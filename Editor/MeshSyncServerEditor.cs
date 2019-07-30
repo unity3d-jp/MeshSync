@@ -7,6 +7,18 @@ namespace UTJ.MeshSyncEditor
     [CustomEditor(typeof(MeshSyncServer))]
     public class MeshSyncServerEditor : Editor
     {
+#if UNITY_EDITOR
+        [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
+        public static void CreateMeshSyncServer(MenuCommand menuCommand)
+        {
+            var go = new GameObject();
+            go.name = "MeshSyncServer";
+            var mss = go.AddComponent<MeshSyncServer>();
+            mss.rootObject = go.GetComponent<Transform>();
+            Undo.RegisterCreatedObjectUndo(go, "MeshSyncServer");
+        }
+#endif
+
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();

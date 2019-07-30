@@ -328,18 +328,6 @@ namespace UTJ.MeshSync
 
 
         #region Impl
-#if UNITY_EDITOR
-        [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
-        public static void CreateMeshSyncServer(MenuCommand menuCommand)
-        {
-            var go = new GameObject();
-            go.name = "MeshSyncServer";
-            var mss = go.AddComponent<MeshSyncServer>();
-            mss.rootObject = go.GetComponent<Transform>();
-            Undo.RegisterCreatedObjectUndo(go, "MeshSyncServer");
-        }
-#endif
-
         void SerializeDictionary<K,V>(Dictionary<K,V> dic, ref K[] keys, ref V[] values)
         {
             keys = dic.Keys.ToArray();

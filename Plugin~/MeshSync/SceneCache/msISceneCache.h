@@ -14,8 +14,11 @@ public:
 
     size_t getNumScenes() const override;
     TimeRange getTimeRange() const override;
+    float getTime(size_t i) const override;
     ScenePtr getByIndex(size_t i) override;
     ScenePtr getByTime(float t, bool lerp) override;
+
+    const AnimationCurvePtr getTimeCurve() const override;
 
     int timeToIndex(float time) const;
 
@@ -38,6 +41,8 @@ protected:
     std::mutex m_mutex;
     std::vector<SceneRecord> m_records;
     RawVector<CacheFileEntityMeta> m_entity_meta;
+
+    AnimationCurvePtr m_time_curve;
 
     BufferEncoderPtr m_encoder;
     MemoryStream m_scene_buf;

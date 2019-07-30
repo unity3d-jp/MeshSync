@@ -29,6 +29,7 @@ public:
         Float4,
         Quaternion,
     };
+    template<class T> struct GetDataType;
 
     struct DataFlags
     {
@@ -76,6 +77,15 @@ public:
 };
 msSerializable(AnimationCurve);
 msDeclPtr(AnimationCurve);
+
+#define DefType(T, E) template<> struct AnimationCurve::GetDataType<T> { static const AnimationCurve::DataType type = AnimationCurve::DataType::E; };
+DefType(int, Int)
+DefType(float, Float)
+DefType(float2, Float2)
+DefType(float3, Float3)
+DefType(float4, Float4)
+DefType(quatf, Quaternion)
+#undef DefType
 
 
 class Animation
@@ -126,8 +136,12 @@ struct TAnimationCurve
     using key_t = TVP<T>;
 
     TAnimationCurve() {}
-    TAnimationCurve(const AnimationCurve& c) : curve(const_cast<AnimationCurve*>(&c)) {}
-    TAnimationCurve(AnimationCurvePtr c) : curve(c.get()) {}
+    TAnimationCurve(const AnimationCurve& c) : curve(const_cast<AnimationCurve*>(&c))
+    {
+        if (curve->data_type == AnimationCurve::DataType::Unknown)
+            curve->data_type = AnimationCurve::GetDataType<T>::type;
+    }
+    TAnimationCurve(AnimationCurvePtr c) : TAnimationCurve(*c) {}
 
     operator bool() const { return curve != nullptr; }
     bool valid() const { return curve != nullptr; }

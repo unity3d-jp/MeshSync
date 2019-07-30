@@ -89,6 +89,12 @@ msAPI int msISceneCacheGetNumScenes(ms::ISceneCache *self)
         return 0;
     return (int)self->getNumScenes();
 }
+msAPI float msISceneCacheGetTime(ms::ISceneCache *self, int index)
+{
+    if (!self)
+        return 0.0f;
+    return self->getTime(index);
+}
 msAPI ms::Scene* msISceneCacheGetSceneByIndex(ms::ISceneCache *self, int index)
 {
     if (!self)
@@ -100,5 +106,12 @@ msAPI ms::Scene* msISceneCacheGetSceneByTime(ms::ISceneCache *self, float time, 
     if (!self)
         return nullptr;
     return self->getByTime(time, lerp).get();
+}
+
+msAPI const ms::AnimationCurve* msISceneCacheGetTimeCurve(ms::ISceneCache *self)
+{
+    if (!self)
+        return nullptr;
+    return self->getTimeCurve().get();
 }
 #pragma endregion

@@ -40,34 +40,6 @@ namespace UTJ.MeshSync
         #endregion
 
         #region Public Methods
-#if UNITY_EDITOR
-        [MenuItem("GameObject/MeshSync/Create Cache Player", false, 10)]
-        public static void CreateSceneCachePlayer(MenuCommand menuCommand)
-        {
-            var path = EditorUtility.OpenFilePanel("Select Cache File", "", "");
-            if (path.Length > 0)
-            {
-                var go = new GameObject();
-                go.name = "SceneCachePlayer";
-
-                var server = go.AddComponent<MeshSyncServer>();
-                server.rootObject = go.GetComponent<Transform>();
-                server.progressiveDisplay = false;
-
-                var player = go.AddComponent<SceneCachePlayer>();
-                if (!player.OpenCache(path))
-                {
-                    Debug.LogError("Failed to open " + path + ".\nPossible reasons: the file is not scene cache, or file format version does not match.");
-                    DestroyImmediate(go);
-                }
-                else
-                {
-                    Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
-                }
-            }
-        }
-#endif
-
         public bool OpenCache(string path)
         {
             CloseCache();
@@ -101,6 +73,34 @@ namespace UTJ.MeshSync
             }
             m_timePrev = -1;
         }
+
+        public bool AddCurve(AnimationClip clip, string path)
+        {
+            if (!m_sceneCache)
+                return false;
+
+            var curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
+            if (curve == null)
+                return false;
+            clip.SetCurve(path, typeof(SceneCachePlayer), "m_time", curve);
+            return true;
+        }
+
+#if UNITY_EDITOR
+        public bool AddAnimator(string assetPath)
+        {
+            var dstPath = string.Format("{0}/{1}.anim", assetPath, gameObject.name);
+            var clip = new AnimationClip();
+            AddCurve(clip, "");
+            clip = Misc.SaveAsset(clip, dstPath);
+            if (clip == null)
+                return false;
+
+            var animator = Misc.GetOrAddComponent<Animator>(gameObject);
+            animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(dstPath + ".controller", clip);
+            return true;
+        }
+#endif
         #endregion
 
 
@@ -124,6 +124,7 @@ namespace UTJ.MeshSync
         {
             m_cacheFilePath.isDirectory = false;
             m_cacheFilePath.readOnly = true;
+            m_cacheFilePath.showRootSelector = true;
             GetComponent<MeshSyncServer>().serverPort = Random.Range(11111, 65000);
         }
         void OnValidate()

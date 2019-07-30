@@ -7,6 +7,35 @@ namespace UTJ.MeshSyncEditor
     [CustomEditor(typeof(SceneCachePlayer))]
     public class SceneCachePlayerEditor : Editor
     {
+#if UNITY_EDITOR
+        [MenuItem("GameObject/MeshSync/Create Cache Player", false, 10)]
+        public static void CreateSceneCachePlayer(MenuCommand menuCommand)
+        {
+            var path = EditorUtility.OpenFilePanel("Select Cache File", "", "");
+            if (path.Length > 0)
+            {
+                var go = new GameObject();
+                go.name = System.IO.Path.GetFileNameWithoutExtension(path);
+
+                var server = go.AddComponent<MeshSyncServer>();
+                server.rootObject = go.GetComponent<Transform>();
+                server.progressiveDisplay = false;
+
+                var player = go.AddComponent<SceneCachePlayer>();
+                if (!player.OpenCache(path))
+                {
+                    Debug.LogError("Failed to open " + path + ".\nPossible reasons: the file is not scene cache, or file format version does not match.");
+                    DestroyImmediate(go);
+                }
+                else
+                {
+                    player.AddAnimator("Assets");
+                    Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
+                }
+            }
+        }
+#endif
+
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
@@ -21,7 +50,7 @@ namespace UTJ.MeshSyncEditor
                 if (GUILayout.Button("Copy to StreamingAssets"))
                 {
                     var srcPath = dataPath.fullPath;
-                    var dstPath = CopyFileToStreamingAssets(dataPath.fullPath);
+                    var dstPath = Misc.CopyFileToStreamingAssets(dataPath.fullPath);
                     t.OpenCache(dstPath);
                     Repaint();
                 }
@@ -29,42 +58,6 @@ namespace UTJ.MeshSyncEditor
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Plugin Version: " + MeshSyncServer.pluginVersion);
-        }
-
-        string CopyFileToStreamingAssets(string srcPath)
-        {
-            var streaminAssetsPath = Application.streamingAssetsPath;
-            if (srcPath.Contains(streaminAssetsPath))
-                return srcPath;
-
-            var filename = System.IO.Path.GetFileNameWithoutExtension(srcPath);
-            var ext = System.IO.Path.GetExtension(srcPath);
-            for (int n = 1; ; ++n)
-            {
-                var ns = n == 1 ? "" : n.ToString();
-                var dstPath = string.Format("{0}/{1}{2}{3}", streaminAssetsPath, filename, ns, ext);
-                if (System.IO.File.Exists(dstPath))
-                {
-                    var srcInfo = new System.IO.FileInfo(srcPath);
-                    var dstInfo = new System.IO.FileInfo(dstPath);
-                    bool identical =
-                        srcInfo.Length == dstInfo.Length &&
-                        srcInfo.LastWriteTime == dstInfo.LastWriteTime;
-                    if (identical)
-                    {
-                        Debug.Log(string.Format("SceneCachePlayer: use existing file {0} -> {1}", srcPath, dstPath));
-                        return dstPath;
-                    }
-                    else
-                        continue;
-                }
-                else
-                {
-                    System.IO.File.Copy(srcPath, dstPath);
-                    Debug.Log(string.Format("SceneCachePlayer: copy {0} -> {1}", srcPath, dstPath));
-                    return dstPath;
-                }
-            }
         }
     }
 }

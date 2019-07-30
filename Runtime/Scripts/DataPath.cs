@@ -21,7 +21,7 @@ namespace UTJ.MeshSync
 #if UNITY_EDITOR
         // just for inspector
         [SerializeField] bool m_readOnly = false;
-        [SerializeField] bool m_showRootSelector = true;
+        [SerializeField] bool m_showRootSelector = false;
         [SerializeField] bool m_isDirectory = true;
 #endif
 
