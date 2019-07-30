@@ -6,13 +6,18 @@
 #include <initializer_list>
 #include "muAllocator.h"
 
+template<class T, int Align = 0x40> class RawVector;
+template<class T, int Align = 0x40> class SharedVector;
+
+
 // simpler version of std::vector.
 // T must be POD types because its constructor and destructor are never called.
 // that also means this can be significantly faster than std::vector in some specific situations.
 // (e.g. temporary buffers that can be very large and frequently resized)
-template<class T, int Align = 0x40>
+template<class T, int Align>
 class RawVector
 {
+template<class T, int A> friend class SharedVector;
 public:
     using value_type      = T;
     using reference       = T&;
@@ -69,6 +74,7 @@ public:
 
     T& at(size_t i) { return m_data[i]; }
     const T& at(size_t i) const { return m_data[i]; }
+    const T& cat(size_t i) const { return m_data[i]; }
     T& operator[](size_t i) { return at(i); }
     const T& operator[](size_t i) const { return at(i); }
 
@@ -174,6 +180,7 @@ public:
         std::swap(m_size, other.m_size);
         std::swap(m_capacity, other.m_capacity);
     }
+    void swap(SharedVector<T, Align> &other);
 
     template<class FwdIter>
     void assign(FwdIter first, FwdIter last)
@@ -288,9 +295,10 @@ private:
 // assign_shared() and some constructors & operator=() just share data. when a non-const method is called, make a copy of source data.
 // (non-const method includes non-const version of operator[], at(), data(), etc)
 // assign_shared(), is_shared() and detach() are SharedVector-specific methods
-template<class T, int Align = 0x40>
+template<class T, int Align>
 class SharedVector
 {
+template<class T, int A> friend class RawVector;
 public:
     using value_type = T;
     using reference = T & ;
@@ -306,7 +314,7 @@ public:
     {
         operator=(v);
     }
-    SharedVector(const RawVector& v)
+    SharedVector(const RawVector<T, Align>& v)
     {
         operator=(v);
     }
@@ -328,7 +336,7 @@ public:
         assign_shared(v.begin(), v.end());
         return *this;
     }
-    SharedVector& operator=(const RawVector& v)
+    SharedVector& operator=(const RawVector<T, Align>& v)
     {
         assign_shared(v.begin(), v.end());
         return *this;
@@ -346,7 +354,7 @@ public:
 
     ~SharedVector()
     {
-        if (!shared()) {
+        if (!is_shared()) {
             clear();
             shrink_to_fit();
         }
@@ -362,6 +370,7 @@ public:
 
     T& at(size_t i) { detach(); return m_data[i]; }
     const T& at(size_t i) const { return m_data[i]; }
+    const T& cat(size_t i) const { return m_data[i]; }
     T& operator[](size_t i) { detach(); return at(i); }
     const T& operator[](size_t i) const { return at(i); }
 
@@ -411,7 +420,8 @@ public:
     void shrink_to_fit()
     {
         if (is_shared()) {
-            m_data = m_shared_data = nullptr;
+            m_data = nullptr;
+            m_shared_data = nullptr;
             m_size = m_capacity = 0;
             return;
         }
@@ -470,9 +480,17 @@ public:
         m_size = 0;
     }
 
-    void swap(RawVector &other)
+    void swap(SharedVector<T, Align>& other)
     {
+        std::swap(m_data, other.m_data);
+        std::swap(m_size, other.m_size);
+        std::swap(m_capacity, other.m_capacity);
         std::swap(m_shared_data, other.m_shared_data);
+    }
+
+    void swap(RawVector<T, Align>& other)
+    {
+        detach();
         std::swap(m_data, other.m_data);
         std::swap(m_size, other.m_size);
         std::swap(m_capacity, other.m_capacity);
@@ -481,7 +499,8 @@ public:
     void assign_shared(pointer first, pointer last)
     {
         // just share data. no copy at this point.
-        m_data = m_shared_data = first;
+        m_data = first;
+        m_shared_data = first;
         m_size = std::distance(first, last);
     }
     void assign_shared(const_pointer first, const_pointer last)
@@ -620,9 +639,34 @@ public:
         m_capacity = m_size;
     }
 
+    const RawVector<T, Align>& as_raw() const
+    {
+        return reinterpret_cast<const RawVector<T, Align>&>(*this);
+    }
+    const RawVector<T, Align>& as_craw() const
+    {
+        return reinterpret_cast<const RawVector<T, Align>&>(*this);
+    }
+    RawVector<T, Align>& as_raw()
+    {
+        detach();
+        return reinterpret_cast<RawVector<T, Align>&>(*this);
+    }
+
+
 private:
-    const T *m_shared_data = nullptr;
     T *m_data = nullptr;
     size_t m_size = 0;
     size_t m_capacity = 0;
+    const T *m_shared_data = nullptr;
 };
+
+template<class T, int A>
+inline void RawVector<T, A>::swap(SharedVector<T, A>& other)
+{
+    other.detach();
+    std::swap(m_data, other.m_data);
+    std::swap(m_size, other.m_size);
+    std::swap(m_capacity, other.m_capacity);
+}
+

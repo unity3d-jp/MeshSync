@@ -260,32 +260,36 @@ void GenerateTangentsTriangleSoA_ISPC(float4 *dst,
     int num_triangles, int num_vertices);
 
 
+#define DefNearEqual(VT)\
+inline bool near_equal(const VT<float>& a, const VT<float>& b, float epsilon = muEpsilon)\
+{\
+    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);\
+}\
+inline bool near_equal(const VT<float2>& a, const VT<float2>& b, float epsilon = muEpsilon)\
+{\
+    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);\
+}\
+inline bool near_equal(const VT<float3>& a, const VT<float3>& b, float epsilon = muEpsilon)\
+{\
+    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);\
+}\
+inline bool near_equal(const VT<float4>& a, const VT<float4>& b, float epsilon = muEpsilon)\
+{\
+    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);\
+}\
+inline bool near_equal(const VT<quatf>& a, const VT<quatf>& b, float epsilon = muEpsilon)\
+{\
+    return a.size() == b.size() && NearEqual((const float4*)a.data(), (const float4*)b.data(), a.size(), epsilon);\
+}\
+inline bool near_equal(const VT<int>& a, const VT<int>& b, float epsilon = muEpsilon)\
+{\
+    (void)epsilon;\
+    return a == b;\
+}
 
-inline bool near_equal(const RawVector<float>& a, const RawVector<float>& b, float epsilon = muEpsilon)
-{
-    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);
-}
-inline bool near_equal(const RawVector<float2>& a, const RawVector<float2>& b, float epsilon = muEpsilon)
-{
-    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);
-}
-inline bool near_equal(const RawVector<float3>& a, const RawVector<float3>& b, float epsilon = muEpsilon)
-{
-    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);
-}
-inline bool near_equal(const RawVector<float4>& a, const RawVector<float4>& b, float epsilon = muEpsilon)
-{
-    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);
-}
-inline bool near_equal(const RawVector<quatf>& a, const RawVector<quatf>& b, float epsilon = muEpsilon)
-{
-    return a.size() == b.size() && NearEqual((const float4*)a.data(), (const float4*)b.data(), a.size(), epsilon);
-}
+DefNearEqual(RawVector);
+DefNearEqual(SharedVector);
 
-inline bool near_equal(const RawVector<int>& a, const RawVector<int>& b, float epsilon = muEpsilon)
-{
-    (void)epsilon;
-    return a == b;
-}
+#undef DefNearEqual
 
 } // namespace mu
