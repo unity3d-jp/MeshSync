@@ -23,10 +23,9 @@ namespace UTJ.MeshSync
         #endregion
 
         #region Properties
-        public string cacheFilePath
+        public DataPath cacheFilePath
         {
-            get { return m_cacheFilePath.fullPath; }
-            set { m_cacheFilePath.fullPath = value; CheckParamsUpdated(); }
+            get { return m_cacheFilePath; }
         }
         public float time
         {
