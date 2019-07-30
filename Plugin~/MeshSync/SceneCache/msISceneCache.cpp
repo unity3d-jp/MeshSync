@@ -41,7 +41,17 @@ ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
             m_ist->seekg(sh.size, std::ios::cur);
         }
     }
+
+    size_t scene_count = m_records.size();
     std::sort(m_records.begin(), m_records.end(), [](auto& a, auto& b) { return a.time < b.time; });
+
+    m_time_curve = AnimationCurve::create();
+    TAnimationCurve<float> curve(m_time_curve);
+    curve.resize(scene_count);
+    for (size_t i = 0; i < scene_count; ++i) {
+        auto& kvp = curve[i];
+        kvp.time = kvp.value = m_records[i].time;
+    }
 
     {
         // read meta data
@@ -78,6 +88,11 @@ int ISceneCacheImpl::timeToIndex(float time) const
 }
 
 
+float ISceneCacheImpl::getSampleRate() const
+{
+    return m_header.oscs.sample_rate;
+}
+
 size_t ISceneCacheImpl::getNumScenes() const
 {
     if (!valid())
@@ -90,6 +105,13 @@ TimeRange ISceneCacheImpl::getTimeRange() const
     if (!valid())
         return {0.0f, 0.0f};
     return { m_records.front().time, m_records.back().time };
+}
+
+float ISceneCacheImpl::getTime(size_t i) const
+{
+    if (!valid())
+        return 0.0f;
+    return m_records[i].time;
 }
 
 ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i)
@@ -223,6 +245,11 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
     }
 
     return postprocess(ret);
+}
+
+const AnimationCurvePtr ISceneCacheImpl::getTimeCurve() const
+{
+    return m_time_curve;
 }
 
 

@@ -2340,6 +2340,7 @@ namespace UTJ.MeshSync
         public IntPtr self;
         [DllImport("MeshSyncServer")] static extern SceneCacheData msISceneCacheOpen(string path);
         [DllImport("MeshSyncServer")] static extern void msISceneCacheClose(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern float msISceneCacheGetSampleRate(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msISceneCacheGetTimeRange(IntPtr self, ref float start, ref float end);
         [DllImport("MeshSyncServer")] static extern int msISceneCacheGetNumScenes(IntPtr self);
         [DllImport("MeshSyncServer")] static extern float msISceneCacheGetTime(IntPtr self, int i);
@@ -2354,6 +2355,10 @@ namespace UTJ.MeshSync
 
         public void Close() { msISceneCacheClose(self); self = IntPtr.Zero; }
 
+        public float sampleRate
+        {
+            get { return msISceneCacheGetSampleRate(self); }
+        }
         public int sceneCount {
             get { return msISceneCacheGetNumScenes(self); }
         }

@@ -12,6 +12,7 @@ public:
     ~ISceneCacheImpl() override;
     bool valid() const override;
 
+    float getSampleRate() const override;
     size_t getNumScenes() const override;
     TimeRange getTimeRange() const override;
     float getTime(size_t i) const override;

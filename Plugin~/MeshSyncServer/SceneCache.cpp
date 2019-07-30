@@ -75,6 +75,12 @@ msAPI void msISceneCacheClose(ms::ISceneCache *self)
 {
     delete self;
 }
+msAPI float msISceneCacheGetSampleRate(ms::ISceneCache *self)
+{
+    if (!self)
+        return 0.0f;
+    return self->getSampleRate();
+}
 msAPI void msISceneCacheGetTimeRange(ms::ISceneCache *self, float *start, float *end)
 {
     if (!self)

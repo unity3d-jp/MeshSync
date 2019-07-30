@@ -31,6 +31,7 @@ struct OSceneCacheSettingsBase
 {
     SceneCacheEncoding encoding = SceneCacheEncoding::ZSTD;
     SceneCacheEncoderSettings encoder_settings;
+    float sample_rate = 30.0f; // 0.0f means 'variable sample rate'
 
     // flags
     uint32_t strip_unchanged : 1;
@@ -83,6 +84,7 @@ public:
     virtual ~ISceneCache() {}
     virtual bool valid() const = 0;
 
+    virtual float getSampleRate() const = 0;
     virtual TimeRange getTimeRange() const = 0;
     virtual size_t getNumScenes() const = 0;
     virtual float getTime(size_t i) const = 0;

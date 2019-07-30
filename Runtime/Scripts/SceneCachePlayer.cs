@@ -91,6 +91,9 @@ namespace UTJ.MeshSync
         {
             var dstPath = string.Format("{0}/{1}.anim", assetPath, gameObject.name);
             var clip = new AnimationClip();
+            var sampleRate = m_sceneCache.sampleRate;
+            if (sampleRate > 0.0f)
+                clip.frameRate = sampleRate;
             AddCurve(clip, "");
             clip = Misc.SaveAsset(clip, dstPath);
             if (clip == null)
