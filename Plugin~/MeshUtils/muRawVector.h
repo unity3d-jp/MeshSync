@@ -35,7 +35,11 @@ public:
     }
     RawVector(RawVector&& v)
     {
-        v.swap(*this);
+        swap(v);
+    }
+    RawVector(SharedVector<T, Align>&& v)
+    {
+        swap(v);
     }
     RawVector(std::initializer_list<T> v)
     {
@@ -49,7 +53,12 @@ public:
     }
     RawVector& operator=(RawVector&& v)
     {
-        v.swap(*this);
+        swap(v);
+        return *this;
+    }
+    RawVector& operator=(SharedVector<T, Align>&& v)
+    {
+        swap(v);
         return *this;
     }
     RawVector& operator=(std::initializer_list<T> v)
@@ -240,7 +249,7 @@ public:
     void push_back(T&& v)
     {
         resize(m_size + 1);
-        back() = v;
+        back() = std::move(v);
     }
     void push_back(const_pointer v, size_t n)
     {
@@ -294,7 +303,7 @@ private:
 // 'copy on write' version of RawVector.
 // assign_shared() and some constructors & operator=() just share data. when a non-const method is called, make a copy of source data.
 // (non-const method includes non-const version of operator[], at(), data(), etc)
-// assign_shared(), is_shared() and detach() are SharedVector-specific methods
+// share(), is_shared() and detach() are SharedVector-specific methods
 template<class T, int Align>
 class SharedVector
 {
@@ -318,13 +327,13 @@ public:
     {
         operator=(v);
     }
-    SharedVector(const_pointer shared_data, size_t size)
-    {
-        assign_shared(shared_data, shared_data + size);
-    }
     SharedVector(SharedVector&& v)
     {
-        v.swap(*this);
+        swap(v);
+    }
+    SharedVector(RawVector<T, Align>&& v)
+    {
+        swap(v);
     }
     SharedVector(std::initializer_list<T> v)
     {
@@ -333,17 +342,22 @@ public:
     explicit SharedVector(size_t initial_size) { resize(initial_size); }
     SharedVector& operator=(const SharedVector& v)
     {
-        assign_shared(v.begin(), v.end());
+        share(v.begin(), v.end());
         return *this;
     }
     SharedVector& operator=(const RawVector<T, Align>& v)
     {
-        assign_shared(v.begin(), v.end());
+        share(v.begin(), v.end());
         return *this;
     }
     SharedVector& operator=(SharedVector&& v)
     {
-        v.swap(*this);
+        swap(v);
+        return *this;
+    }
+    SharedVector& operator=(RawVector<T, Align>&& v)
+    {
+        swap(v);
         return *this;
     }
     SharedVector& operator=(std::initializer_list<T> v)
@@ -387,6 +401,22 @@ public:
     static void* allocate(size_t size) { return AlignedMalloc(size, alignment); }
     static void deallocate(void *addr, size_t /*size*/) { AlignedFree(addr); }
 
+    void share(const_pointer first, const_pointer last)
+    {
+        // just share data. no copy at this point.
+        m_data = (pointer)first;
+        m_shared_data = first;
+        m_size = m_capacity = std::distance(first, last);
+    }
+    void share(const RawVector<T, Align>& c)
+    {
+        share((pointer)c.begin(), (pointer)c.end());
+    }
+    void share(const SharedVector& c)
+    {
+        share((pointer)c.begin(), (pointer)c.end());
+    }
+
     void reserve(size_t s)
     {
         detach();
@@ -405,7 +435,7 @@ public:
 
     void reserve_discard(size_t s)
     {
-        detach();
+        detach_clear();
         if (s > m_capacity) {
             s = std::max<size_t>(s, m_size * 2);
             size_t newsize = sizeof(T) * s;
@@ -419,12 +449,8 @@ public:
 
     void shrink_to_fit()
     {
-        if (is_shared()) {
-            m_data = nullptr;
-            m_shared_data = nullptr;
-            m_size = m_capacity = 0;
+        if (is_shared())
             return;
-        }
 
         if (m_size == 0) {
             deallocate(m_data, m_size);
@@ -476,7 +502,6 @@ public:
 
     void clear()
     {
-        detach();
         m_size = 0;
     }
 
@@ -494,18 +519,6 @@ public:
         std::swap(m_data, other.m_data);
         std::swap(m_size, other.m_size);
         std::swap(m_capacity, other.m_capacity);
-    }
-
-    void assign_shared(pointer first, pointer last)
-    {
-        // just share data. no copy at this point.
-        m_data = first;
-        m_shared_data = first;
-        m_size = std::distance(first, last);
-    }
-    void assign_shared(const_pointer first, const_pointer last)
-    {
-        assign_shared((pointer)first, (pointer)last);
     }
 
     template<class FwdIter>
@@ -573,7 +586,7 @@ public:
     {
         detach();
         resize(m_size + 1);
-        back() = v;
+        back() = std::move(v);
     }
     void push_back(const_pointer v, size_t n)
     {
@@ -637,6 +650,16 @@ public:
         memcpy(m_data, m_shared_data, size);
         m_shared_data = nullptr;
         m_capacity = m_size;
+    }
+
+    void detach_clear()
+    {
+        if (!m_shared_data)
+            return;
+
+        m_data = nullptr;
+        m_shared_data = nullptr;
+        m_capacity = m_size = 0;
     }
 
     const RawVector<T, Align>& as_raw() const
