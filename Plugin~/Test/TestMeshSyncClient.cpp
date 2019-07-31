@@ -93,7 +93,7 @@ TestCase(Test_SendMesh)
 
 TestCase(Test_SceneCacheRead)
 {
-    auto isc = ms::OpenISceneCacheFile("wave.scz");
+    auto isc = ms::OpenISceneCacheFile("wave_c2.sc");
     Expect(isc);
     if (!isc)
         return;
@@ -263,7 +263,7 @@ TestCase(Test_Points)
 
 
 template<class color_t>
-void CreateCheckerImage(RawVector<char>& dst, color_t black, color_t white, int width, int height)
+void CreateCheckerImage(SharedVector<char>& dst, color_t black, color_t white, int width, int height)
 {
     int num_pixels = width * height;
     int checker_size = 8;

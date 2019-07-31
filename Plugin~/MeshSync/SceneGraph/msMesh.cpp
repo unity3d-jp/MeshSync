@@ -217,7 +217,7 @@ void Mesh::deserialize(std::istream& is)
 void Mesh::resolve()
 {
     for (auto& submesh : submeshes)
-        submesh.indices.reset(indices.data() + submesh.index_offset, submesh.index_count);
+        submesh.indices.reset(indices.cdata() + submesh.index_offset, submesh.index_count);
     for (auto& split : splits)
         split.submeshes.reset(submeshes.data() + split.submesh_offset, split.submesh_count);
 }
