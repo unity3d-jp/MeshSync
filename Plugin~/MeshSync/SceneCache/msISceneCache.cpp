@@ -171,6 +171,9 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
         MemoryStream scene_buf(std::move(tmp_buf));
         ret->deserialize(scene_buf);
 
+        // keep scene buffer alive. Meshes will use it as vertex buffers
+        ret->scene_buffers.push_back(scene_buf.moveBuffer());
+
         if (m_header.oscs.strip_unchanged && m_base_scene) {
             // set cache flags
             size_t n = ret->entities.size();

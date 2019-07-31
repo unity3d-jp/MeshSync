@@ -304,12 +304,12 @@ struct PointsData
     // serializable
     PointsDataFlags pd_flags;
     float time = -1.0f;
-    RawVector<float3> points;
-    RawVector<quatf>  rotations;
-    RawVector<float3> scales;
-    RawVector<float4> colors;
-    RawVector<float3> velocities;
-    RawVector<int>    ids;
+    SharedVector<float3> points;
+    SharedVector<quatf>  rotations;
+    SharedVector<float3> scales;
+    SharedVector<float4> colors;
+    SharedVector<float3> velocities;
+    SharedVector<int>    ids;
 
 protected:
     PointsData();

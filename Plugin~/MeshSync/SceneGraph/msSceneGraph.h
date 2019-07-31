@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include <memory>
 #include "MeshUtils/MeshUtils.h"
 #include "msFoundation.h"
@@ -59,10 +60,14 @@ struct SceneImportSettings
 class Scene
 {
 public:
+    // serializable
     SceneSettings settings;
     std::vector<AssetPtr> assets;
     std::vector<TransformPtr> entities;
     std::vector<ConstraintPtr> constraints;
+
+    // non-serializable
+    std::list<RawVector<char>> scene_buffers;
 
 public:
     msDefinePool(Scene);

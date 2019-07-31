@@ -25,10 +25,18 @@ bool FileToByteArray(const char *path, RawVector<char> &dst)
     f.read(dst.data(), (size_t)size);
     return true;
 }
+bool FileToByteArray(const char *path, SharedVector<char>& out)
+{
+    return FileToByteArray(path, out.as_raw());
+}
 
 bool ByteArrayToFile(const char *path, const RawVector<char> &data)
 {
-    return ByteArrayToFile(path, data.data(), data.size());
+    return ByteArrayToFile(path, data.cdata(), data.size());
+}
+bool ByteArrayToFile(const char *path, const SharedVector<char>& data)
+{
+    return ByteArrayToFile(path, data.as_craw());
 }
 
 bool ByteArrayToFile(const char *path, const char *data, size_t size)

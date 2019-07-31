@@ -301,7 +301,7 @@ private:
 
 
 // 'copy on write' version of RawVector.
-// assign_shared() and some constructors & operator=() just share data. when a non-const method is called, make a copy of source data.
+// share() and some constructors & operator=() just share data. when a non-const method is called, make a copy.
 // (non-const method includes non-const version of operator[], at(), data(), etc)
 // share(), is_shared() and detach() are SharedVector-specific methods
 template<class T, int Align>
@@ -342,12 +342,12 @@ public:
     explicit SharedVector(size_t initial_size) { resize(initial_size); }
     SharedVector& operator=(const SharedVector& v)
     {
-        share(v.begin(), v.end());
+        share(v.cdata(), v.size());
         return *this;
     }
     SharedVector& operator=(const RawVector<T, Align>& v)
     {
-        share(v.begin(), v.end());
+        share(v.cdata(), v.size());
         return *this;
     }
     SharedVector& operator=(SharedVector&& v)
@@ -401,20 +401,20 @@ public:
     static void* allocate(size_t size) { return AlignedMalloc(size, alignment); }
     static void deallocate(void *addr, size_t /*size*/) { AlignedFree(addr); }
 
-    void share(const_pointer first, const_pointer last)
+    void share(const_pointer data, size_t size)
     {
         // just share data. no copy at this point.
-        m_data = (pointer)first;
-        m_shared_data = first;
-        m_size = m_capacity = std::distance(first, last);
+        m_data = (pointer)data;
+        m_shared_data = data;
+        m_size = m_capacity = size;
     }
     void share(const RawVector<T, Align>& c)
     {
-        share((pointer)c.begin(), (pointer)c.end());
+        share(c.cdata(), c.size());
     }
     void share(const SharedVector& c)
     {
-        share((pointer)c.begin(), (pointer)c.end());
+        share(c.cdata(), c.size());
     }
 
     void reserve(size_t s)

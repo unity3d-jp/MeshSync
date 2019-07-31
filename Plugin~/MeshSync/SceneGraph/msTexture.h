@@ -73,7 +73,7 @@ public:
     TextureFormat format = TextureFormat::Unknown;
     int width = 0;
     int height = 0;
-    RawVector<char> data;
+    SharedVector<char> data;
 
 protected:
     Texture();

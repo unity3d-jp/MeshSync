@@ -48,7 +48,7 @@ using super = Asset;
 public:
     // Asset::name must be file name
 
-    RawVector<char> data;
+    SharedVector<char> data;
 
 public:
     msDefinePool(FileAsset);

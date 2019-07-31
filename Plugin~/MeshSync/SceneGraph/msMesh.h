@@ -134,9 +134,9 @@ struct BlendShapeFrameData
 {
     // serializable
     float weight = 0.0f; // 0.0f - 100.0f
-    RawVector<float3> points; // can be empty or per-vertex data
-    RawVector<float3> normals;  // can be empty, per-vertex or per-index data
-    RawVector<float3> tangents; // can be empty, per-vertex or per-index data
+    SharedVector<float3> points; // can be empty or per-vertex data
+    SharedVector<float3> normals;  // can be empty, per-vertex or per-index data
+    SharedVector<float3> tangents; // can be empty, per-vertex or per-index data
 
 protected:
     BlendShapeFrameData();
@@ -178,7 +178,7 @@ struct BoneData
     // serializable
     std::string path;
     float4x4 bindpose = float4x4::identity();
-    RawVector<float> weights; // per-vertex data
+    SharedVector<float> weights; // per-vertex data
 
 protected:
     BoneData();
@@ -201,15 +201,15 @@ public:
     MeshDataFlags      md_flags;
     MeshRefineSettings refine_settings;
 
-    RawVector<float3> points;
-    RawVector<float3> normals;    // can be empty, per-vertex or per-index data
-    RawVector<float4> tangents;   // can be empty, per-vertex or per-index data
-    RawVector<float2> uv0, uv1;   // can be empty, per-vertex or per-index data
-    RawVector<float4> colors;     // can be empty, per-vertex or per-index data
-    RawVector<float3> velocities; // can be empty or per-vertex data
-    RawVector<int>    counts;
-    RawVector<int>    indices;
-    RawVector<int>    material_ids; // can be empty or per-face data
+    SharedVector<float3> points;
+    SharedVector<float3> normals;    // can be empty, per-vertex or per-index data
+    SharedVector<float4> tangents;   // can be empty, per-vertex or per-index data
+    SharedVector<float2> uv0, uv1;   // can be empty, per-vertex or per-index data
+    SharedVector<float4> colors;     // can be empty, per-vertex or per-index data
+    SharedVector<float3> velocities; // can be empty or per-vertex data
+    SharedVector<int>    counts;
+    SharedVector<int>    indices;
+    SharedVector<int>    material_ids; // can be empty or per-face data
 
     std::string root_bone;
     std::vector<BoneDataPtr> bones;
@@ -220,10 +220,10 @@ public:
 
     // non-serializable
     // *update clear() when add member*
-    RawVector<Weights4> weights4;
-    RawVector<uint8_t> bone_counts;
-    RawVector<int> bone_offsets;
-    RawVector<Weights1> weights1;
+    SharedVector<Weights4>  weights4;
+    SharedVector<uint8_t>   bone_counts;
+    SharedVector<int>       bone_offsets;
+    SharedVector<Weights1>  weights1;
 
 
 protected:

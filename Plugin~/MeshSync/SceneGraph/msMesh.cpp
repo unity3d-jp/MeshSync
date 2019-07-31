@@ -152,14 +152,14 @@ std::shared_ptr<BoneData> BoneData::create(std::istream & is)
 BoneData::BoneData() {}
 BoneData::~BoneData() {}
 
-void BoneData::serialize(std::ostream & os) const
+void BoneData::serialize(std::ostream& os) const
 {
     write(os, path);
     write(os, bindpose);
     write(os, weights);
 }
 
-void BoneData::deserialize(std::istream & is)
+void BoneData::deserialize(std::istream& is)
 {
     read(is, path);
     read(is, bindpose);
@@ -433,8 +433,8 @@ EntityPtr Mesh::clone()
     return ret;
 }
 
-template<class T>
-static inline void Remap(RawVector<T>& dst, const RawVector<T>& src, const RawVector<int>& indices)
+template<class C1, class C2, class C3>
+static inline void Remap(C1& dst, const C2& src, const C3& indices)
 {
     if (indices.empty()) {
         dst.assign(src.begin(), src.end());
@@ -497,10 +497,10 @@ void Mesh::refine()
     // normals
     bool flip_normals = mrs.flags.flip_normals ^ mrs.flags.flip_faces;
     if (mrs.flags.gen_normals || (mrs.flags.gen_normals_with_smooth_angle && mrs.smooth_angle >= 180.0f)) {
-        GenerateNormalsPoly(normals, points, counts, indices, flip_normals);
+        GenerateNormalsPoly(normals.as_raw(), points, counts, indices, flip_normals);
     }
     else if (mrs.flags.gen_normals_with_smooth_angle && !mrs.flags.no_reindexing) {
-        GenerateNormalsWithSmoothAngle(normals, points, counts, indices, mrs.smooth_angle, flip_normals);
+        GenerateNormalsWithSmoothAngle(normals.as_raw(), points, counts, indices, mrs.smooth_angle, flip_normals);
     }
 
     // generate back faces
@@ -513,7 +513,7 @@ void Mesh::refine()
         if (mrs.flags.gen_tangents && normals.size() == points.size() && uv0.size() == points.size()) {
             tangents.resize(points.size());
             GenerateTangentsTriangleIndexed(tangents.data(),
-                points.data(), uv0.data(), normals.data(), indices.data(), (int)indices.size() / 3, (int)points.size());
+                points.cdata(), uv0.cdata(), normals.cdata(), indices.cdata(), (int)indices.size() / 3, (int)points.size());
         }
     };
 
@@ -590,7 +590,7 @@ void Mesh::refine()
             sm.index_offset = src.index_offset;
             sm.topology = (SubmeshData::Topology)src.topology;
             sm.material_id = src.material_id;
-            sm.indices.reset(indices.data() + sm.index_offset, sm.index_count);
+            sm.indices.reset(indices.cdata() + sm.index_offset, sm.index_count);
             submeshes.push_back(sm);
         }
 
@@ -729,8 +729,8 @@ void Mesh::makeDoubleSided()
         counts.resize(num_faces * 2);
         indices.resize(num_indices * 2);
 
-        const int *scounts = counts.data();
-        const int *sindices = indices.data();
+        const int *scounts = counts.cdata();
+        const int *sindices = indices.cdata();
         int *dcounts = counts.data() + num_faces;
         int *dindices = indices.data() + num_indices;
 
@@ -760,7 +760,7 @@ void Mesh::makeDoubleSided()
             return false;
 
         attr.resize(num_faces + num_back_faces);
-        const auto *src = attr.data();
+        const auto *src = attr.cdata();
         auto *dst = attr.data() + num_faces;
         for (int fi = 0; fi < num_faces; ++fi) {
             int count = counts[fi];
@@ -778,7 +778,7 @@ void Mesh::makeDoubleSided()
             return false;
 
         attr.resize(num_indices + num_back_indices);
-        const auto *src = attr.data();
+        const auto *src = attr.cdata();
         auto *dst = attr.data() + num_indices;
         for (int fi = 0; fi < num_faces; ++fi) {
             int count = counts[fi];
@@ -854,30 +854,30 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
 
     // points
     if (refine_settings.flags.mirror_basis)
-        mu::MulPoints(refine_settings.mirror_basis, points.data(), points.data(), points.size());
+        mu::MulPoints(refine_settings.mirror_basis, points.cdata(), points.data(), points.size());
     points.resize(num_points_old + num_additional_points);
-    mu::CopyWithIndices(&points[num_points_old], &points[0], copylist);
+    mu::CopyWithIndices(&points[num_points_old], points.cdata(), copylist);
     mu::MirrorPoints(&points[num_points_old], num_additional_points, plane_n, plane_d);
     if (refine_settings.flags.mirror_basis)
-        mu::MulPoints(mu::invert(refine_settings.mirror_basis), points.data(), points.data(), points.size());
+        mu::MulPoints(mu::invert(refine_settings.mirror_basis), points.cdata(), points.data(), points.size());
 
     // indices
     counts.resize(num_faces_old * 2);
     indices.resize(num_indices_old * 2);
     mu::MirrorTopology(counts.data() + num_faces_old, indices.data() + num_indices_old,
-        IArray<int>{counts.data(), num_faces_old}, IArray<int>{indices.data(), num_indices_old}, IArray<int>{indirect.data(), indirect.size()});
+        IArray<int>{counts.cdata(), num_faces_old}, IArray<int>{indices.cdata(), num_indices_old}, IArray<int>{indirect.cdata(), indirect.size()});
 
     // normals
     if (!normals.empty()) {
         if (normals.size() == num_points_old) {
             normals.resize(points.size());
-            mu::CopyWithIndices(&normals[num_points_old], &normals[0], copylist);
+            mu::CopyWithIndices(&normals[num_points_old], normals.cdata(), copylist);
             mu::MirrorVectors(&normals[num_points_old], num_additional_points, plane_n);
         }
         else if (normals.size() == num_indices_old) {
             normals.resize(indices.size());
             auto dst = &normals[num_indices_old];
-            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces_old}, [dst, this](int, int idx, int ridx) {
+            mu::EnumerateReverseFaceIndices(IArray<int>{counts.cdata(), num_faces_old}, [dst, this](int, int idx, int ridx) {
                 dst[idx] = normals[ridx];
             });
             mu::MirrorVectors(&normals[num_indices_old], num_additional_indices, plane_n);
@@ -888,13 +888,13 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     if (!tangents.empty()) {
         if (tangents.size() == num_points_old) {
             tangents.resize(points.size());
-            mu::CopyWithIndices(&tangents[num_points_old], &tangents[0], copylist);
+            mu::CopyWithIndices(&tangents[num_points_old], tangents.cdata(), copylist);
             mu::MirrorVectors(&tangents[num_points_old], num_additional_points, plane_n);
         }
         else if (tangents.size() == num_indices_old) {
             tangents.resize(indices.size());
             auto dst = &tangents[num_indices_old];
-            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces_old}, [dst, this](int, int idx, int ridx) {
+            mu::EnumerateReverseFaceIndices(IArray<int>{counts.cdata(), num_faces_old}, [dst, this](int, int idx, int ridx) {
                 dst[idx] = tangents[ridx];
             });
             mu::MirrorVectors(&tangents[num_indices_old], num_additional_indices, plane_n);
@@ -905,12 +905,12 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     if (!uv0.empty()) {
         if (uv0.size() == num_points_old) {
             uv0.resize(points.size());
-            mu::CopyWithIndices(&uv0[num_points_old], &uv0[0], copylist);
+            mu::CopyWithIndices(&uv0[num_points_old], uv0.cdata(), copylist);
         }
         else if (uv0.size() == num_indices_old) {
             uv0.resize(indices.size());
             auto dst = &uv0[num_indices_old];
-            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces_old}, [dst, this](int, int idx, int ridx) {
+            mu::EnumerateReverseFaceIndices(IArray<int>{counts.cdata(), num_faces_old}, [dst, this](int, int idx, int ridx) {
                 dst[idx] = uv0[ridx];
             });
         }
@@ -918,12 +918,12 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     if (!uv1.empty()) {
         if (uv1.size() == num_points_old) {
             uv1.resize(points.size());
-            mu::CopyWithIndices(&uv1[num_points_old], &uv1[0], copylist);
+            mu::CopyWithIndices(&uv1[num_points_old], uv1.cdata(), copylist);
         }
         else if (uv1.size() == num_indices_old) {
             uv1.resize(indices.size());
             auto dst = &uv1[num_indices_old];
-            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces_old}, [dst, this](int, int idx, int ridx) {
+            mu::EnumerateReverseFaceIndices(IArray<int>{counts.cdata(), num_faces_old}, [dst, this](int, int idx, int ridx) {
                 dst[idx] = uv1[ridx];
             });
         }
@@ -933,12 +933,12 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     if (!colors.empty()) {
         if (colors.size() == num_points_old) {
             colors.resize(points.size());
-            mu::CopyWithIndices(&colors[num_points_old], &colors[0], copylist);
+            mu::CopyWithIndices(&colors[num_points_old], colors.cdata(), copylist);
         }
         else if (colors.size() == num_indices_old) {
             colors.resize(indices.size());
             auto dst = &colors[num_indices_old];
-            mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces_old}, [dst, this](int, int idx, int ridx) {
+            mu::EnumerateReverseFaceIndices(IArray<int>{counts.cdata(), num_faces_old}, [dst, this](int, int idx, int ridx) {
                 dst[idx] = colors[ridx];
             });
         }
@@ -948,7 +948,7 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     if (!velocities.empty()) {
         if (velocities.size() == num_points_old) {
             velocities.resize(points.size());
-            mu::CopyWithIndices(&velocities[num_points_old], &velocities[0], copylist);
+            mu::CopyWithIndices(&velocities[num_points_old], velocities.cdata(), copylist);
             mu::MirrorVectors(&velocities[num_points_old], num_additional_points, plane_n);
         }
     }
@@ -957,14 +957,14 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     if (!material_ids.empty()) {
         size_t n = material_ids.size();
         material_ids.resize(n * 2);
-        memcpy(material_ids.data() + n, material_ids.data(), sizeof(int) * n);
+        memcpy(material_ids.data() + n, material_ids.cdata(), sizeof(int) * n);
     }
 
     // bone weights
     for (auto& bone : bones) {
         auto& weights = bone->weights;
         weights.resize(points.size());
-        mu::CopyWithIndices(&weights[num_points_old], &weights[0], copylist);
+        mu::CopyWithIndices(&weights[num_points_old], weights.cdata(), copylist);
     }
 
     // blendshapes
@@ -973,19 +973,19 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
             auto& f = *fp;
             if (!f.points.empty()) {
                 f.points.resize(points.size());
-                mu::CopyWithIndices(&f.points[num_points_old], &f.points[0], copylist);
+                mu::CopyWithIndices(&f.points[num_points_old], f.points.cdata(), copylist);
                 mu::MirrorVectors(&f.points[num_points_old], num_additional_points, plane_n);
             }
 
             if (f.normals.size() == num_points_old) {
                 f.normals.resize(points.size());
-                mu::CopyWithIndices(&f.normals[num_points_old], &f.normals[0], copylist);
+                mu::CopyWithIndices(&f.normals[num_points_old], f.normals.cdata(), copylist);
                 mu::MirrorVectors(&f.normals[num_points_old], num_additional_points, plane_n);
             }
             else if (f.normals.size() == num_indices_old) {
                 f.normals.resize(indices.size());
                 auto dst = &f.normals[num_indices_old];
-                mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces_old}, [dst, &f, this](int, int idx, int ridx) {
+                mu::EnumerateReverseFaceIndices(IArray<int>{counts.cdata(), num_faces_old}, [dst, &f, this](int, int idx, int ridx) {
                     dst[idx] = f.normals[ridx];
                 });
                 mu::MirrorVectors(&f.normals[num_indices_old], num_additional_indices, plane_n);
@@ -993,13 +993,13 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
 
             if (f.tangents.size() == num_points_old) {
                 f.tangents.resize(points.size());
-                mu::CopyWithIndices(&f.tangents[num_points_old], &f.tangents[0], copylist);
+                mu::CopyWithIndices(&f.tangents[num_points_old], f.tangents.cdata(), copylist);
                 mu::MirrorVectors(&f.tangents[num_points_old], num_additional_points, plane_n);
             }
             else if (f.normals.size() == num_indices_old) {
                 f.tangents.resize(indices.size());
                 auto dst = &f.tangents[num_indices_old];
-                mu::EnumerateReverseFaceIndices(IArray<int>{counts.data(), num_faces_old}, [dst, &f, this](int, int idx, int ridx) {
+                mu::EnumerateReverseFaceIndices(IArray<int>{counts.cdata(), num_faces_old}, [dst, &f, this](int, int idx, int ridx) {
                     dst[idx] = f.tangents[ridx];
                 });
                 mu::MirrorVectors(&f.tangents[num_indices_old], num_additional_indices, plane_n);
@@ -1012,10 +1012,10 @@ void Mesh::applyTransform(const float4x4& m)
 {
     if (mu::near_equal(m, float4x4::identity()))
         return;
-    mu::MulPoints(m, points.data(), points.data(), points.size());
-    mu::MulVectors(m, normals.data(), normals.data(), normals.size());
+    mu::MulPoints(m, points.cdata(), points.data(), points.size());
+    mu::MulVectors(m, normals.cdata(), normals.data(), normals.size());
     mu::Normalize(normals.data(), normals.size());
-    mu::MulVectors(m, velocities.data(), velocities.data(), velocities.size());
+    mu::MulVectors(m, velocities.cdata(), velocities.data(), velocities.size());
 }
 
 void Mesh::setupBoneWeights4()
@@ -1031,10 +1031,11 @@ void Mesh::setupBoneWeights4()
     for (int vi = 0; vi < num_vertices; ++vi) {
         int num_influence = 0;
         for (int bi = 0; bi < num_bones; ++bi) {
-            float w = bones[bi]->weights[vi];
+            const auto& bone = *bones[bi];
+            float w = bone.weights[vi];
             if (w > 0.0f) {
                 tmp[num_influence].index = bi;
-                tmp[num_influence].weight = bones[bi]->weights[vi];
+                tmp[num_influence].weight = bone.weights[vi];
                 ++num_influence;
             }
         }

@@ -170,7 +170,7 @@ msAPI ms::AssetType     msAssetGetType(ms::Asset *self) { return self->getAssetT
 #pragma region FileAsset
 msAPI ms::FileAsset*    msFileAssetCreate() { return ms::FileAsset::create_raw(); }
 msAPI int               msFileAssetGetDataSize(ms::FileAsset *self) { return (int)self->data.size(); }
-msAPI const void*       msFileAssetGetDataPtr(ms::FileAsset *self, int v) { return self->data.data(); }
+msAPI const void*       msFileAssetGetDataPtr(ms::FileAsset *self, int v) { return self->data.cdata(); }
 msAPI bool              msFileAssetReadFromFile(ms::FileAsset *self, const char *v) { return self->readFromFile(v); }
 msAPI bool              msFileAssetWriteToFile(ms::FileAsset *self, const char *v) { return self->writeToFile(v); }
 #pragma endregion
@@ -203,7 +203,7 @@ msAPI int               msTextureGetHeight(ms::Texture *self) { return self->hei
 msAPI void              msTextureSetHeight(ms::Texture *self, int v) { self->height = v; }
 msAPI void              msTextureGetData(ms::Texture *self, void *v) { self->getData(v); }
 msAPI void              msTextureSetData(ms::Texture *self, const void *v) { self->setData(v); }
-msAPI void*             msTextureGetDataPtr(ms::Texture *self) { return self->data.data(); }
+msAPI const void*       msTextureGetDataPtr(ms::Texture *self) { return self->data.cdata(); }
 msAPI int               msTextureGetSizeInByte(ms::Texture *self) { return (int)self->data.size(); }
 msAPI bool              msTextureWriteToFile(ms::Texture *self, const char *path) { return self->writeToFile(path); }
 msAPI bool              msWriteToFile(const char *path, const char *data, int size) { return ms::ByteArrayToFile(path, data, size); }

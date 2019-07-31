@@ -57,13 +57,13 @@ struct read_impl
 
 
 template<class T>
-struct write_impl<RawVector<T>>
+struct write_impl<SharedVector<T>>
 {
-    void operator()(std::ostream& os, const RawVector<T>& v)
+    void operator()(std::ostream& os, const SharedVector<T>& v)
     {
         auto size = (uint32_t)v.size();
         os.write((const char*)&size, 4);
-        os.write((const char*)v.data(), sizeof(T) * size);
+        os.write((const char*)v.cdata(), sizeof(T) * size);
     }
 };
 template<>
@@ -112,9 +112,9 @@ struct write_impl<std::vector<std::shared_ptr<T>>>
 
 
 template<class T>
-struct read_impl<RawVector<T>>
+struct read_impl<SharedVector<T>>
 {
-    void operator()(std::istream& is, RawVector<T>& v)
+    void operator()(std::istream& is, SharedVector<T>& v)
     {
         uint32_t size = 0;
         is.read((char*)&size, 4);
@@ -168,6 +168,16 @@ struct read_impl<std::vector<std::shared_ptr<T>>>
     }
 };
 
+template<class T>
+struct detach_impl
+{
+    void operator()(T& v) {}
+};
+template<class T>
+struct detach_impl<SharedVector<T>>
+{
+    void operator()(SharedVector<T>& v) { v.detach(); }
+};
 
 template<class T>
 struct clear_impl
@@ -175,9 +185,9 @@ struct clear_impl
     void operator()(T& v) { v = {}; }
 };
 template<class T>
-struct clear_impl<RawVector<T>>
+struct clear_impl<SharedVector<T>>
 {
-    void operator()(RawVector<T>& v) {
+    void operator()(SharedVector<T>& v) {
         v.clear();
         v.shrink_to_fit();
     }
@@ -195,9 +205,9 @@ template<class T>
 struct vhash_impl;
 
 template<class T>
-struct vhash_impl<RawVector<T>>
+struct vhash_impl<SharedVector<T>>
 {
-    uint64_t operator()(const RawVector<T>& v)
+    uint64_t operator()(const SharedVector<T>& v)
     {
         uint64_t ret = 0;
         if (sizeof(T) * v.size() >= 8)
@@ -239,9 +249,9 @@ struct csum_impl<std::vector<T>>
     }
 };
 template<class T>
-struct csum_impl<RawVector<T>>
+struct csum_impl<SharedVector<T>>
 {
-    uint64_t operator()(const RawVector<T>& v)
+    uint64_t operator()(const SharedVector<T>& v)
     {
         return mu::SumInt32(v.data(), sizeof(T) * v.size());
     }
@@ -250,6 +260,7 @@ struct csum_impl<RawVector<T>>
 
 template<class T> inline void write(std::ostream& os, const T& v) { return write_impl<T>()(os, v); }
 template<class T> inline void read(std::istream& is, T& v) { return read_impl<T>()(is, v); }
+template<class T> inline void detach(T& v) { return detach_impl<T>()(v); }
 template<class T> inline void vclear(T& v) { return clear_impl<T>()(v); }
 template<class T> inline uint64_t vhash(const T& v) { return vhash_impl<T>()(v); }
 template<class T> inline uint64_t csum(const T& v) { return csum_impl<T>()(v); }

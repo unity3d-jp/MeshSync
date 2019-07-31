@@ -668,7 +668,7 @@ bool PointsData::lerp(const PointsData& s1, const PointsData& s2, float t)
 {
     if (s1.points.size() != s2.points.size() || s1.ids != s2.ids)
         return false;
-#define DoLerp(N) N.resize_discard(s1.N.size()); Lerp(N.data(), s1.N.data(), s2.N.data(), N.size(), t)
+#define DoLerp(N) N.resize_discard(s1.N.size()); Lerp(N.data(), s1.N.cdata(), s2.N.cdata(), N.size(), t)
     DoLerp(points);
     DoLerp(scales);
     DoLerp(colors);
@@ -702,7 +702,7 @@ void PointsData::setupPointsDataFlags()
 void PointsData::getBounds(float3 & center, float3 & extents)
 {
     float3 bmin, bmax;
-    mu::MinMax(points.data(), points.size(), bmin, bmax);
+    mu::MinMax(points.cdata(), points.size(), bmin, bmax);
     center = (bmax + bmin) * 0.5f;
     extents = abs(bmax - bmin);
 }

@@ -36,6 +36,7 @@ public:
     void swap(RawVector<char>& buf);
 
     const RawVector<char>& getBuffer() const;
+    RawVector<char>&& moveBuffer();
     uint64_t getWCount() const;
     uint64_t getRCount() const;
 

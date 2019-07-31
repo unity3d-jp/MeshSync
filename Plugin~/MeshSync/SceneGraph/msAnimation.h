@@ -71,7 +71,7 @@ public:
 
 
     std::string name;
-    RawVector<char> data;
+    SharedVector<char> data;
     DataType data_type = DataType::Unknown;
     DataFlags data_flags = {};
 };
@@ -148,7 +148,8 @@ struct TAnimationCurve
     size_t size() const { return curve->data.size() / sizeof(key_t); }
 
           key_t* data()       { return (key_t*)curve->data.data(); }
-    const key_t* data() const { return (key_t*)curve->data.data(); }
+    const key_t* data() const { return (key_t*)curve->data.cdata(); }
+    const key_t* cdata() const{ return (key_t*)curve->data.cdata(); }
 
     bool empty() const { return size() == 0; }
     void clear() { curve->data.clear(); }
@@ -161,12 +162,16 @@ struct TAnimationCurve
     void pop_back() { curve->data.pop_back(sizeof(key_t)); }
 
           key_t& operator[](size_t i)       { return data()[i]; }
-    const key_t& operator[](size_t i) const { return data()[i]; }
+    const key_t& operator[](size_t i) const { return cdata()[i]; }
 
     key_t* begin() { return data(); }
+    const key_t* begin() const { return cdata(); }
     key_t* end() { return data() + size(); }
-    key_t& front() { return data()[0]; }
-    key_t& back() { return data()[size() - 1]; }
+    const key_t* end() const { return cdata() + size(); }
+          key_t& front()       { return data()[0]; }
+    const key_t& front() const { return cdata()[0]; }
+          key_t& back()        { return data()[size() - 1]; }
+    const key_t& back() const  { return cdata()[size() - 1]; }
 
     AnimationCurve *curve = nullptr;
 };

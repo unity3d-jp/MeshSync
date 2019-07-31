@@ -263,23 +263,23 @@ void GenerateTangentsTriangleSoA_ISPC(float4 *dst,
 #define DefNearEqual(VT)\
 inline bool near_equal(const VT<float>& a, const VT<float>& b, float epsilon = muEpsilon)\
 {\
-    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);\
+    return a.size() == b.size() && NearEqual(a.cdata(), b.cdata(), a.size(), epsilon);\
 }\
 inline bool near_equal(const VT<float2>& a, const VT<float2>& b, float epsilon = muEpsilon)\
 {\
-    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);\
+    return a.size() == b.size() && NearEqual(a.cdata(), b.cdata(), a.size(), epsilon);\
 }\
 inline bool near_equal(const VT<float3>& a, const VT<float3>& b, float epsilon = muEpsilon)\
 {\
-    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);\
+    return a.size() == b.size() && NearEqual(a.cdata(), b.cdata(), a.size(), epsilon);\
 }\
 inline bool near_equal(const VT<float4>& a, const VT<float4>& b, float epsilon = muEpsilon)\
 {\
-    return a.size() == b.size() && NearEqual(a.data(), b.data(), a.size(), epsilon);\
+    return a.size() == b.size() && NearEqual(a.cdata(), b.cdata(), a.size(), epsilon);\
 }\
 inline bool near_equal(const VT<quatf>& a, const VT<quatf>& b, float epsilon = muEpsilon)\
 {\
-    return a.size() == b.size() && NearEqual((const float4*)a.data(), (const float4*)b.data(), a.size(), epsilon);\
+    return a.size() == b.size() && NearEqual((const float4*)a.cdata(), (const float4*)b.cdata(), a.size(), epsilon);\
 }\
 inline bool near_equal(const VT<int>& a, const VT<int>& b, float epsilon = muEpsilon)\
 {\
