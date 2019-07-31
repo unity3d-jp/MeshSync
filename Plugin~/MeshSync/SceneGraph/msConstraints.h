@@ -64,7 +64,7 @@ public:
         float3 position_offset = float3::zero();
         quatf rotation_offset = quatf::identity();
     };
-    RawVector<SourceData> source_data;
+    SharedVector<SourceData> source_data;
 
 protected:
     ParentConstraint();

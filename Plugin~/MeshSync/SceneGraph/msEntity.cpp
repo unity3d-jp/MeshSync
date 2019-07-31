@@ -32,7 +32,6 @@ std::shared_ptr<Entity> Entity::create(std::istream& is)
     }
     if (ret) {
         ret->deserialize(is);
-        ret->resolve();
     }
     return ret;
 }
@@ -65,10 +64,6 @@ void Entity::deserialize(std::istream& is)
     read(is, id);
     read(is, host_id);
     read(is, path);
-}
-
-void Entity::resolve()
-{
 }
 
 bool Entity::isUnchanged() const
@@ -151,7 +146,6 @@ EntityPtr Entity::clone()
 {
     auto ret = create();
     *ret = *this;
-    ret->resolve();
     return ret;
 }
 
@@ -327,7 +321,6 @@ EntityPtr Transform::clone()
 {
     auto ret = create();
     *ret = *this;
-    ret->resolve();
     return ret;
 }
 
@@ -480,7 +473,6 @@ EntityPtr Camera::clone()
 {
     auto ret = create();
     *ret = *this;
-    ret->resolve();
     return ret;
 }
 #undef EachMember
@@ -605,7 +597,6 @@ EntityPtr Light::clone()
 {
     auto ret = create();
     *ret = *this;
-    ret->resolve();
     return ret;
 }
 #undef EachMember
@@ -699,7 +690,7 @@ void PointsData::setupPointsDataFlags()
     pd_flags.has_ids = !ids.empty();
 }
 
-void PointsData::getBounds(float3 & center, float3 & extents)
+void PointsData::getBounds(float3 & center, float3 & extents) const
 {
     float3 bmin, bmax;
     mu::MinMax(points.cdata(), points.size(), bmin, bmax);

@@ -30,7 +30,7 @@ public:
 
     std::string name;
     Type type = Type::Unknown;
-    RawVector<char> data;
+    SharedVector<char> data;
 
 public:
     void serialize(std::ostream& os) const;
@@ -40,6 +40,8 @@ public:
     bool operator!=(const MaterialProperty& v) const;
 
     MaterialProperty();
+    MaterialProperty(MaterialProperty&& v) noexcept; // noexcept to enforce std::vector to use move constructor
+    MaterialProperty& operator=(MaterialProperty&& v);
 
     // T accepts int, float, float{2,3,4, 2x2, 3x3, 4x4} and TexturePtr/TextureRecord
     // note: float{2,3} are converted to float4 and float{2x2,3x3} are converted to float4x4 internally
@@ -75,6 +77,8 @@ public:
 
     MaterialKeyword();
     MaterialKeyword(const char *n, bool v);
+    MaterialKeyword(MaterialKeyword&& v) noexcept; // noexcept to enforce std::vector to use move constructor
+    MaterialKeyword& operator=(MaterialKeyword&& v);
 };
 msSerializable(MaterialKeyword);
 
@@ -111,7 +115,7 @@ public:
     MaterialProperty* findProperty(const char *name);
     const MaterialProperty* getProperty(int i) const;
     const MaterialProperty* findProperty(const char *name) const;
-    void addProperty(MaterialProperty v);
+    void addProperty(MaterialProperty&& v);
     void eraseProperty(const char *name);
 
     int getKeywordCount() const;
@@ -119,7 +123,7 @@ public:
     MaterialKeyword* findKeyword(const char *name);
     const MaterialKeyword* getKeyword(int i) const;
     const MaterialKeyword* findKeyword(const char *name) const;
-    void addKeyword(MaterialKeyword v);
+    void addKeyword(MaterialKeyword&& v);
     void eraseKeyword(const char *name);
 };
 msSerializable(Material);

@@ -1824,7 +1824,7 @@ namespace UTJ.MeshSync
         #region internal
         public IntPtr self;
         [DllImport("MeshSyncServer")] static extern int msSubmeshGetNumIndices(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msSubmeshReadIndices(IntPtr self, IntPtr dst);
+        [DllImport("MeshSyncServer")] static extern void msSubmeshReadIndices(IntPtr self, IntPtr mesh, IntPtr dst);
         [DllImport("MeshSyncServer")] static extern int msSubmeshGetMaterialID(IntPtr self);
         [DllImport("MeshSyncServer")] static extern Topology msSubmeshGetTopology(IntPtr self);
         #endregion
@@ -1841,7 +1841,7 @@ namespace UTJ.MeshSync
         public int numIndices { get { return msSubmeshGetNumIndices(self); } }
         public Topology topology { get { return msSubmeshGetTopology(self); } }
         public int materialID { get { return msSubmeshGetMaterialID(self); } }
-        public void ReadIndices(PinnedList<int> dst) { msSubmeshReadIndices(self, dst); }
+        public void ReadIndices(MeshData mesh, PinnedList<int> dst) { msSubmeshReadIndices(self, mesh.self, dst); }
     }
 
     public struct SplitData
@@ -1851,21 +1851,20 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumPoints(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumIndices(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumBoneWeights(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern Vector3 msSplitGetBoundsCenter(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern Vector3 msSplitGetBoundsSize(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern Bounds msSplitGetBounds(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumSubmeshes(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern SubmeshData msSplitGetSubmesh(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern SubmeshData msSplitGetSubmesh(IntPtr self, IntPtr mesh, int i);
         #endregion
 
         public int numPoints { get { return msSplitGetNumPoints(self); } }
         public int numIndices { get { return msSplitGetNumIndices(self); } }
         public int numBoneWeights { get { return msSplitGetNumBoneWeights(self); } }
-        public Bounds bounds { get { return new Bounds(msSplitGetBoundsCenter(self), msSplitGetBoundsSize(self)); } }
+        public Bounds bounds { get {  return msSplitGetBounds(self); } }
         public int numSubmeshes { get { return msSplitGetNumSubmeshes(self); } }
 
-        public SubmeshData GetSubmesh(int i)
+        public SubmeshData GetSubmesh(MeshData mesh, int i)
         {
-            return msSplitGetSubmesh(self, i);
+            return msSplitGetSubmesh(self, mesh.self, i);
         }
     }
 

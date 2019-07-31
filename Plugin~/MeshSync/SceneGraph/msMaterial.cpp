@@ -18,7 +18,7 @@ void MaterialProperty::deserialize(std::istream& is)
 }
 uint64_t MaterialProperty::checksum() const
 {
-    return mu::SumInt32(data.data(), data.size());
+    return mu::SumInt32(data.cdata(), data.size());
 }
 bool MaterialProperty::operator==(const MaterialProperty& v) const
 {
@@ -34,15 +34,26 @@ bool MaterialProperty::operator!=(const MaterialProperty& v) const
 #undef EachMember
 
 MaterialProperty::MaterialProperty() {}
+MaterialProperty::MaterialProperty(MaterialProperty&& v) noexcept
+{
+    *this = std::move(v);
+}
+MaterialProperty& MaterialProperty::operator=(MaterialProperty&& v)
+{
+    name = std::move(v.name);
+    type = std::move(v.type);
+    data = std::move(v.data);
+    return *this;
+}
 
 template<class T>
-static inline void set_impl(RawVector<char>& dst, const T& v)
+static inline void set_impl(SharedVector<char>& dst, const T& v)
 {
     dst.resize_discard(sizeof(T));
     (T&)dst[0] = v;
 }
 template<class T>
-static inline void set_impl(RawVector<char>& dst, const T *v, size_t n)
+static inline void set_impl(SharedVector<char>& dst, const T *v, size_t n)
 {
     dst.resize_discard(sizeof(T) * n);
     memcpy(dst.data(), v, dst.size());
@@ -176,6 +187,16 @@ MaterialKeyword::MaterialKeyword()
 MaterialKeyword::MaterialKeyword(const char *n, bool v)
     : name(n), value(v)
 {}
+MaterialKeyword::MaterialKeyword(MaterialKeyword&& v) noexcept
+{
+    *this = std::move(v);
+}
+MaterialKeyword& MaterialKeyword::operator=(MaterialKeyword&& v)
+{
+    name = std::move(v.name);
+    value = std::move(v.value);
+    return *this;
+}
 
 
 
@@ -265,12 +286,12 @@ const MaterialProperty* Material::findProperty(const char *n) const
     return const_cast<Material*>(this)->findProperty(n);
 }
 
-void Material::addProperty(MaterialProperty v)
+void Material::addProperty(MaterialProperty&& v)
 {
     if (auto *p = findProperty(v.name.c_str()))
-        *p = v;
+        *p = std::move(v);
     else
-        properties.push_back(v);
+        properties.emplace_back(std::move(v));
 }
 
 void Material::eraseProperty(const char *n)
@@ -301,12 +322,12 @@ const MaterialKeyword* Material::findKeyword(const char *n) const
 {
     return const_cast<Material*>(this)->findKeyword(n);
 }
-void Material::addKeyword(MaterialKeyword v)
+void Material::addKeyword(MaterialKeyword&& v)
 {
     if (auto *p = findKeyword(v.name.c_str()))
-        *p = v;
+        *p = std::move(v);
     else
-        keywords.push_back(v);
+        keywords.emplace_back(std::move(v));
 }
 void Material::eraseKeyword(const char *n)
 {

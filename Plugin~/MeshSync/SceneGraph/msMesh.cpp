@@ -42,37 +42,6 @@ bool MeshRefineSettings::operator!=(const MeshRefineSettings& v) const
 }
 
 
-#define EachMember(F)\
-    F(index_count) F(index_offset) F(topology) F(material_id)
-
-void SubmeshData::serialize(std::ostream& os) const
-{
-    EachMember(msWrite);
-}
-
-void SubmeshData::deserialize(std::istream& is)
-{
-    EachMember(msRead);
-}
-#undef EachMember
-
-
-#define EachMember(F)\
-    F(index_count) F(index_offset) F(vertex_count) F(vertex_offset) F(bone_weight_count) F(bone_weight_offset)\
-    F(submesh_count) F(submesh_offset) F(bound_center) F(bound_size)
-
-void SplitData::serialize(std::ostream& os) const
-{
-    EachMember(msWrite);
-}
-
-void SplitData::deserialize(std::istream& is)
-{
-    EachMember(msRead);
-}
-#undef EachMember
-
-
 std::shared_ptr<BlendShapeFrameData> BlendShapeFrameData::create(std::istream & is)
 {
     auto ret = Pool<BlendShapeFrameData>::instance().pull();
@@ -212,14 +181,6 @@ void Mesh::deserialize(std::istream& is)
     bones.erase(
         std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); }),
         bones.end());
-}
-
-void Mesh::resolve()
-{
-    for (auto& submesh : submeshes)
-        submesh.indices.reset(indices.cdata() + submesh.index_offset, submesh.index_count);
-    for (auto& split : splits)
-        split.submeshes.reset(submeshes.data() + split.submesh_offset, split.submesh_count);
 }
 
 bool Mesh::isUnchanged() const
@@ -429,7 +390,6 @@ EntityPtr Mesh::clone()
 {
     auto ret = create();
     *ret = *this;
-    ret->resolve();
     return ret;
 }
 
@@ -452,8 +412,8 @@ void Mesh::updateBounds()
         float3 bmin, bmax;
         bmin = bmax = float3::zero();
         MinMax(&points[split.vertex_offset], split.vertex_count, bmin, bmax);
-        split.bound_center = (bmax + bmin) * 0.5f;
-        split.bound_size = abs(bmax - bmin);
+        split.bounds.center = (bmax + bmin) * 0.5f;
+        split.bounds.extents = abs(bmax - bmin) * 0.5f;
     }
 }
 
@@ -590,7 +550,6 @@ void Mesh::refine()
             sm.index_offset = src.index_offset;
             sm.topology = (SubmeshData::Topology)src.topology;
             sm.material_id = src.material_id;
-            sm.indices.reset(indices.cdata() + sm.index_offset, sm.index_count);
             submeshes.push_back(sm);
         }
 
@@ -604,7 +563,6 @@ void Mesh::refine()
             sp.vertex_count = src.vertex_count;
             sp.submesh_offset = src.submesh_offset;
             sp.submesh_count = src.submesh_count;
-            sp.submeshes.reset(submeshes.data() + sp.submesh_offset, sp.submesh_count);
             splits.push_back(sp);
         }
 

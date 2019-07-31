@@ -77,10 +77,8 @@ void Scene::merge(Scene& base)
         parallel_for(0, (int)entity_count, 10, [this, &base](int ei) {
             auto& ecur = entities[ei];
             auto& ebase = base.entities[ei];
-            if (ecur->id == ebase->id) {
+            if (ecur->id == ebase->id)
                 ecur->merge(*ebase);
-                ecur->resolve();
-            }
         });
     }
 }

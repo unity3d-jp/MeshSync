@@ -51,11 +51,11 @@ public:
     {
         memset(m_data, 0, sizeof(T)*m_size);
     }
-    void copy_to(pointer dst)
+    void copy_to(pointer dst) const
     {
         memcpy(dst, m_data, sizeof(value_type) * m_size);
     }
-    void copy_to(pointer dst, size_t num_elements)
+    void copy_to(pointer dst, size_t num_elements) const
     {
         memcpy(dst, m_data, sizeof(value_type) * num_elements);
     }

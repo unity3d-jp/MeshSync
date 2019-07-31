@@ -55,7 +55,6 @@ public:
     virtual bool isGeometry() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
-    virtual void resolve(); // called after deserialize / clone / merge
 
     virtual bool isUnchanged() const;
     virtual bool isTopologyUnchanged() const;
@@ -328,7 +327,7 @@ public:
 
     void setupPointsDataFlags();
 
-    void getBounds(float3& center, float3& extents);
+    void getBounds(float3& center, float3& extents) const;
 };
 msSerializable(PointsData);
 msDeclPtr(PointsData);

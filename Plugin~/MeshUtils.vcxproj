@@ -65,8 +65,8 @@
   <ItemGroup>
     <CustomBuild Include="MeshUtils\MeshUtilsCore.ispc">
       <FileType>Document</FileType>
-      <Command Condition="'$(Platform)'=='x64'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse4-i32x4,avx1-i32x8,avx512skx-i32x16 --arch=x86-64 --opt=fast-masked-vload --opt=fast-math --wno-perf</Command>
-      <Command Condition="'$(Platform)'=='Win32'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse4-i32x4,avx1-i32x8,avx512skx-i32x16 --arch=x86 --opt=fast-masked-vload --opt=fast-math --wno-perf</Command>
+      <Command Condition="'$(Platform)'=='x64'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse4-i32x4,avx1-i32x8,avx512skx-i32x16 --arch=x86-64 --opt=fast-math --wno-perf</Command>
+      <Command Condition="'$(Platform)'=='Win32'">External\ispc %(FullPath) -o $(IntDir)%(Filename).obj -h $(IntDir)%(Filename).h --target=sse4-i32x4,avx1-i32x8,avx512skx-i32x16 --arch=x86 --opt=fast-math --wno-perf</Command>
       <Outputs>$(IntDir)%(Filename).obj;$(IntDir)%(Filename)_sse4.obj;$(IntDir)%(Filename)_avx.obj;$(IntDir)%(Filename)_avx512skx.obj</Outputs>
       <AdditionalInputs>$(SolutionDir)MeshUtils\ispcmath.h;$(SolutionDir)MeshUtils\muSIMDConfig.h</AdditionalInputs>
     </CustomBuild>

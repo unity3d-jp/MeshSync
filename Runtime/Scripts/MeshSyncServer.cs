@@ -1584,11 +1584,11 @@ namespace UTJ.MeshSync
                 mesh.subMeshCount = split.numSubmeshes;
                 for (int smi = 0; smi < mesh.subMeshCount; ++smi)
                 {
-                    var submesh = split.GetSubmesh(smi);
+                    var submesh = split.GetSubmesh(data, smi);
                     var topology = submesh.topology;
 
                     m_tmpI.Resize(submesh.numIndices);
-                    submesh.ReadIndices(m_tmpI);
+                    submesh.ReadIndices(data, m_tmpI);
 
                     if (topology == SubmeshData.Topology.Triangles)
                     {

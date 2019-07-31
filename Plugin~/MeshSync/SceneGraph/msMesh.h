@@ -85,6 +85,12 @@ struct MeshRefineSettings
     bool operator!=(const MeshRefineSettings& v) const;
 };
 
+struct Bounds
+{
+    float3 center;
+    float3 extents;
+};
+
 struct SubmeshData
 {
     enum class Topology : int
@@ -95,18 +101,12 @@ struct SubmeshData
         Quads,
     };
 
+    // serializable
     int index_count = 0;
     int index_offset = 0;
     Topology topology = Topology::Triangles;
     int material_id = 0;
-
-    // non-serializable
-    IArray<int> indices;
-
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
 };
-msSerializable(SubmeshData);
 
 struct SplitData
 {
@@ -119,16 +119,8 @@ struct SplitData
     int bone_weight_offset = 0;
     int submesh_count = 0;
     int submesh_offset = 0;
-    float3 bound_center = float3::zero();
-    float3 bound_size = float3::zero();
-
-    // non-serializable
-    IArray<SubmeshData> submeshes;
-
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
+    Bounds bounds{};
 };
-msSerializable(SplitData);
 
 struct BlendShapeFrameData
 {
@@ -215,8 +207,8 @@ public:
     std::vector<BoneDataPtr> bones;
     std::vector<BlendShapeDataPtr> blendshapes;
 
-    std::vector<SubmeshData> submeshes;
-    std::vector<SplitData> splits;
+    SharedVector<SubmeshData> submeshes;
+    SharedVector<SplitData> splits;
 
     // non-serializable
     // *update clear() when add member*
@@ -235,7 +227,6 @@ public:
     bool isGeometry() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
-    void resolve() override;
 
     bool isUnchanged() const override;
     bool isTopologyUnchanged() const override;
