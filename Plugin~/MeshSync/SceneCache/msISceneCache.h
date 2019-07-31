@@ -38,7 +38,11 @@ protected:
 
         float load_time_ms = 0.0f;
         ScenePtr scene;
-        std::shared_future<void> preload;
+        std::future<void> preload;
+
+        SceneRecord();
+        SceneRecord(SceneRecord&& v) noexcept;   // enforce std::vector to use move constructor
+        SceneRecord& operator=(SceneRecord&& v); // 
     };
 
     StreamPtr m_ist;

@@ -5,6 +5,26 @@
 
 namespace ms {
 
+ISceneCacheImpl::SceneRecord::SceneRecord()
+{
+}
+
+ISceneCacheImpl::SceneRecord::SceneRecord(SceneRecord&& v) noexcept
+{
+    *this = std::move(v);
+}
+
+ISceneCacheImpl::SceneRecord& ISceneCacheImpl::SceneRecord::operator=(SceneRecord&& v)
+{
+#define EachMember(F) F(pos) F(size) F(time) F(load_time_ms) F(scene) F(preload)
+#define Move(A) A = std::move(v.A);
+    EachMember(Move);
+#undef Move
+#undef EachMember
+    return *this;
+}
+
+
 ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
 {
     m_ist = ist;
@@ -23,6 +43,7 @@ ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
         return;
     }
 
+    m_records.reserve(512);
     for (;;) {
         // enumerate all scene headers
         CacheFileSceneHeader sh;
@@ -36,7 +57,7 @@ ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
             desc.pos = (uint64_t)m_ist->tellg();
             desc.size = sh.size;
             desc.time = sh.time;
-            m_records.push_back(desc);
+            m_records.emplace_back(std::move(desc));
 
             m_ist->seekg(sh.size, std::ios::cur);
         }

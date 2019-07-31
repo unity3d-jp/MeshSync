@@ -51,7 +51,7 @@ public:
         assign(v.begin(), v.end());
         return *this;
     }
-    RawVector& operator=(RawVector&& v)
+    RawVector& operator=(RawVector&& v) noexcept
     {
         swap(v);
         return *this;
@@ -327,7 +327,7 @@ public:
     {
         operator=(v);
     }
-    SharedVector(SharedVector&& v)
+    SharedVector(SharedVector&& v) noexcept
     {
         swap(v);
     }

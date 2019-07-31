@@ -136,6 +136,7 @@ protected:
 public:
     msDefinePool(BlendShapeFrameData);
     static std::shared_ptr<BlendShapeFrameData> create(std::istream& is);
+    std::shared_ptr<BlendShapeFrameData> clone(bool detach);
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
@@ -156,6 +157,7 @@ protected:
 public:
     msDefinePool(BlendShapeData);
     static std::shared_ptr<BlendShapeData> create(std::istream& is);
+    std::shared_ptr<BlendShapeData> clone(bool detach);
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
@@ -178,6 +180,7 @@ protected:
 public:
     msDefinePool(BoneData);
     static std::shared_ptr<BoneData> create(std::istream& is);
+    std::shared_ptr<BoneData> clone(bool detach);
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
@@ -238,7 +241,7 @@ public:
     void clear() override;
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;
-    EntityPtr clone() override;
+    EntityPtr clone(bool detach = false) override;
 
     void updateBounds();
     void refine();

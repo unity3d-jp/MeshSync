@@ -31,12 +31,12 @@ void SceneSettings::deserialize(std::istream& is)
 #define EachMember(F)\
     F(settings) F(assets) F(entities) F(constraints)
 
-ScenePtr Scene::clone()
+ScenePtr Scene::clone(bool detach)
 {
     auto ret = create();
     *ret = *this;
-    parallel_for(0, (int)entities.size(), 10, [this, &ret](int ei) {
-        ret->entities[ei] = std::static_pointer_cast<Transform>(entities[ei]->clone());
+    parallel_for(0, (int)entities.size(), 10, [this, detach, &ret](int ei) {
+        ret->entities[ei] = std::static_pointer_cast<Transform>(entities[ei]->clone(detach));
     });
     return ret;
 }

@@ -171,7 +171,7 @@ struct read_impl<std::vector<std::shared_ptr<T>>>
 template<class T>
 struct detach_impl
 {
-    void operator()(T& v) {}
+    void operator()(T&) {}
 };
 template<class T>
 struct detach_impl<SharedVector<T>>

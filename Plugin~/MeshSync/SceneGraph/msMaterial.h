@@ -22,6 +22,7 @@ public:
         int has_scale_offset = 0;
         float2 scale = float2::one();
         float2 offset = float2::zero();
+
         TextureRecord(int i)
             : id(i), has_scale_offset(false) {}
         TextureRecord(int i, const float2& s, const float2& o)

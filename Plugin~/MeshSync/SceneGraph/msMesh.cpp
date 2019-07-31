@@ -381,17 +381,22 @@ uint64_t Mesh::checksumGeom() const
     return ret;
 }
 
+EntityPtr Mesh::clone(bool detach_)
+{
+    auto ret = create();
+    *ret = *this;
+    if (detach_) {
+#define Body(A) detach(ret->A);
+        EachMember(Body);
+#undef Body
+    }
+    return ret;
+}
+
 #undef EachTopologyAttribute
 #undef EachVertexAttribute
 #undef EachGeometryAttribute
 #undef EachMember
-
-EntityPtr Mesh::clone()
-{
-    auto ret = create();
-    *ret = *this;
-    return ret;
-}
 
 template<class C1, class C2, class C3>
 static inline void Remap(C1& dst, const C2& src, const C3& indices)

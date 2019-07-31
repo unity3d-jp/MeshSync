@@ -68,7 +68,7 @@ public:
     virtual uint64_t hash() const;
     virtual uint64_t checksumTrans() const;
     virtual uint64_t checksumGeom() const;
-    virtual std::shared_ptr<Entity> clone();
+    virtual std::shared_ptr<Entity> clone(bool detach = false);
 
     Identifier getIdentifier() const;
     bool isRoot() const;
@@ -136,7 +136,7 @@ public:
 
     void clear() override;
     uint64_t checksumTrans() const override;
-    EntityPtr clone() override;
+    EntityPtr clone(bool detach = false) override;
 
     float4x4 toMatrix() const;
     void assignMatrix(const float4x4& v);
@@ -199,7 +199,7 @@ public:
 
     void clear() override;
     uint64_t checksumTrans() const override;
-    EntityPtr clone() override;
+    EntityPtr clone(bool detach = false) override;
 };
 msSerializable(Camera);
 msDeclPtr(Camera);
@@ -271,7 +271,7 @@ public:
 
     void clear() override;
     uint64_t checksumTrans() const override;
-    EntityPtr clone() override;
+    EntityPtr clone(bool detach = false) override;
 };
 msSerializable(Light);
 msDeclPtr(Light);
@@ -357,7 +357,7 @@ public:
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;
     bool lerp(const Entity& src1, const Entity& src2, float t) override;
-    EntityPtr clone() override;
+    EntityPtr clone(bool detach = false) override;
 
     void setupPointsDataFlags();
 };

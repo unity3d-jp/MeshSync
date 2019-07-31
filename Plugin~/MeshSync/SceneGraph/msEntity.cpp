@@ -142,7 +142,7 @@ uint64_t Entity::checksumGeom() const
     return 0;
 }
 
-EntityPtr Entity::clone()
+EntityPtr Entity::clone(bool /*detach*/)
 {
     auto ret = create();
     *ret = *this;
@@ -317,7 +317,7 @@ uint64_t Transform::checksumTrans() const
     return ret;
 }
 
-EntityPtr Transform::clone()
+EntityPtr Transform::clone(bool /*detach*/)
 {
     auto ret = create();
     *ret = *this;
@@ -469,7 +469,7 @@ uint64_t Camera::checksumTrans() const
     return ret;
 }
 
-EntityPtr Camera::clone()
+EntityPtr Camera::clone(bool /*detach*/)
 {
     auto ret = create();
     *ret = *this;
@@ -593,7 +593,7 @@ uint64_t Light::checksumTrans() const
     return ret;
 }
 
-EntityPtr Light::clone()
+EntityPtr Light::clone(bool /*detach*/)
 {
     auto ret = create();
     *ret = *this;
@@ -761,7 +761,7 @@ bool Points::lerp(const Entity& s1_, const Entity& s2_, float t)
     return ret;
 }
 
-EntityPtr Points::clone()
+EntityPtr Points::clone(bool /*detach*/)
 {
     return EntityPtr();
 }
