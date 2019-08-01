@@ -291,43 +291,65 @@ ScenePtr ISceneCacheImpl::getByIndex(size_t i)
 
 ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
 {
-    if (!valid())
+    if (!valid() || time == m_last_time)
         return nullptr;
 
     ScenePtr ret;
 
     const int scene_count = (int)m_records.size();
-    int scene_index = 0;
 
     auto time_range = getTimeRange();
     if (time <= time_range.start) {
-        scene_index = 0;
-        ret = getByIndexImpl(scene_index);
+        int si = 0;
+        if ((!interpolation && m_last_index == si) ||
+            (m_last_index == si && m_last_index2 == si))
+            return nullptr;
+
+        m_last_index = m_last_index2 = si;
+        ret = getByIndexImpl(si);
     }
     else if (time >= time_range.end) {
-        scene_index = scene_count - 1;
-        ret = getByIndexImpl(scene_index);
+        int si =  scene_count - 1;
+        if ((!interpolation && m_last_index == si) ||
+            (m_last_index == si && m_last_index2 == si))
+            return nullptr;
+
+        m_last_index = m_last_index2 = si;
+        ret = getByIndexImpl(si);
     }
     else {
-        int i = timeToIndex(time);
+        int si = timeToIndex(time);
         if (interpolation) {
-            auto t1 = m_records[i + 0].time;
-            auto t2 = m_records[i + 1].time;
-            auto s1 = getByIndexImpl(i + 0);
-            auto s2 = getByIndexImpl(i + 1);
+            auto t1 = m_records[si + 0].time;
+            auto t2 = m_records[si + 1].time;
+            auto s1 = getByIndexImpl(si + 0);
+            auto s2 = getByIndexImpl(si + 1);
 
             float t = (time - t1) / (t2 - t1);
             ret = Scene::create();
             ret->lerp(*s1, *s2, t);
-            scene_index = i + 1;
+
+            m_last_index = si;
+            m_last_index2 = si + 1;
         }
         else {
-            ret = getByIndexImpl(i);
-            scene_index = i;
+            if (si == m_last_index)
+                return nullptr;
+            ret = getByIndexImpl(si);
+
+            m_last_index = m_last_index2 = si;
         }
     }
+    m_last_time = time;
+    return postprocess(ret, m_last_index2);
+}
 
-    return postprocess(ret, scene_index);
+void ISceneCacheImpl::refresh()
+{
+    m_last_index = m_last_index2  = -1;
+    m_last_time = -1.0f;
+    m_last_scene = nullptr;
+    m_last_diff = nullptr;
 }
 
 const AnimationCurvePtr ISceneCacheImpl::getTimeCurve() const

@@ -119,11 +119,13 @@ namespace UTJ.MeshSync
             {
                 m_timePrev = m_time;
                 var scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
-
-                var server = GetComponent<MeshSyncServer>();
-                server.BeforeUpdateScene();
-                server.UpdateScene(scene);
-                server.AfterUpdateScene();
+                if (scene)
+                {
+                    var server = GetComponent<MeshSyncServer>();
+                    server.BeforeUpdateScene();
+                    server.UpdateScene(scene);
+                    server.AfterUpdateScene();
+                }
             }
         }
         #endregion
@@ -139,7 +141,8 @@ namespace UTJ.MeshSync
                 m_openRequested = true;
             }
 
-            m_time = Mathf.Clamp(m_time, m_timeRange.start, m_timeRange.end);
+            if (m_sceneCache)
+                m_time = Mathf.Clamp(m_time, m_timeRange.start, m_timeRange.end);
         }
         #endregion
 

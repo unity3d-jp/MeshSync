@@ -97,6 +97,7 @@ public:
     virtual float getTime(size_t i) const = 0;
     virtual ScenePtr getByIndex(size_t i) = 0;
     virtual ScenePtr getByTime(float t, bool lerp) = 0;
+    virtual void refresh() = 0;
 
     virtual const AnimationCurvePtr getTimeCurve() const = 0;
 };

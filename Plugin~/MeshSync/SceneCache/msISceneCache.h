@@ -18,6 +18,7 @@ public:
     float getTime(size_t i) const override;
     ScenePtr getByIndex(size_t i) override;
     ScenePtr getByTime(float t, bool lerp) override;
+    void refresh() override;
 
     const AnimationCurvePtr getTimeCurve() const override;
 
@@ -56,6 +57,7 @@ protected:
     AnimationCurvePtr m_time_curve;
 
     float m_last_time = -1.0f;
+    int m_last_index = -1, m_last_index2 = -1;
     ScenePtr m_base_scene, m_last_scene, m_last_diff;
     std::deque<size_t> m_history;
 };

@@ -2320,6 +2320,8 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern ConstraintData msSceneGetConstraint(IntPtr self, int i);
         #endregion
 
+        public static implicit operator bool(SceneData v) { return v.self != IntPtr.Zero; }
+
         public string name { get { return Misc.S(msSceneGetName(self)); } }
         public int numAssets { get { return msSceneGetNumAssets(self); } }
         public int numEntities { get { return msSceneGetNumEntities(self); } }
@@ -2345,6 +2347,7 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern float msISceneCacheGetTime(IntPtr self, int i);
         [DllImport("MeshSyncServer")] static extern SceneData msISceneCacheGetSceneByIndex(IntPtr self, int i);
         [DllImport("MeshSyncServer")] static extern SceneData msISceneCacheGetSceneByTime(IntPtr self, float time, bool lerp);
+        [DllImport("MeshSyncServer")] static extern void msISceneCacheRefesh(IntPtr self);
 
         [DllImport("MeshSyncServer")] static extern AnimationCurveData msISceneCacheGetTimeCurve(IntPtr self);
         #endregion
@@ -2380,6 +2383,10 @@ namespace UTJ.MeshSync
         public SceneData GetSceneByTime(float t, bool lerp)
         {
             return msISceneCacheGetSceneByTime(self, t, lerp);
+        }
+        public void Refresh()
+        {
+            msISceneCacheRefesh(self);
         }
 
         public AnimationCurve GetTimeCurve(InterpolationMode im)

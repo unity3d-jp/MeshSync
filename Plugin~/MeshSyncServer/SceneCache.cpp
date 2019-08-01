@@ -77,6 +77,12 @@ msAPI ms::Scene* msISceneCacheGetSceneByTime(ms::ISceneCache *self, float time, 
         return nullptr;
     return self->getByTime(time, lerp).get();
 }
+msAPI void msISceneCacheRefesh(ms::ISceneCache *self)
+{
+    if (!self)
+        return;
+    self->refresh();
+}
 
 msAPI const ms::AnimationCurve* msISceneCacheGetTimeCurve(ms::ISceneCache *self)
 {
