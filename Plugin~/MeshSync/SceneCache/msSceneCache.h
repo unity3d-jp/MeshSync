@@ -29,6 +29,7 @@ struct TimeRange
 
 struct OSceneCacheSettingsBase
 {
+    // serialized in cache file
     SceneCacheEncoding encoding = SceneCacheEncoding::ZSTD;
     SceneCacheEncoderSettings encoder_settings;
     float sample_rate = 30.0f; // 0.0f means 'variable sample rate'
@@ -44,7 +45,11 @@ struct OSceneCacheSettingsBase
     OSceneCacheSettingsBase();
 };
 
-struct OSceneCacheSettings : OSceneCacheSettingsBase, SceneImportSettings {};
+struct OSceneCacheSettings : OSceneCacheSettingsBase, SceneImportSettings
+{
+    // *not* serialized in cache file
+    int max_queue_size = 4;
+};
 
 class OSceneCache
 {
@@ -59,6 +64,8 @@ public:
 
     virtual void flush() = 0;
     virtual bool isWriting() = 0;
+    virtual int getSceneCountWritten() const = 0;
+    virtual int getSceneCountInQueue() const = 0;
 };
 msDeclPtr(OSceneCache);
 
