@@ -344,20 +344,24 @@ static DWORD WINAPI CB_Dummy(LPVOID arg) { return 0; }
 
 bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::string& path)
 {
-    ms::OSceneCacheSettings oscs;
-    oscs.sample_rate = m_settings.animation_sps;
-    oscs.encoder_settings.zstd.compression_level = 100;
-    oscs.flatten_hierarchy = m_settings.sc_flatten_hierarchy;
-    //oscs.apply_refinement = 0;
-    //oscs.strip_normals = 1;
-    oscs.strip_tangents = 1;
-    if (!m_cache_writer.open(path.c_str(), oscs))
-        return false;
-
     auto settings_old = m_settings;
     m_settings.export_scene_cache = true;
     m_settings.bake_modifiers = true;
     m_settings.use_render_meshes = true;
+    m_settings.flatten_hierarchy = true;
+
+    ms::OSceneCacheSettings oscs;
+    oscs.sample_rate = m_settings.animation_sps;
+    oscs.encoder_settings.zstd.compression_level = 100;
+    oscs.flatten_hierarchy = m_settings.flatten_hierarchy;
+    //oscs.apply_refinement = 0;
+    //oscs.strip_normals = 1;
+    oscs.strip_tangents = 1;
+    if (!m_cache_writer.open(path.c_str(), oscs)) {
+        m_settings = settings_old;
+        return false;
+    }
+
 
     m_material_manager.setAlwaysMarkDirty(true);
     m_entity_manager.setAlwaysMarkDirty(true);
@@ -748,16 +752,20 @@ mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
 void msmaxContext::extractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
     auto mat = getGlobalMatrix(n, t);
-
-    // handle parents
-    if (auto parent = n->GetParentNode()) {
-        auto pmat = getGlobalMatrix(parent, t);
-        mat *= mu::invert(pmat);
+    if (m_settings.bake_modifiers && m_settings.flatten_hierarchy) {
+        // don't care parent in this case
+    }
+    else {
+        // handle parent
+        if (auto parent = n->GetParentNode())
+            mat *= mu::invert(getGlobalMatrix(parent, t));
     }
 
     pos = mu::extract_position(mat);
     rot = mu::extract_rotation(mat);
     scale = mu::extract_scale(mat);
+    if (mu::near_equal(scale, mu::float3::one()))
+        scale = mu::float3::one();
     vis = (n->IsHidden() || !IsVisibleInHierarchy(n, t)) ? false : true;
 
     {
@@ -772,12 +780,7 @@ void msmaxContext::extractTransform(INode *n, TimeValue t, mu::float3& pos, mu::
 void msmaxContext::extractTransform(TreeNode& n)
 {
     auto& dst = *n.dst;
-    auto t = GetTime();
-    extractTransform(n.node, t, dst.position, dst.rotation, dst.scale, dst.visible);
-
-    if (m_settings.bake_modifiers && m_settings.sc_flatten_hierarchy) {
-        n.dst->assignMatrix(getGlobalMatrix(n.node, t));
-    }
+    extractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
 }
 
 void msmaxContext::extractCameraData(GenCamera *cam, TimeValue t,

@@ -1515,7 +1515,11 @@ namespace UTJ.MeshSync
                 if (data.dataFlags.topologyUnchanged)
                     keepIndices = true;
                 else
+                {
                     mesh.Clear();
+                    // Mesh.Clear() seems don't clear bindposes
+                    mesh.bindposes = null;
+                }
             }
 
             var dataFlags = data.dataFlags;

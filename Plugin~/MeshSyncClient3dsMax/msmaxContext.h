@@ -34,6 +34,7 @@ struct msmaxSettings
     bool sync_lights = true;
     bool sync_textures = true;
     bool ignore_non_renderable = true;
+    bool flatten_hierarchy = false;
 
     float animation_time_scale = 1.0f;
     float animation_sps = 3.0f;
@@ -46,7 +47,6 @@ struct msmaxSettings
 
     // scene cache export settings
     bool export_scene_cache = false;
-    bool sc_flatten_hierarchy = true;
     bool sc_merge_meshes = false;
     msmaxMaterialScope sc_material_scope = msmaxMaterialScope::OneFrame;
 };
