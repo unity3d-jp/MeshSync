@@ -95,6 +95,11 @@ msmaxSettings& msmaxContext::getSettings()
     return m_settings;
 }
 
+msmaxCacheExportSettings& msmaxContext::getCacheSettings()
+{
+    return m_cache_settings;
+}
+
 void msmaxContext::onStartup()
 {
     GetCOREInterface()->RegisterViewportDisplayCallback(TRUE, &msmaxViewportDisplayCallback::getInstance());
@@ -252,13 +257,25 @@ bool msmaxContext::sendObjects(SendScope scope, bool dirty_all)
 
     int num_exported = 0;
     auto nodes = getNodes(scope);
-    for (auto& n : nodes) {
-        if (exportObject(n->node, true))
-            ++num_exported;
+    auto export_objects = [&]() {
+        for (auto& n : nodes) {
+            if (exportObject(n->node, true))
+                ++num_exported;
+        }
+    };
+
+    if (m_settings.use_render_meshes) {
+        for (auto& n : nodes)
+            m_render_scope.addNode(n->node);
+        m_render_scope.prepare(GetTime());
+        m_render_scope.scope(export_objects);
+    }
+    else {
+        export_objects();
     }
 
     if (num_exported > 0)
-        kickAsyncSend();
+        kickAsyncExport();
 
     // cleanup intermediate data
     m_material_records.clear();
@@ -277,7 +294,7 @@ bool msmaxContext::sendMaterials(bool dirty_all)
     exportMaterials();
 
     // send
-    kickAsyncSend();
+    kickAsyncExport();
 
     // cleanup intermediate data
     m_material_records.clear();
@@ -335,7 +352,7 @@ bool msmaxContext::sendAnimations(SendScope scope)
     }
 
     if (!m_animations.empty())
-        kickAsyncSend();
+        kickAsyncExport();
     return true;
 }
 
@@ -346,17 +363,17 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
 {
     auto settings_old = m_settings;
     m_settings.export_scene_cache = true;
-    m_settings.bake_modifiers = true;
-    m_settings.use_render_meshes = true;
-    m_settings.flatten_hierarchy = true;
+    m_settings.bake_modifiers = m_cache_settings.bake_modifiers;
+    m_settings.use_render_meshes = m_cache_settings.use_render_meshes;
+    m_settings.flatten_hierarchy = m_cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
-    oscs.sample_rate = m_settings.animation_sps;
-    oscs.encoder_settings.zstd.compression_level = 100;
+    oscs.sample_rate = m_cache_settings.sample_rate > 0.0f ? m_cache_settings.sample_rate : (float)::GetFrameRate();
+    oscs.encoder_settings.zstd.compression_level = m_cache_settings.zstd_compression_level;
     oscs.flatten_hierarchy = m_settings.flatten_hierarchy;
-    //oscs.apply_refinement = 0;
-    //oscs.strip_normals = 1;
-    oscs.strip_tangents = 1;
+    oscs.strip_normals = m_cache_settings.strip_normals;
+    oscs.strip_tangents = m_cache_settings.strip_tangents;
+
     if (!m_cache_writer.open(path.c_str(), oscs)) {
         m_settings = settings_old;
         return false;
@@ -367,22 +384,25 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
     m_entity_manager.setAlwaysMarkDirty(true);
     m_texture_manager.clearDirtyFlags();
 
-    bool export_materials = m_settings.sc_material_scope != msmaxMaterialScope::None;
+    int scene_index = 0;
+    auto material_scope = m_cache_settings.material_scope;
     auto nodes = getNodes(scope);
 
     auto do_export = [&]() {
-        if (export_materials) {
+        if (scene_index == 0) {
+            // exportMaterials() is needed to export material IDs in meshes
             exportMaterials();
-            if (m_settings.sc_material_scope != msmaxMaterialScope::AllFrames)
+            if (material_scope == msmaxMaterialScope::None)
                 m_material_manager.clearDirtyFlags();
         }
+        else {
+            if (material_scope == msmaxMaterialScope::AllFrames)
+                exportMaterials();
+        }
 
-        int num_exported = 0;
         auto export_objects = [&]() {
-            for (auto& n : nodes) {
-                if (exportObject(n->node, true))
-                    ++num_exported;
-            }
+            for (auto& n : nodes)
+                exportObject(n->node, true);
         };
 
         if (m_settings.use_render_meshes) {
@@ -394,10 +414,9 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
         else {
             export_objects();
         }
-        kickAsyncSend();
+        kickAsyncExport();
 
-        // cleanup intermediate data
-        m_material_records.clear();
+        ++scene_index;
     };
 
     auto *ifs = GetCOREInterface();
@@ -407,7 +426,7 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
         auto time_range = ifs->GetAnimRange();
         auto time_start = time_range.Start();
         auto time_end = time_range.End();
-        auto interval = ToTicks(1.0f / std::max(m_settings.animation_sps, 0.01f));
+        auto interval = ToTicks(1.0f / std::max(m_cache_settings.sample_rate, 0.01f));
         for (TimeValue t = time_start;;) {
             m_current_time_tick = t;
             m_anim_time = ToSeconds(t - time_start);
@@ -435,6 +454,9 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
         m_anim_time = 0.0f;
         do_export();
     }
+
+    // cleanup intermediate data
+    m_material_records.clear();
 
     m_settings = settings_old;
     m_cache_writer.close();
@@ -521,7 +543,7 @@ std::vector<msmaxContext::TreeNode*> msmaxContext::getNodes(SendScope scope)
     return ret;
 }
 
-void msmaxContext::kickAsyncSend()
+void msmaxContext::kickAsyncExport()
 {
     for (auto& t : m_async_tasks)
         t.wait();

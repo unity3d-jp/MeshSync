@@ -45,10 +45,22 @@ struct msmaxSettings
     // it seems can cause problems when exporting objects with EvalWorldState()...
     bool multithreaded = false;
 
-    // scene cache export settings
     bool export_scene_cache = false;
-    bool sc_merge_meshes = false;
-    msmaxMaterialScope sc_material_scope = msmaxMaterialScope::OneFrame;
+};
+
+struct msmaxCacheExportSettings
+{
+    int zstd_compression_level = 22; // (min) 0 - 22 (max)
+    float sample_rate = 0.0f; // 0 is treated as scene frame rate
+
+    msmaxMaterialScope material_scope = msmaxMaterialScope::OneFrame;
+    bool bake_modifiers = true;
+    bool use_render_meshes = true;
+    bool flatten_hierarchy = true;
+    bool merge_meshes = false;
+
+    bool strip_normals = false;
+    bool strip_tangents = true;
 };
 
 class msmaxContext : mu::noncopyable
@@ -74,6 +86,7 @@ public:
     msmaxContext();
     ~msmaxContext();
     msmaxSettings& getSettings();
+    msmaxCacheExportSettings& getCacheSettings();
 
     void onStartup();
     void onShutdown();
@@ -154,7 +167,7 @@ private:
     TreeNode& getNodeRecord(INode *n);
     std::vector<TreeNode*> getNodes(SendScope scope);
 
-    void kickAsyncSend();
+    void kickAsyncExport();
 
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     void exportMaterials();
@@ -187,6 +200,7 @@ private:
 
 private:
     msmaxSettings m_settings;
+    msmaxCacheExportSettings m_cache_settings;
     ISceneEventManager::CallbackKey m_cbkey = 0;
 
     std::map<INode*, TreeNode> m_node_records;
@@ -219,5 +233,6 @@ private:
 
 #define msmaxGetContext() msmaxContext::getInstance()
 #define msmaxGetSettings() msmaxGetContext().getSettings()
+#define msmaxGetCacheSettings() msmaxGetContext().getCacheSettings()
 bool msmaxSendScene(msmaxContext::SendTarget target, msmaxContext::SendScope scope);
 bool msmaxExportCache(msmaxContext::SendScope scope, bool all_frames);

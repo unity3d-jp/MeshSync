@@ -33,6 +33,7 @@
 #define IDC_CHECK_KEEPFLATCURVES        1028
 #define IDC_CHECK_IGNORE_NON_RENDERABLE 1029
 #define IDC_GROUP_CACHE                 1030
+#define IDC_CHECK_USE_RENDER_MESHES     1031
 
 // Next default values for new objects
 // 

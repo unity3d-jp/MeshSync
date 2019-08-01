@@ -213,7 +213,7 @@ AsyncSceneCacheWriter::AsyncSceneCacheWriter()
 
 AsyncSceneCacheWriter::~AsyncSceneCacheWriter()
 {
-    wait();
+    close();
 }
 
 bool AsyncSceneCacheWriter::open(const char *path, const OSceneCacheSettings& oscs)
@@ -254,6 +254,11 @@ void AsyncSceneCacheWriter::kick()
     if (!valid())
         return;
 
+    write();
+}
+
+void AsyncSceneCacheWriter::write()
+{
     if (on_prepare)
         on_prepare();
 

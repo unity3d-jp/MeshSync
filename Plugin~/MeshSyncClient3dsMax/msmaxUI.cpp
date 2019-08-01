@@ -351,6 +351,25 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
         case IDC_CHECK_BAKE_MODIFIERS:
             handle_button([&]() {
                 s.bake_modifiers = CtrlIsChecked(IDC_CHECK_BAKE_MODIFIERS);
+                if (!s.bake_modifiers && CtrlIsChecked(IDC_CHECK_USE_RENDER_MESHES)) {
+                    s.use_render_meshes = false;
+                    CtrlSetCheck(IDC_CHECK_USE_RENDER_MESHES, false);
+                }
+                notify_scene_update();
+            });
+            break;
+        case IDC_CHECK_USE_RENDER_MESHES:
+            handle_button([&]() {
+                if (CtrlIsChecked(IDC_CHECK_USE_RENDER_MESHES)) {
+                    if (!s.bake_modifiers) {
+                        s.bake_modifiers = true;
+                        CtrlSetCheck(IDC_CHECK_BAKE_MODIFIERS, true);
+                    }
+                    s.use_render_meshes = true;
+                }
+                else {
+                    s.use_render_meshes = false;
+                }
                 notify_scene_update();
             });
             break;
@@ -485,10 +504,11 @@ void msmaxContext::updateUIText()
     CtrlSetText(IDC_EDIT_PORT, (int)s.client_settings.port);
 
     CtrlSetText(IDC_EDIT_SCALE_FACTOR,      s.scale_factor);
-    CtrlSetCheck(IDC_CHECK_MESHES,          s.sync_meshes);
-    CtrlSetCheck(IDC_CHECK_MAKE_DOUBLE_SIDED,    s.make_double_sided);
-    CtrlSetCheck(IDC_CHECK_IGNORE_NON_RENDERABLE, s.ignore_non_renderable);
-    CtrlSetCheck(IDC_CHECK_BAKE_MODIFIERS,   s.bake_modifiers);
+    CtrlSetCheck(IDC_CHECK_MESHES,                  s.sync_meshes);
+    CtrlSetCheck(IDC_CHECK_MAKE_DOUBLE_SIDED,       s.make_double_sided);
+    CtrlSetCheck(IDC_CHECK_IGNORE_NON_RENDERABLE,   s.ignore_non_renderable);
+    CtrlSetCheck(IDC_CHECK_BAKE_MODIFIERS,          s.bake_modifiers);
+    CtrlSetCheck(IDC_CHECK_USE_RENDER_MESHES,       s.use_render_meshes);
     CtrlSetCheck(IDC_CHECK_BLENDSHAPES,     s.sync_blendshapes);
     CtrlSetCheck(IDC_CHECK_BONES,           s.sync_bones);
     CtrlSetCheck(IDC_CHECK_TEXTURES,        s.sync_textures);
