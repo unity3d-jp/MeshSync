@@ -32,8 +32,7 @@ static void Send(ms::ScenePtr scene)
         client.send(mes);
     }
     {
-        ms::SetMessage mes;
-        mes.scene = *scene;
+        ms::SetMessage mes(scene);
         client.send(mes);
     }
     {

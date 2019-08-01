@@ -9,42 +9,6 @@ using namespace mu;
 static int g_async_scene_handle_seed;
 static std::map<int, std::future<bool>> g_async_scene_sends;
 
-// returns handle that is to be passed to msSendSceneWait()
-// note: scene will be passed to worker thread. so caller must keep it until msSendSceneWait().
-msAPI int msSendSceneAsync(const char *addr, int port, ms::Scene *scene)
-{
-    if (!addr || !scene)
-        return 0;
-
-    ms::ClientSettings settings{ addr, (uint16_t)port };
-    auto body = [settings, scene]() {
-        ms::Client client(settings);
-        {
-            ms::FenceMessage mes;
-            mes.type = ms::FenceMessage::FenceType::SceneBegin;
-            if (!client.send(mes))
-                return false;
-        }
-        {
-            ms::SetMessage mes;
-            mes.scene = *scene;
-            if (!client.send(mes))
-                return false;
-        }
-        {
-            ms::FenceMessage mes;
-            mes.type = ms::FenceMessage::FenceType::SceneEnd;
-            if (!client.send(mes))
-                return false;
-        }
-        return true;
-    };
-
-    int handle = ++g_async_scene_handle_seed;
-    g_async_scene_sends[handle] = std::async(std::launch::async, body);
-    return handle;
-}
-
 msAPI bool msSendSceneWait(int handle)
 {
     // 0 is invalid handle

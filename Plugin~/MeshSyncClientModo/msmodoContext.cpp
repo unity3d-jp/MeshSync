@@ -716,7 +716,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
         // normals
         if (m_settings.sync_normals) {
-            auto do_extract_map = [&](const char *name, RawVector<mu::float3>& dst_array) {
+            auto do_extract_map = [&](const char *name, auto& dst_array) {
                 if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_NORMAL, name)))
                     return;
 
@@ -740,7 +740,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
                 }
             };
 
-            auto do_extract_poly = [&](RawVector<mu::float3>& dst_array) {
+            auto do_extract_poly = [&](auto& dst_array) {
                 dst_array.resize_discard(num_indices);
                 auto *write_ptr = dst_array.data();
 
@@ -770,7 +770,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
         // uv
         if (m_settings.sync_uvs) {
-            auto do_extract = [&](const char *name, RawVector<mu::float2>& dst_array) {
+            auto do_extract = [&](const char *name, auto& dst_array) {
                 if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_TEXTUREUV, name)))
                     return;
 
@@ -803,7 +803,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
         // vertex color
         if (m_settings.sync_colors) {
-            auto do_extract = [&](const char *name, RawVector<mu::float4>& dst_array) {
+            auto do_extract = [&](const char *name, auto& dst_array) {
                 if (LXx_FAIL(mmap.SelectByName(LXi_VMAP_RGBA, name)))
                     return;
 
@@ -834,7 +834,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
         // bone weights
         if (!m_settings.bake_deformers && m_settings.sync_bones) {
-            auto get_weights = [&](const char *name, RawVector<float>& dst_array) -> bool {
+            auto get_weights = [&](const char *name, auto& dst_array) -> bool {
                 if (!name || LXx_FAIL(mmap.SelectByName(LXi_VMAP_WEIGHT, name)))
                     return false;
 
@@ -882,7 +882,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
 
         // morph
         if (!m_settings.bake_deformers && m_settings.sync_blendshapes) {
-            auto get_delta = [&](const char *name, RawVector<mu::float3>& dst_array) -> bool {
+            auto get_delta = [&](const char *name, auto& dst_array) -> bool {
                 if (!name || LXx_FAIL(mmap.SelectByName(LXi_VMAP_MORPH, name)))
                     return false;
 

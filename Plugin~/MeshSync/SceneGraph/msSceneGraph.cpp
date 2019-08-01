@@ -31,6 +31,21 @@ void SceneSettings::deserialize(std::istream& is)
 #define EachMember(F)\
     F(settings) F(assets) F(entities) F(constraints)
 
+Scene::Scene()
+{
+}
+
+Scene::~Scene()
+{
+}
+
+ScenePtr Scene::create(std::istream& is)
+{
+    auto ret = create();
+    ret->deserialize(is);
+    return ret;
+}
+
 ScenePtr Scene::clone(bool detach)
 {
     auto ret = create();

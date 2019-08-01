@@ -78,10 +78,11 @@ class SetMessage : public Message
 {
 using super = Message;
 public:
-    Scene scene;
+    ScenePtr scene;
 
 public:
     SetMessage();
+    explicit SetMessage(ScenePtr scene);
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };

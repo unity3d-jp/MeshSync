@@ -115,8 +115,8 @@ void AsyncSceneSender::send()
     if (!assets.empty()) {
         ms::SetMessage mes;
         setup_message(mes);
-        mes.scene.settings = scene_settings;
-        mes.scene.assets = assets;
+        mes.scene->settings = scene_settings;
+        mes.scene->assets = assets;
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
             goto cleanup;
@@ -127,8 +127,8 @@ void AsyncSceneSender::send()
         for (auto& tex : textures) {
             ms::SetMessage mes;
             setup_message(mes);
-            mes.scene.settings = scene_settings;
-            mes.scene.assets = { tex };
+            mes.scene->settings = scene_settings;
+            mes.scene->assets = { tex };
             succeeded = succeeded && client.send(mes);
             if (!succeeded)
                 goto cleanup;
@@ -139,9 +139,9 @@ void AsyncSceneSender::send()
     if (!materials.empty() || !transforms.empty()) {
         ms::SetMessage mes;
         setup_message(mes);
-        mes.scene.settings = scene_settings;
-        append(mes.scene.assets, materials);
-        mes.scene.entities = transforms;
+        mes.scene->settings = scene_settings;
+        append(mes.scene->assets, materials);
+        mes.scene->entities = transforms;
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
             goto cleanup;
@@ -152,8 +152,8 @@ void AsyncSceneSender::send()
         for (auto& geom : geometries) {
             ms::SetMessage mes;
             setup_message(mes);
-            mes.scene.settings = scene_settings;
-            mes.scene.entities = { geom };
+            mes.scene->settings = scene_settings;
+            mes.scene->entities = { geom };
             succeeded = succeeded && client.send(mes);
             if (!succeeded)
                 goto cleanup;
@@ -164,8 +164,8 @@ void AsyncSceneSender::send()
     if (!animations.empty()) {
         ms::SetMessage mes;
         setup_message(mes);
-        mes.scene.settings = scene_settings;
-        append(mes.scene.assets, animations);
+        mes.scene->settings = scene_settings;
+        append(mes.scene->assets, animations);
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
             goto cleanup;

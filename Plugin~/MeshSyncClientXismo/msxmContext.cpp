@@ -118,7 +118,7 @@ void BufferRecord::buildMeshDataBody(const msxmSettings& settings)
     auto& mesh = *dst_mesh;
     auto vertices = vertices_tmp.data();
     if (settings.weld_vertices) {
-        Weld(vertices, num_indices, vertices_welded, mesh.indices);
+        Weld(vertices, num_indices, vertices_welded, mesh.indices.as_raw());
 
         int num_vertices = (int)vertices_welded.size();
         mesh.points.resize_discard(num_vertices);

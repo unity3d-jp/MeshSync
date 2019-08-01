@@ -153,7 +153,7 @@ msAPI int msGetGetBakeCloth(ms::GetMessage *self)
 
 msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *self)
 {
-    return &self->scene;
+    return self->scene.get();
 }
 #pragma endregion
 

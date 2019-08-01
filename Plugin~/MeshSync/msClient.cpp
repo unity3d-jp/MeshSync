@@ -80,8 +80,7 @@ ScenePtr Client::send(const GetMessage& mes)
             HTTPResponse response;
             auto& is = session.receiveResponse(response);
             try {
-                ret.reset(new Scene());
-                ret->deserialize(is);
+                ret = Scene::create(is);
             }
             catch (const std::exception&) {
                 ret.reset();

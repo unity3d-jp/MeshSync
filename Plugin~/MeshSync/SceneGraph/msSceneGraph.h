@@ -69,8 +69,12 @@ public:
     // non-serializable
     std::list<RawVector<char>> scene_buffers;
 
+protected:
+    Scene();
+    ~Scene();
 public:
     msDefinePool(Scene);
+    static std::shared_ptr<Scene> create(std::istream& is);
 
     std::shared_ptr<Scene> clone(bool detach = false);
     void serialize(std::ostream& os) const;
