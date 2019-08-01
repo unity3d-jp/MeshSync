@@ -251,21 +251,10 @@ bool msmaxContext::sendObjects(SendScope scope, bool dirty_all)
         exportMaterials();
 
     int num_exported = 0;
-    if (scope == SendScope::All) {
-        for (auto& kvp : m_node_records) {
-            kvp.second.dirty_trans = kvp.second.dirty_geom = true;
-            if (exportObject(kvp.first, true))
-                ++num_exported;
-        }
-    }
-    else if (scope == SendScope::Updated) {
-        for (auto& kvp : m_node_records) {
-            auto& rec = kvp.second;
-            if (rec.dirty_trans || rec.dirty_geom) {
-                if (exportObject(kvp.first, true))
-                    ++num_exported;
-            }
-        }
+    auto nodes = getNodes(scope);
+    for (auto& n : nodes) {
+        if (exportObject(n->node, true))
+            ++num_exported;
     }
 
     if (num_exported > 0)
@@ -308,14 +297,10 @@ bool msmaxContext::sendAnimations(SendScope scope)
 
     // gather target data
     int num_exported = 0;
-    if (scope == SendScope::All) {
-        EnumerateAllNode([&](INode *n) {
-            if (exportAnimations(n, false))
-                ++num_exported;
-        });
-    }
-    else {
-        // todo:
+    auto nodes = getNodes(scope);
+    for (auto n : nodes) {
+        if (exportAnimations(n->node, false))
+            ++num_exported;
     }
 
     // advance frame and record animation
@@ -354,6 +339,7 @@ bool msmaxContext::sendAnimations(SendScope scope)
     return true;
 }
 
+
 static DWORD WINAPI CB_Dummy(LPVOID arg) { return 0; }
 
 bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::string& path)
@@ -371,12 +357,15 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
     auto settings_old = m_settings;
     m_settings.export_scene_cache = true;
     m_settings.bake_modifiers = true;
+    m_settings.use_render_meshes = true;
 
     m_material_manager.setAlwaysMarkDirty(true);
     m_entity_manager.setAlwaysMarkDirty(true);
     m_texture_manager.clearDirtyFlags();
 
     bool export_materials = m_settings.sc_material_scope != msmaxMaterialScope::None;
+    auto nodes = getNodes(scope);
+
     auto do_export = [&]() {
         if (export_materials) {
             exportMaterials();
@@ -385,15 +374,21 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
         }
 
         int num_exported = 0;
-        if (scope == SendScope::All) {
-            for (auto& kvp : m_node_records) {
-                kvp.second.dirty_trans = kvp.second.dirty_geom = true;
-                if (exportObject(kvp.first, true))
+        auto export_objects = [&]() {
+            for (auto& n : nodes) {
+                if (exportObject(n->node, true))
                     ++num_exported;
             }
+        };
+
+        if (m_settings.use_render_meshes) {
+            for (auto& n : nodes)
+                m_render_scope.addNode(n->node);
+            m_render_scope.prepare(GetTime());
+            m_render_scope.scope(export_objects);
         }
-        else if (scope == SendScope::Selected) {
-            // todo
+        else {
+            export_objects();
         }
         kickAsyncSend();
 
@@ -495,14 +490,45 @@ msmaxContext::TreeNode & msmaxContext::getNodeRecord(INode *n)
     return rec;
 }
 
+std::vector<msmaxContext::TreeNode*> msmaxContext::getNodes(SendScope scope)
+{
+    std::vector<TreeNode*> ret;
+    ret.reserve(m_node_records.size());
+
+    switch (scope)
+    {
+    case SendScope::All:
+        for (auto& kvp : m_node_records)
+            ret.push_back(&kvp.second);
+        break;
+    case SendScope::Updated:
+        for (auto& kvp : m_node_records) {
+            if (kvp.second.dirty_trans || kvp.second.dirty_geom)
+                ret.push_back(&kvp.second);
+        }
+        break;
+    case SendScope::Selected:
+        for (auto& kvp : m_node_records) {
+            if (kvp.second.node->Selected())
+                ret.push_back(&kvp.second);
+        }
+        break;
+    }
+    return ret;
+}
+
 void msmaxContext::kickAsyncSend()
 {
     for (auto& t : m_async_tasks)
         t.wait();
     m_async_tasks.clear();
 
-    for (auto *t : m_tmp_meshes)
+    for (auto *t : m_tmp_triobj)
         t->DeleteMe();
+    m_tmp_triobj.clear();
+
+    for (auto *t : m_tmp_meshes)
+        t->DeleteThis();
     m_tmp_meshes.clear();
 
     for (auto& kvp : m_node_records)
@@ -1016,12 +1042,28 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
             GetFinalMesh(inode, needs_delete) :
             GetSourceMesh(inode, needs_delete);
         if (tri) {
-            mesh = &tri->GetMesh();
-            mesh->checkNormals(TRUE);
             if (needs_delete)
-                m_tmp_meshes.push_back(tri);
+                m_tmp_triobj.push_back(tri);
+
+            if (m_settings.use_render_meshes) {
+                // get render mesh
+                // todo: support multiple meshes
+                BOOL del;
+                NullView view;
+                mesh = tri->GetRenderMesh(GetTime(), inode, view, del);
+                if (del)
+                    m_tmp_meshes.push_back(mesh);
+            }
+            else {
+                // get viewport mesh
+                mesh = &tri->GetMesh();
+            }
+            if (mesh)
+                mesh->checkNormals(TRUE);
         }
     }
+    if (!mesh)
+        return ret;
 
     auto task = [this, ret, inode, mesh]() {
         doExtractMeshData(*ret, inode, mesh);

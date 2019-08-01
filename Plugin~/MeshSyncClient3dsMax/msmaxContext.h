@@ -2,6 +2,7 @@
 
 #include "MeshSync/MeshSync.h"
 #include "MeshSync/MeshSyncUtils.h"
+#include "msmaxUtils.h"
 
 #define msmaxAPI extern "C" __declspec(dllexport)
 
@@ -26,6 +27,7 @@ struct msmaxSettings
     bool flip_faces = true;
     bool make_double_sided = false;
     bool bake_modifiers = false;
+    bool use_render_meshes = false;
     bool sync_bones = true;
     bool sync_blendshapes = true;
     bool sync_cameras = true;
@@ -150,6 +152,7 @@ private:
 
     void updateRecords();
     TreeNode& getNodeRecord(INode *n);
+    std::vector<TreeNode*> getNodes(SendScope scope);
 
     void kickAsyncSend();
 
@@ -189,7 +192,9 @@ private:
     std::map<INode*, TreeNode> m_node_records;
     std::map<Mtl*, MaterialRecord> m_material_records;
     std::vector<std::future<void>> m_async_tasks;
-    std::vector<TriObject*> m_tmp_meshes;
+    std::vector<TriObject*> m_tmp_triobj;
+    std::vector<Mesh*> m_tmp_meshes;
+    RenderScope m_render_scope;
 
     int m_index_seed = 0;
     bool m_dirty = true;

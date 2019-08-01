@@ -198,3 +198,57 @@ TriObject* GetFinalMesh(INode *n, bool& needs_delete)
     }
     return nullptr;
 }
+
+
+int RenderScope::RenderBeginProc::proc(ReferenceMaker* rm)
+{
+    rm->RenderBegin(time);
+    return REF_ENUM_CONTINUE;
+}
+
+int RenderScope::RenderEndProc::proc(ReferenceMaker* rm)
+{
+    rm->RenderEnd(time);
+    return REF_ENUM_CONTINUE;
+}
+
+void RenderScope::prepare(TimeValue t)
+{
+    m_beginp.time = t;
+    m_endp.time = t;
+}
+
+void RenderScope::addNode(INode *n)
+{
+    m_nodes.push_back(n);
+}
+
+void RenderScope::begin()
+{
+    m_beginp.BeginEnumeration();
+    for (auto n : m_nodes)
+        n->EnumRefHierarchy(m_beginp);
+    m_beginp.EndEnumeration();
+}
+
+void RenderScope::end()
+{
+    m_endp.BeginEnumeration();
+    for (auto n : m_nodes)
+        n->EnumRefHierarchy(m_endp);
+    m_endp.EndEnumeration();
+
+    m_nodes.clear();
+}
+
+
+NullView::NullView()
+{
+    worldToView.IdentityMatrix();
+    screenW = 640.0f; screenH = 480.0f;
+}
+
+Point2 NullView::ViewToScreen(Point3 p)
+{
+    return Point2(p.x, p.y);
+}

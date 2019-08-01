@@ -130,6 +130,7 @@ void Scene::clear()
     assets.clear();
     entities.clear();
     constraints.clear();
+    scene_buffers.clear();
 }
 
 uint64_t Scene::hash() const

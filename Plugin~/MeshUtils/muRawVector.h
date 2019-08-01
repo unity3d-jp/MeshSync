@@ -611,7 +611,7 @@ public:
 
     bool operator == (const SharedVector& other) const
     {
-        return m_size == other.m_size && memcmp(m_data, other.m_data, sizeof(T)*m_size) == 0;
+        return m_size == other.m_size && (m_data == other.m_data || memcmp(m_data, other.m_data, sizeof(T)*m_size) == 0);
     }
 
     bool operator != (const SharedVector& other) const

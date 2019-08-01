@@ -32,6 +32,53 @@ TriObject* GetSourceMesh(INode *n, bool& needs_delete);
 TriObject* GetFinalMesh(INode *n, bool& needs_delete);
 
 
+class RenderScope
+{
+public:
+    void prepare(TimeValue t);
+    void addNode(INode *n);
+
+    void begin();
+    void end();
+
+    template<class Body>
+    void scope(const Body& body)
+    {
+        begin();
+        body();
+        end();
+    }
+
+private:
+    class RenderBeginProc : public RefEnumProc
+    {
+    public:
+        int proc(ReferenceMaker* rm) override;
+
+        TimeValue time = 0;
+    };
+
+    class RenderEndProc : public RefEnumProc
+    {
+    public:
+        int proc(ReferenceMaker* rm) override;
+
+        TimeValue time = 0;
+    };
+
+    std::vector<INode*> m_nodes;
+    RenderBeginProc m_beginp;
+    RenderEndProc m_endp;
+};
+
+class NullView : public View
+{
+public:
+    NullView();
+    Point2 ViewToScreen(Point3 p) override;
+};
+
+
 inline mu::float2 to_float2(const Point3& v)
 {
     return { v.x, v.y };
