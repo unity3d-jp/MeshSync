@@ -6,7 +6,30 @@
 
 #define msmaxAPI extern "C" __declspec(dllexport)
 
-enum class msmaxMaterialScope
+enum class msmaxExportTarget : int
+{
+    Objects,
+    Materials,
+    Animations,
+    Everything,
+};
+
+enum class msmaxObjectScope : int
+{
+    None,
+    All,
+    Updated,
+    Selected,
+};
+
+enum class msmaxFrameRange : int
+{
+    None,
+    CurrentFrame,
+    AllFrames,
+};
+
+enum class msmaxMaterialFrameRange : int
 {
     None,
     OneFrame,
@@ -50,10 +73,14 @@ struct msmaxSettings
 
 struct msmaxCacheExportSettings
 {
+    std::string path;
+    msmaxObjectScope object_scope = msmaxObjectScope::All;
+    msmaxFrameRange frame_range = msmaxFrameRange::CurrentFrame;
+    msmaxMaterialFrameRange material_frame_range = msmaxMaterialFrameRange::OneFrame;
+
     int zstd_compression_level = 22; // (min) 0 - 22 (max)
     float sample_rate = 0.0f; // 0 is treated as scene frame rate
 
-    msmaxMaterialScope material_scope = msmaxMaterialScope::OneFrame;
     bool bake_modifiers = true;
     bool use_render_meshes = true;
     bool flatten_hierarchy = true;
@@ -66,21 +93,6 @@ struct msmaxCacheExportSettings
 class msmaxContext : mu::noncopyable
 {
 public:
-    enum class SendTarget : int
-    {
-        Objects,
-        Materials,
-        Animations,
-        Everything,
-    };
-    enum class SendScope : int
-    {
-        None,
-        All,
-        Updated,
-        Selected,
-    };
-
     static msmaxContext& getInstance();
 
     msmaxContext();
@@ -107,10 +119,11 @@ public:
 
     void wait();
     void update();
-    bool sendObjects(SendScope scope, bool dirty_all);
+    bool sendObjects(msmaxObjectScope scope, bool dirty_all);
     bool sendMaterials(bool dirty_all);
-    bool sendAnimations(SendScope scope);
-    bool writeCache(SendScope scope, bool all_frames, const std::string& path);
+    bool sendAnimations(msmaxObjectScope scope);
+    bool exportCache(msmaxObjectScope scope, bool all_frames, const std::string& path);
+    bool exportCache(const msmaxCacheExportSettings& cache_settings);
 
     bool recvScene();
 
@@ -164,7 +177,7 @@ private:
 
     void updateRecords();
     TreeNode& getNodeRecord(INode *n);
-    std::vector<TreeNode*> getNodes(SendScope scope);
+    std::vector<TreeNode*> getNodes(msmaxObjectScope scope);
 
     void kickAsyncExport();
 
@@ -212,7 +225,7 @@ private:
     int m_index_seed = 0;
     bool m_dirty = true;
     bool m_scene_updated = true;
-    SendScope m_pending_request = SendScope::None;
+    msmaxObjectScope m_pending_request = msmaxObjectScope::None;
 
     std::map<INode*, AnimationRecord> m_anim_records;
     TimeValue m_current_time_tick;
@@ -233,5 +246,6 @@ private:
 #define msmaxGetContext() msmaxContext::getInstance()
 #define msmaxGetSettings() msmaxGetContext().getSettings()
 #define msmaxGetCacheSettings() msmaxGetContext().getCacheSettings()
-bool msmaxSendScene(msmaxContext::SendTarget target, msmaxContext::SendScope scope);
-bool msmaxExportCache(msmaxContext::SendScope scope, bool all_frames);
+bool msmaxSendScene(msmaxExportTarget target, msmaxObjectScope scope);
+bool msmaxExportCache(msmaxObjectScope scope, bool all_frames);
+bool msmaxExportCache(const msmaxCacheExportSettings& cache_settings);

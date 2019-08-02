@@ -41,7 +41,7 @@ public:
     }
 };
 
-class msmaxAction_ExportScene : public ActionItem
+class msmaxAction_SendScene : public ActionItem
 {
 public:
     int GetId() override { return msmaxActionID_ExportScene; }
@@ -56,11 +56,11 @@ public:
 
     BOOL ExecuteAction() override
     {
-        return msmaxSendScene(msmaxContext::SendTarget::Objects, msmaxContext::SendScope::All);
+        return msmaxSendScene(msmaxExportTarget::Objects, msmaxObjectScope::All);
     }
 };
 
-class msmaxAction_ExportAnimations : public ActionItem
+class msmaxAction_SendAnimations : public ActionItem
 {
 public:
     int GetId() override { return msmaxActionID_ExportAnimations; }
@@ -75,7 +75,7 @@ public:
 
     BOOL ExecuteAction() override
     {
-        return msmaxSendScene(msmaxContext::SendTarget::Animations, msmaxContext::SendScope::All);
+        return msmaxSendScene(msmaxExportTarget::Animations, msmaxObjectScope::All);
     }
 };
 
@@ -114,8 +114,8 @@ void msmaxContext::registerMenu()
     {
         auto *table = new ActionTable(kTableActions, kTableContext, TSTR(msmaxTitle));
         table->AppendOperation(new msmaxAction_Window());
-        table->AppendOperation(new msmaxAction_ExportScene());
-        table->AppendOperation(new msmaxAction_ExportAnimations());
+        table->AppendOperation(new msmaxAction_SendScene());
+        table->AppendOperation(new msmaxAction_SendAnimations());
         table->AppendOperation(new msmaxAction_Import());
         action_manager->RegisterActionTable(table);
         action_manager->ActivateActionTable(&g_msmaxActionCallback, kTableActions);
@@ -454,17 +454,17 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             });
             break;
         case IDC_BUTTON_MANUAL_SYNC:
-            handle_button([&]() { msmaxSendScene(msmaxContext::SendTarget::Objects, msmaxContext::SendScope::All); });
+            handle_button([&]() { msmaxSendScene(msmaxExportTarget::Objects, msmaxObjectScope::All); });
             break;
         case IDC_BUTTON_SYNC_ANIMATIONS:
-            handle_button([&]() { msmaxSendScene(msmaxContext::SendTarget::Animations, msmaxContext::SendScope::All); });
+            handle_button([&]() { msmaxSendScene(msmaxExportTarget::Animations, msmaxObjectScope::All); });
             break;
 
         case IDC_BUTTON_EXPORT_CACHE:
-            handle_button([&]() { msmaxExportCache(msmaxContext::SendScope::All, false); });
+            handle_button([&]() { msmaxExportCache(msmaxObjectScope::All, false); });
             break;
         case IDC_BUTTON_EXPORT_CACHE_ALL:
-            handle_button([&]() { msmaxExportCache(msmaxContext::SendScope::All, true); });
+            handle_button([&]() { msmaxExportCache(msmaxObjectScope::All, true); });
             break;
         default: break;
         }
