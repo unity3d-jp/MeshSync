@@ -771,16 +771,31 @@ static inline mu::float4x4 CorrectCameraMatrix(mu::float4x4 v)
 
 mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
 {
+    auto obj = n->GetObjectRef();
+    bool needs_camera_correction = IsCamera(obj) || IsLight(obj);
+
     if (m_settings.bake_modifiers) {
         auto m = n->GetObjTMAfterWSM(t);
         if (m.IsIdentity())
             m = n->GetObjTMBeforeWSM(t);
-        auto mat = to_float4x4(m);
         // cancel scale
-        return mu::transform(extract_position(mat), extract_rotation(mat), mu::float3::one());
+        m.NoScale();
+
+        if (needs_camera_correction) {
+            // rotation part of camera/light matrix after applied modifiers seems inverted... cancel it.
+            auto im = ::Inverse(m);
+            im.SetTrans(m.GetTrans());
+            auto rmat = to_float4x4(im);
+            // note: CorrectCameraMatrix(to_float4x4(im)) return wrong result. possibly there are some problems in extract_rotation().
+            return CorrectCameraMatrix(mu::transform(extract_position(rmat), extract_rotation(rmat), mu::float3::one()));
+        }
+        else {
+            return to_float4x4(m);
+        }
     }
     else {
-        return to_float4x4(n->GetNodeTM(t));
+        auto ret = to_float4x4(n->GetNodeTM(t));
+        return needs_camera_correction ? CorrectCameraMatrix(ret) : ret;
     }
 }
 
@@ -794,10 +809,6 @@ void msmaxContext::extractTransform(TreeNode& n, TimeValue t, mu::float3& pos, m
         // handle parent
         if (auto parent = n.node->GetParentNode())
             mat *= mu::invert(getGlobalMatrix(parent, t));
-    }
-
-    if (IsCamera(n.baseobj) || IsLight(n.baseobj)) {
-        mat = CorrectCameraMatrix(mat);
     }
 
     pos = mu::extract_position(mat);
