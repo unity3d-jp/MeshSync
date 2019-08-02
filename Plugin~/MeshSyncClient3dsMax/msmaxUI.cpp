@@ -6,13 +6,15 @@
 #define msmaxTitle L"UnityMeshSync"
 
 #define msmaxMenuTitle_Window           L"Window"
-#define msmaxMenuTitle_ExportScene      L"Export Scene"
-#define msmaxMenuTitle_ExportAnimations L"Export Animations"
+#define msmaxMenuTitle_Cache            L"Export Cache"
+#define msmaxMenuTitle_ExportScene      L"Send Scene"
+#define msmaxMenuTitle_ExportAnimations L"Send Animations"
 #define msmaxMenuTitle_Import           L"Import"
 #define msmaxActionID_Window            1
-#define msmaxActionID_ExportScene       2
-#define msmaxActionID_ExportAnimations  3
-#define msmaxActionID_Import            4
+#define msmaxActionID_Cache             2
+#define msmaxActionID_ExportScene       3
+#define msmaxActionID_ExportAnimations  4
+#define msmaxActionID_Import            5
 
 static const ActionTableId      kTableActions = 0xec29063a;
 static const ActionContextId    kTableContext = 0xec29063b;
@@ -26,17 +28,40 @@ public:
     void GetMenuText(MSTR& menuText) override       { menuText = MSTR(msmaxMenuTitle_Window); }
     void GetDescriptionText(MSTR& descText) override{ descText = MSTR(msmaxMenuTitle_Window); }
     void GetCategoryText(MSTR& catText) override    { catText = MSTR(msmaxTitle); }
-    BOOL IsChecked() override       { return msmaxGetContext().isWindowOpened(); }
+    BOOL IsChecked() override       { return msmaxGetContext().isSettingWindowOpened(); }
     BOOL IsItemVisible() override   { return TRUE; }
     BOOL IsEnabled() override       { return TRUE; }
     void DeleteThis() override      { delete this; }
 
     BOOL ExecuteAction() override
     {
-        if(msmaxGetContext().isWindowOpened())
-            msmaxGetContext().closeWindow();
+        if(msmaxGetContext().isSettingWindowOpened())
+            msmaxGetContext().closeSettingWindow();
         else
-            msmaxGetContext().openWindow();
+            msmaxGetContext().openSettingWindow();
+        return TRUE;
+    }
+};
+
+class msmaxAction_Cache : public ActionItem
+{
+public:
+    int GetId() override { return msmaxActionID_Cache; }
+    void GetButtonText(MSTR& buttonText) override { buttonText = MSTR(msmaxMenuTitle_Cache); }
+    void GetMenuText(MSTR& menuText) override { menuText = MSTR(msmaxMenuTitle_Cache); }
+    void GetDescriptionText(MSTR& descText) override { descText = MSTR(msmaxMenuTitle_Cache); }
+    void GetCategoryText(MSTR& catText) override { catText = MSTR(msmaxTitle); }
+    BOOL IsChecked() override { return msmaxGetContext().isCacheWindowOpened(); }
+    BOOL IsItemVisible() override { return TRUE; }
+    BOOL IsEnabled() override { return TRUE; }
+    void DeleteThis() override { delete this; }
+
+    BOOL ExecuteAction() override
+    {
+        if (msmaxGetContext().isCacheWindowOpened())
+            msmaxGetContext().closeCacheWindow();
+        else
+            msmaxGetContext().openCacheWindow();
         return TRUE;
     }
 };
@@ -114,6 +139,7 @@ void msmaxContext::registerMenu()
     {
         auto *table = new ActionTable(kTableActions, kTableContext, TSTR(msmaxTitle));
         table->AppendOperation(new msmaxAction_Window());
+        table->AppendOperation(new msmaxAction_Cache());
         table->AppendOperation(new msmaxAction_SendScene());
         table->AppendOperation(new msmaxAction_SendAnimations());
         table->AppendOperation(new msmaxAction_Import());
@@ -152,6 +178,11 @@ void msmaxContext::registerMenu()
     }
     {
         auto item = GetIMenuItem();
+        item->SetActionItem(table->GetAction(msmaxActionID_Cache));
+        menu->AddItem(item);
+    }
+    {
+        auto item = GetIMenuItem();
         item->SetActionItem(table->GetAction(msmaxActionID_ExportScene));
         menu->AddItem(item);
     }
@@ -176,27 +207,30 @@ void msmaxContext::unregisterMenu()
 
 extern HINSTANCE g_msmax_hinstance;
 HWND g_msmax_settings_window;
+HWND g_msmax_cache_window;
+
+HWND g_msmax_current_window;
 
 static bool CtrlIsChecked(int cid)
 {
-    return IsDlgButtonChecked(g_msmax_settings_window, cid);
+    return IsDlgButtonChecked(g_msmax_current_window, cid);
 };
 static void CtrlSetCheck(int cid, bool v)
 {
-    CheckDlgButton(g_msmax_settings_window, cid, v);
+    CheckDlgButton(g_msmax_current_window, cid, v);
 };
 
 static int CtrlGetInt(int cid, int default_value, bool sign = true)
 {
     BOOL valid;
-    int v = GetDlgItemInt(g_msmax_settings_window, cid, &valid, sign);
+    int v = GetDlgItemInt(g_msmax_current_window, cid, &valid, sign);
     return valid ? v : default_value;
 };
 
 static float CtrlGetFloat(int cid, float default_value)
 {
     BOOL valid;
-    float v = GetDlgItemFloat(g_msmax_settings_window, cid, &valid);
+    float v = GetDlgItemFloat(g_msmax_current_window, cid, &valid);
     return valid ? v : default_value;
 };
 
@@ -204,25 +238,30 @@ static float CtrlGetFloat(int cid, float default_value)
 static std::string CtrlGetText(int cid)
 {
     wchar_t buf[256];
-    GetDlgItemText(g_msmax_settings_window, IDC_EDIT_SERVER, buf, _countof(buf));
+    GetDlgItemText(g_msmax_current_window, IDC_EDIT_SERVER, buf, _countof(buf));
     return mu::ToMBS(buf);
 }
 static void CtrlSetText(int cid, const std::string& v)
 {
-    SetDlgItemText(g_msmax_settings_window, cid, mu::ToWCS(v).c_str());
+    SetDlgItemTextA(g_msmax_current_window, cid, v.c_str());
 }
 static void CtrlSetText(int cid, int v)
 {
     wchar_t buf[256];
     swprintf(buf, L"%d", v);
-    SetDlgItemText(g_msmax_settings_window, cid, buf);
+    SetDlgItemText(g_msmax_current_window, cid, buf);
 
 }
 static void CtrlSetText(int cid, float v)
 {
     wchar_t buf[256];
     swprintf(buf, L"%.3f", v);
-    SetDlgItemText(g_msmax_settings_window, cid, buf);
+    SetDlgItemText(g_msmax_current_window, cid, buf);
+}
+static void CtrlAddString(int cid, const std::string& v)
+{
+    SendDlgItemMessageA(g_msmax_current_window, cid, CB_ADDSTRING, 0, (LPARAM)v.c_str());
+   
 }
 
 static void PositionWindowNearCursor(HWND hwnd)
@@ -251,6 +290,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
 
     auto& ctx = msmaxGetContext();
     auto& s = msmaxGetSettings();
+    g_msmax_current_window = hDlg;
 
     INT_PTR ret = FALSE;
     switch (msg) {
@@ -259,7 +299,8 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
         g_msmax_settings_window = hDlg;
         GetCOREInterface()->RegisterDlgWnd(g_msmax_settings_window);
         PositionWindowNearCursor(hDlg);
-        ctx.updateUIText();
+        ctx.updateSettingControls();
+        ShowWindow(hDlg, SW_SHOW);
         break;
 
     case WM_CLOSE:
@@ -477,7 +518,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
     return ret;
 }
 
-void msmaxContext::openWindow()
+void msmaxContext::openSettingWindow()
 {
     if (!g_msmax_settings_window) {
         CreateDialogParam(g_msmax_hinstance, MAKEINTRESOURCE(IDD_SETTINGS_WINDOW),
@@ -485,19 +526,19 @@ void msmaxContext::openWindow()
     }
 }
 
-void msmaxContext::closeWindow()
+void msmaxContext::closeSettingWindow()
 {
     if (g_msmax_settings_window) {
         PostMessage(g_msmax_settings_window, WM_CLOSE, 0, 0);
     }
 }
 
-bool msmaxContext::isWindowOpened() const
+bool msmaxContext::isSettingWindowOpened() const
 {
     return g_msmax_settings_window != nullptr;
 }
 
-void msmaxContext::updateUIText()
+void msmaxContext::updateSettingControls()
 {
     auto& s = m_settings;
     CtrlSetText(IDC_EDIT_SERVER, s.client_settings.server);
@@ -521,4 +562,113 @@ void msmaxContext::updateUIText()
     CtrlSetCheck(IDC_CHECK_KFREDUCTION,        s.keyframe_reduction);
 
     CtrlSetText(IDC_TXT_VERSION, "Plugin Version: " msPluginVersionStr);
+}
+
+
+
+static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    auto& ctx = msmaxGetContext();
+    auto& s = msmaxGetCacheSettings();
+    g_msmax_current_window = hDlg;
+
+    INT_PTR ret = FALSE;
+    switch (msg) {
+    case WM_INITDIALOG:
+        ret = TRUE;
+        g_msmax_cache_window = hDlg;
+
+        // init combo boxes
+        CtrlAddString(IDC_OBJECT_SCOPE, "All");
+        CtrlAddString(IDC_OBJECT_SCOPE, "Selected");
+
+        GetCOREInterface()->RegisterDlgWnd(g_msmax_cache_window);
+        PositionWindowNearCursor(hDlg);
+        ctx.updateCacheControls();
+
+        ShowWindow(hDlg, SW_SHOW);
+        break;
+
+    case WM_CLOSE:
+        DestroyWindow(hDlg);
+        break;
+
+    case WM_DESTROY:
+        GetCOREInterface()->UnRegisterDlgWnd(g_msmax_cache_window);
+        g_msmax_cache_window = nullptr;
+        break;
+
+    case WM_COMMAND:
+    {
+        int code = HIWORD(wParam);
+        int cid = LOWORD(wParam);
+
+        auto handle_edit = [&](const std::function<void()>& body) {
+            switch (code) {
+            case EN_SETFOCUS:
+                DisableAccelerators();
+                ret = TRUE;
+                break;
+            case EN_KILLFOCUS:
+                EnableAccelerators();
+                ret = TRUE;
+                break;
+            case EN_CHANGE:
+                ret = TRUE;
+                body();
+                break;
+            }
+        };
+
+        auto handle_button = [&](const std::function<void()>& body) {
+            switch (code) {
+            case BN_CLICKED:
+                body();
+                ret = TRUE;
+                break;
+            }
+        };
+
+        auto notify_scene_update = []() {
+            auto& ctx = msmaxGetContext();
+            ctx.addDeferredCall([&ctx]() {
+                ctx.onSceneUpdated();
+                ctx.update();
+            });
+        };
+
+        switch (cid) {
+        default: break;
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+    return ret;
+}
+
+void msmaxContext::openCacheWindow()
+{
+    if (!g_msmax_cache_window) {
+        CreateDialogParam(g_msmax_hinstance, MAKEINTRESOURCE(IDD_CACHE_WINDOW),
+            GetCOREInterface()->GetMAXHWnd(), msmaxCacheWindowCB, (LPARAM)this);
+    }
+}
+
+void msmaxContext::closeCacheWindow()
+{
+    if (g_msmax_cache_window) {
+        PostMessage(g_msmax_cache_window, WM_CLOSE, 0, 0);
+    }
+}
+
+bool msmaxContext::isCacheWindowOpened() const
+{
+    return g_msmax_cache_window != nullptr;
+}
+
+void msmaxContext::updateCacheControls()
+{
 }

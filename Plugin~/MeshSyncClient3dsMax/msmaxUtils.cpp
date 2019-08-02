@@ -39,6 +39,16 @@ std::string GetPath(INode *n)
     return mu::ToMBS(GetPathW(n));
 }
 
+std::string GetCurrentMaxFileName()
+{
+    MSTR filename = GetCOREInterface()->GetCurFileName();
+    auto len = filename.Length();
+    if (len == 0)
+        return "Untitled";
+    else
+        return mu::GetFilename_NoExtension(filename.data());
+}
+
 bool IsRenderable(INode *n)
 {
     if (!n)

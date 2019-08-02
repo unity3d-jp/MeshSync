@@ -1518,25 +1518,7 @@ bool msmaxExportCache(msmaxObjectScope scope, bool all_frames)
 {
     auto *ifs = GetCOREInterface8();
 
-    MSTR filename = ifs->GetCurFileName();
-    {
-        auto len = filename.Length();
-        if (len == 0) {
-            filename = L"Untitles.sc";
-        }
-        else {
-            // replace extention (.max -> .sc)
-            int ext_pos = 0;
-            for (int i = 0; i < len; ++i) {
-                ext_pos = i;
-                if (filename[i] == L'.')
-                    break;
-            }
-            filename.Resize(ext_pos);
-            filename += L".sc";
-        }
-    }
-
+    MSTR filename = mu::ToWCS(GetCurrentMaxFileName() + ".sc").c_str();
     MSTR dir = L"";
 
     int filter_index = 0;

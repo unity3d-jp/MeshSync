@@ -2,7 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by msmaxUI.rc
 //
-#define IDD_DIALOGBAR                   103
+#define IDD_CACHE_WINDOW                102
 #define IDD_SETTINGS_WINDOW             103
 #define IDC_EDIT_SERVER                 1001
 #define IDC_EDIT_PORT                   1002
@@ -34,14 +34,21 @@
 #define IDC_CHECK_IGNORE_NON_RENDERABLE 1029
 #define IDC_GROUP_CACHE                 1030
 #define IDC_CHECK_USE_RENDER_MESHES     1031
+#define IDC_FLATTEN_HIERARCHY           1032
+#define IDC_USE_RENDER_MESHES           1033
+#define IDC_STRIP_NORMALS               1034
+#define IDC_STRIP_TANGENTS              1035
+#define IDC_OBJECT_SCOPE                1036
+#define IDC_ZSTD_COMPRESSION_LEVEL      1040
+#define IDC_BAKE_MODIFIERS              1041
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        102
+#define _APS_NEXT_RESOURCE_VALUE        106
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1031
+#define _APS_NEXT_CONTROL_VALUE         1042
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

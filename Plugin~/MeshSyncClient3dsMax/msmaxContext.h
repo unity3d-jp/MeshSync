@@ -135,10 +135,15 @@ public:
     void registerMenu();
     void unregisterMenu();
 
-    void openWindow();
-    void closeWindow();
-    bool isWindowOpened() const;
-    void updateUIText();
+    void openSettingWindow();
+    void closeSettingWindow();
+    bool isSettingWindowOpened() const;
+    void updateSettingControls();
+
+    void openCacheWindow();
+    void closeCacheWindow();
+    bool isCacheWindowOpened() const;
+    void updateCacheControls();
 
 private:
     struct TreeNode : public mu::noncopyable

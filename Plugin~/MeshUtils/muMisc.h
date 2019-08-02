@@ -24,7 +24,9 @@ std::wstring ToWCS(const std::string& src);
 std::string SanitizeNodeName(const std::string& src);
 std::string SanitizeFileName(const std::string& src);
 std::string GetFilename(const char *src);
-std::string GetFilename_NoExtension(const char * src);
+std::string GetFilename(const wchar_t *src);
+std::string GetFilename_NoExtension(const char *src);
+std::string GetFilename_NoExtension(const wchar_t *src);
 
 
 void AddDLLSearchPath(const char *v);

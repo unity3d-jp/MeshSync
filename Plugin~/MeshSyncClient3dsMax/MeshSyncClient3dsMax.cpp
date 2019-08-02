@@ -53,10 +53,10 @@ def_struct_primitive(ExportCache, UnityMeshSync, "ExportCache");
 Value* Window_cf(Value** arg_list, int count)
 {
     if (count >= 1 && wcscmp(arg_list[0]->to_string(), L"close") == 0) {
-        msmaxGetContext().closeWindow();
+        msmaxGetContext().closeSettingWindow();
     }
     else {
-        msmaxGetContext().openWindow();
+        msmaxGetContext().openSettingWindow();
     }
     return &ok;
 }
@@ -188,6 +188,7 @@ Value* Import_cf(Value** arg_list, int count)
     return &ok;
 }
 
+// e.g. UnityMeshSync.ExportCache path:"C:\tmp\hoge.sc"
 Value* ExportCache_cf(Value** arg_list, int count)
 {
     msmaxCacheExportSettings settings;
@@ -206,6 +207,13 @@ Value* ExportCache_cf(Value** arg_list, int count)
                 else if (value == L"selected")
                     settings.object_scope = msmaxObjectScope::Selected;
             }
+            else if (name == L"frame_range") {
+                std::wstring value = arg_list[i++]->to_string();
+                if (value == L"current")
+                    settings.frame_range = msmaxFrameRange::CurrentFrame;
+                else if (value == L"all")
+                    settings.frame_range = msmaxFrameRange::AllFrames;
+            }
             else if (name == L"material_frame_range") {
                 std::wstring value = arg_list[i++]->to_string();
                 if (value == L"none")
@@ -216,13 +224,13 @@ Value* ExportCache_cf(Value** arg_list, int count)
                     settings.material_frame_range = msmaxMaterialFrameRange::AllFrames;
             }
             else if (name == L"zstd_compression_level") settings.zstd_compression_level = arg_list[i++]->to_int();
-            else if (name == L"sample_rate") settings.sample_rate = arg_list[i++]->to_float();
-            else if (name == L"bake_modifiers") settings.bake_modifiers = arg_list[i++]->to_bool();
-            else if (name == L"use_render_meshes") settings.use_render_meshes = arg_list[i++]->to_bool();
-            else if (name == L"flatten_hierarchy") settings.flatten_hierarchy = arg_list[i++]->to_bool();
-            else if (name == L"merge_meshes") settings.merge_meshes = arg_list[i++]->to_bool();
-            else if (name == L"strip_normals") settings.strip_normals = arg_list[i++]->to_bool();
-            else if (name == L"strip_tangents") settings.strip_tangents = arg_list[i++]->to_bool();
+            else if (name == L"sample_rate")            settings.sample_rate = arg_list[i++]->to_float();
+            else if (name == L"bake_modifiers")         settings.bake_modifiers = arg_list[i++]->to_bool();
+            else if (name == L"use_render_meshes")      settings.use_render_meshes = arg_list[i++]->to_bool();
+            else if (name == L"flatten_hierarchy")      settings.flatten_hierarchy = arg_list[i++]->to_bool();
+            else if (name == L"merge_meshes")           settings.merge_meshes = arg_list[i++]->to_bool();
+            else if (name == L"strip_normals")          settings.strip_normals = arg_list[i++]->to_bool();
+            else if (name == L"strip_tangents")         settings.strip_tangents = arg_list[i++]->to_bool();
         }
     }
     msmaxGetContext().exportCache(settings);

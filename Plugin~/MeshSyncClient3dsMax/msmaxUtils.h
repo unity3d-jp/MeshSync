@@ -10,6 +10,9 @@ std::wstring GetNameW(INode *n);
 std::string  GetName(INode *n);
 std::wstring GetPathW(INode *n);
 std::string  GetPath(INode *n);
+// get currently opened filename. '.max' is excluded. 'Untitled' if no file is opened.
+std::string GetCurrentMaxFileName();
+
 bool IsRenderable(INode *n);
 bool IsVisibleInHierarchy(INode *n, TimeValue t);
 bool IsInWorldSpace(INode *n, TimeValue t);

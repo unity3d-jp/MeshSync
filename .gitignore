@@ -17,6 +17,8 @@
 *.zip
 *.mll
 *.unitypackage
+*.sc
+*.sc.meta
 
 .vs/
 _out/
