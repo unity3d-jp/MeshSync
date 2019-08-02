@@ -148,10 +148,9 @@ private:
 
     struct AnimationRecord : public mu::noncopyable
     {
-        using extractor_t = void (msmaxContext::*)(ms::TransformAnimation& dst, INode *n, Object *obj);
+        using extractor_t = void (msmaxContext::*)(ms::TransformAnimation& dst, TreeNode *n);
         extractor_t extractor = nullptr;
-        INode *node = nullptr;
-        Object *obj = nullptr;
+        TreeNode *node = nullptr;
         ms::TransformAnimationPtr dst;
 
         void operator()(msmaxContext *_this);
@@ -182,7 +181,7 @@ private:
 
     mu::float4x4 getPivotMatrix(INode *n);
     mu::float4x4 getGlobalMatrix(INode *n, TimeValue t);
-    void extractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
+    void extractTransform(TreeNode& node, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
     void extractTransform(TreeNode& node);
     void extractCameraData(GenCamera *cam, TimeValue t,
         bool& ortho, float& fov, float& near_plane, float& far_plane,
@@ -193,10 +192,10 @@ private:
     void doExtractMeshData(ms::Mesh& dst, INode *n, Mesh *mesh);
 
     bool exportAnimations(INode *node, bool force);
-    void extractTransformAnimation(ms::TransformAnimation& dst, INode *n, Object *obj);
-    void extractCameraAnimation(ms::TransformAnimation& dst, INode *n, Object *obj);
-    void extractLightAnimation(ms::TransformAnimation& dst, INode *n, Object *obj);
-    void extractMeshAnimation(ms::TransformAnimation& dst, INode *n, Object *obj);
+    void extractTransformAnimation(ms::TransformAnimation& dst, TreeNode *n);
+    void extractCameraAnimation(ms::TransformAnimation& dst, TreeNode *n);
+    void extractLightAnimation(ms::TransformAnimation& dst, TreeNode *n);
+    void extractMeshAnimation(ms::TransformAnimation& dst, TreeNode *n);
 
 private:
     msmaxSettings m_settings;

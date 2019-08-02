@@ -69,7 +69,7 @@ void msmaxContext::TreeNode::clearState()
 
 void msmaxContext::AnimationRecord::operator()(msmaxContext * _this)
 {
-    (_this->*extractor)(*dst, node, obj);
+    (_this->*extractor)(*dst, node);
 }
 
 
@@ -361,6 +361,9 @@ static DWORD WINAPI CB_Dummy(LPVOID arg) { return 0; }
 
 bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::string& path)
 {
+    //float sample_rate = m_cache_settings.sample_rate > 0.0f ? m_cache_settings.sample_rate : (float)::GetFrameRate();
+    float sample_rate = m_settings.animation_sps;
+
     auto settings_old = m_settings;
     m_settings.export_scene_cache = true;
     m_settings.bake_modifiers = m_cache_settings.bake_modifiers;
@@ -368,7 +371,7 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
     m_settings.flatten_hierarchy = m_cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
-    oscs.sample_rate = m_cache_settings.sample_rate > 0.0f ? m_cache_settings.sample_rate : (float)::GetFrameRate();
+    oscs.sample_rate = sample_rate;
     oscs.encoder_settings.zstd.compression_level = m_cache_settings.zstd_compression_level;
     oscs.flatten_hierarchy = m_settings.flatten_hierarchy;
     oscs.strip_normals = m_cache_settings.strip_normals;
@@ -426,7 +429,7 @@ bool msmaxContext::writeCache(SendScope scope, bool all_frames, const std::strin
         auto time_range = ifs->GetAnimRange();
         auto time_start = time_range.Start();
         auto time_end = time_range.End();
-        auto interval = ToTicks(1.0f / std::max(m_cache_settings.sample_rate, 0.01f));
+        auto interval = ToTicks(1.0f / std::max(sample_rate, 0.01f));
         for (TimeValue t = time_start;;) {
             m_current_time_tick = t;
             m_anim_time = ToSeconds(t - time_start);
@@ -756,6 +759,16 @@ mu::float4x4 msmaxContext::getPivotMatrix(INode *n)
     return mu::transform(t, r, mu::float3::one());
 }
 
+static inline mu::float4x4 CorrectCameraMatrix(mu::float4x4 v)
+{
+    return { {
+        {-v[0][0],-v[0][1],-v[0][2],-v[0][3]},
+        { v[1][0], v[1][1], v[1][2], v[1][3]},
+        {-v[2][0],-v[2][1],-v[2][2],-v[2][3]},
+        { v[3][0], v[3][1], v[3][2], v[3][3]},
+    } };
+}
+
 mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
 {
     if (m_settings.bake_modifiers) {
@@ -771,16 +784,20 @@ mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
     }
 }
 
-void msmaxContext::extractTransform(INode *n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+void msmaxContext::extractTransform(TreeNode& n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
-    auto mat = getGlobalMatrix(n, t);
+    auto mat = getGlobalMatrix(n.node, t);
     if (m_settings.bake_modifiers && m_settings.flatten_hierarchy) {
         // don't care parent in this case
     }
     else {
         // handle parent
-        if (auto parent = n->GetParentNode())
+        if (auto parent = n.node->GetParentNode())
             mat *= mu::invert(getGlobalMatrix(parent, t));
+    }
+
+    if (IsCamera(n.baseobj) || IsLight(n.baseobj)) {
+        mat = CorrectCameraMatrix(mat);
     }
 
     pos = mu::extract_position(mat);
@@ -788,21 +805,13 @@ void msmaxContext::extractTransform(INode *n, TimeValue t, mu::float3& pos, mu::
     scale = mu::extract_scale(mat);
     if (mu::near_equal(scale, mu::float3::one()))
         scale = mu::float3::one();
-    vis = (n->IsHidden() || !IsVisibleInHierarchy(n, t)) ? false : true;
-
-    {
-        auto *obj = GetBaseObject(n);
-        if (IsCamera(obj) || IsLight(obj)) {
-            static const auto cr = mu::rotate_y(180.0f * mu::DegToRad);
-            rot *= cr;
-        }
-    }
+    vis = (n.node->IsHidden() || !IsVisibleInHierarchy(n.node, t)) ? false : true;
 }
 
 void msmaxContext::extractTransform(TreeNode& n)
 {
     auto& dst = *n.dst;
-    extractTransform(n.node, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransform(n, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
 }
 
 void msmaxContext::extractCameraData(GenCamera *cam, TimeValue t,
@@ -1300,7 +1309,9 @@ bool msmaxContext::exportAnimations(INode *n, bool force)
     if (it != m_anim_records.end())
         return false;
 
-    auto obj = GetBaseObject(n);
+    auto& rec = getNodeRecord(n);
+
+    auto obj = rec.baseobj;
     ms::TransformAnimationPtr ret;
     AnimationRecord::extractor_t extractor = nullptr;
 
@@ -1340,16 +1351,15 @@ bool msmaxContext::exportAnimations(INode *n, bool force)
         m_animations.front()->addAnimation(ret);
         ret->path = GetPath(n);
 
-        auto& rec = m_anim_records[n];
-        rec.dst = ret;
-        rec.node = n;
-        rec.obj = obj;
-        rec.extractor = extractor;
+        auto& ar = m_anim_records[n];
+        ar.dst = ret;
+        ar.node = &rec;
+        ar.extractor = extractor;
     }
     return ret != nullptr;
 }
 
-void msmaxContext::extractTransformAnimation(ms::TransformAnimation& dst_, INode *src, Object *obj)
+void msmaxContext::extractTransformAnimation(ms::TransformAnimation& dst_, TreeNode *n)
 {
     auto& dst = (ms::TransformAnimation&)dst_;
 
@@ -1357,7 +1367,7 @@ void msmaxContext::extractTransformAnimation(ms::TransformAnimation& dst_, INode
     mu::quatf rot;
     mu::float3 scale;
     bool vis;
-    extractTransform(src, m_current_time_tick, pos, rot, scale, vis);
+    extractTransform(*n, m_current_time_tick, pos, rot, scale, vis);
 
     float t = m_anim_time;
     dst.translation.push_back({ t, pos });
@@ -1366,9 +1376,9 @@ void msmaxContext::extractTransformAnimation(ms::TransformAnimation& dst_, INode
     dst.visible.push_back({ t, vis });
 }
 
-void msmaxContext::extractCameraAnimation(ms::TransformAnimation& dst_, INode *src, Object *obj)
+void msmaxContext::extractCameraAnimation(ms::TransformAnimation& dst_, TreeNode *n)
 {
-    extractTransformAnimation(dst_, src, obj);
+    extractTransformAnimation(dst_, n);
 
     float t = m_anim_time;
     auto& dst = (ms::CameraAnimation&)dst_;
@@ -1376,7 +1386,7 @@ void msmaxContext::extractCameraAnimation(ms::TransformAnimation& dst_, INode *s
     bool ortho;
     float fov, near_plane, far_plane, focal_length;
     mu::float2 sensor_size, lens_shift;
-    extractCameraData((GenCamera*)obj, m_current_time_tick, ortho, fov, near_plane, far_plane, focal_length, sensor_size, lens_shift);
+    extractCameraData((GenCamera*)n->baseobj, m_current_time_tick, ortho, fov, near_plane, far_plane, focal_length, sensor_size, lens_shift);
 
     dst.fov.push_back({ t, fov });
     dst.near_plane.push_back({ t, near_plane });
@@ -1388,9 +1398,9 @@ void msmaxContext::extractCameraAnimation(ms::TransformAnimation& dst_, INode *s
     }
 }
 
-void msmaxContext::extractLightAnimation(ms::TransformAnimation& dst_, INode *src, Object *obj)
+void msmaxContext::extractLightAnimation(ms::TransformAnimation& dst_, TreeNode *n)
 {
-    extractTransformAnimation(dst_, src, obj);
+    extractTransformAnimation(dst_, n);
 
     float t = m_anim_time;
     auto& dst = (ms::LightAnimation&)dst_;
@@ -1399,7 +1409,7 @@ void msmaxContext::extractLightAnimation(ms::TransformAnimation& dst_, INode *sr
     ms::Light::ShadowType stype;
     mu::float4 color;
     float intensity, spot_angle;
-    extractLightData((GenLight*)obj, m_current_time_tick, ltype, stype, color, intensity, spot_angle);
+    extractLightData((GenLight*)n->baseobj, m_current_time_tick, ltype, stype, color, intensity, spot_angle);
 
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });
@@ -1407,15 +1417,15 @@ void msmaxContext::extractLightAnimation(ms::TransformAnimation& dst_, INode *sr
         dst.spot_angle.push_back({ t, spot_angle });
 }
 
-void msmaxContext::extractMeshAnimation(ms::TransformAnimation& dst_, INode *src, Object *obj)
+void msmaxContext::extractMeshAnimation(ms::TransformAnimation& dst_, TreeNode *n)
 {
-    extractTransformAnimation(dst_, src, obj);
+    extractTransformAnimation(dst_, n);
 
     float t = m_anim_time;
     auto& dst = (ms::MeshAnimation&)dst_;
 
     if (m_settings.sync_blendshapes) {
-        auto *mod = FindMorph(src);
+        auto *mod = FindMorph(n->node);
         if (mod) {
             MaxMorphModifier morph(mod);
             int num_channels = morph.NumMorphChannels();
