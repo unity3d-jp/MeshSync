@@ -27,6 +27,7 @@ enum class msmaxFrameRange : int
     None,
     CurrentFrame,
     AllFrames,
+    CustomRange,
 };
 
 enum class msmaxMaterialFrameRange : int
@@ -77,9 +78,11 @@ struct msmaxCacheExportSettings
     msmaxObjectScope object_scope = msmaxObjectScope::All;
     msmaxFrameRange frame_range = msmaxFrameRange::CurrentFrame;
     msmaxMaterialFrameRange material_frame_range = msmaxMaterialFrameRange::OneFrame;
+    int frame_begin = 0;
+    int frame_end = INT_MAX;
 
     int zstd_compression_level = 22; // (min) 0 - 22 (max)
-    float sample_rate = 0.0f; // 0 is treated as scene frame rate
+    float sample_rate = 1.0f;
 
     bool bake_modifiers = true;
     bool use_render_meshes = true;

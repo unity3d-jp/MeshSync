@@ -258,10 +258,17 @@ static void CtrlSetText(int cid, float v)
     swprintf(buf, L"%.3f", v);
     SetDlgItemText(g_msmax_current_window, cid, buf);
 }
-static void CtrlAddString(int cid, const std::string& v)
+static void CtrlComboAddString(int cid, const std::string& v)
 {
     SendDlgItemMessageA(g_msmax_current_window, cid, CB_ADDSTRING, 0, (LPARAM)v.c_str());
-   
+}
+static void CtrlComboSetSelection(int cid, int index)
+{
+    SendDlgItemMessageA(g_msmax_current_window, cid, CB_SETCURSEL, (WPARAM)index, 0);
+}
+static int CtrlComboGetSelection(int cid)
+{
+    return (int)SendDlgItemMessageA(g_msmax_current_window, cid, CB_GETCURSEL, 0, 0);
 }
 
 static void PositionWindowNearCursor(HWND hwnd)
@@ -317,24 +324,21 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
         int code = HIWORD(wParam);
         int cid = LOWORD(wParam);
 
-        auto handle_edit = [&](const std::function<void()>& body) {
+        auto handle_edit = [&](const auto& body) {
             switch (code) {
             case EN_SETFOCUS:
                 DisableAccelerators();
                 ret = TRUE;
                 break;
             case EN_KILLFOCUS:
+                body();
                 EnableAccelerators();
                 ret = TRUE;
-                break;
-            case EN_CHANGE:
-                ret = TRUE;
-                body();
                 break;
             }
         };
 
-        auto handle_button = [&](const std::function<void()>& body) {
+        auto handle_button = [&](const auto& body) {
             switch (code) {
             case BN_CLICKED:
                 body();
@@ -578,9 +582,10 @@ static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, L
         ret = TRUE;
         g_msmax_cache_window = hDlg;
 
-        //// init combo boxes
-        //CtrlAddString(IDC_OBJECT_SCOPE, "All");
-        //CtrlAddString(IDC_OBJECT_SCOPE, "Selected");
+        // init combo boxes
+        CtrlComboAddString(IDC_MATERIAL_RANGE, "None");
+        CtrlComboAddString(IDC_MATERIAL_RANGE, "One Frame");
+        CtrlComboAddString(IDC_MATERIAL_RANGE, "All Frames");
 
         GetCOREInterface()->RegisterDlgWnd(g_msmax_cache_window);
         PositionWindowNearCursor(hDlg);
@@ -603,26 +608,32 @@ static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, L
         int code = HIWORD(wParam);
         int cid = LOWORD(wParam);
 
-        auto handle_edit = [&](const std::function<void()>& body) {
+        auto handle_edit = [&](const auto& body) {
             switch (code) {
             case EN_SETFOCUS:
                 DisableAccelerators();
                 ret = TRUE;
                 break;
             case EN_KILLFOCUS:
+                body();
                 EnableAccelerators();
                 ret = TRUE;
-                break;
-            case EN_CHANGE:
-                ret = TRUE;
-                body();
                 break;
             }
         };
 
-        auto handle_button = [&](const std::function<void()>& body) {
+        auto handle_button = [&](const auto& body) {
             switch (code) {
             case BN_CLICKED:
+                body();
+                ret = TRUE;
+                break;
+            }
+        };
+
+        auto handle_combo = [&](const auto& body) {
+            switch (code) {
+            case CBN_SELCHANGE:
                 body();
                 ret = TRUE;
                 break;
@@ -638,6 +649,100 @@ static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, L
         };
 
         switch (cid) {
+        case IDC_OBJSCOPE_ALL:
+            handle_button([&]() {
+                s.object_scope = msmaxObjectScope::All;
+            });
+            break;
+        case IDC_OBJSCOPE_SELECTED:
+            handle_button([&]() {
+                s.object_scope = msmaxObjectScope::Selected;
+            });
+            break;
+
+        case IDC_FRAMERANGE_SINGLE:
+            handle_button([&]() {
+                s.frame_range = msmaxFrameRange::CurrentFrame;
+            });
+            break;
+        case IDC_FRAMERANGE_ACTIVE:
+            handle_button([&]() {
+                s.frame_range = msmaxFrameRange::AllFrames;
+            });
+            break;
+        case IDC_FRAMERANGE_CUSTOM:
+            handle_button([&]() {
+                s.frame_range = msmaxFrameRange::CustomRange;
+            });
+            break;
+
+        case IDC_FRAME_BEGIN:
+            handle_edit([&]() {
+                int tmp = CtrlGetInt(IDC_FRAME_BEGIN, s.frame_begin);
+                tmp = mu::clamp(tmp, 0, INT_MAX);
+                CtrlSetText(IDC_FRAME_BEGIN, tmp);
+                s.frame_begin = tmp;
+            });
+            break;
+        case IDC_FRAME_END:
+            handle_edit([&]() {
+                int tmp = CtrlGetInt(IDC_FRAME_END, s.frame_end);
+                tmp = mu::clamp(tmp, 0, INT_MAX);
+                CtrlSetText(IDC_FRAME_END, tmp);
+                s.frame_end = tmp;
+            });
+            break;
+
+        case IDC_CACHE_SAMPLES_PER_FRAME:
+            handle_edit([&]() {
+                float tmp = CtrlGetFloat(IDC_CACHE_SAMPLES_PER_FRAME, s.sample_rate);
+                tmp = mu::clamp(tmp, 0.01f, 100.0f);
+                CtrlSetText(IDC_CACHE_SAMPLES_PER_FRAME, tmp);
+                s.sample_rate = tmp;
+            });
+            break;
+        case IDC_ZSTD_COMPRESSION_LEVEL:
+            handle_edit([&]() {
+                int tmp = CtrlGetInt(IDC_ZSTD_COMPRESSION_LEVEL, s.zstd_compression_level);
+                tmp = mu::clamp(tmp, 0, 22);
+                CtrlSetText(IDC_ZSTD_COMPRESSION_LEVEL, tmp);
+                s.zstd_compression_level = tmp;
+            });
+            break;
+        case IDC_MATERIAL_RANGE:
+            handle_edit([&]() {
+                s.material_frame_range = (msmaxMaterialFrameRange)CtrlComboGetSelection(IDC_MATERIAL_RANGE);
+            });
+            break;
+
+            
+        case IDC_BAKE_MODIFIERS:
+            handle_button([&]() {
+                s.bake_modifiers = CtrlIsChecked(IDC_BAKE_MODIFIERS);
+            });
+            break;
+        case IDC_USE_RENDER_MESHES:
+            handle_button([&]() {
+                s.use_render_meshes = CtrlIsChecked(IDC_USE_RENDER_MESHES);
+            });
+            break;
+        case IDC_FLATTEN_HIERARCHY:
+            handle_button([&]() {
+                s.flatten_hierarchy = CtrlIsChecked(IDC_FLATTEN_HIERARCHY);
+            });
+            break;
+
+        case IDC_STRIP_NORMALS:
+            handle_button([&]() {
+                s.strip_normals = CtrlIsChecked(IDC_STRIP_NORMALS);
+            });
+            break;
+        case IDC_STRIP_TANGENTS:
+            handle_button([&]() {
+                s.strip_tangents = CtrlIsChecked(IDC_STRIP_TANGENTS);
+            });
+            break;
+
         default: break;
         }
         break;
@@ -671,4 +776,39 @@ bool msmaxContext::isCacheWindowOpened() const
 
 void msmaxContext::updateCacheControls()
 {
+    auto& s = m_cache_settings;
+
+    switch (s.object_scope) {
+    case msmaxObjectScope::All:
+        CtrlSetCheck(IDC_OBJSCOPE_ALL, true);
+        break;
+    case msmaxObjectScope::Selected:
+        CtrlSetCheck(IDC_OBJSCOPE_SELECTED, true);
+        break;
+    }
+
+    switch (s.frame_range) {
+    case msmaxFrameRange::CurrentFrame:
+        CtrlSetCheck(IDC_FRAMERANGE_SINGLE, true);
+        break;
+    case msmaxFrameRange::AllFrames:
+        CtrlSetCheck(IDC_FRAMERANGE_ACTIVE, true);
+        break;
+    case msmaxFrameRange::CustomRange:
+        CtrlSetCheck(IDC_FRAMERANGE_CUSTOM, true);
+        break;
+    }
+
+    CtrlSetText(IDC_FRAME_BEGIN, s.frame_begin);
+    CtrlSetText(IDC_FRAME_END, s.frame_end);
+    CtrlSetText(IDC_CACHE_SAMPLES_PER_FRAME, s.sample_rate);
+    CtrlSetText(IDC_ZSTD_COMPRESSION_LEVEL, s.zstd_compression_level);
+
+    CtrlComboSetSelection(IDC_MATERIAL_RANGE, (int)s.material_frame_range);
+    CtrlSetCheck(IDC_BAKE_MODIFIERS, s.bake_modifiers);
+    CtrlSetCheck(IDC_USE_RENDER_MESHES, s.use_render_meshes);
+    CtrlSetCheck(IDC_FLATTEN_HIERARCHY, s.flatten_hierarchy);
+
+    CtrlSetCheck(IDC_STRIP_NORMALS, s.strip_normals);
+    CtrlSetCheck(IDC_STRIP_TANGENTS, s.strip_tangents);
 }
