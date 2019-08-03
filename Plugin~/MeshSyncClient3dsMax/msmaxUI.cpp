@@ -238,7 +238,7 @@ static float CtrlGetFloat(int cid, float default_value)
 static std::string CtrlGetText(int cid)
 {
     wchar_t buf[256];
-    GetDlgItemText(g_msmax_current_window, IDC_EDIT_SERVER, buf, _countof(buf));
+    GetDlgItemText(g_msmax_current_window, IDC_SERVER, buf, _countof(buf));
     return mu::ToMBS(buf);
 }
 static void CtrlSetText(int cid, const std::string& v)
@@ -352,59 +352,59 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
         };
 
         switch (cid) {
-        case IDC_EDIT_SERVER:
-            handle_edit([&]() { s.client_settings.server = CtrlGetText(IDC_EDIT_SERVER); });
+        case IDC_SERVER:
+            handle_edit([&]() { s.client_settings.server = CtrlGetText(IDC_SERVER); });
             break;
-        case IDC_EDIT_PORT:
+        case IDC_PORT:
             handle_edit([&]() {
-                int tmp = CtrlGetInt(IDC_EDIT_PORT, s.client_settings.port);
+                int tmp = CtrlGetInt(IDC_PORT, s.client_settings.port);
                 if (tmp < 0 || tmp > 63335) {
                     tmp = mu::clamp((int)tmp, 0, 63335);
-                    CtrlSetText(IDC_EDIT_PORT, tmp);
+                    CtrlSetText(IDC_PORT, tmp);
                 }
                 s.client_settings.port = tmp;
             });
             break;
-        case IDC_EDIT_SCALE_FACTOR:
+        case IDC_SCALE_FACTOR:
             handle_edit([&]() {
-                s.scale_factor = CtrlGetFloat(IDC_EDIT_SCALE_FACTOR, s.scale_factor);
+                s.scale_factor = CtrlGetFloat(IDC_SCALE_FACTOR, s.scale_factor);
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_MESHES:
+        case IDC_SYNC_MESHES:
             handle_button([&]() {
-                s.sync_meshes = CtrlIsChecked(IDC_CHECK_MESHES);
+                s.sync_meshes = CtrlIsChecked(IDC_SYNC_MESHES);
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_MAKE_DOUBLE_SIDED:
+        case IDC_MAKE_DOUBLE_SIDED:
             handle_button([&]() {
-                s.make_double_sided = CtrlIsChecked(IDC_CHECK_MAKE_DOUBLE_SIDED);
+                s.make_double_sided = CtrlIsChecked(IDC_MAKE_DOUBLE_SIDED);
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_IGNORE_NON_RENDERABLE:
+        case IDC_IGNORE_NON_RENDERABLE:
             handle_button([&]() {
-                s.ignore_non_renderable = CtrlIsChecked(IDC_CHECK_IGNORE_NON_RENDERABLE);
+                s.ignore_non_renderable = CtrlIsChecked(IDC_IGNORE_NON_RENDERABLE);
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_BAKE_MODIFIERS:
+        case IDC_BAKE_MODIFIERS:
             handle_button([&]() {
-                s.bake_modifiers = CtrlIsChecked(IDC_CHECK_BAKE_MODIFIERS);
-                if (!s.bake_modifiers && CtrlIsChecked(IDC_CHECK_USE_RENDER_MESHES)) {
+                s.bake_modifiers = CtrlIsChecked(IDC_BAKE_MODIFIERS);
+                if (!s.bake_modifiers && CtrlIsChecked(IDC_USE_RENDER_MESHES)) {
                     s.use_render_meshes = false;
-                    CtrlSetCheck(IDC_CHECK_USE_RENDER_MESHES, false);
+                    CtrlSetCheck(IDC_USE_RENDER_MESHES, false);
                 }
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_USE_RENDER_MESHES:
+        case IDC_USE_RENDER_MESHES:
             handle_button([&]() {
-                if (CtrlIsChecked(IDC_CHECK_USE_RENDER_MESHES)) {
+                if (CtrlIsChecked(IDC_USE_RENDER_MESHES)) {
                     if (!s.bake_modifiers) {
                         s.bake_modifiers = true;
-                        CtrlSetCheck(IDC_CHECK_BAKE_MODIFIERS, true);
+                        CtrlSetCheck(IDC_BAKE_MODIFIERS, true);
                     }
                     s.use_render_meshes = true;
                 }
@@ -414,48 +414,48 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_BLENDSHAPES:
+        case IDC_SYNC_BLENDSHAPES:
             handle_button([&]() {
-                s.sync_blendshapes = CtrlIsChecked(IDC_CHECK_BLENDSHAPES);
+                s.sync_blendshapes = CtrlIsChecked(IDC_SYNC_BLENDSHAPES);
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_BONES:
+        case IDC_SYNC_BONES:
             handle_button([&]() {
-                s.sync_bones = CtrlIsChecked(IDC_CHECK_BONES);
+                s.sync_bones = CtrlIsChecked(IDC_SYNC_BONES);
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_TEXTURES:
+        case IDC_SYNC_TEXTURES:
             handle_button([&]() {
-                s.sync_textures = CtrlIsChecked(IDC_CHECK_TEXTURES);
+                s.sync_textures = CtrlIsChecked(IDC_SYNC_TEXTURES);
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_CAMERAS:
+        case IDC_SYNC_CAMERAS:
             handle_button([&]() {
-                s.sync_cameras = CtrlIsChecked(IDC_CHECK_CAMERAS);
+                s.sync_cameras = CtrlIsChecked(IDC_SYNC_CAMERAS);
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_LIGHTS:
+        case IDC_SYNC_LIGHTS:
             handle_button([&]() {
-                s.sync_lights = CtrlIsChecked(IDC_CHECK_LIGHTS);
+                s.sync_lights = CtrlIsChecked(IDC_SYNC_LIGHTS);
                 notify_scene_update();
             });
             break;
-        case IDC_CHECK_AUTO_SYNC:
+        case IDC_AUTO_SYNC:
             handle_button([&]() {
                 auto& ctx = msmaxGetContext();
                 auto& settings = msmaxGetSettings();
-                if (CtrlIsChecked(IDC_CHECK_AUTO_SYNC)) {
+                if (CtrlIsChecked(IDC_AUTO_SYNC)) {
                     if (ctx.isServerAvailable()) {
                         settings.auto_sync = true;
                         notify_scene_update();
                     }
                     else {
                         ctx.logInfo("MeshSync: Server not available. %s", ctx.getErrorMessage().c_str());
-                        CtrlSetCheck(IDC_CHECK_AUTO_SYNC, false);
+                        CtrlSetCheck(IDC_AUTO_SYNC, false);
                     }
                 }
                 else {
@@ -464,40 +464,40 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             });
             break;
 
-        case IDC_EDIT_ANIMATION_TIME_SCALE:
+        case IDC_ANIMATION_TIME_SCALE:
             handle_edit([&]() {
-                float tmp = CtrlGetFloat(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
+                float tmp = CtrlGetFloat(IDC_ANIMATION_TIME_SCALE, s.anim_time_scale);
                 if (tmp < 0.01f) {
                     tmp = mu::max(tmp, 0.01f);
-                    CtrlSetText(IDC_EDIT_ANIMATION_TIME_SCALE, tmp);
+                    CtrlSetText(IDC_ANIMATION_TIME_SCALE, tmp);
                 }
-                s.animation_time_scale = tmp;
+                s.anim_time_scale = tmp;
             });
             break;
-        case IDC_EDIT_ANIMATION_SPS:
+        case IDC_ANIMATION_SAMPLE_RATE:
             handle_edit([&]() {
-                float tmp = CtrlGetFloat(IDC_EDIT_ANIMATION_SPS, s.animation_sps);
+                float tmp = CtrlGetFloat(IDC_ANIMATION_SAMPLE_RATE, s.anim_sample_rate);
                 if (tmp < 0.01f) {
                     tmp = mu::max(tmp, 0.01f);
-                    CtrlSetText(IDC_EDIT_ANIMATION_SPS, tmp);
+                    CtrlSetText(IDC_ANIMATION_SAMPLE_RATE, tmp);
                 }
-                s.animation_sps = tmp;
+                s.anim_sample_rate = tmp;
             });
             break;
-        case IDC_CHECK_KFREDUCTION:
+        case IDC_KEYFRAME_REDUCTION:
             handle_button([&]() {
-                s.keyframe_reduction = CtrlIsChecked(IDC_CHECK_KFREDUCTION);
+                s.anim_keyframe_reduction = CtrlIsChecked(IDC_KEYFRAME_REDUCTION);
             });
             break;
-        case IDC_CHECK_KEEPFLATCURVES:
+        case IDC_KEEP_FLAT_CURVES:
             handle_button([&]() {
-                s.keep_flat_curves = CtrlIsChecked(IDC_CHECK_KEEPFLATCURVES);
+                s.anim_keep_flat_curves = CtrlIsChecked(IDC_KEEP_FLAT_CURVES);
             });
             break;
-        case IDC_BUTTON_MANUAL_SYNC:
+        case IDC_MANUAL_SYNC:
             handle_button([&]() { msmaxSendScene(msmaxExportTarget::Objects, msmaxObjectScope::All); });
             break;
-        case IDC_BUTTON_SYNC_ANIMATIONS:
+        case IDC_SYNC_ANIMATIONS:
             handle_button([&]() { msmaxSendScene(msmaxExportTarget::Animations, msmaxObjectScope::All); });
             break;
 
@@ -541,25 +541,25 @@ bool msmaxContext::isSettingWindowOpened() const
 void msmaxContext::updateSettingControls()
 {
     auto& s = m_settings;
-    CtrlSetText(IDC_EDIT_SERVER, s.client_settings.server);
-    CtrlSetText(IDC_EDIT_PORT, (int)s.client_settings.port);
+    CtrlSetText(IDC_SERVER, s.client_settings.server);
+    CtrlSetText(IDC_PORT, (int)s.client_settings.port);
 
-    CtrlSetText(IDC_EDIT_SCALE_FACTOR,      s.scale_factor);
-    CtrlSetCheck(IDC_CHECK_MESHES,                  s.sync_meshes);
-    CtrlSetCheck(IDC_CHECK_MAKE_DOUBLE_SIDED,       s.make_double_sided);
-    CtrlSetCheck(IDC_CHECK_IGNORE_NON_RENDERABLE,   s.ignore_non_renderable);
-    CtrlSetCheck(IDC_CHECK_BAKE_MODIFIERS,          s.bake_modifiers);
-    CtrlSetCheck(IDC_CHECK_USE_RENDER_MESHES,       s.use_render_meshes);
-    CtrlSetCheck(IDC_CHECK_BLENDSHAPES,     s.sync_blendshapes);
-    CtrlSetCheck(IDC_CHECK_BONES,           s.sync_bones);
-    CtrlSetCheck(IDC_CHECK_TEXTURES,        s.sync_textures);
-    CtrlSetCheck(IDC_CHECK_CAMERAS,         s.sync_cameras);
-    CtrlSetCheck(IDC_CHECK_LIGHTS,          s.sync_lights);
-    CtrlSetCheck(IDC_CHECK_AUTO_SYNC,       s.auto_sync);
+    CtrlSetText(IDC_SCALE_FACTOR,           s.scale_factor);
+    CtrlSetCheck(IDC_SYNC_MESHES,           s.sync_meshes);
+    CtrlSetCheck(IDC_MAKE_DOUBLE_SIDED,     s.make_double_sided);
+    CtrlSetCheck(IDC_IGNORE_NON_RENDERABLE, s.ignore_non_renderable);
+    CtrlSetCheck(IDC_BAKE_MODIFIERS,        s.bake_modifiers);
+    CtrlSetCheck(IDC_USE_RENDER_MESHES,     s.use_render_meshes);
+    CtrlSetCheck(IDC_SYNC_BLENDSHAPES,      s.sync_blendshapes);
+    CtrlSetCheck(IDC_SYNC_BONES,            s.sync_bones);
+    CtrlSetCheck(IDC_SYNC_TEXTURES,         s.sync_textures);
+    CtrlSetCheck(IDC_SYNC_CAMERAS,          s.sync_cameras);
+    CtrlSetCheck(IDC_SYNC_LIGHTS,           s.sync_lights);
+    CtrlSetCheck(IDC_AUTO_SYNC,             s.auto_sync);
 
-    CtrlSetText(IDC_EDIT_ANIMATION_TIME_SCALE, s.animation_time_scale);
-    CtrlSetText(IDC_EDIT_ANIMATION_SPS,        s.animation_sps);
-    CtrlSetCheck(IDC_CHECK_KFREDUCTION,        s.keyframe_reduction);
+    CtrlSetText(IDC_ANIMATION_TIME_SCALE,   s.anim_time_scale);
+    CtrlSetText(IDC_ANIMATION_SAMPLE_RATE,  s.anim_sample_rate);
+    CtrlSetCheck(IDC_KEYFRAME_REDUCTION,    s.anim_keyframe_reduction);
 
     CtrlSetText(IDC_TXT_VERSION, "Plugin Version: " msPluginVersionStr);
 }
@@ -578,9 +578,9 @@ static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, L
         ret = TRUE;
         g_msmax_cache_window = hDlg;
 
-        // init combo boxes
-        CtrlAddString(IDC_OBJECT_SCOPE, "All");
-        CtrlAddString(IDC_OBJECT_SCOPE, "Selected");
+        //// init combo boxes
+        //CtrlAddString(IDC_OBJECT_SCOPE, "All");
+        //CtrlAddString(IDC_OBJECT_SCOPE, "Selected");
 
         GetCOREInterface()->RegisterDlgWnd(g_msmax_cache_window);
         PositionWindowNearCursor(hDlg);

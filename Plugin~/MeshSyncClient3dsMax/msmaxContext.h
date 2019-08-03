@@ -59,10 +59,10 @@ struct msmaxSettings
     bool ignore_non_renderable = true;
     bool flatten_hierarchy = false;
 
-    float animation_time_scale = 1.0f;
-    float animation_sps = 3.0f;
-    bool keyframe_reduction = true;
-    bool keep_flat_curves = false;
+    float anim_time_scale = 1.0f;
+    float anim_sample_rate = 3.0f;
+    bool anim_keyframe_reduction = true;
+    bool anim_keep_flat_curves = false;
 
     // parallel mesh extraction.
     // it seems can cause problems when exporting objects with EvalWorldState()...

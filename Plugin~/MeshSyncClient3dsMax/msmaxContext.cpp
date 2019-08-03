@@ -324,10 +324,10 @@ bool msmaxContext::sendAnimations(msmaxObjectScope scope)
     auto time_range = GetCOREInterface()->GetAnimRange();
     auto time_start = time_range.Start();
     auto time_end = time_range.End();
-    auto interval = ToTicks(1.0f / std::max(m_settings.animation_sps, 0.01f));
+    auto interval = ToTicks(1.0f / std::max(m_settings.anim_sample_rate, 0.01f));
     for (TimeValue t = time_start;;) {
         m_current_time_tick = t;
-        m_anim_time = ToSeconds(t - time_start) * m_settings.animation_time_scale;
+        m_anim_time = ToSeconds(t - time_start) * m_settings.anim_time_scale;
         for (auto& kvp : m_anim_records)
             kvp.second(this);
 
@@ -340,10 +340,10 @@ bool msmaxContext::sendAnimations(msmaxObjectScope scope)
     // cleanup intermediate data
     m_anim_records.clear();
 
-    if (m_settings.keyframe_reduction) {
+    if (m_settings.anim_keyframe_reduction) {
         // keyframe reduction
         for (auto& clip : m_animations)
-            clip->reduction(m_settings.keep_flat_curves);
+            clip->reduction(m_settings.anim_keep_flat_curves);
 
         // erase empty animation
         m_animations.erase(

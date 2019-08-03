@@ -113,11 +113,12 @@ Value* Settings_cf(Value** arg_list, int count)
         Entry(sync_lights,          bool_result, to_bool);
         Entry(sync_textures,        bool_result, to_bool);
 
-        Entry(animation_time_scale, Float::intern, to_float);
-        Entry(animation_sps,        Float::intern, to_float);
-        Entry(keyframe_reduction,   bool_result, to_bool);
-        Entry(keep_flat_curves,     bool_result, to_bool);
-        Entry(multithreaded,        bool_result, to_bool);
+        Entry(anim_time_scale,          Float::intern, to_float);
+        Entry(anim_sample_rate,         Float::intern, to_float);
+        Entry(anim_keyframe_reduction,  bool_result, to_bool);
+        Entry(anim_keep_flat_curves,    bool_result, to_bool);
+
+        Entry(multithreaded,            bool_result, to_bool);
 
 #undef Entry
     }
