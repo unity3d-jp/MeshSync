@@ -48,8 +48,11 @@ namespace UTJ.MeshSync
             public GameObject go;
             public Mesh origMesh;
             public Mesh mesh;
-            public int[] materialIDs = new int[0];
-            public int[] submeshCounts = new int[0];
+            public MeshFilter meshFilter;
+            public MeshRenderer meshRenderer;
+            public SkinnedMeshRenderer skinnedMeshRenderer;
+
+            public int[] materialIDs;
             public string reference;
             public bool visible = true; // for reference
             public bool recved = false;
@@ -58,22 +61,21 @@ namespace UTJ.MeshSync
             public bool BuildMaterialData(MeshData md)
             {
                 int numSubmeshes = md.numSubmeshes;
-                if (numSubmeshes == 0)
-                    return false;
 
-                var mids = new int[numSubmeshes];
+                bool updated = false;
+                if (materialIDs == null || materialIDs.Length != numSubmeshes)
+                {
+                    materialIDs = new int[numSubmeshes];
+                    updated = true;
+                }
                 for (int i = 0; i < numSubmeshes; ++i)
-                    mids[i] = md.GetSubmesh(i).materialID;
-
-                int numSplits = md.numSplits;
-                var scs = new int[numSplits];
-                for (int i = 0; i < numSplits; ++i)
-                    scs[i] = md.GetSplit(i).numSubmeshes;
-
-                bool ret = !materialIDs.SequenceEqual(mids) || !submeshCounts.SequenceEqual(scs);
-                materialIDs = mids;
-                submeshCounts = scs;
-                return ret;
+                {
+                    int mid = md.GetSubmesh(i).materialID;
+                    if (!updated)
+                        updated = materialIDs[i] != mid;
+                    materialIDs[i] = mid;
+                }
+                return updated;
             }
         }
 
@@ -573,7 +575,7 @@ namespace UTJ.MeshSync
                 var go = co.Value.go;
                 if (go == null)
                     continue;
-                var smr = go.GetComponent<SkinnedMeshRenderer>();
+                var smr = co.Value.skinnedMeshRenderer;
                 if (smr == null)
                     continue;
                 var bones = smr.bones;
@@ -980,7 +982,6 @@ namespace UTJ.MeshSync
                 if (m_clientObjects.TryGetValue(dstrec.reference, out srcrec) && srcrec.go != null)
                 {
                     dstrec.materialIDs = srcrec.materialIDs;
-                    dstrec.submeshCounts = srcrec.submeshCounts;
                     UpdateReference(dstrec, srcrec);
                 }
             }
@@ -1400,90 +1401,89 @@ namespace UTJ.MeshSync
 
             // allocate material list
             bool materialsUpdated = rec.BuildMaterialData(data);
-            bool skinned = data.numBones > 0;
+            bool hasBones = data.numBones > 0;
+            bool hasBlendshapes = data.numBlendShapes > 0;
+            bool meshUpdated = false;
 
-            if (data.numSplits >= 1)
+            if (data.numSplits >= 1 && dflags.hasIndices)
             {
-                var smr = Misc.GetOrAddComponent<SkinnedMeshRenderer>(trans.gameObject);
+                // note:
+                // assume there is always only 1 mesh split.
+                // old versions supported multiple splits because vertex index was 16 bit (pre-Unity 2017.3),
+                // but that code path was removed for simplicity and my sanity.
+                var split = data.GetSplit(0);
+                if (split.numPoints == 0 || split.numIndices == 0)
+                {
+                    if (rec.mesh != null)
+                        rec.mesh.Clear();
+                }
+                else
+                {
+                    if (rec.mesh == null)
+                    {
+                        rec.mesh = new Mesh();
+                        rec.mesh.name = trans.name;
+                        if (m_dontSaveAssetsInScene)
+                            rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
+#if UNITY_2017_3_OR_NEWER
+                        rec.mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+#endif
+                    }
+                    UpdateMesh(ref rec.mesh, data, split);
+                }
+                meshUpdated = true;
+            }
+
+            if (hasBones || hasBlendshapes)
+            {
+                var smr = rec.skinnedMeshRenderer;
+                if (smr == null)
+                {
+                    materialsUpdated = true;
+                    smr = rec.skinnedMeshRenderer = Misc.GetOrAddComponent<SkinnedMeshRenderer>(trans.gameObject);
+                    if (rec.meshRenderer != null)
+                    {
+                        DestroyImmediate(rec.meshRenderer);
+                        rec.meshRenderer = null;
+                    }
+                    if (rec.meshFilter != null)
+                    {
+                        DestroyImmediate(rec.meshFilter);
+                        rec.meshFilter = null;
+                    }
+                }
+
                 smr.bones = null;
                 smr.rootBone = null;
                 if (m_syncVisibility)
                     smr.enabled = data.transform.visible;
+                smr.sharedMesh = rec.mesh;
 
-                // to support fast blendshape preview, mesh data is allowed to have only blendshape weights.
-                // so, in some cases mesh data has no vertices / indices.
-                if (dflags.hasIndices)
+                // update bones
+                if (hasBones)
                 {
-                    var collider = m_updateMeshColliders ? trans.GetComponent<MeshCollider>() : null;
-                    bool updateCollider = collider != null &&
-                        (collider.sharedMesh == null || collider.sharedMesh == smr.sharedMesh);
-
-                    // note:
-                    // assume there is always only 1 mesh split.
-                    // old versions supported multiple splits because vertex index was 16 bit (pre-Unity 2017.3),
-                    // but that code path was removed for simplicity and my sanity.
-                    var split = data.GetSplit(0);
-                    if (split.numPoints == 0 || split.numIndices == 0)
+                    var bonePaths = data.GetBonePaths();
+                    var bones = new Transform[data.numBones];
+                    for (int bi = 0; bi < bones.Length; ++bi)
                     {
-                        rec.mesh = null;
-                        smr.sharedMesh = null;
-                        if (updateCollider)
-                            collider.sharedMesh = null;
-                    }
-                    else
-                    {
-                        if (rec.mesh == null)
-                        {
-                            rec.mesh = new Mesh();
-                            rec.mesh.name = trans.name;
-                            if (m_dontSaveAssetsInScene)
-                                rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
-#if UNITY_2017_3_OR_NEWER
-                            rec.mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-#endif
-                        }
-                        UpdateMesh(ref rec.mesh, data, split);
+                        bool dummy = false;
+                        bones[bi] = FindOrCreateObjectByPath(bonePaths[bi], false, ref dummy);
                     }
 
-                    if (skinned)
+                    if (bones.Length > 0)
                     {
-                        // create bones
-                        var bonePaths = data.GetBonePaths();
-                        var bones = new Transform[data.numBones];
-                        for (int bi = 0; bi < bones.Length; ++bi)
-                        {
-                            bool dummy = false;
-                            bones[bi] = FindOrCreateObjectByPath(bonePaths[bi], false, ref dummy);
-                        }
-
-                        if (bones.Length > 0)
-                        {
-                            bool dummy = false;
-                            var root = FindOrCreateObjectByPath(data.rootBonePath, false, ref dummy);
-                            if (root == null)
-                                root = bones[0];
-                            smr.rootBone = root;
-                            smr.bones = bones;
-                            smr.updateWhenOffscreen = true; // todo: this should be turned off at some point
-                        }
-                    }
-                    else
-                    {
-                        if (rec.mesh != null)
-                            smr.localBounds = rec.mesh.bounds;
-                        smr.updateWhenOffscreen = false;
-                    }
-
-                    smr.sharedMesh = rec.mesh;
-                    if (updateCollider)
-                    {
-                        collider.convex = true;
-                        collider.sharedMesh = rec.mesh;
+                        bool dummy = false;
+                        var root = FindOrCreateObjectByPath(data.rootBonePath, false, ref dummy);
+                        if (root == null)
+                            root = bones[0];
+                        smr.rootBone = root;
+                        smr.bones = bones;
+                        smr.updateWhenOffscreen = true; // todo: this should be turned off at some point
                     }
                 }
 
-                // handle blendshape weights
-                if (dflags.hasBlendshapeWeights && rec.mesh != null)
+                // update blendshape weights
+                if (hasBlendshapes)
                 {
                     int numBlendShapes = Math.Min(data.numBlendShapes, rec.mesh.blendShapeCount);
                     for (int bi = 0; bi < numBlendShapes; ++bi)
@@ -1491,6 +1491,38 @@ namespace UTJ.MeshSync
                         var bsd = data.GetBlendShapeData(bi);
                         smr.SetBlendShapeWeight(bi, bsd.weight);
                     }
+                }
+            }
+            else
+            {
+                var mf = rec.meshFilter;
+                var mr = rec.meshRenderer;
+                if (mf == null)
+                {
+                    materialsUpdated = true;
+                    mf = rec.meshFilter = Misc.GetOrAddComponent<MeshFilter>(trans.gameObject);
+                    mr = rec.meshRenderer = Misc.GetOrAddComponent<MeshRenderer>(trans.gameObject);
+                    if (rec.skinnedMeshRenderer != null)
+                    {
+                        mr.sharedMaterials = rec.skinnedMeshRenderer.sharedMaterials;
+                        DestroyImmediate(rec.skinnedMeshRenderer);
+                        rec.skinnedMeshRenderer = null;
+                    }
+                }
+
+                if (m_syncVisibility)
+                    mr.enabled = data.transform.visible;
+                mf.sharedMesh = rec.mesh;
+            }
+
+            if (meshUpdated)
+            {
+                var collider = m_updateMeshColliders ? trans.GetComponent<MeshCollider>() : null;
+                if (collider != null &&
+                    (collider.sharedMesh == null || collider.sharedMesh == rec.mesh))
+                {
+                    collider.convex = true;
+                    collider.sharedMesh = rec.mesh;
                 }
             }
 
@@ -2121,65 +2153,42 @@ namespace UTJ.MeshSync
 
         void AssignMaterials(EntityRecord rec)
         {
-            if (rec.go == null)
+            if (rec.go == null || rec.mesh == null || rec.materialIDs == null)
                 return;
 
-            var materialIDs = rec.materialIDs;
-            var submeshCounts = rec.submeshCounts;
+            Renderer r = rec.go.GetComponent<Renderer>();
+            if (r == null)
+                return;
 
-            int mi = 0;
-            for (int i = 0; i < submeshCounts.Length; ++i)
+            bool changed = false;
+            int materialCount = rec.materialIDs.Length;
+            var materials = new Material[materialCount];
+            for (int si = 0; si < materialCount; ++si)
             {
-                Renderer r = null;
-                if (i == 0)
+                var mid = rec.materialIDs[si];
+                var material = FindMaterial(mid);
+                if (material != null)
                 {
-                    r = rec.go.GetComponent<Renderer>();
+                    if (materials[si] != material)
+                    {
+                        materials[si] = material;
+                        changed = true;
+                    }
                 }
                 else
                 {
-                    var t = rec.go.transform.Find("[" + i + "]");
-                    if (t == null)
-                        break;
-                    r = t.GetComponent<Renderer>();
-                }
-                if (r == null)
-                    continue;
-
-                int submeshCount = submeshCounts[i];
-                var prev = r.sharedMaterials;
-                var materials = new Material[submeshCount];
-                bool changed = false;
-
-                for (int j = 0; j < submeshCount; ++j)
-                {
-                    if (j < prev.Length && prev[j] != null)
-                        materials[j] = prev[j];
-
-                    var mid = materialIDs[mi++];
-                    var material = FindMaterial(mid);
-                    if (material != null)
+                    if (materials[si] == null)
                     {
-                        if (materials[j] != material)
-                        {
-                            materials[j] = material;
-                            changed = true;
-                        }
-                    }
-                    else
-                    {
-                        if (materials[j] == null)
-                        {
-                            var tmp = CreateDefaultMaterial();
-                            tmp.name = "DefaultMaterial";
-                            materials[j] = tmp;
-                            changed = true;
-                        }
+                        var tmp = CreateDefaultMaterial();
+                        tmp.name = "DefaultMaterial";
+                        materials[si] = tmp;
+                        changed = true;
                     }
                 }
-
-                if (changed)
-                    r.sharedMaterials = materials;
             }
+
+            if (changed)
+                r.sharedMaterials = materials;
         }
         #endregion
 
@@ -2381,13 +2390,6 @@ namespace UTJ.MeshSync
                     }
                 }
             }
-            for (int i = 1; ; ++i)
-            {
-                var t = go.transform.Find("[" + i + "]");
-                if (t == null)
-                    break;
-                GenerateLightmapUV(t.gameObject);
-            }
         }
         public void GenerateLightmapUV()
         {
@@ -2395,7 +2397,7 @@ namespace UTJ.MeshSync
                 GenerateLightmapUV(kvp.Value.go);
             foreach (var kvp in m_hostObjects)
             {
-                if(kvp.Value.mesh != null)
+                if (kvp.Value.mesh != null)
                     GenerateLightmapUV(kvp.Value.go);
             }
         }
@@ -2419,32 +2421,15 @@ namespace UTJ.MeshSync
             }
         }
 
-        void ExportMeshes(GameObject go)
+        void ExportMesh(Mesh mesh)
         {
-            if(go == null)
-                return;
-
-            var smr = go.GetComponent<SkinnedMeshRenderer>();
-            if (smr == null)
-                return;
-
-            var mesh = smr.sharedMesh;
-            if (mesh == null || AssetDatabase.GetAssetPath(mesh) != "")
+            if(mesh == null)
                 return;
 
             var dstPath = assetPath + "/" + mesh.name + ".asset";
             SaveAsset(ref mesh, dstPath);
             if (m_logging)
                 Debug.Log("exported mesh " + dstPath);
-
-            // export splits
-            for (int i = 1; ; ++i)
-            {
-                var t = go.transform.Find("[" + i + "]");
-                if (t == null)
-                    break;
-                ExportMeshes(t.gameObject);
-            }
         }
         public void ExportMeshes()
         {
@@ -2452,35 +2437,31 @@ namespace UTJ.MeshSync
 
             // export client meshes
             foreach (var kvp in m_clientObjects)
-            {
-                if(kvp.Value.go == null || !kvp.Value.go.activeInHierarchy) { continue; }
-                if (kvp.Value.mesh != null)
-                    ExportMeshes(kvp.Value.go);
-            }
+                ExportMesh(kvp.Value.mesh);
 
             // replace existing meshes
             int n = 0;
             foreach (var kvp in m_hostObjects)
             {
-                if (kvp.Value.go == null || !kvp.Value.go.activeInHierarchy) { continue; }
-                if (kvp.Value.mesh != null)
-                {
-                    kvp.Value.origMesh.Clear(); // make editor can recognize mesh has modified by CopySerialized()
-                    EditorUtility.CopySerialized(kvp.Value.mesh, kvp.Value.origMesh);
-                    kvp.Value.mesh = null;
+                var rec = kvp.Value;
+                if (rec.go == null || rec.mesh == null)
+                    continue;
 
-                    var mf = kvp.Value.go.GetComponent<MeshFilter>();
-                    if (mf != null)
-                        mf.sharedMesh = kvp.Value.origMesh;
+                rec.origMesh.Clear(); // make editor can recognize mesh has modified by CopySerialized()
+                EditorUtility.CopySerialized(rec.mesh, rec.origMesh);
+                rec.mesh = null;
 
-                    var smr = kvp.Value.go.GetComponent<SkinnedMeshRenderer>();
-                    if (smr != null)
-                        smr.sharedMesh = kvp.Value.origMesh;
+                var mf = rec.go.GetComponent<MeshFilter>();
+                if (mf != null)
+                    mf.sharedMesh = rec.origMesh;
 
-                    if (m_logging)
-                        Debug.Log("updated mesh " + kvp.Value.origMesh.name);
-                    ++n;
-                }
+                var smr = rec.go.GetComponent<SkinnedMeshRenderer>();
+                if (smr != null)
+                    smr.sharedMesh = rec.origMesh;
+
+                if (m_logging)
+                    Debug.Log("updated mesh " + rec.origMesh.name);
+                ++n;
             }
             if (n > 0)
                 AssetDatabase.SaveAssets();
@@ -2494,22 +2475,22 @@ namespace UTJ.MeshSync
                 var rec = kvp.Value;
                 if (rec.go != null && rec.go.activeInHierarchy)
                 {
-                    var mr = rec.go.GetComponent<SkinnedMeshRenderer>();
-                    if (mr == null || rec.submeshCounts.Length == 0)
+                    var mr = rec.go.GetComponent<Renderer>();
+                    if (mr == null || rec.mesh == null)
                         continue;
 
                     var materials = mr.sharedMaterials;
-                    int n = Math.Min(materials.Length, rec.submeshCounts[0]);
-                    for (int i = 0; i < n; ++i)
+                    int n = Math.Min(materials.Length, rec.materialIDs.Length);
+                    for (int si = 0; si < n; ++si)
                     {
-                        int mid = rec.materialIDs[i];
+                        int mid = rec.materialIDs[si];
                         var mrec = m_materialList.Find(a => a.id == mid);
                         if (mrec == null)
                             continue;
 
-                        if (materials[i] != mrec.material)
+                        if (materials[si] != mrec.material)
                         {
-                            mrec.material = materials[i];
+                            mrec.material = materials[si];
                             changed = true;
                             break;
                         }
