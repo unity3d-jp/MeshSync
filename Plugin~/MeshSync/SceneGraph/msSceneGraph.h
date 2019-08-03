@@ -98,7 +98,7 @@ public:
     {
         for (auto& e : entities)
             if (e->getType() == GetEntityType<EntityType>::type)
-                body(e);
+                body(static_cast<EntityType&>(*e));
     }
 
     template<class Body>
@@ -111,8 +111,6 @@ public:
 
     void buildHierarchy();
     void flatternHierarchy();
-    void stripNormals();
-    void stripTangents();
 };
 msSerializable(Scene);
 msDeclPtr(Scene);

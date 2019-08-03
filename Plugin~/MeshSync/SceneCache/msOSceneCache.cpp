@@ -71,13 +71,34 @@ void OSceneCacheImpl::addScene(ScenePtr scene, float time)
         if (m_oscs.flatten_hierarchy)
             scene->flatternHierarchy();
 
+        if (m_oscs.strip_normals) {
+            scene->eachEntity<Mesh>([](Mesh& mesh) {
+                mesh.normals.clear();
+                mesh.md_flags.has_normals = 0;
+                mesh.refine_settings.flags.gen_normals = 0;
+            });
+        }
+        if (m_oscs.strip_tangents) {
+            scene->eachEntity<Mesh>([](Mesh& mesh) {
+                mesh.tangents.clear();
+                mesh.md_flags.has_tangents = 0;
+                mesh.refine_settings.flags.gen_tangents = 0;
+            });
+        }
+
         if (m_oscs.apply_refinement)
             scene->import(m_oscs);
 
-        if (m_oscs.strip_normals)
-            scene->stripNormals();
-        if (m_oscs.strip_tangents)
-            scene->stripTangents();
+        if (m_oscs.strip_normals) {
+            scene->eachEntity<Mesh>([](Mesh& mesh) {
+                mesh.refine_settings.flags.gen_normals = 1;
+            });
+        }
+        if (m_oscs.strip_tangents) {
+            scene->eachEntity<Mesh>([](Mesh& mesh) {
+                mesh.refine_settings.flags.gen_tangents = 1;
+            });
+        }
     };
 
     SceneRecord rec;
