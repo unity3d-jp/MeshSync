@@ -506,10 +506,7 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             break;
 
         case IDC_BUTTON_EXPORT_CACHE:
-            handle_button([&]() { msmaxExportCache(msmaxObjectScope::All, false); });
-            break;
-        case IDC_BUTTON_EXPORT_CACHE_ALL:
-            handle_button([&]() { msmaxExportCache(msmaxObjectScope::All, true); });
+            handle_button([&]() { ctx.openCacheWindow(); });
             break;
         default: break;
         }
@@ -743,6 +740,13 @@ static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, L
             });
             break;
 
+        case IDOK:
+            handle_button([&]() { msmaxExportCache(s); });
+            DestroyWindow(hDlg);
+            break;
+        case IDCANCEL:
+            DestroyWindow(hDlg);
+            break;
         default: break;
         }
         break;
@@ -757,8 +761,24 @@ static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, L
 void msmaxContext::openCacheWindow()
 {
     if (!g_msmax_cache_window) {
-        CreateDialogParam(g_msmax_hinstance, MAKEINTRESOURCE(IDD_CACHE_WINDOW),
-            GetCOREInterface()->GetMAXHWnd(), msmaxCacheWindowCB, (LPARAM)this);
+        // open file save dialog
+        auto ifs = GetCOREInterface8();
+        MSTR filename = mu::ToWCS(GetCurrentMaxFileName() + ".sc").c_str();
+        MSTR dir = L"";
+
+        int filter_index = 0;
+        FilterList filter_list;
+        filter_list.Append(_M("Scene cache files(*.sc)"));
+        filter_list.Append(_M("*.sc"));
+        filter_list.SetFilterIndex(filter_index);
+
+        if (ifs->DoMaxSaveAsDialog(ifs->GetMAXHWnd(), L"Export Scene Cache", filename, dir, filter_list)) {
+            msmaxGetCacheSettings().path = ms::ToMBS(filename);
+
+            // open cache export settings window
+            CreateDialogParam(g_msmax_hinstance, MAKEINTRESOURCE(IDD_CACHE_WINDOW),
+                ifs->GetMAXHWnd(), msmaxCacheWindowCB, (LPARAM)this);
+        }
     }
 }
 

@@ -1514,31 +1514,6 @@ bool msmaxSendScene(msmaxExportTarget target, msmaxObjectScope scope)
     return true;
 }
 
-bool msmaxExportCache(msmaxObjectScope scope, bool all_frames)
-{
-    auto *ifs = GetCOREInterface8();
-
-    MSTR filename = mu::ToWCS(GetCurrentMaxFileName() + ".sc").c_str();
-    MSTR dir = L"";
-
-    int filter_index = 0;
-    FilterList filter_list;
-    filter_list.Append(_M("Scene cache files(*.sc)"));
-    filter_list.Append(_M("*.sc"));
-    filter_list.SetFilterIndex(filter_index);
-
-    if (ifs->DoMaxSaveAsDialog(ifs->GetMAXHWnd(), L"Export Scene Cache", filename, dir, filter_list)) {
-        auto& ctx = msmaxGetContext();
-        auto filename_mbs = ms::ToMBS(filename);
-        auto body = [&ctx, scope, all_frames, filename_mbs]() {
-            ctx.exportCache(scope, all_frames, filename_mbs);
-        };
-        ctx.addDeferredCall(body);
-        return true;
-    }
-    return false;
-}
-
 bool msmaxExportCache(const msmaxCacheExportSettings& cache_settings)
 {
     auto& ctx = msmaxGetContext();

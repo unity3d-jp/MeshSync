@@ -255,5 +255,4 @@ private:
 #define msmaxGetSettings() msmaxGetContext().getSettings()
 #define msmaxGetCacheSettings() msmaxGetContext().getCacheSettings()
 bool msmaxSendScene(msmaxExportTarget target, msmaxObjectScope scope);
-bool msmaxExportCache(msmaxObjectScope scope, bool all_frames);
 bool msmaxExportCache(const msmaxCacheExportSettings& cache_settings);
