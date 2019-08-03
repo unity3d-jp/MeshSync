@@ -819,7 +819,7 @@ mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
 void msmaxContext::extractTransform(TreeNode& n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
     auto mat = getGlobalMatrix(n.node, t);
-    if (m_settings.bake_modifiers && m_settings.flatten_hierarchy) {
+    if (m_settings.flatten_hierarchy) {
         // don't care parent in this case
     }
     else {
@@ -1093,6 +1093,12 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
     auto& dst = *ret;
     extractTransform(n);
 
+    if (m_settings.flatten_hierarchy) {
+        // when 'flatten_hierarchy' is enabled, transform is applied to vertices.
+        // so node transform must be identity.
+        dst.assignMatrix(mu::float4x4::identity());
+    }
+
     // send mesh contents even if the node is hidden.
 
     Mesh *mesh = nullptr;
@@ -1151,12 +1157,12 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
         }
         else {
             // convert vertices
-            //   (local space) -> world space -> local space without scale
+            //   (local space) -> world space -> local space without scale (if 'flatten_hierarchy' is off)
             // to handle world space problem and complex scale composition
-            if (IsInWorldSpace(n, t))
-                dst.refine_settings.local2world = mu::invert(getGlobalMatrix(n, t));
-            else
-                dst.refine_settings.local2world = to_float4x4(n->GetObjTMAfterWSM(t)) * mu::invert(getGlobalMatrix(n, t));
+            if (!IsInWorldSpace(n, t))
+                dst.refine_settings.local2world = to_float4x4(n->GetObjTMAfterWSM(t));
+            if (!m_settings.flatten_hierarchy)
+                dst.refine_settings.local2world *= mu::invert(getGlobalMatrix(n, t));
             dst.refine_settings.flags.apply_local2world = 1;
         }
 

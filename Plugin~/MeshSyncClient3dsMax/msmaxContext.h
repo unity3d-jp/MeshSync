@@ -86,7 +86,7 @@ struct msmaxCacheExportSettings
 
     bool bake_modifiers = true;
     bool use_render_meshes = true;
-    bool flatten_hierarchy = true;
+    bool flatten_hierarchy = false;
     bool merge_meshes = false;
 
     bool strip_normals = false;
