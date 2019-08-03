@@ -368,6 +368,8 @@ bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
 
     auto settings_old = m_settings;
     m_settings.export_scene_cache = true;
+    m_settings.ignore_non_renderable = cache_settings.ignore_non_renderable;
+    m_settings.make_double_sided = cache_settings.make_double_sided;
     m_settings.bake_modifiers = cache_settings.bake_modifiers;
     m_settings.use_render_meshes = cache_settings.use_render_meshes;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
@@ -816,7 +818,8 @@ mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
     }
 }
 
-void msmaxContext::extractTransform(TreeNode& n, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
+    mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
     auto mat = getGlobalMatrix(n.node, t);
     if (m_settings.flatten_hierarchy) {
@@ -842,10 +845,14 @@ void msmaxContext::extractTransform(TreeNode& n)
     extractTransform(n, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
 }
 
-void msmaxContext::extractCameraData(GenCamera *cam, TimeValue t,
+void msmaxContext::extractCameraData(TreeNode& n, TimeValue t,
     bool& ortho, float& fov, float& near_plane, float& far_plane,
     float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
+    auto *cam = dynamic_cast<GenCamera*>(n.baseobj);
+    if (!cam)
+        return;
+
     float aspect = GetCOREInterface()->GetRendImageAspect();
     ortho = cam->IsOrtho();
     {
@@ -878,9 +885,13 @@ void msmaxContext::extractCameraData(GenCamera *cam, TimeValue t,
     }
 }
 
-void msmaxContext::extractLightData(GenLight *light, TimeValue t,
+void msmaxContext::extractLightData(TreeNode& n, TimeValue t,
     ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle)
 {
+    auto *light = dynamic_cast<GenLight*>(n.baseobj);
+    if (!light)
+        return;
+
     switch (light->Type()) {
     case TSPOT_LIGHT:
     case FSPOT_LIGHT: // fall through
@@ -956,7 +967,7 @@ ms::CameraPtr msmaxContext::exportCamera(TreeNode& n)
     auto ret = createEntity<ms::Camera>(n);
     auto& dst = *ret;
     extractTransform(n);
-    extractCameraData((GenCamera*)n.baseobj, GetTime(),
+    extractCameraData(n, GetTime(),
         dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane, dst.focal_length, dst.sensor_size, dst.lens_shift);
     m_entity_manager.add(ret);
     return ret;
@@ -967,7 +978,7 @@ ms::LightPtr msmaxContext::exportLight(TreeNode& n)
     auto ret = createEntity<ms::Light>(n);
     auto& dst = *ret;
     extractTransform(n);
-    extractLightData((GenLight*)n.baseobj, GetTime(),
+    extractLightData(n, GetTime(),
         dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.spot_angle);
     m_entity_manager.add(ret);
     return ret;
@@ -1094,9 +1105,9 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
     extractTransform(n);
 
     if (m_settings.flatten_hierarchy) {
-        // when 'flatten_hierarchy' is enabled, transform is applied to vertices.
-        // so node transform must be identity.
-        dst.assignMatrix(mu::float4x4::identity());
+        // when 'flatten_hierarchy' is enabled, rotation and scale are applied to vertices.
+        dst.rotation = mu::quatf::identity();
+        dst.scale = mu::float3::one();
     }
 
     // send mesh contents even if the node is hidden.
@@ -1158,10 +1169,11 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
         else {
             // convert vertices
             //   (local space) -> world space -> local space without scale (if 'flatten_hierarchy' is off)
-            // to handle world space problem and complex scale composition
-            if (!IsInWorldSpace(n, t))
-                dst.refine_settings.local2world = to_float4x4(n->GetObjTMAfterWSM(t));
-            if (!m_settings.flatten_hierarchy)
+            // to handle world space problem and complex transform composition
+            dst.refine_settings.local2world = to_float4x4(n->GetObjTMAfterWSM(t));
+            if (m_settings.flatten_hierarchy)
+                dst.refine_settings.local2world *= mu::invert(dst.toMatrix());
+            else
                 dst.refine_settings.local2world *= mu::invert(getGlobalMatrix(n, t));
             dst.refine_settings.flags.apply_local2world = 1;
         }
@@ -1419,7 +1431,7 @@ void msmaxContext::extractCameraAnimation(ms::TransformAnimation& dst_, TreeNode
     bool ortho;
     float fov, near_plane, far_plane, focal_length;
     mu::float2 sensor_size, lens_shift;
-    extractCameraData((GenCamera*)n->baseobj, m_current_time_tick, ortho, fov, near_plane, far_plane, focal_length, sensor_size, lens_shift);
+    extractCameraData(*n, m_current_time_tick, ortho, fov, near_plane, far_plane, focal_length, sensor_size, lens_shift);
 
     dst.fov.push_back({ t, fov });
     dst.near_plane.push_back({ t, near_plane });
@@ -1442,7 +1454,7 @@ void msmaxContext::extractLightAnimation(ms::TransformAnimation& dst_, TreeNode 
     ms::Light::ShadowType stype;
     mu::float4 color;
     float intensity, spot_angle;
-    extractLightData((GenLight*)n->baseobj, m_current_time_tick, ltype, stype, color, intensity, spot_angle);
+    extractLightData(*n, m_current_time_tick, ltype, stype, color, intensity, spot_angle);
 
     dst.color.push_back({ t, color });
     dst.intensity.push_back({ t, intensity });

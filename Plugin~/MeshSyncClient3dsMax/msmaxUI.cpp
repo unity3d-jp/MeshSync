@@ -718,17 +718,40 @@ static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, L
             });
             break;
 
-            
+        case IDC_MAKE_DOUBLE_SIDED:
+            handle_button([&]() {
+                s.make_double_sided = CtrlIsChecked(IDC_MAKE_DOUBLE_SIDED);
+            });
+            break;
+        case IDC_IGNORE_NON_RENDERABLE:
+            handle_button([&]() {
+                s.ignore_non_renderable = CtrlIsChecked(IDC_IGNORE_NON_RENDERABLE);
+            });
+            break;
         case IDC_BAKE_MODIFIERS:
             handle_button([&]() {
                 s.bake_modifiers = CtrlIsChecked(IDC_BAKE_MODIFIERS);
+                if (!s.bake_modifiers && CtrlIsChecked(IDC_USE_RENDER_MESHES)) {
+                    s.use_render_meshes = false;
+                    CtrlSetCheck(IDC_USE_RENDER_MESHES, false);
+                }
             });
             break;
         case IDC_USE_RENDER_MESHES:
             handle_button([&]() {
-                s.use_render_meshes = CtrlIsChecked(IDC_USE_RENDER_MESHES);
+                if (CtrlIsChecked(IDC_USE_RENDER_MESHES)) {
+                    if (!s.bake_modifiers) {
+                        s.bake_modifiers = true;
+                        CtrlSetCheck(IDC_BAKE_MODIFIERS, true);
+                    }
+                    s.use_render_meshes = true;
+                }
+                else {
+                    s.use_render_meshes = false;
+                }
             });
             break;
+
         case IDC_FLATTEN_HIERARCHY:
             handle_button([&]() {
                 s.flatten_hierarchy = CtrlIsChecked(IDC_FLATTEN_HIERARCHY);
@@ -832,6 +855,8 @@ void msmaxContext::updateCacheControls()
     CtrlSetText(IDC_ZSTD_COMPRESSION_LEVEL, s.zstd_compression_level);
 
     CtrlComboSetSelection(IDC_MATERIAL_RANGE, (int)s.material_frame_range);
+    CtrlSetCheck(IDC_MAKE_DOUBLE_SIDED, s.make_double_sided);
+    CtrlSetCheck(IDC_IGNORE_NON_RENDERABLE, s.ignore_non_renderable);
     CtrlSetCheck(IDC_BAKE_MODIFIERS, s.bake_modifiers);
     CtrlSetCheck(IDC_USE_RENDER_MESHES, s.use_render_meshes);
     CtrlSetCheck(IDC_FLATTEN_HIERARCHY, s.flatten_hierarchy);

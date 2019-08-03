@@ -84,6 +84,8 @@ struct msmaxCacheExportSettings
     int zstd_compression_level = 22; // (min) 0 - 22 (max)
     float samples_per_frame = 1.0f;
 
+    bool ignore_non_renderable = true;
+    bool make_double_sided = false;
     bool bake_modifiers = true;
     bool use_render_meshes = true;
     bool flatten_hierarchy = false;
@@ -203,10 +205,10 @@ private:
     mu::float4x4 getGlobalMatrix(INode *n, TimeValue t);
     void extractTransform(TreeNode& node, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
     void extractTransform(TreeNode& node);
-    void extractCameraData(GenCamera *cam, TimeValue t,
+    void extractCameraData(TreeNode& node, TimeValue t,
         bool& ortho, float& fov, float& near_plane, float& far_plane,
         float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);
-    void extractLightData(GenLight *light, TimeValue t,
+    void extractLightData(TreeNode& node, TimeValue t,
         ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle);
 
     void doExtractMeshData(ms::Mesh& dst, INode *n, Mesh *mesh);
