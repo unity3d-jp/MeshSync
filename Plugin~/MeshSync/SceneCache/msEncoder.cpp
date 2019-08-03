@@ -5,6 +5,7 @@
 #ifdef msEnableZSTD
 #define ZSTD_STATIC_LINKING_ONLY
 #include <zstd.h>
+#include "msSceneCache.h"
 #pragma comment(lib, "libzstd_static.lib")
 #endif
 
@@ -40,6 +41,11 @@ BufferEncoderPtr CreatePlainEncoder() { return std::make_shared<PlainBufferEncod
 std::tuple<int, int> GetZSTDCompressionLevelRange()
 {
     return{ ZSTD_minCLevel(), ZSTD_maxCLevel() };
+}
+
+int ClampZSTDCompressionLevel(int v)
+{
+    return clamp(v, 0, ZSTD_maxCLevel());
 }
 
 int GetZSTDDefaultCompressionLevel()
@@ -87,6 +93,7 @@ BufferEncoderPtr CreateZSTDEncoder(int compression_level)
 #else
 
 std::tuple<int, int> GetZSTDCompressionLevelRange() { return{ 0, 0 }; }
+int ClampZSTDCompressionLevel(int v) { return 0; }
 int GetZSTDDefaultCompressionLevel() { return 0; }
 BufferEncoderPtr CreateZSTDEncoder(int) { return nullptr; }
 

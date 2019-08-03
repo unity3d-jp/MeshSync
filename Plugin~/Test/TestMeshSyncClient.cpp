@@ -17,9 +17,9 @@ static ms::ClientSettings GetClientSettings()
     return ret;
 }
 
-static void Send(ms::Scene& scene)
+static void Send(ms::ScenePtr scene)
 {
-    for (auto& obj : scene.entities) {
+    for (auto& obj : scene->entities) {
         if (auto *mesh = dynamic_cast<ms::Mesh*>(obj.get())) {
             mesh->setupMeshDataFlags();
         }
@@ -32,8 +32,7 @@ static void Send(ms::Scene& scene)
         client.send(mes);
     }
     {
-        ms::SetMessage mes;
-        mes.scene = scene;
+        ms::SetMessage mes(scene);
         client.send(mes);
     }
     {
@@ -49,19 +48,20 @@ TestCase(Test_SendMesh)
 {
     ms::OSceneCacheSettings c0;
     c0.strip_unchanged = 0;
-    c0.apply_refinement = 0;
+    c0.flatten_hierarchy = 0;
     c0.encoding = ms::SceneCacheEncoding::Plain;
 
     ms::OSceneCacheSettings c1;
-    c1.apply_refinement = 0;
+    c1.flatten_hierarchy = 0;
 
     ms::OSceneCacheSettings c2;
-    c2.apply_refinement = 0;
+    c2.flatten_hierarchy = 0;
     c2.encoder_settings.zstd.compression_level = 100;
 
-    auto osc_c0 = ms::OpenOSceneCacheFile("wave_c0.sc", c0);
-    auto osc_c1 = ms::OpenOSceneCacheFile("wave_c1.sc", c1);
-    auto osc_c2 = ms::OpenOSceneCacheFile("wave_c2.sc", c2);
+    ms::AsyncSceneCacheWriter writer0, writer1, writer2;
+    writer0.open("wave_c0.sc", c0);
+    writer1.open("wave_c1.sc", c1);
+    writer2.open("wave_c2.sc", c2);
 
     for (int i = 0; i < 8; ++i) {
         auto scene = ms::Scene::create();
@@ -82,18 +82,30 @@ TestCase(Test_SendMesh)
 
         GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 30.0f * mu::DegToRad * i);
         mids.resize(counts.size(), 0);
+        mesh->setupMeshDataFlags();
 
-        osc_c0->addScene(scene->clone(), 0.5f * i);
-        osc_c1->addScene(scene->clone(), 0.5f * i);
-        osc_c2->addScene(scene->clone(), 0.5f * i);
-        Send(*scene);
+
+        writer0.time = writer1.time = writer2.time = 0.5f * i;
+
+        writer0.geometries.emplace_back(std::static_pointer_cast<ms::Transform>(mesh->clone(true)));
+        writer0.kick();
+
+        writer1.geometries.emplace_back(std::static_pointer_cast<ms::Transform>(mesh->clone(true)));
+        writer1.kick();
+
+        writer2.geometries.emplace_back(std::static_pointer_cast<ms::Transform>(mesh->clone(true)));
+        writer2.kick();
+
+        Send(scene);
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
 }
 
 TestCase(Test_SceneCacheRead)
 {
-    auto isc = ms::OpenISceneCacheFile("wave.scz");
+    ms::ISceneCacheSettings iscs;
+    iscs.enable_diff = false;
+    auto isc = ms::OpenISceneCacheFile("wave_c2.sc", iscs);
     Expect(isc);
     if (!isc)
         return;
@@ -104,7 +116,7 @@ TestCase(Test_SceneCacheRead)
         auto scene = isc->getByTime(t, true);
         if (!scene)
             break;
-        Send(*scene);
+        Send(scene);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
@@ -112,10 +124,10 @@ TestCase(Test_SceneCacheRead)
 
 TestCase(Test_Animation)
 {
-    ms::Scene scene;
+    auto scene = ms::Scene::create();
     {
         auto node = ms::Mesh::create();
-        scene.entities.push_back(node);
+        scene->entities.push_back(node);
 
         node->path = "/Test/Animation";
         node->position = { 0.0f, 0.0f, 0.0f };
@@ -127,7 +139,7 @@ TestCase(Test_Animation)
     }
     {
         auto clip = ms::AnimationClip::create();
-        scene.assets.push_back(clip);
+        scene->assets.push_back(clip);
 
         auto anim = ms::TransformAnimation::create();
         clip->addAnimation(anim);
@@ -155,10 +167,10 @@ TestCase(Test_Points)
 {
     Random rand;
 
-    ms::Scene scene;
+    auto scene = ms::Scene::create();
     {
         auto node = ms::Mesh::create();
-        scene.entities.push_back(node);
+        scene->entities.push_back(node);
 
         node->path = "/Test/PointMesh";
         node->position = { 0.0f, 0.0f, 0.0f };
@@ -171,7 +183,7 @@ TestCase(Test_Points)
     }
     {
         auto node = ms::Points::create();
-        scene.entities.push_back(node);
+        scene->entities.push_back(node);
 
         node->path = "/Test/PointsT";
         node->reference = "/Test/PointMesh";
@@ -189,7 +201,7 @@ TestCase(Test_Points)
     }
     {
         auto node = ms::Points::create();
-        scene.entities.push_back(node);
+        scene->entities.push_back(node);
 
         node->path = "/Test/PointsTR";
         node->reference = "/Test/PointMesh";
@@ -209,10 +221,10 @@ TestCase(Test_Points)
     }
     {
         auto node = ms::Points::create();
-        scene.entities.push_back(node);
+        scene->entities.push_back(node);
 
         auto clip = ms::AnimationClip::create();
-        scene.assets.push_back(clip);
+        scene->assets.push_back(clip);
 
         auto anim = ms::PointsAnimation::create();
         clip->addAnimation(anim);
@@ -263,7 +275,7 @@ TestCase(Test_Points)
 
 
 template<class color_t>
-void CreateCheckerImage(RawVector<char>& dst, color_t black, color_t white, int width, int height)
+void CreateCheckerImage(SharedVector<char>& dst, color_t black, color_t white, int width, int height)
 {
     int num_pixels = width * height;
     int checker_size = 8;
@@ -308,20 +320,20 @@ TestCase(Test_SendTexture)
             "Texture_RGBA_f16.exr",
         };
 
-        ms::Scene scene;
+        auto scene = ms::Scene::create();
         for (auto filename : raw_files) {
             auto tex = ms::Texture::create();
             if (tex->readFromFile(filename)) {
-                scene.assets.push_back(tex);
+                scene->assets.push_back(tex);
                 tex->id = gen_id();
             }
         }
-        if (!scene.assets.empty())
+        if (!scene->assets.empty())
             Send(scene);
     }
 
     {
-        ms::Scene scene;
+        auto scene = ms::Scene::create();
 
         const int width = 512;
         const int height = 512;
@@ -329,43 +341,43 @@ TestCase(Test_SendTexture)
             // Ru8
             unorm8 black{ 0.0f };
             unorm8 white{ 1.0f };
-            scene.assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "Ru8"));
+            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "Ru8"));
         }
         {
             // RGu8
             unorm8x2 black{ 0.0f, 0.0f };
             unorm8x2 white{ 1.0f, 1.0f };
-            scene.assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGu8"));
+            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGu8"));
         }
         {
             // RGBAu8
             unorm8x3 black{ 0.0f, 0.0f, 0.0f };
             unorm8x3 white{ 1.0f, 1.0f, 1.0f };
-            scene.assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBu8"));
+            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBu8"));
         }
         {
             // RGBAu8
             unorm8x4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             unorm8x4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene.assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAu8"));
+            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAu8"));
         }
         {
             // RGBAf16
             half4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             half4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene.assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf16"));
+            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf16"));
         }
         {
             // RGBAf32
             float4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             float4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene.assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf32"));
+            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf32"));
         }
 
         // material
         {
             auto mat = ms::Material::create();
-            scene.assets.push_back(mat);
+            scene->assets.push_back(mat);
             mat->name = "TestMaterial1";
             mat->id = 0;
             auto& stdmat = ms::AsStandardMaterial(*mat);
@@ -444,26 +456,26 @@ static ms::AudioPtr CreateAudioFileAsset(const char *path, int id)
 TestCase(Test_Audio)
 {
     int ids = 0;
-    ms::Scene scene;
-    scene.assets.push_back(CreateAudioAsset("audio_u8", ms::AudioFormat::U8, ids++));
-    scene.assets.push_back(CreateAudioAsset("audio_s16", ms::AudioFormat::S16, ids++));
-    scene.assets.push_back(CreateAudioAsset("audio_s24", ms::AudioFormat::S24, ids++));
-    scene.assets.push_back(CreateAudioAsset("audio_s32", ms::AudioFormat::S32, ids++));
-    scene.assets.push_back(CreateAudioAsset("audio_f32", ms::AudioFormat::F32, ids++));
+    auto scene = ms::Scene::create();
+    scene->assets.push_back(CreateAudioAsset("audio_u8", ms::AudioFormat::U8, ids++));
+    scene->assets.push_back(CreateAudioAsset("audio_s16", ms::AudioFormat::S16, ids++));
+    scene->assets.push_back(CreateAudioAsset("audio_s24", ms::AudioFormat::S24, ids++));
+    scene->assets.push_back(CreateAudioAsset("audio_s32", ms::AudioFormat::S32, ids++));
+    scene->assets.push_back(CreateAudioAsset("audio_f32", ms::AudioFormat::F32, ids++));
     if (auto afa = CreateAudioFileAsset("explosion1.wav", ids++))
-        scene.assets.push_back(afa);
+        scene->assets.push_back(afa);
     Send(scene);
 }
 
 TestCase(Test_FileAsset)
 {
-    ms::Scene scene;
+    auto scene = ms::Scene::create();
 
     // file asset
     {
         auto as = ms::FileAsset::create();
         if (as->readFromFile("pch.h"))
-            scene.assets.push_back(as);
+            scene->assets.push_back(as);
     }
     Send(scene);
 }
@@ -502,38 +514,3 @@ TestCase(Test_Query)
     SendQuery(AllNodes);
 #undef SendQuery
 }
-
-TestCase(Test_CacheWriter)
-{
-    ms::AsyncSceneCacheWriter writer;
-    writer.open("wave1f.scz");
-
-    writer.on_prepare = [&writer]() {
-        auto& t = writer;
-        t.scene_settings.handedness = ms::Handedness::RightZUp;
-        t.scene_settings.scale_factor = 1.0f;
-
-        t.clear();
-
-        auto mesh = ms::Mesh::create();
-        t.geometries.push_back(mesh);
-
-        mesh->path = "/Test/Wave";
-        mesh->refine_settings.flags.gen_normals = 1;
-        mesh->refine_settings.flags.gen_tangents = 1;
-
-        auto& points = mesh->points;
-        auto& uv = mesh->uv0;
-        auto& counts = mesh->counts;
-        auto& indices = mesh->indices;
-        auto& mids = mesh->material_ids;
-        GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 0);
-        mids.resize(counts.size(), 0);
-
-    };
-
-
-    writer.kick();
-    writer.wait();
-}
-

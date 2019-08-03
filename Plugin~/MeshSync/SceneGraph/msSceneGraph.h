@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include <memory>
 #include "MeshUtils/MeshUtils.h"
 #include "msFoundation.h"
@@ -59,15 +60,23 @@ struct SceneImportSettings
 class Scene
 {
 public:
+    // serializable
     SceneSettings settings;
     std::vector<AssetPtr> assets;
     std::vector<TransformPtr> entities;
     std::vector<ConstraintPtr> constraints;
 
+    // non-serializable
+    std::list<RawVector<char>> scene_buffers;
+
+protected:
+    Scene();
+    ~Scene();
 public:
     msDefinePool(Scene);
+    static std::shared_ptr<Scene> create(std::istream& is);
 
-    std::shared_ptr<Scene> clone();
+    std::shared_ptr<Scene> clone(bool detach = false);
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is); // throw
     void strip(Scene& base);
@@ -89,7 +98,7 @@ public:
     {
         for (auto& e : entities)
             if (e->getType() == GetEntityType<EntityType>::type)
-                body(e);
+                body(static_cast<EntityType&>(*e));
     }
 
     template<class Body>
@@ -102,8 +111,6 @@ public:
 
     void buildHierarchy();
     void flatternHierarchy();
-    void stripNormals();
-    void stripTangents();
 };
 msSerializable(Scene);
 msDeclPtr(Scene);

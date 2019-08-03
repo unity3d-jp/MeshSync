@@ -114,13 +114,25 @@ void GenerateIcoSphereMesh(
     for (int& c : counts) { c = 3; }
 }
 
+void GenerateIcoSphereMesh(
+    SharedVector<int>& counts,
+    SharedVector<int>& indices,
+    SharedVector<float3>& points,
+    SharedVector<float2>& uv,
+    float radius,
+    int iteration)
+{
+    GenerateIcoSphereMesh(counts.as_raw(), indices.as_raw(), points.as_raw(), uv.as_raw(), radius, iteration);
+}
+
+
 void GenerateWaveMesh(
     RawVector<int>& counts,
     RawVector<int>& indices,
     RawVector<float3> &points,
     RawVector<float2> &uv,
     float size, float height,
-    const int resolution,
+    int resolution,
     float angle,
     bool triangulate)
 {
@@ -187,4 +199,18 @@ void GenerateWaveMesh(
             }
         }
     }
+}
+
+void GenerateWaveMesh(
+    SharedVector<int>& counts,
+    SharedVector<int>& indices,
+    SharedVector<float3>& points,
+    SharedVector<float2>& uv,
+    float size,
+    float height,
+    int resolution,
+    float angle,
+    bool triangulate)
+{
+    GenerateWaveMesh(counts.as_raw(), indices.as_raw(), points.as_raw(), uv.as_raw(), size, height, resolution, angle, triangulate);
 }

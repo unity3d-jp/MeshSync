@@ -25,7 +25,7 @@ public:
     AudioFormat format = AudioFormat::Unknown;
     int frequency = 0;
     int channels = 0;
-    RawVector<char> data;
+    SharedVector<char> data;
 
 protected:
     Audio();

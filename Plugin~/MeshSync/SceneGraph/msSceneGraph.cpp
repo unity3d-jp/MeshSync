@@ -31,12 +31,27 @@ void SceneSettings::deserialize(std::istream& is)
 #define EachMember(F)\
     F(settings) F(assets) F(entities) F(constraints)
 
-ScenePtr Scene::clone()
+Scene::Scene()
+{
+}
+
+Scene::~Scene()
+{
+}
+
+ScenePtr Scene::create(std::istream& is)
+{
+    auto ret = create();
+    ret->deserialize(is);
+    return ret;
+}
+
+ScenePtr Scene::clone(bool detach)
 {
     auto ret = create();
     *ret = *this;
-    parallel_for(0, (int)entities.size(), 10, [this, &ret](int ei) {
-        ret->entities[ei] = std::static_pointer_cast<Transform>(entities[ei]->clone());
+    parallel_for(0, (int)entities.size(), 10, [this, detach, &ret](int ei) {
+        ret->entities[ei] = std::static_pointer_cast<Transform>(entities[ei]->clone(detach));
     });
     return ret;
 }
@@ -111,9 +126,14 @@ void Scene::lerp(const Scene& s1, const Scene& s2, float t)
             auto& e1 = s1.entities[i];
             auto& e2 = s2.entities[i];
             if (e1->id == e2->id) {
-                auto e3 = e1->clone();
-                e3->lerp(*e1, *e2, t);
-                entities[i] = std::static_pointer_cast<Transform>(e3);
+                if (e1->isGeometry() && !e1->cache_flags.constant_topology) {
+                    entities[i] = e1;
+                }
+                else {
+                    auto e3 = e1->clone();
+                    e3->lerp(*e1, *e2, t);
+                    entities[i] = std::static_pointer_cast<Transform>(e3);
+                }
             }
         });
     }
@@ -121,10 +141,11 @@ void Scene::lerp(const Scene& s1, const Scene& s2, float t)
 
 void Scene::clear()
 {
-    settings = SceneSettings();
+    settings = {};
     assets.clear();
     entities.clear();
     constraints.clear();
+    scene_buffers.clear();
 }
 
 uint64_t Scene::hash() const
@@ -291,30 +312,6 @@ void Scene::flatternHierarchy()
         e->path += kvp.first;
         entities.push_back(e);
     }
-}
-
-void Scene::stripNormals()
-{
-    eachEntity<Mesh>([](auto& e) {
-        auto& mesh = static_cast<Mesh&>(*e);
-        if (!mesh.normals.empty()) {
-            mesh.normals.clear();
-            mesh.md_flags.has_normals = 0;
-            mesh.refine_settings.flags.gen_normals = 1;
-        }
-    });
-}
-
-void Scene::stripTangents()
-{
-    eachEntity<Mesh>([](auto& e) {
-        auto& mesh = static_cast<Mesh&>(*e);
-        if (!mesh.tangents.empty()) {
-            mesh.tangents.clear();
-            mesh.md_flags.has_tangents = 0;
-            mesh.refine_settings.flags.gen_tangents = 1;
-        }
-    });
 }
 
 template<class AssetType>

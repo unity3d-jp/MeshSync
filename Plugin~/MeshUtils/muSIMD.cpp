@@ -5,6 +5,7 @@
 
 namespace mu {
 
+//#undef muEnableISPC
 
 #ifdef muEnableISPC
 #include "MeshUtilsCore.h"

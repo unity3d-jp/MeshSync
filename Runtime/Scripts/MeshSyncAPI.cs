@@ -59,6 +59,54 @@ namespace UTJ.MeshSync
         }
 
 #if UNITY_EDITOR
+        // copy a file to StreamingAssets.
+        // if here is already a file with same name:
+        // - use existing one if both are identical (identical = same file size & same mtime)
+        // - otherwise copy with rename (e.g. hoge.png -> hoge2.png)
+        // return destination path
+        public static string CopyFileToStreamingAssets(string srcPath)
+        {
+            if (!System.IO.File.Exists(srcPath))
+                return null; // srcPath doesn't exist
+
+            var streaminAssetsPath = Application.streamingAssetsPath;
+            if (srcPath.Contains(streaminAssetsPath))
+                return srcPath; // srcPath is already in StreamingAssets
+
+            var filename = System.IO.Path.GetFileNameWithoutExtension(srcPath);
+            var ext = System.IO.Path.GetExtension(srcPath);
+            for (int n = 1; ; ++n)
+            {
+                var ns = n == 1 ? "" : n.ToString();
+                var dstPath = string.Format("{0}/{1}{2}{3}", streaminAssetsPath, filename, ns, ext);
+                if (System.IO.File.Exists(dstPath))
+                {
+                    var srcInfo = new System.IO.FileInfo(srcPath);
+                    var dstInfo = new System.IO.FileInfo(dstPath);
+                    bool identical =
+                        srcInfo.Length == dstInfo.Length &&
+                        srcInfo.LastWriteTime == dstInfo.LastWriteTime;
+                    if (identical)
+                    {
+                        // use existing one
+                        Debug.Log(string.Format("CopyFileToStreamingAssets: use existing file {0} -> {1}", srcPath, dstPath));
+                        return dstPath;
+                    }
+                    else
+                        continue;
+                }
+                else
+                {
+                    // do copy
+                    System.IO.File.Copy(srcPath, dstPath);
+                    Debug.Log(string.Format("CopyFileToStreamingAssets: copy {0} -> {1}", srcPath, dstPath));
+                    return dstPath;
+                }
+            }
+        }
+
+        // save asset to path.
+        // if there is already a file, overwrite it but keep .meta intact.
         public static T SaveAsset<T>(T asset, string path) where T : UnityEngine.Object
         {
             try
@@ -1037,6 +1085,7 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
+        [DllImport("MeshSyncServer")] static extern void msSetSizeOfKeyframe(int v);
         [DllImport("MeshSyncServer")] static extern IntPtr msCurveGetName(IntPtr self);
         [DllImport("MeshSyncServer")] static extern DataType msCurveGetDataType(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msCurveGetNumSamples(IntPtr self);
@@ -1049,6 +1098,11 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern byte msCurveFillF4(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im);
         [DllImport("MeshSyncServer")] static extern byte msCurveFillQuat(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im);
         [DllImport("MeshSyncServer")] static extern byte msCurveFillEuler(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im);
+
+        static void Prepare()
+        {
+            msSetSizeOfKeyframe(Marshal.SizeOf(typeof(Keyframe)));
+        }
         #endregion
 
         public enum DataType
@@ -1084,20 +1138,19 @@ namespace UTJ.MeshSync
             get { return Misc.S(msCurveGetBlendshapeName(self)); }
         }
 
-        public bool FillI(Keyframe[] x, InterpolationMode im) { return msCurveFillI(self, x, im) != 0; }
-        public bool FillF(Keyframe[] x, InterpolationMode im) { return msCurveFillF(self, x, im) != 0; }
-        public bool FillF2(Keyframe[] x, Keyframe[] y, InterpolationMode im) { return msCurveFillF2(self, x, y, im) != 0; }
-        public bool FillF3(Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im) { return msCurveFillF3(self, x, y, z, im) != 0; }
-        public bool FillF4(Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im) { return msCurveFillF4(self, x, y, z, w, im) != 0; }
-        public bool FillQuat(Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im) { return msCurveFillQuat(self, x, y, z, w, im) != 0; }
-        public bool FillEuler(Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im) { return msCurveFillEuler(self, x, y, z, im) != 0; }
+        public bool FillI(Keyframe[] x, InterpolationMode im) { Prepare(); return msCurveFillI(self, x, im) != 0; }
+        public bool FillF(Keyframe[] x, InterpolationMode im) { Prepare(); return msCurveFillF(self, x, im) != 0; }
+        public bool FillF2(Keyframe[] x, Keyframe[] y, InterpolationMode im) { Prepare(); return msCurveFillF2(self, x, y, im) != 0; }
+        public bool FillF3(Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im) { Prepare(); return msCurveFillF3(self, x, y, z, im) != 0; }
+        public bool FillF4(Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im) { Prepare(); return msCurveFillF4(self, x, y, z, w, im) != 0; }
+        public bool FillQuat(Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im) { Prepare(); return msCurveFillQuat(self, x, y, z, w, im) != 0; }
+        public bool FillEuler(Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im) { Prepare(); return msCurveFillEuler(self, x, y, z, im) != 0; }
     }
 
     public struct AnimationData
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern void msSetSizeOfKeyframe(int v);
         [DllImport("MeshSyncServer")] static extern IntPtr msAnimationGetPath(IntPtr self);
         [DllImport("MeshSyncServer")] static extern EntityType msAnimationGetEntityType(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msAnimationGetNumCurves(IntPtr self);
@@ -1142,7 +1195,6 @@ namespace UTJ.MeshSync
             if (!data)
                 return null;
 
-            msSetSizeOfKeyframe(Marshal.SizeOf(typeof(Keyframe)));
             int n = data.numSamples;
             var t = data.dataType;
             if (n == 0 || t == AnimationCurveData.DataType.Unknown)
@@ -1772,7 +1824,7 @@ namespace UTJ.MeshSync
         #region internal
         public IntPtr self;
         [DllImport("MeshSyncServer")] static extern int msSubmeshGetNumIndices(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msSubmeshReadIndices(IntPtr self, IntPtr dst);
+        [DllImport("MeshSyncServer")] static extern void msSubmeshReadIndices(IntPtr self, IntPtr mesh, IntPtr dst);
         [DllImport("MeshSyncServer")] static extern int msSubmeshGetMaterialID(IntPtr self);
         [DllImport("MeshSyncServer")] static extern Topology msSubmeshGetTopology(IntPtr self);
         #endregion
@@ -1789,7 +1841,7 @@ namespace UTJ.MeshSync
         public int numIndices { get { return msSubmeshGetNumIndices(self); } }
         public Topology topology { get { return msSubmeshGetTopology(self); } }
         public int materialID { get { return msSubmeshGetMaterialID(self); } }
-        public void ReadIndices(PinnedList<int> dst) { msSubmeshReadIndices(self, dst); }
+        public void ReadIndices(MeshData mesh, PinnedList<int> dst) { msSubmeshReadIndices(self, mesh.self, dst); }
     }
 
     public struct SplitData
@@ -1799,21 +1851,20 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumPoints(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumIndices(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumBoneWeights(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern Vector3 msSplitGetBoundsCenter(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern Vector3 msSplitGetBoundsSize(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern Bounds msSplitGetBounds(IntPtr self);
         [DllImport("MeshSyncServer")] static extern int msSplitGetNumSubmeshes(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern SubmeshData msSplitGetSubmesh(IntPtr self, int i);
+        [DllImport("MeshSyncServer")] static extern SubmeshData msSplitGetSubmesh(IntPtr self, IntPtr mesh, int i);
         #endregion
 
         public int numPoints { get { return msSplitGetNumPoints(self); } }
         public int numIndices { get { return msSplitGetNumIndices(self); } }
         public int numBoneWeights { get { return msSplitGetNumBoneWeights(self); } }
-        public Bounds bounds { get { return new Bounds(msSplitGetBoundsCenter(self), msSplitGetBoundsSize(self)); } }
+        public Bounds bounds { get {  return msSplitGetBounds(self); } }
         public int numSubmeshes { get { return msSplitGetNumSubmeshes(self); } }
 
-        public SubmeshData GetSubmesh(int i)
+        public SubmeshData GetSubmesh(MeshData mesh, int i)
         {
-            return msSplitGetSubmesh(self, i);
+            return msSplitGetSubmesh(self, mesh.self, i);
         }
     }
 
@@ -1862,17 +1913,18 @@ namespace UTJ.MeshSync
     {
         public BitFlags flags;
         public bool unchanged           { get { return flags[0]; } }
-        public bool hasIndices          { get { return flags[3]; } }
-        public bool hasPoints           { get { return flags[5]; } }
-        public bool hasNormals          { get { return flags[6]; } }
-        public bool hasTangents         { get { return flags[7]; } }
-        public bool hasUV0              { get { return flags[8]; } }
-        public bool hasUV1              { get { return flags[9]; } }
-        public bool hasColors           { get { return flags[10]; } }
-        public bool hasVelocities       { get { return flags[11]; } }
-        public bool hasBones            { get { return flags[13]; } }
-        public bool hasBlendshapeWeights{ get { return flags[14]; } }
-        public bool hasBlendshapes      { get { return flags[15]; } }
+        public bool topologyUnchanged   { get { return flags[1]; } }
+        public bool hasIndices          { get { return flags[4]; } }
+        public bool hasPoints           { get { return flags[6]; } }
+        public bool hasNormals          { get { return flags[7]; } }
+        public bool hasTangents         { get { return flags[8]; } }
+        public bool hasUV0              { get { return flags[9]; } }
+        public bool hasUV1              { get { return flags[10]; } }
+        public bool hasColors           { get { return flags[11]; } }
+        public bool hasVelocities       { get { return flags[12]; } }
+        public bool hasBones            { get { return flags[14]; } }
+        public bool hasBlendshapeWeights{ get { return flags[15]; } }
+        public bool hasBlendshapes      { get { return flags[16]; } }
     };
 
     [StructLayout(LayoutKind.Explicit)]
@@ -2268,6 +2320,8 @@ namespace UTJ.MeshSync
         [DllImport("MeshSyncServer")] static extern ConstraintData msSceneGetConstraint(IntPtr self, int i);
         #endregion
 
+        public static implicit operator bool(SceneData v) { return v.self != IntPtr.Zero; }
+
         public string name { get { return Misc.S(msSceneGetName(self)); } }
         public int numAssets { get { return msSceneGetNumAssets(self); } }
         public int numEntities { get { return msSceneGetNumEntities(self); } }
@@ -2287,13 +2341,15 @@ namespace UTJ.MeshSync
         public IntPtr self;
         [DllImport("MeshSyncServer")] static extern SceneCacheData msISceneCacheOpen(string path);
         [DllImport("MeshSyncServer")] static extern void msISceneCacheClose(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern float msISceneCacheGetSampleRate(IntPtr self);
         [DllImport("MeshSyncServer")] static extern void msISceneCacheGetTimeRange(IntPtr self, ref float start, ref float end);
         [DllImport("MeshSyncServer")] static extern int msISceneCacheGetNumScenes(IntPtr self);
+        [DllImport("MeshSyncServer")] static extern float msISceneCacheGetTime(IntPtr self, int i);
         [DllImport("MeshSyncServer")] static extern SceneData msISceneCacheGetSceneByIndex(IntPtr self, int i);
         [DllImport("MeshSyncServer")] static extern SceneData msISceneCacheGetSceneByTime(IntPtr self, float time, bool lerp);
+        [DllImport("MeshSyncServer")] static extern void msISceneCacheRefesh(IntPtr self);
 
-        [DllImport("MeshSyncServer")] static extern int msSendSceneAsync(string addr, int port, SceneData scene);
-        [DllImport("MeshSyncServer")] static extern byte msSendSceneWait(int handle);
+        [DllImport("MeshSyncServer")] static extern AnimationCurveData msISceneCacheGetTimeCurve(IntPtr self);
         #endregion
 
         public static implicit operator bool(SceneCacheData v) { return v.self != IntPtr.Zero; }
@@ -2301,6 +2357,10 @@ namespace UTJ.MeshSync
 
         public void Close() { msISceneCacheClose(self); self = IntPtr.Zero; }
 
+        public float sampleRate
+        {
+            get { return msISceneCacheGetSampleRate(self); }
+        }
         public int sceneCount {
             get { return msISceneCacheGetNumScenes(self); }
         }
@@ -2312,6 +2372,10 @@ namespace UTJ.MeshSync
             }
         }
 
+        public float GetTime(int i)
+        {
+            return msISceneCacheGetTime(self, i);
+        }
         public SceneData GetSceneByIndex(int i)
         {
             return msISceneCacheGetSceneByIndex(self, i);
@@ -2320,11 +2384,19 @@ namespace UTJ.MeshSync
         {
             return msISceneCacheGetSceneByTime(self, t, lerp);
         }
-
-        public static bool SendScene(string addr, int port, SceneData scene)
+        public void Refresh()
         {
-            var handle = msSendSceneAsync(addr, port, scene);
-            return msSendSceneWait(handle) != 0;
+            msISceneCacheRefesh(self);
+        }
+
+        public AnimationCurve GetTimeCurve(InterpolationMode im)
+        {
+            var data = msISceneCacheGetTimeCurve(self);
+            if (!data)
+                return null;
+            var keys = new Keyframe[sceneCount];
+            data.FillF(keys, im);
+            return new AnimationCurve(keys);
         }
     }
     #endregion

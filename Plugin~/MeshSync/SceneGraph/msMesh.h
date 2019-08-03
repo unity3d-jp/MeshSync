@@ -8,6 +8,7 @@ namespace ms {
 struct MeshDataFlags
 {
     uint32_t unchanged : 1;
+    uint32_t topology_unchanged : 1;
     uint32_t has_refine_settings : 1;
     uint32_t has_submeshes : 1;
     uint32_t has_indices : 1;
@@ -16,8 +17,8 @@ struct MeshDataFlags
     uint32_t has_normals : 1;
     uint32_t has_tangents : 1;
     uint32_t has_uv0 : 1;
-    uint32_t has_uv1 : 1;
-    uint32_t has_colors : 1; // 10
+    uint32_t has_uv1 : 1; // 10
+    uint32_t has_colors : 1;
     uint32_t has_velocities : 1;
     uint32_t has_material_ids : 1;
     uint32_t has_bones : 1;
@@ -84,6 +85,12 @@ struct MeshRefineSettings
     bool operator!=(const MeshRefineSettings& v) const;
 };
 
+struct Bounds
+{
+    float3 center;
+    float3 extents;
+};
+
 struct SubmeshData
 {
     enum class Topology : int
@@ -94,18 +101,12 @@ struct SubmeshData
         Quads,
     };
 
+    // serializable
     int index_count = 0;
     int index_offset = 0;
     Topology topology = Topology::Triangles;
     int material_id = 0;
-
-    // non-serializable
-    IArray<int> indices;
-
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
 };
-msSerializable(SubmeshData);
 
 struct SplitData
 {
@@ -118,24 +119,16 @@ struct SplitData
     int bone_weight_offset = 0;
     int submesh_count = 0;
     int submesh_offset = 0;
-    float3 bound_center = float3::zero();
-    float3 bound_size = float3::zero();
-
-    // non-serializable
-    IArray<SubmeshData> submeshes;
-
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
+    Bounds bounds{};
 };
-msSerializable(SplitData);
 
 struct BlendShapeFrameData
 {
     // serializable
     float weight = 0.0f; // 0.0f - 100.0f
-    RawVector<float3> points; // can be empty or per-vertex data
-    RawVector<float3> normals;  // can be empty, per-vertex or per-index data
-    RawVector<float3> tangents; // can be empty, per-vertex or per-index data
+    SharedVector<float3> points; // can be empty or per-vertex data
+    SharedVector<float3> normals;  // can be empty, per-vertex or per-index data
+    SharedVector<float3> tangents; // can be empty, per-vertex or per-index data
 
 protected:
     BlendShapeFrameData();
@@ -143,6 +136,7 @@ protected:
 public:
     msDefinePool(BlendShapeFrameData);
     static std::shared_ptr<BlendShapeFrameData> create(std::istream& is);
+    std::shared_ptr<BlendShapeFrameData> clone(bool detach);
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
@@ -163,6 +157,7 @@ protected:
 public:
     msDefinePool(BlendShapeData);
     static std::shared_ptr<BlendShapeData> create(std::istream& is);
+    std::shared_ptr<BlendShapeData> clone(bool detach);
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
@@ -177,7 +172,7 @@ struct BoneData
     // serializable
     std::string path;
     float4x4 bindpose = float4x4::identity();
-    RawVector<float> weights; // per-vertex data
+    SharedVector<float> weights; // per-vertex data
 
 protected:
     BoneData();
@@ -185,6 +180,7 @@ protected:
 public:
     msDefinePool(BoneData);
     static std::shared_ptr<BoneData> create(std::istream& is);
+    std::shared_ptr<BoneData> clone(bool detach);
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
     void clear();
@@ -200,29 +196,29 @@ public:
     MeshDataFlags      md_flags;
     MeshRefineSettings refine_settings;
 
-    RawVector<float3> points;
-    RawVector<float3> normals;    // can be empty, per-vertex or per-index data
-    RawVector<float4> tangents;   // can be empty, per-vertex or per-index data
-    RawVector<float2> uv0, uv1;   // can be empty, per-vertex or per-index data
-    RawVector<float4> colors;     // can be empty, per-vertex or per-index data
-    RawVector<float3> velocities; // can be empty or per-vertex data
-    RawVector<int>    counts;
-    RawVector<int>    indices;
-    RawVector<int>    material_ids; // can be empty or per-face data
+    SharedVector<float3> points;
+    SharedVector<float3> normals;    // can be empty, per-vertex or per-index data
+    SharedVector<float4> tangents;   // can be empty, per-vertex or per-index data
+    SharedVector<float2> uv0, uv1;   // can be empty, per-vertex or per-index data
+    SharedVector<float4> colors;     // can be empty, per-vertex or per-index data
+    SharedVector<float3> velocities; // can be empty or per-vertex data
+    SharedVector<int>    counts;
+    SharedVector<int>    indices;
+    SharedVector<int>    material_ids; // can be empty or per-face data
 
     std::string root_bone;
     std::vector<BoneDataPtr> bones;
     std::vector<BlendShapeDataPtr> blendshapes;
 
-    std::vector<SubmeshData> submeshes;
-    std::vector<SplitData> splits;
+    SharedVector<SubmeshData> submeshes;
+    SharedVector<SplitData> splits;
 
     // non-serializable
     // *update clear() when add member*
-    RawVector<Weights4> weights4;
-    RawVector<uint8_t> bone_counts;
-    RawVector<int> bone_offsets;
-    RawVector<Weights1> weights1;
+    SharedVector<Weights4>  weights4;
+    SharedVector<uint8_t>   bone_counts;
+    SharedVector<int>       bone_offsets;
+    SharedVector<Weights1>  weights1;
 
 
 protected:
@@ -234,9 +230,9 @@ public:
     bool isGeometry() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
-    void resolve() override;
 
     bool isUnchanged() const override;
+    bool isTopologyUnchanged() const override;
     bool strip(const Entity& base) override;
     bool merge(const Entity& base) override;
     bool diff(const Entity& e1, const Entity& e2) override;
@@ -245,7 +241,7 @@ public:
     void clear() override;
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;
-    EntityPtr clone() override;
+    EntityPtr clone(bool detach = false) override;
 
     void updateBounds();
     void refine();

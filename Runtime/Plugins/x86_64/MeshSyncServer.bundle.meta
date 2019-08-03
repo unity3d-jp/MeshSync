@@ -1,15 +1,16 @@
 fileFormatVersion: 2
 guid: 6a040fc09bc2c3e46be7a8c1649b5e88
 folderAsset: yes
-timeCreated: 1523903709
-licenseType: Pro
 PluginImporter:
   externalObjects: {}
   serializedVersion: 2
   iconMap: {}
   executionOrder: {}
+  defineConstraints: []
   isPreloaded: 0
   isOverridable: 0
+  isExplicitlyReferenced: 0
+  validateReferences: 1
   platformData:
   - first:
       '': Any
@@ -71,7 +72,7 @@ PluginImporter:
     second:
       enabled: 1
       settings:
-        CPU: x86_64
+        CPU: AnyCPU
   - first:
       Standalone: LinuxUniversal
     second:

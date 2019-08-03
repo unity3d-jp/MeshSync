@@ -23,10 +23,9 @@ namespace UTJ.MeshSync
         #endregion
 
         #region Properties
-        public string cacheFilePath
+        public DataPath cacheFilePath
         {
-            get { return m_cacheFilePath.fullPath; }
-            set { m_cacheFilePath.fullPath = value; CheckParamsUpdated(); }
+            get { return m_cacheFilePath; }
         }
         public float time
         {
@@ -41,34 +40,6 @@ namespace UTJ.MeshSync
         #endregion
 
         #region Public Methods
-#if UNITY_EDITOR
-        [MenuItem("GameObject/MeshSync/Create Cache Player", false, 10)]
-        public static void CreateSceneCachePlayer(MenuCommand menuCommand)
-        {
-            var path = EditorUtility.OpenFilePanel("Select Cache File", "", "");
-            if (path.Length > 0)
-            {
-                var go = new GameObject();
-                go.name = "SceneCachePlayer";
-
-                var server = go.AddComponent<MeshSyncServer>();
-                server.rootObject = go.GetComponent<Transform>();
-                server.progressiveDisplay = false;
-
-                var player = go.AddComponent<SceneCachePlayer>();
-                if (!player.OpenCache(path))
-                {
-                    Debug.LogError("Failed to open " + path + ".\nPossible reasons: the file is not scene cache, or file format version does not match.");
-                    DestroyImmediate(go);
-                }
-                else
-                {
-                    Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
-                }
-            }
-        }
-#endif
-
         public bool OpenCache(string path)
         {
             CloseCache();
@@ -102,6 +73,61 @@ namespace UTJ.MeshSync
             }
             m_timePrev = -1;
         }
+
+        public bool AddCurve(AnimationClip clip, string path)
+        {
+            if (!m_sceneCache)
+                return false;
+
+            var curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
+            if (curve == null)
+                return false;
+            clip.SetCurve(path, typeof(SceneCachePlayer), "m_time", curve);
+            return true;
+        }
+
+#if UNITY_EDITOR
+        public bool AddAnimator(string assetPath)
+        {
+            if (m_sceneCache.sceneCount < 2)
+                return false;
+
+            var dstPath = string.Format("{0}/{1}.anim", assetPath, gameObject.name);
+            var clip = new AnimationClip();
+            var sampleRate = m_sceneCache.sampleRate;
+            if (sampleRate > 0.0f)
+                clip.frameRate = sampleRate;
+            AddCurve(clip, "");
+            clip = Misc.SaveAsset(clip, dstPath);
+            if (clip == null)
+                return false;
+
+            var animator = Misc.GetOrAddComponent<Animator>(gameObject);
+            animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(dstPath + ".controller", clip);
+            return true;
+        }
+#endif
+
+        public void UpdatePlayer()
+        {
+            if (m_openRequested)
+            {
+                OpenCache(m_cacheFilePath.fullPath);
+            }
+
+            if (m_sceneCache && m_time != m_timePrev)
+            {
+                m_timePrev = m_time;
+                var scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
+                if (scene)
+                {
+                    var server = GetComponent<MeshSyncServer>();
+                    server.BeforeUpdateScene();
+                    server.UpdateScene(scene);
+                    server.AfterUpdateScene();
+                }
+            }
+        }
         #endregion
 
 
@@ -115,7 +141,8 @@ namespace UTJ.MeshSync
                 m_openRequested = true;
             }
 
-            m_time = Mathf.Clamp(m_time, m_timeRange.start, m_timeRange.end);
+            if (m_sceneCache)
+                m_time = Mathf.Clamp(m_time, m_timeRange.start, m_timeRange.end);
         }
         #endregion
 
@@ -125,6 +152,7 @@ namespace UTJ.MeshSync
         {
             m_cacheFilePath.isDirectory = false;
             m_cacheFilePath.readOnly = true;
+            m_cacheFilePath.showRootSelector = true;
             GetComponent<MeshSyncServer>().serverPort = Random.Range(11111, 65000);
         }
         void OnValidate()
@@ -150,21 +178,7 @@ namespace UTJ.MeshSync
         // in many cases m_time is controlled by animation system. so scene update must be handled in LateUpdate()
         void LateUpdate()
         {
-            if (m_openRequested)
-            {
-                OpenCache(m_cacheFilePath.fullPath);
-            }
-
-            if (m_sceneCache && m_time != m_timePrev)
-            {
-                m_timePrev = m_time;
-                var scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
-
-                var server = GetComponent<MeshSyncServer>();
-                server.BeforeUpdateScene();
-                server.UpdateScene(scene);
-                server.AfterUpdateScene();
-            }
+            UpdatePlayer();
         }
         #endregion
     }

@@ -301,7 +301,7 @@ void Server::beginServeScene()
         msLogError("m_current_get_request is null\n");
         return;
     }
-    m_host_scene.reset(new Scene());
+    m_host_scene = Scene::create();
 
     auto& request = *m_current_get_request;
     request.refine_settings.scale_factor = request.scene_settings.scale_factor;
@@ -480,7 +480,7 @@ void Server::recvSet(HTTPServerRequest& request, HTTPServerResponse& response)
         return;
 
     auto task = std::async(std::launch::async, [this, mes]() {
-        mes->scene.import(m_settings.import_settings);
+        mes->scene->import(m_settings.import_settings);
     });
     queueMessage(mes, std::move(task));
     serveText(response, "ok");
@@ -531,12 +531,12 @@ void Server::recvGet(HTTPServerRequest& request, HTTPServerResponse& response)
             os.flush();
         }
         else {
-            Scene empty_scene;
+            auto empty_scene = Scene::create();
             response.setContentType("application/octet-stream");
-            response.setContentLength(ssize(empty_scene));
+            response.setContentLength(ssize(*empty_scene));
 
             auto& os = response.send();
-            empty_scene.serialize(os);
+            empty_scene->serialize(os);
             os.flush();
         }
     }

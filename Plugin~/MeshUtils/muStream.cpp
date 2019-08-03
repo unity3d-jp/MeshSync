@@ -8,6 +8,12 @@ MemoryStreamBuf::MemoryStreamBuf()
     resize(default_bufsize);
 }
 
+MemoryStreamBuf::MemoryStreamBuf(RawVector<char>&& buf)
+    : buffer(std::move(buf))
+{
+    reset();
+}
+
 void MemoryStreamBuf::reset()
 {
     auto *p = buffer.data();
@@ -75,16 +81,20 @@ int MemoryStreamBuf::sync()
 {
     rcount = uint64_t(this->gptr() - this->eback());
     wcount = uint64_t(this->pptr() - this->pbase());
-    if (wcount > 0)
-        buffer.resize(wcount);
+    buffer.resize(std::max(rcount, wcount));
     return 0;
 }
 
 MemoryStream::MemoryStream() : std::iostream(&m_buf) {}
+MemoryStream::MemoryStream(RawVector<char>&& buf)
+    : std::iostream(&m_buf), m_buf(std::move(buf))
+{
+}
 void MemoryStream::reset() { m_buf.reset(); }
 void MemoryStream::resize(size_t n) { m_buf.resize(n); }
 void MemoryStream::swap(RawVector<char>& buf) { m_buf.swap(buf); }
 const RawVector<char>& MemoryStream::getBuffer() const { return m_buf.buffer; }
+RawVector<char>&& MemoryStream::moveBuffer() { return std::move(m_buf.buffer); }
 uint64_t MemoryStream::getWCount() const { return m_buf.wcount; }
 uint64_t MemoryStream::getRCount() const { return m_buf.rcount; }
 

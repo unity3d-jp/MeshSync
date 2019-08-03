@@ -27,9 +27,9 @@ public:
         m_size = 0;
     }
 
-    void reset(T *d, size_t s)
+    void reset(const T *d, size_t s)
     {
-        m_data = d;
+        m_data = const_cast<T*>(d);
         m_size = s;
     }
 
@@ -51,11 +51,11 @@ public:
     {
         memset(m_data, 0, sizeof(T)*m_size);
     }
-    void copy_to(pointer dst)
+    void copy_to(pointer dst) const
     {
         memcpy(dst, m_data, sizeof(value_type) * m_size);
     }
-    void copy_to(pointer dst, size_t num_elements)
+    void copy_to(pointer dst, size_t num_elements) const
     {
         memcpy(dst, m_data, sizeof(value_type) * num_elements);
     }
@@ -91,10 +91,10 @@ public:
         return *this;
     }
 
-    void reset(I *i, T *d, size_t s)
+    void reset(const I *i, const T *d, size_t s)
     {
-        m_index = i;
-        m_data = d;
+        m_index = const_cast<I*>(i);
+        m_data = const_cast<I*>(d);
         m_size = s;
     }
 

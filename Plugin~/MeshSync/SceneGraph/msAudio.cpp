@@ -10,7 +10,7 @@ namespace ms {
 Audio::Audio() {}
 Audio::~Audio() {}
 
-std::shared_ptr<Audio> Audio::create(std::istream & is)
+std::shared_ptr<Audio> Audio::create(std::istream& is)
 {
     return std::static_pointer_cast<Audio>(Asset::create(is));
 }
@@ -20,13 +20,13 @@ AssetType Audio::getAssetType() const
     return AssetType::Audio;
 }
 
-void Audio::serialize(std::ostream & os) const
+void Audio::serialize(std::ostream& os) const
 {
     super::serialize(os);
     EachMember(msWrite);
 }
 
-void Audio::deserialize(std::istream & is)
+void Audio::deserialize(std::istream& is)
 {
     super::deserialize(is);
     EachMember(msRead);
@@ -87,7 +87,7 @@ double Audio::getDuration() const
     return (double)getSampleLength() / (frequency * channels);
 }
 
-bool Audio::readFromFile(const char * path)
+bool Audio::readFromFile(const char *path)
 {
     if (!path)
         return false;
@@ -99,7 +99,7 @@ bool Audio::readFromFile(const char * path)
     return false;
 }
 
-bool Audio::writeToFile(const char * path) const
+bool Audio::writeToFile(const char *path) const
 {
     if (!path)
         return false;
@@ -132,15 +132,15 @@ bool Audio::exportAsWave(const char *path) const
     if (!os)
         return false;
 
-    RawVector<char> tmp_data;
+    SharedVector<char> tmp_data;
 
-    const RawVector<char> *wdata = &data;
+    const SharedVector<char> *wdata = &data;
     AudioFormat wfmt = format;
     // if format is f32, convert to s16
     if (format == AudioFormat::F32) {
         wfmt = AudioFormat::S16;
         tmp_data.resize(getSampleLength() * sizeof(snorm16));
-        F32ToS16((snorm16*)tmp_data.data(), (const float*)data.data(), getSampleLength());
+        F32ToS16((snorm16*)tmp_data.data(), (const float*)data.cdata(), getSampleLength());
         wdata = &tmp_data;
     }
 
@@ -151,7 +151,7 @@ bool Audio::exportAsWave(const char *path) const
     header.nBytePerSec = header.nSampleRate * header.shBitPerSample * header.shCh / 8;
     header.shBlockSize = header.shBitPerSample * header.shCh / 8;
     os.write((char*)&header, sizeof(header));
-    os.write(wdata->data(), wdata->size());
+    os.write(wdata->cdata(), wdata->size());
 
     uint32_t total_size = (uint32_t)(wdata->size() + sizeof(WaveHeader));
     uint32_t filesize = total_size - 8;
@@ -171,13 +171,13 @@ bool Audio::convertSamplesToFloat(float *dst)
         return false; // invalid format
 
     if (format == AudioFormat::U8)
-        U8NToF32(dst, (unorm8n*)data.data(), n);
+        U8NToF32(dst, (unorm8n*)data.cdata(), n);
     else if (format == AudioFormat::S16)
-        S16ToF32(dst, (snorm16*)data.data(), n);
+        S16ToF32(dst, (snorm16*)data.cdata(), n);
     else if (format == AudioFormat::S24)
-        S24ToF32(dst, (snorm24*)data.data(), n);
+        S24ToF32(dst, (snorm24*)data.cdata(), n);
     else if (format == AudioFormat::S32)
-        S32ToF32(dst, (snorm32*)data.data(), n);
+        S32ToF32(dst, (snorm32*)data.cdata(), n);
     else if (format == AudioFormat::F32)
         data.copy_to((char*)dst);
     else

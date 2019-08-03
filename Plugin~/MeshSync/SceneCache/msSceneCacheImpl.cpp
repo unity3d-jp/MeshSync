@@ -14,7 +14,7 @@ OSceneCacheSettingsBase::OSceneCacheSettingsBase()
 
     strip_unchanged = 1;
     apply_refinement = 1;
-    flatten_hierarchy = 1;
+    flatten_hierarchy = 0;
     merge_meshes = 0;
     strip_normals = 0;
     strip_tangents = 0;

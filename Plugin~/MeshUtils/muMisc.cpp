@@ -101,7 +101,7 @@ std::string ToANSI(const std::string& src)
     return ToANSI(src.c_str());
 }
 
-std::string ToMBS(const wchar_t * src)
+std::string ToMBS(const wchar_t *src)
 {
     using converter_t = std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>;
     return converter_t().to_bytes(src);
@@ -111,12 +111,12 @@ std::string ToMBS(const std::wstring& src)
     return ToMBS(src.c_str());
 }
 
-std::wstring ToWCS(const char * src)
+std::wstring ToWCS(const char *src)
 {
     using converter_t = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>;
     return converter_t().from_bytes(src);
 }
-std::wstring ToWCS(const std::string & src)
+std::wstring ToWCS(const std::string& src)
 {
     return ToWCS(src.c_str());
 }
@@ -155,7 +155,7 @@ std::string SanitizeNodeName(const std::string& src)
     }
 }
 
-std::string SanitizeFileName(const std::string & src)
+std::string SanitizeFileName(const std::string& src)
 {
     std::string ret = src;
     for (auto& c : ret) {
@@ -175,7 +175,17 @@ std::string GetFilename(const char *src)
     return std::string(src + last_separator);
 }
 
-std::string GetFilename_NoExtension(const char * src)
+std::string GetFilename(const wchar_t *src)
+{
+    int last_separator = 0;
+    for (int i = 0; src[i] != L'\0'; ++i) {
+        if (src[i] == L'\\' || src[i] == L'/')
+            last_separator = i + 1;
+    }
+    return ToMBS(src + last_separator);
+}
+
+std::string GetFilename_NoExtension(const char *src)
 {
     int last_separator = 0;
     int last_comma = 0;
@@ -190,6 +200,23 @@ std::string GetFilename_NoExtension(const char * src)
         return std::string(src + last_separator, src + last_comma);
     else
         return std::string(src + last_separator);
+}
+
+std::string GetFilename_NoExtension(const wchar_t *src)
+{
+    int last_separator = 0;
+    int last_comma = 0;
+    for (int i = 0; src[i] != '\0'; ++i) {
+        if (src[i] == '\\' || src[i] == '/')
+            last_separator = i + 1;
+        if (src[i] == '.')
+            last_comma = i;
+    }
+
+    if (last_comma > last_separator)
+        return ToMBS(std::wstring(src + last_separator, src + last_comma));
+    else
+        return ToMBS(src + last_separator);
 }
 
 

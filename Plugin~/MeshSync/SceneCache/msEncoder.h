@@ -14,9 +14,6 @@ public:
 msDeclPtr(BufferEncoder);
 
 BufferEncoderPtr CreatePlainEncoder();
-
-std::tuple<int, int> GetZSTDCompressionLevelRange();
-int GetZSTDDefaultCompressionLevel();
 BufferEncoderPtr CreateZSTDEncoder(int compression_level);
 
 

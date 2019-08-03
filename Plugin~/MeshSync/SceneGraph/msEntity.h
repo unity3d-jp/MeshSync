@@ -55,9 +55,9 @@ public:
     virtual bool isGeometry() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
-    virtual void resolve(); // called after deserialize & clone
 
     virtual bool isUnchanged() const;
+    virtual bool isTopologyUnchanged() const;
     virtual bool strip(const Entity& base);
     virtual bool merge(const Entity& base);
     virtual bool diff(const Entity& e1, const Entity& e2);
@@ -68,7 +68,7 @@ public:
     virtual uint64_t hash() const;
     virtual uint64_t checksumTrans() const;
     virtual uint64_t checksumGeom() const;
-    virtual std::shared_ptr<Entity> clone();
+    virtual std::shared_ptr<Entity> clone(bool detach = false);
 
     Identifier getIdentifier() const;
     bool isRoot() const;
@@ -136,7 +136,7 @@ public:
 
     void clear() override;
     uint64_t checksumTrans() const override;
-    EntityPtr clone() override;
+    EntityPtr clone(bool detach = false) override;
 
     float4x4 toMatrix() const;
     void assignMatrix(const float4x4& v);
@@ -199,7 +199,7 @@ public:
 
     void clear() override;
     uint64_t checksumTrans() const override;
-    EntityPtr clone() override;
+    EntityPtr clone(bool detach = false) override;
 };
 msSerializable(Camera);
 msDeclPtr(Camera);
@@ -271,7 +271,7 @@ public:
 
     void clear() override;
     uint64_t checksumTrans() const override;
-    EntityPtr clone() override;
+    EntityPtr clone(bool detach = false) override;
 };
 msSerializable(Light);
 msDeclPtr(Light);
@@ -303,12 +303,12 @@ struct PointsData
     // serializable
     PointsDataFlags pd_flags;
     float time = -1.0f;
-    RawVector<float3> points;
-    RawVector<quatf>  rotations;
-    RawVector<float3> scales;
-    RawVector<float4> colors;
-    RawVector<float3> velocities;
-    RawVector<int>    ids;
+    SharedVector<float3> points;
+    SharedVector<quatf>  rotations;
+    SharedVector<float3> scales;
+    SharedVector<float4> colors;
+    SharedVector<float3> velocities;
+    SharedVector<int>    ids;
 
 protected:
     PointsData();
@@ -327,7 +327,7 @@ public:
 
     void setupPointsDataFlags();
 
-    void getBounds(float3& center, float3& extents);
+    void getBounds(float3& center, float3& extents) const;
 };
 msSerializable(PointsData);
 msDeclPtr(PointsData);
@@ -357,7 +357,7 @@ public:
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;
     bool lerp(const Entity& src1, const Entity& src2, float t) override;
-    EntityPtr clone() override;
+    EntityPtr clone(bool detach = false) override;
 
     void setupPointsDataFlags();
 };

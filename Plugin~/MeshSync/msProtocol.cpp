@@ -63,16 +63,21 @@ void GetMessage::deserialize(std::istream& is)
 
 SetMessage::SetMessage()
 {
+    scene = Scene::create();
+}
+SetMessage::SetMessage(ScenePtr s)
+{
+    scene = s;
 }
 void SetMessage::serialize(std::ostream& os) const
 {
     super::serialize(os);
-    scene.serialize(os);
+    msWrite(scene);
 }
 void SetMessage::deserialize(std::istream& is)
 {
     super::deserialize(is);
-    scene.deserialize(is);
+    msRead(scene);
 }
 
 

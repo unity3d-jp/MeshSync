@@ -153,7 +153,7 @@ msAPI int msGetGetBakeCloth(ms::GetMessage *self)
 
 msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *self)
 {
-    return &self->scene;
+    return self->scene.get();
 }
 #pragma endregion
 
@@ -170,7 +170,7 @@ msAPI ms::AssetType     msAssetGetType(ms::Asset *self) { return self->getAssetT
 #pragma region FileAsset
 msAPI ms::FileAsset*    msFileAssetCreate() { return ms::FileAsset::create_raw(); }
 msAPI int               msFileAssetGetDataSize(ms::FileAsset *self) { return (int)self->data.size(); }
-msAPI const void*       msFileAssetGetDataPtr(ms::FileAsset *self, int v) { return self->data.data(); }
+msAPI const void*       msFileAssetGetDataPtr(ms::FileAsset *self, int v) { return self->data.cdata(); }
 msAPI bool              msFileAssetReadFromFile(ms::FileAsset *self, const char *v) { return self->readFromFile(v); }
 msAPI bool              msFileAssetWriteToFile(ms::FileAsset *self, const char *v) { return self->writeToFile(v); }
 #pragma endregion
@@ -203,7 +203,7 @@ msAPI int               msTextureGetHeight(ms::Texture *self) { return self->hei
 msAPI void              msTextureSetHeight(ms::Texture *self, int v) { self->height = v; }
 msAPI void              msTextureGetData(ms::Texture *self, void *v) { self->getData(v); }
 msAPI void              msTextureSetData(ms::Texture *self, const void *v) { self->setData(v); }
-msAPI void*             msTextureGetDataPtr(ms::Texture *self) { return self->data.data(); }
+msAPI const void*       msTextureGetDataPtr(ms::Texture *self) { return self->data.cdata(); }
 msAPI int               msTextureGetSizeInByte(ms::Texture *self) { return (int)self->data.size(); }
 msAPI bool              msTextureWriteToFile(ms::Texture *self, const char *path) { return self->writeToFile(path); }
 msAPI bool              msWriteToFile(const char *path, const char *data, int size) { return ms::ByteArrayToFile(path, data, size); }
@@ -746,21 +746,21 @@ msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *self, const int *v, int size, i
         self->md_flags.has_material_ids = 1;
     }
 }
-msAPI ms::SplitData* msMeshGetSplit(ms::Mesh *self, int i)
+msAPI const ms::SplitData* msMeshGetSplit(const ms::Mesh *self, int i)
 {
     return &self->splits[i];
 }
 
-msAPI int msMeshGetNumSubmeshes(ms::Mesh *self)
+msAPI int msMeshGetNumSubmeshes(const ms::Mesh *self)
 {
     return (int)self->submeshes.size();
 }
-msAPI ms::SubmeshData* msMeshGetSubmesh(ms::Mesh *self, int i)
+msAPI const ms::SubmeshData* msMeshGetSubmesh(const ms::Mesh *self, int i)
 {
     return &self->submeshes[i];
 }
 
-msAPI void msMeshReadBoneWeights4(ms::Mesh *self, ms::Weights4 *dst, ms::SplitData *split)
+msAPI void msMeshReadBoneWeights4(const ms::Mesh *self, ms::Weights4 *dst, const ms::SplitData *split)
 {
     if (split)
         self->weights4.copy_to(dst, split->vertex_count, split->vertex_offset);
@@ -785,11 +785,11 @@ msAPI void msMeshWriteBoneWeights4(ms::Mesh *self, const ms::Weights4 *data, int
             bones[indices[wi]]->weights[vi] = weights[wi];
     }
 }
-msAPI void msMeshReadBoneCounts(ms::Mesh *self, uint8_t *dst, ms::SplitData *split)
+msAPI void msMeshReadBoneCounts(const ms::Mesh *self, uint8_t *dst, const ms::SplitData *split)
 {
     self->bone_counts.copy_to(dst, split->vertex_count, split->vertex_offset);
 }
-msAPI void msMeshReadBoneWeightsV(ms::Mesh *self, ms::Weights1 *dst, ms::SplitData *split)
+msAPI void msMeshReadBoneWeightsV(const ms::Mesh *self, ms::Weights1 *dst, const ms::SplitData *split)
 {
     if (split)
         self->weights1.copy_to(dst, split->bone_weight_count, split->bone_weight_offset);
@@ -822,11 +822,11 @@ msAPI void msMeshWriteBoneWeightsV(ms::Mesh *self, uint8_t *counts, int counts_s
     }
 }
 
-msAPI int msMeshGetNumBones(ms::Mesh *self)
+msAPI int msMeshGetNumBones(const ms::Mesh *self)
 {
     return (int)self->bones.size();
 }
-msAPI const char* msMeshGetRootBonePath(ms::Mesh *self)
+msAPI const char* msMeshGetRootBonePath(const ms::Mesh *self)
 {
     return self->root_bone.c_str();
 }
@@ -834,7 +834,7 @@ msAPI void msMeshSetRootBonePath(ms::Mesh *self, const char *v)
 {
     self->root_bone = v;
 }
-msAPI const char* msMeshGetBonePath(ms::Mesh *self, int i)
+msAPI const char* msMeshGetBonePath(const ms::Mesh *self, int i)
 {
     return self->bones[i]->path.c_str();
 }
@@ -845,7 +845,7 @@ msAPI void msMeshSetBonePath(ms::Mesh *self, const char *v, int i)
     }
     self->bones[i]->path = v;
 }
-msAPI void msMeshReadBindPoses(ms::Mesh *self, float4x4 *v)
+msAPI void msMeshReadBindPoses(const ms::Mesh *self, float4x4 *v)
 {
     int num_bones = (int)self->bones.size();
     for (int bi = 0; bi < num_bones; ++bi) {
@@ -860,11 +860,11 @@ msAPI void msMeshWriteBindPoses(ms::Mesh *self, const float4x4 *v, int size)
     }
 }
 
-msAPI int msMeshGetNumBlendShapes(ms::Mesh *self)
+msAPI int msMeshGetNumBlendShapes(const ms::Mesh *self)
 {
     return (int)self->blendshapes.size();
 }
-msAPI ms::BlendShapeData* msMeshGetBlendShapeData(ms::Mesh *self, int i)
+msAPI const ms::BlendShapeData* msMeshGetBlendShapeData(const ms::Mesh *self, int i)
 {
     return self->blendshapes[i].get();
 }
@@ -886,53 +886,49 @@ msAPI void msMeshSetWorld2Local(ms::Mesh *self, const float4x4 *v)
 }
 
 
-msAPI int msSplitGetNumPoints(ms::SplitData *self)
+msAPI int msSplitGetNumPoints(const ms::SplitData *self)
 {
     return (int)self->vertex_count;
 }
-msAPI int msSplitGetNumIndices(ms::SplitData *self)
+msAPI int msSplitGetNumIndices(const ms::SplitData *self)
 {
     return (int)self->index_count;
 }
-msAPI int msSplitGetNumBoneWeights(ms::SplitData *self)
+msAPI int msSplitGetNumBoneWeights(const ms::SplitData *self)
 {
     return (int)self->bone_weight_count;
 }
-msAPI float3 msSplitGetBoundsCenter(ms::SplitData *self)
+msAPI ms::Bounds msSplitGetBounds(const ms::SplitData *self)
 {
-    return self->bound_center;
+    return self->bounds;
 }
-msAPI float3 msSplitGetBoundsSize(ms::SplitData *self)
+msAPI int msSplitGetNumSubmeshes(const ms::SplitData *self)
 {
-    return self->bound_size;
+    return (int)self->submesh_count;
 }
-msAPI int msSplitGetNumSubmeshes(ms::SplitData *self)
+msAPI const ms::SubmeshData* msSplitGetSubmesh(const ms::SplitData *self, const ms::Mesh *mesh, int i)
 {
-    return (int)self->submeshes.size();
-}
-msAPI ms::SubmeshData* msSplitGetSubmesh(ms::SplitData *self, int i)
-{
-    return &self->submeshes[i];
+    return &mesh->submeshes[self->submesh_offset + i];
 }
 
-msAPI int msSubmeshGetNumIndices(ms::SubmeshData *self)
+msAPI int msSubmeshGetNumIndices(const ms::SubmeshData *self)
 {
-    return (int)self->indices.size();
+    return (int)self->index_count;
 }
-msAPI void msSubmeshReadIndices(ms::SubmeshData *self, int *dst)
+msAPI void msSubmeshReadIndices(const ms::SubmeshData *self, const ms::Mesh *mesh, int *dst)
 {
-    self->indices.copy_to(dst);
+    mesh->indices.copy_to(dst, self->index_count, self->index_offset);
 }
-msAPI int msSubmeshGetMaterialID(ms::SubmeshData *self)
+msAPI int msSubmeshGetMaterialID(const ms::SubmeshData *self)
 {
     return self->material_id;
 }
-msAPI ms::SubmeshData::Topology msSubmeshGetTopology(ms::SubmeshData *self)
+msAPI ms::SubmeshData::Topology msSubmeshGetTopology(const ms::SubmeshData *self)
 {
     return self->topology;
 }
 
-msAPI const char* msBlendShapeGetName(ms::BlendShapeData *self)
+msAPI const char* msBlendShapeGetName(const ms::BlendShapeData *self)
 {
     return self ? self->name.c_str() : "";
 }
@@ -940,7 +936,7 @@ msAPI void msBlendShapeSetName(ms::BlendShapeData *self, const char *v)
 {
     self->name = v;
 }
-msAPI float msBlendShapeGetWeight(ms::BlendShapeData *self)
+msAPI float msBlendShapeGetWeight(const ms::BlendShapeData *self)
 {
     return self ? self->weight : 0.0f;
 }
@@ -948,15 +944,15 @@ msAPI void msBlendShapeSetWeight(ms::BlendShapeData *self, float v)
 {
     self->weight = v;
 }
-msAPI int msBlendShapeGetNumFrames(ms::BlendShapeData *self)
+msAPI int msBlendShapeGetNumFrames(const ms::BlendShapeData *self)
 {
     return self ? (int)self->frames.size() : 0;
 }
-msAPI float msBlendShapeGetFrameWeight(ms::BlendShapeData *self, int f)
+msAPI float msBlendShapeGetFrameWeight(const ms::BlendShapeData *self, int f)
 {
     return self ? self->frames[f]->weight : 0.0f;
 }
-msAPI void msBlendShapeReadPoints(ms::BlendShapeData *self, int f, float3 *dst, ms::SplitData *split)
+msAPI void msBlendShapeReadPoints(const ms::BlendShapeData *self, int f, float3 *dst, ms::SplitData *split)
 {
     auto& frame = *self->frames[f];
     size_t size = std::max(frame.points.size(), std::max(frame.normals.size(), frame.tangents.size()));
@@ -972,7 +968,7 @@ msAPI void msBlendShapeReadPoints(ms::BlendShapeData *self, int f, float3 *dst, 
         else
             src.copy_to(dst);
 }
-msAPI void msBlendShapeReadNormals(ms::BlendShapeData *self, int f, float3 *dst, ms::SplitData *split)
+msAPI void msBlendShapeReadNormals(const ms::BlendShapeData *self, int f, float3 *dst, ms::SplitData *split)
 {
     auto& frame = *self->frames[f];
     size_t size = std::max(frame.points.size(), std::max(frame.normals.size(), frame.tangents.size()));
@@ -988,7 +984,7 @@ msAPI void msBlendShapeReadNormals(ms::BlendShapeData *self, int f, float3 *dst,
         else
             src.copy_to(dst);
 }
-msAPI void msBlendShapeReadTangents(ms::BlendShapeData *self, int f, float3 *dst, ms::SplitData *split)
+msAPI void msBlendShapeReadTangents(const ms::BlendShapeData *self, int f, float3 *dst, ms::SplitData *split)
 {
     auto& frame = *self->frames[f];
     size_t size = std::max(frame.points.size(), std::max(frame.normals.size(), frame.tangents.size()));
@@ -1016,11 +1012,11 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *self, float weight, int num,
 #pragma endregion
 
 #pragma region Points
-msAPI uint32_t msPointsDataGetFlags(ms::PointsData *self)
+msAPI uint32_t msPointsDataGetFlags(const ms::PointsData *self)
 {
     return (uint32_t&)self->pd_flags;
 }
-msAPI float msPointsDataGetTime(ms::PointsData *self)
+msAPI float msPointsDataGetTime(const ms::PointsData *self)
 {
     return self->time;
 }
@@ -1028,15 +1024,15 @@ msAPI void msPointsDataSetTime(ms::PointsData *self, float v)
 {
     self->time = v;
 }
-msAPI void msPointsDataGetBounds(ms::PointsData *self, float3 *center, float3 *extents)
+msAPI void msPointsDataGetBounds(const ms::PointsData *self, float3 *center, float3 *extents)
 {
     self->getBounds(*center, *extents);
 }
-msAPI int msPointsDataGetNumPoints(ms::PointsData *self, float3 *dst)
+msAPI int msPointsDataGetNumPoints(const ms::PointsData *self, float3 *dst)
 {
     return (int)self->points.size();
 }
-msAPI void msPointsDataReadPoints(ms::PointsData *self, float3 *dst)
+msAPI void msPointsDataReadPoints(const ms::PointsData *self, float3 *dst)
 {
     self->points.copy_to(dst);
 }
@@ -1044,7 +1040,7 @@ msAPI void msPointsDataWritePoints(ms::PointsData *self, const float3 *v, int si
 {
     self->points.assign(v, v + size);
 }
-msAPI void msPointsDataReadRotations(ms::PointsData *self, quatf *dst)
+msAPI void msPointsDataReadRotations(const ms::PointsData *self, quatf *dst)
 {
     self->rotations.copy_to(dst);
 }
@@ -1052,7 +1048,7 @@ msAPI void msPointsDataWriteRotations(ms::PointsData *self, const quatf *v, int 
 {
     self->rotations.assign(v, v + size);
 }
-msAPI void msPointsDataReadScales(ms::PointsData *self, float3 *dst)
+msAPI void msPointsDataReadScales(const ms::PointsData *self, float3 *dst)
 {
     self->scales.copy_to(dst);
 }
@@ -1060,7 +1056,7 @@ msAPI void msPointsDataWriteScales(ms::PointsData *self, const float3 *v, int si
 {
     self->scales.assign(v, v + size);
 }
-msAPI void msPointsDataReadVelocities(ms::PointsData *self, float3 *dst)
+msAPI void msPointsDataReadVelocities(const ms::PointsData *self, float3 *dst)
 {
     self->velocities.copy_to(dst);
 }
@@ -1069,7 +1065,7 @@ msAPI void msPointsDataWriteVelocities(ms::PointsData *self, const float3 *v, in
     self->velocities.assign(v, v + size);
 }
 
-msAPI void msPointsDataReadColors(ms::PointsData *self, float4 *dst)
+msAPI void msPointsDataReadColors(const ms::PointsData *self, float4 *dst)
 {
     self->colors.copy_to(dst);
 }
@@ -1077,7 +1073,7 @@ msAPI void msPointsDataWriteColors(ms::PointsData *self, const float4 *v, int si
 {
     self->colors.assign(v, v + size);
 }
-msAPI void msPointsDataReadIDs(ms::PointsData *self, int *dst)
+msAPI void msPointsDataReadIDs(const ms::PointsData *self, int *dst)
 {
     self->ids.copy_to(dst);
 }

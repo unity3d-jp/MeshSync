@@ -29,6 +29,7 @@ public:
         Float4,
         Quaternion,
     };
+    template<class T> struct GetDataType;
 
     struct DataFlags
     {
@@ -70,12 +71,21 @@ public:
 
 
     std::string name;
-    RawVector<char> data;
+    SharedVector<char> data;
     DataType data_type = DataType::Unknown;
     DataFlags data_flags = {};
 };
 msSerializable(AnimationCurve);
 msDeclPtr(AnimationCurve);
+
+#define DefType(T, E) template<> struct AnimationCurve::GetDataType<T> { static const AnimationCurve::DataType type = AnimationCurve::DataType::E; };
+DefType(int, Int)
+DefType(float, Float)
+DefType(float2, Float2)
+DefType(float3, Float3)
+DefType(float4, Float4)
+DefType(quatf, Quaternion)
+#undef DefType
 
 
 class Animation
@@ -126,15 +136,20 @@ struct TAnimationCurve
     using key_t = TVP<T>;
 
     TAnimationCurve() {}
-    TAnimationCurve(const AnimationCurve& c) : curve(const_cast<AnimationCurve*>(&c)) {}
-    TAnimationCurve(AnimationCurvePtr c) : curve(c.get()) {}
+    TAnimationCurve(const AnimationCurve& c) : curve(const_cast<AnimationCurve*>(&c))
+    {
+        if (curve->data_type == AnimationCurve::DataType::Unknown)
+            curve->data_type = AnimationCurve::GetDataType<T>::type;
+    }
+    TAnimationCurve(AnimationCurvePtr c) : TAnimationCurve(*c) {}
 
     operator bool() const { return curve != nullptr; }
     bool valid() const { return curve != nullptr; }
     size_t size() const { return curve->data.size() / sizeof(key_t); }
 
           key_t* data()       { return (key_t*)curve->data.data(); }
-    const key_t* data() const { return (key_t*)curve->data.data(); }
+    const key_t* data() const { return (key_t*)curve->data.cdata(); }
+    const key_t* cdata() const{ return (key_t*)curve->data.cdata(); }
 
     bool empty() const { return size() == 0; }
     void clear() { curve->data.clear(); }
@@ -147,12 +162,16 @@ struct TAnimationCurve
     void pop_back() { curve->data.pop_back(sizeof(key_t)); }
 
           key_t& operator[](size_t i)       { return data()[i]; }
-    const key_t& operator[](size_t i) const { return data()[i]; }
+    const key_t& operator[](size_t i) const { return cdata()[i]; }
 
     key_t* begin() { return data(); }
+    const key_t* begin() const { return cdata(); }
     key_t* end() { return data() + size(); }
-    key_t& front() { return data()[0]; }
-    key_t& back() { return data()[size() - 1]; }
+    const key_t* end() const { return cdata() + size(); }
+          key_t& front()       { return data()[0]; }
+    const key_t& front() const { return cdata()[0]; }
+          key_t& back()        { return data()[size() - 1]; }
+    const key_t& back() const  { return cdata()[size() - 1]; }
 
     AnimationCurve *curve = nullptr;
 };

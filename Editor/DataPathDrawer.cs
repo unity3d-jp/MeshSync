@@ -10,7 +10,9 @@ namespace UTJ.MeshSyncEditor
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             bool ro = property.FindPropertyRelative("m_readOnly").boolValue;
-            bool showRoot = property.FindPropertyRelative("m_showRootSelector").boolValue;
+            var pShowRoot = property.FindPropertyRelative("m_showRootSelector");
+            var pRoot = property.FindPropertyRelative("m_root");
+            var pLeaf = property.FindPropertyRelative("m_leaf");
             bool isDirectory = property.FindPropertyRelative("m_isDirectory").boolValue;
             if (ro)
                 EditorGUI.BeginDisabledGroup(true);
@@ -21,6 +23,7 @@ namespace UTJ.MeshSyncEditor
             var indent = EditorGUI.indentLevel;
             EditorGUI.indentLevel = 0;
 
+            bool showRoot = pShowRoot.boolValue && pRoot.intValue != (int)DataPath.Root.Current;
             float buttonWidth = 22;
             float rootWidth = showRoot ? 70 : 0;
             float rootMargin = showRoot ? 5 : 0;
@@ -29,8 +32,6 @@ namespace UTJ.MeshSyncEditor
             var leafRect = new Rect(position.x + rootWidth + rootMargin, position.y, leafWidth, position.height);
             var buttonRect = new Rect(position.x + rootWidth + rootMargin + leafWidth, position.y, buttonWidth, position.height);
 
-            var pRoot = property.FindPropertyRelative("m_root");
-            var pLeaf = property.FindPropertyRelative("m_leaf");
             if (showRoot)
                 EditorGUI.PropertyField(rootRect, pRoot, GUIContent.none);
             EditorGUI.PropertyField(leafRect, pLeaf, GUIContent.none);

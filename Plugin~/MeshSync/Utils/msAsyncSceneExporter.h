@@ -78,6 +78,8 @@ public:
     void kick() override;
 
 private:
+    void write();
+
     OSceneCachePtr m_osc;
     std::string m_error_message;
 };

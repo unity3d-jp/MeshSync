@@ -46,16 +46,17 @@ msmaxAPI ULONG CanAutoDefer()
 def_struct_primitive(Window, UnityMeshSync, "Window");
 def_struct_primitive(ServerStatus, UnityMeshSync, "ServerStatus");
 def_struct_primitive(Settings, UnityMeshSync, "Settings");
-def_struct_primitive(Export, UnityMeshSync, "Export");
+def_struct_primitive(Send, UnityMeshSync, "Send");
 def_struct_primitive(Import, UnityMeshSync, "Import");
+def_struct_primitive(ExportCache, UnityMeshSync, "ExportCache");
 
 Value* Window_cf(Value** arg_list, int count)
 {
     if (count >= 1 && wcscmp(arg_list[0]->to_string(), L"close") == 0) {
-        msmaxGetContext().closeWindow();
+        msmaxGetContext().closeSettingWindow();
     }
     else {
-        msmaxGetContext().openWindow();
+        msmaxGetContext().openSettingWindow();
     }
     return &ok;
 }
@@ -103,6 +104,8 @@ Value* Settings_cf(Value** arg_list, int count)
         Entry(make_double_sided,    bool_result, to_bool);
         Entry(ignore_non_renderable,bool_result, to_bool);
         Entry(bake_modifiers,       bool_result, to_bool);
+        Entry(use_render_meshes,    bool_result, to_bool);
+        Entry(flatten_hierarchy,    bool_result, to_bool);
 
         Entry(sync_bones,           bool_result, to_bool);
         Entry(sync_blendshapes,     bool_result, to_bool);
@@ -110,11 +113,12 @@ Value* Settings_cf(Value** arg_list, int count)
         Entry(sync_lights,          bool_result, to_bool);
         Entry(sync_textures,        bool_result, to_bool);
 
-        Entry(animation_time_scale, Float::intern, to_float);
-        Entry(animation_sps,        Float::intern, to_float);
-        Entry(keyframe_reduction,   bool_result, to_bool);
-        Entry(keep_flat_curves,     bool_result, to_bool);
-        Entry(multithreaded,        bool_result, to_bool);
+        Entry(anim_time_scale,          Float::intern, to_float);
+        Entry(anim_sample_rate,         Float::intern, to_float);
+        Entry(anim_keyframe_reduction,  bool_result, to_bool);
+        Entry(anim_keep_flat_curves,    bool_result, to_bool);
+
+        Entry(multithreaded,            bool_result, to_bool);
 
 #undef Entry
     }
@@ -142,10 +146,10 @@ Value* Settings_cf(Value** arg_list, int count)
     return &ok;
 }
 
-Value* Export_cf(Value** arg_list, int count)
+Value* Send_cf(Value** arg_list, int count)
 {
-    auto target = msmaxContext::SendTarget::Objects;
-    auto scope = msmaxContext::SendScope::All;
+    auto target = msmaxExportTarget::Objects;
+    auto scope = msmaxObjectScope::All;
 
     // parse args
     for (int i = 0; i < count; /**/) {
@@ -154,22 +158,22 @@ Value* Export_cf(Value** arg_list, int count)
             if (name == L"target") {
                 std::wstring value = arg_list[i++]->to_string();
                 if (value == L"objects")
-                    target = msmaxContext::SendTarget::Objects;
+                    target = msmaxExportTarget::Objects;
                 else if (value == L"materials")
-                    target = msmaxContext::SendTarget::Materials;
+                    target = msmaxExportTarget::Materials;
                 else if (value == L"animations")
-                    target = msmaxContext::SendTarget::Animations;
+                    target = msmaxExportTarget::Animations;
                 else if (value == L"everything")
-                    target = msmaxContext::SendTarget::Everything;
+                    target = msmaxExportTarget::Everything;
             }
             else if (name == L"scope") {
                 std::wstring value = arg_list[i++]->to_string();
                 if (value == L"all")
-                    scope = msmaxContext::SendScope::All;
+                    scope = msmaxObjectScope::All;
                 else if (value == L"selected")
-                    scope = msmaxContext::SendScope::Selected;
+                    scope = msmaxObjectScope::Selected;
                 else if (value == L"updated")
-                    scope = msmaxContext::SendScope::Updated;
+                    scope = msmaxObjectScope::Updated;
             }
         }
     }
@@ -182,5 +186,56 @@ Value* Export_cf(Value** arg_list, int count)
 Value* Import_cf(Value** arg_list, int count)
 {
     msmaxGetContext().recvScene();
+    return &ok;
+}
+
+// e.g. UnityMeshSync.ExportCache path:"C:\tmp\hoge.sc"
+Value* ExportCache_cf(Value** arg_list, int count)
+{
+    msmaxCacheExportSettings settings;
+
+    // parse args
+    for (int i = 0; i < count; /**/) {
+        std::wstring name = arg_list[i++]->to_string();
+        if (i + 1 <= count) {
+            if (name == L"path") {
+                settings.path = mu::ToMBS(arg_list[i++]->to_string());
+            }
+            else if (name == L"object_scope") {
+                std::wstring value = arg_list[i++]->to_string();
+                if (value == L"all")
+                    settings.object_scope = msmaxObjectScope::All;
+                else if (value == L"selected")
+                    settings.object_scope = msmaxObjectScope::Selected;
+            }
+            else if (name == L"frame_range") {
+                std::wstring value = arg_list[i++]->to_string();
+                if (value == L"current")
+                    settings.frame_range = msmaxFrameRange::CurrentFrame;
+                else if (value == L"all")
+                    settings.frame_range = msmaxFrameRange::AllFrames;
+            }
+            else if (name == L"material_frame_range") {
+                std::wstring value = arg_list[i++]->to_string();
+                if (value == L"none")
+                    settings.material_frame_range = msmaxMaterialFrameRange::None;
+                else if (value == L"one")
+                    settings.material_frame_range = msmaxMaterialFrameRange::OneFrame;
+                else if (value == L"all")
+                    settings.material_frame_range = msmaxMaterialFrameRange::AllFrames;
+            }
+            else if (name == L"zstd_compression_level") settings.zstd_compression_level = arg_list[i++]->to_int();
+            else if (name == L"samples_per_frame")      settings.samples_per_frame = arg_list[i++]->to_float();
+            else if (name == L"ignore_non_renderable")  settings.ignore_non_renderable = arg_list[i++]->to_bool();
+            else if (name == L"make_double_sided")      settings.make_double_sided = arg_list[i++]->to_bool();
+            else if (name == L"bake_modifiers")         settings.bake_modifiers = arg_list[i++]->to_bool();
+            else if (name == L"use_render_meshes")      settings.use_render_meshes = arg_list[i++]->to_bool();
+            else if (name == L"flatten_hierarchy")      settings.flatten_hierarchy = arg_list[i++]->to_bool();
+            else if (name == L"merge_meshes")           settings.merge_meshes = arg_list[i++]->to_bool();
+            else if (name == L"strip_normals")          settings.strip_normals = arg_list[i++]->to_bool();
+            else if (name == L"strip_tangents")         settings.strip_tangents = arg_list[i++]->to_bool();
+        }
+    }
+    msmaxGetContext().exportCache(settings);
     return &ok;
 }

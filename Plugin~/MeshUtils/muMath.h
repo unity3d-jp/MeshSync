@@ -375,88 +375,36 @@ template<class T> inline tvec4<T> operator*(const tmat4x4<T>& m, const tvec4<T>&
         m[0][3] * v[0] + m[1][3] * v[1] + m[2][3] * v[2] + m[3][3] * v[3],
     };
 }
-template<class T> inline tmat3x3<T> operator*(const tmat3x3<T> &a, const tmat3x3<T> &b)
+
+template<class T> inline T sum(const tvec3<T>& v);
+template<class T> inline T sum(const tvec4<T>& v);
+template<class T> inline tmat3x3<T> transpose(const tmat3x3<T>& v);
+template<class T> inline tmat4x4<T> transpose(const tmat4x4<T>& v);
+
+template<class T> inline tmat3x3<T> operator*(const tmat3x3<T> &a, const tmat3x3<T> &b_)
 {
-    tmat3x3<T> c;
-    const T *ap = &a[0][0];
-    const T *bp = &b[0][0];
-    T *cp = &c[0][0];
-    T a0, a1, a2;
-
-    a0 = ap[0];
-    a1 = ap[1];
-    a2 = ap[2];
-
-    cp[0] = a0 * bp[0] + a1 * bp[3] + a2 * bp[6];
-    cp[1] = a0 * bp[1] + a1 * bp[4] + a2 * bp[7];
-    cp[2] = a0 * bp[2] + a1 * bp[5] + a2 * bp[9];
-
-    a0 = ap[3];
-    a1 = ap[4];
-    a2 = ap[5];
-
-    cp[3] = a0 * bp[0] + a1 * bp[4] + a2 * bp[7];
-    cp[4] = a0 * bp[1] + a1 * bp[5] + a2 * bp[8];
-    cp[5] = a0 * bp[2] + a1 * bp[6] + a2 * bp[9];
-
-    a0 = ap[6];
-    a1 = ap[7];
-    a2 = ap[8];
-
-    cp[6] = a0 * bp[0] + a1 * bp[4] + a2 * bp[7];
-    cp[7] = a0 * bp[1] + a1 * bp[5] + a2 * bp[8];
-    cp[8] = a0 * bp[2] + a1 * bp[6] + a2 * bp[9];
-
-    return c;
+    const auto b = transpose(b_);
+    return { {
+        { sum(a[0] * b[0]), sum(a[0] * b[1]), sum(a[0] * b[2]) },
+        { sum(a[1] * b[0]), sum(a[1] * b[1]), sum(a[1] * b[2]) },
+        { sum(a[2] * b[0]), sum(a[2] * b[1]), sum(a[2] * b[2]) },
+    } };
 }
-template<class T> inline tmat4x4<T> operator*(const tmat4x4<T> &a, const tmat4x4<T> &b)
+template<class T> inline tmat3x3<T>& operator*=(tmat3x3<T>& a, const tmat3x3<T> &b)
 {
-    tmat4x4<T> c;
-    const T *ap = &a[0][0];
-    const T *bp = &b[0][0];
-    T *cp = &c[0][0];
-    T a0, a1, a2, a3;
+    a = a * b;
+    return a;
+}
 
-    a0 = ap[0];
-    a1 = ap[1];
-    a2 = ap[2];
-    a3 = ap[3];
-
-    cp[0] = a0 * bp[0] + a1 * bp[4] + a2 * bp[8] + a3 * bp[12];
-    cp[1] = a0 * bp[1] + a1 * bp[5] + a2 * bp[9] + a3 * bp[13];
-    cp[2] = a0 * bp[2] + a1 * bp[6] + a2 * bp[10] + a3 * bp[14];
-    cp[3] = a0 * bp[3] + a1 * bp[7] + a2 * bp[11] + a3 * bp[15];
-
-    a0 = ap[4];
-    a1 = ap[5];
-    a2 = ap[6];
-    a3 = ap[7];
-
-    cp[4] = a0 * bp[0] + a1 * bp[4] + a2 * bp[8] + a3 * bp[12];
-    cp[5] = a0 * bp[1] + a1 * bp[5] + a2 * bp[9] + a3 * bp[13];
-    cp[6] = a0 * bp[2] + a1 * bp[6] + a2 * bp[10] + a3 * bp[14];
-    cp[7] = a0 * bp[3] + a1 * bp[7] + a2 * bp[11] + a3 * bp[15];
-
-    a0 = ap[8];
-    a1 = ap[9];
-    a2 = ap[10];
-    a3 = ap[11];
-
-    cp[8] = a0 * bp[0] + a1 * bp[4] + a2 * bp[8] + a3 * bp[12];
-    cp[9] = a0 * bp[1] + a1 * bp[5] + a2 * bp[9] + a3 * bp[13];
-    cp[10] = a0 * bp[2] + a1 * bp[6] + a2 * bp[10] + a3 * bp[14];
-    cp[11] = a0 * bp[3] + a1 * bp[7] + a2 * bp[11] + a3 * bp[15];
-
-    a0 = ap[12];
-    a1 = ap[13];
-    a2 = ap[14];
-    a3 = ap[15];
-
-    cp[12] = a0 * bp[0] + a1 * bp[4] + a2 * bp[8] + a3 * bp[12];
-    cp[13] = a0 * bp[1] + a1 * bp[5] + a2 * bp[9] + a3 * bp[13];
-    cp[14] = a0 * bp[2] + a1 * bp[6] + a2 * bp[10] + a3 * bp[14];
-    cp[15] = a0 * bp[3] + a1 * bp[7] + a2 * bp[11] + a3 * bp[15];
-    return c;
+template<class T> inline tmat4x4<T> operator*(const tmat4x4<T> &a, const tmat4x4<T> &b_)
+{
+    const auto b = transpose(b_);
+    return { {
+        { sum(a[0] * b[0]), sum(a[0] * b[1]), sum(a[0] * b[2]), sum(a[0] * b[3]) },
+        { sum(a[1] * b[0]), sum(a[1] * b[1]), sum(a[1] * b[2]), sum(a[1] * b[3]) },
+        { sum(a[2] * b[0]), sum(a[2] * b[1]), sum(a[2] * b[2]), sum(a[2] * b[3]) },
+        { sum(a[3] * b[0]), sum(a[3] * b[1]), sum(a[3] * b[2]), sum(a[3] * b[3]) },
+    }};
 }
 template<class T> inline tmat4x4<T>& operator*=(tmat4x4<T>& a, const tmat4x4<T> &b)
 {
@@ -634,6 +582,11 @@ template<class T> inline tvec3<T> cross(const tvec3<T>& l, const tvec3<T>& r)
         l.z * r.x - l.x * r.z,
         l.x * r.y - l.y * r.x };
 }
+
+template<class T> inline T sum(const tvec2<T>& v) { return v.x + v.y; }
+template<class T> inline T sum(const tvec3<T>& v) { return v.x + v.y + v.z; }
+template<class T> inline T sum(const tvec4<T>& v) { return v.x + v.y + v.z + v.w; }
+
 
 // a & b must be normalized
 template<class T> inline T angle_between(const tvec3<T>& a, const tvec3<T>& b)

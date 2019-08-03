@@ -32,7 +32,6 @@ std::shared_ptr<Entity> Entity::create(std::istream& is)
     }
     if (ret) {
         ret->deserialize(is);
-        ret->resolve();
     }
     return ret;
 }
@@ -67,11 +66,12 @@ void Entity::deserialize(std::istream& is)
     read(is, path);
 }
 
-void Entity::resolve()
+bool Entity::isUnchanged() const
 {
+    return false;
 }
 
-bool Entity::isUnchanged() const
+bool Entity::isTopologyUnchanged() const
 {
     return false;
 }
@@ -142,11 +142,10 @@ uint64_t Entity::checksumGeom() const
     return 0;
 }
 
-EntityPtr Entity::clone()
+EntityPtr Entity::clone(bool /*detach*/)
 {
     auto ret = create();
     *ret = *this;
-    ret->resolve();
     return ret;
 }
 
@@ -318,11 +317,10 @@ uint64_t Transform::checksumTrans() const
     return ret;
 }
 
-EntityPtr Transform::clone()
+EntityPtr Transform::clone(bool /*detach*/)
 {
     auto ret = create();
     *ret = *this;
-    ret->resolve();
     return ret;
 }
 
@@ -471,11 +469,10 @@ uint64_t Camera::checksumTrans() const
     return ret;
 }
 
-EntityPtr Camera::clone()
+EntityPtr Camera::clone(bool /*detach*/)
 {
     auto ret = create();
     *ret = *this;
-    ret->resolve();
     return ret;
 }
 #undef EachMember
@@ -596,11 +593,10 @@ uint64_t Light::checksumTrans() const
     return ret;
 }
 
-EntityPtr Light::clone()
+EntityPtr Light::clone(bool /*detach*/)
 {
     auto ret = create();
     *ret = *this;
-    ret->resolve();
     return ret;
 }
 #undef EachMember
@@ -663,7 +659,7 @@ bool PointsData::lerp(const PointsData& s1, const PointsData& s2, float t)
 {
     if (s1.points.size() != s2.points.size() || s1.ids != s2.ids)
         return false;
-#define DoLerp(N) N.resize_discard(s1.N.size()); Lerp(N.data(), s1.N.data(), s2.N.data(), N.size(), t)
+#define DoLerp(N) N.resize_discard(s1.N.size()); Lerp(N.data(), s1.N.cdata(), s2.N.cdata(), N.size(), t)
     DoLerp(points);
     DoLerp(scales);
     DoLerp(colors);
@@ -694,10 +690,10 @@ void PointsData::setupPointsDataFlags()
     pd_flags.has_ids = !ids.empty();
 }
 
-void PointsData::getBounds(float3 & center, float3 & extents)
+void PointsData::getBounds(float3 & center, float3 & extents) const
 {
     float3 bmin, bmax;
-    mu::MinMax(points.data(), points.size(), bmin, bmax);
+    mu::MinMax(points.cdata(), points.size(), bmin, bmax);
     center = (bmax + bmin) * 0.5f;
     extents = abs(bmax - bmin);
 }
@@ -765,7 +761,7 @@ bool Points::lerp(const Entity& s1_, const Entity& s2_, float t)
     return ret;
 }
 
-EntityPtr Points::clone()
+EntityPtr Points::clone(bool /*detach*/)
 {
     return EntityPtr();
 }

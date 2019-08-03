@@ -15,6 +15,8 @@ public:
     void addScene(ScenePtr scene, float time) override;
     void flush() override;
     bool isWriting() override;
+    int getSceneCountWritten() const override;
+    int getSceneCountInQueue() const override;
 
 protected:
     void doWrite();
@@ -23,13 +25,14 @@ protected:
     {
         ScenePtr scene;
         float time;
+        std::future<void> preprocess_task;
     };
     struct EntityRecord
     {
         EntityType type = EntityType::Unknown;
         int id = 0;
         int unchanged_count = 0;
-        int unchanged_topology_count = 0;
+        int topology_unchanged_count = 0;
     };
 
     StreamPtr m_ost = nullptr;
@@ -40,7 +43,8 @@ protected:
     std::future<void> m_task;
 
     ScenePtr m_base_scene;
-    int m_scene_count = 0;
+    int m_scene_count_written = 0;
+    int m_scene_count_in_queue = 0;
     std::vector<EntityRecord> m_entity_records;
 
     BufferEncoderPtr m_encoder;

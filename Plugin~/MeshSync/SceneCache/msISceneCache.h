@@ -12,38 +12,52 @@ public:
     ~ISceneCacheImpl() override;
     bool valid() const override;
 
+    float getSampleRate() const override;
     size_t getNumScenes() const override;
     TimeRange getTimeRange() const override;
+    float getTime(size_t i) const override;
     ScenePtr getByIndex(size_t i) override;
     ScenePtr getByTime(float t, bool lerp) override;
+    void refresh() override;
+
+    const AnimationCurvePtr getTimeCurve() const override;
 
     int timeToIndex(float time) const;
+    void preloadAll();
 
 protected:
-    ScenePtr getByIndexImpl(size_t i);
-    ScenePtr postprocess(ScenePtr& sp);
+    ScenePtr getByIndexImpl(size_t i, bool wait_preload = true);
+    ScenePtr postprocess(ScenePtr& sp, size_t scene_index);
+    bool kickPreload(size_t i);
+    void waitAllPreloads();
 
     struct SceneRecord
     {
         uint64_t pos = 0;
         uint64_t size = 0;
-        ScenePtr scene;
         float time = 0.0f;
+
+        float load_time_ms = 0.0f;
+        ScenePtr scene;
+        std::future<void> preload;
+
+        SceneRecord();
+        SceneRecord(SceneRecord&& v) noexcept;   // enforce std::vector to use move constructor
+        SceneRecord& operator=(SceneRecord&& v); // 
     };
 
     StreamPtr m_ist;
     ISceneCacheSettings m_iscs;
     CacheFileHeader m_header;
+    BufferEncoderPtr m_encoder;
 
     std::mutex m_mutex;
     std::vector<SceneRecord> m_records;
     RawVector<CacheFileEntityMeta> m_entity_meta;
-
-    BufferEncoderPtr m_encoder;
-    MemoryStream m_scene_buf;
-    RawVector<char> m_encoded_buf, m_tmp_buf;
+    AnimationCurvePtr m_time_curve;
 
     float m_last_time = -1.0f;
+    int m_last_index = -1, m_last_index2 = -1;
     ScenePtr m_base_scene, m_last_scene, m_last_diff;
     std::deque<size_t> m_history;
 };
