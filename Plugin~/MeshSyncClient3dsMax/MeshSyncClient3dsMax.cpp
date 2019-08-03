@@ -225,7 +225,7 @@ Value* ExportCache_cf(Value** arg_list, int count)
                     settings.material_frame_range = msmaxMaterialFrameRange::AllFrames;
             }
             else if (name == L"zstd_compression_level") settings.zstd_compression_level = arg_list[i++]->to_int();
-            else if (name == L"sample_rate")            settings.sample_rate = arg_list[i++]->to_float();
+            else if (name == L"samples_per_frame")      settings.samples_per_frame = arg_list[i++]->to_float();
             else if (name == L"bake_modifiers")         settings.bake_modifiers = arg_list[i++]->to_bool();
             else if (name == L"use_render_meshes")      settings.use_render_meshes = arg_list[i++]->to_bool();
             else if (name == L"flatten_hierarchy")      settings.flatten_hierarchy = arg_list[i++]->to_bool();

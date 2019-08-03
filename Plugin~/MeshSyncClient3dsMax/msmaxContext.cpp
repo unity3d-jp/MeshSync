@@ -331,7 +331,7 @@ bool msmaxContext::sendAnimations(msmaxObjectScope scope)
         for (auto& kvp : m_anim_records)
             kvp.second(this);
 
-        if (t >= time_range.End())
+        if (t >= time_end)
             break;
         else
             t = std::min(t + interval, time_end);
@@ -362,7 +362,9 @@ static DWORD WINAPI CB_Dummy(LPVOID arg) { return 0; }
 bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
 {
     //float sample_rate = m_settings.animation_sps;
-    float sample_rate = cache_settings.sample_rate > 0.0f ? cache_settings.sample_rate : (float)::GetFrameRate();
+    float samples_per_frame = cache_settings.samples_per_frame;
+    float samples_per_second = samples_per_frame * ::GetFrameRate();
+    int ticks_per_frame = ::GetTicksPerFrame();
 
     auto settings_old = m_settings;
     m_settings.export_scene_cache = true;
@@ -371,7 +373,7 @@ bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
-    oscs.sample_rate = sample_rate;
+    oscs.sample_rate = samples_per_second;
     oscs.encoder_settings.zstd.compression_level = cache_settings.zstd_compression_level;
     oscs.flatten_hierarchy = cache_settings.flatten_hierarchy;
     oscs.strip_normals = cache_settings.strip_normals;
@@ -423,27 +425,41 @@ bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
     };
 
     auto *ifs = GetCOREInterface();
-    if (cache_settings.frame_range == msmaxFrameRange::AllFrames) {
+    if (cache_settings.frame_range != msmaxFrameRange::CurrentFrame) {
         ifs->ProgressStart(L"Exporting Scene Cache", TRUE, CB_Dummy, nullptr);
 
-        auto time_range = ifs->GetAnimRange();
-        auto time_start = time_range.Start();
-        auto time_end = time_range.End();
-        auto interval = ToTicks(1.0f / std::max(sample_rate, 0.01f));
+        TimeValue time_start = 0, time_end = 0, interval = 0;
+
+        if (cache_settings.frame_range == msmaxFrameRange::CustomRange) {
+            // custom frame range
+            time_start = cache_settings.frame_begin * ticks_per_frame;
+            time_end = cache_settings.frame_end * ticks_per_frame;
+        }
+        else {
+            // all active frames
+            auto time_range = ifs->GetAnimRange();
+            time_start = time_range.Start();
+            time_end = time_range.End();
+        }
+        interval = TimeValue((float)ticks_per_frame * samples_per_frame);
+        time_end = std::max(time_end, time_start); // sanitize
+
         for (TimeValue t = time_start;;) {
             m_current_time_tick = t;
             m_anim_time = ToSeconds(t - time_start);
-            ifs->SetTime(m_current_time_tick);
+            ifs->SetTime(m_current_time_tick); // this also update viewports
 
             do_export();
 
             float progress = float(m_current_time_tick - time_start) / float(time_end - time_start) * 100.0f;
             ifs->ProgressUpdate((int)progress);
 
-            if (t >= time_range.End()) {
+            if (t >= time_end) {
+                // end of time range
                 break;
             }
             else if (ifs->GetCancel()) {
+                // cancel requested
                 ifs->SetCancel(FALSE);
                 break;
             }
@@ -464,15 +480,6 @@ bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
     m_settings = settings_old;
     m_cache_writer.close();
     return true;
-}
-
-bool msmaxContext::exportCache(msmaxObjectScope scope, bool all_frames, const std::string& path)
-{
-    auto cache_settings = m_cache_settings;
-    cache_settings.path = path;
-    cache_settings.object_scope = scope;
-    cache_settings.frame_range = all_frames ? msmaxFrameRange::AllFrames : msmaxFrameRange::CurrentFrame;
-    return exportCache(cache_settings);
 }
 
 bool msmaxContext::recvScene()

@@ -12,6 +12,7 @@ std::wstring GetPathW(INode *n);
 std::string  GetPath(INode *n);
 // get currently opened filename. '.max' is excluded. 'Untitled' if no file is opened.
 std::string GetCurrentMaxFileName();
+std::tuple<int, int> GetActiveFrameRange();
 
 bool IsRenderable(INode *n);
 bool IsVisibleInHierarchy(INode *n, TimeValue t);

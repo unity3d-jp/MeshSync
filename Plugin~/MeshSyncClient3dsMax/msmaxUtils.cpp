@@ -41,12 +41,22 @@ std::string GetPath(INode *n)
 
 std::string GetCurrentMaxFileName()
 {
-    MSTR filename = GetCOREInterface()->GetCurFileName();
+    MSTR filename = ::GetCOREInterface()->GetCurFileName();
     auto len = filename.Length();
     if (len == 0)
         return "Untitled";
     else
         return mu::GetFilename_NoExtension(filename.data());
+}
+
+std::tuple<int, int> GetActiveFrameRange()
+{
+    auto time_range = ::GetCOREInterface()->GetAnimRange();
+    auto tick_per_frame = ::GetTicksPerFrame();
+    return {
+        time_range.Start() / tick_per_frame,
+        time_range.End() / tick_per_frame
+    };
 }
 
 bool IsRenderable(INode *n)

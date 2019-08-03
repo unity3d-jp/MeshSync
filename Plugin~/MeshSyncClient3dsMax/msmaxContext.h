@@ -79,10 +79,10 @@ struct msmaxCacheExportSettings
     msmaxFrameRange frame_range = msmaxFrameRange::CurrentFrame;
     msmaxMaterialFrameRange material_frame_range = msmaxMaterialFrameRange::OneFrame;
     int frame_begin = 0;
-    int frame_end = INT_MAX;
+    int frame_end = 100;
 
     int zstd_compression_level = 22; // (min) 0 - 22 (max)
-    float sample_rate = 1.0f;
+    float samples_per_frame = 1.0f;
 
     bool bake_modifiers = true;
     bool use_render_meshes = true;
@@ -125,7 +125,6 @@ public:
     bool sendObjects(msmaxObjectScope scope, bool dirty_all);
     bool sendMaterials(bool dirty_all);
     bool sendAnimations(msmaxObjectScope scope);
-    bool exportCache(msmaxObjectScope scope, bool all_frames, const std::string& path);
     bool exportCache(const msmaxCacheExportSettings& cache_settings);
 
     bool recvScene();

@@ -583,6 +583,12 @@ static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, L
         CtrlComboAddString(IDC_MATERIAL_RANGE, "None");
         CtrlComboAddString(IDC_MATERIAL_RANGE, "One Frame");
         CtrlComboAddString(IDC_MATERIAL_RANGE, "All Frames");
+        {
+            auto frame_range = GetActiveFrameRange();
+            char buf[256];
+            sprintf(buf, "Active Time Segments: %d to %d", std::get<0>(frame_range), std::get<1>(frame_range));
+            CtrlSetText(IDC_FRAMERANGE_ACTIVE, buf);
+        }
 
         GetCOREInterface()->RegisterDlgWnd(g_msmax_cache_window);
         PositionWindowNearCursor(hDlg);
@@ -692,16 +698,16 @@ static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, L
 
         case IDC_CACHE_SAMPLES_PER_FRAME:
             handle_edit([&]() {
-                float tmp = CtrlGetFloat(IDC_CACHE_SAMPLES_PER_FRAME, s.sample_rate);
+                float tmp = CtrlGetFloat(IDC_CACHE_SAMPLES_PER_FRAME, s.samples_per_frame);
                 tmp = mu::clamp(tmp, 0.01f, 100.0f);
                 CtrlSetText(IDC_CACHE_SAMPLES_PER_FRAME, tmp);
-                s.sample_rate = tmp;
+                s.samples_per_frame = tmp;
             });
             break;
         case IDC_ZSTD_COMPRESSION_LEVEL:
             handle_edit([&]() {
                 int tmp = CtrlGetInt(IDC_ZSTD_COMPRESSION_LEVEL, s.zstd_compression_level);
-                tmp = mu::clamp(tmp, 0, 22);
+                tmp = ms::ClampZSTDCompressionLevel(tmp);
                 CtrlSetText(IDC_ZSTD_COMPRESSION_LEVEL, tmp);
                 s.zstd_compression_level = tmp;
             });
@@ -773,6 +779,7 @@ void msmaxContext::openCacheWindow()
         filter_list.SetFilterIndex(filter_index);
 
         if (ifs->DoMaxSaveAsDialog(ifs->GetMAXHWnd(), L"Export Scene Cache", filename, dir, filter_list)) {
+            // save path
             msmaxGetCacheSettings().path = ms::ToMBS(filename);
 
             // open cache export settings window
@@ -821,7 +828,7 @@ void msmaxContext::updateCacheControls()
 
     CtrlSetText(IDC_FRAME_BEGIN, s.frame_begin);
     CtrlSetText(IDC_FRAME_END, s.frame_end);
-    CtrlSetText(IDC_CACHE_SAMPLES_PER_FRAME, s.sample_rate);
+    CtrlSetText(IDC_CACHE_SAMPLES_PER_FRAME, s.samples_per_frame);
     CtrlSetText(IDC_ZSTD_COMPRESSION_LEVEL, s.zstd_compression_level);
 
     CtrlComboSetSelection(IDC_MATERIAL_RANGE, (int)s.material_frame_range);
