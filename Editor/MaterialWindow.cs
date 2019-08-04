@@ -6,7 +6,7 @@ namespace UTJ.MeshSyncEditor
 {
     class MaterialWindow : EditorWindow
     {
-        public static void Open(MeshSyncServer server)
+        public static void Open(MeshSyncPlayer server)
         {
             var window = (MaterialWindow)EditorWindow.GetWindow(typeof(MaterialWindow));
             window.titleContent = new GUIContent("Material List");
@@ -15,7 +15,7 @@ namespace UTJ.MeshSyncEditor
         }
 
 
-        public MeshSyncServer m_server;
+        public MeshSyncPlayer m_server;
 
 
         void OnGUI()

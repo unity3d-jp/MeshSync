@@ -17,6 +17,30 @@ namespace UTJ.MeshSync
     {
         public const int InvalidID = -1;
 
+        public static uint maxVerticesPerMesh
+        {
+            get
+            {
+#if UNITY_2017_3_OR_NEWER
+                return 0xffffffff;
+#else
+                return 65000;
+#endif
+            }
+        }
+        public static uint maxBoneInfluence
+        {
+            get
+            {
+#if UNITY_2019_1_OR_NEWER
+                return 255;
+#else
+                return 4;
+#endif
+            }
+        }
+
+
         public static string S(IntPtr cstring)
         {
             return cstring == IntPtr.Zero ? "" : Marshal.PtrToStringAnsi(cstring);
@@ -227,7 +251,7 @@ namespace UTJ.MeshSync
 
         public Flags flags; // reserved
         public uint meshSplitUnit;
-        public int meshMaxBoneInfluence; // 4 or 255 (variable)
+        public uint meshMaxBoneInfluence; // 4 or 255 (variable)
         public ZUpCorrectionMode zUpCorrectionMode;
 
         public static ServerSettings defaultValue
@@ -239,16 +263,8 @@ namespace UTJ.MeshSync
                     maxQueue = 512,
                     maxThreads = 8,
                     port = defaultPort,
-#if UNITY_2017_3_OR_NEWER
-                    meshSplitUnit = 0xffffffff,
-#else
-                    meshSplitUnit = 65000,
-#endif
-#if UNITY_2019_1_OR_NEWER
-                    meshMaxBoneInfluence = 255,
-#else
-                    meshMaxBoneInfluence = 4,
-#endif
+                    meshSplitUnit = Misc.maxVerticesPerMesh,
+                    meshMaxBoneInfluence = Misc.maxBoneInfluence,
                     zUpCorrectionMode = ZUpCorrectionMode.FlipYZ,
                 };
                 return ret;
@@ -2058,7 +2074,7 @@ namespace UTJ.MeshSync
             }
             set { msMeshWriteBindPoses(self, value, value.Length); }
         }
-        public void SetBonePaths(MeshSyncServer mss, Transform[] bones)
+        public void SetBonePaths(MeshSyncPlayer mss, Transform[] bones)
         {
             int n = bones.Length;
             for (int i = 0; i < n; ++i)

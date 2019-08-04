@@ -5,7 +5,7 @@ using UnityEditor;
 
 namespace UTJ.MeshSync
 {
-    [RequireComponent(typeof(MeshSyncServer))]
+    [RequireComponent(typeof(MeshSyncPlayer))]
     [ExecuteInEditMode]
     public class SceneCachePlayer : MonoBehaviour
     {
@@ -121,7 +121,7 @@ namespace UTJ.MeshSync
                 var scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
                 if (scene)
                 {
-                    var server = GetComponent<MeshSyncServer>();
+                    var server = GetComponent<MeshSyncPlayer>();
                     server.BeforeUpdateScene();
                     server.UpdateScene(scene);
                     server.AfterUpdateScene();
@@ -153,7 +153,6 @@ namespace UTJ.MeshSync
             m_cacheFilePath.isDirectory = false;
             m_cacheFilePath.readOnly = true;
             m_cacheFilePath.showRootSelector = true;
-            GetComponent<MeshSyncServer>().serverPort = Random.Range(11111, 65000);
         }
         void OnValidate()
         {

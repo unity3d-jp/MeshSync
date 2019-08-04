@@ -17,7 +17,7 @@ namespace UTJ.MeshSyncEditor
                 var go = new GameObject();
                 go.name = System.IO.Path.GetFileNameWithoutExtension(path);
 
-                var server = go.AddComponent<MeshSyncServer>();
+                var server = go.AddComponent<MeshSyncPlayer>();
                 server.rootObject = go.GetComponent<Transform>();
                 server.progressiveDisplay = false;
                 server.dontSaveAssetsInScene = true;
@@ -67,7 +67,7 @@ namespace UTJ.MeshSyncEditor
             }
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Plugin Version: " + MeshSyncServer.pluginVersion);
+            EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.pluginVersion);
         }
     }
 }
