@@ -163,6 +163,35 @@ TestCase(Test_Animation)
     Send(scene);
 }
 
+TestCase(Test_MeshMerge)
+{
+    auto scene = ms::Scene::create();
+
+    auto mesh = ms::Mesh::create();
+    scene->entities.push_back(mesh);
+    {
+        mesh->path = "/Test/Merge";
+        mesh->position = { 0.0f, 0.0f, 0.0f };
+        mesh->rotation = quatf::identity();
+        mesh->scale = { 1.0f, 1.0f, 1.0f };
+
+        GenerateWaveMesh(mesh->counts, mesh->indices, mesh->points, mesh->uv0, 2.0f, 1.0f, 16, 90.0f * mu::DegToRad);
+        mesh->refine_settings.flags.gen_normals = 1;
+        mesh->refine_settings.flags.gen_tangents = 1;
+        mesh->material_ids.resize(mesh->counts.size(), 0);
+    }
+
+    {
+        auto sphere = ms::Mesh::create();
+        GenerateIcoSphereMesh(sphere->counts, sphere->indices, sphere->points, sphere->uv0, 0.5f, 1);
+        sphere->material_ids.resize(sphere->counts.size(), 1);
+        sphere->transformMesh(mu::translate(float3{ 0.0f, 1.5f, 0.0f }));
+
+        mesh->mergeMesh(*sphere);
+    }
+    Send(scene);
+}
+
 TestCase(Test_Points)
 {
     Random rand;

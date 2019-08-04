@@ -1481,6 +1481,11 @@ namespace UTJ.MeshSync
                         smr.updateWhenOffscreen = true; // todo: this should be turned off at some point
                     }
                 }
+                else
+                {
+                    smr.localBounds = rec.mesh.bounds;
+                    smr.updateWhenOffscreen = false;
+                }
 
                 // update blendshape weights
                 if (hasBlendshapes)
