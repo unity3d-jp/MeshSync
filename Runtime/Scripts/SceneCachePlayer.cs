@@ -5,15 +5,13 @@ using UnityEditor;
 
 namespace UTJ.MeshSync
 {
-    [RequireComponent(typeof(MeshSyncPlayer))]
     [ExecuteInEditMode]
-    public class SceneCachePlayer : MonoBehaviour
+    public class SceneCachePlayer : MeshSyncPlayer
     {
         #region Fields
         [SerializeField] DataPath m_cacheFilePath = new DataPath();
         [SerializeField] float m_time;
         [SerializeField] bool m_interpolation = false;
-        [SerializeField] bool m_logging = false;
 
         SceneCacheData m_sceneCache;
         TimeRange m_timeRange;
@@ -74,30 +72,23 @@ namespace UTJ.MeshSync
             m_timePrev = -1;
         }
 
-        public bool AddCurve(AnimationClip clip, string path)
-        {
-            if (!m_sceneCache)
-                return false;
-
-            var curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
-            if (curve == null)
-                return false;
-            clip.SetCurve(path, typeof(SceneCachePlayer), "m_time", curve);
-            return true;
-        }
-
 #if UNITY_EDITOR
         public bool AddAnimator(string assetPath)
         {
             if (m_sceneCache.sceneCount < 2)
                 return false;
 
-            var dstPath = string.Format("{0}/{1}.anim", assetPath, gameObject.name);
+            var curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
+            if (curve == null)
+                return false;
+
             var clip = new AnimationClip();
             var sampleRate = m_sceneCache.sampleRate;
             if (sampleRate > 0.0f)
                 clip.frameRate = sampleRate;
-            AddCurve(clip, "");
+            clip.SetCurve("", typeof(SceneCachePlayer), "m_time", curve);
+
+            var dstPath = string.Format("{0}/{1}.anim", assetPath, gameObject.name);
             clip = Misc.SaveAsset(clip, dstPath);
             if (clip == null)
                 return false;
@@ -121,15 +112,13 @@ namespace UTJ.MeshSync
                 var scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
                 if (scene)
                 {
-                    var server = GetComponent<MeshSyncPlayer>();
-                    server.BeforeUpdateScene();
-                    server.UpdateScene(scene);
-                    server.AfterUpdateScene();
+                    this.BeforeUpdateScene();
+                    this.UpdateScene(scene);
+                    this.AfterUpdateScene();
                 }
             }
         }
         #endregion
-
 
         #region Impl
         void CheckParamsUpdated()
@@ -154,23 +143,25 @@ namespace UTJ.MeshSync
             m_cacheFilePath.readOnly = true;
             m_cacheFilePath.showRootSelector = true;
         }
+
         void OnValidate()
         {
             CheckParamsUpdated();
         }
 #endif
 
-        void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
             CheckParamsUpdated();
         }
 
-        void OnDisable()
+        protected override void OnDisable()
         {
+            base.OnDisable();
             CloseCache();
             m_pathPrev = "";
         }
-
 
         // note:
         // Update() is called *before* animation update.

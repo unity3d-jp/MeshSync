@@ -185,8 +185,8 @@ namespace UTJ.MeshSync
 #endif
         [SerializeField] protected bool m_updateMeshColliders = true;
         [SerializeField] protected bool m_findMaterialFromAssets = true;
-        [SerializeField] protected bool m_trackMaterialAssignment = true;
 
+        [SerializeField] protected bool m_trackMaterialAssignment = true;
         [SerializeField] protected bool m_progressiveDisplay = true;
         [SerializeField] protected bool m_logging = true;
 
@@ -322,12 +322,12 @@ namespace UTJ.MeshSync
 
 
         #region Impl
-        protected void SerializeDictionary<K,V>(Dictionary<K,V> dic, ref K[] keys, ref V[] values)
+        void SerializeDictionary<K,V>(Dictionary<K,V> dic, ref K[] keys, ref V[] values)
         {
             keys = dic.Keys.ToArray();
             values = dic.Values.ToArray();
         }
-        protected void DeserializeDictionary<K, V>(Dictionary<K, V> dic, ref K[] keys, ref V[] values)
+        void DeserializeDictionary<K, V>(Dictionary<K, V> dic, ref K[] keys, ref V[] values)
         {
             try
             {
@@ -355,7 +355,7 @@ namespace UTJ.MeshSync
             DeserializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
             DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
         }
-
+        #endregion
 
         #region Misc
         //[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -564,8 +564,6 @@ namespace UTJ.MeshSync
 #endif
         }
         #endregion
-
-
 
         #region ReceiveScene
         public void BeforeUpdateScene()
@@ -1932,9 +1930,6 @@ namespace UTJ.MeshSync
         }
         #endregion
 
-
-
-
         #region Tools
 #if UNITY_EDITOR
         public void GenerateLightmapUV(GameObject go)
@@ -2085,7 +2080,6 @@ namespace UTJ.MeshSync
 #endif
         #endregion
 
-
         #region Events
 #if UNITY_EDITOR
         void Reset()
@@ -2100,13 +2094,6 @@ namespace UTJ.MeshSync
         }
 #endif
 
-        void Awake()
-        {
-#if UNITY_EDITOR
-            DeployStreamingAssets.Deploy();
-#endif
-        }
-
         void OnDestroy()
         {
             m_tmpI.Dispose();
@@ -2116,8 +2103,27 @@ namespace UTJ.MeshSync
             m_tmpC.Dispose();
         }
 
+        protected virtual void OnEnable()
+        {
+#if UNITY_EDITOR
+#if UNITY_2019_1_OR_NEWER
+            SceneView.duringSceneGui += OnSceneViewGUI;
+#else
+            SceneView.onSceneGUIDelegate += OnSceneViewGUI;
+#endif
+#endif
+        }
 
-        #endregion
+        protected virtual void OnDisable()
+        {
+#if UNITY_EDITOR
+#if UNITY_2019_1_OR_NEWER
+            SceneView.duringSceneGui -= OnSceneViewGUI;
+#else
+            SceneView.onSceneGUIDelegate -= OnSceneViewGUI;
+#endif
+#endif
+        }
         #endregion
     }
 }

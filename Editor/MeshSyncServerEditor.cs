@@ -25,12 +25,12 @@ namespace UTJ.MeshSyncEditor
             EditorGUILayout.Space();
 
             EditorGUILayout.LabelField("Sync Settings", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(so.FindProperty("m_syncVisibility"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_syncTransform"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_syncCameras"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_syncLights"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_syncMeshes"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"));
+            EditorGUILayout.PropertyField(so.FindProperty("m_syncVisibility"), new GUIContent("Visibility"));
+            EditorGUILayout.PropertyField(so.FindProperty("m_syncTransform"), new GUIContent("Transform"));
+            EditorGUILayout.PropertyField(so.FindProperty("m_syncCameras"), new GUIContent("Cameras"));
+            EditorGUILayout.PropertyField(so.FindProperty("m_syncLights"), new GUIContent("Lights"));
+            EditorGUILayout.PropertyField(so.FindProperty("m_syncMeshes"), new GUIContent("Meshes"));
+            EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));
             EditorGUILayout.Space();
 
             EditorGUILayout.LabelField("Import Settings", EditorStyles.boldLabel);
@@ -39,14 +39,12 @@ namespace UTJ.MeshSyncEditor
 #if UNITY_2018_1_OR_NEWER
             EditorGUILayout.PropertyField(so.FindProperty("m_usePhysicalCameraParams"));
 #endif
-            EditorGUILayout.Space();
-
             EditorGUILayout.PropertyField(so.FindProperty("m_updateMeshColliders"));
             EditorGUILayout.PropertyField(so.FindProperty("m_findMaterialFromAssets"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_trackMaterialAssignment"));
             EditorGUILayout.Space();
 
             EditorGUILayout.LabelField("Misc", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(so.FindProperty("m_trackMaterialAssignment"));
             EditorGUILayout.PropertyField(so.FindProperty("m_progressiveDisplay"));
             EditorGUILayout.PropertyField(so.FindProperty("m_logging"));
             EditorGUILayout.Space();
@@ -103,10 +101,7 @@ namespace UTJ.MeshSyncEditor
             EditorGUILayout.LabelField("Server", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(so.FindProperty("m_serverPort"));
 
-
             DrawBaseParams(t, so);
-
-
             DrawMaterialList(t);
 
             EditorGUILayout.Space();
@@ -133,6 +128,7 @@ namespace UTJ.MeshSyncEditor
             EditorGUILayout.Space();
 
             EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.pluginVersion);
+            so.ApplyModifiedProperties();
         }
     }
 }

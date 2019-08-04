@@ -53,11 +53,6 @@ namespace UTJ.MeshSync
             m_handler = OnServerMessage;
 #if UNITY_EDITOR
             EditorApplication.update += PollServerEvents;
-#if UNITY_2019_1_OR_NEWER
-            SceneView.duringSceneGui += OnSceneViewGUI;
-#else
-            SceneView.onSceneGUIDelegate += OnSceneViewGUI;
-#endif
 #endif
             if (m_logging)
                 Debug.Log("MeshSync: server started (port: " + m_serverSettings.port + ")");
@@ -69,11 +64,6 @@ namespace UTJ.MeshSync
             {
 #if UNITY_EDITOR
                 EditorApplication.update -= PollServerEvents;
-#if UNITY_2019_1_OR_NEWER
-                SceneView.duringSceneGui -= OnSceneViewGUI;
-#else
-                SceneView.onSceneGUIDelegate -= OnSceneViewGUI;
-#endif
 #endif
                 m_server.Stop();
                 m_server = default(Server);
@@ -95,7 +85,6 @@ namespace UTJ.MeshSync
                 m_server.zUpCorrectionMode = m_zUpCorrection;
             }
         }
-
         #endregion
 
         #region MessageHandlers
@@ -420,18 +409,29 @@ namespace UTJ.MeshSync
 
 
         #region Events
+#if UNITY_EDITOR
         void OnValidate()
         {
             CheckParamsUpdated();
         }
+#endif
 
-        void OnEnable()
+        void Awake()
         {
+#if UNITY_EDITOR
+            DeployStreamingAssets.Deploy();
+#endif
+        }
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
             m_requestRestartServer = true;
         }
 
-        void OnDisable()
+        protected override void OnDisable()
         {
+            base.OnDisable();
             StopServer();
         }
 
