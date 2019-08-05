@@ -10,7 +10,7 @@ class Light;
 class Mesh;
 class Points;
 
-enum class EntityType
+enum class EntityType : int
 {
     Unknown,
     Transform,
