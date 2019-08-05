@@ -219,6 +219,8 @@ private:
     void extractLightAnimation(ms::TransformAnimation& dst, TreeNode *n);
     void extractMeshAnimation(ms::TransformAnimation& dst, TreeNode *n);
 
+    bool exportCacheImpl(const msmaxCacheExportSettings& cache_settings);
+
 private:
     msmaxSettings m_settings;
     msmaxCacheExportSettings m_cache_settings;

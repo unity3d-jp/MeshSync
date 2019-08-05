@@ -111,6 +111,8 @@ public:
 
     void buildHierarchy();
     void flatternHierarchy();
+
+    void dbgDump() const;
 };
 msSerializable(Scene);
 msDeclPtr(Scene);

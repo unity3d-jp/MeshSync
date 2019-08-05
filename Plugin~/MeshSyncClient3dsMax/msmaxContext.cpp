@@ -359,7 +359,12 @@ bool msmaxContext::sendAnimations(msmaxObjectScope scope)
 
 static DWORD WINAPI CB_Dummy(LPVOID arg) { return 0; }
 
-bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
+static int ExceptionFilter(unsigned int code, struct _EXCEPTION_POINTERS *ep)
+{
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+bool msmaxContext::exportCacheImpl(const msmaxCacheExportSettings& cache_settings)
 {
     //float sample_rate = m_settings.animation_sps;
     float samples_per_frame = cache_settings.samples_per_frame;
@@ -482,6 +487,21 @@ bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
     m_settings = settings_old;
     m_cache_writer.close();
     return true;
+}
+
+bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
+{
+    __try {
+        return exportCacheImpl(cache_settings);
+    }
+    __except (ExceptionFilter(GetExceptionCode(), GetExceptionInformation()))
+    {
+        logInfo("3ds max crashed! export aborted.");
+        if (cache_settings.frame_range != msmaxFrameRange::CurrentFrame) {
+            GetCOREInterface()->ProgressEnd();
+        }
+        return false;
+    }
 }
 
 bool msmaxContext::recvScene()

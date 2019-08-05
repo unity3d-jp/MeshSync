@@ -635,10 +635,14 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         auto ite = m_host_meshes.find(dst.host_id);
         if (ite != m_host_meshes.end()) {
             dst.refine_settings.world2local = ite->second->refine_settings.world2local;
-            dst.td_flags.has_transform = 0;
+            dst.td_flags.has_position = 0;
+            dst.td_flags.has_rotation = 0;
+            dst.td_flags.has_scale= 0;
         }
         else {
-            dst.td_flags.has_transform = ~0;
+            dst.td_flags.has_position = 1;
+            dst.td_flags.has_rotation = 1;
+            dst.td_flags.has_scale = 1;
             ExtractLocalTransform(obj, dst.position, dst.rotation, dst.scale);
             dst.refine_settings.world2local = invert(ExtractGlobalMatrix(doc, obj));
         }

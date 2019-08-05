@@ -104,7 +104,8 @@ void Scene::diff(const Scene& s1, const Scene& s2)
     if (entity_count == s2.entities.size()) {
         settings = s1.settings;
         entities.resize(entity_count);
-        parallel_for(0, (int)entity_count, 10, [this, &s1, &s2](int i) {
+        bool error = false;
+        parallel_for(0, (int)entity_count, 10, [this, &s1, &s2, &error](int i) {
             auto& e1 = s1.entities[i];
             auto& e2 = s2.entities[i];
             if (e1->id == e2->id) {
@@ -113,9 +114,14 @@ void Scene::diff(const Scene& s1, const Scene& s2)
                 entities[i] = std::static_pointer_cast<Transform>(e3);
             }
             else {
-                msLogError("Scene::diff(): should not be here!\n");
+                error = true;
             }
         });
+        if (error) {
+            msLogError("Scene::diff(): should not be here\n");
+            s1.dbgDump();
+            s2.dbgDump();
+        }
     }
 }
 
@@ -312,6 +318,14 @@ void Scene::flatternHierarchy()
         e->path += kvp.first;
         entities.push_back(e);
     }
+}
+
+void Scene::dbgDump() const
+{
+    for (auto& e : entities) {
+        msLogInfo("  id:%d order:%d %s\n", e->id, e->order, e->path.c_str());
+    }
+    msLogInfo("\n");
 }
 
 template<class AssetType>

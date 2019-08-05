@@ -83,7 +83,9 @@ msDeclPtr(Entity);
 struct TransformDataFlags
 {
     uint32_t unchanged : 1;
-    uint32_t has_transform : 3; // TRS
+    uint32_t has_position : 1;
+    uint32_t has_rotation: 1;
+    uint32_t has_scale: 1;
     uint32_t has_visible : 1;
     uint32_t has_visible_hierarchy : 1;
     uint32_t has_layer : 1;
