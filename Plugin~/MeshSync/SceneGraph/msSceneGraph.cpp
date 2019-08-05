@@ -112,6 +112,9 @@ void Scene::diff(const Scene& s1, const Scene& s2)
                 e3->diff(*e1, *e2);
                 entities[i] = std::static_pointer_cast<Transform>(e3);
             }
+            else {
+                msLogError("Scene::diff(): should not be here!\n");
+            }
         });
     }
 }

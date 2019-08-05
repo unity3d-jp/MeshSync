@@ -81,7 +81,7 @@ struct msmaxCacheExportSettings
     int frame_begin = 0;
     int frame_end = 100;
 
-    int zstd_compression_level = 22; // (min) 0 - 22 (max)
+    int zstd_compression_level = 3; // (min) 0 - 22 (max)
     float samples_per_frame = 1.0f;
 
     bool ignore_non_renderable = true;

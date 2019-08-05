@@ -98,6 +98,13 @@ RawVector<char>&& MemoryStream::moveBuffer() { return std::move(m_buf.buffer); }
 uint64_t MemoryStream::getWCount() const { return m_buf.wcount; }
 uint64_t MemoryStream::getRCount() const { return m_buf.rcount; }
 
+char* MemoryStream::gskip(size_t n)
+{
+    auto ret = m_buf.gptr();
+    m_buf.seekoff(n, std::ios::cur, 0);
+    return ret;
+}
+
 
 static RawVector<char> s_dummy_buf;
 

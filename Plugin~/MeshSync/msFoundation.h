@@ -154,8 +154,15 @@ struct read_impl<SharedVector<T>>
     {
         uint32_t size = 0;
         is.read((char*)&size, sizeof(size));
-        v.resize_discard(size);
-        is.read((char*)v.data(), sizeof(T) * size);
+        if (typeid(is) == typeid(MemoryStream)) {
+            // just share buffer (no copy)
+            auto& ms = static_cast<MemoryStream&>(is);
+            v.share((T*)ms.gskip(sizeof(T) * size), size);
+        }
+        else {
+            v.resize_discard(size);
+            is.read((char*)v.data(), sizeof(T) * size);
+        }
         read_align(is, sizeof(T) * size); // align
     }
 };
