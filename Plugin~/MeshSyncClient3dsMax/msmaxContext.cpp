@@ -401,6 +401,12 @@ bool msmaxContext::exportCacheImpl(const msmaxCacheExportSettings& cache_setting
     auto nodes = getNodes(cache_settings.object_scope);
 
     auto do_export = [&]() {
+        if (m_scene_updated) {
+            updateRecords(false);
+            nodes = getNodes(cache_settings.object_scope);
+            m_scene_updated = false;
+        }
+
         if (scene_index == 0) {
             // exportMaterials() is needed to export material IDs in meshes
             exportMaterials();
@@ -510,7 +516,7 @@ bool msmaxContext::recvScene()
 }
 
 
-void msmaxContext::updateRecords()
+void msmaxContext::updateRecords(bool track_delete)
 {
     struct ExistRecord
     {
@@ -520,12 +526,15 @@ void msmaxContext::updateRecords()
         bool operator<(const ExistRecord& v) const { return path < v.path; }
         bool operator<(const std::string& v) const { return path < v; }
     };
-    // create path list to detect rename / re-parent 
+
     std::vector<ExistRecord> old_records;
-    old_records.reserve(m_node_records.size());
-    for (auto& kvp : m_node_records)
-        old_records.push_back({ std::move(kvp.second.path), false });
-    std::sort(old_records.begin(), old_records.end());
+    if (track_delete) {
+        // create path list to detect rename / re-parent 
+        old_records.reserve(m_node_records.size());
+        for (auto& kvp : m_node_records)
+            old_records.push_back({ std::move(kvp.second.path), false });
+        std::sort(old_records.begin(), old_records.end());
+    }
 
     // re-construct records
     m_node_records.clear();
@@ -533,15 +542,17 @@ void msmaxContext::updateRecords()
         getNodeRecord(n);
     });
 
-    // erase renamed / re-parented objects
-    for (auto& kvp : m_node_records) {
-        auto it = std::lower_bound(old_records.begin(), old_records.end(), kvp.second.path);
-        if (it != old_records.end() && it->path == kvp.second.path)
-            it->exists = true;
-    }
-    for (auto& r : old_records) {
-        if (!r.exists)
-            m_entity_manager.erase(r.path);
+    if (track_delete) {
+        // erase renamed / re-parented objects
+        for (auto& kvp : m_node_records) {
+            auto it = std::lower_bound(old_records.begin(), old_records.end(), kvp.second.path);
+            if (it != old_records.end() && it->path == kvp.second.path)
+                it->exists = true;
+        }
+        for (auto& r : old_records) {
+            if (!r.exists)
+                m_entity_manager.erase(r.path);
+        }
     }
 }
 
@@ -797,21 +808,9 @@ mu::float4x4 msmaxContext::getPivotMatrix(INode *n)
     return mu::transform(t, r, mu::float3::one());
 }
 
-static inline mu::float4x4 CorrectCameraMatrix(mu::float4x4 v)
-{
-    return { {
-        {-v[0][0],-v[0][1],-v[0][2],-v[0][3]},
-        { v[1][0], v[1][1], v[1][2], v[1][3]},
-        {-v[2][0],-v[2][1],-v[2][2],-v[2][3]},
-        { v[3][0], v[3][1], v[3][2], v[3][3]},
-    } };
-}
-
 mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
 {
-    auto obj = n->GetObjectRef();
-    bool needs_camera_correction = IsCamera(obj) || IsLight(obj);
-
+    mu::float4x4 r;
     if (m_settings.bake_modifiers) {
         // https://help.autodesk.com/view/3DSMAX/2016/ENU/?guid=__files_GUID_2E4E41D4_1B52_48C8_8ABA_3D3C9910CB2C_htm
         auto m = n->GetObjTMAfterWSM(t);
@@ -819,44 +818,59 @@ mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
             m = n->GetObjTMBeforeWSM(t);
         // cancel scale
         m.NoScale();
-
-        if (needs_camera_correction) {
-            // rotation part of camera/light matrix after applied modifiers seems inverted... cancel it.
-            auto im = ::Inverse(m);
-            im.SetTrans(m.GetTrans());
-            auto rmat = to_float4x4(im);
-            // note: CorrectCameraMatrix(to_float4x4(im)) return wrong result. possibly there are some problems in extract_rotation().
-            return CorrectCameraMatrix(mu::transform(extract_position(rmat), extract_rotation(rmat), mu::float3::one()));
-        }
-        else {
-            return to_float4x4(m);
-        }
+        r = to_float4x4(m);
     }
     else {
-        auto ret = to_float4x4(n->GetNodeTM(t));
-        return needs_camera_correction ? CorrectCameraMatrix(ret) : ret;
+        r = to_float4x4(n->GetNodeTM(t));
     }
+
+    auto obj = n->GetObjectRef();
+    if (IsCamera(obj) || IsLight(obj)) {
+        // camera/light correction
+        return mu::float4x4{ {
+            {-r[0][0],-r[0][1],-r[0][2],-r[0][3]},
+            { r[1][0], r[1][1], r[1][2], r[1][3]},
+            {-r[2][0],-r[2][1],-r[2][2],-r[2][3]},
+            { r[3][0], r[3][1], r[3][2], r[3][3]},
+        } };
+    }
+    else
+        return r;
+
 }
 
 void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
     mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
-    auto mat = getGlobalMatrix(n.node, t);
-    if (m_settings.flatten_hierarchy) {
-        // don't care parent in this case
+    vis = (n.node->IsHidden() || !IsVisibleInHierarchy(n.node, t)) ? false : true;
+
+    auto do_extract = [&](const mu::float4x4& mat) {
+        pos = mu::extract_position(mat);
+        rot = mu::extract_rotation(mat);
+        scale = mu::extract_scale(mat);
+        if (mu::near_equal(scale, mu::float3::one()))
+            scale = mu::float3::one();
+    };
+
+    auto obj = n.node->GetObjectRef();
+    bool camera_or_light = IsCamera(obj) || IsLight(obj);
+    if (m_settings.bake_modifiers && !camera_or_light) {
+        if (camera_or_light) {
+            do_extract(getGlobalMatrix(n.node, t));
+        }
+        else {
+            // when 'bake_modifiers' is enabled, transform is applied to vertices.
+            pos = mu::float3::zero();
+            rot = mu::quatf::identity();
+            scale = mu::float3::one();
+        }
     }
     else {
-        // handle parent
+        auto mat = getGlobalMatrix(n.node, t);
         if (auto parent = n.node->GetParentNode())
             mat *= mu::invert(getGlobalMatrix(parent, t));
+        do_extract(mat);
     }
-
-    pos = mu::extract_position(mat);
-    rot = mu::extract_rotation(mat);
-    scale = mu::extract_scale(mat);
-    if (mu::near_equal(scale, mu::float3::one()))
-        scale = mu::float3::one();
-    vis = (n.node->IsHidden() || !IsVisibleInHierarchy(n.node, t)) ? false : true;
 }
 
 void msmaxContext::extractTransform(TreeNode& n)
@@ -1124,12 +1138,6 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
     auto& dst = *ret;
     extractTransform(n);
 
-    if (m_settings.flatten_hierarchy) {
-        // when 'flatten_hierarchy' is enabled, rotation and scale are applied to vertices.
-        dst.rotation = mu::quatf::identity();
-        dst.scale = mu::float3::one();
-    }
-
     // send mesh contents even if the node is hidden.
 
     Mesh *mesh = nullptr;
@@ -1187,14 +1195,9 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
             dst.refine_settings.local2world = getPivotMatrix(n);
         }
         else {
-            // convert vertices
-            //   (local space) -> world space -> local space without scale (if 'flatten_hierarchy' is off)
-            // to handle world space problem and complex transform composition
+            // bake_modifiers is enabled
+            // in this case transform is applied to vertices (dst.position/rotation/scale is identity)
             dst.refine_settings.local2world = to_float4x4(n->GetObjTMAfterWSM(t));
-            if (m_settings.flatten_hierarchy)
-                dst.refine_settings.local2world *= mu::invert(dst.toMatrix());
-            else
-                dst.refine_settings.local2world *= mu::invert(getGlobalMatrix(n, t));
             dst.refine_settings.flags.apply_local2world = 1;
         }
 

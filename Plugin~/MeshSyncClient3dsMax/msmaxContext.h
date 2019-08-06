@@ -184,7 +184,7 @@ private:
         std::vector<int> submaterial_ids;
     };
 
-    void updateRecords();
+    void updateRecords(bool track_delete = true);
     TreeNode& getNodeRecord(INode *n);
     std::vector<TreeNode*> getNodes(msmaxObjectScope scope);
 
