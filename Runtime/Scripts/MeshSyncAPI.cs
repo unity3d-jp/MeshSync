@@ -129,6 +129,47 @@ namespace UTJ.MeshSync
             }
         }
 
+        public static string MoveFileToStreamingAssets(string srcPath)
+        {
+            if (!System.IO.File.Exists(srcPath))
+                return null; // srcPath doesn't exist
+
+            var streaminAssetsPath = Application.streamingAssetsPath;
+            if (srcPath.Contains(streaminAssetsPath))
+                return srcPath; // srcPath is already in StreamingAssets
+
+            var filename = System.IO.Path.GetFileNameWithoutExtension(srcPath);
+            var ext = System.IO.Path.GetExtension(srcPath);
+            for (int n = 1; ; ++n)
+            {
+                var ns = n == 1 ? "" : n.ToString();
+                var dstPath = string.Format("{0}/{1}{2}{3}", streaminAssetsPath, filename, ns, ext);
+                if (System.IO.File.Exists(dstPath))
+                {
+                    var srcInfo = new System.IO.FileInfo(srcPath);
+                    var dstInfo = new System.IO.FileInfo(dstPath);
+                    bool identical =
+                        srcInfo.Length == dstInfo.Length &&
+                        srcInfo.LastWriteTime == dstInfo.LastWriteTime;
+                    if (identical)
+                    {
+                        // use existing one
+                        Debug.Log(string.Format("MoveFileToStreamingAssets: use existing file {0} -> {1}", srcPath, dstPath));
+                        return dstPath;
+                    }
+                    else
+                        continue;
+                }
+                else
+                {
+                    // do move
+                    System.IO.File.Move(srcPath, dstPath);
+                    Debug.Log(string.Format("MoveFileToStreamingAssets: move {0} -> {1}", srcPath, dstPath));
+                    return dstPath;
+                }
+            }
+        }
+
         // save asset to path.
         // if there is already a file, overwrite it but keep .meta intact.
         public static T SaveAsset<T>(T asset, string path) where T : UnityEngine.Object

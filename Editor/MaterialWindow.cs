@@ -16,6 +16,7 @@ namespace UTJ.MeshSyncEditor
 
 
         public MeshSyncPlayer m_server;
+        Vector2 m_scrollPos;
 
 
         void OnGUI()
@@ -25,7 +26,10 @@ namespace UTJ.MeshSyncEditor
                 return;
             }
 
-            MeshSyncServerEditor.DrawMaterialList(m_server);
+            var pos = position;
+            m_scrollPos = EditorGUILayout.BeginScrollView(m_scrollPos, GUILayout.Width(pos.width), GUILayout.Height(pos.height));
+            MeshSyncServerEditor.DrawMaterialList(m_server, false);
+            EditorGUILayout.EndScrollView();
         }
     }
 }

@@ -44,13 +44,32 @@ namespace UTJ.MeshSyncEditor
             EditorGUILayout.Space();
 
             EditorGUILayout.LabelField("Misc", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(so.FindProperty("m_trackMaterialAssignment"));
+            //EditorGUILayout.PropertyField(so.FindProperty("m_trackMaterialAssignment"));
             EditorGUILayout.PropertyField(so.FindProperty("m_progressiveDisplay"));
             EditorGUILayout.PropertyField(so.FindProperty("m_logging"));
             EditorGUILayout.Space();
         }
 
-        public static void DrawMaterialList(MeshSyncPlayer t)
+        public static void DrawMaterialList(MeshSyncPlayer t, bool allowFold = true)
+        {
+            if (allowFold)
+            {
+                var style = EditorStyles.foldout;
+                style.fontStyle = FontStyle.Bold;
+                t.foldMaterialList = EditorGUILayout.Foldout(t.foldMaterialList, "Material List", true, style);
+                if (t.foldMaterialList)
+                {
+                    DrawMaterialListElements(t);
+                }
+            }
+            else
+            {
+                GUILayout.Label("Material List", EditorStyles.boldLabel);
+                DrawMaterialListElements(t);
+            }
+        }
+
+        static void DrawMaterialListElements(MeshSyncPlayer t)
         {
             // calculate label width
             float labelWidth = 60; // minimum
@@ -65,7 +84,6 @@ namespace UTJ.MeshSyncEditor
                 labelWidth = Mathf.Min(labelWidth, EditorGUIUtility.currentViewWidth - 100);
             }
 
-            GUILayout.Label("Material List", EditorStyles.boldLabel);
             foreach (var md in t.materialData)
             {
                 var rect = EditorGUILayout.BeginHorizontal();
@@ -82,7 +100,6 @@ namespace UTJ.MeshSyncEditor
                         t.ForceRepaint();
                     }
                 }
-
                 EditorGUILayout.EndHorizontal();
             }
         }

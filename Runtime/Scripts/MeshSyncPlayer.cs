@@ -185,30 +185,32 @@ namespace UTJ.MeshSync
 #endif
         [SerializeField] protected bool m_updateMeshColliders = true;
         [SerializeField] protected bool m_findMaterialFromAssets = true;
-
-        [SerializeField] protected bool m_trackMaterialAssignment = true;
-        [SerializeField] protected bool m_progressiveDisplay = true;
         [SerializeField] protected bool m_logging = true;
+        [SerializeField] protected bool m_dontSaveAssetsInScene = false;
 
-        [HideInInspector] [SerializeField] protected bool m_dontSaveAssetsInScene = false;
+        [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
+        [SerializeField] protected List<TextureHolder> m_textureList = new List<TextureHolder>();
+        [SerializeField] protected List<AudioHolder> m_audioList = new List<AudioHolder>();
 
-        [HideInInspector] [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
-        [HideInInspector] [SerializeField] protected List<TextureHolder> m_textureList = new List<TextureHolder>();
-        [HideInInspector] [SerializeField] protected List<AudioHolder> m_audioList = new List<AudioHolder>();
+        [SerializeField] string[] m_clientObjects_keys;
+        [SerializeField] EntityRecord[] m_clientObjects_values;
+        [SerializeField] int[] m_hostObjects_keys;
+        [SerializeField] EntityRecord[] m_hostObjects_values;
+        [SerializeField] GameObject[] m_objIDTable_keys;
+        [SerializeField] int[] m_objIDTable_values;
+        [SerializeField] int m_objIDSeed = 0;
+
+#if UNITY_EDITOR
+        [SerializeField] bool m_progressiveDisplay = true;
+        [SerializeField] bool m_trackMaterialAssignment = true;
+        [SerializeField] bool m_foldMaterialList = true;
+#endif
 
         protected bool m_needReassignMaterials = false;
 
         protected Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
         protected Dictionary<int, EntityRecord> m_hostObjects = new Dictionary<int, EntityRecord>();
         protected Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
-
-        [HideInInspector] [SerializeField] string[] m_clientObjects_keys;
-        [HideInInspector] [SerializeField] EntityRecord[] m_clientObjects_values;
-        [HideInInspector] [SerializeField] int[] m_hostObjects_keys;
-        [HideInInspector] [SerializeField] EntityRecord[] m_hostObjects_values;
-        [HideInInspector] [SerializeField] GameObject[] m_objIDTable_keys;
-        [HideInInspector] [SerializeField] int[] m_objIDTable_values;
-        [HideInInspector] [SerializeField] int m_objIDSeed = 0;
         #endregion
 
 
@@ -293,17 +295,7 @@ namespace UTJ.MeshSync
             get { return m_findMaterialFromAssets; }
             set { m_findMaterialFromAssets = value; }
         }
-        public bool trackMaterialAssignment
-        {
-            get { return m_trackMaterialAssignment; }
-            set { m_trackMaterialAssignment = value; }
-        }
 
-        public bool progressiveDisplay
-        {
-            get { return m_progressiveDisplay; }
-            set { m_progressiveDisplay = value; }
-        }
         public bool logging
         {
             get { return m_logging; }
@@ -318,6 +310,24 @@ namespace UTJ.MeshSync
 
         public List<MaterialHolder> materialData { get { return m_materialList; } }
         public List<TextureHolder> textureData { get { return m_textureList; } }
+
+#if UNITY_EDITOR
+        public bool progressiveDisplay
+        {
+            get { return m_progressiveDisplay; }
+            set { m_progressiveDisplay = value; }
+        }
+        public bool trackMaterialAssignment
+        {
+            get { return m_trackMaterialAssignment; }
+            set { m_trackMaterialAssignment = value; }
+        }
+        public bool foldMaterialList
+        {
+            get { return m_foldMaterialList; }
+            set { m_foldMaterialList = value; }
+        }
+#endif
         #endregion
 
 
@@ -658,9 +668,10 @@ namespace UTJ.MeshSync
                     UpdateConstraint(scene.GetConstraint(i));
             });
 #endif
-
+#if UNITY_EDITOR
             if (m_progressiveDisplay)
                 ForceRepaint();
+#endif
         }
 
         public void AfterUpdateScene()

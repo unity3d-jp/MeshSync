@@ -52,28 +52,41 @@ namespace UTJ.MeshSyncEditor
             // server param
             EditorGUILayout.LabelField("Player", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(so.FindProperty("m_cacheFilePath"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_time"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
-            EditorGUILayout.Space();
-
-            MeshSyncServerEditor.DrawBaseParams(t, so);
-            MeshSyncServerEditor.DrawMaterialList(t);
-
-            EditorGUILayout.Space();
-
             var dataPath = t.cacheFilePath;
             if (dataPath.root != DataPath.Root.StreamingAssets)
             {
-                if (GUILayout.Button("Copy to StreamingAssets"))
+                GUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("Copy to StreamingAssets", GUILayout.Width(160.0f)))
                 {
                     var srcPath = dataPath.fullPath;
                     var dstPath = Misc.CopyFileToStreamingAssets(dataPath.fullPath);
                     t.OpenCache(dstPath);
                     Repaint();
                 }
+                if (GUILayout.Button("Move to StreamingAssets", GUILayout.Width(160.0f)))
+                {
+                    var srcPath = dataPath.fullPath;
+                    var dstPath = Misc.MoveFileToStreamingAssets(dataPath.fullPath);
+                    t.OpenCache(dstPath);
+                    Repaint();
+                }
+                GUILayout.EndHorizontal();
             }
-
             EditorGUILayout.Space();
+
+            EditorGUILayout.PropertyField(so.FindProperty("m_time"));
+            EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
+            EditorGUILayout.Space();
+
+            MeshSyncServerEditor.DrawBaseParams(t, so);
+            MeshSyncServerEditor.DrawMaterialList(t);
+            EditorGUILayout.Space();
+
+            if (GUILayout.Button("Open Material Window"))
+                MaterialWindow.Open(t);
+            EditorGUILayout.Space();
+
             EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.pluginVersion);
             so.ApplyModifiedProperties();
         }
