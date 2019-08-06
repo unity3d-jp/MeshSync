@@ -178,9 +178,9 @@ public:
     float far_plane = 1000.0f;
 
     // physical camera params
-    float focal_length = 0.0f;
-    float2 sensor_size = float2::zero();
-    float2 lens_shift = float2::zero();
+    float focal_length = 0.0f;          // in mm
+    float2 sensor_size = float2::zero();// in mm
+    float2 lens_shift = float2::zero(); // in percent
 
     int layer_mask = ~0;
 

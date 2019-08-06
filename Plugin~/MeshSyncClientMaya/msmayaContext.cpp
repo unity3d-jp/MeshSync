@@ -977,8 +977,12 @@ void msmayaContext::extractCameraData(TreeNode *n, bool& ortho, float& near_plan
     focal_length = (float)mcam.focalLength();
     sensor_size.x = (float)(mcam.horizontalFilmAperture() * mu::InchToMillimeter_d);
     sensor_size.y = (float)(mcam.verticalFilmAperture() * mu::InchToMillimeter_d);
-    lens_shift.x = (float)(mcam.horizontalFilmOffset() * mu::InchToMillimeter_d);
-    lens_shift.y = (float)(mcam.verticalFilmOffset() * mu::InchToMillimeter_d);
+
+    mu::float2 shift = {
+        (float)(mcam.horizontalFilmOffset() * mu::InchToMillimeter_d),
+        (float)(mcam.verticalFilmOffset() * mu::InchToMillimeter_d),
+    };
+    lens_shift = shift / sensor_size; // to percent
 }
 
 void msmayaContext::extractLightData(TreeNode *n,
