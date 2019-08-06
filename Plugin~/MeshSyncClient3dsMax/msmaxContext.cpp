@@ -460,7 +460,6 @@ bool msmaxContext::exportCacheImpl(const msmaxCacheExportSettings& cache_setting
         for (TimeValue t = time_start;;) {
             m_current_time_tick = t;
             m_anim_time = ToSeconds(t - time_start);
-            ifs->SetTime(m_current_time_tick); // this also update viewports
 
             do_export();
 
@@ -1525,6 +1524,14 @@ void msmaxContext::feedDeferredCalls()
     for (auto& c : m_deferred_calls)
         c();
     m_deferred_calls.clear();
+}
+
+TimeValue msmaxContext::getExportTime() const
+{
+    if (m_settings.export_scene_cache)
+        return m_current_time_tick;
+    else
+        return GetCOREInterface()->GetTime();
 }
 
 

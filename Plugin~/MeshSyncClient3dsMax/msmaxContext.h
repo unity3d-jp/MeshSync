@@ -135,6 +135,8 @@ public:
     void addDeferredCall(const std::function<void()>& c);
     void feedDeferredCalls();
 
+    TimeValue getExportTime() const;
+
     // UI
     void registerMenu();
     void unregisterMenu();

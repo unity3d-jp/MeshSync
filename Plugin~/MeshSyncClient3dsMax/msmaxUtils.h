@@ -83,6 +83,10 @@ public:
 };
 
 
+inline mu::float2 to_float2(const Point2& v)
+{
+    return { v.x, v.y };
+}
 inline mu::float2 to_float2(const Point3& v)
 {
     return { v.x, v.y };

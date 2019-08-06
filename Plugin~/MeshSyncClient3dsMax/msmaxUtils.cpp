@@ -1,9 +1,10 @@
 #include "pch.h"
 #include "msmaxUtils.h"
+#include "msmaxContext.h"
 
 TimeValue GetTime()
 {
-    return GetCOREInterface()->GetTime();
+    return msmaxGetContext().getExportTime();
 }
 float ToSeconds(TimeValue tics)
 {
