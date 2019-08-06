@@ -905,11 +905,17 @@ void msmaxContext::extractCameraData(TreeNode& n, TimeValue t,
     if (auto* pcam = dynamic_cast<MaxSDK::IPhysicalCamera*>(cam)) {
         float to_mm = (float)GetMasterScale(UNITS_MILLIMETERS);
         Interval interval;
+
+        // focal length in mm
         focal_length = pcam->GetEffectiveLensFocalLength(t, interval) * to_mm;
         float film_width = pcam->GetFilmWidth(t, interval) * to_mm;
+        // sensor size in mm
         sensor_size.x = film_width;
         sensor_size.y = film_width / aspect;
-        lens_shift = mu::float2::zero();
+        // lens shift in percent
+        auto shift = pcam->GetFilmPlaneOffset(t, interval);
+        lens_shift = -to_float2(shift);
+        lens_shift.y *= aspect;
     }
     else {
         focal_length = 0.0f;
