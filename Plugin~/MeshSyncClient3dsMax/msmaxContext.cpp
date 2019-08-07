@@ -361,7 +361,7 @@ static DWORD WINAPI CB_Dummy(LPVOID arg) { return 0; }
 
 static int ExceptionFilter(unsigned int code, struct _EXCEPTION_POINTERS *ep)
 {
-    return EXCEPTION_CONTINUE_EXECUTION;
+    return EXCEPTION_EXECUTE_HANDLER;
 }
 
 bool msmaxContext::exportCacheImpl(const msmaxCacheExportSettings& cache_settings)

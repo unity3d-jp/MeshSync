@@ -167,7 +167,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
             m_ist->read(seg.encoded_buf.data(), seg.encoded_buf.size());
         }
 
-        seg.load_task = std::async(std::launch::async, [this, &seg]() {
+        seg.task = std::async(std::launch::async, [this, &seg]() {
             msDbgTimer("ISceneCacheImpl: decode segment");
 
             RawVector<char> tmp_buf;
@@ -193,7 +193,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
     // concat segmented scenes
     for (size_t si = 0; si < seg_count; ++si) {
         auto& seg = rec.segments[si];
-        seg.load_task.wait();
+        seg.task.wait();
         if (seg.error)
             break;
 
@@ -202,6 +202,8 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
         else
             ret->concat(*seg.segment, true);
     }
+    if (ret)
+        std::sort(ret->entities.begin(), ret->entities.end(), [](auto& a, auto& b) { return a->id < b->id; });
     rec.segments.clear();
 
     {

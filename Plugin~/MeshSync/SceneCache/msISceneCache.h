@@ -34,7 +34,7 @@ protected:
     struct SceneSegment
     {
         RawVector<char> encoded_buf;
-        std::future<void> load_task;
+        std::future<void> task;
         ScenePtr segment;
         bool error = false;
     };

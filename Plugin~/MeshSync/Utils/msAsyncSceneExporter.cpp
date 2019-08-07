@@ -88,8 +88,8 @@ void AsyncSceneSender::send()
     AssignIDs(transforms, id_table);
     AssignIDs(geometries, id_table);
     // sort by order. not id.
-    std::sort(transforms.begin(), transforms.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
-    std::sort(geometries.begin(), geometries.end(), [](TransformPtr& a, TransformPtr& b) { return a->order < b->order; });
+    std::sort(transforms.begin(), transforms.end(), [](auto& a, auto& b) { return a->order < b->order; });
+    std::sort(geometries.begin(), geometries.end(), [](auto& a, auto& b) { return a->order < b->order; });
 
     auto append = [](auto& dst, auto& src) { dst.insert(dst.end(), src.begin(), src.end()); };
 
@@ -268,9 +268,6 @@ void AsyncSceneCacheWriter::write()
 
     AssignIDs(transforms, id_table);
     AssignIDs(geometries, id_table);
-    // sort by id. not order.
-    std::sort(transforms.begin(), transforms.end(), [](TransformPtr& a, TransformPtr& b) { return a->id < b->id; });
-    std::sort(geometries.begin(), geometries.end(), [](TransformPtr& a, TransformPtr& b) { return a->id < b->id; });
 
     auto append = [](auto& dst, auto& src) { dst.insert(dst.end(), src.begin(), src.end()); };
 
@@ -293,19 +290,16 @@ void AsyncSceneCacheWriter::write()
 
     // geometries
     {
-        int geom_count = (int)geometries.size();
-        int block_size = ceildiv(geom_count, 8);
-        for (int ei = 0; ei < geom_count; ei += block_size) {
-            int n = std::min(ei + block_size, geom_count);
-            auto scene = Scene::create();
-            segments.push_back(scene);
-            scene->settings = scene_settings;
-            scene->entities.assign(
-                geometries.begin() + ei,
-                geometries.begin() + n);
-            if (n == geom_count)
-                break;
+        while (segments.size() < max_segments) {
+            auto s = Scene::create();
+            s->settings = scene_settings;
+            segments.push_back(s);
         }
+
+        int segment_count = (int)segments.size();
+        int geom_count = (int)geometries.size();
+        for (int ei = 0; ei < geom_count; ++ei)
+            segments[ei % segment_count]->entities.push_back(geometries[ei]);
     }
     m_osc->addScene(segments, time);
 

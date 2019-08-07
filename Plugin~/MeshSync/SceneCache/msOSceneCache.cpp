@@ -86,6 +86,7 @@ void OSceneCacheImpl::addScene(std::vector<ScenePtr> scene_segments, float time)
         rec.scene->concat(*seg.segment, false);
         seg.segment->settings = {};
     }
+    std::sort(rec.scene->entities.begin(), rec.scene->entities.end(), [](auto& a, auto& b) { return a->id < b->id; });
 
     rec.task = std::async(std::launch::async, [this, &rec]() {
         msDbgTimer("OSceneCacheImpl: scene optimization");
