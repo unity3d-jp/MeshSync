@@ -179,13 +179,13 @@ namespace UTJ.MeshSync
         [SerializeField] protected bool m_syncPoints = true;
         [SerializeField] protected bool m_syncMaterials = true;
 
-        [SerializeField] protected InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
-        [SerializeField] protected ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
 #if UNITY_2018_1_OR_NEWER
         [SerializeField] protected bool m_usePhysicalCameraParams = false;
 #endif
         [SerializeField] protected bool m_updateMeshColliders = true;
         [SerializeField] protected bool m_findMaterialFromAssets = true;
+        [SerializeField] protected InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
+        [SerializeField] protected ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
         [SerializeField] protected bool m_logging = true;
         [SerializeField] protected bool m_dontSaveAssetsInScene = false;
 
@@ -202,6 +202,7 @@ namespace UTJ.MeshSync
         [SerializeField] int m_objIDSeed = 0;
 
 #if UNITY_EDITOR
+        [SerializeField] bool m_sortEntities = true;
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_trackMaterialAssignment = true;
         [SerializeField] bool m_foldMaterialList = true;
@@ -216,8 +217,8 @@ namespace UTJ.MeshSync
 
 
         #region Properties
-        public static int pluginVersion { get { return Server.pluginVersion; } }
-        public static int protocolVersion { get { return Server.protocolVersion; } }
+        public static int pluginVersion { get { return Lib.pluginVersion; } }
+        public static int protocolVersion { get { return Lib.protocolVersion; } }
         public DataPath assetDir
         {
             get { return m_assetDir; }
@@ -318,6 +319,11 @@ namespace UTJ.MeshSync
         public List<TextureHolder> textureData { get { return m_textureList; } }
 
 #if UNITY_EDITOR
+        public bool sortEntities
+        {
+            get { return m_sortEntities; }
+            set { m_sortEntities = value; }
+        }
         public bool progressiveDisplay
         {
             get { return m_progressiveDisplay; }
@@ -698,15 +704,16 @@ namespace UTJ.MeshSync
             }
 
             // reassign materials
-            m_materialList = m_materialList.OrderBy(v => v.index).ToList();
             if (m_needReassignMaterials)
             {
+                m_materialList = m_materialList.OrderBy(v => v.index).ToList();
                 ReassignMaterials();
                 m_needReassignMaterials = false;
             }
 
 #if UNITY_EDITOR
             // sort objects by index
+            if (m_sortEntities)
             {
                 var rec = m_clientObjects.Values.OrderBy(v => v.index);
                 foreach (var r in rec)
@@ -721,7 +728,7 @@ namespace UTJ.MeshSync
                 // force recalculate skinning
                 foreach (var rec in m_clientObjects)
                 {
-                    if (rec.Value.mesh)
+                    if (rec.Value.skinnedMeshRenderer != null)
                     {
                         var go = rec.Value.go;
                         if (go != null && go.activeInHierarchy)
@@ -945,7 +952,7 @@ namespace UTJ.MeshSync
                 m_materialList.Add(dst);
             }
 #if UNITY_EDITOR
-            if (m_findMaterialFromAssets && (dst.material == null || dst.name != materialName))
+            if (m_findMaterialFromAssets && m_syncMaterials && (dst.material == null || dst.name != materialName))
             {
                 Material candidate = null;
 

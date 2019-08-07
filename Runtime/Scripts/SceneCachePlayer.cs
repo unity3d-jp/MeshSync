@@ -46,6 +46,9 @@ namespace UTJ.MeshSync
             m_sceneCache = SceneCacheData.Open(path);
             if (m_sceneCache)
             {
+#if UNITY_EDITOR
+                this.sortEntities = true;
+#endif
                 m_cacheFilePath.fullPath = path;
                 m_pathPrev = path;
                 m_timeRange = m_sceneCache.timeRange;
@@ -115,6 +118,9 @@ namespace UTJ.MeshSync
                     this.BeforeUpdateScene();
                     this.UpdateScene(scene);
                     this.AfterUpdateScene();
+#if UNITY_EDITOR
+                    this.sortEntities = false;
+#endif
                 }
             }
         }
