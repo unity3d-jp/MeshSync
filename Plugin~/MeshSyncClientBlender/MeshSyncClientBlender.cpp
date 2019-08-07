@@ -69,9 +69,6 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             BindProperty(server_port,
                 [](const msblenContext& self) { return self.getSettings().client_settings.port; },
                 [](msblenContext& self, uint16_t v) { self.getSettings().client_settings.port = v; })
-            BindProperty(scene_name,
-                [](const msblenContext& self) { return self.getSettings().scene_settings.name; },
-                [](msblenContext& self, const std::string& v) { self.getSettings().scene_settings.name = v; })
             BindProperty(scale_factor,
                 [](const msblenContext& self) { return self.getSettings().scene_settings.scale_factor; },
                 [](msblenContext& self, float v) { self.getSettings().scene_settings.scale_factor = v; })

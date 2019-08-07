@@ -18,7 +18,7 @@ void MemoryStreamBuf::reset()
 {
     auto *p = buffer.data();
     auto *e = p + buffer.size();
-    this->setp(p, p, e);
+    this->setp(p, e);
     this->setg(p, p, e);
 }
 
@@ -51,7 +51,8 @@ std::ios::pos_type MemoryStreamBuf::seekpos(pos_type pos, std::ios_base::openmod
 {
     auto *p = buffer.data();
     auto *e = p + buffer.size();
-    this->setp(p, p + pos, e);
+    this->setp(p, e);
+    this->pbump((int)pos);
     return wcount;
 }
 

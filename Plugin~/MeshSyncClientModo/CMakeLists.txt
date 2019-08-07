@@ -12,6 +12,9 @@ target_include_directories(${MESHSYNC_CLIENT_MODO} PUBLIC
     ${MODO_QT_INCLUDE_DIRS}
 )
 target_link_libraries(${MESHSYNC_CLIENT_MODO} MeshSync MeshUtils ${Poco_LIBRARIES} ${MODO_QT_LIBRARIES})
+if(ENABLE_ZSTD)
+    target_link_libraries(${MESHSYNC_CLIENT_MODO} ${ZSTD_LIBRARY})
+endif()
 if(LINUX)
     target_link_libraries(${MESHSYNC_CLIENT_MODO} pthread "-Wl,--no-undefined")
 endif()

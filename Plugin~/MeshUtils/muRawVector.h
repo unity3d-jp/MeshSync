@@ -17,7 +17,7 @@ template<class T, int Align = 0x40> class SharedVector;
 template<class T, int Align>
 class RawVector
 {
-template<class T, int A> friend class SharedVector;
+template<class _T, int _A> friend class SharedVector;
 public:
     using value_type      = T;
     using reference       = T&;
@@ -309,7 +309,7 @@ private:
 template<class T, int Align>
 class SharedVector
 {
-template<class T, int A> friend class RawVector;
+template<class _T, int _A> friend class RawVector;
 public:
     using value_type = T;
     using reference = T & ;

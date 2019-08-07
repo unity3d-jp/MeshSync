@@ -14,7 +14,8 @@ static_assert(sizeof(MeshRefineFlags) == sizeof(uint32_t), "");
 
 void MeshRefineSettings::clear()
 {
-    *this = {};
+    // *this = {}; causes internal compiler error on gcc
+    *this = MeshRefineSettings();
     flags.no_reindexing = 1;
 }
 

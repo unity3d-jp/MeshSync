@@ -376,13 +376,15 @@ void MeshRefiner::refine()
         num_indices_points = 0;
     };
 
-    auto compare_all_attributes = [&](int ni, int ii) -> bool {
-        for (auto& attr : attributes)
-            if (!attr->compare(ni, ii)) { return false; }
+    auto compare_all_attributes = [&](int ni, int ii) {
+        for (auto& attr : attributes) {
+            if (!attr->compare(ni, ii))
+                return false;
+        }
         return true;
     };
 
-    auto find_or_emit_vertex = [&](int vi, int ii) -> int {
+    auto find_or_emit_vertex = [&](int vi, int ii) {
         int offset = connection.v2f_offsets[vi];
         int connection_count = connection.v2f_counts[vi];
         for (int ci = 0; ci < connection_count; ++ci) {
@@ -394,7 +396,8 @@ void MeshRefiner::refine()
                 ni = (int)new_points.size();
                 new_points.push_back(points[vi]);
                 new2old_points.push_back(vi);
-                for (auto& attr : attributes) { attr->emit(ii); }
+                for (auto& attr : attributes)
+                    attr->emit(ii);
                 return ni;
             }
         }
