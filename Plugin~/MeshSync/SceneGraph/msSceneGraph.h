@@ -74,7 +74,7 @@ public:
     std::shared_ptr<Scene> clone(bool detach = false);
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is); // throw
-    void concat(Scene& src); // src will be cleared
+    void concat(Scene& src, bool move_buffer);
 
     void strip(Scene& base);
     void merge(Scene& base);

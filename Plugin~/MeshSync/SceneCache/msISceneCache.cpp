@@ -5,26 +5,6 @@
 
 namespace ms {
 
-ISceneCacheImpl::SceneRecord::SceneRecord()
-{
-}
-
-ISceneCacheImpl::SceneRecord::SceneRecord(SceneRecord&& v) noexcept
-{
-    *this = std::move(v);
-}
-
-ISceneCacheImpl::SceneRecord& ISceneCacheImpl::SceneRecord::operator=(SceneRecord&& v)
-{
-#define EachMember(F) F(pos) F(buffer_size_total) F(time) F(load_time_ms) F(scene) F(preload) F(buffer_sizes) F(segments)
-#define Move(A) A = std::move(v.A);
-    EachMember(Move);
-#undef Move
-#undef EachMember
-    return *this;
-}
-
-
 ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
 {
     m_ist = ist;
@@ -53,21 +33,21 @@ ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
             break;
         }
         else {
-            SceneRecord desc;
-            desc.time = sh.time;
+            SceneRecord rec;
+            rec.time = sh.time;
 
-            desc.buffer_sizes.resize_discard(sh.buffer_count);
-            m_ist->read((char*)desc.buffer_sizes.data(), desc.buffer_sizes.size_in_byte());
-            desc.pos = (uint64_t)m_ist->tellg();
+            rec.buffer_sizes.resize_discard(sh.buffer_count);
+            m_ist->read((char*)rec.buffer_sizes.data(), rec.buffer_sizes.size_in_byte());
+            rec.pos = (uint64_t)m_ist->tellg();
 
-            desc.buffer_size_total = 0;
-            for (auto s : desc.buffer_sizes)
-                desc.buffer_size_total += s;
+            rec.buffer_size_total = 0;
+            for (auto s : rec.buffer_sizes)
+                rec.buffer_size_total += s;
 
-            desc.segments.resize(sh.buffer_count);
+            rec.segments.resize(sh.buffer_count);
 
-            m_records.emplace_back(std::move(desc));
-            m_ist->seekg(desc.buffer_size_total, std::ios::cur);
+            m_records.emplace_back(std::move(rec));
+            m_ist->seekg(rec.buffer_size_total, std::ios::cur);
         }
     }
 
@@ -220,7 +200,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
         if (si == 0)
             ret = seg.segment;
         else
-            ret->concat(*seg.segment);
+            ret->concat(*seg.segment, true);
     }
     rec.segments.clear();
 

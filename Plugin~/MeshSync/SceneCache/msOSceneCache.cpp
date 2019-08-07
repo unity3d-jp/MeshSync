@@ -63,11 +63,34 @@ bool OSceneCacheImpl::valid() const
 
 void OSceneCacheImpl::addScene(ScenePtr scene, float time)
 {
-    while (m_scene_count_in_queue > 0 && m_scene_count_in_queue >= m_oscs.max_queue_size) {
+    std::vector<ScenePtr> tmp{scene};
+    addScene(tmp, time);
+}
+
+void OSceneCacheImpl::addScene(std::vector<ScenePtr> scene_segments, float time)
+{
+    while (m_scene_count_in_queue > 0 && (!m_base_scene || m_scene_count_in_queue >= m_oscs.max_queue_size)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    auto preprocess_scene = [this, scene]() {
+    auto rec_ptr = std::make_shared<SceneRecord>();
+    auto& rec = *rec_ptr;
+    rec.time = time;
+    rec.scene = Scene::create();
+
+    size_t seg_count = scene_segments.size();
+    rec.segments.resize(seg_count);
+    for (size_t si = 0; si < seg_count; ++si) {
+        auto& seg = rec.segments[si];
+        seg.segment = scene_segments[si];
+        rec.scene->concat(*seg.segment, false);
+        seg.segment->settings = {};
+    }
+
+    rec.task = std::async(std::launch::async, [this, &rec]() {
+        msDbgTimer("OSceneCacheImpl: scene optimization");
+
+        auto& scene = rec.scene;
         if (m_oscs.flatten_hierarchy)
             scene->flatternHierarchy();
 
@@ -99,16 +122,28 @@ void OSceneCacheImpl::addScene(ScenePtr scene, float time)
                 mesh.refine_settings.flags.gen_tangents = 1;
             });
         }
-    };
 
-    SceneRecord rec;
-    rec.scene = scene;
-    rec.time = time;
-    rec.preprocess_task = std::async(std::launch::async, preprocess_scene);
+        // strip unchanged
+        if (!m_base_scene)
+            m_base_scene = scene;
+        else
+            scene->strip(*m_base_scene);
+
+        for (auto& seg : rec.segments) {
+            seg.task = std::async(std::launch::async, [this, &seg]() {
+                msDbgTimer("OSceneCacheImpl: serialize segment");
+
+                MemoryStream scene_buf;
+                seg.segment->serialize(scene_buf);
+                scene_buf.flush();
+                m_encoder->encode(seg.encoded_buf, scene_buf.getBuffer());
+            });
+        }
+    });
 
     {
         std::unique_lock<std::mutex> l(m_mutex);
-        m_queue.emplace_back(std::move(rec));
+        m_queue.emplace_back(std::move(rec_ptr));
         m_scene_count_in_queue = (int)m_queue.size();
     }
     doWrite();
@@ -140,83 +175,64 @@ void OSceneCacheImpl::doWrite()
 {
     auto body = [this]() {
         for (;;) {
-            SceneRecord desc;
+            SceneRecordPtr rec_ptr;
             {
                 std::unique_lock<std::mutex> l(m_mutex);
                 if (m_queue.empty()) {
                     break;
                 }
                 else {
-                    desc = std::move(m_queue.back());
+                    rec_ptr = std::move(m_queue.back());
                     m_queue.pop_back();
                     m_scene_count_in_queue = (int)m_queue.size();
                 }
             }
-            if (!desc.scene)
-                continue;
-
-            auto& scene = *desc.scene;
+            if (!rec_ptr)
+                break;
+            auto& rec = *rec_ptr;
+            if (rec.task.valid())
+                rec.task.wait();
             {
-                msDbgTimer("OSceneCacheImpl: scene optimization");
-                if (desc.preprocess_task.valid())
-                    desc.preprocess_task.wait();
-
-                if (m_oscs.strip_unchanged) {
-                    if (!m_base_scene)
-                        m_base_scene = desc.scene;
-                    else
-                        scene.strip(*m_base_scene);
-                }
 
                 // update entity record
+                auto& scene = *rec.scene;
                 size_t n = scene.entities.size();
                 m_entity_records.resize(n);
                 for (size_t i = 0; i < n; ++i) {
                     auto& e = scene.entities[i];
-                    auto& rec = m_entity_records[i];
-                    if (rec.type == EntityType::Unknown) {
-                        rec.type = e->getType();
-                        rec.id = e->id;
+                    auto& er = m_entity_records[i];
+                    if (er.type == EntityType::Unknown) {
+                        er.type = e->getType();
+                        er.id = e->id;
                     }
-                    else if (rec.id != e->id)
+                    else if (er.id != e->id)
                         continue;
 
                     if (e->isUnchanged())
-                        rec.unchanged_count++;
+                        er.unchanged_count++;
                     if (e->isTopologyUnchanged())
-                        rec.topology_unchanged_count++;
+                        er.topology_unchanged_count++;
                 }
             }
 
-            // serialize
-            {
-                msDbgTimer("OSceneCacheImpl: serialization");
-
-                m_scene_buf.reset();
-                scene.serialize(m_scene_buf);
-                m_scene_buf.flush();
-            }
-
-            // encode
-            {
-                msDbgTimer("OSceneCacheImpl: encode");
-
-                m_encoder->encode(m_encoded_buf, m_scene_buf.getBuffer());
-            }
- 
             // write
             {
-                msDbgTimer("OSceneCacheImpl: write");
-
                 RawVector<uint64_t> buffer_sizes;
-                buffer_sizes.push_back(m_encoded_buf.size());
+                for (auto& seg : rec.segments) {
+                    if (seg.task.valid())
+                        seg.task.wait();
+                    buffer_sizes.push_back(seg.encoded_buf.size());
+                }
+
+                msDbgTimer("OSceneCacheImpl: write");
 
                 CacheFileSceneHeader header;
                 header.buffer_count = 1;
-                header.time = desc.time;
+                header.time = rec.time;
                 m_ost->write((char*)&header, sizeof(header));
                 m_ost->write((char*)buffer_sizes.cdata(), buffer_sizes.size_in_byte());
-                m_ost->write(m_encoded_buf.cdata(), m_encoded_buf.size());
+                for (auto& seg : rec.segments)
+                    m_ost->write(seg.encoded_buf.cdata(), seg.encoded_buf.size());
             }
             ++m_scene_count_written;
         }

@@ -58,15 +58,18 @@ void Scene::deserialize(std::istream& is)
     }
 }
 
-void Scene::concat(Scene& src)
+void Scene::concat(Scene& src, bool move_buffer)
 {
+    settings = src.settings;
     assets.insert(assets.end(), src.assets.begin(), src.assets.end());
     entities.insert(entities.end(), src.entities.begin(), src.entities.end());
     constraints.insert(constraints.end(), src.constraints.begin(), src.constraints.end());
-    for (auto& buf : src.scene_buffers)
-        scene_buffers.push_back(std::move(buf));
 
-    src.clear();
+    if (move_buffer) {
+        for (auto& buf : src.scene_buffers)
+            scene_buffers.push_back(std::move(buf));
+        src.clear();
+    }
 }
 
 void Scene::strip(Scene& base)

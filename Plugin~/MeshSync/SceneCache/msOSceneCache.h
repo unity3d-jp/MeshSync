@@ -13,6 +13,8 @@ public:
     bool valid() const override;
 
     void addScene(ScenePtr scene, float time) override;
+    void addScene(std::vector<ScenePtr> scene_segments, float time) override;
+
     void flush() override;
     bool isWriting() override;
     int getSceneCountWritten() const override;
@@ -21,12 +23,22 @@ public:
 protected:
     void doWrite();
 
+    struct SceneSegment
+    {
+        ScenePtr segment;
+        RawVector<char> encoded_buf;
+        std::future<void> task;
+    };
+
     struct SceneRecord
     {
-        ScenePtr scene;
         float time;
-        std::future<void> preprocess_task;
+        ScenePtr scene;
+        std::vector<SceneSegment> segments;
+        std::future<void> task;
     };
+    using SceneRecordPtr = std::shared_ptr<SceneRecord>;
+
     struct EntityRecord
     {
         EntityType type = EntityType::Unknown;
@@ -39,7 +51,7 @@ protected:
     OSceneCacheSettings m_oscs;
 
     std::mutex m_mutex;
-    std::list<SceneRecord> m_queue;
+    std::list<SceneRecordPtr> m_queue;
     std::future<void> m_task;
 
     ScenePtr m_base_scene;

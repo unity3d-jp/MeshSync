@@ -51,10 +51,6 @@ protected:
 
         RawVector<uint64_t> buffer_sizes;
         std::vector<SceneSegment> segments;
-
-        SceneRecord();
-        SceneRecord(SceneRecord&& v) noexcept;   // enforce std::vector to use move constructor
-        SceneRecord& operator=(SceneRecord&& v); // 
     };
 
     StreamPtr m_ist;
