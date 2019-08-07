@@ -18,31 +18,44 @@ namespace UTJ.MeshSyncEditor
             Undo.RegisterCreatedObjectUndo(go, "MeshSyncServer");
         }
 #endif
-        public static void DrawBaseParams(MeshSyncPlayer t, SerializedObject so)
+        public static void DrawPlayerSettings(MeshSyncPlayer t, SerializedObject so)
         {
-            EditorGUILayout.PropertyField(so.FindProperty("m_assetDir"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_rootObject"));
-            EditorGUILayout.Space();
-
+            // Sync Settings
             EditorGUILayout.LabelField("Sync Settings", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(so.FindProperty("m_syncVisibility"), new GUIContent("Visibility"));
+
             EditorGUILayout.PropertyField(so.FindProperty("m_syncTransform"), new GUIContent("Transform"));
             EditorGUILayout.PropertyField(so.FindProperty("m_syncCameras"), new GUIContent("Cameras"));
+#if UNITY_2018_1_OR_NEWER
+            if (t.syncCameras)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(so.FindProperty("m_usePhysicalCameraParams"), new GUIContent("Physical Camera Params"));
+                EditorGUI.indentLevel--;
+            }
+#endif
             EditorGUILayout.PropertyField(so.FindProperty("m_syncLights"), new GUIContent("Lights"));
+
             EditorGUILayout.PropertyField(so.FindProperty("m_syncMeshes"), new GUIContent("Meshes"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));
+            EditorGUI.indentLevel++;
+            EditorGUILayout.PropertyField(so.FindProperty("m_updateMeshColliders"));
+            EditorGUI.indentLevel--;
+
+            //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));
+            EditorGUILayout.PropertyField(so.FindProperty("m_syncMaterials"), new GUIContent("Materials"));
+            EditorGUI.indentLevel++;
+            EditorGUILayout.PropertyField(so.FindProperty("m_findMaterialFromAssets"), new GUIContent("Find From AssetDatabase"));
+            EditorGUI.indentLevel--;
+
             EditorGUILayout.Space();
 
+            // Import Settings
             EditorGUILayout.LabelField("Import Settings", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(so.FindProperty("m_animationInterpolation"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_zUpCorrection"));
-#if UNITY_2018_1_OR_NEWER
-            EditorGUILayout.PropertyField(so.FindProperty("m_usePhysicalCameraParams"));
-#endif
-            EditorGUILayout.PropertyField(so.FindProperty("m_updateMeshColliders"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_findMaterialFromAssets"));
+            EditorGUILayout.PropertyField(so.FindProperty("m_zUpCorrection"), new GUIContent("Z-Up Correction"));
             EditorGUILayout.Space();
 
+            // Misc
             EditorGUILayout.LabelField("Misc", EditorStyles.boldLabel);
             //EditorGUILayout.PropertyField(so.FindProperty("m_trackMaterialAssignment"));
             EditorGUILayout.PropertyField(so.FindProperty("m_progressiveDisplay"));
@@ -67,6 +80,9 @@ namespace UTJ.MeshSyncEditor
                 GUILayout.Label("Material List", EditorStyles.boldLabel);
                 DrawMaterialListElements(t);
             }
+            if (GUILayout.Button("Open Material Window", GUILayout.Width(160.0f)))
+                MaterialWindow.Open(t);
+            EditorGUILayout.Space();
         }
 
         static void DrawMaterialListElements(MeshSyncPlayer t)
@@ -117,30 +133,19 @@ namespace UTJ.MeshSyncEditor
             // server param
             EditorGUILayout.LabelField("Server", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(so.FindProperty("m_serverPort"));
-
-            DrawBaseParams(t, so);
-            DrawMaterialList(t);
-
+            EditorGUILayout.PropertyField(so.FindProperty("m_assetDir"));
+            EditorGUILayout.PropertyField(so.FindProperty("m_rootObject"));
             EditorGUILayout.Space();
 
-            //GUILayout.Label("Texture List", EditorStyles.boldLabel);
-            //DrawTextureList(t);
+            MeshSyncServerEditor.DrawPlayerSettings(t, so);
+            MeshSyncServerEditor.DrawMaterialList(t);
+            MeshSyncServerEditor.DrawTextureList(t);
 
-            EditorGUILayout.Space();
-
-            if (GUILayout.Button("Open Material Window"))
-                MaterialWindow.Open(t);
-            EditorGUILayout.Space();
-
-            //if (GUILayout.Button("Generate Lightmap UV"))
-            //    t.GenerateLightmapUV();
-            //EditorGUILayout.Space();
-
-            if (GUILayout.Button("Export Meshes"))
+            if (GUILayout.Button("Export Meshes", GUILayout.Width(160.0f)))
                 t.ExportMeshes();
             EditorGUILayout.Space();
 
-            if (GUILayout.Button("Export Materials"))
+            if (GUILayout.Button("Export Materials", GUILayout.Width(160.0f)))
                 t.ExportMaterials();
             EditorGUILayout.Space();
 

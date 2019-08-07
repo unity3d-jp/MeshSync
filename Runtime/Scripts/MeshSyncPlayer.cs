@@ -177,6 +177,7 @@ namespace UTJ.MeshSync
         [SerializeField] protected bool m_syncLights = true;
         [SerializeField] protected bool m_syncMeshes = true;
         [SerializeField] protected bool m_syncPoints = true;
+        [SerializeField] protected bool m_syncMaterials = true;
 
         [SerializeField] protected InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
         [SerializeField] protected ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
@@ -265,6 +266,11 @@ namespace UTJ.MeshSync
         {
             get { return m_syncPoints; }
             set { m_syncPoints = value; }
+        }
+        public bool syncMaterials
+        {
+            get { return m_syncMaterials; }
+            set { m_syncMaterials = value; }
         }
 
         public InterpolationMode animationInterpolation
@@ -989,7 +995,7 @@ namespace UTJ.MeshSync
             dst.color = src.color;
 
             var dstmat = dst.material;
-            if (dst.materialIID == dst.material.GetInstanceID())
+            if (m_syncMaterials && dst.materialIID == dst.material.GetInstanceID())
             {
                 int numKeywords = src.numKeywords;
                 for (int ki = 0; ki < numKeywords; ++ki)
@@ -1240,7 +1246,6 @@ namespace UTJ.MeshSync
                 if (collider != null &&
                     (collider.sharedMesh == null || collider.sharedMesh == rec.mesh))
                 {
-                    collider.convex = true;
                     collider.sharedMesh = rec.mesh;
                 }
             }

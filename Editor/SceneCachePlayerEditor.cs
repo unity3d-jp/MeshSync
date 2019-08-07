@@ -49,7 +49,6 @@ namespace UTJ.MeshSyncEditor
             var so = serializedObject;
             var t = target as SceneCachePlayer;
 
-            // server param
             EditorGUILayout.LabelField("Player", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(so.FindProperty("m_cacheFilePath"));
             var dataPath = t.cacheFilePath;
@@ -79,13 +78,9 @@ namespace UTJ.MeshSyncEditor
             EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
             EditorGUILayout.Space();
 
-            MeshSyncServerEditor.DrawBaseParams(t, so);
+            MeshSyncServerEditor.DrawPlayerSettings(t, so);
             MeshSyncServerEditor.DrawMaterialList(t);
-            EditorGUILayout.Space();
-
-            if (GUILayout.Button("Open Material Window"))
-                MaterialWindow.Open(t);
-            EditorGUILayout.Space();
+            MeshSyncServerEditor.DrawTextureList(t);
 
             EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.pluginVersion);
             so.ApplyModifiedProperties();
