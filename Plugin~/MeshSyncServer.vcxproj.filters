@@ -6,24 +6,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MeshSyncServer\MeshSyncServer.cpp">
-      <Filter>MeshSyncServer</Filter>
-    </ClCompile>
     <ClCompile Include="MeshSyncServer\pch.cpp">
       <Filter>MeshSyncServer</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncServer\UnitySpecific.cpp">
+    <ClCompile Include="MeshSyncServer\msSceneCacheAPI.cpp">
       <Filter>MeshSyncServer</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncServer\SceneCache.cpp">
+    <ClCompile Include="MeshSyncServer\msServerAPI.cpp">
+      <Filter>MeshSyncServer</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncServer\msUnitySpecific.cpp">
+      <Filter>MeshSyncServer</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshSyncServer\msCoreAPI.cpp">
       <Filter>MeshSyncServer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshSyncServer\MeshSyncServer.h">
+    <ClInclude Include="MeshSyncServer\pch.h">
       <Filter>MeshSyncServer</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncServer\pch.h">
+    <ClInclude Include="MeshSyncServer\msCoreAPI.h">
       <Filter>MeshSyncServer</Filter>
     </ClInclude>
   </ItemGroup>

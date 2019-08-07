@@ -11,15 +11,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MeshSyncServer\MeshSyncServer.cpp" />
+    <ClCompile Include="MeshSyncServer\msCoreAPI.cpp" />
+    <ClCompile Include="MeshSyncServer\msSceneCacheAPI.cpp" />
+    <ClCompile Include="MeshSyncServer\msServerAPI.cpp" />
+    <ClCompile Include="MeshSyncServer\msUnitySpecific.cpp" />
     <ClCompile Include="MeshSyncServer\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="MeshSyncServer\SceneCache.cpp" />
-    <ClCompile Include="MeshSyncServer\UnitySpecific.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshSyncServer\MeshSyncServer.h" />
+    <ClInclude Include="MeshSyncServer\msCoreAPI.h" />
     <ClInclude Include="MeshSyncServer\pch.h" />
   </ItemGroup>
   <ItemGroup>
