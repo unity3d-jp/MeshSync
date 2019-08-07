@@ -30,6 +30,7 @@ ISkin* FindSkinInterface(INode *n);
 Modifier* FindMorph(INode * n);
 
 bool IsCamera(Object *obj);
+bool IsPhysicalCamera(Object *obj);
 bool IsLight(Object *obj);
 bool IsMesh(Object *obj);
 TriObject* GetSourceMesh(INode *n, bool& needs_delete);

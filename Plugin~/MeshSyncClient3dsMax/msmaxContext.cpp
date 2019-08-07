@@ -73,7 +73,7 @@ void msmaxContext::AnimationRecord::operator()(msmaxContext * _this)
 }
 
 
-msmaxContext & msmaxContext::getInstance()
+msmaxContext& msmaxContext::getInstance()
 {
     static msmaxContext s_plugin;
     return s_plugin;
@@ -809,22 +809,38 @@ mu::float4x4 msmaxContext::getPivotMatrix(INode *n)
 
 mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
 {
+    auto obj = n->GetObjectRef();
+    bool is_camera = IsCamera(obj);
+    bool is_light = IsLight(obj);
+
     mu::float4x4 r;
     if (m_settings.bake_modifiers) {
-        // https://help.autodesk.com/view/3DSMAX/2016/ENU/?guid=__files_GUID_2E4E41D4_1B52_48C8_8ABA_3D3C9910CB2C_htm
-        auto m = n->GetObjTMAfterWSM(t);
-        if (m.IsIdentity())
-            m = n->GetObjTMBeforeWSM(t);
-        // cancel scale
-        m.NoScale();
-        r = to_float4x4(m);
+        auto get_matrix = [&]() {
+            // https://help.autodesk.com/view/3DSMAX/2016/ENU/?guid=__files_GUID_2E4E41D4_1B52_48C8_8ABA_3D3C9910CB2C_htm
+            Matrix3 m;
+            m = n->GetObjTMAfterWSM(t);
+            if (m.IsIdentity())
+                m = n->GetObjTMBeforeWSM(t);
+            // cancel scale
+            m.NoScale();
+            r = to_float4x4(m);
+        };
+
+        bool is_physical_camera = is_camera && IsPhysicalCamera(obj);
+        if (is_physical_camera) {
+            // cancel tilt/shift effect
+            MaxSDK::IPhysicalCamera::RenderTransformEvaluationGuard guard(n, t);
+            get_matrix();
+        }
+        else {
+            get_matrix();
+        }
     }
     else {
         r = to_float4x4(n->GetNodeTM(t));
     }
 
-    auto obj = n->GetObjectRef();
-    if (IsCamera(obj) || IsLight(obj)) {
+    if (is_camera || is_light) {
         // camera/light correction
         return mu::float4x4{ {
             {-r[0][0],-r[0][1],-r[0][2],-r[0][3]},
@@ -833,9 +849,9 @@ mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
             { r[3][0], r[3][1], r[3][2], r[3][3]},
         } };
     }
-    else
+    else {
         return r;
-
+    }
 }
 
 void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
@@ -852,13 +868,13 @@ void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
     };
 
     auto obj = n.node->GetObjectRef();
-    bool camera_or_light = IsCamera(obj) || IsLight(obj);
-    if (m_settings.bake_modifiers && !camera_or_light) {
-        if (camera_or_light) {
+    if (m_settings.bake_modifiers) {
+        if (IsCamera(obj) || IsLight(obj)) {
+            // on camera/light, extract from global matrix
             do_extract(getGlobalMatrix(n.node, t));
         }
         else {
-            // when 'bake_modifiers' is enabled, transform is applied to vertices.
+            // on mesh, transform is applied to vertices when 'bake_modifiers' is enabled
             pos = mu::float3::zero();
             rot = mu::quatf::identity();
             scale = mu::float3::one();

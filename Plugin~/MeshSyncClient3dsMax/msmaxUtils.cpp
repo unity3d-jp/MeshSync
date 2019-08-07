@@ -136,6 +136,11 @@ bool IsCamera(Object *obj)
     return false;
 }
 
+bool IsPhysicalCamera(Object *obj)
+{
+    return dynamic_cast<MaxSDK::IPhysicalCamera*>(obj) != nullptr;
+}
+
 bool IsLight(Object *obj)
 {
     if (!obj)
