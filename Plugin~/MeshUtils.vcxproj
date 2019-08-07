@@ -36,7 +36,6 @@
     <ClInclude Include="MeshUtils\muMeshRefiner.h" />
     <ClInclude Include="MeshUtils\muMisc.h" />
     <ClInclude Include="MeshUtils\muQuat32.h" />
-    <ClInclude Include="MeshUtils\muS10x3.h" />
     <ClInclude Include="MeshUtils\muSIMDConfig.h" />
     <ClInclude Include="MeshUtils\muStream.h" />
     <ClInclude Include="MeshUtils\pch.h" />

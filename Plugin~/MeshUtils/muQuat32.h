@@ -102,4 +102,83 @@ struct quat32
 
 template<class T> inline T to(quat32 v) { return (T)v; }
 
+
+// 32bit normal/tangent
+struct snormx3_32
+{
+    static constexpr float C = float(0x7fff);
+    static constexpr float R = 1.0f / float(0x7fff);
+
+    static uint32_t pack(float a)
+    {
+        return static_cast<uint32_t>((clamp11(a) * 0.5f + 0.5f) * C);
+    }
+    static float unpack(uint32_t a)
+    {
+        return a * R * 2.0f - 1.0f;
+    }
+
+    struct
+    {
+        uint32_t x : 15;
+        uint32_t y : 15;
+        uint32_t sz : 1;
+        uint32_t sw : 1;
+    } value;
+
+    snormx3_32() {}
+    snormx3_32(const snormx3_32& v) : value(v.value) {}
+    template<class T> snormx3_32(const tvec3<T>& v) { *this = v; }
+    template<class T> void assign(const tvec3<T>& v) { *this = v; }
+    template<class T> snormx3_32(const tvec4<T>& v) { *this = v; }
+    template<class T> void assign(const tvec4<T>& v) { *this = v; }
+
+    template<class T>
+    snormx3_32& operator=(const tvec3<T>& v_)
+    {
+        auto v = to<float3>(v_);
+        (uint32_t&)value = 0;
+        value.x = pack(v[0]);
+        value.y = pack(v[1]);
+        value.sz = v[2] < 0.0f ? 1 : 0;
+        return *this;
+    }
+
+    template<class T>
+    snormx3_32& operator=(const tvec4<T>& v_)
+    {
+        auto v = to<float4>(v_);
+        (uint32_t&)value = 0;
+        value.x = pack(v[0]);
+        value.y = pack(v[1]);
+        value.sz = v[2] < 0.0f ? 1 : 0;
+        value.sw = v[3] < 0.0f ? 1 : 0;
+        return *this;
+    }
+
+    template<class T>
+    operator tvec3<T>() const
+    {
+        T _x = (T)unpack(value.x);
+        T _y = (T)unpack(value.y);
+        T _z = sqrt(1.0f - (_x*_x) - (_y*_y)) * (value.sz == 1 ? T(-1) : T(1));
+        return { _x, _y, _z };
+    }
+
+    template<class T>
+    operator tvec4<T>() const
+    {
+        T _x = (T)unpack(value.x);
+        T _y = (T)unpack(value.y);
+        T _z = sqrt(1.0f - (_x*_x) - (_y*_y)) * (value.sz == 1 ? T(-1) : T(1));
+        T _w = (value.sw == 1 ? T(-1) : T(1));
+        return { _x, _y, _z, _w };
+    }
+
+    static snormx3_32 zero() { return snormx3_32(float3::zero()); }
+    static snormx3_32 one() { return snormx3_32(float3::one()); }
+};
+
+template<class T> inline T to(snormx3_32 v) { return (T)v; }
+
 } // namespace mu

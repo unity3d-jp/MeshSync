@@ -986,7 +986,7 @@ TestCase(Test_Quat32)
     }
 }
 
-TestCase(Test_S10x3)
+TestCase(Test_S3_32)
 {
     const int N = 100;
     const float eps = 0.01f;
@@ -997,8 +997,8 @@ TestCase(Test_S10x3)
         (float3&)tangent = rnd.v3n();
         tangent.w = i % 2 == 0 ? 1.0f : -1.0f;
 
-        snorm10x3 encoded = mu::encode_tangent(tangent);
-        float4 decoded = mu::decode_tangent(encoded);
+        snormx3_32 encoded = tangent;
+        float4 decoded = encoded;
         Expect(near_equal(tangent, decoded, eps));
     }
 }
@@ -1015,6 +1015,7 @@ TestCase(Test_BoundedArray)
     RawVector<float2> data2(N), tmp2(N);
     RawVector<float3> data3(N), tmp3(N);
     RawVector<float4> data4(N), tmp4(N);
+    RawVector<float3> data_normals(N), tmp_normals(N);
     RawVector<float4> data_tangents(N), tmp_tangents(N);
     for (int i = 0; i < N; ++i) {
         data1i[i] = (rnd.f01() * 60000.0f) + 10000;
@@ -1023,6 +1024,8 @@ TestCase(Test_BoundedArray)
         data2[i] = { rnd.f01()*2.0f, rnd.f01()*2.0f - 2.0f };
         data3[i] = rnd.v3n();
         data4[i] = { rnd.f01() + 5.0f, rnd.f01() + 2.0f, rnd.f01() - 2.0f, rnd.f01() - 5.0f };
+
+        data_normals[i] = rnd.v3n();
 
         float4 tangent;
         (float3&)tangent = rnd.v3n();
@@ -1033,10 +1036,10 @@ TestCase(Test_BoundedArray)
     BoundedArrayU16I ba1i_16;
     BoundedArrayU8 ba1_8;
     BoundedArrayU8x2 ba2_8;
-    BoundedArrayU10x3 ba3_10;
     BoundedArrayU16x3 ba3_16;
     BoundedArrayU16x4 ba4_16;
-    PackedArrayS10x3 batan;
+    PackedArrayS3_32 panml;
+    PackedArrayS3_32 patan;
 
     encode(ba1i_16, data1i);
     decode(tmp1i, ba1i_16);
@@ -1050,10 +1053,6 @@ TestCase(Test_BoundedArray)
     decode(tmp2, ba2_8);
     Expect(NearEqual(data2.data(), tmp2.data(), N, eps));
 
-    encode(ba3_10, data3);
-    decode(tmp3, ba3_10);
-    Expect(NearEqual_Generic((float*)data3.data(), (float*)tmp3.data(), N*3, eps));
-
     encode(ba3_16, data3);
     decode(tmp3, ba3_16);
     Expect(NearEqual(data3.data(), tmp3.data(), N, eps));
@@ -1062,8 +1061,12 @@ TestCase(Test_BoundedArray)
     decode(tmp4, ba4_16);
     Expect(NearEqual(data4.data(), tmp4.data(), N, eps));
 
-    encode_tangents(batan, data_tangents);
-    decode_tangents(tmp_tangents, batan);
+    encode(panml, data_normals);
+    decode(tmp_normals, panml);
+    Expect(NearEqual(data_normals.data(), tmp_normals.data(), N, eps));
+
+    encode(patan, data_tangents);
+    decode(tmp_tangents, patan);
     Expect(NearEqual(data_tangents.data(), tmp_tangents.data(), N, eps));
 }
 
