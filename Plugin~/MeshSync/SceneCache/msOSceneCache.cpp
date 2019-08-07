@@ -208,11 +208,15 @@ void OSceneCacheImpl::doWrite()
             {
                 msDbgTimer("OSceneCacheImpl: write");
 
+                RawVector<uint64_t> buffer_sizes;
+                buffer_sizes.push_back(m_encoded_buf.size());
+
                 CacheFileSceneHeader header;
-                header.size = m_encoded_buf.size();
+                header.buffer_count = 1;
                 header.time = desc.time;
                 m_ost->write((char*)&header, sizeof(header));
-                m_ost->write(m_encoded_buf.data(), m_encoded_buf.size());
+                m_ost->write((char*)buffer_sizes.cdata(), buffer_sizes.size_in_byte());
+                m_ost->write(m_encoded_buf.cdata(), m_encoded_buf.size());
             }
             ++m_scene_count_written;
         }

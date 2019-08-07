@@ -16,7 +16,7 @@ ISceneCacheImpl::SceneRecord::SceneRecord(SceneRecord&& v) noexcept
 
 ISceneCacheImpl::SceneRecord& ISceneCacheImpl::SceneRecord::operator=(SceneRecord&& v)
 {
-#define EachMember(F) F(pos) F(size) F(time) F(load_time_ms) F(scene) F(preload)
+#define EachMember(F) F(pos) F(buffer_size_total) F(time) F(load_time_ms) F(scene) F(preload) F(buffer_sizes) F(segments)
 #define Move(A) A = std::move(v.A);
     EachMember(Move);
 #undef Move
@@ -48,18 +48,26 @@ ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
         // enumerate all scene headers
         CacheFileSceneHeader sh;
         m_ist->read((char*)&sh, sizeof(sh));
-        if (sh.size == 0) {
+        if (sh.buffer_count == 0) {
             // empty header is a terminator
             break;
         }
         else {
             SceneRecord desc;
-            desc.pos = (uint64_t)m_ist->tellg();
-            desc.size = sh.size;
             desc.time = sh.time;
-            m_records.emplace_back(std::move(desc));
 
-            m_ist->seekg(sh.size, std::ios::cur);
+            desc.buffer_sizes.resize_discard(sh.buffer_count);
+            m_ist->read((char*)desc.buffer_sizes.data(), desc.buffer_sizes.size_in_byte());
+            desc.pos = (uint64_t)m_ist->tellg();
+
+            desc.buffer_size_total = 0;
+            for (auto s : desc.buffer_sizes)
+                desc.buffer_size_total += s;
+
+            desc.segments.resize(sh.buffer_count);
+
+            m_records.emplace_back(std::move(desc));
+            m_ist->seekg(desc.buffer_size_total, std::ios::cur);
         }
     }
 
@@ -166,36 +174,59 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
         return ret; // already loaded
 
     auto time_begin = mu::Now();
-    RawVector<char> encoded_buf, tmp_buf;
 
-    // read buffer
-    {
-        msDbgTimer("ISceneCacheImpl: read");
+    size_t seg_count = rec.buffer_sizes.size();
+    rec.segments.resize(seg_count);
 
-        encoded_buf.resize(rec.size);
-        m_ist->seekg(rec.pos, std::ios::beg);
-        m_ist->read(encoded_buf.data(), encoded_buf.size());
+    m_ist->seekg(rec.pos, std::ios::beg);
+    for (size_t si = 0; si < seg_count; ++si) {
+        auto& seg = rec.segments[si];
+        {
+            msDbgTimer("ISceneCacheImpl: read segment");
+            seg.encoded_buf.resize(rec.buffer_sizes[si]);
+            m_ist->read(seg.encoded_buf.data(), seg.encoded_buf.size());
+        }
+
+        seg.load_task = std::async(std::launch::async, [this, &seg]() {
+            msDbgTimer("ISceneCacheImpl: decode segment");
+
+            RawVector<char> tmp_buf;
+            m_encoder->decode(tmp_buf, seg.encoded_buf);
+
+            auto ret = Scene::create();
+            MemoryStream scene_buf(std::move(tmp_buf));
+            try {
+                ret->deserialize(scene_buf);
+
+                // keep scene buffer alive. Meshes will use it as vertex buffers
+                ret->scene_buffers.push_back(scene_buf.moveBuffer());
+                seg.segment = ret;
+            }
+            catch (std::runtime_error& e) {
+                msLogError("exception: %s\n", e.what());
+                ret = nullptr;
+                seg.error = true;
+            }
+        });
     }
 
-    // decode buffer
-    {
-        msDbgTimer("ISceneCacheImpl: decode");
+    // concat segmented scenes
+    for (size_t si = 0; si < seg_count; ++si) {
+        auto& seg = rec.segments[si];
+        seg.load_task.wait();
+        if (seg.error)
+            break;
 
-        m_encoder->decode(tmp_buf, encoded_buf);
+        if (si == 0)
+            ret = seg.segment;
+        else
+            ret->concat(*seg.segment);
     }
+    rec.segments.clear();
 
-    // deserialize scene
-    try {
-        msDbgTimer("ISceneCacheImpl: deserialize");
-
-        ret = Scene::create();
-        MemoryStream scene_buf(std::move(tmp_buf));
-        ret->deserialize(scene_buf);
-
-        // keep scene buffer alive. Meshes will use it as vertex buffers
-        ret->scene_buffers.push_back(scene_buf.moveBuffer());
-
-        if (m_header.oscs.strip_unchanged && m_base_scene) {
+    {
+        msDbgTimer("ISceneCacheImpl: merge");
+        if (m_header.oscs.strip_unchanged && m_base_scene && ret) {
             // set cache flags
             size_t n = ret->entities.size();
             if (m_entity_meta.size() == n) {
@@ -210,10 +241,6 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
             // merge
             ret->merge(*m_base_scene);
         }
-    }
-    catch (std::runtime_error& e) {
-        msLogError("exception: %s\n", e.what());
-        ret = nullptr;
     }
     rec.load_time_ms = mu::NS2MS(mu::Now() - time_begin);
 
@@ -230,6 +257,9 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
 
 ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp, size_t scene_index)
 {
+    if (!sp)
+        return sp;
+
     // do import
     if (m_iscs.convert_scenes) {
         msDbgTimer("ISceneCacheImpl: import");

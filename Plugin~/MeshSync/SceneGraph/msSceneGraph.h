@@ -36,14 +36,9 @@ enum class ZUpCorrectionMode
 
 struct SceneSettings
 {
-    std::string name = "Untitled";
     Handedness handedness = Handedness::Left;
     float scale_factor = 1.0f;
-
-    void serialize(std::ostream& os) const;
-    void deserialize(std::istream& is);
 };
-msSerializable(SceneSettings);
 
 struct SceneImportSettings
 {
@@ -79,6 +74,8 @@ public:
     std::shared_ptr<Scene> clone(bool detach = false);
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is); // throw
+    void concat(Scene& src); // src will be cleared
+
     void strip(Scene& base);
     void merge(Scene& base);
     void diff(const Scene& src1, const Scene& src2);

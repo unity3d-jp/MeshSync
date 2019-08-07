@@ -76,6 +76,8 @@ public:
     bool empty() const { return m_size == 0; }
     size_t size() const { return m_size; }
     size_t capacity() const { return m_capacity; }
+    size_t size_in_byte() const { return sizeof(T)*m_size; }
+    size_t capacity_in_byte() const { return sizeof(T)*m_capacity; }
 
     T* data() { return m_data; }
     const T* data() const { return m_data; }
@@ -377,6 +379,8 @@ public:
     bool empty() const { return m_size == 0; }
     size_t size() const { return m_size; }
     size_t capacity() const { return m_capacity; }
+    size_t size_in_byte() const { return sizeof(T)*m_size; }
+    size_t capacity_in_byte() const { return sizeof(T)*m_capacity; }
 
     T* data() { detach(); return m_data; }
     const T* data() const { return m_data; }

@@ -1131,7 +1131,6 @@ msAPI quatf msParentConstraintGetRotationOffset(ms::ParentConstraint *self, int 
 #pragma endregion
 
 #pragma region Scene
-msAPI const char*       msSceneGetName(ms::Scene *self)                { return self->settings.name.c_str(); }
 msAPI int               msSceneGetNumAssets(ms::Scene *self)           { return (int)self->assets.size(); }
 msAPI ms::Asset*        msSceneGetAsset(ms::Scene *self, int i)        { return self->assets[i].get(); }
 msAPI int               msSceneGetNumEntities(ms::Scene *self)         { return (int)self->entities.size(); }

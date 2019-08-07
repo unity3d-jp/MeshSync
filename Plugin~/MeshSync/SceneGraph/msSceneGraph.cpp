@@ -15,20 +15,6 @@ namespace ms {
 #pragma region Scene
 
 #define EachMember(F)\
-    F(name) F(handedness) F(scale_factor)
-
-void SceneSettings::serialize(std::ostream& os) const
-{
-    EachMember(msWrite);
-}
-void SceneSettings::deserialize(std::istream& is)
-{
-    EachMember(msRead);
-}
-#undef EachMember
-
-
-#define EachMember(F)\
     F(settings) F(assets) F(entities) F(constraints)
 
 Scene::Scene()
@@ -70,6 +56,17 @@ void Scene::deserialize(std::istream& is)
     if (validation_hash != hash()) {
         throw std::runtime_error("scene hash doesn't match");
     }
+}
+
+void Scene::concat(Scene& src)
+{
+    assets.insert(assets.end(), src.assets.begin(), src.assets.end());
+    entities.insert(entities.end(), src.entities.begin(), src.entities.end());
+    constraints.insert(constraints.end(), src.constraints.begin(), src.constraints.end());
+    for (auto& buf : src.scene_buffers)
+        scene_buffers.push_back(std::move(buf));
+
+    src.clear();
 }
 
 void Scene::strip(Scene& base)

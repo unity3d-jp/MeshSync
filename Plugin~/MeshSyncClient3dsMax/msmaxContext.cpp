@@ -483,6 +483,7 @@ bool msmaxContext::exportCacheImpl(const msmaxCacheExportSettings& cache_setting
     }
     else if (cache_settings.frame_range == msmaxFrameRange::CurrentFrame) {
         m_anim_time = 0.0f;
+        m_current_time_tick = ifs->GetTime();
         do_export();
     }
 
