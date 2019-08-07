@@ -227,7 +227,7 @@ void OSceneCacheImpl::doWrite()
                 msDbgTimer("OSceneCacheImpl: write");
 
                 CacheFileSceneHeader header;
-                header.buffer_count = 1;
+                header.buffer_count = (uint32_t)buffer_sizes.size();
                 header.time = rec.time;
                 m_ost->write((char*)&header, sizeof(header));
                 m_ost->write((char*)buffer_sizes.cdata(), buffer_sizes.size_in_byte());
