@@ -454,7 +454,7 @@ bool msmaxContext::exportCacheImpl(const msmaxCacheExportSettings& cache_setting
             time_start = time_range.Start();
             time_end = time_range.End();
         }
-        interval = TimeValue((float)ticks_per_frame * samples_per_frame);
+        interval = TimeValue((float)ticks_per_frame / samples_per_frame);
         time_end = std::max(time_end, time_start); // sanitize
 
         for (TimeValue t = time_start;;) {
