@@ -3,8 +3,8 @@
 #include "MeshSync/MeshSync.h"
 #include "msCoreAPI.h"
 
+#ifdef msEnableSceneCache
 using namespace mu;
-
 
 #pragma region ISceneCache
 #ifdef msDebug
@@ -85,3 +85,4 @@ msAPI const ms::AnimationCurve* msISceneCacheGetTimeCurve(ms::ISceneCache *self)
 }
 #undef msDbgBreadcrumb
 #pragma endregion
+#endif // msEnableSceneCache

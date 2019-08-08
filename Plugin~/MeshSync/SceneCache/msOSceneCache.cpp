@@ -2,6 +2,7 @@
 #include "msOSceneCache.h"
 #include "Utils/msDebug.h"
 
+#ifdef msEnableSceneCache
 namespace ms {
 
 OSceneCacheImpl::OSceneCacheImpl(StreamPtr ost, const OSceneCacheSettings& oscs)
@@ -277,3 +278,4 @@ OSceneCachePtr OpenOSceneCacheFile(const char *path, const OSceneCacheSettings& 
 }
 
 } // namespace ms
+#endif // msEnableSceneCache

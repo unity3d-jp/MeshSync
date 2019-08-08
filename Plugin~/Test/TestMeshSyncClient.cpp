@@ -7,6 +7,7 @@
 using namespace mu;
 
 
+#ifdef msEnableNetwork
 static ms::ClientSettings GetClientSettings()
 {
     ms::ClientSettings ret;
@@ -543,3 +544,4 @@ TestCase(Test_Query)
     SendQuery(AllNodes);
 #undef SendQuery
 }
+#endif // msEnableNetwork

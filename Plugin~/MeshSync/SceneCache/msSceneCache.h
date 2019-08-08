@@ -6,6 +6,7 @@
 #include "SceneGraph/msSceneGraph.h"
 #include "SceneGraph/msAnimation.h"
 
+#ifdef msEnableSceneCache
 namespace ms {
 
 enum class SceneCacheEncoding
@@ -117,3 +118,4 @@ int ClampZSTDCompressionLevel(int v);
 int GetZSTDDefaultCompressionLevel();
 
 } // namespace ms
+#endif // msEnableSceneCache

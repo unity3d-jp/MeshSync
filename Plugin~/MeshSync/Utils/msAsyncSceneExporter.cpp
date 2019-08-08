@@ -22,6 +22,7 @@ void AsyncSceneExporter::clear()
 }
 
 
+#ifdef msEnableNetwork
 AsyncSceneSender::AsyncSceneSender(int sid)
 {
     if (sid == InvalidID) {
@@ -205,9 +206,10 @@ cleanup:
 
     clear();
 }
+#endif // msEnableNetwork
 
 
-
+#ifdef msEnableSceneCache
 AsyncSceneCacheWriter::AsyncSceneCacheWriter()
 {
 }
@@ -316,6 +318,7 @@ void AsyncSceneCacheWriter::write()
 
     clear();
 }
+#endif // msEnableSceneCache
 
 } // namespace ms
 
