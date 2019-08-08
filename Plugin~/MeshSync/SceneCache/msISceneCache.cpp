@@ -345,6 +345,8 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
             float t = (time - t1) / (t2 - t1);
             ret = Scene::create();
             ret->lerp(*s1, *s2, t);
+            // keep a reference for s1 (s2 is not needed)
+            ret->data_sources.push_back(s1);
 
             m_last_index = si;
             m_last_index2 = si + 1;

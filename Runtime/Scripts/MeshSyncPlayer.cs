@@ -1348,8 +1348,9 @@ namespace UTJ.MeshSync
             }
             if (dataFlags.hasIndices && !keepIndices)
             {
-                mesh.subMeshCount = split.numSubmeshes;
-                for (int smi = 0; smi < mesh.subMeshCount; ++smi)
+                int subMeshCount = split.numSubmeshes;
+                mesh.subMeshCount = subMeshCount;
+                for (int smi = 0; smi < subMeshCount; ++smi)
                 {
                     var submesh = split.GetSubmesh(data, smi);
                     var topology = submesh.topology;

@@ -63,6 +63,7 @@ public:
 
     // non-serializable
     std::list<RawVector<char>> scene_buffers;
+    std::vector<std::shared_ptr<Scene>> data_sources; // keep references for lerp sources etc
 
 protected:
     Scene();
