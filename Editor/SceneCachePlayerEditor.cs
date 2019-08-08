@@ -65,6 +65,7 @@ namespace UTJ.MeshSyncEditor
                 }
                 if (GUILayout.Button("Move to StreamingAssets", GUILayout.Width(160.0f)))
                 {
+                    t.CloseCache();
                     var srcPath = dataPath.fullPath;
                     var dstPath = Misc.MoveFileToStreamingAssets(dataPath.fullPath);
                     t.OpenCache(dstPath);

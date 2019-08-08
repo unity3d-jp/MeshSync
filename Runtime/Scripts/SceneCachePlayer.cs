@@ -148,6 +148,8 @@ namespace UTJ.MeshSync
             m_cacheFilePath.isDirectory = false;
             m_cacheFilePath.readOnly = true;
             m_cacheFilePath.showRootSelector = true;
+
+            m_logging = false;
         }
 
         void OnValidate()
