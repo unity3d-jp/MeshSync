@@ -102,7 +102,7 @@ uint64_t MemoryStream::getRCount() const { return m_buf.rcount; }
 char* MemoryStream::gskip(size_t n)
 {
     auto ret = m_buf.gptr();
-    m_buf.seekoff(n, std::ios::cur, 0);
+    m_buf.seekoff((std::streamoff)n, std::ios::cur, std::ios::binary);
     return ret;
 }
 
