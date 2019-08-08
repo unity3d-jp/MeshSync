@@ -158,36 +158,41 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
     size_t seg_count = rec.buffer_sizes.size();
     rec.segments.resize(seg_count);
 
-    m_ist->seekg(rec.pos, std::ios::beg);
-    for (size_t si = 0; si < seg_count; ++si) {
-        auto& seg = rec.segments[si];
-        {
-            msDbgTimer("ISceneCacheImpl: read segment");
-            seg.encoded_buf.resize(rec.buffer_sizes[si]);
-            m_ist->read(seg.encoded_buf.data(), seg.encoded_buf.size());
+    {
+        // get exclusive file access
+        std::unique_lock<std::mutex> lock(m_mutex);
+
+        m_ist->seekg(rec.pos, std::ios::beg);
+        for (size_t si = 0; si < seg_count; ++si) {
+            auto& seg = rec.segments[si];
+            {
+                msDbgTimer("ISceneCacheImpl: read segment");
+                seg.encoded_buf.resize(rec.buffer_sizes[si]);
+                m_ist->read(seg.encoded_buf.data(), seg.encoded_buf.size());
+            }
+
+            seg.task = std::async(std::launch::async, [this, &seg]() {
+                msDbgTimer("ISceneCacheImpl: decode segment");
+
+                RawVector<char> tmp_buf;
+                m_encoder->decode(tmp_buf, seg.encoded_buf);
+
+                auto ret = Scene::create();
+                MemoryStream scene_buf(std::move(tmp_buf));
+                try {
+                    ret->deserialize(scene_buf);
+
+                    // keep scene buffer alive. Meshes will use it as vertex buffers
+                    ret->scene_buffers.push_back(scene_buf.moveBuffer());
+                    seg.segment = ret;
+                }
+                catch (std::runtime_error& e) {
+                    msLogError("exception: %s\n", e.what());
+                    ret = nullptr;
+                    seg.error = true;
+                }
+            });
         }
-
-        seg.task = std::async(std::launch::async, [this, &seg]() {
-            msDbgTimer("ISceneCacheImpl: decode segment");
-
-            RawVector<char> tmp_buf;
-            m_encoder->decode(tmp_buf, seg.encoded_buf);
-
-            auto ret = Scene::create();
-            MemoryStream scene_buf(std::move(tmp_buf));
-            try {
-                ret->deserialize(scene_buf);
-
-                // keep scene buffer alive. Meshes will use it as vertex buffers
-                ret->scene_buffers.push_back(scene_buf.moveBuffer());
-                seg.segment = ret;
-            }
-            catch (std::runtime_error& e) {
-                msLogError("exception: %s\n", e.what());
-                ret = nullptr;
-                seg.error = true;
-            }
-        });
     }
 
     // concat segmented scenes
@@ -229,7 +234,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
     // push & pop history
     if (!m_header.oscs.strip_unchanged || i != 0) {
         m_history.push_back(i);
-        if (m_history.size() >= m_iscs.max_history) {
+        if (m_history.size() > m_iscs.max_history) {
             m_records[m_history.front()].scene.reset();
             m_history.pop_front();
         }
