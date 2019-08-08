@@ -10,7 +10,7 @@ class Light;
 class Mesh;
 class Points;
 
-enum class EntityType
+enum class EntityType : int
 {
     Unknown,
     Transform,
@@ -83,7 +83,9 @@ msDeclPtr(Entity);
 struct TransformDataFlags
 {
     uint32_t unchanged : 1;
-    uint32_t has_transform : 3; // TRS
+    uint32_t has_position : 1;
+    uint32_t has_rotation: 1;
+    uint32_t has_scale: 1;
     uint32_t has_visible : 1;
     uint32_t has_visible_hierarchy : 1;
     uint32_t has_layer : 1;
@@ -176,9 +178,9 @@ public:
     float far_plane = 1000.0f;
 
     // physical camera params
-    float focal_length = 0.0f;
-    float2 sensor_size = float2::zero();
-    float2 lens_shift = float2::zero();
+    float focal_length = 0.0f;          // in mm
+    float2 sensor_size = float2::zero();// in mm
+    float2 lens_shift = float2::zero(); // in percent
 
     int layer_mask = ~0;
 

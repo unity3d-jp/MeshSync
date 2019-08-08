@@ -16,16 +16,16 @@ static_assert(sizeof(PointsDataFlags) == sizeof(uint32_t), "");
 #pragma region Entity
 std::shared_ptr<Entity> Entity::create(std::istream& is)
 {
-    char type;
+    EntityType type;
     read(is, type);
 
     std::shared_ptr<Entity> ret;
-    switch ((Type)type) {
-    case Type::Transform: ret = Transform::create(); break;
-    case Type::Camera: ret = Camera::create(); break;
-    case Type::Light: ret = Light::create(); break;
-    case Type::Mesh: ret = Mesh::create(); break;
-    case Type::Points: ret = Points::create(); break;
+    switch (type) {
+    case EntityType::Transform: ret = Transform::create(); break;
+    case EntityType::Camera: ret = Camera::create(); break;
+    case EntityType::Light: ret = Light::create(); break;
+    case EntityType::Mesh: ret = Mesh::create(); break;
+    case EntityType::Points: ret = Points::create(); break;
     default:
         throw std::runtime_error("Entity::create() failed");
         break;
@@ -51,7 +51,7 @@ bool Entity::isGeometry() const
 
 void Entity::serialize(std::ostream& os) const
 {
-    char type = (char)getType();
+    auto type = getType();
     // will be consumed by create()
     write(os, type);
 

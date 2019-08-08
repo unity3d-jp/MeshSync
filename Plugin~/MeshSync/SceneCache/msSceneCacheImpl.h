@@ -13,9 +13,12 @@ struct CacheFileHeader
 
 struct CacheFileSceneHeader
 {
-    uint64_t size = 0;
+    uint32_t buffer_count = 0;
     float time = 0.0f;
+    // flags
     uint32_t keyframe : 1;
+
+    // uint64_t buffer_sizes[buffer_count];
 
     static CacheFileSceneHeader terminator() { return CacheFileSceneHeader(); }
 };

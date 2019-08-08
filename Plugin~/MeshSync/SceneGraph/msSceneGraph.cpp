@@ -15,20 +15,6 @@ namespace ms {
 #pragma region Scene
 
 #define EachMember(F)\
-    F(name) F(handedness) F(scale_factor)
-
-void SceneSettings::serialize(std::ostream& os) const
-{
-    EachMember(msWrite);
-}
-void SceneSettings::deserialize(std::istream& is)
-{
-    EachMember(msRead);
-}
-#undef EachMember
-
-
-#define EachMember(F)\
     F(settings) F(assets) F(entities) F(constraints)
 
 Scene::Scene()
@@ -72,6 +58,20 @@ void Scene::deserialize(std::istream& is)
     }
 }
 
+void Scene::concat(Scene& src, bool move_buffer)
+{
+    settings = src.settings;
+    assets.insert(assets.end(), src.assets.begin(), src.assets.end());
+    entities.insert(entities.end(), src.entities.begin(), src.entities.end());
+    constraints.insert(constraints.end(), src.constraints.begin(), src.constraints.end());
+
+    if (move_buffer) {
+        for (auto& buf : src.scene_buffers)
+            scene_buffers.push_back(std::move(buf));
+        src.clear();
+    }
+}
+
 void Scene::strip(Scene& base)
 {
     size_t entity_count = entities.size();
@@ -104,7 +104,8 @@ void Scene::diff(const Scene& s1, const Scene& s2)
     if (entity_count == s2.entities.size()) {
         settings = s1.settings;
         entities.resize(entity_count);
-        parallel_for(0, (int)entity_count, 10, [this, &s1, &s2](int i) {
+        bool error = false;
+        parallel_for(0, (int)entity_count, 10, [this, &s1, &s2, &error](int i) {
             auto& e1 = s1.entities[i];
             auto& e2 = s2.entities[i];
             if (e1->id == e2->id) {
@@ -112,7 +113,15 @@ void Scene::diff(const Scene& s1, const Scene& s2)
                 e3->diff(*e1, *e2);
                 entities[i] = std::static_pointer_cast<Transform>(e3);
             }
+            else {
+                error = true;
+            }
         });
+        if (error) {
+            msLogError("Scene::diff(): should not be here\n");
+            s1.dbgDump();
+            s2.dbgDump();
+        }
     }
 }
 
@@ -145,7 +154,9 @@ void Scene::clear()
     assets.clear();
     entities.clear();
     constraints.clear();
+
     scene_buffers.clear();
+    data_sources.clear();
 }
 
 uint64_t Scene::hash() const
@@ -204,13 +215,10 @@ void Scene::import(const SceneImportSettings& cv)
             mesh.refine();
         }
 
-        if (!converters.empty()) {
+        if (!converters.empty())
             convert(*obj);
-            if (is_mesh) {
-                auto& mesh = static_cast<Mesh&>(*obj);
-                mesh.updateBounds();
-            }
-        }
+        if (is_mesh)
+            static_cast<Mesh&>(*obj).updateBounds();
     });
 
     for (auto& asset : assets) {
@@ -312,6 +320,14 @@ void Scene::flatternHierarchy()
         e->path += kvp.first;
         entities.push_back(e);
     }
+}
+
+void Scene::dbgDump() const
+{
+    for (auto& e : entities) {
+        msLogInfo("  id:%d order:%d %s\n", e->id, e->order, e->path.c_str());
+    }
+    msLogInfo("\n");
 }
 
 template<class AssetType>

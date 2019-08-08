@@ -1,7 +1,6 @@
 #pragma once
 #include "muMath.h"
 #include "muHalf.h"
-#include "muS10x3.h"
 #include "muQuat32.h"
 #include "muRawVector.h"
 
@@ -16,13 +15,11 @@ struct PackedArray
 };
 template<class PackedType, class PlainType> void encode(PackedArray<PackedType>& dst, const RawVector<PlainType>& src);
 template<class PackedType, class PlainType> void decode(RawVector<PlainType>& dst, const PackedArray<PackedType>& src);
-void encode_tangents(PackedArray<snorm10x3>& dst, const RawVector<float4>& src);
-void decode_tangents(RawVector<float4>& dst, const PackedArray<snorm10x3>& src);
 
 using PackedArrayS8    = PackedArray<snorm8>;
 using PackedArrayS8x2  = PackedArray<snorm8x2>;
-using PackedArrayS10x3 = PackedArray<snorm10x3>;
 using PackedArrayS16x3 = PackedArray<snorm16x3>;
+using PackedArrayS3_32 = PackedArray<snormx3_32>;
 
 
 template<class PackedType, class PlainType>
@@ -44,7 +41,6 @@ using BoundedArrayU16   = BoundedArray<unorm16, float>;
 using BoundedArrayU8x2  = BoundedArray<unorm8x2, float2>;
 using BoundedArrayU16x2 = BoundedArray<unorm16x2, float2>;
 using BoundedArrayU8x3  = BoundedArray<unorm8x3, float3>;
-using BoundedArrayU10x3 = BoundedArray<unorm10x3, float3>;
 using BoundedArrayU16x3 = BoundedArray<unorm16x3, float3>;
 using BoundedArrayU8x4  = BoundedArray<unorm8x4, float4>;
 using BoundedArrayU16x4 = BoundedArray<unorm16x4, float4>;

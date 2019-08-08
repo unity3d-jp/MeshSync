@@ -91,7 +91,6 @@ DefType(quatf, Quaternion)
 class Animation
 {
 public:
-    using EntityType = EntityType;
     using DataType = AnimationCurve::DataType;
 
     EntityType entity_type = EntityType::Unknown;

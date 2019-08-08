@@ -1,52 +1,39 @@
 #include "pch.h"
 #include "MeshUtils/MeshUtils.h"
 #include "MeshSync/MeshSync.h"
-#include "MeshSyncServer.h"
+#include "msCoreAPI.h"
 
 using namespace mu;
 
-#pragma region SendScene
-static int g_async_scene_handle_seed;
-static std::map<int, std::future<bool>> g_async_scene_sends;
-
-msAPI bool msSendSceneWait(int handle)
-{
-    // 0 is invalid handle
-    if (handle == 0)
-        return false;
-
-    auto it = g_async_scene_sends.find(handle);
-    if (it != g_async_scene_sends.end()) {
-        bool ret = it->second.get();
-        g_async_scene_sends.erase(it);
-        return ret;
-    }
-    return false;
-}
-#pragma endregion
-
 
 #pragma region ISceneCache
+#ifdef msDebug
+    static ms::ISceneCache *g_dbg_last_scene;
+    #define msDbgBreadcrumb() g_dbg_last_scene = self;
+#else
+    #define msDbgBreadcrumb()
+#endif
+
 msAPI ms::ISceneCache* msISceneCacheOpen(const char *path)
 {
     ms::ISceneCacheSettings ps;
-    ps.max_history = 2;
-    //ps.max_history = 200;
-    //ps.preload_entire_file = true;
     return ms::OpenISceneCacheFileRaw(path, ps);
 }
 msAPI void msISceneCacheClose(ms::ISceneCache *self)
 {
+    msDbgBreadcrumb();
     delete self;
 }
 msAPI float msISceneCacheGetSampleRate(ms::ISceneCache *self)
 {
+    msDbgBreadcrumb();
     if (!self)
         return 0.0f;
     return self->getSampleRate();
 }
 msAPI void msISceneCacheGetTimeRange(ms::ISceneCache *self, float *start, float *end)
 {
+    msDbgBreadcrumb();
     if (!self)
         return;
     auto v = self->getTimeRange();
@@ -55,30 +42,35 @@ msAPI void msISceneCacheGetTimeRange(ms::ISceneCache *self, float *start, float 
 }
 msAPI int msISceneCacheGetNumScenes(ms::ISceneCache *self)
 {
+    msDbgBreadcrumb();
     if (!self)
         return 0;
     return (int)self->getNumScenes();
 }
 msAPI float msISceneCacheGetTime(ms::ISceneCache *self, int index)
 {
+    msDbgBreadcrumb();
     if (!self)
         return 0.0f;
     return self->getTime(index);
 }
 msAPI ms::Scene* msISceneCacheGetSceneByIndex(ms::ISceneCache *self, int index)
 {
+    msDbgBreadcrumb();
     if (!self)
         return nullptr;
     return self->getByIndex(index).get();
 }
 msAPI ms::Scene* msISceneCacheGetSceneByTime(ms::ISceneCache *self, float time, bool lerp)
 {
+    msDbgBreadcrumb();
     if (!self)
         return nullptr;
     return self->getByTime(time, lerp).get();
 }
 msAPI void msISceneCacheRefesh(ms::ISceneCache *self)
 {
+    msDbgBreadcrumb();
     if (!self)
         return;
     self->refresh();
@@ -86,8 +78,10 @@ msAPI void msISceneCacheRefesh(ms::ISceneCache *self)
 
 msAPI const ms::AnimationCurve* msISceneCacheGetTimeCurve(ms::ISceneCache *self)
 {
+    msDbgBreadcrumb();
     if (!self)
         return nullptr;
     return self->getTimeCurve().get();
 }
+#undef msDbgBreadcrumb
 #pragma endregion

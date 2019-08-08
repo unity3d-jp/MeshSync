@@ -11,10 +11,10 @@ set_target_properties(${MESHSYNC_CLIENT_METASEQUOIA} PROPERTIES OUTPUT_NAME "Mes
 
 add_dependencies(${MESHSYNC_CLIENT_METASEQUOIA} MeshUtils MeshSync)
 target_include_directories(${MESHSYNC_CLIENT_METASEQUOIA} PUBLIC "${CMAKE_SOURCE_DIR}" "${MQSDK_DIR}")
-target_link_libraries(${MESHSYNC_CLIENT_METASEQUOIA}
-    MeshSync MeshUtils
-    ${Poco_LIBRARIES} ${COCOA_LIBRARY})
-
+target_link_libraries(${MESHSYNC_CLIENT_METASEQUOIA} MeshSync MeshUtils ${Poco_LIBRARIES} ${COCOA_LIBRARY})
+if(ENABLE_ZSTD)
+    target_link_libraries(${MESHSYNC_CLIENT_METASEQUOIA} ${ZSTD_LIBRARY})
+endif()
 set(DIST_DIR "${CMAKE_INSTALL_PREFIX}/UnityMeshSync_Metasequoia_${PLATFORM}/Metasequoia${MQ_VERSION}")
 install(CODE "execute_process(COMMAND mkdir -p \"${DIST_DIR}/MeshSyncClientMQ4.plugin/\")")
 install(CODE "execute_process(COMMAND rm -rf \"${DIST_DIR}/MeshSyncClientMQ4.plugin/\")")

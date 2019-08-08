@@ -5,26 +5,6 @@
 
 namespace ms {
 
-ISceneCacheImpl::SceneRecord::SceneRecord()
-{
-}
-
-ISceneCacheImpl::SceneRecord::SceneRecord(SceneRecord&& v) noexcept
-{
-    *this = std::move(v);
-}
-
-ISceneCacheImpl::SceneRecord& ISceneCacheImpl::SceneRecord::operator=(SceneRecord&& v)
-{
-#define EachMember(F) F(pos) F(size) F(time) F(load_time_ms) F(scene) F(preload)
-#define Move(A) A = std::move(v.A);
-    EachMember(Move);
-#undef Move
-#undef EachMember
-    return *this;
-}
-
-
 ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
 {
     m_ist = ist;
@@ -48,18 +28,26 @@ ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
         // enumerate all scene headers
         CacheFileSceneHeader sh;
         m_ist->read((char*)&sh, sizeof(sh));
-        if (sh.size == 0) {
+        if (sh.buffer_count == 0) {
             // empty header is a terminator
             break;
         }
         else {
-            SceneRecord desc;
-            desc.pos = (uint64_t)m_ist->tellg();
-            desc.size = sh.size;
-            desc.time = sh.time;
-            m_records.emplace_back(std::move(desc));
+            SceneRecord rec;
+            rec.time = sh.time;
 
-            m_ist->seekg(sh.size, std::ios::cur);
+            rec.buffer_sizes.resize_discard(sh.buffer_count);
+            m_ist->read((char*)rec.buffer_sizes.data(), rec.buffer_sizes.size_in_byte());
+            rec.pos = (uint64_t)m_ist->tellg();
+
+            rec.buffer_size_total = 0;
+            for (auto s : rec.buffer_sizes)
+                rec.buffer_size_total += s;
+
+            rec.segments.resize(sh.buffer_count);
+
+            m_records.emplace_back(std::move(rec));
+            m_ist->seekg(rec.buffer_size_total, std::ios::cur);
         }
     }
 
@@ -166,36 +154,66 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
         return ret; // already loaded
 
     auto time_begin = mu::Now();
-    RawVector<char> encoded_buf, tmp_buf;
 
-    // read buffer
+    size_t seg_count = rec.buffer_sizes.size();
+    rec.segments.resize(seg_count);
+
     {
-        msDbgTimer("ISceneCacheImpl: read");
+        // get exclusive file access
+        std::unique_lock<std::mutex> lock(m_mutex);
 
-        encoded_buf.resize(rec.size);
         m_ist->seekg(rec.pos, std::ios::beg);
-        m_ist->read(encoded_buf.data(), encoded_buf.size());
+        for (size_t si = 0; si < seg_count; ++si) {
+            auto& seg = rec.segments[si];
+            {
+                msDbgTimer("ISceneCacheImpl: read segment");
+                seg.encoded_buf.resize(rec.buffer_sizes[si]);
+                m_ist->read(seg.encoded_buf.data(), seg.encoded_buf.size());
+            }
+
+            seg.task = std::async(std::launch::async, [this, &seg]() {
+                msDbgTimer("ISceneCacheImpl: decode segment");
+
+                RawVector<char> tmp_buf;
+                m_encoder->decode(tmp_buf, seg.encoded_buf);
+
+                auto ret = Scene::create();
+                MemoryStream scene_buf(std::move(tmp_buf));
+                try {
+                    ret->deserialize(scene_buf);
+
+                    // keep scene buffer alive. Meshes will use it as vertex buffers
+                    ret->scene_buffers.push_back(scene_buf.moveBuffer());
+                    seg.segment = ret;
+                }
+                catch (std::runtime_error& e) {
+                    msLogError("exception: %s\n", e.what());
+                    ret = nullptr;
+                    seg.error = true;
+                }
+            });
+        }
     }
 
-    // decode buffer
+    // concat segmented scenes
+    for (size_t si = 0; si < seg_count; ++si) {
+        auto& seg = rec.segments[si];
+        seg.task.wait();
+        if (seg.error)
+            break;
+
+        if (si == 0)
+            ret = seg.segment;
+        else
+            ret->concat(*seg.segment, true);
+    }
+    if (ret)
+        std::sort(ret->entities.begin(), ret->entities.end(), [](auto& a, auto& b) { return a->id < b->id; });
+    rec.segments.clear();
+
     {
-        msDbgTimer("ISceneCacheImpl: decode");
-
-        m_encoder->decode(tmp_buf, encoded_buf);
-    }
-
-    // deserialize scene
-    try {
-        msDbgTimer("ISceneCacheImpl: deserialize");
-
-        ret = Scene::create();
-        MemoryStream scene_buf(std::move(tmp_buf));
-        ret->deserialize(scene_buf);
-
-        // keep scene buffer alive. Meshes will use it as vertex buffers
-        ret->scene_buffers.push_back(scene_buf.moveBuffer());
-
-        if (m_header.oscs.strip_unchanged && m_base_scene) {
+        msDbgTimer("ISceneCacheImpl: merge");
+        if (m_header.oscs.strip_unchanged && m_base_scene && ret) {
             // set cache flags
             size_t n = ret->entities.size();
             if (m_entity_meta.size() == n) {
@@ -211,16 +229,12 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
             ret->merge(*m_base_scene);
         }
     }
-    catch (std::runtime_error& e) {
-        msLogError("exception: %s\n", e.what());
-        ret = nullptr;
-    }
     rec.load_time_ms = mu::NS2MS(mu::Now() - time_begin);
 
     // push & pop history
     if (!m_header.oscs.strip_unchanged || i != 0) {
         m_history.push_back(i);
-        if (m_history.size() >= m_iscs.max_history) {
+        if (m_history.size() > m_iscs.max_history) {
             m_records[m_history.front()].scene.reset();
             m_history.pop_front();
         }
@@ -230,10 +244,12 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
 
 ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp, size_t scene_index)
 {
-    msDbgTimer("ISceneCacheImpl: postprocess");
+    if (!sp)
+        return sp;
 
     // do import
     if (m_iscs.convert_scenes) {
+        msDbgTimer("ISceneCacheImpl: import");
         sp->import(m_iscs.sis);
     }
 
@@ -242,6 +258,7 @@ ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp, size_t scene_index)
     // m_last_scene and m_last_diff keep reference counts and keep scenes alive.
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
     if (m_last_scene && m_iscs.enable_diff) {
+        msDbgTimer("ISceneCacheImpl: diff");
         m_last_diff = Scene::create();
         m_last_diff->diff(*sp, *m_last_scene);
         m_last_scene = sp;
@@ -328,6 +345,8 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
             float t = (time - t1) / (t2 - t1);
             ret = Scene::create();
             ret->lerp(*s1, *s2, t);
+            // keep a reference for s1 (s2 is not needed)
+            ret->data_sources.push_back(s1);
 
             m_last_index = si;
             m_last_index2 = si + 1;

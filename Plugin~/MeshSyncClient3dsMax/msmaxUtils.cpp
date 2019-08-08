@@ -1,9 +1,10 @@
 #include "pch.h"
 #include "msmaxUtils.h"
+#include "msmaxContext.h"
 
 TimeValue GetTime()
 {
-    return GetCOREInterface()->GetTime();
+    return msmaxGetContext().getExportTime();
 }
 float ToSeconds(TimeValue tics)
 {
@@ -133,6 +134,11 @@ bool IsCamera(Object *obj)
         return true;
     }
     return false;
+}
+
+bool IsPhysicalCamera(Object *obj)
+{
+    return dynamic_cast<MaxSDK::IPhysicalCamera*>(obj) != nullptr;
 }
 
 bool IsLight(Object *obj)

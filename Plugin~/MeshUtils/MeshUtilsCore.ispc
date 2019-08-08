@@ -142,11 +142,19 @@ export void S32ToF32(uniform float dst[], uniform const int32 src[], uniform siz
 export uniform bool NearEqual(
     uniform const float src1[], uniform const float src2[], uniform const int num, uniform const float eps)
 {
-    float tdiff = 0.0f;
-    foreach(i=0 ... num) {
-        tdiff = max(tdiff, abs(src1[i] - src2[i]));
+    // SIMD part
+    uniform int num_simd = num & ~(C - 1);
+    for (uniform int i = 0; i < num_simd; i += C) {
+        if (any(abs(src1[i+I] - src2[i+I]) >= eps))
+            return false;
     }
-    return reduce_max(tdiff) < eps;
+
+    // non-SIMD part
+    for (uniform int i = num_simd; i < num; ++i) {
+        if (abs(src1[i] - src2[i]) >= eps)
+            return false;
+    }
+    return true;
 }
 #endif
 

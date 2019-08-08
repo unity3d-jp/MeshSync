@@ -30,6 +30,7 @@ ISkin* FindSkinInterface(INode *n);
 Modifier* FindMorph(INode * n);
 
 bool IsCamera(Object *obj);
+bool IsPhysicalCamera(Object *obj);
 bool IsLight(Object *obj);
 bool IsMesh(Object *obj);
 TriObject* GetSourceMesh(INode *n, bool& needs_delete);
@@ -83,6 +84,10 @@ public:
 };
 
 
+inline mu::float2 to_float2(const Point2& v)
+{
+    return { v.x, v.y };
+}
 inline mu::float2 to_float2(const Point3& v)
 {
     return { v.x, v.y };

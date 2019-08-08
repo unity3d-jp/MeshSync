@@ -17,12 +17,10 @@ namespace UTJ.MeshSyncEditor
                 var go = new GameObject();
                 go.name = System.IO.Path.GetFileNameWithoutExtension(path);
 
-                var server = go.AddComponent<MeshSyncServer>();
-                server.rootObject = go.GetComponent<Transform>();
-                server.progressiveDisplay = false;
-                server.dontSaveAssetsInScene = true;
-
                 var player = go.AddComponent<SceneCachePlayer>();
+                player.rootObject = go.GetComponent<Transform>();
+                player.progressiveDisplay = false;
+                player.dontSaveAssetsInScene = true;
                 if (!player.OpenCache(path))
                 {
                     Debug.LogError("Failed to open " + path + ".\nPossible reasons: the file is not scene cache, or file format version does not match.");
@@ -36,7 +34,7 @@ namespace UTJ.MeshSyncEditor
                 }
 
                 //player.UpdatePlayer();
-                //server.ExportMaterials();
+                //player.ExportMaterials();
                 //var prefab = PrefabUtility.SaveAsPrefabAsset(go, "Assets/" + go.name + ".prefab");
                 //var index = go.transform.GetSiblingIndex();
                 ////Object.DestroyImmediate(go);
@@ -48,26 +46,45 @@ namespace UTJ.MeshSyncEditor
 
         public override void OnInspectorGUI()
         {
-            DrawDefaultInspector();
-
+            var so = serializedObject;
             var t = target as SceneCachePlayer;
 
-            EditorGUILayout.Space();
-
+            EditorGUILayout.LabelField("Player", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(so.FindProperty("m_cacheFilePath"));
             var dataPath = t.cacheFilePath;
             if (dataPath.root != DataPath.Root.StreamingAssets)
             {
-                if (GUILayout.Button("Copy to StreamingAssets"))
+                GUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("Copy to StreamingAssets", GUILayout.Width(160.0f)))
                 {
                     var srcPath = dataPath.fullPath;
                     var dstPath = Misc.CopyFileToStreamingAssets(dataPath.fullPath);
                     t.OpenCache(dstPath);
                     Repaint();
                 }
+                if (GUILayout.Button("Move to StreamingAssets", GUILayout.Width(160.0f)))
+                {
+                    t.CloseCache();
+                    var srcPath = dataPath.fullPath;
+                    var dstPath = Misc.MoveFileToStreamingAssets(dataPath.fullPath);
+                    t.OpenCache(dstPath);
+                    Repaint();
+                }
+                GUILayout.EndHorizontal();
             }
-
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Plugin Version: " + MeshSyncServer.pluginVersion);
+
+            EditorGUILayout.PropertyField(so.FindProperty("m_time"));
+            EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
+            EditorGUILayout.Space();
+
+            MeshSyncServerEditor.DrawPlayerSettings(t, so);
+            MeshSyncServerEditor.DrawMaterialList(t);
+            MeshSyncServerEditor.DrawTextureList(t);
+
+            EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.pluginVersion);
+            so.ApplyModifiedProperties();
         }
     }
 }

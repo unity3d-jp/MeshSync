@@ -33,6 +33,9 @@ target_include_directories(${MESHSYNC_CLIENT_BLENDER} PUBLIC
     ${BLENDER_INCLUDE_DIRS}
 )
 target_link_libraries(${MESHSYNC_CLIENT_BLENDER} MeshSync MeshUtils ${Poco_LIBRARIES})
+if(ENABLE_ZSTD)
+    target_link_libraries(${MESHSYNC_CLIENT_BLENDER} ${ZSTD_LIBRARY})
+endif()
 if(LINUX)
     target_link_libraries(${MESHSYNC_CLIENT_BLENDER} pthread)
     set_target_properties(${MESHSYNC_CLIENT_BLENDER} PROPERTIES SUFFIX ".cpython-${BLENDER_PYTHON_VERSION}m-x86_64-linux-gnu.so")

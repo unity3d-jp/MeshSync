@@ -81,7 +81,7 @@ struct msmaxCacheExportSettings
     int frame_begin = 0;
     int frame_end = 100;
 
-    int zstd_compression_level = 22; // (min) 0 - 22 (max)
+    int zstd_compression_level = 3; // (min) 0 - 22 (max)
     float samples_per_frame = 1.0f;
 
     bool ignore_non_renderable = true;
@@ -135,6 +135,8 @@ public:
     void addDeferredCall(const std::function<void()>& c);
     void feedDeferredCalls();
 
+    TimeValue getExportTime() const;
+
     // UI
     void registerMenu();
     void unregisterMenu();
@@ -184,7 +186,7 @@ private:
         std::vector<int> submaterial_ids;
     };
 
-    void updateRecords();
+    void updateRecords(bool track_delete = true);
     TreeNode& getNodeRecord(INode *n);
     std::vector<TreeNode*> getNodes(msmaxObjectScope scope);
 
@@ -218,6 +220,8 @@ private:
     void extractCameraAnimation(ms::TransformAnimation& dst, TreeNode *n);
     void extractLightAnimation(ms::TransformAnimation& dst, TreeNode *n);
     void extractMeshAnimation(ms::TransformAnimation& dst, TreeNode *n);
+
+    bool exportCacheImpl(const msmaxCacheExportSettings& cache_settings);
 
 private:
     msmaxSettings m_settings;

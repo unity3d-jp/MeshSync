@@ -14,7 +14,8 @@ static_assert(sizeof(MeshRefineFlags) == sizeof(uint32_t), "");
 
 void MeshRefineSettings::clear()
 {
-    *this = {};
+    // *this = {}; causes internal compiler error on gcc
+    *this = MeshRefineSettings();
     flags.no_reindexing = 1;
 }
 
@@ -435,16 +436,16 @@ void Mesh::refine()
         mu::InvertV(uv0.data(), uv0.size());
 
     if (mrs.flags.apply_local2world)
-        applyTransform(mrs.local2world);
+        transformMesh(mrs.local2world);
     if (mrs.flags.apply_world2local)
-        applyTransform(mrs.world2local);
+        transformMesh(mrs.world2local);
 
     if (mrs.flags.mirror_x)
-        applyMirror({ 1.0f, 0.0f, 0.0f }, 0.0f, true);
+        mirrorMesh({ 1.0f, 0.0f, 0.0f }, 0.0f, true);
     if (mrs.flags.mirror_y)
-        applyMirror({ 0.0f, 1.0f, 0.0f }, 0.0f, true);
+        mirrorMesh({ 0.0f, 1.0f, 0.0f }, 0.0f, true);
     if (mrs.flags.mirror_z)
-        applyMirror({ 0.0f, 0.0f, 1.0f }, 0.0f, true);
+        mirrorMesh({ 0.0f, 0.0f, 1.0f }, 0.0f, true);
 
     if (!bones.empty()) {
         if (mrs.max_bone_influence == 4)
@@ -788,7 +789,7 @@ void Mesh::makeDoubleSided()
     copy_index_elements(colors);
 }
 
-void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
+void Mesh::mirrorMesh(const float3 & plane_n, float plane_d, bool /*welding*/)
 {
     size_t num_points_old = points.size();
     size_t num_faces_old = counts.size();
@@ -971,7 +972,7 @@ void Mesh::applyMirror(const float3 & plane_n, float plane_d, bool /*welding*/)
     }
 }
 
-void Mesh::applyTransform(const float4x4& m)
+void Mesh::transformMesh(const float4x4& m)
 {
     if (mu::near_equal(m, float4x4::identity()))
         return;
@@ -979,6 +980,110 @@ void Mesh::applyTransform(const float4x4& m)
     mu::MulVectors(m, normals.cdata(), normals.data(), normals.size());
     mu::Normalize(normals.data(), normals.size());
     mu::MulVectors(m, velocities.cdata(), velocities.data(), velocities.size());
+}
+
+void Mesh::mergeMesh(const Mesh& v)
+{
+    size_t num_points_old = points.size();
+    size_t num_faces_old = counts.size();
+    size_t num_indices_old = indices.size();
+    size_t num_indices_new = num_indices_old + v.indices.size();
+
+    points.insert(points.end(), v.points.begin(), v.points.end());
+    counts.insert(counts.end(), v.counts.begin(), v.counts.end());
+    indices.insert(indices.end(), v.indices.begin(), v.indices.end());
+
+    // slide indices
+    for (size_t i = num_indices_old; i < num_indices_new; ++i)
+        indices[i] += (int)num_points_old;
+
+    auto expand_face_attribute = [this, num_faces_old](auto& base, const auto& additional) {
+        if (base.empty() && additional.empty())
+            return;
+
+        if (additional.empty()) {
+            base.resize(counts.size(), {});
+        }
+        else {
+            base.resize(num_faces_old);
+            base.insert(base.end(), additional.begin(), additional.end());
+        }
+    };
+
+    auto expand_vertex_attribute = [&](auto& base, const auto& add) {
+        if (base.empty() && add.empty())
+            return;
+
+        if ((base.empty() || base.size()== points.size()) && (add.empty() || add.size() == v.points.size())) {
+            // per-vertex attribute
+            if (add.empty()) {
+                base.resize(points.size(), {});
+            }
+            else {
+                base.resize(num_points_old);
+                base.insert(base.end(), add.begin(), add.end());
+            }
+        }
+        else if ((base.empty() || base.size() == indices.size()) && (add.empty() || add.size() == v.indices.size())) {
+            // per-index attribute
+            if (add.empty()) {
+                base.resize(indices.size(), {});
+            }
+            else {
+                base.resize(num_indices_old);
+                base.insert(base.end(), add.begin(), add.end());
+            }
+        }
+        else if (base.size() == points.size() && add.size() == v.indices.size()) {
+            // per-vertex <- per-index
+            std::remove_reference_t<decltype(base)> tmp(indices.size());
+            CopyWithIndices(tmp.data(), base.cdata(), indices);
+            base.swap(tmp);
+            base.insert(base.end(), add.begin(), add.end());
+        }
+        else if (base.size() == indices.size() && add.size() == v.points.size()) {
+            // per-index <- per-vertex
+            std::remove_reference_t<decltype(base)> tmp(v.indices.size());
+            CopyWithIndices(tmp.data(), add.cdata(), v.indices);
+            base.insert(base.end(), tmp.begin(), tmp.end());
+        }
+    };
+
+    expand_face_attribute(material_ids, v.material_ids);
+    expand_vertex_attribute(normals, v.normals);
+    expand_vertex_attribute(tangents, v.tangents);
+    expand_vertex_attribute(uv0, v.uv0);
+    expand_vertex_attribute(uv1, v.uv1);
+    expand_vertex_attribute(colors, v.colors);
+    expand_vertex_attribute(velocities, v.velocities);
+
+    if (!splits.empty() && !v.splits.empty()) {
+        // merge splits/submeshes
+        size_t num_submeshes_old = (int)submeshes.size();
+        for (auto split : v.splits)
+        {
+            split.vertex_offset += (int)num_points_old;
+            split.index_offset += (int)num_indices_old;
+            split.bone_weight_count = 0;
+            split.bone_weight_offset = 0;
+            split.submesh_offset += (int)num_submeshes_old;
+            splits.push_back(split);
+        }
+        for (auto submesh : v.submeshes)
+        {
+            submesh.index_offset += (int)num_indices_old;
+            submeshes.push_back(submesh);
+        }
+    }
+
+    // discard bones/blendspapes for now.
+    root_bone.clear();
+    bones.clear();
+    weights1.clear();
+    bone_counts.clear();
+    bone_offsets.clear();
+    weights4.clear();
+    blendshapes.clear();
 }
 
 void Mesh::setupBoneWeights4()

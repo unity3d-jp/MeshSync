@@ -5,7 +5,7 @@ using UTJ.MeshSync;
 
 
 [ExecuteInEditMode]
-[RequireComponent(typeof(MeshSyncServer))]
+[RequireComponent(typeof(MeshSyncPlayer))]
 public class SceneEventHandler : MonoBehaviour
 {
     string m_log;
@@ -48,7 +48,7 @@ public class SceneEventHandler : MonoBehaviour
 
     void OnEnable()
     {
-        var mss = GetComponent<MeshSyncServer>();
+        var mss = GetComponent<MeshSyncPlayer>();
         if (mss != null)
         {
             mss.onSceneUpdateBegin += OnSceneUpdateBegin;
@@ -64,7 +64,7 @@ public class SceneEventHandler : MonoBehaviour
 
     void OnDisable()
     {
-        var mss = GetComponent<MeshSyncServer>();
+        var mss = GetComponent<MeshSyncPlayer>();
         if (mss != null)
         {
             mss.onSceneUpdateBegin -= OnSceneUpdateBegin;

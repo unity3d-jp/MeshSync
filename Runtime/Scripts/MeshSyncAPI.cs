@@ -17,6 +17,30 @@ namespace UTJ.MeshSync
     {
         public const int InvalidID = -1;
 
+        public static uint maxVerticesPerMesh
+        {
+            get
+            {
+#if UNITY_2017_3_OR_NEWER
+                return 0xffffffff;
+#else
+                return 65000;
+#endif
+            }
+        }
+        public static uint maxBoneInfluence
+        {
+            get
+            {
+#if UNITY_2019_1_OR_NEWER
+                return 255;
+#else
+                return 4;
+#endif
+            }
+        }
+
+
         public static string S(IntPtr cstring)
         {
             return cstring == IntPtr.Zero ? "" : Marshal.PtrToStringAnsi(cstring);
@@ -100,6 +124,47 @@ namespace UTJ.MeshSync
                     // do copy
                     System.IO.File.Copy(srcPath, dstPath);
                     Debug.Log(string.Format("CopyFileToStreamingAssets: copy {0} -> {1}", srcPath, dstPath));
+                    return dstPath;
+                }
+            }
+        }
+
+        public static string MoveFileToStreamingAssets(string srcPath)
+        {
+            if (!System.IO.File.Exists(srcPath))
+                return null; // srcPath doesn't exist
+
+            var streaminAssetsPath = Application.streamingAssetsPath;
+            if (srcPath.Contains(streaminAssetsPath))
+                return srcPath; // srcPath is already in StreamingAssets
+
+            var filename = System.IO.Path.GetFileNameWithoutExtension(srcPath);
+            var ext = System.IO.Path.GetExtension(srcPath);
+            for (int n = 1; ; ++n)
+            {
+                var ns = n == 1 ? "" : n.ToString();
+                var dstPath = string.Format("{0}/{1}{2}{3}", streaminAssetsPath, filename, ns, ext);
+                if (System.IO.File.Exists(dstPath))
+                {
+                    var srcInfo = new System.IO.FileInfo(srcPath);
+                    var dstInfo = new System.IO.FileInfo(dstPath);
+                    bool identical =
+                        srcInfo.Length == dstInfo.Length &&
+                        srcInfo.LastWriteTime == dstInfo.LastWriteTime;
+                    if (identical)
+                    {
+                        // use existing one
+                        Debug.Log(string.Format("MoveFileToStreamingAssets: use existing file {0} -> {1}", srcPath, dstPath));
+                        return dstPath;
+                    }
+                    else
+                        continue;
+                }
+                else
+                {
+                    // do move
+                    System.IO.File.Move(srcPath, dstPath);
+                    Debug.Log(string.Format("MoveFileToStreamingAssets: move {0} -> {1}", srcPath, dstPath));
                     return dstPath;
                 }
             }
@@ -200,6 +265,18 @@ namespace UTJ.MeshSync
 #endif
     }
 
+    public static class Lib
+    {
+        #region internal
+        public const string name = "MeshSyncServer";
+        [DllImport(name)] static extern int msGetPluginVersion();
+        [DllImport(name)] static extern int msGetProtocolVersion();
+        #endregion
+
+        public static int pluginVersion { get { return msGetPluginVersion(); } }
+        public static int protocolVersion { get { return msGetProtocolVersion(); } }
+    }
+
     public struct TimeRange
     {
         public float start, end;
@@ -227,7 +304,7 @@ namespace UTJ.MeshSync
 
         public Flags flags; // reserved
         public uint meshSplitUnit;
-        public int meshMaxBoneInfluence; // 4 or 255 (variable)
+        public uint meshMaxBoneInfluence; // 4 or 255 (variable)
         public ZUpCorrectionMode zUpCorrectionMode;
 
         public static ServerSettings defaultValue
@@ -239,16 +316,8 @@ namespace UTJ.MeshSync
                     maxQueue = 512,
                     maxThreads = 8,
                     port = defaultPort,
-#if UNITY_2017_3_OR_NEWER
-                    meshSplitUnit = 0xffffffff,
-#else
-                    meshSplitUnit = 65000,
-#endif
-#if UNITY_2019_1_OR_NEWER
-                    meshMaxBoneInfluence = 255,
-#else
-                    meshMaxBoneInfluence = 4,
-#endif
+                    meshSplitUnit = Misc.maxVerticesPerMesh,
+                    meshMaxBoneInfluence = Misc.maxBoneInfluence,
                     zUpCorrectionMode = ZUpCorrectionMode.FlipYZ,
                 };
                 return ret;
@@ -261,35 +330,30 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern int msGetPluginVersion();
-        [DllImport("MeshSyncServer")] static extern int msGetProtocolVersion();
-        [DllImport("MeshSyncServer")] static extern Server msServerStart(ref ServerSettings settings);
-        [DllImport("MeshSyncServer")] static extern void msServerStop(IntPtr self);
+        [DllImport(Lib.name)] static extern Server msServerStart(ref ServerSettings settings);
+        [DllImport(Lib.name)] static extern void msServerStop(IntPtr self);
 
-        [DllImport("MeshSyncServer")] static extern void msServerSetZUpCorrectionMode(IntPtr self, ZUpCorrectionMode v);
+        [DllImport(Lib.name)] static extern void msServerSetZUpCorrectionMode(IntPtr self, ZUpCorrectionMode v);
 
-        [DllImport("MeshSyncServer")] static extern int msServerGetNumMessages(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msServerProcessMessages(IntPtr self, MessageHandler handler);
+        [DllImport(Lib.name)] static extern int msServerGetNumMessages(IntPtr self);
+        [DllImport(Lib.name)] static extern int msServerProcessMessages(IntPtr self, MessageHandler handler);
 
-        [DllImport("MeshSyncServer")] static extern void msServerBeginServe(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msServerEndServe(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msServerServeTransform(IntPtr self, TransformData data);
-        [DllImport("MeshSyncServer")] static extern void msServerServeCamera(IntPtr self, CameraData data);
-        [DllImport("MeshSyncServer")] static extern void msServerServeLight(IntPtr self, LightData data);
-        [DllImport("MeshSyncServer")] static extern void msServerServeMesh(IntPtr self, MeshData data);
-        [DllImport("MeshSyncServer")] static extern void msServerServeTexture(IntPtr self, TextureData data);
-        [DllImport("MeshSyncServer")] static extern void msServerServeMaterial(IntPtr self, MaterialData data);
-        [DllImport("MeshSyncServer")] static extern void msServerSetFileRootPath(IntPtr self, string path);
-        [DllImport("MeshSyncServer")] static extern void msServerSetScreenshotFilePath(IntPtr self, string path);
-        [DllImport("MeshSyncServer")] static extern void msServerNotifyPoll(IntPtr self, PollMessage.PollType t);
+        [DllImport(Lib.name)] static extern void msServerBeginServe(IntPtr self);
+        [DllImport(Lib.name)] static extern void msServerEndServe(IntPtr self);
+        [DllImport(Lib.name)] static extern void msServerServeTransform(IntPtr self, TransformData data);
+        [DllImport(Lib.name)] static extern void msServerServeCamera(IntPtr self, CameraData data);
+        [DllImport(Lib.name)] static extern void msServerServeLight(IntPtr self, LightData data);
+        [DllImport(Lib.name)] static extern void msServerServeMesh(IntPtr self, MeshData data);
+        [DllImport(Lib.name)] static extern void msServerServeTexture(IntPtr self, TextureData data);
+        [DllImport(Lib.name)] static extern void msServerServeMaterial(IntPtr self, MaterialData data);
+        [DllImport(Lib.name)] static extern void msServerSetFileRootPath(IntPtr self, string path);
+        [DllImport(Lib.name)] static extern void msServerSetScreenshotFilePath(IntPtr self, string path);
+        [DllImport(Lib.name)] static extern void msServerNotifyPoll(IntPtr self, PollMessage.PollType t);
         #endregion
 
         public delegate void MessageHandler(MessageType type, IntPtr data);
 
         public static implicit operator bool(Server v) { return v.self != IntPtr.Zero; }
-
-        public static int pluginVersion { get { return msGetPluginVersion(); } }
-        public static int protocolVersion { get { return msGetProtocolVersion(); } }
 
         public static Server Start(ref ServerSettings settings) { return msServerStart(ref settings); }
         public void Stop() { msServerStop(self); }
@@ -352,9 +416,9 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern GetFlags msGetGetFlags(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msGetGetBakeSkin(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msGetGetBakeCloth(IntPtr self);
+        [DllImport(Lib.name)] static extern GetFlags msGetGetFlags(IntPtr self);
+        [DllImport(Lib.name)] static extern int msGetGetBakeSkin(IntPtr self);
+        [DllImport(Lib.name)] static extern int msGetGetBakeCloth(IntPtr self);
         #endregion
 
         public static explicit operator GetMessage(IntPtr v)
@@ -373,7 +437,7 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern SceneData msSetGetSceneData(IntPtr self);
+        [DllImport(Lib.name)] static extern SceneData msSetGetSceneData(IntPtr self);
         #endregion
 
         public static explicit operator SetMessage(IntPtr v)
@@ -393,10 +457,10 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern int msDeleteGetNumEntities(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern Identifier msDeleteGetEntity(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern int msDeleteGetNumMaterials(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern Identifier msDeleteGetMaterial(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern int msDeleteGetNumEntities(IntPtr self);
+        [DllImport(Lib.name)] static extern Identifier msDeleteGetEntity(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern int msDeleteGetNumMaterials(IntPtr self);
+        [DllImport(Lib.name)] static extern Identifier msDeleteGetMaterial(IntPtr self, int i);
         #endregion
 
         public static explicit operator DeleteMessage(IntPtr v)
@@ -417,7 +481,7 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern FenceType msFenceGetType(IntPtr self);
+        [DllImport(Lib.name)] static extern FenceType msFenceGetType(IntPtr self);
         #endregion
 
         public enum FenceType
@@ -441,8 +505,8 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern IntPtr msTextGetText(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern TextType msTextGetType(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msTextGetText(IntPtr self);
+        [DllImport(Lib.name)] static extern TextType msTextGetType(IntPtr self);
         #endregion
 
         public enum TextType
@@ -484,9 +548,9 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern QueryType msQueryGetType(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msQueryFinishRespond(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msQueryAddResponseText(IntPtr self, string text);
+        [DllImport(Lib.name)] static extern QueryType msQueryGetType(IntPtr self);
+        [DllImport(Lib.name)] static extern void msQueryFinishRespond(IntPtr self);
+        [DllImport(Lib.name)] static extern void msQueryAddResponseText(IntPtr self, string text);
         #endregion
 
         public enum QueryType
@@ -546,11 +610,11 @@ namespace UTJ.MeshSync
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern int msAssetGetID(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msAssetSetID(IntPtr self, int v);
-        [DllImport("MeshSyncServer")] static extern IntPtr msAssetGetName(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msAssetSetName(IntPtr self, string v);
-        [DllImport("MeshSyncServer")] static extern AssetType msAssetGetType(IntPtr self);
+        [DllImport(Lib.name)] static extern int msAssetGetID(IntPtr self);
+        [DllImport(Lib.name)] static extern void msAssetSetID(IntPtr self, int v);
+        [DllImport(Lib.name)] static extern IntPtr msAssetGetName(IntPtr self);
+        [DllImport(Lib.name)] static extern void msAssetSetName(IntPtr self, string v);
+        [DllImport(Lib.name)] static extern AssetType msAssetGetType(IntPtr self);
         #endregion
 
         public static implicit operator bool(AssetData v) { return v.self != IntPtr.Zero; }
@@ -582,9 +646,9 @@ namespace UTJ.MeshSync
         #region internal
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public AssetData asset;
-        [DllImport("MeshSyncServer")] static extern FileAssetData msFileAssetCreate();
-        [DllImport("MeshSyncServer")] static extern byte msFileAssetReadFromFile(IntPtr self, string path);
-        [DllImport("MeshSyncServer")] static extern byte msFileAssetWriteToFile(IntPtr self, string path);
+        [DllImport(Lib.name)] static extern FileAssetData msFileAssetCreate();
+        [DllImport(Lib.name)] static extern byte msFileAssetReadFromFile(IntPtr self, string path);
+        [DllImport(Lib.name)] static extern byte msFileAssetWriteToFile(IntPtr self, string path);
         #endregion
 
         public static implicit operator bool(FileAssetData v) { return v.self != IntPtr.Zero; }
@@ -625,17 +689,17 @@ namespace UTJ.MeshSync
         #region internal
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public AssetData asset;
-        [DllImport("MeshSyncServer")] static extern AudioData msAudioCreate();
-        [DllImport("MeshSyncServer")] static extern AudioFormat msAudioGetFormat(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msAudioSetFormat(IntPtr self, AudioFormat v);
-        [DllImport("MeshSyncServer")] static extern int msAudioGetFrequency(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msAudioSetFrequency(IntPtr self, int v);
-        [DllImport("MeshSyncServer")] static extern int msAudioGetChannels(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msAudioSetChannels(IntPtr self, int v);
-        [DllImport("MeshSyncServer")] static extern int msAudioGetSampleLength(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msAudioGetDataAsFloat(IntPtr self, float[] dst);
-        [DllImport("MeshSyncServer")] static extern byte msAudioWriteToFile(IntPtr self, string path);
-        [DllImport("MeshSyncServer")] static extern byte msAudioExportAsWave(IntPtr self, string path);
+        [DllImport(Lib.name)] static extern AudioData msAudioCreate();
+        [DllImport(Lib.name)] static extern AudioFormat msAudioGetFormat(IntPtr self);
+        [DllImport(Lib.name)] static extern void msAudioSetFormat(IntPtr self, AudioFormat v);
+        [DllImport(Lib.name)] static extern int msAudioGetFrequency(IntPtr self);
+        [DllImport(Lib.name)] static extern void msAudioSetFrequency(IntPtr self, int v);
+        [DllImport(Lib.name)] static extern int msAudioGetChannels(IntPtr self);
+        [DllImport(Lib.name)] static extern void msAudioSetChannels(IntPtr self, int v);
+        [DllImport(Lib.name)] static extern int msAudioGetSampleLength(IntPtr self);
+        [DllImport(Lib.name)] static extern int msAudioGetDataAsFloat(IntPtr self, float[] dst);
+        [DllImport(Lib.name)] static extern byte msAudioWriteToFile(IntPtr self, string path);
+        [DllImport(Lib.name)] static extern byte msAudioExportAsWave(IntPtr self, string path);
         #endregion
 
         public static implicit operator bool(AudioData v) { return v.self != IntPtr.Zero; }
@@ -742,19 +806,19 @@ namespace UTJ.MeshSync
         #region internal
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public AssetData asset;
-        [DllImport("MeshSyncServer")] static extern TextureData msTextureCreate();
-        [DllImport("MeshSyncServer")] static extern TextureType msTextureGetType(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTextureSetType(IntPtr self, TextureType v);
-        [DllImport("MeshSyncServer")] static extern TextureFormat msTextureGetFormat(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTextureSetFormat(IntPtr self, TextureFormat v);
-        [DllImport("MeshSyncServer")] static extern int msTextureGetWidth(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTextureSetWidth(IntPtr self, int v);
-        [DllImport("MeshSyncServer")] static extern int msTextureGetHeight(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTextureSetHeight(IntPtr self, int v);
-        [DllImport("MeshSyncServer")] static extern IntPtr msTextureGetDataPtr(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msTextureGetSizeInByte(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern byte msTextureWriteToFile(IntPtr self, string path);
-        [DllImport("MeshSyncServer")] static extern byte msWriteToFile(string path, byte[] data, int size);
+        [DllImport(Lib.name)] static extern TextureData msTextureCreate();
+        [DllImport(Lib.name)] static extern TextureType msTextureGetType(IntPtr self);
+        [DllImport(Lib.name)] static extern void msTextureSetType(IntPtr self, TextureType v);
+        [DllImport(Lib.name)] static extern TextureFormat msTextureGetFormat(IntPtr self);
+        [DllImport(Lib.name)] static extern void msTextureSetFormat(IntPtr self, TextureFormat v);
+        [DllImport(Lib.name)] static extern int msTextureGetWidth(IntPtr self);
+        [DllImport(Lib.name)] static extern void msTextureSetWidth(IntPtr self, int v);
+        [DllImport(Lib.name)] static extern int msTextureGetHeight(IntPtr self);
+        [DllImport(Lib.name)] static extern void msTextureSetHeight(IntPtr self, int v);
+        [DllImport(Lib.name)] static extern IntPtr msTextureGetDataPtr(IntPtr self);
+        [DllImport(Lib.name)] static extern int msTextureGetSizeInByte(IntPtr self);
+        [DllImport(Lib.name)] static extern byte msTextureWriteToFile(IntPtr self, string path);
+        [DllImport(Lib.name)] static extern byte msWriteToFile(string path, byte[] data, int size);
         #endregion
 
         public static TextureData Create() { return msTextureCreate(); }
@@ -816,17 +880,17 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern IntPtr msMaterialPropGetName(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern Type msMaterialPropGetType(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msMaterialPropGetArrayLength(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, ref int dst);
-        [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, ref float dst);
-        [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, ref Vector4 dst);
-        [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, ref Matrix4x4 dst);
-        [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, ref TextureRecord dst);
-        [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, float[] dst);
-        [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, Vector4[] dst);
-        [DllImport("MeshSyncServer")] static extern void msMaterialPropCopyData(IntPtr self, Matrix4x4[] dst);
+        [DllImport(Lib.name)] static extern IntPtr msMaterialPropGetName(IntPtr self);
+        [DllImport(Lib.name)] static extern Type msMaterialPropGetType(IntPtr self);
+        [DllImport(Lib.name)] static extern int msMaterialPropGetArrayLength(IntPtr self);
+        [DllImport(Lib.name)] static extern void msMaterialPropCopyData(IntPtr self, ref int dst);
+        [DllImport(Lib.name)] static extern void msMaterialPropCopyData(IntPtr self, ref float dst);
+        [DllImport(Lib.name)] static extern void msMaterialPropCopyData(IntPtr self, ref Vector4 dst);
+        [DllImport(Lib.name)] static extern void msMaterialPropCopyData(IntPtr self, ref Matrix4x4 dst);
+        [DllImport(Lib.name)] static extern void msMaterialPropCopyData(IntPtr self, ref TextureRecord dst);
+        [DllImport(Lib.name)] static extern void msMaterialPropCopyData(IntPtr self, float[] dst);
+        [DllImport(Lib.name)] static extern void msMaterialPropCopyData(IntPtr self, Vector4[] dst);
+        [DllImport(Lib.name)] static extern void msMaterialPropCopyData(IntPtr self, Matrix4x4[] dst);
         #endregion
 
         public enum Type
@@ -934,8 +998,8 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern IntPtr msMaterialKeywordGetName(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern byte msMaterialKeywordGetValue(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msMaterialKeywordGetName(IntPtr self);
+        [DllImport(Lib.name)] static extern byte msMaterialKeywordGetValue(IntPtr self);
         #endregion
 
         public static implicit operator bool(MaterialKeywordData v)
@@ -953,27 +1017,27 @@ namespace UTJ.MeshSync
         #region internal
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public AssetData asset;
-        [DllImport("MeshSyncServer")] static extern MaterialData msMaterialCreate();
-        [DllImport("MeshSyncServer")] static extern int msMaterialGetIndex(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msMaterialSetIndex(IntPtr self, int v);
-        [DllImport("MeshSyncServer")] static extern IntPtr msMaterialGetShader(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msMaterialSetShader(IntPtr self, string v);
-        [DllImport("MeshSyncServer")] static extern int msMaterialGetNumParams(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern MaterialPropertyData msMaterialGetParam(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern MaterialPropertyData msMaterialFindParam(IntPtr self, string name);
+        [DllImport(Lib.name)] static extern MaterialData msMaterialCreate();
+        [DllImport(Lib.name)] static extern int msMaterialGetIndex(IntPtr self);
+        [DllImport(Lib.name)] static extern void msMaterialSetIndex(IntPtr self, int v);
+        [DllImport(Lib.name)] static extern IntPtr msMaterialGetShader(IntPtr self);
+        [DllImport(Lib.name)] static extern void msMaterialSetShader(IntPtr self, string v);
+        [DllImport(Lib.name)] static extern int msMaterialGetNumParams(IntPtr self);
+        [DllImport(Lib.name)] static extern MaterialPropertyData msMaterialGetParam(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern MaterialPropertyData msMaterialFindParam(IntPtr self, string name);
 
-        [DllImport("MeshSyncServer")] static extern void msMaterialSetInt(IntPtr self, string name, int v);
-        [DllImport("MeshSyncServer")] static extern void msMaterialSetFloat(IntPtr self, string name, float v);
-        [DllImport("MeshSyncServer")] static extern void msMaterialSetVector(IntPtr self, string name, Vector4 v);
-        [DllImport("MeshSyncServer")] static extern void msMaterialSetMatrix(IntPtr self, string name, Matrix4x4 v);
-        [DllImport("MeshSyncServer")] static extern void msMaterialSetFloatArray(IntPtr self, string name, float[] v, int c);
-        [DllImport("MeshSyncServer")] static extern void msMaterialSetVectorArray(IntPtr self, string name, Vector4[] v, int c);
-        [DllImport("MeshSyncServer")] static extern void msMaterialSetMatrixArray(IntPtr self, string name, Matrix4x4[] v, int c);
-        [DllImport("MeshSyncServer")] static extern void msMaterialSetTexture(IntPtr self, string name, TextureData v);
+        [DllImport(Lib.name)] static extern void msMaterialSetInt(IntPtr self, string name, int v);
+        [DllImport(Lib.name)] static extern void msMaterialSetFloat(IntPtr self, string name, float v);
+        [DllImport(Lib.name)] static extern void msMaterialSetVector(IntPtr self, string name, Vector4 v);
+        [DllImport(Lib.name)] static extern void msMaterialSetMatrix(IntPtr self, string name, Matrix4x4 v);
+        [DllImport(Lib.name)] static extern void msMaterialSetFloatArray(IntPtr self, string name, float[] v, int c);
+        [DllImport(Lib.name)] static extern void msMaterialSetVectorArray(IntPtr self, string name, Vector4[] v, int c);
+        [DllImport(Lib.name)] static extern void msMaterialSetMatrixArray(IntPtr self, string name, Matrix4x4[] v, int c);
+        [DllImport(Lib.name)] static extern void msMaterialSetTexture(IntPtr self, string name, TextureData v);
 
-        [DllImport("MeshSyncServer")] static extern int msMaterialGetNumKeywords(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern MaterialKeywordData msMaterialGetKeyword(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern void msMaterialAddKeyword(IntPtr self, string name, byte v);
+        [DllImport(Lib.name)] static extern int msMaterialGetNumKeywords(IntPtr self);
+        [DllImport(Lib.name)] static extern MaterialKeywordData msMaterialGetKeyword(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern void msMaterialAddKeyword(IntPtr self, string name, byte v);
         #endregion
 
         public static implicit operator bool(MaterialData v)
@@ -1085,19 +1149,19 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern void msSetSizeOfKeyframe(int v);
-        [DllImport("MeshSyncServer")] static extern IntPtr msCurveGetName(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern DataType msCurveGetDataType(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msCurveGetNumSamples(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern IntPtr msCurveGetBlendshapeName(IntPtr self);
+        [DllImport(Lib.name)] static extern void msSetSizeOfKeyframe(int v);
+        [DllImport(Lib.name)] static extern IntPtr msCurveGetName(IntPtr self);
+        [DllImport(Lib.name)] static extern DataType msCurveGetDataType(IntPtr self);
+        [DllImport(Lib.name)] static extern int msCurveGetNumSamples(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msCurveGetBlendshapeName(IntPtr self);
 
-        [DllImport("MeshSyncServer")] static extern byte msCurveFillI(IntPtr self, Keyframe[] x, InterpolationMode im);
-        [DllImport("MeshSyncServer")] static extern byte msCurveFillF(IntPtr self, Keyframe[] x, InterpolationMode im);
-        [DllImport("MeshSyncServer")] static extern byte msCurveFillF2(IntPtr self, Keyframe[] x, Keyframe[] y, InterpolationMode im);
-        [DllImport("MeshSyncServer")] static extern byte msCurveFillF3(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im);
-        [DllImport("MeshSyncServer")] static extern byte msCurveFillF4(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im);
-        [DllImport("MeshSyncServer")] static extern byte msCurveFillQuat(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im);
-        [DllImport("MeshSyncServer")] static extern byte msCurveFillEuler(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im);
+        [DllImport(Lib.name)] static extern byte msCurveFillI(IntPtr self, Keyframe[] x, InterpolationMode im);
+        [DllImport(Lib.name)] static extern byte msCurveFillF(IntPtr self, Keyframe[] x, InterpolationMode im);
+        [DllImport(Lib.name)] static extern byte msCurveFillF2(IntPtr self, Keyframe[] x, Keyframe[] y, InterpolationMode im);
+        [DllImport(Lib.name)] static extern byte msCurveFillF3(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im);
+        [DllImport(Lib.name)] static extern byte msCurveFillF4(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im);
+        [DllImport(Lib.name)] static extern byte msCurveFillQuat(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, Keyframe[] w, InterpolationMode im);
+        [DllImport(Lib.name)] static extern byte msCurveFillEuler(IntPtr self, Keyframe[] x, Keyframe[] y, Keyframe[] z, InterpolationMode im);
 
         static void Prepare()
         {
@@ -1151,29 +1215,29 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern IntPtr msAnimationGetPath(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern EntityType msAnimationGetEntityType(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msAnimationGetNumCurves(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCurve(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationFindCurve(IntPtr self, string name);
+        [DllImport(Lib.name)] static extern IntPtr msAnimationGetPath(IntPtr self);
+        [DllImport(Lib.name)] static extern EntityType msAnimationGetEntityType(IntPtr self);
+        [DllImport(Lib.name)] static extern int msAnimationGetNumCurves(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetCurve(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationFindCurve(IntPtr self, string name);
 
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetTransformTranslation(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetTransformRotation(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetTransformScale(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetTransformVisible(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraFieldOfView(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraNearPlane(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraFarPlane(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraFocalLength(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraSensorSize(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetCameraLensShift(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetLightColor(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetLightIntensity(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetLightRange(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetLightSpotAngle(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetTransformTranslation(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetTransformRotation(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetTransformScale(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetTransformVisible(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetCameraFieldOfView(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetCameraNearPlane(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetCameraFarPlane(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetCameraFocalLength(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetCameraSensorSize(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetCameraLensShift(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetLightColor(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetLightIntensity(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetLightRange(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetLightSpotAngle(IntPtr self);
         public delegate void msCurveCallback(AnimationCurveData data);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationEachBlendshapeCurves(IntPtr self, msCurveCallback cb);
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msAnimationGetPointsTime(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationEachBlendshapeCurves(IntPtr self, msCurveCallback cb);
+        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetPointsTime(IntPtr self);
         #endregion
 
         public static implicit operator bool(AnimationData v)
@@ -1517,10 +1581,10 @@ namespace UTJ.MeshSync
         #region internal
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public AssetData asset;
-        [DllImport("MeshSyncServer")] static extern IntPtr msAssetGetName(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msAnimationClipGetFrameRate(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msAnimationClipGetNumAnimations(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AnimationData msAnimationClipGetAnimationData(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern IntPtr msAssetGetName(IntPtr self);
+        [DllImport(Lib.name)] static extern float msAnimationClipGetFrameRate(IntPtr self);
+        [DllImport(Lib.name)] static extern int msAnimationClipGetNumAnimations(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationData msAnimationClipGetAnimationData(IntPtr self, int i);
         #endregion
 
         public int id
@@ -1554,8 +1618,8 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern int msIdentifierGetID(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern IntPtr msIdentifierGetName(IntPtr self);
+        [DllImport(Lib.name)] static extern int msIdentifierGetID(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msIdentifierGetName(IntPtr self);
         #endregion
 
         public int id { get { return msIdentifierGetID(self); } }
@@ -1582,27 +1646,27 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern TransformData msTransformCreate();
-        [DllImport("MeshSyncServer")] static extern TransformDataFlags msTransformGetDataFlags(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern EntityType msTransformGetType(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msTransformGetHostID(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformSetHostID(IntPtr self, int v);
-        [DllImport("MeshSyncServer")] static extern int msTransformGetIndex(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformSetIndex(IntPtr self, int v);
-        [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetPath(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformSetPath(IntPtr self, string v);
-        [DllImport("MeshSyncServer")] static extern Vector3 msTransformGetPosition(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformSetPosition(IntPtr self, Vector3 v);
-        [DllImport("MeshSyncServer")] static extern Quaternion msTransformGetRotation(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformSetRotation(IntPtr self, Quaternion v);
-        [DllImport("MeshSyncServer")] static extern Vector3 msTransformGetScale(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformSetScale(IntPtr self, Vector3 v);
-        [DllImport("MeshSyncServer")] static extern byte msTransformGetVisible(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformSetVisible(IntPtr self, byte v);
-        [DllImport("MeshSyncServer")] static extern byte msTransformGetVisibleHierarchy(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformSetVisibleHierarchy(IntPtr self, byte v);
-        [DllImport("MeshSyncServer")] static extern IntPtr msTransformGetReference(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msTransformSetReference(IntPtr self, string v);
+        [DllImport(Lib.name)] static extern TransformData msTransformCreate();
+        [DllImport(Lib.name)] static extern TransformDataFlags msTransformGetDataFlags(IntPtr self);
+        [DllImport(Lib.name)] static extern EntityType msTransformGetType(IntPtr self);
+        [DllImport(Lib.name)] static extern int msTransformGetHostID(IntPtr self);
+        [DllImport(Lib.name)] static extern void msTransformSetHostID(IntPtr self, int v);
+        [DllImport(Lib.name)] static extern int msTransformGetIndex(IntPtr self);
+        [DllImport(Lib.name)] static extern void msTransformSetIndex(IntPtr self, int v);
+        [DllImport(Lib.name)] static extern IntPtr msTransformGetPath(IntPtr self);
+        [DllImport(Lib.name)] static extern void msTransformSetPath(IntPtr self, string v);
+        [DllImport(Lib.name)] static extern Vector3 msTransformGetPosition(IntPtr self);
+        [DllImport(Lib.name)] static extern void msTransformSetPosition(IntPtr self, Vector3 v);
+        [DllImport(Lib.name)] static extern Quaternion msTransformGetRotation(IntPtr self);
+        [DllImport(Lib.name)] static extern void msTransformSetRotation(IntPtr self, Quaternion v);
+        [DllImport(Lib.name)] static extern Vector3 msTransformGetScale(IntPtr self);
+        [DllImport(Lib.name)] static extern void msTransformSetScale(IntPtr self, Vector3 v);
+        [DllImport(Lib.name)] static extern byte msTransformGetVisible(IntPtr self);
+        [DllImport(Lib.name)] static extern void msTransformSetVisible(IntPtr self, byte v);
+        [DllImport(Lib.name)] static extern byte msTransformGetVisibleHierarchy(IntPtr self);
+        [DllImport(Lib.name)] static extern void msTransformSetVisibleHierarchy(IntPtr self, byte v);
+        [DllImport(Lib.name)] static extern IntPtr msTransformGetReference(IntPtr self);
+        [DllImport(Lib.name)] static extern void msTransformSetReference(IntPtr self, string v);
         #endregion
 
         public static explicit operator TransformData(IntPtr v) { return new TransformData { self = v }; }
@@ -1683,22 +1747,22 @@ namespace UTJ.MeshSync
         #region internal
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public TransformData transform;
-        [DllImport("MeshSyncServer")] static extern CameraData msCameraCreate();
-        [DllImport("MeshSyncServer")] static extern CameraDataFlags msCameraGetDataFlags(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern byte msCameraIsOrtho(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraSetOrtho(IntPtr self, byte v);
-        [DllImport("MeshSyncServer")] static extern float msCameraGetFov(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraSetFov(IntPtr self, float v);
-        [DllImport("MeshSyncServer")] static extern float msCameraGetNearPlane(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraSetNearPlane(IntPtr self, float v);
-        [DllImport("MeshSyncServer")] static extern float msCameraGetFarPlane(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraSetFarPlane(IntPtr self, float v);
-        [DllImport("MeshSyncServer")] static extern float msCameraGetFocalLength(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msCameraSetFocalLength(IntPtr self, float v);
-        [DllImport("MeshSyncServer")] static extern void msCameraGetSensorSize(IntPtr self, ref Vector2 v);
-        [DllImport("MeshSyncServer")] static extern void msCameraSetSensorSize(IntPtr self, ref Vector2 v);
-        [DllImport("MeshSyncServer")] static extern void msCameraGetLensShift(IntPtr self, ref Vector2 v);
-        [DllImport("MeshSyncServer")] static extern void msCameraSetLensShift(IntPtr self, ref Vector2 v);
+        [DllImport(Lib.name)] static extern CameraData msCameraCreate();
+        [DllImport(Lib.name)] static extern CameraDataFlags msCameraGetDataFlags(IntPtr self);
+        [DllImport(Lib.name)] static extern byte msCameraIsOrtho(IntPtr self);
+        [DllImport(Lib.name)] static extern void msCameraSetOrtho(IntPtr self, byte v);
+        [DllImport(Lib.name)] static extern float msCameraGetFov(IntPtr self);
+        [DllImport(Lib.name)] static extern void msCameraSetFov(IntPtr self, float v);
+        [DllImport(Lib.name)] static extern float msCameraGetNearPlane(IntPtr self);
+        [DllImport(Lib.name)] static extern void msCameraSetNearPlane(IntPtr self, float v);
+        [DllImport(Lib.name)] static extern float msCameraGetFarPlane(IntPtr self);
+        [DllImport(Lib.name)] static extern void msCameraSetFarPlane(IntPtr self, float v);
+        [DllImport(Lib.name)] static extern float msCameraGetFocalLength(IntPtr self);
+        [DllImport(Lib.name)] static extern void msCameraSetFocalLength(IntPtr self, float v);
+        [DllImport(Lib.name)] static extern void msCameraGetSensorSize(IntPtr self, ref Vector2 v);
+        [DllImport(Lib.name)] static extern void msCameraSetSensorSize(IntPtr self, ref Vector2 v);
+        [DllImport(Lib.name)] static extern void msCameraGetLensShift(IntPtr self, ref Vector2 v);
+        [DllImport(Lib.name)] static extern void msCameraSetLensShift(IntPtr self, ref Vector2 v);
         #endregion
 
 
@@ -1761,20 +1825,20 @@ namespace UTJ.MeshSync
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public TransformData transform;
 
-        [DllImport("MeshSyncServer")] static extern LightData msLightCreate();
-        [DllImport("MeshSyncServer")] static extern LightDataFlags msLightGetDataFlags(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern LightType msLightGetType(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msLightSetType(IntPtr self, LightType v);
-        [DllImport("MeshSyncServer")] static extern LightShadows msLightGetShadowType(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msLightSetShadowType(IntPtr self, LightShadows v);
-        [DllImport("MeshSyncServer")] static extern Color msLightGetColor(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msLightSetColor(IntPtr self, Color v);
-        [DllImport("MeshSyncServer")] static extern float msLightGetIntensity(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msLightSetIntensity(IntPtr self, float v);
-        [DllImport("MeshSyncServer")] static extern float msLightGetRange(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msLightSetRange(IntPtr self, float v);
-        [DllImport("MeshSyncServer")] static extern float msLightGetSpotAngle(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msLightSetSpotAngle(IntPtr self, float v);
+        [DllImport(Lib.name)] static extern LightData msLightCreate();
+        [DllImport(Lib.name)] static extern LightDataFlags msLightGetDataFlags(IntPtr self);
+        [DllImport(Lib.name)] static extern LightType msLightGetType(IntPtr self);
+        [DllImport(Lib.name)] static extern void msLightSetType(IntPtr self, LightType v);
+        [DllImport(Lib.name)] static extern LightShadows msLightGetShadowType(IntPtr self);
+        [DllImport(Lib.name)] static extern void msLightSetShadowType(IntPtr self, LightShadows v);
+        [DllImport(Lib.name)] static extern Color msLightGetColor(IntPtr self);
+        [DllImport(Lib.name)] static extern void msLightSetColor(IntPtr self, Color v);
+        [DllImport(Lib.name)] static extern float msLightGetIntensity(IntPtr self);
+        [DllImport(Lib.name)] static extern void msLightSetIntensity(IntPtr self, float v);
+        [DllImport(Lib.name)] static extern float msLightGetRange(IntPtr self);
+        [DllImport(Lib.name)] static extern void msLightSetRange(IntPtr self, float v);
+        [DllImport(Lib.name)] static extern float msLightGetSpotAngle(IntPtr self);
+        [DllImport(Lib.name)] static extern void msLightSetSpotAngle(IntPtr self, float v);
         #endregion
 
         public static LightData Create()
@@ -1823,10 +1887,10 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern int msSubmeshGetNumIndices(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msSubmeshReadIndices(IntPtr self, IntPtr mesh, IntPtr dst);
-        [DllImport("MeshSyncServer")] static extern int msSubmeshGetMaterialID(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern Topology msSubmeshGetTopology(IntPtr self);
+        [DllImport(Lib.name)] static extern int msSubmeshGetNumIndices(IntPtr self);
+        [DllImport(Lib.name)] static extern void msSubmeshReadIndices(IntPtr self, IntPtr mesh, IntPtr dst);
+        [DllImport(Lib.name)] static extern int msSubmeshGetMaterialID(IntPtr self);
+        [DllImport(Lib.name)] static extern Topology msSubmeshGetTopology(IntPtr self);
         #endregion
 
         public enum Topology
@@ -1848,12 +1912,12 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern int msSplitGetNumPoints(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msSplitGetNumIndices(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msSplitGetNumBoneWeights(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern Bounds msSplitGetBounds(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msSplitGetNumSubmeshes(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern SubmeshData msSplitGetSubmesh(IntPtr self, IntPtr mesh, int i);
+        [DllImport(Lib.name)] static extern int msSplitGetNumPoints(IntPtr self);
+        [DllImport(Lib.name)] static extern int msSplitGetNumIndices(IntPtr self);
+        [DllImport(Lib.name)] static extern int msSplitGetNumBoneWeights(IntPtr self);
+        [DllImport(Lib.name)] static extern Bounds msSplitGetBounds(IntPtr self);
+        [DllImport(Lib.name)] static extern int msSplitGetNumSubmeshes(IntPtr self);
+        [DllImport(Lib.name)] static extern SubmeshData msSplitGetSubmesh(IntPtr self, IntPtr mesh, int i);
         #endregion
 
         public int numPoints { get { return msSplitGetNumPoints(self); } }
@@ -1872,16 +1936,16 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern IntPtr msBlendShapeGetName(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msBlendShapeSetName(IntPtr self, string v);
-        [DllImport("MeshSyncServer")] static extern float msBlendShapeGetWeight(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msBlendShapeSetWeight(IntPtr self, float v);
-        [DllImport("MeshSyncServer")] static extern int msBlendShapeGetNumFrames(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msBlendShapeGetFrameWeight(IntPtr self, int f);
-        [DllImport("MeshSyncServer")] static extern void msBlendShapeReadPoints(IntPtr self, int f, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msBlendShapeReadNormals(IntPtr self, int f, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msBlendShapeReadTangents(IntPtr self, int f, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msBlendShapeAddFrame(IntPtr self, float weight, int num, Vector3[] v, Vector3[] n, Vector3[] t);
+        [DllImport(Lib.name)] static extern IntPtr msBlendShapeGetName(IntPtr self);
+        [DllImport(Lib.name)] static extern void msBlendShapeSetName(IntPtr self, string v);
+        [DllImport(Lib.name)] static extern float msBlendShapeGetWeight(IntPtr self);
+        [DllImport(Lib.name)] static extern void msBlendShapeSetWeight(IntPtr self, float v);
+        [DllImport(Lib.name)] static extern int msBlendShapeGetNumFrames(IntPtr self);
+        [DllImport(Lib.name)] static extern float msBlendShapeGetFrameWeight(IntPtr self, int f);
+        [DllImport(Lib.name)] static extern void msBlendShapeReadPoints(IntPtr self, int f, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msBlendShapeReadNormals(IntPtr self, int f, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msBlendShapeReadTangents(IntPtr self, int f, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msBlendShapeAddFrame(IntPtr self, float weight, int num, Vector3[] v, Vector3[] n, Vector3[] t);
         #endregion
 
         public string name
@@ -1934,55 +1998,55 @@ namespace UTJ.MeshSync
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public TransformData transform;
 
-        [DllImport("MeshSyncServer")] static extern MeshData msMeshCreate();
-        [DllImport("MeshSyncServer")] static extern MeshDataFlags msMeshGetDataFlags(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msMeshSetFlags(IntPtr self, MeshDataFlags v);
-        [DllImport("MeshSyncServer")] static extern int msMeshGetNumPoints(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msMeshGetNumIndices(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msMeshGetNumSplits(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msMeshReadPoints(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msMeshWritePoints(IntPtr self, Vector3[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msMeshReadNormals(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msMeshWriteNormals(IntPtr self, Vector3[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msMeshReadTangents(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msMeshWriteTangents(IntPtr self, Vector4[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msMeshReadUV0(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msMeshReadUV1(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msMeshWriteUV0(IntPtr self, Vector2[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msMeshWriteUV1(IntPtr self, Vector2[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msMeshReadColors(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msMeshWriteColors(IntPtr self, Color[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msMeshReadVelocities(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msMeshWriteVelocities(IntPtr self, Vector3[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msMeshReadBoneWeights4(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msMeshWriteBoneWeights4(IntPtr self, BoneWeight[] weights, int size);
+        [DllImport(Lib.name)] static extern MeshData msMeshCreate();
+        [DllImport(Lib.name)] static extern MeshDataFlags msMeshGetDataFlags(IntPtr self);
+        [DllImport(Lib.name)] static extern void msMeshSetFlags(IntPtr self, MeshDataFlags v);
+        [DllImport(Lib.name)] static extern int msMeshGetNumPoints(IntPtr self);
+        [DllImport(Lib.name)] static extern int msMeshGetNumIndices(IntPtr self);
+        [DllImport(Lib.name)] static extern int msMeshGetNumSplits(IntPtr self);
+        [DllImport(Lib.name)] static extern void msMeshReadPoints(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshWritePoints(IntPtr self, Vector3[] v, int size);
+        [DllImport(Lib.name)] static extern void msMeshReadNormals(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshWriteNormals(IntPtr self, Vector3[] v, int size);
+        [DllImport(Lib.name)] static extern void msMeshReadTangents(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshWriteTangents(IntPtr self, Vector4[] v, int size);
+        [DllImport(Lib.name)] static extern void msMeshReadUV0(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshReadUV1(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshWriteUV0(IntPtr self, Vector2[] v, int size);
+        [DllImport(Lib.name)] static extern void msMeshWriteUV1(IntPtr self, Vector2[] v, int size);
+        [DllImport(Lib.name)] static extern void msMeshReadColors(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshWriteColors(IntPtr self, Color[] v, int size);
+        [DllImport(Lib.name)] static extern void msMeshReadVelocities(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshWriteVelocities(IntPtr self, Vector3[] v, int size);
+        [DllImport(Lib.name)] static extern void msMeshReadBoneWeights4(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshWriteBoneWeights4(IntPtr self, BoneWeight[] weights, int size);
 #if UNITY_2019_1_OR_NEWER
-        [DllImport("MeshSyncServer")] static extern void msMeshReadBoneCounts(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msMeshReadBoneWeightsV(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msMeshWriteBoneWeightsV(IntPtr self, IntPtr counts, int numCounts, IntPtr weights, int numWeights);
+        [DllImport(Lib.name)] static extern void msMeshReadBoneCounts(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshReadBoneWeightsV(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshWriteBoneWeightsV(IntPtr self, IntPtr counts, int numCounts, IntPtr weights, int numWeights);
 #endif
-        [DllImport("MeshSyncServer")] static extern void msMeshReadIndices(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport("MeshSyncServer")] static extern void msMeshWriteIndices(IntPtr self, int[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msMeshWriteSubmeshTriangles(IntPtr self, int[] v, int size, int materialID);
+        [DllImport(Lib.name)] static extern void msMeshReadIndices(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshWriteIndices(IntPtr self, int[] v, int size);
+        [DllImport(Lib.name)] static extern void msMeshWriteSubmeshTriangles(IntPtr self, int[] v, int size, int materialID);
 
-        [DllImport("MeshSyncServer")] static extern int msMeshGetNumBones(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern IntPtr msMeshGetRootBonePath(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msMeshSetRootBonePath(IntPtr self, string v);
-        [DllImport("MeshSyncServer")] static extern IntPtr msMeshGetBonePath(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern void msMeshSetBonePath(IntPtr self, string v, int i);
-        [DllImport("MeshSyncServer")] static extern void msMeshReadBindPoses(IntPtr self, Matrix4x4[] v);
-        [DllImport("MeshSyncServer")] static extern void msMeshWriteBindPoses(IntPtr self, Matrix4x4[] v, int size);
+        [DllImport(Lib.name)] static extern int msMeshGetNumBones(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msMeshGetRootBonePath(IntPtr self);
+        [DllImport(Lib.name)] static extern void msMeshSetRootBonePath(IntPtr self, string v);
+        [DllImport(Lib.name)] static extern IntPtr msMeshGetBonePath(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern void msMeshSetBonePath(IntPtr self, string v, int i);
+        [DllImport(Lib.name)] static extern void msMeshReadBindPoses(IntPtr self, Matrix4x4[] v);
+        [DllImport(Lib.name)] static extern void msMeshWriteBindPoses(IntPtr self, Matrix4x4[] v, int size);
 
-        [DllImport("MeshSyncServer")] static extern void msMeshSetLocal2World(IntPtr self, ref Matrix4x4 v);
-        [DllImport("MeshSyncServer")] static extern void msMeshSetWorld2Local(IntPtr self, ref Matrix4x4 v);
+        [DllImport(Lib.name)] static extern void msMeshSetLocal2World(IntPtr self, ref Matrix4x4 v);
+        [DllImport(Lib.name)] static extern void msMeshSetWorld2Local(IntPtr self, ref Matrix4x4 v);
 
-        [DllImport("MeshSyncServer")] static extern SplitData msMeshGetSplit(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern int msMeshGetNumSubmeshes(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern SubmeshData msMeshGetSubmesh(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern SplitData msMeshGetSplit(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern int msMeshGetNumSubmeshes(IntPtr self);
+        [DllImport(Lib.name)] static extern SubmeshData msMeshGetSubmesh(IntPtr self, int i);
 
-        [DllImport("MeshSyncServer")] static extern int msMeshGetNumBlendShapes(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern BlendShapeData msMeshGetBlendShapeData(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern BlendShapeData msMeshAddBlendShape(IntPtr self, string name);
+        [DllImport(Lib.name)] static extern int msMeshGetNumBlendShapes(IntPtr self);
+        [DllImport(Lib.name)] static extern BlendShapeData msMeshGetBlendShapeData(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern BlendShapeData msMeshAddBlendShape(IntPtr self, string name);
         #endregion
 
         public static MeshData Create()
@@ -2058,7 +2122,7 @@ namespace UTJ.MeshSync
             }
             set { msMeshWriteBindPoses(self, value, value.Length); }
         }
-        public void SetBonePaths(MeshSyncServer mss, Transform[] bones)
+        public void SetBonePaths(MeshSyncPlayer mss, Transform[] bones)
         {
             int n = bones.Length;
             for (int i = 0; i < n; ++i)
@@ -2112,23 +2176,23 @@ namespace UTJ.MeshSync
         #region internal
         public IntPtr self;
 
-        [DllImport("MeshSyncServer")] static extern PointsDataFlags msPointsDataGetFlags(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msPointsDataGetTime(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msPointsDataSetTime(IntPtr self, float v);
-        [DllImport("MeshSyncServer")] static extern void msPointsDataGetBounds(IntPtr self, ref Vector3 center, ref Vector3 extents);
-        [DllImport("MeshSyncServer")] static extern int msPointsDataGetNumPoints(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msPointsDataReadPoints(IntPtr self, Vector3[] dst);
-        [DllImport("MeshSyncServer")] static extern void msPointsDataWritePoints(IntPtr self, Vector3[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msPointsDataReadRotations(IntPtr self, Quaternion[] dst);
-        [DllImport("MeshSyncServer")] static extern void msPointsDataWriteRotations(IntPtr self, Quaternion[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msPointsDataReadScales(IntPtr self, Vector3[] dst);
-        [DllImport("MeshSyncServer")] static extern void msPointsDataWriteScales(IntPtr self, Vector3[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msPointsDataReadVelocities(IntPtr self, Vector3[] dst);
-        [DllImport("MeshSyncServer")] static extern void msPointsDataWriteVelocities(IntPtr self, Vector3[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msPointsDataReadColors(IntPtr self, Color[] dst);
-        [DllImport("MeshSyncServer")] static extern void msPointsDataWriteColors(IntPtr self, Color[] v, int size);
-        [DllImport("MeshSyncServer")] static extern void msPointsDataReadIDs(IntPtr self, int[] dst);
-        [DllImport("MeshSyncServer")] static extern void msPointsDataWriteIDs(IntPtr self, int[] v, int size);
+        [DllImport(Lib.name)] static extern PointsDataFlags msPointsDataGetFlags(IntPtr self);
+        [DllImport(Lib.name)] static extern float msPointsDataGetTime(IntPtr self);
+        [DllImport(Lib.name)] static extern void msPointsDataSetTime(IntPtr self, float v);
+        [DllImport(Lib.name)] static extern void msPointsDataGetBounds(IntPtr self, ref Vector3 center, ref Vector3 extents);
+        [DllImport(Lib.name)] static extern int msPointsDataGetNumPoints(IntPtr self);
+        [DllImport(Lib.name)] static extern void msPointsDataReadPoints(IntPtr self, Vector3[] dst);
+        [DllImport(Lib.name)] static extern void msPointsDataWritePoints(IntPtr self, Vector3[] v, int size);
+        [DllImport(Lib.name)] static extern void msPointsDataReadRotations(IntPtr self, Quaternion[] dst);
+        [DllImport(Lib.name)] static extern void msPointsDataWriteRotations(IntPtr self, Quaternion[] v, int size);
+        [DllImport(Lib.name)] static extern void msPointsDataReadScales(IntPtr self, Vector3[] dst);
+        [DllImport(Lib.name)] static extern void msPointsDataWriteScales(IntPtr self, Vector3[] v, int size);
+        [DllImport(Lib.name)] static extern void msPointsDataReadVelocities(IntPtr self, Vector3[] dst);
+        [DllImport(Lib.name)] static extern void msPointsDataWriteVelocities(IntPtr self, Vector3[] v, int size);
+        [DllImport(Lib.name)] static extern void msPointsDataReadColors(IntPtr self, Color[] dst);
+        [DllImport(Lib.name)] static extern void msPointsDataWriteColors(IntPtr self, Color[] v, int size);
+        [DllImport(Lib.name)] static extern void msPointsDataReadIDs(IntPtr self, int[] dst);
+        [DllImport(Lib.name)] static extern void msPointsDataWriteIDs(IntPtr self, int[] v, int size);
         #endregion
 
         public PointsDataFlags flags
@@ -2174,10 +2238,10 @@ namespace UTJ.MeshSync
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public TransformData transform;
 
-        [DllImport("MeshSyncServer")] static extern PointsData msPointsCreate();
-        [DllImport("MeshSyncServer")] static extern int msPointsGetNumData(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern PointsCacheData msPointsGetData(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern PointsCacheData msPointsAddData(IntPtr self);
+        [DllImport(Lib.name)] static extern PointsData msPointsCreate();
+        [DllImport(Lib.name)] static extern int msPointsGetNumData(IntPtr self);
+        [DllImport(Lib.name)] static extern PointsCacheData msPointsGetData(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern PointsCacheData msPointsAddData(IntPtr self);
         #endregion
 
         public static PointsData Create()
@@ -2198,10 +2262,10 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern ConstraintType msConstraintGetType(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern IntPtr msConstraintGetPath(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msConstraintGetNumSources(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern IntPtr msConstraintGetSource(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern ConstraintType msConstraintGetType(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msConstraintGetPath(IntPtr self);
+        [DllImport(Lib.name)] static extern int msConstraintGetNumSources(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msConstraintGetSource(IntPtr self, int i);
         #endregion
 
         public enum ConstraintType
@@ -2247,8 +2311,8 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern Vector3 msParentConstraintGetPositionOffset(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern Quaternion msParentConstraintGetRotationOffset(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern Vector3 msParentConstraintGetPositionOffset(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern Quaternion msParentConstraintGetRotationOffset(IntPtr self, int i);
         #endregion
 
 
@@ -2311,18 +2375,16 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern IntPtr msSceneGetName(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern int msSceneGetNumAssets(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern AssetData msSceneGetAsset(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern int msSceneGetNumEntities(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern TransformData msSceneGetEntity(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern int msSceneGetNumConstraints(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern ConstraintData msSceneGetConstraint(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern int msSceneGetNumAssets(IntPtr self);
+        [DllImport(Lib.name)] static extern AssetData msSceneGetAsset(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern int msSceneGetNumEntities(IntPtr self);
+        [DllImport(Lib.name)] static extern TransformData msSceneGetEntity(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern int msSceneGetNumConstraints(IntPtr self);
+        [DllImport(Lib.name)] static extern ConstraintData msSceneGetConstraint(IntPtr self, int i);
         #endregion
 
         public static implicit operator bool(SceneData v) { return v.self != IntPtr.Zero; }
 
-        public string name { get { return Misc.S(msSceneGetName(self)); } }
         public int numAssets { get { return msSceneGetNumAssets(self); } }
         public int numEntities { get { return msSceneGetNumEntities(self); } }
         public int numConstraints { get { return msSceneGetNumConstraints(self); } }
@@ -2339,17 +2401,17 @@ namespace UTJ.MeshSync
     {
         #region internal
         public IntPtr self;
-        [DllImport("MeshSyncServer")] static extern SceneCacheData msISceneCacheOpen(string path);
-        [DllImport("MeshSyncServer")] static extern void msISceneCacheClose(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msISceneCacheGetSampleRate(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern void msISceneCacheGetTimeRange(IntPtr self, ref float start, ref float end);
-        [DllImport("MeshSyncServer")] static extern int msISceneCacheGetNumScenes(IntPtr self);
-        [DllImport("MeshSyncServer")] static extern float msISceneCacheGetTime(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern SceneData msISceneCacheGetSceneByIndex(IntPtr self, int i);
-        [DllImport("MeshSyncServer")] static extern SceneData msISceneCacheGetSceneByTime(IntPtr self, float time, bool lerp);
-        [DllImport("MeshSyncServer")] static extern void msISceneCacheRefesh(IntPtr self);
+        [DllImport(Lib.name)] static extern SceneCacheData msISceneCacheOpen(string path);
+        [DllImport(Lib.name)] static extern void msISceneCacheClose(IntPtr self);
+        [DllImport(Lib.name)] static extern float msISceneCacheGetSampleRate(IntPtr self);
+        [DllImport(Lib.name)] static extern void msISceneCacheGetTimeRange(IntPtr self, ref float start, ref float end);
+        [DllImport(Lib.name)] static extern int msISceneCacheGetNumScenes(IntPtr self);
+        [DllImport(Lib.name)] static extern float msISceneCacheGetTime(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern SceneData msISceneCacheGetSceneByIndex(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern SceneData msISceneCacheGetSceneByTime(IntPtr self, float time, bool lerp);
+        [DllImport(Lib.name)] static extern void msISceneCacheRefesh(IntPtr self);
 
-        [DllImport("MeshSyncServer")] static extern AnimationCurveData msISceneCacheGetTimeCurve(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msISceneCacheGetTimeCurve(IntPtr self);
         #endregion
 
         public static implicit operator bool(SceneCacheData v) { return v.self != IntPtr.Zero; }

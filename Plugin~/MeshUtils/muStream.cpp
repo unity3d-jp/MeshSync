@@ -18,7 +18,7 @@ void MemoryStreamBuf::reset()
 {
     auto *p = buffer.data();
     auto *e = p + buffer.size();
-    this->setp(p, p, e);
+    this->setp(p, e);
     this->setg(p, p, e);
 }
 
@@ -51,7 +51,8 @@ std::ios::pos_type MemoryStreamBuf::seekpos(pos_type pos, std::ios_base::openmod
 {
     auto *p = buffer.data();
     auto *e = p + buffer.size();
-    this->setp(p, p + pos, e);
+    this->setp(p, e);
+    this->pbump((int)pos);
     return wcount;
 }
 
@@ -97,6 +98,13 @@ const RawVector<char>& MemoryStream::getBuffer() const { return m_buf.buffer; }
 RawVector<char>&& MemoryStream::moveBuffer() { return std::move(m_buf.buffer); }
 uint64_t MemoryStream::getWCount() const { return m_buf.wcount; }
 uint64_t MemoryStream::getRCount() const { return m_buf.rcount; }
+
+char* MemoryStream::gskip(size_t n)
+{
+    auto ret = m_buf.gptr();
+    m_buf.seekoff((std::streamoff)n, std::ios::cur, std::ios::binary);
+    return ret;
+}
 
 
 static RawVector<char> s_dummy_buf;

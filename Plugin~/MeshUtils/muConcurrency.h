@@ -36,6 +36,14 @@ inline void parallel_for(int begin, int end, int granularity, const Body& body)
         }
     });
 }
+#else
+template<class Body>
+inline void parallel_for(int begin, int end, int /*granularity*/, const Body& body)
+{
+    for (; begin != end; ++begin) { body(begin); }
+}
+#endif
+
 template<class Body>
 inline void parallel_for_blocked(int begin, int end, int granularity, const Body& body)
 {
@@ -47,18 +55,6 @@ inline void parallel_for_blocked(int begin, int end, int granularity, const Body
         body(begin, end);
     });
 }
-#else
-template<class Body>
-inline void parallel_for(int begin, int end, int /*granularity*/, const Body& body)
-{
-    for (; begin != end; ++begin) { body(begin); }
-}
-template<class Body>
-inline void parallel_for_blocked(int begin, int end, int /*granularity*/, const Body& body)
-{
-    for (; begin != end; ++begin) { body(begin); }
-}
-#endif
 
 template<class Iter, class Body>
 inline void parallel_for_each(Iter begin, Iter end, const Body& body)

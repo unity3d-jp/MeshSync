@@ -31,19 +31,26 @@ protected:
     bool kickPreload(size_t i);
     void waitAllPreloads();
 
+    struct SceneSegment
+    {
+        RawVector<char> encoded_buf;
+        std::future<void> task;
+        ScenePtr segment;
+        bool error = false;
+    };
+
     struct SceneRecord
     {
         uint64_t pos = 0;
-        uint64_t size = 0;
+        uint64_t buffer_size_total = 0;
         float time = 0.0f;
 
         float load_time_ms = 0.0f;
         ScenePtr scene;
         std::future<void> preload;
 
-        SceneRecord();
-        SceneRecord(SceneRecord&& v) noexcept;   // enforce std::vector to use move constructor
-        SceneRecord& operator=(SceneRecord&& v); // 
+        RawVector<uint64_t> buffer_sizes;
+        std::vector<SceneSegment> segments;
     };
 
     StreamPtr m_ist;

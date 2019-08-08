@@ -6,6 +6,7 @@ namespace mu {
 
 class MemoryStreamBuf : public std::streambuf
 {
+friend class MemoryStream;
 public:
     static const size_t default_bufsize = 1024 * 128;
 
@@ -39,6 +40,8 @@ public:
     RawVector<char>&& moveBuffer();
     uint64_t getWCount() const;
     uint64_t getRCount() const;
+
+    char* gskip(size_t n); // return current read pointer and advance n byte
 
 private:
     MemoryStreamBuf m_buf;

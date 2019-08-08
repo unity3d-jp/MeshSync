@@ -73,7 +73,7 @@ void msmaxContext::AnimationRecord::operator()(msmaxContext * _this)
 }
 
 
-msmaxContext & msmaxContext::getInstance()
+msmaxContext& msmaxContext::getInstance()
 {
     static msmaxContext s_plugin;
     return s_plugin;
@@ -359,7 +359,12 @@ bool msmaxContext::sendAnimations(msmaxObjectScope scope)
 
 static DWORD WINAPI CB_Dummy(LPVOID arg) { return 0; }
 
-bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
+static int ExceptionFilter(unsigned int code, struct _EXCEPTION_POINTERS *ep)
+{
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+bool msmaxContext::exportCacheImpl(const msmaxCacheExportSettings& cache_settings)
 {
     //float sample_rate = m_settings.animation_sps;
     float samples_per_frame = cache_settings.samples_per_frame;
@@ -396,6 +401,12 @@ bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
     auto nodes = getNodes(cache_settings.object_scope);
 
     auto do_export = [&]() {
+        if (m_scene_updated) {
+            updateRecords(false);
+            nodes = getNodes(cache_settings.object_scope);
+            m_scene_updated = false;
+        }
+
         if (scene_index == 0) {
             // exportMaterials() is needed to export material IDs in meshes
             exportMaterials();
@@ -443,13 +454,12 @@ bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
             time_start = time_range.Start();
             time_end = time_range.End();
         }
-        interval = TimeValue((float)ticks_per_frame * samples_per_frame);
+        interval = TimeValue((float)ticks_per_frame / samples_per_frame);
         time_end = std::max(time_end, time_start); // sanitize
 
         for (TimeValue t = time_start;;) {
             m_current_time_tick = t;
             m_anim_time = ToSeconds(t - time_start);
-            ifs->SetTime(m_current_time_tick); // this also update viewports
 
             do_export();
 
@@ -473,6 +483,7 @@ bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
     }
     else if (cache_settings.frame_range == msmaxFrameRange::CurrentFrame) {
         m_anim_time = 0.0f;
+        m_current_time_tick = ifs->GetTime();
         do_export();
     }
 
@@ -484,13 +495,28 @@ bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
     return true;
 }
 
+bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
+{
+    __try {
+        return exportCacheImpl(cache_settings);
+    }
+    __except (ExceptionFilter(GetExceptionCode(), GetExceptionInformation()))
+    {
+        logInfo("3ds max crashed! export aborted.");
+        if (cache_settings.frame_range != msmaxFrameRange::CurrentFrame) {
+            GetCOREInterface()->ProgressEnd();
+        }
+        return false;
+    }
+}
+
 bool msmaxContext::recvScene()
 {
     return false;
 }
 
 
-void msmaxContext::updateRecords()
+void msmaxContext::updateRecords(bool track_delete)
 {
     struct ExistRecord
     {
@@ -500,12 +526,15 @@ void msmaxContext::updateRecords()
         bool operator<(const ExistRecord& v) const { return path < v.path; }
         bool operator<(const std::string& v) const { return path < v; }
     };
-    // create path list to detect rename / re-parent 
+
     std::vector<ExistRecord> old_records;
-    old_records.reserve(m_node_records.size());
-    for (auto& kvp : m_node_records)
-        old_records.push_back({ std::move(kvp.second.path), false });
-    std::sort(old_records.begin(), old_records.end());
+    if (track_delete) {
+        // create path list to detect rename / re-parent 
+        old_records.reserve(m_node_records.size());
+        for (auto& kvp : m_node_records)
+            old_records.push_back({ std::move(kvp.second.path), false });
+        std::sort(old_records.begin(), old_records.end());
+    }
 
     // re-construct records
     m_node_records.clear();
@@ -513,15 +542,17 @@ void msmaxContext::updateRecords()
         getNodeRecord(n);
     });
 
-    // erase renamed / re-parented objects
-    for (auto& kvp : m_node_records) {
-        auto it = std::lower_bound(old_records.begin(), old_records.end(), kvp.second.path);
-        if (it != old_records.end() && it->path == kvp.second.path)
-            it->exists = true;
-    }
-    for (auto& r : old_records) {
-        if (!r.exists)
-            m_entity_manager.erase(r.path);
+    if (track_delete) {
+        // erase renamed / re-parented objects
+        for (auto& kvp : m_node_records) {
+            auto it = std::lower_bound(old_records.begin(), old_records.end(), kvp.second.path);
+            if (it != old_records.end() && it->path == kvp.second.path)
+                it->exists = true;
+        }
+        for (auto& r : old_records) {
+            if (!r.exists)
+                m_entity_manager.erase(r.path);
+        }
     }
 }
 
@@ -777,66 +808,85 @@ mu::float4x4 msmaxContext::getPivotMatrix(INode *n)
     return mu::transform(t, r, mu::float3::one());
 }
 
-static inline mu::float4x4 CorrectCameraMatrix(mu::float4x4 v)
-{
-    return { {
-        {-v[0][0],-v[0][1],-v[0][2],-v[0][3]},
-        { v[1][0], v[1][1], v[1][2], v[1][3]},
-        {-v[2][0],-v[2][1],-v[2][2],-v[2][3]},
-        { v[3][0], v[3][1], v[3][2], v[3][3]},
-    } };
-}
-
 mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
 {
     auto obj = n->GetObjectRef();
-    bool needs_camera_correction = IsCamera(obj) || IsLight(obj);
+    bool is_camera = IsCamera(obj);
+    bool is_light = IsLight(obj);
 
+    mu::float4x4 r;
     if (m_settings.bake_modifiers) {
-        // https://help.autodesk.com/view/3DSMAX/2016/ENU/?guid=__files_GUID_2E4E41D4_1B52_48C8_8ABA_3D3C9910CB2C_htm
-        auto m = n->GetObjTMAfterWSM(t);
-        if (m.IsIdentity())
-            m = n->GetObjTMBeforeWSM(t);
-        // cancel scale
-        m.NoScale();
+        auto get_matrix = [&]() {
+            // https://help.autodesk.com/view/3DSMAX/2016/ENU/?guid=__files_GUID_2E4E41D4_1B52_48C8_8ABA_3D3C9910CB2C_htm
+            Matrix3 m;
+            m = n->GetObjTMAfterWSM(t);
+            if (m.IsIdentity())
+                m = n->GetObjTMBeforeWSM(t);
+            // cancel scale
+            m.NoScale();
+            r = to_float4x4(m);
+        };
 
-        if (needs_camera_correction) {
-            // rotation part of camera/light matrix after applied modifiers seems inverted... cancel it.
-            auto im = ::Inverse(m);
-            im.SetTrans(m.GetTrans());
-            auto rmat = to_float4x4(im);
-            // note: CorrectCameraMatrix(to_float4x4(im)) return wrong result. possibly there are some problems in extract_rotation().
-            return CorrectCameraMatrix(mu::transform(extract_position(rmat), extract_rotation(rmat), mu::float3::one()));
+        bool is_physical_camera = is_camera && IsPhysicalCamera(obj);
+        if (is_physical_camera) {
+            // cancel tilt/shift effect
+            MaxSDK::IPhysicalCamera::RenderTransformEvaluationGuard guard(n, t);
+            get_matrix();
         }
         else {
-            return to_float4x4(m);
+            get_matrix();
         }
     }
     else {
-        auto ret = to_float4x4(n->GetNodeTM(t));
-        return needs_camera_correction ? CorrectCameraMatrix(ret) : ret;
+        r = to_float4x4(n->GetNodeTM(t));
+    }
+
+    if (is_camera || is_light) {
+        // camera/light correction
+        return mu::float4x4{ {
+            {-r[0][0],-r[0][1],-r[0][2],-r[0][3]},
+            { r[1][0], r[1][1], r[1][2], r[1][3]},
+            {-r[2][0],-r[2][1],-r[2][2],-r[2][3]},
+            { r[3][0], r[3][1], r[3][2], r[3][3]},
+        } };
+    }
+    else {
+        return r;
     }
 }
 
 void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
     mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
 {
-    auto mat = getGlobalMatrix(n.node, t);
-    if (m_settings.flatten_hierarchy) {
-        // don't care parent in this case
+    vis = (n.node->IsHidden() || !IsVisibleInHierarchy(n.node, t)) ? false : true;
+
+    auto do_extract = [&](const mu::float4x4& mat) {
+        pos = mu::extract_position(mat);
+        rot = mu::extract_rotation(mat);
+        scale = mu::extract_scale(mat);
+        if (mu::near_equal(scale, mu::float3::one()))
+            scale = mu::float3::one();
+    };
+
+    auto obj = n.node->GetObjectRef();
+    if (m_settings.bake_modifiers) {
+        if (IsCamera(obj) || IsLight(obj)) {
+            // on camera/light, extract from global matrix
+            do_extract(getGlobalMatrix(n.node, t));
+        }
+        else {
+            // on mesh, transform is applied to vertices when 'bake_modifiers' is enabled
+            pos = mu::float3::zero();
+            rot = mu::quatf::identity();
+            scale = mu::float3::one();
+        }
     }
     else {
-        // handle parent
+        auto mat = getGlobalMatrix(n.node, t);
         if (auto parent = n.node->GetParentNode())
             mat *= mu::invert(getGlobalMatrix(parent, t));
+        do_extract(mat);
     }
-
-    pos = mu::extract_position(mat);
-    rot = mu::extract_rotation(mat);
-    scale = mu::extract_scale(mat);
-    if (mu::near_equal(scale, mu::float3::one()))
-        scale = mu::float3::one();
-    vis = (n.node->IsHidden() || !IsVisibleInHierarchy(n.node, t)) ? false : true;
 }
 
 void msmaxContext::extractTransform(TreeNode& n)
@@ -872,11 +922,17 @@ void msmaxContext::extractCameraData(TreeNode& n, TimeValue t,
     if (auto* pcam = dynamic_cast<MaxSDK::IPhysicalCamera*>(cam)) {
         float to_mm = (float)GetMasterScale(UNITS_MILLIMETERS);
         Interval interval;
+
+        // focal length in mm
         focal_length = pcam->GetEffectiveLensFocalLength(t, interval) * to_mm;
         float film_width = pcam->GetFilmWidth(t, interval) * to_mm;
+        // sensor size in mm
         sensor_size.x = film_width;
         sensor_size.y = film_width / aspect;
-        lens_shift = mu::float2::zero();
+        // lens shift in percent
+        auto shift = pcam->GetFilmPlaneOffset(t, interval);
+        lens_shift = -to_float2(shift);
+        lens_shift.y *= aspect;
     }
     else {
         focal_length = 0.0f;
@@ -1104,12 +1160,6 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
     auto& dst = *ret;
     extractTransform(n);
 
-    if (m_settings.flatten_hierarchy) {
-        // when 'flatten_hierarchy' is enabled, rotation and scale are applied to vertices.
-        dst.rotation = mu::quatf::identity();
-        dst.scale = mu::float3::one();
-    }
-
     // send mesh contents even if the node is hidden.
 
     Mesh *mesh = nullptr;
@@ -1167,14 +1217,9 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
             dst.refine_settings.local2world = getPivotMatrix(n);
         }
         else {
-            // convert vertices
-            //   (local space) -> world space -> local space without scale (if 'flatten_hierarchy' is off)
-            // to handle world space problem and complex transform composition
+            // bake_modifiers is enabled
+            // in this case transform is applied to vertices (dst.position/rotation/scale is identity)
             dst.refine_settings.local2world = to_float4x4(n->GetObjTMAfterWSM(t));
-            if (m_settings.flatten_hierarchy)
-                dst.refine_settings.local2world *= mu::invert(dst.toMatrix());
-            else
-                dst.refine_settings.local2world *= mu::invert(getGlobalMatrix(n, t));
             dst.refine_settings.flags.apply_local2world = 1;
         }
 
@@ -1502,6 +1547,14 @@ void msmaxContext::feedDeferredCalls()
     for (auto& c : m_deferred_calls)
         c();
     m_deferred_calls.clear();
+}
+
+TimeValue msmaxContext::getExportTime() const
+{
+    if (m_settings.export_scene_cache)
+        return m_current_time_tick;
+    else
+        return GetCOREInterface()->GetTime();
 }
 
 

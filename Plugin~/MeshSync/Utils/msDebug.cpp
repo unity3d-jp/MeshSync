@@ -13,7 +13,7 @@ DbgTimerScope::DbgTimerScope(const char *mes)
 DbgTimerScope::~DbgTimerScope()
 {
     float elapsed = mu::NS2MS(mu::Now() - m_begin);
-    mu::Print("%s - %.2f\n", m_message, elapsed);
+    mu::Print("%s - %.2fms\n", m_message, elapsed);
 }
 #endif // msDbgEnableTimer
 

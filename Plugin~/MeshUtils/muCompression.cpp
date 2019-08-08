@@ -4,6 +4,16 @@
 
 namespace mu {
 
+static_assert(sizeof(half) == 2, "");
+static_assert(sizeof(snorm8) == 1, "");
+static_assert(sizeof(unorm8) == 1, "");
+static_assert(sizeof(snorm16) == 2, "");
+static_assert(sizeof(unorm16) == 2, "");
+static_assert(sizeof(snorm32) == 4, "");
+static_assert(sizeof(quat32) == 4, "");
+static_assert(sizeof(snormx3_32) == 4, "");
+
+
 template<class DstType, class SrcType>
 static inline void convert(RawVector<DstType>& dst, const RawVector<SrcType>& src)
 {
@@ -32,32 +42,15 @@ void decode(RawVector<PlainType>& dst, const PackedArray<PackedType>& src)
 
 template void encode(PackedArray<snorm8>& src, const RawVector<float>& dst);
 template void encode(PackedArray<snorm8x2>& src, const RawVector<float2>& dst);
-template void encode(PackedArray<snorm10x3>& src, const RawVector<float3>& dst);
 template void encode(PackedArray<snorm16x3>& src, const RawVector<float3>& dst);
+template void encode(PackedArray<snormx3_32>& src, const RawVector<float3>& dst);
+template void encode(PackedArray<snormx3_32>& src, const RawVector<float4>& dst);
 
 template void decode(RawVector<float>& dst, const PackedArray<snorm8>& src);
 template void decode(RawVector<float2>& dst, const PackedArray<snorm8x2>& src);
-template void decode(RawVector<float3>& dst, const PackedArray<snorm10x3>& src);
 template void decode(RawVector<float3>& dst, const PackedArray<snorm16x3>& src);
-
-
-void encode_tangents(PackedArray<snorm10x3>& dst, const RawVector<float4>& src)
-{
-    dst.packed.resize_discard(src.size());
-    if (dst.packed.empty())
-        return;
-
-    enumerate(dst.packed, src, [](auto& d, const auto& s) { d = encode_tangent(s); });
-}
-
-void decode_tangents(RawVector<float4>& dst, const PackedArray<snorm10x3>& src)
-{
-    dst.resize_discard(src.packed.size());
-    if (src.packed.empty())
-        return;
-
-    enumerate(dst, src.packed, [](auto& d, const auto& s) { d = decode_tangent(s); });
-}
+template void decode(RawVector<float3>& dst, const PackedArray<snormx3_32>& src);
+template void decode(RawVector<float4>& dst, const PackedArray<snormx3_32>& src);
 
 
 template<class T> static void zeroclear(T& v) { v = T::zero(); }
@@ -153,7 +146,6 @@ template void encode(BoundedArray<unorm16, float>& dst, const RawVector<float>& 
 template void encode(BoundedArray<unorm8x2, float2>& dst, const RawVector<float2>& src);
 template void encode(BoundedArray<unorm16x2, float2>& dst, const RawVector<float2>& src);
 template void encode(BoundedArray<unorm8x3, float3>& dst, const RawVector<float3>& src);
-template void encode(BoundedArray<unorm10x3, float3>& dst, const RawVector<float3>& src);
 template void encode(BoundedArray<unorm16x3, float3>& dst, const RawVector<float3>& src);
 template void encode(BoundedArray<unorm8x4, float4>& dst, const RawVector<float4>& src);
 template void encode(BoundedArray<unorm16x4, float4>& dst, const RawVector<float4>& src);
@@ -165,7 +157,6 @@ template void decode(RawVector<float>& dst, const BoundedArray<unorm16, float>& 
 template void decode(RawVector<float2>& dst, const BoundedArray<unorm8x2, float2>& src);
 template void decode(RawVector<float2>& dst, const BoundedArray<unorm16x2, float2>& src);
 template void decode(RawVector<float3>& dst, const BoundedArray<unorm8x3, float3>& src);
-template void decode(RawVector<float3>& dst, const BoundedArray<unorm10x3, float3>& src);
 template void decode(RawVector<float3>& dst, const BoundedArray<unorm16x3, float3>& src);
 template void decode(RawVector<float4>& dst, const BoundedArray<unorm8x4, float4>& src);
 template void decode(RawVector<float4>& dst, const BoundedArray<unorm16x4, float4>& src);

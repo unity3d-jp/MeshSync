@@ -17,7 +17,7 @@ template<class T, int Align = 0x40> class SharedVector;
 template<class T, int Align>
 class RawVector
 {
-template<class T, int A> friend class SharedVector;
+template<class _T, int _A> friend class SharedVector;
 public:
     using value_type      = T;
     using reference       = T&;
@@ -76,6 +76,8 @@ public:
     bool empty() const { return m_size == 0; }
     size_t size() const { return m_size; }
     size_t capacity() const { return m_capacity; }
+    size_t size_in_byte() const { return sizeof(T)*m_size; }
+    size_t capacity_in_byte() const { return sizeof(T)*m_capacity; }
 
     T* data() { return m_data; }
     const T* data() const { return m_data; }
@@ -307,7 +309,7 @@ private:
 template<class T, int Align>
 class SharedVector
 {
-template<class T, int A> friend class RawVector;
+template<class _T, int _A> friend class RawVector;
 public:
     using value_type = T;
     using reference = T & ;
@@ -377,6 +379,8 @@ public:
     bool empty() const { return m_size == 0; }
     size_t size() const { return m_size; }
     size_t capacity() const { return m_capacity; }
+    size_t size_in_byte() const { return sizeof(T)*m_size; }
+    size_t capacity_in_byte() const { return sizeof(T)*m_capacity; }
 
     T* data() { detach(); return m_data; }
     const T* data() const { return m_data; }
