@@ -29,7 +29,7 @@ void Points::deserialize(std::istream& is)
 
 bool Points::isUnchanged() const
 {
-    return pd_flags.unchanged; // todo
+    return pd_flags.unchanged;
 }
 
 bool Points::isTopologyUnchanged() const
@@ -37,26 +37,80 @@ bool Points::isTopologyUnchanged() const
     return pd_flags.topology_unchanged;
 }
 
-void Points::clear()
+bool Points::strip(const Entity& base_)
 {
-    pd_flags = {};
-    EachArray(msClear);
+    if (!super::strip(base_))
+        return false;
+
+    bool unchanged = true;
+    auto clear_if_identical = [&](auto& a1, const auto& a2) {
+        if (near_equal(a1, a2))
+            a1.clear();
+        else
+            unchanged = false;
+    };
+
+    auto& base = static_cast<const Points&>(base_);
+    clear_if_identical(ids, base.ids);
+    pd_flags.topology_unchanged = unchanged && points.size() == base.points.size();
+
+    clear_if_identical(points, base.points);
+    clear_if_identical(rotations, base.rotations);
+    clear_if_identical(scales, base.scales);
+    clear_if_identical(colors, base.colors);
+    clear_if_identical(velocities, base.velocities);
+    pd_flags.unchanged = unchanged;
+    return true;
 }
 
-uint64_t Points::hash() const
+bool Points::merge(const Entity& base_)
 {
-    uint64_t ret = 0;
-    EachArray(msHash);
-    return ret;
-}
+    if (!super::merge(base_))
+        return false;
+    auto& base = static_cast<const Points&>(base_);
 
-uint64_t Points::checksumGeom() const
-{
-    uint64_t ret = 0;
-#define Body(A) ret += csum(A);
-    EachArray(Body);
+    if (pd_flags.unchanged) {
+#define Body(A) A = base.A;
+        EachArray(Body);
 #undef Body
-    return ret;
+    }
+    else {
+        auto assign_if_empty = [](auto& cur, const auto& base) {
+            if (cur.empty())
+                cur = base;
+        };
+#define Body(A) assign_if_empty(A, base.A);
+        EachArray(Body);
+#undef Body
+    }
+    return true;
+}
+
+bool Points::diff(const Entity&e1_, const Entity& e2_)
+{
+    if (!super::diff(e1_, e2_))
+        return false;
+
+    auto& e1 = static_cast<const Points&>(e1_);
+    auto& e2 = static_cast<const Points&>(e2_);
+
+    bool unchanged = true;
+    auto compare_attribute = [&](const auto& a1, const auto& a2) {
+        if (!near_equal(a1, a2))
+            unchanged = false;
+    };
+
+
+    compare_attribute(e1.ids, e2.ids);
+    pd_flags.topology_unchanged = unchanged && e1.points.size() == e2.points.size();
+
+    compare_attribute(e1.points, e2.points);
+    compare_attribute(e1.rotations, e2.rotations);
+    compare_attribute(e1.scales, e2.scales);
+    compare_attribute(e1.colors, e2.colors);
+    compare_attribute(e1.velocities, e2.velocities);
+    pd_flags.unchanged = unchanged;
+    return true;
 }
 
 bool Points::lerp(const Entity& e1_, const Entity& e2_, float t)
@@ -80,6 +134,29 @@ bool Points::lerp(const Entity& e1_, const Entity& e2_, float t)
         v = mu::slerp(t1, t2, t);
     });
     return true;
+}
+
+void Points::clear()
+{
+    pd_flags = {};
+    EachArray(msClear);
+    bounds = {};
+}
+
+uint64_t Points::hash() const
+{
+    uint64_t ret = 0;
+    EachArray(msHash);
+    return ret;
+}
+
+uint64_t Points::checksumGeom() const
+{
+    uint64_t ret = 0;
+#define Body(A) ret += csum(A);
+    EachArray(Body);
+#undef Body
+    return ret;
 }
 
 EntityPtr Points::clone(bool detach_)

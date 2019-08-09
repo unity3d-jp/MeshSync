@@ -137,8 +137,6 @@ DefGetCurve(LightColor)
 DefGetCurve(LightIntensity)
 DefGetCurve(LightRange)
 DefGetCurve(LightSpotAngle)
-
-DefGetCurve(PointsTime)
 #undef DefGetCurve
 
 using msCurveCallback = void(*)(ms::AnimationCurve *curve);

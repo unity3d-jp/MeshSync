@@ -1237,7 +1237,6 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetLightSpotAngle(IntPtr self);
         public delegate void msCurveCallback(AnimationCurveData data);
         [DllImport(Lib.name)] static extern AnimationCurveData msAnimationEachBlendshapeCurves(IntPtr self, msCurveCallback cb);
-        [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetPointsTime(IntPtr self);
         #endregion
 
         public static implicit operator bool(AnimationData v)
@@ -1536,18 +1535,6 @@ namespace UTJ.MeshSync
             var tpoints = typeof(PointCache);
             ctx.mainComponentType = tpoints;
             ExportTransformAnimation(ctx);
-
-            var clip = ctx.clip;
-            var path = ctx.path;
-            var interpolation = ctx.interpolation;
-
-            {
-                const string Target = "m_time";
-                clip.SetCurve(path, tpoints, Target, null);
-                var curves = GenCurves(msAnimationGetPointsTime(self), interpolation);
-                if (curves != null && curves.Length == 1)
-                    clip.SetCurve(path, tpoints, Target, curves[0]);
-            }
         }
 
         public void ExportToClip(AnimationImportContext ctx)

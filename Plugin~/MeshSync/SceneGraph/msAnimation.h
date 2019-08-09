@@ -283,21 +283,6 @@ public:
 };
 
 
-#define mskPointsTime "Points.time"
-
-class PointsAnimation : public TransformAnimation
-{
-using super = TransformAnimation;
-public:
-    static std::shared_ptr<PointsAnimation> create(AnimationPtr host = nullptr);
-
-    PointsAnimation(AnimationPtr host);
-    void setupCurves(bool create_if_not_exist) override;
-
-    TAnimationCurve<float> time;
-};
-
-
 class AnimationClip : public Asset
 {
 using super = Asset;

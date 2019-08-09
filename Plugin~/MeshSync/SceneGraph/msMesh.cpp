@@ -7,8 +7,6 @@ namespace ms {
 static_assert(sizeof(MeshDataFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(MeshRefineFlags) == sizeof(uint32_t), "");
 
-#define CopyMember(V) V = base.V;
-
 // Mesh
 #pragma region Mesh
 
@@ -231,7 +229,9 @@ bool Mesh::merge(const Entity& base_)
     auto& base = static_cast<const Mesh&>(base_);
 
     if (md_flags.unchanged) {
-        EachMember(CopyMember);
+#define Body(A) A = base.A;
+        EachMember(Body);
+#undef Body
     }
     else {
         auto assign_if_empty = [](auto& cur, const auto& base) {

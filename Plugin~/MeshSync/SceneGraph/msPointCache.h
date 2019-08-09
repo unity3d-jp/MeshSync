@@ -50,13 +50,17 @@ public:
 
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+
     bool isUnchanged() const override;
     bool isTopologyUnchanged() const override;
+    bool strip(const Entity& base) override;
+    bool merge(const Entity& base) override;
+    bool diff(const Entity& e1, const Entity& e2) override;
+    bool lerp(const Entity& e1, const Entity& e2, float t) override;
 
     void clear() override;
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;
-    bool lerp(const Entity& src1, const Entity& src2, float t) override;
     EntityPtr clone(bool detach = false) override;
 
     void updateBounds();
