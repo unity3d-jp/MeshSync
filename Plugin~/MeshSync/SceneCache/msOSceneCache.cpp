@@ -38,22 +38,24 @@ OSceneCacheImpl::~OSceneCacheImpl()
 
     {
         // add meta data
-        m_scene_buf.reset();
+        MemoryStream scene_buf;
         for (auto& rec : m_entity_records) {
             CacheFileEntityMeta meta{};
             meta.id = rec.id;
             meta.type = (uint32_t)rec.type;
             meta.constant = rec.unchanged_count == m_scene_count_written - 1;
             meta.constant_topology = rec.topology_unchanged_count == m_scene_count_written - 1;
-            m_scene_buf.write((char*)&meta, sizeof(meta));
+            scene_buf.write((char*)&meta, sizeof(meta));
         }
-        m_scene_buf.flush();
-        m_encoder->encode(m_encoded_buf, m_scene_buf.getBuffer());
+        scene_buf.flush();
+
+        RawVector<char> encoded_buf;
+        m_encoder->encode(encoded_buf, scene_buf.getBuffer());
 
         CacheFileMetaHeader header;
-        header.size = m_encoded_buf.size();
+        header.size = encoded_buf.size();
         m_ost->write((char*)&header, sizeof(header));
-        m_ost->write(m_encoded_buf.data(), m_encoded_buf.size());
+        m_ost->write(encoded_buf.data(), encoded_buf.size());
     }
 }
 
@@ -62,13 +64,76 @@ bool OSceneCacheImpl::valid() const
     return m_ost && (*m_ost);
 }
 
-void OSceneCacheImpl::addScene(ScenePtr scene, float time)
+static size_t vertex_count(TransformPtr& e)
 {
-    std::vector<ScenePtr> tmp{scene};
-    addScene(tmp, time);
+    switch (e->getType()) {
+    case EntityType::Mesh:
+        return static_cast<Mesh&>(*e).points.size();
+    case EntityType::Points:
+        // todo
+        return 0;
+    default:
+        return 0;
+    }
 }
 
-void OSceneCacheImpl::addScene(std::vector<ScenePtr> scene_segments, float time)
+static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments)
+{
+    auto scene_settings = base->settings;
+
+    std::vector<uint64_t> vertex_counts;
+    std::vector<ScenePtr> segments;
+
+    // materials and non-geometry objects
+    {
+        auto segment = Scene::create();
+        segments.push_back(segment);
+
+        segment->assets = std::move(base->assets);
+        for (auto& e : base->entities) {
+            if (!e->isGeometry())
+                segment->entities.push_back(e);
+        }
+    }
+
+    // geometries
+    {
+        while (segments.size() < max_segments) {
+            auto s = Scene::create();
+            s->settings = scene_settings;
+            segments.push_back(s);
+        }
+        vertex_counts.resize(segments.size());
+
+        int segment_count = (int)segments.size();
+        auto add_geometry = [&](TransformPtr& entity) {
+            // add entity to the scene with lowest vertex count. this can improve encode & decode time.
+            int idx = 0;
+            uint64_t lowest = ~0u;
+            for (int si = 0; si < segment_count; ++si) {
+                if (vertex_counts[si] < lowest) {
+                    idx = si;
+                    lowest = vertex_counts[si];
+                }
+            }
+            segments[idx]->entities.push_back(entity);
+            vertex_counts[idx] += vertex_count(entity);
+        };
+
+        std::vector<TransformPtr> geometries;
+        geometries.reserve(base->entities.size());
+        for (auto& e : base->entities) {
+            if (e->isGeometry())
+                geometries.push_back(e);
+        }
+        std::sort(geometries.begin(), geometries.end(), [](auto& a, auto& b) { return vertex_count(a) > vertex_count(b);  });
+        for (auto& g : geometries)
+            add_geometry(g);
+    }
+    return segments;
+}
+
+void OSceneCacheImpl::addScene(ScenePtr scene, float time)
 {
     while (m_scene_count_in_queue > 0 && (!m_base_scene || m_scene_count_in_queue >= m_oscs.max_queue_size)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -76,64 +141,70 @@ void OSceneCacheImpl::addScene(std::vector<ScenePtr> scene_segments, float time)
 
     auto rec_ptr = std::make_shared<SceneRecord>();
     auto& rec = *rec_ptr;
+    rec.index = m_scene_count_queued++;
     rec.time = time;
-    rec.scene = Scene::create();
-
-    size_t seg_count = scene_segments.size();
-    rec.segments.resize(seg_count);
-    for (size_t si = 0; si < seg_count; ++si) {
-        auto& seg = rec.segments[si];
-        seg.segment = scene_segments[si];
-        rec.scene->concat(*seg.segment, false);
-        seg.segment->settings = {};
-    }
-    std::sort(rec.scene->entities.begin(), rec.scene->entities.end(), [](auto& a, auto& b) { return a->id < b->id; });
+    rec.scene = scene;
 
     rec.task = std::async(std::launch::async, [this, &rec]() {
-        msDbgTimer("OSceneCacheImpl: scene optimization");
+        {
+            msDbgTimer("OSceneCacheImpl: [%d] scene optimization", rec.index);
 
-        auto& scene = rec.scene;
-        if (m_oscs.flatten_hierarchy)
-            scene->flatternHierarchy();
+            auto& scene = rec.scene;
+            std::sort(scene->entities.begin(), scene->entities.end(), [](auto& a, auto& b) { return a->id < b->id; });
 
-        if (m_oscs.strip_normals) {
-            scene->eachEntity<Mesh>([](Mesh& mesh) {
-                mesh.normals.clear();
-                mesh.md_flags.has_normals = 0;
-                mesh.refine_settings.flags.gen_normals = 0;
-            });
+            if (m_oscs.flatten_hierarchy)
+                scene->flatternHierarchy();
+
+            if (m_oscs.strip_normals) {
+                scene->eachEntity<Mesh>([](Mesh& mesh) {
+                    mesh.normals.clear();
+                    mesh.md_flags.has_normals = 0;
+                    mesh.refine_settings.flags.gen_normals = 0;
+                    });
+            }
+            if (m_oscs.strip_tangents) {
+                scene->eachEntity<Mesh>([](Mesh& mesh) {
+                    mesh.tangents.clear();
+                    mesh.md_flags.has_tangents = 0;
+                    mesh.refine_settings.flags.gen_tangents = 0;
+                    });
+            }
+
+            if (m_oscs.apply_refinement)
+                scene->import(m_oscs);
+
+            if (m_oscs.strip_normals) {
+                scene->eachEntity<Mesh>([](Mesh& mesh) {
+                    mesh.refine_settings.flags.gen_normals = 1;
+                    });
+            }
+            if (m_oscs.strip_tangents) {
+                scene->eachEntity<Mesh>([](Mesh& mesh) {
+                    mesh.refine_settings.flags.gen_tangents = 1;
+                    });
+            }
+
+            // strip unchanged
+            if (!m_base_scene)
+                m_base_scene = scene;
+            else
+                scene->strip(*m_base_scene);
+
+            // split into segments
+            auto scene_segments = LoadBalancing(rec.scene, m_oscs.max_scene_segments);
+            size_t seg_count = scene_segments.size();
+            rec.segments.resize(seg_count);
+            for (size_t si = 0; si < seg_count; ++si) {
+                auto& seg = rec.segments[si];
+                seg.index = (int)si;
+                seg.segment = scene_segments[si];
+                seg.segment->settings = {};
+            }
         }
-        if (m_oscs.strip_tangents) {
-            scene->eachEntity<Mesh>([](Mesh& mesh) {
-                mesh.tangents.clear();
-                mesh.md_flags.has_tangents = 0;
-                mesh.refine_settings.flags.gen_tangents = 0;
-            });
-        }
-
-        if (m_oscs.apply_refinement)
-            scene->import(m_oscs);
-
-        if (m_oscs.strip_normals) {
-            scene->eachEntity<Mesh>([](Mesh& mesh) {
-                mesh.refine_settings.flags.gen_normals = 1;
-            });
-        }
-        if (m_oscs.strip_tangents) {
-            scene->eachEntity<Mesh>([](Mesh& mesh) {
-                mesh.refine_settings.flags.gen_tangents = 1;
-            });
-        }
-
-        // strip unchanged
-        if (!m_base_scene)
-            m_base_scene = scene;
-        else
-            scene->strip(*m_base_scene);
 
         for (auto& seg : rec.segments) {
-            seg.task = std::async(std::launch::async, [this, &seg]() {
-                msDbgTimer("OSceneCacheImpl: serialize segment");
+            seg.task = std::async(std::launch::async, [this, &rec, &seg]() {
+                msDbgTimer("OSceneCacheImpl: [%d] serialize & encode segment (%d)", rec.index, seg.index);
 
                 MemoryStream scene_buf;
                 seg.segment->serialize(scene_buf);
@@ -219,14 +290,16 @@ void OSceneCacheImpl::doWrite()
 
             // write
             {
+                uint64_t total_buffer_size = 0;
                 RawVector<uint64_t> buffer_sizes;
                 for (auto& seg : rec.segments) {
                     if (seg.task.valid())
                         seg.task.wait();
                     buffer_sizes.push_back(seg.encoded_buf.size());
+                    total_buffer_size += seg.encoded_buf.size();
                 }
 
-                msDbgTimer("OSceneCacheImpl: write");
+                msDbgTimer("OSceneCacheImpl: [%d] write (%u byte)", rec.index, (uint32_t)total_buffer_size);
 
                 CacheFileSceneHeader header;
                 header.buffer_count = (uint32_t)buffer_sizes.size();

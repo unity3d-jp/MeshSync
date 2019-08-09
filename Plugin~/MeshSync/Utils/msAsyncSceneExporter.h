@@ -66,7 +66,6 @@ private:
 class AsyncSceneCacheWriter : public AsyncSceneExporter
 {
 public:
-    int max_segments = 8;
     float time = 0.0f;
 
 public:

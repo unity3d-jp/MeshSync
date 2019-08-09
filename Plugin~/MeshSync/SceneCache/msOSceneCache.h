@@ -14,7 +14,6 @@ public:
     bool valid() const override;
 
     void addScene(ScenePtr scene, float time) override;
-    void addScene(std::vector<ScenePtr> scene_segments, float time) override;
 
     void flush() override;
     bool isWriting() override;
@@ -26,6 +25,7 @@ protected:
 
     struct SceneSegment
     {
+        int index = 0;
         ScenePtr segment;
         RawVector<char> encoded_buf;
         std::future<void> task;
@@ -33,7 +33,8 @@ protected:
 
     struct SceneRecord
     {
-        float time;
+        int index = 0;
+        float time = 0.0f;
         ScenePtr scene;
         std::vector<SceneSegment> segments;
         std::future<void> task;
@@ -56,13 +57,12 @@ protected:
     std::future<void> m_task;
 
     ScenePtr m_base_scene;
+    int m_scene_count_queued = 0;
     int m_scene_count_written = 0;
     int m_scene_count_in_queue = 0;
     std::vector<EntityRecord> m_entity_records;
 
     BufferEncoderPtr m_encoder;
-    MemoryStream m_scene_buf;
-    RawVector<char> m_encoded_buf;
 };
 
 

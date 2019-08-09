@@ -2,15 +2,15 @@
 #include "MeshUtils/MeshUtils.h"
 
 #ifdef msDebug
-//#define msDbgEnableTimer
+//#define msDbgEnableProfile
 #endif
 
 namespace ms {
 
-#ifdef msDbgEnableTimer
+#ifdef msDbgEnableProfile
     #define msDbgTimer(Message, ...) mu::ScopedTimer _dbg_timer(Message, __VA_ARGS__)
-#else // msDbgEnableTimer
+#else // msDbgEnableProfile
     #define msDbgTimer(Message, ...)
-#endif // msDbgEnableTimer
+#endif // msDbgEnableProfile
 
 } // namespace ms

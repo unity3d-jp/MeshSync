@@ -167,7 +167,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t scene_index, bool wait_preload)
         for (size_t si = 0; si < seg_count; ++si) {
             auto& seg = rec.segments[si];
             {
-                msDbgTimer("ISceneCacheImpl: [%d] read segment (%d)", (int)scene_index, (int)si);
+                msDbgTimer("ISceneCacheImpl: [%d] read segment (%d - %u byte)", (int)scene_index, (int)si, (uint32_t)rec.buffer_sizes[si]);
                 seg.encoded_buf.resize(rec.buffer_sizes[si]);
                 m_ist->read(seg.encoded_buf.data(), seg.encoded_buf.size());
             }

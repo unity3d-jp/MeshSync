@@ -275,11 +275,8 @@ void AsyncSceneCacheWriter::write()
 
     bool succeeded = true;
 
-    std::vector<ScenePtr> segments;
-    // materials and non-geometry objects
     {
         auto scene = Scene::create();
-        segments.push_back(scene);
         scene->settings = scene_settings;
 
         scene->assets = assets;
@@ -288,22 +285,9 @@ void AsyncSceneCacheWriter::write()
         append(scene->assets, animations);
 
         scene->entities = transforms;
+        append(scene->entities, geometries);
+        m_osc->addScene(scene, time);
     }
-
-    // geometries
-    {
-        while (segments.size() < max_segments) {
-            auto s = Scene::create();
-            s->settings = scene_settings;
-            segments.push_back(s);
-        }
-
-        int segment_count = (int)segments.size();
-        int geom_count = (int)geometries.size();
-        for (int ei = 0; ei < geom_count; ++ei)
-            segments[ei % segment_count]->entities.push_back(geometries[ei]);
-    }
-    m_osc->addScene(segments, time);
 
     if (succeeded) {
         if (on_success)
