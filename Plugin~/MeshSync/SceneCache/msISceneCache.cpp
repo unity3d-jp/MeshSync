@@ -138,12 +138,12 @@ float ISceneCacheImpl::getTime(size_t i) const
 }
 
 // thread safe
-ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
+ScenePtr ISceneCacheImpl::getByIndexImpl(size_t scene_index, bool wait_preload)
 {
-    if (!valid() || i >= m_records.size())
+    if (!valid() || scene_index >= m_records.size())
         return nullptr;
 
-    auto& rec = m_records[i];
+    auto& rec = m_records[scene_index];
     if (wait_preload && rec.preload.valid()) {
         // wait preload
         rec.preload.wait();
@@ -167,13 +167,13 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
         for (size_t si = 0; si < seg_count; ++si) {
             auto& seg = rec.segments[si];
             {
-                msDbgTimer("ISceneCacheImpl: read segment");
+                msDbgTimer("ISceneCacheImpl: [%d] read segment (%d)", (int)scene_index, (int)si);
                 seg.encoded_buf.resize(rec.buffer_sizes[si]);
                 m_ist->read(seg.encoded_buf.data(), seg.encoded_buf.size());
             }
 
-            seg.task = std::async(std::launch::async, [this, &seg]() {
-                msDbgTimer("ISceneCacheImpl: decode segment");
+            seg.task = std::async(std::launch::async, [this, &seg, scene_index, si]() {
+                msDbgTimer("ISceneCacheImpl: [%d] decode segment (%d)", (int)scene_index, (int)si);
 
                 RawVector<char> tmp_buf;
                 m_encoder->decode(tmp_buf, seg.encoded_buf);
@@ -213,7 +213,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
     rec.segments.clear();
 
     {
-        msDbgTimer("ISceneCacheImpl: merge");
+        msDbgTimer("ISceneCacheImpl: [%d] merge", (int)scene_index);
         if (m_header.oscs.strip_unchanged && m_base_scene && ret) {
             // set cache flags
             size_t n = ret->entities.size();
@@ -230,11 +230,16 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
             ret->merge(*m_base_scene);
         }
     }
+    {
+        // do import
+        msDbgTimer("ISceneCacheImpl: [%d] import", (int)scene_index);
+        ret->import(m_iscs.sis);
+    }
     rec.load_time_ms = mu::NS2MS(mu::Now() - time_begin);
 
     // push & pop history
-    if (!m_header.oscs.strip_unchanged || i != 0) {
-        m_history.push_back(i);
+    if (!m_header.oscs.strip_unchanged || scene_index != 0) {
+        m_history.push_back(scene_index);
         if (m_history.size() > m_iscs.max_history) {
             m_records[m_history.front()].scene.reset();
             m_history.pop_front();
@@ -248,18 +253,12 @@ ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp, size_t scene_index)
     if (!sp)
         return sp;
 
-    // do import
-    if (m_iscs.convert_scenes) {
-        msDbgTimer("ISceneCacheImpl: import");
-        sp->import(m_iscs.sis);
-    }
-
     ScenePtr ret;
 
     // m_last_scene and m_last_diff keep reference counts and keep scenes alive.
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
     if (m_last_scene && m_iscs.enable_diff) {
-        msDbgTimer("ISceneCacheImpl: diff");
+        msDbgTimer("ISceneCacheImpl: [%d] diff", (int)scene_index);
         m_last_diff = Scene::create();
         m_last_diff->diff(*sp, *m_last_scene);
         m_last_scene = sp;
@@ -340,14 +339,19 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
         if (interpolation) {
             auto t1 = m_records[si + 0].time;
             auto t2 = m_records[si + 1].time;
+
+            kickPreload(si + 1);
             auto s1 = getByIndexImpl(si + 0);
             auto s2 = getByIndexImpl(si + 1);
 
-            float t = (time - t1) / (t2 - t1);
-            ret = Scene::create();
-            ret->lerp(*s1, *s2, t);
-            // keep a reference for s1 (s2 is not needed)
-            ret->data_sources.push_back(s1);
+            {
+                msDbgTimer("ISceneCacheImpl: [%d] lerp", (int)si);
+                float t = (time - t1) / (t2 - t1);
+                ret = Scene::create();
+                ret->lerp(*s1, *s2, t);
+                // keep a reference for s1 (s2 is not needed)
+                ret->data_sources.push_back(s1);
+            }
 
             m_last_index = si;
             m_last_index2 = si + 1;

@@ -29,6 +29,7 @@
     <ClInclude Include="MeshUtils\muCompression.h" />
     <ClInclude Include="MeshUtils\muConcurrency.h" />
     <ClInclude Include="MeshUtils\muConfig.h" />
+    <ClInclude Include="MeshUtils\muDebugTimer.h" />
     <ClInclude Include="MeshUtils\muHalf.h" />
     <ClInclude Include="MeshUtils\muIntrusiveArray.h" />
     <ClInclude Include="MeshUtils\ispcmath.h" />
@@ -50,6 +51,7 @@
     <ClCompile Include="CrashReporter\CrashReporter.cpp" />
     <ClCompile Include="MeshUtils\muAllocator.cpp" />
     <ClCompile Include="MeshUtils\muCompression.cpp" />
+    <ClCompile Include="MeshUtils\muDebugTimer.cpp" />
     <ClCompile Include="MeshUtils\muMeshRefiner.cpp" />
     <ClCompile Include="MeshUtils\muMisc.cpp" />
     <ClCompile Include="MeshUtils\muStream.cpp" />

@@ -136,6 +136,7 @@ void Scene::lerp(const Scene& s1, const Scene& s2, float t)
             auto& e2 = s2.entities[i];
             if (e1->id == e2->id) {
                 if (e1->isGeometry() && !e1->cache_flags.constant_topology) {
+                    // topology is not constant. no way to lerp.
                     entities[i] = e1;
                 }
                 else {

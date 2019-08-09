@@ -76,7 +76,6 @@
     <ClCompile Include="MeshSync\SceneGraph\msSceneGraph.cpp" />
     <ClCompile Include="MeshSync\SceneGraph\msTexture.cpp" />
     <ClCompile Include="MeshSync\Utils\msAsyncSceneExporter.cpp" />
-    <ClCompile Include="MeshSync\Utils\msDebug.cpp" />
     <ClCompile Include="MeshSync\Utils\msEntityManager.cpp" />
     <ClCompile Include="MeshSync\Utils\msIDGenerator.cpp" />
     <ClCompile Include="MeshSync\Utils\msMaterialManager.cpp" />

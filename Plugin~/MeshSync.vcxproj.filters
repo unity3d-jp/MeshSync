@@ -79,9 +79,6 @@
     <ClCompile Include="MeshSync\SceneCache\msISceneCache.cpp">
       <Filter>MeshSync\SceneCache</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSync\Utils\msDebug.cpp">
-      <Filter>MeshSync\Utils</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\msClient.h">

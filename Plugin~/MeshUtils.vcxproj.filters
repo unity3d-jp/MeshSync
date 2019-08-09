@@ -79,6 +79,9 @@
     <ClInclude Include="MeshUtils\muStream.h">
       <Filter>MeshUtils</Filter>
     </ClInclude>
+    <ClInclude Include="MeshUtils\muDebugTimer.h">
+      <Filter>MeshUtils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="MeshUtils">
@@ -120,6 +123,9 @@
       <Filter>MeshUtils</Filter>
     </ClCompile>
     <ClCompile Include="MeshUtils\muStream.cpp">
+      <Filter>MeshUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshUtils\muDebugTimer.cpp">
       <Filter>MeshUtils</Filter>
     </ClCompile>
   </ItemGroup>

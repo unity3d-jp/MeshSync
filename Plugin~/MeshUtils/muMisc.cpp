@@ -45,6 +45,17 @@ void Print(const wchar_t *fmt, ...)
     va_end(args);
 }
 
+std::string Format(const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    char buf[1024];
+    vsnprintf(buf, sizeof(buf), fmt, args);
+    va_end(args);
+
+    return buf;
+}
+
 std::string ToUTF8(const char *src)
 {
 #ifdef _WIN32
