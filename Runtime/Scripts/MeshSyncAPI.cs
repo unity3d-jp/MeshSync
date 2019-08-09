@@ -2142,74 +2142,15 @@ namespace UTJ.MeshSync
     public struct PointsDataFlags
     {
         public BitFlags flags;
-        public bool unchanged       { get { return flags[0]; } }
-        public bool hasPoints       { get { return flags[1]; } }
-        public bool hasRotations    { get { return flags[2]; } }
-        public bool hasScales       { get { return flags[3]; } }
-        public bool hasColors       { get { return flags[4]; } }
-        public bool hasVelocities   { get { return flags[5]; } }
-        public bool hasIDs          { get { return flags[6]; } }
+        public bool unchanged { get { return flags[0]; } }
+        public bool topologyUnchanged { get { return flags[1]; } }
+        public bool hasPoints       { get { return flags[2]; } }
+        public bool hasRotations    { get { return flags[3]; } }
+        public bool hasScales       { get { return flags[4]; } }
+        public bool hasColors       { get { return flags[5]; } }
+        public bool hasVelocities   { get { return flags[6]; } }
+        public bool hasIDs          { get { return flags[7]; } }
     };
-
-    public struct PointsCacheData
-    {
-        #region internal
-        public IntPtr self;
-
-        [DllImport(Lib.name)] static extern PointsDataFlags msPointsDataGetFlags(IntPtr self);
-        [DllImport(Lib.name)] static extern float msPointsDataGetTime(IntPtr self);
-        [DllImport(Lib.name)] static extern void msPointsDataSetTime(IntPtr self, float v);
-        [DllImport(Lib.name)] static extern void msPointsDataGetBounds(IntPtr self, ref Vector3 center, ref Vector3 extents);
-        [DllImport(Lib.name)] static extern int msPointsDataGetNumPoints(IntPtr self);
-        [DllImport(Lib.name)] static extern void msPointsDataReadPoints(IntPtr self, Vector3[] dst);
-        [DllImport(Lib.name)] static extern void msPointsDataWritePoints(IntPtr self, Vector3[] v, int size);
-        [DllImport(Lib.name)] static extern void msPointsDataReadRotations(IntPtr self, Quaternion[] dst);
-        [DllImport(Lib.name)] static extern void msPointsDataWriteRotations(IntPtr self, Quaternion[] v, int size);
-        [DllImport(Lib.name)] static extern void msPointsDataReadScales(IntPtr self, Vector3[] dst);
-        [DllImport(Lib.name)] static extern void msPointsDataWriteScales(IntPtr self, Vector3[] v, int size);
-        [DllImport(Lib.name)] static extern void msPointsDataReadVelocities(IntPtr self, Vector3[] dst);
-        [DllImport(Lib.name)] static extern void msPointsDataWriteVelocities(IntPtr self, Vector3[] v, int size);
-        [DllImport(Lib.name)] static extern void msPointsDataReadColors(IntPtr self, Color[] dst);
-        [DllImport(Lib.name)] static extern void msPointsDataWriteColors(IntPtr self, Color[] v, int size);
-        [DllImport(Lib.name)] static extern void msPointsDataReadIDs(IntPtr self, int[] dst);
-        [DllImport(Lib.name)] static extern void msPointsDataWriteIDs(IntPtr self, int[] v, int size);
-        #endregion
-
-        public PointsDataFlags flags
-        {
-            get { return msPointsDataGetFlags(self); }
-        }
-        public float time
-        {
-            get { return msPointsDataGetTime(self); }
-            set { msPointsDataSetTime(self, value); }
-        }
-        public Bounds bounds
-        {
-            get
-            {
-                Vector3 c = default(Vector3);
-                Vector3 e = default(Vector3);
-                msPointsDataGetBounds(self, ref c, ref e);
-                return new Bounds(c, e);
-            }
-        }
-        public int numPoints { get { return msPointsDataGetNumPoints(self); } }
-
-        public void ReadPoints(Vector3[] dst) { msPointsDataReadPoints(self, dst); }
-        public void ReadRotations(Quaternion[] dst) { msPointsDataReadRotations(self, dst); }
-        public void ReadScales(Vector3[] dst) { msPointsDataReadScales(self, dst); }
-        public void ReadVelocities(Vector3[] dst) { msPointsDataReadVelocities(self, dst); }
-        public void ReadColors(Color[] dst) { msPointsDataReadColors(self, dst); }
-        public void ReadIDs(int[] dst) { msPointsDataReadIDs(self, dst); }
-
-        public void WritePoints(Vector3[] v) { msPointsDataWritePoints(self, v, v.Length); }
-        public void WriteRotations(Quaternion[] v) { msPointsDataWriteRotations(self, v, v.Length); }
-        public void WriteScales(Vector3[] v) { msPointsDataWriteScales(self, v, v.Length); }
-        public void WriteVelocities(Vector3[] v) { msPointsDataWriteVelocities(self, v, v.Length); }
-        public void WriteColors(Color[] v) { msPointsDataWriteColors(self, v, v.Length); }
-        public void WriteIDs(int[] v) { msPointsDataWriteIDs(self, v, v.Length); }
-    }
 
     [StructLayout(LayoutKind.Explicit)]
     public struct PointsData
@@ -2219,9 +2160,21 @@ namespace UTJ.MeshSync
         [FieldOffset(0)] public TransformData transform;
 
         [DllImport(Lib.name)] static extern PointsData msPointsCreate();
-        [DllImport(Lib.name)] static extern int msPointsGetNumData(IntPtr self);
-        [DllImport(Lib.name)] static extern PointsCacheData msPointsGetData(IntPtr self, int i);
-        [DllImport(Lib.name)] static extern PointsCacheData msPointsAddData(IntPtr self);
+        [DllImport(Lib.name)] static extern PointsDataFlags msPointsGetFlags(IntPtr self);
+        [DllImport(Lib.name)] static extern Bounds msPointsGetBounds(IntPtr self);
+        [DllImport(Lib.name)] static extern int msPointsGetNumPoints(IntPtr self);
+        [DllImport(Lib.name)] static extern void msPointsReadPoints(IntPtr self, Vector3[] dst);
+        [DllImport(Lib.name)] static extern void msPointsWritePoints(IntPtr self, Vector3[] v, int size);
+        [DllImport(Lib.name)] static extern void msPointsReadRotations(IntPtr self, Quaternion[] dst);
+        [DllImport(Lib.name)] static extern void msPointsWriteRotations(IntPtr self, Quaternion[] v, int size);
+        [DllImport(Lib.name)] static extern void msPointsReadScales(IntPtr self, Vector3[] dst);
+        [DllImport(Lib.name)] static extern void msPointsWriteScales(IntPtr self, Vector3[] v, int size);
+        [DllImport(Lib.name)] static extern void msPointsReadVelocities(IntPtr self, Vector3[] dst);
+        [DllImport(Lib.name)] static extern void msPointsWriteVelocities(IntPtr self, Vector3[] v, int size);
+        [DllImport(Lib.name)] static extern void msPointsReadColors(IntPtr self, Color[] dst);
+        [DllImport(Lib.name)] static extern void msPointsWriteColors(IntPtr self, Color[] v, int size);
+        [DllImport(Lib.name)] static extern void msPointsReadIDs(IntPtr self, int[] dst);
+        [DllImport(Lib.name)] static extern void msPointsWriteIDs(IntPtr self, int[] v, int size);
         #endregion
 
         public static PointsData Create()
@@ -2229,9 +2182,23 @@ namespace UTJ.MeshSync
             return msPointsCreate();
         }
 
-        public int numData { get { return msPointsGetNumData(self); } }
-        public PointsCacheData GetData(int i) { return msPointsGetData(self, i); }
-        public PointsCacheData AddData(int i) { return msPointsAddData(self); }
+        public PointsDataFlags flags { get { return msPointsGetFlags(self); } }
+        public Bounds bounds  { get { return msPointsGetBounds(self); } }
+        public int numPoints { get { return msPointsGetNumPoints(self); } }
+
+        public void ReadPoints(Vector3[] dst) { msPointsReadPoints(self, dst); }
+        public void ReadRotations(Quaternion[] dst) { msPointsReadRotations(self, dst); }
+        public void ReadScales(Vector3[] dst) { msPointsReadScales(self, dst); }
+        public void ReadVelocities(Vector3[] dst) { msPointsReadVelocities(self, dst); }
+        public void ReadColors(Color[] dst) { msPointsReadColors(self, dst); }
+        public void ReadIDs(int[] dst) { msPointsReadIDs(self, dst); }
+
+        public void WritePoints(Vector3[] v) { msPointsWritePoints(self, v, v.Length); }
+        public void WriteRotations(Quaternion[] v) { msPointsWriteRotations(self, v, v.Length); }
+        public void WriteScales(Vector3[] v) { msPointsWriteScales(self, v, v.Length); }
+        public void WriteVelocities(Vector3[] v) { msPointsWriteVelocities(self, v, v.Length); }
+        public void WriteColors(Color[] v) { msPointsWriteColors(self, v, v.Length); }
+        public void WriteIDs(int[] v) { msPointsWriteIDs(self, v, v.Length); }
     }
     #endregion
     #endregion

@@ -1420,49 +1420,30 @@ namespace UTJ.MeshSync
             var go = rec.go;
 
             Misc.GetOrAddComponent<PointCacheRenderer>(go);
-            var pts = Misc.GetOrAddComponent<PointCache>(go);
+            var dst = Misc.GetOrAddComponent<PointCache>(go);
 
-            int numData = data.numData;
-            if (numData == 1)
-            {
-                ReadPointsData(data.GetData(0), pts.current);
-            }
-            else
-            {
-                var dst = pts.data;
-                Misc.Resize(dst, numData);
-                for (int di = 0; di < numData; ++di)
-                    ReadPointsData(data.GetData(di), dst[di]);
-            }
-            return rec;
-        }
-
-        void ReadPointsData(PointsCacheData src, PointCache.Data dst)
-        {
             dst.Clear();
 
-            var flags = src.flags;
-            var time = src.time;
-            var num = src.numPoints;
+            var flags = data.flags;
+            var num = data.numPoints;
 
-            if (time >= 0.0f)
-                dst.time = time;
-            dst.bounds = src.bounds;
+            dst.bounds = data.bounds;
             if (flags.hasPoints)
             {
                 dst.points = new Vector3[num];
-                src.ReadPoints(dst.points);
+                data.ReadPoints(dst.points);
             }
             if (flags.hasRotations)
             {
                 dst.rotations = new Quaternion[num];
-                src.ReadRotations(dst.rotations);
+                data.ReadRotations(dst.rotations);
             }
             if (flags.hasScales)
             {
                 dst.scales = new Vector3[num];
-                src.ReadScales(dst.scales);
+                data.ReadScales(dst.scales);
             }
+            return rec;
         }
 
         EntityRecord UpdateTransform(TransformData data)

@@ -219,13 +219,10 @@ TestCase(Test_Points)
         node->reference = "/Test/PointMesh";
         node->position = { -2.5f, 0.0f, 0.0f };
 
-        auto data = ms::PointsData::create();
-        node->data.push_back(data);
-
         int c = 100;
-        data->points.resize_discard(c);
+        node->points.resize_discard(c);
         for (int i = 0; i < c;++i) {
-            data->points[i] = { rand.f11(), rand.f11(), rand.f11() };
+            node->points[i] = { rand.f11(), rand.f11(), rand.f11() };
         }
         node->setupPointsDataFlags();
     }
@@ -237,15 +234,12 @@ TestCase(Test_Points)
         node->reference = "/Test/PointMesh";
         node->position = { 0.0f, 0.0f, 0.0f };
 
-        auto data = ms::PointsData::create();
-        node->data.push_back(data);
-
         int c = 100;
-        data->points.resize_discard(c);
-        data->rotations.resize_discard(c);
+        node->points.resize_discard(c);
+        node->rotations.resize_discard(c);
         for (int i = 0; i < c; ++i) {
-            data->points[i] = { rand.f11(), rand.f11(), rand.f11() };
-            data->rotations[i] = rotate(rand.v3n(), rand.f11() * mu::PI);
+            node->points[i] = { rand.f11(), rand.f11(), rand.f11() };
+            node->rotations[i] = rotate(rand.v3n(), rand.f11() * mu::PI);
         }
         node->setupPointsDataFlags();
     }
@@ -253,13 +247,6 @@ TestCase(Test_Points)
         auto node = ms::Points::create();
         scene->entities.push_back(node);
 
-        auto clip = ms::AnimationClip::create();
-        scene->assets.push_back(clip);
-
-        auto anim = ms::PointsAnimation::create();
-        clip->addAnimation(anim);
-
-        anim->path = "/Test/PointsTRS";
         node->path = "/Test/PointsTRS";
         node->reference = "/Test/PointMesh";
         node->position = { 2.5f, 0.0f, 0.0f };
@@ -282,25 +269,18 @@ TestCase(Test_Points)
         }
 
         for (int fi = 0; fi < num_frames; ++fi) {
-            auto data = ms::PointsData::create();
-            node->data.push_back(data);
-
-            float t = (1.0f / 30.0f) * fi;
-            anim->time.push_back({ t, t });
-            data->time = t;
-            data->points = points;
-            data->rotations = rotations;
-            data->scales = scales;
-            data->velocities = velocities;
-            data->colors = colors;
-            for (int i = 0; i < num_points; ++i) {
+            node->points = points;
+            node->rotations = rotations;
+            node->scales = scales;
+            node->velocities = velocities;
+            node->colors = colors;
+            for (int i = 0; i < num_points; ++i)
                 points[i] += velocities[i];
-            }
-        }
-        node->setupPointsDataFlags();
-    }
 
-    Send(scene);
+            node->setupPointsDataFlags();
+            Send(scene);
+        }
+    }
 }
 
 

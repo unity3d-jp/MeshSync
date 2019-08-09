@@ -721,93 +721,69 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *self, float weight, int num,
 #pragma endregion
 
 #pragma region Points
-msAPI uint32_t msPointsDataGetFlags(const ms::PointsData *self)
-{
-    return (uint32_t&)self->pd_flags;
-}
-msAPI float msPointsDataGetTime(const ms::PointsData *self)
-{
-    return self->time;
-}
-msAPI void msPointsDataSetTime(ms::PointsData *self, float v)
-{
-    self->time = v;
-}
-msAPI void msPointsDataGetBounds(const ms::PointsData *self, float3 *center, float3 *extents)
-{
-    self->getBounds(*center, *extents);
-}
-msAPI int msPointsDataGetNumPoints(const ms::PointsData *self, float3 *dst)
-{
-    return (int)self->points.size();
-}
-msAPI void msPointsDataReadPoints(const ms::PointsData *self, float3 *dst)
-{
-    self->points.copy_to(dst);
-}
-msAPI void msPointsDataWritePoints(ms::PointsData *self, const float3 *v, int size)
-{
-    self->points.assign(v, v + size);
-}
-msAPI void msPointsDataReadRotations(const ms::PointsData *self, quatf *dst)
-{
-    self->rotations.copy_to(dst);
-}
-msAPI void msPointsDataWriteRotations(ms::PointsData *self, const quatf *v, int size)
-{
-    self->rotations.assign(v, v + size);
-}
-msAPI void msPointsDataReadScales(const ms::PointsData *self, float3 *dst)
-{
-    self->scales.copy_to(dst);
-}
-msAPI void msPointsDataWriteScales(ms::PointsData *self, const float3 *v, int size)
-{
-    self->scales.assign(v, v + size);
-}
-msAPI void msPointsDataReadVelocities(const ms::PointsData *self, float3 *dst)
-{
-    self->velocities.copy_to(dst);
-}
-msAPI void msPointsDataWriteVelocities(ms::PointsData *self, const float3 *v, int size)
-{
-    self->velocities.assign(v, v + size);
-}
-
-msAPI void msPointsDataReadColors(const ms::PointsData *self, float4 *dst)
-{
-    self->colors.copy_to(dst);
-}
-msAPI void msPointsDataWriteColors(ms::PointsData *self, const float4 *v, int size)
-{
-    self->colors.assign(v, v + size);
-}
-msAPI void msPointsDataReadIDs(const ms::PointsData *self, int *dst)
-{
-    self->ids.copy_to(dst);
-}
-msAPI void msPointsDataWriteIDs(ms::PointsData *self, const int *v, int size)
-{
-    self->ids.assign(v, v + size);
-}
-
 msAPI ms::Points* msPointsCreate()
 {
     return ms::Points::create_raw();
 }
-msAPI int msPointsGetNumData(ms::Points *self)
+msAPI uint32_t msPointsGetFlags(const ms::Points *self)
 {
-    return (int)self->data.size();
+    return (uint32_t&)self->pd_flags;
 }
-msAPI ms::PointsData* msPointsGetData(ms::Points *self, int i)
+msAPI ms::Bounds msPointsGetBounds(const ms::Points *self)
 {
-    return self->data[i].get();
+    return self->bounds;
 }
-msAPI ms::PointsData* msPointsAddData(ms::Points *self)
+msAPI int msPointsGetNumPoints(const ms::Points *self, float3 *dst)
 {
-    auto ret = ms::PointsData::create();
-    self->data.push_back(ret);
-    return ret.get();
+    return (int)self->points.size();
+}
+msAPI void msPointsReadPoints(const ms::Points *self, float3 *dst)
+{
+    self->points.copy_to(dst);
+}
+msAPI void msPointsWritePoints(ms::Points *self, const float3 *v, int size)
+{
+    self->points.assign(v, v + size);
+}
+msAPI void msPointsReadRotations(const ms::Points *self, quatf *dst)
+{
+    self->rotations.copy_to(dst);
+}
+msAPI void msPointsWriteRotations(ms::Points *self, const quatf *v, int size)
+{
+    self->rotations.assign(v, v + size);
+}
+msAPI void msPointsReadScales(const ms::Points *self, float3 *dst)
+{
+    self->scales.copy_to(dst);
+}
+msAPI void msPointsWriteScales(ms::Points *self, const float3 *v, int size)
+{
+    self->scales.assign(v, v + size);
+}
+msAPI void msPointsReadVelocities(const ms::Points *self, float3 *dst)
+{
+    self->velocities.copy_to(dst);
+}
+msAPI void msPointsWriteVelocities(ms::Points *self, const float3 *v, int size)
+{
+    self->velocities.assign(v, v + size);
+}
+msAPI void msPointsReadColors(const ms::Points *self, float4 *dst)
+{
+    self->colors.copy_to(dst);
+}
+msAPI void msPointsWriteColors(ms::Points *self, const float4 *v, int size)
+{
+    self->colors.assign(v, v + size);
+}
+msAPI void msPointsReadIDs(const ms::Points *self, int *dst)
+{
+    self->ids.copy_to(dst);
+}
+msAPI void msPointsWriteIDs(ms::Points *self, const int *v, int size)
+{
+    self->ids.assign(v, v + size);
 }
 #pragma endregion
 

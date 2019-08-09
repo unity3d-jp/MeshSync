@@ -85,12 +85,6 @@ struct MeshRefineSettings
     bool operator!=(const MeshRefineSettings& v) const;
 };
 
-struct Bounds
-{
-    float3 center;
-    float3 extents;
-};
-
 struct SubmeshData
 {
     enum class Topology : int

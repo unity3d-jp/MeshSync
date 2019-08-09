@@ -17,4 +17,11 @@ struct Identifier
 };
 msSerializable(Identifier);
 
+
+struct Bounds
+{
+    float3 center;
+    float3 extents;
+};
+
 } // namespace ms

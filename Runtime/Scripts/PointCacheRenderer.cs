@@ -66,7 +66,7 @@ namespace UTJ.MeshSync
             return a != null && a.Length > 0;
         }
 
-        public void Flush(PointCache.Data data)
+        public void Flush(PointCache data)
         {
             if (data == null || data.points == null || data.points.Length == 0)
                 return;
@@ -128,8 +128,7 @@ namespace UTJ.MeshSync
 
         void LateUpdate()
         {
-            var points = GetComponent<PointCache>();
-            Flush(points.current);
+            Flush(GetComponent<PointCache>());
         }
         #endregion
     }

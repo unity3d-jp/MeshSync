@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "msSceneGraph.h"
 #include "msMesh.h"
+#include "msPointCache.h"
 #include "msConstraints.h"
 #include "msAnimation.h"
 #include "msMaterial.h"
@@ -358,10 +359,10 @@ std::vector<std::shared_ptr<EntityType>> Scene::getEntities() const
     }
     return ret;
 }
-template std::vector<std::shared_ptr<Camera>> Scene::getAssets<Camera>() const;
-template std::vector<std::shared_ptr<Light>> Scene::getAssets<Light>() const;
-template std::vector<std::shared_ptr<Mesh>> Scene::getAssets<Mesh>() const;
-template std::vector<std::shared_ptr<Points>> Scene::getAssets<Points>() const;
+template std::vector<std::shared_ptr<Camera>> Scene::getEntities<Camera>() const;
+template std::vector<std::shared_ptr<Light>> Scene::getEntities<Light>() const;
+template std::vector<std::shared_ptr<Mesh>> Scene::getEntities<Mesh>() const;
+template std::vector<std::shared_ptr<Points>> Scene::getEntities<Points>() const;
 
 #undef EachMember
 #pragma endregion
