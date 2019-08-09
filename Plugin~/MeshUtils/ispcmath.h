@@ -19,10 +19,14 @@ struct float4x4 { float4 m[4]; };
 
 static inline float2 float2_(float x, float y) { float2 r = { x,y }; return r; }
 static inline float3 float3_(float x, float y, float z) { float3 r = { x,y,z }; return r; }
+static inline float3 float3_(float4 v) { float3 r = { v.x, v.y, v.z }; return r; }
 static inline float4 float4_(float x, float y, float z, float w) { float4 r = { x,y,z,w }; return r; }
+static inline float4 float4_(float3 xyz, float w) { float4 r = { xyz.x, xyz.y, xyz.z, w }; return r; }
 static inline uniform float2 float2_(uniform float x, uniform float y) { uniform float2 r = { x,y }; return r; }
 static inline uniform float3 float3_(uniform float x, uniform float y, uniform float z) { uniform float3 r = { x,y,z }; return r; }
+static inline uniform float3 float3_(uniform float4 v) { uniform float3 r = { v.x, v.y, v.z }; return r; }
 static inline uniform float4 float4_(uniform float x, uniform float y, uniform float z, uniform float w) { uniform float4 r = { x,y,z,w }; return r; }
+static inline uniform  float4 float4_(uniform float3 xyz, uniform float w) { uniform float4 r = { xyz.x, xyz.y, xyz.z, w }; return r; }
 
 
 static inline float2 half_to_float(half2 h)

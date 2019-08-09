@@ -76,7 +76,27 @@ void Lerp_Generic(float *dst, const float *src1, const float *src2, size_t num, 
 {
     const float iw = 1.0f - w;
     for (size_t i = 0; i < num; ++i)
-        dst[i] = src1[i] * w + src2[i] * iw;
+        dst[i] = src1[i] * iw + src2[i] * w;
+}
+
+void LerpNormals_Generic(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float w)
+{
+    const float iw = 1.0f - w;
+    for (size_t i = 0; i < num; ++i)
+        dst[i] = normalize(src1[i] * iw + src2[i] * w);
+}
+
+void LerpTangents_Generic(float4 *dst, const float4 *src1, const float4 *src2, size_t num, float w)
+{
+    const float iw = 1.0f - w;
+    for (size_t i = 0; i < num; ++i) {
+        float4 t1 = src1[i];
+        float4 t2 = src2[i];
+        float4 r;
+        (float3&)r = normalize((float3&)t1 * iw + (float3&)t2 * w);
+        r.w = t1.w;
+        dst[i] = r;
+    }
 }
 
 template<class T>

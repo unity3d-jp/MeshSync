@@ -39,6 +39,8 @@ void Lerp(float  *dst, const float  *src1, const float  *src2, size_t num, float
 void Lerp(float2 *dst, const float2 *src1, const float2 *src2, size_t num, float w);
 void Lerp(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float w);
 void Lerp(float4 *dst, const float4 *src1, const float4 *src2, size_t num, float w);
+void LerpNormals(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float w);
+void LerpTangents(float4 *dst, const float4 *src1, const float4 *src2, size_t num, float w);
 void MinMax(const int *src, size_t num, int& dst_min, int& dst_max);
 void MinMax(const float *src, size_t num, float& dst_min, float& dst_max);
 void MinMax(const float2 *src, size_t num, float2& dst_min, float2& dst_max);
@@ -161,6 +163,10 @@ void Normalize_ISPC(float3 *dst, size_t num);
 
 void Lerp_Generic(float *dst, const float *src1, const float *src2, size_t num, float w);
 void Lerp_ISPC(float *dst, const float *src1, const float *src2, size_t num, float w);
+void LerpNormals_Generic(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float w);
+void LerpNormals_ISPC(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float w);
+void LerpTangents_Generic(float4 *dst, const float4 *src1, const float4 *src2, size_t num, float w);
+void LerpTangents_ISPC(float4 *dst, const float4 *src1, const float4 *src2, size_t num, float w);
 
 void MinMax_Generic(const int *src, size_t num, int& dst_min, int& dst_max);
 void MinMax_ISPC(const int *src, size_t num, int& dst_min, int& dst_max);

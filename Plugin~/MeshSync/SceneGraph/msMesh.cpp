@@ -272,14 +272,6 @@ bool Mesh::diff(const Entity& e1_, const Entity& e2_)
     return true;
 }
 
-static inline float4 lerp_tangent(float4 a, float4 b, float w)
-{
-    float4 ret;
-    (float3&)ret = normalize(lerp((float3&)a, (float3&)b, w));
-    ret.w = a.w;
-    return ret;
-}
-
 bool Mesh::lerp(const Entity& e1_, const Entity& e2_, float t)
 {
     if (!super::lerp(e1_, e2_, t))
@@ -291,18 +283,17 @@ bool Mesh::lerp(const Entity& e1_, const Entity& e2_, float t)
         return false;
 #define DoLerp(N) N.resize_discard(e1.N.size()); Lerp(N.data(), e1.N.data(), e2.N.data(), N.size(), t)
     DoLerp(points);
-    DoLerp(normals);
     DoLerp(uv0);
     DoLerp(uv1);
     DoLerp(colors);
     DoLerp(velocities);
 #undef DoLerp
-    Normalize(normals.data(), normals.size());
+
+    normals.resize_discard(e1.normals.size());
+    LerpNormals(normals.data(), e1.normals.cdata(), e2.normals.cdata(), normals.size(), t);
 
     tangents.resize_discard(e1.tangents.size());
-    enumerate(tangents, e1.tangents, e2.tangents, [t](float4& v, const float4& t1, const float4& t2) {
-        v = lerp_tangent(t1, t2, t);
-    });
+    LerpTangents(tangents.data(), e1.tangents.cdata(), e2.tangents.cdata(), tangents.size(), t);
     return false;
 }
 

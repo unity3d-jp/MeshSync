@@ -554,6 +554,50 @@ export void Lerp(uniform float dst[], uniform const float src1[], uniform const 
         dst[i] = src1[i]*iw + src2[i]*w;
     }
 }
+
+export void LerpNormals(uniform float3 dst[], uniform const float3 src1[], uniform const float3 src2[], uniform const int num, uniform float w)
+{
+    uniform float iw = 1.0f - w;
+    uniform int num_simd = num & ~(C - 1);
+    for(uniform int bi=0; bi < num_simd; bi+=C) {
+        float3 n1, n2;
+        aos_to_soa3((uniform float*)&src1[bi], &n1.x, &n1.y, &n1.z);
+        aos_to_soa3((uniform float*)&src2[bi], &n2.x, &n2.y, &n2.z);
+
+        float3 n3 = normalize(n1*iw + n2*w);
+        soa_to_aos3(n3.x, n3.y, n3.z, (uniform float*)&dst[bi]);
+    }
+
+    for(uniform int i=num_simd; i < num; ++i) {
+        uniform float3 n1, n2;
+        n1 = src1[i];
+        n2 = src2[i];
+        dst[i] = normalize(n1*iw + n2*w);
+    }
+}
+
+export void LerpTangents(uniform float4 dst[], uniform const float4 src1[], uniform const float4 src2[], uniform const int num, uniform float w)
+{
+    uniform float iw = 1.0f - w;
+    uniform int num_simd = num & ~(C - 1);
+    for(uniform int bi=0; bi < num_simd; bi+=C) {
+        float3 t1, t2;
+        float w1, w2;
+        aos_to_soa4((uniform float*)&src1[bi], &t1.x, &t1.y, &t1.z, &w1);
+        aos_to_soa4((uniform float*)&src2[bi], &t2.x, &t2.y, &t2.z, &w2);
+
+        float3 t3 = normalize(t1*iw + t2*w);
+        soa_to_aos4(t3.x, t3.y, t3.z, w1, (uniform float*)&dst[bi]);
+    }
+
+    for(uniform int i=num_simd; i < num; ++i) {
+        uniform float4 t1, t2;
+        t1 = src1[i];
+        t2 = src2[i];
+        uniform float3 r = normalize(float3_(t1)*iw + float3_(t2)*w);
+        dst[i] = float4_(r, t1.w);
+    }
+}
 #endif
 
 

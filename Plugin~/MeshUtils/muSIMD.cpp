@@ -78,6 +78,16 @@ void Lerp_ISPC(float *dst, const float *src1, const float *src2, size_t num, flo
 {
     ispc::Lerp(dst, src1, src2, (int)num, w);
 }
+
+void LerpNormals_ISPC(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float w)
+{
+    ispc::LerpNormals((ispc::float3*)dst, (ispc::float3*)src1, (ispc::float3*)src2, (int)num, w);
+}
+
+void LerpTangents_ISPC(float4 *dst, const float4 *src1, const float4 *src2, size_t num, float w)
+{
+    ispc::LerpTangents((ispc::float4*)dst, (ispc::float4*)src1, (ispc::float4*)src2, (int)num, w);
+}
 #endif
 
 #ifdef muSIMD_NearEqual
@@ -352,6 +362,16 @@ void Lerp(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float
 void Lerp(float4 *dst, const float4 *src1, const float4 *src2, size_t num, float w)
 {
     Lerp((float*)dst, (const float*)src1, (const float*)src2, num * 4, w);
+}
+
+void LerpNormals(float3 *dst, const float3 *src1, const float3 *src2, size_t num, float w)
+{
+    Forward(LerpNormals, dst, src1, src2, num, w);
+}
+
+void LerpTangents(float4 * dst, const float4 * src1, const float4 * src2, size_t num, float w)
+{
+    Forward(LerpTangents, dst, src1, src2, num, w);
 }
 #endif
 

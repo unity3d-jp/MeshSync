@@ -306,6 +306,48 @@ TestCase(TestNormalsAndTangents)
 #undef SoAPointsArgs
 }
 
+TestCase(TestLerp)
+{
+    const int N = 1000000;
+    const int T = 5;
+
+    Random rnd;
+    RawVector<float> v1(N), v2(N), rv1(N), rv2(N);
+    RawVector<float3> n1(N), n2(N), rn1(N), rn2(N);
+    RawVector<float4> t1(N), t2(N), rt1(N), rt2(N);
+    for (int i = 0; i < N; ++i) {
+        v1[i] = rnd.f11();
+        v2[i] = rnd.f11();
+        n1[i] = rnd.v3n();
+        n2[i] = rnd.v3n();
+        t1[i] = rnd.v4t();
+        t2[i] = rnd.v4t();
+    }
+    
+    TestScope("Lerp_ISPC", [&]() {
+        Lerp_ISPC(rv1.data(), v1.cdata(), v2.cdata(), N, 0.5f);
+    }, T);
+    TestScope("Lerp_Generic", [&]() {
+        Lerp_Generic(rv2.data(), v1.cdata(), v2.cdata(), N, 0.5f);
+    }, T);
+    Expect(near_equal(rn1, rn2));
+
+    TestScope("LerpNormals_ISPC", [&]() {
+        LerpNormals_ISPC(rn1.data(), n1.cdata(), n2.cdata(), N, 0.5f);
+    }, T);
+    TestScope("LerpNormals_Generic", [&]() {
+        LerpNormals_Generic(rn2.data(), n1.cdata(), n2.cdata(), N, 0.5f);
+    }, T);
+    Expect(near_equal(rn1, rn2));
+
+    TestScope("LerpTangents_ISPC", [&]() {
+        LerpTangents_ISPC(rt1.data(), t1.cdata(), t2.cdata(), N, 0.5f);
+    }, T);
+    TestScope("LerpTangents_Generic", [&]() {
+        LerpTangents_Generic(rt2.data(), t1.cdata(), t2.cdata(), N, 0.5f);
+    }, T);
+    Expect(near_equal(rt1, rt2));
+}
 
 TestCase(TestHandednessConversion)
 {
