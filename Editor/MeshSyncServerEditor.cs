@@ -1,3 +1,4 @@
+using System;
 using UnityEditor;
 using UnityEngine;
 using UTJ.MeshSync;
@@ -65,23 +66,39 @@ namespace UTJ.MeshSyncEditor
 
         public static void DrawMaterialList(MeshSyncPlayer t, bool allowFold = true)
         {
+            Action drawInExportButton = () => {
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("Import List", GUILayout.Width(110.0f)))
+                {
+                    var path = EditorUtility.OpenFilePanel("Select Cache File", "", "asset");
+                    t.ImportMaterialList(path);
+                }
+                if (GUILayout.Button("Export List", GUILayout.Width(110.0f)))
+                {
+                    var path = EditorUtility.SaveFilePanel("Select Cache File", "", t.name + "_MaterialList", "asset");
+                    t.ExportMaterialList(path);
+                }
+                GUILayout.EndHorizontal();
+            };
+
             if (allowFold)
             {
                 var style = EditorStyles.foldout;
                 style.fontStyle = FontStyle.Bold;
                 t.foldMaterialList = EditorGUILayout.Foldout(t.foldMaterialList, "Material List", true, style);
                 if (t.foldMaterialList)
-                {
                     DrawMaterialListElements(t);
-                }
+                drawInExportButton();
+                if (GUILayout.Button("Open Material Window", GUILayout.Width(160.0f)))
+                    MaterialWindow.Open(t);
             }
             else
             {
                 GUILayout.Label("Material List", EditorStyles.boldLabel);
                 DrawMaterialListElements(t);
+                drawInExportButton();
             }
-            if (GUILayout.Button("Open Material Window", GUILayout.Width(160.0f)))
-                MaterialWindow.Open(t);
+
             EditorGUILayout.Space();
         }
 

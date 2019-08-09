@@ -1956,6 +1956,26 @@ namespace UTJ.MeshSync
         #endregion
 
         #region Tools
+        public bool ApplyMaterialList(MaterialList ml)
+        {
+            if (ml == null || ml.materials == null || ml.materials.Count == 0)
+                return false;
+
+            bool updated = false;
+            int materialCount = Mathf.Min(m_materialList.Count, ml.materials.Count);
+            for (int mi = 0; mi < materialCount; ++mi)
+            {
+                if (ml.materials[mi].material != null)
+                {
+                    m_materialList[mi].material = ml.materials[mi].material;
+                    updated = true;
+                }
+            }
+            if (updated)
+                ReassignMaterials();
+            return updated;
+        }
+
 #if UNITY_EDITOR
         public void GenerateLightmapUV(GameObject go)
         {
@@ -2052,6 +2072,32 @@ namespace UTJ.MeshSync
             }
             if (n > 0)
                 AssetDatabase.SaveAssets();
+        }
+
+        public bool ExportMaterialList(string path)
+        {
+            if (path == null || path.Length == 0)
+                return false;
+
+            path = path.Replace(Application.dataPath, "Assets/");
+            if (!path.EndsWith(".asset"))
+                path = path + ".asset";
+
+            var ml = ScriptableObject.CreateInstance<MaterialList>();
+            ml.materials = m_materialList;
+            AssetDatabase.CreateAsset(ml, path);
+            return true;
+        }
+
+        public bool ImportMaterialList(string path)
+        {
+            if (path == null || path.Length == 0)
+                return false;
+
+            path = path.Replace(Application.dataPath, "Assets/");
+
+            var ml = AssetDatabase.LoadAssetAtPath<MaterialList>(path);
+            return ApplyMaterialList(ml);
         }
 
         void CheckMaterialAssignedViaEditor()
