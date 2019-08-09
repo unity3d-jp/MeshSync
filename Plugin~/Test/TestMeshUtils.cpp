@@ -330,7 +330,7 @@ TestCase(TestLerp)
     TestScope("Lerp_Generic", [&]() {
         Lerp_Generic(rv2.data(), v1.cdata(), v2.cdata(), N, 0.5f);
     }, T);
-    Expect(near_equal(rn1, rn2));
+    Expect(near_equal(rv1, rv2));
 
     TestScope("LerpNormals_ISPC", [&]() {
         LerpNormals_ISPC(rn1.data(), n1.cdata(), n2.cdata(), N, 0.5f);

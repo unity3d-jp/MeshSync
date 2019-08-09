@@ -153,7 +153,7 @@ void BoneData::clear()
     EachVertexAttribute(F) EachTopologyAttribute(F)
 
 #define EachMember(F)\
-    F(refine_settings) EachGeometryAttribute(F) F(root_bone) F(bones) F(blendshapes) F(splits) F(submeshes)
+    F(refine_settings) EachGeometryAttribute(F) F(root_bone) F(bones) F(blendshapes) F(submeshes)
 
 Mesh::Mesh() {}
 Mesh::~Mesh() {}
@@ -312,13 +312,14 @@ void Mesh::clear()
     root_bone.clear();
     bones.clear();
     blendshapes.clear();
+    submeshes.clear();
 
     vclear(weights4);
     vclear(bone_counts);
     vclear(bone_offsets);
     vclear(weights1);
-    submeshes.clear();
-    splits.clear();
+    bone_weight_count = 0;
+    bounds = {};
 }
 
 uint64_t Mesh::hash() const
@@ -404,14 +405,11 @@ static inline void Remap(C1& dst, const C2& src, const C3& indices)
 
 void Mesh::updateBounds()
 {
-    // bounds
-    for (auto& split : splits) {
-        float3 bmin, bmax;
-        bmin = bmax = float3::zero();
-        MinMax(&points[split.vertex_offset], split.vertex_count, bmin, bmax);
-        split.bounds.center = (bmax + bmin) * 0.5f;
-        split.bounds.extents = abs(bmax - bmin) * 0.5f;
-    }
+    float3 bmin, bmax;
+    bmin = bmax = float3::zero();
+    MinMax(points.cdata(), points.size(), bmin, bmax);
+    bounds.center = (bmax + bmin) * 0.5f;
+    bounds.extents = abs(bmax - bmin) * 0.5f;
 }
 
 void Mesh::refine()
@@ -550,19 +548,6 @@ void Mesh::refine()
             submeshes.push_back(sm);
         }
 
-        // setup splits
-        splits.clear();
-        for (auto& src : refiner.splits) {
-            auto sp = SplitData();
-            sp.index_offset = src.index_offset;
-            sp.vertex_offset = src.vertex_offset;
-            sp.index_count = src.index_count;
-            sp.vertex_count = src.vertex_count;
-            sp.submesh_offset = src.submesh_offset;
-            sp.submesh_count = src.submesh_count;
-            splits.push_back(sp);
-        }
-
         // remap vertex attributes
         if (!normals.empty()) {
             Remap(tmp_normals, normals, !remap_normals.empty() ? remap_normals : refiner.new2old_points);
@@ -626,16 +611,10 @@ void Mesh::refine()
             bone_offsets.swap(tmp_bone_offsets);
             weights1.swap(tmp_weights);
 
-            // setup splits
-            int weight_offset = 0;
-            for (auto& split : splits) {
-                split.bone_weight_offset = weight_offset;
-                int bone_count = 0;
-                for (int vi = 0; vi < split.vertex_count; ++vi)
-                    bone_count += bone_counts[split.vertex_offset + vi];
-                split.bone_weight_count = bone_count;
-                weight_offset += bone_count;
-            }
+            uint32_t wc = 0;
+            for (auto c : bone_counts)
+                wc += c;
+            bone_weight_count = wc;
         }
 
         // remap blendshape delta
@@ -1047,25 +1026,6 @@ void Mesh::mergeMesh(const Mesh& v)
     expand_vertex_attribute(uv1, v.uv1);
     expand_vertex_attribute(colors, v.colors);
     expand_vertex_attribute(velocities, v.velocities);
-
-    if (!splits.empty() && !v.splits.empty()) {
-        // merge splits/submeshes
-        size_t num_submeshes_old = (int)submeshes.size();
-        for (auto split : v.splits)
-        {
-            split.vertex_offset += (int)num_points_old;
-            split.index_offset += (int)num_indices_old;
-            split.bone_weight_count = 0;
-            split.bone_weight_offset = 0;
-            split.submesh_offset += (int)num_submeshes_old;
-            splits.push_back(split);
-        }
-        for (auto submesh : v.submeshes)
-        {
-            submesh.index_offset += (int)num_indices_old;
-            submeshes.push_back(submesh);
-        }
-    }
 
     // discard bones/blendspapes for now.
     root_bone.clear();

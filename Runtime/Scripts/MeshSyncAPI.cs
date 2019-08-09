@@ -1908,30 +1908,6 @@ namespace UTJ.MeshSync
         public void ReadIndices(MeshData mesh, PinnedList<int> dst) { msSubmeshReadIndices(self, mesh.self, dst); }
     }
 
-    public struct SplitData
-    {
-        #region internal
-        public IntPtr self;
-        [DllImport(Lib.name)] static extern int msSplitGetNumPoints(IntPtr self);
-        [DllImport(Lib.name)] static extern int msSplitGetNumIndices(IntPtr self);
-        [DllImport(Lib.name)] static extern int msSplitGetNumBoneWeights(IntPtr self);
-        [DllImport(Lib.name)] static extern Bounds msSplitGetBounds(IntPtr self);
-        [DllImport(Lib.name)] static extern int msSplitGetNumSubmeshes(IntPtr self);
-        [DllImport(Lib.name)] static extern SubmeshData msSplitGetSubmesh(IntPtr self, IntPtr mesh, int i);
-        #endregion
-
-        public int numPoints { get { return msSplitGetNumPoints(self); } }
-        public int numIndices { get { return msSplitGetNumIndices(self); } }
-        public int numBoneWeights { get { return msSplitGetNumBoneWeights(self); } }
-        public Bounds bounds { get {  return msSplitGetBounds(self); } }
-        public int numSubmeshes { get { return msSplitGetNumSubmeshes(self); } }
-
-        public SubmeshData GetSubmesh(MeshData mesh, int i)
-        {
-            return msSplitGetSubmesh(self, mesh.self, i);
-        }
-    }
-
     public struct BlendShapeData
     {
         #region internal
@@ -1942,9 +1918,9 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern void msBlendShapeSetWeight(IntPtr self, float v);
         [DllImport(Lib.name)] static extern int msBlendShapeGetNumFrames(IntPtr self);
         [DllImport(Lib.name)] static extern float msBlendShapeGetFrameWeight(IntPtr self, int f);
-        [DllImport(Lib.name)] static extern void msBlendShapeReadPoints(IntPtr self, int f, IntPtr dst, SplitData split);
-        [DllImport(Lib.name)] static extern void msBlendShapeReadNormals(IntPtr self, int f, IntPtr dst, SplitData split);
-        [DllImport(Lib.name)] static extern void msBlendShapeReadTangents(IntPtr self, int f, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msBlendShapeReadPoints(IntPtr self, int f, IntPtr dst);
+        [DllImport(Lib.name)] static extern void msBlendShapeReadNormals(IntPtr self, int f, IntPtr dst);
+        [DllImport(Lib.name)] static extern void msBlendShapeReadTangents(IntPtr self, int f, IntPtr dst);
         [DllImport(Lib.name)] static extern void msBlendShapeAddFrame(IntPtr self, float weight, int num, Vector3[] v, Vector3[] n, Vector3[] t);
         #endregion
 
@@ -1963,9 +1939,9 @@ namespace UTJ.MeshSync
             get { return msBlendShapeGetNumFrames(self); }
         }
         public float GetWeight(int f) { return msBlendShapeGetFrameWeight(self, f); }
-        public void ReadPoints(int f, PinnedList<Vector3> dst, SplitData split) { msBlendShapeReadPoints(self, f, dst, split); }
-        public void ReadNormals(int f, PinnedList<Vector3> dst, SplitData split) { msBlendShapeReadNormals(self, f, dst, split); }
-        public void ReadTangents(int f, PinnedList<Vector3> dst, SplitData split) { msBlendShapeReadTangents(self, f, dst, split); }
+        public void ReadPoints(int f, PinnedList<Vector3> dst) { msBlendShapeReadPoints(self, f, dst); }
+        public void ReadNormals(int f, PinnedList<Vector3> dst) { msBlendShapeReadNormals(self, f, dst); }
+        public void ReadTangents(int f, PinnedList<Vector3> dst) { msBlendShapeReadTangents(self, f, dst); }
 
         public void AddFrame(float w, Vector3[] v, Vector3[] n, Vector3[] t)
         {
@@ -2004,32 +1980,36 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern int msMeshGetNumPoints(IntPtr self);
         [DllImport(Lib.name)] static extern int msMeshGetNumIndices(IntPtr self);
         [DllImport(Lib.name)] static extern int msMeshGetNumSplits(IntPtr self);
-        [DllImport(Lib.name)] static extern void msMeshReadPoints(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshReadPoints(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshWritePoints(IntPtr self, Vector3[] v, int size);
-        [DllImport(Lib.name)] static extern void msMeshReadNormals(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshReadNormals(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshWriteNormals(IntPtr self, Vector3[] v, int size);
-        [DllImport(Lib.name)] static extern void msMeshReadTangents(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshReadTangents(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshWriteTangents(IntPtr self, Vector4[] v, int size);
-        [DllImport(Lib.name)] static extern void msMeshReadUV0(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport(Lib.name)] static extern void msMeshReadUV1(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshReadUV0(IntPtr self, IntPtr dst);
+        [DllImport(Lib.name)] static extern void msMeshReadUV1(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshWriteUV0(IntPtr self, Vector2[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshWriteUV1(IntPtr self, Vector2[] v, int size);
-        [DllImport(Lib.name)] static extern void msMeshReadColors(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshReadColors(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshWriteColors(IntPtr self, Color[] v, int size);
-        [DllImport(Lib.name)] static extern void msMeshReadVelocities(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshReadVelocities(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshWriteVelocities(IntPtr self, Vector3[] v, int size);
-        [DllImport(Lib.name)] static extern void msMeshReadBoneWeights4(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport(Lib.name)] static extern void msMeshWriteBoneWeights4(IntPtr self, BoneWeight[] weights, int size);
-#if UNITY_2019_1_OR_NEWER
-        [DllImport(Lib.name)] static extern void msMeshReadBoneCounts(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport(Lib.name)] static extern void msMeshReadBoneWeightsV(IntPtr self, IntPtr dst, SplitData split);
-        [DllImport(Lib.name)] static extern void msMeshWriteBoneWeightsV(IntPtr self, IntPtr counts, int numCounts, IntPtr weights, int numWeights);
-#endif
-        [DllImport(Lib.name)] static extern void msMeshReadIndices(IntPtr self, IntPtr dst, SplitData split);
+        [DllImport(Lib.name)] static extern void msMeshReadIndices(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshWriteIndices(IntPtr self, int[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshWriteSubmeshTriangles(IntPtr self, int[] v, int size, int materialID);
+        [DllImport(Lib.name)] static extern int msMeshGetNumSubmeshes(IntPtr self);
+        [DllImport(Lib.name)] static extern SubmeshData msMeshGetSubmesh(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern Bounds msMeshGetBounds(IntPtr self);
 
+        [DllImport(Lib.name)] static extern void msMeshReadBoneWeights4(IntPtr self, IntPtr dst);
+        [DllImport(Lib.name)] static extern void msMeshWriteBoneWeights4(IntPtr self, BoneWeight[] weights, int size);
+#if UNITY_2019_1_OR_NEWER
+        [DllImport(Lib.name)] static extern void msMeshReadBoneCounts(IntPtr self, IntPtr dst);
+        [DllImport(Lib.name)] static extern void msMeshReadBoneWeightsV(IntPtr self, IntPtr dst);
+        [DllImport(Lib.name)] static extern void msMeshWriteBoneWeightsV(IntPtr self, IntPtr counts, int numCounts, IntPtr weights, int numWeights);
+#endif
         [DllImport(Lib.name)] static extern int msMeshGetNumBones(IntPtr self);
+        [DllImport(Lib.name)] static extern int msMeshGetNumBoneWeights(IntPtr self);
         [DllImport(Lib.name)] static extern IntPtr msMeshGetRootBonePath(IntPtr self);
         [DllImport(Lib.name)] static extern void msMeshSetRootBonePath(IntPtr self, string v);
         [DllImport(Lib.name)] static extern IntPtr msMeshGetBonePath(IntPtr self, int i);
@@ -2040,9 +2020,6 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern void msMeshSetLocal2World(IntPtr self, ref Matrix4x4 v);
         [DllImport(Lib.name)] static extern void msMeshSetWorld2Local(IntPtr self, ref Matrix4x4 v);
 
-        [DllImport(Lib.name)] static extern SplitData msMeshGetSplit(IntPtr self, int i);
-        [DllImport(Lib.name)] static extern int msMeshGetNumSubmeshes(IntPtr self);
-        [DllImport(Lib.name)] static extern SubmeshData msMeshGetSubmesh(IntPtr self, int i);
 
         [DllImport(Lib.name)] static extern int msMeshGetNumBlendShapes(IntPtr self);
         [DllImport(Lib.name)] static extern BlendShapeData msMeshGetBlendShapeData(IntPtr self, int i);
@@ -2062,21 +2039,21 @@ namespace UTJ.MeshSync
 
         public int numPoints { get { return msMeshGetNumPoints(self); } }
         public int numIndices { get { return msMeshGetNumIndices(self); } }
-        public int numSplits { get { return msMeshGetNumSplits(self); } }
+        public Bounds bounds { get { return msMeshGetBounds(self); } }
 
-        public void ReadPoints(PinnedList<Vector3> dst, SplitData split) { msMeshReadPoints(self, dst, split); }
-        public void ReadNormals(PinnedList<Vector3> dst, SplitData split) { msMeshReadNormals(self, dst, split); }
-        public void ReadTangents(PinnedList<Vector4> dst, SplitData split) { msMeshReadTangents(self, dst, split); }
-        public void ReadUV0(PinnedList<Vector2> dst, SplitData split) { msMeshReadUV0(self, dst, split); }
-        public void ReadUV1(PinnedList<Vector2> dst, SplitData split) { msMeshReadUV1(self, dst, split); }
-        public void ReadColors(PinnedList<Color> dst, SplitData split) { msMeshReadColors(self, dst, split); }
-        public void ReadVelocities(PinnedList<Vector3> dst, SplitData split) { msMeshReadVelocities(self, dst, split); }
-        public void ReadBoneWeights4(IntPtr dst, SplitData split) { msMeshReadBoneWeights4(self, dst, split); }
+        public void ReadPoints(PinnedList<Vector3> dst) { msMeshReadPoints(self, dst); }
+        public void ReadNormals(PinnedList<Vector3> dst) { msMeshReadNormals(self, dst); }
+        public void ReadTangents(PinnedList<Vector4> dst) { msMeshReadTangents(self, dst); }
+        public void ReadUV0(PinnedList<Vector2> dst) { msMeshReadUV0(self, dst); }
+        public void ReadUV1(PinnedList<Vector2> dst) { msMeshReadUV1(self, dst); }
+        public void ReadColors(PinnedList<Color> dst) { msMeshReadColors(self, dst); }
+        public void ReadVelocities(PinnedList<Vector3> dst) { msMeshReadVelocities(self, dst); }
+        public void ReadBoneWeights4(IntPtr dst) { msMeshReadBoneWeights4(self, dst); }
 #if UNITY_2019_1_OR_NEWER
-        public void ReadBoneCounts(IntPtr dst, SplitData split) { msMeshReadBoneCounts(self, dst, split); }
-        public void ReadBoneWeightsV(IntPtr dst, SplitData split) { msMeshReadBoneWeightsV(self, dst, split); }
+        public void ReadBoneCounts(IntPtr dst) { msMeshReadBoneCounts(self, dst); }
+        public void ReadBoneWeightsV(IntPtr dst) { msMeshReadBoneWeightsV(self, dst); }
 #endif
-        public void ReadIndices(IntPtr dst, SplitData split) { msMeshReadIndices(self, dst, split); }
+        public void ReadIndices(IntPtr dst) { msMeshReadIndices(self, dst); }
 
         public void WritePoints(Vector3[] v) { msMeshWritePoints(self, v, v.Length); }
         public void WriteNormals(Vector3[] v) { msMeshWriteNormals(self, v, v.Length); }
@@ -2097,7 +2074,6 @@ namespace UTJ.MeshSync
         public Matrix4x4 local2world { set { msMeshSetLocal2World(self, ref value); } }
         public Matrix4x4 world2local { set { msMeshSetWorld2Local(self, ref value); } }
 
-        public SplitData GetSplit(int i) { return msMeshGetSplit(self, i); }
         public void WriteSubmeshTriangles(int[] indices, int materialID)
         {
             msMeshWriteSubmeshTriangles(self, indices, indices.Length, materialID);
@@ -2106,6 +2082,10 @@ namespace UTJ.MeshSync
         public int numBones
         {
             get { return msMeshGetNumBones(self); }
+        }
+        public int numBoneWeights
+        {
+            get { return msMeshGetNumBoneWeights(self); }
         }
         public string rootBonePath
         {

@@ -1132,14 +1132,13 @@ namespace UTJ.MeshSync
             bool hasBlendshapes = data.numBlendShapes > 0;
             bool meshUpdated = false;
 
-            if (data.numSplits >= 1 && dflags.hasIndices)
+            if (data.numPoints > 0)
             {
                 // note:
                 // assume there is always only 1 mesh split.
                 // old versions supported multiple splits because vertex index was 16 bit (pre-Unity 2017.3),
                 // but that code path was removed for simplicity and my sanity.
-                var split = data.GetSplit(0);
-                if (split.numPoints == 0 || split.numIndices == 0)
+                if (data.numIndices == 0)
                 {
                     if (rec.mesh != null)
                         rec.mesh.Clear();
@@ -1156,7 +1155,7 @@ namespace UTJ.MeshSync
                         rec.mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 #endif
                     }
-                    UpdateMesh(ref rec.mesh, data, split);
+                    UpdateMesh(ref rec.mesh, data);
                 }
                 meshUpdated = true;
             }
@@ -1270,7 +1269,7 @@ namespace UTJ.MeshSync
         PinnedList<Vector4> m_tmpV4 = new PinnedList<Vector4>();
         PinnedList<Color> m_tmpC = new PinnedList<Color>();
 
-        void UpdateMesh(ref Mesh mesh, MeshData data, SplitData split)
+        void UpdateMesh(ref Mesh mesh, MeshData data)
         {
             bool keepIndices = false;
             if (mesh.vertexCount != 0)
@@ -1285,41 +1284,42 @@ namespace UTJ.MeshSync
                 }
             }
 
+            var numPoints = data.numPoints;
             var dataFlags = data.dataFlags;
             if (dataFlags.hasPoints)
             {
-                m_tmpV3.Resize(split.numPoints);
-                data.ReadPoints(m_tmpV3, split);
+                m_tmpV3.Resize(numPoints);
+                data.ReadPoints(m_tmpV3);
                 mesh.SetVertices(m_tmpV3.List);
             }
             if (dataFlags.hasNormals)
             {
-                m_tmpV3.Resize(split.numPoints);
-                data.ReadNormals(m_tmpV3, split);
+                m_tmpV3.Resize(numPoints);
+                data.ReadNormals(m_tmpV3);
                 mesh.SetNormals(m_tmpV3.List);
             }
             if (dataFlags.hasTangents)
             {
-                m_tmpV4.Resize(split.numPoints);
-                data.ReadTangents(m_tmpV4, split);
+                m_tmpV4.Resize(numPoints);
+                data.ReadTangents(m_tmpV4);
                 mesh.SetTangents(m_tmpV4.List);
             }
             if (dataFlags.hasUV0)
             {
-                m_tmpV2.Resize(split.numPoints);
-                data.ReadUV0(m_tmpV2, split);
+                m_tmpV2.Resize(numPoints);
+                data.ReadUV0(m_tmpV2);
                 mesh.SetUVs(0, m_tmpV2.List);
             }
             if (dataFlags.hasUV1)
             {
-                m_tmpV2.Resize(split.numPoints);
-                data.ReadUV1(m_tmpV2, split);
+                m_tmpV2.Resize(numPoints);
+                data.ReadUV1(m_tmpV2);
                 mesh.SetUVs(1, m_tmpV2.List);
             }
             if (dataFlags.hasColors)
             {
-                m_tmpC.Resize(split.numPoints);
-                data.ReadColors(m_tmpC, split);
+                m_tmpC.Resize(numPoints);
+                data.ReadColors(m_tmpC);
                 mesh.SetColors(m_tmpC.List);
             }
             if (dataFlags.hasBones)
@@ -1328,18 +1328,18 @@ namespace UTJ.MeshSync
                 if (Misc.maxBoneInfluence == 4)
                 {
                     var tmpWeights4 = new PinnedList<BoneWeight>();
-                    tmpWeights4.Resize(split.numPoints);
-                    data.ReadBoneWeights4(tmpWeights4, split);
+                    tmpWeights4.Resize(numPoints);
+                    data.ReadBoneWeights4(tmpWeights4);
                     mesh.boneWeights = tmpWeights4.Array;
                     tmpWeights4.Dispose();
                 }
 #if UNITY_2019_1_OR_NEWER
                 else if(Misc.maxBoneInfluence == 255)
                 {
-                    var bonesPerVertex = new NativeArray<byte>(split.numPoints, Allocator.Temp);
-                    var weights = new NativeArray<BoneWeight1>(split.numBoneWeights, Allocator.Temp);
-                    data.ReadBoneCounts(Misc.ForceGetPointer(ref bonesPerVertex), split);
-                    data.ReadBoneWeightsV(Misc.ForceGetPointer(ref weights), split);
+                    var bonesPerVertex = new NativeArray<byte>(numPoints, Allocator.Temp);
+                    var weights = new NativeArray<BoneWeight1>(data.numBoneWeights, Allocator.Temp);
+                    data.ReadBoneCounts(Misc.ForceGetPointer(ref bonesPerVertex));
+                    data.ReadBoneWeightsV(Misc.ForceGetPointer(ref weights));
                     mesh.SetBoneWeights(bonesPerVertex, weights);
                     bonesPerVertex.Dispose();
                     weights.Dispose();
@@ -1348,11 +1348,11 @@ namespace UTJ.MeshSync
             }
             if (dataFlags.hasIndices && !keepIndices)
             {
-                int subMeshCount = split.numSubmeshes;
+                int subMeshCount = data.numSubmeshes;
                 mesh.subMeshCount = subMeshCount;
                 for (int smi = 0; smi < subMeshCount; ++smi)
                 {
-                    var submesh = split.GetSubmesh(data, smi);
+                    var submesh = data.GetSubmesh(smi);
                     var topology = submesh.topology;
 
                     m_tmpI.Resize(submesh.numIndices);
@@ -1379,9 +1379,9 @@ namespace UTJ.MeshSync
             }
             if (dataFlags.hasBlendshapes)
             {
-                var tmpBSP = new PinnedList<Vector3>(split.numPoints);
-                var tmpBSN = new PinnedList<Vector3>(split.numPoints);
-                var tmpBST = new PinnedList<Vector3>(split.numPoints);
+                var tmpBSP = new PinnedList<Vector3>(numPoints);
+                var tmpBSN = new PinnedList<Vector3>(numPoints);
+                var tmpBST = new PinnedList<Vector3>(numPoints);
 
                 int numBlendShapes = data.numBlendShapes;
                 for (int bi = 0; bi < numBlendShapes; ++bi)
@@ -1391,9 +1391,9 @@ namespace UTJ.MeshSync
                     var numFrames = bsd.numFrames;
                     for (int fi = 0; fi < numFrames; ++fi)
                     {
-                        bsd.ReadPoints(fi, tmpBSP, split);
-                        bsd.ReadNormals(fi, tmpBSN, split);
-                        bsd.ReadTangents(fi, tmpBST, split);
+                        bsd.ReadPoints(fi, tmpBSP);
+                        bsd.ReadNormals(fi, tmpBSN);
+                        bsd.ReadTangents(fi, tmpBST);
                         mesh.AddBlendShapeFrame(name, bsd.GetWeight(fi), tmpBSP.Array, tmpBSN.Array, tmpBST.Array);
                     }
                 }
@@ -1403,7 +1403,7 @@ namespace UTJ.MeshSync
                 tmpBST.Dispose();
             }
 
-            mesh.bounds = split.bounds;
+            mesh.bounds = data.bounds;
             mesh.UploadMeshData(false);
         }
 

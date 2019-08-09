@@ -397,16 +397,9 @@ msAPI int msMeshGetNumIndices(ms::Mesh *self)
 {
     return (int)self->indices.size();
 }
-msAPI int msMeshGetNumSplits(ms::Mesh *self)
+msAPI void msMeshReadPoints(ms::Mesh *self, float3 *dst)
 {
-    return (int)self->splits.size();
-}
-msAPI void msMeshReadPoints(ms::Mesh *self, float3 *dst, ms::SplitData *split)
-{
-    if (split)
-        self->points.copy_to(dst, split->vertex_count, split->vertex_offset);
-    else
-        self->points.copy_to(dst);
+    self->points.copy_to(dst);
 }
 msAPI void msMeshWritePoints(ms::Mesh *self, const float3 *v, int size)
 {
@@ -415,12 +408,9 @@ msAPI void msMeshWritePoints(ms::Mesh *self, const float3 *v, int size)
         self->md_flags.has_points = 1;
     }
 }
-msAPI void msMeshReadNormals(ms::Mesh *self, float3 *dst, ms::SplitData *split)
+msAPI void msMeshReadNormals(ms::Mesh *self, float3 *dst)
 {
-    if (split)
-        self->normals.copy_to(dst, split->vertex_count, split->vertex_offset);
-    else
-        self->normals.copy_to(dst);
+    self->normals.copy_to(dst);
 }
 msAPI void msMeshWriteNormals(ms::Mesh *self, const float3 *v, int size)
 {
@@ -429,12 +419,9 @@ msAPI void msMeshWriteNormals(ms::Mesh *self, const float3 *v, int size)
         self->md_flags.has_normals = 1;
     }
 }
-msAPI void msMeshReadTangents(ms::Mesh *self, float4 *dst, ms::SplitData *split)
+msAPI void msMeshReadTangents(ms::Mesh *self, float4 *dst)
 {
-    if (split)
-        self->tangents.copy_to(dst, split->vertex_count, split->vertex_offset);
-    else
-        self->tangents.copy_to(dst);
+    self->tangents.copy_to(dst);
 }
 msAPI void msMeshWriteTangents(ms::Mesh *self, const float4 *v, int size)
 {
@@ -443,19 +430,13 @@ msAPI void msMeshWriteTangents(ms::Mesh *self, const float4 *v, int size)
         self->md_flags.has_tangents = 1;
     }
 }
-msAPI void msMeshReadUV0(ms::Mesh *self, float2 *dst, ms::SplitData *split)
+msAPI void msMeshReadUV0(ms::Mesh *self, float2 *dst)
 {
-    if (split)
-        self->uv0.copy_to(dst, split->vertex_count, split->vertex_offset);
-    else
-        self->uv0.copy_to(dst);
+    self->uv0.copy_to(dst);
 }
-msAPI void msMeshReadUV1(ms::Mesh *self, float2 *dst, ms::SplitData *split)
+msAPI void msMeshReadUV1(ms::Mesh *self, float2 *dst)
 {
-    if (split)
-        self->uv1.copy_to(dst, split->vertex_count, split->vertex_offset);
-    else
-        self->uv1.copy_to(dst);
+    self->uv1.copy_to(dst);
 }
 msAPI void msMeshWriteUV0(ms::Mesh *self, const float2 *v, int size)
 {
@@ -471,12 +452,9 @@ msAPI void msMeshWriteUV1(ms::Mesh *self, const float2 *v, int size)
         self->md_flags.has_uv1 = 1;
     }
 }
-msAPI void msMeshReadColors(ms::Mesh *self, float4 *dst, ms::SplitData *split)
+msAPI void msMeshReadColors(ms::Mesh *self, float4 *dst)
 {
-    if (split)
-        self->colors.copy_to(dst, split->vertex_count, split->vertex_offset);
-    else
-        self->colors.copy_to(dst);
+    self->colors.copy_to(dst);
 }
 msAPI void msMeshWriteColors(ms::Mesh *self, const float4 *v, int size)
 {
@@ -485,12 +463,9 @@ msAPI void msMeshWriteColors(ms::Mesh *self, const float4 *v, int size)
         self->md_flags.has_colors = 1;
     }
 }
-msAPI void msMeshReadVelocities(ms::Mesh *self, float3 *dst, ms::SplitData *split)
+msAPI void msMeshReadVelocities(ms::Mesh *self, float3 *dst)
 {
-    if (split)
-        self->velocities.copy_to(dst, split->vertex_count, split->vertex_offset);
-    else
-        self->velocities.copy_to(dst);
+    self->velocities.copy_to(dst);
 }
 msAPI void msMeshWriteVelocities(ms::Mesh *self, const float3 *v, int size)
 {
@@ -499,12 +474,9 @@ msAPI void msMeshWriteVelocities(ms::Mesh *self, const float3 *v, int size)
         self->md_flags.has_velocities = 1;
     }
 }
-msAPI void msMeshReadIndices(ms::Mesh *self, int *dst, ms::SplitData *split)
+msAPI void msMeshReadIndices(ms::Mesh *self, int *dst)
 {
-    if (split)
-        self->indices.copy_to(dst, split->index_count, split->index_offset);
-    else
-        self->indices.copy_to(dst);
+    self->indices.copy_to(dst);
 }
 msAPI void msMeshWriteIndices(ms::Mesh *self, const int *v, int size)
 {
@@ -527,10 +499,6 @@ msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *self, const int *v, int size, i
         self->md_flags.has_material_ids = 1;
     }
 }
-msAPI const ms::SplitData* msMeshGetSplit(const ms::Mesh *self, int i)
-{
-    return &self->splits[i];
-}
 
 msAPI int msMeshGetNumSubmeshes(const ms::Mesh *self)
 {
@@ -541,12 +509,14 @@ msAPI const ms::SubmeshData* msMeshGetSubmesh(const ms::Mesh *self, int i)
     return &self->submeshes[i];
 }
 
-msAPI void msMeshReadBoneWeights4(const ms::Mesh *self, ms::Weights4 *dst, const ms::SplitData *split)
+msAPI ms::Bounds msMeshGetBounds(const ms::Mesh *self)
 {
-    if (split)
-        self->weights4.copy_to(dst, split->vertex_count, split->vertex_offset);
-    else
-        self->weights4.copy_to(dst);
+    return self->bounds;
+}
+
+msAPI void msMeshReadBoneWeights4(const ms::Mesh *self, ms::Weights4 *dst)
+{
+    self->weights4.copy_to(dst);
 }
 msAPI void msMeshWriteBoneWeights4(ms::Mesh *self, const ms::Weights4 *data, int size)
 {
@@ -566,16 +536,13 @@ msAPI void msMeshWriteBoneWeights4(ms::Mesh *self, const ms::Weights4 *data, int
             bones[indices[wi]]->weights[vi] = weights[wi];
     }
 }
-msAPI void msMeshReadBoneCounts(const ms::Mesh *self, uint8_t *dst, const ms::SplitData *split)
+msAPI void msMeshReadBoneCounts(const ms::Mesh *self, uint8_t *dst)
 {
-    self->bone_counts.copy_to(dst, split->vertex_count, split->vertex_offset);
+    self->bone_counts.copy_to(dst);
 }
-msAPI void msMeshReadBoneWeightsV(const ms::Mesh *self, ms::Weights1 *dst, const ms::SplitData *split)
+msAPI void msMeshReadBoneWeightsV(const ms::Mesh *self, ms::Weights1 *dst)
 {
-    if (split)
-        self->weights1.copy_to(dst, split->bone_weight_count, split->bone_weight_offset);
-    else
-        self->weights1.copy_to(dst);
+    self->weights1.copy_to(dst);
 }
 msAPI void msMeshWriteBoneCounts(ms::Mesh *self, uint8_t *data, int size)
 {
@@ -606,6 +573,10 @@ msAPI void msMeshWriteBoneWeightsV(ms::Mesh *self, uint8_t *counts, int counts_s
 msAPI int msMeshGetNumBones(const ms::Mesh *self)
 {
     return (int)self->bones.size();
+}
+msAPI int msMeshGetNumBoneWeights(const ms::Mesh *self)
+{
+    return self->bone_weight_count;
 }
 msAPI const char* msMeshGetRootBonePath(const ms::Mesh *self)
 {
@@ -667,31 +638,6 @@ msAPI void msMeshSetWorld2Local(ms::Mesh *self, const float4x4 *v)
 }
 
 
-msAPI int msSplitGetNumPoints(const ms::SplitData *self)
-{
-    return (int)self->vertex_count;
-}
-msAPI int msSplitGetNumIndices(const ms::SplitData *self)
-{
-    return (int)self->index_count;
-}
-msAPI int msSplitGetNumBoneWeights(const ms::SplitData *self)
-{
-    return (int)self->bone_weight_count;
-}
-msAPI ms::Bounds msSplitGetBounds(const ms::SplitData *self)
-{
-    return self->bounds;
-}
-msAPI int msSplitGetNumSubmeshes(const ms::SplitData *self)
-{
-    return (int)self->submesh_count;
-}
-msAPI const ms::SubmeshData* msSplitGetSubmesh(const ms::SplitData *self, const ms::Mesh *mesh, int i)
-{
-    return &mesh->submeshes[self->submesh_offset + i];
-}
-
 msAPI int msSubmeshGetNumIndices(const ms::SubmeshData *self)
 {
     return (int)self->index_count;
@@ -733,53 +679,35 @@ msAPI float msBlendShapeGetFrameWeight(const ms::BlendShapeData *self, int f)
 {
     return self ? self->frames[f]->weight : 0.0f;
 }
-msAPI void msBlendShapeReadPoints(const ms::BlendShapeData *self, int f, float3 *dst, ms::SplitData *split)
+msAPI void msBlendShapeReadPoints(const ms::BlendShapeData *self, int f, float3 *dst)
 {
     auto& frame = *self->frames[f];
     size_t size = std::max(frame.points.size(), std::max(frame.normals.size(), frame.tangents.size()));
     auto& src = frame.points;
-    if (split)
-        if (src.empty())
-            memset(dst, 0, sizeof(float3)*split->vertex_count);
-        else
-            src.copy_to(dst, split->vertex_count, split->vertex_offset);
+    if (src.empty())
+        memset(dst, 0, sizeof(float3)*size);
     else
-        if (src.empty())
-            memset(dst, 0, sizeof(float3)*size);
-        else
-            src.copy_to(dst);
+        src.copy_to(dst);
 }
-msAPI void msBlendShapeReadNormals(const ms::BlendShapeData *self, int f, float3 *dst, ms::SplitData *split)
+msAPI void msBlendShapeReadNormals(const ms::BlendShapeData *self, int f, float3 *dst)
 {
     auto& frame = *self->frames[f];
     size_t size = std::max(frame.points.size(), std::max(frame.normals.size(), frame.tangents.size()));
     auto& src = frame.normals;
-    if (split)
-        if (src.empty())
-            memset(dst, 0, sizeof(float3)*split->vertex_count);
-        else
-            src.copy_to(dst, split->vertex_count, split->vertex_offset);
+    if (src.empty())
+        memset(dst, 0, sizeof(float3)*size);
     else
-        if (src.empty())
-            memset(dst, 0, sizeof(float3)*size);
-        else
-            src.copy_to(dst);
+        src.copy_to(dst);
 }
-msAPI void msBlendShapeReadTangents(const ms::BlendShapeData *self, int f, float3 *dst, ms::SplitData *split)
+msAPI void msBlendShapeReadTangents(const ms::BlendShapeData *self, int f, float3 *dst)
 {
     auto& frame = *self->frames[f];
     size_t size = std::max(frame.points.size(), std::max(frame.normals.size(), frame.tangents.size()));
     auto& src = frame.tangents;
-    if (split)
-        if (src.empty())
-            memset(dst, 0, sizeof(float3)*split->vertex_count);
-        else
-            src.copy_to(dst, split->vertex_count, split->vertex_offset);
+    if (src.empty())
+        memset(dst, 0, sizeof(float3)*size);
     else
-        if (src.empty())
-            memset(dst, 0, sizeof(float3)*size);
-        else
-            src.copy_to(dst);
+        src.copy_to(dst);
 }
 msAPI void msBlendShapeAddFrame(ms::BlendShapeData *self, float weight, int num, const float3 *v, const float3 *n, const float3 *t)
 {

@@ -108,20 +108,6 @@ struct SubmeshData
     int material_id = 0;
 };
 
-struct SplitData
-{
-    // serializable
-    int index_count = 0;
-    int index_offset = 0;
-    int vertex_count = 0;
-    int vertex_offset = 0;
-    int bone_weight_count = 0;
-    int bone_weight_offset = 0;
-    int submesh_count = 0;
-    int submesh_offset = 0;
-    Bounds bounds{};
-};
-
 struct BlendShapeFrameData
 {
     // serializable
@@ -211,7 +197,6 @@ public:
     std::vector<BlendShapeDataPtr> blendshapes;
 
     SharedVector<SubmeshData> submeshes;
-    SharedVector<SplitData> splits;
 
     // non-serializable
     // *update clear() when add member*
@@ -219,6 +204,8 @@ public:
     SharedVector<uint8_t>   bone_counts;
     SharedVector<int>       bone_offsets;
     SharedVector<Weights1>  weights1;
+    uint32_t bone_weight_count = 0; // sum of bone_counts
+    Bounds bounds{};
 
 
 protected:
