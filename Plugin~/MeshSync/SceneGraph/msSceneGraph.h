@@ -10,6 +10,7 @@
 #include "msAsset.h"
 #include "msEntity.h"
 #include "msMesh.h"
+#include "msPointCache.h"
 
 #ifdef GetMessage
     #undef GetMessage

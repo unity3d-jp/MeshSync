@@ -19,11 +19,13 @@ bool Points::isGeometry() const { return true; }
 
 void Points::serialize(std::ostream& os) const
 {
+    super::serialize(os);
     EachMember(msWrite);
 }
 
 void Points::deserialize(std::istream& is)
 {
+    super::deserialize(is);
     EachMember(msRead);
 }
 

@@ -1632,8 +1632,11 @@ namespace UTJ.MeshSync
             }
             else if (src.dataType == EntityType.Mesh)
             {
-                var srcsmr = srcgo.GetComponent<SkinnedMeshRenderer>();
-                if (srcsmr != null)
+                var mesh = src.mesh;
+                var srcmr = src.meshRenderer;
+                var srcsmr = src.skinnedMeshRenderer;
+
+                if (mesh != null)
                 {
                     // disable GameObject while updating mesh and materials
                     bool active = dstgo.activeSelf;
@@ -1644,17 +1647,36 @@ namespace UTJ.MeshSync
                     {
                         if (m_syncVisibility)
                             dstpr.enabled = dst.visible;
-                        dstpr.sharedMesh = srcsmr.sharedMesh;
+                        dstpr.sharedMesh = mesh;
 
-                        var materials = srcsmr.sharedMaterials;
-                        for (int i = 0; i < materials.Length; ++i)
-                            materials[i].enableInstancing = true;
-                        dstpr.sharedMaterials = materials;
+                        if (dstpr.sharedMaterials == null || dstpr.sharedMaterials.Length == 0)
+                        {
+                            Material[] materials = null;
+                            if (srcmr != null)
+                                materials = srcmr.sharedMaterials;
+                            else if (srcsmr != null)
+                                materials = srcsmr.sharedMaterials;
+
+                            if (materials != null)
+                            {
+                                foreach (var m in materials)
+                                    m.enableInstancing = true;
+                                dstpr.sharedMaterials = materials;
+                            }
+                        }
                     }
-                    else
+                    else if (srcmr != null)
+                    {
+                        var dstmr = Misc.GetOrAddComponent<MeshRenderer>(dstgo);
+                        var dstmf = Misc.GetOrAddComponent<MeshFilter>(dstgo);
+                        if (m_syncVisibility)
+                            dstmr.enabled = dst.visible;
+                        dstmf.sharedMesh = mesh;
+                        dstmr.sharedMaterials = srcsmr.sharedMaterials;
+                    }
+                    else if (srcsmr != null)
                     {
                         var dstsmr = Misc.GetOrAddComponent<SkinnedMeshRenderer>(dstgo);
-                        var mesh = srcsmr.sharedMesh;
                         if (m_syncVisibility)
                             dstsmr.enabled = dst.visible;
                         dstsmr.sharedMesh = mesh;
@@ -1662,27 +1684,25 @@ namespace UTJ.MeshSync
                         dstsmr.bones = srcsmr.bones;
                         dstsmr.rootBone = srcsmr.rootBone;
                         dstsmr.updateWhenOffscreen = srcsmr.updateWhenOffscreen;
-                        if (mesh != null)
-                        {
-                            int blendShapeCount = mesh.blendShapeCount;
-                            for (int bi = 0; bi < blendShapeCount; ++bi)
-                                dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
-                        }
 
-                        // handle mesh collider
-                        if (m_updateMeshColliders)
+                        int blendShapeCount = mesh.blendShapeCount;
+                        for (int bi = 0; bi < blendShapeCount; ++bi)
+                            dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
+                    }
+
+                    // handle mesh collider
+                    if (m_updateMeshColliders)
+                    {
+                        var srcmc = srcgo.GetComponent<MeshCollider>();
+                        if (srcmc != null && srcmc.sharedMesh == mesh)
                         {
-                            var srcmc = srcgo.GetComponent<MeshCollider>();
-                            if (srcmc != null && srcmc.sharedMesh == mesh)
-                            {
-                                var dstmc = Misc.GetOrAddComponent<MeshCollider>(dstgo);
-                                dstmc.enabled = srcmc.enabled;
-                                dstmc.isTrigger = srcmc.isTrigger;
-                                dstmc.sharedMaterial = srcmc.sharedMaterial;
-                                dstmc.sharedMesh = mesh;
-                                dstmc.convex = srcmc.convex;
-                                dstmc.cookingOptions = srcmc.cookingOptions;
-                            }
+                            var dstmc = Misc.GetOrAddComponent<MeshCollider>(dstgo);
+                            dstmc.enabled = srcmc.enabled;
+                            dstmc.isTrigger = srcmc.isTrigger;
+                            dstmc.sharedMaterial = srcmc.sharedMaterial;
+                            dstmc.sharedMesh = mesh;
+                            dstmc.convex = srcmc.convex;
+                            dstmc.cookingOptions = srcmc.cookingOptions;
                         }
                     }
 

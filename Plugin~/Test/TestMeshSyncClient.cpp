@@ -219,9 +219,9 @@ TestCase(Test_Points)
         node->reference = "/Test/PointMesh";
         node->position = { -2.5f, 0.0f, 0.0f };
 
-        int c = 100;
-        node->points.resize_discard(c);
-        for (int i = 0; i < c;++i) {
+        int N = 100;
+        node->points.resize_discard(N);
+        for (int i = 0; i < N;++i) {
             node->points[i] = { rand.f11(), rand.f11(), rand.f11() };
         }
         node->setupPointsDataFlags();
@@ -234,10 +234,10 @@ TestCase(Test_Points)
         node->reference = "/Test/PointMesh";
         node->position = { 0.0f, 0.0f, 0.0f };
 
-        int c = 100;
-        node->points.resize_discard(c);
-        node->rotations.resize_discard(c);
-        for (int i = 0; i < c; ++i) {
+        int N = 100;
+        node->points.resize_discard(N);
+        node->rotations.resize_discard(N);
+        for (int i = 0; i < N; ++i) {
             node->points[i] = { rand.f11(), rand.f11(), rand.f11() };
             node->rotations[i] = rotate(rand.v3n(), rand.f11() * mu::PI);
         }
@@ -251,34 +251,35 @@ TestCase(Test_Points)
         node->reference = "/Test/PointMesh";
         node->position = { 2.5f, 0.0f, 0.0f };
 
-        int num_points = 100;
-        int num_frames = 100;
-
-        RawVector<float3> points(num_points);
-        RawVector<quatf> rotations(num_points);
-        RawVector<float3> scales(num_points);
-        RawVector<float3> velocities(num_points);
-        RawVector<float4> colors(num_points);
-
-        for (int i = 0; i < num_points; ++i) {
-            points[i] = { rand.f11(), rand.f11(), rand.f11() };
-            rotations[i] = rotate(rand.v3n(), rand.f11() * mu::PI);
-            scales[i] = { rand.f01(), rand.f01(), rand.f01() };
-            velocities[i] = float3{ rand.f11(), rand.f11(), rand.f11() } *0.1f;
-            colors[i] = { rand.f01(), rand.f01(), rand.f01() };
+        int N = 100;
+        node->points.resize_discard(N);
+        node->rotations.resize_discard(N);
+        node->scales.resize_discard(N);
+        node->colors.resize_discard(N);
+        node->velocities.resize_discard(N);
+        for (int i = 0; i < N; ++i) {
+            node->points[i] = { rand.f11(), rand.f11(), rand.f11() };
+            node->rotations[i] = rotate(rand.v3n(), rand.f11() * mu::PI);
+            node->scales[i] = { rand.f01(), rand.f01(), rand.f01() };
+            node->colors[i] = { rand.f01(), rand.f01(), rand.f01() };
+            node->velocities[i] = float3{ rand.f11(), rand.f11(), rand.f11() } *0.1f;
         }
+        node->setupPointsDataFlags();
 
-        for (int fi = 0; fi < num_frames; ++fi) {
-            node->points = points;
-            node->rotations = rotations;
-            node->scales = scales;
-            node->velocities = velocities;
-            node->colors = colors;
-            for (int i = 0; i < num_points; ++i)
-                points[i] += velocities[i];
+    }
+    Send(scene);
 
-            node->setupPointsDataFlags();
+    // animation
+    {
+        const int F = 20;
+        auto node = std::static_pointer_cast<ms::Points>(scene->entities.back());
+
+        for (int fi = 0; fi < F; ++fi) {
+            for (int i = 0; i < node->points.size(); ++i)
+                node->points[i] += node->velocities[i];
+
             Send(scene);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 }
