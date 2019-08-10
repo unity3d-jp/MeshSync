@@ -171,6 +171,11 @@ uint64_t Points::checksumGeom() const
     return ret;
 }
 
+uint64_t Points::vertexCount() const
+{
+    return points.size();
+}
+
 EntityPtr Points::clone(bool detach_)
 {
     auto ret = create();

@@ -64,19 +64,6 @@ bool OSceneCacheImpl::valid() const
     return m_ost && (*m_ost);
 }
 
-static size_t vertex_count(TransformPtr& e)
-{
-    switch (e->getType()) {
-    case EntityType::Mesh:
-        return static_cast<Mesh&>(*e).points.size();
-    case EntityType::Points:
-        // todo
-        return 0;
-    default:
-        return 0;
-    }
-}
-
 static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments)
 {
     auto scene_settings = base->settings;
@@ -117,7 +104,7 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
                 }
             }
             segments[idx]->entities.push_back(entity);
-            vertex_counts[idx] += vertex_count(entity);
+            vertex_counts[idx] += entity->vertexCount();
         };
 
         std::vector<TransformPtr> geometries;
@@ -126,7 +113,8 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
             if (e->isGeometry())
                 geometries.push_back(e);
         }
-        std::sort(geometries.begin(), geometries.end(), [](auto& a, auto& b) { return vertex_count(a) > vertex_count(b);  });
+        std::sort(geometries.begin(), geometries.end(),
+            [](auto& a, auto& b) { return a->vertexCount() > b->vertexCount();  });
         for (auto& g : geometries)
             add_geometry(g);
     }
@@ -147,7 +135,7 @@ void OSceneCacheImpl::addScene(ScenePtr scene, float time)
 
     rec.task = std::async(std::launch::async, [this, &rec]() {
         {
-            msDbgTimer("OSceneCacheImpl: [%d] scene optimization", rec.index);
+            msProfileScope("OSceneCacheImpl: [%d] scene optimization", rec.index);
 
             auto& scene = rec.scene;
             std::sort(scene->entities.begin(), scene->entities.end(), [](auto& a, auto& b) { return a->id < b->id; });
@@ -204,7 +192,7 @@ void OSceneCacheImpl::addScene(ScenePtr scene, float time)
 
         for (auto& seg : rec.segments) {
             seg.task = std::async(std::launch::async, [this, &rec, &seg]() {
-                msDbgTimer("OSceneCacheImpl: [%d] serialize & encode segment (%d)", rec.index, seg.index);
+                msProfileScope("OSceneCacheImpl: [%d] serialize & encode segment (%d)", rec.index, seg.index);
 
                 MemoryStream scene_buf;
                 seg.segment->serialize(scene_buf);
@@ -299,7 +287,7 @@ void OSceneCacheImpl::doWrite()
                     total_buffer_size += seg.encoded_buf.size();
                 }
 
-                msDbgTimer("OSceneCacheImpl: [%d] write (%u byte)", rec.index, (uint32_t)total_buffer_size);
+                msProfileScope("OSceneCacheImpl: [%d] write (%u byte)", rec.index, (uint32_t)total_buffer_size);
 
                 CacheFileSceneHeader header;
                 header.buffer_count = (uint32_t)buffer_sizes.size();

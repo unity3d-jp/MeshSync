@@ -1,9 +1,21 @@
+#include "muDebugTimer.h"
 #include "pch.h"
 #include "muDebugTimer.h"
 
 namespace mu {
 
-ScopedTimer::ScopedTimer(const char *mes, ...)
+ScopedTimer::ScopedTimer()
+{
+    m_begin = Now();
+}
+
+float ScopedTimer::elapsed() const
+{
+    return NS2MS(Now() - m_begin);
+}
+
+
+ProfileTimer::ProfileTimer(const char *mes, ...)
 {
     va_list args;
     va_start(args, mes);
@@ -12,13 +24,12 @@ ScopedTimer::ScopedTimer(const char *mes, ...)
     va_end(args);
 
     m_message = buf;
-    m_begin = Now();
 }
 
-ScopedTimer::~ScopedTimer()
+ProfileTimer::~ProfileTimer()
 {
-    float elapsed = NS2MS(Now() - m_begin);
-    Print("%s - %.2fms\n", m_message.c_str(), elapsed);
+    float t = elapsed();
+    Print("%s - %.2fms\n", m_message.c_str(), t);
 }
 
 } // namespace mu

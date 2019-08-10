@@ -99,6 +99,8 @@ void Scene::merge(Scene& base)
 
 void Scene::diff(const Scene& s1, const Scene& s2)
 {
+    profile_data = s1.profile_data;
+
     size_t entity_count = s1.entities.size();
     if (entity_count == s2.entities.size()) {
         settings = s1.settings;
@@ -126,9 +128,11 @@ void Scene::diff(const Scene& s1, const Scene& s2)
 
 void Scene::lerp(const Scene& s1, const Scene& s2, float t)
 {
+    settings = s1.settings;
+    profile_data = s1.profile_data;
+
     size_t entity_count = s1.entities.size();
     if (entity_count == s2.entities.size()) {
-        settings = s1.settings;
         entities.resize(entity_count);
         parallel_for(0, (int)entity_count, 10, [this, &s1, &s2, t](int i) {
             auto& e1 = s1.entities[i];
@@ -157,6 +161,7 @@ void Scene::clear()
 
     scene_buffers.clear();
     data_sources.clear();
+    profile_data = {};
 }
 
 uint64_t Scene::hash() const

@@ -71,6 +71,7 @@ public:
     virtual uint64_t hash() const;
     virtual uint64_t checksumTrans() const;
     virtual uint64_t checksumGeom() const;
+    virtual uint64_t vertexCount() const;
     virtual std::shared_ptr<Entity> clone(bool detach = false);
 
     Identifier getIdentifier() const;

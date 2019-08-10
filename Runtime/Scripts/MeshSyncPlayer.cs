@@ -187,6 +187,7 @@ namespace UTJ.MeshSync
         [SerializeField] protected InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
         [SerializeField] protected ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
         [SerializeField] protected bool m_logging = true;
+        [SerializeField] protected bool m_profiling = false;
         [SerializeField] protected bool m_dontSaveAssetsInScene = false;
 
         [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
@@ -307,6 +308,11 @@ namespace UTJ.MeshSync
         {
             get { return m_logging; }
             set { m_logging = value; }
+        }
+        public bool profiling
+        {
+            get { return m_profiling; }
+            set { m_profiling = value; }
         }
 
         public bool dontSaveAssetsInScene
@@ -1965,10 +1971,15 @@ namespace UTJ.MeshSync
             int materialCount = Mathf.Min(m_materialList.Count, ml.materials.Count);
             for (int mi = 0; mi < materialCount; ++mi)
             {
-                if (ml.materials[mi].material != null)
+                var src = ml.materials[mi];
+                if (src.material != null)
                 {
-                    m_materialList[mi].material = ml.materials[mi].material;
-                    updated = true;
+                    var dst = m_materialList.Find(a => a.id == src.id);
+                    if (dst != null)
+                    {
+                        dst.material = src.material;
+                        updated = true;
+                    }
                 }
             }
             if (updated)

@@ -8,9 +8,9 @@
 namespace ms {
 
 #ifdef msDbgEnableProfile
-    #define msDbgTimer(Message, ...) mu::ScopedTimer _dbg_timer(Message, __VA_ARGS__)
+    #define msProfileScope(Message, ...) mu::ProfileTimer _prof_timer(Message, __VA_ARGS__)
 #else // msDbgEnableProfile
-    #define msDbgTimer(Message, ...)
+    #define msProfileScope(Message, ...)
 #endif // msDbgEnableProfile
 
 } // namespace ms

@@ -61,6 +61,7 @@ namespace UTJ.MeshSyncEditor
             //EditorGUILayout.PropertyField(so.FindProperty("m_trackMaterialAssignment"));
             EditorGUILayout.PropertyField(so.FindProperty("m_progressiveDisplay"));
             EditorGUILayout.PropertyField(so.FindProperty("m_logging"));
+            EditorGUILayout.PropertyField(so.FindProperty("m_profiling"));
             EditorGUILayout.Space();
         }
 

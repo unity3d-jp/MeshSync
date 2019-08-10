@@ -385,6 +385,11 @@ uint64_t Mesh::checksumGeom() const
     return ret;
 }
 
+uint64_t Mesh::vertexCount() const
+{
+    return points.size();
+}
+
 EntityPtr Mesh::clone(bool detach_)
 {
     auto ret = create();

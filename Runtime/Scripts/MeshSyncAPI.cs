@@ -13,8 +13,24 @@ using UnityEditor;
 
 namespace UTJ.MeshSync
 {
+    public static class Lib
+    {
+        #region internal
+        public const string name = "MeshSyncServer";
+        [DllImport(name)] static extern int msGetPluginVersion();
+        [DllImport(name)] static extern int msGetProtocolVersion();
+        #endregion
+
+        public static int pluginVersion { get { return msGetPluginVersion(); } }
+        public static int protocolVersion { get { return msGetProtocolVersion(); } }
+    }
+
     public static partial class Misc
     {
+        #region internal
+        [DllImport(Lib.name)] static extern ulong msGetTime();
+        #endregion
+
         public const int InvalidID = -1;
 
         public static uint maxVerticesPerMesh
@@ -39,7 +55,12 @@ namespace UTJ.MeshSync
 #endif
             }
         }
+        public static ulong GetTimeNS() { return msGetTime(); }
 
+        public static float NS2MS(ulong ns)
+        {
+            return (float)((double)ns / 1000000.0);
+        }
 
         public static string S(IntPtr cstring)
         {
@@ -263,18 +284,6 @@ namespace UTJ.MeshSync
             return union.pointer;
         }
 #endif
-    }
-
-    public static class Lib
-    {
-        #region internal
-        public const string name = "MeshSyncServer";
-        [DllImport(name)] static extern int msGetPluginVersion();
-        [DllImport(name)] static extern int msGetProtocolVersion();
-        #endregion
-
-        public static int pluginVersion { get { return msGetPluginVersion(); } }
-        public static int protocolVersion { get { return msGetProtocolVersion(); } }
     }
 
     public struct TimeRange
@@ -2305,6 +2314,18 @@ namespace UTJ.MeshSync
 
 
     #region Scene
+    public struct SceneProfileData
+    {
+        public ulong sizeEncoded;
+        public ulong sizeDecoded;
+        public ulong vertexCount;
+        public float loadTime;      // in ms
+        public float readTime;      // in ms
+        public float decodeTime;    // in ms
+        public float setupTime;     // in ms
+        public float lerpTime;      // in ms
+    };
+
     public struct SceneData
     {
         #region internal
@@ -2315,6 +2336,7 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern TransformData msSceneGetEntity(IntPtr self, int i);
         [DllImport(Lib.name)] static extern int msSceneGetNumConstraints(IntPtr self);
         [DllImport(Lib.name)] static extern ConstraintData msSceneGetConstraint(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern SceneProfileData msSceneGetProfileData(IntPtr self);
         #endregion
 
         public static implicit operator bool(SceneData v) { return v.self != IntPtr.Zero; }
@@ -2322,6 +2344,7 @@ namespace UTJ.MeshSync
         public int numAssets { get { return msSceneGetNumAssets(self); } }
         public int numEntities { get { return msSceneGetNumEntities(self); } }
         public int numConstraints { get { return msSceneGetNumConstraints(self); } }
+        public SceneProfileData profileData { get { return msSceneGetProfileData(self); } }
 
         public AssetData GetAsset(int i) { return msSceneGetAsset(self, i); }
         public TransformData GetEntity(int i) { return msSceneGetEntity(self, i); }

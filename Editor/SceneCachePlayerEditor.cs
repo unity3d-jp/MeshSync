@@ -80,6 +80,13 @@ namespace UTJ.MeshSyncEditor
             EditorGUILayout.Space();
 
             MeshSyncServerEditor.DrawPlayerSettings(t, so);
+
+            if (t.profiling)
+            {
+                EditorGUILayout.TextArea(t.dbgProfileReport, GUILayout.Height(120));
+                EditorGUILayout.Space();
+            }
+
             MeshSyncServerEditor.DrawMaterialList(t);
             MeshSyncServerEditor.DrawTextureList(t);
 

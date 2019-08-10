@@ -60,6 +60,7 @@ public:
     void clear() override;
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;
+    uint64_t vertexCount() const override;
     EntityPtr clone(bool detach = false) override;
 
     void setupPointsDataFlags();

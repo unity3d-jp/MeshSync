@@ -820,4 +820,9 @@ msAPI int               msSceneGetNumEntities(ms::Scene *self)         { return 
 msAPI ms::Transform*    msSceneGetEntity(ms::Scene *self, int i)       { return self->entities[i].get(); }
 msAPI int               msSceneGetNumConstraints(ms::Scene *self)      { return (int)self->constraints.size(); }
 msAPI ms::Constraint*   msSceneGetConstraint(ms::Scene *self, int i)   { return self->constraints[i].get(); }
+msAPI ms::SceneProfileData msSceneGetProfileData(ms::Scene *self) { return self->profile_data; }
+#pragma endregion
+
+#pragma region Misc
+msAPI uint64_t msGetTime() { return ms::Now(); }
 #pragma endregion

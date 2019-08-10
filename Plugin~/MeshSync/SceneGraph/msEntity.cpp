@@ -146,6 +146,11 @@ uint64_t Entity::checksumGeom() const
     return 0;
 }
 
+uint64_t Entity::vertexCount() const
+{
+    return 0;
+}
+
 EntityPtr Entity::clone(bool /*detach*/)
 {
     auto ret = create();
