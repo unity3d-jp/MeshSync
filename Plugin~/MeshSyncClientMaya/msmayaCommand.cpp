@@ -193,7 +193,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
         else {\
             get_arg(Value, Name, args);\
             if (settings.auto_sync && Sync)\
-                msmayaGetContext().sendObjects(msmayaContext::SendScope::All, false);\
+                msmayaGetContext().sendObjects(msmayaObjectScope::All, false);\
         }\
     }
 
@@ -251,31 +251,31 @@ MStatus CmdExport::doIt(const MArgList& args_)
     MStatus status;
     MArgParser args(syntax(), args_, &status);
 
-    auto target = msmayaContext::SendTarget::Objects;
-    auto scope = msmayaContext::SendScope::All;
+    auto target = msmayaExportTarget::Objects;
+    auto scope = msmayaObjectScope::All;
 
     // parse args
     if (args.isFlagSet("target")) {
         std::string t;
         get_arg(t, "target", args);
         if (t == "objects")
-            target = msmayaContext::SendTarget::Objects;
+            target = msmayaExportTarget::Objects;
         else if (t == "materials")
-            target = msmayaContext::SendTarget::Materials;
+            target = msmayaExportTarget::Materials;
         else if (t == "animations")
-            target = msmayaContext::SendTarget::Animations;
+            target = msmayaExportTarget::Animations;
         else if (t == "everything")
-            target = msmayaContext::SendTarget::Everything;
+            target = msmayaExportTarget::Everything;
     }
     if (args.isFlagSet("scope")) {
         std::string s;
         get_arg(s, "scope", args);
         if (s == "all")
-            scope = msmayaContext::SendScope::All;
+            scope = msmayaObjectScope::All;
         else if (s == "selection")
-            scope = msmayaContext::SendScope::Selected;
+            scope = msmayaObjectScope::Selected;
         else if (s == "updated")
-            scope = msmayaContext::SendScope::Updated;
+            scope = msmayaObjectScope::Updated;
     }
 
     // do send
@@ -285,19 +285,19 @@ MStatus CmdExport::doIt(const MArgList& args_)
         return MStatus::kFailure;
     }
 
-    if (target == msmayaContext::SendTarget::Objects) {
+    if (target == msmayaExportTarget::Objects) {
         inst.wait();
         inst.sendObjects(scope, true);
     }
-    else if (target == msmayaContext::SendTarget::Materials) {
+    else if (target == msmayaExportTarget::Materials) {
         inst.wait();
         inst.sendMaterials(true);
     }
-    else if (target == msmayaContext::SendTarget::Animations) {
+    else if (target == msmayaExportTarget::Animations) {
         inst.wait();
         inst.sendAnimations(scope);
     }
-    else if (target == msmayaContext::SendTarget::Everything) {
+    else if (target == msmayaExportTarget::Everything) {
         inst.wait();
         inst.sendMaterials(true);
         inst.wait();

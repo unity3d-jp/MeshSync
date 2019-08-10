@@ -195,12 +195,12 @@ void msmayaContext::onSceneLoadEnd()
 void msmayaContext::onTimeChange(const MTime & time)
 {
     if (m_settings.auto_sync) {
-        m_pending_scope = SendScope::All;
+        m_pending_scope = msmayaObjectScope::All;
         // timer callback won't be fired while scrubbing time slider. so call update() immediately
         update();
 
         // for timer callback
-        m_pending_scope = SendScope::All;
+        m_pending_scope = msmayaObjectScope::All;
     }
 }
 
@@ -404,6 +404,44 @@ void msmayaContext::removeNodeCallbacks()
     }
 }
 
+std::vector<TreeNode*> msmayaContext::getNodes(msmayaObjectScope scope)
+{
+    std::vector<TreeNode*> ret;
+    switch (scope) {
+    case msmayaObjectScope::All:
+        {
+            size_t n = m_tree_nodes.size();
+            ret.resize(n);
+            for (size_t i = 0; i < n; ++i)
+                ret[i] = m_tree_nodes[i].get();
+        }
+        break;
+    case msmayaObjectScope::Updated:
+        for (auto& kvp : m_dag_nodes) {
+            auto& rec = kvp.second;
+            if (rec.dirty) {
+                ret.insert(ret.end(), rec.branches.begin(), rec.branches.end());
+            }
+        }
+        break;
+    case msmayaObjectScope::Selected:
+        {
+
+            MSelectionList selected;
+            MGlobal::getActiveSelectionList(selected);
+            uint32_t n = selected.length();
+            for (uint32_t i = 0; i < n; ++i) {
+                MObject obj;
+                selected.getDependNode(i, obj);
+                auto it = m_dag_nodes.find(obj);
+                if (it != m_dag_nodes.end())
+                    ret.insert(ret.end(), it->second.branches.begin(), it->second.branches.end());
+            }
+        }
+        break;
+    }
+    return ret;
+}
 
 void msmayaContext::constructTree()
 {
@@ -505,19 +543,19 @@ bool msmayaContext::sendMaterials(bool dirty_all)
     exportMaterials();
 
     // send
-    kickAsyncSend();
+    kickAsyncExport();
     return true;
 }
 
-bool msmayaContext::sendObjects(SendScope scope, bool dirty_all)
+bool msmayaContext::sendObjects(msmayaObjectScope scope, bool dirty_all)
 {
     if (m_sender.isExporting()) {
         m_pending_scope = scope;
         return false;
     }
-    m_pending_scope = SendScope::None;
+    m_pending_scope = msmayaObjectScope::None;
 
-    if (scope == SendScope::All) {
+    if (scope == msmayaObjectScope::All) {
         m_entity_manager.clearEntityRecords();
     }
 
@@ -537,7 +575,7 @@ bool msmayaContext::sendObjects(SendScope scope, bool dirty_all)
         rec.dirty = false;
     };
 
-    if (scope == SendScope::All) {
+    if (scope == msmayaObjectScope::All) {
         //EnumerateAllNode([](MObject& obj) { PrintNodeInfo(obj); });
 
         auto handler = [&](MObject& node) {
@@ -548,14 +586,14 @@ bool msmayaContext::sendObjects(SendScope scope, bool dirty_all)
         EnumerateNode(MFn::kLight, handler);
         EnumerateNode(MFn::kMesh, handler);
     }
-    else if (scope == SendScope::Updated) {
+    else if (scope == msmayaObjectScope::Updated) {
         for (auto& kvp : m_dag_nodes) {
             auto& rec = kvp.second;
             if (rec.dirty)
                 export_branches(rec, false);
         }
     }
-    else if (scope == SendScope::Selected) {
+    else if (scope == msmayaObjectScope::Selected) {
         MSelectionList list;
         MGlobal::getActiveSelectionList(list);
         uint32_t n = list.length();
@@ -567,7 +605,7 @@ bool msmayaContext::sendObjects(SendScope scope, bool dirty_all)
     }
 
     if (num_exported > 0 || !m_entity_manager.getDeleted().empty()) {
-        kickAsyncSend();
+        kickAsyncExport();
         return true;
     }
     else {
@@ -575,13 +613,107 @@ bool msmayaContext::sendObjects(SendScope scope, bool dirty_all)
     }
 }
 
-bool msmayaContext::sendAnimations(SendScope scope)
+bool msmayaContext::sendAnimations(msmayaObjectScope scope)
 {
     if (m_sender.isExporting())
         return false;
 
     if (exportAnimations(scope) > 0)
-        kickAsyncSend();
+        kickAsyncExport();
+    return true;
+}
+
+bool msmayaContext::exportCache(const msmayaCacheExportSettings& cache_settings)
+{
+    float frame_rate = (float)MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
+    float samples_per_second = frame_rate;
+    float frame_to_second = 1.0f / frame_rate;
+
+    auto settings_old = m_settings;
+    m_settings.export_cache = true;
+    m_settings.make_double_sided = cache_settings.make_double_sided;
+    m_settings.bake_deformers = cache_settings.bake_deformers;
+    m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
+
+    ms::OSceneCacheSettings oscs;
+    oscs.sample_rate = samples_per_second;
+    oscs.encoder_settings.zstd.compression_level = cache_settings.zstd_compression_level;
+    oscs.flatten_hierarchy = cache_settings.flatten_hierarchy;
+    oscs.strip_normals = cache_settings.strip_normals;
+    oscs.strip_tangents = cache_settings.strip_tangents;
+
+    if (!m_cache_writer.open(cache_settings.path.c_str(), oscs)) {
+        m_settings = settings_old;
+        return false;
+    }
+
+    m_material_manager.setAlwaysMarkDirty(true);
+    m_entity_manager.setAlwaysMarkDirty(true);
+    m_texture_manager.clearDirtyFlags();
+
+    int scene_index = 0;
+    auto material_range = cache_settings.material_frame_range;
+    auto nodes = getNodes(cache_settings.object_scope);
+
+    auto do_export = [&]() {
+        if (scene_index == 0) {
+            // exportMaterials() is needed to export material IDs in meshes
+            exportMaterials();
+            if (material_range == msmayaMaterialFrameRange::None)
+                m_material_manager.clearDirtyFlags();
+        }
+        else {
+            if (material_range == msmayaMaterialFrameRange::AllFrames)
+                exportMaterials();
+        }
+
+        for (auto& n : nodes)
+            exportObject(n, true);
+
+        kickAsyncExport();
+        ++scene_index;
+    };
+
+    if (cache_settings.frame_range == msmayaFrameRange::CurrentFrame) {
+        m_anim_time = 0.0f;
+        do_export();
+    }
+    else {
+        MTime time_current = MAnimControl::currentTime();
+        MTime interval = MTime(1.0 / std::max(m_settings.animation_sps, 0.01f), MTime::kSeconds);
+        MTime time_start, time_end;
+
+        // time range
+        if (cache_settings.frame_range == msmayaFrameRange::CustomRange) {
+            // custom frame range
+            time_start = MTime(cache_settings.frame_begin, MTime::uiUnit());
+            time_end = MTime(cache_settings.frame_end, MTime::uiUnit());
+        }
+        else {
+            // all active frames
+            time_start = MAnimControl::minTime();
+            time_end = MAnimControl::maxTime();
+        }
+        time_end = std::max(time_end, time_start); // sanitize
+
+        // advance frame and record
+        m_ignore_update = true;
+        for (MTime t = time_start;;) {
+            m_anim_time = (float)(t - time_start).as(MTime::kSeconds) * m_settings.animation_time_scale;
+            MGlobal::viewFrame(t);
+            do_export();
+
+            if (t >= time_end)
+                break;
+            else
+                t = std::min(t + interval, time_end);
+        }
+        MGlobal::viewFrame(time_current);
+        m_ignore_update = false;
+    }
+
+    m_settings = settings_old;
+    m_cache_writer.close();
     return true;
 }
 
@@ -601,20 +733,20 @@ void msmayaContext::update()
         constructTree();
         registerNodeCallbacks();
         if (m_settings.auto_sync) {
-            m_pending_scope = SendScope::All;
+            m_pending_scope = msmayaObjectScope::All;
         }
     }
 
-    if (m_pending_scope != SendScope::None) {
+    if (m_pending_scope != msmayaObjectScope::None) {
         sendObjects(m_pending_scope, false);
     }
     else if (m_settings.auto_sync) {
-        sendObjects(SendScope::Updated, false);
+        sendObjects(msmayaObjectScope::Updated, false);
     }
 }
 
 
-void msmayaContext::kickAsyncSend()
+void msmayaContext::kickAsyncExport()
 {
     // process parallel extract tasks
     if (!m_extract_tasks.empty()) {
@@ -642,9 +774,18 @@ void msmayaContext::kickAsyncSend()
         to_meter = (float)dist.asMeters();
     }
 
-    m_sender.on_prepare = [this, to_meter]() {
-        auto& t = m_sender;
-        t.client_settings = m_settings.client_settings;
+    using Exporter = ms::AsyncSceneExporter;
+    Exporter *exporter = m_settings.export_cache ? (Exporter*)&m_cache_writer : (Exporter*)&m_sender;
+
+    exporter->on_prepare = [this, to_meter, exporter]() {
+        if (auto sender = dynamic_cast<ms::AsyncSceneSender*>(exporter)) {
+            sender->client_settings = m_settings.client_settings;
+        }
+        else if (auto writer = dynamic_cast<ms::AsyncSceneCacheWriter*>(exporter)) {
+            writer->time = m_anim_time;
+        }
+
+        auto& t = *exporter;
         t.scene_settings.handedness = ms::Handedness::Right;
         t.scene_settings.scale_factor = m_settings.scale_factor / to_meter;
 
@@ -657,14 +798,14 @@ void msmayaContext::kickAsyncSend()
         t.deleted_materials = m_material_manager.getDeleted();
         t.deleted_entities = m_entity_manager.getDeleted();
     };
-    m_sender.on_success = [this]() {
+    exporter->on_success = [this]() {
         m_material_ids.clearDirtyFlags();
         m_material_manager.clearDirtyFlags();
         m_texture_manager.clearDirtyFlags();
         m_entity_manager.clearDirtyFlags();
         m_animations.clear();
     };
-    m_sender.kick();
+    exporter->kick();
 }
 
 bool msmayaContext::recvObjects()
@@ -1587,7 +1728,7 @@ void msmayaContext::AnimationRecord::operator()(msmayaContext *_this)
 }
 
 
-int msmayaContext::exportAnimations(SendScope scope)
+int msmayaContext::exportAnimations(msmayaObjectScope scope)
 {
     // create default clip
     m_animations.clear();
@@ -1606,7 +1747,7 @@ int msmayaContext::exportAnimations(SendScope scope)
 
 
     // gather target data
-    if (scope == SendScope::Selected) {
+    if (scope == msmayaObjectScope::Selected) {
         MSelectionList list;
         MGlobal::getActiveSelectionList(list);
         for (uint32_t i = 0; i < list.length(); i++) {

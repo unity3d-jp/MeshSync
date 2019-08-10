@@ -81,6 +81,37 @@ struct TreeNode : public mu::noncopyable
 using TreeNodePtr = std::unique_ptr<TreeNode>;
 
 
+enum class msmayaExportTarget : int
+{
+    Objects,
+    Materials,
+    Animations,
+    Everything,
+};
+
+enum class msmayaObjectScope : int
+{
+    None,
+    All,
+    Updated,
+    Selected,
+};
+
+enum class msmayaFrameRange : int
+{
+    None,
+    CurrentFrame,
+    AllFrames,
+    CustomRange,
+};
+
+enum class msmayaMaterialFrameRange : int
+{
+    None,
+    OneFrame,
+    AllFrames,
+};
+
 struct msmayaSettings
 {
     ms::ClientSettings client_settings;
@@ -96,6 +127,7 @@ struct msmayaSettings
     bool sync_colors = true;
     bool make_double_sided = false;
     bool bake_deformers = false;
+    bool flatten_hierarchy = false;
     bool apply_tweak = false;
     bool sync_blendshapes = true;
     bool sync_bones = true;
@@ -112,26 +144,35 @@ struct msmayaSettings
     // import settings
     bool bake_skin = false;
     bool bake_cloth = false;
+
+    // cache
+    bool export_cache = false;
+};
+
+struct msmayaCacheExportSettings
+{
+    std::string path;
+    msmayaObjectScope object_scope = msmayaObjectScope::All;
+    msmayaFrameRange frame_range = msmayaFrameRange::CurrentFrame;
+    msmayaMaterialFrameRange material_frame_range = msmayaMaterialFrameRange::OneFrame;
+    int frame_begin = 0;
+    int frame_end = 100;
+
+    int zstd_compression_level = 3; // (min) 0 - 22 (max)
+    float samples_per_frame = 1.0f;
+
+    bool make_double_sided = false;
+    bool bake_deformers = true;
+    bool flatten_hierarchy = false;
+    bool merge_meshes = false;
+
+    bool strip_normals = false;
+    bool strip_tangents = true;
 };
 
 class msmayaContext
 {
 public:
-    enum class SendTarget : int
-    {
-        Objects,
-        Materials,
-        Animations,
-        Everything,
-    };
-    enum class SendScope : int
-    {
-        None,
-        All,
-        Updated,
-        Selected,
-    };
-
     static msmayaContext& getInstance();
     msmayaSettings& getSettings();
 
@@ -155,8 +196,9 @@ public:
     void wait();
     void update();
     bool sendMaterials(bool dirty_all);
-    bool sendObjects(SendScope scope, bool dirty_all);
-    bool sendAnimations(SendScope scope);
+    bool sendObjects(msmayaObjectScope scope, bool dirty_all);
+    bool sendAnimations(msmayaObjectScope scope);
+    bool exportCache(const msmayaCacheExportSettings& cache_settings);
 
     bool recvObjects();
 
@@ -194,6 +236,8 @@ private:
     void removeGlobalCallbacks();
     void removeNodeCallbacks();
 
+    std::vector<TreeNode*> getNodes(msmayaObjectScope scope);
+
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     void exportMaterials();
 
@@ -214,14 +258,14 @@ private:
         float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);
     void extractLightData(TreeNode *n, ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle);
 
-    int exportAnimations(SendScope scope);
+    int exportAnimations(msmayaObjectScope scope);
     bool exportAnimation(TreeNode *tn, bool force);
     void extractTransformAnimationData(ms::TransformAnimation& dst, TreeNode *n);
     void extractCameraAnimationData(ms::TransformAnimation& dst, TreeNode *n);
     void extractLightAnimationData(ms::TransformAnimation& dst, TreeNode *n);
     void extractMeshAnimationData(ms::TransformAnimation& dst, TreeNode *n);
 
-    void kickAsyncSend();
+    void kickAsyncExport();
 
 private:
     msmayaSettings m_settings;
@@ -242,8 +286,9 @@ private:
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
+    ms::AsyncSceneCacheWriter m_cache_writer;
 
-    SendScope m_pending_scope = SendScope::None;
+    msmayaObjectScope m_pending_scope = msmayaObjectScope::None;
     bool      m_scene_updated = true;
     bool      m_ignore_update = false;
     int       m_index_seed = 0;
