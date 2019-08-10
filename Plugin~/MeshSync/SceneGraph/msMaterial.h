@@ -58,7 +58,7 @@ public:
     template<class T> T& get() const;
     template<class T> T* getArray() const;
 
-    void copy(void *dst);
+    void copy(void *dst) const;
 };
 msSerializable(MaterialProperty);
 

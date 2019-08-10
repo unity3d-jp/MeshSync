@@ -85,16 +85,16 @@ struct MeshRefineSettings
     bool operator!=(const MeshRefineSettings& v) const;
 };
 
+enum class Topology : int
+{
+    Points,
+    Lines,
+    Triangles,
+    Quads,
+};
+
 struct SubmeshData
 {
-    enum class Topology : int
-    {
-        Points,
-        Lines,
-        Triangles,
-        Quads,
-    };
-
     // serializable
     int index_count = 0;
     int index_offset = 0;

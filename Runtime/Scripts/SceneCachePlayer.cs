@@ -188,7 +188,7 @@ namespace UTJ.MeshSync
                     sb.AppendFormat("Cache: {0:#.##}KB encoded, {1:#.##}KB decoded, ", sizeEncoded / 1000.0, prof.sizeDecoded / 1000.0);
                 else
                     sb.AppendFormat("Cache: {0}B encoded, {1}B decoded, ", sizeEncoded, prof.sizeDecoded);
-                sb.AppendFormat("{0}vert\n", prof.vertexCount);
+                sb.AppendFormat("{0} verts\n", prof.vertexCount);
             }
             sb.AppendFormat("Cache Load: {0:#.##}ms\n", prof.loadTime);
             double MBperSec = ((double)prof.sizeEncoded / 1000000.0) / (prof.readTime / 1000.0);

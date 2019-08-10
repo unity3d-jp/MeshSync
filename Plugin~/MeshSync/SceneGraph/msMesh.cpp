@@ -550,7 +550,7 @@ void Mesh::refine()
             SubmeshData sm;
             sm.index_count = src.index_count;
             sm.index_offset = src.index_offset;
-            sm.topology = (SubmeshData::Topology)src.topology;
+            sm.topology = (Topology)src.topology;
             sm.material_id = src.material_id;
             submeshes.push_back(sm);
         }

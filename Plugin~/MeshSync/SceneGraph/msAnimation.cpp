@@ -237,7 +237,7 @@ bool Animation::isRoot() const
     return path.find_last_of('/') == 0;
 }
 
-AnimationCurvePtr Animation::findCurve(const char *name)
+AnimationCurvePtr Animation::findCurve(const char *name) const
 {
     auto it = std::lower_bound(curves.begin(), curves.end(), name, [](auto& curve, auto name) {
         return std::strcmp(curve->name.c_str(), name) < 0;
@@ -246,12 +246,12 @@ AnimationCurvePtr Animation::findCurve(const char *name)
         return *it;
     return nullptr;
 }
-AnimationCurvePtr Animation::findCurve(const std::string& name)
+AnimationCurvePtr Animation::findCurve(const std::string& name) const
 {
     return findCurve(name.c_str());
 }
 
-AnimationCurvePtr Animation::findCurve(const char *name, DataType type)
+AnimationCurvePtr Animation::findCurve(const char *name, DataType type) const
 {
     auto ret = findCurve(name);
     if (ret && ret->data_type == type)
@@ -259,7 +259,7 @@ AnimationCurvePtr Animation::findCurve(const char *name, DataType type)
     return nullptr;
 }
 
-AnimationCurvePtr Animation::findCurve(const std::string& name, DataType type)
+AnimationCurvePtr Animation::findCurve(const std::string& name, DataType type) const
 {
     return findCurve(name.c_str(), type);
 }

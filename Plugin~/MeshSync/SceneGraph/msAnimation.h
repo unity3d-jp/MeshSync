@@ -113,10 +113,10 @@ public:
     void reserve(size_t n);
 
     bool isRoot() const;
-    AnimationCurvePtr findCurve(const char *name);
-    AnimationCurvePtr findCurve(const std::string& name);
-    AnimationCurvePtr findCurve(const char *name, DataType type);
-    AnimationCurvePtr findCurve(const std::string& name, DataType type);
+    AnimationCurvePtr findCurve(const char *name) const;
+    AnimationCurvePtr findCurve(const std::string& name) const;
+    AnimationCurvePtr findCurve(const char *name, DataType type) const;
+    AnimationCurvePtr findCurve(const std::string& name, DataType type) const;
     // erase old one if already exists
     AnimationCurvePtr addCurve(const char *name, DataType type);
     AnimationCurvePtr addCurve(const std::string& name, DataType type);

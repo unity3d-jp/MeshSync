@@ -18,75 +18,76 @@ msAPI int msIdentifierGetID(ms::Identifier *self)
 
 
 #pragma region Asset
-msAPI int               msAssetGetID(ms::Asset *self) { return self->id; }
+msAPI int               msAssetGetID(const ms::Asset *self) { return self->id; }
+msAPI const char*       msAssetGetName(const ms::Asset *self) { return self->name.c_str(); }
+msAPI ms::AssetType     msAssetGetType(const ms::Asset *self) { return self->getAssetType(); }
 msAPI void              msAssetSetID(ms::Asset *self, int v) { self->id = v; }
-msAPI const char*       msAssetGetName(ms::Asset *self) { return self->name.c_str(); }
 msAPI void              msAssetSetName(ms::Asset *self, const char *v) { self->name = v; }
-msAPI ms::AssetType     msAssetGetType(ms::Asset *self) { return self->getAssetType(); }
 #pragma endregion
 
 
 #pragma region FileAsset
 msAPI ms::FileAsset*    msFileAssetCreate() { return ms::FileAsset::create_raw(); }
-msAPI int               msFileAssetGetDataSize(ms::FileAsset *self) { return (int)self->data.size(); }
-msAPI const void*       msFileAssetGetDataPtr(ms::FileAsset *self, int v) { return self->data.cdata(); }
+msAPI int               msFileAssetGetDataSize(const ms::FileAsset *self) { return (int)self->data.size(); }
+msAPI const void*       msFileAssetGetDataPtr(const ms::FileAsset *self, int v) { return self->data.cdata(); }
+msAPI bool              msFileAssetWriteToFile(const ms::FileAsset *self, const char *v) { return self->writeToFile(v); }
 msAPI bool              msFileAssetReadFromFile(ms::FileAsset *self, const char *v) { return self->readFromFile(v); }
-msAPI bool              msFileAssetWriteToFile(ms::FileAsset *self, const char *v) { return self->writeToFile(v); }
 #pragma endregion
 
 
 #pragma region Audio
 msAPI ms::Audio*        msAudioCreate() { return ms::Audio::create_raw(); }
-msAPI ms::AudioFormat   msAudioGetFormat(ms::Audio *self) { return self->format; }
+msAPI ms::AudioFormat   msAudioGetFormat(const ms::Audio *self) { return self->format; }
+msAPI int               msAudioGetFrequency(const ms::Audio *self) { return self->frequency; }
+msAPI int               msAudioGetChannels(const ms::Audio *self) { return self->channels; }
+msAPI int               msAudioGetSampleLength(const ms::Audio *self) { return (int)self->getSampleLength(); }
+msAPI void              msAudioGetDataAsFloat(const ms::Audio *self, float *dst) { self->convertSamplesToFloat(dst); }
+msAPI bool              msAudioWriteToFile(const ms::Audio *self, const char *path) { return self->writeToFile(path); }
+msAPI bool              msAudioExportAsWave(const ms::Audio *self, const char *path) { return self->exportAsWave(path); }
 msAPI void              msAudioSetFormat(ms::Audio *self, ms::AudioFormat v) { self->format = v; }
-msAPI int               msAudioGetFrequency(ms::Audio *self) { return self->frequency; }
 msAPI void              msAudioSetFrequency(ms::Audio *self, int v) { self->frequency = v; }
-msAPI int               msAudioGetChannels(ms::Audio *self) { return self->channels; }
 msAPI void              msAudioSetChannels(ms::Audio *self, int v) { self->channels = v; }
-msAPI int               msAudioGetSampleLength(ms::Audio *self) { return (int)self->getSampleLength(); }
-msAPI void              msAudioGetDataAsFloat(ms::Audio *self, float *dst) { self->convertSamplesToFloat(dst); }
-msAPI bool              msAudioWriteToFile(ms::Audio *self, const char *path) { return self->writeToFile(path); }
-msAPI bool              msAudioExportAsWave(ms::Audio *self, const char *path) { return self->exportAsWave(path); }
 #pragma endregion
 
 
 #pragma region Texture
 msAPI ms::Texture*      msTextureCreate() { return ms::Texture::create_raw(); }
-msAPI ms::TextureType   msTextureGetType(ms::Texture *self) { return self->type; }
+msAPI ms::TextureType   msTextureGetType(const ms::Texture *self) { return self->type; }
+msAPI ms::TextureFormat msTextureGetFormat(const ms::Texture *self) { return self->format; }
+msAPI int               msTextureGetWidth(const ms::Texture *self) { return self->width; }
+msAPI int               msTextureGetHeight(const ms::Texture *self) { return self->height; }
+msAPI void              msTextureGetData(const ms::Texture *self, void *v) { self->getData(v); }
+msAPI const void*       msTextureGetDataPtr(const ms::Texture *self) { return self->data.cdata(); }
+msAPI int               msTextureGetSizeInByte(const ms::Texture *self) { return (int)self->data.size(); }
+msAPI bool              msTextureWriteToFile(const ms::Texture *self, const char *path) { return self->writeToFile(path); }
 msAPI void              msTextureSetType(ms::Texture *self, ms::TextureType v) { self->type = v; }
-msAPI ms::TextureFormat msTextureGetFormat(ms::Texture *self) { return self->format; }
 msAPI void              msTextureSetFormat(ms::Texture *self, ms::TextureFormat v) { self->format = v; }
-msAPI int               msTextureGetWidth(ms::Texture *self) { return self->width; }
 msAPI void              msTextureSetWidth(ms::Texture *self, int v) { self->width = v; }
-msAPI int               msTextureGetHeight(ms::Texture *self) { return self->height; }
 msAPI void              msTextureSetHeight(ms::Texture *self, int v) { self->height = v; }
-msAPI void              msTextureGetData(ms::Texture *self, void *v) { self->getData(v); }
 msAPI void              msTextureSetData(ms::Texture *self, const void *v) { self->setData(v); }
-msAPI const void*       msTextureGetDataPtr(ms::Texture *self) { return self->data.cdata(); }
-msAPI int               msTextureGetSizeInByte(ms::Texture *self) { return (int)self->data.size(); }
-msAPI bool              msTextureWriteToFile(ms::Texture *self, const char *path) { return self->writeToFile(path); }
-msAPI bool              msWriteToFile(const char *path, const char *data, int size) { return ms::ByteArrayToFile(path, data, size); }
 #pragma endregion
 
 
 #pragma region Material
-msAPI const char*   msMaterialPropGetName(ms::MaterialProperty *self) { return self->name.c_str(); }
-msAPI ms::MaterialProperty::Type msMaterialPropGetType(ms::MaterialProperty *self) { return self->type; }
-msAPI int           msMaterialPropGetArrayLength(ms::MaterialProperty *self) { return (int)self->getArrayLength(); }
-msAPI void          msMaterialPropCopyData(ms::MaterialProperty *self, void *dst) { return self->copy(dst); }
+msAPI const char*   msMaterialPropGetName(const ms::MaterialProperty *self) { return self->name.c_str(); }
+msAPI ms::MaterialProperty::Type msMaterialPropGetType(const ms::MaterialProperty *self) { return self->type; }
+msAPI int           msMaterialPropGetArrayLength(const ms::MaterialProperty *self) { return (int)self->getArrayLength(); }
+msAPI void          msMaterialPropCopyData(const ms::MaterialProperty *self, void *dst) { return self->copy(dst); }
 
-msAPI const char*   msMaterialKeywordGetName(ms::MaterialKeyword *self) { return self->name.c_str(); }
-msAPI bool          msMaterialKeywordGetValue(ms::MaterialKeyword *self) { return self->value; }
+msAPI const char*   msMaterialKeywordGetName(const ms::MaterialKeyword *self) { return self->name.c_str(); }
+msAPI bool          msMaterialKeywordGetValue(const ms::MaterialKeyword *self) { return self->value; }
 
 msAPI ms::Material* msMaterialCreate() { return ms::Material::create_raw(); }
-msAPI int           msMaterialGetIndex(ms::Material *self) { return self->index; }
+msAPI int           msMaterialGetIndex(const ms::Material *self) { return self->index; }
+msAPI const char*   msMaterialGetShader(const ms::Material *self) { return self->shader.c_str(); }
 msAPI void          msMaterialSetIndex(ms::Material *self, int v) { self->index = v; }
-msAPI const char*   msMaterialGetShader(ms::Material *self) { return self->shader.c_str(); }
 msAPI void          msMaterialSetShader(ms::Material *self, const char *v) { self->shader = v; }
 
-msAPI int msMaterialGetNumParams(ms::Material *self) { return self->getPropertyCount(); }
-msAPI ms::MaterialProperty* msMaterialGetParam(ms::Material *self, int i) { return self->getProperty(i); }
-msAPI ms::MaterialProperty* msMaterialFindParam(ms::Material *self, const char *n) { return self->findProperty(n); }
+msAPI int msMaterialGetNumParams(const ms::Material *self) { return self->getPropertyCount(); }
+msAPI const ms::MaterialProperty* msMaterialGetParam(const ms::Material *self, int i) { return self->getProperty(i); }
+msAPI const ms::MaterialProperty* msMaterialFindParam(const ms::Material *self, const char *n) { return self->findProperty(n); }
+msAPI int msMaterialGetNumKeywords(const ms::Material *self) { return (int)self->keywords.size(); }
+msAPI const ms::MaterialKeyword* msMaterialGetKeyword(const ms::Material *self, int i) { return &self->keywords[i]; }
 msAPI void msMaterialSetInt(ms::Material *self, const char *n, int v) { self->addProperty({ n, v }); }
 msAPI void msMaterialSetFloat(ms::Material *self, const char *n, float v) { self->addProperty({ n, v }); }
 msAPI void msMaterialSetVector(ms::Material *self, const char *n, const float4 v) { self->addProperty({ n, v }); }
@@ -94,19 +95,16 @@ msAPI void msMaterialSetMatrix(ms::Material *self, const char *n, const float4x4
 msAPI void msMaterialSetFloatArray(ms::Material *self, const char *n, const float *v, int c) { self->addProperty({ n, v, (size_t)c }); }
 msAPI void msMaterialSetVectorArray(ms::Material *self, const char *n, const float4 *v, int c) { self->addProperty({ n, v, (size_t)c }); }
 msAPI void msMaterialSetMatrixArray(ms::Material *self, const char *n, const float4x4 *v, int c) { self->addProperty({ n, v, (size_t)c }); }
-
-msAPI int msMaterialGetNumKeywords(ms::Material *self) { return (int)self->keywords.size(); }
-msAPI ms::MaterialKeyword* msMaterialGetKeyword(ms::Material *self, int i) { return &self->keywords[i]; }
 msAPI void msMaterialAddKeyword(ms::Material *self, const char *name, bool v) { self->keywords.push_back({name, v}); }
 #pragma endregion
 
 
 #pragma region Animations
-msAPI const char*   msCurveGetName(ms::AnimationCurve *self) { return self->name.c_str(); }
-msAPI int           msCurveGetDataType(ms::AnimationCurve *self) { return (int)self->data_type; }
-msAPI int           msCurveGetDataFlags(ms::AnimationCurve *self) { return (int&)self->data_flags; }
-msAPI int           msCurveGetNumSamples(ms::AnimationCurve *self) { return self ? (int)self->size() : 0; }
-msAPI const char* msCurveGetBlendshapeName(ms::AnimationCurve *self)
+msAPI const char*   msCurveGetName(const ms::AnimationCurve *self) { return self->name.c_str(); }
+msAPI int           msCurveGetDataType(const ms::AnimationCurve *self) { return (int)self->data_type; }
+msAPI int           msCurveGetDataFlags(const ms::AnimationCurve *self) { return (int&)self->data_flags; }
+msAPI int           msCurveGetNumSamples(const ms::AnimationCurve *self) { return self ? (int)self->size() : 0; }
+msAPI const char* msCurveGetBlendshapeName(const ms::AnimationCurve *self)
 {
     static const size_t s_name_pos = std::strlen(mskMeshBlendshape) + 1; // +1 for trailing '.'
     if (ms::StartWith(self->name, mskMeshBlendshape))
@@ -114,13 +112,13 @@ msAPI const char* msCurveGetBlendshapeName(ms::AnimationCurve *self)
     return "";
 }
 
-msAPI const char*           msAnimationGetPath(ms::Animation *self) { return self->path.c_str(); }
-msAPI int                   msAnimationGetEntityType(ms::Animation *self) { return (int)self->entity_type; }
-msAPI int                   msAnimationGetNumCurves(ms::Animation *self) { return (int)self->curves.size(); }
-msAPI ms::AnimationCurve*   msAnimationGetCurve(ms::Animation *self, int i) { return self->curves[i].get(); }
-msAPI ms::AnimationCurve*   msAnimationFindCurve(ms::Animation *self, const char *name) { return self->findCurve(name).get(); }
+msAPI const char*           msAnimationGetPath(const ms::Animation *self) { return self->path.c_str(); }
+msAPI int                   msAnimationGetEntityType(const ms::Animation *self) { return (int)self->entity_type; }
+msAPI int                   msAnimationGetNumCurves(const ms::Animation *self) { return (int)self->curves.size(); }
+msAPI ms::AnimationCurve*   msAnimationGetCurve(const ms::Animation *self, int i) { return self->curves[i].get(); }
+msAPI ms::AnimationCurve*   msAnimationFindCurve(const ms::Animation *self, const char *name) { return self->findCurve(name).get(); }
 
-#define DefGetCurve(Name) msAPI ms::AnimationCurve* msAnimationGet##Name(ms::Animation *self) { return self->findCurve(msk##Name).get(); }
+#define DefGetCurve(Name) msAPI ms::AnimationCurve* msAnimationGet##Name(const ms::Animation *self) { return self->findCurve(msk##Name).get(); }
 DefGetCurve(TransformTranslation) // -> msAnimationGetTransformTranslation
 DefGetCurve(TransformRotation)
 DefGetCurve(TransformScale)
@@ -148,267 +146,119 @@ msAPI void msAnimationEachBlendshapeCurves(ms::Animation *self, msCurveCallback 
     });
 }
 
-msAPI float             msAnimationClipGetFrameRate(ms::AnimationClip *self) { return self->frame_rate; }
-msAPI int               msAnimationClipGetNumAnimations(ms::AnimationClip *self) { return (int)self->animations.size(); }
-msAPI ms::Animation*    msAnimationClipGetAnimationData(ms::AnimationClip *self, int i) { return self->animations[i].get(); }
+msAPI float             msAnimationClipGetFrameRate(const ms::AnimationClip *self) { return self->frame_rate; }
+msAPI int               msAnimationClipGetNumAnimations(const ms::AnimationClip *self) { return (int)self->animations.size(); }
+msAPI ms::Animation*    msAnimationClipGetAnimationData(const ms::AnimationClip *self, int i) { return self->animations[i].get(); }
 #pragma endregion
 
 
 #pragma region Transform
-msAPI ms::Transform* msTransformCreate()
-{
-    return ms::Transform::create_raw();
-}
-msAPI uint32_t msTransformGetDataFlags(ms::Transform *self)
-{
-    return (uint32_t&)self->td_flags;
-}
-msAPI ms::EntityType msTransformGetType(ms::Transform *self)
-{
-    return self->getType();
-}
-msAPI int msTransformGetID(ms::Transform *self)
-{
-    return self->host_id;
-}
-msAPI int msTransformGetHostID(ms::Transform *self)
-{
-    return self->host_id;
-}
-msAPI void msTransformSetHostID(ms::Transform *self, int v)
-{
-    self->host_id = v;
-}
-msAPI int msTransformGetIndex(ms::Transform *self)
-{
-    return self->index;
-}
-msAPI void msTransformSetIndex(ms::Transform *self, int v)
-{
-    self->index = v;
-}
-msAPI const char* msTransformGetPath(ms::Transform *self)
-{
-    return self->path.c_str();
-}
-msAPI void msTransformSetPath(ms::Transform *self, const char *v)
-{
-    self->path = v;
-}
-msAPI mu::float3 msTransformGetPosition(ms::Transform *self)
-{
-    return self->position;
-}
-msAPI void msTransformSetPosition(ms::Transform *self, mu::float3 v)
-{
-    self->position = v;
-}
-msAPI mu::quatf msTransformGetRotation(ms::Transform *self)
-{
-    return self->rotation;
-}
-msAPI void msTransformSetRotation(ms::Transform *self, mu::quatf v)
-{
-    self->rotation = v;
-}
-msAPI mu::float3 msTransformGetScale(ms::Transform *self)
-{
-    return self->scale;
-}
-msAPI void msTransformSetScale(ms::Transform *self, mu::float3 v)
-{
-    self->scale = v;
-}
-msAPI bool msTransformGetVisible(ms::Transform *self)
-{
-    return self->visible;
-}
-msAPI void msTransformSetVisible(ms::Transform *self, bool v)
-{
-    self->visible = v;
-}
-msAPI bool msTransformGetVisibleHierarchy(ms::Transform *self)
-{
-    return self->visible_hierarchy;
-}
-msAPI void msTransformSetVisibleHierarchy(ms::Transform *self, bool v)
-{
-    self->visible_hierarchy = v;
-}
-msAPI const char* msTransformGetReference(ms::Transform *self)
-{
-    return self->reference.c_str();
-}
-msAPI void msTransformSetReference(ms::Transform *self, const char *v)
-{
-    self->reference = v;
-}
+msAPI ms::Transform* msTransformCreate() { return ms::Transform::create_raw(); }
+msAPI uint32_t msTransformGetDataFlags(const ms::Transform *self) { return (uint32_t&)self->td_flags; }
+msAPI ms::EntityType msTransformGetType(const ms::Transform *self) { return self->getType(); }
+msAPI int msTransformGetID(const ms::Transform *self) { return self->host_id; }
+msAPI int msTransformGetHostID(const ms::Transform *self) { return self->host_id; }
+msAPI int msTransformGetIndex(const ms::Transform *self) { return self->index; }
+msAPI const char* msTransformGetPath(const ms::Transform *self) { return self->path.c_str(); }
+msAPI mu::float3 msTransformGetPosition(const ms::Transform *self) { return self->position; }
+msAPI mu::quatf msTransformGetRotation(const ms::Transform *self) { return self->rotation; }
+msAPI mu::float3 msTransformGetScale(const ms::Transform *self) { return self->scale; }
+msAPI bool msTransformGetVisible(const ms::Transform *self) { return self->visible; }
+msAPI bool msTransformGetVisibleHierarchy(const ms::Transform *self) { return self->visible_hierarchy; }
+msAPI const char* msTransformGetReference(const ms::Transform *self) { return self->reference.c_str(); }
+
+msAPI void msTransformSetHostID(ms::Transform *self, int v) { self->host_id = v; }
+msAPI void msTransformSetIndex(ms::Transform *self, int v) { self->index = v; }
+msAPI void msTransformSetPath(ms::Transform *self, const char *v) { self->path = v; }
+msAPI void msTransformSetPosition(ms::Transform *self, mu::float3 v) { self->position = v; }
+msAPI void msTransformSetRotation(ms::Transform *self, mu::quatf v) { self->rotation = v; }
+msAPI void msTransformSetScale(ms::Transform *self, mu::float3 v) { self->scale = v; }
+msAPI void msTransformSetVisible(ms::Transform *self, bool v) { self->visible = v; }
+msAPI void msTransformSetVisibleHierarchy(ms::Transform *self, bool v) { self->visible_hierarchy = v;}
+msAPI void msTransformSetReference(ms::Transform *self, const char *v) { self->reference = v; }
 #pragma endregion
 
 
 #pragma region Camera
-msAPI ms::Camera* msCameraCreate()
-{
-    return ms::Camera::create_raw();
-}
-msAPI uint32_t msCameraGetDataFlags(ms::Camera *self)
-{
-    return (uint32_t&)self->cd_flags;
-}
-msAPI bool msCameraIsOrtho(ms::Camera *self)
-{
-    return self->is_ortho;
-}
-msAPI void msCameraSetOrtho(ms::Camera *self, bool v)
-{
-    self->is_ortho = v;
-}
-msAPI float msCameraGetFov(ms::Camera *self)
-{
-    return self->fov;
-}
-msAPI void msCameraSetFov(ms::Camera *self, float v)
-{
-    self->fov = v;
-}
-msAPI float msCameraGetNearPlane(ms::Camera *self)
-{
-    return self->near_plane;
-}
-msAPI void msCameraSetNearPlane(ms::Camera *self, float v)
-{
-    self->near_plane = v;
-}
-msAPI float msCameraGetFarPlane(ms::Camera *self)
-{
-    return self->far_plane;
-}
-msAPI void msCameraSetFarPlane(ms::Camera *self, float v)
-{
-    self->far_plane = v;
-}
-msAPI float msCameraGetFocalLength(ms::Camera *self)
-{
-    return self->focal_length;
-}
-msAPI void msCameraSetFocalLength(ms::Camera *self, float v)
-{
-    self->focal_length = v;
-}
-msAPI void msCameraGetSensorSize(ms::Camera *self, mu::float2 *v)
-{
-    *v = self->sensor_size;
-}
-msAPI void msCameraSetSensorSize(ms::Camera *self, mu::float2 *v)
-{
-    self->sensor_size = *v;
-}
-msAPI void msCameraGetLensShift(ms::Camera *self, mu::float2 *v)
-{
-    *v = self->lens_shift;
-}
-msAPI void msCameraSetLensShift(ms::Camera *self, mu::float2 *v)
-{
-    self->lens_shift = *v;
-}
+msAPI ms::Camera* msCameraCreate() { return ms::Camera::create_raw(); }
+msAPI uint32_t msCameraGetDataFlags(const ms::Camera *self) { return (uint32_t&)self->cd_flags; }
+msAPI bool msCameraIsOrtho(const ms::Camera *self) { return self->is_ortho; }
+msAPI float msCameraGetFov(const ms::Camera *self) { return self->fov; }
+msAPI float msCameraGetNearPlane(const ms::Camera *self) { return self->near_plane; }
+msAPI float msCameraGetFarPlane(const ms::Camera *self) { return self->far_plane; }
+msAPI float msCameraGetFocalLength(const ms::Camera *self) { return self->focal_length; }
+msAPI void msCameraGetSensorSize(const ms::Camera *self, mu::float2 *v) { *v = self->sensor_size; }
+msAPI void msCameraGetLensShift(const ms::Camera *self, mu::float2 *v) { *v = self->lens_shift; }
+
+msAPI void msCameraSetOrtho(ms::Camera *self, bool v) { self->is_ortho = v; }
+msAPI void msCameraSetFov(ms::Camera *self, float v) { self->fov = v; }
+msAPI void msCameraSetNearPlane(ms::Camera *self, float v) { self->near_plane = v; }
+msAPI void msCameraSetFarPlane(ms::Camera *self, float v) { self->far_plane = v; }
+msAPI void msCameraSetFocalLength(ms::Camera *self, float v) { self->focal_length = v; }
+msAPI void msCameraSetSensorSize(ms::Camera *self, mu::float2 *v) { self->sensor_size = *v; }
+msAPI void msCameraSetLensShift(ms::Camera *self, mu::float2 *v) { self->lens_shift = *v; }
 #pragma endregion
 
 
 #pragma region Light
-msAPI ms::Light* msLightCreate()
-{
-    return ms::Light::create_raw();
-}
-msAPI uint32_t msLightGetDataFlags(ms::Light *self)
-{
-    return (uint32_t&)self->ld_flags;
-}
-msAPI ms::Light::LightType msLightGetType(ms::Light *self)
-{
-    return self->light_type;
-}
-msAPI void msLightSetType(ms::Light *self, ms::Light::LightType v)
-{
-    self->light_type = v;
-}
-msAPI ms::Light::ShadowType msLightGetShadowType(ms::Light *self)
-{
-    return self->shadow_type;
-}
-msAPI void msLightSetShadowType(ms::Light *self, ms::Light::ShadowType v)
-{
-    self->shadow_type = v;
-}
-msAPI float4 msLightGetColor(ms::Light *self)
-{
-    return self->color;
-}
-msAPI void msLightSetColor(ms::Light *self, float4 v)
-{
-    self->color = v;
-}
-msAPI float msLightGetIntensity(ms::Light *self)
-{
-    return self->intensity;
-}
-msAPI void msLightSetIntensity(ms::Light *self, float v)
-{
-    self->intensity = v;
-}
-msAPI float msLightGetRange(ms::Light *self)
-{
-    return self->range;
-}
-msAPI void msLightSetRange(ms::Light *self, float v)
-{
-    self->range = v;
-}
-msAPI float msLightGetSpotAngle(ms::Light *self)
-{
-    return self->spot_angle;
-}
-msAPI void msLightSetSpotAngle(ms::Light *self, float v)
-{
-    self->spot_angle = v;
-}
+msAPI ms::Light* msLightCreate() { return ms::Light::create_raw(); }
+msAPI uint32_t msLightGetDataFlags(const ms::Light *self) { return (uint32_t&)self->ld_flags; }
+msAPI ms::Light::LightType msLightGetType(const ms::Light *self) { return self->light_type; }
+msAPI ms::Light::ShadowType msLightGetShadowType(const ms::Light *self) { return self->shadow_type; }
+msAPI float4 msLightGetColor(const ms::Light *self) { return self->color; }
+msAPI float msLightGetIntensity(const ms::Light *self) { return self->intensity; }
+msAPI float msLightGetRange(const ms::Light *self) { return self->range; }
+msAPI float msLightGetSpotAngle(const ms::Light *self) { return self->spot_angle; }
+
+msAPI void msLightSetType(ms::Light *self, ms::Light::LightType v) { self->light_type = v; }
+msAPI void msLightSetShadowType(ms::Light *self, ms::Light::ShadowType v) { self->shadow_type = v; }
+msAPI void msLightSetColor(ms::Light *self, float4 v) { self->color = v; }
+msAPI void msLightSetIntensity(ms::Light *self, float v) { self->intensity = v; }
+msAPI void msLightSetRange(ms::Light *self, float v) { self->range = v; }
+msAPI void msLightSetSpotAngle(ms::Light *self, float v) { self->spot_angle = v; }
 #pragma endregion
 
 
 #pragma region Mesh
-msAPI ms::Mesh* msMeshCreate()
+msAPI ms::Mesh* msMeshCreate() { return ms::Mesh::create_raw(); }
+msAPI uint32_t msMeshGetDataFlags(const ms::Mesh *self) { return (uint32_t&)self->md_flags; }
+msAPI int msMeshGetNumPoints(const ms::Mesh *self) { return (int)self->points.size(); }
+msAPI int msMeshGetNumIndices(const ms::Mesh *self) { return (int)self->indices.size(); }
+msAPI void msMeshReadPoints(const ms::Mesh *self, float3 *dst) { self->points.copy_to(dst); }
+msAPI void msMeshReadNormals(const ms::Mesh *self, float3 *dst) { self->normals.copy_to(dst); }
+msAPI void msMeshReadTangents(const ms::Mesh *self, float4 *dst) { self->tangents.copy_to(dst); }
+msAPI void msMeshReadUV0(const ms::Mesh *self, float2 *dst) { self->uv0.copy_to(dst); }
+msAPI void msMeshReadUV1(const ms::Mesh *self, float2 *dst) { self->uv1.copy_to(dst); }
+msAPI void msMeshReadColors(const ms::Mesh *self, float4 *dst) { self->colors.copy_to(dst); }
+msAPI void msMeshReadVelocities(const ms::Mesh *self, float3 *dst) { self->velocities.copy_to(dst); }
+msAPI void msMeshReadIndices(const ms::Mesh *self, int *dst) { self->indices.copy_to(dst); }
+msAPI int msMeshGetNumSubmeshes(const ms::Mesh *self) { return (int)self->submeshes.size(); }
+msAPI const ms::SubmeshData* msMeshGetSubmesh(const ms::Mesh *self, int i) { return &self->submeshes[i]; }
+msAPI ms::Bounds msMeshGetBounds(const ms::Mesh *self) { return self->bounds; }
+msAPI void msMeshReadBoneWeights4(const ms::Mesh *self, ms::Weights4 *dst) { self->weights4.copy_to(dst); }
+msAPI void msMeshReadBoneCounts(const ms::Mesh *self, uint8_t *dst) { self->bone_counts.copy_to(dst); }
+msAPI void msMeshReadBoneWeightsV(const ms::Mesh *self, ms::Weights1 *dst) { self->weights1.copy_to(dst); }
+msAPI int msMeshGetNumBones(const ms::Mesh *self) { return (int)self->bones.size(); }
+msAPI int msMeshGetNumBoneWeights(const ms::Mesh *self) { return self->bone_weight_count; }
+msAPI const char* msMeshGetRootBonePath(const ms::Mesh *self) { return self->root_bone.c_str(); }
+msAPI const char* msMeshGetBonePath(const ms::Mesh *self, int i) { return self->bones[i]->path.c_str(); }
+msAPI void msMeshReadBindPoses(const ms::Mesh *self, float4x4 *v)
 {
-    return ms::Mesh::create_raw();
+    int num_bones = (int)self->bones.size();
+    for (int bi = 0; bi < num_bones; ++bi) {
+        v[bi] = self->bones[bi]->bindpose;
+    }
 }
-msAPI uint32_t msMeshGetDataFlags(ms::Mesh *self)
-{
-    return (uint32_t&)self->md_flags;
-}
-msAPI void msMeshSetFlags(ms::Mesh *self, uint32_t v)
-{
-    (uint32_t&)self->md_flags = v;
-}
-msAPI int msMeshGetNumPoints(ms::Mesh *self)
-{
-    return (int)self->points.size();
-}
-msAPI int msMeshGetNumIndices(ms::Mesh *self)
-{
-    return (int)self->indices.size();
-}
-msAPI void msMeshReadPoints(ms::Mesh *self, float3 *dst)
-{
-    self->points.copy_to(dst);
-}
+msAPI int msMeshGetNumBlendShapes(const ms::Mesh *self) { return (int)self->blendshapes.size(); }
+msAPI const ms::BlendShapeData* msMeshGetBlendShapeData(const ms::Mesh *self, int i) { return self->blendshapes[i].get(); }
+
+msAPI void msMeshSetFlags(ms::Mesh *self, uint32_t v) { (uint32_t&)self->md_flags = v; }
 msAPI void msMeshWritePoints(ms::Mesh *self, const float3 *v, int size)
 {
     if (size > 0) {
         self->points.assign(v, v + size);
         self->md_flags.has_points = 1;
     }
-}
-msAPI void msMeshReadNormals(ms::Mesh *self, float3 *dst)
-{
-    self->normals.copy_to(dst);
 }
 msAPI void msMeshWriteNormals(ms::Mesh *self, const float3 *v, int size)
 {
@@ -417,24 +267,12 @@ msAPI void msMeshWriteNormals(ms::Mesh *self, const float3 *v, int size)
         self->md_flags.has_normals = 1;
     }
 }
-msAPI void msMeshReadTangents(ms::Mesh *self, float4 *dst)
-{
-    self->tangents.copy_to(dst);
-}
 msAPI void msMeshWriteTangents(ms::Mesh *self, const float4 *v, int size)
 {
     if (size > 0) {
         self->tangents.assign(v, v + size);
         self->md_flags.has_tangents = 1;
     }
-}
-msAPI void msMeshReadUV0(ms::Mesh *self, float2 *dst)
-{
-    self->uv0.copy_to(dst);
-}
-msAPI void msMeshReadUV1(ms::Mesh *self, float2 *dst)
-{
-    self->uv1.copy_to(dst);
 }
 msAPI void msMeshWriteUV0(ms::Mesh *self, const float2 *v, int size)
 {
@@ -450,10 +288,6 @@ msAPI void msMeshWriteUV1(ms::Mesh *self, const float2 *v, int size)
         self->md_flags.has_uv1 = 1;
     }
 }
-msAPI void msMeshReadColors(ms::Mesh *self, float4 *dst)
-{
-    self->colors.copy_to(dst);
-}
 msAPI void msMeshWriteColors(ms::Mesh *self, const float4 *v, int size)
 {
     if (size > 0) {
@@ -461,20 +295,12 @@ msAPI void msMeshWriteColors(ms::Mesh *self, const float4 *v, int size)
         self->md_flags.has_colors = 1;
     }
 }
-msAPI void msMeshReadVelocities(ms::Mesh *self, float3 *dst)
-{
-    self->velocities.copy_to(dst);
-}
 msAPI void msMeshWriteVelocities(ms::Mesh *self, const float3 *v, int size)
 {
     if (size > 0) {
         self->velocities.assign(v, v + size);
         self->md_flags.has_velocities = 1;
     }
-}
-msAPI void msMeshReadIndices(ms::Mesh *self, int *dst)
-{
-    self->indices.copy_to(dst);
 }
 msAPI void msMeshWriteIndices(ms::Mesh *self, const int *v, int size)
 {
@@ -497,25 +323,6 @@ msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *self, const int *v, int size, i
         self->md_flags.has_material_ids = 1;
     }
 }
-
-msAPI int msMeshGetNumSubmeshes(const ms::Mesh *self)
-{
-    return (int)self->submeshes.size();
-}
-msAPI const ms::SubmeshData* msMeshGetSubmesh(const ms::Mesh *self, int i)
-{
-    return &self->submeshes[i];
-}
-
-msAPI ms::Bounds msMeshGetBounds(const ms::Mesh *self)
-{
-    return self->bounds;
-}
-
-msAPI void msMeshReadBoneWeights4(const ms::Mesh *self, ms::Weights4 *dst)
-{
-    self->weights4.copy_to(dst);
-}
 msAPI void msMeshWriteBoneWeights4(ms::Mesh *self, const ms::Weights4 *data, int size)
 {
     auto& bones = self->bones;
@@ -533,14 +340,6 @@ msAPI void msMeshWriteBoneWeights4(ms::Mesh *self, const ms::Weights4 *data, int
         for (int wi = 0; wi < 4; ++wi)
             bones[indices[wi]]->weights[vi] = weights[wi];
     }
-}
-msAPI void msMeshReadBoneCounts(const ms::Mesh *self, uint8_t *dst)
-{
-    self->bone_counts.copy_to(dst);
-}
-msAPI void msMeshReadBoneWeightsV(const ms::Mesh *self, ms::Weights1 *dst)
-{
-    self->weights1.copy_to(dst);
 }
 msAPI void msMeshWriteBoneCounts(ms::Mesh *self, uint8_t *data, int size)
 {
@@ -567,26 +366,9 @@ msAPI void msMeshWriteBoneWeightsV(ms::Mesh *self, uint8_t *counts, int counts_s
         offset += num_weights;
     }
 }
-
-msAPI int msMeshGetNumBones(const ms::Mesh *self)
-{
-    return (int)self->bones.size();
-}
-msAPI int msMeshGetNumBoneWeights(const ms::Mesh *self)
-{
-    return self->bone_weight_count;
-}
-msAPI const char* msMeshGetRootBonePath(const ms::Mesh *self)
-{
-    return self->root_bone.c_str();
-}
 msAPI void msMeshSetRootBonePath(ms::Mesh *self, const char *v)
 {
     self->root_bone = v;
-}
-msAPI const char* msMeshGetBonePath(const ms::Mesh *self, int i)
-{
-    return self->bones[i]->path.c_str();
 }
 msAPI void msMeshSetBonePath(ms::Mesh *self, const char *v, int i)
 {
@@ -595,28 +377,12 @@ msAPI void msMeshSetBonePath(ms::Mesh *self, const char *v, int i)
     }
     self->bones[i]->path = v;
 }
-msAPI void msMeshReadBindPoses(const ms::Mesh *self, float4x4 *v)
-{
-    int num_bones = (int)self->bones.size();
-    for (int bi = 0; bi < num_bones; ++bi) {
-        v[bi] = self->bones[bi]->bindpose;
-    }
-}
 msAPI void msMeshWriteBindPoses(ms::Mesh *self, const float4x4 *v, int size)
 {
     int num_bones = (int)self->bones.size();
     for (int bi = 0; bi < num_bones; ++bi) {
         self->bones[bi]->bindpose = v[bi];
     }
-}
-
-msAPI int msMeshGetNumBlendShapes(const ms::Mesh *self)
-{
-    return (int)self->blendshapes.size();
-}
-msAPI const ms::BlendShapeData* msMeshGetBlendShapeData(const ms::Mesh *self, int i)
-{
-    return self->blendshapes[i].get();
 }
 msAPI ms::BlendShapeData* msMeshAddBlendShape(ms::Mesh *self, const char *name)
 {
@@ -625,58 +391,18 @@ msAPI ms::BlendShapeData* msMeshAddBlendShape(ms::Mesh *self, const char *name)
     self->blendshapes.push_back(ret);
     return ret.get();
 }
+msAPI void msMeshSetLocal2World(ms::Mesh *self, const float4x4 *v) { self->refine_settings.local2world = *v; }
+msAPI void msMeshSetWorld2Local(ms::Mesh *self, const float4x4 *v) { self->refine_settings.world2local = *v; }
 
-msAPI void msMeshSetLocal2World(ms::Mesh *self, const float4x4 *v)
-{
-    self->refine_settings.local2world = *v;
-}
-msAPI void msMeshSetWorld2Local(ms::Mesh *self, const float4x4 *v)
-{
-    self->refine_settings.world2local = *v;
-}
+msAPI int msSubmeshGetNumIndices(const ms::SubmeshData *self) { return (int)self->index_count; }
+msAPI void msSubmeshReadIndices(const ms::SubmeshData *self, const ms::Mesh *mesh, int *dst) { mesh->indices.copy_to(dst, self->index_count, self->index_offset); }
+msAPI int msSubmeshGetMaterialID(const ms::SubmeshData *self) { return self->material_id; }
+msAPI ms::Topology msSubmeshGetTopology(const ms::SubmeshData *self) { return self->topology; }
 
-
-msAPI int msSubmeshGetNumIndices(const ms::SubmeshData *self)
-{
-    return (int)self->index_count;
-}
-msAPI void msSubmeshReadIndices(const ms::SubmeshData *self, const ms::Mesh *mesh, int *dst)
-{
-    mesh->indices.copy_to(dst, self->index_count, self->index_offset);
-}
-msAPI int msSubmeshGetMaterialID(const ms::SubmeshData *self)
-{
-    return self->material_id;
-}
-msAPI ms::SubmeshData::Topology msSubmeshGetTopology(const ms::SubmeshData *self)
-{
-    return self->topology;
-}
-
-msAPI const char* msBlendShapeGetName(const ms::BlendShapeData *self)
-{
-    return self ? self->name.c_str() : "";
-}
-msAPI void msBlendShapeSetName(ms::BlendShapeData *self, const char *v)
-{
-    self->name = v;
-}
-msAPI float msBlendShapeGetWeight(const ms::BlendShapeData *self)
-{
-    return self ? self->weight : 0.0f;
-}
-msAPI void msBlendShapeSetWeight(ms::BlendShapeData *self, float v)
-{
-    self->weight = v;
-}
-msAPI int msBlendShapeGetNumFrames(const ms::BlendShapeData *self)
-{
-    return self ? (int)self->frames.size() : 0;
-}
-msAPI float msBlendShapeGetFrameWeight(const ms::BlendShapeData *self, int f)
-{
-    return self ? self->frames[f]->weight : 0.0f;
-}
+msAPI const char* msBlendShapeGetName(const ms::BlendShapeData *self) { return self ? self->name.c_str() : ""; }
+msAPI float msBlendShapeGetWeight(const ms::BlendShapeData *self) { return self ? self->weight : 0.0f; }
+msAPI int msBlendShapeGetNumFrames(const ms::BlendShapeData *self) { return self ? (int)self->frames.size() : 0; }
+msAPI float msBlendShapeGetFrameWeight(const ms::BlendShapeData *self, int f) { return self ? self->frames[f]->weight : 0.0f; }
 msAPI void msBlendShapeReadPoints(const ms::BlendShapeData *self, int f, float3 *dst)
 {
     auto& frame = *self->frames[f];
@@ -707,6 +433,9 @@ msAPI void msBlendShapeReadTangents(const ms::BlendShapeData *self, int f, float
     else
         src.copy_to(dst);
 }
+
+msAPI void msBlendShapeSetName(ms::BlendShapeData *self, const char *v) { self->name = v; }
+msAPI void msBlendShapeSetWeight(ms::BlendShapeData *self, float v) { self->weight = v; }
 msAPI void msBlendShapeAddFrame(ms::BlendShapeData *self, float weight, int num, const float3 *v, const float3 *n, const float3 *t)
 {
     self->frames.push_back(ms::BlendShapeFrameData::create());
@@ -719,110 +448,47 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *self, float weight, int num,
 #pragma endregion
 
 #pragma region Points
-msAPI ms::Points* msPointsCreate()
-{
-    return ms::Points::create_raw();
-}
-msAPI uint32_t msPointsGetFlags(const ms::Points *self)
-{
-    return (uint32_t&)self->pd_flags;
-}
-msAPI ms::Bounds msPointsGetBounds(const ms::Points *self)
-{
-    return self->bounds;
-}
-msAPI int msPointsGetNumPoints(const ms::Points *self, float3 *dst)
-{
-    return (int)self->points.size();
-}
-msAPI void msPointsReadPoints(const ms::Points *self, float3 *dst)
-{
-    self->points.copy_to(dst);
-}
-msAPI void msPointsWritePoints(ms::Points *self, const float3 *v, int size)
-{
-    self->points.assign(v, v + size);
-}
-msAPI void msPointsReadRotations(const ms::Points *self, quatf *dst)
-{
-    self->rotations.copy_to(dst);
-}
-msAPI void msPointsWriteRotations(ms::Points *self, const quatf *v, int size)
-{
-    self->rotations.assign(v, v + size);
-}
-msAPI void msPointsReadScales(const ms::Points *self, float3 *dst)
-{
-    self->scales.copy_to(dst);
-}
-msAPI void msPointsWriteScales(ms::Points *self, const float3 *v, int size)
-{
-    self->scales.assign(v, v + size);
-}
-msAPI void msPointsReadVelocities(const ms::Points *self, float3 *dst)
-{
-    self->velocities.copy_to(dst);
-}
-msAPI void msPointsWriteVelocities(ms::Points *self, const float3 *v, int size)
-{
-    self->velocities.assign(v, v + size);
-}
-msAPI void msPointsReadColors(const ms::Points *self, float4 *dst)
-{
-    self->colors.copy_to(dst);
-}
-msAPI void msPointsWriteColors(ms::Points *self, const float4 *v, int size)
-{
-    self->colors.assign(v, v + size);
-}
-msAPI void msPointsReadIDs(const ms::Points *self, int *dst)
-{
-    self->ids.copy_to(dst);
-}
-msAPI void msPointsWriteIDs(ms::Points *self, const int *v, int size)
-{
-    self->ids.assign(v, v + size);
-}
+msAPI ms::Points* msPointsCreate() { return ms::Points::create_raw(); }
+msAPI uint32_t msPointsGetFlags(const ms::Points *self) { return (uint32_t&)self->pd_flags; }
+msAPI ms::Bounds msPointsGetBounds(const ms::Points *self) { return self->bounds; }
+msAPI int msPointsGetNumPoints(const ms::Points *self, float3 *dst) { return (int)self->points.size(); }
+msAPI void msPointsReadPoints(const ms::Points *self, float3 *dst) { self->points.copy_to(dst); }
+msAPI void msPointsReadRotations(const ms::Points *self, quatf *dst) { self->rotations.copy_to(dst); }
+msAPI void msPointsReadScales(const ms::Points *self, float3 *dst) { self->scales.copy_to(dst); }
+msAPI void msPointsReadVelocities(const ms::Points *self, float3 *dst) { self->velocities.copy_to(dst); }
+msAPI void msPointsReadColors(const ms::Points *self, float4 *dst) { self->colors.copy_to(dst); }
+msAPI void msPointsReadIDs(const ms::Points *self, int *dst) { self->ids.copy_to(dst); }
+
+msAPI void msPointsWritePoints(ms::Points *self, const float3 *v, int size) { self->points.assign(v, v + size); }
+msAPI void msPointsWriteRotations(ms::Points *self, const quatf *v, int size) { self->rotations.assign(v, v + size); }
+msAPI void msPointsWriteScales(ms::Points *self, const float3 *v, int size) { self->scales.assign(v, v + size); }
+msAPI void msPointsWriteVelocities(ms::Points *self, const float3 *v, int size) { self->velocities.assign(v, v + size); }
+msAPI void msPointsWriteColors(ms::Points *self, const float4 *v, int size) { self->colors.assign(v, v + size); }
+msAPI void msPointsWriteIDs(ms::Points *self, const int *v, int size) { self->ids.assign(v, v + size); }
 #pragma endregion
 
 #pragma region Constraints
-msAPI ms::Constraint::Type msConstraintGetType(ms::Constraint *self)
-{
-    return self->getType();
-}
-msAPI const char* msConstraintGetPath(ms::Constraint *self)
-{
-    return self->path.c_str();
-}
-msAPI int msConstraintGetNumSources(ms::Constraint *self)
-{
-    return (int)self->source_paths.size();
-}
-msAPI const char* msConstraintGetSource(ms::Constraint *self, int i)
-{
-    return self->source_paths[i].c_str();
-}
+msAPI ms::Constraint::Type msConstraintGetType(const ms::Constraint *self) { return self->getType(); }
+msAPI const char* msConstraintGetPath(const ms::Constraint *self) { return self->path.c_str(); }
+msAPI int msConstraintGetNumSources(const ms::Constraint *self) { return (int)self->source_paths.size(); }
+msAPI const char* msConstraintGetSource(const ms::Constraint *self, int i) { return self->source_paths[i].c_str(); }
 
-msAPI float3 msParentConstraintGetPositionOffset(ms::ParentConstraint *self, int i)
-{
-    return self->source_data[i].position_offset;
-}
-msAPI quatf msParentConstraintGetRotationOffset(ms::ParentConstraint *self, int i)
-{
-    return self->source_data[i].rotation_offset;
-}
+msAPI float3 msParentConstraintGetPositionOffset(const ms::ParentConstraint *self, int i) { return self->source_data[i].position_offset; }
+msAPI quatf msParentConstraintGetRotationOffset(const ms::ParentConstraint *self, int i) { return self->source_data[i].rotation_offset; }
 #pragma endregion
 
 #pragma region Scene
-msAPI int               msSceneGetNumAssets(ms::Scene *self)           { return (int)self->assets.size(); }
-msAPI ms::Asset*        msSceneGetAsset(ms::Scene *self, int i)        { return self->assets[i].get(); }
-msAPI int               msSceneGetNumEntities(ms::Scene *self)         { return (int)self->entities.size(); }
-msAPI ms::Transform*    msSceneGetEntity(ms::Scene *self, int i)       { return self->entities[i].get(); }
-msAPI int               msSceneGetNumConstraints(ms::Scene *self)      { return (int)self->constraints.size(); }
-msAPI ms::Constraint*   msSceneGetConstraint(ms::Scene *self, int i)   { return self->constraints[i].get(); }
-msAPI ms::SceneProfileData msSceneGetProfileData(ms::Scene *self) { return self->profile_data; }
+msAPI int msSceneGetNumAssets(const ms::Scene *self) { return (int)self->assets.size(); }
+msAPI int msSceneGetNumEntities(const ms::Scene *self) { return (int)self->entities.size(); }
+msAPI int msSceneGetNumConstraints(const ms::Scene *self) { return (int)self->constraints.size(); }
+msAPI ms::Asset* msSceneGetAsset(const ms::Scene *self, int i) { return self->assets[i].get(); }
+msAPI ms::Transform* msSceneGetEntity(const ms::Scene *self, int i) { return self->entities[i].get(); }
+msAPI ms::Constraint* msSceneGetConstraint(const ms::Scene *self, int i) { return self->constraints[i].get(); }
+msAPI ms::SceneProfileData msSceneGetProfileData(const ms::Scene *self) { return self->profile_data; }
 #pragma endregion
+
 
 #pragma region Misc
 msAPI uint64_t msGetTime() { return ms::Now(); }
+msAPI bool msWriteToFile(const char *path, const char *data, int size) { return ms::ByteArrayToFile(path, data, size); }
 #pragma endregion

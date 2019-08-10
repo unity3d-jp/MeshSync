@@ -164,7 +164,7 @@ bool Audio::exportAsWave(const char *path) const
 }
 
 
-bool Audio::convertSamplesToFloat(float *dst)
+bool Audio::convertSamplesToFloat(float *dst) const
 {
     size_t n = data.size() / SizeOf(format);
     if (n == 0)
