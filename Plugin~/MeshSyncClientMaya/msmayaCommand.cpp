@@ -4,41 +4,47 @@
 #include "msmayaCommand.h"
 
 
-template<class T> static void get_arg(T& dst, const char *name, MArgParser& args);
+template<class T> static bool get_arg(T& dst, const char *name, MArgParser& args);
 
-template<> void get_arg(std::string& dst, const char *name, MArgParser& args)
+template<> bool get_arg(std::string& dst, const char *name, MArgParser& args)
 {
     MString tmp;
-    args.getFlagArgument(name, 0, tmp);
-    dst = tmp.asChar();
+    auto stat = args.getFlagArgument(name, 0, tmp);
+    if (stat == MStatus::kSuccess)
+        dst = tmp.asChar();
+    return stat == MStatus::kSuccess;
 }
-template<> void get_arg(bool& dst, const char *name, MArgParser& args)
+template<> bool get_arg(bool& dst, const char *name, MArgParser& args)
 {
     bool tmp;
     auto stat = args.getFlagArgument(name, 0, tmp);
     if (stat == MStatus::kSuccess)
         dst = tmp;
+    return stat == MStatus::kSuccess;
 }
-template<> void get_arg(int& dst, const char *name, MArgParser& args)
+template<> bool get_arg(int& dst, const char *name, MArgParser& args)
 {
     int tmp;
     auto stat = args.getFlagArgument(name, 0, tmp);
     if (stat == MStatus::kSuccess)
         dst = tmp;
+    return stat == MStatus::kSuccess;
 }
-template<> void get_arg(uint16_t& dst, const char *name, MArgParser& args)
+template<> bool get_arg(uint16_t& dst, const char *name, MArgParser& args)
 {
     int tmp;
     auto stat = args.getFlagArgument(name, 0, tmp);
     if (stat == MStatus::kSuccess)
         dst = (uint16_t)tmp;
+    return stat == MStatus::kSuccess;
 }
-template<> void get_arg(float& dst, const char *name, MArgParser& args)
+template<> bool get_arg(float& dst, const char *name, MArgParser& args)
 {
     double tmp;
     auto stat = args.getFlagArgument(name, 0, tmp);
     if (stat == MStatus::kSuccess)
         dst = (float)tmp;
+    return stat == MStatus::kSuccess;
 }
 
 
@@ -151,7 +157,7 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-smn", "-syncNormals", MSyntax::kBoolean);
     syntax.addFlag("-smu", "-syncUVs", MSyntax::kBoolean);
     syntax.addFlag("-smc", "-syncColors", MSyntax::kBoolean);
-    syntax.addFlag("-mbs", "-makeDoubleSided", MSyntax::kBoolean);
+    syntax.addFlag("-ds", "-makeDoubleSided", MSyntax::kBoolean);
     syntax.addFlag("-bd", "-bakeDeformers", MSyntax::kBoolean);
     syntax.addFlag("-tw", "-applyTweak", MSyntax::kBoolean);
     syntax.addFlag("-sms", "-syncBlendShapes", MSyntax::kBoolean);
@@ -193,7 +199,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
         else {\
             get_arg(Value, Name, args);\
             if (settings.auto_sync && Sync)\
-                msmayaGetContext().sendObjects(msmayaObjectScope::All, false);\
+                msmayaGetContext().sendObjects(ObjectScope::All, false);\
         }\
     }
 
@@ -227,16 +233,16 @@ MStatus CmdSettings::doIt(const MArgList& args_)
 }
 
 
-void* CmdExport::create()
+void* CmdSend::create()
 {
-    return new CmdExport();
+    return new CmdSend();
 }
-const char* CmdExport::name()
+const char* CmdSend::name()
 {
     return "UnityMeshSync_Export";
 }
 
-MSyntax CmdExport::createSyntax()
+MSyntax CmdSend::createSyntax()
 {
     MSyntax syntax;
     syntax.enableQuery(false);
@@ -246,36 +252,36 @@ MSyntax CmdExport::createSyntax()
     return syntax;
 }
 
-MStatus CmdExport::doIt(const MArgList& args_)
+MStatus CmdSend::doIt(const MArgList& args_)
 {
     MStatus status;
     MArgParser args(syntax(), args_, &status);
 
-    auto target = msmayaExportTarget::Objects;
-    auto scope = msmayaObjectScope::All;
+    auto target = ExportTarget::Objects;
+    auto scope = ObjectScope::All;
 
     // parse args
     if (args.isFlagSet("target")) {
         std::string t;
         get_arg(t, "target", args);
         if (t == "objects")
-            target = msmayaExportTarget::Objects;
+            target = ExportTarget::Objects;
         else if (t == "materials")
-            target = msmayaExportTarget::Materials;
+            target = ExportTarget::Materials;
         else if (t == "animations")
-            target = msmayaExportTarget::Animations;
+            target = ExportTarget::Animations;
         else if (t == "everything")
-            target = msmayaExportTarget::Everything;
+            target = ExportTarget::Everything;
     }
     if (args.isFlagSet("scope")) {
         std::string s;
         get_arg(s, "scope", args);
         if (s == "all")
-            scope = msmayaObjectScope::All;
+            scope = ObjectScope::All;
         else if (s == "selection")
-            scope = msmayaObjectScope::Selected;
+            scope = ObjectScope::Selected;
         else if (s == "updated")
-            scope = msmayaObjectScope::Updated;
+            scope = ObjectScope::Updated;
     }
 
     // do send
@@ -285,19 +291,19 @@ MStatus CmdExport::doIt(const MArgList& args_)
         return MStatus::kFailure;
     }
 
-    if (target == msmayaExportTarget::Objects) {
+    if (target == ExportTarget::Objects) {
         inst.wait();
         inst.sendObjects(scope, true);
     }
-    else if (target == msmayaExportTarget::Materials) {
+    else if (target == ExportTarget::Materials) {
         inst.wait();
         inst.sendMaterials(true);
     }
-    else if (target == msmayaExportTarget::Animations) {
+    else if (target == ExportTarget::Animations) {
         inst.wait();
         inst.sendAnimations(scope);
     }
-    else if (target == msmayaExportTarget::Everything) {
+    else if (target == ExportTarget::Everything) {
         inst.wait();
         inst.sendMaterials(true);
         inst.wait();
@@ -330,4 +336,88 @@ MStatus CmdImport::doIt(const MArgList&)
 {
     msmayaGetContext().recvObjects();
     return MStatus::kSuccess;
+}
+
+
+
+void* CmdExportCache::create()
+{
+    return new CmdExportCache();
+}
+
+const char* CmdExportCache::name()
+{
+    return "UnityMeshSync_ExportCache";
+}
+
+MSyntax CmdExportCache::createSyntax()
+{
+    MSyntax syntax;
+    syntax.enableQuery(true);
+    syntax.enableEdit(false);
+    syntax.addFlag("-p", "-path", MSyntax::kString);
+    syntax.addFlag("-os", "-objectScope", MSyntax::kString);
+    syntax.addFlag("-fr", "-frameRange", MSyntax::kString);
+    syntax.addFlag("-frb", "-frameBegin", MSyntax::kLong);
+    syntax.addFlag("-fre", "-frameEnd", MSyntax::kLong);
+    syntax.addFlag("-mfr", "-materialFrameRange", MSyntax::kString);
+    syntax.addFlag("-z", "-ZSTDCompressionLevel", MSyntax::kLong);
+    syntax.addFlag("-spf", "-samplesPerFrame", MSyntax::kDouble);
+    syntax.addFlag("-ds", "-makeDoubleSided", MSyntax::kBoolean);
+    syntax.addFlag("-bd", "-bakeDeformers", MSyntax::kBoolean);
+    syntax.addFlag("-fh", "-flattenHierarchy", MSyntax::kBoolean);
+    syntax.addFlag("-mm", "-mergeMeshes", MSyntax::kBoolean);
+    syntax.addFlag("-sn", "-stripNormals", MSyntax::kBoolean);
+    syntax.addFlag("-st", "-stripTangents", MSyntax::kBoolean);
+    return syntax;
+}
+
+MStatus CmdExportCache::doIt(const MArgList& args_)
+{
+    MStatus status;
+    MArgParser args(syntax(), args_, &status);
+    auto settings = msmayaGetCacheSettings(); // copy
+
+    std::string v;
+    get_arg(settings.path, "path", args);
+    if (get_arg(v, "objectScope", args)) {
+        if (v == "all")
+            settings.object_scope = ObjectScope::All;
+        else if (v == "selection")
+            settings.object_scope = ObjectScope::Selected;
+        else if (v == "updated")
+            settings.object_scope = ObjectScope::Updated;
+    }
+    if (get_arg(v, "frameRange", args)) {
+        if (v == "current")
+            settings.frame_range = FrameRange::CurrentFrame;
+        else if (v == "custom")
+            settings.frame_range = FrameRange::CustomRange; // "frame_begin" - "frame_end"
+        else if (v == "all")
+            settings.frame_range = FrameRange::AllFrames;
+    }
+    if (get_arg(v, "materialFrameRange", args)) {
+        if (v == "none")
+            settings.material_frame_range = MaterialFrameRange::None;
+        else if (v == "one")
+            settings.material_frame_range = MaterialFrameRange::OneFrame;
+        else if (v == "all")
+            settings.material_frame_range = MaterialFrameRange::AllFrames;
+    }
+    get_arg(settings.frame_begin, "frameBegin", args);
+    get_arg(settings.frame_end, "frameEnd", args);
+    get_arg(settings.zstd_compression_level, "ZSTDCompressionLevel", args);
+    get_arg(settings.samples_per_frame, "samplesPerFrame", args);
+    get_arg(settings.make_double_sided, "makeDoubleSided", args);
+    get_arg(settings.bake_deformers, "bakeDeformers", args);
+    get_arg(settings.flatten_hierarchy, "flattenHierarchy", args);
+    get_arg(settings.merge_meshes, "mergeMeshes", args);
+    get_arg(settings.strip_normals, "stripNormals", args);
+    get_arg(settings.strip_tangents, "stripTangents", args);
+
+    auto& ctx = msmayaGetContext();
+    if (ctx.exportCache(settings))
+        return MStatus::kSuccess;
+    else
+        return MStatus::kFailure;
 }

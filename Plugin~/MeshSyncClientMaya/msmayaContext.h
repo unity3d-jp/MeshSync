@@ -81,7 +81,7 @@ struct TreeNode : public mu::noncopyable
 using TreeNodePtr = std::unique_ptr<TreeNode>;
 
 
-enum class msmayaExportTarget : int
+enum class ExportTarget : int
 {
     Objects,
     Materials,
@@ -89,7 +89,7 @@ enum class msmayaExportTarget : int
     Everything,
 };
 
-enum class msmayaObjectScope : int
+enum class ObjectScope : int
 {
     None,
     All,
@@ -97,7 +97,7 @@ enum class msmayaObjectScope : int
     Selected,
 };
 
-enum class msmayaFrameRange : int
+enum class FrameRange : int
 {
     None,
     CurrentFrame,
@@ -105,14 +105,14 @@ enum class msmayaFrameRange : int
     CustomRange,
 };
 
-enum class msmayaMaterialFrameRange : int
+enum class MaterialFrameRange : int
 {
     None,
     OneFrame,
     AllFrames,
 };
 
-struct msmayaSettings
+struct SyncSettings
 {
     ms::ClientSettings client_settings;
 
@@ -149,12 +149,12 @@ struct msmayaSettings
     bool export_cache = false;
 };
 
-struct msmayaCacheExportSettings
+struct CacheExportSettings
 {
     std::string path;
-    msmayaObjectScope object_scope = msmayaObjectScope::All;
-    msmayaFrameRange frame_range = msmayaFrameRange::CurrentFrame;
-    msmayaMaterialFrameRange material_frame_range = msmayaMaterialFrameRange::OneFrame;
+    ObjectScope object_scope = ObjectScope::All;
+    FrameRange frame_range = FrameRange::CurrentFrame;
+    MaterialFrameRange material_frame_range = MaterialFrameRange::OneFrame;
     int frame_begin = 0;
     int frame_end = 100;
 
@@ -174,7 +174,8 @@ class msmayaContext
 {
 public:
     static msmayaContext& getInstance();
-    msmayaSettings& getSettings();
+    SyncSettings& getSettings();
+    CacheExportSettings& getCacheSettings();
 
     msmayaContext(MObject obj);
     ~msmayaContext();
@@ -196,9 +197,9 @@ public:
     void wait();
     void update();
     bool sendMaterials(bool dirty_all);
-    bool sendObjects(msmayaObjectScope scope, bool dirty_all);
-    bool sendAnimations(msmayaObjectScope scope);
-    bool exportCache(const msmayaCacheExportSettings& cache_settings);
+    bool sendObjects(ObjectScope scope, bool dirty_all);
+    bool sendAnimations(ObjectScope scope);
+    bool exportCache(const CacheExportSettings& cache_settings);
 
     bool recvObjects();
 
@@ -236,7 +237,7 @@ private:
     void removeGlobalCallbacks();
     void removeNodeCallbacks();
 
-    std::vector<TreeNode*> getNodes(msmayaObjectScope scope);
+    std::vector<TreeNode*> getNodes(ObjectScope scope);
 
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     void exportMaterials();
@@ -258,7 +259,7 @@ private:
         float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);
     void extractLightData(TreeNode *n, ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle);
 
-    int exportAnimations(msmayaObjectScope scope);
+    int exportAnimations(ObjectScope scope);
     bool exportAnimation(TreeNode *tn, bool force);
     void extractTransformAnimationData(ms::TransformAnimation& dst, TreeNode *n);
     void extractCameraAnimationData(ms::TransformAnimation& dst, TreeNode *n);
@@ -268,7 +269,8 @@ private:
     void kickAsyncExport();
 
 private:
-    msmayaSettings m_settings;
+    SyncSettings m_settings;
+    CacheExportSettings m_cache_settings;
 
     MObject m_obj;
     MFnPlugin m_iplugin;
@@ -288,7 +290,7 @@ private:
     ms::AsyncSceneSender m_sender;
     ms::AsyncSceneCacheWriter m_cache_writer;
 
-    msmayaObjectScope m_pending_scope = msmayaObjectScope::None;
+    ObjectScope m_pending_scope = ObjectScope::None;
     bool      m_scene_updated = true;
     bool      m_ignore_update = false;
     int       m_index_seed = 0;
@@ -297,3 +299,4 @@ private:
 
 #define msmayaGetContext() msmayaContext::getInstance()
 #define msmayaGetSettings() msmayaGetContext().getSettings()
+#define msmayaGetCacheSettings() msmayaGetContext().getCacheSettings()
