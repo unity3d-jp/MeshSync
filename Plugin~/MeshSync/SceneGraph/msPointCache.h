@@ -36,8 +36,6 @@ public:
     SharedVector<float4> colors;
     SharedVector<float3> velocities;
     SharedVector<int>    ids;
-
-    // non-serializable
     Bounds bounds{};
 
 protected:
@@ -57,13 +55,13 @@ public:
     bool merge(const Entity& base) override;
     bool diff(const Entity& e1, const Entity& e2) override;
     bool lerp(const Entity& e1, const Entity& e2, float t) override;
+    void updateBounds() override;
 
     void clear() override;
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;
     EntityPtr clone(bool detach = false) override;
 
-    void updateBounds();
     void setupPointsDataFlags();
 };
 msSerializable(Points);

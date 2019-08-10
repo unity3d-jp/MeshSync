@@ -217,8 +217,7 @@ void Scene::import(const SceneImportSettings& cv)
 
         if (!converters.empty())
             convert(*obj);
-        if (is_mesh)
-            static_cast<Mesh&>(*obj).updateBounds();
+        obj->updateBounds();
     });
 
     for (auto& asset : assets) {

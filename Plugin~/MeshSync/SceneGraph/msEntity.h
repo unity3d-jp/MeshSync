@@ -27,6 +27,8 @@ template<> struct GetEntityType<Light>      { static const EntityType type = Ent
 template<> struct GetEntityType<Mesh>       { static const EntityType type = EntityType::Mesh; };
 template<> struct GetEntityType<Points>     { static const EntityType type = EntityType::Points; };
 
+class EntityConverter;
+msDeclPtr(EntityConverter);
 
 class Entity
 {
@@ -62,6 +64,7 @@ public:
     virtual bool merge(const Entity& base);
     virtual bool diff(const Entity& e1, const Entity& e2);
     virtual bool lerp(const Entity& e1, const Entity& e2, float t);
+    virtual void updateBounds();
     virtual bool genVelocity(const Entity& prev); // todo
 
     virtual void clear();

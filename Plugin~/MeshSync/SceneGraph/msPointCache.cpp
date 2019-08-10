@@ -9,7 +9,7 @@ static_assert(sizeof(PointsDataFlags) == sizeof(uint32_t), "");
 #define EachArray(F)\
     F(points) F(rotations) F(scales) F(colors) F(velocities) F(ids)
 #define EachMember(F)\
-    F(pd_flags) EachArray(F)
+    F(pd_flags) EachArray(F) F(bounds)
 
 
 Points::Points() {}
@@ -31,7 +31,7 @@ void Points::deserialize(std::istream& is)
 
 bool Points::isUnchanged() const
 {
-    return pd_flags.unchanged;
+    return td_flags.unchanged && pd_flags.unchanged;
 }
 
 bool Points::isTopologyUnchanged() const
@@ -135,7 +135,17 @@ bool Points::lerp(const Entity& e1_, const Entity& e2_, float t)
     enumerate(rotations, e1.rotations, e2.rotations, [t](quatf& v, const quatf& t1, const quatf& t2) {
         v = mu::slerp(t1, t2, t);
     });
+
+    updateBounds();
     return true;
+}
+
+void Points::updateBounds()
+{
+    float3 bmin, bmax;
+    mu::MinMax(points.cdata(), points.size(), bmin, bmax);
+    bounds.center = (bmax + bmin) * 0.5f;
+    bounds.extents = abs(bmax - bmin);
 }
 
 void Points::clear()
@@ -183,14 +193,6 @@ void Points::setupPointsDataFlags()
     pd_flags.has_colors = !colors.empty();
     pd_flags.has_velocities = !velocities.empty();
     pd_flags.has_ids = !ids.empty();
-}
-
-void Points::updateBounds()
-{
-    float3 bmin, bmax;
-    mu::MinMax(points.cdata(), points.size(), bmin, bmax);
-    bounds.center = (bmax + bmin) * 0.5f;
-    bounds.extents = abs(bmax - bmin);
 }
 
 

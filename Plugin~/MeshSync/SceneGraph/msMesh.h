@@ -191,6 +191,7 @@ public:
     std::vector<BlendShapeDataPtr> blendshapes;
 
     SharedVector<SubmeshData> submeshes;
+    Bounds bounds{};
 
     // non-serializable
     // *update clear() when add member*
@@ -199,7 +200,6 @@ public:
     SharedVector<int>       bone_offsets;
     SharedVector<Weights1>  weights1;
     uint32_t bone_weight_count = 0; // sum of bone_counts
-    Bounds bounds{};
 
 
 protected:
@@ -218,13 +218,13 @@ public:
     bool merge(const Entity& base) override;
     bool diff(const Entity& e1, const Entity& e2) override;
     bool lerp(const Entity& e1, const Entity& e2, float t) override;
+    void updateBounds() override;
 
     void clear() override;
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;
     EntityPtr clone(bool detach = false) override;
 
-    void updateBounds();
     void refine();
     void makeDoubleSided();
     void mirrorMesh(const float3& plane_n, float plane_d, bool welding = false);

@@ -151,7 +151,7 @@ void BoneData::clear()
     EachVertexAttribute(F) EachTopologyAttribute(F)
 
 #define EachMember(F)\
-    F(refine_settings) EachGeometryAttribute(F) F(root_bone) F(bones) F(blendshapes) F(submeshes)
+    F(refine_settings) EachGeometryAttribute(F) F(root_bone) F(bones) F(blendshapes) F(submeshes) F(bounds)
 
 Mesh::Mesh() {}
 Mesh::~Mesh() {}
@@ -294,7 +294,18 @@ bool Mesh::lerp(const Entity& e1_, const Entity& e2_, float t)
 
     tangents.resize_discard(e1.tangents.size());
     LerpTangents(tangents.data(), e1.tangents.cdata(), e2.tangents.cdata(), tangents.size(), t);
-    return false;
+
+    updateBounds();
+    return true;
+}
+
+void Mesh::updateBounds()
+{
+    float3 bmin, bmax;
+    bmin = bmax = float3::zero();
+    MinMax(points.cdata(), points.size(), bmin, bmax);
+    bounds.center = (bmax + bmin) * 0.5f;
+    bounds.extents = abs(bmax - bmin) * 0.5f;
 }
 
 
@@ -401,15 +412,6 @@ static inline void Remap(C1& dst, const C2& src, const C3& indices)
         dst.resize_discard(indices.size());
         CopyWithIndices(dst.data(), src.data(), indices);
     }
-}
-
-void Mesh::updateBounds()
-{
-    float3 bmin, bmax;
-    bmin = bmax = float3::zero();
-    MinMax(points.cdata(), points.size(), bmin, bmax);
-    bounds.center = (bmax + bmin) * 0.5f;
-    bounds.extents = abs(bmax - bmin) * 0.5f;
 }
 
 void Mesh::refine()

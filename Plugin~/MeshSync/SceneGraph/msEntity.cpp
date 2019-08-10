@@ -110,6 +110,10 @@ bool Entity::lerp(const Entity& s1, const Entity& s2, float /*t*/)
     return true;
 }
 
+void Entity::updateBounds()
+{
+}
+
 bool Entity::genVelocity(const Entity& prev)
 {
     if (cache_flags.constant || getType() != prev.getType())
