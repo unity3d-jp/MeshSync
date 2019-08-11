@@ -294,7 +294,7 @@ SyncSettings& msmayaContext::getSettings()
     return m_settings;
 }
 
-CacheExportSettings& msmayaContext::getCacheSettings()
+CacheSettings& msmayaContext::getCacheSettings()
 {
     return m_cache_settings;
 }
@@ -628,7 +628,7 @@ bool msmayaContext::sendAnimations(ObjectScope scope)
     return true;
 }
 
-bool msmayaContext::exportCache(const CacheExportSettings& cache_settings)
+bool msmayaContext::exportCache(const CacheSettings& cache_settings)
 {
     float frame_rate = (float)MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
     float samples_per_second = frame_rate;

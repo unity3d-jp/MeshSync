@@ -1,32 +1,32 @@
 #include "pch.h"
 #include "msblenContext.h"
 
-static bool msblenExport(msblenContext& self, msblenContext::SendTarget target, msblenContext::SendScope scope)
+static bool msblenExport(msblenContext& self, ExportTarget target, ObjectScope scope)
 {
     if (!self.isServerAvailable()) {
         self.logInfo("MeshSync: Server not available. %s", self.getErrorMessage().c_str());
         return false;
     }
 
-    if (target == msblenContext::SendTarget::Objects) {
+    if (target == ExportTarget::Objects) {
         self.wait();
-        self.sendObjects(msblenContext::SendScope::All, true);
+        self.sendObjects(ObjectScope::All, true);
     }
-    else if (target == msblenContext::SendTarget::Materials) {
+    else if (target == ExportTarget::Materials) {
         self.wait();
         self.sendMaterials(true);
     }
-    else if (target == msblenContext::SendTarget::Animations) {
+    else if (target == ExportTarget::Animations) {
         self.wait();
-        self.sendAnimations(msblenContext::SendScope::All);
+        self.sendAnimations(ObjectScope::All);
     }
-    else if (target == msblenContext::SendTarget::Everything) {
+    else if (target == ExportTarget::Everything) {
         self.wait();
         self.sendMaterials(true);
         self.wait();
-        self.sendObjects(msblenContext::SendScope::All, true);
+        self.sendObjects(ObjectScope::All, true);
         self.wait();
-        self.sendAnimations(msblenContext::SendScope::All);
+        self.sendAnimations(ObjectScope::All);
     }
     return true;
 }
@@ -44,24 +44,24 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
             .def(py::init<>())
             .def_property_readonly("PLUGIN_VERSION", [](const msblenContext& self) { return std::string(msPluginVersionStr); })
             .def_property_readonly("PROTOCOL_VERSION", [](const msblenContext& self) { return std::to_string(msProtocolVersion); })
-            .def_property_readonly("TARGET_OBJECTS",    [](const msblenContext& self) { return (int)msblenContext::SendTarget::Objects; })
-            .def_property_readonly("TARGET_MATERIALS",  [](const msblenContext& self) { return (int)msblenContext::SendTarget::Materials; })
-            .def_property_readonly("TARGET_ANIMATIONS", [](const msblenContext& self) { return (int)msblenContext::SendTarget::Animations; })
-            .def_property_readonly("TARGET_EVERYTHING", [](const msblenContext& self) { return (int)msblenContext::SendTarget::Everything; })
-            .def_property_readonly("SCOPE_NONE",        [](const msblenContext& self) { return (int)msblenContext::SendScope::None; })
-            .def_property_readonly("SCOPE_ALL",         [](const msblenContext& self) { return (int)msblenContext::SendScope::All; })
-            .def_property_readonly("SCOPE_UPDATED",     [](const msblenContext& self) { return (int)msblenContext::SendScope::Updated; })
-            .def_property_readonly("SCOPE_SELECTED",    [](const msblenContext& self) { return (int)msblenContext::SendScope::Selected; })
+            .def_property_readonly("TARGET_OBJECTS",    [](const msblenContext& self) { return (int)ExportTarget::Objects; })
+            .def_property_readonly("TARGET_MATERIALS",  [](const msblenContext& self) { return (int)ExportTarget::Materials; })
+            .def_property_readonly("TARGET_ANIMATIONS", [](const msblenContext& self) { return (int)ExportTarget::Animations; })
+            .def_property_readonly("TARGET_EVERYTHING", [](const msblenContext& self) { return (int)ExportTarget::Everything; })
+            .def_property_readonly("SCOPE_NONE",        [](const msblenContext& self) { return (int)ObjectScope::None; })
+            .def_property_readonly("SCOPE_ALL",         [](const msblenContext& self) { return (int)ObjectScope::All; })
+            .def_property_readonly("SCOPE_UPDATED",     [](const msblenContext& self) { return (int)ObjectScope::Updated; })
+            .def_property_readonly("SCOPE_SELECTED",    [](const msblenContext& self) { return (int)ObjectScope::Selected; })
             .def_property_readonly("is_server_available", [](msblenContext& self) { return self.isServerAvailable(); })
             .def_property_readonly("error_message", [](msblenContext& self) { return self.getErrorMessage(); })
             BindMethod(flushPendingList)
             BindMethodF(setup, [](msblenContext& self, py::object ctx) { bl::setup(ctx); })
             BindMethodF(clear, [](msblenContext& self, py::object ctx) { self.clear(); })
             BindMethodF(exportUpdatedObjects, [](msblenContext& self) {
-                self.sendObjects(msblenContext::SendScope::Updated, false);
+                self.sendObjects(ObjectScope::Updated, false);
             })
             BindMethodF(export, [](msblenContext& self, int _target) {
-                msblenExport(self, (msblenContext::SendTarget)_target, msblenContext::SendScope::All);
+                msblenExport(self, (ExportTarget)_target, ObjectScope::All);
             })
             BindProperty(server_address,
                 [](const msblenContext& self) { return self.getSettings().client_settings.server; },

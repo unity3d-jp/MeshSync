@@ -149,7 +149,7 @@ struct SyncSettings
     bool export_cache = false;
 };
 
-struct CacheExportSettings
+struct CacheSettings
 {
     std::string path;
     ObjectScope object_scope = ObjectScope::All;
@@ -175,7 +175,7 @@ class msmayaContext
 public:
     static msmayaContext& getInstance();
     SyncSettings& getSettings();
-    CacheExportSettings& getCacheSettings();
+    CacheSettings& getCacheSettings();
 
     msmayaContext(MObject obj);
     ~msmayaContext();
@@ -199,7 +199,7 @@ public:
     bool sendMaterials(bool dirty_all);
     bool sendObjects(ObjectScope scope, bool dirty_all);
     bool sendAnimations(ObjectScope scope);
-    bool exportCache(const CacheExportSettings& cache_settings);
+    bool exportCache(const CacheSettings& cache_settings);
 
     bool recvObjects();
 
@@ -270,7 +270,7 @@ private:
 
 private:
     SyncSettings m_settings;
-    CacheExportSettings m_cache_settings;
+    CacheSettings m_cache_settings;
 
     MObject m_obj;
     MFnPlugin m_iplugin;

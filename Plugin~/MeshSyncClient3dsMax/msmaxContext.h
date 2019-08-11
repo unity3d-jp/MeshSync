@@ -72,7 +72,7 @@ struct SyncSettings
     bool export_scene_cache = false;
 };
 
-struct CacheExportSettings
+struct CacheSettings
 {
     std::string path;
     ObjectScope object_scope = ObjectScope::All;
@@ -103,7 +103,7 @@ public:
     msmaxContext();
     ~msmaxContext();
     SyncSettings& getSettings();
-    CacheExportSettings& getCacheSettings();
+    CacheSettings& getCacheSettings();
 
     void onStartup();
     void onShutdown();
@@ -127,7 +127,7 @@ public:
     bool sendObjects(ObjectScope scope, bool dirty_all);
     bool sendMaterials(bool dirty_all);
     bool sendAnimations(ObjectScope scope);
-    bool exportCache(const CacheExportSettings& cache_settings);
+    bool exportCache(const CacheSettings& cache_settings);
 
     bool recvScene();
 
@@ -223,7 +223,7 @@ private:
 
 private:
     SyncSettings m_settings;
-    CacheExportSettings m_cache_settings;
+    CacheSettings m_cache_settings;
     ISceneEventManager::CallbackKey m_cbkey = 0;
 
     std::map<INode*, TreeNode> m_node_records;
@@ -257,4 +257,4 @@ private:
 #define msmaxGetSettings() msmaxGetContext().getSettings()
 #define msmaxGetCacheSettings() msmaxGetContext().getCacheSettings()
 bool msmaxSendScene(ExportTarget target, ObjectScope scope);
-bool msmaxExportCache(const CacheExportSettings& cache_settings);
+bool msmaxExportCache(const CacheSettings& cache_settings);

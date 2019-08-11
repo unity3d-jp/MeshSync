@@ -95,7 +95,7 @@ SyncSettings& msmaxContext::getSettings()
     return m_settings;
 }
 
-CacheExportSettings& msmaxContext::getCacheSettings()
+CacheSettings& msmaxContext::getCacheSettings()
 {
     return m_cache_settings;
 }
@@ -364,7 +364,7 @@ static int ExceptionFilter(unsigned int code, struct _EXCEPTION_POINTERS *ep)
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-bool msmaxContext::exportCache(const CacheExportSettings& cache_settings)
+bool msmaxContext::exportCache(const CacheSettings& cache_settings)
 {
     //float sample_rate = m_settings.animation_sps;
     float samples_per_frame = cache_settings.samples_per_frame;
@@ -1581,7 +1581,7 @@ bool msmaxSendScene(ExportTarget target, ObjectScope scope)
     return true;
 }
 
-bool msmaxExportCache(const CacheExportSettings& cache_settings)
+bool msmaxExportCache(const CacheSettings& cache_settings)
 {
     auto& ctx = msmaxGetContext();
     auto body = [&ctx, cache_settings]() {

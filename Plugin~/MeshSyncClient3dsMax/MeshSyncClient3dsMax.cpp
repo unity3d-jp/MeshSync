@@ -192,7 +192,7 @@ Value* Import_cf(Value** arg_list, int count)
 // e.g. UnityMeshSync.ExportCache path:"C:/tmp/hoge.sc" frame_range:"all"
 Value* ExportCache_cf(Value** arg_list, int count)
 {
-    CacheExportSettings settings;
+    CacheSettings settings;
 
     // parse args
     for (int i = 0; i < count; /**/) {
