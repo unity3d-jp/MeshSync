@@ -1767,15 +1767,35 @@ namespace UTJ.MeshSync
         {
             get { return msMeshGetNumBones(self); }
         }
-        public int numBoneWeights
+        public string[] bonePaths
         {
-            get { return msMeshGetNumBoneWeights(self); }
+            get
+            {
+                int n = numBones;
+                var ret = new string[n];
+                for (int i = 0; i < n; ++i)
+                    ret[i] = Misc.S(msMeshGetBonePath(self, i));
+                return ret;
+            }
         }
         public string rootBonePath
         {
             get { return Misc.S(msMeshGetRootBonePath(self)); }
             set { msMeshSetRootBonePath(self, value); }
         }
+        public int numBoneWeights
+        {
+            get { return msMeshGetNumBoneWeights(self); }
+        }
+        public int numSubmeshes
+        {
+            get { return msMeshGetNumSubmeshes(self); }
+        }
+        public int numBlendShapes
+        {
+            get { return msMeshGetNumBlendShapes(self); }
+        }
+
         public Matrix4x4[] bindposes
         {
             get
@@ -1795,22 +1815,12 @@ namespace UTJ.MeshSync
                 msMeshSetBonePath(self, path, i);
             }
         }
-        public string[] GetBonePaths()
-        {
-            int n = numBones;
-            var ret = new string[n];
-            for (int i = 0; i < n; ++i)
-                ret[i] = Misc.S(msMeshGetBonePath(self, i));
-            return ret;
-        }
 
-        public int numSubmeshes { get { return msMeshGetNumSubmeshes(self); } }
         public SubmeshData GetSubmesh(int i)
         {
             return msMeshGetSubmesh(self, i);
         }
 
-        public int numBlendShapes { get { return msMeshGetNumBlendShapes(self); } }
         public BlendShapeData GetBlendShapeData(int i)
         {
             return msMeshGetBlendShapeData(self, i);

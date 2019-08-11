@@ -54,6 +54,8 @@ namespace UTJ.MeshSync
 
             public int[] materialIDs;
             public string reference;
+            public string rootBonePath;
+            public string[] bonePaths;
             public bool visible = true; // for reference
             public bool recved = false;
 
@@ -694,18 +696,56 @@ namespace UTJ.MeshSync
 
         public void AfterUpdateScene()
         {
-            // resolve references
             foreach (var pair in m_clientObjects)
             {
-                var dstrec = pair.Value;
-                if (dstrec.reference == null || dstrec.go == null)
+                var rec = pair.Value;
+                if (rec.go == null)
                     continue;
 
-                EntityRecord srcrec = null;
-                if (m_clientObjects.TryGetValue(dstrec.reference, out srcrec) && srcrec.go != null)
+                // resolve references
+                if (rec.reference != null)
                 {
-                    dstrec.materialIDs = srcrec.materialIDs;
-                    UpdateReference(dstrec, srcrec);
+                    EntityRecord srcrec = null;
+                    if (m_clientObjects.TryGetValue(rec.reference, out srcrec) && srcrec.go != null)
+                    {
+                        rec.materialIDs = srcrec.materialIDs;
+                        UpdateReference(rec, srcrec);
+                    }
+                }
+
+                // resolve bones
+                if (rec.bonePaths != null && rec.bonePaths.Length > 0 && rec.skinnedMeshRenderer != null)
+                {
+                    var smr = rec.skinnedMeshRenderer;
+                    var n = rec.bonePaths.Length;
+                    bool dummy = false;
+
+                    var bones = new Transform[n];
+                    for (int bi = 0; bi < n; ++bi)
+                        bones[bi] = FindOrCreateObjectByPath(rec.bonePaths[bi], false, ref dummy);
+
+                    Transform root = null;
+                    if (rec.rootBonePath != null && rec.rootBonePath.Length != 0)
+                        root = FindOrCreateObjectByPath(rec.rootBonePath, false, ref dummy);
+                    if (root == null && n > 0)
+                    {
+                        // find root bone
+                        root = bones[0];
+                        for (; ; )
+                        {
+                            var parent = root.parent;
+                            if (parent == null || parent == m_rootObject)
+                                break;
+                            root = parent;
+                        }
+                    }
+
+                    smr.rootBone = root;
+                    smr.bones = bones;
+                    smr.updateWhenOffscreen = true; // todo: this should be turned off at some point
+
+                    rec.bonePaths = null;
+                    rec.rootBonePath = null;
                 }
             }
 
@@ -1194,24 +1234,9 @@ namespace UTJ.MeshSync
                 // update bones
                 if (hasBones)
                 {
-                    var bonePaths = data.GetBonePaths();
-                    var bones = new Transform[data.numBones];
-                    for (int bi = 0; bi < bones.Length; ++bi)
-                    {
-                        bool dummy = false;
-                        bones[bi] = FindOrCreateObjectByPath(bonePaths[bi], false, ref dummy);
-                    }
-
-                    if (bones.Length > 0)
-                    {
-                        bool dummy = false;
-                        var root = FindOrCreateObjectByPath(data.rootBonePath, false, ref dummy);
-                        if (root == null)
-                            root = bones[0];
-                        smr.rootBone = root;
-                        smr.bones = bones;
-                        smr.updateWhenOffscreen = true; // todo: this should be turned off at some point
-                    }
+                    rec.rootBonePath = data.rootBonePath;
+                    rec.bonePaths = data.bonePaths;
+                    // bones will be resolved in AfterUpdateScene()
                 }
                 else
                 {
