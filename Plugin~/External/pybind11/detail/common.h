@@ -1,5 +1,5 @@
 /*
-    pybind11/common.h -- Basic macros
+    pybind11/detail/common.h -- Basic macros
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>
 
@@ -16,13 +16,30 @@
 #  define NAMESPACE_END(name) }
 #endif
 
-// Neither MSVC nor Intel support enough of C++14 yet (in particular, as of MSVC 2015 and ICC 17
-// beta, neither support extended constexpr, which we rely on in descr.h), so don't enable pybind
-// CPP14 features for them.
-#if !defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+// Robust support for some features and loading modules compiled against different pybind versions
+// requires forcing hidden visibility on pybind code, so we enforce this by setting the attribute on
+// the main `pybind11` namespace.
+#if !defined(PYBIND11_NAMESPACE)
+#  ifdef __GNUG__
+#    define PYBIND11_NAMESPACE pybind11 __attribute__((visibility("hidden")))
+#  else
+#    define PYBIND11_NAMESPACE pybind11
+#  endif
+#endif
+
+#if !(defined(_MSC_VER) && __cplusplus == 199711L) && !defined(__INTEL_COMPILER)
 #  if __cplusplus >= 201402L
 #    define PYBIND11_CPP14
-#    if __cplusplus > 201402L /* Temporary: should be updated to >= the final C++17 value once known */
+#    if __cplusplus >= 201703L
+#      define PYBIND11_CPP17
+#    endif
+#  endif
+#elif defined(_MSC_VER) && __cplusplus == 199711L
+// MSVC sets _MSVC_LANG rather than __cplusplus (supposedly until the standard is fully implemented)
+// Unless you use the /Zc:__cplusplus flag on Visual Studio 2017 15.7 Preview 3 or newer
+#  if _MSVC_LANG >= 201402L
+#    define PYBIND11_CPP14
+#    if _MSVC_LANG > 201402L && _MSC_VER >= 1910
 #      define PYBIND11_CPP17
 #    endif
 #  endif
@@ -30,8 +47,8 @@
 
 // Compiler version assertions
 #if defined(__INTEL_COMPILER)
-#  if __INTEL_COMPILER < 1500
-#    error pybind11 requires Intel C++ compiler v15 or newer
+#  if __INTEL_COMPILER < 1700
+#    error pybind11 requires Intel C++ compiler v17 or newer
 #  endif
 #elif defined(__clang__) && !defined(__apple_build_version__)
 #  if __clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 3)
@@ -71,17 +88,13 @@
 
 #if defined(PYBIND11_CPP14)
 #  define PYBIND11_DEPRECATED(reason) [[deprecated(reason)]]
-#elif defined(__clang__)
+#else
 #  define PYBIND11_DEPRECATED(reason) __attribute__((deprecated(reason)))
-#elif defined(__GNUG__)
-#  define PYBIND11_DEPRECATED(reason) __attribute__((deprecated))
-#elif defined(_MSC_VER)
-#  define PYBIND11_DEPRECATED(reason) __declspec(deprecated)
 #endif
 
 #define PYBIND11_VERSION_MAJOR 2
-#define PYBIND11_VERSION_MINOR 1
-#define PYBIND11_VERSION_PATCH 1
+#define PYBIND11_VERSION_MINOR 3
+#define PYBIND11_VERSION_PATCH 0
 
 /// Include Python header, disable linking to pythonX_d.lib on Windows in debug mode
 #if defined(_MSC_VER)
@@ -123,6 +136,7 @@
 #endif
 
 #include <cstddef>
+#include <cstring>
 #include <forward_list>
 #include <vector>
 #include <string>
@@ -135,6 +149,8 @@
 
 #if PY_MAJOR_VERSION >= 3 /// Compatibility macros for various Python versions
 #define PYBIND11_INSTANCE_METHOD_NEW(ptr, class_) PyInstanceMethod_New(ptr)
+#define PYBIND11_INSTANCE_METHOD_CHECK PyInstanceMethod_Check
+#define PYBIND11_INSTANCE_METHOD_GET_FUNCTION PyInstanceMethod_GET_FUNCTION
 #define PYBIND11_BYTES_CHECK PyBytes_Check
 #define PYBIND11_BYTES_FROM_STRING PyBytes_FromString
 #define PYBIND11_BYTES_FROM_STRING_AND_SIZE PyBytes_FromStringAndSize
@@ -143,16 +159,22 @@
 #define PYBIND11_BYTES_SIZE PyBytes_Size
 #define PYBIND11_LONG_CHECK(o) PyLong_Check(o)
 #define PYBIND11_LONG_AS_LONGLONG(o) PyLong_AsLongLong(o)
-#define PYBIND11_LONG_AS_UNSIGNED_LONGLONG(o) PyLong_AsUnsignedLongLong(o)
+#define PYBIND11_LONG_FROM_SIGNED(o) PyLong_FromSsize_t((ssize_t) o)
+#define PYBIND11_LONG_FROM_UNSIGNED(o) PyLong_FromSize_t((size_t) o)
 #define PYBIND11_BYTES_NAME "bytes"
 #define PYBIND11_STRING_NAME "str"
 #define PYBIND11_SLICE_OBJECT PyObject
 #define PYBIND11_FROM_STRING PyUnicode_FromString
 #define PYBIND11_STR_TYPE ::pybind11::str
+#define PYBIND11_BOOL_ATTR "__bool__"
+#define PYBIND11_NB_BOOL(ptr) ((ptr)->nb_bool)
 #define PYBIND11_PLUGIN_IMPL(name) \
     extern "C" PYBIND11_EXPORT PyObject *PyInit_##name()
+
 #else
 #define PYBIND11_INSTANCE_METHOD_NEW(ptr, class_) PyMethod_New(ptr, nullptr, class_)
+#define PYBIND11_INSTANCE_METHOD_CHECK PyMethod_Check
+#define PYBIND11_INSTANCE_METHOD_GET_FUNCTION PyMethod_GET_FUNCTION
 #define PYBIND11_BYTES_CHECK PyString_Check
 #define PYBIND11_BYTES_FROM_STRING PyString_FromString
 #define PYBIND11_BYTES_FROM_STRING_AND_SIZE PyString_FromStringAndSize
@@ -161,12 +183,15 @@
 #define PYBIND11_BYTES_SIZE PyString_Size
 #define PYBIND11_LONG_CHECK(o) (PyInt_Check(o) || PyLong_Check(o))
 #define PYBIND11_LONG_AS_LONGLONG(o) (PyInt_Check(o) ? (long long) PyLong_AsLong(o) : PyLong_AsLongLong(o))
-#define PYBIND11_LONG_AS_UNSIGNED_LONGLONG(o) (PyInt_Check(o) ? (unsigned long long) PyLong_AsUnsignedLong(o) : PyLong_AsUnsignedLongLong(o))
+#define PYBIND11_LONG_FROM_SIGNED(o) PyInt_FromSsize_t((ssize_t) o) // Returns long if needed.
+#define PYBIND11_LONG_FROM_UNSIGNED(o) PyInt_FromSize_t((size_t) o) // Returns long if needed.
 #define PYBIND11_BYTES_NAME "str"
 #define PYBIND11_STRING_NAME "unicode"
 #define PYBIND11_SLICE_OBJECT PySliceObject
 #define PYBIND11_FROM_STRING PyString_FromString
 #define PYBIND11_STR_TYPE ::pybind11::bytes
+#define PYBIND11_BOOL_ATTR "__nonzero__"
+#define PYBIND11_NB_BOOL(ptr) ((ptr)->nb_nonzero)
 #define PYBIND11_PLUGIN_IMPL(name) \
     static PyObject *pybind11_init_wrapper();               \
     extern "C" PYBIND11_EXPORT void init##name() {          \
@@ -185,10 +210,36 @@ extern "C" {
 #define PYBIND11_TRY_NEXT_OVERLOAD ((PyObject *) 1) // special failure return code
 #define PYBIND11_STRINGIFY(x) #x
 #define PYBIND11_TOSTRING(x) PYBIND11_STRINGIFY(x)
-#define PYBIND11_INTERNALS_ID "__pybind11_" \
-    PYBIND11_TOSTRING(PYBIND11_VERSION_MAJOR) "_" PYBIND11_TOSTRING(PYBIND11_VERSION_MINOR) "__"
+#define PYBIND11_CONCAT(first, second) first##second
+
+#define PYBIND11_CHECK_PYTHON_VERSION \
+    {                                                                          \
+        const char *compiled_ver = PYBIND11_TOSTRING(PY_MAJOR_VERSION)         \
+            "." PYBIND11_TOSTRING(PY_MINOR_VERSION);                           \
+        const char *runtime_ver = Py_GetVersion();                             \
+        size_t len = std::strlen(compiled_ver);                                \
+        if (std::strncmp(runtime_ver, compiled_ver, len) != 0                  \
+                || (runtime_ver[len] >= '0' && runtime_ver[len] <= '9')) {     \
+            PyErr_Format(PyExc_ImportError,                                    \
+                "Python version mismatch: module was compiled for Python %s, " \
+                "but the interpreter version is incompatible: %s.",            \
+                compiled_ver, runtime_ver);                                    \
+            return nullptr;                                                    \
+        }                                                                      \
+    }
+
+#define PYBIND11_CATCH_INIT_EXCEPTIONS \
+        catch (pybind11::error_already_set &e) {                               \
+            PyErr_SetString(PyExc_ImportError, e.what());                      \
+            return nullptr;                                                    \
+        } catch (const std::exception &e) {                                    \
+            PyErr_SetString(PyExc_ImportError, e.what());                      \
+            return nullptr;                                                    \
+        }                                                                      \
 
 /** \rst
+    ***Deprecated in favor of PYBIND11_MODULE***
+
     This macro creates the entry point that will be invoked when the Python interpreter
     imports a plugin library. Please create a `module` in the function body and return
     the pointer to its underlying Python object at the end.
@@ -202,34 +253,47 @@ extern "C" {
         }
 \endrst */
 #define PYBIND11_PLUGIN(name)                                                  \
+    PYBIND11_DEPRECATED("PYBIND11_PLUGIN is deprecated, use PYBIND11_MODULE")  \
     static PyObject *pybind11_init();                                          \
     PYBIND11_PLUGIN_IMPL(name) {                                               \
-        int major, minor;                                                      \
-        if (sscanf(Py_GetVersion(), "%i.%i", &major, &minor) != 2) {           \
-            PyErr_SetString(PyExc_ImportError, "Can't parse Python version."); \
-            return nullptr;                                                    \
-        } else if (major != PY_MAJOR_VERSION || minor != PY_MINOR_VERSION) {   \
-            PyErr_Format(PyExc_ImportError,                                    \
-                         "Python version mismatch: module was compiled for "   \
-                         "version %i.%i, while the interpreter is running "    \
-                         "version %i.%i.", PY_MAJOR_VERSION, PY_MINOR_VERSION, \
-                         major, minor);                                        \
-            return nullptr;                                                    \
-        }                                                                      \
+        PYBIND11_CHECK_PYTHON_VERSION                                          \
         try {                                                                  \
             return pybind11_init();                                            \
-        } catch (pybind11::error_already_set &e) {                             \
-            e.clear();                                                         \
-            PyErr_SetString(PyExc_ImportError, e.what());                      \
-            return nullptr;                                                    \
-        } catch (const std::exception &e) {                                    \
-            PyErr_SetString(PyExc_ImportError, e.what());                      \
-            return nullptr;                                                    \
-        }                                                                      \
+        } PYBIND11_CATCH_INIT_EXCEPTIONS                                       \
     }                                                                          \
     PyObject *pybind11_init()
 
-NAMESPACE_BEGIN(pybind11)
+/** \rst
+    This macro creates the entry point that will be invoked when the Python interpreter
+    imports an extension module. The module name is given as the fist argument and it
+    should not be in quotes. The second macro argument defines a variable of type
+    `py::module` which can be used to initialize the module.
+
+    .. code-block:: cpp
+
+        PYBIND11_MODULE(example, m) {
+            m.doc() = "pybind11 example module";
+
+            // Add bindings here
+            m.def("foo", []() {
+                return "Hello, World!";
+            });
+        }
+\endrst */
+#define PYBIND11_MODULE(name, variable)                                        \
+    static void PYBIND11_CONCAT(pybind11_init_, name)(pybind11::module &);     \
+    PYBIND11_PLUGIN_IMPL(name) {                                               \
+        PYBIND11_CHECK_PYTHON_VERSION                                          \
+        auto m = pybind11::module(PYBIND11_TOSTRING(name));                    \
+        try {                                                                  \
+            PYBIND11_CONCAT(pybind11_init_, name)(m);                          \
+            return m.ptr();                                                    \
+        } PYBIND11_CATCH_INIT_EXCEPTIONS                                       \
+    }                                                                          \
+    void PYBIND11_CONCAT(pybind11_init_, name)(pybind11::module &variable)
+
+
+NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 
 using ssize_t = Py_ssize_t;
 using size_t  = std::size_t;
@@ -286,134 +350,110 @@ enum class return_value_policy : uint8_t {
     reference_internal
 };
 
-/// Information record describing a Python buffer object
-struct buffer_info {
-    void *ptr = nullptr;         // Pointer to the underlying storage
-    size_t itemsize = 0;         // Size of individual items in bytes
-    size_t size = 0;             // Total number of entries
-    std::string format;          // For homogeneous buffers, this should be set to format_descriptor<T>::format()
-    size_t ndim = 0;             // Number of dimensions
-    std::vector<size_t> shape;   // Shape of the tensor (1 entry per dimension)
-    std::vector<size_t> strides; // Number of entries between adjacent entries (for each per dimension)
-
-    buffer_info() { }
-
-    buffer_info(void *ptr, size_t itemsize, const std::string &format, size_t ndim,
-                const std::vector<size_t> &shape, const std::vector<size_t> &strides)
-        : ptr(ptr), itemsize(itemsize), size(1), format(format),
-          ndim(ndim), shape(shape), strides(strides) {
-        for (size_t i = 0; i < ndim; ++i)
-            size *= shape[i];
-    }
-
-    buffer_info(void *ptr, size_t itemsize, const std::string &format, size_t size)
-    : buffer_info(ptr, itemsize, format, 1, std::vector<size_t> { size },
-                  std::vector<size_t> { itemsize }) { }
-
-    explicit buffer_info(Py_buffer *view, bool ownview = true)
-        : ptr(view->buf), itemsize((size_t) view->itemsize), size(1), format(view->format),
-          ndim((size_t) view->ndim), shape((size_t) view->ndim), strides((size_t) view->ndim), view(view), ownview(ownview) {
-        for (size_t i = 0; i < (size_t) view->ndim; ++i) {
-            shape[i] = (size_t) view->shape[i];
-            strides[i] = (size_t) view->strides[i];
-            size *= shape[i];
-        }
-    }
-
-    buffer_info(const buffer_info &) = delete;
-    buffer_info& operator=(const buffer_info &) = delete;
-
-    buffer_info(buffer_info &&other) {
-        (*this) = std::move(other);
-    }
-
-    buffer_info& operator=(buffer_info &&rhs) {
-        ptr = rhs.ptr;
-        itemsize = rhs.itemsize;
-        size = rhs.size;
-        format = std::move(rhs.format);
-        ndim = rhs.ndim;
-        shape = std::move(rhs.shape);
-        strides = std::move(rhs.strides);
-        std::swap(view, rhs.view);
-        std::swap(ownview, rhs.ownview);
-        return *this;
-    }
-
-    ~buffer_info() {
-        if (view && ownview) { PyBuffer_Release(view); delete view; }
-    }
-
-private:
-    Py_buffer *view = nullptr;
-    bool ownview = false;
-};
-
 NAMESPACE_BEGIN(detail)
 
 inline static constexpr int log2(size_t n, int k = 0) { return (n <= 1) ? k : log2(n >> 1, k + 1); }
 
-inline std::string error_string();
+// Returns the size as a multiple of sizeof(void *), rounded up.
+inline static constexpr size_t size_in_ptrs(size_t s) { return 1 + ((s - 1) >> log2(sizeof(void *))); }
 
-/// Core part of the 'instance' type which POD (needed to be able to use 'offsetof')
-template <typename type> struct instance_essentials {
+/**
+ * The space to allocate for simple layout instance holders (see below) in multiple of the size of
+ * a pointer (e.g.  2 means 16 bytes on 64-bit architectures).  The default is the minimum required
+ * to holder either a std::unique_ptr or std::shared_ptr (which is almost always
+ * sizeof(std::shared_ptr<T>)).
+ */
+constexpr size_t instance_simple_holder_in_ptrs() {
+    static_assert(sizeof(std::shared_ptr<int>) >= sizeof(std::unique_ptr<int>),
+            "pybind assumes std::shared_ptrs are at least as big as std::unique_ptrs");
+    return size_in_ptrs(sizeof(std::shared_ptr<int>));
+}
+
+// Forward declarations
+struct type_info;
+struct value_and_holder;
+
+struct nonsimple_values_and_holders {
+    void **values_and_holders;
+    uint8_t *status;
+};
+
+/// The 'instance' type which needs to be standard layout (need to be able to use 'offsetof')
+struct instance {
     PyObject_HEAD
-    type *value;
+    /// Storage for pointers and holder; see simple_layout, below, for a description
+    union {
+        void *simple_value_holder[1 + instance_simple_holder_in_ptrs()];
+        nonsimple_values_and_holders nonsimple;
+    };
+    /// Weak references
     PyObject *weakrefs;
+    /// If true, the pointer is owned which means we're free to manage it with a holder.
     bool owned : 1;
-    bool holder_constructed : 1;
+    /**
+     * An instance has two possible value/holder layouts.
+     *
+     * Simple layout (when this flag is true), means the `simple_value_holder` is set with a pointer
+     * and the holder object governing that pointer, i.e. [val1*][holder].  This layout is applied
+     * whenever there is no python-side multiple inheritance of bound C++ types *and* the type's
+     * holder will fit in the default space (which is large enough to hold either a std::unique_ptr
+     * or std::shared_ptr).
+     *
+     * Non-simple layout applies when using custom holders that require more space than `shared_ptr`
+     * (which is typically the size of two pointers), or when multiple inheritance is used on the
+     * python side.  Non-simple layout allocates the required amount of memory to have multiple
+     * bound C++ classes as parents.  Under this layout, `nonsimple.values_and_holders` is set to a
+     * pointer to allocated space of the required space to hold a sequence of value pointers and
+     * holders followed `status`, a set of bit flags (1 byte each), i.e.
+     * [val1*][holder1][val2*][holder2]...[bb...]  where each [block] is rounded up to a multiple of
+     * `sizeof(void *)`.  `nonsimple.status` is, for convenience, a pointer to the
+     * beginning of the [bb...] block (but not independently allocated).
+     *
+     * Status bits indicate whether the associated holder is constructed (&
+     * status_holder_constructed) and whether the value pointer is registered (&
+     * status_instance_registered) in `registered_instances`.
+     */
+    bool simple_layout : 1;
+    /// For simple layout, tracks whether the holder has been constructed
+    bool simple_holder_constructed : 1;
+    /// For simple layout, tracks whether the instance is registered in `registered_instances`
+    bool simple_instance_registered : 1;
+    /// If true, get_internals().patients has an entry for this object
+    bool has_patients : 1;
+
+    /// Initializes all of the above type/values/holders data (but not the instance values themselves)
+    void allocate_layout();
+
+    /// Destroys/deallocates all of the above
+    void deallocate_layout();
+
+    /// Returns the value_and_holder wrapper for the given type (or the first, if `find_type`
+    /// omitted).  Returns a default-constructed (with `.inst = nullptr`) object on failure if
+    /// `throw_if_missing` is false.
+    value_and_holder get_value_and_holder(const type_info *find_type = nullptr, bool throw_if_missing = true);
+
+    /// Bit values for the non-simple status flags
+    static constexpr uint8_t status_holder_constructed  = 1;
+    static constexpr uint8_t status_instance_registered = 2;
 };
 
-/// PyObject wrapper around generic types, includes a special holder type that is responsible for lifetime management
-template <typename type, typename holder_type = std::unique_ptr<type>> struct instance : instance_essentials<type> {
-    holder_type holder;
-};
-
-struct overload_hash {
-    inline size_t operator()(const std::pair<const PyObject *, const char *>& v) const {
-        size_t value = std::hash<const void *>()(v.first);
-        value ^= std::hash<const void *>()(v.second)  + 0x9e3779b9 + (value<<6) + (value>>2);
-        return value;
-    }
-};
-
-/// Internal data structure used to track registered instances and types
-struct internals {
-    std::unordered_map<std::type_index, void*> registered_types_cpp;   // std::type_index -> type_info
-    std::unordered_map<const void *, void*> registered_types_py;       // PyTypeObject* -> type_info
-    std::unordered_multimap<const void *, void*> registered_instances; // void * -> PyObject*
-    std::unordered_set<std::pair<const PyObject *, const char *>, overload_hash> inactive_overload_cache;
-    std::unordered_map<std::type_index, std::vector<bool (*)(PyObject *, void *&)>> direct_conversions;
-    std::forward_list<void (*) (std::exception_ptr)> registered_exception_translators;
-    std::unordered_map<std::string, void *> shared_data; // Custom data to be shared across extensions
-    PyTypeObject *static_property_type;
-    PyTypeObject *default_metaclass;
-    std::unordered_map<size_t, PyObject *> bases; // one base type per `instance_size` (very few)
-#if defined(WITH_THREAD)
-    decltype(PyThread_create_key()) tstate = 0; // Usually an int but a long on Cygwin64 with Python 3.x
-    PyInterpreterState *istate = nullptr;
-#endif
-
-    /// Return the appropriate base type for the given instance size
-    PyObject *get_base(size_t instance_size);
-};
-
-/// Return a reference to the current 'internals' information
-inline internals &get_internals();
+static_assert(std::is_standard_layout<instance>::value, "Internal error: `pybind11::detail::instance` is not standard layout!");
 
 /// from __cpp_future__ import (convenient aliases from C++14/17)
-#ifdef PYBIND11_CPP14
+#if defined(PYBIND11_CPP14) && (!defined(_MSC_VER) || _MSC_VER >= 1910)
 using std::enable_if_t;
 using std::conditional_t;
 using std::remove_cv_t;
+using std::remove_reference_t;
 #else
 template <bool B, typename T = void> using enable_if_t = typename std::enable_if<B, T>::type;
 template <bool B, typename T, typename F> using conditional_t = typename std::conditional<B, T, F>::type;
 template <typename T> using remove_cv_t = typename std::remove_cv<T>::type;
+template <typename T> using remove_reference_t = typename std::remove_reference<T>::type;
 #endif
 
 /// Index sequences
-#if defined(PYBIND11_CPP14) || defined(_MSC_VER)
+#if defined(PYBIND11_CPP14)
 using std::index_sequence;
 using std::make_index_sequence;
 #else
@@ -423,7 +463,13 @@ template<size_t ...S> struct make_index_sequence_impl <0, S...> { typedef index_
 template<size_t N> using make_index_sequence = typename make_index_sequence_impl<N>::type;
 #endif
 
-/// Backports of std::bool_constant and std::negation to accomodate older compilers
+/// Make an index sequence of the indices of true arguments
+template <typename ISeq, size_t, bool...> struct select_indices_impl { using type = ISeq; };
+template <size_t... IPrev, size_t I, bool B, bool... Bs> struct select_indices_impl<index_sequence<IPrev...>, I, B, Bs...>
+    : select_indices_impl<conditional_t<B, index_sequence<IPrev..., I>, index_sequence<IPrev...>>, I + 1, Bs...> {};
+template <bool... Bs> using select_indices = typename select_indices_impl<index_sequence<>, 0, Bs...>::type;
+
+/// Backports of std::bool_constant and std::negation to accommodate older compilers
 template <bool B> using bool_constant = std::integral_constant<bool, B>;
 template <typename T> struct negation : bool_constant<!T::value> { };
 
@@ -431,7 +477,7 @@ template <typename...> struct void_t_impl { using type = void; };
 template <typename... Ts> using void_t = typename void_t_impl<Ts...>::type;
 
 /// Compile-time all/any/none of that check the boolean value of all template types
-#ifdef __cpp_fold_expressions
+#if defined(__cpp_fold_expressions) && !(defined(_MSC_VER) && (_MSC_VER < 1916))
 template <class... Ts> using all_of = bool_constant<(Ts::value && ...)>;
 template <class... Ts> using any_of = bool_constant<(Ts::value || ...)>;
 #elif !defined(_MSC_VER)
@@ -502,24 +548,41 @@ constexpr int constexpr_first() { return constexpr_impl::first(0, Predicate<Ts>:
 template <template<typename> class Predicate, typename... Ts>
 constexpr int constexpr_last() { return constexpr_impl::last(0, -1, Predicate<Ts>::value...); }
 
-// Extracts the first type from the template parameter pack matching the predicate, or Default if none match.
-template <template<class> class Predicate, class Default, class... Ts> struct first_of;
-template <template<class> class Predicate, class Default> struct first_of<Predicate, Default> {
-    using type = Default;
+/// Return the Nth element from the parameter pack
+template <size_t N, typename T, typename... Ts>
+struct pack_element { using type = typename pack_element<N - 1, Ts...>::type; };
+template <typename T, typename... Ts>
+struct pack_element<0, T, Ts...> { using type = T; };
+
+/// Return the one and only type which matches the predicate, or Default if none match.
+/// If more than one type matches the predicate, fail at compile-time.
+template <template<typename> class Predicate, typename Default, typename... Ts>
+struct exactly_one {
+    static constexpr auto found = constexpr_sum(Predicate<Ts>::value...);
+    static_assert(found <= 1, "Found more than one type matching the predicate");
+
+    static constexpr auto index = found ? constexpr_first<Predicate, Ts...>() : 0;
+    using type = conditional_t<found, typename pack_element<index, Ts...>::type, Default>;
 };
-template <template<class> class Predicate, class Default, class T, class... Ts>
-struct first_of<Predicate, Default, T, Ts...> {
-    using type = typename std::conditional<
-        Predicate<T>::value,
-        T,
-        typename first_of<Predicate, Default, Ts...>::type
-    >::type;
-};
-template <template<class> class Predicate, class Default, class... T> using first_of_t = typename first_of<Predicate, Default, T...>::type;
+template <template<typename> class P, typename Default>
+struct exactly_one<P, Default> { using type = Default; };
+
+template <template<typename> class Predicate, typename Default, typename... Ts>
+using exactly_one_t = typename exactly_one<Predicate, Default, Ts...>::type;
 
 /// Defer the evaluation of type T until types Us are instantiated
 template <typename T, typename... /*Us*/> struct deferred_type { using type = T; };
 template <typename T, typename... Us> using deferred_t = typename deferred_type<T, Us...>::type;
+
+/// Like is_base_of, but requires a strict base (i.e. `is_strict_base_of<T, T>::value == false`,
+/// unlike `std::is_base_of`)
+template <typename Base, typename Derived> using is_strict_base_of = bool_constant<
+    std::is_base_of<Base, Derived>::value && !std::is_same<Base, Derived>::value>;
+
+/// Like is_base_of, but also requires that the base type is accessible (i.e. that a Derived pointer
+/// can be converted to a Base pointer)
+template <typename Base, typename Derived> using is_accessible_base_of = bool_constant<
+    std::is_base_of<Base, Derived>::value && std::is_convertible<Derived *, Base *>::value>;
 
 template <template<typename...> class Base>
 struct is_template_base_of_impl {
@@ -531,75 +594,64 @@ struct is_template_base_of_impl {
 /// `is_template_base_of<Base, T>` is true if `struct T : Base<U> {}` where U can be anything
 template <template<typename...> class Base, typename T>
 #if !defined(_MSC_VER)
-using is_template_base_of = decltype(is_template_base_of_impl<Base>::check((remove_cv_t<T>*)nullptr));
+using is_template_base_of = decltype(is_template_base_of_impl<Base>::check((intrinsic_t<T>*)nullptr));
 #else // MSVC2015 has trouble with decltype in template aliases
-struct is_template_base_of : decltype(is_template_base_of_impl<Base>::check((remove_cv_t<T>*)nullptr)) { };
+struct is_template_base_of : decltype(is_template_base_of_impl<Base>::check((intrinsic_t<T>*)nullptr)) { };
 #endif
 
+/// Check if T is an instantiation of the template `Class`. For example:
+/// `is_instantiation<shared_ptr, T>` is true if `T == shared_ptr<U>` where U can be anything.
+template <template<typename...> class Class, typename T>
+struct is_instantiation : std::false_type { };
+template <template<typename...> class Class, typename... Us>
+struct is_instantiation<Class, Class<Us...>> : std::true_type { };
+
 /// Check if T is std::shared_ptr<U> where U can be anything
-template <typename T> struct is_shared_ptr : std::false_type { };
-template <typename U> struct is_shared_ptr<std::shared_ptr<U>> : std::true_type { };
+template <typename T> using is_shared_ptr = is_instantiation<std::shared_ptr, T>;
+
+/// Check if T looks like an input iterator
+template <typename T, typename = void> struct is_input_iterator : std::false_type {};
+template <typename T>
+struct is_input_iterator<T, void_t<decltype(*std::declval<T &>()), decltype(++std::declval<T &>())>>
+    : std::true_type {};
+
+template <typename T> using is_function_pointer = bool_constant<
+    std::is_pointer<T>::value && std::is_function<typename std::remove_pointer<T>::type>::value>;
+
+template <typename F> struct strip_function_object {
+    using type = typename remove_class<decltype(&F::operator())>::type;
+};
+
+// Extracts the function signature from a function, function pointer or lambda.
+template <typename Function, typename F = remove_reference_t<Function>>
+using function_signature_t = conditional_t<
+    std::is_function<F>::value,
+    F,
+    typename conditional_t<
+        std::is_pointer<F>::value || std::is_member_pointer<F>::value,
+        std::remove_pointer<F>,
+        strip_function_object<F>
+    >::type
+>;
+
+/// Returns true if the type looks like a lambda: that is, isn't a function, pointer or member
+/// pointer.  Note that this can catch all sorts of other things, too; this is intended to be used
+/// in a place where passing a lambda makes sense.
+template <typename T> using is_lambda = satisfies_none_of<remove_reference_t<T>,
+        std::is_function, std::is_pointer, std::is_member_pointer>;
 
 /// Ignore that a variable is unused in compiler warnings
 inline void ignore_unused(const int *) { }
 
+/// Apply a function over each element of a parameter pack
+#ifdef __cpp_fold_expressions
+#define PYBIND11_EXPAND_SIDE_EFFECTS(PATTERN) (((PATTERN), void()), ...)
+#else
+using expand_side_effects = bool[];
+#define PYBIND11_EXPAND_SIDE_EFFECTS(PATTERN) pybind11::detail::expand_side_effects{ ((PATTERN), void(), false)..., false }
+#endif
+
 NAMESPACE_END(detail)
-
-/// Returns a named pointer that is shared among all extension modules (using the same
-/// pybind11 version) running in the current interpreter. Names starting with underscores
-/// are reserved for internal usage. Returns `nullptr` if no matching entry was found.
-inline PYBIND11_NOINLINE void* get_shared_data(const std::string& name) {
-    auto& internals = detail::get_internals();
-    auto it = internals.shared_data.find(name);
-    return it != internals.shared_data.end() ? it->second : nullptr;
-}
-
-/// Set the shared data that can be later recovered by `get_shared_data()`.
-inline PYBIND11_NOINLINE void *set_shared_data(const std::string& name, void *data) {
-    detail::get_internals().shared_data[name] = data;
-    return data;
-}
-
-/// Returns a typed reference to a shared data entry (by using `get_shared_data()`) if
-/// such entry exists. Otherwise, a new object of default-constructible type `T` is
-/// added to the shared data under the given name and a reference to it is returned.
-template<typename T> T& get_or_create_shared_data(const std::string& name) {
-    auto& internals = detail::get_internals();
-    auto it = internals.shared_data.find(name);
-    T* ptr = (T*) (it != internals.shared_data.end() ? it->second : nullptr);
-    if (!ptr) {
-        ptr = new T();
-        internals.shared_data[name] = ptr;
-    }
-    return *ptr;
-}
-
-/// Fetch and hold an error which was already set in Python
-class error_already_set : public std::runtime_error {
-public:
-    error_already_set() : std::runtime_error(detail::error_string()) {
-        PyErr_Fetch(&type, &value, &trace);
-    }
-
-    error_already_set(const error_already_set &) = delete;
-
-    error_already_set(error_already_set &&e)
-        : std::runtime_error(e.what()), type(e.type), value(e.value),
-          trace(e.trace) { e.type = e.value = e.trace = nullptr; }
-
-    inline ~error_already_set(); // implementation in pybind11.h
-
-    error_already_set& operator=(const error_already_set &) = delete;
-
-    /// Give the error back to Python
-    void restore() { PyErr_Restore(type, value, trace); type = value = trace = nullptr; }
-
-    /// Clear the held Python error state (the C++ `what()` message remains intact)
-    void clear() { restore(); PyErr_Clear(); }
-
-private:
-    PyObject *type, *value, *trace;
-};
 
 /// C++ bindings of builtin Python exceptions
 class builtin_exception : public std::runtime_error {
@@ -644,32 +696,18 @@ template <typename T> struct is_fmt_numeric<T, enable_if_t<std::is_arithmetic<T>
 };
 NAMESPACE_END(detail)
 
-template <typename T> struct format_descriptor<T, detail::enable_if_t<detail::is_fmt_numeric<T>::value>> {
-    static constexpr const char c = "?bBhHiIqQfdgFDG"[detail::is_fmt_numeric<T>::index];
+template <typename T> struct format_descriptor<T, detail::enable_if_t<std::is_arithmetic<T>::value>> {
+    static constexpr const char c = "?bBhHiIqQfdg"[detail::is_fmt_numeric<T>::index];
     static constexpr const char value[2] = { c, '\0' };
     static std::string format() { return std::string(1, c); }
 };
 
+#if !defined(PYBIND11_CPP17)
+
 template <typename T> constexpr const char format_descriptor<
-    T, detail::enable_if_t<detail::is_fmt_numeric<T>::value>>::value[2];
+    T, detail::enable_if_t<std::is_arithmetic<T>::value>>::value[2];
 
-NAMESPACE_BEGIN(detail)
-
-template <typename T, typename SFINAE = void> struct compare_buffer_info {
-    static bool compare(const buffer_info& b) {
-        return b.format == format_descriptor<T>::format() && b.itemsize == sizeof(T);
-    }
-};
-
-template <typename T> struct compare_buffer_info<T, detail::enable_if_t<std::is_integral<T>::value>> {
-    static bool compare(const buffer_info& b) {
-        return b.itemsize == sizeof(T) && (b.format == format_descriptor<T>::value ||
-            ((sizeof(T) == sizeof(long)) && b.format == (std::is_unsigned<T>::value ? "L" : "l")) ||
-            ((sizeof(T) == sizeof(size_t)) && b.format == (std::is_unsigned<T>::value ? "N" : "n")));
-    }
-};
-
-NAMESPACE_END(detail)
+#endif
 
 /// RAII wrapper that temporarily clears any Python error state
 struct error_scope {
@@ -681,13 +719,15 @@ struct error_scope {
 /// Dummy destructor wrapper that can be used to expose classes with a private destructor
 struct nodelete { template <typename T> void operator()(T*) { } };
 
-// overload_cast requires variable templates: C++14 or MSVC
-#if defined(PYBIND11_CPP14) || defined(_MSC_VER)
+// overload_cast requires variable templates: C++14
+#if defined(PYBIND11_CPP14)
 #define PYBIND11_OVERLOAD_CAST 1
 
 NAMESPACE_BEGIN(detail)
 template <typename... Args>
 struct overload_cast_impl {
+    constexpr overload_cast_impl() {} // MSVC 2015 needs this
+
     template <typename Return>
     constexpr auto operator()(Return (*pf)(Args...)) const noexcept
                               -> decltype(pf) { return pf; }
@@ -714,6 +754,54 @@ static constexpr detail::overload_cast_impl<Args...> overload_cast = {};
 ///  - sweet:   overload_cast<Arg>(&Class::func, const_)
 static constexpr auto const_ = std::true_type{};
 
+#else // no overload_cast: providing something that static_assert-fails:
+template <typename... Args> struct overload_cast {
+    static_assert(detail::deferred_t<std::false_type, Args...>::value,
+                  "pybind11::overload_cast<...> requires compiling in C++14 mode");
+};
 #endif // overload_cast
 
-NAMESPACE_END(pybind11)
+NAMESPACE_BEGIN(detail)
+
+// Adaptor for converting arbitrary container arguments into a vector; implicitly convertible from
+// any standard container (or C-style array) supporting std::begin/std::end, any singleton
+// arithmetic type (if T is arithmetic), or explicitly constructible from an iterator pair.
+template <typename T>
+class any_container {
+    std::vector<T> v;
+public:
+    any_container() = default;
+
+    // Can construct from a pair of iterators
+    template <typename It, typename = enable_if_t<is_input_iterator<It>::value>>
+    any_container(It first, It last) : v(first, last) { }
+
+    // Implicit conversion constructor from any arbitrary container type with values convertible to T
+    template <typename Container, typename = enable_if_t<std::is_convertible<decltype(*std::begin(std::declval<const Container &>())), T>::value>>
+    any_container(const Container &c) : any_container(std::begin(c), std::end(c)) { }
+
+    // initializer_list's aren't deducible, so don't get matched by the above template; we need this
+    // to explicitly allow implicit conversion from one:
+    template <typename TIn, typename = enable_if_t<std::is_convertible<TIn, T>::value>>
+    any_container(const std::initializer_list<TIn> &c) : any_container(c.begin(), c.end()) { }
+
+    // Avoid copying if given an rvalue vector of the correct type.
+    any_container(std::vector<T> &&v) : v(std::move(v)) { }
+
+    // Moves the vector out of an rvalue any_container
+    operator std::vector<T> &&() && { return std::move(v); }
+
+    // Dereferencing obtains a reference to the underlying vector
+    std::vector<T> &operator*() { return v; }
+    const std::vector<T> &operator*() const { return v; }
+
+    // -> lets you call methods on the underlying vector
+    std::vector<T> *operator->() { return &v; }
+    const std::vector<T> *operator->() const { return &v; }
+};
+
+NAMESPACE_END(detail)
+
+
+
+NAMESPACE_END(PYBIND11_NAMESPACE)

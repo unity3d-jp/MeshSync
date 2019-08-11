@@ -12,7 +12,7 @@
 #include "pybind11.h"
 #include <functional>
 
-NAMESPACE_BEGIN(pybind11)
+NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 NAMESPACE_BEGIN(detail)
 
 template <typename Return, typename... Args>
@@ -22,13 +22,17 @@ struct type_caster<std::function<Return(Args...)>> {
     using function_type = Return (*) (Args...);
 
 public:
-    bool load(handle src_, bool) {
-        if (src_.is_none())
+    bool load(handle src, bool convert) {
+        if (src.is_none()) {
+            // Defer accepting None to other overloads (if we aren't in convert mode):
+            if (!convert) return false;
             return true;
+        }
 
-        src_ = detail::get_function(src_);
-        if (!src_ || !PyCallable_Check(src_.ptr()))
+        if (!isinstance<function>(src))
             return false;
+
+        auto func = reinterpret_borrow<function>(src);
 
         /*
            When passing a C++ function as an argument to another C++
@@ -38,21 +42,32 @@ public:
            stateless (i.e. function pointer or lambda function without
            captured variables), in which case the roundtrip can be avoided.
          */
-        if (PyCFunction_Check(src_.ptr())) {
-            auto c = reinterpret_borrow<capsule>(PyCFunction_GET_SELF(src_.ptr()));
+        if (auto cfunc = func.cpp_function()) {
+            auto c = reinterpret_borrow<capsule>(PyCFunction_GET_SELF(cfunc.ptr()));
             auto rec = (function_record *) c;
 
-            if (rec && rec->is_stateless && rec->data[1] == &typeid(function_type)) {
+            if (rec && rec->is_stateless &&
+                    same_type(typeid(function_type), *reinterpret_cast<const std::type_info *>(rec->data[1]))) {
                 struct capture { function_type f; };
                 value = ((capture *) &rec->data)->f;
                 return true;
             }
         }
 
-        auto src = reinterpret_borrow<object>(src_);
-        value = [src](Args... args) -> Return {
+        // ensure GIL is held during functor destruction
+        struct func_handle {
+            function f;
+            func_handle(function&& f_) : f(std::move(f_)) {}
+            func_handle(const func_handle&) = default;
+            ~func_handle() {
+                gil_scoped_acquire acq;
+                function kill_f(std::move(f));
+            }
+        };
+
+        value = [hfunc = func_handle(std::move(func))](Args... args) -> Return {
             gil_scoped_acquire acq;
-            object retval(src(std::forward<Args>(args)...));
+            object retval(hfunc.f(std::forward<Args>(args)...));
             /* Visual studio 2015 parser issue: need parentheses around this expression */
             return (retval.template cast<Return>());
         };
@@ -71,11 +86,9 @@ public:
             return cpp_function(std::forward<Func>(f_), policy).release();
     }
 
-    PYBIND11_TYPE_CASTER(type, _("Callable[[") +
-            argument_loader<Args...>::arg_names() + _("], ") +
-            make_caster<retval_type>::name() +
-            _("]"));
+    PYBIND11_TYPE_CASTER(type, _("Callable[[") + concat(make_caster<Args>::name...) + _("], ")
+                               + make_caster<retval_type>::name + _("]"));
 };
 
 NAMESPACE_END(detail)
-NAMESPACE_END(pybind11)
+NAMESPACE_END(PYBIND11_NAMESPACE)

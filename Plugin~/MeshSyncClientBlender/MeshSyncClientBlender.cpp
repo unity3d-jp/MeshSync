@@ -31,9 +31,9 @@ static bool msblenExport(msblenContext& self, ExportTarget target, ObjectScope s
     return true;
 }
 
-PYBIND11_PLUGIN(MeshSyncClientBlender)
+PYBIND11_MODULE(MeshSyncClientBlender, mod)
 {
-    py::module mod("MeshSyncClientBlender", "Python bindings for MeshSync");
+    mod.doc() = "Python bindings for MeshSync";
 
 #define BindMethod(Name) .def(#Name, &self_t::Name)
 #define BindMethodF(Name, ...) .def(#Name, __VA_ARGS__)
@@ -131,6 +131,4 @@ PYBIND11_PLUGIN(MeshSyncClientBlender)
 #undef BindMethod
 #undef BindMethodF
 #undef BindProperty
-
-    return mod.ptr();
 }

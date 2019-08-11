@@ -67,7 +67,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(BLENDER_PYTHON_INCLUDE_DIR);$(BLENDER_INCLUDE_DIRS);$(SolutionDir)External;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir);$(SolutionDir)External;$(BLENDER_PYTHON_INCLUDE_DIR);$(BLENDER_INCLUDE_DIRS);$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\$(ProjectName)-$(BLENDER_VERSION)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)-$(BLENDER_VERSION)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>

@@ -17,11 +17,24 @@
 #  undef I
 #endif
 
-NAMESPACE_BEGIN(pybind11)
+NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
+
+template <typename T> struct format_descriptor<std::complex<T>, detail::enable_if_t<std::is_floating_point<T>::value>> {
+    static constexpr const char c = format_descriptor<T>::c;
+    static constexpr const char value[3] = { 'Z', c, '\0' };
+    static std::string format() { return std::string(value); }
+};
+
+#ifndef PYBIND11_CPP17
+
+template <typename T> constexpr const char format_descriptor<
+    std::complex<T>, detail::enable_if_t<std::is_floating_point<T>::value>>::value[3];
+
+#endif
+
 NAMESPACE_BEGIN(detail)
 
-// The format codes are already in the string in common.h, we just need to provide a specialization
-template <typename T> struct is_fmt_numeric<std::complex<T>> {
+template <typename T> struct is_fmt_numeric<std::complex<T>, detail::enable_if_t<std::is_floating_point<T>::value>> {
     static constexpr bool value = true;
     static constexpr int index = is_fmt_numeric<T>::index + 3;
 };
@@ -49,4 +62,4 @@ public:
     PYBIND11_TYPE_CASTER(std::complex<T>, _("complex"));
 };
 NAMESPACE_END(detail)
-NAMESPACE_END(pybind11)
+NAMESPACE_END(PYBIND11_NAMESPACE)
