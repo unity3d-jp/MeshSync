@@ -668,7 +668,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
                 m_material_manager.clearDirtyFlags();
         }
         else {
-            if (material_range == MaterialFrameRange::AllFrames)
+            if (material_range == MaterialFrameRange::All)
                 exportMaterials();
         }
 
@@ -679,7 +679,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
         ++scene_index;
     };
 
-    if (cache_settings.frame_range == FrameRange::CurrentFrame) {
+    if (cache_settings.frame_range == FrameRange::Current) {
         m_anim_time = 0.0f;
         do_export();
     }
@@ -689,7 +689,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
         MTime time_start, time_end;
 
         // time range
-        if (cache_settings.frame_range == FrameRange::CustomRange) {
+        if (cache_settings.frame_range == FrameRange::Custom) {
             // custom frame range
             time_start = MTime(cache_settings.frame_begin, MTime::uiUnit());
             time_end = MTime(cache_settings.frame_end, MTime::uiUnit());

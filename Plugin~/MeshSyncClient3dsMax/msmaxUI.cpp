@@ -665,17 +665,17 @@ static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, L
 
         case IDC_FRAMERANGE_SINGLE:
             handle_button([&]() {
-                s.frame_range = FrameRange::CurrentFrame;
+                s.frame_range = FrameRange::Current;
             });
             break;
         case IDC_FRAMERANGE_ACTIVE:
             handle_button([&]() {
-                s.frame_range = FrameRange::AllFrames;
+                s.frame_range = FrameRange::All;
             });
             break;
         case IDC_FRAMERANGE_CUSTOM:
             handle_button([&]() {
-                s.frame_range = FrameRange::CustomRange;
+                s.frame_range = FrameRange::Custom;
             });
             break;
 
@@ -838,13 +838,13 @@ void msmaxContext::updateCacheControls()
     }
 
     switch (s.frame_range) {
-    case FrameRange::CurrentFrame:
+    case FrameRange::Current:
         CtrlSetCheck(IDC_FRAMERANGE_SINGLE, true);
         break;
-    case FrameRange::AllFrames:
+    case FrameRange::All:
         CtrlSetCheck(IDC_FRAMERANGE_ACTIVE, true);
         break;
-    case FrameRange::CustomRange:
+    case FrameRange::Custom:
         CtrlSetCheck(IDC_FRAMERANGE_CUSTOM, true);
         break;
     }

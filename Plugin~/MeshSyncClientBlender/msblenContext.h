@@ -28,16 +28,16 @@ enum class ObjectScope : int
 enum class FrameRange : int
 {
     None,
-    CurrentFrame,
-    AllFrames,
-    CustomRange,
+    Current,
+    All,
+    Custom,
 };
 
 enum class MaterialFrameRange : int
 {
     None,
-    OneFrame,
-    AllFrames,
+    Current,
+    All,
 };
 
 struct SyncSettings
@@ -74,8 +74,8 @@ struct CacheSettings
 {
     std::string path;
     ObjectScope object_scope = ObjectScope::All;
-    FrameRange frame_range = FrameRange::CurrentFrame;
-    MaterialFrameRange material_frame_range = MaterialFrameRange::OneFrame;
+    FrameRange frame_range = FrameRange::Current;
+    MaterialFrameRange material_frame_range = MaterialFrameRange::Current;
     int frame_begin = 0;
     int frame_end = 100;
 
@@ -83,7 +83,8 @@ struct CacheSettings
     int frame_step = 1;
 
     bool make_double_sided = false;
-    bool bake_deformers = true;
+    bool bake_modifiers = true;
+    bool convert_to_mesh = true;
     bool flatten_hierarchy = false;
     bool merge_meshes = false;
 
@@ -92,14 +93,15 @@ struct CacheSettings
 };
 
 
-class msblenContext : public std::enable_shared_from_this<msblenContext>
+class msblenContext
 {
 public:
-    msblenContext();
-    ~msblenContext();
+    static msblenContext& getInstance();
 
-    SyncSettings&        getSettings();
-    const SyncSettings&  getSettings() const;
+    SyncSettings& getSettings();
+    const SyncSettings& getSettings() const;
+    CacheSettings& getCacheSettings();
+    const CacheSettings& getCacheSettings() const;
 
     void logInfo(const char *format, ...);
     bool isServerAvailable();
@@ -144,6 +146,9 @@ private:
         }
     };
 
+    msblenContext();
+    ~msblenContext();
+
     std::vector<Object*> getNodes(ObjectScope scope);
 
     int exportTexture(const std::string & path, ms::TextureType type);
@@ -178,6 +183,7 @@ private:
 
 private:
     SyncSettings m_settings;
+    CacheSettings m_cache_settings;
     std::set<Object*> m_pending;
     std::map<Bone*, ms::TransformPtr> m_bones;
     std::map<void*, ObjectRecord> m_obj_records; // key can be object or bone
@@ -197,4 +203,7 @@ private:
     float m_anim_time = 0.0f;
     bool m_ignore_events = false;
 };
-using msbContextPtr = std::shared_ptr<msblenContext>;
+using msblenContextPtr = std::shared_ptr<msblenContext>;
+#define msblenGetContext() msblenContext::getInstance()
+#define msblenGetSettings() msblenContext::getInstance().getSettings()
+#define msblenGetCacheSettings() msblenContext::getInstance().getCacheSettings()

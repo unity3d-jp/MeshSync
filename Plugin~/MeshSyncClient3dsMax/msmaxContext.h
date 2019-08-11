@@ -25,16 +25,16 @@ enum class ObjectScope : int
 enum class FrameRange : int
 {
     None,
-    CurrentFrame,
-    AllFrames,
-    CustomRange,
+    Current,
+    All,
+    Custom,
 };
 
 enum class MaterialFrameRange : int
 {
     None,
-    OneFrame,
-    AllFrames,
+    Current,
+    All,
 };
 
 struct SyncSettings
@@ -76,8 +76,8 @@ struct CacheSettings
 {
     std::string path;
     ObjectScope object_scope = ObjectScope::All;
-    FrameRange frame_range = FrameRange::CurrentFrame;
-    MaterialFrameRange material_frame_range = MaterialFrameRange::OneFrame;
+    FrameRange frame_range = FrameRange::Current;
+    MaterialFrameRange material_frame_range = MaterialFrameRange::Current;
     int frame_begin = 0;
     int frame_end = 100;
 

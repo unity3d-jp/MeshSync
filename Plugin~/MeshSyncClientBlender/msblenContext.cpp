@@ -3,6 +3,12 @@
 #include "msblenUtils.h"
 
 
+msblenContext& msblenContext::getInstance()
+{
+    static msblenContext s_instance;
+    return s_instance;
+}
+
 msblenContext::msblenContext()
 {
     m_settings.scene_settings.handedness = ms::Handedness::RightZUp;
@@ -15,7 +21,8 @@ msblenContext::~msblenContext()
 
 SyncSettings& msblenContext::getSettings() { return m_settings; }
 const SyncSettings& msblenContext::getSettings() const { return m_settings; }
-
+CacheSettings& msblenContext::getCacheSettings() { return m_cache_settings; }
+const CacheSettings& msblenContext::getCacheSettings() const { return m_cache_settings; }
 
 std::vector<Object*> msblenContext::getNodes(ObjectScope scope)
 {
@@ -1202,7 +1209,8 @@ bool msblenContext::exportCache(const CacheSettings& cache_settings)
     auto settings_old = m_settings;
     m_settings.export_cache = true;
     m_settings.make_double_sided = cache_settings.make_double_sided;
-    m_settings.bake_modifiers = cache_settings.bake_deformers;
+    m_settings.convert_to_mesh = cache_settings.convert_to_mesh;
+    m_settings.bake_modifiers = cache_settings.bake_modifiers;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
@@ -1233,7 +1241,7 @@ bool msblenContext::exportCache(const CacheSettings& cache_settings)
                 m_material_manager.clearDirtyFlags();
         }
         else {
-            if (material_range == MaterialFrameRange::AllFrames)
+            if (material_range == MaterialFrameRange::All)
                 exportMaterials();
         }
 
@@ -1244,7 +1252,7 @@ bool msblenContext::exportCache(const CacheSettings& cache_settings)
         ++scene_index;
     };
 
-    if (cache_settings.frame_range == FrameRange::CurrentFrame) {
+    if (cache_settings.frame_range == FrameRange::Current) {
         m_anim_time = 0.0f;
         do_export();
     }
@@ -1254,7 +1262,7 @@ bool msblenContext::exportCache(const CacheSettings& cache_settings)
         int interval = std::max(cache_settings.frame_step, 1);
 
         // time range
-        if (cache_settings.frame_range == FrameRange::CustomRange) {
+        if (cache_settings.frame_range == FrameRange::Custom) {
             // custom frame range
             frame_start = cache_settings.frame_begin;
             frame_end = cache_settings.frame_end;

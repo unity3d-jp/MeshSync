@@ -390,19 +390,19 @@ MStatus CmdExportCache::doIt(const MArgList& args_)
     }
     if (get_arg(v, "frameRange", args)) {
         if (v == "current")
-            settings.frame_range = FrameRange::CurrentFrame;
+            settings.frame_range = FrameRange::Current;
         else if (v == "custom")
-            settings.frame_range = FrameRange::CustomRange; // "frame_begin" - "frame_end"
+            settings.frame_range = FrameRange::Custom; // "frame_begin" - "frame_end"
         else if (v == "all")
-            settings.frame_range = FrameRange::AllFrames;
+            settings.frame_range = FrameRange::All;
     }
     if (get_arg(v, "materialFrameRange", args)) {
         if (v == "none")
             settings.material_frame_range = MaterialFrameRange::None;
         else if (v == "one")
-            settings.material_frame_range = MaterialFrameRange::OneFrame;
+            settings.material_frame_range = MaterialFrameRange::Current;
         else if (v == "all")
-            settings.material_frame_range = MaterialFrameRange::AllFrames;
+            settings.material_frame_range = MaterialFrameRange::All;
     }
 
 #define Handle(Name, Value) get_arg(settings.Value, Name, args);

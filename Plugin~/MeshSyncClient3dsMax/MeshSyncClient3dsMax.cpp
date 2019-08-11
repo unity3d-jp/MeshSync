@@ -211,20 +211,20 @@ Value* ExportCache_cf(Value** arg_list, int count)
             else if (name == L"frame_range") {
                 std::wstring v = arg_list[i++]->to_string();
                 if (v == L"current")
-                    settings.frame_range = FrameRange::CurrentFrame;
+                    settings.frame_range = FrameRange::Current;
                 else if (v == L"custom")
-                    settings.frame_range = FrameRange::CustomRange; // "frame_begin" - "frame_end"
+                    settings.frame_range = FrameRange::Custom; // "frame_begin" - "frame_end"
                 else if (v == L"all")
-                    settings.frame_range = FrameRange::AllFrames;
+                    settings.frame_range = FrameRange::All;
             }
             else if (name == L"material_frame_range") {
                 std::wstring v = arg_list[i++]->to_string();
                 if (v == L"none")
                     settings.material_frame_range = MaterialFrameRange::None;
                 else if (v == L"one")
-                    settings.material_frame_range = MaterialFrameRange::OneFrame;
+                    settings.material_frame_range = MaterialFrameRange::Current;
                 else if (v == L"all")
-                    settings.material_frame_range = MaterialFrameRange::AllFrames;
+                    settings.material_frame_range = MaterialFrameRange::All;
             }
             else if (name == L"frame_begin")            settings.frame_begin = arg_list[i++]->to_int();
             else if (name == L"frame_end")              settings.frame_end = arg_list[i++]->to_int();

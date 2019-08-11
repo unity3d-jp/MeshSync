@@ -75,8 +75,8 @@ void msmaxContext::AnimationRecord::operator()(msmaxContext * _this)
 
 msmaxContext& msmaxContext::getInstance()
 {
-    static msmaxContext s_plugin;
-    return s_plugin;
+    static msmaxContext s_instance;
+    return s_instance;
 }
 
 msmaxContext::msmaxContext()
@@ -408,7 +408,7 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
                 m_material_manager.clearDirtyFlags();
         }
         else {
-            if (material_range == MaterialFrameRange::AllFrames)
+            if (material_range == MaterialFrameRange::All)
                 exportMaterials();
         }
 
@@ -432,7 +432,7 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
     };
 
     auto *ifs = GetCOREInterface();
-    if (cache_settings.frame_range == FrameRange::CurrentFrame) {
+    if (cache_settings.frame_range == FrameRange::Current) {
         m_anim_time = 0.0f;
         m_current_time_tick = ifs->GetTime();
         do_export();
@@ -442,7 +442,7 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
 
         TimeValue time_start = 0, time_end = 0, interval = 0;
 
-        if (cache_settings.frame_range == FrameRange::CustomRange) {
+        if (cache_settings.frame_range == FrameRange::Custom) {
             // custom frame range
             time_start = cache_settings.frame_begin * ticks_per_frame;
             time_end = cache_settings.frame_end * ticks_per_frame;
