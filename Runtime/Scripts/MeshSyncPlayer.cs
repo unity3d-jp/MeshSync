@@ -1225,8 +1225,6 @@ namespace UTJ.MeshSync
                     }
                 }
 
-                smr.bones = null;
-                smr.rootBone = null;
                 if (m_syncVisibility)
                     smr.enabled = data.transform.visible;
                 smr.sharedMesh = rec.mesh;

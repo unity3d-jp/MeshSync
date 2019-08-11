@@ -194,39 +194,39 @@ MStatus CmdSettings::doIt(const MArgList& args_)
 #define Handle(Name, Value, Sync)\
     if (args.isFlagSet(Name)) {\
         if(args.isQuery()) {\
-            set_result(Value);\
+            set_result(settings.Value);\
         }\
         else {\
-            get_arg(Value, Name, args);\
+            get_arg(settings.Value, Name, args);\
             if (settings.auto_sync && Sync)\
                 msmayaGetContext().sendObjects(ObjectScope::All, false);\
         }\
     }
 
-    Handle("address", settings.client_settings.server, false);
-    Handle("port", settings.client_settings.port, false);
-    Handle("scaleFactor", settings.scale_factor, true);
-    Handle("autosync", settings.auto_sync, true);
-    Handle("syncMeshes", settings.sync_meshes, true);
-    Handle("syncNormals", settings.sync_normals, true);
-    Handle("syncUVs", settings.sync_uvs, true);
-    Handle("syncColors", settings.sync_colors, true);
-    Handle("makeDoubleSided", settings.make_double_sided, true);
-    Handle("bakeDeformers", settings.bake_deformers, true);
-    Handle("applyTweak", settings.apply_tweak, true);
-    Handle("syncBlendShapes", settings.sync_blendshapes, true);
-    Handle("syncBones", settings.sync_bones, true);
-    Handle("syncTextures", settings.sync_textures, true);
-    Handle("syncCameras", settings.sync_cameras, true);
-    Handle("syncLights", settings.sync_lights, true);
-    Handle("syncConstraints", settings.sync_constraints, true);
-    Handle("animationTS", settings.animation_time_scale, false);
-    Handle("animationSPS", settings.animation_sps, false);
-    Handle("keyframeReduction", settings.reduce_keyframes, false);
-    Handle("keepFlatCurves", settings.keep_flat_curves, false);
-    Handle("removeNamespace", settings.remove_namespace, true);
-    Handle("multithreaded", settings.multithreaded, false);
-    Handle("fbxCompatibleTransform", settings.fbx_compatible_transform, true);
+    Handle("address", client_settings.server, false);
+    Handle("port", client_settings.port, false);
+    Handle("scaleFactor", scale_factor, true);
+    Handle("autosync", auto_sync, true);
+    Handle("syncMeshes", sync_meshes, true);
+    Handle("syncNormals", sync_normals, true);
+    Handle("syncUVs", sync_uvs, true);
+    Handle("syncColors", sync_colors, true);
+    Handle("makeDoubleSided", make_double_sided, true);
+    Handle("bakeDeformers", bake_deformers, true);
+    Handle("applyTweak", apply_tweak, true);
+    Handle("syncBlendShapes", sync_blendshapes, true);
+    Handle("syncBones", sync_bones, true);
+    Handle("syncTextures", sync_textures, true);
+    Handle("syncCameras", sync_cameras, true);
+    Handle("syncLights", sync_lights, true);
+    Handle("syncConstraints", sync_constraints, true);
+    Handle("animationTS", animation_time_scale, false);
+    Handle("animationSPS", animation_sps, false);
+    Handle("keyframeReduction", reduce_keyframes, false);
+    Handle("keepFlatCurves", keep_flat_curves, false);
+    Handle("removeNamespace", remove_namespace, true);
+    Handle("multithreaded", multithreaded, false);
+    Handle("fbxCompatibleTransform", fbx_compatible_transform, true);
 #undef Handle
 
     return MStatus::kSuccess;
@@ -404,16 +404,21 @@ MStatus CmdExportCache::doIt(const MArgList& args_)
         else if (v == "all")
             settings.material_frame_range = MaterialFrameRange::AllFrames;
     }
-    get_arg(settings.frame_begin, "frameBegin", args);
-    get_arg(settings.frame_end, "frameEnd", args);
-    get_arg(settings.zstd_compression_level, "ZSTDCompressionLevel", args);
-    get_arg(settings.samples_per_frame, "samplesPerFrame", args);
-    get_arg(settings.make_double_sided, "makeDoubleSided", args);
-    get_arg(settings.bake_deformers, "bakeDeformers", args);
-    get_arg(settings.flatten_hierarchy, "flattenHierarchy", args);
-    get_arg(settings.merge_meshes, "mergeMeshes", args);
-    get_arg(settings.strip_normals, "stripNormals", args);
-    get_arg(settings.strip_tangents, "stripTangents", args);
+
+#define Handle(Name, Value) get_arg(settings.Value, Name, args);
+
+    Handle("frameBegin", frame_begin);
+    Handle("frameEnd", frame_end);
+    Handle("ZSTDCompressionLevel", zstd_compression_level);
+    Handle("samplesPerFrame", samples_per_frame);
+    Handle("makeDoubleSided", make_double_sided);
+    Handle("bakeDeformers", bake_deformers);
+    Handle("flattenHierarchy", flatten_hierarchy);
+    Handle("mergeMeshes", merge_meshes);
+    Handle("stripNormals", strip_normals);
+    Handle("stripTangents", strip_tangents);
+
+#undef Handle
 
     auto& ctx = msmayaGetContext();
     if (ctx.exportCache(settings))

@@ -148,8 +148,8 @@ Value* Settings_cf(Value** arg_list, int count)
 
 Value* Send_cf(Value** arg_list, int count)
 {
-    auto target = msmaxExportTarget::Objects;
-    auto scope = msmaxObjectScope::All;
+    auto target = ExportTarget::Objects;
+    auto scope = ObjectScope::All;
 
     // parse args
     for (int i = 0; i < count; /**/) {
@@ -158,22 +158,22 @@ Value* Send_cf(Value** arg_list, int count)
             if (name == L"target") {
                 std::wstring value = arg_list[i++]->to_string();
                 if (value == L"objects")
-                    target = msmaxExportTarget::Objects;
+                    target = ExportTarget::Objects;
                 else if (value == L"materials")
-                    target = msmaxExportTarget::Materials;
+                    target = ExportTarget::Materials;
                 else if (value == L"animations")
-                    target = msmaxExportTarget::Animations;
+                    target = ExportTarget::Animations;
                 else if (value == L"everything")
-                    target = msmaxExportTarget::Everything;
+                    target = ExportTarget::Everything;
             }
             else if (name == L"scope") {
                 std::wstring value = arg_list[i++]->to_string();
                 if (value == L"all")
-                    scope = msmaxObjectScope::All;
+                    scope = ObjectScope::All;
                 else if (value == L"selected")
-                    scope = msmaxObjectScope::Selected;
+                    scope = ObjectScope::Selected;
                 else if (value == L"updated")
-                    scope = msmaxObjectScope::Updated;
+                    scope = ObjectScope::Updated;
             }
         }
     }
@@ -189,10 +189,10 @@ Value* Import_cf(Value** arg_list, int count)
     return &ok;
 }
 
-// e.g. UnityMeshSync.ExportCache path:"C:\tmp\hoge.sc"
+// e.g. UnityMeshSync.ExportCache path:"C:/tmp/hoge.sc" frame_range:"all"
 Value* ExportCache_cf(Value** arg_list, int count)
 {
-    msmaxCacheExportSettings settings;
+    CacheExportSettings settings;
 
     // parse args
     for (int i = 0; i < count; /**/) {
@@ -202,28 +202,32 @@ Value* ExportCache_cf(Value** arg_list, int count)
                 settings.path = mu::ToMBS(arg_list[i++]->to_string());
             }
             else if (name == L"object_scope") {
-                std::wstring value = arg_list[i++]->to_string();
-                if (value == L"all")
-                    settings.object_scope = msmaxObjectScope::All;
-                else if (value == L"selected")
-                    settings.object_scope = msmaxObjectScope::Selected;
+                std::wstring v = arg_list[i++]->to_string();
+                if (v == L"all")
+                    settings.object_scope = ObjectScope::All;
+                else if (v == L"selected")
+                    settings.object_scope = ObjectScope::Selected;
             }
             else if (name == L"frame_range") {
-                std::wstring value = arg_list[i++]->to_string();
-                if (value == L"current")
-                    settings.frame_range = msmaxFrameRange::CurrentFrame;
-                else if (value == L"all")
-                    settings.frame_range = msmaxFrameRange::AllFrames;
+                std::wstring v = arg_list[i++]->to_string();
+                if (v == L"current")
+                    settings.frame_range = FrameRange::CurrentFrame;
+                else if (v == L"custom")
+                    settings.frame_range = FrameRange::CustomRange; // "frame_begin" - "frame_end"
+                else if (v == L"all")
+                    settings.frame_range = FrameRange::AllFrames;
             }
             else if (name == L"material_frame_range") {
-                std::wstring value = arg_list[i++]->to_string();
-                if (value == L"none")
-                    settings.material_frame_range = msmaxMaterialFrameRange::None;
-                else if (value == L"one")
-                    settings.material_frame_range = msmaxMaterialFrameRange::OneFrame;
-                else if (value == L"all")
-                    settings.material_frame_range = msmaxMaterialFrameRange::AllFrames;
+                std::wstring v = arg_list[i++]->to_string();
+                if (v == L"none")
+                    settings.material_frame_range = MaterialFrameRange::None;
+                else if (v == L"one")
+                    settings.material_frame_range = MaterialFrameRange::OneFrame;
+                else if (v == L"all")
+                    settings.material_frame_range = MaterialFrameRange::AllFrames;
             }
+            else if (name == L"frame_begin")            settings.frame_begin = arg_list[i++]->to_int();
+            else if (name == L"frame_end")              settings.frame_end = arg_list[i++]->to_int();
             else if (name == L"zstd_compression_level") settings.zstd_compression_level = arg_list[i++]->to_int();
             else if (name == L"samples_per_frame")      settings.samples_per_frame = arg_list[i++]->to_float();
             else if (name == L"ignore_non_renderable")  settings.ignore_non_renderable = arg_list[i++]->to_bool();
