@@ -78,7 +78,7 @@ PYBIND11_MODULE(MeshSyncClientBlender, mod)
             BindConst(FRANGE_CUSTOM, (int)FrameRange::Custom)
 
             BindConst(MFRANGE_NONE, (int)MaterialFrameRange::None)
-            BindConst(MFRANGE_ONE, (int)MaterialFrameRange::Current)
+            BindConst(MFRANGE_ONE, (int)MaterialFrameRange::One)
             BindConst(MFRANGE_ALL, (int)MaterialFrameRange::All)
 
             BindConst(is_server_available, self->getErrorMessage())

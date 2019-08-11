@@ -222,7 +222,7 @@ Value* ExportCache_cf(Value** arg_list, int count)
                 if (v == L"none")
                     settings.material_frame_range = MaterialFrameRange::None;
                 else if (v == L"one")
-                    settings.material_frame_range = MaterialFrameRange::Current;
+                    settings.material_frame_range = MaterialFrameRange::One;
                 else if (v == L"all")
                     settings.material_frame_range = MaterialFrameRange::All;
             }

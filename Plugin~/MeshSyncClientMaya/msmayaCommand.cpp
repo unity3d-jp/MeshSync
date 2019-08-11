@@ -400,7 +400,7 @@ MStatus CmdExportCache::doIt(const MArgList& args_)
         if (v == "none")
             settings.material_frame_range = MaterialFrameRange::None;
         else if (v == "one")
-            settings.material_frame_range = MaterialFrameRange::Current;
+            settings.material_frame_range = MaterialFrameRange::One;
         else if (v == "all")
             settings.material_frame_range = MaterialFrameRange::All;
     }

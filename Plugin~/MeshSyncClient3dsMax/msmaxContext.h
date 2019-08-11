@@ -33,7 +33,7 @@ enum class FrameRange : int
 enum class MaterialFrameRange : int
 {
     None,
-    Current,
+    One,
     All,
 };
 
@@ -77,7 +77,7 @@ struct CacheSettings
     std::string path;
     ObjectScope object_scope = ObjectScope::All;
     FrameRange frame_range = FrameRange::Current;
-    MaterialFrameRange material_frame_range = MaterialFrameRange::Current;
+    MaterialFrameRange material_frame_range = MaterialFrameRange::One;
     int frame_begin = 0;
     int frame_end = 100;
 
