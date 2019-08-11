@@ -147,9 +147,26 @@ public:
     }
 };
 
+class msmodoCmdCache : public CLxCommand
+{
+public:
+    void setup_args(CLxAttributeDesc &desc) override
+    {
+        desc.add("path", LXsTYPE_FILEPATH);
+    }
+
+    void execute() override
+    {
+        auto settings = msmodoGetCacheSettings(); // copy
+        cmd_read_arg("path", settings.path);
+        msmodoGetContext().exportCache(settings);
+    }
+};
+
 static CLxMeta_Command<msmodoCmdSettings> g_meta_settings(msmodoCmdSettingsName);
 static CLxMeta_Command<msmodoCmdExport> g_meta_export(msmodoCmdExportName);
 static CLxMeta_Command<msmodoCmdImport> g_meta_import(msmodoCmdImportName);
+static CLxMeta_Command<msmodoCmdCache> g_meta_cache(msmodoCmdCacheName);
 
 class msmodoMetaRoot : public CLxMetaRoot
 {
@@ -160,6 +177,7 @@ class msmodoMetaRoot : public CLxMetaRoot
         add(&g_meta_settings);
         add(&g_meta_export);
         add(&g_meta_import);
+        add(&g_meta_cache);
         return false;
     }
 };

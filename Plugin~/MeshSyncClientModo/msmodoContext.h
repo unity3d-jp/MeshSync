@@ -120,10 +120,8 @@ public:
     static msmodoContext& getInstance();
     static void finalizeInstance();
 
-    msmodoContext();
-    ~msmodoContext();
-
     SyncSettings& getSettings();
+    CacheSettings& getCacheSettings();
 
     using super::logInfo;
     using super::logError;
@@ -176,6 +174,10 @@ private:
         void eraseFromEntityManager(msmodoContext *self);
     };
 
+    template<class T> friend struct std::default_delete;
+    msmodoContext();
+    ~msmodoContext();
+
     std::vector<CLxUser_Item> getNodes(ObjectScope scope);
 
     void exportMaterials();
@@ -211,7 +213,10 @@ private:
     void kickAsyncExport();
 
 private:
+    static std::unique_ptr<msmodoContext> s_instance;
+
     SyncSettings m_settings;
+    CacheSettings m_cache_settings;
     ms::IDGenerator<CLxUser_Item> m_material_ids;
     ms::TextureManager m_texture_manager;
     ms::MaterialManager m_material_manager;
@@ -233,4 +238,5 @@ private:
 
 #define msmodoGetContext() msmodoContext::getInstance()
 #define msmodoGetSettings() msmodoGetContext().getSettings()
+#define msmodoGetCacheSettings() msmodoGetContext().getCacheSettings()
 bool msmodoExport(ExportTarget target, ObjectScope scope);

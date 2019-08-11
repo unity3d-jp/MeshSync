@@ -1701,7 +1701,7 @@ namespace UTJ.MeshSync
                         if (m_syncVisibility)
                             dstmr.enabled = dst.visible;
                         dstmf.sharedMesh = mesh;
-                        dstmr.sharedMaterials = srcsmr.sharedMaterials;
+                        dstmr.sharedMaterials = srcmr.sharedMaterials;
                     }
                     else if (srcsmr != null)
                     {

@@ -28,18 +28,18 @@ void msmodoContext::TreeNode::eraseFromEntityManager(msmodoContext *self)
 
 
 
-static std::unique_ptr<msmodoContext> g_context;
+std::unique_ptr<msmodoContext> msmodoContext::s_instance;
 
 msmodoContext& msmodoContext::getInstance()
 {
-    if (!g_context)
-        g_context.reset(new msmodoContext());
-    return *g_context;
+    if (!s_instance)
+        s_instance.reset(new msmodoContext());
+    return *s_instance;
 }
 
 void msmodoContext::finalizeInstance()
 {
-    g_context.reset();
+    s_instance.reset();
 }
 
 
@@ -55,6 +55,11 @@ msmodoContext::~msmodoContext()
 SyncSettings& msmodoContext::getSettings()
 {
     return m_settings;
+}
+
+CacheSettings& msmodoContext::getCacheSettings()
+{
+    return m_cache_settings;
 }
 
 
@@ -390,6 +395,10 @@ bool msmodoContext::sendAnimations(ObjectScope scope)
 
 bool msmodoContext::exportCache(const CacheSettings & cache_settings)
 {
+    if (!prepare()) {
+        return false;
+    }
+
     float frame_rate = (float)getFrameRate();
     float samples_per_second = frame_rate;
     float frame_to_second = 1.0f / frame_rate;
