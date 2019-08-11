@@ -95,7 +95,7 @@ public:
         auto& settings = msmodoGetSettings();
 #define Handler(Name, Type, Member, Sync)\
         if(getArg(Name, Member) && settings.auto_sync && Sync)\
-            msmodoGetContext().sendObjects(msmodoContext::SendScope::All, true);
+            msmodoGetContext().sendObjects(ObjectScope::All, true);
 
         EachParam(Handler)
 #undef Handler
@@ -118,7 +118,7 @@ public:
             pop->popup_add("Materials");
             pop->popup_add("Animations");
             pop->popup_add("Everything");
-            static_assert((int)msmodoContext::SendTarget::Everything == 3, "SendTarget enum and uivalue mismatch");
+            static_assert((int)ExportTarget::Everything == 3, "SendTarget enum and uivalue mismatch");
             return pop;
         }
     };
@@ -131,9 +131,9 @@ public:
 
     void execute() override
     {
-        auto target = msmodoContext::SendTarget::Objects;
+        auto target = ExportTarget::Objects;
         cmd_read_arg("target", (int&)target);
-        msmodoExport(target, msmodoContext::SendScope::All);
+        msmodoExport(target, ObjectScope::All);
     }
 };
 

@@ -1192,7 +1192,7 @@ bool msblenContext::sendAnimations(ObjectScope scope)
     return false;
 }
 
-bool msblenContext::exportCache(const CacheSettings & cache_settings)
+bool msblenContext::exportCache(const CacheSettings& cache_settings)
 {
     auto scene = bl::BScene(bl::BContext::get().scene());
     float frame_rate = (float)scene.fps();

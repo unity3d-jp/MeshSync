@@ -52,7 +52,7 @@ msmodoContext::~msmodoContext()
     wait();
 }
 
-msmodoSettings& msmodoContext::getSettings()
+SyncSettings& msmodoContext::getSettings()
 {
     return m_settings;
 }
@@ -78,7 +78,7 @@ void msmodoContext::wait()
 
 void msmodoContext::update()
 {
-    if (m_pending_scope != SendScope::None) {
+    if (m_pending_scope != ObjectScope::None) {
         sendObjects(m_pending_scope, false);
     }
 }
@@ -86,7 +86,7 @@ void msmodoContext::update()
 void msmodoContext::onItemAdd(CLxUser_Item& item)
 {
     if (m_settings.auto_sync)
-        m_pending_scope = SendScope::All;
+        m_pending_scope = ObjectScope::All;
 }
 
 void msmodoContext::onItemRemove(CLxUser_Item& item)
@@ -97,7 +97,7 @@ void msmodoContext::onItemRemove(CLxUser_Item& item)
         m_tree_nodes.erase(it);
 
         if (m_settings.auto_sync)
-            m_pending_scope = SendScope::All;
+            m_pending_scope = ObjectScope::All;
     }
 }
 
@@ -110,8 +110,8 @@ void msmodoContext::onItemUpdate(CLxUser_Item& item)
     if (it != m_tree_nodes.end()) {
         it->second.dirty = true;
 
-        if (m_settings.auto_sync && m_pending_scope == SendScope::None)
-            m_pending_scope = SendScope::Updated;
+        if (m_settings.auto_sync && m_pending_scope == ObjectScope::None)
+            m_pending_scope = ObjectScope::Updated;
     }
     else {
         //dbgDumpItem(item);
@@ -121,13 +121,13 @@ void msmodoContext::onItemUpdate(CLxUser_Item& item)
 void msmodoContext::onTreeRestructure()
 {
     if (m_settings.auto_sync)
-        m_pending_scope = SendScope::All;
+        m_pending_scope = ObjectScope::All;
 }
 
 void msmodoContext::onTimeChange()
 {
     if (m_settings.auto_sync)
-        sendObjects(SendScope::All, false);
+        sendObjects(ObjectScope::All, false);
 }
 
 void msmodoContext::onIdle()
@@ -314,17 +314,17 @@ bool msmodoContext::sendMaterials(bool dirty_all)
     exportMaterials();
 
     // send
-    kickAsyncSend();
+    kickAsyncExport();
     return true;
 }
 
-bool msmodoContext::sendObjects(SendScope scope, bool dirty_all)
+bool msmodoContext::sendObjects(ObjectScope scope, bool dirty_all)
 {
     if (!prepare() || m_sender.isExporting()) {
         m_pending_scope = scope;
         return false;
     }
-    m_pending_scope = SendScope::None;
+    m_pending_scope = ObjectScope::None;
 
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
     m_material_manager.setAlwaysMarkDirty(dirty_all);
@@ -346,7 +346,7 @@ bool msmodoContext::sendObjects(SendScope scope, bool dirty_all)
         exportMaterials();
 
     // entities
-    if (scope == SendScope::All) {
+    if (scope == ObjectScope::All) {
         auto do_export = [this](CLxUser_Item& obj) { exportObject(obj, true); };
 
         eachCamera(do_export);
@@ -356,7 +356,7 @@ bool msmodoContext::sendObjects(SendScope scope, bool dirty_all)
         eachMeshInstance(do_export);
         eachReplicator(do_export);
     }
-    else if (scope == SendScope::Updated) {
+    else if (scope == ObjectScope::Updated) {
         int num_exported = 0;
         for (auto& kvp : m_tree_nodes) {
             auto& n = kvp.second;
@@ -370,22 +370,104 @@ bool msmodoContext::sendObjects(SendScope scope, bool dirty_all)
     }
 
     // send
-    kickAsyncSend();
+    kickAsyncExport();
     return true;
 }
 
-bool msmodoContext::sendAnimations(SendScope scope)
+bool msmodoContext::sendAnimations(ObjectScope scope)
 {
     if (!prepare() || m_sender.isExporting())
         return false;
 
     if (exportAnimations(scope) > 0) {
-        kickAsyncSend();
+        kickAsyncExport();
         return true;
     }
     else {
         return false;
     }
+}
+
+bool msmodoContext::exportCache(const CacheSettings & cache_settings)
+{
+    float frame_rate = (float)getFrameRate();
+    float samples_per_second = frame_rate;
+    float frame_to_second = 1.0f / frame_rate;
+
+    auto settings_old = m_settings;
+    m_settings.export_cache = true;
+    m_settings.make_double_sided = cache_settings.make_double_sided;
+    m_settings.bake_deformers = cache_settings.bake_deformers;
+    m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
+
+    ms::OSceneCacheSettings oscs;
+    oscs.sample_rate = samples_per_second;
+    oscs.encoder_settings.zstd.compression_level = cache_settings.zstd_compression_level;
+    oscs.flatten_hierarchy = cache_settings.flatten_hierarchy;
+    oscs.strip_normals = cache_settings.strip_normals;
+    oscs.strip_tangents = cache_settings.strip_tangents;
+
+    if (!m_cache_writer.open(cache_settings.path.c_str(), oscs)) {
+        m_settings = settings_old;
+        return false;
+    }
+
+    m_material_manager.setAlwaysMarkDirty(true);
+    m_entity_manager.setAlwaysMarkDirty(true);
+    m_texture_manager.clearDirtyFlags();
+
+    int scene_index = 0;
+    auto material_range = cache_settings.material_frame_range;
+    auto nodes = getNodes(cache_settings.object_scope);
+
+    auto do_export = [&]() {
+        if (scene_index == 0) {
+            // exportMaterials() is needed to export material IDs in meshes
+            exportMaterials();
+            if (material_range == MaterialFrameRange::None)
+                m_material_manager.clearDirtyFlags();
+        }
+        else {
+            if (material_range == MaterialFrameRange::AllFrames)
+                exportMaterials();
+        }
+
+        for (auto n : nodes)
+            exportObject(n, true);
+
+        kickAsyncExport();
+        ++scene_index;
+    };
+
+    if (cache_settings.frame_range == FrameRange::CurrentFrame) {
+        m_anim_time = 0.0f;
+        do_export();
+    }
+    else {
+        // advance frame and record
+        double time_current = m_svc_selection.GetTime();
+        double time_start, time_end;
+        std::tie(time_start, time_end) = getTimeRange();
+        auto interval = (frame_to_second / cache_settings.samples_per_frame);
+
+        m_ignore_events = true;
+        for (double t = time_start;;) {
+            m_anim_time = (float)(t - time_start);
+            setChannelReadTime(t);
+            do_export();
+
+            if (t >= time_end)
+                break;
+            else
+                t = std::min(t + interval, time_end);
+        }
+        setChannelReadTime();
+        m_ignore_events = false;
+    }
+
+    m_settings = settings_old;
+    m_cache_writer.close();
+    return true;
 }
 
 bool msmodoContext::recvObjects()
@@ -468,6 +550,31 @@ ms::MaterialPtr msmodoContext::exportMaterial(CLxUser_Item obj)
     }
     m_material_manager.add(ret);
 
+    return ret;
+}
+
+std::vector<CLxUser_Item> msmodoContext::getNodes(ObjectScope scope)
+{
+    std::vector<CLxUser_Item> ret;
+
+    if (scope == ObjectScope::All) {
+        eachLocator([&](CLxUser_Item& obj) {
+            ret.push_back(obj);
+        });
+    }
+    else if (scope == ObjectScope::Updated) {
+        int num_exported = 0;
+        for (auto& kvp : m_tree_nodes) {
+            auto& n = kvp.second;
+            if (n.dirty) {
+                exportObject(n.item, false);
+                ++num_exported;
+            }
+        }
+    }
+    else if (scope == ObjectScope::Selected) {
+        // todo
+    }
     return ret;
 }
 
@@ -1025,7 +1132,7 @@ ms::TransformPtr msmodoContext::exportReplicator(TreeNode& n)
 // animation export
 // 
 
-int msmodoContext::exportAnimations(SendScope scope)
+int msmodoContext::exportAnimations(ObjectScope scope)
 {
     // create default clip
     m_animations.clear();
@@ -1277,7 +1384,7 @@ void msmodoContext::extractReplicatorAnimationData(TreeNode& n)
     });
 }
 
-void msmodoContext::kickAsyncSend()
+void msmodoContext::kickAsyncExport()
 {
     // process parallel tasks
     if (!m_parallel_tasks.empty()) {
@@ -1291,10 +1398,19 @@ void msmodoContext::kickAsyncSend()
     for (auto& kvp : m_tree_nodes)
         kvp.second.clearState();
 
+    using Exporter = ms::AsyncSceneExporter;
+    Exporter *exporter = m_settings.export_cache ? (Exporter*)&m_cache_writer : (Exporter*)&m_sender;
+
     // kick async send
-    m_sender.on_prepare = [this]() {
-        auto& t = m_sender;
-        t.client_settings = m_settings.client_settings;
+    exporter->on_prepare = [this, exporter]() {
+        if (auto sender = dynamic_cast<ms::AsyncSceneSender*>(exporter)) {
+            sender->client_settings = m_settings.client_settings;
+        }
+        else if (auto writer = dynamic_cast<ms::AsyncSceneCacheWriter*>(exporter)) {
+            writer->time = m_anim_time;
+        }
+
+        auto& t = *exporter;
         t.scene_settings.handedness = ms::Handedness::Right;
         t.scene_settings.scale_factor = m_settings.scale_factor;
 
@@ -1307,16 +1423,16 @@ void msmodoContext::kickAsyncSend()
         t.deleted_materials = m_material_manager.getDeleted();
         t.deleted_entities = m_entity_manager.getDeleted();
     };
-    m_sender.on_success = [this]() {
+    exporter->on_success = [this]() {
         m_material_manager.clearDirtyFlags();
         m_texture_manager.clearDirtyFlags();
         m_entity_manager.clearDirtyFlags();
         m_animations.clear();
     };
-    m_sender.kick();
+    exporter->kick();
 }
 
-bool msmodoExport(msmodoContext::SendTarget target, msmodoContext::SendScope scope)
+bool msmodoExport(ExportTarget target, ObjectScope scope)
 {
     auto& ctx = msmodoGetContext();
     if (!ctx.isServerAvailable()) {
@@ -1324,19 +1440,19 @@ bool msmodoExport(msmodoContext::SendTarget target, msmodoContext::SendScope sco
         return false;
     }
 
-    if (target == msmodoContext::SendTarget::Objects) {
+    if (target == ExportTarget::Objects) {
         ctx.wait();
         ctx.sendObjects(scope, true);
     }
-    else if (target == msmodoContext::SendTarget::Materials) {
+    else if (target == ExportTarget::Materials) {
         ctx.wait();
         ctx.sendMaterials(true);
     }
-    else if (target == msmodoContext::SendTarget::Animations) {
+    else if (target == ExportTarget::Animations) {
         ctx.wait();
         ctx.sendAnimations(scope);
     }
-    else if (target == msmodoContext::SendTarget::Everything) {
+    else if (target == ExportTarget::Everything) {
         ctx.wait();
         ctx.sendMaterials(true);
         ctx.wait();

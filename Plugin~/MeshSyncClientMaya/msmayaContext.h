@@ -141,10 +141,6 @@ struct SyncSettings
     bool multithreaded = false;
     bool fbx_compatible_transform = true;
 
-    // import settings
-    bool bake_skin = false;
-    bool bake_cloth = false;
-
     // cache
     bool export_cache = false;
 };

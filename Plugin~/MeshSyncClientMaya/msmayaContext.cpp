@@ -815,24 +815,7 @@ void msmayaContext::kickAsyncExport()
 
 bool msmayaContext::recvObjects()
 {
-    m_sender.wait();
-
-    ms::Client client(m_settings.client_settings);
-    ms::GetMessage gd;
-    gd.scene_settings.handedness = ms::Handedness::Right;
-    gd.scene_settings.scale_factor = 1.0f / m_settings.scale_factor;
-    gd.refine_settings.flags.bake_skin = m_settings.bake_skin;
-    gd.refine_settings.flags.bake_cloth = m_settings.bake_cloth;
-
-    auto ret = client.send(gd);
-    if (!ret) {
-        return false;
-    }
-
-
-    // todo: 
-
-    return true;
+    return false;
 }
 
 
