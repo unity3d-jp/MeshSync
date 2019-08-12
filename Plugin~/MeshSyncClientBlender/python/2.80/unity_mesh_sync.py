@@ -68,6 +68,7 @@ class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
         else:
             layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PLAY")
         layout.operator("meshsync.export_objects", text="Manual Sync")
+        layout.operator("meshsync.export_cache", text="Export Cache")
 
 
 class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
@@ -86,35 +87,6 @@ class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
             b = layout.box()
             b.prop(scene, 'meshsync_animation_kfc')
         layout.operator("meshsync.export_animations", text="Sync")
-
-
-class MESHSYNC_PT_Cache(MESHSYNC_PT, bpy.types.Panel):
-    bl_label = "Cache"
-    bl_parent_id = "MESHSYNC_PT_Main"
-
-    def draw(self, context):
-        scene = bpy.context.scene
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-        layout.prop(scene, 'mscache_object_scope')
-        layout.prop(scene, 'mscache_frame_range')
-        if scene.mscache_frame_range == '2':
-            b = layout.box()
-            b.prop(scene, 'mscache_frame_begin')
-            b.prop(scene, 'mscache_frame_end')
-        layout.prop(scene, 'mscache_material_frame_range')
-        layout.prop(scene, 'mscache_zstd_compression_level')
-        layout.prop(scene, 'mscache_frame_step')
-        layout.prop(scene, 'mscache_make_double_sided')
-        layout.prop(scene, 'mscache_bake_modifiers')
-        layout.prop(scene, 'mscache_convert_to_mesh')
-        layout.prop(scene, 'mscache_flatten_hierarchy')
-        layout.prop(scene, 'mscache_merge_meshes')
-        layout.prop(scene, 'mscache_strip_normals')
-        layout.prop(scene, 'mscache_strip_tangents')
-        layout.separator()
-        layout.operator("meshsync.export_cache", text="Export")
 
 
 class MESHSYNC_PT_Version(MESHSYNC_PT, bpy.types.Panel):
@@ -165,7 +137,6 @@ classes = (
     MESHSYNC_PT_Server,
     MESHSYNC_PT_Scene,
     MESHSYNC_PT_Animation,
-    MESHSYNC_PT_Cache,
     MESHSYNC_PT_Version,
     MESHSYNC_OT_ExportObjects,
     MESHSYNC_OT_ExportMaterials,

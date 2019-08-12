@@ -55,6 +55,7 @@ class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
         else:
             layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PLAY")
         layout.operator("meshsync.export_objects", text="Manual Sync")
+        layout.operator("meshsync.export_cache", text="Export Cache")
         layout.separator()
 
 
@@ -105,6 +106,7 @@ classes = (
     MESHSYNC_OT_ExportAnimations,
     MESHSYNC_OT_ExportEverything,
     MESHSYNC_OT_AutoSync,
+    MESHSYNC_OT_ExportCache,
 )
 
 def register():
