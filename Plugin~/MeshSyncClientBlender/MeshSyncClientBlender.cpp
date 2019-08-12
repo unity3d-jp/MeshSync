@@ -157,7 +157,7 @@ PYBIND11_MODULE(MeshSyncClientBlender, mod)
     }
     {
         using self_t = CacheProxy;
-        py::class_<CacheProxy, std::shared_ptr<CacheProxy>>(mod, "SceneCache")
+        py::class_<CacheProxy, std::shared_ptr<CacheProxy>>(mod, "Cache")
             .def(py::init<>())
             BindProperty(object_scope,
                 [](const self_t& self) { return (int)self->getCacheSettings().object_scope; },

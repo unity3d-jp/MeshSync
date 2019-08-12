@@ -19,15 +19,14 @@ enum class ExportTarget : int
 
 enum class ObjectScope : int
 {
-    None,
+    None = -1,
     All,
-    Updated,
     Selected,
+    Updated,
 };
 
 enum class FrameRange : int
 {
-    None,
     Current,
     All,
     Custom,
