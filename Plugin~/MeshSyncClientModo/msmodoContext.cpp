@@ -152,9 +152,7 @@ void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf
     pos = extract_position(mat);
     rot = extract_rotation(mat);
     if (n.item.IsA(tCamera) || n.item.IsA(tLight)) {
-        rot = mu::flip_y(rot);
-        if (n.item.IsA(tLight))
-            rot *= mu::rotate_z(180.0f * mu::DegToRad);
+        rot *= mu::rotate_y(180.0f * mu::DegToRad);
     }
     scale = extract_scale(mat);
     vis = loc.Visible(m_ch_read) == LXe_TRUE;
@@ -187,16 +185,15 @@ void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plan
     m_ch_read.Double(n.item, ch_offset_x, &offset_x);
     m_ch_read.Double(n.item, ch_offset_y, &offset_y);
 
-    ortho = proj == 1;
-    fov = mu::compute_fov((float)aperture_y, focal_length);
     // disable clipping planes
     near_plane = far_plane = 0.0f;
-
+    ortho = proj == 1;
     focal_length = (float)focal_len;
-    sensor_size.x = (float)aperture_x;
-    sensor_size.y = (float)aperture_y;
-    lens_shift.x = (float)offset_x;
-    lens_shift.y = (float)offset_y;
+    sensor_size.x = (float)aperture_x; // in mm
+    sensor_size.y = (float)aperture_y; // in mm
+    lens_shift.x = (float)(offset_x / aperture_x); // mm to percent
+    lens_shift.y = (float)(offset_y / aperture_y); // mm to percent
+    fov = mu::compute_fov((float)aperture_y, focal_length);
 }
 
 void msmodoContext::extractLightData(TreeNode& n,
