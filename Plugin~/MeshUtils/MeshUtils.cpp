@@ -16,10 +16,9 @@ bool GenerateNormalsPoly(RawVector<float3>& dst,
     dst.zeroclear();
 
     int offset = 0;
-    for (size_t fi = 0; fi < num_faces; ++fi)
-    {
-        int count = counts[fi];
-        if (count < 3)
+    for (size_t fi = 0; fi < num_faces; ++fi) {
+        const int ngon = counts[fi];
+        if (ngon < 3)
             continue;
 
         const int *face = &indices[offset];
@@ -27,10 +26,9 @@ bool GenerateNormalsPoly(RawVector<float3>& dst,
         float3 p1 = points[face[i1]];
         float3 p2 = points[face[i2]];
         float3 n = cross(p1 - p0, p2 - p0);
-        for (int ci = 0; ci < count; ++ci) {
+        for (int ci = 0; ci < ngon; ++ci)
             dst[face[ci]] += n;
-        }
-        offset += count;
+        offset += ngon;
     }
     Normalize(dst.data(), dst.size());
     return true;

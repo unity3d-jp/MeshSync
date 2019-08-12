@@ -24,7 +24,7 @@
 //#define muSIMD_PolyInside
 //#define muSIMD_PolyInsideSoA
 
-//#define muSIMD_GenerateNormalsTriangleIndexed
+#define muSIMD_GenerateNormalsTriangleIndexed
 //#define muSIMD_GenerateNormalsTriangleFlattened
 //#define muSIMD_GenerateNormalsTriangleSoA
 //#define muSIMD_GenerateNormalsPolygonIndexed
