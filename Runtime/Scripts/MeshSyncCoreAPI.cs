@@ -15,7 +15,7 @@ namespace UTJ.MeshSync
     public static class Lib
     {
         #region internal
-        public const string name = "MeshSyncServer";
+        public const string name = "mscore";
         [DllImport(name)] static extern int msGetPluginVersion();
         [DllImport(name)] static extern int msGetProtocolVersion();
         #endregion

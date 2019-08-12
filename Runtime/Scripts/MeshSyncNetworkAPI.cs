@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace UTJ.MeshSync
 {
+#if UNITY_STANDALONE
     #region Server
     public enum ZUpCorrectionMode
     {
@@ -313,4 +314,5 @@ namespace UTJ.MeshSync
         }
     }
     #endregion
+#endif // UNITY_STANDALONE
 }

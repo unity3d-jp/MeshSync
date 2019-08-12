@@ -11,7 +11,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "setup", "setup.vcxproj", "{
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshUtils", "MeshUtils.vcxproj", "{FD3FE1FF-ABE5-40DB-B867-144E9DD9B23C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncServer", "MeshSyncServer.vcxproj", "{66397903-6FF2-46C6-B51E-B323FD248FAD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mscore", "mscore.vcxproj", "{66397903-6FF2-46C6-B51E-B323FD248FAD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -11,17 +11,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MeshSyncServer\msCoreAPI.cpp" />
-    <ClCompile Include="MeshSyncServer\msSceneCacheAPI.cpp" />
-    <ClCompile Include="MeshSyncServer\msServerAPI.cpp" />
-    <ClCompile Include="MeshSyncServer\msUnitySpecific.cpp" />
-    <ClCompile Include="MeshSyncServer\pch.cpp">
+    <ClCompile Include="mscore\msCoreAPI.cpp" />
+    <ClCompile Include="mscore\msSceneCacheAPI.cpp" />
+    <ClCompile Include="mscore\msServerAPI.cpp" />
+    <ClCompile Include="mscore\msUnitySpecific.cpp" />
+    <ClCompile Include="mscore\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshSyncServer\msCoreAPI.h" />
-    <ClInclude Include="MeshSyncServer\pch.h" />
+    <ClInclude Include="mscore\msCoreAPI.h" />
+    <ClInclude Include="mscore\pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshSync.vcxproj">
@@ -41,7 +41,7 @@
     <ProjectGuid>{66397903-6FF2-46C6-B51E-B323FD248FAD}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
-    <ProjectName>MeshSyncServer</ProjectName>
+    <ProjectName>mscore</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

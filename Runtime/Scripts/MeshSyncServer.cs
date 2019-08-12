@@ -19,6 +19,7 @@ namespace UTJ.MeshSync
     [ExecuteInEditMode]
     public class MeshSyncServer : MeshSyncPlayer
     {
+#if UNITY_STANDALONE
         #region Fields
         [SerializeField] int m_serverPort = ServerSettings.defaultPort;
 
@@ -440,5 +441,6 @@ namespace UTJ.MeshSync
             PollServerEvents();
         }
         #endregion
+#endif // UNITY_STANDALONE
     }
 }

@@ -23,7 +23,7 @@ if(ENABLE_ZSTD)
 endif()
 
 # Server
-option(BUILD_SERVER "Build MeshSyncServer" ON)
+option(BUILD_MSCORE "Build MeshSyncCore" ON)
 
 # Metasequoia
 if(MAC)
@@ -73,9 +73,9 @@ add_subdirectory(MeshUtils)
 add_subdirectory(MeshSync)
 
 
-# Server
-if(BUILD_SERVER)
-    add_subdirectory(MeshSyncServer)
+# core
+if(BUILD_MSCORE)
+    add_subdirectory(mscore)
 endif()
 
 # Metasequoia
