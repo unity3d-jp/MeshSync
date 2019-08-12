@@ -192,73 +192,93 @@ public:
     {
         desc.add("path", LXsTYPE_FILEPATH);
 
-        desc.add("object_scope", LXsTYPE_INTEGER);
+        desc.add("objectScope", LXsTYPE_INTEGER);
         desc.arg_set_custom(new ScopeSelector());
 
-        desc.add("frame_range", LXsTYPE_INTEGER);
+        desc.add("frameRange", LXsTYPE_INTEGER);
         desc.arg_set_custom(new FrameRangeSelector());
 
-        desc.add("frame_begin", LXsTYPE_INTEGER);
+        desc.add("frameBegin", LXsTYPE_INTEGER);
         desc.default_val(0);
-        desc.add("frame_end", LXsTYPE_INTEGER);
+        desc.add("frameEnd", LXsTYPE_INTEGER);
         desc.default_val(100);
 
-        desc.add("material_frame_range", LXsTYPE_INTEGER);
+        desc.add("materialFrameRange", LXsTYPE_INTEGER);
         desc.arg_set_custom(new MaterialFrameRangeSelector());
         desc.default_val(1);
 
-        desc.add("zstd_compression_level", LXsTYPE_INTEGER);
+        desc.add("zstdCompressionLevel", LXsTYPE_INTEGER);
         desc.default_val(3);
 
-        desc.add("samples_per_frame", LXsTYPE_FLOAT);
+        desc.add("samplesPerFrame", LXsTYPE_FLOAT);
         desc.default_val(1.0f);
 
-        desc.add("make_double_sided", LXsTYPE_BOOLEAN);
+        desc.add("makeDoubleSided", LXsTYPE_BOOLEAN);
         desc.default_val(false);
 
-        desc.add("bake_deformers", LXsTYPE_BOOLEAN);
+        desc.add("bakeDeformers", LXsTYPE_BOOLEAN);
         desc.default_val(true);
 
-        desc.add("flatten_hierarchy", LXsTYPE_BOOLEAN);
+        desc.add("flattenHierarchy", LXsTYPE_BOOLEAN);
         desc.default_val(false);
 
-        desc.add("merge_meshes", LXsTYPE_BOOLEAN);
+        desc.add("mergeMeshes", LXsTYPE_BOOLEAN);
         desc.default_val(false);
 
-        desc.add("strip_normals", LXsTYPE_BOOLEAN);
+        desc.add("stripNormals", LXsTYPE_BOOLEAN);
         desc.default_val(false);
-        desc.add("strip_tangents", LXsTYPE_BOOLEAN);
+        desc.add("stripTangents", LXsTYPE_BOOLEAN);
         desc.default_val(true);
+    }
+
+    inline bool readArg(const char *name, std::string& v)
+    {
+        return cmd_read_arg(name, v);
+    }
+
+    inline bool readArg(const char *name, int& v)
+    {
+        return cmd_read_arg(name, v);
+    }
+
+    inline bool readArg(const char *name, float& v)
+    {
+        double tmp;
+        if (cmd_read_arg(name, tmp)) {
+            v = (float)tmp;
+            return true;
+        }
+        return false;
+    }
+
+    inline bool readArg(const char *name, bool& v)
+    {
+        int tmp;
+        if (cmd_read_arg(name, tmp)) {
+            v = (bool)tmp;
+            return true;
+        }
+        return false;
     }
 
     void execute() override
     {
         auto settings = msmodoGetCacheSettings(); // copy
-        auto read_float = [&](const char *name, float& dst) {
-            double tmp;
-            if (cmd_read_arg(name, tmp))
-                dst = (float)tmp;
-        };
-        auto read_bool = [&](const char *name, bool& dst) {
-            int tmp;
-            if (cmd_read_arg(name, tmp))
-                dst = (bool)tmp;
-        };
 
-        cmd_read_arg("path", settings.path);
-        cmd_read_arg("object_scope", (int&)settings.object_scope);
-        cmd_read_arg("frame_range", (int&)settings.frame_range);
-        cmd_read_arg("frame_begin", settings.frame_begin);
-        cmd_read_arg("frame_end", settings.frame_end);
-        cmd_read_arg("material_frame_range", (int&)settings.material_frame_range);
-        cmd_read_arg("zstd_compression_level", settings.zstd_compression_level);
-        read_float("samples_per_frame", settings.samples_per_frame);
-        read_bool("make_double_sided", settings.make_double_sided);
-        read_bool("bake_deformers", settings.bake_deformers);
-        read_bool("flatten_hierarchy", settings.flatten_hierarchy);
-        read_bool("merge_meshes", settings.merge_meshes);
-        read_bool("strip_normals", settings.strip_normals);
-        read_bool("strip_tangents", settings.strip_tangents);
+        readArg("path", settings.path);
+        readArg("objectScope", (int&)settings.object_scope);
+        readArg("frameRange", (int&)settings.frame_range);
+        readArg("frameBegin", settings.frame_begin);
+        readArg("frameEnd", settings.frame_end);
+        readArg("materialFrameRange", (int&)settings.material_frame_range);
+        readArg("zstdCompressionLevel", settings.zstd_compression_level);
+        readArg("samplesPerFrame", settings.samples_per_frame);
+        readArg("makeDoubleSided", settings.make_double_sided);
+        readArg("bakeDeformers", settings.bake_deformers);
+        readArg("flattenHierarchy", settings.flatten_hierarchy);
+        readArg("mergeMeshes", settings.merge_meshes);
+        readArg("stripNormals", settings.strip_normals);
+        readArg("stripTangents", settings.strip_tangents);
         msmodoGetContext().exportCache(settings);
     }
 };

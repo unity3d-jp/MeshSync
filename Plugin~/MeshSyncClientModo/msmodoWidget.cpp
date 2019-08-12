@@ -50,6 +50,7 @@ public slots:
     void onToggleSyncLights(int v);
     void onToggleAutoSync(int v);
     void onClickManualSync(bool v);
+    void onClickExportCache(bool v);
 
     void onEditAnimationTimeScale(const QString& v);
     void onEditAnimationSPS(const QString& v);
@@ -212,6 +213,10 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         auto bu_manual_sync = new QPushButton("Manual Sync");
         layout->addWidget(bu_manual_sync, iy++, 0, 1, 3);
         connect(bu_manual_sync, SIGNAL(clicked(bool)), this, SLOT(onClickManualSync(bool)));
+
+        auto bu_export_cache = new QPushButton("Export Cache");
+        layout->addWidget(bu_export_cache, iy++, 0, 1, 3);
+        connect(bu_export_cache, SIGNAL(clicked(bool)), this, SLOT(onClickExportCache(bool)));
     }
 
     // animation
@@ -408,6 +413,33 @@ void msmodoSettingsWidget::onToggleAutoSync(int v)
 void msmodoSettingsWidget::onClickManualSync(bool v)
 {
     msmodoSendObjects();
+}
+
+void msmodoSettingsWidget::onClickExportCache(bool v)
+{
+    CLxUser_CommandService svc_cmd;
+    std::string path;
+    {
+        // open file dialog
+        svc_cmd.ExecuteArgString(-1, LXiCTAG_NULL, "dialog.setup fileSave");
+        svc_cmd.ExecuteArgString(-1, LXiCTAG_NULL, "dialog.title {Export Cache}");
+        svc_cmd.ExecuteArgString(-1, LXiCTAG_NULL, "dialog.fileTypeCustom cache {Scene Cache} {*.sc} sc");
+        svc_cmd.ExecuteArgString(-1, LXiCTAG_NULL, "dialog.open");
+
+        CLxUser_Command cmd;
+        CLxUser_ValueArray va;
+        if (LXx_OK(svc_cmd.NewCommand(cmd, "dialog.result"))) {
+            if (LXx_OK(svc_cmd.QueryIndex(cmd, 0, va))) {
+                if (va.Count() > 0)
+                    va.String(0, path);
+            }
+        }
+    }
+    if (!path.empty()) {
+        char buf[1024];
+        sprintf(buf, "unity.meshsync.cache path:{%s}", path.c_str());
+        svc_cmd.ExecuteArgString(-1, LXiCTAG_NULL, buf);
+    }
 }
 
 
