@@ -142,29 +142,29 @@ class MESHSYNC_OT_ExportCache(bpy.types.Operator):
 
     # cache properties
     object_scope = bpy.props.EnumProperty(
-        name = 'Object Scope',
-        default = '0',
+        name = "Object Scope",
+        default = "0",
         items = {
-            ('0', 'All', 'Export all objects'),
-            ('1', 'Selected', 'Export selected objects'),
+            ("0", "All", "Export all objects"),
+            ("1", "Selected", "Export selected objects"),
         })
     frame_range = bpy.props.EnumProperty(
-        name = 'Frame Range',
-        default = '0',
+        name = "Frame Range",
+        default = "0",
         items = {
-            ('0', 'Current', 'Export current frame'),
-            ('1', 'All', 'Export all frames'),
-            ('2', 'Custom', 'Export speficied frames'),
+            ("0", "Current", "Export current frame"),
+            ("1", "All", "Export all frames"),
+            ("2", "Custom", "Export speficied frames"),
         })
     frame_begin = bpy.props.IntProperty(default = 1, name = "Frame Begin")
     frame_end = bpy.props.IntProperty(default = 100, name = "Frame End")
     material_frame_range = bpy.props.EnumProperty(
-        name = 'Material Range',
-        default = '1',
+        name = "Material Range",
+        default = "1",
         items = {
-            ('0', 'None', 'Export no materials'),
-            ('1', 'One', 'Export one frame of materials'),
-            ('2', 'All', 'Export all frames of materials'),
+            ("0", "None", "Export no materials"),
+            ("1", "One", "Export one frame of materials"),
+            ("2", "All", "Export all frames of materials"),
         })
     zstd_compression_level = bpy.props.IntProperty(default = 3, name = "ZSTD Compression")
     frame_step = bpy.props.IntProperty(default = 1, name = "Frame Step")
@@ -218,7 +218,7 @@ class MESHSYNC_OT_ExportCache(bpy.types.Operator):
         if len(path) != 0:
             tmp = os.path.split(path)
             self.directory = tmp[0]
-            self.filename = re.sub(r"\.[^.]+$", '.sc', tmp[1])
+            self.filename = re.sub(r"\.[^.]+$", ".sc", tmp[1])
         else:
             self.directory = ""
             self.filename = "Untitled.sc";
@@ -230,19 +230,19 @@ class MESHSYNC_OT_ExportCache(bpy.types.Operator):
         layout = self.layout
         if hasattr(layout, "use_property_split"): # false on 2.79
             layout.use_property_split = True
-        layout.prop(self, 'object_scope')
-        layout.prop(self, 'frame_range')
-        if self.frame_range == '2':
+        layout.prop(self, "object_scope")
+        layout.prop(self, "frame_range")
+        if self.frame_range == "2":
             b = layout.box()
-            b.prop(self, 'frame_begin')
-            b.prop(self, 'frame_end')
-        layout.prop(self, 'material_frame_range')
-        layout.prop(self, 'zstd_compression_level')
-        layout.prop(self, 'frame_step')
-        layout.prop(self, 'make_double_sided')
-        layout.prop(self, 'bake_modifiers')
-        layout.prop(self, 'convert_to_mesh')
-        layout.prop(self, 'flatten_hierarchy')
-        layout.prop(self, 'merge_meshes')
-        layout.prop(self, 'strip_normals')
-        layout.prop(self, 'strip_tangents')
+            b.prop(self, "frame_begin")
+            b.prop(self, "frame_end")
+        layout.prop(self, "material_frame_range")
+        layout.prop(self, "zstd_compression_level")
+        layout.prop(self, "frame_step")
+        layout.prop(self, "make_double_sided")
+        layout.prop(self, "bake_modifiers")
+        layout.prop(self, "convert_to_mesh")
+        layout.prop(self, "flatten_hierarchy")
+        layout.prop(self, "merge_meshes")
+        layout.prop(self, "strip_normals")
+        layout.prop(self, "strip_tangents")
