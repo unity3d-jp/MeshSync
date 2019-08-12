@@ -15,7 +15,12 @@ namespace UTJ.MeshSync
     public static class Lib
     {
         #region internal
-        public const string name = "mscore";
+        public const string name =
+#if UNITY_IOS
+            "__internal";
+#else
+            "mscore";
+#endif
         [DllImport(name)] static extern int msGetPluginVersion();
         [DllImport(name)] static extern int msGetProtocolVersion();
         #endregion
@@ -2116,5 +2121,5 @@ namespace UTJ.MeshSync
             return new AnimationCurve(keys);
         }
     }
-    #endregion
+#endregion
 }
