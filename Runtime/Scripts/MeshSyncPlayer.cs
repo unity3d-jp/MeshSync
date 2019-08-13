@@ -47,6 +47,8 @@ namespace UTJ.MeshSync
             public int index;
             public GameObject go;
             public Transform trans;
+            public Camera camera;
+            public Light light;
             public MeshFilter meshFilter;
             public MeshRenderer meshRenderer;
             public SkinnedMeshRenderer skinnedMeshRenderer;
@@ -59,6 +61,8 @@ namespace UTJ.MeshSync
             public string reference;
             public string rootBonePath;
             public string[] bonePaths;
+            public bool smrUpdated = false;
+            public bool smrEnabled = false;
             public bool visible = true; // for reference
             public bool recved = false;
 
@@ -709,38 +713,44 @@ namespace UTJ.MeshSync
                     continue;
                 }
 
-                if (rec.bonePaths != null && rec.bonePaths.Length > 0 && rec.skinnedMeshRenderer != null)
+                if (rec.smrUpdated)
                 {
+                    rec.smrUpdated = false;
+
                     var smr = rec.skinnedMeshRenderer;
-                    var boneCount = rec.bonePaths.Length;
-                    bool dummy = false;
-
-                    var bones = new Transform[boneCount];
-                    for (int bi = 0; bi < boneCount; ++bi)
-                        bones[bi] = FindOrCreateObjectByPath(rec.bonePaths[bi], false, ref dummy);
-
-                    Transform root = null;
-                    if (rec.rootBonePath != null && rec.rootBonePath.Length != 0)
-                        root = FindOrCreateObjectByPath(rec.rootBonePath, false, ref dummy);
-                    if (root == null && boneCount > 0)
+                    if (rec.bonePaths != null && rec.bonePaths.Length > 0)
                     {
-                        // find root bone
-                        root = bones[0];
-                        for (; ; )
+                        var boneCount = rec.bonePaths.Length;
+                        bool dummy = false;
+
+                        var bones = new Transform[boneCount];
+                        for (int bi = 0; bi < boneCount; ++bi)
+                            bones[bi] = FindOrCreateObjectByPath(rec.bonePaths[bi], false, ref dummy);
+
+                        Transform root = null;
+                        if (rec.rootBonePath != null && rec.rootBonePath.Length != 0)
+                            root = FindOrCreateObjectByPath(rec.rootBonePath, false, ref dummy);
+                        if (root == null && boneCount > 0)
                         {
-                            var parent = root.parent;
-                            if (parent == null || parent == m_rootObject)
-                                break;
-                            root = parent;
+                            // find root bone
+                            root = bones[0];
+                            for (; ; )
+                            {
+                                var parent = root.parent;
+                                if (parent == null || parent == m_rootObject)
+                                    break;
+                                root = parent;
+                            }
                         }
+
+                        smr.rootBone = root;
+                        smr.bones = bones;
+                        smr.updateWhenOffscreen = true; // todo: this should be turned off at some point
+
+                        rec.bonePaths = null;
+                        rec.rootBonePath = null;
                     }
-
-                    smr.rootBone = root;
-                    smr.bones = bones;
-                    smr.updateWhenOffscreen = true; // todo: this should be turned off at some point
-
-                    rec.bonePaths = null;
-                    rec.rootBonePath = null;
+                    smr.enabled = rec.smrEnabled;
                 }
             }
             if (deadKeys != null)
@@ -762,7 +772,6 @@ namespace UTJ.MeshSync
                     }
                 }
             }
-
 
             // reassign materials
             if (m_needReassignMaterials)
@@ -787,22 +796,18 @@ namespace UTJ.MeshSync
             if (!EditorApplication.isPlaying || !EditorApplication.isPaused)
             {
                 // force recalculate skinning
-                foreach (var rec in m_clientObjects)
+                foreach (var kvp in m_clientObjects)
                 {
-                    if (rec.Value.skinnedMeshRenderer != null)
+                    var rec = kvp.Value;
+                    if (rec.smrEnabled && rec.go.activeInHierarchy)
                     {
-                        var go = rec.Value.go;
-                        if (go != null && go.activeInHierarchy)
-                        {
-                            go.SetActive(false); // 
-                            go.SetActive(true);  // force recalculate skinned mesh on editor. I couldn't find better way...
-                        }
+                        var smr = rec.skinnedMeshRenderer;
+                        smr.enabled = false; // 
+                        smr.enabled = true;  // force recalculate skinned mesh on editor. I couldn't find better way...
                     }
                 }
-                ForceRepaint();
             }
 #endif
-
 
             if (onSceneUpdateEnd != null)
                 onSceneUpdateEnd.Invoke();
@@ -1259,8 +1264,13 @@ namespace UTJ.MeshSync
                     }
                 }
 
+                rec.smrUpdated = true;
                 if (m_syncVisibility)
-                    smr.enabled = data.transform.visible;
+                    rec.smrEnabled = data.transform.visible;
+                else
+                    rec.smrEnabled = smr.enabled;
+                // disable temporarily to prevent error. restore on AfterUpdateScene()
+                smr.enabled = false;
                 smr.sharedMesh = rec.mesh;
 
                 // update bones
@@ -1599,7 +1609,9 @@ namespace UTJ.MeshSync
             if (rec == null || dflags.unchanged)
                 return null;
 
-            var cam = Misc.GetOrAddComponent<Camera>(rec.go);
+            var cam = rec.camera;
+            if (cam == null)
+                cam = rec.camera = Misc.GetOrAddComponent<Camera>(rec.go);
             if (m_syncVisibility)
                 cam.enabled = dtrans.visible;
 
@@ -1647,7 +1659,10 @@ namespace UTJ.MeshSync
             if (rec == null || dflags.unchanged)
                 return null;
 
-            var lt = Misc.GetOrAddComponent<Light>(rec.go);
+            var lt = rec.light;
+            if (lt == null)
+                lt = rec.light = Misc.GetOrAddComponent<Light>(rec.go);
+
             if (m_syncVisibility)
                 lt.enabled = dtrans.visible;
 
@@ -1680,10 +1695,12 @@ namespace UTJ.MeshSync
             var srcgo = src.go;
             if (src.dataType == EntityType.Camera)
             {
-                var srccam = srcgo.GetComponent<Camera>();
+                var srccam = src.camera;
                 if (srccam != null)
                 {
-                    var dstcam  = Misc.GetOrAddComponent<Camera>(dstgo);
+                    var dstcam = dst.camera;
+                    if (dstcam == null)
+                        dstcam = dst.camera = Misc.GetOrAddComponent<Camera>(dstgo);
                     if (m_syncVisibility)
                         dstcam.enabled = dst.visible;
                     dstcam.enabled = srccam.enabled;
@@ -1695,10 +1712,12 @@ namespace UTJ.MeshSync
             }
             else if (src.dataType == EntityType.Light)
             {
-                var srclt = srcgo.GetComponent<Light>();
+                var srclt = src.light;
                 if (srclt != null)
                 {
-                    var dstlt = Misc.GetOrAddComponent<Light>(dstgo);
+                    var dstlt = dst.light;
+                    if (dstlt == null)
+                        dstlt = dst.light = Misc.GetOrAddComponent<Light>(dstgo);
                     if (m_syncVisibility)
                         dstlt.enabled = dst.visible;
                     dstlt.type = srclt.type;
@@ -2141,6 +2160,7 @@ namespace UTJ.MeshSync
                 m.material = doExport(m.material); // material maybe updated by SaveAsset()
             m_defaultMaterial = doExport(m_defaultMaterial);
 
+            AssetDatabase.SaveAssets();
             ReassignMaterials();
         }
 
