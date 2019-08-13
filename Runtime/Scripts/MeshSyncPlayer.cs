@@ -46,9 +46,12 @@ namespace UTJ.MeshSync
             public EntityType dataType;
             public int index;
             public GameObject go;
+            public Transform trans;
             public MeshFilter meshFilter;
             public MeshRenderer meshRenderer;
             public SkinnedMeshRenderer skinnedMeshRenderer;
+            public PointCache pointCache;
+            public PointCacheRenderer pointCacheRenderer;
             public Mesh origMesh;
             public Mesh mesh;
 
@@ -182,7 +185,7 @@ namespace UTJ.MeshSync
         [SerializeField] protected bool m_syncMaterials = true;
 
 #if UNITY_2018_1_OR_NEWER
-        [SerializeField] protected bool m_usePhysicalCameraParams = false;
+        [SerializeField] protected bool m_usePhysicalCameraParams = true;
 #endif
         [SerializeField] protected bool m_updateMeshColliders = true;
         [SerializeField] protected bool m_findMaterialFromAssets = true;
@@ -192,6 +195,7 @@ namespace UTJ.MeshSync
         [SerializeField] protected bool m_profiling = false;
         [SerializeField] protected bool m_dontSaveAssetsInScene = false;
 
+        [SerializeField] protected Material m_defaultMaterial;
         [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] protected List<TextureHolder> m_textureList = new List<TextureHolder>();
         [SerializeField] protected List<AudioHolder> m_audioList = new List<AudioHolder>();
@@ -687,38 +691,34 @@ namespace UTJ.MeshSync
 
         public void AfterUpdateScene()
         {
-            foreach (var pair in m_clientObjects)
-            {
-                var rec = pair.Value;
-                if (rec.go == null)
-                    continue;
+            List<string> deadKeys = null;
 
-                // resolve references
-                if (rec.reference != null)
+            // resolve bones
+            foreach (var kvp in m_clientObjects)
+            {
+                var rec = kvp.Value;
+                if (rec.go == null)
                 {
-                    EntityRecord srcrec = null;
-                    if (m_clientObjects.TryGetValue(rec.reference, out srcrec) && srcrec.go != null)
-                    {
-                        rec.materialIDs = srcrec.materialIDs;
-                        UpdateReference(rec, srcrec);
-                    }
+                    if (deadKeys == null)
+                        deadKeys = new List<string>();
+                    deadKeys.Add(kvp.Key);
+                    continue;
                 }
 
-                // resolve bones
                 if (rec.bonePaths != null && rec.bonePaths.Length > 0 && rec.skinnedMeshRenderer != null)
                 {
                     var smr = rec.skinnedMeshRenderer;
-                    var n = rec.bonePaths.Length;
+                    var boneCount = rec.bonePaths.Length;
                     bool dummy = false;
 
-                    var bones = new Transform[n];
-                    for (int bi = 0; bi < n; ++bi)
+                    var bones = new Transform[boneCount];
+                    for (int bi = 0; bi < boneCount; ++bi)
                         bones[bi] = FindOrCreateObjectByPath(rec.bonePaths[bi], false, ref dummy);
 
                     Transform root = null;
                     if (rec.rootBonePath != null && rec.rootBonePath.Length != 0)
                         root = FindOrCreateObjectByPath(rec.rootBonePath, false, ref dummy);
-                    if (root == null && n > 0)
+                    if (root == null && boneCount > 0)
                     {
                         // find root bone
                         root = bones[0];
@@ -739,6 +739,26 @@ namespace UTJ.MeshSync
                     rec.rootBonePath = null;
                 }
             }
+            if (deadKeys != null)
+                foreach (var key in deadKeys)
+                    m_clientObjects.Remove(key);
+
+            // resolve references
+            // this must be another pass because resolving bones can affect references
+            foreach (var kvp in m_clientObjects)
+            {
+                var rec = kvp.Value;
+                if (rec.reference != null)
+                {
+                    EntityRecord srcrec = null;
+                    if (m_clientObjects.TryGetValue(rec.reference, out srcrec) && srcrec.go != null)
+                    {
+                        rec.materialIDs = srcrec.materialIDs;
+                        UpdateReference(rec, srcrec);
+                    }
+                }
+            }
+
 
             // reassign materials
             if (m_needReassignMaterials)
@@ -1446,9 +1466,12 @@ namespace UTJ.MeshSync
             var path = dtrans.path;
             var go = rec.go;
 
-            Misc.GetOrAddComponent<PointCacheRenderer>(go);
-            var dst = Misc.GetOrAddComponent<PointCache>(go);
-
+            var dst = rec.pointCache;
+            if (dst == null)
+            {
+                rec.pointCacheRenderer = Misc.GetOrAddComponent<PointCacheRenderer>(go);
+                dst = rec.pointCache = Misc.GetOrAddComponent<PointCache>(go);
+            }
             dst.Clear();
 
             var num = data.numPoints;
@@ -1510,13 +1533,17 @@ namespace UTJ.MeshSync
                     rec = new EntityRecord
                     {
                         go = trans.gameObject,
+                        trans = trans,
                         recved = true,
                     };
                     m_clientObjects.Add(path, rec);
                 }
             }
 
-            trans = rec.go.GetComponent<Transform>();
+            trans = rec.trans;
+            if (trans == null)
+                trans = rec.trans = rec.go.transform;
+
             rec.index = data.index;
             var reference = data.reference;
             rec.reference = reference != "" ? reference : null;
@@ -1669,18 +1696,14 @@ namespace UTJ.MeshSync
 
                 if (mesh != null)
                 {
-                    // disable GameObject while updating mesh and materials
-                    bool active = dstgo.activeSelf;
-                    dstgo.SetActive(false);
-
-                    var dstpr = dstgo.GetComponent<PointCacheRenderer>();
-                    if (dstpr != null)
+                    var dstpcr = dst.pointCacheRenderer;
+                    if (dstpcr != null)
                     {
                         if (m_syncVisibility)
-                            dstpr.enabled = dst.visible;
-                        dstpr.sharedMesh = mesh;
+                            dstpcr.enabled = dst.visible;
+                        dstpcr.sharedMesh = mesh;
 
-                        if (dstpr.sharedMaterials == null || dstpr.sharedMaterials.Length == 0)
+                        if (dstpcr.sharedMaterials == null || dstpcr.sharedMaterials.Length == 0)
                         {
                             Material[] materials = null;
                             if (srcmr != null)
@@ -1692,14 +1715,20 @@ namespace UTJ.MeshSync
                             {
                                 foreach (var m in materials)
                                     m.enableInstancing = true;
-                                dstpr.sharedMaterials = materials;
+                                dstpcr.sharedMaterials = materials;
                             }
                         }
                     }
                     else if (srcmr != null)
                     {
-                        var dstmr = Misc.GetOrAddComponent<MeshRenderer>(dstgo);
-                        var dstmf = Misc.GetOrAddComponent<MeshFilter>(dstgo);
+                        var dstmr = dst.meshRenderer;
+                        var dstmf = dst.meshFilter;
+                        if (dstmr == null)
+                        {
+                            dstmr = dst.meshRenderer = Misc.GetOrAddComponent<MeshRenderer>(dstgo);
+                            dstmf = dst.meshFilter = Misc.GetOrAddComponent<MeshFilter>(dstgo);
+                        }
+
                         if (m_syncVisibility)
                             dstmr.enabled = dst.visible;
                         dstmf.sharedMesh = mesh;
@@ -1707,18 +1736,26 @@ namespace UTJ.MeshSync
                     }
                     else if (srcsmr != null)
                     {
-                        var dstsmr = Misc.GetOrAddComponent<SkinnedMeshRenderer>(dstgo);
-                        if (m_syncVisibility)
-                            dstsmr.enabled = dst.visible;
+                        var dstsmr = dst.skinnedMeshRenderer;
+                        if (dstsmr == null)
+                            dstsmr = dst.skinnedMeshRenderer = Misc.GetOrAddComponent<SkinnedMeshRenderer>(dstgo);
+
+                        // disable SkinnedMeshRenderer while updating
+                        bool oldEnabled = dstsmr.enabled;
+                        dstsmr.enabled = false;
                         dstsmr.sharedMesh = mesh;
                         dstsmr.sharedMaterials = srcsmr.sharedMaterials;
                         dstsmr.bones = srcsmr.bones;
                         dstsmr.rootBone = srcsmr.rootBone;
                         dstsmr.updateWhenOffscreen = srcsmr.updateWhenOffscreen;
-
                         int blendShapeCount = mesh.blendShapeCount;
                         for (int bi = 0; bi < blendShapeCount; ++bi)
                             dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
+
+                        if (m_syncVisibility)
+                            dstsmr.enabled = dst.visible;
+                        else
+                            dstsmr.enabled = oldEnabled;
                     }
 
                     // handle mesh collider
@@ -1736,22 +1773,20 @@ namespace UTJ.MeshSync
                             dstmc.cookingOptions = srcmc.cookingOptions;
                         }
                     }
-
-                    dstgo.SetActive(active);
                 }
             }
             else if (src.dataType == EntityType.Points)
             {
-                var srcpr = srcgo.GetComponent<PointCacheRenderer>();
-                if (srcpr != null)
+                var srcpcr = src.pointCacheRenderer;
+                if (srcpcr != null)
                 {
-                    var dstpr = Misc.GetOrAddComponent<PointCacheRenderer>(dstgo);
-                    dstpr.sharedMesh = srcpr.sharedMesh;
+                    var dstpcr = dst.pointCacheRenderer;
+                    dstpcr.sharedMesh = srcpcr.sharedMesh;
 
-                    var materials = srcpr.sharedMaterials;
+                    var materials = srcpcr.sharedMaterials;
                     for (int i = 0; i < materials.Length; ++i)
                         materials[i].enableInstancing = true;
-                    dstpr.sharedMaterials = materials;
+                    dstpcr.sharedMaterials = materials;
                 }
             }
         }
@@ -1920,7 +1955,7 @@ namespace UTJ.MeshSync
             if (rec.go == null || rec.mesh == null || rec.materialIDs == null)
                 return;
 
-            Renderer r = rec.go.GetComponent<Renderer>();
+            Renderer r = rec.meshRenderer != null ? (Renderer)rec.meshRenderer : (Renderer)rec.skinnedMeshRenderer;
             if (r == null)
                 return;
 
@@ -1943,9 +1978,12 @@ namespace UTJ.MeshSync
                 {
                     if (materials[si] == null)
                     {
-                        var tmp = CreateDefaultMaterial();
-                        tmp.name = "DefaultMaterial";
-                        materials[si] = tmp;
+                        if (m_defaultMaterial == null)
+                        {
+                            m_defaultMaterial = CreateDefaultMaterial();
+                            m_defaultMaterial.name = "DefaultMaterial";
+                        }
+                        materials[si] = m_defaultMaterial;
                         changed = true;
                     }
                 }
@@ -2059,21 +2097,24 @@ namespace UTJ.MeshSync
             var nameGenerator = new Misc.UniqueNameGenerator();
             var basePath = assetPath;
 
-            foreach (var m in m_materialList)
-            {
-                var material = m.material;
-                if (material == null)
-                    continue;
-
-                var dstPath = string.Format("{0}/{1}.mat", basePath, nameGenerator.Gen(material.name));
-                if (overwrite || !AssetDatabase.Contains(material))
+            Func<Material, Material> doExport = (Material mat) => {
+                var dstPath = string.Format("{0}/{1}.mat", basePath, nameGenerator.Gen(mat.name));
+                if (overwrite || !AssetDatabase.Contains(mat))
                 {
-                    SaveAsset(ref material, dstPath);
-                    m.material = material; // material maybe updated by SaveAsset()
+                    SaveAsset(ref mat, dstPath);
                     if (m_logging)
                         Debug.Log("exported material " + dstPath);
                 }
+                return mat;
+            };
+
+            foreach (var m in m_materialList)
+            {
+                if (overwrite || !AssetDatabase.Contains(m.material))
+                    m.material = doExport(m.material); // material maybe updated by SaveAsset()
             }
+            if (m_defaultMaterial != null)
+                m_defaultMaterial = doExport(m_defaultMaterial);
             ReassignMaterials();
         }
 

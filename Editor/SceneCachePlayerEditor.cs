@@ -7,44 +7,49 @@ namespace UTJ.MeshSyncEditor
     [CustomEditor(typeof(SceneCachePlayer))]
     public class SceneCachePlayerEditor : Editor
     {
-#if UNITY_EDITOR
         [MenuItem("GameObject/MeshSync/Create Cache Player", false, 10)]
-        public static void CreateSceneCachePlayer(MenuCommand menuCommand)
+        public static void CreateSceneCachePlayerMenu(MenuCommand menuCommand)
         {
             var path = EditorUtility.OpenFilePanel("Select Cache File", "", "");
             if (path.Length > 0)
-            {
-                // create temporary GO to make prefab
-                var go = new GameObject();
-                go.name = System.IO.Path.GetFileNameWithoutExtension(path);
-
-                var player = go.AddComponent<SceneCachePlayer>();
-                player.rootObject = go.GetComponent<Transform>();
-                player.assetDir = new DataPath(DataPath.Root.DataPath, string.Format("SceneCache/{0}", go.name));
-                player.progressiveDisplay = false;
-                player.dontSaveAssetsInScene = true;
-                player.findMaterialFromAssets = false;
-                if (!player.OpenCache(path))
-                {
-                    Debug.LogError("Failed to open " + path + ". Possible reasons: file format version does not match, or the file is not scene cache.");
-                    DestroyImmediate(go);
-                    return;
-                }
-
-                // export materials & animation and generate prefab
-                player.UpdatePlayer();
-                player.ExportMaterials(false);
-                player.AddAnimator();
-                var prefab = PrefabUtility.SaveAsPrefabAsset(go, string.Format("Assets/SceneCache/{0}.prefab", go.name));
-
-                // delete temporary GO and instantiate prefab
-                var index = go.transform.GetSiblingIndex();
-                Object.DestroyImmediate(go);
-                var inst = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
-                inst.transform.SetSiblingIndex(index);
-            }
+                CreateSceneCachePlayer(path);
         }
-#endif
+
+        public static GameObject CreateSceneCachePlayer(string path)
+        {
+            // create temporary GO to make prefab
+            var go = new GameObject();
+            go.name = System.IO.Path.GetFileNameWithoutExtension(path);
+
+            var player = go.AddComponent<SceneCachePlayer>();
+            player.rootObject = go.GetComponent<Transform>();
+            player.assetDir = new DataPath(DataPath.Root.DataPath, string.Format("SceneCache/{0}", go.name));
+            player.updateMeshColliders = false;
+            player.progressiveDisplay = false;
+            player.dontSaveAssetsInScene = true;
+            player.findMaterialFromAssets = false;
+            if (!player.OpenCache(path))
+            {
+                Debug.LogError("Failed to open " + path + ". Possible reasons: file format version does not match, or the file is not scene cache.");
+                DestroyImmediate(go);
+                return null;
+            }
+
+            // export materials & animation and generate prefab
+            player.UpdatePlayer();
+            player.ExportMaterials(false);
+            player.AddAnimator();
+            var prefab = PrefabUtility.SaveAsPrefabAsset(go, string.Format("Assets/SceneCache/{0}.prefab", go.name));
+
+            // delete temporary GO and instantiate prefab
+            var index = go.transform.GetSiblingIndex();
+            Object.DestroyImmediate(go);
+            var inst = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+            Undo.RegisterCreatedObjectUndo(inst, "SceneCachePlayer");
+            inst.transform.SetSiblingIndex(index);
+            return inst;
+        }
+
 
         public override void OnInspectorGUI()
         {
