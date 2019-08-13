@@ -347,7 +347,7 @@ void* CmdExportCache::create()
 
 const char* CmdExportCache::name()
 {
-    return "UnityMeshSync_ExportCache";
+    return "UnityMeshSync_Cache";
 }
 
 MSyntax CmdExportCache::createSyntax()
@@ -378,39 +378,24 @@ MStatus CmdExportCache::doIt(const MArgList& args_)
     MArgParser args(syntax(), args_, &status);
     auto settings = msmayaGetCacheSettings(); // copy
 
-    std::string v;
-    get_arg(settings.path, "path", args);
-    if (get_arg(v, "objectScope", args)) {
-        if (v == "all")
-            settings.object_scope = ObjectScope::All;
-        else if (v == "selection")
-            settings.object_scope = ObjectScope::Selected;
-        else if (v == "updated")
-            settings.object_scope = ObjectScope::Updated;
-    }
-    if (get_arg(v, "frameRange", args)) {
-        if (v == "current")
-            settings.frame_range = FrameRange::Current;
-        else if (v == "custom")
-            settings.frame_range = FrameRange::Custom; // "frame_begin" - "frame_end"
-        else if (v == "all")
-            settings.frame_range = FrameRange::All;
-    }
-    if (get_arg(v, "materialFrameRange", args)) {
-        if (v == "none")
-            settings.material_frame_range = MaterialFrameRange::None;
-        else if (v == "one")
-            settings.material_frame_range = MaterialFrameRange::One;
-        else if (v == "all")
-            settings.material_frame_range = MaterialFrameRange::All;
+#define Handle(Name, Value, ...)\
+    if (args.isFlagSet(Name)) {\
+            if (args.isQuery())\
+                    set_result(__VA_ARGS__ settings.Value);\
+            else\
+                    get_arg(__VA_ARGS__ settings.Value, Name, args);\
     }
 
-#define Handle(Name, Value) get_arg(settings.Value, Name, args);
-
+    Handle("path", path);
+    Handle("objectScope", object_scope, (int&));
+    Handle("frameRange", frame_range, (int&));
     Handle("frameBegin", frame_begin);
     Handle("frameEnd", frame_end);
-    Handle("ZSTDCompressionLevel", zstd_compression_level);
+    Handle("materialFrameRange", material_frame_range, (int&));
     Handle("samplesPerFrame", samples_per_frame);
+
+    Handle("zstdCompressionLevel", zstd_compression_level);
+    Handle("removeNamespace", remove_namespace);
     Handle("makeDoubleSided", make_double_sided);
     Handle("bakeDeformers", bake_deformers);
     Handle("flattenHierarchy", flatten_hierarchy);
@@ -420,9 +405,12 @@ MStatus CmdExportCache::doIt(const MArgList& args_)
 
 #undef Handle
 
-    auto& ctx = msmayaGetContext();
-    if (ctx.exportCache(settings))
-        return MStatus::kSuccess;
-    else
-        return MStatus::kFailure;
+    if (!args.isQuery()) {
+        auto& ctx = msmayaGetContext();
+        if (ctx.exportCache(settings))
+            return MStatus::kSuccess;
+        else
+            return MStatus::kFailure;
+    }
+    return MStatus::kSuccess;
 }

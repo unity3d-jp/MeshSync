@@ -91,7 +91,7 @@ enum class ExportTarget : int
 
 enum class ObjectScope : int
 {
-    None,
+    None = -1,
     All,
     Updated,
     Selected,
@@ -99,7 +99,6 @@ enum class ObjectScope : int
 
 enum class FrameRange : int
 {
-    None,
     Current,
     All,
     Custom,
@@ -107,7 +106,7 @@ enum class FrameRange : int
 
 enum class MaterialFrameRange : int
 {
-    None,
+    None = -1,
     One,
     All,
 };
@@ -154,6 +153,7 @@ struct CacheSettings
     int frame_begin = 0;
     int frame_end = 100;
 
+    bool remove_namespace = true;
     int zstd_compression_level = 3; // (min) 0 - 22 (max)
     float samples_per_frame = 1.0f;
 

@@ -1,0 +1,66 @@
+global proc UnityMeshSync_CacheGUI()
+{
+    global string $Window = "Export Cache";
+    if (`window -exists $Window`) dframeEndeleteUI -window $Window;
+    window -t ("Unity Mesh Sync") -wh 300 610 $Window;
+    
+    int    $objScope            = `UnityMeshSync_Cache -q -objectScope`;
+    int    $frameRange          = `UnityMeshSync_Cache -q -frameRange`;
+    int    $frameBegin          = `UnityMeshSync_Cache -q -frameBegin`;
+    int    $frameEnd            = `UnityMeshSync_Cache -q -frameEnd`;
+    int    $mfRange             = `UnityMeshSync_Cache -q -materialFrameRange`;
+
+    int    $removeNamespace     = `UnityMeshSync_Cache -q -removeNamespace`;
+    int    $zstdCompressionLevel= `UnityMeshSync_Cache -q -zstdCompressionLevel`;
+    int    $samplesPerFrame     = `UnityMeshSync_Cache -q -samplesPerFrame`;
+    int    $makeDoubleSided     = `UnityMeshSync_Cache -q -makeDoubleSided`;
+    int    $bakeDeformers       = `UnityMeshSync_Cache -q -bakeDeformers`;
+    int    $flattenHierarchy    = `UnityMeshSync_Cache -q -flattenHierarchy`;
+    int    $mergeMeshes         = `UnityMeshSync_Cache -q -mergeMeshes`;
+    int    $stripNormals        = `UnityMeshSync_Cache -q -stripNormals`;
+    int    $stripTangents       = `UnityMeshSync_Cache -q -stripTangents`;
+
+    optionMenu -label "Object Scope" -select $objScope+1 umsCtrlCObjectScope;
+        menuItem -label "All" -data 0;
+        menuItem -label "Selected" -data 1;
+
+    optionMenu -label "Frame Range" -select $frameRange+1 umsCtrlCFrameRange;
+        menuItem -label "Single" -data 0;
+        menuItem -label "All" -data 1;
+        menuItem -label "Custom" -data 2;
+
+    columnLayout -visible $frameRange==2 -columnOffset "left" 20 umsCFoldFrameRange;
+        intFieldGrp -label "Frame Begin" -value $frameBegin umsCtrlCFrameBegin;
+        intFieldGrp -label "Frame End" -value $frameEnd umsCtrlCFrameEnd;
+    setParent ..;
+
+    optionMenu -label "Material Frame Range" -select $mfRange+2 umsCtrlCMFRange;
+        menuItem -label "None" -data -1;
+        menuItem -label "One" -data 0;
+        menuItem -label "All" -data 1;
+
+    floatFieldGrp -label "Samples Per Frame" -value $samplesPerFrame umsCtrlCSamplesPerFrame;
+
+    intFieldGrp -label "ZSTD Compression" -value $zstdCompressionLevel umsCtrlCZSTDCompression;
+
+    checkBox -label "Remove Namespace" -value $removeNamespace umsCtrlCRemoveNamespace;
+    checkBox -label "Make Double Sided" -value $makeDoubleSided umsCtrlCMakeDoubleSided;
+    checkBox -label "Bake Deformers" -value $bakeDeformers umsCtrlCBakeDeformers;
+    checkBox -label "Flatten Hierarchy" -value $flattenHierarchy umsCtrlCFlattenHierarchy;
+    checkBox -label "Strip Normals" -value $stripNormals umsCtrlCStripNormals;
+    checkBox -label "Strip Tangents" -value $stripTangents umsCtrlCStripTangents;
+
+    separator -h 5 -w 250 -style none;
+
+    button -l "Export" -c "umsCBExportCache";
+
+    setParent ..;
+
+    showWindow $Window;
+}
+
+global proc umsCBExportCache()
+{
+    string $ret = `UnityMeshSync_Cache`;
+}
+

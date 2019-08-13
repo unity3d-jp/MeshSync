@@ -636,6 +636,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
 
     auto settings_old = m_settings;
     m_settings.export_cache = true;
+    m_settings.remove_namespace = cache_settings.remove_namespace;
     m_settings.make_double_sided = cache_settings.make_double_sided;
     m_settings.bake_deformers = cache_settings.bake_deformers;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
