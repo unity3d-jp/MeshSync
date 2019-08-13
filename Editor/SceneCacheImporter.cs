@@ -19,7 +19,7 @@ namespace UTJ.MeshSyncEditor
             // export materials & animation and generate prefab
             var player = go.GetComponent<SceneCachePlayer>();
             player.UpdatePlayer();
-            player.ExportMaterials(false);
+            player.ExportMaterials(false, true);
             player.AddAnimator();
             player.handleAssets = false;
 

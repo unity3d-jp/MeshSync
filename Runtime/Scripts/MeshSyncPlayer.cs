@@ -2112,7 +2112,7 @@ namespace UTJ.MeshSync
         }
 
 
-        public void ExportMaterials(bool overwrite = true)
+        public void ExportMaterials(bool overwrite = true, bool useExistingOnes = false)
         {
             MakeSureAssetDirectoryExists();
 
@@ -2121,27 +2121,30 @@ namespace UTJ.MeshSync
             var basePath = assetPath;
 
             Func<Material, Material> doExport = (Material mat) => {
+                if (mat == null || AssetDatabase.Contains(mat))
+                    return mat;
+
                 var dstPath = string.Format("{0}/{1}.mat", basePath, nameGenerator.Gen(mat.name));
-                if (overwrite || !AssetDatabase.Contains(mat))
+                var existing = AssetDatabase.LoadAssetAtPath<Material>(dstPath);
+                if (overwrite || existing == null)
                 {
                     SaveAsset(ref mat, dstPath);
                     if (m_logging)
                         Debug.Log("exported material " + dstPath);
                 }
+                else if (useExistingOnes && existing != null)
+                    mat = existing;
                 return mat;
             };
 
             foreach (var m in m_materialList)
-            {
-                if (overwrite || !AssetDatabase.Contains(m.material))
-                    m.material = doExport(m.material); // material maybe updated by SaveAsset()
-            }
-            if (m_defaultMaterial != null)
-                m_defaultMaterial = doExport(m_defaultMaterial);
+                m.material = doExport(m.material); // material maybe updated by SaveAsset()
+            m_defaultMaterial = doExport(m_defaultMaterial);
+
             ReassignMaterials();
         }
 
-        public void ExportMeshes(bool overwrite = true)
+        public void ExportMeshes(bool overwrite = true, bool useExistingOnes = false)
         {
             MakeSureAssetDirectoryExists();
 
@@ -2153,17 +2156,20 @@ namespace UTJ.MeshSync
             foreach (var kvp in m_clientObjects)
             {
                 var mesh = kvp.Value.mesh;
-                if (mesh == null)
+                if (mesh == null || AssetDatabase.Contains(mesh))
                     continue;
 
-                if (overwrite || !AssetDatabase.Contains(mesh))
+                var dstPath = string.Format("{0}/{1}.asset", basePath, nameGenerator.Gen(mesh.name));
+                var existing = AssetDatabase.LoadAssetAtPath<Mesh>(dstPath);
+                if (overwrite || existing == null)
                 {
-                    var dstPath = string.Format("{0}/{1}.asset", basePath, nameGenerator.Gen(mesh.name));
                     SaveAsset(ref mesh, dstPath);
                     kvp.Value.mesh = mesh; // mesh maybe updated by SaveAsset()
                     if (m_logging)
                         Debug.Log("exported material " + dstPath);
                 }
+                else if (useExistingOnes && existing != null)
+                    kvp.Value.mesh = existing;
             }
 
             // replace existing meshes
