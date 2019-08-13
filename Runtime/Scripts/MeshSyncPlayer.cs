@@ -183,6 +183,7 @@ namespace UTJ.MeshSync
         [SerializeField] protected bool m_syncMeshes = true;
         [SerializeField] protected bool m_syncPoints = true;
         [SerializeField] protected bool m_syncMaterials = true;
+        [SerializeField] protected bool m_handleAssets = true;
 
 #if UNITY_2018_1_OR_NEWER
         [SerializeField] protected bool m_usePhysicalCameraParams = true;
@@ -279,6 +280,11 @@ namespace UTJ.MeshSync
         {
             get { return m_syncMaterials; }
             set { m_syncMaterials = value; }
+        }
+        public bool handleAssets
+        {
+            get { return m_handleAssets; }
+            set { m_handleAssets = value; }
         }
 
         public InterpolationMode animationInterpolation
@@ -411,9 +417,7 @@ namespace UTJ.MeshSync
         public void MakeSureAssetDirectoryExists()
         {
 #if UNITY_EDITOR
-            Try(()=> {
-                m_assetDir.CreateDirectory();
-            });
+            m_assetDir.CreateDirectory();
 #endif
         }
 
@@ -614,7 +618,7 @@ namespace UTJ.MeshSync
                         switch (asset.type)
                         {
                             case AssetType.File:
-                                ((FileAssetData)asset).WriteToFile(assetPath + "/" + asset.name);
+                                UpdateFileAsset((FileAssetData)asset);
                                 break;
                             case AssetType.Audio:
                                 UpdateAudio((AudioData)asset);
@@ -804,8 +808,21 @@ namespace UTJ.MeshSync
                 onSceneUpdateEnd.Invoke();
         }
 
+        void UpdateFileAsset(FileAssetData src)
+        {
+#if UNITY_EDITOR
+            if (!m_handleAssets)
+                return;
+
+            src.WriteToFile(assetPath + "/" + src.name);
+#endif
+        }
+
         void UpdateAudio(AudioData src)
         {
+            if (!m_handleAssets)
+                return;
+
             AudioClip ac = null;
 
             var format = src.format;
@@ -869,6 +886,9 @@ namespace UTJ.MeshSync
 
         void UpdateTexture(TextureData src)
         {
+            if (!m_handleAssets)
+                return;
+
             Texture2D texture = null;
 #if UNITY_EDITOR
             Action<string> doImport = (path) =>
@@ -1852,6 +1872,9 @@ namespace UTJ.MeshSync
         void UpdateAnimation(AnimationClipData clipData)
         {
 #if UNITY_EDITOR
+            if (!m_handleAssets)
+                return;
+
             //float start = Time.realtimeSinceStartup;
 
             var animClipCache = new Dictionary<GameObject, AnimationClip>();

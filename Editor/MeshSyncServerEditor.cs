@@ -11,7 +11,9 @@ namespace UTJ.MeshSyncEditor
         [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
         public static void CreateMeshSyncServerMenu(MenuCommand menuCommand)
         {
-            CreateMeshSyncServer();
+            var go = CreateMeshSyncServer();
+            if (go != null)
+                Undo.RegisterCreatedObjectUndo(go, "MeshSyncServer");
         }
 
         public static GameObject CreateMeshSyncServer()
@@ -20,7 +22,6 @@ namespace UTJ.MeshSyncEditor
             go.name = "MeshSyncServer";
             var mss = go.AddComponent<MeshSyncServer>();
             mss.rootObject = go.GetComponent<Transform>();
-            Undo.RegisterCreatedObjectUndo(go, "MeshSyncServer");
             return go;
         }
 

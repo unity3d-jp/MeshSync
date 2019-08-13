@@ -12,7 +12,11 @@ namespace UTJ.MeshSyncEditor
         {
             var path = EditorUtility.OpenFilePanel("Select Cache File", "", "");
             if (path.Length > 0)
-                CreateSceneCachePlayer(path);
+            {
+                var go = CreateSceneCachePlayerPrefab(path);
+                if (go != null)
+                    Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
+            }
         }
 
         public static GameObject CreateSceneCachePlayer(string path)
@@ -34,18 +38,29 @@ namespace UTJ.MeshSyncEditor
                 DestroyImmediate(go);
                 return null;
             }
+            return go;
+        }
+
+        public static GameObject CreateSceneCachePlayerPrefab(string path)
+        {
+            var go = CreateSceneCachePlayer(path);
+            if (go == null)
+                return null;
 
             // export materials & animation and generate prefab
+            var player = go.GetComponent<SceneCachePlayer>();
             player.UpdatePlayer();
             player.ExportMaterials(false);
             player.AddAnimator();
-            var prefab = PrefabUtility.SaveAsPrefabAsset(go, string.Format("Assets/SceneCache/{0}.prefab", go.name));
+            player.handleAssets = false;
+
+            var prefabPath = string.Format("Assets/SceneCache/{0}.prefab", go.name);
+            var prefab = PrefabUtility.SaveAsPrefabAsset(go, prefabPath);
 
             // delete temporary GO and instantiate prefab
             var index = go.transform.GetSiblingIndex();
             Object.DestroyImmediate(go);
             var inst = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
-            Undo.RegisterCreatedObjectUndo(inst, "SceneCachePlayer");
             inst.transform.SetSiblingIndex(index);
             return inst;
         }
