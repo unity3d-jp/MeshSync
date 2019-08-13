@@ -89,7 +89,7 @@ namespace UTJ.MeshSync
         }
 
 #if UNITY_EDITOR
-        public bool AddAnimator(string assetPath)
+        public bool AddAnimator()
         {
             if (m_sceneCache.sceneCount < 2)
                 return false;
@@ -104,13 +104,14 @@ namespace UTJ.MeshSync
                 clip.frameRate = sampleRate;
             clip.SetCurve("", typeof(SceneCachePlayer), "m_time", curve);
 
-            var dstPath = string.Format("{0}/{1}.anim", assetPath, gameObject.name);
-            clip = Misc.SaveAsset(clip, dstPath);
+            var animPath = string.Format("{0}/{1}.anim", assetPath, gameObject.name);
+            var controllerPath = string.Format("{0}/{1}.controller", assetPath, gameObject.name);
+            clip = Misc.SaveAsset(clip, animPath);
             if (clip == null)
                 return false;
 
             var animator = Misc.GetOrAddComponent<Animator>(gameObject);
-            animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(dstPath + ".controller", clip);
+            animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(controllerPath, clip);
             return true;
         }
 #endif

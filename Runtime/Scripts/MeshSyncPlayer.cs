@@ -429,18 +429,9 @@ namespace UTJ.MeshSync
             return false;
         }
 
-        protected bool IsAsset(UnityEngine.Object obj)
-        {
-#if UNITY_EDITOR
-            if (AssetDatabase.GetAssetPath(obj) != "")
-                return true;
-#endif
-            return false;
-        }
-
         protected bool DestroyIfNotAsset(UnityEngine.Object obj)
         {
-            if (obj != null && !IsAsset(obj))
+            if (obj != null && !AssetDatabase.Contains(obj))
             {
                 DestroyImmediate(obj, false);
                 return true;
@@ -1961,7 +1952,12 @@ namespace UTJ.MeshSync
             }
 
             if (changed)
+            {
+#if UNITY_EDITOR
+                Undo.RecordObject(r, "MeshSyncPlayer");
+#endif
                 r.sharedMaterials = materials;
+            }
         }
 
         public bool EraseEntityRecord(Identifier identifier)
@@ -1985,7 +1981,7 @@ namespace UTJ.MeshSync
                 ret = m_clientObjects.Remove(path);
             }
 
-            if (target != null && !IsAsset(target))
+            if (target != null && !AssetDatabase.Contains(target))
             {
                 if (onDeleteEntity != null)
                     onDeleteEntity.Invoke(target);
@@ -2054,42 +2050,57 @@ namespace UTJ.MeshSync
             }
         }
 
-        public void ExportMaterials()
-        {
-            if (m_materialList == null)
-                return;
 
+        public void ExportMaterials(bool overwrite = true)
+        {
             MakeSureAssetDirectoryExists();
+
+            // need to avoid filename collision
+            var nameGenerator = new Misc.UniqueNameGenerator();
+            var basePath = assetPath;
+
             foreach (var m in m_materialList)
             {
                 var material = m.material;
-                if (AssetDatabase.GetAssetPath(material) == "")
+                if (material == null)
+                    continue;
+
+                var dstPath = string.Format("{0}/{1}.mat", basePath, nameGenerator.Gen(material.name));
+                if (overwrite || !AssetDatabase.Contains(material))
                 {
-                    string dstPath = assetPath + "/" + material.name + ".mat";
                     SaveAsset(ref material, dstPath);
+                    m.material = material; // material maybe updated by SaveAsset()
                     if (m_logging)
                         Debug.Log("exported material " + dstPath);
                 }
             }
+            ReassignMaterials();
         }
 
-        void ExportMesh(Mesh mesh)
-        {
-            if(mesh == null)
-                return;
-
-            var dstPath = assetPath + "/" + mesh.name + ".asset";
-            SaveAsset(ref mesh, dstPath);
-            if (m_logging)
-                Debug.Log("exported mesh " + dstPath);
-        }
-        public void ExportMeshes()
+        public void ExportMeshes(bool overwrite = true)
         {
             MakeSureAssetDirectoryExists();
 
+            // need to avoid filename collision
+            var nameGenerator = new Misc.UniqueNameGenerator();
+            var basePath = assetPath;
+
             // export client meshes
             foreach (var kvp in m_clientObjects)
-                ExportMesh(kvp.Value.mesh);
+            {
+                var mesh = kvp.Value.mesh;
+                if (mesh == null)
+                    continue;
+
+                if (overwrite || !AssetDatabase.Contains(mesh))
+                {
+                    var dstPath = string.Format("{0}/{1}.asset", basePath, nameGenerator.Gen(mesh.name));
+                    SaveAsset(ref mesh, dstPath);
+                    kvp.Value.mesh = mesh; // mesh maybe updated by SaveAsset()
+                    if (m_logging)
+                        Debug.Log("exported material " + dstPath);
+                }
+            }
 
             // replace existing meshes
             int n = 0;

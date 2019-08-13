@@ -288,6 +288,26 @@ namespace UTJ.MeshSync
             return union.pointer;
         }
 #endif
+        public class UniqueNameGenerator
+        {
+            public string Gen(string name)
+            {
+                var uniqueName = name;
+                for (int i = 1; ; ++i)
+                {
+                    if (m_usedNames.Contains(uniqueName))
+                        uniqueName = string.Format("{0} ({1})", name, i);
+                    else
+                    {
+                        m_usedNames.Add(uniqueName);
+                        break;
+                    }
+                }
+                return uniqueName;
+            }
+
+            HashSet<string> m_usedNames = new HashSet<string>();
+        }
     }
 
 

@@ -14,32 +14,34 @@ namespace UTJ.MeshSyncEditor
             var path = EditorUtility.OpenFilePanel("Select Cache File", "", "");
             if (path.Length > 0)
             {
+                // create temporary GO to make prefab
                 var go = new GameObject();
                 go.name = System.IO.Path.GetFileNameWithoutExtension(path);
 
                 var player = go.AddComponent<SceneCachePlayer>();
                 player.rootObject = go.GetComponent<Transform>();
+                player.assetDir = new DataPath(DataPath.Root.DataPath, string.Format("SceneCache/{0}", go.name));
                 player.progressiveDisplay = false;
                 player.dontSaveAssetsInScene = true;
+                player.findMaterialFromAssets = false;
                 if (!player.OpenCache(path))
                 {
-                    Debug.LogError("Failed to open " + path + ".\nPossible reasons: the file is not scene cache, or file format version does not match.");
+                    Debug.LogError("Failed to open " + path + ". Possible reasons: file format version does not match, or the file is not scene cache.");
                     DestroyImmediate(go);
                     return;
                 }
-                else
-                {
-                    player.AddAnimator("Assets");
-                    Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
-                }
 
-                //player.UpdatePlayer();
-                //player.ExportMaterials();
-                //var prefab = PrefabUtility.SaveAsPrefabAsset(go, "Assets/" + go.name + ".prefab");
-                //var index = go.transform.GetSiblingIndex();
-                ////Object.DestroyImmediate(go);
-                //var inst = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
-                //inst.transform.SetSiblingIndex(index);
+                // export materials & animation and generate prefab
+                player.UpdatePlayer();
+                player.ExportMaterials(false);
+                player.AddAnimator();
+                var prefab = PrefabUtility.SaveAsPrefabAsset(go, string.Format("Assets/SceneCache/{0}.prefab", go.name));
+
+                // delete temporary GO and instantiate prefab
+                var index = go.transform.GetSiblingIndex();
+                Object.DestroyImmediate(go);
+                var inst = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+                inst.transform.SetSiblingIndex(index);
             }
         }
 #endif
