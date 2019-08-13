@@ -1152,10 +1152,13 @@ namespace UTJ.MeshSync
 
         EntityRecord UpdateMesh(MeshData data)
         {
+            if (!m_syncMeshes)
+                return null;
+
             var dtrans = data.transform;
             var dflags = data.dataFlags;
             var rec = UpdateTransform(dtrans);
-            if (rec == null || !m_syncMeshes || dflags.unchanged)
+            if (rec == null || dflags.unchanged)
                 return null;
 
             if (rec.reference != null)
@@ -1438,9 +1441,13 @@ namespace UTJ.MeshSync
 
         EntityRecord UpdatePoints(PointsData data)
         {
+            if (!m_syncPoints)
+                return null;
+
             var dtrans = data.transform;
+            var dflags = data.dataFlags;
             var rec = UpdateTransform(dtrans);
-            if (rec == null || !m_syncPoints)
+            if (rec == null || dflags.unchanged)
                 return null;
 
             // reference (source mesh) will be resolved in UpdateReference()
@@ -1453,21 +1460,19 @@ namespace UTJ.MeshSync
 
             dst.Clear();
 
-            var flags = data.flags;
             var num = data.numPoints;
-
             dst.bounds = data.bounds;
-            if (flags.hasPoints)
+            if (dflags.hasPoints)
             {
                 dst.points = new Vector3[num];
                 data.ReadPoints(dst.points);
             }
-            if (flags.hasRotations)
+            if (dflags.hasRotations)
             {
                 dst.rotations = new Quaternion[num];
                 data.ReadRotations(dst.rotations);
             }
-            if (flags.hasScales)
+            if (dflags.hasScales)
             {
                 dst.scales = new Vector3[num];
                 data.ReadScales(dst.scales);
@@ -1547,10 +1552,13 @@ namespace UTJ.MeshSync
 
         EntityRecord UpdateCamera(CameraData data)
         {
+            if (!m_syncCameras)
+                return null;
+
             var dtrans = data.transform;
             var dflags = data.dataFlags;
             var rec = UpdateTransform(dtrans);
-            if (rec == null || !m_syncCameras || dflags.unchanged)
+            if (rec == null || dflags.unchanged)
                 return null;
 
             var cam = Misc.GetOrAddComponent<Camera>(rec.go);
@@ -1592,10 +1600,13 @@ namespace UTJ.MeshSync
 
         EntityRecord UpdateLight(LightData data)
         {
+            if (!m_syncLights)
+                return null;
+
             var dtrans = data.transform;
             var dflags = data.dataFlags;
             var rec = UpdateTransform(dtrans);
-            if (rec == null || !m_syncLights || dflags.unchanged)
+            if (rec == null || dflags.unchanged)
                 return null;
 
             var lt = Misc.GetOrAddComponent<Light>(rec.go);

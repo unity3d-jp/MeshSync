@@ -1881,7 +1881,7 @@ namespace UTJ.MeshSync
             return msPointsCreate();
         }
 
-        public PointsDataFlags flags { get { return msPointsGetFlags(self); } }
+        public PointsDataFlags dataFlags { get { return msPointsGetFlags(self); } }
         public Bounds bounds  { get { return msPointsGetBounds(self); } }
         public int numPoints { get { return msPointsGetNumPoints(self); } }
 
