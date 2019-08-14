@@ -1686,26 +1686,38 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern MeshData msMeshCreate();
         [DllImport(Lib.name)] static extern MeshDataFlags msMeshGetDataFlags(IntPtr self);
         [DllImport(Lib.name)] static extern void msMeshSetFlags(IntPtr self, MeshDataFlags v);
+
         [DllImport(Lib.name)] static extern int msMeshGetNumPoints(IntPtr self);
         [DllImport(Lib.name)] static extern int msMeshGetNumIndices(IntPtr self);
-        [DllImport(Lib.name)] static extern int msMeshGetNumSplits(IntPtr self);
+
         [DllImport(Lib.name)] static extern void msMeshReadPoints(IntPtr self, IntPtr dst);
-        [DllImport(Lib.name)] static extern void msMeshWritePoints(IntPtr self, Vector3[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshReadNormals(IntPtr self, IntPtr dst);
-        [DllImport(Lib.name)] static extern void msMeshWriteNormals(IntPtr self, Vector3[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshReadTangents(IntPtr self, IntPtr dst);
-        [DllImport(Lib.name)] static extern void msMeshWriteTangents(IntPtr self, Vector4[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshReadUV0(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshReadUV1(IntPtr self, IntPtr dst);
+        [DllImport(Lib.name)] static extern void msMeshReadColors(IntPtr self, IntPtr dst);
+        [DllImport(Lib.name)] static extern void msMeshReadVelocities(IntPtr self, IntPtr dst);
+        [DllImport(Lib.name)] static extern void msMeshReadIndices(IntPtr self, IntPtr dst);
+
+        [DllImport(Lib.name)] static extern IntPtr msMeshGetPointsPtr(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msMeshGetNormalsPtr(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msMeshGetTangentsPtr(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msMeshGetUV0Ptr(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msMeshGetUV1Ptr(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msMeshGetColorsPtr(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msMeshGetVelocitiesPtr(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msMeshGetIndicesPtr(IntPtr self);
+
+        [DllImport(Lib.name)] static extern void msMeshWritePoints(IntPtr self, Vector3[] v, int size);
+        [DllImport(Lib.name)] static extern void msMeshWriteNormals(IntPtr self, Vector3[] v, int size);
+        [DllImport(Lib.name)] static extern void msMeshWriteTangents(IntPtr self, Vector4[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshWriteUV0(IntPtr self, Vector2[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshWriteUV1(IntPtr self, Vector2[] v, int size);
-        [DllImport(Lib.name)] static extern void msMeshReadColors(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshWriteColors(IntPtr self, Color[] v, int size);
-        [DllImport(Lib.name)] static extern void msMeshReadVelocities(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshWriteVelocities(IntPtr self, Vector3[] v, int size);
-        [DllImport(Lib.name)] static extern void msMeshReadIndices(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshWriteIndices(IntPtr self, int[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshWriteSubmeshTriangles(IntPtr self, int[] v, int size, int materialID);
+
         [DllImport(Lib.name)] static extern int msMeshGetNumSubmeshes(IntPtr self);
         [DllImport(Lib.name)] static extern SubmeshData msMeshGetSubmesh(IntPtr self, int i);
         [DllImport(Lib.name)] static extern Bounds msMeshGetBounds(IntPtr self);
@@ -1715,6 +1727,8 @@ namespace UTJ.MeshSync
 #if UNITY_2019_1_OR_NEWER
         [DllImport(Lib.name)] static extern void msMeshReadBoneCounts(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshReadBoneWeightsV(IntPtr self, IntPtr dst);
+        [DllImport(Lib.name)] static extern IntPtr msMeshGetBoneCountsPtr(IntPtr self);
+        [DllImport(Lib.name)] static extern IntPtr msMeshGetBoneWeightsVPtr(IntPtr self);
         [DllImport(Lib.name)] static extern void msMeshWriteBoneWeightsV(IntPtr self, IntPtr counts, int numCounts, IntPtr weights, int numWeights);
 #endif
         [DllImport(Lib.name)] static extern int msMeshGetNumBones(IntPtr self);

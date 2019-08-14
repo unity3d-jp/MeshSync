@@ -224,6 +224,7 @@ msAPI ms::Mesh* msMeshCreate() { return ms::Mesh::create_raw(); }
 msAPI uint32_t msMeshGetDataFlags(const ms::Mesh *self) { return (uint32_t&)self->md_flags; }
 msAPI int msMeshGetNumPoints(const ms::Mesh *self) { return (int)self->points.size(); }
 msAPI int msMeshGetNumIndices(const ms::Mesh *self) { return (int)self->indices.size(); }
+msAPI int msMeshGetNumCounts(const ms::Mesh *self) { return (int)self->counts.size(); }
 msAPI void msMeshReadPoints(const ms::Mesh *self, float3 *dst) { self->points.copy_to(dst); }
 msAPI void msMeshReadNormals(const ms::Mesh *self, float3 *dst) { self->normals.copy_to(dst); }
 msAPI void msMeshReadTangents(const ms::Mesh *self, float4 *dst) { self->tangents.copy_to(dst); }
@@ -232,12 +233,25 @@ msAPI void msMeshReadUV1(const ms::Mesh *self, float2 *dst) { self->uv1.copy_to(
 msAPI void msMeshReadColors(const ms::Mesh *self, float4 *dst) { self->colors.copy_to(dst); }
 msAPI void msMeshReadVelocities(const ms::Mesh *self, float3 *dst) { self->velocities.copy_to(dst); }
 msAPI void msMeshReadIndices(const ms::Mesh *self, int *dst) { self->indices.copy_to(dst); }
+msAPI void msMeshReadCounts(const ms::Mesh *self, int *dst) { self->counts.copy_to(dst); }
+msAPI const ms::float3* msMeshGetPointsPtr(const ms::Mesh *self) { return self->points.cdata(); }
+msAPI const ms::float3* msMeshGetNormalsPtr(const ms::Mesh *self) { return self->normals.cdata(); }
+msAPI const ms::float4* msMeshGetTangentsPtr(const ms::Mesh *self) { return self->tangents.cdata(); }
+msAPI const ms::float2* msMeshGetUV0Ptr(const ms::Mesh *self) { return self->uv0.cdata(); }
+msAPI const ms::float2* msMeshGetUV1Ptr(const ms::Mesh *self) { return self->uv1.cdata(); }
+msAPI const ms::float4* msMeshGetColorsPtr(const ms::Mesh *self) { return self->colors.cdata(); }
+msAPI const ms::float3* msMeshGetVelocitiesPtr(const ms::Mesh *self) { return self->velocities.cdata(); }
+msAPI const int* msMeshGetIndicesPtr(const ms::Mesh *self) { return self->indices.cdata(); }
+msAPI const int* msMeshGetCountsPtr(const ms::Mesh *self) { return self->counts.cdata(); }
 msAPI int msMeshGetNumSubmeshes(const ms::Mesh *self) { return (int)self->submeshes.size(); }
 msAPI const ms::SubmeshData* msMeshGetSubmesh(const ms::Mesh *self, int i) { return &self->submeshes[i]; }
 msAPI ms::Bounds msMeshGetBounds(const ms::Mesh *self) { return self->bounds; }
+
 msAPI void msMeshReadBoneWeights4(const ms::Mesh *self, ms::Weights4 *dst) { self->weights4.copy_to(dst); }
 msAPI void msMeshReadBoneCounts(const ms::Mesh *self, uint8_t *dst) { self->bone_counts.copy_to(dst); }
 msAPI void msMeshReadBoneWeightsV(const ms::Mesh *self, ms::Weights1 *dst) { self->weights1.copy_to(dst); }
+msAPI const uint8_t* msMeshGetBoneCountsPtr(const ms::Mesh *self) { return self->bone_counts.cdata(); }
+msAPI const ms::Weights1* msMeshGetBoneWeightsVPtr(const ms::Mesh *self) { return self->weights1.cdata(); }
 msAPI int msMeshGetNumBones(const ms::Mesh *self) { return (int)self->bones.size(); }
 msAPI int msMeshGetNumBoneWeights(const ms::Mesh *self) { return self->bone_weight_count; }
 msAPI const char* msMeshGetRootBonePath(const ms::Mesh *self) { return self->root_bone.c_str(); }
