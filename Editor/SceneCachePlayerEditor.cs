@@ -101,7 +101,7 @@ namespace UTJ.MeshSyncEditor
             EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
             EditorGUILayout.Space();
 
-            MeshSyncPlayerEditor.DrawPlayerSettings(t, so);
+            DrawPlayerSettings(t, so);
 
             if (t.profiling)
             {
@@ -109,8 +109,8 @@ namespace UTJ.MeshSyncEditor
                 EditorGUILayout.Space();
             }
 
-            MeshSyncPlayerEditor.DrawMaterialList(t);
-            MeshSyncPlayerEditor.DrawTextureList(t);
+            DrawMaterialList(t);
+            DrawTextureList(t);
             this.DrawAnimationSettings(t);
 
             EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.pluginVersion);

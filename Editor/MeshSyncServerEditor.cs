@@ -38,9 +38,9 @@ namespace UTJ.MeshSyncEditor
             EditorGUILayout.PropertyField(so.FindProperty("m_rootObject"));
             EditorGUILayout.Space();
 
-            MeshSyncPlayerEditor.DrawPlayerSettings(t, so);
-            MeshSyncPlayerEditor.DrawMaterialList(t);
-            MeshSyncPlayerEditor.DrawTextureList(t);
+            DrawPlayerSettings(t, so);
+            DrawMaterialList(t);
+            DrawTextureList(t);
 
             if (GUILayout.Button("Export Meshes", GUILayout.Width(160.0f)))
                 t.ExportMeshes();

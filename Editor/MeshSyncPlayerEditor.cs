@@ -12,6 +12,7 @@ namespace UTJ.MeshSyncEditor
         protected float m_animationFrameRate = 30.0f;
         protected float m_animationTimeScale = 1.0f;
         protected int m_animationDropStep = 2;
+        protected float m_animtionReductionThreshold = 0.001f;
 
         public virtual void OnEnable()
         {
@@ -90,7 +91,7 @@ namespace UTJ.MeshSyncEditor
             {
                 var style = EditorStyles.foldout;
                 style.fontStyle = FontStyle.Bold;
-                t.foldMaterialList = EditorGUILayout.Foldout(t.foldMaterialList, "Material List", true, style);
+                t.foldMaterialList = EditorGUILayout.Foldout(t.foldMaterialList, "Materials", true, style);
                 if (t.foldMaterialList)
                     DrawMaterialListElements(t);
                 drawInExportButton();
@@ -99,7 +100,7 @@ namespace UTJ.MeshSyncEditor
             }
             else
             {
-                GUILayout.Label("Material List", EditorStyles.boldLabel);
+                GUILayout.Label("Materials", EditorStyles.boldLabel);
                 DrawMaterialListElements(t);
                 drawInExportButton();
             }
@@ -190,6 +191,19 @@ namespace UTJ.MeshSyncEditor
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Apply", GUILayout.Width(120.0f)))
                     ApplyDropKeyframes(t.GetAnimationClips(), m_animationDropStep);
+                GUILayout.EndHorizontal();
+                EditorGUI.indentLevel--;
+                GUILayout.EndVertical();
+
+                // Keyframe Reduction
+                GUILayout.BeginVertical("Box");
+                EditorGUILayout.LabelField("Keyframe Reduction", EditorStyles.boldLabel);
+                EditorGUI.indentLevel++;
+                m_animtionReductionThreshold = EditorGUILayout.FloatField("Threshold", m_animtionReductionThreshold);
+                GUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("Apply", GUILayout.Width(120.0f)))
+                    ApplyKeyframeReduction(t.GetAnimationClips(), m_animtionReductionThreshold);
                 GUILayout.EndHorizontal();
                 EditorGUI.indentLevel--;
                 GUILayout.EndVertical();
@@ -298,5 +312,37 @@ namespace UTJ.MeshSyncEditor
             // repaint animation window
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         }
+
+        public void ApplyKeyframeReduction(IEnumerable<AnimationClip> clips, float eps)
+        {
+            foreach (var clip in clips)
+            {
+                var curves = new List<AnimationCurve>();
+                var bindings = new List<EditorCurveBinding>();
+
+                // gather curves
+                bindings.AddRange(AnimationUtility.GetCurveBindings(clip));
+                bindings.AddRange(AnimationUtility.GetObjectReferenceCurveBindings(clip));
+                foreach (var b in bindings)
+                    curves.Add(AnimationUtility.GetEditorCurve(clip, b));
+
+                int curveCount = curves.Count;
+
+                // transform keys/events
+                foreach (var curve in curves)
+                    Misc.AnimationCurveKeyReducer.Apply(curve, eps);
+
+                // apply changes to clip
+                Undo.RecordObject(clip, "ApplyKeyframeReduction");
+                for (int ci = 0; ci < curveCount; ++ci)
+                    AnimationUtility.SetEditorCurve(clip, bindings[ci], curves[ci]);
+
+                Debug.Log("Applied keyframe reduction to " + AssetDatabase.GetAssetPath(clip));
+            }
+
+            // repaint animation window
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+        }
+
     }
 }

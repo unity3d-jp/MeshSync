@@ -67,7 +67,7 @@ namespace UTJ.MeshSync
         // thanks: http://techblog.sega.jp/entry/2016/11/28/100000
         public static class AnimationCurveKeyReducer
         {
-            static public void DoReduction(AnimationCurve curve, float eps = 0.001f)
+            static public void Apply(AnimationCurve curve, float eps = 0.001f)
             {
                 if (curve.keys.Length <= 2)
                     return;
