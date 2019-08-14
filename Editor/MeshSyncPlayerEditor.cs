@@ -11,10 +11,11 @@ namespace UTJ.MeshSyncEditor
     {
         protected float m_animationFrameRate = 30.0f;
         protected float m_animationTimeScale = 1.0f;
+        protected int m_animationDropStep = 2;
 
         public virtual void OnEnable()
         {
-            var t = target as SceneCachePlayer;
+            var t = target as MeshSyncPlayer;
             var clips = t.GetAnimationClips();
             if (clips.Count > 0)
                 m_animationFrameRate = clips[0].frameRate;
@@ -179,6 +180,19 @@ namespace UTJ.MeshSyncEditor
                 GUILayout.EndHorizontal();
                 EditorGUI.indentLevel--;
                 GUILayout.EndVertical();
+
+                // Drop Keyframes
+                GUILayout.BeginVertical("Box");
+                EditorGUILayout.LabelField("Drop Keyframes", EditorStyles.boldLabel);
+                EditorGUI.indentLevel++;
+                m_animationDropStep = EditorGUILayout.IntField("Step", m_animationDropStep);
+                GUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("Apply", GUILayout.Width(120.0f)))
+                    ApplyDropKeyframes(t.GetAnimationClips(), m_animationDropStep);
+                GUILayout.EndHorizontal();
+                EditorGUI.indentLevel--;
+                GUILayout.EndVertical();
             }
 
             EditorGUILayout.Space();
@@ -239,6 +253,47 @@ namespace UTJ.MeshSyncEditor
 
             // reset m_animationFrameRate
             OnEnable();
+
+            // repaint animation window
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+        }
+
+        public void ApplyDropKeyframes(IEnumerable<AnimationClip> clips, int step)
+        {
+            if (step <= 1)
+                return;
+
+            foreach (var clip in clips)
+            {
+                var curves = new List<AnimationCurve>();
+                var bindings = new List<EditorCurveBinding>();
+
+                // gather curves
+                bindings.AddRange(AnimationUtility.GetCurveBindings(clip));
+                bindings.AddRange(AnimationUtility.GetObjectReferenceCurveBindings(clip));
+                foreach (var b in bindings)
+                    curves.Add(AnimationUtility.GetEditorCurve(clip, b));
+
+                int curveCount = curves.Count;
+
+                // transform keys/events
+                foreach (var curve in curves)
+                {
+                    var keys = curve.keys;
+                    var keyCount = keys.Length;
+                    var newKeys = new List<Keyframe>();
+                    for (int ki = 0; ki < keyCount; ki += step)
+                        newKeys.Add(keys[ki]);
+                    curve.keys = newKeys.ToArray();
+                }
+ 
+                // apply changes to clip
+                Undo.RecordObject(clip, "ApplyDropKeyframes");
+                for (int ci = 0; ci < curveCount; ++ci)
+                    AnimationUtility.SetEditorCurve(clip, bindings[ci], curves[ci]);
+
+                Debug.Log("Applied drop keyframes to " + AssetDatabase.GetAssetPath(clip));
+            }
 
             // repaint animation window
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
