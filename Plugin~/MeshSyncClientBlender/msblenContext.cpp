@@ -129,10 +129,16 @@ static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float
     far_plane = cam.clip_end();
     fov = cam.angle_y() * mu::RadToDeg;
     focal_length = cam.lens();
-    sensor_size.x = cam.sensor_width();
-    sensor_size.y = cam.sensor_height();
-    lens_shift.x = cam.shift_x();
-    lens_shift.y = cam.shift_y();
+    sensor_size.x = cam.sensor_width();  // in mm
+    sensor_size.y = cam.sensor_height(); // in mm
+
+    auto fit = cam.sensor_fit();
+    if (fit == CAMERA_SENSOR_FIT_AUTO)
+        fit = sensor_size.x > sensor_size.y ? CAMERA_SENSOR_FIT_HOR : CAMERA_SENSOR_FIT_VERT;
+    const float aspx = sensor_size.x / sensor_size.y;
+    const float aspy = sensor_size.y / sensor_size.x;
+    lens_shift.x = cam.shift_x() * (fit == CAMERA_SENSOR_FIT_HOR ? 1.0f : aspy); // in percent
+    lens_shift.y = cam.shift_y() * (fit == CAMERA_SENSOR_FIT_HOR ? aspx : 1.0f); // in percent
 }
 
 static void ExtractLightData(Object *src,

@@ -171,10 +171,16 @@ namespace blender
         float angle_x() const;
         float angle_y() const;
         float lens() const;
-        float sensor_width() const;
-        float sensor_height() const;
-        float shift_x() const;
-        float shift_y() const;
+        /*
+            CAMERA_SENSOR_FIT_AUTO,
+            CAMERA_SENSOR_FIT_HOR,
+            CAMERA_SENSOR_FIT_VERT,
+        */
+        int sensor_fit() const;
+        float sensor_width() const;  // in mm
+        float sensor_height() const; // in mm
+        float shift_x() const; // in percent
+        float shift_y() const; // in percent
     };
 
     class BScene

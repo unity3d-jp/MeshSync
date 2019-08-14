@@ -40,6 +40,7 @@ Prop(BCamera, clip_end);
 Prop(BCamera, angle_x);
 Prop(BCamera, angle_y);
 Prop(BCamera, lens);
+Prop(BCamera, sensor_fit);
 Prop(BCamera, sensor_width);
 Prop(BCamera, sensor_height);
 Prop(BCamera, shift_x);
@@ -141,6 +142,7 @@ void setup(py::object bpy_context)
                 if (match_prop("angle_x")) BCamera_angle_x = prop;
                 if (match_prop("angle_y")) BCamera_angle_y = prop;
                 if (match_prop("lens")) BCamera_lens = prop;
+                if (match_prop("sensor_fit")) BCamera_sensor_fit = prop;
                 if (match_prop("sensor_width")) BCamera_sensor_width = prop;
                 if (match_prop("sensor_height")) BCamera_sensor_height = prop;
                 if (match_prop("shift_x")) BCamera_shift_x = prop;
@@ -562,6 +564,7 @@ float BCamera::clip_end() const { return get_float(m_ptr, BCamera_clip_end); }
 float BCamera::angle_y() const { return get_float(m_ptr, BCamera_angle_y); }
 float BCamera::angle_x() const { return get_float(m_ptr, BCamera_angle_x); }
 float BCamera::lens() const { return get_float(m_ptr, BCamera_lens); }
+int   BCamera::sensor_fit() const { return get_int(m_ptr, BCamera_sensor_fit); }
 float BCamera::sensor_width() const { return get_float(m_ptr, BCamera_sensor_width); }
 float BCamera::sensor_height() const { return get_float(m_ptr, BCamera_sensor_height); }
 float BCamera::shift_x() const { return get_float(m_ptr, BCamera_shift_x); }
