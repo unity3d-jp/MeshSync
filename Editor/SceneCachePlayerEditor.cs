@@ -5,7 +5,7 @@ using UTJ.MeshSync;
 namespace UTJ.MeshSyncEditor
 {
     [CustomEditor(typeof(SceneCachePlayer))]
-    public class SceneCachePlayerEditor : Editor
+    public class SceneCachePlayerEditor : MeshSyncPlayerEditor
     {
         [MenuItem("GameObject/MeshSync/Create Cache Player", false, 10)]
         public static void CreateSceneCachePlayerMenu(MenuCommand menuCommand)
@@ -101,7 +101,7 @@ namespace UTJ.MeshSyncEditor
             EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
             EditorGUILayout.Space();
 
-            MeshSyncServerEditor.DrawPlayerSettings(t, so);
+            MeshSyncPlayerEditor.DrawPlayerSettings(t, so);
 
             if (t.profiling)
             {
@@ -109,8 +109,9 @@ namespace UTJ.MeshSyncEditor
                 EditorGUILayout.Space();
             }
 
-            MeshSyncServerEditor.DrawMaterialList(t);
-            MeshSyncServerEditor.DrawTextureList(t);
+            MeshSyncPlayerEditor.DrawMaterialList(t);
+            MeshSyncPlayerEditor.DrawTextureList(t);
+            this.DrawAnimationSettings(t);
 
             EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.pluginVersion);
             so.ApplyModifiedProperties();

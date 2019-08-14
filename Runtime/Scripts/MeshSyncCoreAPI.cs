@@ -27,6 +27,20 @@ namespace UTJ.MeshSync
 
         public static int pluginVersion { get { return msGetPluginVersion(); } }
         public static int protocolVersion { get { return msGetProtocolVersion(); } }
+
+        public const int invalidID = -1;
+        public const uint maxVerticesPerMesh =
+#if UNITY_2017_3_OR_NEWER
+            0xffffffff;
+#else
+            0xffff;
+#endif
+        public const uint maxBoneInfluence =
+#if UNITY_2019_1_OR_NEWER
+            255;
+#else
+            4;
+#endif
     }
 
     public static partial class Misc
@@ -35,36 +49,8 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern ulong msGetTime();
         #endregion
 
-        public const int InvalidID = -1;
-
-        public static uint maxVerticesPerMesh
-        {
-            get
-            {
-#if UNITY_2017_3_OR_NEWER
-                return 0xffffffff;
-#else
-                return 65000;
-#endif
-            }
-        }
-        public static uint maxBoneInfluence
-        {
-            get
-            {
-#if UNITY_2019_1_OR_NEWER
-                return 255;
-#else
-                return 4;
-#endif
-            }
-        }
         public static ulong GetTimeNS() { return msGetTime(); }
-
-        public static float NS2MS(ulong ns)
-        {
-            return (float)((double)ns / 1000000.0);
-        }
+        public static float NS2MS(ulong ns) { return (float)((double)ns / 1000000.0); }
 
         public static string S(IntPtr cstring)
         {

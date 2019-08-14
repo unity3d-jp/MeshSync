@@ -38,8 +38,8 @@ namespace UTJ.MeshSync
                     maxQueue = 512,
                     maxThreads = 8,
                     port = defaultPort,
-                    meshSplitUnit = Misc.maxVerticesPerMesh,
-                    meshMaxBoneInfluence = Misc.maxBoneInfluence,
+                    meshSplitUnit = Lib.maxVerticesPerMesh,
+                    meshMaxBoneInfluence = Lib.maxBoneInfluence,
                     zUpCorrectionMode = ZUpCorrectionMode.FlipYZ,
                 };
                 return ret;

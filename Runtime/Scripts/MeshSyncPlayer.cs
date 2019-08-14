@@ -218,6 +218,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_trackMaterialAssignment = true;
         [SerializeField] bool m_foldMaterialList = true;
+        [SerializeField] bool m_foldAnimationSettings = true;
 #endif
 
         protected bool m_needReassignMaterials = false;
@@ -361,6 +362,11 @@ namespace UTJ.MeshSync
             get { return m_foldMaterialList; }
             set { m_foldMaterialList = value; }
         }
+        public bool foldAnimationSettings
+        {
+            get { return m_foldAnimationSettings; }
+            set { m_foldAnimationSettings = value; }
+        }
 #endif
         #endregion
 
@@ -462,7 +468,7 @@ namespace UTJ.MeshSync
 
         public Texture2D FindTexture(int id)
         {
-            if (id == Misc.InvalidID)
+            if (id == Lib.invalidID)
                 return null;
             var rec = m_textureList.Find(a => a.id == id);
             return rec != null ? rec.texture : null;
@@ -470,7 +476,7 @@ namespace UTJ.MeshSync
 
         public Material FindMaterial(int id)
         {
-            if (id == Misc.InvalidID)
+            if (id == Lib.invalidID)
                 return null;
             var rec = m_materialList.Find(a => a.id == id);
             return rec != null ? rec.material : null;
@@ -484,7 +490,7 @@ namespace UTJ.MeshSync
         protected int GetMaterialIndex(Material mat)
         {
             if (mat == null)
-                return Misc.InvalidID;
+                return Lib.invalidID;
 
             for (int i = 0; i < m_materialList.Count; ++i)
             {
@@ -503,7 +509,7 @@ namespace UTJ.MeshSync
 
         public AudioClip FindAudio(int id)
         {
-            if (id == Misc.InvalidID)
+            if (id == Lib.invalidID)
                 return null;
             var rec = m_audioList.Find(a => a.id == id);
             return rec != null ? rec.audio : null;
@@ -512,7 +518,7 @@ namespace UTJ.MeshSync
         public int GetObjectlID(GameObject go)
         {
             if (go == null)
-                return Misc.InvalidID;
+                return Lib.invalidID;
 
             int ret;
             if (m_objIDTable.ContainsKey(go))
@@ -1398,24 +1404,25 @@ namespace UTJ.MeshSync
             if (dataFlags.hasBones)
             {
                 mesh.bindposes = data.bindposes;
-                if (Misc.maxBoneInfluence == 4)
+#if UNITY_2019_1_OR_NEWER
                 {
+                    // bonesPerVertex + weights1
+                    var bonesPerVertex = new NativeArray<byte>(numPoints, Allocator.Temp);
+                    var weights1 = new NativeArray<BoneWeight1>(data.numBoneWeights, Allocator.Temp);
+                    data.ReadBoneCounts(Misc.ForceGetPointer(ref bonesPerVertex));
+                    data.ReadBoneWeightsV(Misc.ForceGetPointer(ref weights1));
+                    mesh.SetBoneWeights(bonesPerVertex, weights1);
+                    bonesPerVertex.Dispose();
+                    weights1.Dispose();
+                }
+#else
+                {
+                    // weights4
                     var tmpWeights4 = new PinnedList<BoneWeight>();
                     tmpWeights4.Resize(numPoints);
                     data.ReadBoneWeights4(tmpWeights4);
                     mesh.boneWeights = tmpWeights4.Array;
                     tmpWeights4.Dispose();
-                }
-#if UNITY_2019_1_OR_NEWER
-                else if(Misc.maxBoneInfluence == 255)
-                {
-                    var bonesPerVertex = new NativeArray<byte>(numPoints, Allocator.Temp);
-                    var weights = new NativeArray<BoneWeight1>(data.numBoneWeights, Allocator.Temp);
-                    data.ReadBoneCounts(Misc.ForceGetPointer(ref bonesPerVertex));
-                    data.ReadBoneWeightsV(Misc.ForceGetPointer(ref weights));
-                    mesh.SetBoneWeights(bonesPerVertex, weights);
-                    bonesPerVertex.Dispose();
-                    weights.Dispose();
                 }
 #endif
             }
@@ -1533,7 +1540,7 @@ namespace UTJ.MeshSync
 
             Transform trans = null;
             EntityRecord rec = null;
-            if (hostID != Misc.InvalidID)
+            if (hostID != Lib.invalidID)
             {
                 if (m_hostObjects.TryGetValue(hostID, out rec))
                 {
@@ -2286,6 +2293,32 @@ namespace UTJ.MeshSync
             }
         }
 
+        public List<AnimationClip> GetAnimationClips()
+        {
+            var ret = new List<AnimationClip>();
+
+            Action<GameObject> gatherClips = (go) => {
+                AnimationClip[] clips = null;
+#if UNITY_2018_3_OR_NEWER
+                clips = AnimationUtility.GetAnimationClips(go);
+#else
+                var animator = go.GetComponent<Animator>();
+                if (animator != null && animator.runtimeAnimatorController != null)
+                    clips = animator.runtimeAnimatorController.animationClips;
+#endif
+                if (clips != null && clips.Length > 0)
+                    ret.AddRange(clips);
+            };
+
+            gatherClips(gameObject);
+            // process children. root children should be enough.
+            var trans = transform;
+            int childCount = trans.childCount;
+            for (int ci = 0; ci < childCount; ++ci)
+                gatherClips(transform.GetChild(ci).gameObject);
+            return ret;
+        }
+
         protected void OnSceneViewGUI(SceneView sceneView)
         {
             if (m_trackMaterialAssignment)
@@ -2297,9 +2330,9 @@ namespace UTJ.MeshSync
 #endif
         #endregion
 
-        #region Events
+            #region Events
 #if UNITY_EDITOR
-        void Reset()
+            void Reset()
         {
             // force disable batching for export
             var method = typeof(UnityEditor.PlayerSettings).GetMethod("SetBatchingForPlatform", BindingFlags.NonPublic | BindingFlags.Static);
