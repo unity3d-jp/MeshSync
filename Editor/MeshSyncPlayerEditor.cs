@@ -12,6 +12,14 @@ namespace UTJ.MeshSyncEditor
         protected float m_animationFrameRate = 30.0f;
         protected float m_animationTimeScale = 1.0f;
 
+        public virtual void OnEnable()
+        {
+            var t = target as SceneCachePlayer;
+            var clips = t.GetAnimationClips();
+            if (clips.Count > 0)
+                m_animationFrameRate = clips[0].frameRate;
+        }
+
 
         public static void DrawPlayerSettings(MeshSyncPlayer t, SerializedObject so)
         {
@@ -228,6 +236,10 @@ namespace UTJ.MeshSyncEditor
 
                 Debug.Log("Applied time scale to " + AssetDatabase.GetAssetPath(clip));
             }
+
+            // reset m_animationFrameRate
+            OnEnable();
+
             // repaint animation window
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         }
