@@ -5,7 +5,10 @@
 
 using namespace mu;
 
+// on Unity, the structure of Keyframe is different on editor and runtime. also, some members are added on Unity 2018.1.
+// we need to support all of Unity 2017.4 or later keyframe types.
 
+// pre-Unity 2018.1 runtime Keyframe
 struct Keyframe_R
 {
     float time;
@@ -24,6 +27,7 @@ struct Keyframe_R
     void  setOutWeight(float v) {}
 };
 
+// pre-Unity 2018.1 editor Keyframe
 struct Keyframe_E
 {
     float time;
@@ -44,6 +48,7 @@ struct Keyframe_E
     void  setOutWeight(float v) {}
 };
 
+// Unity 2018.1+ runtime Keyframe
 struct Keyframe_RW
 {
     float time;
@@ -51,9 +56,9 @@ struct Keyframe_RW
     float in_tangent;
     float out_tangent;
 
-    int weighted_mode;
-    float in_weight;
-    float out_weight;
+    int weighted_mode; // Unity 2018.1+ only
+    float in_weight;   // 
+    float out_weight;  // 
 
     int   getTangentMode() const { return 0; }
     void  setTangentMode(int v) {}
@@ -66,6 +71,7 @@ struct Keyframe_RW
     void  setOutWeight(float v) { out_weight = v; }
 };
 
+// Unity 2018.1+ editor Keyframe
 struct Keyframe_EW
 {
     float time;
@@ -75,9 +81,9 @@ struct Keyframe_EW
 
     int tangent_mode; // editor only
 
-    int weighted_mode;// 
-    float in_weight;  // 
-    float out_weight; // Unity 2018.1-?
+    int weighted_mode; // Unity 2018.1+ only
+    float in_weight;   // 
+    float out_weight;  // 
 
     int   getTangentMode() const { return tangent_mode; }
     void  setTangentMode(int v) { tangent_mode = v; }
@@ -90,65 +96,8 @@ struct Keyframe_EW
     void  setOutWeight(float v) { out_weight = v; }
 };
 
-// thanks: http://techblog.sega.jp/entry/2016/11/28/100000
-template<class KF>
-class AnimationCurveKeyReducer
-{
-public:
-    static RawVector<KF> apply(const IArray<KF>& keys, float eps)
-    {
-        RawVector<KF> ret;
-        ret.reserve(keys.size());
-        if (keys.size() <= 2)
-            ret.assign(keys.begin(), keys.end());
-        else
-            genNewKeys(keys, eps, ret);
-        return ret;
-    }
-
-private:
-    static void genNewKeys(const IArray<KF>& keys, float eps, RawVector<KF>& ret)
-    {
-        ret.push_back(keys.front());
-
-        int end = (int)keys.size() - 1;
-        for (int k = 0, i = 1; i < end; i++) {
-            if (!nearEqualToEvaluated(keys[k], keys[i + 1], keys[i], eps)) {
-                k = i;
-                ret.push_back(keys[k]);
-            }
-        }
-        ret.push_back(keys.back());
-    }
-
-    static bool nearEqualToEvaluated(const KF& key1, const KF& key2, const KF& comp, float eps)
-    {
-        float val1 = evaluate(key1, key2, comp.time);
-        if (!near_equal(val1, comp.value, eps))
-            return false;
-
-        float time = key1.time + (comp.time - key1.time) * 0.5f;
-        val1 = evaluate(key1, comp, time);
-        float val2 = evaluate(key1, key2, time);
-        return near_equal(val1, val2, eps);
-    }
-
-    static float evaluate(const KF& key1, const KF& key2, float time)
-    {
-        if (std::isinf(key1.out_tangent))
-            return key1.value;
-
-        float kd = key2.time - key1.time;
-        float vd = key2.value - key1.value;
-        float t = (time - key1.time) / kd;
-
-        float a = -2 * vd + kd * (key1.out_tangent + key2.in_tangent);
-        float b = 3 * vd - kd * (2 * key1.out_tangent + key2.in_tangent);
-        float c = kd * key1.out_tangent;
-
-        return key1.value + t * (t * (a * t + b) + c);
-    }
-};
+// dummy for not yet supported Keyframe
+struct UnknownKF {};
 
 
 enum InterpolationMode
@@ -165,12 +114,12 @@ enum TangentMode
     kTangentModeConstant = 3,
     kTangentModeClampedAuto = 4,
 };
-const int kBrokenMask = 1 << 0;
-const int kLeftTangentMask = 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4;
-const int kRightTangentMask = 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8;
-const float kTimeEpsilon = 0.00001f;
-const float kDefaultWeight = 1.0f / 3.0f;
-const float kCurveTimeEpsilon = 0.00001f;
+static const int kBrokenMask = 1 << 0;
+static const int kLeftTangentMask = 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4;
+static const int kRightTangentMask = 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8;
+static const float kTimeEpsilon = 0.00001f;
+static const float kDefaultWeight = 1.0f / 3.0f;
+static const float kCurveTimeEpsilon = 0.00001f;
 
 template<class KF>
 static inline float LinearTangent(IArray<KF>& curve, int i1, int i2)
@@ -401,7 +350,7 @@ static void SetTangentMode(KF *key, int n, InterpolationMode im)
 }
 
 template<class KF>
-static inline void FillCurve(const ms::TAnimationCurve<int>& src, void *x_, InterpolationMode it)
+static void FillCurveI(const ms::TAnimationCurve<int>& src, void *x_, InterpolationMode it)
 {
     auto *x = (KF*)x_;
     int n = (int)src.size();
@@ -412,9 +361,10 @@ static inline void FillCurve(const ms::TAnimationCurve<int>& src, void *x_, Inte
     }
     SetTangentMode(x, n, it);
 }
+template<> static void FillCurveI<UnknownKF>(const ms::TAnimationCurve<int>& src, void *x_, InterpolationMode it) {}
 
 template<class KF>
-static inline void FillCurve(const ms::TAnimationCurve<float>& src, void *x_, InterpolationMode it)
+static void FillCurveF(const ms::TAnimationCurve<float>& src, void *x_, InterpolationMode it)
 {
     auto *x = (KF*)x_;
     int n = (int)src.size();
@@ -425,9 +375,10 @@ static inline void FillCurve(const ms::TAnimationCurve<float>& src, void *x_, In
     }
     SetTangentMode(x, n, it);
 }
+template<> static void FillCurveF<UnknownKF>(const ms::TAnimationCurve<float>& src, void *x_, InterpolationMode it) {}
 
 template<class KF>
-static inline void FillCurves(const ms::TAnimationCurve<float2>& src, void *x_, void *y_, InterpolationMode it)
+static void FillCurvesF2(const ms::TAnimationCurve<float2>& src, void *x_, void *y_, InterpolationMode it)
 {
     auto *x = (KF*)x_;
     auto *y = (KF*)y_;
@@ -442,9 +393,10 @@ static inline void FillCurves(const ms::TAnimationCurve<float2>& src, void *x_, 
     SetTangentMode(x, n, it);
     SetTangentMode(y, n, it);
 }
+template<> static void FillCurvesF2<UnknownKF>(const ms::TAnimationCurve<float2>& src, void *x_, void *y_, InterpolationMode it) {}
 
 template<class KF>
-static inline void FillCurves(const ms::TAnimationCurve<float3>& src, void *x_, void *y_, void *z_, InterpolationMode it)
+static void FillCurvesF3(const ms::TAnimationCurve<float3>& src, void *x_, void *y_, void *z_, InterpolationMode it)
 {
     auto *x = (KF*)x_;
     auto *y = (KF*)y_;
@@ -464,9 +416,10 @@ static inline void FillCurves(const ms::TAnimationCurve<float3>& src, void *x_, 
     SetTangentMode(y, n, it);
     SetTangentMode(z, n, it);
 }
+template<> static void FillCurvesF3<UnknownKF>(const ms::TAnimationCurve<float3>& src, void *x_, void *y_, void *z_, InterpolationMode it) {}
 
 template<class KF>
-static inline void FillCurves(const ms::TAnimationCurve<float4>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it)
+static void FillCurvesF4(const ms::TAnimationCurve<float4>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it)
 {
     auto *x = (KF*)x_;
     auto *y = (KF*)y_;
@@ -491,8 +444,10 @@ static inline void FillCurves(const ms::TAnimationCurve<float4>& src, void *x_, 
     SetTangentMode(w, n, it);
 
 }
+template<> static void FillCurvesF4<UnknownKF>(const ms::TAnimationCurve<float4>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it) {}
+
 template<class KF>
-static inline void FillCurves(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it)
+static void FillCurvesQuat(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it)
 {
     auto *x = (KF*)x_;
     auto *y = (KF*)y_;
@@ -519,9 +474,10 @@ static inline void FillCurves(const ms::TAnimationCurve<quatf>& src, void *x_, v
     if (it == InterpolationMode::Smooth)
         EnsureQuaternionContinuityAndRecalculateSlope(x, y, z, w, n);
 }
+template<> static void FillCurvesQuat<UnknownKF>(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it) {}
 
 template<class KF>
-static inline void FillCurvesEuler(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, InterpolationMode it)
+static void FillCurvesEuler(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, InterpolationMode it)
 {
     KF *x = (KF*)x_;
     KF *y = (KF*)y_;
@@ -571,22 +527,143 @@ static inline void FillCurvesEuler(const ms::TAnimationCurve<quatf>& src, void *
     SetTangentMode(y, n, it);
     SetTangentMode(z, n, it);
 }
+template<> static void FillCurvesEuler<UnknownKF>(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, InterpolationMode it) {}
+
+
+// thanks: http://techblog.sega.jp/entry/2016/11/28/100000
+template<class KF>
+class AnimationCurveKeyReducer
+{
+public:
+    static RawVector<KF> apply(const IArray<KF>& keys, float eps)
+    {
+        RawVector<KF> ret;
+        ret.reserve(keys.size());
+        if (keys.size() <= 2)
+            ret.assign(keys.begin(), keys.end());
+        else
+            genNewKeys(keys, eps, ret);
+        return ret;
+    }
+
+private:
+    static void genNewKeys(const IArray<KF>& keys, float eps, RawVector<KF>& ret)
+    {
+        ret.push_back(keys.front());
+
+        int end = (int)keys.size() - 1;
+        for (int k = 0, i = 1; i < end; i++) {
+            if (!nearEqualToEvaluated(keys[k], keys[i + 1], keys[i], eps)) {
+                k = i;
+                ret.push_back(keys[k]);
+            }
+        }
+        ret.push_back(keys.back());
+    }
+
+    static bool nearEqualToEvaluated(const KF& key1, const KF& key2, const KF& comp, float eps)
+    {
+        float val1 = evaluate(key1, key2, comp.time);
+        if (!near_equal(val1, comp.value, eps))
+            return false;
+
+        float time = key1.time + (comp.time - key1.time) * 0.5f;
+        val1 = evaluate(key1, comp, time);
+        float val2 = evaluate(key1, key2, time);
+        return near_equal(val1, val2, eps);
+    }
+
+    static float evaluate(const KF& key1, const KF& key2, float time)
+    {
+        if (std::isinf(key1.out_tangent))
+            return key1.value;
+
+        float kd = key2.time - key1.time;
+        float vd = key2.value - key1.value;
+        float t = (time - key1.time) / kd;
+
+        float a = -2 * vd + kd * (key1.out_tangent + key2.in_tangent);
+        float b = 3 * vd - kd * (2 * key1.out_tangent + key2.in_tangent);
+        float c = kd * key1.out_tangent;
+
+        return key1.value + t * (t * (a * t + b) + c);
+    }
+};
+
+template<class KF>
+static void KeyframeReductionA(void *keys_, int key_count, float threshold, int& new_key_count)
+{
+    if (!keys_ || key_count == 0)
+        return;
+
+    auto *keys = (const KF*)keys_;
+    auto new_keys = AnimationCurveKeyReducer<KF>().apply({ keys, (size_t)key_count }, threshold);
+    memcpy(keys_, new_keys.cdata(), (sizeof(KF) * new_keys.size()));
+    new_key_count = (int)new_keys.size();
+}
+template<> static void KeyframeReductionA<UnknownKF>(void *keys_, int key_count, float threshold, int& new_key_count) {}
+
+template<class KF>
+static void KeyframeReductionV(RawVector<char>& idata, float threshold)
+{
+    if (idata.empty())
+        return;
+
+    auto *keys = (const KF*)idata.cdata();
+    size_t key_count = idata.size() / sizeof(KF);
+
+    auto new_keys = AnimationCurveKeyReducer<KF>().apply({ keys, key_count }, threshold);
+    auto ptr = (const char*)new_keys.cdata();
+    idata.assign(ptr, ptr + (sizeof(KF) * new_keys.size()));
+}
+template<> static void KeyframeReductionV<UnknownKF>(RawVector<char>& idata, float threshold) {}
+
+
+struct FunctionSet
+{
+    void(*FillCurveI)(const ms::TAnimationCurve<int>& src, void *x_, InterpolationMode it);
+    void(*FillCurveF)(const ms::TAnimationCurve<float>& src, void *x_, InterpolationMode it);
+    void(*FillCurvesF2)(const ms::TAnimationCurve<float2>& src, void *x_, void *y_, InterpolationMode it);
+    void(*FillCurvesF3)(const ms::TAnimationCurve<float3>& src, void *x_, void *y_, void *z_, InterpolationMode it);
+    void(*FillCurvesF4)(const ms::TAnimationCurve<float4>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it);
+    void(*FillCurvesQuat)(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it);
+    void(*FillCurvesEuler)(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, InterpolationMode it);
+
+    void(*KeyframeReductionA)(void *keys_, int key_count, float threshold, int& new_key_count);
+    void(*KeyframeReductionV)(RawVector<char>& idata, float threshold);
+};
+static FunctionSet g_fs;
+
+template<class KF>
+static void SetupFunctionSet()
+{
+    g_fs = {
+        &FillCurveI<KF>,
+        &FillCurveF<KF>,
+        &FillCurvesF2<KF>,
+        &FillCurvesF3<KF>,
+        &FillCurvesF4<KF>,
+        &FillCurvesQuat<KF>,
+        &FillCurvesEuler<KF>,
+        &KeyframeReductionA<KF>,
+        &KeyframeReductionV<KF>,
+    };
+}
 
 static int g_sizeof_keyframe = 0;
 
 msAPI void msSetSizeOfKeyframe(int v)
 {
     g_sizeof_keyframe = v;
-}
 
-#define Switch(Func, ...)\
-    switch (g_sizeof_keyframe) {\
-        case sizeof(Keyframe_EW): Func<Keyframe_EW>(__VA_ARGS__); break;\
-        case sizeof(Keyframe_RW): Func<Keyframe_EW>(__VA_ARGS__); break;\
-        case sizeof(Keyframe_E): Func<Keyframe_E>(__VA_ARGS__); break;\
-        case sizeof(Keyframe_R): Func<Keyframe_R>(__VA_ARGS__); break;\
-        default: break;\
-    }\
+    switch (g_sizeof_keyframe) {
+        case sizeof(Keyframe_EW): SetupFunctionSet<Keyframe_EW>(); break;
+        case sizeof(Keyframe_RW): SetupFunctionSet<Keyframe_EW>(); break;
+        case sizeof(Keyframe_E): SetupFunctionSet<Keyframe_E>(); break;
+        case sizeof(Keyframe_R): SetupFunctionSet<Keyframe_R>(); break;
+        default: SetupFunctionSet<UnknownKF>(); break;
+    }
+}
 
 static void ConvertCurve(ms::AnimationCurve& curve, InterpolationMode it)
 {
@@ -607,32 +684,32 @@ static void ConvertCurve(ms::AnimationCurve& curve, InterpolationMode it)
     switch (curve.data_type) {
     case ms::Animation::DataType::Int:
         alloc(1);
-        Switch(FillCurve, ms::TAnimationCurve<int>(curve), dst[0], it);
+        g_fs.FillCurveI(ms::TAnimationCurve<int>(curve), dst[0], it);
         break;
     case ms::Animation::DataType::Float:
         alloc(1);
-        Switch(FillCurve, ms::TAnimationCurve<float>(curve), dst[0], it);
+        g_fs.FillCurveF(ms::TAnimationCurve<float>(curve), dst[0], it);
         break;
     case ms::Animation::DataType::Float2:
         alloc(2);
-        Switch(FillCurves, ms::TAnimationCurve<float2>(curve), dst[0], dst[1], it);
+        g_fs.FillCurvesF2( ms::TAnimationCurve<float2>(curve), dst[0], dst[1], it);
         break;
     case ms::Animation::DataType::Float3:
         alloc(3);
-        Switch(FillCurves, ms::TAnimationCurve<float3>(curve), dst[0], dst[1], dst[2], it);
+        g_fs.FillCurvesF3(ms::TAnimationCurve<float3>(curve), dst[0], dst[1], dst[2], it);
         break;
     case ms::Animation::DataType::Float4:
         alloc(4);
-        Switch(FillCurves, ms::TAnimationCurve<float4>(curve), dst[0], dst[1], dst[2], dst[3], it);
+        g_fs.FillCurvesF4(ms::TAnimationCurve<float4>(curve), dst[0], dst[1], dst[2], dst[3], it);
         break;
     case ms::Animation::DataType::Quaternion:
         if (it == InterpolationMode::Linear || it == InterpolationMode::Constant) {
             alloc(3);
-            Switch(FillCurvesEuler, ms::TAnimationCurve<quatf>(curve), dst[0], dst[1], dst[2], it);
+            g_fs.FillCurvesEuler(ms::TAnimationCurve<quatf>(curve), dst[0], dst[1], dst[2], it);
         }
         else {
             alloc(4);
-            Switch(FillCurves, ms::TAnimationCurve<quatf>(curve), dst[0], dst[1], dst[2], dst[3], it);
+            g_fs.FillCurvesQuat(ms::TAnimationCurve<quatf>(curve), dst[0], dst[1], dst[2], dst[3], it);
         }
         break;
     }
@@ -644,50 +721,24 @@ static void ConvertCurves(ms::Animation& anim, InterpolationMode it)
         ConvertCurve(*anim.curves[i], it);
 }
 
-template<class KF>
-static void KeyframeReductionImpl(void *keys_, int key_count, float threshold, int& new_key_count)
-{
-    if (!keys_ || key_count == 0)
-        return;
-
-    auto *keys = (const KF*)keys_;
-    auto new_keys = AnimationCurveKeyReducer<KF>().apply({ keys, (size_t)key_count }, threshold);
-    memcpy(keys_, new_keys.cdata(), (sizeof(KF) * new_keys.size()));
-    new_key_count = (int)new_keys.size();
-}
-
-template<class KF>
-static void KeyframeReductionImpl(RawVector<char>& idata, float threshold)
-{
-    if (idata.empty())
-        return;
-
-    auto *keys = (const KF*)idata.cdata();
-    size_t key_count = idata.size() / sizeof(KF);
-
-    auto new_keys = AnimationCurveKeyReducer<KF>().apply({keys, key_count}, threshold);
-    auto ptr = (const char*)new_keys.cdata();
-    idata.assign(ptr, ptr + (sizeof(KF) * new_keys.size()));
-}
-
 static void KeyframeReduction(ms::AnimationCurve& curve, float threshold)
 {
     for (auto& idata : curve.idata) {
-        Switch(KeyframeReductionImpl, idata, threshold);
+        g_fs.KeyframeReductionV(idata, threshold);
     }
 }
 
 static void KeyframeReduction(ms::Animation& anim, float threshold)
 {
-    int n = (int)anim.curves.size();
-    for (int i = 0; i != n; ++i)
-        KeyframeReduction(*anim.curves[i], threshold);
+    for (auto& curve : anim.curves) {
+        KeyframeReduction(*curve, threshold);
+    }
 }
 
 msAPI int msKeyframeReduction(void *kfs, int kf_count, float threshold)
 {
     int new_key_count = 0;
-    Switch(KeyframeReductionImpl, kfs, kf_count, threshold, new_key_count);
+    g_fs.KeyframeReductionA(kfs, kf_count, threshold, new_key_count);
     return new_key_count;
 }
 
