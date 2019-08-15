@@ -102,37 +102,39 @@ public:
         if (keys.size() <= 2)
             ret.assign(keys.begin(), keys.end());
         else
-            generate(keys, eps, ret);
+            genNewKeys(keys, eps, ret);
         return ret;
     }
 
 private:
-    static void generate(const IArray<KF>& keys, float eps, RawVector<KF>& result)
+    static void genNewKeys(const IArray<KF>& keys, float eps, RawVector<KF>& ret)
     {
+        ret.push_back(keys.front());
+
         int end = (int)keys.size() - 1;
         for (int k = 0, i = 1; i < end; i++) {
-            if (!isInterpolationValue(keys[k], keys[i + 1], keys[i], eps)) {
-                result.push_back(keys[k]);
+            if (!isInterpolatedValue(keys[k], keys[i + 1], keys[i], eps)) {
                 k = i;
+                ret.push_back(keys[k]);
             }
         }
-        result.push_back(keys.back());
+        ret.push_back(keys.back());
     }
 
-    static bool isInterpolationValue(const KF& key1, const KF& key2, const KF& comp, float eps)
+    static bool isInterpolatedValue(const KF& key1, const KF& key2, const KF& comp, float eps)
     {
-        float val1 = getValue(key1, key2, comp.time);
+        float val1 = evaluate(key1, key2, comp.time);
         if (eps < std::abs(comp.value - val1))
             return false;
 
         float time = key1.time + (comp.time - key1.time) * 0.5f;
-        val1 = getValue(key1, comp, time);
-        float val2 = getValue(key1, key2, time);
+        val1 = evaluate(key1, comp, time);
+        float val2 = evaluate(key1, key2, time);
 
         return std::abs(val2 - val1) <= eps ? true : false;
     }
 
-    static float getValue(const KF& key1, const KF& key2, float time)
+    static float evaluate(const KF& key1, const KF& key2, float time)
     {
         if (key1.out_tangent == std::numeric_limits<float>::infinity())
             return key1.value;
@@ -331,7 +333,7 @@ static void SetTangentMode(KF *key, int n, InterpolationMode im)
 template<class KF>
 static inline void FillCurve(const ms::TAnimationCurve<int>& src, void *x_, InterpolationMode it)
 {
-    KF *x = (KF*)x_;
+    auto *x = (KF*)x_;
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
         const auto v = src[i];
@@ -344,7 +346,7 @@ static inline void FillCurve(const ms::TAnimationCurve<int>& src, void *x_, Inte
 template<class KF>
 static inline void FillCurve(const ms::TAnimationCurve<float>& src, void *x_, InterpolationMode it)
 {
-    KF *x = (KF*)x_;
+    auto *x = (KF*)x_;
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
         const auto v = src[i];
@@ -357,8 +359,8 @@ static inline void FillCurve(const ms::TAnimationCurve<float>& src, void *x_, In
 template<class KF>
 static inline void FillCurves(const ms::TAnimationCurve<float2>& src, void *x_, void *y_, InterpolationMode it)
 {
-    KF *x = (KF*)x_;
-    KF *y = (KF*)y_;
+    auto *x = (KF*)x_;
+    auto *y = (KF*)y_;
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
         const auto v = src[i];
@@ -374,9 +376,9 @@ static inline void FillCurves(const ms::TAnimationCurve<float2>& src, void *x_, 
 template<class KF>
 static inline void FillCurves(const ms::TAnimationCurve<float3>& src, void *x_, void *y_, void *z_, InterpolationMode it)
 {
-    KF *x = (KF*)x_;
-    KF *y = (KF*)y_;
-    KF *z = (KF*)z_;
+    auto *x = (KF*)x_;
+    auto *y = (KF*)y_;
+    auto *z = (KF*)z_;
 
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
@@ -396,10 +398,10 @@ static inline void FillCurves(const ms::TAnimationCurve<float3>& src, void *x_, 
 template<class KF>
 static inline void FillCurves(const ms::TAnimationCurve<float4>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it)
 {
-    KF *x = (KF*)x_;
-    KF *y = (KF*)y_;
-    KF *z = (KF*)z_;
-    KF *w = (KF*)w_;
+    auto *x = (KF*)x_;
+    auto *y = (KF*)y_;
+    auto *z = (KF*)z_;
+    auto *w = (KF*)w_;
 
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
@@ -422,10 +424,10 @@ static inline void FillCurves(const ms::TAnimationCurve<float4>& src, void *x_, 
 template<class KF>
 static inline void FillCurves(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it)
 {
-    KF *x = (KF*)x_;
-    KF *y = (KF*)y_;
-    KF *z = (KF*)z_;
-    KF *w = (KF*)w_;
+    auto *x = (KF*)x_;
+    auto *y = (KF*)y_;
+    auto *z = (KF*)z_;
+    auto *w = (KF*)w_;
 
     int n = (int)src.size();
     for (int i = 0; i < n; ++i) {
@@ -570,6 +572,18 @@ static void ConvertCurves(ms::Animation& anim, InterpolationMode it)
 }
 
 template<class KF>
+static void KeyframeReductionImpl(void *keys_, int key_count, float threshold, int& new_key_count)
+{
+    if (!keys_ || key_count == 0)
+        return;
+
+    auto *keys = (const KF*)keys_;
+    auto new_keys = AnimationCurveKeyReducer<KF>().apply({ keys, (size_t)key_count }, threshold);
+    memcpy(keys_, new_keys.cdata(), (sizeof(KF) * new_keys.size()));
+    new_key_count = (int)new_keys.size();
+}
+
+template<class KF>
 static void KeyframeReductionImpl(RawVector<char>& idata, float threshold)
 {
     if (idata.empty())
@@ -579,7 +593,7 @@ static void KeyframeReductionImpl(RawVector<char>& idata, float threshold)
     size_t key_count = idata.size() / sizeof(KF);
 
     auto new_keys = AnimationCurveKeyReducer<KF>().apply({keys, key_count}, threshold);
-    auto ptr = (char*)new_keys.cdata();
+    auto ptr = (const char*)new_keys.cdata();
     idata.assign(ptr, ptr + (sizeof(KF) * new_keys.size()));
 }
 
@@ -597,31 +611,25 @@ static void KeyframeReduction(ms::Animation& anim, float threshold)
         KeyframeReduction(*anim.curves[i], threshold);
 }
 
-static void KeyframeReduction(ms::AnimationClip *self, float threshold)
+msAPI int msKeyframeReduction(void *kfs, int kf_count, float threshold)
 {
-    int n = (int)self->animations.size();
-    mu::parallel_for_blocked(0, n, 16,
-        [&](int begin, int end) {
-            for (int i = begin; i != end; ++i)
-                KeyframeReduction(*self->animations[i], threshold);
-        });
+    int new_key_count = 0;
+    Switch(KeyframeReductionImpl, kfs, kf_count, threshold, new_key_count);
+    return new_key_count;
 }
 
 msAPI int msCurveGetNumElements(ms::AnimationCurve *self)
 {
     return (int)self->idata.size();
 }
-
 msAPI int msCurveGetNumKeys(ms::AnimationCurve *self, int i)
 {
     return (int)self->idata[i].size() / g_sizeof_keyframe;
 }
-
 msAPI void msCurveCopy(ms::AnimationCurve *self, int i, void *dst)
 {
     memcpy(dst, self->idata[i].cdata(), self->idata[i].size());
 }
-
 msAPI void msCurveConvert(ms::AnimationCurve *self, InterpolationMode it)
 {
     ConvertCurve(*self, it);

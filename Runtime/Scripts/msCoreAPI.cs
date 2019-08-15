@@ -967,6 +967,7 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern void msAnimationClipConvert(IntPtr self, InterpolationMode it);
         [DllImport(Lib.name)] static extern void msAnimationClipKeyframeReduction(IntPtr self, float threshold);
         [DllImport(Lib.name)] static extern void msSetSizeOfKeyframe(int v);
+        static bool s_prepared = false;
         #endregion
 
         public int id
@@ -994,7 +995,11 @@ namespace UTJ.MeshSync
 
         public static void Prepare()
         {
-            msSetSizeOfKeyframe(Marshal.SizeOf(typeof(Keyframe)));
+            if (!s_prepared)
+            {
+                s_prepared = true;
+                msSetSizeOfKeyframe(Marshal.SizeOf(typeof(Keyframe)));
+            }
         }
         public void Convert(InterpolationMode it)
         {

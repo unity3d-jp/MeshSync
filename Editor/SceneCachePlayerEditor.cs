@@ -111,9 +111,10 @@ namespace UTJ.MeshSyncEditor
 
             DrawMaterialList(t);
             DrawTextureList(t);
-            DrawAnimationSettings(t);
+            DrawAnimationTweak(t);
+            DrawExportAssets(t);
+            DrawPluginVersion();
 
-            EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.pluginVersion);
             so.ApplyModifiedProperties();
         }
     }

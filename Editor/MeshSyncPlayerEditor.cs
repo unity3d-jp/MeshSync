@@ -149,12 +149,12 @@ namespace UTJ.MeshSyncEditor
         }
 
 
-        public void DrawAnimationSettings(MeshSyncPlayer t)
+        public void DrawAnimationTweak(MeshSyncPlayer t)
         {
             var style = EditorStyles.foldout;
             style.fontStyle = FontStyle.Bold;
-            t.foldAnimationSettings = EditorGUILayout.Foldout(t.foldAnimationSettings, "Animation Settings", true, style);
-            if (t.foldAnimationSettings)
+            t.foldAnimationTweak = EditorGUILayout.Foldout(t.foldAnimationTweak, "Animation Tweak", true, style);
+            if (t.foldAnimationTweak)
             {
                 // Override Frame Rate
                 GUILayout.BeginVertical("Box");
@@ -330,7 +330,7 @@ namespace UTJ.MeshSyncEditor
 
                 // transform keys/events
                 foreach (var curve in curves)
-                    Misc.AnimationCurveKeyReducer.Apply(curve, eps);
+                    Misc.KeyframeReduction(curve, eps);
 
                 // apply changes to clip
                 Undo.RecordObject(clip, "ApplyKeyframeReduction");
@@ -344,5 +344,28 @@ namespace UTJ.MeshSyncEditor
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         }
 
+
+        public static void DrawExportAssets(MeshSyncPlayer t)
+        {
+            var style = EditorStyles.foldout;
+            style.fontStyle = FontStyle.Bold;
+            t.foldExportAssets = EditorGUILayout.Foldout(t.foldExportAssets, "Export Assets", true, style);
+            if (t.foldExportAssets)
+            {
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("Export Meshes", GUILayout.Width(160.0f)))
+                    t.ExportMeshes();
+
+                if (GUILayout.Button("Export Materials", GUILayout.Width(160.0f)))
+                    t.ExportMaterials();
+                GUILayout.EndHorizontal();
+            }
+            EditorGUILayout.Space();
+        }
+
+        public static void DrawPluginVersion()
+        {
+            EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.pluginVersion);
+        }
     }
 }

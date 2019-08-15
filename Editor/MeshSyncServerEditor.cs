@@ -41,17 +41,10 @@ namespace UTJ.MeshSyncEditor
             DrawPlayerSettings(t, so);
             DrawMaterialList(t);
             DrawTextureList(t);
-            DrawAnimationSettings(t);
+            DrawAnimationTweak(t);
+            DrawExportAssets(t);
+            DrawPluginVersion();
 
-            if (GUILayout.Button("Export Meshes", GUILayout.Width(160.0f)))
-                t.ExportMeshes();
-            EditorGUILayout.Space();
-
-            if (GUILayout.Button("Export Materials", GUILayout.Width(160.0f)))
-                t.ExportMaterials();
-            EditorGUILayout.Space();
-
-            EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.pluginVersion);
             so.ApplyModifiedProperties();
         }
     }

@@ -160,7 +160,8 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_trackMaterialAssignment = true;
         [SerializeField] bool m_foldMaterialList = true;
-        [SerializeField] bool m_foldAnimationSettings = true;
+        [SerializeField] bool m_foldAnimationTweak = true;
+        [SerializeField] bool m_foldExportAssets = true;
 #endif
 
         protected bool m_needReassignMaterials = false;
@@ -304,10 +305,15 @@ namespace UTJ.MeshSync
             get { return m_foldMaterialList; }
             set { m_foldMaterialList = value; }
         }
-        public bool foldAnimationSettings
+        public bool foldAnimationTweak
         {
-            get { return m_foldAnimationSettings; }
-            set { m_foldAnimationSettings = value; }
+            get { return m_foldAnimationTweak; }
+            set { m_foldAnimationTweak = value; }
+        }
+        public bool foldExportAssets
+        {
+            get { return m_foldExportAssets; }
+            set { m_foldExportAssets = value; }
         }
 #endif
         #endregion

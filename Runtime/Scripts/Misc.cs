@@ -17,6 +17,7 @@ namespace UTJ.MeshSync
     {
         #region internal
         [DllImport(Lib.name)] static extern ulong msGetTime();
+        [DllImport(Lib.name)] static extern int msKeyframeReduction(Keyframe[] keys, int keyCount, float threshold);
         #endregion
 
         public static ulong GetTimeNS() { return msGetTime(); }
@@ -63,62 +64,23 @@ namespace UTJ.MeshSync
             return ret;
         }
 
-#if UNITY_EDITOR
-        // thanks: http://techblog.sega.jp/entry/2016/11/28/100000
-        public static class AnimationCurveKeyReducer
+        public static Keyframe[] KeyframeReduction(Keyframe[] keys, float threshold)
         {
-            static public void Apply(AnimationCurve curve, float eps = 0.001f)
-            {
-                if (curve.keys.Length <= 2)
-                    return;
-
-                var indices = GetDeleteKeyIndex(curve.keys, eps).ToArray();
-                foreach (var idx in indices.Reverse())
-                    curve.RemoveKey(idx);
-            }
-
-            static IEnumerable<int> GetDeleteKeyIndex(Keyframe[] keys, float eps)
-            {
-                int end = keys.Length - 1;
-                for (int k = 0, i = 1; i < end; i++)
-                {
-                    if (IsInterpolationValue(keys[k], keys[i + 1], keys[i], eps))
-                        yield return i;
-                    else
-                        k = i;
-                }
-            }
-
-            static bool IsInterpolationValue(Keyframe key1, Keyframe key2, Keyframe comp, float eps)
-            {
-                float val1 = GetValueFromTime(key1, key2, comp.time);
-                if (eps < Math.Abs(comp.value - val1))
-                    return false;
-
-                float time = key1.time + (comp.time - key1.time) * 0.5f;
-                val1 = GetValueFromTime(key1, comp, time);
-                float val2 = GetValueFromTime(key1, key2, time);
-
-                return Math.Abs(val2 - val1) <= eps ? true : false;
-            }
-
-            static float GetValueFromTime(Keyframe key1, Keyframe key2, float time)
-            {
-                if (key1.outTangent == Mathf.Infinity)
-                    return key1.value;
-
-                float kd = key2.time - key1.time;
-                float vd = key2.value - key1.value;
-                float t = (time - key1.time) / kd;
-
-                float a = -2 * vd + kd * (key1.outTangent + key2.inTangent);
-                float b = 3 * vd - kd * (2 * key1.outTangent + key2.inTangent);
-                float c = kd * key1.outTangent;
-
-                return key1.value + t * (t * (a * t + b) + c);
-            }
+            AnimationClipData.Prepare();
+            int newCount = msKeyframeReduction(keys, keys.Length, threshold);
+            var newKeys = new Keyframe[newCount];
+            Array.Copy(keys, newKeys, newCount);
+            return newKeys;
         }
 
+        public static void KeyframeReduction(AnimationCurve curve, float threshold)
+        {
+            if (curve.length <= 2)
+                return;
+            curve.keys = KeyframeReduction(curve.keys, threshold);
+        }
+
+#if UNITY_EDITOR
         // copy a file to StreamingAssets.
         // if here is already a file with same name:
         // - use existing one if both are identical (identical = same file size & same mtime)
