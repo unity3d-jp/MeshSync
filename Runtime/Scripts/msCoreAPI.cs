@@ -719,16 +719,9 @@ namespace UTJ.MeshSync
 
 
 #if UNITY_EDITOR
-        public void SetCurve(AnimationClip clip, string path, Type type, string prop, AnimationCurve curve)
+        public static void SetCurve(AnimationClip clip, string path, Type type, string prop, AnimationCurve curve)
         {
-#if UNITY_2018_2_OR_NEWER
-            var binding = EditorCurveBinding.FloatCurve(path, type, prop);
-#else
-            var binding = new EditorCurveBinding();
-            binding.path = path;
-            binding.propertyName = prop;
-#endif
-            AnimationUtility.SetEditorCurve(clip, binding, curve);
+            Misc.SetCurve(clip, path, type, prop, curve);
         }
 
         public void ExportTransformAnimation(AnimationImportContext ctx)

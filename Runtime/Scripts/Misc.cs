@@ -80,6 +80,22 @@ namespace UTJ.MeshSync
             curve.keys = KeyframeReduction(curve.keys, threshold);
         }
 
+        public static void SetCurve(AnimationClip clip, string path, Type type, string prop, AnimationCurve curve)
+        {
+            //var binding = EditorCurveBinding.FloatCurve(path, type, prop);
+            //AnimationUtility.SetEditorCurve(clip, binding, curve);
+
+            // AnimationUtility.SetEditorCurve() is far too slow and impractical (as of Unity 2019.2)
+            // we stick to the old way for now.
+            clip.SetCurve(path, type, prop, curve);
+        }
+        public static void SetCurve(AnimationClip clip, EditorCurveBinding binding, AnimationCurve curve)
+        {
+            // see above
+            //AnimationUtility.SetEditorCurve(clip, binding, curve);
+            clip.SetCurve(binding.path, binding.type, binding.propertyName, curve);
+        }
+
 #if UNITY_EDITOR
         // copy a file to StreamingAssets.
         // if here is already a file with same name:

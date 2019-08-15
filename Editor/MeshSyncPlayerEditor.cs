@@ -224,7 +224,7 @@ namespace UTJ.MeshSyncEditor
         {
             foreach (var clip in clips)
             {
-                Undo.RecordObject(clip, "ApplyFrameRate");
+                Undo.RegisterCompleteObjectUndo(clip, "ApplyFrameRate");
                 clip.frameRate = frameRate;
 
                 Debug.Log("Applied frame rate to " + AssetDatabase.GetAssetPath(clip));
@@ -263,11 +263,11 @@ namespace UTJ.MeshSyncEditor
                     events[ei].time = events[ei].time * timeScale;
 
                 // apply changes to clip
-                Undo.RecordObject(clip, "ApplyTimeScale");
+                Undo.RegisterCompleteObjectUndo(clip, "ApplyTimeScale");
                 clip.frameRate = clip.frameRate / timeScale;
-                AnimationUtility.SetAnimationEvents(clip, events);
+                clip.events = events;
                 for (int ci = 0; ci < curveCount; ++ci)
-                    AnimationUtility.SetEditorCurve(clip, bindings[ci], curves[ci]);
+                    Misc.SetCurve(clip, bindings[ci], curves[ci]);
 
                 Debug.Log("Applied time scale to " + AssetDatabase.GetAssetPath(clip));
             }
@@ -309,9 +309,9 @@ namespace UTJ.MeshSyncEditor
                 }
  
                 // apply changes to clip
-                Undo.RecordObject(clip, "ApplyDropKeyframes");
+                Undo.RegisterCompleteObjectUndo(clip, "ApplyDropKeyframes");
                 for (int ci = 0; ci < curveCount; ++ci)
-                    AnimationUtility.SetEditorCurve(clip, bindings[ci], curves[ci]);
+                    Misc.SetCurve(clip, bindings[ci], curves[ci]);
 
                 Debug.Log("Applied drop keyframes to " + AssetDatabase.GetAssetPath(clip));
             }
@@ -340,9 +340,9 @@ namespace UTJ.MeshSyncEditor
                     Misc.KeyframeReduction(curve, eps);
 
                 // apply changes to clip
-                Undo.RecordObject(clip, "ApplyKeyframeReduction");
+                Undo.RegisterCompleteObjectUndo(clip, "ApplyKeyframeReduction");
                 for (int ci = 0; ci < curveCount; ++ci)
-                    AnimationUtility.SetEditorCurve(clip, bindings[ci], curves[ci]);
+                    Misc.SetCurve(clip, bindings[ci], curves[ci]);
 
                 Debug.Log("Applied keyframe reduction to " + AssetDatabase.GetAssetPath(clip));
             }
