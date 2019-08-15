@@ -57,6 +57,13 @@ namespace UTJ.MeshSyncEditor
             // Import Settings
             EditorGUILayout.LabelField("Import Settings", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(so.FindProperty("m_animationInterpolation"));
+            EditorGUILayout.PropertyField(so.FindProperty("m_keyframeReduction"));
+            if (t.keyframeReduction)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(so.FindProperty("m_reductionThreshold"));
+                EditorGUI.indentLevel--;
+            }
             EditorGUILayout.PropertyField(so.FindProperty("m_zUpCorrection"), new GUIContent("Z-Up Correction"));
             EditorGUILayout.Space();
 

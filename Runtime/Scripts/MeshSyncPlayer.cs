@@ -137,6 +137,8 @@ namespace UTJ.MeshSync
         [SerializeField] protected bool m_updateMeshColliders = true;
         [SerializeField] protected bool m_findMaterialFromAssets = true;
         [SerializeField] protected InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
+        [SerializeField] protected bool m_keyframeReduction = true;
+        [SerializeField] protected float m_reductionThreshold = 0.001f;
         [SerializeField] protected ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
         [SerializeField] protected bool m_logging = true;
         [SerializeField] protected bool m_profiling = false;
@@ -239,6 +241,16 @@ namespace UTJ.MeshSync
         {
             get { return m_animationInterpolation; }
             set { m_animationInterpolation = value; }
+        }
+        public bool keyframeReduction
+        {
+            get { return m_keyframeReduction; }
+            set { m_keyframeReduction = value; }
+        }
+        public float reductionThreshold
+        {
+            get { return m_reductionThreshold; }
+            set { m_reductionThreshold = value; }
         }
         public ZUpCorrectionMode zUpCorrection
         {
@@ -1850,7 +1862,8 @@ namespace UTJ.MeshSync
                 return;
 
             clipData.Convert(m_animationInterpolation);
-            //clipData.KeyframeReduction(0.001f);
+            if (m_keyframeReduction)
+                clipData.KeyframeReduction(m_reductionThreshold);
 
             //float start = Time.realtimeSinceStartup;
 

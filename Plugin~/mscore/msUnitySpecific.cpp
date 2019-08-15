@@ -591,17 +591,17 @@ private:
 };
 
 template<class KF>
-static void KeyframeReductionA(void *keys_, int key_count, float threshold, int& new_key_count)
+static int KeyframeReductionA(void *keys_, int key_count, float threshold)
 {
     if (!keys_ || key_count == 0)
-        return;
+        return 0;
 
-    auto *keys = (const KF*)keys_;
+    auto *keys = (KF*)keys_;
     auto new_keys = AnimationCurveKeyReducer<KF>().apply({ keys, (size_t)key_count }, threshold);
-    memcpy(keys_, new_keys.cdata(), (sizeof(KF) * new_keys.size()));
-    new_key_count = (int)new_keys.size();
+    new_keys.copy_to(keys);
+    return (int)new_keys.size();
 }
-template<> static void KeyframeReductionA<UnknownKF>(void *keys_, int key_count, float threshold, int& new_key_count) {}
+template<> static int KeyframeReductionA<UnknownKF>(void *keys_, int key_count, float threshold) { return 0; }
 
 template<class KF>
 static void KeyframeReductionV(RawVector<char>& idata, float threshold)
@@ -613,8 +613,7 @@ static void KeyframeReductionV(RawVector<char>& idata, float threshold)
     size_t key_count = idata.size() / sizeof(KF);
 
     auto new_keys = AnimationCurveKeyReducer<KF>().apply({ keys, key_count }, threshold);
-    auto ptr = (const char*)new_keys.cdata();
-    idata.assign(ptr, ptr + (sizeof(KF) * new_keys.size()));
+    idata.assign((const char*)new_keys.cdata(), new_keys.size_in_byte());
 }
 template<> static void KeyframeReductionV<UnknownKF>(RawVector<char>& idata, float threshold) {}
 
@@ -629,7 +628,7 @@ struct FunctionSet
     void(*FillCurvesQuat)(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it);
     void(*FillCurvesEuler)(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, InterpolationMode it);
 
-    void(*KeyframeReductionA)(void *keys_, int key_count, float threshold, int& new_key_count);
+    int(*KeyframeReductionA)(void *keys_, int key_count, float threshold);
     void(*KeyframeReductionV)(RawVector<char>& idata, float threshold);
 };
 static FunctionSet g_fs;
@@ -737,9 +736,7 @@ static void KeyframeReduction(ms::Animation& anim, float threshold)
 
 msAPI int msKeyframeReduction(void *kfs, int kf_count, float threshold)
 {
-    int new_key_count = 0;
-    g_fs.KeyframeReductionA(kfs, kf_count, threshold, new_key_count);
-    return new_key_count;
+    return g_fs.KeyframeReductionA(kfs, kf_count, threshold);
 }
 
 msAPI int msCurveGetNumElements(ms::AnimationCurve *self)
