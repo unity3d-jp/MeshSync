@@ -1785,17 +1785,6 @@ int msmayaContext::exportAnimations(ObjectScope scope)
     // cleanup
     m_anim_records.clear();
 
-    if (m_settings.reduce_keyframes) {
-        // keyframe reduction
-        for (auto& clip : m_animations)
-            clip->reduction(m_settings.keep_flat_curves);
-
-        // erase empty animation
-        m_animations.erase(
-            std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
-            m_animations.end());
-    }
-
     if (num_exported == 0)
         m_animations.clear();
 

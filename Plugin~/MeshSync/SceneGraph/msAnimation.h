@@ -76,7 +76,6 @@ public:
         }
     }
 
-    void reduction(bool keep_flat_curves);
     void reserve(size_t size);
 };
 msSerializable(AnimationCurve);
@@ -114,7 +113,6 @@ public:
     uint64_t hash() const;
     uint64_t checksum() const;
     bool empty() const;
-    void reduction(bool keep_flat_curves);
     void reserve(size_t n);
 
     bool isRoot() const;
@@ -310,8 +308,6 @@ public:
     uint64_t checksum() const override;
 
     bool empty() const;
-    void reduction(bool keep_flat_curves = false);
-
     void addAnimation(AnimationPtr v);
     void addAnimation(TransformAnimationPtr v);
 };

@@ -488,16 +488,6 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
                 s.anim_sample_rate = tmp;
             });
             break;
-        case IDC_KEYFRAME_REDUCTION:
-            handle_button([&]() {
-                s.anim_keyframe_reduction = CtrlIsChecked(IDC_KEYFRAME_REDUCTION);
-            });
-            break;
-        case IDC_KEEP_FLAT_CURVES:
-            handle_button([&]() {
-                s.anim_keep_flat_curves = CtrlIsChecked(IDC_KEEP_FLAT_CURVES);
-            });
-            break;
         case IDC_MANUAL_SYNC:
             handle_button([&]() { msmaxSendScene(ExportTarget::Objects, ObjectScope::All); });
             break;
@@ -560,7 +550,6 @@ void msmaxContext::updateSettingControls()
 
     CtrlSetText(IDC_ANIMATION_TIME_SCALE,   s.anim_time_scale);
     CtrlSetText(IDC_ANIMATION_SAMPLE_RATE,  s.anim_sample_rate);
-    CtrlSetCheck(IDC_KEYFRAME_REDUCTION,    s.anim_keyframe_reduction);
 
     CtrlSetText(IDC_TXT_VERSION, "Plugin Version: " msPluginVersionStr);
 }

@@ -138,12 +138,6 @@ PYBIND11_MODULE(MeshSyncClientBlender, mod)
             BindProperty(animation_interval,
                 [](const self_t& self) { return self->getSettings().animation_frame_interval; },
                 [](self_t& self, int v) { self->getSettings().animation_frame_interval = v; })
-            BindProperty(keyframe_reduction,
-                [](const self_t& self) { return self->getSettings().keyframe_reduction; },
-                [](self_t& self, int v) { self->getSettings().keyframe_reduction = v; })
-            BindProperty(keep_flat_curves,
-                [](const self_t& self) { return self->getSettings().keep_flat_curves; },
-                [](self_t& self, int v) { self->getSettings().keep_flat_curves = v; })
             BindProperty(multithreaded,
                 [](const self_t& self) { return self->getSettings().multithreaded; },
                 [](self_t& self, int v) { self->getSettings().multithreaded = v; })

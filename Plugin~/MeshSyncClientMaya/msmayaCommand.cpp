@@ -222,8 +222,6 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("syncConstraints", sync_constraints, true);
     Handle("animationTS", animation_time_scale, false);
     Handle("animationSPS", animation_sps, false);
-    Handle("keyframeReduction", reduce_keyframes, false);
-    Handle("keepFlatCurves", keep_flat_curves, false);
     Handle("removeNamespace", remove_namespace, true);
     Handle("multithreaded", multithreaded, false);
     Handle("fbxCompatibleTransform", fbx_compatible_transform, true);

@@ -163,10 +163,6 @@ void AnimationCurve::reserve(size_t size)
 {
     g_curve_fs[(int)data_type].reserve_keyframes(*this, size);
 }
-void AnimationCurve::reduction(bool keep_flat_curves)
-{
-    g_curve_fs[(int)data_type].reduce_keyframes(*this, keep_flat_curves);
-}
 #undef EachMember
 
 
@@ -219,14 +215,6 @@ uint64_t Animation::checksum() const
 bool Animation::empty() const
 {
     return curves.empty();
-}
-void Animation::reduction(bool keep_flat_curves)
-{
-    for (auto& c : curves)
-        c->reduction(keep_flat_curves);
-    curves.erase(
-        std::remove_if(curves.begin(), curves.end(), [](ms::AnimationCurvePtr& p) { return p->empty(); }),
-        curves.end());
 }
 void Animation::reserve(size_t n)
 {
@@ -366,16 +354,6 @@ uint64_t AnimationClip::checksum() const
 bool AnimationClip::empty() const
 {
     return animations.empty();
-}
-
-void AnimationClip::reduction(bool keep_flat_curves)
-{
-    mu::parallel_for_each(animations.begin(), animations.end(), [keep_flat_curves](ms::AnimationPtr& p) {
-        p->reduction(keep_flat_curves);
-    });
-    animations.erase(
-        std::remove_if(animations.begin(), animations.end(), [](ms::AnimationPtr& p) { return p->empty(); }),
-        animations.end());
 }
 
 void AnimationClip::addAnimation(AnimationPtr v)

@@ -121,9 +121,8 @@ static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float
 {
     bl::BCamera cam(src->data);
 
-    // fbx exporter seems always export as perspective. so we follow it.
-    //ortho = data->type == CAM_ORTHO;
-    ortho = false;
+    // note: fbx exporter seems always export as perspective
+    ortho = ((Camera*)src->data)->type == CAM_ORTHO;
 
     near_plane = cam.clip_start();
     far_plane = cam.clip_end();
@@ -1185,16 +1184,6 @@ bool msblenContext::sendAnimations(ObjectScope scope)
         scene.frame_set(frame_current);
     }
 
-    if (m_settings.keyframe_reduction) {
-        // keyframe reduction
-        for (auto& clip : m_animations)
-            clip->reduction(m_settings.keep_flat_curves);
-
-        // erase empty clip
-        m_animations.erase(
-            std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
-            m_animations.end());
-    }
     m_ignore_events = false;
 
     // send

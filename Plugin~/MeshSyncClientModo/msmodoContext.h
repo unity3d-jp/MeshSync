@@ -83,8 +83,6 @@ struct SyncSettings
     bool sync_textures = true;
     bool sync_cameras = true;
     bool sync_lights = true;
-    bool reduce_keyframes = true;
-    bool keep_flat_curves = false;
 
     // cache
     bool export_cache = false;

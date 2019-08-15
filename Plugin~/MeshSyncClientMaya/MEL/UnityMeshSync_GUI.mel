@@ -67,10 +67,6 @@ global proc UnityMeshSync_GUI()
     rowLayout -numberOfColumns 2;
         text -label "Samples Per Second"; floatField -w 60 -v $animationSPS -cc "umsCBAnimationSPS" -minValue 0.01 umsCtrlAnimationSPS;
     setParent ..;
-    checkBox -label "Keyframe Reduction" -value $kfReduction -cc "umsCBKeyframeReduction" umsCtrlKeyframeReduction;
-    columnLayout -visible $kfReduction -columnOffset "left" 20 msuFoldKeyframeReduction;
-        checkBox -label "Keep Flat Curves" -value $keepFlatCurves -cc "umsCBKeepFlatCurves" umsCtrlKeepFlatCurves;
-    setParent ..;
 
     separator -h 5 -w 250 -style none;
 
@@ -191,19 +187,6 @@ global proc umsCBAnimationSPS()
 {
     float $v = `floatField -q -value umsCtrlAnimationSPS`;
     string $ret = `UnityMeshSync_Settings -animationSPS $v`;
-}
-
-global proc umsCBKeyframeReduction()
-{
-    int $v = `checkBox -q -value umsCtrlKeyframeReduction`;
-    string $ret = `UnityMeshSync_Settings -keyframeReduction $v`;
-    columnLayout -e -visible $v msuFoldKeyframeReduction;
-}
-
-global proc umsCBKeepFlatCurves()
-{
-    int $v = `checkBox -q -value umsCtrlKeepFlatCurves`;
-    string $ret = `UnityMeshSync_Settings -keepFlatCurves $v`;
 }
 
 global proc umsCBSyncAnimations()

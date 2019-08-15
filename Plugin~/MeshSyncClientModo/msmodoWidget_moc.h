@@ -21,7 +21,7 @@ static const uint qt_meta_data_msmodoSettingsWidget[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      21,   14, // methods
+      19,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -48,8 +48,6 @@ static const uint qt_meta_data_msmodoSettingsWidget[] = {
      427,   22,   21,   21, 0x0a,
      461,   22,   21,   21, 0x0a,
      489,   22,   21,   21, 0x0a,
-     520,   22,   21,   21, 0x0a,
-     548,   22,   21,   21, 0x0a,
 
        0        // eod
 };
@@ -70,8 +68,6 @@ static const char qt_meta_stringdata_msmodoSettingsWidget[] = {
     "onClickExportCache(bool)\0"
     "onEditAnimationTimeScale(QString)\0"
     "onEditAnimationSPS(QString)\0"
-    "onToggleKeyframeReduction(int)\0"
-    "onToggleKeepFlatCurves(int)\0"
     "onClickSyncAnimations(bool)\0"
 };
 
@@ -99,9 +95,7 @@ void msmodoSettingsWidget::qt_static_metacall(QObject *_o, QMetaObject::Call _c,
         case 15: _t->onClickExportCache((*reinterpret_cast< bool(*)>(_a[1]))); break;
         case 16: _t->onEditAnimationTimeScale((*reinterpret_cast< const QString(*)>(_a[1]))); break;
         case 17: _t->onEditAnimationSPS((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 18: _t->onToggleKeyframeReduction((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 19: _t->onToggleKeepFlatCurves((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 20: _t->onClickSyncAnimations((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 18: _t->onClickSyncAnimations((*reinterpret_cast< bool(*)>(_a[1]))); break;
         default: ;
         }
     }
@@ -139,9 +133,9 @@ int msmodoSettingsWidget::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 21)
+        if (_id < 19)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 21;
+        _id -= 19;
     }
     return _id;
 }

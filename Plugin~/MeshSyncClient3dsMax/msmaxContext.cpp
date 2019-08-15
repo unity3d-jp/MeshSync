@@ -340,17 +340,6 @@ bool msmaxContext::sendAnimations(ObjectScope scope)
     // cleanup intermediate data
     m_anim_records.clear();
 
-    if (m_settings.anim_keyframe_reduction) {
-        // keyframe reduction
-        for (auto& clip : m_animations)
-            clip->reduction(m_settings.anim_keep_flat_curves);
-
-        // erase empty animation
-        m_animations.erase(
-            std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
-            m_animations.end());
-    }
-
     if (!m_animations.empty())
         kickAsyncExport();
     return true;

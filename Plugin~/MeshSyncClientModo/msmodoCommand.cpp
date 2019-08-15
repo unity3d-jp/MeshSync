@@ -77,9 +77,7 @@ public:
     Handler("syncMeshInstances", LXsTYPE_BOOLEAN, settings.sync_mesh_instances, true)\
     Handler("syncReplicators", LXsTYPE_BOOLEAN, settings.sync_replicators, true)\
     Handler("animationTimeScale", LXsTYPE_FLOAT, settings.animation_time_scale, false)\
-    Handler("animationSamplesPerSecond", LXsTYPE_FLOAT, settings.animation_sps, false)\
-    Handler("keyframeReduction", LXsTYPE_BOOLEAN, settings.reduce_keyframes, false)\
-    Handler("keepFlatCurves", LXsTYPE_BOOLEAN, settings.keep_flat_curves, false)
+    Handler("animationSamplesPerSecond", LXsTYPE_FLOAT, settings.animation_sps, false)
 
 
     void setup_args(CLxAttributeDesc &desc) override

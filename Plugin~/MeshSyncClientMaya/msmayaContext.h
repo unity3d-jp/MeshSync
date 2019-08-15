@@ -135,8 +135,6 @@ struct SyncSettings
     bool sync_lights = true;
     bool sync_constraints = false;
     bool remove_namespace = true;
-    bool reduce_keyframes = true;
-    bool keep_flat_curves = false;
     bool multithreaded = false;
     bool fbx_compatible_transform = true;
 

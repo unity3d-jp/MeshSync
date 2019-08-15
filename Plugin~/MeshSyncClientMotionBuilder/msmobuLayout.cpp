@@ -37,8 +37,6 @@ bool msmobuLayout::FBCreate()
     const char *idEditTimeScale = "idEditTimeScale";
     const char *idLabelSPS = "idLabelSPS";
     const char *idEditSPS = "idEditSPS";
-    const char *idButtonKFReduction = "idButtonKFReduction";
-    const char *idButtonKeepEmptyCurves = "idButtonKeepEmptyCurves";
     const char *idButtonSyncAnimations = "idButtonSyncAnimations";
 
     const char *idLabelVersion = "idLabelVersion";
@@ -258,33 +256,11 @@ bool msmobuLayout::FBCreate()
         m_ed_sps.LargeStep = 0.1;
         m_ed_sps.OnChange.Add(this, (FBCallback)&msmobuLayout::onAnimationSettingsChange);
 
-        AddRegion(idButtonKFReduction, idButtonKFReduction,
+        AddRegion(idButtonSyncAnimations, idButtonSyncAnimations,
             0, kFBAttachLeft, idLabelSPS, 1,
             lS, kFBAttachBottom, idLabelSPS, 1,
-            0, kFBAttachWidth, idLabelSPS, 1,
-            0, kFBAttachHeight, idLabelSPS, 1);
-        SetControl(idButtonKFReduction, m_bu_kf_reduction);
-        m_bu_kf_reduction.Caption = "Keyframe Reduction";
-        m_bu_kf_reduction.Style = kFBCheckbox;
-        m_bu_kf_reduction.State = (int)settings.keyframe_reduction;
-        m_bu_kf_reduction.OnClick.Add(this, (FBCallback)&msmobuLayout::onAnimationSettingsChange);
-
-        AddRegion(idButtonKeepEmptyCurves, idButtonKeepEmptyCurves,
-            0, kFBAttachLeft, idButtonKFReduction, 1,
-            lS, kFBAttachBottom, idButtonKFReduction, 1,
-            0, kFBAttachWidth, idButtonKFReduction, 1,
-            0, kFBAttachHeight, idButtonKFReduction, 1);
-        SetControl(idButtonKeepEmptyCurves, m_bu_keep_flat_curves);
-        m_bu_keep_flat_curves.Caption = "Keep Flat Curves";
-        m_bu_keep_flat_curves.Style = kFBCheckbox;
-        m_bu_keep_flat_curves.State = (int)settings.keep_flat_curves;
-        m_bu_keep_flat_curves.OnClick.Add(this, (FBCallback)&msmobuLayout::onAnimationSettingsChange);
-
-        AddRegion(idButtonSyncAnimations, idButtonSyncAnimations,
-            0, kFBAttachLeft, idButtonKeepEmptyCurves, 1,
-            lS, kFBAttachBottom, idButtonKeepEmptyCurves, 1,
             lW2, kFBAttachNone, nullptr, 1,
-            0, kFBAttachHeight, idButtonKeepEmptyCurves, 1);
+            0, kFBAttachHeight, idLabelSPS, 1);
         SetControl(idButtonSyncAnimations, m_bu_sync_animations);
         m_bu_sync_animations.Caption = "Sync Animations";
         m_bu_sync_animations.OnClick.Add(this, (FBCallback)&msmobuLayout::onSyncAnimation);
@@ -333,8 +309,6 @@ void msmobuLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEv
     auto& settings = m_device->getSettings();
     settings.animation_time_scale = (float)m_ed_time_scale.Value;
     settings.animation_sps = (float)m_ed_sps.Value;
-    settings.keyframe_reduction = (bool)(int)m_bu_kf_reduction.State;
-    settings.keep_flat_curves = (bool)(int)m_bu_keep_flat_curves.State;
 }
 
 void msmobuLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)

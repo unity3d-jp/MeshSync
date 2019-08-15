@@ -60,8 +60,6 @@ struct SyncSettings
 
     float animation_timescale = 1.0f;
     int animation_frame_interval = 10;
-    bool keyframe_reduction = true;
-    bool keep_flat_curves = false;
 
     bool multithreaded = true;
 
