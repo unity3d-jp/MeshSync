@@ -300,6 +300,28 @@ AnimationCurvePtr Animation::getCurve(const std::string& name, DataType type)
     return getCurve(name.c_str(), type);
 }
 
+void Animation::validate(AnimationPtr& anim)
+{
+    switch (anim->entity_type) {
+    case EntityType::Transform:
+        TransformAnimation::create(anim)->validate();
+        break;
+    case EntityType::Camera:
+        CameraAnimation::create(anim)->validate();
+        break;
+    case EntityType::Light:
+        LightAnimation::create(anim)->validate();
+        break;
+    case EntityType::Mesh:
+        MeshAnimation::create(anim)->validate();
+        break;
+    case EntityType::Points:
+        // no PointsAnimation for now
+        TransformAnimation::create(anim)->validate();
+        break;
+    }
+}
+
 
 #define EachMember(F) F(frame_rate) F(animations)
 
@@ -429,6 +451,10 @@ void TransformAnimation::reserve(size_t n)
     host->reserve(n);
 }
 
+void TransformAnimation::validate()
+{
+}
+
 
 std::shared_ptr<CameraAnimation> CameraAnimation::create(AnimationPtr host)
 {
@@ -458,6 +484,22 @@ void CameraAnimation::setupCurves(bool create_if_not_exist)
     }
 }
 
+void CameraAnimation::validate()
+{
+    if (fov.equal_all(0.0f))
+        fov.clear();
+    if (near_plane.equal_all(0.0f))
+        near_plane.clear();
+    if (far_plane.equal_all(0.0f))
+        far_plane.clear();
+    if (focal_length.equal_all(0.0f))
+        focal_length.clear();
+    if (sensor_size.equal_all(float2::zero()))
+        sensor_size.clear();
+    if (lens_shift.equal_all(float2::zero()))
+        lens_shift.clear();
+}
+
 
 std::shared_ptr<LightAnimation> LightAnimation::create(AnimationPtr host)
 {
@@ -482,6 +524,14 @@ void LightAnimation::setupCurves(bool create_if_not_exist)
     if (create_if_not_exist) {
         range.curve->data_flags.affect_scale = true;
     }
+}
+
+void LightAnimation::validate()
+{
+    if (range.equal_all(0.0f))
+        range.clear();
+    if (spot_angle.equal_all(0.0f))
+        spot_angle.clear();
 }
 
 

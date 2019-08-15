@@ -126,6 +126,8 @@ public:
     // find or create curve
     AnimationCurvePtr getCurve(const char *name, DataType type);
     AnimationCurvePtr getCurve(const std::string& name, DataType type);
+
+    static void validate(std::shared_ptr<Animation>& anim);
 };
 msSerializable(Animation);
 msDeclPtr(Animation);
@@ -175,6 +177,16 @@ struct TAnimationCurve
           key_t& back()        { return data()[size() - 1]; }
     const key_t& back() const  { return cdata()[size() - 1]; }
 
+    bool equal_all(T v) const
+    {
+        if (!*this)
+            return false;
+        for (auto& e : *this)
+            if (e.value != v)
+                return false;
+        return true;
+    }
+
     AnimationCurve *curve = nullptr;
 };
 
@@ -196,6 +208,7 @@ public:
     virtual ~TransformAnimation();
     virtual void setupCurves(bool create_if_not_exist);
     virtual void reserve(size_t n);
+    virtual void validate();
 
     AnimationPtr host;
     std::string& path;
@@ -207,12 +220,12 @@ public:
 msDeclPtr(TransformAnimation);
 
 
-#define mskCameraFieldOfView        "Camera.fieldOfView"
-#define mskCameraNearPlane          "Camera.nearPlane"
-#define mskCameraFarPlane           "Camera.farPlane"
-#define mskCameraFocalLength        "Camera.focalLength"
-#define mskCameraSensorSize         "Camera.sensorSize"
-#define mskCameraLensShift          "Camera.lensShift"
+#define mskCameraFieldOfView    "Camera.fieldOfView"
+#define mskCameraNearPlane      "Camera.nearPlane"
+#define mskCameraFarPlane       "Camera.farPlane"
+#define mskCameraFocalLength    "Camera.focalLength"
+#define mskCameraSensorSize     "Camera.sensorSize"
+#define mskCameraLensShift      "Camera.lensShift"
 
 class CameraAnimation : public TransformAnimation
 {
@@ -222,6 +235,7 @@ public:
 
     CameraAnimation(AnimationPtr host);
     void setupCurves(bool create_if_not_exist) override;
+    void validate() override;
 
     TAnimationCurve<float> fov;
     TAnimationCurve<float> near_plane;
@@ -245,6 +259,7 @@ public:
 
     LightAnimation(AnimationPtr host);
     void setupCurves(bool create_if_not_exist) override;
+    void validate() override;
 
     TAnimationCurve<float4> color;
     TAnimationCurve<float>  intensity;

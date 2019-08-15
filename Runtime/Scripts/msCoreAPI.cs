@@ -710,9 +710,13 @@ namespace UTJ.MeshSync
             var ret = new AnimationCurve[numElements];
             for (int i = 0; i < numElements; ++i)
             {
-                var keys = new Keyframe[data.GetKeyCount(i)];
-                data.Copy(i, keys);
-                ret[i] = new AnimationCurve(keys);
+                int keyCount = data.GetKeyCount(i);
+                if (keyCount > 0)
+                {
+                    var keys = new Keyframe[keyCount];
+                    data.Copy(i, keys);
+                    ret[i] = new AnimationCurve(keys);
+                }
             }
             return ret;
         }

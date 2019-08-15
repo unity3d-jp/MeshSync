@@ -230,6 +230,7 @@ void Scene::import(const SceneImportSettings& cv)
             auto& clip = static_cast<AnimationClip&>(*asset);
             parallel_for_each(clip.animations.begin(), clip.animations.end(), [&](AnimationPtr& anim) {
                 sanitizeHierarchyPath(anim->path);
+                Animation::validate(anim);
                 convert(*anim);
             });
         }
