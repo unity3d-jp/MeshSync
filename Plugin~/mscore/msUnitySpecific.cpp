@@ -113,7 +113,7 @@ private:
 
         int end = (int)keys.size() - 1;
         for (int k = 0, i = 1; i < end; i++) {
-            if (!isInterpolatedValue(keys[k], keys[i + 1], keys[i], eps)) {
+            if (!nearEqualToEvaluated(keys[k], keys[i + 1], keys[i], eps)) {
                 k = i;
                 ret.push_back(keys[k]);
             }
@@ -121,22 +121,21 @@ private:
         ret.push_back(keys.back());
     }
 
-    static bool isInterpolatedValue(const KF& key1, const KF& key2, const KF& comp, float eps)
+    static bool nearEqualToEvaluated(const KF& key1, const KF& key2, const KF& comp, float eps)
     {
         float val1 = evaluate(key1, key2, comp.time);
-        if (eps < std::abs(comp.value - val1))
+        if (!near_equal(val1, comp.value, eps))
             return false;
 
         float time = key1.time + (comp.time - key1.time) * 0.5f;
         val1 = evaluate(key1, comp, time);
         float val2 = evaluate(key1, key2, time);
-
-        return std::abs(val2 - val1) <= eps ? true : false;
+        return near_equal(val1, val2, eps);
     }
 
     static float evaluate(const KF& key1, const KF& key2, float time)
     {
-        if (key1.out_tangent == std::numeric_limits<float>::infinity())
+        if (std::isinf(key1.out_tangent))
             return key1.value;
 
         float kd = key2.time - key1.time;
@@ -204,6 +203,77 @@ static inline float SafeDiv(float y, float x)
         return y / x;
     else
         return 0;
+}
+
+template<class KF>
+static void RecalculateSplineSlopeT(IArray<KF> curve, int key, float b = 0.0f)
+{
+    if (curve.size() < 2)
+        return;
+
+    if (key == 0) {
+        float dx = curve[1].time - curve[0].time;
+        float dy = curve[1].value - curve[0].value;
+        float m = dy / dx;
+        curve[key].in_tangent = m;
+        curve[key].out_tangent = m;
+        curve[key].setOutWeight(kDefaultWeight);
+    }
+    else if (key == curve.size() - 1) {
+        float dx = curve[key].time - curve[key - 1].time;
+        float dy = curve[key].value - curve[key - 1].value;
+        float m = dy / dx;
+        curve[key].in_tangent = m;
+        curve[key].out_tangent = m;
+        curve[key].setInWeight(kDefaultWeight);
+    }
+    else {
+        float dx1 = curve[key].time - curve[key - 1].time;
+        float dy1 = curve[key].value - curve[key - 1].value;
+
+        float dx2 = curve[key + 1].time - curve[key].time;
+        float dy2 = curve[key + 1].value - curve[key].value;
+
+        float m1 = SafeDiv(dy1, dx1);
+        float m2 = SafeDiv(dy2, dx2);
+
+        float m = (1.0f + b) * 0.5f * m1 + (1.0f - b) * 0.5f * m2;
+        curve[key].in_tangent = m;
+        curve[key].out_tangent = m;
+        curve[key].setInWeight(kDefaultWeight);
+        curve[key].setOutWeight(kDefaultWeight);
+    }
+}
+
+template<class KF>
+static void EnsureQuaternionContinuityAndRecalculateSlope(KF *x, KF *y, KF *z, KF *w, int key_count)
+{
+    auto get_value = [&](int i) -> quatf {
+        return { x[i].value, y[i].value, z[i].value, w[i].value };
+    };
+    auto set_value = [&](int i, quatf v) {
+        x[i].value = v.x;
+        y[i].value = v.y;
+        z[i].value = v.z;
+        w[i].value = v.w;
+    };
+
+    auto last = get_value(key_count - 1);
+    for (int i = 0; i < key_count; i++) {
+        auto cur = get_value(i);
+        if (dot(cur, last) < 0.0f)
+            cur = { -cur.x, -cur.y, -cur.z, -cur.w };
+        last = cur;
+        set_value(i, cur);
+    }
+
+    for (int i = 0; i < key_count; i++) {
+        size_t n = key_count;
+        RecalculateSplineSlopeT<KF>({ x, n }, i);
+        RecalculateSplineSlopeT<KF>({ y, n }, i);
+        RecalculateSplineSlopeT<KF>({ z, n }, i);
+        RecalculateSplineSlopeT<KF>({ w, n }, i);
+    }
 }
 
 template<class KF>
@@ -445,6 +515,9 @@ static inline void FillCurves(const ms::TAnimationCurve<quatf>& src, void *x_, v
     SetTangentMode(y, n, it);
     SetTangentMode(z, n, it);
     SetTangentMode(w, n, it);
+
+    if (it == InterpolationMode::Smooth)
+        EnsureQuaternionContinuityAndRecalculateSlope(x, y, z, w, n);
 }
 
 template<class KF>

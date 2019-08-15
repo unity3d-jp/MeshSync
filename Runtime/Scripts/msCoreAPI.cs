@@ -653,6 +653,7 @@ namespace UTJ.MeshSync
         public void Copy(int i, Keyframe[] dst) { msCurveCopy(self, i, dst); }
 
         public void Convert(InterpolationMode it) { msCurveConvert(self, it); }
+        public void KeyframeReduction(float threshold) { msCurveKeyframeReduction(self, threshold); }
     }
 
     public struct AnimationData
@@ -703,17 +704,13 @@ namespace UTJ.MeshSync
                 return null;
 
             int numElements = data.numElements;
-
-            var c = new Keyframe[numElements][];
-            for (int i = 0; i < numElements; ++i)
-            {
-                c[i] = new Keyframe[data.GetKeyCount(i)];
-                data.Copy(i, c[i]);
-            }
-
             var ret = new AnimationCurve[numElements];
             for (int i = 0; i < numElements; ++i)
-                ret[i] = new AnimationCurve(c[i]);
+            {
+                var keys = new Keyframe[data.GetKeyCount(i)];
+                data.Copy(i, keys);
+                ret[i] = new AnimationCurve(keys);
+            }
             return ret;
         }
 

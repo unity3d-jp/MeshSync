@@ -1927,11 +1927,6 @@ namespace UTJ.MeshSync
                 data.ExportToClip(ctx);
             }
 
-            // smooth rotation curves
-            if (m_animationInterpolation == InterpolationMode.Smooth)
-                foreach (var kvp in animClipCache)
-                    kvp.Value.EnsureQuaternionContinuity();
-
             //Debug.Log("UpdateAnimation() " + (Time.realtimeSinceStartup - start) + " sec");
 
             // fire event
