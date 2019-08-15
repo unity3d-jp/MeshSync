@@ -90,6 +90,65 @@ struct Keyframe_EW
     void  setOutWeight(float v) { out_weight = v; }
 };
 
+// thanks: http://techblog.sega.jp/entry/2016/11/28/100000
+template<class KF>
+class AnimationCurveKeyReducer
+{
+public:
+    static RawVector<KF> apply(const IArray<KF>& keys, float eps)
+    {
+        RawVector<KF> ret;
+        ret.reserve(keys.size());
+        if (keys.size() <= 2)
+            ret.assign(keys.begin(), keys.end());
+        else
+            generate(keys, eps, ret);
+        return ret;
+    }
+
+private:
+    static void generate(const IArray<KF>& keys, float eps, RawVector<KF>& result)
+    {
+        int end = (int)keys.size() - 1;
+        for (int k = 0, i = 1; i < end; i++) {
+            if (!isInterpolationValue(keys[k], keys[i + 1], keys[i], eps)) {
+                result.push_back(keys[k]);
+                k = i;
+            }
+        }
+        result.push_back(keys.back());
+    }
+
+    static bool isInterpolationValue(const KF& key1, const KF& key2, const KF& comp, float eps)
+    {
+        float val1 = getValue(key1, key2, comp.time);
+        if (eps < std::abs(comp.value - val1))
+            return false;
+
+        float time = key1.time + (comp.time - key1.time) * 0.5f;
+        val1 = getValue(key1, comp, time);
+        float val2 = getValue(key1, key2, time);
+
+        return std::abs(val2 - val1) <= eps ? true : false;
+    }
+
+    static float getValue(const KF& key1, const KF& key2, float time)
+    {
+        if (key1.out_tangent == std::numeric_limits<float>::infinity())
+            return key1.value;
+
+        float kd = key2.time - key1.time;
+        float vd = key2.value - key1.value;
+        float t = (time - key1.time) / kd;
+
+        float a = -2 * vd + kd * (key1.out_tangent + key2.in_tangent);
+        float b = 3 * vd - kd * (2 * key1.out_tangent + key2.in_tangent);
+        float c = kd * key1.out_tangent;
+
+        return key1.value + t * (t * (a * t + b) + c);
+    }
+};
+
 
 enum InterpolationMode
 {
@@ -451,56 +510,152 @@ msAPI void msSetSizeOfKeyframe(int v)
         case sizeof(Keyframe_RW): Func<Keyframe_EW>(__VA_ARGS__); break;\
         case sizeof(Keyframe_E): Func<Keyframe_E>(__VA_ARGS__); break;\
         case sizeof(Keyframe_R): Func<Keyframe_R>(__VA_ARGS__); break;\
-        default: return false;\
+        default: break;\
     }\
 
-msAPI bool msCurveFillI(ms::AnimationCurve *self, void *x, InterpolationMode it)
+static void ConvertCurve(ms::AnimationCurve& curve, InterpolationMode it)
 {
-    if (self->data_type != ms::AnimationCurve::DataType::Int)
-        return false;
-    Switch(FillCurve, ms::TAnimationCurve<int>(*self), x, it);
-    return true;
+    size_t data_size = g_sizeof_keyframe * curve.size();
+
+    if (curve.data_flags.force_constant)
+        it = InterpolationMode::Constant;
+
+    char *dst[4]{};
+    auto alloc = [&](int n) {
+        curve.idata.resize(n);
+        for (int i = 0; i < n; ++i) {
+            curve.idata[i].resize_zeroclear(data_size);
+            dst[i] = curve.idata[i].data();
+        }
+    };
+
+    switch (curve.data_type) {
+    case ms::Animation::DataType::Int:
+        alloc(1);
+        Switch(FillCurve, ms::TAnimationCurve<int>(curve), dst[0], it);
+        break;
+    case ms::Animation::DataType::Float:
+        alloc(1);
+        Switch(FillCurve, ms::TAnimationCurve<float>(curve), dst[0], it);
+        break;
+    case ms::Animation::DataType::Float2:
+        alloc(2);
+        Switch(FillCurves, ms::TAnimationCurve<float2>(curve), dst[0], dst[1], it);
+        break;
+    case ms::Animation::DataType::Float3:
+        alloc(3);
+        Switch(FillCurves, ms::TAnimationCurve<float3>(curve), dst[0], dst[1], dst[2], it);
+        break;
+    case ms::Animation::DataType::Float4:
+        alloc(4);
+        Switch(FillCurves, ms::TAnimationCurve<float4>(curve), dst[0], dst[1], dst[2], dst[3], it);
+        break;
+    case ms::Animation::DataType::Quaternion:
+        if (it == InterpolationMode::Linear || it == InterpolationMode::Constant) {
+            alloc(3);
+            Switch(FillCurvesEuler, ms::TAnimationCurve<quatf>(curve), dst[0], dst[1], dst[2], it);
+        }
+        else {
+            alloc(4);
+            Switch(FillCurves, ms::TAnimationCurve<quatf>(curve), dst[0], dst[1], dst[2], dst[3], it);
+        }
+        break;
+    }
 }
-msAPI bool msCurveFillF(ms::AnimationCurve *self, void *x, InterpolationMode it)
+static void ConvertCurves(ms::Animation& anim, InterpolationMode it)
 {
-    if (self->data_type != ms::AnimationCurve::DataType::Float)
-        return false;
-    Switch(FillCurve, ms::TAnimationCurve<float>(*self), x, it);
-    return true;
+    int n = (int)anim.curves.size();
+    for (int i = 0; i != n; ++i)
+        ConvertCurve(*anim.curves[i], it);
 }
-msAPI bool msCurveFillF2(ms::AnimationCurve *self, void *x, void *y, InterpolationMode it)
+
+template<class KF>
+static void KeyframeReductionImpl(RawVector<char>& idata, float threshold)
 {
-    if (self->data_type != ms::AnimationCurve::DataType::Float2)
-        return false;
-    Switch(FillCurves, ms::TAnimationCurve<float2>(*self), x, y, it);
-    return true;
+    if (idata.empty())
+        return;
+
+    auto *keys = (const KF*)idata.cdata();
+    size_t key_count = idata.size() / sizeof(KF);
+
+    auto new_keys = AnimationCurveKeyReducer<KF>().apply({keys, key_count}, threshold);
+    auto ptr = (char*)new_keys.cdata();
+    idata.assign(ptr, ptr + (sizeof(KF) * new_keys.size()));
 }
-msAPI bool msCurveFillF3(ms::AnimationCurve *self, void *x, void *y, void *z, InterpolationMode it)
+
+static void KeyframeReduction(ms::AnimationCurve& curve, float threshold)
 {
-    if (self->data_type != ms::AnimationCurve::DataType::Float3)
-        return false;
-    Switch(FillCurves, ms::TAnimationCurve<float3>(*self), x, y, z, it);
-    return true;
+    for (auto& idata : curve.idata) {
+        Switch(KeyframeReductionImpl, idata, threshold);
+    }
 }
-msAPI bool msCurveFillF4(ms::AnimationCurve *self, void *x, void *y, void *z, void *w, InterpolationMode it)
+
+static void KeyframeReduction(ms::Animation& anim, float threshold)
 {
-    if (self->data_type != ms::AnimationCurve::DataType::Float4)
-        return false;
-    Switch(FillCurves, ms::TAnimationCurve<float4>(*self), x, y, z, w, it);
-    return true;
+    int n = (int)anim.curves.size();
+    for (int i = 0; i != n; ++i)
+        KeyframeReduction(*anim.curves[i], threshold);
 }
-msAPI bool msCurveFillQuat(ms::AnimationCurve *self, void *x, void *y, void *z, void *w, InterpolationMode it)
+
+static void KeyframeReduction(ms::AnimationClip *self, float threshold)
 {
-    if (self->data_type != ms::AnimationCurve::DataType::Quaternion)
-        return false;
-    Switch(FillCurves, ms::TAnimationCurve<quatf>(*self), x, y, z, w, it);
-    return true;
+    int n = (int)self->animations.size();
+    mu::parallel_for_blocked(0, n, 16,
+        [&](int begin, int end) {
+            for (int i = begin; i != end; ++i)
+                KeyframeReduction(*self->animations[i], threshold);
+        });
 }
-msAPI bool msCurveFillEuler(ms::AnimationCurve *self, void *x, void *y, void *z, InterpolationMode it)
+
+msAPI int msCurveGetNumElements(ms::AnimationCurve *self)
 {
-    if (self->data_type != ms::AnimationCurve::DataType::Quaternion)
-        return false;
-    Switch(FillCurvesEuler, ms::TAnimationCurve<quatf>(*self), x, y, z, it);
-    return true;
+    return (int)self->idata.size();
+}
+
+msAPI int msCurveGetNumKeys(ms::AnimationCurve *self, int i)
+{
+    return (int)self->idata[i].size() / g_sizeof_keyframe;
+}
+
+msAPI void msCurveCopy(ms::AnimationCurve *self, int i, void *dst)
+{
+    memcpy(dst, self->idata[i].cdata(), self->idata[i].size());
+}
+
+msAPI void msCurveConvert(ms::AnimationCurve *self, InterpolationMode it)
+{
+    ConvertCurve(*self, it);
+}
+msAPI void msCurveKeyframeReduction(ms::AnimationCurve *self, float threshold)
+{
+    KeyframeReduction(*self, threshold);
+}
+
+msAPI void msAnimationConvert(ms::Animation *self, InterpolationMode it)
+{
+    ConvertCurves(*self, it);
+}
+msAPI void msAnimationKeyframeReduction(ms::Animation *self, float threshold)
+{
+    KeyframeReduction(*self, threshold);
+}
+
+msAPI void msAnimationClipConvert(ms::AnimationClip *self, InterpolationMode it)
+{
+    int n = (int)self->animations.size();
+    mu::parallel_for_blocked(0, n, 16,
+        [&](int begin, int end) {
+            for (int i = begin; i != end; ++i)
+                ConvertCurves(*self->animations[i], it);
+        });
+}
+msAPI void msAnimationClipKeyframeReduction(ms::AnimationClip *self, float threshold)
+{
+    int n = (int)self->animations.size();
+    mu::parallel_for_blocked(0, n, 16,
+        [&](int begin, int end) {
+            for (int i = begin; i != end; ++i)
+                KeyframeReduction(*self->animations[i], threshold);
+        });
 }
 #undef Switch

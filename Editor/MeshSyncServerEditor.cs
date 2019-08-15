@@ -41,6 +41,7 @@ namespace UTJ.MeshSyncEditor
             DrawPlayerSettings(t, so);
             DrawMaterialList(t);
             DrawTextureList(t);
+            DrawAnimationSettings(t);
 
             if (GUILayout.Button("Export Meshes", GUILayout.Width(160.0f)))
                 t.ExportMeshes();

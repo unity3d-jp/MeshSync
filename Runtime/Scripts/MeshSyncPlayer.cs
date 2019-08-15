@@ -1843,6 +1843,9 @@ namespace UTJ.MeshSync
             if (!m_handleAssets)
                 return;
 
+            clipData.Convert(m_animationInterpolation);
+            //clipData.KeyframeReduction(0.001f);
+
             //float start = Time.realtimeSinceStartup;
 
             var animClipCache = new Dictionary<GameObject, AnimationClip>();
@@ -1910,7 +1913,6 @@ namespace UTJ.MeshSync
                     root = root.gameObject,
                     target = target.gameObject,
                     path = animPath,
-                    interpolation = m_animationInterpolation,
                     enableVisibility = m_syncVisibility,
 #if UNITY_2018_1_OR_NEWER
                     usePhysicalCameraParams = m_usePhysicalCameraParams,

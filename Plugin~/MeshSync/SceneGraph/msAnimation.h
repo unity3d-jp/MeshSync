@@ -36,7 +36,17 @@ public:
         uint32_t affect_scale : 1; // for position values
         uint32_t affect_handedness : 1; // for TRS values
         uint32_t ignore_negate : 1; // for scale values
+        uint32_t force_constant : 1; // force constant interpolation. e.g. bool curves
     };
+
+    // serializable
+    std::string name;
+    SharedVector<char> data;
+    DataType data_type = DataType::Unknown;
+    DataFlags data_flags = {};
+
+    // non-serializable
+    std::vector<RawVector<char>> idata; // used in msUnitySpecific.cpp
 
 protected:
     AnimationCurve();
@@ -67,13 +77,7 @@ public:
     }
 
     void reduction(bool keep_flat_curves);
-    void reserve(size_t n);
-
-
-    std::string name;
-    SharedVector<char> data;
-    DataType data_type = DataType::Unknown;
-    DataFlags data_flags = {};
+    void reserve(size_t size);
 };
 msSerializable(AnimationCurve);
 msDeclPtr(AnimationCurve);
@@ -93,6 +97,7 @@ class Animation
 public:
     using DataType = AnimationCurve::DataType;
 
+    // serializable
     EntityType entity_type = EntityType::Unknown;
     std::string path;
     std::vector<AnimationCurvePtr> curves; // sorted vector

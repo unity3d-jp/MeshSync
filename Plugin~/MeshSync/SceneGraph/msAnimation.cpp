@@ -119,6 +119,8 @@ void AnimationCurve::clear()
     data.clear();
     data_type = DataType::Unknown;
     data_flags = {};
+
+    idata.clear();
 }
 
 uint64_t AnimationCurve::hash() const
@@ -157,9 +159,9 @@ EachDataTypes(Instantiate)
 #undef Instantiate
 
 
-void AnimationCurve::reserve(size_t n)
+void AnimationCurve::reserve(size_t size)
 {
-    g_curve_fs[(int)data_type].reserve_keyframes(*this, n);
+    g_curve_fs[(int)data_type].reserve_keyframes(*this, size);
 }
 void AnimationCurve::reduction(bool keep_flat_curves)
 {
@@ -440,6 +442,7 @@ void TransformAnimation::setupCurves(bool create_if_not_exist)
         rotation.curve->data_flags.affect_handedness = true;
         scale.curve->data_flags.affect_handedness = true;
         scale.curve->data_flags.ignore_negate = true;
+        visible.curve->data_flags.force_constant = true;
     }
 }
 
