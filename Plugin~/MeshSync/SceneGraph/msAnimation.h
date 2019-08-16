@@ -127,6 +127,8 @@ public:
     AnimationCurvePtr getCurve(const char *name, DataType type);
     AnimationCurvePtr getCurve(const std::string& name, DataType type);
 
+    void clearEmptyCurves();
+
     static void validate(std::shared_ptr<Animation>& anim);
 };
 msSerializable(Animation);
@@ -325,6 +327,8 @@ public:
     bool empty() const;
     void addAnimation(AnimationPtr v);
     void addAnimation(TransformAnimationPtr v);
+
+    void clearEmptyAnimations();
 };
 msSerializable(AnimationClip);
 msDeclPtr(AnimationClip);

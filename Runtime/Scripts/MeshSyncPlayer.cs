@@ -139,6 +139,7 @@ namespace UTJ.MeshSync
         [SerializeField] protected InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
         [SerializeField] protected bool m_keyframeReduction = true;
         [SerializeField] protected float m_reductionThreshold = 0.001f;
+        [SerializeField] protected bool m_reductionKeepFlatCurves = false;
         [SerializeField] protected ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
         [SerializeField] protected bool m_logging = true;
         [SerializeField] protected bool m_profiling = false;
@@ -251,6 +252,11 @@ namespace UTJ.MeshSync
         {
             get { return m_reductionThreshold; }
             set { m_reductionThreshold = value; }
+        }
+        public bool reductionKeepFlatCurves
+        {
+            get { return m_reductionKeepFlatCurves; }
+            set { m_reductionKeepFlatCurves = value; }
         }
         public ZUpCorrectionMode zUpCorrection
         {
@@ -1863,7 +1869,7 @@ namespace UTJ.MeshSync
 
             clipData.Convert(m_animationInterpolation);
             if (m_keyframeReduction)
-                clipData.KeyframeReduction(m_reductionThreshold);
+                clipData.KeyframeReduction(m_reductionThreshold, m_reductionKeepFlatCurves);
 
             //float start = Time.realtimeSinceStartup;
 
@@ -1875,10 +1881,19 @@ namespace UTJ.MeshSync
                 AnimationData data = clipData.GetAnimation(ai);
 
                 var path = data.path;
-                bool dummy = false;
-                var target = FindOrCreateObjectByPath(path, true, ref dummy);
+                EntityRecord rec = null;
+                m_clientObjects.TryGetValue(path, out rec);
+
+                Transform target = null;
+                if (rec != null)
+                    target = rec.trans;
                 if (target == null)
-                    return;
+                {
+                    bool dummy = false;
+                    target = FindOrCreateObjectByPath(path, true, ref dummy);
+                    if (target == null)
+                        return;
+                }
 
                 Transform root = target;
                 while (root.parent != null && root.parent != m_rootObject)
@@ -1937,6 +1952,11 @@ namespace UTJ.MeshSync
                     usePhysicalCameraParams = m_usePhysicalCameraParams,
 #endif
                 };
+                if (rec != null)
+                {
+                    if (rec.meshRenderer != null) ctx.mainComponentType = typeof(MeshRenderer);
+                    else if (rec.skinnedMeshRenderer != null) ctx.mainComponentType = typeof(SkinnedMeshRenderer);
+                }
                 data.ExportToClip(ctx);
             }
 

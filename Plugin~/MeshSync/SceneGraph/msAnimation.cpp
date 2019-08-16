@@ -300,6 +300,14 @@ AnimationCurvePtr Animation::getCurve(const std::string& name, DataType type)
     return getCurve(name.c_str(), type);
 }
 
+void Animation::clearEmptyCurves()
+{
+    curves.erase(
+        std::remove_if(curves.begin(), curves.end(), [](auto& c) { return c->empty(); }),
+        curves.end());
+}
+
+
 void Animation::validate(AnimationPtr& anim)
 {
     switch (anim->entity_type) {
@@ -320,6 +328,7 @@ void Animation::validate(AnimationPtr& anim)
         TransformAnimation::create(anim)->validate();
         break;
     }
+    anim->clearEmptyCurves();
 }
 
 
@@ -389,6 +398,13 @@ void AnimationClip::addAnimation(TransformAnimationPtr v)
         addAnimation(v->host);
 }
 
+void AnimationClip::clearEmptyAnimations()
+{
+    animations.erase(
+        std::remove_if(animations.begin(), animations.end(), [](auto& c) { return c->empty(); }),
+        animations.end());
+}
+
 
 template<class T>
 static inline std::shared_ptr<T> CreateTypedAnimation(AnimationPtr host)
@@ -453,6 +469,8 @@ void TransformAnimation::reserve(size_t n)
 
 void TransformAnimation::validate()
 {
+    if (visible && !visible.empty() && visible.equal_all(visible.front().value))
+        visible.clear();
 }
 
 
@@ -486,6 +504,8 @@ void CameraAnimation::setupCurves(bool create_if_not_exist)
 
 void CameraAnimation::validate()
 {
+    super::validate();
+
     if (fov.equal_all(0.0f))
         fov.clear();
     if (near_plane.equal_all(0.0f))
@@ -528,6 +548,8 @@ void LightAnimation::setupCurves(bool create_if_not_exist)
 
 void LightAnimation::validate()
 {
+    super::validate();
+
     if (range.equal_all(0.0f))
         range.clear();
     if (spot_angle.equal_all(0.0f))

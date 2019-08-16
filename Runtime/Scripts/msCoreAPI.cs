@@ -588,6 +588,7 @@ namespace UTJ.MeshSync
     public class AnimationImportContext
     {
         public AnimationClip clip;
+        public Type mainComponentType;
         public GameObject root;
         public GameObject target;
         public string path;
@@ -595,7 +596,6 @@ namespace UTJ.MeshSync
 #if UNITY_2018_1_OR_NEWER
         public bool usePhysicalCameraParams;
 #endif
-        public Type mainComponentType;
     }
 
     public struct AnimationCurveData
@@ -612,7 +612,6 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern void msCurveCopy(IntPtr self, int i, Keyframe[] x);
 
         [DllImport(Lib.name)] static extern void msCurveConvert(IntPtr self, InterpolationMode it);
-        [DllImport(Lib.name)] static extern void msCurveKeyframeReduction(IntPtr self, float threshold);
         #endregion
 
         public enum DataType
@@ -656,7 +655,6 @@ namespace UTJ.MeshSync
         public void Copy(int i, Keyframe[] dst) { msCurveCopy(self, i, dst); }
 
         public void Convert(InterpolationMode it) { msCurveConvert(self, it); }
-        public void KeyframeReduction(float threshold) { msCurveKeyframeReduction(self, threshold); }
     }
 
     public struct AnimationData
@@ -723,8 +721,10 @@ namespace UTJ.MeshSync
 
 
 #if UNITY_EDITOR
-        public static void SetCurve(AnimationClip clip, string path, Type type, string prop, AnimationCurve curve)
+        public static void SetCurve(AnimationClip clip, string path, Type type, string prop, AnimationCurve curve, bool applyNullCurve = false)
         {
+            if (curve == null && !applyNullCurve)
+                return;
             Misc.SetCurve(clip, path, type, prop, curve);
         }
 
@@ -735,7 +735,7 @@ namespace UTJ.MeshSync
             var ttrans = typeof(Transform);
 
             {
-                SetCurve(clip, path, ttrans, "m_LocalPosition", null);
+                SetCurve(clip, path, ttrans, "m_LocalPosition", null, true);
                 var curves = GenCurves(msAnimationGetTransformTranslation(self));
                 if (curves != null && curves.Length == 3)
                 {
@@ -745,7 +745,7 @@ namespace UTJ.MeshSync
                 }
             }
             {
-                SetCurve(clip, path, ttrans, "m_LocalRotation", null);
+                SetCurve(clip, path, ttrans, "m_LocalRotation", null, true);
                 var curves = GenCurves(msAnimationGetTransformRotation(self));
                 if (curves != null)
                 {
@@ -765,7 +765,7 @@ namespace UTJ.MeshSync
                 }
             }
             {
-                SetCurve(clip, path, ttrans, "m_LocalScale", null);
+                SetCurve(clip, path, ttrans, "m_LocalScale", null, true);
                 var curves = GenCurves(msAnimationGetTransformScale(self));
                 if (curves != null && curves.Length == 3)
                 {
@@ -777,7 +777,7 @@ namespace UTJ.MeshSync
             if (ctx.enableVisibility && ctx.mainComponentType != null)
             {
                 const string Target = "m_Enabled";
-                SetCurve(clip, path, ctx.mainComponentType, Target, null);
+                SetCurve(clip, path, ctx.mainComponentType, Target, null, true);
                 var curves = GenCurves(msAnimationGetTransformVisible(self));
                 if (curves != null && curves.Length == 1)
                     SetCurve(clip, path, ctx.mainComponentType, Target, curves[0]);
@@ -799,7 +799,7 @@ namespace UTJ.MeshSync
             if (ctx.usePhysicalCameraParams)
             {
                 const string Target = "m_FocalLength";
-                SetCurve(clip, path, tcam, Target, null);
+                SetCurve(clip, path, tcam, Target, null, true);
                 var curves = GenCurves(msAnimationGetCameraFocalLength(self));
                 if (curves != null && curves.Length == 1)
                 {
@@ -810,7 +810,7 @@ namespace UTJ.MeshSync
             if (isPhysicalCameraParamsAvailable)
             {
                 {
-                    SetCurve(clip, path, tcam, "m_SensorSize", null);
+                    SetCurve(clip, path, tcam, "m_SensorSize", null, true);
                     var curves = GenCurves(msAnimationGetCameraSensorSize(self));
                     if (curves != null && curves.Length == 2)
                     {
@@ -819,7 +819,7 @@ namespace UTJ.MeshSync
                     }
                 }
                 {
-                    SetCurve(clip, path, tcam, "m_LensShift", null);
+                    SetCurve(clip, path, tcam, "m_LensShift", null, true);
                     var curves = GenCurves(msAnimationGetCameraLensShift(self));
                     if (curves != null && curves.Length == 2)
                     {
@@ -832,7 +832,7 @@ namespace UTJ.MeshSync
 #endif
             {
                 const string Target = "field of view";
-                SetCurve(clip, path, tcam, Target, null);
+                SetCurve(clip, path, tcam, Target, null, true);
                 var curves = GenCurves(msAnimationGetCameraFieldOfView(self));
                 if (curves != null && curves.Length == 1)
                     SetCurve(clip, path, tcam, Target, curves[0]);
@@ -840,14 +840,14 @@ namespace UTJ.MeshSync
 
             {
                 const string Target = "far clip plane";
-                SetCurve(clip, path, tcam, Target, null);
+                SetCurve(clip, path, tcam, Target, null, true);
                 var curves = GenCurves(msAnimationGetCameraFarPlane(self));
                 if (curves != null && curves.Length == 1)
                     SetCurve(clip, path, tcam, Target, curves[0]);
             }
             {
                 const string Target = "near clip plane";
-                SetCurve(clip, path, tcam, Target, null);
+                SetCurve(clip, path, tcam, Target, null, true);
                 var curves = GenCurves(msAnimationGetCameraNearPlane(self));
                 if (curves != null && curves.Length == 1)
                     SetCurve(clip, path, tcam, Target, curves[0]);
@@ -864,7 +864,7 @@ namespace UTJ.MeshSync
             var path = ctx.path;
 
             {
-                SetCurve(clip, path, tlight, "m_Color", null);
+                SetCurve(clip, path, tlight, "m_Color", null, true);
                 var curves = GenCurves(msAnimationGetLightColor(self));
                 if (curves != null && curves.Length == 4)
                 {
@@ -876,21 +876,21 @@ namespace UTJ.MeshSync
             }
             {
                 const string Target = "m_Intensity";
-                SetCurve(clip, path, tlight, Target, null);
+                SetCurve(clip, path, tlight, Target, null, true);
                 var curves = GenCurves(msAnimationGetLightIntensity(self));
                 if (curves != null && curves.Length == 1)
                     SetCurve(clip, path, tlight, Target, curves[0]);
             }
             {
                 const string Target = "m_Range";
-                SetCurve(clip, path, tlight, Target, null);
+                SetCurve(clip, path, tlight, Target, null, true);
                 var curves = GenCurves(msAnimationGetLightRange(self));
                 if (curves != null && curves.Length == 1)
                     SetCurve(clip, path, tlight, Target, curves[0]);
             }
             {
                 const string Target = "m_SpotAngle";
-                SetCurve(clip, path, tlight, Target, null);
+                SetCurve(clip, path, tlight, Target, null, true);
                 var curves = GenCurves(msAnimationGetLightSpotAngle(self));
                 if (curves != null && curves.Length == 1)
                     SetCurve(clip, path, tlight, Target, curves[0]);
@@ -905,8 +905,9 @@ namespace UTJ.MeshSync
 
         public void ExportMeshAnimation(AnimationImportContext ctx)
         {
+            if (ctx.mainComponentType == null)
+                ctx.mainComponentType = typeof(MeshRenderer);
             var tsmr = typeof(SkinnedMeshRenderer);
-            ctx.mainComponentType = tsmr;
             ExportTransformAnimation(ctx);
 
             var clip = ctx.clip;
@@ -914,7 +915,7 @@ namespace UTJ.MeshSync
 
             {
                 // blendshape animation
-                SetCurve(clip, path, tsmr, "blendShape", null);
+                SetCurve(clip, path, tsmr, "blendShape", null, true);
 
                 s_blendshapes = new List<AnimationCurveData>();
                 msAnimationEachBlendshapeCurves(self, BlendshapeCallback);
@@ -974,7 +975,7 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern AnimationData msAnimationClipGetAnimationData(IntPtr self, int i);
 
         [DllImport(Lib.name)] static extern void msAnimationClipConvert(IntPtr self, InterpolationMode it);
-        [DllImport(Lib.name)] static extern void msAnimationClipKeyframeReduction(IntPtr self, float threshold);
+        [DllImport(Lib.name)] static extern void msAnimationClipKeyframeReduction(IntPtr self, float threshold, byte keepFlatCurves);
         [DllImport(Lib.name)] static extern void msSetSizeOfKeyframe(int v);
         static bool s_prepared = false;
         #endregion
@@ -1015,9 +1016,9 @@ namespace UTJ.MeshSync
             Prepare();
             msAnimationClipConvert(self, it);
         }
-        public void KeyframeReduction(float threshold)
+        public void KeyframeReduction(float threshold, bool keepFlatCurves)
         {
-            msAnimationClipKeyframeReduction(self, threshold);
+            msAnimationClipKeyframeReduction(self, threshold, Misc.ToByte(keepFlatCurves));
         }
     }
     #endregion

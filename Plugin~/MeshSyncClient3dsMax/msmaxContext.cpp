@@ -1377,41 +1377,36 @@ bool msmaxContext::exportAnimations(INode *n, bool force)
     if (it != m_anim_records.end())
         return false;
 
-    auto& rec = getNodeRecord(n);
-
-    auto obj = rec.baseobj;
+    auto *obj = GetBaseObject(n);
     ms::TransformAnimationPtr ret;
     AnimationRecord::extractor_t extractor = nullptr;
 
-    if (IsMesh(obj)) {
+    if (IsMesh(obj) && (!m_settings.ignore_non_renderable || IsRenderable(n))) {
         exportAnimations(n->GetParentNode(), true);
-        auto mod = FindSkin(n);
-        if (mod && mod->IsEnabled()) {
-            auto skin = (ISkin*)mod->GetInterface(I_SKIN);
-            EachBone(skin, [this](INode *bone) {
+        if (m_settings.sync_bones && !m_settings.bake_modifiers) {
+            EachBone(n, [this](INode *bone) {
                 exportAnimations(bone, true);
             });
         }
+
         ret = ms::MeshAnimation::create();
         extractor = &msmaxContext::extractMeshAnimation;
     }
     else {
-        if (IsCamera(obj)) {
+        if (IsCamera(obj) && m_settings.sync_cameras) {
             exportAnimations(n->GetParentNode(), true);
             ret = ms::CameraAnimation::create();
             extractor = &msmaxContext::extractCameraAnimation;
         }
-        else if (IsLight(obj)) {
+        else if (IsLight(obj) && m_settings.sync_lights) {
             exportAnimations(n->GetParentNode(), true);
             ret = ms::LightAnimation::create();
             extractor = &msmaxContext::extractLightAnimation;
         }
-        else {
-            if (force) {
-                exportAnimations(n->GetParentNode(), true);
-                ret = ms::TransformAnimation::create();
-                extractor = &msmaxContext::extractTransformAnimation;
-            }
+        else if (force) {
+            exportAnimations(n->GetParentNode(), true);
+            ret = ms::TransformAnimation::create();
+            extractor = &msmaxContext::extractTransformAnimation;
         }
     }
 
@@ -1421,7 +1416,7 @@ bool msmaxContext::exportAnimations(INode *n, bool force)
 
         auto& ar = m_anim_records[n];
         ar.dst = ret;
-        ar.node = &rec;
+        ar.node = &getNodeRecord(n);
         ar.extractor = extractor;
     }
     return ret != nullptr;

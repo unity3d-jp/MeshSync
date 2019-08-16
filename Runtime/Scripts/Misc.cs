@@ -17,11 +17,13 @@ namespace UTJ.MeshSync
     {
         #region internal
         [DllImport(Lib.name)] static extern ulong msGetTime();
-        [DllImport(Lib.name)] static extern int msKeyframeReduction(Keyframe[] keys, int keyCount, float threshold);
+        [DllImport(Lib.name)] static extern int msKeyframeReduction(Keyframe[] keys, int keyCount, float threshold, byte keepFlatCurves);
         #endregion
 
         public static ulong GetTimeNS() { return msGetTime(); }
         public static float NS2MS(ulong ns) { return (float)((double)ns / 1000000.0); }
+
+        public static byte ToByte(bool v) { return v ? (byte)1 : (byte)0; }
 
         public static string S(IntPtr cstring)
         {
@@ -64,20 +66,21 @@ namespace UTJ.MeshSync
             return ret;
         }
 
-        public static Keyframe[] KeyframeReduction(Keyframe[] keys, float threshold)
+        public static Keyframe[] KeyframeReduction(Keyframe[] keys, float threshold, bool keepFlatCurves)
         {
             AnimationClipData.Prepare();
-            int newCount = msKeyframeReduction(keys, keys.Length, threshold);
+            int newCount = msKeyframeReduction(keys, keys.Length, threshold, ToByte(keepFlatCurves));
             var newKeys = new Keyframe[newCount];
-            Array.Copy(keys, newKeys, newCount);
+            if (newCount > 0)
+                Array.Copy(keys, newKeys, newCount);
             return newKeys;
         }
 
-        public static void KeyframeReduction(AnimationCurve curve, float threshold)
+        public static void KeyframeReduction(AnimationCurve curve, float threshold, bool keepFlatCurves)
         {
             if (curve.length <= 2)
                 return;
-            curve.keys = KeyframeReduction(curve.keys, threshold);
+            curve.keys = KeyframeReduction(curve.keys, threshold, keepFlatCurves);
         }
 
         public static void SetCurve(AnimationClip clip, string path, Type type, string prop, AnimationCurve curve)
