@@ -7,6 +7,7 @@
 using namespace mu;
 
 
+#ifdef msEnableNetwork
 static ms::ClientSettings GetClientSettings()
 {
     ms::ClientSettings ret;
@@ -218,13 +219,10 @@ TestCase(Test_Points)
         node->reference = "/Test/PointMesh";
         node->position = { -2.5f, 0.0f, 0.0f };
 
-        auto data = ms::PointsData::create();
-        node->data.push_back(data);
-
-        int c = 100;
-        data->points.resize_discard(c);
-        for (int i = 0; i < c;++i) {
-            data->points[i] = { rand.f11(), rand.f11(), rand.f11() };
+        int N = 100;
+        node->points.resize_discard(N);
+        for (int i = 0; i < N;++i) {
+            node->points[i] = { rand.f11(), rand.f11(), rand.f11() };
         }
         node->setupPointsDataFlags();
     }
@@ -236,15 +234,12 @@ TestCase(Test_Points)
         node->reference = "/Test/PointMesh";
         node->position = { 0.0f, 0.0f, 0.0f };
 
-        auto data = ms::PointsData::create();
-        node->data.push_back(data);
-
-        int c = 100;
-        data->points.resize_discard(c);
-        data->rotations.resize_discard(c);
-        for (int i = 0; i < c; ++i) {
-            data->points[i] = { rand.f11(), rand.f11(), rand.f11() };
-            data->rotations[i] = rotate(rand.v3n(), rand.f11() * mu::PI);
+        int N = 100;
+        node->points.resize_discard(N);
+        node->rotations.resize_discard(N);
+        for (int i = 0; i < N; ++i) {
+            node->points[i] = { rand.f11(), rand.f11(), rand.f11() };
+            node->rotations[i] = rotate(rand.v3n(), rand.f11() * mu::PI);
         }
         node->setupPointsDataFlags();
     }
@@ -252,54 +247,41 @@ TestCase(Test_Points)
         auto node = ms::Points::create();
         scene->entities.push_back(node);
 
-        auto clip = ms::AnimationClip::create();
-        scene->assets.push_back(clip);
-
-        auto anim = ms::PointsAnimation::create();
-        clip->addAnimation(anim);
-
-        anim->path = "/Test/PointsTRS";
         node->path = "/Test/PointsTRS";
         node->reference = "/Test/PointMesh";
         node->position = { 2.5f, 0.0f, 0.0f };
 
-        int num_points = 100;
-        int num_frames = 100;
-
-        RawVector<float3> points(num_points);
-        RawVector<quatf> rotations(num_points);
-        RawVector<float3> scales(num_points);
-        RawVector<float3> velocities(num_points);
-        RawVector<float4> colors(num_points);
-
-        for (int i = 0; i < num_points; ++i) {
-            points[i] = { rand.f11(), rand.f11(), rand.f11() };
-            rotations[i] = rotate(rand.v3n(), rand.f11() * mu::PI);
-            scales[i] = { rand.f01(), rand.f01(), rand.f01() };
-            velocities[i] = float3{ rand.f11(), rand.f11(), rand.f11() } *0.1f;
-            colors[i] = { rand.f01(), rand.f01(), rand.f01() };
-        }
-
-        for (int fi = 0; fi < num_frames; ++fi) {
-            auto data = ms::PointsData::create();
-            node->data.push_back(data);
-
-            float t = (1.0f / 30.0f) * fi;
-            anim->time.push_back({ t, t });
-            data->time = t;
-            data->points = points;
-            data->rotations = rotations;
-            data->scales = scales;
-            data->velocities = velocities;
-            data->colors = colors;
-            for (int i = 0; i < num_points; ++i) {
-                points[i] += velocities[i];
-            }
+        int N = 100;
+        node->points.resize_discard(N);
+        node->rotations.resize_discard(N);
+        node->scales.resize_discard(N);
+        node->colors.resize_discard(N);
+        node->velocities.resize_discard(N);
+        for (int i = 0; i < N; ++i) {
+            node->points[i] = { rand.f11(), rand.f11(), rand.f11() };
+            node->rotations[i] = rotate(rand.v3n(), rand.f11() * mu::PI);
+            node->scales[i] = { rand.f01(), rand.f01(), rand.f01() };
+            node->colors[i] = { rand.f01(), rand.f01(), rand.f01() };
+            node->velocities[i] = float3{ rand.f11(), rand.f11(), rand.f11() } *0.1f;
         }
         node->setupPointsDataFlags();
-    }
 
+    }
     Send(scene);
+
+    // animation
+    {
+        const int F = 20;
+        auto node = std::static_pointer_cast<ms::Points>(scene->entities.back());
+
+        for (int fi = 0; fi < F; ++fi) {
+            for (int i = 0; i < node->points.size(); ++i)
+                node->points[i] += node->velocities[i];
+
+            Send(scene);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }
 }
 
 
@@ -543,3 +525,4 @@ TestCase(Test_Query)
     SendQuery(AllNodes);
 #undef SendQuery
 }
+#endif // msEnableNetwork

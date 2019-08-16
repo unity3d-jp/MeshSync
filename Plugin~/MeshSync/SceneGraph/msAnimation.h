@@ -36,7 +36,17 @@ public:
         uint32_t affect_scale : 1; // for position values
         uint32_t affect_handedness : 1; // for TRS values
         uint32_t ignore_negate : 1; // for scale values
+        uint32_t force_constant : 1; // force constant interpolation. e.g. bool curves
     };
+
+    // serializable
+    std::string name;
+    SharedVector<char> data;
+    DataType data_type = DataType::Unknown;
+    DataFlags data_flags = {};
+
+    // non-serializable
+    std::vector<RawVector<char>> idata; // used in msUnitySpecific.cpp
 
 protected:
     AnimationCurve();
@@ -66,14 +76,7 @@ public:
         }
     }
 
-    void reduction(bool keep_flat_curves);
-    void reserve(size_t n);
-
-
-    std::string name;
-    SharedVector<char> data;
-    DataType data_type = DataType::Unknown;
-    DataFlags data_flags = {};
+    void reserve(size_t size);
 };
 msSerializable(AnimationCurve);
 msDeclPtr(AnimationCurve);
@@ -93,6 +96,7 @@ class Animation
 public:
     using DataType = AnimationCurve::DataType;
 
+    // serializable
     EntityType entity_type = EntityType::Unknown;
     std::string path;
     std::vector<AnimationCurvePtr> curves; // sorted vector
@@ -109,20 +113,23 @@ public:
     uint64_t hash() const;
     uint64_t checksum() const;
     bool empty() const;
-    void reduction(bool keep_flat_curves);
     void reserve(size_t n);
 
     bool isRoot() const;
-    AnimationCurvePtr findCurve(const char *name);
-    AnimationCurvePtr findCurve(const std::string& name);
-    AnimationCurvePtr findCurve(const char *name, DataType type);
-    AnimationCurvePtr findCurve(const std::string& name, DataType type);
+    AnimationCurvePtr findCurve(const char *name) const;
+    AnimationCurvePtr findCurve(const std::string& name) const;
+    AnimationCurvePtr findCurve(const char *name, DataType type) const;
+    AnimationCurvePtr findCurve(const std::string& name, DataType type) const;
     // erase old one if already exists
     AnimationCurvePtr addCurve(const char *name, DataType type);
     AnimationCurvePtr addCurve(const std::string& name, DataType type);
     // find or create curve
     AnimationCurvePtr getCurve(const char *name, DataType type);
     AnimationCurvePtr getCurve(const std::string& name, DataType type);
+
+    void clearEmptyCurves();
+
+    static void validate(std::shared_ptr<Animation>& anim);
 };
 msSerializable(Animation);
 msDeclPtr(Animation);
@@ -172,6 +179,16 @@ struct TAnimationCurve
           key_t& back()        { return data()[size() - 1]; }
     const key_t& back() const  { return cdata()[size() - 1]; }
 
+    bool equal_all(T v) const
+    {
+        if (!*this)
+            return false;
+        for (auto& e : *this)
+            if (e.value != v)
+                return false;
+        return true;
+    }
+
     AnimationCurve *curve = nullptr;
 };
 
@@ -193,6 +210,7 @@ public:
     virtual ~TransformAnimation();
     virtual void setupCurves(bool create_if_not_exist);
     virtual void reserve(size_t n);
+    virtual void validate();
 
     AnimationPtr host;
     std::string& path;
@@ -204,12 +222,12 @@ public:
 msDeclPtr(TransformAnimation);
 
 
-#define mskCameraFieldOfView        "Camera.fieldOfView"
-#define mskCameraNearPlane          "Camera.nearPlane"
-#define mskCameraFarPlane           "Camera.farPlane"
-#define mskCameraFocalLength        "Camera.focalLength"
-#define mskCameraSensorSize         "Camera.sensorSize"
-#define mskCameraLensShift          "Camera.lensShift"
+#define mskCameraFieldOfView    "Camera.fieldOfView"
+#define mskCameraNearPlane      "Camera.nearPlane"
+#define mskCameraFarPlane       "Camera.farPlane"
+#define mskCameraFocalLength    "Camera.focalLength"
+#define mskCameraSensorSize     "Camera.sensorSize"
+#define mskCameraLensShift      "Camera.lensShift"
 
 class CameraAnimation : public TransformAnimation
 {
@@ -219,6 +237,7 @@ public:
 
     CameraAnimation(AnimationPtr host);
     void setupCurves(bool create_if_not_exist) override;
+    void validate() override;
 
     TAnimationCurve<float> fov;
     TAnimationCurve<float> near_plane;
@@ -242,6 +261,7 @@ public:
 
     LightAnimation(AnimationPtr host);
     void setupCurves(bool create_if_not_exist) override;
+    void validate() override;
 
     TAnimationCurve<float4> color;
     TAnimationCurve<float>  intensity;
@@ -283,21 +303,6 @@ public:
 };
 
 
-#define mskPointsTime "Points.time"
-
-class PointsAnimation : public TransformAnimation
-{
-using super = TransformAnimation;
-public:
-    static std::shared_ptr<PointsAnimation> create(AnimationPtr host = nullptr);
-
-    PointsAnimation(AnimationPtr host);
-    void setupCurves(bool create_if_not_exist) override;
-
-    TAnimationCurve<float> time;
-};
-
-
 class AnimationClip : public Asset
 {
 using super = Asset;
@@ -320,10 +325,10 @@ public:
     uint64_t checksum() const override;
 
     bool empty() const;
-    void reduction(bool keep_flat_curves = false);
-
     void addAnimation(AnimationPtr v);
     void addAnimation(TransformAnimationPtr v);
+
+    void clearEmptyAnimations();
 };
 msSerializable(AnimationClip);
 msDeclPtr(AnimationClip);

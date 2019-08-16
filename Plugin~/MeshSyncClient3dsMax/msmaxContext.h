@@ -6,7 +6,7 @@
 
 #define msmaxAPI extern "C" __declspec(dllexport)
 
-enum class msmaxExportTarget : int
+enum class ExportTarget : int
 {
     Objects,
     Materials,
@@ -14,30 +14,29 @@ enum class msmaxExportTarget : int
     Everything,
 };
 
-enum class msmaxObjectScope : int
+enum class ObjectScope : int
 {
-    None,
+    None = -1,
     All,
     Updated,
     Selected,
 };
 
-enum class msmaxFrameRange : int
+enum class FrameRange : int
 {
-    None,
-    CurrentFrame,
-    AllFrames,
-    CustomRange,
+    Current,
+    All,
+    Custom,
 };
 
-enum class msmaxMaterialFrameRange : int
+enum class MaterialFrameRange : int
 {
     None,
-    OneFrame,
-    AllFrames,
+    One,
+    All,
 };
 
-struct msmaxSettings
+struct SyncSettings
 {
     ms::ClientSettings client_settings;
 
@@ -62,8 +61,6 @@ struct msmaxSettings
 
     float anim_time_scale = 1.0f;
     float anim_sample_rate = 3.0f;
-    bool anim_keyframe_reduction = true;
-    bool anim_keep_flat_curves = false;
 
     // parallel mesh extraction.
     // it seems can cause problems when exporting objects with EvalWorldState()...
@@ -72,12 +69,12 @@ struct msmaxSettings
     bool export_scene_cache = false;
 };
 
-struct msmaxCacheExportSettings
+struct CacheSettings
 {
     std::string path;
-    msmaxObjectScope object_scope = msmaxObjectScope::All;
-    msmaxFrameRange frame_range = msmaxFrameRange::CurrentFrame;
-    msmaxMaterialFrameRange material_frame_range = msmaxMaterialFrameRange::OneFrame;
+    ObjectScope object_scope = ObjectScope::All;
+    FrameRange frame_range = FrameRange::Current;
+    MaterialFrameRange material_frame_range = MaterialFrameRange::One;
     int frame_begin = 0;
     int frame_end = 100;
 
@@ -102,8 +99,8 @@ public:
 
     msmaxContext();
     ~msmaxContext();
-    msmaxSettings& getSettings();
-    msmaxCacheExportSettings& getCacheSettings();
+    SyncSettings& getSettings();
+    CacheSettings& getCacheSettings();
 
     void onStartup();
     void onShutdown();
@@ -124,10 +121,10 @@ public:
 
     void wait();
     void update();
-    bool sendObjects(msmaxObjectScope scope, bool dirty_all);
+    bool sendObjects(ObjectScope scope, bool dirty_all);
     bool sendMaterials(bool dirty_all);
-    bool sendAnimations(msmaxObjectScope scope);
-    bool exportCache(const msmaxCacheExportSettings& cache_settings);
+    bool sendAnimations(ObjectScope scope);
+    bool exportCache(const CacheSettings& cache_settings);
 
     bool recvScene();
 
@@ -188,7 +185,7 @@ private:
 
     void updateRecords(bool track_delete = true);
     TreeNode& getNodeRecord(INode *n);
-    std::vector<TreeNode*> getNodes(msmaxObjectScope scope);
+    std::vector<TreeNode*> getNodes(ObjectScope scope);
 
     void kickAsyncExport();
 
@@ -199,9 +196,9 @@ private:
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode& node);
     ms::TransformPtr exportInstance(TreeNode& node, ms::TransformPtr base);
-    ms::CameraPtr exportCamera(TreeNode& node);
-    ms::LightPtr exportLight(TreeNode& node);
-    ms::MeshPtr exportMesh(TreeNode& node);
+    ms::TransformPtr exportCamera(TreeNode& node);
+    ms::TransformPtr exportLight(TreeNode& node);
+    ms::TransformPtr exportMesh(TreeNode& node);
 
     mu::float4x4 getPivotMatrix(INode *n);
     mu::float4x4 getGlobalMatrix(INode *n, TimeValue t);
@@ -221,11 +218,9 @@ private:
     void extractLightAnimation(ms::TransformAnimation& dst, TreeNode *n);
     void extractMeshAnimation(ms::TransformAnimation& dst, TreeNode *n);
 
-    bool exportCacheImpl(const msmaxCacheExportSettings& cache_settings);
-
 private:
-    msmaxSettings m_settings;
-    msmaxCacheExportSettings m_cache_settings;
+    SyncSettings m_settings;
+    CacheSettings m_cache_settings;
     ISceneEventManager::CallbackKey m_cbkey = 0;
 
     std::map<INode*, TreeNode> m_node_records;
@@ -235,10 +230,9 @@ private:
     std::vector<Mesh*> m_tmp_meshes;
     RenderScope m_render_scope;
 
-    int m_index_seed = 0;
     bool m_dirty = true;
     bool m_scene_updated = true;
-    msmaxObjectScope m_pending_request = msmaxObjectScope::None;
+    ObjectScope m_pending_request = ObjectScope::None;
 
     std::map<INode*, AnimationRecord> m_anim_records;
     TimeValue m_current_time_tick;
@@ -259,5 +253,5 @@ private:
 #define msmaxGetContext() msmaxContext::getInstance()
 #define msmaxGetSettings() msmaxGetContext().getSettings()
 #define msmaxGetCacheSettings() msmaxGetContext().getCacheSettings()
-bool msmaxSendScene(msmaxExportTarget target, msmaxObjectScope scope);
-bool msmaxExportCache(const msmaxCacheExportSettings& cache_settings);
+bool msmaxSendScene(ExportTarget target, ObjectScope scope);
+bool msmaxExportCache(const CacheSettings& cache_settings);

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "msEntity.h"
 #include "msMesh.h"
+#include "msPointCache.h"
 #include "msAnimation.h"
 #include "msEntityConverter.h"
 
@@ -92,9 +93,7 @@ void ScaleConverter::convertMesh(Mesh &e)
 void ScaleConverter::convertPoints(Points &e)
 {
     convertTransform(e);
-    for (auto& p : e.data) {
-        mu::Scale(p->points.data(), m_scale, p->points.size());
-    }
+    mu::Scale(e.points.data(), m_scale, e.points.size());
 }
 
 void ScaleConverter::convertAnimationCurve(AnimationCurve &c)
@@ -166,12 +165,11 @@ void FlipX_HandednessCorrector::convertMesh(Mesh &e)
 void FlipX_HandednessCorrector::convertPoints(Points &e)
 {
     convertTransform(e);
-    for (auto& p : e.data) {
-        mu::InvertX(p->points.data(), p->points.size());
-        for (auto& v : p->rotations)
-            v = flip_x(v);
-        mu::InvertX(p->scales.data(), p->scales.size());
-    }
+
+    mu::InvertX(e.points.data(), e.points.size());
+    mu::InvertX(e.scales.data(), e.scales.size());
+    for (auto& v : e.rotations)
+        v = flip_x(v);
 }
 
 void FlipX_HandednessCorrector::convertAnimationCurve(AnimationCurve &c)
@@ -250,12 +248,14 @@ void FlipYZ_ZUpCorrector::convertMesh(Mesh &e)
 void FlipYZ_ZUpCorrector::convertPoints(Points &e)
 {
     convertTransform(e);
-    for (auto& p : e.data) {
-        for (auto& v : p->points) v = flip_z(swap_yz(v));
-        for (auto& v : p->rotations) v = flip_z(swap_yz(v));
-        for (auto& v : p->scales) v = swap_yz(v);
-    }
+
+    auto convert = [this](auto& v) { return flip_z(swap_yz(v)); };
+
+    for (auto& v : e.points) v = flip_z(swap_yz(v));
+    for (auto& v : e.rotations) v = flip_z(swap_yz(v));
+    for (auto& v : e.scales) v = swap_yz(v);
 }
+
 void FlipYZ_ZUpCorrector::convert(Animation &anim)
 {
     auto convert_curve = [&](AnimationCurve& c) {

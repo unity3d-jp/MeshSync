@@ -149,7 +149,7 @@ template<> const float* MaterialProperty::getArray() const { return (float*)&dat
 template<> const float4* MaterialProperty::getArray() const { return (float4*)&data[0]; }
 template<> const float4x4* MaterialProperty::getArray() const { return (float4x4*)&data[0]; }
 
-void MaterialProperty::copy(void* dst)
+void MaterialProperty::copy(void* dst) const
 {
     data.copy_to((char*)dst);
 }

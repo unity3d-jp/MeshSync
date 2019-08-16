@@ -4,41 +4,47 @@
 #include "msmayaCommand.h"
 
 
-template<class T> static void get_arg(T& dst, const char *name, MArgParser& args);
+template<class T> static bool get_arg(T& dst, const char *name, MArgParser& args);
 
-template<> void get_arg(std::string& dst, const char *name, MArgParser& args)
+template<> bool get_arg(std::string& dst, const char *name, MArgParser& args)
 {
     MString tmp;
-    args.getFlagArgument(name, 0, tmp);
-    dst = tmp.asChar();
+    auto stat = args.getFlagArgument(name, 0, tmp);
+    if (stat == MStatus::kSuccess)
+        dst = tmp.asChar();
+    return stat == MStatus::kSuccess;
 }
-template<> void get_arg(bool& dst, const char *name, MArgParser& args)
+template<> bool get_arg(bool& dst, const char *name, MArgParser& args)
 {
     bool tmp;
     auto stat = args.getFlagArgument(name, 0, tmp);
     if (stat == MStatus::kSuccess)
         dst = tmp;
+    return stat == MStatus::kSuccess;
 }
-template<> void get_arg(int& dst, const char *name, MArgParser& args)
+template<> bool get_arg(int& dst, const char *name, MArgParser& args)
 {
     int tmp;
     auto stat = args.getFlagArgument(name, 0, tmp);
     if (stat == MStatus::kSuccess)
         dst = tmp;
+    return stat == MStatus::kSuccess;
 }
-template<> void get_arg(uint16_t& dst, const char *name, MArgParser& args)
+template<> bool get_arg(uint16_t& dst, const char *name, MArgParser& args)
 {
     int tmp;
     auto stat = args.getFlagArgument(name, 0, tmp);
     if (stat == MStatus::kSuccess)
         dst = (uint16_t)tmp;
+    return stat == MStatus::kSuccess;
 }
-template<> void get_arg(float& dst, const char *name, MArgParser& args)
+template<> bool get_arg(float& dst, const char *name, MArgParser& args)
 {
     double tmp;
     auto stat = args.getFlagArgument(name, 0, tmp);
     if (stat == MStatus::kSuccess)
         dst = (float)tmp;
+    return stat == MStatus::kSuccess;
 }
 
 
@@ -151,7 +157,7 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-smn", "-syncNormals", MSyntax::kBoolean);
     syntax.addFlag("-smu", "-syncUVs", MSyntax::kBoolean);
     syntax.addFlag("-smc", "-syncColors", MSyntax::kBoolean);
-    syntax.addFlag("-mbs", "-makeDoubleSided", MSyntax::kBoolean);
+    syntax.addFlag("-ds", "-makeDoubleSided", MSyntax::kBoolean);
     syntax.addFlag("-bd", "-bakeDeformers", MSyntax::kBoolean);
     syntax.addFlag("-tw", "-applyTweak", MSyntax::kBoolean);
     syntax.addFlag("-sms", "-syncBlendShapes", MSyntax::kBoolean);
@@ -188,55 +194,53 @@ MStatus CmdSettings::doIt(const MArgList& args_)
 #define Handle(Name, Value, Sync)\
     if (args.isFlagSet(Name)) {\
         if(args.isQuery()) {\
-            set_result(Value);\
+            set_result(settings.Value);\
         }\
         else {\
-            get_arg(Value, Name, args);\
+            get_arg(settings.Value, Name, args);\
             if (settings.auto_sync && Sync)\
-                msmayaGetContext().sendObjects(msmayaContext::SendScope::All, false);\
+                msmayaGetContext().sendObjects(ObjectScope::All, false);\
         }\
     }
 
-    Handle("address", settings.client_settings.server, false);
-    Handle("port", settings.client_settings.port, false);
-    Handle("scaleFactor", settings.scale_factor, true);
-    Handle("autosync", settings.auto_sync, true);
-    Handle("syncMeshes", settings.sync_meshes, true);
-    Handle("syncNormals", settings.sync_normals, true);
-    Handle("syncUVs", settings.sync_uvs, true);
-    Handle("syncColors", settings.sync_colors, true);
-    Handle("makeDoubleSided", settings.make_double_sided, true);
-    Handle("bakeDeformers", settings.bake_deformers, true);
-    Handle("applyTweak", settings.apply_tweak, true);
-    Handle("syncBlendShapes", settings.sync_blendshapes, true);
-    Handle("syncBones", settings.sync_bones, true);
-    Handle("syncTextures", settings.sync_textures, true);
-    Handle("syncCameras", settings.sync_cameras, true);
-    Handle("syncLights", settings.sync_lights, true);
-    Handle("syncConstraints", settings.sync_constraints, true);
-    Handle("animationTS", settings.animation_time_scale, false);
-    Handle("animationSPS", settings.animation_sps, false);
-    Handle("keyframeReduction", settings.reduce_keyframes, false);
-    Handle("keepFlatCurves", settings.keep_flat_curves, false);
-    Handle("removeNamespace", settings.remove_namespace, true);
-    Handle("multithreaded", settings.multithreaded, false);
-    Handle("fbxCompatibleTransform", settings.fbx_compatible_transform, true);
+    Handle("address", client_settings.server, false);
+    Handle("port", client_settings.port, false);
+    Handle("scaleFactor", scale_factor, true);
+    Handle("autosync", auto_sync, true);
+    Handle("syncMeshes", sync_meshes, true);
+    Handle("syncNormals", sync_normals, true);
+    Handle("syncUVs", sync_uvs, true);
+    Handle("syncColors", sync_colors, true);
+    Handle("makeDoubleSided", make_double_sided, true);
+    Handle("bakeDeformers", bake_deformers, true);
+    Handle("applyTweak", apply_tweak, true);
+    Handle("syncBlendShapes", sync_blendshapes, true);
+    Handle("syncBones", sync_bones, true);
+    Handle("syncTextures", sync_textures, true);
+    Handle("syncCameras", sync_cameras, true);
+    Handle("syncLights", sync_lights, true);
+    Handle("syncConstraints", sync_constraints, true);
+    Handle("animationTS", animation_time_scale, false);
+    Handle("animationSPS", animation_sps, false);
+    Handle("removeNamespace", remove_namespace, true);
+    Handle("multithreaded", multithreaded, false);
+    Handle("fbxCompatibleTransform", fbx_compatible_transform, true);
 #undef Handle
 
     return MStatus::kSuccess;
 }
 
 
-void* CmdExport::create()
+void* CmdSend::create()
 {
-    return new CmdExport();
+    return new CmdSend();
 }
-const char* CmdExport::name()
+const char* CmdSend::name()
 {
     return "UnityMeshSync_Export";
 }
 
-MSyntax CmdExport::createSyntax()
+MSyntax CmdSend::createSyntax()
 {
     MSyntax syntax;
     syntax.enableQuery(false);
@@ -246,36 +250,36 @@ MSyntax CmdExport::createSyntax()
     return syntax;
 }
 
-MStatus CmdExport::doIt(const MArgList& args_)
+MStatus CmdSend::doIt(const MArgList& args_)
 {
     MStatus status;
     MArgParser args(syntax(), args_, &status);
 
-    auto target = msmayaContext::SendTarget::Objects;
-    auto scope = msmayaContext::SendScope::All;
+    auto target = ExportTarget::Objects;
+    auto scope = ObjectScope::All;
 
     // parse args
     if (args.isFlagSet("target")) {
         std::string t;
         get_arg(t, "target", args);
         if (t == "objects")
-            target = msmayaContext::SendTarget::Objects;
+            target = ExportTarget::Objects;
         else if (t == "materials")
-            target = msmayaContext::SendTarget::Materials;
+            target = ExportTarget::Materials;
         else if (t == "animations")
-            target = msmayaContext::SendTarget::Animations;
+            target = ExportTarget::Animations;
         else if (t == "everything")
-            target = msmayaContext::SendTarget::Everything;
+            target = ExportTarget::Everything;
     }
     if (args.isFlagSet("scope")) {
         std::string s;
         get_arg(s, "scope", args);
         if (s == "all")
-            scope = msmayaContext::SendScope::All;
+            scope = ObjectScope::All;
         else if (s == "selection")
-            scope = msmayaContext::SendScope::Selected;
+            scope = ObjectScope::Selected;
         else if (s == "updated")
-            scope = msmayaContext::SendScope::Updated;
+            scope = ObjectScope::Updated;
     }
 
     // do send
@@ -285,19 +289,19 @@ MStatus CmdExport::doIt(const MArgList& args_)
         return MStatus::kFailure;
     }
 
-    if (target == msmayaContext::SendTarget::Objects) {
+    if (target == ExportTarget::Objects) {
         inst.wait();
         inst.sendObjects(scope, true);
     }
-    else if (target == msmayaContext::SendTarget::Materials) {
+    else if (target == ExportTarget::Materials) {
         inst.wait();
         inst.sendMaterials(true);
     }
-    else if (target == msmayaContext::SendTarget::Animations) {
+    else if (target == ExportTarget::Animations) {
         inst.wait();
         inst.sendAnimations(scope);
     }
-    else if (target == msmayaContext::SendTarget::Everything) {
+    else if (target == ExportTarget::Everything) {
         inst.wait();
         inst.sendMaterials(true);
         inst.wait();
@@ -329,5 +333,82 @@ MSyntax CmdImport::createSyntax()
 MStatus CmdImport::doIt(const MArgList&)
 {
     msmayaGetContext().recvObjects();
+    return MStatus::kSuccess;
+}
+
+
+
+void* CmdExportCache::create()
+{
+    return new CmdExportCache();
+}
+
+const char* CmdExportCache::name()
+{
+    return "UnityMeshSync_Cache";
+}
+
+MSyntax CmdExportCache::createSyntax()
+{
+    MSyntax syntax;
+    syntax.enableQuery(true);
+    syntax.enableEdit(false);
+    syntax.addFlag("-p", "-path", MSyntax::kString);
+    syntax.addFlag("-os", "-objectScope", MSyntax::kString);
+    syntax.addFlag("-fr", "-frameRange", MSyntax::kString);
+    syntax.addFlag("-frb", "-frameBegin", MSyntax::kLong);
+    syntax.addFlag("-fre", "-frameEnd", MSyntax::kLong);
+    syntax.addFlag("-mfr", "-materialFrameRange", MSyntax::kString);
+    syntax.addFlag("-z", "-ZSTDCompressionLevel", MSyntax::kLong);
+    syntax.addFlag("-spf", "-samplesPerFrame", MSyntax::kDouble);
+    syntax.addFlag("-ds", "-makeDoubleSided", MSyntax::kBoolean);
+    syntax.addFlag("-bd", "-bakeDeformers", MSyntax::kBoolean);
+    syntax.addFlag("-fh", "-flattenHierarchy", MSyntax::kBoolean);
+    syntax.addFlag("-mm", "-mergeMeshes", MSyntax::kBoolean);
+    syntax.addFlag("-sn", "-stripNormals", MSyntax::kBoolean);
+    syntax.addFlag("-st", "-stripTangents", MSyntax::kBoolean);
+    return syntax;
+}
+
+MStatus CmdExportCache::doIt(const MArgList& args_)
+{
+    MStatus status;
+    MArgParser args(syntax(), args_, &status);
+    auto settings = msmayaGetCacheSettings(); // copy
+
+#define Handle(Name, Value, ...)\
+    if (args.isFlagSet(Name)) {\
+            if (args.isQuery())\
+                    set_result(__VA_ARGS__ settings.Value);\
+            else\
+                    get_arg(__VA_ARGS__ settings.Value, Name, args);\
+    }
+
+    Handle("path", path);
+    Handle("objectScope", object_scope, (int&));
+    Handle("frameRange", frame_range, (int&));
+    Handle("frameBegin", frame_begin);
+    Handle("frameEnd", frame_end);
+    Handle("materialFrameRange", material_frame_range, (int&));
+    Handle("samplesPerFrame", samples_per_frame);
+
+    Handle("zstdCompressionLevel", zstd_compression_level);
+    Handle("removeNamespace", remove_namespace);
+    Handle("makeDoubleSided", make_double_sided);
+    Handle("bakeDeformers", bake_deformers);
+    Handle("flattenHierarchy", flatten_hierarchy);
+    Handle("mergeMeshes", merge_meshes);
+    Handle("stripNormals", strip_normals);
+    Handle("stripTangents", strip_tangents);
+
+#undef Handle
+
+    if (!args.isQuery()) {
+        auto& ctx = msmayaGetContext();
+        if (ctx.exportCache(settings))
+            return MStatus::kSuccess;
+        else
+            return MStatus::kFailure;
+    }
     return MStatus::kSuccess;
 }

@@ -5,44 +5,64 @@ using UTJ.MeshSync;
 namespace UTJ.MeshSyncEditor
 {
     [CustomEditor(typeof(SceneCachePlayer))]
-    public class SceneCachePlayerEditor : Editor
+    public class SceneCachePlayerEditor : MeshSyncPlayerEditor
     {
-#if UNITY_EDITOR
         [MenuItem("GameObject/MeshSync/Create Cache Player", false, 10)]
-        public static void CreateSceneCachePlayer(MenuCommand menuCommand)
+        public static void CreateSceneCachePlayerMenu(MenuCommand menuCommand)
         {
             var path = EditorUtility.OpenFilePanel("Select Cache File", "", "");
             if (path.Length > 0)
             {
-                var go = new GameObject();
-                go.name = System.IO.Path.GetFileNameWithoutExtension(path);
-
-                var player = go.AddComponent<SceneCachePlayer>();
-                player.rootObject = go.GetComponent<Transform>();
-                player.progressiveDisplay = false;
-                player.dontSaveAssetsInScene = true;
-                if (!player.OpenCache(path))
-                {
-                    Debug.LogError("Failed to open " + path + ".\nPossible reasons: the file is not scene cache, or file format version does not match.");
-                    DestroyImmediate(go);
-                    return;
-                }
-                else
-                {
-                    player.AddAnimator("Assets");
+                var go = CreateSceneCachePlayerPrefab(path);
+                if (go != null)
                     Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
-                }
-
-                //player.UpdatePlayer();
-                //player.ExportMaterials();
-                //var prefab = PrefabUtility.SaveAsPrefabAsset(go, "Assets/" + go.name + ".prefab");
-                //var index = go.transform.GetSiblingIndex();
-                ////Object.DestroyImmediate(go);
-                //var inst = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
-                //inst.transform.SetSiblingIndex(index);
             }
         }
+
+        public static GameObject CreateSceneCachePlayer(string path)
+        {
+            // create temporary GO to make prefab
+            var go = new GameObject();
+            go.name = System.IO.Path.GetFileNameWithoutExtension(path);
+
+            var player = go.AddComponent<SceneCachePlayer>();
+            player.rootObject = go.GetComponent<Transform>();
+            player.assetDir = new DataPath(DataPath.Root.DataPath, string.Format("SceneCache/{0}", go.name));
+            player.updateMeshColliders = false;
+            player.progressiveDisplay = false;
+            player.dontSaveAssetsInScene = true;
+            player.findMaterialFromAssets = false;
+            if (!player.OpenCache(path))
+            {
+                Debug.LogError("Failed to open " + path + ". Possible reasons: file format version does not match, or the file is not scene cache.");
+                DestroyImmediate(go);
+                return null;
+            }
+            return go;
+        }
+
+        public static GameObject CreateSceneCachePlayerPrefab(string path)
+        {
+            var go = CreateSceneCachePlayer(path);
+            if (go == null)
+                return null;
+
+            // export materials & animation and generate prefab
+            var player = go.GetComponent<SceneCachePlayer>();
+            player.UpdatePlayer();
+            player.ExportMaterials(false, true);
+            player.AddAnimator();
+            player.handleAssets = false;
+
+            var prefabPath = string.Format("Assets/SceneCache/{0}.prefab", go.name);
+#if UNITY_2018_3_OR_NEWER
+            PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabPath, InteractionMode.AutomatedAction);
+#else
+            PrefabUtility.CreatePrefab(prefabPath, go, ReplacePrefabOptions.ConnectToPrefab);
 #endif
+            return go;
+        }
+
 
         public override void OnInspectorGUI()
         {
@@ -79,11 +99,20 @@ namespace UTJ.MeshSyncEditor
             EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
             EditorGUILayout.Space();
 
-            MeshSyncServerEditor.DrawPlayerSettings(t, so);
-            MeshSyncServerEditor.DrawMaterialList(t);
-            MeshSyncServerEditor.DrawTextureList(t);
+            DrawPlayerSettings(t, so);
 
-            EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.pluginVersion);
+            if (t.profiling)
+            {
+                EditorGUILayout.TextArea(t.dbgProfileReport, GUILayout.Height(120));
+                EditorGUILayout.Space();
+            }
+
+            DrawMaterialList(t);
+            DrawTextureList(t);
+            DrawAnimationTweak(t);
+            DrawExportAssets(t);
+            DrawPluginVersion();
+
             so.ApplyModifiedProperties();
         }
     }

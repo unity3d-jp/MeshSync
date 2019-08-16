@@ -2,13 +2,13 @@
 #include "msSceneGraph.h"
 #include "msEntity.h"
 #include "msMesh.h"
+#include "msPointCache.h"
 
 namespace ms {
 
 static_assert(sizeof(TransformDataFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(CameraDataFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(LightDataFlags) == sizeof(uint32_t), "");
-static_assert(sizeof(PointsDataFlags) == sizeof(uint32_t), "");
 
 #define CopyMember(V) V = base.V;
 
@@ -110,6 +110,10 @@ bool Entity::lerp(const Entity& s1, const Entity& s2, float /*t*/)
     return true;
 }
 
+void Entity::updateBounds()
+{
+}
+
 bool Entity::genVelocity(const Entity& prev)
 {
     if (cache_flags.constant || getType() != prev.getType())
@@ -138,6 +142,11 @@ uint64_t Entity::checksumTrans() const
 }
 
 uint64_t Entity::checksumGeom() const
+{
+    return 0;
+}
+
+uint64_t Entity::vertexCount() const
 {
     return 0;
 }
@@ -602,179 +611,5 @@ EntityPtr Light::clone(bool /*detach*/)
 #undef EachMember
 #pragma endregion
 
-
-// Points
-#pragma region Points
-
-PointsData::PointsData() {}
-PointsData::~PointsData() {}
-
-std::shared_ptr<PointsData> PointsData::create(std::istream & is)
-{
-    auto ret = Pool<PointsData>::instance().pull();
-    ret->deserialize(is);
-    return make_shared_ptr(ret);
-}
-
-#define EachArray(F)\
-    F(points) F(rotations) F(scales) F(colors) F(velocities) F(ids)
-#define EachMember(F)\
-    F(pd_flags) F(time) EachArray(F)
-
-void PointsData::serialize(std::ostream& os) const
-{
-    EachMember(msWrite);
-}
-
-void PointsData::deserialize(std::istream& is)
-{
-    EachMember(msRead);
-}
-
-void PointsData::clear()
-{
-    pd_flags = {};
-    time = 0.0f;
-    EachArray(msClear);
-}
-
-uint64_t PointsData::hash() const
-{
-    uint64_t ret = 0;
-    EachArray(msHash);
-    return ret;
-}
-
-uint64_t PointsData::checksumGeom() const
-{
-    uint64_t ret = 0;
-    ret += csum(time);
-#define Body(A) ret += csum(A);
-    EachArray(Body);
-#undef Body
-    return ret;
-}
-
-bool PointsData::lerp(const PointsData& s1, const PointsData& s2, float t)
-{
-    if (s1.points.size() != s2.points.size() || s1.ids != s2.ids)
-        return false;
-#define DoLerp(N) N.resize_discard(s1.N.size()); Lerp(N.data(), s1.N.cdata(), s2.N.cdata(), N.size(), t)
-    DoLerp(points);
-    DoLerp(scales);
-    DoLerp(colors);
-    DoLerp(velocities);
-#undef DoLerp
-
-    rotations.resize_discard(s1.rotations.size());
-    enumerate(rotations, s1.rotations, s2.rotations, [t](quatf& v, const quatf& t1, const quatf& t2) {
-        v = mu::slerp(t1, t2, t);
-    });
-    return true;
-}
-
-EntityPtr PointsData::clone()
-{
-    return EntityPtr();
-}
-#undef EachArrays
-#undef EachMember
-
-void PointsData::setupPointsDataFlags()
-{
-    pd_flags.has_points = !points.empty();
-    pd_flags.has_rotations = !rotations.empty();
-    pd_flags.has_scales = !scales.empty();
-    pd_flags.has_colors = !colors.empty();
-    pd_flags.has_velocities = !velocities.empty();
-    pd_flags.has_ids = !ids.empty();
-}
-
-void PointsData::getBounds(float3 & center, float3 & extents) const
-{
-    float3 bmin, bmax;
-    mu::MinMax(points.cdata(), points.size(), bmin, bmax);
-    center = (bmax + bmin) * 0.5f;
-    extents = abs(bmax - bmin);
-}
-
-
-Points::Points() {}
-Points::~Points() {}
-EntityType Points::getType() const { return Type::Points; }
-bool Points::isGeometry() const { return true; }
-
-#define EachMember(F)\
-    F(data)
-
-bool Points::isUnchanged() const
-{
-    return td_flags.unchanged; // todo
-}
-
-void Points::serialize(std::ostream & os) const
-{
-    super::serialize(os);
-    EachMember(msWrite);
-}
-
-void Points::deserialize(std::istream & is)
-{
-    super::deserialize(is);
-    EachMember(msRead);
-}
-
-void Points::clear()
-{
-    super::clear();
-    data.clear();
-}
-
-uint64_t Points::hash() const
-{
-    uint64_t ret = 0;
-    for (auto& p : data)
-        ret += p->hash();
-    return ret;
-}
-
-uint64_t Points::checksumGeom() const
-{
-    uint64_t ret = 0;
-    for (auto& p : data)
-        ret += p->checksumGeom();
-    return ret;
-}
-
-bool Points::lerp(const Entity& s1_, const Entity& s2_, float t)
-{
-    if (!super::lerp(s1_, s2_, t))
-        return false;
-    auto& s1 = static_cast<const Points&>(s1_);
-    auto& s2 = static_cast<const Points&>(s2_);
-
-    bool ret = true;
-    enumerate(data, s1.data, s2.data, [t, &ret](PointsDataPtr& v, const PointsDataPtr& t1, const PointsDataPtr& t2) {
-        if (!v->lerp(*t1, *t2, t))
-            ret = false;
-    });
-    return ret;
-}
-
-EntityPtr Points::clone(bool /*detach*/)
-{
-    return EntityPtr();
-}
-
-#undef EachArrays
-#undef EachMember
-
-void Points::setupPointsDataFlags()
-{
-    for (auto& p : data)
-        p->setupPointsDataFlags();
-}
-
-#pragma endregion
 
 } // namespace ms

@@ -50,7 +50,7 @@ public:
     bool exportAsWave(const char *path) const;
 
     // length of dst must be frequency * channels
-    bool convertSamplesToFloat(float *dst);
+    bool convertSamplesToFloat(float *dst) const;
 };
 msSerializable(Audio);
 msDeclPtr(Audio);

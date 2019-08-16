@@ -24,7 +24,7 @@ public:
     bool eraseThreadSafe(TransformPtr v);
 
     // thread safe
-    void add(TransformPtr v); 
+    void add(TransformPtr v);
 
     void touch(const std::string& path);
 

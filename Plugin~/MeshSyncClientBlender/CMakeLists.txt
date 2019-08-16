@@ -29,7 +29,7 @@ add_library(${MESHSYNC_CLIENT_BLENDER}  SHARED ${sources})
 add_dependencies(${MESHSYNC_CLIENT_BLENDER} MeshUtils MeshSync)
 target_include_directories(${MESHSYNC_CLIENT_BLENDER} PUBLIC
     "${CMAKE_SOURCE_DIR}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/PyBind11"
+    "${CMAKE_SOURCE_DIR}/External"
     ${BLENDER_INCLUDE_DIRS}
 )
 target_link_libraries(${MESHSYNC_CLIENT_BLENDER} MeshSync MeshUtils ${Poco_LIBRARIES})

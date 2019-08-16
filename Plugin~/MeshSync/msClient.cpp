@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "msClient.h"
 
+#ifdef msEnableNetwork
 namespace ms {
 
 using namespace Poco;
@@ -212,3 +213,4 @@ ResponseMessagePtr Client::send(const QueryMessage& mes)
 }
 
 } // namespace ms
+#endif // msEnableNetwork

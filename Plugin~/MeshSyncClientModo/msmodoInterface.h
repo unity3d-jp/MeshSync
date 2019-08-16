@@ -35,6 +35,7 @@ public:
 
     template<class Body> void eachObject(LXtItemType type, const Body& body);
     template<class Body> void eachMaterial(const Body& body);
+    template<class Body> void eachLocator(const Body& body);
     template<class Body> void eachLight(const Body& body);
     template<class Body> void eachCamera(const Body& body);
     template<class Body> void eachMesh(const Body& body);
@@ -207,6 +208,7 @@ inline void msmodoInterface::eachObject(LXtItemType type, const Body& body)
     }
 }
 template<class Body> inline void msmodoInterface::eachMaterial(const Body& body) { eachObject(tMaterial, body); }
+template<class Body> inline void msmodoInterface::eachLocator(const Body& body) { eachObject(tLocator, body); }
 template<class Body> inline void msmodoInterface::eachLight(const Body& body) { eachObject(tLight, body); }
 template<class Body> inline void msmodoInterface::eachCamera(const Body& body) { eachObject(tCamera, body); }
 template<class Body> inline void msmodoInterface::eachMesh(const Body& body) { eachObject(tMesh, body); }

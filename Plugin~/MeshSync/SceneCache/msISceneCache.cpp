@@ -3,6 +3,7 @@
 #include "msMisc.h"
 #include "Utils/msDebug.h"
 
+#ifdef msEnableSceneCache
 namespace ms {
 
 ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
@@ -137,12 +138,12 @@ float ISceneCacheImpl::getTime(size_t i) const
 }
 
 // thread safe
-ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
+ScenePtr ISceneCacheImpl::getByIndexImpl(size_t scene_index, bool wait_preload)
 {
-    if (!valid() || i >= m_records.size())
+    if (!valid() || scene_index >= m_records.size())
         return nullptr;
 
-    auto& rec = m_records[i];
+    auto& rec = m_records[scene_index];
     if (wait_preload && rec.preload.valid()) {
         // wait preload
         rec.preload.wait();
@@ -153,7 +154,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
     if (ret)
         return ret; // already loaded
 
-    auto time_begin = mu::Now();
+    auto load_begin = mu::Now();
 
     size_t seg_count = rec.buffer_sizes.size();
     rec.segments.resize(seg_count);
@@ -165,17 +166,27 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
         m_ist->seekg(rec.pos, std::ios::beg);
         for (size_t si = 0; si < seg_count; ++si) {
             auto& seg = rec.segments[si];
+            seg.size_encoded = rec.buffer_sizes[si];
+
+            // read segment
             {
-                msDbgTimer("ISceneCacheImpl: read segment");
-                seg.encoded_buf.resize(rec.buffer_sizes[si]);
+                msProfileScope("ISceneCacheImpl: [%d] read segment (%d - %u byte)", (int)scene_index, (int)si, (uint32_t)seg.size_encoded);
+                ScopedTimer timer;
+
+                seg.encoded_buf.resize(seg.size_encoded);
                 m_ist->read(seg.encoded_buf.data(), seg.encoded_buf.size());
+
+                seg.read_time = timer.elapsed();
             }
 
-            seg.task = std::async(std::launch::async, [this, &seg]() {
-                msDbgTimer("ISceneCacheImpl: decode segment");
+            // launch async decode
+            seg.task = std::async(std::launch::async, [this, &seg, scene_index, si]() {
+                msProfileScope("ISceneCacheImpl: [%d] decode segment (%d)", (int)scene_index, (int)si);
+                ScopedTimer timer;
 
                 RawVector<char> tmp_buf;
                 m_encoder->decode(tmp_buf, seg.encoded_buf);
+                seg.size_decoded = tmp_buf.size();
 
                 auto ret = Scene::create();
                 MemoryStream scene_buf(std::move(tmp_buf));
@@ -185,12 +196,19 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
                     // keep scene buffer alive. Meshes will use it as vertex buffers
                     ret->scene_buffers.push_back(scene_buf.moveBuffer());
                     seg.segment = ret;
+
+                    // count vertices
+                    seg.vertex_count = 0;
+                    for (auto& e : seg.segment->entities)
+                        seg.vertex_count += e->vertexCount();
                 }
                 catch (std::runtime_error& e) {
                     msLogError("exception: %s\n", e.what());
                     ret = nullptr;
                     seg.error = true;
                 }
+
+                seg.decode_time = timer.elapsed();
             });
         }
     }
@@ -207,33 +225,54 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t i, bool wait_preload)
         else
             ret->concat(*seg.segment, true);
     }
-    if (ret)
-        std::sort(ret->entities.begin(), ret->entities.end(), [](auto& a, auto& b) { return a->id < b->id; });
-    rec.segments.clear();
 
-    {
-        msDbgTimer("ISceneCacheImpl: merge");
-        if (m_header.oscs.strip_unchanged && m_base_scene && ret) {
-            // set cache flags
-            size_t n = ret->entities.size();
-            if (m_entity_meta.size() == n) {
-                enumerate(m_entity_meta, ret->entities, [](auto& meta, auto& e) {
-                    if (meta.id == e->id) {
-                        e->cache_flags.constant = meta.constant;
-                        e->cache_flags.constant_topology = meta.constant_topology;
-                    }
-                });
+    if (ret) {
+        // sort entities by ID
+        std::sort(ret->entities.begin(), ret->entities.end(), [](auto& a, auto& b) { return a->id < b->id; });
+
+        // update profile data
+        auto& prof = ret->profile_data;
+        prof = {};
+        prof.load_time = NS2MS(Now() - load_begin);
+        for (auto& seg : rec.segments) {
+            prof.size_encoded += seg.size_encoded;
+            prof.size_decoded += seg.size_decoded;
+            prof.read_time += seg.read_time;
+            prof.decode_time += seg.decode_time;
+            prof.vertex_count += seg.vertex_count;
+        }
+
+        {
+            msProfileScope("ISceneCacheImpl: [%d] merge & import", (int)scene_index);
+            ScopedTimer timer;
+
+            if (m_header.oscs.strip_unchanged && m_base_scene) {
+                // set cache flags
+                size_t n = ret->entities.size();
+                if (m_entity_meta.size() == n) {
+                    enumerate(m_entity_meta, ret->entities, [](auto& meta, auto& e) {
+                        if (meta.id == e->id) {
+                            e->cache_flags.constant = meta.constant;
+                            e->cache_flags.constant_topology = meta.constant_topology;
+                        }
+                        });
+                }
+
+                // merge
+                ret->merge(*m_base_scene);
             }
 
-            // merge
-            ret->merge(*m_base_scene);
+            // do import
+            ret->import(m_iscs.sis);
+
+            prof.setup_time = timer.elapsed();
         }
     }
-    rec.load_time_ms = mu::NS2MS(mu::Now() - time_begin);
+    rec.segments.clear();
 
     // push & pop history
-    if (!m_header.oscs.strip_unchanged || i != 0) {
-        m_history.push_back(i);
+    if (!m_header.oscs.strip_unchanged || scene_index != 0) {
+        m_history.push_back(scene_index);
         if (m_history.size() > m_iscs.max_history) {
             m_records[m_history.front()].scene.reset();
             m_history.pop_front();
@@ -247,18 +286,12 @@ ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp, size_t scene_index)
     if (!sp)
         return sp;
 
-    // do import
-    if (m_iscs.convert_scenes) {
-        msDbgTimer("ISceneCacheImpl: import");
-        sp->import(m_iscs.sis);
-    }
-
     ScenePtr ret;
 
     // m_last_scene and m_last_diff keep reference counts and keep scenes alive.
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
     if (m_last_scene && m_iscs.enable_diff) {
-        msDbgTimer("ISceneCacheImpl: diff");
+        msProfileScope("ISceneCacheImpl: [%d] diff", (int)scene_index);
         m_last_diff = Scene::create();
         m_last_diff->diff(*sp, *m_last_scene);
         m_last_scene = sp;
@@ -339,14 +372,23 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
         if (interpolation) {
             auto t1 = m_records[si + 0].time;
             auto t2 = m_records[si + 1].time;
+
+            kickPreload(si + 1);
             auto s1 = getByIndexImpl(si + 0);
             auto s2 = getByIndexImpl(si + 1);
 
-            float t = (time - t1) / (t2 - t1);
-            ret = Scene::create();
-            ret->lerp(*s1, *s2, t);
-            // keep a reference for s1 (s2 is not needed)
-            ret->data_sources.push_back(s1);
+            {
+                msProfileScope("ISceneCacheImpl: [%d] lerp", (int)si);
+                ScopedTimer timer;
+
+                float t = (time - t1) / (t2 - t1);
+                ret = Scene::create();
+                ret->lerp(*s1, *s2, t);
+                // keep a reference for s1 (s2 is not needed)
+                ret->data_sources.push_back(s1);
+
+                ret->profile_data.lerp_time = timer.elapsed();
+            }
 
             m_last_index = si;
             m_last_index2 = si + 1;
@@ -422,3 +464,4 @@ ISceneCachePtr OpenISceneCacheFile(const char *path, const ISceneCacheSettings& 
 }
 
 } // namespace ms
+#endif // msEnableSceneCache

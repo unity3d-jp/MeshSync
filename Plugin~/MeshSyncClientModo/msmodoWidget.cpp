@@ -50,11 +50,10 @@ public slots:
     void onToggleSyncLights(int v);
     void onToggleAutoSync(int v);
     void onClickManualSync(bool v);
+    void onClickExportCache(bool v);
 
     void onEditAnimationTimeScale(const QString& v);
     void onEditAnimationSPS(const QString& v);
-    void onToggleKeyframeReduction(int v);
-    void onToggleKeepFlatCurves(int v);
     void onClickSyncAnimations(bool v);
 
 private:
@@ -212,6 +211,10 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         auto bu_manual_sync = new QPushButton("Manual Sync");
         layout->addWidget(bu_manual_sync, iy++, 0, 1, 3);
         connect(bu_manual_sync, SIGNAL(clicked(bool)), this, SLOT(onClickManualSync(bool)));
+
+        auto bu_export_cache = new QPushButton("Export Cache");
+        layout->addWidget(bu_export_cache, iy++, 0, 1, 3);
+        connect(bu_export_cache, SIGNAL(clicked(bool)), this, SLOT(onClickExportCache(bool)));
     }
 
     // animation
@@ -233,28 +236,6 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         layout->addWidget(ed_anim_sps, iy++, 1, 1, 2);
         connect(ed_anim_sps, SIGNAL(textEdited(QString)), this, SLOT(onEditAnimationSPS(QString)));
 
-        auto ck_keyframe_reduction = new QCheckBox("Keyframe Reduction");
-        ck_keyframe_reduction->setCheckState(to_qcheckstate(settings.reduce_keyframes));
-        layout->addWidget(ck_keyframe_reduction, iy++, 0, 1, 3);
-        connect(ck_keyframe_reduction, SIGNAL(stateChanged(int)), this, SLOT(onToggleKeyframeReduction(int)));
-
-        {
-            int iy2 = 0;
-            m_widget_kfoptions = new QWidget();
-            auto *layout_kfoptions = new QGridLayout();
-            layout_kfoptions->setVerticalSpacing(2);
-            layout_kfoptions->setContentsMargins(10, 0, 0, 0);
-
-            auto ck_keep_flat_curves = new QCheckBox("Keep Flat Curves");
-            ck_keep_flat_curves->setCheckState(to_qcheckstate(settings.keep_flat_curves));
-            layout_kfoptions->addWidget(ck_keep_flat_curves, iy2++, 0);
-            connect(ck_keep_flat_curves, SIGNAL(stateChanged(int)), this, SLOT(onToggleKeepFlatCurves(int)));
-
-            m_widget_kfoptions->setLayout(layout_kfoptions);
-            m_widget_kfoptions->setShown(settings.reduce_keyframes);
-            layout->addWidget(m_widget_kfoptions, iy++, 0, 1, 3, Qt::AlignTop);
-        }
-
         auto bu_sync_animations = new QPushButton("Sync Animations");
         layout->addWidget(bu_sync_animations, iy++, 0, 1, 3);
         connect(bu_sync_animations, SIGNAL(clicked(bool)), this, SLOT(onClickSyncAnimations(bool)));
@@ -271,12 +252,12 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
 
 static bool msmodoSendObjects()
 {
-    return msmodoExport(msmodoContext::SendTarget::Objects, msmodoContext::SendScope::All);
+    return msmodoExport(ExportTarget::Objects, ObjectScope::All);
 }
 
 static bool msmodoSendAnimations()
 {
-    return msmodoExport(msmodoContext::SendTarget::Animations, msmodoContext::SendScope::All);
+    return msmodoExport(ExportTarget::Animations, ObjectScope::All);
 }
 
 void msmodoSettingsWidget::onEditServer(const QString& v)
@@ -410,6 +391,33 @@ void msmodoSettingsWidget::onClickManualSync(bool v)
     msmodoSendObjects();
 }
 
+void msmodoSettingsWidget::onClickExportCache(bool v)
+{
+    CLxUser_CommandService svc_cmd;
+    std::string path;
+    {
+        // open file dialog
+        svc_cmd.ExecuteArgString(-1, LXiCTAG_NULL, "dialog.setup fileSave");
+        svc_cmd.ExecuteArgString(-1, LXiCTAG_NULL, "dialog.title {Export Cache}");
+        svc_cmd.ExecuteArgString(-1, LXiCTAG_NULL, "dialog.fileTypeCustom cache {Scene Cache} {*.sc} sc");
+        svc_cmd.ExecuteArgString(-1, LXiCTAG_NULL, "dialog.open");
+
+        CLxUser_Command cmd;
+        CLxUser_ValueArray va;
+        if (LXx_OK(svc_cmd.NewCommand(cmd, "dialog.result"))) {
+            if (LXx_OK(svc_cmd.QueryIndex(cmd, 0, va))) {
+                if (va.Count() > 0)
+                    va.String(0, path);
+            }
+        }
+    }
+    if (!path.empty()) {
+        char buf[1024];
+        sprintf(buf, "unity.meshsync.cache path:{%s}", path.c_str());
+        svc_cmd.ExecuteArgString(-1, LXiCTAG_NULL, buf);
+    }
+}
+
 
 void msmodoSettingsWidget::onEditAnimationTimeScale(const QString& v)
 {
@@ -429,19 +437,6 @@ void msmodoSettingsWidget::onEditAnimationSPS(const QString& v)
     if (ok && val != 0.0f && settings.animation_sps != val) {
         settings.animation_sps = val;
     }
-}
-
-void msmodoSettingsWidget::onToggleKeyframeReduction(int v)
-{
-    auto& settings = msmodoGetSettings();
-    settings.reduce_keyframes = v;
-    m_widget_kfoptions->setShown(settings.reduce_keyframes);
-}
-
-void msmodoSettingsWidget::onToggleKeepFlatCurves(int v)
-{
-    auto& settings = msmodoGetSettings();
-    settings.keep_flat_curves = v;
 }
 
 void msmodoSettingsWidget::onClickSyncAnimations(bool v)

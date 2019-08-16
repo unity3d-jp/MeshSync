@@ -85,41 +85,21 @@ struct MeshRefineSettings
     bool operator!=(const MeshRefineSettings& v) const;
 };
 
-struct Bounds
+enum class Topology : int
 {
-    float3 center;
-    float3 extents;
+    Points,
+    Lines,
+    Triangles,
+    Quads,
 };
 
 struct SubmeshData
 {
-    enum class Topology : int
-    {
-        Points,
-        Lines,
-        Triangles,
-        Quads,
-    };
-
     // serializable
     int index_count = 0;
     int index_offset = 0;
     Topology topology = Topology::Triangles;
     int material_id = 0;
-};
-
-struct SplitData
-{
-    // serializable
-    int index_count = 0;
-    int index_offset = 0;
-    int vertex_count = 0;
-    int vertex_offset = 0;
-    int bone_weight_count = 0;
-    int bone_weight_offset = 0;
-    int submesh_count = 0;
-    int submesh_offset = 0;
-    Bounds bounds{};
 };
 
 struct BlendShapeFrameData
@@ -211,7 +191,7 @@ public:
     std::vector<BlendShapeDataPtr> blendshapes;
 
     SharedVector<SubmeshData> submeshes;
-    SharedVector<SplitData> splits;
+    Bounds bounds{};
 
     // non-serializable
     // *update clear() when add member*
@@ -219,6 +199,7 @@ public:
     SharedVector<uint8_t>   bone_counts;
     SharedVector<int>       bone_offsets;
     SharedVector<Weights1>  weights1;
+    uint32_t bone_weight_count = 0; // sum of bone_counts
 
 
 protected:
@@ -237,13 +218,14 @@ public:
     bool merge(const Entity& base) override;
     bool diff(const Entity& e1, const Entity& e2) override;
     bool lerp(const Entity& e1, const Entity& e2, float t) override;
+    void updateBounds() override;
 
     void clear() override;
     uint64_t hash() const override;
     uint64_t checksumGeom() const override;
+    uint64_t vertexCount() const override;
     EntityPtr clone(bool detach = false) override;
 
-    void updateBounds();
     void refine();
     void makeDoubleSided();
     void mirrorMesh(const float3& plane_n, float plane_d, bool welding = false);

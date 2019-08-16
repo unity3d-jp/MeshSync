@@ -21,7 +21,7 @@ static const uint qt_meta_data_msmodoSettingsWidget[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      20,   14, // methods
+      19,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -45,10 +45,9 @@ static const uint qt_meta_data_msmodoSettingsWidget[] = {
      356,   22,   21,   21, 0x0a,
      378,   22,   21,   21, 0x0a,
      402,   22,   21,   21, 0x0a,
-     436,   22,   21,   21, 0x0a,
-     464,   22,   21,   21, 0x0a,
-     495,   22,   21,   21, 0x0a,
-     523,   22,   21,   21, 0x0a,
+     427,   22,   21,   21, 0x0a,
+     461,   22,   21,   21, 0x0a,
+     489,   22,   21,   21, 0x0a,
 
        0        // eod
 };
@@ -66,10 +65,9 @@ static const char qt_meta_stringdata_msmodoSettingsWidget[] = {
     "onToggleSyncCameras(int)\0"
     "onToggleSyncLights(int)\0onToggleAutoSync(int)\0"
     "onClickManualSync(bool)\0"
+    "onClickExportCache(bool)\0"
     "onEditAnimationTimeScale(QString)\0"
     "onEditAnimationSPS(QString)\0"
-    "onToggleKeyframeReduction(int)\0"
-    "onToggleKeepFlatCurves(int)\0"
     "onClickSyncAnimations(bool)\0"
 };
 
@@ -94,11 +92,10 @@ void msmodoSettingsWidget::qt_static_metacall(QObject *_o, QMetaObject::Call _c,
         case 12: _t->onToggleSyncLights((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 13: _t->onToggleAutoSync((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 14: _t->onClickManualSync((*reinterpret_cast< bool(*)>(_a[1]))); break;
-        case 15: _t->onEditAnimationTimeScale((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 16: _t->onEditAnimationSPS((*reinterpret_cast< const QString(*)>(_a[1]))); break;
-        case 17: _t->onToggleKeyframeReduction((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 18: _t->onToggleKeepFlatCurves((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 19: _t->onClickSyncAnimations((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 15: _t->onClickExportCache((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 16: _t->onEditAnimationTimeScale((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 17: _t->onEditAnimationSPS((*reinterpret_cast< const QString(*)>(_a[1]))); break;
+        case 18: _t->onClickSyncAnimations((*reinterpret_cast< bool(*)>(_a[1]))); break;
         default: ;
         }
     }
@@ -136,9 +133,9 @@ int msmodoSettingsWidget::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 20)
+        if (_id < 19)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 20;
+        _id -= 19;
     }
     return _id;
 }

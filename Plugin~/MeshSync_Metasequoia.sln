@@ -7,7 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshUtils", "MeshUtils.vcxp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "setup", "setup.vcxproj", "{1C5DE91B-7AE9-4304-9FA1-0DE1ABA8C02D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncServer", "MeshSyncServer.vcxproj", "{66397903-6FF2-46C6-B51E-B323FD248FAD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mscore", "mscore.vcxproj", "{66397903-6FF2-46C6-B51E-B323FD248FAD}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshSyncClientMQ4", "MeshSyncClientMQ4.vcxproj", "{12C849FC-DFEC-4FCD-9351-38BE0020BED5}"
 EndProject

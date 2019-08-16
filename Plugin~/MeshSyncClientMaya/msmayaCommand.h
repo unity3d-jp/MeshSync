@@ -29,7 +29,7 @@ public:
     LT_PAD64;
 };
 
-class CmdExport : public MPxCommand
+class CmdSend : public MPxCommand
 {
 public:
     static void* create();
@@ -51,8 +51,21 @@ public:
     LT_PAD64;
 };
 
+
+class CmdExportCache : public MPxCommand
+{
+public:
+    static void* create();
+    static const char* name();
+    static MSyntax createSyntax();
+
+    MStatus doIt(const MArgList&) override;
+    LT_PAD64;
+};
+
 #define EachCommand(Body)\
     Body(CmdServerStatus)\
     Body(CmdSettings)\
-    Body(CmdExport)\
-    Body(CmdImport)
+    Body(CmdSend)\
+    Body(CmdImport)\
+    Body(CmdExportCache)

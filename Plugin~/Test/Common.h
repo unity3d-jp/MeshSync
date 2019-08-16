@@ -22,9 +22,19 @@ struct Random
         return d11(r);
     }
 
+    // normalized vector
     float3 v3n()
     {
         return normalize(float3{ f11(), f11(), f11() });
+    }
+
+    // tangent
+    float4 v4t()
+    {
+        float4 r;
+        (float3&)r = normalize(float3{ f11(), f11(), f11() });
+        r.w = sign(f11());
+        return r;
     }
 };
 

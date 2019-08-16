@@ -6,6 +6,7 @@
 #include <future>
 #include "msProtocol.h"
 
+#ifdef msEnableNetwork
 namespace Poco {
     namespace Net {
         class HTTPServer;
@@ -116,3 +117,4 @@ private:
 msDeclPtr(Server);
 
 } // namespace ms
+#endif // msEnableNetwork

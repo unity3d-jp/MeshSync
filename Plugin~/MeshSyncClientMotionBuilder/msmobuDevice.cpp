@@ -881,17 +881,6 @@ bool msmobuDevice::exportAnimations()
     m_anim_records.clear();
     control.Goto(time_current);
 
-    if (m_settings.keyframe_reduction) {
-        // keyframe reduction
-        for (auto& clip : m_animations)
-            clip->reduction(m_settings.keep_flat_curves);
-
-        // erase empty clip
-        m_animations.erase(
-            std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
-            m_animations.end());
-    }
-
     return !m_animations.empty();
 }
 

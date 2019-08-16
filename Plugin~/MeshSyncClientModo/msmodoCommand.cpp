@@ -77,9 +77,7 @@ public:
     Handler("syncMeshInstances", LXsTYPE_BOOLEAN, settings.sync_mesh_instances, true)\
     Handler("syncReplicators", LXsTYPE_BOOLEAN, settings.sync_replicators, true)\
     Handler("animationTimeScale", LXsTYPE_FLOAT, settings.animation_time_scale, false)\
-    Handler("animationSamplesPerSecond", LXsTYPE_FLOAT, settings.animation_sps, false)\
-    Handler("keyframeReduction", LXsTYPE_BOOLEAN, settings.reduce_keyframes, false)\
-    Handler("keepFlatCurves", LXsTYPE_BOOLEAN, settings.keep_flat_curves, false)
+    Handler("animationSamplesPerSecond", LXsTYPE_FLOAT, settings.animation_sps, false)
 
 
     void setup_args(CLxAttributeDesc &desc) override
@@ -95,7 +93,7 @@ public:
         auto& settings = msmodoGetSettings();
 #define Handler(Name, Type, Member, Sync)\
         if(getArg(Name, Member) && settings.auto_sync && Sync)\
-            msmodoGetContext().sendObjects(msmodoContext::SendScope::All, true);
+            msmodoGetContext().sendObjects(ObjectScope::All, true);
 
         EachParam(Handler)
 #undef Handler
@@ -118,7 +116,7 @@ public:
             pop->popup_add("Materials");
             pop->popup_add("Animations");
             pop->popup_add("Everything");
-            static_assert((int)msmodoContext::SendTarget::Everything == 3, "SendTarget enum and uivalue mismatch");
+            static_assert((int)ExportTarget::Everything == 3, "SendTarget enum and uivalue mismatch");
             return pop;
         }
     };
@@ -131,9 +129,9 @@ public:
 
     void execute() override
     {
-        auto target = msmodoContext::SendTarget::Objects;
+        auto target = ExportTarget::Objects;
         cmd_read_arg("target", (int&)target);
-        msmodoExport(target, msmodoContext::SendScope::All);
+        msmodoExport(target, ObjectScope::All);
     }
 };
 
@@ -147,9 +145,146 @@ public:
     }
 };
 
+class msmodoCmdCache : public CLxCommand
+{
+public:
+    class ScopeSelector : public CLxCustomArgumentUI
+    {
+    public:
+        CLxDynamicUIValue* uivalue(CLxCommand &cmd) override
+        {
+            auto *pop = new CLxUIValue();
+            pop->popup_add("All");
+            pop->popup_add("Selected");
+            return pop;
+        }
+    };
+
+    class FrameRangeSelector : public CLxCustomArgumentUI
+    {
+    public:
+        CLxDynamicUIValue* uivalue(CLxCommand &cmd) override
+        {
+            auto *pop = new CLxUIValue();
+            pop->popup_add("Current");
+            pop->popup_add("All");
+            pop->popup_add("Custom");
+            return pop;
+        }
+    };
+
+    class MaterialFrameRangeSelector : public CLxCustomArgumentUI
+    {
+    public:
+        CLxDynamicUIValue* uivalue(CLxCommand &cmd) override
+        {
+            auto *pop = new CLxUIValue();
+            pop->popup_add("None");
+            pop->popup_add("One");
+            pop->popup_add("All");
+            return pop;
+        }
+    };
+
+    void setup_args(CLxAttributeDesc &desc) override
+    {
+        desc.add("path", LXsTYPE_FILEPATH);
+
+        desc.add("objectScope", LXsTYPE_INTEGER);
+        desc.arg_set_custom(new ScopeSelector());
+
+        desc.add("frameRange", LXsTYPE_INTEGER);
+        desc.arg_set_custom(new FrameRangeSelector());
+
+        desc.add("frameBegin", LXsTYPE_INTEGER);
+        desc.default_val(0);
+        desc.add("frameEnd", LXsTYPE_INTEGER);
+        desc.default_val(100);
+
+        desc.add("materialFrameRange", LXsTYPE_INTEGER);
+        desc.arg_set_custom(new MaterialFrameRangeSelector());
+        desc.default_val(1);
+
+        desc.add("zstdCompressionLevel", LXsTYPE_INTEGER);
+        desc.default_val(3);
+
+        desc.add("samplesPerFrame", LXsTYPE_FLOAT);
+        desc.default_val(1.0f);
+
+        desc.add("makeDoubleSided", LXsTYPE_BOOLEAN);
+        desc.default_val(false);
+
+        desc.add("bakeDeformers", LXsTYPE_BOOLEAN);
+        desc.default_val(true);
+
+        desc.add("flattenHierarchy", LXsTYPE_BOOLEAN);
+        desc.default_val(false);
+
+        desc.add("mergeMeshes", LXsTYPE_BOOLEAN);
+        desc.default_val(false);
+
+        desc.add("stripNormals", LXsTYPE_BOOLEAN);
+        desc.default_val(false);
+        desc.add("stripTangents", LXsTYPE_BOOLEAN);
+        desc.default_val(true);
+    }
+
+    inline bool readArg(const char *name, std::string& v)
+    {
+        return cmd_read_arg(name, v);
+    }
+
+    inline bool readArg(const char *name, int& v)
+    {
+        return cmd_read_arg(name, v);
+    }
+
+    inline bool readArg(const char *name, float& v)
+    {
+        double tmp;
+        if (cmd_read_arg(name, tmp)) {
+            v = (float)tmp;
+            return true;
+        }
+        return false;
+    }
+
+    inline bool readArg(const char *name, bool& v)
+    {
+        int tmp;
+        if (cmd_read_arg(name, tmp)) {
+            v = (bool)tmp;
+            return true;
+        }
+        return false;
+    }
+
+    void execute() override
+    {
+        auto settings = msmodoGetCacheSettings(); // copy
+
+        readArg("path", settings.path);
+        readArg("objectScope", (int&)settings.object_scope);
+        readArg("frameRange", (int&)settings.frame_range);
+        readArg("frameBegin", settings.frame_begin);
+        readArg("frameEnd", settings.frame_end);
+        readArg("materialFrameRange", (int&)settings.material_frame_range);
+        readArg("zstdCompressionLevel", settings.zstd_compression_level);
+        readArg("samplesPerFrame", settings.samples_per_frame);
+        readArg("makeDoubleSided", settings.make_double_sided);
+        readArg("bakeDeformers", settings.bake_deformers);
+        readArg("flattenHierarchy", settings.flatten_hierarchy);
+        readArg("mergeMeshes", settings.merge_meshes);
+        readArg("stripNormals", settings.strip_normals);
+        readArg("stripTangents", settings.strip_tangents);
+        msmodoGetContext().exportCache(settings);
+    }
+};
+
 static CLxMeta_Command<msmodoCmdSettings> g_meta_settings(msmodoCmdSettingsName);
 static CLxMeta_Command<msmodoCmdExport> g_meta_export(msmodoCmdExportName);
 static CLxMeta_Command<msmodoCmdImport> g_meta_import(msmodoCmdImportName);
+static CLxMeta_Command<msmodoCmdCache> g_meta_cache(msmodoCmdCacheName);
 
 class msmodoMetaRoot : public CLxMetaRoot
 {
@@ -160,6 +295,7 @@ class msmodoMetaRoot : public CLxMetaRoot
         add(&g_meta_settings);
         add(&g_meta_export);
         add(&g_meta_import);
+        add(&g_meta_cache);
         return false;
     }
 };

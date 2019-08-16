@@ -226,7 +226,7 @@ xismo doesn't provide a plugin, so the current implementation (05/2018) uses an 
 - Installation:
   - Download MeshSync.unitypackage from [releases](https://github.com/unity3d-jp/MeshSync/releases) and import it into the project.
     - This repository can be directly imported into Unity 2018.3 and later versions. Open the project's Packages/manifest.json in a text editor and add the following line under "dependencies".
-    > "com.utj.meshsync": "https://github.com/unity3d-jp/MeshSync.git",
+    > "com.unity.meshsync": "https://github.com/unity3d-jp/MeshSync.git",
   
   - When installing on older versions, **close Unity and delete Assets/UTJ/MeshSync before importing the package**. If the plugin dll loads, the update will fail. 
   - After importing, the GameObject -> MeshSync menu will be added

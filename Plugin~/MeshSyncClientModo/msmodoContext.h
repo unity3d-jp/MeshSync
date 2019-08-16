@@ -30,8 +30,37 @@ struct LxItemKey
 class msmodoContext;
 
 
+enum class ExportTarget : int
+{
+    Objects,
+    Materials,
+    Animations,
+    Everything,
+};
 
-struct msmodoSettings
+enum class ObjectScope : int
+{
+    None = -1,
+    All,
+    Selected,
+    Updated,
+};
+
+enum class FrameRange : int
+{
+    Current,
+    All,
+    Custom,
+};
+
+enum class MaterialFrameRange : int
+{
+    None,
+    One,
+    All,
+};
+
+struct SyncSettings
 {
     ms::ClientSettings client_settings;
 
@@ -46,6 +75,7 @@ struct msmodoSettings
     bool sync_colors = true;
     bool make_double_sided = false;
     bool bake_deformers = false;
+    bool flatten_hierarchy = false;
     bool sync_blendshapes = true;
     bool sync_bones = true;
     bool sync_mesh_instances = true;
@@ -53,12 +83,30 @@ struct msmodoSettings
     bool sync_textures = true;
     bool sync_cameras = true;
     bool sync_lights = true;
-    bool reduce_keyframes = true;
-    bool keep_flat_curves = false;
 
-    // import settings
-    bool bake_skin = false;
-    bool bake_cloth = false;
+    // cache
+    bool export_cache = false;
+};
+
+struct CacheSettings
+{
+    std::string path;
+    ObjectScope object_scope = ObjectScope::All;
+    FrameRange frame_range = FrameRange::Current;
+    MaterialFrameRange material_frame_range = MaterialFrameRange::One;
+    int frame_begin = 0;
+    int frame_end = 100;
+
+    int zstd_compression_level = 3; // (min) 0 - 22 (max)
+    float samples_per_frame = 1.0f;
+
+    bool make_double_sided = false;
+    bool bake_deformers = true;
+    bool flatten_hierarchy = false;
+    bool merge_meshes = false;
+
+    bool strip_normals = false;
+    bool strip_tangents = true;
 };
 
 
@@ -66,28 +114,11 @@ class msmodoContext : private msmodoInterface
 {
 using super = msmodoInterface;
 public:
-    enum class SendTarget : int
-    {
-        Objects,
-        Materials,
-        Animations,
-        Everything,
-    };
-    enum class SendScope : int
-    {
-        None,
-        All,
-        Updated,
-        Selected,
-    };
-
     static msmodoContext& getInstance();
     static void finalizeInstance();
 
-    msmodoContext();
-    ~msmodoContext();
-
-    msmodoSettings& getSettings();
+    SyncSettings& getSettings();
+    CacheSettings& getCacheSettings();
 
     using super::logInfo;
     using super::logError;
@@ -97,8 +128,9 @@ public:
     void wait();
     void update();
     bool sendMaterials(bool dirty_all);
-    bool sendObjects(SendScope scope, bool dirty_all);
-    bool sendAnimations(SendScope scope);
+    bool sendObjects(ObjectScope scope, bool dirty_all);
+    bool sendAnimations(ObjectScope scope);
+    bool exportCache(const CacheSettings& cache_settings);
 
     bool recvObjects();
 
@@ -139,6 +171,12 @@ private:
         void eraseFromEntityManager(msmodoContext *self);
     };
 
+    template<class T> friend struct std::default_delete;
+    msmodoContext();
+    ~msmodoContext();
+
+    std::vector<CLxUser_Item> getNodes(ObjectScope scope);
+
     void exportMaterials();
     ms::MaterialPtr exportMaterial(CLxUser_Item obj);
 
@@ -151,7 +189,7 @@ private:
     ms::MeshPtr exportMesh(TreeNode& node);
     ms::TransformPtr exportReplicator(TreeNode& node);
 
-    int exportAnimations(SendScope scope);
+    int exportAnimations(ObjectScope scope);
     template<class T> static AnimationExtractor getAnimationExtractor();
     template<class T> std::shared_ptr<T> createAnimation(TreeNode& n);
     bool exportAnimation(CLxUser_Item obj);
@@ -161,8 +199,6 @@ private:
     void extractMeshAnimationData(TreeNode& node);
     void extractReplicatorAnimationData(TreeNode& node);
 
-    void kickAsyncSend();
-
     void extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
     void extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,
         float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);
@@ -171,13 +207,19 @@ private:
     void extractReplicaData(TreeNode& n, CLxUser_Item& geom, int nth, const mu::float4x4& matrix,
         std::string& path, mu::float3& pos, mu::quatf& rot, mu::float3& scale);
 
+    void kickAsyncExport();
+
 private:
-    msmodoSettings m_settings;
+    static std::unique_ptr<msmodoContext> s_instance;
+
+    SyncSettings m_settings;
+    CacheSettings m_cache_settings;
     ms::IDGenerator<CLxUser_Item> m_material_ids;
     ms::TextureManager m_texture_manager;
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
+    ms::AsyncSceneCacheWriter m_cache_writer;
 
     int m_material_index_seed = 0;
     int m_entity_index_seed = 0;
@@ -186,11 +228,12 @@ private:
     std::vector<TreeNode*> m_anim_nodes;
     std::vector<ms::AnimationClipPtr> m_animations;
     std::vector<std::function<void()>> m_parallel_tasks;
-    SendScope m_pending_scope = SendScope::None;
+    ObjectScope m_pending_scope = ObjectScope::None;
     bool m_ignore_events = false;
     float m_anim_time = 0.0f;
 };
 
 #define msmodoGetContext() msmodoContext::getInstance()
 #define msmodoGetSettings() msmodoGetContext().getSettings()
-bool msmodoExport(msmodoContext::SendTarget target, msmodoContext::SendScope scope);
+#define msmodoGetCacheSettings() msmodoGetContext().getCacheSettings()
+bool msmodoExport(ExportTarget target, ObjectScope scope);

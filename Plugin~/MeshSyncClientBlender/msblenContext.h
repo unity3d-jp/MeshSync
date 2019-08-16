@@ -4,12 +4,42 @@
 #include "MeshSync/MeshSyncUtils.h"
 #include "msblenBinder.h"
 
-struct msblenSettings;
+struct SyncSettings;
 class msblenContext;
 namespace bl = blender;
 
 
-struct msblenSettings
+enum class ExportTarget : int
+{
+    Objects,
+    Materials,
+    Animations,
+    Everything,
+};
+
+enum class ObjectScope : int
+{
+    None = -1,
+    All,
+    Selected,
+    Updated,
+};
+
+enum class FrameRange : int
+{
+    Current,
+    All,
+    Custom,
+};
+
+enum class MaterialFrameRange : int
+{
+    None,
+    One,
+    All,
+};
+
+struct SyncSettings
 {
     ms::ClientSettings client_settings;
     ms::SceneSettings scene_settings;
@@ -20,6 +50,7 @@ struct msblenSettings
     bool make_double_sided = false;
     bool bake_modifiers = false;
     bool convert_to_mesh = true;
+    bool flatten_hierarchy = false;
     bool sync_bones = true;
     bool sync_blendshapes = true;
     bool sync_textures = true;
@@ -29,36 +60,45 @@ struct msblenSettings
 
     float animation_timescale = 1.0f;
     int animation_frame_interval = 10;
-    bool keyframe_reduction = true;
-    bool keep_flat_curves = false;
 
     bool multithreaded = true;
+
+    // cache
+    bool export_cache = false;
+};
+
+struct CacheSettings
+{
+    std::string path;
+    ObjectScope object_scope = ObjectScope::All;
+    FrameRange frame_range = FrameRange::Current;
+    MaterialFrameRange material_frame_range = MaterialFrameRange::One;
+    int frame_begin = 0;
+    int frame_end = 100;
+
+    int zstd_compression_level = 3; // (min) 0 - 22 (max)
+    int frame_step = 1;
+
+    bool make_double_sided = false;
+    bool bake_modifiers = true;
+    bool convert_to_mesh = true;
+    bool flatten_hierarchy = false;
+    bool merge_meshes = false;
+
+    bool strip_normals = false;
+    bool strip_tangents = true;
 };
 
 
-class msblenContext : public std::enable_shared_from_this<msblenContext>
+class msblenContext
 {
 public:
-    enum class SendTarget : int
-    {
-        Objects,
-        Materials,
-        Animations,
-        Everything,
-    };
-    enum class SendScope : int
-    {
-        None,
-        All,
-        Updated,
-        Selected,
-    };
+    static msblenContext& getInstance();
 
-    msblenContext();
-    ~msblenContext();
-
-    msblenSettings&        getSettings();
-    const msblenSettings&  getSettings() const;
+    SyncSettings& getSettings();
+    const SyncSettings& getSettings() const;
+    CacheSettings& getCacheSettings();
+    const CacheSettings& getCacheSettings() const;
 
     void logInfo(const char *format, ...);
     bool isServerAvailable();
@@ -69,8 +109,10 @@ public:
     bool prepare();
 
     bool sendMaterials(bool dirty_all);
-    bool sendObjects(SendScope scope, bool dirty_all);
-    bool sendAnimations(SendScope scope);
+    bool sendObjects(ObjectScope scope, bool dirty_all);
+    bool sendAnimations(ObjectScope scope);
+    bool exportCache(const CacheSettings& cache_settings);
+
     void flushPendingList();
 
 private:
@@ -101,6 +143,11 @@ private:
         }
     };
 
+    msblenContext();
+    ~msblenContext();
+
+    std::vector<Object*> getNodes(ObjectScope scope);
+
     int exportTexture(const std::string & path, ms::TextureType type);
     void exportMaterials();
 
@@ -129,10 +176,11 @@ private:
     void extractLightAnimationData(ms::TransformAnimation& dst, void *obj);
     void extractMeshAnimationData(ms::TransformAnimation& dst, void *obj);
 
-    void kickAsyncSend();
+    void kickAsyncExport();
 
 private:
-    msblenSettings m_settings;
+    SyncSettings m_settings;
+    CacheSettings m_cache_settings;
     std::set<Object*> m_pending;
     std::map<Bone*, ms::TransformPtr> m_bones;
     std::map<void*, ObjectRecord> m_obj_records; // key can be object or bone
@@ -145,10 +193,14 @@ private:
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
+    ms::AsyncSceneCacheWriter m_cache_writer;
 
     // animation export
     std::map<std::string, AnimationRecord> m_anim_records;
     float m_anim_time = 0.0f;
     bool m_ignore_events = false;
 };
-using msbContextPtr = std::shared_ptr<msblenContext>;
+using msblenContextPtr = std::shared_ptr<msblenContext>;
+#define msblenGetContext() msblenContext::getInstance()
+#define msblenGetSettings() msblenContext::getInstance().getSettings()
+#define msblenGetCacheSettings() msblenContext::getInstance().getCacheSettings()

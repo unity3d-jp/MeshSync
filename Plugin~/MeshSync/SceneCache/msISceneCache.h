@@ -1,6 +1,7 @@
 #pragma once
 #include "msSceneCacheImpl.h"
 
+#ifdef msEnableSceneCache
 namespace ms {
 
 class ISceneCacheImpl : public ISceneCache
@@ -37,6 +38,13 @@ protected:
         std::future<void> task;
         ScenePtr segment;
         bool error = false;
+
+        // profile data
+        float read_time;
+        float decode_time;
+        uint64_t size_encoded;
+        uint64_t size_decoded;
+        uint64_t vertex_count;
     };
 
     struct SceneRecord
@@ -45,10 +53,8 @@ protected:
         uint64_t buffer_size_total = 0;
         float time = 0.0f;
 
-        float load_time_ms = 0.0f;
         ScenePtr scene;
         std::future<void> preload;
-
         RawVector<uint64_t> buffer_sizes;
         std::vector<SceneSegment> segments;
     };
@@ -80,3 +86,4 @@ public:
 };
 
 } // namespace ms
+#endif // msEnableSceneCache

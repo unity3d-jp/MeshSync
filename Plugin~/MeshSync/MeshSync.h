@@ -9,6 +9,7 @@
 #include "SceneGraph/msAudio.h"
 #include "SceneGraph/msEntity.h"
 #include "SceneGraph/msMesh.h"
+#include "SceneGraph/msPointCache.h"
 #include "SceneGraph/msConstraints.h"
 #include "SceneGraph/msSceneGraph.h"
 #include "SceneGraph/msEntityConverter.h"

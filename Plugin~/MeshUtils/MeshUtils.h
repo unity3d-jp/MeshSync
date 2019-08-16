@@ -16,6 +16,7 @@
 #include "muConcurrency.h"
 #include "muCompression.h"
 #include "muStream.h"
+#include "muDebugTimer.h"
 
 namespace mu {
 

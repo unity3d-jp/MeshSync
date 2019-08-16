@@ -7,8 +7,6 @@ namespace ms {
 static_assert(sizeof(MeshDataFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(MeshRefineFlags) == sizeof(uint32_t), "");
 
-#define CopyMember(V) V = base.V;
-
 // Mesh
 #pragma region Mesh
 
@@ -153,7 +151,7 @@ void BoneData::clear()
     EachVertexAttribute(F) EachTopologyAttribute(F)
 
 #define EachMember(F)\
-    F(refine_settings) EachGeometryAttribute(F) F(root_bone) F(bones) F(blendshapes) F(splits) F(submeshes)
+    F(refine_settings) EachGeometryAttribute(F) F(root_bone) F(bones) F(blendshapes) F(submeshes) F(bounds)
 
 Mesh::Mesh() {}
 Mesh::~Mesh() {}
@@ -231,7 +229,9 @@ bool Mesh::merge(const Entity& base_)
     auto& base = static_cast<const Mesh&>(base_);
 
     if (md_flags.unchanged) {
-        EachMember(CopyMember);
+#define Body(A) A = base.A;
+        EachMember(Body);
+#undef Body
     }
     else {
         auto assign_if_empty = [](auto& cur, const auto& base) {
@@ -272,14 +272,6 @@ bool Mesh::diff(const Entity& e1_, const Entity& e2_)
     return true;
 }
 
-static inline float4 lerp_tangent(float4 a, float4 b, float w)
-{
-    float4 ret;
-    (float3&)ret = normalize(lerp((float3&)a, (float3&)b, w));
-    ret.w = a.w;
-    return ret;
-}
-
 bool Mesh::lerp(const Entity& e1_, const Entity& e2_, float t)
 {
     if (!super::lerp(e1_, e2_, t))
@@ -291,19 +283,29 @@ bool Mesh::lerp(const Entity& e1_, const Entity& e2_, float t)
         return false;
 #define DoLerp(N) N.resize_discard(e1.N.size()); Lerp(N.data(), e1.N.data(), e2.N.data(), N.size(), t)
     DoLerp(points);
-    DoLerp(normals);
     DoLerp(uv0);
     DoLerp(uv1);
     DoLerp(colors);
     DoLerp(velocities);
 #undef DoLerp
-    Normalize(normals.data(), normals.size());
+
+    normals.resize_discard(e1.normals.size());
+    LerpNormals(normals.data(), e1.normals.cdata(), e2.normals.cdata(), normals.size(), t);
 
     tangents.resize_discard(e1.tangents.size());
-    enumerate(tangents, e1.tangents, e2.tangents, [t](float4& v, const float4& t1, const float4& t2) {
-        v = lerp_tangent(t1, t2, t);
-    });
-    return false;
+    LerpTangents(tangents.data(), e1.tangents.cdata(), e2.tangents.cdata(), tangents.size(), t);
+
+    updateBounds();
+    return true;
+}
+
+void Mesh::updateBounds()
+{
+    float3 bmin, bmax;
+    bmin = bmax = float3::zero();
+    MinMax(points.cdata(), points.size(), bmin, bmax);
+    bounds.center = (bmax + bmin) * 0.5f;
+    bounds.extents = abs(bmax - bmin) * 0.5f;
 }
 
 
@@ -321,13 +323,14 @@ void Mesh::clear()
     root_bone.clear();
     bones.clear();
     blendshapes.clear();
+    submeshes.clear();
 
     vclear(weights4);
     vclear(bone_counts);
     vclear(bone_offsets);
     vclear(weights1);
-    submeshes.clear();
-    splits.clear();
+    bone_weight_count = 0;
+    bounds = {};
 }
 
 uint64_t Mesh::hash() const
@@ -382,6 +385,11 @@ uint64_t Mesh::checksumGeom() const
     return ret;
 }
 
+uint64_t Mesh::vertexCount() const
+{
+    return points.size();
+}
+
 EntityPtr Mesh::clone(bool detach_)
 {
     auto ret = create();
@@ -408,18 +416,6 @@ static inline void Remap(C1& dst, const C2& src, const C3& indices)
     else {
         dst.resize_discard(indices.size());
         CopyWithIndices(dst.data(), src.data(), indices);
-    }
-}
-
-void Mesh::updateBounds()
-{
-    // bounds
-    for (auto& split : splits) {
-        float3 bmin, bmax;
-        bmin = bmax = float3::zero();
-        MinMax(&points[split.vertex_offset], split.vertex_count, bmin, bmax);
-        split.bounds.center = (bmax + bmin) * 0.5f;
-        split.bounds.extents = abs(bmax - bmin) * 0.5f;
     }
 }
 
@@ -463,7 +459,13 @@ void Mesh::refine()
     // normals
     bool flip_normals = mrs.flags.flip_normals ^ mrs.flags.flip_faces;
     if (mrs.flags.gen_normals || (mrs.flags.gen_normals_with_smooth_angle && mrs.smooth_angle >= 180.0f)) {
-        GenerateNormalsPoly(normals.as_raw(), points, counts, indices, flip_normals);
+        if (!counts.empty()) {
+            GenerateNormalsPoly(normals.as_raw(), points, counts, indices, flip_normals);
+        }
+        else {
+            normals.resize_discard(points.size());
+            GenerateNormalsTriangleIndexed(normals.data(), points.cdata(), indices.cdata(), (int)indices.size() / 3, (int)points.size());
+        }
     }
     else if (mrs.flags.gen_normals_with_smooth_angle && !mrs.flags.no_reindexing) {
         GenerateNormalsWithSmoothAngle(normals.as_raw(), points, counts, indices, mrs.smooth_angle, flip_normals);
@@ -554,22 +556,9 @@ void Mesh::refine()
             SubmeshData sm;
             sm.index_count = src.index_count;
             sm.index_offset = src.index_offset;
-            sm.topology = (SubmeshData::Topology)src.topology;
+            sm.topology = (Topology)src.topology;
             sm.material_id = src.material_id;
             submeshes.push_back(sm);
-        }
-
-        // setup splits
-        splits.clear();
-        for (auto& src : refiner.splits) {
-            auto sp = SplitData();
-            sp.index_offset = src.index_offset;
-            sp.vertex_offset = src.vertex_offset;
-            sp.index_count = src.index_count;
-            sp.vertex_count = src.vertex_count;
-            sp.submesh_offset = src.submesh_offset;
-            sp.submesh_count = src.submesh_count;
-            splits.push_back(sp);
         }
 
         // remap vertex attributes
@@ -635,16 +624,10 @@ void Mesh::refine()
             bone_offsets.swap(tmp_bone_offsets);
             weights1.swap(tmp_weights);
 
-            // setup splits
-            int weight_offset = 0;
-            for (auto& split : splits) {
-                split.bone_weight_offset = weight_offset;
-                int bone_count = 0;
-                for (int vi = 0; vi < split.vertex_count; ++vi)
-                    bone_count += bone_counts[split.vertex_offset + vi];
-                split.bone_weight_count = bone_count;
-                weight_offset += bone_count;
-            }
+            uint32_t wc = 0;
+            for (auto c : bone_counts)
+                wc += c;
+            bone_weight_count = wc;
         }
 
         // remap blendshape delta
@@ -675,6 +658,11 @@ void Mesh::refine()
                 }
             }
         }
+
+        // all faces are triangles
+        counts.clear();
+        // material_ids can be regenerated by submeshes
+        material_ids.clear();
     }
 
     mrs.clear();
@@ -1056,25 +1044,6 @@ void Mesh::mergeMesh(const Mesh& v)
     expand_vertex_attribute(uv1, v.uv1);
     expand_vertex_attribute(colors, v.colors);
     expand_vertex_attribute(velocities, v.velocities);
-
-    if (!splits.empty() && !v.splits.empty()) {
-        // merge splits/submeshes
-        size_t num_submeshes_old = (int)submeshes.size();
-        for (auto split : v.splits)
-        {
-            split.vertex_offset += (int)num_points_old;
-            split.index_offset += (int)num_indices_old;
-            split.bone_weight_count = 0;
-            split.bone_weight_offset = 0;
-            split.submesh_offset += (int)num_submeshes_old;
-            splits.push_back(split);
-        }
-        for (auto submesh : v.submeshes)
-        {
-            submesh.index_offset += (int)num_indices_old;
-            submeshes.push_back(submesh);
-        }
-    }
 
     // discard bones/blendspapes for now.
     root_bone.clear();

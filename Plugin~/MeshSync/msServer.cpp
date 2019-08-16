@@ -5,7 +5,7 @@
 #include "SceneGraph/msAnimation.h"
 #include "SceneGraph/msEntityConverter.h"
 
-
+#ifdef msEnableNetwork
 namespace ms {
 
 using namespace Poco::Net;
@@ -701,4 +701,4 @@ Server::MessageHolder::MessageHolder(MessageHolder && v)
 }
 
 } // namespace ms
-
+#endif // msEnableNetwork

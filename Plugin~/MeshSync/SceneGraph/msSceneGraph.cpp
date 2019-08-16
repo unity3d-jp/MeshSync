@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "msSceneGraph.h"
-#include "msMesh.h"
 #include "msConstraints.h"
 #include "msAnimation.h"
 #include "msMaterial.h"
@@ -100,6 +99,8 @@ void Scene::merge(Scene& base)
 
 void Scene::diff(const Scene& s1, const Scene& s2)
 {
+    profile_data = s1.profile_data;
+
     size_t entity_count = s1.entities.size();
     if (entity_count == s2.entities.size()) {
         settings = s1.settings;
@@ -127,15 +128,18 @@ void Scene::diff(const Scene& s1, const Scene& s2)
 
 void Scene::lerp(const Scene& s1, const Scene& s2, float t)
 {
+    settings = s1.settings;
+    profile_data = s1.profile_data;
+
     size_t entity_count = s1.entities.size();
     if (entity_count == s2.entities.size()) {
-        settings = s1.settings;
         entities.resize(entity_count);
         parallel_for(0, (int)entity_count, 10, [this, &s1, &s2, t](int i) {
             auto& e1 = s1.entities[i];
             auto& e2 = s2.entities[i];
             if (e1->id == e2->id) {
                 if (e1->isGeometry() && !e1->cache_flags.constant_topology) {
+                    // topology is not constant. no way to lerp.
                     entities[i] = e1;
                 }
                 else {
@@ -157,6 +161,7 @@ void Scene::clear()
 
     scene_buffers.clear();
     data_sources.clear();
+    profile_data = {};
 }
 
 uint64_t Scene::hash() const
@@ -217,8 +222,7 @@ void Scene::import(const SceneImportSettings& cv)
 
         if (!converters.empty())
             convert(*obj);
-        if (is_mesh)
-            static_cast<Mesh&>(*obj).updateBounds();
+        obj->updateBounds();
     });
 
     for (auto& asset : assets) {
@@ -226,6 +230,7 @@ void Scene::import(const SceneImportSettings& cv)
             auto& clip = static_cast<AnimationClip&>(*asset);
             parallel_for_each(clip.animations.begin(), clip.animations.end(), [&](AnimationPtr& anim) {
                 sanitizeHierarchyPath(anim->path);
+                Animation::validate(anim);
                 convert(*anim);
             });
         }
@@ -357,10 +362,10 @@ std::vector<std::shared_ptr<EntityType>> Scene::getEntities() const
     }
     return ret;
 }
-template std::vector<std::shared_ptr<Camera>> Scene::getAssets<Camera>() const;
-template std::vector<std::shared_ptr<Light>> Scene::getAssets<Light>() const;
-template std::vector<std::shared_ptr<Mesh>> Scene::getAssets<Mesh>() const;
-template std::vector<std::shared_ptr<Points>> Scene::getAssets<Points>() const;
+template std::vector<std::shared_ptr<Camera>> Scene::getEntities<Camera>() const;
+template std::vector<std::shared_ptr<Light>> Scene::getEntities<Light>() const;
+template std::vector<std::shared_ptr<Mesh>> Scene::getEntities<Mesh>() const;
+template std::vector<std::shared_ptr<Points>> Scene::getEntities<Points>() const;
 
 #undef EachMember
 #pragma endregion

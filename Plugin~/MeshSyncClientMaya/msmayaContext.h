@@ -81,7 +81,37 @@ struct TreeNode : public mu::noncopyable
 using TreeNodePtr = std::unique_ptr<TreeNode>;
 
 
-struct msmayaSettings
+enum class ExportTarget : int
+{
+    Objects,
+    Materials,
+    Animations,
+    Everything,
+};
+
+enum class ObjectScope : int
+{
+    None = -1,
+    All,
+    Updated,
+    Selected,
+};
+
+enum class FrameRange : int
+{
+    Current,
+    All,
+    Custom,
+};
+
+enum class MaterialFrameRange : int
+{
+    None = -1,
+    One,
+    All,
+};
+
+struct SyncSettings
 {
     ms::ClientSettings client_settings;
 
@@ -96,6 +126,7 @@ struct msmayaSettings
     bool sync_colors = true;
     bool make_double_sided = false;
     bool bake_deformers = false;
+    bool flatten_hierarchy = false;
     bool apply_tweak = false;
     bool sync_blendshapes = true;
     bool sync_bones = true;
@@ -104,36 +135,41 @@ struct msmayaSettings
     bool sync_lights = true;
     bool sync_constraints = false;
     bool remove_namespace = true;
-    bool reduce_keyframes = true;
-    bool keep_flat_curves = false;
     bool multithreaded = false;
     bool fbx_compatible_transform = true;
 
-    // import settings
-    bool bake_skin = false;
-    bool bake_cloth = false;
+    // cache
+    bool export_cache = false;
+};
+
+struct CacheSettings
+{
+    std::string path;
+    ObjectScope object_scope = ObjectScope::All;
+    FrameRange frame_range = FrameRange::Current;
+    MaterialFrameRange material_frame_range = MaterialFrameRange::One;
+    int frame_begin = 0;
+    int frame_end = 100;
+
+    bool remove_namespace = true;
+    int zstd_compression_level = 3; // (min) 0 - 22 (max)
+    float samples_per_frame = 1.0f;
+
+    bool make_double_sided = false;
+    bool bake_deformers = true;
+    bool flatten_hierarchy = false;
+    bool merge_meshes = false;
+
+    bool strip_normals = false;
+    bool strip_tangents = true;
 };
 
 class msmayaContext
 {
 public:
-    enum class SendTarget : int
-    {
-        Objects,
-        Materials,
-        Animations,
-        Everything,
-    };
-    enum class SendScope : int
-    {
-        None,
-        All,
-        Updated,
-        Selected,
-    };
-
     static msmayaContext& getInstance();
-    msmayaSettings& getSettings();
+    SyncSettings& getSettings();
+    CacheSettings& getCacheSettings();
 
     msmayaContext(MObject obj);
     ~msmayaContext();
@@ -155,8 +191,9 @@ public:
     void wait();
     void update();
     bool sendMaterials(bool dirty_all);
-    bool sendObjects(SendScope scope, bool dirty_all);
-    bool sendAnimations(SendScope scope);
+    bool sendObjects(ObjectScope scope, bool dirty_all);
+    bool sendAnimations(ObjectScope scope);
+    bool exportCache(const CacheSettings& cache_settings);
 
     bool recvObjects();
 
@@ -194,6 +231,8 @@ private:
     void removeGlobalCallbacks();
     void removeNodeCallbacks();
 
+    std::vector<TreeNode*> getNodes(ObjectScope scope);
+
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     void exportMaterials();
 
@@ -214,17 +253,18 @@ private:
         float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);
     void extractLightData(TreeNode *n, ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle);
 
-    int exportAnimations(SendScope scope);
+    int exportAnimations(ObjectScope scope);
     bool exportAnimation(TreeNode *tn, bool force);
     void extractTransformAnimationData(ms::TransformAnimation& dst, TreeNode *n);
     void extractCameraAnimationData(ms::TransformAnimation& dst, TreeNode *n);
     void extractLightAnimationData(ms::TransformAnimation& dst, TreeNode *n);
     void extractMeshAnimationData(ms::TransformAnimation& dst, TreeNode *n);
 
-    void kickAsyncSend();
+    void kickAsyncExport();
 
 private:
-    msmayaSettings m_settings;
+    SyncSettings m_settings;
+    CacheSettings m_cache_settings;
 
     MObject m_obj;
     MFnPlugin m_iplugin;
@@ -242,8 +282,9 @@ private:
     ms::MaterialManager m_material_manager;
     ms::EntityManager m_entity_manager;
     ms::AsyncSceneSender m_sender;
+    ms::AsyncSceneCacheWriter m_cache_writer;
 
-    SendScope m_pending_scope = SendScope::None;
+    ObjectScope m_pending_scope = ObjectScope::None;
     bool      m_scene_updated = true;
     bool      m_ignore_update = false;
     int       m_index_seed = 0;
@@ -252,3 +293,4 @@ private:
 
 #define msmayaGetContext() msmayaContext::getInstance()
 #define msmayaGetSettings() msmayaGetContext().getSettings()
+#define msmayaGetCacheSettings() msmayaGetContext().getCacheSettings()

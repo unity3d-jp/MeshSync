@@ -159,6 +159,19 @@ inline void EachChild(const MObject& node, const Body& body)
 
 // body: [](MObject&) -> void
 template<class Body>
+inline void EachChildRecursive(const MObject& node, const Body& body)
+{
+    Pad<MFnDagNode> fn(node);
+    auto num_children = fn.childCount();
+    for (uint32_t i = 0; i < num_children; ++i) {
+        auto child = fn.child(i);
+        body(child);
+        EachChildRecursive(child, body);
+    }
+}
+
+// body: [](MObject&) -> void
+template<class Body>
 inline void EachConstraints(MObject& node, const Body& body)
 {
     MItDependencyGraph it(node, MFn::kConstraint, MItDependencyGraph::kUpstream);

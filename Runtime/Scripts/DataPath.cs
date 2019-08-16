@@ -18,6 +18,8 @@ namespace UTJ.MeshSync
 
         [SerializeField] Root m_root;
         [SerializeField] string m_leaf;
+        bool m_dirty = true;
+        string m_fullpath;
 #if UNITY_EDITOR
         // just for inspector
         [SerializeField] bool m_readOnly = false;
@@ -28,38 +30,19 @@ namespace UTJ.MeshSync
         public Root root
         {
             get { return m_root; }
-            set { m_root = value; }
+            set { m_root = value; m_dirty = true; }
         }
         public string leaf
         {
             get { return m_leaf; }
-            set { m_leaf = value; }
+            set { m_leaf = value; m_dirty = true; }
         }
         public string fullPath
         {
             get
             {
-                if (m_root == Root.Current)
-                    return m_leaf;
-
-                string ret = "";
-                switch (m_root)
-                {
-                    case Root.PersistentData:
-                        ret = Application.persistentDataPath + "/";
-                        break;
-                    case Root.StreamingAssets:
-                        ret = Application.streamingAssetsPath + "/";
-                        break;
-                    case Root.TemporaryCache:
-                        ret = Application.temporaryCachePath + "/";
-                        break;
-                    case Root.DataPath:
-                        ret = Application.dataPath + "/";
-                        break;
-                }
-                ret += m_leaf;
-                return ret;
+                UpdateFullPath();
+                return m_fullpath;
             }
 
             set
@@ -89,6 +72,7 @@ namespace UTJ.MeshSync
                     m_root = Root.Current;
                     m_leaf = value;
                 }
+                m_dirty = true;
             }
         }
         public bool exists
@@ -134,10 +118,12 @@ namespace UTJ.MeshSync
         {
             try
             {
-                // exception will be thrown if fullPath is a file
-                System.IO.Directory.CreateDirectory(fullPath);
+                var path = fullPath;
+                if (!System.IO.Directory.Exists(path))
+                    System.IO.Directory.CreateDirectory(path);
+                // note: Directory.CreateDirectory() throw exception if the path is a file
             }
-            catch(System.Exception)
+            catch (System.Exception)
             {
                 return false;
             }
@@ -147,6 +133,39 @@ namespace UTJ.MeshSync
         public override string ToString()
         {
             return fullPath;
+        }
+
+        void UpdateFullPath()
+        {
+            if (!m_dirty)
+                return;
+            m_dirty = false;
+
+            if (m_root == Root.Current)
+            {
+                m_fullpath = m_leaf;
+            }
+            else
+            {
+                string tmp = "";
+                switch (m_root)
+                {
+                    case Root.PersistentData:
+                        tmp = Application.persistentDataPath + "/";
+                        break;
+                    case Root.StreamingAssets:
+                        tmp = Application.streamingAssetsPath + "/";
+                        break;
+                    case Root.TemporaryCache:
+                        tmp = Application.temporaryCachePath + "/";
+                        break;
+                    case Root.DataPath:
+                        tmp = Application.dataPath + "/";
+                        break;
+                }
+                tmp += m_leaf;
+                m_fullpath = tmp;
+            }
         }
     }
 }

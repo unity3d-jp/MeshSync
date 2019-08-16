@@ -10,6 +10,7 @@
 #include "msAsset.h"
 #include "msEntity.h"
 #include "msMesh.h"
+#include "msPointCache.h"
 
 #ifdef GetMessage
     #undef GetMessage
@@ -52,6 +53,18 @@ struct SceneImportSettings
     }
 };
 
+struct SceneProfileData
+{
+    uint64_t size_encoded;
+    uint64_t size_decoded;
+    uint64_t vertex_count;
+    float load_time;    // in ms
+    float read_time;    // in ms
+    float decode_time;  // in ms
+    float setup_time;   // in ms
+    float lerp_time;    // in ms
+};
+
 class Scene
 {
 public:
@@ -64,6 +77,7 @@ public:
     // non-serializable
     std::list<RawVector<char>> scene_buffers;
     std::vector<std::shared_ptr<Scene>> data_sources; // keep references for lerp sources etc
+    SceneProfileData profile_data{};
 
 protected:
     Scene();

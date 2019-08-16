@@ -37,6 +37,7 @@ function(add_plugin name)
         set_target_properties(${name} PROPERTIES BUNDLE ON)
     else()
         add_library(${name} SHARED ${arg_SOURCES})
+        set_target_properties(${name} PROPERTIES PREFIX "")
     endif()
 
     if(ENABLE_DEPLOY)

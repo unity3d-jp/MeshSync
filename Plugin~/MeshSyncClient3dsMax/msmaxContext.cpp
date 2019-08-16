@@ -75,8 +75,8 @@ void msmaxContext::AnimationRecord::operator()(msmaxContext * _this)
 
 msmaxContext& msmaxContext::getInstance()
 {
-    static msmaxContext s_plugin;
-    return s_plugin;
+    static msmaxContext s_instance;
+    return s_instance;
 }
 
 msmaxContext::msmaxContext()
@@ -90,12 +90,12 @@ msmaxContext::~msmaxContext()
     // releasing resources is done by onShutdown()
 }
 
-msmaxSettings& msmaxContext::getSettings()
+SyncSettings& msmaxContext::getSettings()
 {
     return m_settings;
 }
 
-msmaxCacheExportSettings& msmaxContext::getCacheSettings()
+CacheSettings& msmaxContext::getCacheSettings()
 {
     return m_cache_settings;
 }
@@ -144,7 +144,7 @@ void msmaxContext::onSceneUpdated()
 void msmaxContext::onTimeChanged()
 {
     if (m_settings.auto_sync)
-        m_pending_request = msmaxObjectScope::All;
+        m_pending_request = ObjectScope::All;
 }
 
 void msmaxContext::onNodeAdded(INode * n)
@@ -229,21 +229,21 @@ void msmaxContext::update()
         updateRecords();
         m_scene_updated = false;
         if (m_settings.auto_sync) {
-            m_pending_request = msmaxObjectScope::All;
+            m_pending_request = ObjectScope::All;
         }
     }
-    if (m_settings.auto_sync && m_pending_request == msmaxObjectScope::None && m_dirty) {
-        m_pending_request = msmaxObjectScope::Updated;
+    if (m_settings.auto_sync && m_pending_request == ObjectScope::None && m_dirty) {
+        m_pending_request = ObjectScope::Updated;
     }
 
-    if (m_pending_request != msmaxObjectScope::None) {
+    if (m_pending_request != ObjectScope::None) {
         if (sendObjects(m_pending_request, false)) {
-            m_pending_request = msmaxObjectScope::None;
+            m_pending_request = ObjectScope::None;
         }
     }
 }
 
-bool msmaxContext::sendObjects(msmaxObjectScope scope, bool dirty_all)
+bool msmaxContext::sendObjects(ObjectScope scope, bool dirty_all)
 {
     if (m_sender.isExporting())
         return false;
@@ -301,7 +301,7 @@ bool msmaxContext::sendMaterials(bool dirty_all)
     return true;
 }
 
-bool msmaxContext::sendAnimations(msmaxObjectScope scope)
+bool msmaxContext::sendAnimations(ObjectScope scope)
 {
     m_sender.wait();
 
@@ -340,17 +340,6 @@ bool msmaxContext::sendAnimations(msmaxObjectScope scope)
     // cleanup intermediate data
     m_anim_records.clear();
 
-    if (m_settings.anim_keyframe_reduction) {
-        // keyframe reduction
-        for (auto& clip : m_animations)
-            clip->reduction(m_settings.anim_keep_flat_curves);
-
-        // erase empty animation
-        m_animations.erase(
-            std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
-            m_animations.end());
-    }
-
     if (!m_animations.empty())
         kickAsyncExport();
     return true;
@@ -364,7 +353,7 @@ static int ExceptionFilter(unsigned int code, struct _EXCEPTION_POINTERS *ep)
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-bool msmaxContext::exportCacheImpl(const msmaxCacheExportSettings& cache_settings)
+bool msmaxContext::exportCache(const CacheSettings& cache_settings)
 {
     //float sample_rate = m_settings.animation_sps;
     float samples_per_frame = cache_settings.samples_per_frame;
@@ -397,24 +386,18 @@ bool msmaxContext::exportCacheImpl(const msmaxCacheExportSettings& cache_setting
     m_texture_manager.clearDirtyFlags();
 
     int scene_index = 0;
-    auto material_range = m_cache_settings.material_frame_range;
+    auto material_range = cache_settings.material_frame_range;
     auto nodes = getNodes(cache_settings.object_scope);
 
     auto do_export = [&]() {
-        if (m_scene_updated) {
-            updateRecords(false);
-            nodes = getNodes(cache_settings.object_scope);
-            m_scene_updated = false;
-        }
-
         if (scene_index == 0) {
             // exportMaterials() is needed to export material IDs in meshes
             exportMaterials();
-            if (material_range == msmaxMaterialFrameRange::None)
+            if (material_range == MaterialFrameRange::None)
                 m_material_manager.clearDirtyFlags();
         }
         else {
-            if (material_range == msmaxMaterialFrameRange::AllFrames)
+            if (material_range == MaterialFrameRange::All)
                 exportMaterials();
         }
 
@@ -438,12 +421,17 @@ bool msmaxContext::exportCacheImpl(const msmaxCacheExportSettings& cache_setting
     };
 
     auto *ifs = GetCOREInterface();
-    if (cache_settings.frame_range != msmaxFrameRange::CurrentFrame) {
+    if (cache_settings.frame_range == FrameRange::Current) {
+        m_anim_time = 0.0f;
+        m_current_time_tick = ifs->GetTime();
+        do_export();
+    }
+    else {
         ifs->ProgressStart(L"Exporting Scene Cache", TRUE, CB_Dummy, nullptr);
 
         TimeValue time_start = 0, time_end = 0, interval = 0;
 
-        if (cache_settings.frame_range == msmaxFrameRange::CustomRange) {
+        if (cache_settings.frame_range == FrameRange::Custom) {
             // custom frame range
             time_start = cache_settings.frame_begin * ticks_per_frame;
             time_end = cache_settings.frame_end * ticks_per_frame;
@@ -481,11 +469,6 @@ bool msmaxContext::exportCacheImpl(const msmaxCacheExportSettings& cache_setting
         }
         ifs->ProgressEnd();
     }
-    else if (cache_settings.frame_range == msmaxFrameRange::CurrentFrame) {
-        m_anim_time = 0.0f;
-        m_current_time_tick = ifs->GetTime();
-        do_export();
-    }
 
     // cleanup intermediate data
     m_material_records.clear();
@@ -493,21 +476,6 @@ bool msmaxContext::exportCacheImpl(const msmaxCacheExportSettings& cache_setting
     m_settings = settings_old;
     m_cache_writer.close();
     return true;
-}
-
-bool msmaxContext::exportCache(const msmaxCacheExportSettings& cache_settings)
-{
-    __try {
-        return exportCacheImpl(cache_settings);
-    }
-    __except (ExceptionFilter(GetExceptionCode(), GetExceptionInformation()))
-    {
-        logInfo("3ds max crashed! export aborted.");
-        if (cache_settings.frame_range != msmaxFrameRange::CurrentFrame) {
-            GetCOREInterface()->ProgressEnd();
-        }
-        return false;
-    }
 }
 
 bool msmaxContext::recvScene()
@@ -537,10 +505,18 @@ void msmaxContext::updateRecords(bool track_delete)
     }
 
     // re-construct records
+    std::vector<TreeNode*> nodes;
+    nodes.reserve(m_node_records.size());
     m_node_records.clear();
-    EnumerateAllNode([this](INode *n) {
-        getNodeRecord(n);
+    EnumerateAllNode([this, &nodes](INode *n) {
+        nodes.push_back(&getNodeRecord(n));
     });
+
+    // sort nodes by path and assign indices
+    std::sort(nodes.begin(), nodes.end(), [](auto *a, auto *b) { return a->path < b->path; });
+    size_t n = nodes.size();
+    for (size_t i = 0; i < n; ++i)
+        nodes[i]->index = (int)i;
 
     if (track_delete) {
         // erase renamed / re-parented objects
@@ -556,11 +532,10 @@ void msmaxContext::updateRecords(bool track_delete)
     }
 }
 
-msmaxContext::TreeNode & msmaxContext::getNodeRecord(INode *n)
+msmaxContext::TreeNode& msmaxContext::getNodeRecord(INode *n)
 {
     auto& rec = m_node_records[n];
-    if (rec.index == 0) {
-        rec.index = ++m_index_seed;
+    if (!rec.node) {
         rec.node = n;
         rec.name = GetNameW(n);
         rec.path = GetPath(n);
@@ -568,30 +543,33 @@ msmaxContext::TreeNode & msmaxContext::getNodeRecord(INode *n)
     return rec;
 }
 
-std::vector<msmaxContext::TreeNode*> msmaxContext::getNodes(msmaxObjectScope scope)
+std::vector<msmaxContext::TreeNode*> msmaxContext::getNodes(ObjectScope scope)
 {
     std::vector<TreeNode*> ret;
     ret.reserve(m_node_records.size());
 
     switch (scope)
     {
-    case msmaxObjectScope::All:
+    case ObjectScope::All:
         for (auto& kvp : m_node_records)
             ret.push_back(&kvp.second);
         break;
-    case msmaxObjectScope::Updated:
+    case ObjectScope::Updated:
         for (auto& kvp : m_node_records) {
             if (kvp.second.dirty_trans || kvp.second.dirty_geom)
                 ret.push_back(&kvp.second);
         }
         break;
-    case msmaxObjectScope::Selected:
+    case ObjectScope::Selected:
         for (auto& kvp : m_node_records) {
             if (kvp.second.node->Selected())
                 ret.push_back(&kvp.second);
         }
         break;
     }
+
+    std::sort(ret.begin(), ret.end(),
+        [](auto& a, auto& b) { return a->index < b->index; });
     return ret;
 }
 
@@ -1018,7 +996,7 @@ ms::TransformPtr msmaxContext::exportInstance(TreeNode& n, ms::TransformPtr base
     return ret;
 }
 
-ms::CameraPtr msmaxContext::exportCamera(TreeNode& n)
+ms::TransformPtr msmaxContext::exportCamera(TreeNode& n)
 {
     auto ret = createEntity<ms::Camera>(n);
     auto& dst = *ret;
@@ -1029,7 +1007,7 @@ ms::CameraPtr msmaxContext::exportCamera(TreeNode& n)
     return ret;
 }
 
-ms::LightPtr msmaxContext::exportLight(TreeNode& n)
+ms::TransformPtr msmaxContext::exportLight(TreeNode& n)
 {
     auto ret = createEntity<ms::Light>(n);
     auto& dst = *ret;
@@ -1153,13 +1131,9 @@ static void GenSmoothNormals(ms::Mesh& dst, Mesh& mesh)
     }
 }
 
-ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
+ms::TransformPtr msmaxContext::exportMesh(TreeNode& n)
 {
-    auto ret = createEntity<ms::Mesh>(n);
     auto inode = n.node;
-    auto& dst = *ret;
-    extractTransform(n);
-
     // send mesh contents even if the node is hidden.
 
     Mesh *mesh = nullptr;
@@ -1191,8 +1165,14 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
                 mesh->checkNormals(TRUE);
         }
     }
-    if (!mesh)
-        return ret;
+    if (!mesh) {
+        // camera target and a few other objects are renderable mesh (GEOMOBJECT_CLASS_ID and Renderable() returns true)
+        // but doesn't have valid mesh. I have no idea why... export as transform.
+        return exportTransform(n);
+    }
+
+    auto ret = createEntity<ms::Mesh>(n);
+    extractTransform(n);
 
     auto task = [this, ret, inode, mesh]() {
         doExtractMeshData(*ret, inode, mesh);
@@ -1399,41 +1379,36 @@ bool msmaxContext::exportAnimations(INode *n, bool force)
     if (it != m_anim_records.end())
         return false;
 
-    auto& rec = getNodeRecord(n);
-
-    auto obj = rec.baseobj;
+    auto *obj = GetBaseObject(n);
     ms::TransformAnimationPtr ret;
     AnimationRecord::extractor_t extractor = nullptr;
 
-    if (IsMesh(obj)) {
+    if (IsMesh(obj) && (!m_settings.ignore_non_renderable || IsRenderable(n))) {
         exportAnimations(n->GetParentNode(), true);
-        auto mod = FindSkin(n);
-        if (mod && mod->IsEnabled()) {
-            auto skin = (ISkin*)mod->GetInterface(I_SKIN);
-            EachBone(skin, [this](INode *bone) {
+        if (m_settings.sync_bones && !m_settings.bake_modifiers) {
+            EachBone(n, [this](INode *bone) {
                 exportAnimations(bone, true);
             });
         }
+
         ret = ms::MeshAnimation::create();
         extractor = &msmaxContext::extractMeshAnimation;
     }
     else {
-        if (IsCamera(obj)) {
+        if (IsCamera(obj) && m_settings.sync_cameras) {
             exportAnimations(n->GetParentNode(), true);
             ret = ms::CameraAnimation::create();
             extractor = &msmaxContext::extractCameraAnimation;
         }
-        else if (IsLight(obj)) {
+        else if (IsLight(obj) && m_settings.sync_lights) {
             exportAnimations(n->GetParentNode(), true);
             ret = ms::LightAnimation::create();
             extractor = &msmaxContext::extractLightAnimation;
         }
-        else {
-            if (force) {
-                exportAnimations(n->GetParentNode(), true);
-                ret = ms::TransformAnimation::create();
-                extractor = &msmaxContext::extractTransformAnimation;
-            }
+        else if (force) {
+            exportAnimations(n->GetParentNode(), true);
+            ret = ms::TransformAnimation::create();
+            extractor = &msmaxContext::extractTransformAnimation;
         }
     }
 
@@ -1443,7 +1418,7 @@ bool msmaxContext::exportAnimations(INode *n, bool force)
 
         auto& ar = m_anim_records[n];
         ar.dst = ret;
-        ar.node = &rec;
+        ar.node = &getNodeRecord(n);
         ar.extractor = extractor;
     }
     return ret != nullptr;
@@ -1558,7 +1533,7 @@ TimeValue msmaxContext::getExportTime() const
 }
 
 
-bool msmaxSendScene(msmaxExportTarget target, msmaxObjectScope scope)
+bool msmaxSendScene(ExportTarget target, ObjectScope scope)
 {
     auto& ctx = msmaxGetContext();
     if (!ctx.isServerAvailable()) {
@@ -1567,19 +1542,19 @@ bool msmaxSendScene(msmaxExportTarget target, msmaxObjectScope scope)
     }
 
     auto body = [&ctx, target, scope]() {
-        if (target == msmaxExportTarget::Objects) {
+        if (target == ExportTarget::Objects) {
             ctx.wait();
             ctx.sendObjects(scope, true);
         }
-        else if (target == msmaxExportTarget::Materials) {
+        else if (target == ExportTarget::Materials) {
             ctx.wait();
             ctx.sendMaterials(true);
         }
-        else if (target == msmaxExportTarget::Animations) {
+        else if (target == ExportTarget::Animations) {
             ctx.wait();
             ctx.sendAnimations(scope);
         }
-        else if (target == msmaxExportTarget::Everything) {
+        else if (target == ExportTarget::Everything) {
             ctx.wait();
             ctx.sendMaterials(true);
             ctx.wait();
@@ -1592,7 +1567,7 @@ bool msmaxSendScene(msmaxExportTarget target, msmaxObjectScope scope)
     return true;
 }
 
-bool msmaxExportCache(const msmaxCacheExportSettings& cache_settings)
+bool msmaxExportCache(const CacheSettings& cache_settings)
 {
     auto& ctx = msmaxGetContext();
     auto body = [&ctx, cache_settings]() {

@@ -119,6 +119,8 @@ void AnimationCurve::clear()
     data.clear();
     data_type = DataType::Unknown;
     data_flags = {};
+
+    idata.clear();
 }
 
 uint64_t AnimationCurve::hash() const
@@ -157,13 +159,9 @@ EachDataTypes(Instantiate)
 #undef Instantiate
 
 
-void AnimationCurve::reserve(size_t n)
+void AnimationCurve::reserve(size_t size)
 {
-    g_curve_fs[(int)data_type].reserve_keyframes(*this, n);
-}
-void AnimationCurve::reduction(bool keep_flat_curves)
-{
-    g_curve_fs[(int)data_type].reduce_keyframes(*this, keep_flat_curves);
+    g_curve_fs[(int)data_type].reserve_keyframes(*this, size);
 }
 #undef EachMember
 
@@ -218,14 +216,6 @@ bool Animation::empty() const
 {
     return curves.empty();
 }
-void Animation::reduction(bool keep_flat_curves)
-{
-    for (auto& c : curves)
-        c->reduction(keep_flat_curves);
-    curves.erase(
-        std::remove_if(curves.begin(), curves.end(), [](ms::AnimationCurvePtr& p) { return p->empty(); }),
-        curves.end());
-}
 void Animation::reserve(size_t n)
 {
     for (auto& c : curves)
@@ -237,7 +227,7 @@ bool Animation::isRoot() const
     return path.find_last_of('/') == 0;
 }
 
-AnimationCurvePtr Animation::findCurve(const char *name)
+AnimationCurvePtr Animation::findCurve(const char *name) const
 {
     auto it = std::lower_bound(curves.begin(), curves.end(), name, [](auto& curve, auto name) {
         return std::strcmp(curve->name.c_str(), name) < 0;
@@ -246,12 +236,12 @@ AnimationCurvePtr Animation::findCurve(const char *name)
         return *it;
     return nullptr;
 }
-AnimationCurvePtr Animation::findCurve(const std::string& name)
+AnimationCurvePtr Animation::findCurve(const std::string& name) const
 {
     return findCurve(name.c_str());
 }
 
-AnimationCurvePtr Animation::findCurve(const char *name, DataType type)
+AnimationCurvePtr Animation::findCurve(const char *name, DataType type) const
 {
     auto ret = findCurve(name);
     if (ret && ret->data_type == type)
@@ -259,7 +249,7 @@ AnimationCurvePtr Animation::findCurve(const char *name, DataType type)
     return nullptr;
 }
 
-AnimationCurvePtr Animation::findCurve(const std::string& name, DataType type)
+AnimationCurvePtr Animation::findCurve(const std::string& name, DataType type) const
 {
     return findCurve(name.c_str(), type);
 }
@@ -308,6 +298,37 @@ AnimationCurvePtr Animation::getCurve(const char *name, DataType type)
 AnimationCurvePtr Animation::getCurve(const std::string& name, DataType type)
 {
     return getCurve(name.c_str(), type);
+}
+
+void Animation::clearEmptyCurves()
+{
+    curves.erase(
+        std::remove_if(curves.begin(), curves.end(), [](auto& c) { return c->empty(); }),
+        curves.end());
+}
+
+
+void Animation::validate(AnimationPtr& anim)
+{
+    switch (anim->entity_type) {
+    case EntityType::Transform:
+        TransformAnimation::create(anim)->validate();
+        break;
+    case EntityType::Camera:
+        CameraAnimation::create(anim)->validate();
+        break;
+    case EntityType::Light:
+        LightAnimation::create(anim)->validate();
+        break;
+    case EntityType::Mesh:
+        MeshAnimation::create(anim)->validate();
+        break;
+    case EntityType::Points:
+        // no PointsAnimation for now
+        TransformAnimation::create(anim)->validate();
+        break;
+    }
+    anim->clearEmptyCurves();
 }
 
 
@@ -366,16 +387,6 @@ bool AnimationClip::empty() const
     return animations.empty();
 }
 
-void AnimationClip::reduction(bool keep_flat_curves)
-{
-    mu::parallel_for_each(animations.begin(), animations.end(), [keep_flat_curves](ms::AnimationPtr& p) {
-        p->reduction(keep_flat_curves);
-    });
-    animations.erase(
-        std::remove_if(animations.begin(), animations.end(), [](ms::AnimationPtr& p) { return p->empty(); }),
-        animations.end());
-}
-
 void AnimationClip::addAnimation(AnimationPtr v)
 {
     if (v)
@@ -385,6 +396,13 @@ void AnimationClip::addAnimation(TransformAnimationPtr v)
 {
     if (v)
         addAnimation(v->host);
+}
+
+void AnimationClip::clearEmptyAnimations()
+{
+    animations.erase(
+        std::remove_if(animations.begin(), animations.end(), [](auto& c) { return c->empty(); }),
+        animations.end());
 }
 
 
@@ -440,12 +458,19 @@ void TransformAnimation::setupCurves(bool create_if_not_exist)
         rotation.curve->data_flags.affect_handedness = true;
         scale.curve->data_flags.affect_handedness = true;
         scale.curve->data_flags.ignore_negate = true;
+        visible.curve->data_flags.force_constant = true;
     }
 }
 
 void TransformAnimation::reserve(size_t n)
 {
     host->reserve(n);
+}
+
+void TransformAnimation::validate()
+{
+    if (visible && !visible.empty() && visible.equal_all(visible.front().value))
+        visible.clear();
 }
 
 
@@ -477,6 +502,24 @@ void CameraAnimation::setupCurves(bool create_if_not_exist)
     }
 }
 
+void CameraAnimation::validate()
+{
+    super::validate();
+
+    if (fov.equal_all(0.0f))
+        fov.clear();
+    if (near_plane.equal_all(0.0f))
+        near_plane.clear();
+    if (far_plane.equal_all(0.0f))
+        far_plane.clear();
+    if (focal_length.equal_all(0.0f))
+        focal_length.clear();
+    if (sensor_size.equal_all(float2::zero()))
+        sensor_size.clear();
+    if (lens_shift.equal_all(float2::zero()))
+        lens_shift.clear();
+}
+
 
 std::shared_ptr<LightAnimation> LightAnimation::create(AnimationPtr host)
 {
@@ -501,6 +544,16 @@ void LightAnimation::setupCurves(bool create_if_not_exist)
     if (create_if_not_exist) {
         range.curve->data_flags.affect_scale = true;
     }
+}
+
+void LightAnimation::validate()
+{
+    super::validate();
+
+    if (range.equal_all(0.0f))
+        range.clear();
+    if (spot_angle.equal_all(0.0f))
+        spot_angle.clear();
 }
 
 
@@ -530,24 +583,5 @@ TAnimationCurve<float> MeshAnimation::getBlendshapeCurve(const std::string& name
 {
     return getBlendshapeCurve(name.c_str());
 }
-
-
-std::shared_ptr<PointsAnimation> PointsAnimation::create(AnimationPtr host)
-{
-    return CreateTypedAnimation<PointsAnimation>(host);
-}
-
-PointsAnimation::PointsAnimation(AnimationPtr host)
-    : super(host)
-{
-}
-
-void PointsAnimation::setupCurves(bool create_if_not_exist)
-{
-    super::setupCurves(create_if_not_exist);
-
-    time = GetCurve(host, mskPointsTime, DataType::Float, create_if_not_exist);
-}
-
 
 } // namespace ms

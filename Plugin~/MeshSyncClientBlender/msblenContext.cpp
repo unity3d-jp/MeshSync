@@ -3,6 +3,12 @@
 #include "msblenUtils.h"
 
 
+msblenContext& msblenContext::getInstance()
+{
+    static msblenContext s_instance;
+    return s_instance;
+}
+
 msblenContext::msblenContext()
 {
     m_settings.scene_settings.handedness = ms::Handedness::RightZUp;
@@ -13,9 +19,37 @@ msblenContext::~msblenContext()
     wait();
 }
 
-msblenSettings& msblenContext::getSettings() { return m_settings; }
-const msblenSettings& msblenContext::getSettings() const { return m_settings; }
+SyncSettings& msblenContext::getSettings() { return m_settings; }
+const SyncSettings& msblenContext::getSettings() const { return m_settings; }
+CacheSettings& msblenContext::getCacheSettings() { return m_cache_settings; }
+const CacheSettings& msblenContext::getCacheSettings() const { return m_cache_settings; }
 
+std::vector<Object*> msblenContext::getNodes(ObjectScope scope)
+{
+    std::vector<Object*> ret;
+
+    auto scene = bl::BScene(bl::BContext::get().scene());
+    if (scope == ObjectScope::All) {
+        scene.each_objects([&](Object *obj) {
+            ret.push_back(obj);
+        });
+    }
+    else if (scope == ObjectScope::Updated) {
+        auto bpy_data = bl::BData(bl::BContext::get().data());
+        if (bpy_data.objects_is_updated()) {
+            scene.each_objects([&](Object *obj) {
+                auto bid = bl::BID(obj);
+                if (bid.is_updated() || bid.is_updated_data())
+                    ret.push_back(obj);
+            });
+        }
+    }
+    else if (scope == ObjectScope::Selected) {
+        // todo
+    }
+
+    return ret;
+}
 
 int msblenContext::exportTexture(const std::string & path, ms::TextureType type)
 {
@@ -87,18 +121,23 @@ static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float
 {
     bl::BCamera cam(src->data);
 
-    // fbx exporter seems always export as perspective. so we follow it.
-    //ortho = data->type == CAM_ORTHO;
-    ortho = false;
+    // note: fbx exporter seems always export as perspective
+    ortho = ((Camera*)src->data)->type == CAM_ORTHO;
 
     near_plane = cam.clip_start();
     far_plane = cam.clip_end();
     fov = cam.angle_y() * mu::RadToDeg;
     focal_length = cam.lens();
-    sensor_size.x = cam.sensor_width();
-    sensor_size.y = cam.sensor_height();
-    lens_shift.x = cam.shift_x();
-    lens_shift.y = cam.shift_y();
+    sensor_size.x = cam.sensor_width();  // in mm
+    sensor_size.y = cam.sensor_height(); // in mm
+
+    auto fit = cam.sensor_fit();
+    if (fit == CAMERA_SENSOR_FIT_AUTO)
+        fit = sensor_size.x > sensor_size.y ? CAMERA_SENSOR_FIT_HOR : CAMERA_SENSOR_FIT_VERT;
+    const float aspx = sensor_size.x / sensor_size.y;
+    const float aspy = sensor_size.y / sensor_size.x;
+    lens_shift.x = cam.shift_x() * (fit == CAMERA_SENSOR_FIT_HOR ? 1.0f : aspy); // in percent
+    lens_shift.y = cam.shift_y() * (fit == CAMERA_SENSOR_FIT_HOR ? aspx : 1.0f); // in percent
 }
 
 static void ExtractLightData(Object *src,
@@ -1046,11 +1085,11 @@ bool msblenContext::sendMaterials(bool dirty_all)
     exportMaterials();
 
     // send
-    kickAsyncSend();
+    kickAsyncExport();
     return true;
 }
 
-bool msblenContext::sendObjects(SendScope scope, bool dirty_all)
+bool msblenContext::sendObjects(ObjectScope scope, bool dirty_all)
 {
     if (!prepare() || m_sender.isExporting() || m_ignore_events)
         return false;
@@ -1062,14 +1101,14 @@ bool msblenContext::sendObjects(SendScope scope, bool dirty_all)
     if (m_settings.sync_meshes)
         exportMaterials();
 
-    if (scope == SendScope::All) {
+    if (scope == ObjectScope::All) {
         auto scene = bl::BScene(bl::BContext::get().scene());
         scene.each_objects([this](Object *obj) {
             exportObject(obj, true);
         });
         eraseStaleObjects();
     }
-    if (scope == SendScope::Updated) {
+    if (scope == ObjectScope::Updated) {
         auto bpy_data = bl::BData(bl::BContext::get().data());
         if (!bpy_data.objects_is_updated())
             return true; // nothing to send
@@ -1084,14 +1123,14 @@ bool msblenContext::sendObjects(SendScope scope, bool dirty_all)
         });
         eraseStaleObjects();
     }
-    if (scope == SendScope::Selected) {
+    if (scope == ObjectScope::Selected) {
     }
 
-    kickAsyncSend();
+    kickAsyncExport();
     return true;
 }
 
-bool msblenContext::sendAnimations(SendScope scope)
+bool msblenContext::sendAnimations(ObjectScope scope)
 {
     if (!prepare() || m_sender.isExporting() || m_ignore_events)
         return false;
@@ -1106,7 +1145,7 @@ bool msblenContext::sendAnimations(SendScope scope)
     clip.frame_rate = (float)scene.fps();
 
     // list target objects
-    if (scope == SendScope::Selected) {
+    if (scope == ObjectScope::Selected) {
         // todo
     }
     else {
@@ -1145,24 +1184,107 @@ bool msblenContext::sendAnimations(SendScope scope)
         scene.frame_set(frame_current);
     }
 
-    if (m_settings.keyframe_reduction) {
-        // keyframe reduction
-        for (auto& clip : m_animations)
-            clip->reduction(m_settings.keep_flat_curves);
-
-        // erase empty clip
-        m_animations.erase(
-            std::remove_if(m_animations.begin(), m_animations.end(), [](ms::AnimationClipPtr& p) { return p->empty(); }),
-            m_animations.end());
-    }
     m_ignore_events = false;
 
     // send
     if (!m_animations.empty()) {
-        kickAsyncSend();
+        kickAsyncExport();
         return true;
     }
     return false;
+}
+
+bool msblenContext::exportCache(const CacheSettings& cache_settings)
+{
+    auto scene = bl::BScene(bl::BContext::get().scene());
+    float frame_rate = (float)scene.fps();
+    float samples_per_second = frame_rate;
+    float frame_to_second = 1.0f / frame_rate;
+
+    auto settings_old = m_settings;
+    m_settings.export_cache = true;
+    m_settings.make_double_sided = cache_settings.make_double_sided;
+    m_settings.convert_to_mesh = cache_settings.convert_to_mesh;
+    m_settings.bake_modifiers = cache_settings.bake_modifiers;
+    m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
+
+    ms::OSceneCacheSettings oscs;
+    oscs.sample_rate = samples_per_second;
+    oscs.encoder_settings.zstd.compression_level = cache_settings.zstd_compression_level;
+    oscs.flatten_hierarchy = cache_settings.flatten_hierarchy;
+    oscs.strip_normals = cache_settings.strip_normals;
+    oscs.strip_tangents = cache_settings.strip_tangents;
+
+    if (!m_cache_writer.open(cache_settings.path.c_str(), oscs)) {
+        m_settings = settings_old;
+        return false;
+    }
+
+    m_material_manager.setAlwaysMarkDirty(true);
+    m_entity_manager.setAlwaysMarkDirty(true);
+    m_texture_manager.clearDirtyFlags();
+
+    int scene_index = 0;
+    auto material_range = cache_settings.material_frame_range;
+    auto nodes = getNodes(cache_settings.object_scope);
+
+    auto do_export = [&]() {
+        if (scene_index == 0) {
+            // exportMaterials() is needed to export material IDs in meshes
+            exportMaterials();
+            if (material_range == MaterialFrameRange::None)
+                m_material_manager.clearDirtyFlags();
+        }
+        else {
+            if (material_range == MaterialFrameRange::All)
+                exportMaterials();
+        }
+
+        for (auto& n : nodes)
+            exportObject(n, true);
+
+        kickAsyncExport();
+        ++scene_index;
+    };
+
+    if (cache_settings.frame_range == FrameRange::Current) {
+        m_anim_time = 0.0f;
+        do_export();
+    }
+    else {
+        int frame_current = scene.frame_current();
+        int frame_start, frame_end;
+        int interval = std::max(cache_settings.frame_step, 1);
+
+        // time range
+        if (cache_settings.frame_range == FrameRange::Custom) {
+            // custom frame range
+            frame_start = cache_settings.frame_begin;
+            frame_end = cache_settings.frame_end;
+        }
+        else {
+            // all active frames
+            frame_start = scene.frame_start();
+            frame_end = scene.frame_end();
+        }
+
+        // record
+        for (int f = frame_start;;) {
+            scene.frame_set(f);
+            m_anim_time = (f - frame_start) * frame_to_second;
+            do_export();
+
+            if (f >= frame_end)
+                break;
+            else
+                f = std::min(f + interval, frame_end);
+        }
+        scene.frame_set(frame_current);
+    }
+
+    m_settings = settings_old;
+    m_cache_writer.close();
+    return true;
 }
 
 void msblenContext::flushPendingList()
@@ -1171,11 +1293,11 @@ void msblenContext::flushPendingList()
         for (auto p : m_pending)
             exportObject(p, false);
         m_pending.clear();
-        kickAsyncSend();
+        kickAsyncExport();
     }
 }
 
-void msblenContext::kickAsyncSend()
+void msblenContext::kickAsyncExport()
 {
     for (auto& t : m_async_tasks)
         t.wait();
@@ -1193,10 +1315,19 @@ void msblenContext::kickAsyncSend()
         kvp.second.clearState();
     m_bones.clear();
 
+    using Exporter = ms::AsyncSceneExporter;
+    Exporter *exporter = m_settings.export_cache ? (Exporter*)&m_cache_writer : (Exporter*)&m_sender;
+
     // kick async send
-    m_sender.on_prepare = [this]() {
-        auto& t = m_sender;
-        t.client_settings = m_settings.client_settings;
+    exporter->on_prepare = [this, exporter]() {
+        if (auto sender = dynamic_cast<ms::AsyncSceneSender*>(exporter)) {
+            sender->client_settings = m_settings.client_settings;
+        }
+        else if (auto writer = dynamic_cast<ms::AsyncSceneCacheWriter*>(exporter)) {
+            writer->time = m_anim_time;
+        }
+
+        auto& t = *exporter;
         t.scene_settings = m_settings.scene_settings;
         float scale_factor = 1.0f / m_settings.scene_settings.scale_factor;
         t.scene_settings.scale_factor = 1.0f;
@@ -1217,12 +1348,12 @@ void msblenContext::kickAsyncSend()
             for (auto& obj : t.animations) { cv.convert(*obj); }
         }
     };
-    m_sender.on_success = [this]() {
+    exporter->on_success = [this]() {
         m_material_ids.clearDirtyFlags();
         m_texture_manager.clearDirtyFlags();
         m_material_manager.clearDirtyFlags();
         m_entity_manager.clearDirtyFlags();
         m_animations.clear();
     };
-    m_sender.kick();
+    exporter->kick();
 }

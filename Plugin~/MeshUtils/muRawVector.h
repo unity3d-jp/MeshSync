@@ -205,9 +205,9 @@ public:
         // memcpy() can be way faster than std::copy()
         memcpy(m_data, first, sizeof(value_type) * m_size);
     }
-    void assign(pointer first, pointer last)
+    void assign(const_pointer data, size_t size)
     {
-        assign((const_pointer)first, (const_pointer)last);
+        assign(data, data + size);
     }
 
     template<class ForwardIter>
