@@ -383,7 +383,6 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
 
     m_material_manager.setAlwaysMarkDirty(true);
     m_entity_manager.setAlwaysMarkDirty(true);
-    m_texture_manager.clearDirtyFlags();
 
     int scene_index = 0;
     auto material_range = cache_settings.material_frame_range;
@@ -415,6 +414,7 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
         else {
             export_objects();
         }
+        m_texture_manager.clearDirtyFlags();
         kickAsyncExport();
 
         ++scene_index;

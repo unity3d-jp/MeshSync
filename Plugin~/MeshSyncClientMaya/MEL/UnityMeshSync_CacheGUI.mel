@@ -2,7 +2,7 @@
 global proc UnityMeshSync_CacheGUI()
 {
     $paths = `fileDialog2 -fileMode 0 -fileFilter "*.sc"`;
-    if(size($paths)==0)
+    if (size($paths) == 0)
         return;
 
     global string $Window = "UnityMeshSyncCacheGUI";

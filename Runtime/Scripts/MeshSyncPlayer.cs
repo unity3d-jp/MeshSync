@@ -782,9 +782,9 @@ namespace UTJ.MeshSync
                 foreach (var kvp in m_clientObjects)
                 {
                     var rec = kvp.Value;
-                    if (rec.smrEnabled && rec.go.activeInHierarchy)
+                    var smr = rec.skinnedMeshRenderer;
+                    if (smr != null && rec.smrEnabled && rec.go.activeInHierarchy)
                     {
-                        var smr = rec.skinnedMeshRenderer;
                         smr.enabled = false; // 
                         smr.enabled = true;  // force recalculate skinned mesh on editor. I couldn't find better way...
                     }

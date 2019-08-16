@@ -361,7 +361,7 @@ static void FillCurveI(const ms::TAnimationCurve<int>& src, void *x_, Interpolat
     }
     SetTangentMode(x, n, it);
 }
-template<> static void FillCurveI<UnknownKF>(const ms::TAnimationCurve<int>& src, void *x_, InterpolationMode it) {}
+template<> void FillCurveI<UnknownKF>(const ms::TAnimationCurve<int>& src, void *x_, InterpolationMode it) {}
 
 template<class KF>
 static void FillCurveF(const ms::TAnimationCurve<float>& src, void *x_, InterpolationMode it)
@@ -375,7 +375,7 @@ static void FillCurveF(const ms::TAnimationCurve<float>& src, void *x_, Interpol
     }
     SetTangentMode(x, n, it);
 }
-template<> static void FillCurveF<UnknownKF>(const ms::TAnimationCurve<float>& src, void *x_, InterpolationMode it) {}
+template<> void FillCurveF<UnknownKF>(const ms::TAnimationCurve<float>& src, void *x_, InterpolationMode it) {}
 
 template<class KF>
 static void FillCurvesF2(const ms::TAnimationCurve<float2>& src, void *x_, void *y_, InterpolationMode it)
@@ -393,7 +393,7 @@ static void FillCurvesF2(const ms::TAnimationCurve<float2>& src, void *x_, void 
     SetTangentMode(x, n, it);
     SetTangentMode(y, n, it);
 }
-template<> static void FillCurvesF2<UnknownKF>(const ms::TAnimationCurve<float2>& src, void *x_, void *y_, InterpolationMode it) {}
+template<> void FillCurvesF2<UnknownKF>(const ms::TAnimationCurve<float2>& src, void *x_, void *y_, InterpolationMode it) {}
 
 template<class KF>
 static void FillCurvesF3(const ms::TAnimationCurve<float3>& src, void *x_, void *y_, void *z_, InterpolationMode it)
@@ -416,7 +416,7 @@ static void FillCurvesF3(const ms::TAnimationCurve<float3>& src, void *x_, void 
     SetTangentMode(y, n, it);
     SetTangentMode(z, n, it);
 }
-template<> static void FillCurvesF3<UnknownKF>(const ms::TAnimationCurve<float3>& src, void *x_, void *y_, void *z_, InterpolationMode it) {}
+template<> void FillCurvesF3<UnknownKF>(const ms::TAnimationCurve<float3>& src, void *x_, void *y_, void *z_, InterpolationMode it) {}
 
 template<class KF>
 static void FillCurvesF4(const ms::TAnimationCurve<float4>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it)
@@ -444,7 +444,7 @@ static void FillCurvesF4(const ms::TAnimationCurve<float4>& src, void *x_, void 
     SetTangentMode(w, n, it);
 
 }
-template<> static void FillCurvesF4<UnknownKF>(const ms::TAnimationCurve<float4>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it) {}
+template<> void FillCurvesF4<UnknownKF>(const ms::TAnimationCurve<float4>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it) {}
 
 template<class KF>
 static void FillCurvesQuat(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it)
@@ -474,7 +474,7 @@ static void FillCurvesQuat(const ms::TAnimationCurve<quatf>& src, void *x_, void
     if (it == InterpolationMode::Smooth)
         EnsureQuaternionContinuityAndRecalculateSlope(x, y, z, w, n);
 }
-template<> static void FillCurvesQuat<UnknownKF>(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it) {}
+template<> void FillCurvesQuat<UnknownKF>(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it) {}
 
 template<class KF>
 static void FillCurvesEuler(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, InterpolationMode it)
@@ -527,7 +527,7 @@ static void FillCurvesEuler(const ms::TAnimationCurve<quatf>& src, void *x_, voi
     SetTangentMode(y, n, it);
     SetTangentMode(z, n, it);
 }
-template<> static void FillCurvesEuler<UnknownKF>(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, InterpolationMode it) {}
+template<> void FillCurvesEuler<UnknownKF>(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, InterpolationMode it) {}
 
 
 // thanks: http://techblog.sega.jp/entry/2016/11/28/100000
@@ -617,7 +617,7 @@ static int KeyframeReductionA(void *keys_, int key_count, float threshold, bool 
     new_keys.copy_to(keys);
     return (int)new_keys.size();
 }
-template<> static int KeyframeReductionA<UnknownKF>(void *keys_, int key_count, float threshold, bool erase_flat_curves) { return 0; }
+template<> int KeyframeReductionA<UnknownKF>(void *keys_, int key_count, float threshold, bool erase_flat_curves) { return 0; }
 
 template<class KF>
 static void KeyframeReductionV(RawVector<char>& idata, float threshold, bool erase_flat_curves)
@@ -631,7 +631,7 @@ static void KeyframeReductionV(RawVector<char>& idata, float threshold, bool era
     auto new_keys = AnimationCurveKeyReducer<KF>().apply({ keys, key_count }, threshold, erase_flat_curves);
     idata.assign((const char*)new_keys.cdata(), new_keys.size_in_byte());
 }
-template<> static void KeyframeReductionV<UnknownKF>(RawVector<char>& idata, float threshold, bool erase_flat_curves) {}
+template<> void KeyframeReductionV<UnknownKF>(RawVector<char>& idata, float threshold, bool erase_flat_curves) {}
 
 
 struct FunctionSet

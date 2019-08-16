@@ -655,7 +655,6 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
 
     m_material_manager.setAlwaysMarkDirty(true);
     m_entity_manager.setAlwaysMarkDirty(true);
-    m_texture_manager.clearDirtyFlags();
 
     int scene_index = 0;
     auto material_range = cache_settings.material_frame_range;
@@ -676,6 +675,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
         for (auto& n : nodes)
             exportObject(n, true);
 
+        m_texture_manager.clearDirtyFlags();
         kickAsyncExport();
         ++scene_index;
     };
@@ -935,7 +935,7 @@ void msmayaContext::exportMaterials()
 ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
 {
     if (!n || n->dst_obj)
-        return nullptr;
+        return nullptr; // null or already exported
 
     auto& trans = n->trans->node;
     auto& shape = n->shape->node;
@@ -984,14 +984,14 @@ ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
             handle_transform();
     }
     else if (shape.hasFn(MFn::kJoint)) {
-        if (m_settings.sync_bones) {
+        if (m_settings.sync_bones && !m_settings.bake_deformers) {
             handle_parent();
             n->dst_obj = exportTransform(n);
         }
         else if (!tip && parent)
             handle_transform();
     }
-    else {
+    else if (!tip) {
         // intermediate node
         handle_transform();
     }

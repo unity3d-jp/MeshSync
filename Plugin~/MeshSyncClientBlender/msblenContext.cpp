@@ -1222,7 +1222,6 @@ bool msblenContext::exportCache(const CacheSettings& cache_settings)
 
     m_material_manager.setAlwaysMarkDirty(true);
     m_entity_manager.setAlwaysMarkDirty(true);
-    m_texture_manager.clearDirtyFlags();
 
     int scene_index = 0;
     auto material_range = cache_settings.material_frame_range;
@@ -1243,6 +1242,7 @@ bool msblenContext::exportCache(const CacheSettings& cache_settings)
         for (auto& n : nodes)
             exportObject(n, true);
 
+        m_texture_manager.clearDirtyFlags();
         kickAsyncExport();
         ++scene_index;
     };
