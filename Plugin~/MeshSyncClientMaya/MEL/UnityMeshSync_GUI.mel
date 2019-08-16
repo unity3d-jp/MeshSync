@@ -1,3 +1,4 @@
+// entry point
 global proc UnityMeshSync_GUI()
 {
     global string $Window = "UnityMeshSyncGUI";

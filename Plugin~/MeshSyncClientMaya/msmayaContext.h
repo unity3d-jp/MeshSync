@@ -93,8 +93,8 @@ enum class ObjectScope : int
 {
     None = -1,
     All,
-    Updated,
     Selected,
+    Updated,
 };
 
 enum class FrameRange : int
@@ -106,7 +106,7 @@ enum class FrameRange : int
 
 enum class MaterialFrameRange : int
 {
-    None = -1,
+    None,
     One,
     All,
 };

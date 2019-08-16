@@ -1,7 +1,6 @@
+// entry point
 global proc UnityMeshSync_CacheGUI()
 {
-    $filename = `file -q -sn`;
-    $filename += ".sc";
     $paths = `fileDialog2 -fileMode 0 -fileFilter "*.sc"`;
     if(size($paths)==0)
         return;
@@ -9,17 +8,17 @@ global proc UnityMeshSync_CacheGUI()
     global string $Window = "UnityMeshSyncCacheGUI";
     if (`window -exists $Window`)
         deleteUI -window $Window;
-    window -t ("Scene Cache") -wh 300 550 $Window;
+    window -t ("Scene Cache") -wh 300 400 $Window;
 
     $objScope           = `UnityMeshSync_Cache -q -objectScope`;
     $frameRange         = `UnityMeshSync_Cache -q -frameRange`;
     $frameBegin         = `UnityMeshSync_Cache -q -frameBegin`;
     $frameEnd           = `UnityMeshSync_Cache -q -frameEnd`;
     $materialFrameRange = `UnityMeshSync_Cache -q -materialFrameRange`;
+    $samplesPerFrame    = `UnityMeshSync_Cache -q -samplesPerFrame`;
 
     $removeNamespace    = `UnityMeshSync_Cache -q -removeNamespace`;
     $zstdCompressionLevel = `UnityMeshSync_Cache -q -zstdCompressionLevel`;
-    $samplesPerFrame    = `UnityMeshSync_Cache -q -samplesPerFrame`;
     $makeDoubleSided    = `UnityMeshSync_Cache -q -makeDoubleSided`;
     $bakeDeformers      = `UnityMeshSync_Cache -q -bakeDeformers`;
     $flattenHierarchy   = `UnityMeshSync_Cache -q -flattenHierarchy`;
@@ -30,19 +29,21 @@ global proc UnityMeshSync_CacheGUI()
     columnLayout -columnOffset "left" 5;
 
     rowLayout -nc 2;
-        text -l "Path"; textField -text $paths[0] -w 200 umsCtrlCPath;
+        text -l "Path"; textField -text $paths[0] -w 220 umsCtrlCPath;
     setParent ..;
 
     separator -h 20 -w 250;
 
     optionMenu -l "Object Scope" umsCtrlCObjectScope;
-        menuItem -l "All" -data 0;
-        menuItem -l "Selected" -data 1;
+        menuItem -l "All";
+        menuItem -l "Selected";
+    optionMenu -e -sl ($objScope + 1) umsCtrlCObjectScope;
 
     optionMenu -l "Frame Range" -cc umsCBFrameRange umsCtrlCFrameRange;
-        menuItem -l "Single" -data 0;
-        menuItem -l "All" -data 1;
-        menuItem -l "Custom" -data 2;
+        menuItem -l "Single";
+        menuItem -l "All";
+        menuItem -l "Custom";
+    optionMenu -e -sl ($frameRange + 1) umsCtrlCFrameRange;
 
     columnLayout -columnOffset "left" 20 umsCFoldFrameRange;
         rowLayout -nc 2;
@@ -54,9 +55,10 @@ global proc UnityMeshSync_CacheGUI()
     setParent ..;
 
     optionMenu -l "Material Frame Range" umsCtrlCMFRange;
-        menuItem -l "None" -data -1;
-        menuItem -l "One" -data 0;
-        menuItem -l "All" -data 1;
+        menuItem -l "None";
+        menuItem -l "One";
+        menuItem -l "All";
+    optionMenu -e -sl ($materialFrameRange + 1) umsCtrlCMFRange;
     
     rowLayout -nc 2;
         text -l "Samples Per Frame"; floatField -w 60 -v $samplesPerFrame umsCtrlCSamplesPerFrame;
@@ -81,24 +83,26 @@ global proc UnityMeshSync_CacheGUI()
 
     setParent ..;
 
+    umsCBFrameRange();
     showWindow $Window;
 }
 
 global proc umsCBFrameRange()
 {
-    $v = `optionMenu -q -v -umsCtrlCMFRange`;
-    columnLayout -e -visible $v umsCFoldFrameRange;
+    $v = `optionMenu -q -sl umsCtrlCFrameRange`;
+    $visible = $v==3;
+    columnLayout -e -visible $visible umsCFoldFrameRange;
 }
 
 global proc umsCBExportCache()
 {
-    $path               = `textField -q -text -umsCtrlCPath`;
-    $objectScope        = `optionMenu -q -v -umsCtrlCObjectScope`;
-    $frameRange         = `optionMenu -q -v -umsCtrlCFrameRange`;
-    $frameBegin         = `intField -q -v -umsCtrlCFrameBegin`;
-    $frameEnd           = `intField -q -v -umsCtrlCFrameEnd`;
-    $materialFrameRange = `optionMenu -q -v -umsCtrlCMFRange`;
-    $samplesPerFrame    = `floatField -q -v -umsCtrlCSamplesPerFrame`;
+    $path               = `textField -q -text umsCtrlCPath`;
+    $objectScope        = `optionMenu -q -sl umsCtrlCObjectScope` - 1;
+    $frameRange         = `optionMenu -q -sl umsCtrlCFrameRange` -  1;
+    $frameBegin         = `intField -q -v umsCtrlCFrameBegin`;
+    $frameEnd           = `intField -q -v umsCtrlCFrameEnd`;
+    $materialFrameRange = `optionMenu -q -sl umsCtrlCMFRange` - 1;
+    $samplesPerFrame    = `floatField -q -v umsCtrlCSamplesPerFrame`;
 
     $removeNamespace    = `checkBox -q -v umsCtrlCRemoveNamespace`;
     $zstdCompression    = `intField -q -v umsCtrlCZSTDCompression`;
@@ -108,13 +112,14 @@ global proc umsCBExportCache()
     $stripNormals       = `checkBox -q -v umsCtrlCStripNormals`;
     $stripTangents      = `checkBox -q -v umsCtrlCStripTangents`;
 
-    string $ret = `UnityMeshSync_Cache
+    UnityMeshSync_Cache
         -path $path
         -objectScope $objectScope
         -frameRange $frameRange
-        -frameBegin $frameRange
+        -frameBegin $frameBegin
         -frameEnd $frameEnd
         -materialFrameRange $materialFrameRange
+        -samplesPerFrame $samplesPerFrame
         -removeNamespace $removeNamespace
         -zstdCompressionLevel $zstdCompression
         -makeDoubleSided $makeDoubleSided
@@ -122,6 +127,6 @@ global proc umsCBExportCache()
         -flattenHierarchy $flattenHierarchy
         -stripNormals $stripNormals
         -stripTangents $stripTangents
-        `;
+        ;
 }
 

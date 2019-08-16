@@ -354,11 +354,11 @@ MSyntax CmdExportCache::createSyntax()
     syntax.enableQuery(true);
     syntax.enableEdit(false);
     syntax.addFlag("-p", "-path", MSyntax::kString);
-    syntax.addFlag("-os", "-objectScope", MSyntax::kString);
-    syntax.addFlag("-fr", "-frameRange", MSyntax::kString);
+    syntax.addFlag("-os", "-objectScope", MSyntax::kLong);
+    syntax.addFlag("-fr", "-frameRange", MSyntax::kLong);
     syntax.addFlag("-frb", "-frameBegin", MSyntax::kLong);
     syntax.addFlag("-fre", "-frameEnd", MSyntax::kLong);
-    syntax.addFlag("-mfr", "-materialFrameRange", MSyntax::kString);
+    syntax.addFlag("-mfr", "-materialFrameRange", MSyntax::kLong);
     syntax.addFlag("-spf", "-samplesPerFrame", MSyntax::kDouble);
 
     syntax.addFlag("-z", "-zstdCompressionLevel", MSyntax::kLong);
@@ -376,7 +376,7 @@ MStatus CmdExportCache::doIt(const MArgList& args_)
 {
     MStatus status;
     MArgParser args(syntax(), args_, &status);
-    auto settings = msmayaGetCacheSettings(); // copy
+    auto& settings = msmayaGetCacheSettings();
 
 #define Handle(Name, Value, ...)\
     if (args.isFlagSet(Name)) {\

@@ -1,3 +1,4 @@
+// entry point
 global proc UnityMeshSync_Shelf() {
     global string $gBuffStr;
     global string $gBuffStr0;
