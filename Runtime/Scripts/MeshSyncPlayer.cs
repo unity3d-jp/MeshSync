@@ -791,8 +791,11 @@ namespace UTJ.MeshSync
                 }
             }
 
-            // mark scene dirty
-            EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+            if (!EditorApplication.isPlaying)
+            {
+                // mark scene dirty
+                EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+            }
 #endif
 
             if (onSceneUpdateEnd != null)

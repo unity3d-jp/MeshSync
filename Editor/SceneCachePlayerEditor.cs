@@ -55,14 +55,12 @@ namespace UTJ.MeshSyncEditor
             player.handleAssets = false;
 
             var prefabPath = string.Format("Assets/SceneCache/{0}.prefab", go.name);
-            var prefab = PrefabUtility.SaveAsPrefabAsset(go, prefabPath);
-
-            // delete temporary GO and instantiate prefab
-            var index = go.transform.GetSiblingIndex();
-            Object.DestroyImmediate(go);
-            var inst = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
-            inst.transform.SetSiblingIndex(index);
-            return inst;
+#if UNITY_2018_3_OR_NEWER
+            PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabPath, InteractionMode.AutomatedAction);
+#else
+            PrefabUtility.CreatePrefab(prefabPath, go, ReplacePrefabOptions.ConnectToPrefab);
+#endif
+            return go;
         }
 
 
