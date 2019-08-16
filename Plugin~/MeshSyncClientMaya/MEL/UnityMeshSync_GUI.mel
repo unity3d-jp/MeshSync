@@ -1,8 +1,9 @@
 global proc UnityMeshSync_GUI()
 {
-    global string $Window = "UnityMeshSync";
-    if (`window -exists $Window`) deleteUI -window $Window;
-    window -t ("Unity Mesh Sync") -wh 300 610 $Window;
+    global string $Window = "UnityMeshSyncGUI";
+    if (`window -exists $Window`)
+        deleteUI -window $Window;
+    window -t ("Unity Mesh Sync") -wh 300 550 $Window;
 
     string $version         = `UnityMeshSync_Settings -q -pluginVersion`;
     string $address         = `UnityMeshSync_Settings -q -address`;
@@ -25,47 +26,47 @@ global proc UnityMeshSync_GUI()
 
     columnLayout -columnOffset "left" 5;
     rowLayout -numberOfColumns 3;
-    text -label "Server:Port";
+    text -l "Server:Port";
     textField -text $address -w 120 -cc "umsCBServerAddress" umsCtrlAddress;
-    intField -value $port -w 60  -cc "umsCBServerPort" -minValue 0 -maxValue 65535 umsCtrlPort;
+    intField -v $port -w 60  -cc "umsCBServerPort" -minValue 0 -maxValue 65535 umsCtrlPort;
     setParent ..;
 
     separator -h 20 -w 250;
 
-    text -label "Scene" -font "boldLabelFont";
+    text -l "Scene" -font "boldLabelFont";
     separator -h 5 -w 250 -style none;
 
     rowLayout -numberOfColumns 2;
-        text -label "Scale Factor"; floatField -value $scaleFactor -cc "umsCBScaleFactor" umsCtrlScaleFactor;
+        text -l "Scale Factor"; floatField -v $scaleFactor -cc "umsCBScaleFactor" umsCtrlScaleFactor;
     setParent ..;
-    checkBox -label "Remove Namespace" -value $removeNamespace -cc "umsCBRemoveNamespace" umsCtrlRemoveNamespace;
+    checkBox -l "Remove Namespace" -v $removeNamespace -cc "umsCBRemoveNamespace" umsCtrlRemoveNamespace;
 
-    checkBox -label "Sync Meshes" -value $syncMeshes -cc "umsCBSyncMeshes" umsCtrlSyncMeshes;
+    checkBox -l "Sync Meshes" -v $syncMeshes -cc "umsCBSyncMeshes" umsCtrlSyncMeshes;
     columnLayout -visible $syncMeshes -columnOffset "left" 20 msuFoldMeshes;
-        checkBox -label "Make Double Sided" -value $makeDoubleSided -cc "umsCBMakeDoubleSided" umsCtrlMakeDoubleSided;
-        checkBox -label "Bake Deformers" -value $bakeDeformers -cc "umsCBBakeDeformers" umsCtrlBakeDeformers;
+        checkBox -l "Make Double Sided" -v $makeDoubleSided -cc "umsCBMakeDoubleSided" umsCtrlMakeDoubleSided;
+        checkBox -l "Bake Deformers" -v $bakeDeformers -cc "umsCBBakeDeformers" umsCtrlBakeDeformers;
     setParent ..;
-    checkBox -label "Sync Blend Shapes" -value $syncBlendShapes -cc "umsCBSyncBlendShapes" umsCtrlSyncBlendShapes;
-    checkBox -label "Sync Bones" -value $syncBones -cc "umsCBSyncBones" umsCtrlSyncBones;
-    checkBox -label "Sync Textures" -value $syncTextures -cc "umsCBSyncTextures" umsCtrlSyncTextures;
+    checkBox -l "Sync Blend Shapes" -v $syncBlendShapes -cc "umsCBSyncBlendShapes" umsCtrlSyncBlendShapes;
+    checkBox -l "Sync Bones" -v $syncBones -cc "umsCBSyncBones" umsCtrlSyncBones;
+    checkBox -l "Sync Textures" -v $syncTextures -cc "umsCBSyncTextures" umsCtrlSyncTextures;
 
-    checkBox -label "Sync Cameras" -value $syncCameras -cc "umsCBSyncCameras" umsCtrlSyncCameras;
-    checkBox -label "Sync Lights" -value $syncLights -cc "umsCBSyncLights" umsCtrlSyncLights;
+    checkBox -l "Sync Cameras" -v $syncCameras -cc "umsCBSyncCameras" umsCtrlSyncCameras;
+    checkBox -l "Sync Lights" -v $syncLights -cc "umsCBSyncLights" umsCtrlSyncLights;
 
     separator -h 5 -w 250 -style none;
-    checkBox -label "Auto Sync" -value $autosync -cc "umsCBAutoSync" umsCtrlAutoSync;
+    checkBox -l "Auto Sync" -v $autosync -cc "umsCBAutoSync" umsCtrlAutoSync;
     button -l "Manual Sync" -c "umsCBManualSync";
 
     separator -h 20 -w 250;
 
-    text -label "Animations" -font "boldLabelFont";
+    text -l "Animations" -font "boldLabelFont";
     separator -h 8 -w 250 -style none;
 
     rowLayout -numberOfColumns 2;
-        text -label "Time Scale"; floatField -w 60 -v $animationTS -cc "umsCBAnimationTS" -minValue 0.01 umsCtrlAnimationTS;
+        text -l "Time Scale"; floatField -w 60 -v $animationTS -cc "umsCBAnimationTS" -minValue 0.01 umsCtrlAnimationTS;
     setParent ..;
     rowLayout -numberOfColumns 2;
-        text -label "Samples Per Second"; floatField -w 60 -v $animationSPS -cc "umsCBAnimationSPS" -minValue 0.01 umsCtrlAnimationSPS;
+        text -l "Samples Per Second"; floatField -w 60 -v $animationSPS -cc "umsCBAnimationSPS" -minValue 0.01 umsCtrlAnimationSPS;
     setParent ..;
 
     separator -h 5 -w 250 -style none;
@@ -74,7 +75,7 @@ global proc UnityMeshSync_GUI()
     
     separator -h 20 -w 250;
     string $pluginVersion = "Plugin Version: " + $version;
-    text -label $pluginVersion;
+    text -l $pluginVersion;
 
     //    button -l "Import Unity Scene" -w 100 -c "umsCBImport" BUTTON_IMPORT;
     setParent ..;
@@ -90,80 +91,80 @@ global proc umsCBServerAddress()
 
 global proc umsCBServerPort()
 {
-    int $v = `intField -q -value umsCtrlPort`;
+    int $v = `intField -q -v umsCtrlPort`;
     string $ret = `UnityMeshSync_Settings -port $v`;
 }
 
 global proc umsCBScaleFactor()
 {
-    float $v = `floatField -q -value umsCtrlScaleFactor`;
+    float $v = `floatField -q -v umsCtrlScaleFactor`;
     string $ret = `UnityMeshSync_Settings -scaleFactor $v`;
 }
 
 global proc umsCBRemoveNamespace()
 {
-    float $v = `checkBox -q -value umsCtrlRemoveNamespace`;
+    int $v = `checkBox -q -v umsCtrlRemoveNamespace`;
     string $ret = `UnityMeshSync_Settings -removeNamespace $v`;
 }
 
 global proc umsCBSyncMeshes()
 {
-    int $v = `checkBox -q -value umsCtrlSyncMeshes`;
+    int $v = `checkBox -q -v umsCtrlSyncMeshes`;
     string $ret = `UnityMeshSync_Settings -syncMeshes $v`;
     columnLayout -e -visible $v msuFoldMeshes;
 }
 
 global proc umsCBMakeDoubleSided()
 {
-    int $v = `checkBox -q -value umsCtrlMakeDoubleSided`;
+    int $v = `checkBox -q -v umsCtrlMakeDoubleSided`;
     string $ret = `UnityMeshSync_Settings -makeDoubleSided $v`;
 }
 
 global proc umsCBBakeDeformers()
 {
-    int $v = `checkBox -q -value umsCtrlBakeDeformers`;
+    int $v = `checkBox -q -v umsCtrlBakeDeformers`;
     string $ret = `UnityMeshSync_Settings -bakeDeformers $v`;
 }
 
 global proc umsCBSyncBlendShapes()
 {
-    int $v = `checkBox -q -value umsCtrlSyncBlendShapes`;
+    int $v = `checkBox -q -v umsCtrlSyncBlendShapes`;
     string $ret = `UnityMeshSync_Settings -syncBlendShapes $v`;
 }
 
 global proc umsCBSyncBones()
 {
-    int $v = `checkBox -q -value umsCtrlSyncBones`;
+    int $v = `checkBox -q -v umsCtrlSyncBones`;
     string $ret = `UnityMeshSync_Settings -syncBones $v`;
 }
 
 global proc umsCBSyncTextures()
 {
-    int $v = `checkBox -q -value umsCtrlSyncTextures`;
+    int $v = `checkBox -q -v umsCtrlSyncTextures`;
     string $ret = `UnityMeshSync_Settings -syncTextures $v`;
 }
 
 global proc umsCBSyncCameras()
 {
-    int $v = `checkBox -q -value umsCtrlSyncCameras`;
+    int $v = `checkBox -q -v umsCtrlSyncCameras`;
     string $ret = `UnityMeshSync_Settings -syncCameras $v`;
 }
 
 global proc umsCBSyncLights()
 {
-    int $v = `checkBox -q -value umsCtrlSyncLights`;
+    int $v = `checkBox -q -v umsCtrlSyncLights`;
     string $ret = `UnityMeshSync_Settings -syncLights $v`;
 }
 
 global  proc umsCBAutoSync()
 {
-    if (`checkBox -q -value umsCtrlAutoSync`) {
+    if (`checkBox -q -v umsCtrlAutoSync`) {
         if (`UnityMeshSync_ServerStatus -q -isAvailable`) {
             UnityMeshSync_Settings -autosync 1;
         }
         else {
             print `UnityMeshSync_ServerStatus -q -errorMessage`;
-            checkBox -edit -value 0 umsCtrlAutoSync;
+            checkBox -edit -v 0 umsCtrlAutoSync;
         }
     }
     else {
@@ -179,13 +180,13 @@ global proc umsCBManualSync()
 
 global proc umsCBAnimationTS()
 {
-    float $v = `floatField -q -value umsCtrlAnimationTS`;
+    float $v = `floatField -q -v umsCtrlAnimationTS`;
     string $ret = `UnityMeshSync_Settings -animationTS $v`;
 }
 
 global proc umsCBAnimationSPS()
 {
-    float $v = `floatField -q -value umsCtrlAnimationSPS`;
+    float $v = `floatField -q -v umsCtrlAnimationSPS`;
     string $ret = `UnityMeshSync_Settings -animationSPS $v`;
 }
 

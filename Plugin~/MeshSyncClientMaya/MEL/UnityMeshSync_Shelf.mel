@@ -40,6 +40,32 @@ global proc UnityMeshSync_Shelf() {
         -manage 1
         -visible 1
         -preventOverride 0
+        -annotation "Export Cache" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -align "center" 
+        -label "Export Cache" 
+        -labelOffset 0
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "syncOn.png" 
+        -image1 "syncOn.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "UnityMeshSync_CacheGUI;" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
         -annotation "Send scene objects to Unity" 
         -enableBackground 0
         -backgroundColor 0 0 0 

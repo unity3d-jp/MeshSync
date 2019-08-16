@@ -359,8 +359,10 @@ MSyntax CmdExportCache::createSyntax()
     syntax.addFlag("-frb", "-frameBegin", MSyntax::kLong);
     syntax.addFlag("-fre", "-frameEnd", MSyntax::kLong);
     syntax.addFlag("-mfr", "-materialFrameRange", MSyntax::kString);
-    syntax.addFlag("-z", "-ZSTDCompressionLevel", MSyntax::kLong);
     syntax.addFlag("-spf", "-samplesPerFrame", MSyntax::kDouble);
+
+    syntax.addFlag("-z", "-zstdCompressionLevel", MSyntax::kLong);
+    syntax.addFlag("-rn", "-removeNamespace", MSyntax::kBoolean);
     syntax.addFlag("-ds", "-makeDoubleSided", MSyntax::kBoolean);
     syntax.addFlag("-bd", "-bakeDeformers", MSyntax::kBoolean);
     syntax.addFlag("-fh", "-flattenHierarchy", MSyntax::kBoolean);
