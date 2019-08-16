@@ -17,7 +17,7 @@ namespace UTJ.MeshSync
     {
         #region internal
         [DllImport(Lib.name)] static extern ulong msGetTime();
-        [DllImport(Lib.name)] static extern int msKeyframeReduction(Keyframe[] keys, int keyCount, float threshold, byte keepFlatCurves);
+        [DllImport(Lib.name)] static extern int msKeyframeReduction(Keyframe[] keys, int keyCount, float threshold, byte eraseFlatCurves);
         #endregion
 
         public static ulong GetTimeNS() { return msGetTime(); }
@@ -66,21 +66,21 @@ namespace UTJ.MeshSync
             return ret;
         }
 
-        public static Keyframe[] KeyframeReduction(Keyframe[] keys, float threshold, bool keepFlatCurves)
+        public static Keyframe[] KeyframeReduction(Keyframe[] keys, float threshold, bool eraseFlatCurves)
         {
             AnimationClipData.Prepare();
-            int newCount = msKeyframeReduction(keys, keys.Length, threshold, ToByte(keepFlatCurves));
+            int newCount = msKeyframeReduction(keys, keys.Length, threshold, ToByte(eraseFlatCurves));
             var newKeys = new Keyframe[newCount];
             if (newCount > 0)
                 Array.Copy(keys, newKeys, newCount);
             return newKeys;
         }
 
-        public static void KeyframeReduction(AnimationCurve curve, float threshold, bool keepFlatCurves)
+        public static void KeyframeReduction(AnimationCurve curve, float threshold, bool eraseFlatCurves)
         {
             if (curve.length <= 2)
                 return;
-            curve.keys = KeyframeReduction(curve.keys, threshold, keepFlatCurves);
+            curve.keys = KeyframeReduction(curve.keys, threshold, eraseFlatCurves);
         }
 
         public static void SetCurve(AnimationClip clip, string path, Type type, string prop, AnimationCurve curve)

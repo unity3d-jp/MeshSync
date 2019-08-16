@@ -535,7 +535,7 @@ template<class KF>
 class AnimationCurveKeyReducer
 {
 public:
-    static RawVector<KF> apply(const IArray<KF>& keys, float eps, bool keep_flat_curves)
+    static RawVector<KF> apply(const IArray<KF>& keys, float eps, bool erase_flat_curves)
     {
         RawVector<KF> ret;
         ret.reserve(keys.size());
@@ -544,7 +544,7 @@ public:
         else
             genNewKeys(keys, eps, ret);
 
-        if (!keep_flat_curves && isFlat(ret))
+        if (erase_flat_curves && isFlat(ret))
             ret.clear();
         return ret;
     }
@@ -607,20 +607,20 @@ private:
 };
 
 template<class KF>
-static int KeyframeReductionA(void *keys_, int key_count, float threshold, bool keep_flat_curves)
+static int KeyframeReductionA(void *keys_, int key_count, float threshold, bool erase_flat_curves)
 {
     if (!keys_ || key_count == 0)
         return 0;
 
     auto *keys = (KF*)keys_;
-    auto new_keys = AnimationCurveKeyReducer<KF>().apply({ keys, (size_t)key_count }, threshold, keep_flat_curves);
+    auto new_keys = AnimationCurveKeyReducer<KF>().apply({ keys, (size_t)key_count }, threshold, erase_flat_curves);
     new_keys.copy_to(keys);
     return (int)new_keys.size();
 }
-template<> static int KeyframeReductionA<UnknownKF>(void *keys_, int key_count, float threshold, bool keep_flat_curves) { return 0; }
+template<> static int KeyframeReductionA<UnknownKF>(void *keys_, int key_count, float threshold, bool erase_flat_curves) { return 0; }
 
 template<class KF>
-static void KeyframeReductionV(RawVector<char>& idata, float threshold, bool keep_flat_curves)
+static void KeyframeReductionV(RawVector<char>& idata, float threshold, bool erase_flat_curves)
 {
     if (idata.empty())
         return;
@@ -628,10 +628,10 @@ static void KeyframeReductionV(RawVector<char>& idata, float threshold, bool kee
     auto *keys = (const KF*)idata.cdata();
     size_t key_count = idata.size() / sizeof(KF);
 
-    auto new_keys = AnimationCurveKeyReducer<KF>().apply({ keys, key_count }, threshold, keep_flat_curves);
+    auto new_keys = AnimationCurveKeyReducer<KF>().apply({ keys, key_count }, threshold, erase_flat_curves);
     idata.assign((const char*)new_keys.cdata(), new_keys.size_in_byte());
 }
-template<> static void KeyframeReductionV<UnknownKF>(RawVector<char>& idata, float threshold, bool keep_flat_curves) {}
+template<> static void KeyframeReductionV<UnknownKF>(RawVector<char>& idata, float threshold, bool erase_flat_curves) {}
 
 
 struct FunctionSet
@@ -644,8 +644,8 @@ struct FunctionSet
     void(*FillCurvesQuat)(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, void *w_, InterpolationMode it);
     void(*FillCurvesEuler)(const ms::TAnimationCurve<quatf>& src, void *x_, void *y_, void *z_, InterpolationMode it);
 
-    int(*KeyframeReductionA)(void *keys_, int key_count, float threshold, bool keep_flat_curves);
-    void(*KeyframeReductionV)(RawVector<char>& idata, float threshold, bool keep_flat_curves);
+    int(*KeyframeReductionA)(void *keys_, int key_count, float threshold, bool erase_flat_curves);
+    void(*KeyframeReductionV)(RawVector<char>& idata, float threshold, bool erase_flat_curves);
 };
 static FunctionSet g_fs;
 
@@ -736,14 +736,14 @@ static void ConvertCurves(ms::Animation& anim, InterpolationMode it)
         ConvertCurve(*anim.curves[i], it);
 }
 
-static void KeyframeReduction(ms::AnimationCurve& curve, float threshold, bool keep_flat_curves)
+static void KeyframeReduction(ms::AnimationCurve& curve, float threshold, bool erase_flat_curves)
 {
     for (auto& idata : curve.idata) {
-        g_fs.KeyframeReductionV(idata, threshold, keep_flat_curves);
+        g_fs.KeyframeReductionV(idata, threshold, erase_flat_curves);
     }
 }
 
-static void KeyframeReduction(ms::Animation& anim, float threshold, bool keep_flat_curves)
+static void KeyframeReduction(ms::Animation& anim, float threshold, bool erase_flat_curves)
 {
     auto idata_empty = [](auto& curve) {
         for (auto& id : curve.idata)
@@ -753,7 +753,7 @@ static void KeyframeReduction(ms::Animation& anim, float threshold, bool keep_fl
     };
 
     for (auto& curve : anim.curves) {
-        KeyframeReduction(*curve, threshold, keep_flat_curves);
+        KeyframeReduction(*curve, threshold, erase_flat_curves);
         if (idata_empty(*curve)) {
             curve->idata.clear();
             curve->data.clear();
@@ -762,9 +762,9 @@ static void KeyframeReduction(ms::Animation& anim, float threshold, bool keep_fl
     anim.clearEmptyCurves();
 }
 
-msAPI int msKeyframeReduction(void *kfs, int kf_count, float threshold, bool keep_flat_curves)
+msAPI int msKeyframeReduction(void *kfs, int kf_count, float threshold, bool erase_flat_curves)
 {
-    return g_fs.KeyframeReductionA(kfs, kf_count, threshold, keep_flat_curves);
+    return g_fs.KeyframeReductionA(kfs, kf_count, threshold, erase_flat_curves);
 }
 
 msAPI int msCurveGetNumElements(ms::AnimationCurve *self)
@@ -783,18 +783,18 @@ msAPI void msCurveConvert(ms::AnimationCurve *self, InterpolationMode it)
 {
     ConvertCurve(*self, it);
 }
-msAPI void msCurveKeyframeReduction(ms::AnimationCurve *self, float threshold, bool keep_flat_curves)
+msAPI void msCurveKeyframeReduction(ms::AnimationCurve *self, float threshold, bool erase_flat_curves)
 {
-    KeyframeReduction(*self, threshold, keep_flat_curves);
+    KeyframeReduction(*self, threshold, erase_flat_curves);
 }
 
 msAPI void msAnimationConvert(ms::Animation *self, InterpolationMode it)
 {
     ConvertCurves(*self, it);
 }
-msAPI void msAnimationKeyframeReduction(ms::Animation *self, float threshold, bool keep_flat_curves)
+msAPI void msAnimationKeyframeReduction(ms::Animation *self, float threshold, bool erase_flat_curves)
 {
-    KeyframeReduction(*self, threshold, keep_flat_curves);
+    KeyframeReduction(*self, threshold, erase_flat_curves);
 }
 
 msAPI void msAnimationClipConvert(ms::AnimationClip *self, InterpolationMode it)
@@ -806,13 +806,13 @@ msAPI void msAnimationClipConvert(ms::AnimationClip *self, InterpolationMode it)
                 ConvertCurves(*self->animations[i], it);
         });
 }
-msAPI void msAnimationClipKeyframeReduction(ms::AnimationClip *self, float threshold, bool keep_flat_curves)
+msAPI void msAnimationClipKeyframeReduction(ms::AnimationClip *self, float threshold, bool erase_flat_curves)
 {
     int n = (int)self->animations.size();
     mu::parallel_for_blocked(0, n, 16,
         [&](int begin, int end) {
             for (int i = begin; i != end; ++i)
-                KeyframeReduction(*self->animations[i], threshold, keep_flat_curves);
+                KeyframeReduction(*self->animations[i], threshold, erase_flat_curves);
         });
     self->clearEmptyAnimations();
 }

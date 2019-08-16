@@ -975,7 +975,7 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern AnimationData msAnimationClipGetAnimationData(IntPtr self, int i);
 
         [DllImport(Lib.name)] static extern void msAnimationClipConvert(IntPtr self, InterpolationMode it);
-        [DllImport(Lib.name)] static extern void msAnimationClipKeyframeReduction(IntPtr self, float threshold, byte keepFlatCurves);
+        [DllImport(Lib.name)] static extern void msAnimationClipKeyframeReduction(IntPtr self, float threshold, byte eraseFlatCurves);
         [DllImport(Lib.name)] static extern void msSetSizeOfKeyframe(int v);
         static bool s_prepared = false;
         #endregion
@@ -1016,9 +1016,9 @@ namespace UTJ.MeshSync
             Prepare();
             msAnimationClipConvert(self, it);
         }
-        public void KeyframeReduction(float threshold, bool keepFlatCurves)
+        public void KeyframeReduction(float threshold, bool eraseFlatCurves)
         {
-            msAnimationClipKeyframeReduction(self, threshold, Misc.ToByte(keepFlatCurves));
+            msAnimationClipKeyframeReduction(self, threshold, Misc.ToByte(eraseFlatCurves));
         }
     }
     #endregion

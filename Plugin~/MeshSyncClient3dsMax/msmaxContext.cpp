@@ -996,7 +996,7 @@ ms::TransformPtr msmaxContext::exportInstance(TreeNode& n, ms::TransformPtr base
     return ret;
 }
 
-ms::CameraPtr msmaxContext::exportCamera(TreeNode& n)
+ms::TransformPtr msmaxContext::exportCamera(TreeNode& n)
 {
     auto ret = createEntity<ms::Camera>(n);
     auto& dst = *ret;
@@ -1007,7 +1007,7 @@ ms::CameraPtr msmaxContext::exportCamera(TreeNode& n)
     return ret;
 }
 
-ms::LightPtr msmaxContext::exportLight(TreeNode& n)
+ms::TransformPtr msmaxContext::exportLight(TreeNode& n)
 {
     auto ret = createEntity<ms::Light>(n);
     auto& dst = *ret;
@@ -1131,13 +1131,9 @@ static void GenSmoothNormals(ms::Mesh& dst, Mesh& mesh)
     }
 }
 
-ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
+ms::TransformPtr msmaxContext::exportMesh(TreeNode& n)
 {
-    auto ret = createEntity<ms::Mesh>(n);
     auto inode = n.node;
-    auto& dst = *ret;
-    extractTransform(n);
-
     // send mesh contents even if the node is hidden.
 
     Mesh *mesh = nullptr;
@@ -1169,8 +1165,14 @@ ms::MeshPtr msmaxContext::exportMesh(TreeNode& n)
                 mesh->checkNormals(TRUE);
         }
     }
-    if (!mesh)
-        return ret;
+    if (!mesh) {
+        // camera target and a few other objects are renderable mesh (GEOMOBJECT_CLASS_ID and Renderable() returns true)
+        // but doesn't have valid mesh. I have no idea why... export as transform.
+        return exportTransform(n);
+    }
+
+    auto ret = createEntity<ms::Mesh>(n);
+    extractTransform(n);
 
     auto task = [this, ret, inode, mesh]() {
         doExtractMeshData(*ret, inode, mesh);

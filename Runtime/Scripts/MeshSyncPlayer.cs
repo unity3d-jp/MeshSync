@@ -139,7 +139,7 @@ namespace UTJ.MeshSync
         [SerializeField] protected InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
         [SerializeField] protected bool m_keyframeReduction = true;
         [SerializeField] protected float m_reductionThreshold = 0.001f;
-        [SerializeField] protected bool m_reductionKeepFlatCurves = false;
+        [SerializeField] protected bool m_reductionEraseFlatCurves = false;
         [SerializeField] protected ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
         [SerializeField] protected bool m_logging = true;
         [SerializeField] protected bool m_profiling = false;
@@ -253,10 +253,10 @@ namespace UTJ.MeshSync
             get { return m_reductionThreshold; }
             set { m_reductionThreshold = value; }
         }
-        public bool reductionKeepFlatCurves
+        public bool reductionKeepEraseCurves
         {
-            get { return m_reductionKeepFlatCurves; }
-            set { m_reductionKeepFlatCurves = value; }
+            get { return m_reductionEraseFlatCurves; }
+            set { m_reductionEraseFlatCurves = value; }
         }
         public ZUpCorrectionMode zUpCorrection
         {
@@ -1869,7 +1869,7 @@ namespace UTJ.MeshSync
 
             clipData.Convert(m_animationInterpolation);
             if (m_keyframeReduction)
-                clipData.KeyframeReduction(m_reductionThreshold, m_reductionKeepFlatCurves);
+                clipData.KeyframeReduction(m_reductionThreshold, m_reductionEraseFlatCurves);
 
             //float start = Time.realtimeSinceStartup;
 

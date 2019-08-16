@@ -13,7 +13,7 @@ namespace UTJ.MeshSyncEditor
         protected float m_animationTimeScale = 1.0f;
         protected int m_animationDropStep = 2;
         protected float m_reductionThreshold = 0.001f;
-        protected bool m_keepFlatCurves = false;
+        protected bool m_eraseFlatCurves = false;
 
         public virtual void OnEnable()
         {
@@ -63,7 +63,7 @@ namespace UTJ.MeshSyncEditor
             {
                 EditorGUI.indentLevel++;
                 EditorGUILayout.PropertyField(so.FindProperty("m_reductionThreshold"), new GUIContent("Threshold"));
-                EditorGUILayout.PropertyField(so.FindProperty("m_reductionKeepFlatCurves"), new GUIContent("Keep Flat Curves"));
+                EditorGUILayout.PropertyField(so.FindProperty("m_reductionEraseFlatCurves"), new GUIContent("Erase Flat Curves"));
                 EditorGUI.indentLevel--;
             }
             EditorGUILayout.PropertyField(so.FindProperty("m_zUpCorrection"), new GUIContent("Z-Up Correction"));
@@ -209,11 +209,11 @@ namespace UTJ.MeshSyncEditor
                 EditorGUILayout.LabelField("Keyframe Reduction", EditorStyles.boldLabel);
                 EditorGUI.indentLevel++;
                 m_reductionThreshold = EditorGUILayout.FloatField("Threshold", m_reductionThreshold);
-                m_keepFlatCurves = EditorGUILayout.Toggle("Keep Flat Curves", m_keepFlatCurves);
+                m_eraseFlatCurves = EditorGUILayout.Toggle("Erase Flat Curves", m_eraseFlatCurves);
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Apply", GUILayout.Width(120.0f)))
-                    ApplyKeyframeReduction(t.GetAnimationClips(), m_reductionThreshold, m_keepFlatCurves);
+                    ApplyKeyframeReduction(t.GetAnimationClips(), m_reductionThreshold, m_eraseFlatCurves);
                 GUILayout.EndHorizontal();
                 EditorGUI.indentLevel--;
                 GUILayout.EndVertical();
@@ -323,7 +323,7 @@ namespace UTJ.MeshSyncEditor
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         }
 
-        public void ApplyKeyframeReduction(IEnumerable<AnimationClip> clips, float threshold, bool keepFlatCurves)
+        public void ApplyKeyframeReduction(IEnumerable<AnimationClip> clips, float threshold, bool eraseFlatCurves)
         {
             foreach (var clip in clips)
             {
@@ -340,7 +340,7 @@ namespace UTJ.MeshSyncEditor
 
                 // transform keys/events
                 foreach (var curve in curves)
-                    Misc.KeyframeReduction(curve, threshold, keepFlatCurves);
+                    Misc.KeyframeReduction(curve, threshold, eraseFlatCurves);
 
                 // apply changes to clip
                 Undo.RegisterCompleteObjectUndo(clip, "ApplyKeyframeReduction");

@@ -196,9 +196,9 @@ private:
     template<class T> std::shared_ptr<T> createEntity(TreeNode& n);
     ms::TransformPtr exportTransform(TreeNode& node);
     ms::TransformPtr exportInstance(TreeNode& node, ms::TransformPtr base);
-    ms::CameraPtr exportCamera(TreeNode& node);
-    ms::LightPtr exportLight(TreeNode& node);
-    ms::MeshPtr exportMesh(TreeNode& node);
+    ms::TransformPtr exportCamera(TreeNode& node);
+    ms::TransformPtr exportLight(TreeNode& node);
+    ms::TransformPtr exportMesh(TreeNode& node);
 
     mu::float4x4 getPivotMatrix(INode *n);
     mu::float4x4 getGlobalMatrix(INode *n, TimeValue t);
