@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 #if UNITY_2017_1_OR_NEWER
 using UnityEngine.Animations;
 #endif
@@ -12,6 +13,7 @@ using Unity.Collections;
 
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.SceneManagement;
 #endif
 
 namespace UTJ.MeshSync
@@ -413,9 +415,18 @@ namespace UTJ.MeshSync
             return false;
         }
 
+        protected bool IsAsset(UnityEngine.Object obj)
+        {
+#if UNITY_EDITOR
+            return AssetDatabase.Contains(obj);
+#else
+            return false;
+#endif
+        }
+
         protected bool DestroyIfNotAsset(UnityEngine.Object obj)
         {
-            if (obj != null && !AssetDatabase.Contains(obj))
+            if (obj != null && IsAsset(obj))
             {
                 DestroyImmediate(obj, false);
                 return true;
@@ -779,6 +790,9 @@ namespace UTJ.MeshSync
                     }
                 }
             }
+
+            // mark scene dirty
+            EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
 #endif
 
             if (onSceneUpdateEnd != null)
@@ -2046,7 +2060,7 @@ namespace UTJ.MeshSync
                 ret = m_clientObjects.Remove(path);
             }
 
-            if (target != null && !AssetDatabase.Contains(target))
+            if (target != null && !IsAsset(target))
             {
                 if (onDeleteEntity != null)
                     onDeleteEntity.Invoke(target);
@@ -2125,7 +2139,7 @@ namespace UTJ.MeshSync
             var basePath = assetPath;
 
             Func<Material, Material> doExport = (Material mat) => {
-                if (mat == null || AssetDatabase.Contains(mat))
+                if (mat == null || IsAsset(mat))
                     return mat;
 
                 var dstPath = string.Format("{0}/{1}.mat", basePath, nameGenerator.Gen(mat.name));
@@ -2161,7 +2175,7 @@ namespace UTJ.MeshSync
             foreach (var kvp in m_clientObjects)
             {
                 var mesh = kvp.Value.mesh;
-                if (mesh == null || AssetDatabase.Contains(mesh))
+                if (mesh == null || IsAsset(mesh))
                     continue;
 
                 var dstPath = string.Format("{0}/{1}.asset", basePath, nameGenerator.Gen(mesh.name));

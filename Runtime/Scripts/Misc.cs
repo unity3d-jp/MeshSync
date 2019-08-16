@@ -66,6 +66,7 @@ namespace UTJ.MeshSync
             return ret;
         }
 
+#if UNITY_EDITOR
         public static Keyframe[] KeyframeReduction(Keyframe[] keys, float threshold, bool eraseFlatCurves)
         {
             AnimationClipData.Prepare();
@@ -99,7 +100,6 @@ namespace UTJ.MeshSync
             clip.SetCurve(binding.path, binding.type, binding.propertyName, curve);
         }
 
-#if UNITY_EDITOR
         // copy a file to StreamingAssets.
         // if here is already a file with same name:
         // - use existing one if both are identical (identical = same file size & same mtime)
