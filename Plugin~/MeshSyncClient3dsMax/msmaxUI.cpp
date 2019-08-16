@@ -468,16 +468,6 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             });
             break;
 
-        case IDC_ANIMATION_TIME_SCALE:
-            handle_edit([&]() {
-                float tmp = CtrlGetFloat(IDC_ANIMATION_TIME_SCALE, s.anim_time_scale);
-                if (tmp < 0.01f) {
-                    tmp = mu::max(tmp, 0.01f);
-                    CtrlSetText(IDC_ANIMATION_TIME_SCALE, tmp);
-                }
-                s.anim_time_scale = tmp;
-            });
-            break;
         case IDC_ANIMATION_SAMPLE_RATE:
             handle_edit([&]() {
                 float tmp = CtrlGetFloat(IDC_ANIMATION_SAMPLE_RATE, s.anim_sample_rate);
@@ -548,7 +538,6 @@ void msmaxContext::updateSettingControls()
     CtrlSetCheck(IDC_SYNC_LIGHTS,           s.sync_lights);
     CtrlSetCheck(IDC_AUTO_SYNC,             s.auto_sync);
 
-    CtrlSetText(IDC_ANIMATION_TIME_SCALE,   s.anim_time_scale);
     CtrlSetText(IDC_ANIMATION_SAMPLE_RATE,  s.anim_sample_rate);
 
     CtrlSetText(IDC_TXT_VERSION, "Plugin Version: " msPluginVersionStr);

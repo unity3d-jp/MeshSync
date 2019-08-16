@@ -80,7 +80,6 @@ class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
-        layout.prop(scene, "meshsync_animation_ts")
         layout.prop(scene, "meshsync_animation_fi")
         layout.operator("meshsync.export_animations", text="Sync")
 

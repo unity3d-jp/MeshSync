@@ -1182,7 +1182,7 @@ int msmodoContext::exportAnimations(ObjectScope scope)
 
     m_ignore_events = true;
     for (double t = time_start;;) {
-        m_anim_time = (float)(t - time_start) * m_settings.animation_time_scale;
+        m_anim_time = (float)(t - time_start);
         setChannelReadTime(t);
         for (auto& n : m_anim_nodes)
             n->doExtractAnimation(this);

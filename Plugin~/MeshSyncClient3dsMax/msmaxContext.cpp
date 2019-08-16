@@ -327,7 +327,7 @@ bool msmaxContext::sendAnimations(ObjectScope scope)
     auto interval = ToTicks(1.0f / std::max(m_settings.anim_sample_rate, 0.01f));
     for (TimeValue t = time_start;;) {
         m_current_time_tick = t;
-        m_anim_time = ToSeconds(t - time_start) * m_settings.anim_time_scale;
+        m_anim_time = ToSeconds(t - time_start);
         for (auto& kvp : m_anim_records)
             kvp.second(this);
 

@@ -65,7 +65,6 @@ class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
     def draw(self, context):
         scene = bpy.context.scene
         layout = self.layout
-        layout.prop(scene, "meshsync_animation_ts")
         layout.prop(scene, "meshsync_animation_fi")
         layout.operator("meshsync.export_animations", text="Sync")
 

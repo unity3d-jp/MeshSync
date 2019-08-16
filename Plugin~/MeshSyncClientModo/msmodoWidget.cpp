@@ -52,7 +52,6 @@ public slots:
     void onClickManualSync(bool v);
     void onClickExportCache(bool v);
 
-    void onEditAnimationTimeScale(const QString& v);
     void onEditAnimationSPS(const QString& v);
     void onClickSyncAnimations(bool v);
 
@@ -223,12 +222,6 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         lb_scene->setContentsMargins(0, space, 0, 0);
         lb_scene->setStyleSheet("font-weight: bold");
         layout->addWidget(lb_scene, iy++, 0, 1, 3);
-
-        layout->addWidget(new QLabel("Time Scale"), iy, 0);
-        auto ed_anim_timescale = new QLineEdit(to_qstring(settings.animation_time_scale));
-        ed_anim_timescale->setValidator(new QDoubleValidator(0.01, 10000.0, 100, this));
-        layout->addWidget(ed_anim_timescale, iy++, 1, 1, 2);
-        connect(ed_anim_timescale, SIGNAL(textEdited(QString)), this, SLOT(onEditAnimationTimeScale(QString)));
 
         layout->addWidget(new QLabel("Samples Per Second"), iy, 0);
         auto ed_anim_sps = new QLineEdit(to_qstring(settings.animation_sps));
@@ -415,17 +408,6 @@ void msmodoSettingsWidget::onClickExportCache(bool v)
         char buf[1024];
         sprintf(buf, "unity.meshsync.cache path:{%s}", path.c_str());
         svc_cmd.ExecuteArgString(-1, LXiCTAG_NULL, buf);
-    }
-}
-
-
-void msmodoSettingsWidget::onEditAnimationTimeScale(const QString& v)
-{
-    auto& settings = msmodoGetSettings();
-    bool ok;
-    float val = v.toFloat(&ok);
-    if (ok && val != 0.0f && settings.animation_time_scale != val) {
-        settings.animation_time_scale = val;
     }
 }
 

@@ -220,7 +220,6 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("syncCameras", sync_cameras, true);
     Handle("syncLights", sync_lights, true);
     Handle("syncConstraints", sync_constraints, true);
-    Handle("animationTS", animation_time_scale, false);
     Handle("animationSPS", animation_sps, false);
     Handle("removeNamespace", remove_namespace, true);
     Handle("multithreaded", multithreaded, false);

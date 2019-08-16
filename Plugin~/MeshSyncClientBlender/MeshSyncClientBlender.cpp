@@ -132,9 +132,6 @@ PYBIND11_MODULE(MeshSyncClientBlender, mod)
             BindProperty(sync_lights,
                 [](const self_t& self) { return self->getSettings().sync_lights; },
                 [](self_t& self, bool v) { self->getSettings().sync_lights = v; })
-            BindProperty(animation_ts,
-                [](const self_t& self) { return self->getSettings().animation_timescale; },
-                [](self_t& self, float v) { self->getSettings().animation_timescale = v; })
             BindProperty(animation_interval,
                 [](const self_t& self) { return self->getSettings().animation_frame_interval; },
                 [](self_t& self, int v) { self->getSettings().animation_frame_interval = v; })

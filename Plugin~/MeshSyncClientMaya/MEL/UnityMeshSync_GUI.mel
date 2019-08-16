@@ -61,9 +61,6 @@ global proc UnityMeshSync_GUI()
     text -l "Animations" -font "boldLabelFont";
     separator -h 8 -w 250 -style none;
     rowLayout -numberOfColumns 2;
-        text -l "Time Scale"; floatField -w 60 -v $animationTS -cc "umsCBAnimationTS" -minValue 0.01 umsCtrlAnimationTS;
-    setParent ..;
-    rowLayout -numberOfColumns 2;
         text -l "Samples Per Second"; floatField -w 60 -v $animationSPS -cc "umsCBAnimationSPS" -minValue 0.01 umsCtrlAnimationSPS;
     setParent ..;
     separator -h 5 -w 250 -style none;
@@ -178,12 +175,6 @@ global  proc umsCBAutoSync()
 global proc umsCBManualSync()
 {
     UnityMeshSync_Export;
-}
-
-global proc umsCBAnimationTS()
-{
-    float $v = `floatField -q -v umsCtrlAnimationTS`;
-    UnityMeshSync_Settings -animationTS $v;
 }
 
 global proc umsCBAnimationSPS()

@@ -58,7 +58,6 @@ struct SyncSettings
     bool sync_lights = true;
     bool calc_per_index_normals = true;
 
-    float animation_timescale = 1.0f;
     int animation_frame_interval = 10;
 
     bool multithreaded = true;

@@ -76,7 +76,6 @@ public:
     Handler("syncLights", LXsTYPE_BOOLEAN, settings.sync_lights, true)\
     Handler("syncMeshInstances", LXsTYPE_BOOLEAN, settings.sync_mesh_instances, true)\
     Handler("syncReplicators", LXsTYPE_BOOLEAN, settings.sync_replicators, true)\
-    Handler("animationTimeScale", LXsTYPE_FLOAT, settings.animation_time_scale, false)\
     Handler("animationSamplesPerSecond", LXsTYPE_FLOAT, settings.animation_sps, false)
 
 

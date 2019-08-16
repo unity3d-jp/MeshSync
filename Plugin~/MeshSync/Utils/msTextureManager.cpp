@@ -70,20 +70,29 @@ int TextureManager::addImage(const std::string& name, int width, int height, con
 
 int TextureManager::addFile(const std::string& path, TextureType type)
 {
+    if (path.empty())
+        return InvalidID;
+
     auto& rec = lockAndGet(path);
-    int id = rec.texture ?
-        rec.texture->id :
-        (FileExists(path.c_str()) ? genID() : -1);
+    int id = InvalidID;
+    if (rec.texture) {
+        id = rec.texture->id;
+    }
+    else {
+        if (!FileExists(path.c_str()))
+            return InvalidID;
+        id = genID();
+    }
 
     rec.waitTask();
     rec.task = std::async(std::launch::async, [this, path, type, &rec, id]() {
         auto mtime = FileMTime(path.c_str());
         if (!rec.texture || rec.mtime != mtime) {
+            if (!rec.texture)
+                rec.texture = Texture::create();
             rec.mtime = mtime;
-            rec.texture = Texture::create();
             auto& tex = rec.texture;
-            auto& data = tex->data;
-            if (FileToByteArray(path.c_str(), data)) {
+            if (FileToByteArray(path.c_str(), rec.texture->data)) {
                 tex->id = id;
                 tex->name = mu::GetFilename(path.c_str());
                 tex->format = ms::TextureFormat::RawFile;
@@ -117,9 +126,11 @@ std::vector<TexturePtr> TextureManager::getAllTextures()
     waitTasks();
 
     std::vector<TexturePtr> ret;
-    for (auto& p : m_records) {
-        if (p.second.texture->id != -1)
-            ret.push_back(p.second.texture);
+    for (auto& kvp : m_records) {
+        auto& rec = kvp.second;
+        rec.waitTask();
+        if (rec.texture)
+            ret.push_back(rec.texture);
     }
     return ret;
 }
@@ -129,24 +140,26 @@ std::vector<TexturePtr> TextureManager::getDirtyTextures()
     waitTasks();
 
     std::vector<TexturePtr> ret;
-    for (auto& p : m_records) {
-        if (p.second.dirty && p.second.texture->id != -1)
-            ret.push_back(p.second.texture);
+    for (auto& kvp : m_records) {
+        auto& rec = kvp.second;
+        rec.waitTask();
+        if (rec.dirty && rec.texture)
+            ret.push_back(rec.texture);
     }
     return ret;
 }
 
 void TextureManager::makeDirtyAll()
 {
-    for (auto& p : m_records) {
-        p.second.dirty = true;
+    for (auto& kvp : m_records) {
+        kvp.second.dirty = true;
     }
 }
 
 void TextureManager::clearDirtyFlags()
 {
-    for (auto& p : m_records) {
-        p.second.dirty = false;
+    for (auto& kvp : m_records) {
+        kvp.second.dirty = false;
     }
 }
 

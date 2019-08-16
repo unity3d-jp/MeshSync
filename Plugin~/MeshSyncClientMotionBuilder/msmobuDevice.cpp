@@ -867,7 +867,7 @@ bool msmobuDevice::exportAnimations()
         FBTime fbt;
         fbt.SetSecondDouble(t);
         control.Goto(fbt);
-        m_anim_time = (float)(t - time_begin) * m_settings.animation_time_scale;
+        m_anim_time = (float)(t - time_begin);
         for (auto& kvp : m_anim_records)
             kvp.second(this);
 

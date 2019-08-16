@@ -1170,7 +1170,7 @@ bool msblenContext::sendAnimations(ObjectScope scope)
         for (int f = frame_start;;) {
             scene.frame_set(f);
 
-            m_anim_time = (f - frame_start) * frame_to_seconds * m_settings.animation_timescale;
+            m_anim_time = (f - frame_start) * frame_to_seconds;
             mu::parallel_for_each(m_anim_records.begin(), m_anim_records.end(), [this](auto& kvp) {
                 kvp.second(this);
             });

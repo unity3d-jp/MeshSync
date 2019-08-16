@@ -59,7 +59,6 @@ struct SyncSettings
     bool ignore_non_renderable = true;
     bool flatten_hierarchy = false;
 
-    float anim_time_scale = 1.0f;
     float anim_sample_rate = 3.0f;
 
     // parallel mesh extraction.

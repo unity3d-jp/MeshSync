@@ -113,7 +113,6 @@ Value* Settings_cf(Value** arg_list, int count)
         Entry(sync_lights,          bool_result, to_bool);
         Entry(sync_textures,        bool_result, to_bool);
 
-        Entry(anim_time_scale,      Float::intern, to_float);
         Entry(anim_sample_rate,     Float::intern, to_float);
 
         Entry(multithreaded,        bool_result, to_bool);

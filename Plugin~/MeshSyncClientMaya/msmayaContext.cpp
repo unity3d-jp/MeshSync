@@ -705,7 +705,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
         // advance frame and record
         m_ignore_update = true;
         for (MTime t = time_start;;) {
-            m_anim_time = (float)(t - time_start).as(MTime::kSeconds) * m_settings.animation_time_scale;
+            m_anim_time = (float)(t - time_start).as(MTime::kSeconds);
             MGlobal::viewFrame(t);
             do_export();
 
@@ -858,33 +858,26 @@ static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu:
         }
     }
 
-    if (texpath.empty()) {
-        auto get_color_element = [](MFnDependencyNode& fn, const char *plug_name, const char *color_name, double def = 0.0) -> double
-        {
-            MString name = plug_name;
-            name += color_name;
-            auto plug = fn.findPlug(name, true);
-            if (!plug.isNull()) {
-                double ret = 0.0;
-                plug.getValue(ret);
-                return ret;
-            }
-            else {
-                return def;
-            }
-        };
-
-        color = {
-            (float)get_color_element(fn, plug_name, "R"),
-            (float)get_color_element(fn, plug_name, "G"),
-            (float)get_color_element(fn, plug_name, "B"),
-            1.0f,
-        };
-    }
-    else {
-        color = mu::float4::one();
-    }
-
+    auto get_color_element = [](MFnDependencyNode& fn, const char *plug_name, const char *color_name, double def = 0.0) -> double
+    {
+        MString name = plug_name;
+        name += color_name;
+        auto plug = fn.findPlug(name, true);
+        if (!plug.isNull()) {
+            double ret = 0.0;
+            plug.getValue(ret);
+            return ret;
+        }
+        else {
+            return def;
+        }
+    };
+    color = {
+        (float)get_color_element(fn, plug_name, "R"),
+        (float)get_color_element(fn, plug_name, "G"),
+        (float)get_color_element(fn, plug_name, "B"),
+        1.0f,
+    };
     return true;
 }
 
@@ -915,7 +908,7 @@ void msmayaContext::exportMaterials()
             std::string texpath;
             auto& stdmat = ms::AsStandardMaterial(*tmp);
             if (GetColorAndTexture(fn, "color", color, texpath)) {
-                stdmat.setColor(color);
+                stdmat.setColor(texpath.empty() ? color : ms::float4::one());
                 if (m_settings.sync_textures)
                     stdmat.setColorMap(exportTexture(texpath));
             }
@@ -1769,7 +1762,7 @@ int msmayaContext::exportAnimations(ObjectScope scope)
     // advance frame and record
     m_ignore_update = true;
     for (MTime t = time_start;;) {
-        m_anim_time = (float)(t - time_start).as(MTime::kSeconds) * m_settings.animation_time_scale;
+        m_anim_time = (float)(t - time_start).as(MTime::kSeconds);
         MGlobal::viewFrame(t);
         for (auto& kvp : m_anim_records)
             kvp.second(this);

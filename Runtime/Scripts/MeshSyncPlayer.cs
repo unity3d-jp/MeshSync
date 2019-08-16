@@ -1202,11 +1202,9 @@ namespace UTJ.MeshSync
 
             // allocate material list
             bool materialsUpdated = rec.BuildMaterialData(data);
-            bool hasBones = data.numBones > 0;
-            bool hasBlendshapes = data.numBlendShapes > 0;
             bool meshUpdated = false;
 
-            if (data.numPoints > 0)
+            if (dflags.hasPoints && dflags.hasIndices)
             {
                 // note:
                 // assume there is always only 1 mesh split.
@@ -1234,7 +1232,7 @@ namespace UTJ.MeshSync
                 meshUpdated = true;
             }
 
-            if (hasBones || hasBlendshapes)
+            if (dflags.hasBones || dflags.hasBlendshapes)
             {
                 var smr = rec.skinnedMeshRenderer;
                 if (smr == null)
@@ -1263,7 +1261,7 @@ namespace UTJ.MeshSync
                 smr.sharedMesh = rec.mesh;
 
                 // update bones
-                if (hasBones)
+                if (dflags.hasBones)
                 {
                     rec.rootBonePath = data.rootBonePath;
                     rec.bonePaths = data.bonePaths;
@@ -1276,7 +1274,7 @@ namespace UTJ.MeshSync
                 }
 
                 // update blendshape weights
-                if (hasBlendshapes)
+                if (dflags.hasBlendshapes)
                 {
                     int numBlendShapes = Math.Min(data.numBlendShapes, rec.mesh.blendShapeCount);
                     for (int bi = 0; bi < numBlendShapes; ++bi)
@@ -1286,7 +1284,7 @@ namespace UTJ.MeshSync
                     }
                 }
             }
-            else
+            else if (meshUpdated)
             {
                 var mf = rec.meshFilter;
                 var mr = rec.meshRenderer;
@@ -1306,6 +1304,7 @@ namespace UTJ.MeshSync
                 if (m_syncVisibility)
                     mr.enabled = data.transform.visible;
                 mf.sharedMesh = rec.mesh;
+                rec.smrEnabled = false;
             }
 
             if (meshUpdated)
