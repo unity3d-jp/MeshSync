@@ -139,9 +139,9 @@ void MeshRefiner::retopology(bool flip_faces)
     }
 }
 
-void MeshRefiner::genSubmeshes(const IArray<int>& material_ids, const IArray<int>& face_groups_)
+void MeshRefiner::genSubmeshes(const IArray<int>& material_ids, bool has_face_group)
 {
-    if (material_ids.empty() && face_groups_.empty()) {
+    if (material_ids.empty()) {
         genSubmeshes();
         return;
     }
@@ -157,7 +157,17 @@ void MeshRefiner::genSubmeshes(const IArray<int>& material_ids, const IArray<int
     int offset_faces = 0;
     RawVector<Submesh> tmp_submeshes;
 
-    auto& face_groups = face_groups_.empty() ? material_ids : face_groups_;
+    auto get_ids = [has_face_group](int base, int& mid, int& gid) {
+        base = std::max(base, 0);
+        if (!has_face_group) {
+            mid = gid = base;
+        }
+        else {
+            mid = base & 0xffff;
+            gid = base >> 16;
+        }
+    };
+
     for (int spi = 0; spi < num_splits; ++spi) {
         auto& split = splits[spi];
         int offset_vertices = split.vertex_offset;
@@ -168,11 +178,12 @@ void MeshRefiner::genSubmeshes(const IArray<int>& material_ids, const IArray<int
             for (int fi = 0; fi < split.face_count; ++fi) {
                 int count = new_counts[offset_faces + fi];
                 if (count >= 3) {
-                    int gid = face_groups[offset_faces + fi];
+                    int mid, gid;
+                    get_ids(material_ids[offset_faces + fi], mid, gid);
                     if (gid >= (int)tmp_submeshes.size())
                         tmp_submeshes.resize(gid + 1, {});
                     auto& sm = tmp_submeshes[gid];
-                    sm.material_id = material_ids.empty() ? 0 : std::max(material_ids[offset_faces + fi], 0);
+                    sm.material_id = mid;
                     sm.index_count += (new_counts[fi] - 2) * 3;
                 }
             }
@@ -189,7 +200,8 @@ void MeshRefiner::genSubmeshes(const IArray<int>& material_ids, const IArray<int
             for (int fi = 0; fi < split.face_count; ++fi) {
                 int count = new_counts[offset_faces + fi];
                 if (count >= 3) {
-                    int gid = face_groups[offset_faces + fi];
+                    int mid, gid;
+                    get_ids(material_ids[offset_faces + fi], mid, gid);
                     int nidx = (count - 2) * 3;
                     for (int i = 0; i < nidx; ++i)
                         *(tmp_submeshes[gid].dst_indices++) = *(src_tri++) - offset_vertices;

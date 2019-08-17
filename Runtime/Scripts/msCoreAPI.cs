@@ -1373,9 +1373,9 @@ namespace UTJ.MeshSync
         public bool hasUV1              { get { return flags[10]; } }
         public bool hasColors           { get { return flags[11]; } }
         public bool hasVelocities       { get { return flags[12]; } }
-        public bool hasBones            { get { return flags[14]; } }
-        public bool hasBlendshapeWeights{ get { return flags[15]; } }
-        public bool hasBlendshapes      { get { return flags[16]; } }
+        public bool hasBones            { get { return flags[15]; } }
+        public bool hasBlendshapeWeights{ get { return flags[16]; } }
+        public bool hasBlendshapes      { get { return flags[17]; } }
     };
 
     [StructLayout(LayoutKind.Explicit)]

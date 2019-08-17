@@ -5,6 +5,7 @@ namespace ms {
 
 // Mesh
 
+// must be synced with C# side
 struct MeshDataFlags
 {
     uint32_t unchanged : 1;
@@ -21,6 +22,7 @@ struct MeshDataFlags
     uint32_t has_colors : 1;
     uint32_t has_velocities : 1;
     uint32_t has_material_ids : 1;
+    uint32_t has_face_groups : 1; // use upper 16 bit of material id as face group. mainly for 3ds max
     uint32_t has_bones : 1;
     uint32_t has_blendshape_weights : 1;
     uint32_t has_blendshapes : 1;

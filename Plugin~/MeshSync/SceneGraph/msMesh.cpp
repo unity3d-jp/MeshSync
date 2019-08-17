@@ -543,7 +543,7 @@ void Mesh::refine()
         // refine
         refiner.refine();
         refiner.retopology(mrs.flags.flip_faces);
-        refiner.genSubmeshes(material_ids);
+        refiner.genSubmeshes(material_ids, md_flags.has_face_groups);
 
         // apply new points & indices
         refiner.new_points.swap(points);

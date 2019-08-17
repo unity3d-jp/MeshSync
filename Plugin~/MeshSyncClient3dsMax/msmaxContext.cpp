@@ -1218,14 +1218,17 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
             dst.indices.resize_discard(num_indices);
             for (int fi = 0; fi < num_faces; ++fi) {
                 auto& face = faces[fi];
-                int fmi = mesh->getFaceMtlIndex(fi);
+                int gid = mesh->getFaceMtlIndex(fi);
+                int mid = 0;
+
                 if (!mrec.submaterial_ids.empty()) { // multi-materials
-                    int midx = std::min(fmi, (int)mrec.submaterial_ids.size() - 1);
-                    dst.material_ids[fi] = mrec.submaterial_ids[midx];
+                    int midx = std::min(gid, (int)mrec.submaterial_ids.size() - 1);
+                    mid = mrec.submaterial_ids[midx];
                 }
-                else { // single material
-                    dst.material_ids[fi] = mrec.material_id;
-                }
+                else // single material
+                    mid = mrec.material_id;
+                // use upper 16 bit as face group id
+                dst.material_ids[fi] = mid | (gid << 16);
 
                 for (int i = 0; i < 3; ++i)
                     dst.indices[fi * 3 + i] = face.v[i];
@@ -1367,6 +1370,7 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
             dst.refine_settings.flags.gen_tangents = 1;
         dst.refine_settings.flags.flip_faces = m_settings.flip_faces;
         dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
+        dst.md_flags.has_face_groups = 1;
         dst.setupMeshDataFlags();
     }
 }
