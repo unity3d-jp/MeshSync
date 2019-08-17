@@ -630,10 +630,6 @@ bool msmayaContext::sendAnimations(ObjectScope scope)
 
 bool msmayaContext::exportCache(const CacheSettings& cache_settings)
 {
-    float frame_rate = (float)MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
-    float samples_per_second = frame_rate;
-    float frame_to_second = 1.0f / frame_rate;
-
     auto settings_old = m_settings;
     m_settings.export_cache = true;
     m_settings.remove_namespace = cache_settings.remove_namespace;
@@ -642,11 +638,12 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
-    oscs.sample_rate = samples_per_second;
+    oscs.sample_rate = (float)MTime(std::max(1.0 / cache_settings.frame_step, 1.0), MTime::kSeconds).as(MTime::uiUnit());
     oscs.encoder_settings.zstd.compression_level = cache_settings.zstd_compression_level;
     oscs.flatten_hierarchy = cache_settings.flatten_hierarchy;
     oscs.strip_normals = cache_settings.strip_normals;
     oscs.strip_tangents = cache_settings.strip_tangents;
+
 
     if (!m_cache_writer.open(cache_settings.path.c_str(), oscs)) {
         m_settings = settings_old;
@@ -686,7 +683,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
     }
     else {
         MTime time_current = MAnimControl::currentTime();
-        MTime interval = MTime(1.0f / cache_settings.samples_per_frame, MTime::uiUnit());
+        MTime interval = MTime(m_settings.frame_step, MTime::uiUnit());
         MTime time_start, time_end;
 
         // time range
@@ -1717,7 +1714,7 @@ int msmayaContext::exportAnimations(ObjectScope scope)
     m_animations.push_back(ms::AnimationClip::create());
 
     auto& clip = *m_animations.back();
-    clip.frame_rate = (float)MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
+    clip.frame_rate = (float)MTime(std::max(1.0 / m_settings.frame_step, 1.0), MTime::kSeconds).as(MTime::uiUnit());
 
     int num_exported = 0;
     auto export_branches = [&](DAGNode& rec) {
@@ -1752,7 +1749,7 @@ int msmayaContext::exportAnimations(ObjectScope scope)
     auto time_current = MAnimControl::currentTime();
     auto time_start = MAnimControl::minTime();
     auto time_end = MAnimControl::maxTime();
-    auto interval = MTime(1.0 / std::max(m_settings.animation_sps, 0.01f), MTime::kSeconds);
+    auto interval = MTime(m_settings.frame_step, MTime::uiUnit());
 
     int reserve_size = int((time_end.as(MTime::kSeconds) - time_start.as(MTime::kSeconds)) / interval.as(MTime::kSeconds)) + 1;
     for (auto& kvp : m_anim_records) {

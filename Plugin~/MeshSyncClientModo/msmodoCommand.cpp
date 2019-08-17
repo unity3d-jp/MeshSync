@@ -76,7 +76,7 @@ public:
     Handler("syncLights", LXsTYPE_BOOLEAN, settings.sync_lights, true)\
     Handler("syncMeshInstances", LXsTYPE_BOOLEAN, settings.sync_mesh_instances, true)\
     Handler("syncReplicators", LXsTYPE_BOOLEAN, settings.sync_replicators, true)\
-    Handler("animationSamplesPerSecond", LXsTYPE_FLOAT, settings.animation_sps, false)
+    Handler("frameStep", LXsTYPE_FLOAT, settings.frame_step, false)
 
 
     void setup_args(CLxAttributeDesc &desc) override
@@ -194,11 +194,13 @@ public:
 
         desc.add("frameRange", LXsTYPE_INTEGER);
         desc.arg_set_custom(new FrameRangeSelector());
-
+        desc.default_val(1);
         desc.add("frameBegin", LXsTYPE_INTEGER);
         desc.default_val(0);
         desc.add("frameEnd", LXsTYPE_INTEGER);
         desc.default_val(100);
+        desc.add("frameStep", LXsTYPE_FLOAT);
+        desc.default_val(1.0f);
 
         desc.add("materialFrameRange", LXsTYPE_INTEGER);
         desc.arg_set_custom(new MaterialFrameRangeSelector());
@@ -206,9 +208,6 @@ public:
 
         desc.add("zstdCompressionLevel", LXsTYPE_INTEGER);
         desc.default_val(3);
-
-        desc.add("samplesPerFrame", LXsTYPE_FLOAT);
-        desc.default_val(1.0f);
 
         desc.add("makeDoubleSided", LXsTYPE_BOOLEAN);
         desc.default_val(false);
@@ -267,9 +266,9 @@ public:
         readArg("frameRange", (int&)settings.frame_range);
         readArg("frameBegin", settings.frame_begin);
         readArg("frameEnd", settings.frame_end);
+        readArg("frameStep", settings.frame_step);
         readArg("materialFrameRange", (int&)settings.material_frame_range);
         readArg("zstdCompressionLevel", settings.zstd_compression_level);
-        readArg("samplesPerFrame", settings.samples_per_frame);
         readArg("makeDoubleSided", settings.make_double_sided);
         readArg("bakeDeformers", settings.bake_deformers);
         readArg("flattenHierarchy", settings.flatten_hierarchy);

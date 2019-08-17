@@ -305,12 +305,15 @@ bool msmaxContext::sendAnimations(ObjectScope scope)
 {
     m_sender.wait();
 
+    const float frame_rate = (float)::GetFrameRate();
+    const float frame_step = std::max(m_settings.frame_step, 0.1f);
+
     // create default clip
     m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
     auto& clip = *m_animations.back();
-    clip.frame_rate = (float)::GetFrameRate();
+    clip.frame_rate = frame_rate * std::max(1.0f / frame_step, 1.0f);
 
     // gather target data
     int num_exported = 0;
@@ -324,7 +327,7 @@ bool msmaxContext::sendAnimations(ObjectScope scope)
     auto time_range = GetCOREInterface()->GetAnimRange();
     auto time_start = time_range.Start();
     auto time_end = time_range.End();
-    auto interval = ToTicks(1.0f / std::max(m_settings.anim_sample_rate, 0.01f));
+    auto interval = ToTicks(frame_step / frame_rate);
     for (TimeValue t = time_start;;) {
         m_current_time_tick = t;
         m_anim_time = ToSeconds(t - time_start);
@@ -355,10 +358,8 @@ static int ExceptionFilter(unsigned int code, struct _EXCEPTION_POINTERS *ep)
 
 bool msmaxContext::exportCache(const CacheSettings& cache_settings)
 {
-    //float sample_rate = m_settings.animation_sps;
-    float samples_per_frame = cache_settings.samples_per_frame;
-    float samples_per_second = samples_per_frame * ::GetFrameRate();
-    int ticks_per_frame = ::GetTicksPerFrame();
+    const float frame_rate = (float)::GetFrameRate();
+    const float frame_step = std::max(cache_settings.frame_step, 0.1f);
 
     auto settings_old = m_settings;
     m_settings.export_scene_cache = true;
@@ -369,7 +370,7 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
-    oscs.sample_rate = samples_per_second;
+    oscs.sample_rate = frame_rate * std::max(1.0f / frame_step, 1.0f);;
     oscs.encoder_settings.zstd.compression_level = cache_settings.zstd_compression_level;
     oscs.flatten_hierarchy = cache_settings.flatten_hierarchy;
     oscs.strip_normals = cache_settings.strip_normals;
@@ -433,8 +434,8 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
 
         if (cache_settings.frame_range == FrameRange::Custom) {
             // custom frame range
-            time_start = cache_settings.frame_begin * ticks_per_frame;
-            time_end = cache_settings.frame_end * ticks_per_frame;
+            time_start = cache_settings.frame_begin * ::GetTicksPerFrame();
+            time_end = cache_settings.frame_end * ::GetTicksPerFrame();
         }
         else {
             // all active frames
@@ -442,7 +443,7 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
             time_start = time_range.Start();
             time_end = time_range.End();
         }
-        interval = TimeValue((float)ticks_per_frame / samples_per_frame);
+        interval = ToTicks(frame_step / frame_rate);
         time_end = std::max(time_end, time_start); // sanitize
 
         for (TimeValue t = time_start;;) {

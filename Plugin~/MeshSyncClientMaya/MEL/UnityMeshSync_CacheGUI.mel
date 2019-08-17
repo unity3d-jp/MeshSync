@@ -15,7 +15,7 @@ global proc UnityMeshSync_CacheGUI()
     $frameBegin         = `UnityMeshSync_Cache -q -frameBegin`;
     $frameEnd           = `UnityMeshSync_Cache -q -frameEnd`;
     $materialFrameRange = `UnityMeshSync_Cache -q -materialFrameRange`;
-    $samplesPerFrame    = `UnityMeshSync_Cache -q -samplesPerFrame`;
+    $frameStep          = `UnityMeshSync_Cache -q -frameStep`;
 
     $removeNamespace    = `UnityMeshSync_Cache -q -removeNamespace`;
     $zstdCompressionLevel = `UnityMeshSync_Cache -q -zstdCompressionLevel`;
@@ -53,16 +53,15 @@ global proc UnityMeshSync_CacheGUI()
             text -l "Frame End"; intField -w 60 -v $frameEnd umsCtrlCFrameEnd;
         setParent ..;
     setParent ..;
+    rowLayout -nc 2;
+        text -l "Frame Step"; floatField -w 60 -v $frameStep umsCtrlCFrameStep;
+    setParent ..;
 
     optionMenu -l "Material Frame Range" umsCtrlCMFRange;
         menuItem -l "None";
         menuItem -l "One";
         menuItem -l "All";
     optionMenu -e -sl ($materialFrameRange + 1) umsCtrlCMFRange;
-    
-    rowLayout -nc 2;
-        text -l "Samples Per Frame"; floatField -w 60 -v $samplesPerFrame umsCtrlCSamplesPerFrame;
-    setParent ..;
 
     separator -h 20 -w 250;
 
@@ -102,7 +101,7 @@ global proc umsCBExportCache()
     $frameBegin         = `intField -q -v umsCtrlCFrameBegin`;
     $frameEnd           = `intField -q -v umsCtrlCFrameEnd`;
     $materialFrameRange = `optionMenu -q -sl umsCtrlCMFRange` - 1;
-    $samplesPerFrame    = `floatField -q -v umsCtrlCSamplesPerFrame`;
+    $frameStep          = `floatField -q -v umsCtrlCFrameStep`;
 
     $removeNamespace    = `checkBox -q -v umsCtrlCRemoveNamespace`;
     $zstdCompression    = `intField -q -v umsCtrlCZSTDCompression`;
@@ -119,7 +118,7 @@ global proc umsCBExportCache()
         -frameBegin $frameBegin
         -frameEnd $frameEnd
         -materialFrameRange $materialFrameRange
-        -samplesPerFrame $samplesPerFrame
+        -frameStep $frameStep
         -removeNamespace $removeNamespace
         -zstdCompressionLevel $zstdCompression
         -makeDoubleSided $makeDoubleSided

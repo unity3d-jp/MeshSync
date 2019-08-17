@@ -166,8 +166,7 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-sc", "-syncCameras", MSyntax::kBoolean);
     syntax.addFlag("-sl", "-syncLights", MSyntax::kBoolean);
     syntax.addFlag("-sco", "-syncConstraints", MSyntax::kBoolean);
-    syntax.addFlag("-ats", "-animationTS", MSyntax::kDouble);
-    syntax.addFlag("-asp", "-animationSPS", MSyntax::kDouble);
+    syntax.addFlag("-fs", "-frameStep", MSyntax::kDouble);
     syntax.addFlag("-kfr", "-keyframeReduction", MSyntax::kBoolean);
     syntax.addFlag("-kfc", "-keepFlatCurves", MSyntax::kBoolean);
     syntax.addFlag("-rn", "-removeNamespace", MSyntax::kBoolean);
@@ -220,7 +219,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("syncCameras", sync_cameras, true);
     Handle("syncLights", sync_lights, true);
     Handle("syncConstraints", sync_constraints, true);
-    Handle("animationSPS", animation_sps, false);
+    Handle("frameStep", frame_step, false);
     Handle("removeNamespace", remove_namespace, true);
     Handle("multithreaded", multithreaded, false);
     Handle("fbxCompatibleTransform", fbx_compatible_transform, true);
@@ -358,7 +357,7 @@ MSyntax CmdExportCache::createSyntax()
     syntax.addFlag("-frb", "-frameBegin", MSyntax::kLong);
     syntax.addFlag("-fre", "-frameEnd", MSyntax::kLong);
     syntax.addFlag("-mfr", "-materialFrameRange", MSyntax::kLong);
-    syntax.addFlag("-spf", "-samplesPerFrame", MSyntax::kDouble);
+    syntax.addFlag("-fs", "-frameStep", MSyntax::kDouble);
 
     syntax.addFlag("-z", "-zstdCompressionLevel", MSyntax::kLong);
     syntax.addFlag("-rn", "-removeNamespace", MSyntax::kBoolean);
@@ -391,7 +390,7 @@ MStatus CmdExportCache::doIt(const MArgList& args_)
     Handle("frameBegin", frame_begin);
     Handle("frameEnd", frame_end);
     Handle("materialFrameRange", material_frame_range, (int&));
-    Handle("samplesPerFrame", samples_per_frame);
+    Handle("frameStep", frame_step);
 
     Handle("zstdCompressionLevel", zstd_compression_level);
     Handle("removeNamespace", remove_namespace);

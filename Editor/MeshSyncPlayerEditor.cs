@@ -11,6 +11,7 @@ namespace UTJ.MeshSyncEditor
     {
         protected float m_animationFrameRate = 30.0f;
         protected float m_animationTimeScale = 1.0f;
+        protected float m_animationTimeOffset = 0.0f;
         protected int m_animationDropStep = 2;
         protected float m_reductionThreshold = 0.001f;
         protected bool m_eraseFlatCurves = false;
@@ -182,11 +183,12 @@ namespace UTJ.MeshSyncEditor
                 GUILayout.BeginVertical("Box");
                 EditorGUILayout.LabelField("Time Scale", EditorStyles.boldLabel);
                 EditorGUI.indentLevel++;
-                m_animationTimeScale = EditorGUILayout.FloatField("Scale Value", m_animationTimeScale);
+                m_animationTimeScale = EditorGUILayout.FloatField("Scale", m_animationTimeScale);
+                m_animationTimeOffset = EditorGUILayout.FloatField("Offset", m_animationTimeOffset);
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Apply", GUILayout.Width(120.0f)))
-                    ApplyTimeScale(t.GetAnimationClips(), m_animationTimeScale);
+                    ApplyTimeScale(t.GetAnimationClips(), m_animationTimeScale, m_animationTimeOffset);
                 GUILayout.EndHorizontal();
                 EditorGUI.indentLevel--;
                 GUILayout.EndVertical();
@@ -236,7 +238,7 @@ namespace UTJ.MeshSyncEditor
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         }
 
-        public void ApplyTimeScale(IEnumerable<AnimationClip> clips, float timeScale)
+        public void ApplyTimeScale(IEnumerable<AnimationClip> clips, float timeScale, float timeOffset)
         {
             foreach (var clip in clips)
             {
@@ -259,11 +261,11 @@ namespace UTJ.MeshSyncEditor
                     var keys = curve.keys;
                     var keyCount = keys.Length;
                     for (int ki = 0; ki < keyCount; ++ki)
-                        keys[ki].time = keys[ki].time * timeScale;
+                        keys[ki].time = keys[ki].time * timeScale + timeOffset;
                     curve.keys = keys;
                 }
                 for (int ei = 0; ei < eventCount; ++ei)
-                    events[ei].time = events[ei].time * timeScale;
+                    events[ei].time = events[ei].time * timeScale + timeOffset;
 
                 // apply changes to clip
                 Undo.RegisterCompleteObjectUndo(clip, "ApplyTimeScale");

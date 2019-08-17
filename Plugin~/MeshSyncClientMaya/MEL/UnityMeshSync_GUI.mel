@@ -20,10 +20,7 @@ global proc UnityMeshSync_GUI()
     int    $syncCameras     = `UnityMeshSync_Settings -q -syncCameras`;
     int    $syncLights      = `UnityMeshSync_Settings -q -syncLights`;
     int    $autosync        = `UnityMeshSync_Settings -q -autosync`;
-    int    $animationTS     = `UnityMeshSync_Settings -q -animationTS`;
-    int    $animationSPS    = `UnityMeshSync_Settings -q -animationSPS`;
-    int    $kfReduction     = `UnityMeshSync_Settings -q -keyframeReduction`;
-    int    $keepFlatCurves  = `UnityMeshSync_Settings -q -keepFlatCurves`;
+    int    $frameStep       = `UnityMeshSync_Settings -q -frameStep`;
 
     columnLayout -columnOffset "left" 5;
     rowLayout -numberOfColumns 3;
@@ -61,7 +58,7 @@ global proc UnityMeshSync_GUI()
     text -l "Animations" -font "boldLabelFont";
     separator -h 8 -w 250 -style none;
     rowLayout -numberOfColumns 2;
-        text -l "Samples Per Second"; floatField -w 60 -v $animationSPS -cc "umsCBAnimationSPS" -minValue 0.01 umsCtrlAnimationSPS;
+        text -l "Frame Step"; floatField -w 60 -v $frameStep -cc "umsCBFrameStep" -minValue 0.1 umsCtrlFrameStep;
     setParent ..;
     separator -h 5 -w 250 -style none;
     button -l "Sync" -c "umsCBSyncAnimations";
@@ -177,10 +174,10 @@ global proc umsCBManualSync()
     UnityMeshSync_Export;
 }
 
-global proc umsCBAnimationSPS()
+global proc umsCBFrameStep()
 {
-    float $v = `floatField -q -v umsCtrlAnimationSPS`;
-    UnityMeshSync_Settings -animationSPS $v;
+    float $v = `floatField -q -v umsCtrlFrameStep`;
+    UnityMeshSync_Settings -frameStep $v;
 }
 
 global proc umsCBSyncAnimations()

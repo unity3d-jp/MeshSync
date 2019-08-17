@@ -59,7 +59,7 @@ struct SyncSettings
     bool ignore_non_renderable = true;
     bool flatten_hierarchy = false;
 
-    float anim_sample_rate = 3.0f;
+    float frame_step = 1.0f;
 
     // parallel mesh extraction.
     // it seems can cause problems when exporting objects with EvalWorldState()...
@@ -72,13 +72,13 @@ struct CacheSettings
 {
     std::string path;
     ObjectScope object_scope = ObjectScope::All;
-    FrameRange frame_range = FrameRange::Current;
-    MaterialFrameRange material_frame_range = MaterialFrameRange::One;
+    FrameRange frame_range = FrameRange::All;
     int frame_begin = 0;
     int frame_end = 100;
+    float frame_step = 1.0f;
+    MaterialFrameRange material_frame_range = MaterialFrameRange::One;
 
     int zstd_compression_level = 3; // (min) 0 - 22 (max)
-    float samples_per_frame = 1.0f;
 
     bool ignore_non_renderable = true;
     bool make_double_sided = false;
