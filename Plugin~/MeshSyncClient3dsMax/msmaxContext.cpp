@@ -390,15 +390,10 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
     auto nodes = getNodes(cache_settings.object_scope);
 
     auto do_export = [&]() {
-        if (scene_index == 0) {
+        if (scene_index == 0 || material_range == MaterialFrameRange::All) {
             // exportMaterials() is needed to export material IDs in meshes
             exportMaterials();
-            if (material_range == MaterialFrameRange::None)
-                m_material_manager.clearDirtyFlags();
-        }
-        else {
-            if (material_range == MaterialFrameRange::All)
-                exportMaterials();
+            m_material_manager.clearDirtyFlags();
         }
 
         auto export_objects = [&]() {
@@ -415,6 +410,10 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
         else {
             export_objects();
         }
+
+        if (material_range == MaterialFrameRange::None ||
+            (material_range == MaterialFrameRange::One && scene_index != 0))
+            m_material_manager.clearDirtyFlags();
         m_texture_manager.clearDirtyFlags();
         kickAsyncExport();
 
@@ -1213,6 +1212,11 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
             dst.material_ids.resize_discard(num_faces);
 
             const auto& mrec = m_material_records[n->GetMtl()];
+            if (!mrec.submaterial_ids.empty())
+                for (int mid : mrec.submaterial_ids)
+                    m_material_manager.markDirty(mid);
+            else
+                m_material_manager.markDirty(mrec.material_id);
 
             auto *faces = mesh->faces;
             dst.indices.resize_discard(num_indices);

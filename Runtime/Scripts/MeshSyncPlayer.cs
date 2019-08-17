@@ -147,6 +147,7 @@ namespace UTJ.MeshSync
         [SerializeField] protected bool m_profiling = false;
         [SerializeField] protected bool m_dontSaveAssetsInScene = false;
 
+        [SerializeField] protected Material m_dummyMaterial;
         [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] protected List<TextureHolder> m_textureList = new List<TextureHolder>();
         [SerializeField] protected List<AudioHolder> m_audioList = new List<AudioHolder>();
@@ -166,6 +167,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_foldMaterialList = true;
         [SerializeField] bool m_foldAnimationTweak = true;
         [SerializeField] bool m_foldExportAssets = true;
+        bool m_recordAssignMaterials = false;
 #endif
 
         protected bool m_needReassignMaterials = false;
@@ -1997,13 +1999,16 @@ namespace UTJ.MeshSync
             if (rec.go == null || rec.mesh == null || rec.materialIDs == null)
                 return;
 
-            Renderer r = rec.meshRenderer != null ? (Renderer)rec.meshRenderer : (Renderer)rec.skinnedMeshRenderer;
+            var r = rec.meshRenderer != null ? (Renderer)rec.meshRenderer : (Renderer)rec.skinnedMeshRenderer;
             if (r == null)
                 return;
 
             bool changed = false;
             int materialCount = rec.materialIDs.Length;
             var materials = new Material[materialCount];
+            var prevMaterials = r.sharedMaterials;
+            Array.Copy(prevMaterials, materials, Math.Min(prevMaterials.Length, materials.Length));
+
             for (int si = 0; si < materialCount; ++si)
             {
                 var mid = rec.materialIDs[si];
@@ -2019,10 +2024,12 @@ namespace UTJ.MeshSync
                 else if (materials[si] == null)
                 {
                     // assign dummy material to prevent to go pink
-                    material = CreateDefaultMaterial();
-                    material.name = "Dummy";
-
-                    materials[si] = material;
+                    if (m_dummyMaterial == null)
+                    {
+                        m_dummyMaterial = CreateDefaultMaterial();
+                        m_dummyMaterial.name = "Dummy";
+                    }
+                    materials[si] = m_dummyMaterial;
                     changed = true;
                 }
             }
@@ -2030,7 +2037,8 @@ namespace UTJ.MeshSync
             if (changed)
             {
 #if UNITY_EDITOR
-                Undo.RecordObject(r, "MeshSyncPlayer");
+                if (m_recordAssignMaterials)
+                    Undo.RecordObject(r, "Assign Material");
 #endif
                 r.sharedMaterials = materials;
             }
@@ -2135,11 +2143,9 @@ namespace UTJ.MeshSync
             var nameGenerator = new Misc.UniqueNameGenerator();
             var basePath = assetPath;
 
-            foreach (var m in m_materialList)
-            {
-                var mat = m.material;
+            Func<Material, Material> doExport = (Material mat) => {
                 if (mat == null || IsAsset(mat))
-                    continue;
+                    return mat;
 
                 var dstPath = string.Format("{0}/{1}.mat", basePath, nameGenerator.Gen(mat.name));
                 var existing = AssetDatabase.LoadAssetAtPath<Material>(dstPath);
@@ -2151,8 +2157,12 @@ namespace UTJ.MeshSync
                 }
                 else if (useExistingOnes && existing != null)
                     mat = existing;
-                m.material = mat; // material maybe updated by SaveAsset()
-            }
+                return mat;
+            };
+
+            foreach (var m in m_materialList)
+                m.material = doExport(m.material); // material maybe updated by SaveAsset()
+            m_dummyMaterial = doExport(m_dummyMaterial);
 
             AssetDatabase.SaveAssets();
             ReassignMaterials();
@@ -2240,7 +2250,7 @@ namespace UTJ.MeshSync
             return ApplyMaterialList(ml);
         }
 
-        void CheckMaterialAssignedViaEditor()
+        void CheckMaterialAssigned()
         {
             bool changed = false;
             foreach (var kvp in m_clientObjects)
@@ -2258,10 +2268,7 @@ namespace UTJ.MeshSync
                     {
                         int mid = rec.materialIDs[si];
                         var mrec = m_materialList.Find(a => a.id == mid);
-                        if (mrec == null)
-                            continue;
-
-                        if (materials[si] != mrec.material)
+                        if (mrec != null && materials[si] != mrec.material)
                         {
                             mrec.material = materials[si];
                             changed = true;
@@ -2275,7 +2282,14 @@ namespace UTJ.MeshSync
 
             if (changed)
             {
+                // assume last undo group is "Assign Material" performed by mouse drag & drop.
+                // collapse reassigning materials into it.
+                int group = Undo.GetCurrentGroup() - 1;
+                m_recordAssignMaterials = true;
                 ReassignMaterials();
+                m_recordAssignMaterials = false;
+                Undo.CollapseUndoOperations(group);
+
                 ForceRepaint();
             }
         }
@@ -2311,7 +2325,7 @@ namespace UTJ.MeshSync
             if (m_trackMaterialAssignment)
             {
                 if (Event.current.type == EventType.DragExited && Event.current.button == 0)
-                    CheckMaterialAssignedViaEditor();
+                    CheckMaterialAssigned();
             }
         }
 #endif

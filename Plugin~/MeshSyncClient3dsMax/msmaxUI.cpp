@@ -673,7 +673,6 @@ static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, L
                 s.frame_end = tmp;
             });
             break;
-
         case IDC_CACHE_FRAME_STEP:
             handle_edit([&]() {
                 float tmp = CtrlGetFloat(IDC_CACHE_FRAME_STEP, s.frame_step);
@@ -682,17 +681,18 @@ static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, L
                 s.frame_step = tmp;
             });
             break;
+        case IDC_MATERIAL_RANGE:
+            handle_combo([&]() {
+                s.material_frame_range = (MaterialFrameRange)CtrlComboGetSelection(IDC_MATERIAL_RANGE);
+            });
+            break;
+
         case IDC_ZSTD_COMPRESSION_LEVEL:
             handle_edit([&]() {
                 int tmp = CtrlGetInt(IDC_ZSTD_COMPRESSION_LEVEL, s.zstd_compression_level);
                 tmp = ms::ClampZSTDCompressionLevel(tmp);
                 CtrlSetText(IDC_ZSTD_COMPRESSION_LEVEL, tmp);
                 s.zstd_compression_level = tmp;
-            });
-            break;
-        case IDC_MATERIAL_RANGE:
-            handle_edit([&]() {
-                s.material_frame_range = (MaterialFrameRange)CtrlComboGetSelection(IDC_MATERIAL_RANGE);
             });
             break;
 
