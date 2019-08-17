@@ -124,7 +124,7 @@ namespace UTJ.MeshSyncEditor
             float labelWidth = 60; // minimum
             {
                 var style = GUI.skin.box;
-                foreach (var md in t.materialData)
+                foreach (var md in t.materialList)
                 {
                     var size = style.CalcSize(new GUIContent(md.name));
                     labelWidth = Mathf.Max(labelWidth, size.x);
@@ -133,7 +133,7 @@ namespace UTJ.MeshSyncEditor
                 labelWidth = Mathf.Min(labelWidth, EditorGUIUtility.currentViewWidth - 100);
             }
 
-            foreach (var md in t.materialData)
+            foreach (var md in t.materialList)
             {
                 var rect = EditorGUILayout.BeginHorizontal();
                 EditorGUI.DrawRect(new Rect(rect.x, rect.y, 16, 16), md.color);
@@ -142,12 +142,7 @@ namespace UTJ.MeshSyncEditor
                 {
                     var tmp = EditorGUILayout.ObjectField(md.material, typeof(Material), true) as Material;
                     if (tmp != md.material)
-                    {
-                        Undo.RecordObject(t, "MeshSyncServer");
-                        md.material = tmp;
-                        t.ReassignMaterials();
-                        t.ForceRepaint();
-                    }
+                        t.AssignMaterial(md, tmp);
                 }
                 EditorGUILayout.EndHorizontal();
             }

@@ -302,8 +302,8 @@ namespace UTJ.MeshSync
             set { m_dontSaveAssetsInScene = value; }
         }
 
-        public List<MaterialHolder> materialData { get { return m_materialList; } }
-        public List<TextureHolder> textureData { get { return m_textureList; } }
+        public List<MaterialHolder> materialList { get { return m_materialList; } }
+        public List<TextureHolder> textureList { get { return m_textureList; } }
 
 #if UNITY_EDITOR
         public bool sortEntities
@@ -2289,9 +2289,22 @@ namespace UTJ.MeshSync
                 ReassignMaterials();
                 m_recordAssignMaterials = false;
                 Undo.CollapseUndoOperations(group);
+                Undo.FlushUndoRecordObjects();
 
                 ForceRepaint();
             }
+        }
+
+        public void AssignMaterial(MaterialHolder holder, Material mat)
+        {
+            Undo.RegisterCompleteObjectUndo(this, "Assign Material");
+            holder.material = mat;
+            m_recordAssignMaterials = true;
+            ReassignMaterials();
+            m_recordAssignMaterials = false;
+            Undo.FlushUndoRecordObjects();
+
+            ForceRepaint();
         }
 
         public List<AnimationClip> GetAnimationClips()
