@@ -1388,25 +1388,24 @@ void msmayaContext::doExtractMeshDataImpl(ms::Mesh& dst, MFnMesh &mmesh, MFnMesh
 
     // get face material id
     {
-        std::vector<int> mids;
+        RawVector<int> mids;
         MObjectArray shaders;
-        MIntArray indices;
-        mshape.getConnectedShaders(0, shaders, indices);
-        mids.resize(shaders.length(), ms::InvalidID);
+        MIntArray shader_indices;
+        mshape.getConnectedShaders(0, shaders, shader_indices);
+        mids.resize(shaders.length(), 0);
         for (uint32_t si = 0; si < shaders.length(); si++) {
             MItDependencyGraph it(shaders[si], MFn::kLambert, MItDependencyGraph::kUpstream);
-            if (!it.isDone()) {
+            if (!it.isDone())
                 mids[si] = m_material_ids.getID(it.currentItem());
-            }
         }
 
         if (mids.size() > 0) {
-            const auto* indices_ptr = &indices[0];
-            dst.material_ids.resize(face_count, -1);
-            uint32_t len = std::min(face_count, indices.length());
-            for (uint32_t i = 0; i < len; ++i) {
-                dst.material_ids[i] = mids[indices_ptr[i]];
-            }
+            // MIntArray::operator[] is dllimported function. get raw pointer for faster access.
+            const int* shader_indices_ = &shader_indices[0];
+            dst.material_ids.resize(face_count, 0);
+            uint32_t len = std::min(face_count, shader_indices.length());
+            for (uint32_t i = 0; i < len; ++i)
+                dst.material_ids[i] = mids[shader_indices_[i]];
         }
     }
 }
@@ -1532,7 +1531,8 @@ void msmayaContext::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                 uint32_t base_point = 0;
 
                 MFnPointArrayData fn_points(obj_points);
-                const auto *points_ptr = &fn_points[0];
+                // get raw pointer for faster access.
+                const auto *points_ = &fn_points[0];
 
                 MFnComponentListData fn_cld(obj_cld);
                 uint32_t num_clists = fn_cld.length();
@@ -1544,11 +1544,11 @@ void msmayaContext::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                     MIntArray indices;
                     MFnSingleIndexedComponent fn_indices(clist);
                     fn_indices.getElements(indices);
-                    const auto *indices_ptr = &indices[0];
+                    const int *indices_ = &indices[0];
 
                     auto len = indices.length();
                     for (uint32_t pi = 0; pi < len; ++pi)
-                        dst_frame.points[indices_ptr[pi]] = to_float3(points_ptr[base_point + pi]);
+                        dst_frame.points[indices_[pi]] = to_float3(points_[base_point + pi]);
 
                     base_point += len;
                 }

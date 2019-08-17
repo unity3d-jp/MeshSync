@@ -1218,8 +1218,9 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
             dst.indices.resize_discard(num_indices);
             for (int fi = 0; fi < num_faces; ++fi) {
                 auto& face = faces[fi];
+                int fmi = mesh->getFaceMtlIndex(fi);
                 if (!mrec.submaterial_ids.empty()) { // multi-materials
-                    int midx = std::min((int)mesh->getFaceMtlIndex(fi), (int)mrec.submaterial_ids.size() - 1);
+                    int midx = std::min(fmi, (int)mrec.submaterial_ids.size() - 1);
                     dst.material_ids[fi] = mrec.submaterial_ids[midx];
                 }
                 else { // single material

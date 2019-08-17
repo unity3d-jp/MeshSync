@@ -539,7 +539,7 @@ namespace UTJ.MeshSync
                 if (p && p.type == MaterialPropertyData.Type.Vector)
                     return p.vectorValue;
                 else
-                    return Color.black;
+                    return Color.white;
             }
             set
             {

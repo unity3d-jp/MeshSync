@@ -509,22 +509,39 @@ int msmqContext::exportTexture(const std::string& path, ms::TextureType type)
     return m_texture_manager.addFile(path, type);
 }
 
+int msmqContext::getMaterialID(int material_index) const
+{
+    // material_index maybe -1. adjust to 0-based.
+    return m_material_index_to_id[material_index + 1];
+}
+
 int msmqContext::exportMaterials(MQDocument doc)
 {
     char buf[1024];
     int num_materials = doc->GetMaterialCount();
 
     m_material_index_to_id.clear();
-    m_material_index_to_id.resize(num_materials, ms::InvalidID);
+    m_material_index_to_id.resize(num_materials + 1, 0);
 
+    // Metasequoia allows faces to NOT have material. that face has -1 material index.
+    // allocate a dummy material for -1 material index.
+    {
+        auto dst = ms::Material::create();
+        dst->id = m_material_index_to_id[0] = m_material_ids.getID(nullptr);
+        dst->index = 0;
+        dst->name = "Dummy";
+        m_material_manager.add(dst);
+    }
+
+    // create materials based on Metasequoia's
     for (int mi = 0; mi < num_materials; ++mi) {
         auto src = doc->GetMaterial(mi);
         if (!src)
             continue;
 
         auto dst = ms::Material::create();
-        dst->id = m_material_index_to_id[mi] = m_material_ids.getID(src);
-        dst->index = mi;
+        dst->id = m_material_index_to_id[mi + 1] = m_material_ids.getID(src);
+        dst->index = mi + 1;
         dst->name = GetName(src);
 
         auto& stdmat = ms::AsStandardMaterial(*dst);
@@ -670,8 +687,7 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
     auto *indices = dst.indices.data();
     auto *uv = dst.uv0.data();
     for (int fi = 0; fi < nfaces; ++fi) {
-        int material_index = obj->GetFaceMaterial(fi);
-        dst.material_ids[fi] = material_index != -1 ? m_material_index_to_id[material_index] : ms::InvalidID;
+        dst.material_ids[fi] = getMaterialID(obj->GetFaceMaterial(fi));
 
         int c = dst.counts[fi];
         //if (obj->GetFaceVisible(fi))

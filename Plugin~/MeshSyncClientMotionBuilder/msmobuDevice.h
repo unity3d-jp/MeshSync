@@ -70,7 +70,7 @@ private:
 
     struct MaterialRecord : public mu::noncopyable
     {
-        int id = ms::InvalidID;
+        int id = 0;
         ms::Material *dst = nullptr;
     };
     using MaterialRecords = std::map<FBMaterial*, MaterialRecord>;

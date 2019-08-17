@@ -147,7 +147,6 @@ namespace UTJ.MeshSync
         [SerializeField] protected bool m_profiling = false;
         [SerializeField] protected bool m_dontSaveAssetsInScene = false;
 
-        [SerializeField] protected Material m_defaultMaterial;
         [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] protected List<TextureHolder> m_textureList = new List<TextureHolder>();
         [SerializeField] protected List<AudioHolder> m_audioList = new List<AudioHolder>();
@@ -2017,18 +2016,14 @@ namespace UTJ.MeshSync
                         changed = true;
                     }
                 }
-                else
+                else if (materials[si] == null)
                 {
-                    if (materials[si] == null)
-                    {
-                        if (m_defaultMaterial == null)
-                        {
-                            m_defaultMaterial = CreateDefaultMaterial();
-                            m_defaultMaterial.name = "DefaultMaterial";
-                        }
-                        materials[si] = m_defaultMaterial;
-                        changed = true;
-                    }
+                    // assign dummy material to prevent to go pink
+                    material = CreateDefaultMaterial();
+                    material.name = "Dummy";
+
+                    materials[si] = material;
+                    changed = true;
                 }
             }
 
@@ -2140,9 +2135,11 @@ namespace UTJ.MeshSync
             var nameGenerator = new Misc.UniqueNameGenerator();
             var basePath = assetPath;
 
-            Func<Material, Material> doExport = (Material mat) => {
+            foreach (var m in m_materialList)
+            {
+                var mat = m.material;
                 if (mat == null || IsAsset(mat))
-                    return mat;
+                    continue;
 
                 var dstPath = string.Format("{0}/{1}.mat", basePath, nameGenerator.Gen(mat.name));
                 var existing = AssetDatabase.LoadAssetAtPath<Material>(dstPath);
@@ -2154,12 +2151,8 @@ namespace UTJ.MeshSync
                 }
                 else if (useExistingOnes && existing != null)
                     mat = existing;
-                return mat;
-            };
-
-            foreach (var m in m_materialList)
-                m.material = doExport(m.material); // material maybe updated by SaveAsset()
-            m_defaultMaterial = doExport(m_defaultMaterial);
+                m.material = mat; // material maybe updated by SaveAsset()
+            }
 
             AssetDatabase.SaveAssets();
             ReassignMaterials();

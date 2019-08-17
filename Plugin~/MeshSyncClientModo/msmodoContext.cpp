@@ -587,6 +587,15 @@ void msmodoContext::exportMaterials()
 {
     m_material_index_seed = 0;
 
+    {
+        // todo: handle default material properly
+        auto ret = ms::Material::create();
+        auto& dst = *ret;
+        dst.name = "Default";
+        dst.id = m_material_ids.getID(nullptr);
+        dst.index = ++m_material_index_seed;
+        m_material_manager.add(ret);
+    }
     eachMaterial([this](CLxUser_Item& obj) { exportMaterial(obj); });
     m_material_ids.eraseStaleRecords();
     m_material_manager.eraseStaleMaterials();
@@ -1060,7 +1069,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             dst.material_ids.resize_discard(num_faces);
             for (int fi = 0; fi < num_faces; ++fi) {
                 auto mname = n.material_names[fi];
-                int mid = -1;
+                int mid = 0;
                 auto it = std::lower_bound(materials.begin(), materials.end(), mname,
                     [](const ms::MaterialPtr& mp, const char *name) { return std::strcmp(mp->name.c_str(), name) < 0; });
                 if (it != materials.end() && (*it)->name == mname)

@@ -140,7 +140,7 @@ struct MeshRefiner
     void refine();
     void buildConnection();
     void retopology(bool flip_faces);
-    void genSubmeshes(IArray<int> material_ids);
+    void genSubmeshes(const IArray<int>& material_ids, const IArray<int>& face_groups = IArray<int>());
     void genSubmeshes();
     void clear();
 
