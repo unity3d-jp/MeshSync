@@ -68,6 +68,8 @@ void ScaleConverter::convertCamera(Camera &e)
     convertTransform(e);
     e.near_plane *= m_scale;
     e.far_plane *= m_scale;
+    (float3&)e.view_matrix[3] *= m_scale;
+    (float3&)e.proj_matrix[3] *= m_scale;
 }
 
 void ScaleConverter::convertLight(Light &e)
@@ -134,6 +136,8 @@ void FlipX_HandednessCorrector::convertTransform(Transform &e)
 void FlipX_HandednessCorrector::convertCamera(Camera &e)
 {
     convertTransform(e);
+    e.view_matrix = flip_x(e.view_matrix);
+    e.proj_matrix = flip_x(e.proj_matrix);
 }
 
 void FlipX_HandednessCorrector::convertLight(Light &e)
@@ -215,6 +219,13 @@ void FlipYZ_ZUpCorrector::convertTransform(Transform &e)
 void FlipYZ_ZUpCorrector::convertCamera(Camera &e)
 {
     convertTransform(e);
+
+    auto convert = [this](auto& v) {
+        return flip_z(swap_yz(v));
+    };
+
+    e.view_matrix = convert(e.view_matrix);
+    e.proj_matrix = convert(e.proj_matrix);
 }
 
 void FlipYZ_ZUpCorrector::convertLight(Light &e)

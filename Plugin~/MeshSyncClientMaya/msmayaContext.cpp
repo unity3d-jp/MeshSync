@@ -1241,7 +1241,6 @@ ms::MeshPtr msmayaContext::exportMesh(TreeNode *n)
             if (!m_settings.bake_deformers && m_settings.sync_blendshapes)
                 doExtractBlendshapeWeights(dst, n);
         }
-        dst.setupMeshDataFlags();
         m_entity_manager.add(ret);
     };
     m_extract_tasks[n->shape->branches.front()].add(n, task);

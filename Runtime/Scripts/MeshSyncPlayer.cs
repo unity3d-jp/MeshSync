@@ -1657,8 +1657,11 @@ namespace UTJ.MeshSync
 
             if (dflags.hasViewMatrix)
                 cam.worldToCameraMatrix = data.viewMatrix;
+            //cam.ResetWorldToCameraMatrix()
+
             if (dflags.hasProjMatrix)
                 cam.projectionMatrix = data.projMatrix;
+            //cam.ResetProjectionMatrix()
 
             return rec;
         }

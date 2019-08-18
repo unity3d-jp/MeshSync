@@ -200,12 +200,13 @@ private:
     ms::TransformPtr exportMesh(TreeNode& node);
 
     mu::float4x4 getPivotMatrix(INode *n);
-    mu::float4x4 getGlobalMatrix(INode *n, TimeValue t);
+    mu::float4x4 getGlobalMatrix(INode *n, TimeValue t, bool cancel_camera_correction = true);
     void extractTransform(TreeNode& node, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
     void extractTransform(TreeNode& node);
     void extractCameraData(TreeNode& node, TimeValue t,
         bool& ortho, float& fov, float& near_plane, float& far_plane,
-        float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);
+        float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift,
+        mu::float4x4 *view_mat = nullptr);
     void extractLightData(TreeNode& node, TimeValue t,
         ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle);
 

@@ -5,6 +5,11 @@ namespace ms {
 
 static_assert(sizeof(PointsDataFlags) == sizeof(uint32_t), "");
 
+PointsDataFlags::PointsDataFlags()
+{
+    *(uint32_t*)this = 0;
+}
+
 #pragma region Points
 #define EachArray(F)\
     F(points) F(rotations) F(scales) F(colors) F(velocities) F(ids)
@@ -27,6 +32,17 @@ void Points::deserialize(std::istream& is)
 {
     super::deserialize(is);
     EachMember(msRead);
+}
+
+void Points::setupDataFlags()
+{
+    super::setupDataFlags();
+    pd_flags.has_points = !points.empty();
+    pd_flags.has_rotations = !rotations.empty();
+    pd_flags.has_scales = !scales.empty();
+    pd_flags.has_colors = !colors.empty();
+    pd_flags.has_velocities = !velocities.empty();
+    pd_flags.has_ids = !ids.empty();
 }
 
 bool Points::isUnchanged() const

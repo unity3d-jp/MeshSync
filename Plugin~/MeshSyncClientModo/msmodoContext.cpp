@@ -1058,7 +1058,6 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
         dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
         dst.refine_settings.flags.flip_faces = 1;
     }
-    dst.setupMeshDataFlags();
 
     m_parallel_tasks.push_back([this, &n, &dst](){
         // resolve materials (name -> id)

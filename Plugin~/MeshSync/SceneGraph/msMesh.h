@@ -27,10 +27,7 @@ struct MeshDataFlags
     uint32_t has_blendshape_weights : 1;
     uint32_t has_blendshapes : 1;
 
-    MeshDataFlags()
-    {
-        (uint32_t&)*this = 0;
-    }
+    MeshDataFlags();
 };
 
 struct MeshRefineFlags
@@ -62,10 +59,7 @@ struct MeshRefineFlags
     uint32_t quadify : 1;
     uint32_t quadify_full_search : 1;
 
-    MeshRefineFlags()
-    {
-        (uint32_t&)*this = 0;
-    }
+    MeshRefineFlags();
 };
 
 struct MeshRefineSettings
@@ -213,6 +207,7 @@ public:
     bool isGeometry() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void setupDataFlags() override;
 
     bool isUnchanged() const override;
     bool isTopologyUnchanged() const override;
@@ -236,7 +231,6 @@ public:
 
     void setupBoneWeights4();
     void setupBoneWeightsVariable();
-    void setupMeshDataFlags();
     bool submeshesHaveUniqueMaterial() const;
 
     BoneDataPtr addBone(const std::string& path);

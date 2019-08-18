@@ -22,7 +22,7 @@ static void Send(ms::ScenePtr scene)
 {
     for (auto& obj : scene->entities) {
         if (auto *mesh = dynamic_cast<ms::Mesh*>(obj.get())) {
-            mesh->setupMeshDataFlags();
+            mesh->setupDataFlags();
         }
     }
 
@@ -83,7 +83,7 @@ TestCase(Test_SendMesh)
 
         GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 30.0f * mu::DegToRad * i);
         mids.resize(counts.size(), 0);
-        mesh->setupMeshDataFlags();
+        mesh->setupDataFlags();
 
 
         writer0.time = writer1.time = writer2.time = 0.5f * i;

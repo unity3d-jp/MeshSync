@@ -16,10 +16,7 @@ struct PointsDataFlags
     uint32_t has_velocities : 1;
     uint32_t has_ids : 1;
 
-    PointsDataFlags()
-    {
-        *(uint32_t*)this = 0;
-    }
+    PointsDataFlags();
 };
 
 class Points : public Transform
@@ -48,6 +45,7 @@ public:
 
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void setupDataFlags() override;
 
     bool isUnchanged() const override;
     bool isTopologyUnchanged() const override;

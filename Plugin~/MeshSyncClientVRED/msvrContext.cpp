@@ -756,7 +756,6 @@ void msvrContext::onDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLs
             dst.refine_settings.flags.flip_u = m_settings.flip_u;
             dst.refine_settings.flags.flip_v = m_settings.flip_v;
             dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
-            dst.setupMeshDataFlags();
         }
     };
     task();

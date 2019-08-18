@@ -57,6 +57,7 @@ public:
     virtual bool isGeometry() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
+    virtual void setupDataFlags();
 
     virtual bool isUnchanged() const;
     virtual bool isTopologyUnchanged() const;
@@ -96,10 +97,7 @@ struct TransformDataFlags
     uint32_t has_layer : 1;
     uint32_t has_reference: 1;
 
-    TransformDataFlags()
-    {
-        *(uint32_t*)this = ~0x1u;
-    }
+    TransformDataFlags();
 };
 
 class Transform : public Entity
@@ -134,6 +132,7 @@ public:
     Type getType() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void setupDataFlags() override;
 
     bool isUnchanged() const override;
     bool strip(const Entity& base) override;
@@ -168,12 +167,7 @@ struct CameraDataFlags
     uint32_t has_proj_matrix : 1;
     uint32_t has_layer_mask : 1;    // 10
 
-    CameraDataFlags()
-    {
-        *(uint32_t*)this = ~0x1u;
-        has_view_matrix = 0;
-        has_proj_matrix = 0;
-    }
+    CameraDataFlags();
 };
 
 class Camera : public Transform
@@ -181,7 +175,7 @@ class Camera : public Transform
 using super = Transform;
 public:
     // serializable
-    mutable CameraDataFlags cd_flags;
+    CameraDataFlags cd_flags;
     bool is_ortho = false;
     float fov = 30.0f;
     float near_plane = 0.3f;
@@ -201,6 +195,7 @@ public:
     Type getType() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void setupDataFlags() override;
 
     bool isUnchanged() const override;
     bool strip(const Entity& base) override;
@@ -229,10 +224,7 @@ struct LightDataFlags
     uint32_t has_spot_angle : 1;
     uint32_t has_layer_mask : 1;
 
-    LightDataFlags()
-    {
-        *(uint32_t*)this = ~0x1u;
-    }
+    LightDataFlags();
 };
 
 class Light : public Transform
@@ -274,6 +266,7 @@ public:
     Type getType() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void setupDataFlags() override;
 
     bool isUnchanged() const override;
     bool strip(const Entity& base) override;

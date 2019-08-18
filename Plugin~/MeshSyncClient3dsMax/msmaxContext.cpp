@@ -786,7 +786,7 @@ mu::float4x4 msmaxContext::getPivotMatrix(INode *n)
     return mu::transform(t, r, mu::float3::one());
 }
 
-mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
+mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t, bool cancel_camera_correction)
 {
     auto obj = n->GetObjectRef();
     bool is_camera = IsCamera(obj);
@@ -805,8 +805,7 @@ mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
             r = to_float4x4(m);
         };
 
-        bool is_physical_camera = is_camera && IsPhysicalCamera(obj);
-        if (is_physical_camera) {
+        if (is_camera && IsPhysicalCamera(obj) && cancel_camera_correction) {
             // cancel tilt/shift effect
             MaxSDK::IPhysicalCamera::RenderTransformEvaluationGuard guard(n, t);
             get_matrix();
@@ -875,7 +874,8 @@ void msmaxContext::extractTransform(TreeNode& n)
 
 void msmaxContext::extractCameraData(TreeNode& n, TimeValue t,
     bool& ortho, float& fov, float& near_plane, float& far_plane,
-    float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
+    float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift,
+    mu::float4x4 *view_mat)
 {
     auto *cam = dynamic_cast<GenCamera*>(n.baseobj);
     if (!cam)
@@ -911,6 +911,15 @@ void msmaxContext::extractCameraData(TreeNode& n, TimeValue t,
         auto shift = pcam->GetFilmPlaneOffset(t, interval);
         lens_shift = -to_float2(shift);
         lens_shift.y *= aspect;
+
+        //// todo
+        //if (m_settings.bake_modifiers && view_mat) {
+        //    auto tilt_correction = to_float2(pcam->GetTiltCorrection(t, interval));
+        //    if (tilt_correction != mu::float2::zero()) {
+        //        auto mat = getGlobalMatrix(n.node, t, false);
+        //        *view_mat = mu::invert(mat);
+        //    }
+        //}
     }
     else {
         focal_length = 0.0f;
@@ -1002,7 +1011,8 @@ ms::TransformPtr msmaxContext::exportCamera(TreeNode& n)
     auto& dst = *ret;
     extractTransform(n);
     extractCameraData(n, GetTime(),
-        dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane, dst.focal_length, dst.sensor_size, dst.lens_shift);
+        dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane, dst.focal_length, dst.sensor_size, dst.lens_shift,
+        &dst.view_matrix);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -1375,7 +1385,6 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
         dst.refine_settings.flags.flip_faces = m_settings.flip_faces;
         dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
         dst.md_flags.has_face_groups = 1;
-        dst.setupMeshDataFlags();
     }
 }
 

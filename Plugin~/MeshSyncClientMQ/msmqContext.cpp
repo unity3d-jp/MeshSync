@@ -735,7 +735,6 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
         dst.refine_settings.flags.gen_normals_with_smooth_angle = 1;
         dst.refine_settings.smooth_angle = obj->GetSmoothAngle();
     }
-    dst.setupMeshDataFlags();
 }
 
 void msmqContext::extractCameraData(MQDocument doc, MQScene scene, ms::Camera& dst)
