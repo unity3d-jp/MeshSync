@@ -1775,6 +1775,7 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern TransformData msSceneGetEntity(IntPtr self, int i);
         [DllImport(Lib.name)] static extern int msSceneGetNumConstraints(IntPtr self);
         [DllImport(Lib.name)] static extern ConstraintData msSceneGetConstraint(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern byte msSceneSubmeshesHaveUniqueMaterial(IntPtr self);
         [DllImport(Lib.name)] static extern SceneProfileData msSceneGetProfileData(IntPtr self);
         #endregion
 
@@ -1783,6 +1784,7 @@ namespace UTJ.MeshSync
         public int numAssets { get { return msSceneGetNumAssets(self); } }
         public int numEntities { get { return msSceneGetNumEntities(self); } }
         public int numConstraints { get { return msSceneGetNumConstraints(self); } }
+        public bool submeshesHaveUniqueMaterial { get { return msSceneSubmeshesHaveUniqueMaterial(self) != 0; } }
         public SceneProfileData profileData { get { return msSceneGetProfileData(self); } }
 
         public AssetData GetAsset(int i) { return msSceneGetAsset(self, i); }

@@ -39,7 +39,7 @@ int TextureManager::find(const std::string& name) const
     auto it = m_records.find(name);
     if (it != m_records.end())
         return it->second.texture->id;
-    return -1;
+    return InvalidID;
 }
 
 int TextureManager::addImage(const std::string& name, int width, int height, const void *data, size_t size, TextureFormat format)

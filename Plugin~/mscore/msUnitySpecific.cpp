@@ -800,19 +800,17 @@ msAPI void msAnimationKeyframeReduction(ms::Animation *self, float threshold, bo
 msAPI void msAnimationClipConvert(ms::AnimationClip *self, InterpolationMode it)
 {
     int n = (int)self->animations.size();
-    mu::parallel_for_blocked(0, n, 16,
-        [&](int begin, int end) {
-            for (int i = begin; i != end; ++i)
-                ConvertCurves(*self->animations[i], it);
+    mu::parallel_for(0, n, 16,
+        [&](int i) {
+            ConvertCurves(*self->animations[i], it);
         });
 }
 msAPI void msAnimationClipKeyframeReduction(ms::AnimationClip *self, float threshold, bool erase_flat_curves)
 {
     int n = (int)self->animations.size();
-    mu::parallel_for_blocked(0, n, 16,
-        [&](int begin, int end) {
-            for (int i = begin; i != end; ++i)
-                KeyframeReduction(*self->animations[i], threshold, erase_flat_curves);
+    mu::parallel_for(0, n, 16,
+        [&](int i) {
+            KeyframeReduction(*self->animations[i], threshold, erase_flat_curves);
         });
     self->clearEmptyAnimations();
 }

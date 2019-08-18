@@ -53,6 +53,9 @@ namespace UTJ.MeshSyncEditor
             player.ExportMaterials(false, true);
             player.AddAnimator();
             player.handleAssets = false;
+            var scene = player.GetLastScene();
+            if (!scene.submeshesHaveUniqueMaterial)
+                player.syncMaterialList = false;
 
             var prefabPath = string.Format("Assets/SceneCache/{0}.prefab", go.name);
 #if UNITY_2018_3_OR_NEWER

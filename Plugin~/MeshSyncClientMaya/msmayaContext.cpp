@@ -821,6 +821,9 @@ bool msmayaContext::recvObjects()
 
 static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu::float4& color, std::string& texpath)
 {
+    color = mu::float4::zero();
+    texpath.clear();
+
     MPlug plug = fn.findPlug(plug_name, true);
     if (!plug)
         return false;
@@ -888,6 +891,11 @@ int msmayaContext::exportTexture(const std::string& path, ms::TextureType type)
     return m_texture_manager.addFile(path, type);
 }
 
+int msmayaContext::findTexture(const std::string& path)
+{
+    return m_texture_manager.find(path);
+}
+
 void msmayaContext::exportMaterials()
 {
     int midx = 0;
@@ -905,13 +913,17 @@ void msmayaContext::exportMaterials()
             std::string texpath;
             auto& stdmat = ms::AsStandardMaterial(*tmp);
             if (GetColorAndTexture(fn, "color", color, texpath)) {
-                stdmat.setColor(texpath.empty() ? color : ms::float4::one());
-                if (m_settings.sync_textures)
-                    stdmat.setColorMap(exportTexture(texpath));
+                if (!texpath.empty()) {
+                    stdmat.setColor(ms::float4::one());
+                    stdmat.setColorMap(m_settings.sync_textures ? exportTexture(texpath) : findTexture(texpath));
+                }
+                else {
+                    stdmat.setColor(color);
+                }
             }
             if (GetColorAndTexture(fn, "normalCamera", color, texpath)) {
-                if (m_settings.sync_textures)
-                    stdmat.setBumpMap(exportTexture(texpath));
+                if (!texpath.empty())
+                    stdmat.setBumpMap(m_settings.sync_textures ? exportTexture(texpath) : findTexture(texpath));
             }
         }
         m_material_manager.add(tmp);

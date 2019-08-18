@@ -237,6 +237,7 @@ public:
     void setupBoneWeights4();
     void setupBoneWeightsVariable();
     void setupMeshDataFlags();
+    bool submeshesHaveUniqueMaterial() const;
 
     BoneDataPtr addBone(const std::string& path);
     BlendShapeDataPtr addBlendShape(const std::string& name);

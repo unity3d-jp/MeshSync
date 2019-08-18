@@ -341,8 +341,14 @@ ScenePtr ISceneCacheImpl::getByIndex(size_t i)
 
 ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
 {
-    if (!valid() || time == m_last_time)
+    if (!valid())
         return nullptr;
+    if (time == m_last_time) {
+        if (m_last_diff)
+            return m_last_diff;
+        else if (m_last_scene)
+            return m_last_scene;
+    }
 
     ScenePtr ret;
 

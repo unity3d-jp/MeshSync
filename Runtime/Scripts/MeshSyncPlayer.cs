@@ -161,9 +161,12 @@ namespace UTJ.MeshSync
         [SerializeField] int m_objIDSeed = 0;
 
 #if UNITY_EDITOR
+        [SerializeField] bool m_syncMaterialList = true;
         [SerializeField] bool m_sortEntities = true;
         [SerializeField] bool m_progressiveDisplay = true;
-        [SerializeField] bool m_trackMaterialAssignment = true;
+        [SerializeField] bool m_foldSyncSettings = true;
+        [SerializeField] bool m_foldImportSettings = true;
+        [SerializeField] bool m_foldMisc = true;
         [SerializeField] bool m_foldMaterialList = true;
         [SerializeField] bool m_foldAnimationTweak = true;
         [SerializeField] bool m_foldExportAssets = true;
@@ -306,6 +309,11 @@ namespace UTJ.MeshSync
         public List<TextureHolder> textureList { get { return m_textureList; } }
 
 #if UNITY_EDITOR
+        public bool syncMaterialList
+        {
+            get { return m_syncMaterialList; }
+            set { m_syncMaterialList = value; }
+        }
         public bool sortEntities
         {
             get { return m_sortEntities; }
@@ -316,10 +324,21 @@ namespace UTJ.MeshSync
             get { return m_progressiveDisplay; }
             set { m_progressiveDisplay = value; }
         }
-        public bool trackMaterialAssignment
+
+        public bool foldSyncSettings
         {
-            get { return m_trackMaterialAssignment; }
-            set { m_trackMaterialAssignment = value; }
+            get { return m_foldSyncSettings; }
+            set { m_foldSyncSettings = value; }
+        }
+        public bool foldImportSettings
+        {
+            get { return m_foldImportSettings; }
+            set { m_foldImportSettings = value; }
+        }
+        public bool foldMisc
+        {
+            get { return m_foldMisc; }
+            set { m_foldMisc = value; }
         }
         public bool foldMaterialList
         {
@@ -2335,7 +2354,7 @@ namespace UTJ.MeshSync
 
         protected void OnSceneViewGUI(SceneView sceneView)
         {
-            if (m_trackMaterialAssignment)
+            if (m_syncMaterialList)
             {
                 if (Event.current.type == EventType.DragExited && Event.current.button == 0)
                     CheckMaterialAssigned();

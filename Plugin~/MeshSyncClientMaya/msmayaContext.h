@@ -232,6 +232,7 @@ private:
     std::vector<TreeNode*> getNodes(ObjectScope scope);
 
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
+    int findTexture(const std::string& path);
     void exportMaterials();
 
     ms::TransformPtr exportObject(TreeNode *n, bool parent, bool tip = true);

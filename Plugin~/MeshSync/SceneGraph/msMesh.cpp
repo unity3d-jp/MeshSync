@@ -1174,6 +1174,16 @@ void Mesh::setupMeshDataFlags()
         refine_settings.scale_factor != 1.0f;
 }
 
+bool Mesh::submeshesHaveUniqueMaterial() const
+{
+    // O(N^2) but should be acceptable because submeshes are usually 1~5
+    for (auto& s1 : submeshes)
+        for (auto& s2 : submeshes)
+            if (&s1 != &s2 && s1.material_id == s2.material_id)
+                return false;
+    return true;
+}
+
 BoneDataPtr Mesh::addBone(const std::string& _path)
 {
     auto ret = BoneData::create();

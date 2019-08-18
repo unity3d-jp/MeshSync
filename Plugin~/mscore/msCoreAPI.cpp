@@ -498,6 +498,7 @@ msAPI int msSceneGetNumConstraints(const ms::Scene *self) { return (int)self->co
 msAPI ms::Asset* msSceneGetAsset(const ms::Scene *self, int i) { return self->assets[i].get(); }
 msAPI ms::Transform* msSceneGetEntity(const ms::Scene *self, int i) { return self->entities[i].get(); }
 msAPI ms::Constraint* msSceneGetConstraint(const ms::Scene *self, int i) { return self->constraints[i].get(); }
+msAPI bool msSceneSubmeshesHaveUniqueMaterial(const ms::Scene *self) { return self->submeshesHaveUniqueMaterial(); }
 msAPI ms::SceneProfileData msSceneGetProfileData(const ms::Scene *self) { return self->profile_data; }
 #pragma endregion
 
