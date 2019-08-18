@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Unity Mesh Sync",
     "author": "Unity Technologies",
-    "version": (2019, 8, 8),
+    "version": (2019, 8, 19),
     "blender": (2, 80, 57),
     "description": "Sync Meshes with Unity",
     "location": "View3D > Mesh Sync",
