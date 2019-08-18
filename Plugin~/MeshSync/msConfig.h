@@ -3,7 +3,7 @@
 #define msPluginVersion 20190808
 #define msPluginVersionStr "20190808"
 #define msVendor "Unity Technologies"
-#define msProtocolVersion 119
+#define msProtocolVersion 120
 
 #define msEnableNetwork
 #define msEnableSceneCache

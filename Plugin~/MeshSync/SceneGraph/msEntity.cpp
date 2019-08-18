@@ -368,15 +368,27 @@ EntityType Camera::getType() const
 }
 
 #define EachMember(F)\
-    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(focal_length) F(sensor_size) F(lens_shift) F(layer_mask)
+    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(focal_length) F(sensor_size) F(lens_shift) F(view_matrix) F(proj_matrix) F(layer_mask)
 
 void Camera::serialize(std::ostream& os) const
 {
+    cd_flags.has_fov = fov > 0.0f;
+    cd_flags.has_near_plane = near_plane > 0.0f;
+    cd_flags.has_far_plane = far_plane > 0.0f;
+    cd_flags.has_focal_length = focal_length > 0.0f;
+    cd_flags.has_sensor_size = sensor_size != float2::zero();
+    cd_flags.has_lens_shift = lens_shift != float2::zero();
+    cd_flags.has_view_matrix = view_matrix != float4x4::zero();
+    cd_flags.has_proj_matrix = proj_matrix != float4x4::zero();
+
     super::serialize(os);
     write(os, cd_flags);
     if (cd_flags.unchanged)
         return;
-    EachMember(msWrite);
+
+#define Body(V) if(cd_flags.has_##V) write(os, V);
+    EachMember(Body);
+#undef Body
 }
 void Camera::deserialize(std::istream& is)
 {
@@ -384,7 +396,10 @@ void Camera::deserialize(std::istream& is)
     read(is, cd_flags);
     if (cd_flags.unchanged)
         return;
-    EachMember(msRead);
+
+#define Body(V) if(cd_flags.has_##V) read(is, V);
+    EachMember(Body);
+#undef Body
 }
 
 bool Camera::isUnchanged() const
@@ -402,6 +417,8 @@ static bool NearEqual(const Camera& a, const Camera& b)
         near_equal(a.focal_length, b.focal_length) &&
         near_equal(a.sensor_size, b.sensor_size) &&
         near_equal(a.lens_shift, b.lens_shift) &&
+        near_equal(a.view_matrix, b.view_matrix) &&
+        near_equal(a.proj_matrix, b.proj_matrix) &&
         a.layer_mask == b.layer_mask;
 }
 
@@ -463,10 +480,12 @@ void Camera::clear()
     fov = 30.0f;
     near_plane = 0.3f;
     far_plane = 1000.0f;
-
     focal_length = 0.0f;
     sensor_size = float2::zero();
     lens_shift = float2::zero();
+    view_matrix = float4x4::zero();
+    proj_matrix = float4x4::zero();
+    layer_mask = ~0;
 }
 
 uint64_t Camera::checksumTrans() const
@@ -507,7 +526,10 @@ void Light::serialize(std::ostream & os) const
     write(os, ld_flags);
     if (ld_flags.unchanged)
         return;
-    EachMember(msWrite);
+
+#define Body(V) if(ld_flags.has_##V) write(os, V);
+    EachMember(Body);
+#undef Body
 }
 void Light::deserialize(std::istream & is)
 {
@@ -515,7 +537,10 @@ void Light::deserialize(std::istream & is)
     read(is, ld_flags);
     if (ld_flags.unchanged)
         return;
-    EachMember(msRead);
+
+#define Body(V) if(ld_flags.has_##V) read(is, V);
+    EachMember(Body);
+#undef Body
 }
 
 bool Light::isUnchanged() const
@@ -591,6 +616,7 @@ void Light::clear()
     intensity = 1.0f;
     range = 0.0f;
     spot_angle = 30.0f;
+    layer_mask = ~0;
 }
 
 uint64_t Light::checksumTrans() const

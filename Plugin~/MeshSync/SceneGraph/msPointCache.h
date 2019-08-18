@@ -4,7 +4,7 @@
 
 namespace ms {
 
-// Points
+// must be synced with C# side
 struct PointsDataFlags
 {
     uint32_t unchanged : 1;

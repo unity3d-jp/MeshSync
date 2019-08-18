@@ -38,14 +38,15 @@ namespace UTJ.MeshSyncEditor
 
                 EditorGUILayout.PropertyField(so.FindProperty("m_syncTransform"), new GUIContent("Transform"));
                 EditorGUILayout.PropertyField(so.FindProperty("m_syncCameras"), new GUIContent("Cameras"));
-#if UNITY_2018_1_OR_NEWER
                 if (t.syncCameras)
                 {
                     EditorGUI.indentLevel++;
+#if UNITY_2018_1_OR_NEWER
                     EditorGUILayout.PropertyField(so.FindProperty("m_usePhysicalCameraParams"), new GUIContent("Physical Camera Params"));
+#endif
+                    EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
                     EditorGUI.indentLevel--;
                 }
-#endif
                 EditorGUILayout.PropertyField(so.FindProperty("m_syncLights"), new GUIContent("Lights"));
 
                 EditorGUILayout.PropertyField(so.FindProperty("m_syncMeshes"), new GUIContent("Meshes"));

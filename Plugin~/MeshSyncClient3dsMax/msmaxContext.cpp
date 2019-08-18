@@ -890,8 +890,8 @@ void msmaxContext::extractCameraData(TreeNode& n, TimeValue t,
         fov = vfov * mu::RadToDeg;
     }
     if (cam->GetManualClip()) {
-        near_plane = cam->GetClipDist(t, 0);
-        far_plane = cam->GetClipDist(t, 1);
+        near_plane = cam->GetClipDist(t, CAM_HITHER_CLIP);
+        far_plane = cam->GetClipDist(t, CAM_YON_CLIP);
     }
     else {
         near_plane = far_plane = 0.0f;

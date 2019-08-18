@@ -84,6 +84,7 @@ msSerializable(Entity);
 msDeclPtr(Entity);
 
 
+// must be synced with C# side
 struct TransformDataFlags
 {
     uint32_t unchanged : 1;
@@ -152,6 +153,7 @@ msSerializable(Transform);
 msDeclPtr(Transform);
 
 
+// must be synced with C# side
 struct CameraDataFlags
 {
     uint32_t unchanged : 1;
@@ -159,14 +161,18 @@ struct CameraDataFlags
     uint32_t has_fov : 1;
     uint32_t has_near_plane : 1;
     uint32_t has_far_plane : 1;
-    uint32_t has_focal_length : 1;
+    uint32_t has_focal_length : 1;  // 5
     uint32_t has_sensor_size : 1;
     uint32_t has_lens_shift : 1;
-    uint32_t has_layer_mask : 1;
+    uint32_t has_view_matrix : 1;
+    uint32_t has_proj_matrix : 1;
+    uint32_t has_layer_mask : 1;    // 10
 
     CameraDataFlags()
     {
         *(uint32_t*)this = ~0x1u;
+        has_view_matrix = 0;
+        has_proj_matrix = 0;
     }
 };
 
@@ -175,17 +181,16 @@ class Camera : public Transform
 using super = Transform;
 public:
     // serializable
-    CameraDataFlags cd_flags;
+    mutable CameraDataFlags cd_flags;
     bool is_ortho = false;
     float fov = 30.0f;
     float near_plane = 0.3f;
     float far_plane = 1000.0f;
-
-    // physical camera params
     float focal_length = 0.0f;          // in mm
     float2 sensor_size = float2::zero();// in mm
     float2 lens_shift = float2::zero(); // in percent
-
+    float4x4 view_matrix = float4x4::zero();
+    float4x4 proj_matrix = float4x4::zero();
     int layer_mask = ~0;
 
 protected:
@@ -212,6 +217,7 @@ msDeclPtr(Camera);
 
 
 
+// must be synced with C# side
 struct LightDataFlags
 {
     uint32_t unchanged : 1;

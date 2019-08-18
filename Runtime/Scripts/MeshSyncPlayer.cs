@@ -136,6 +136,7 @@ namespace UTJ.MeshSync
 #if UNITY_2018_1_OR_NEWER
         [SerializeField] protected bool m_usePhysicalCameraParams = true;
 #endif
+        [SerializeField] protected bool m_useCustomCameraMatrices = true;
         [SerializeField] protected bool m_updateMeshColliders = true;
         [SerializeField] protected bool m_findMaterialFromAssets = true;
         [SerializeField] protected InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
@@ -277,6 +278,11 @@ namespace UTJ.MeshSync
             set { m_usePhysicalCameraParams = value; }
         }
 #endif
+        public bool useCustomCameraMatrices
+        {
+            get { return m_useCustomCameraMatrices; }
+            set { m_useCustomCameraMatrices = value; }
+        }
         public bool updateMeshColliders
         {
             get { return m_updateMeshColliders; }
@@ -1628,32 +1634,32 @@ namespace UTJ.MeshSync
 
 #if UNITY_2018_1_OR_NEWER
             // use physical camera params if available
-            float focalLength = data.focalLength;
-            if (m_usePhysicalCameraParams && focalLength > 0.0f)
+            if (m_usePhysicalCameraParams && dflags.hasFocalLength && dflags.hasSensorSize)
             {
                 cam.usePhysicalProperties = true;
-                cam.focalLength = focalLength;
-
-                var sensorSize = data.sensorSize;
-                if (sensorSize.x > 0.0f && sensorSize.y > 0.0f)
-                    cam.sensorSize = sensorSize;
-                cam.lensShift = data.lensShift;
+                cam.focalLength = data.focalLength;
+                cam.sensorSize = data.sensorSize;
+                if (dflags.hasLensShift)
+                    cam.lensShift = data.lensShift;
             }
             else
 #endif
             {
-                float fov = data.fov;
-                if (fov > 0.0f)
-                    cam.fieldOfView = fov;
+                if (dflags.hasFov)
+                    cam.fieldOfView = data.fov;
             }
 
-            float nearClipPlane = data.nearClipPlane;
-            float farClipPlane = data.farClipPlane;
-            if (nearClipPlane > 0.0f && farClipPlane > 0.0f)
+            if (dflags.hasNearPlane && dflags.hasFarPlane)
             {
-                cam.nearClipPlane = data.nearClipPlane;
-                cam.farClipPlane = data.farClipPlane;
+                cam.nearClipPlane = data.nearPlane;
+                cam.farClipPlane = data.farPlane;
             }
+
+            if (dflags.hasViewMatrix)
+                cam.worldToCameraMatrix = data.viewMatrix;
+            if (dflags.hasProjMatrix)
+                cam.projectionMatrix = data.projMatrix;
+
             return rec;
         }
 

@@ -1150,6 +1150,14 @@ namespace UTJ.MeshSync
     {
         public BitFlags flags;
         public bool unchanged { get { return flags[0]; } }
+        public bool hasFov { get { return flags[2]; } }
+        public bool hasNearPlane { get { return flags[3]; } }
+        public bool hasFarPlane { get { return flags[4]; } }
+        public bool hasFocalLength { get { return flags[5]; } }
+        public bool hasSensorSize { get { return flags[6]; } }
+        public bool hasLensShift { get { return flags[7]; } }
+        public bool hasViewMatrix { get { return flags[8]; } }
+        public bool hasProjMatrix { get { return flags[9]; } }
     }
 
     [StructLayout(LayoutKind.Explicit)]
@@ -1161,19 +1169,24 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern CameraData msCameraCreate();
         [DllImport(Lib.name)] static extern CameraDataFlags msCameraGetDataFlags(IntPtr self);
         [DllImport(Lib.name)] static extern byte msCameraIsOrtho(IntPtr self);
-        [DllImport(Lib.name)] static extern void msCameraSetOrtho(IntPtr self, byte v);
         [DllImport(Lib.name)] static extern float msCameraGetFov(IntPtr self);
-        [DllImport(Lib.name)] static extern void msCameraSetFov(IntPtr self, float v);
         [DllImport(Lib.name)] static extern float msCameraGetNearPlane(IntPtr self);
-        [DllImport(Lib.name)] static extern void msCameraSetNearPlane(IntPtr self, float v);
         [DllImport(Lib.name)] static extern float msCameraGetFarPlane(IntPtr self);
-        [DllImport(Lib.name)] static extern void msCameraSetFarPlane(IntPtr self, float v);
         [DllImport(Lib.name)] static extern float msCameraGetFocalLength(IntPtr self);
+        [DllImport(Lib.name)] static extern Vector2 msCameraGetSensorSize(IntPtr self);
+        [DllImport(Lib.name)] static extern Vector2 msCameraGetLensShift(IntPtr self);
+        [DllImport(Lib.name)] static extern Matrix4x4 msCameraGetViewMatrix(IntPtr self);
+        [DllImport(Lib.name)] static extern Matrix4x4 msCameraGetProjMatrix(IntPtr self);
+
+        [DllImport(Lib.name)] static extern void msCameraSetOrtho(IntPtr self, byte v);
+        [DllImport(Lib.name)] static extern void msCameraSetFov(IntPtr self, float v);
+        [DllImport(Lib.name)] static extern void msCameraSetNearPlane(IntPtr self, float v);
+        [DllImport(Lib.name)] static extern void msCameraSetFarPlane(IntPtr self, float v);
         [DllImport(Lib.name)] static extern void msCameraSetFocalLength(IntPtr self, float v);
-        [DllImport(Lib.name)] static extern void msCameraGetSensorSize(IntPtr self, ref Vector2 v);
-        [DllImport(Lib.name)] static extern void msCameraSetSensorSize(IntPtr self, ref Vector2 v);
-        [DllImport(Lib.name)] static extern void msCameraGetLensShift(IntPtr self, ref Vector2 v);
-        [DllImport(Lib.name)] static extern void msCameraSetLensShift(IntPtr self, ref Vector2 v);
+        [DllImport(Lib.name)] static extern void msCameraSetSensorSize(IntPtr self, Vector2 v);
+        [DllImport(Lib.name)] static extern void msCameraSetLensShift(IntPtr self, Vector2 v);
+        [DllImport(Lib.name)] static extern void msCameraSetViewMatrix(IntPtr self, Matrix4x4 v);
+        [DllImport(Lib.name)] static extern void msCameraSetProjMatrix(IntPtr self, Matrix4x4 v);
         #endregion
 
 
@@ -1196,12 +1209,12 @@ namespace UTJ.MeshSync
             get { return msCameraGetFov(self); }
             set { msCameraSetFov(self, value); }
         }
-        public float nearClipPlane
+        public float nearPlane
         {
             get { return msCameraGetNearPlane(self); }
             set { msCameraSetNearPlane(self, value); }
         }
-        public float farClipPlane
+        public float farPlane
         {
             get { return msCameraGetFarPlane(self); }
             set { msCameraSetFarPlane(self, value); }
@@ -1213,13 +1226,23 @@ namespace UTJ.MeshSync
         }
         public Vector2 sensorSize
         {
-            get { var v = Vector2.zero; msCameraGetSensorSize(self, ref v); return v; }
-            set { msCameraSetSensorSize(self, ref value); }
+            get { return msCameraGetSensorSize(self); }
+            set { msCameraSetSensorSize(self, value); }
         }
         public Vector2 lensShift
         {
-            get { var v = Vector2.zero; msCameraGetLensShift(self, ref v); return v; }
-            set { msCameraSetLensShift(self, ref value); }
+            get { return msCameraGetLensShift(self); }
+            set { msCameraSetLensShift(self, value); }
+        }
+        public Matrix4x4 viewMatrix
+        {
+            get { return msCameraGetViewMatrix(self); }
+            set { msCameraSetViewMatrix(self, value); }
+        }
+        public Matrix4x4 projMatrix
+        {
+            get { return msCameraGetProjMatrix(self); }
+            set { msCameraSetProjMatrix(self, value); }
         }
     }
 

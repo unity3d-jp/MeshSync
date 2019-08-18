@@ -330,7 +330,7 @@ void Scene::flatternHierarchy()
 bool Scene::submeshesHaveUniqueMaterial() const
 {
     std::atomic_bool ret{true};
-    parallel_for(0, (int)entities.size(), 32, [this, &ret](int ei) {
+    parallel_for(0, (int)entities.size(), ceildiv((int)entities.size(), 8), [this, &ret](int ei) {
         auto& e = *entities[ei];
         if (e.getType() == EntityType::Mesh) {
             if (!static_cast<Mesh&>(e).submeshesHaveUniqueMaterial()) {
