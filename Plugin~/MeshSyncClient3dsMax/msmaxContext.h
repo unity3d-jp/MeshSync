@@ -59,8 +59,7 @@ struct SyncSettings
     bool ignore_non_renderable = true;
     bool flatten_hierarchy = false;
 
-    float anim_time_scale = 1.0f;
-    float anim_sample_rate = 3.0f;
+    float frame_step = 1.0f;
 
     // parallel mesh extraction.
     // it seems can cause problems when exporting objects with EvalWorldState()...
@@ -73,13 +72,13 @@ struct CacheSettings
 {
     std::string path;
     ObjectScope object_scope = ObjectScope::All;
-    FrameRange frame_range = FrameRange::Current;
-    MaterialFrameRange material_frame_range = MaterialFrameRange::One;
+    FrameRange frame_range = FrameRange::All;
     int frame_begin = 0;
     int frame_end = 100;
+    float frame_step = 1.0f;
+    MaterialFrameRange material_frame_range = MaterialFrameRange::One;
 
     int zstd_compression_level = 3; // (min) 0 - 22 (max)
-    float samples_per_frame = 1.0f;
 
     bool ignore_non_renderable = true;
     bool make_double_sided = false;
@@ -201,12 +200,13 @@ private:
     ms::TransformPtr exportMesh(TreeNode& node);
 
     mu::float4x4 getPivotMatrix(INode *n);
-    mu::float4x4 getGlobalMatrix(INode *n, TimeValue t);
+    mu::float4x4 getGlobalMatrix(INode *n, TimeValue t, bool cancel_camera_correction = true);
     void extractTransform(TreeNode& node, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
     void extractTransform(TreeNode& node);
     void extractCameraData(TreeNode& node, TimeValue t,
         bool& ortho, float& fov, float& near_plane, float& far_plane,
-        float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);
+        float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift,
+        mu::float4x4 *view_mat = nullptr);
     void extractLightData(TreeNode& node, TimeValue t,
         ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle);
 

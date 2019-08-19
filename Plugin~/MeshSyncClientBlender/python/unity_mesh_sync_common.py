@@ -16,7 +16,7 @@ def msb_apply_scene_settings(self = None, context = None):
     ctx.sync_meshes = scene.meshsync_sync_meshes
     ctx.make_double_sided = scene.meshsync_make_double_sided
     ctx.bake_modifiers = scene.meshsync_bake_modifiers
-    ctx.convert_to_mesh = scene.meshsync_convert_to_mesh
+    ctx.curves_as_mesh = scene.meshsync_curves_as_mesh
     ctx.sync_bones = scene.meshsync_sync_bones
     ctx.sync_blendshapes = scene.meshsync_sync_blendshapes
     ctx.sync_textures = scene.meshsync_sync_textures
@@ -27,8 +27,7 @@ def msb_apply_scene_settings(self = None, context = None):
 def msb_apply_animation_settings(self = None, context = None):
     ctx = msb_context
     scene = bpy.context.scene
-    ctx.animation_ts = scene.meshsync_animation_ts
-    ctx.animation_interval = scene.meshsync_animation_fi
+    ctx.frame_step = scene.meshsync_frame_step
     return None
 
 
@@ -56,21 +55,20 @@ def msb_on_animation_settings_updated(self = None, context = None):
 
 def msb_initialize_properties():
     # sync settings
-    bpy.types.Scene.meshsync_server_address = bpy.props.StringProperty(default = "127.0.0.1", name = "Address", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_server_port = bpy.props.IntProperty(default = 8080, name = "Port", min = 0, max = 65535, update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_scale_factor = bpy.props.FloatProperty(default = 1.0, name = "Scale Factor", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_sync_meshes = bpy.props.BoolProperty(default = True, name = "Sync Meshes", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_make_double_sided = bpy.props.BoolProperty(default = False, name = "Make Double Sided", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_bake_modifiers = bpy.props.BoolProperty(default = False, name = "Bake Modifiers", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_convert_to_mesh = bpy.props.BoolProperty(default = True, name = "Convert To Mesh", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(default = True, name = "Sync Bones", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_sync_blendshapes = bpy.props.BoolProperty(default = True, name = "Sync Blend Shapes", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_sync_textures = bpy.props.BoolProperty(default = True, name = "Sync Textures", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(default = True, name = "Sync Cameras", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_sync_lights = bpy.props.BoolProperty(default = True, name = "Sync Lights", update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(default = False, name = "Auto Sync", update = msb_on_toggle_auto_sync)
-    bpy.types.Scene.meshsync_animation_ts = bpy.props.FloatProperty(default = 1, name = "Time Scale", min = 0.01, update = msb_on_animation_settings_updated)
-    bpy.types.Scene.meshsync_animation_fi = bpy.props.IntProperty(default = 10, name = "Frame Step", min = 1, update = msb_on_animation_settings_updated)
+    bpy.types.Scene.meshsync_server_address = bpy.props.StringProperty(name = "Address", default = "127.0.0.1", update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_server_port = bpy.props.IntProperty(name = "Port", default = 8080, min = 0, max = 65535, update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_scale_factor = bpy.props.FloatProperty(name = "Scale Factor", default = 1.0, update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_sync_meshes = bpy.props.BoolProperty(name = "Sync Meshes", default = True, update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_make_double_sided = bpy.props.BoolProperty(name = "Make Double Sided", default = False, update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_bake_modifiers = bpy.props.BoolProperty(name = "Bake Modifiers", default = False, update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_curves_as_mesh = bpy.props.BoolProperty(name = "Curves as Mesh", default = True, update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(name = "Sync Bones", default = True, update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_sync_blendshapes = bpy.props.BoolProperty(name = "Sync Blend Shapes", default = True, update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_sync_textures = bpy.props.BoolProperty(name = "Sync Textures", default = True, update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_sync_cameras = bpy.props.BoolProperty(name = "Sync Cameras", default = True, update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_sync_lights = bpy.props.BoolProperty(name = "Sync Lights", default = True, update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_auto_sync = bpy.props.BoolProperty(name = "Auto Sync", default = False, update = msb_on_toggle_auto_sync)
+    bpy.types.Scene.meshsync_frame_step = bpy.props.IntProperty(name = "Frame Step", default = 1, min = 1, update = msb_on_animation_settings_updated)
 
 
 @persistent
@@ -146,14 +144,15 @@ class MESHSYNC_OT_ExportCache(bpy.types.Operator):
         })
     frame_range = bpy.props.EnumProperty(
         name = "Frame Range",
-        default = "0",
+        default = "1",
         items = {
             ("0", "Current", "Export current frame"),
             ("1", "All", "Export all frames"),
             ("2", "Custom", "Export speficied frames"),
         })
-    frame_begin = bpy.props.IntProperty(default = 1, name = "Frame Begin")
-    frame_end = bpy.props.IntProperty(default = 100, name = "Frame End")
+    frame_begin = bpy.props.IntProperty(name = "Frame Begin", default = 1)
+    frame_end = bpy.props.IntProperty(name = "Frame End", default = 100)
+    frame_step = bpy.props.IntProperty(name = "Frame Step", default = 1, min = 1)
     material_frame_range = bpy.props.EnumProperty(
         name = "Material Range",
         default = "1",
@@ -162,15 +161,14 @@ class MESHSYNC_OT_ExportCache(bpy.types.Operator):
             ("1", "One", "Export one frame of materials"),
             ("2", "All", "Export all frames of materials"),
         })
-    zstd_compression_level = bpy.props.IntProperty(default = 3, name = "ZSTD Compression")
-    frame_step = bpy.props.IntProperty(default = 1, name = "Frame Step")
-    make_double_sided = bpy.props.BoolProperty(default = False, name = "Make Double Sided")
-    bake_modifiers = bpy.props.BoolProperty(default = True, name = "Bake Modifiers")
-    convert_to_mesh = bpy.props.BoolProperty(default = True, name = "Convert To Mesh")
-    flatten_hierarchy = bpy.props.BoolProperty(default = False, name = "Flatten Hierarchy")
-    merge_meshes = bpy.props.BoolProperty(default = False, name = "Merge Meshes")
-    strip_normals = bpy.props.BoolProperty(default = False, name = "Strip Normals")
-    strip_tangents = bpy.props.BoolProperty(default = False, name = "Strip Tangents")
+    zstd_compression_level = bpy.props.IntProperty(name = "ZSTD Compression", default = 3)
+    make_double_sided = bpy.props.BoolProperty(name = "Make Double Sided", default = False)
+    bake_modifiers = bpy.props.BoolProperty(name = "Bake Modifiers", default = True)
+    convert_to_mesh = bpy.props.BoolProperty(name = "Convert To Mesh", default = True)
+    flatten_hierarchy = bpy.props.BoolProperty(name = "Flatten Hierarchy", default = False)
+    merge_meshes = bpy.props.BoolProperty(name = "Merge Meshes", default = False)
+    strip_normals = bpy.props.BoolProperty(name = "Strip Normals", default = False)
+    strip_tangents = bpy.props.BoolProperty(name = "Strip Tangents", default = False)
 
     def execute(self, context):
         ctx = msb_cache

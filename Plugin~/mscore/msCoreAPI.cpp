@@ -187,16 +187,20 @@ msAPI float msCameraGetFov(const ms::Camera *self) { return self->fov; }
 msAPI float msCameraGetNearPlane(const ms::Camera *self) { return self->near_plane; }
 msAPI float msCameraGetFarPlane(const ms::Camera *self) { return self->far_plane; }
 msAPI float msCameraGetFocalLength(const ms::Camera *self) { return self->focal_length; }
-msAPI void msCameraGetSensorSize(const ms::Camera *self, mu::float2 *v) { *v = self->sensor_size; }
-msAPI void msCameraGetLensShift(const ms::Camera *self, mu::float2 *v) { *v = self->lens_shift; }
+msAPI mu::float2 msCameraGetSensorSize(const ms::Camera *self) { return self->sensor_size; }
+msAPI mu::float2 msCameraGetLensShift(const ms::Camera *self) { return self->lens_shift; }
+msAPI mu::float4x4 msCameraGetViewMatrix(const ms::Camera *self) { return self->view_matrix; }
+msAPI mu::float4x4 msCameraGetProjMatrix(const ms::Camera *self) { return self->proj_matrix; }
 
 msAPI void msCameraSetOrtho(ms::Camera *self, bool v) { self->is_ortho = v; }
 msAPI void msCameraSetFov(ms::Camera *self, float v) { self->fov = v; }
 msAPI void msCameraSetNearPlane(ms::Camera *self, float v) { self->near_plane = v; }
 msAPI void msCameraSetFarPlane(ms::Camera *self, float v) { self->far_plane = v; }
 msAPI void msCameraSetFocalLength(ms::Camera *self, float v) { self->focal_length = v; }
-msAPI void msCameraSetSensorSize(ms::Camera *self, mu::float2 *v) { self->sensor_size = *v; }
-msAPI void msCameraSetLensShift(ms::Camera *self, mu::float2 *v) { self->lens_shift = *v; }
+msAPI void msCameraSetSensorSize(ms::Camera *self, mu::float2 v) { self->sensor_size = v; }
+msAPI void msCameraSetLensShift(ms::Camera *self, mu::float2 v) { self->lens_shift = v; }
+msAPI void msCameraSetViewMatrix(ms::Camera *self, mu::float4x4 v) { self->view_matrix = v; }
+msAPI void msCameraSetProjMatrix(ms::Camera *self, mu::float4x4 v) { self->proj_matrix = v; }
 #pragma endregion
 
 
@@ -498,6 +502,7 @@ msAPI int msSceneGetNumConstraints(const ms::Scene *self) { return (int)self->co
 msAPI ms::Asset* msSceneGetAsset(const ms::Scene *self, int i) { return self->assets[i].get(); }
 msAPI ms::Transform* msSceneGetEntity(const ms::Scene *self, int i) { return self->entities[i].get(); }
 msAPI ms::Constraint* msSceneGetConstraint(const ms::Scene *self, int i) { return self->constraints[i].get(); }
+msAPI bool msSceneSubmeshesHaveUniqueMaterial(const ms::Scene *self) { return self->submeshesHaveUniqueMaterial(); }
 msAPI ms::SceneProfileData msSceneGetProfileData(const ms::Scene *self) { return self->profile_data; }
 #pragma endregion
 

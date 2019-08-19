@@ -39,10 +39,10 @@ MaterialPtr MaterialManager::find(int id) const
     return it != m_records.end() ? it->second.material : nullptr;
 }
 
-int MaterialManager::add(MaterialPtr material)
+bool MaterialManager::add(MaterialPtr material)
 {
-    if (!material || material->id == InvalidID)
-        return InvalidID;
+    if (!material)
+        return false;
 
     auto& rec = lockAndGet(material->id);
     rec.material = material;
@@ -55,7 +55,18 @@ int MaterialManager::add(MaterialPtr material)
     }
     else if (m_always_mark_dirty)
         rec.dirty = true;
-    return 0;
+    return true;
+}
+
+bool MaterialManager::markDirty(int id)
+{
+    auto it = m_records.find(id);
+    if (it != m_records.end() && !it->second.dirty) {
+        it->second.dirty = true;
+        return true;
+    }
+    else
+        return false;
 }
 
 std::vector<MaterialPtr> MaterialManager::getAllMaterials()

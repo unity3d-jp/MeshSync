@@ -33,8 +33,6 @@ bool msmobuLayout::FBCreate()
     const char *idButtonManualSync = "idButtonManualSync";
 
     const char *idLabelAnimation = "idLabelAnimation";
-    const char *idLabelTimeScale = "idLabelTimeScale";
-    const char *idEditTimeScale = "idEditTimeScale";
     const char *idLabelSPS = "idLabelSPS";
     const char *idEditSPS = "idEditSPS";
     const char *idButtonSyncAnimations = "idButtonSyncAnimations";
@@ -214,33 +212,11 @@ bool msmobuLayout::FBCreate()
         m_lb_animation.Caption = "Animation";
         m_lb_animation.Style = kFBTextStyleBold;
 
-
-        AddRegion(idLabelTimeScale, idLabelTimeScale,
+        AddRegion(idLabelSPS, idLabelSPS,
             0, kFBAttachLeft, idLabelAnimation, 1,
             lS, kFBAttachBottom, idLabelAnimation, 1,
             lW, kFBAttachNone, nullptr, 1,
             0, kFBAttachHeight, idLabelAnimation, 1);
-        SetControl(idLabelTimeScale, m_lb_time_scale);
-        m_lb_time_scale.Caption = "Time Scale";
-
-        AddRegion(idEditTimeScale, idEditTimeScale,
-            lS, kFBAttachRight, idLabelTimeScale, 1,
-            0, kFBAttachTop, idLabelTimeScale, 1,
-            lW, kFBAttachNone, nullptr, 1,
-            0, kFBAttachHeight, idLabelTimeScale, 1);
-        SetControl(idEditTimeScale, m_ed_time_scale);
-        m_ed_time_scale.Value = 1;
-        m_ed_time_scale.Min = 0.01;
-        m_ed_time_scale.SmallStep = 0.01;
-        m_ed_time_scale.LargeStep = 0.1;
-        m_ed_time_scale.OnChange.Add(this, (FBCallback)&msmobuLayout::onAnimationSettingsChange);
-
-
-        AddRegion(idLabelSPS, idLabelSPS,
-            0, kFBAttachLeft, idLabelTimeScale, 1,
-            lS, kFBAttachBottom, idLabelTimeScale, 1,
-            lW, kFBAttachNone, nullptr, 1,
-            0, kFBAttachHeight, idLabelTimeScale, 1);
         SetControl(idLabelSPS, m_lb_sps);
         m_lb_sps.Caption = "Samples Per Sec";
 
@@ -307,7 +283,6 @@ void msmobuLayout::onSceneSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 void msmobuLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 {
     auto& settings = m_device->getSettings();
-    settings.animation_time_scale = (float)m_ed_time_scale.Value;
     settings.animation_sps = (float)m_ed_sps.Value;
 }
 

@@ -123,6 +123,7 @@ public:
 
     void buildHierarchy();
     void flatternHierarchy();
+    bool submeshesHaveUniqueMaterial() const;
 
     void dbgDump() const;
 };

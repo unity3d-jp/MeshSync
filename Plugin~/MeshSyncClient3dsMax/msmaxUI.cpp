@@ -468,24 +468,14 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
             });
             break;
 
-        case IDC_ANIMATION_TIME_SCALE:
+        case IDC_FRAME_STEP:
             handle_edit([&]() {
-                float tmp = CtrlGetFloat(IDC_ANIMATION_TIME_SCALE, s.anim_time_scale);
+                float tmp = CtrlGetFloat(IDC_FRAME_STEP, s.frame_step);
                 if (tmp < 0.01f) {
                     tmp = mu::max(tmp, 0.01f);
-                    CtrlSetText(IDC_ANIMATION_TIME_SCALE, tmp);
+                    CtrlSetText(IDC_FRAME_STEP, tmp);
                 }
-                s.anim_time_scale = tmp;
-            });
-            break;
-        case IDC_ANIMATION_SAMPLE_RATE:
-            handle_edit([&]() {
-                float tmp = CtrlGetFloat(IDC_ANIMATION_SAMPLE_RATE, s.anim_sample_rate);
-                if (tmp < 0.01f) {
-                    tmp = mu::max(tmp, 0.01f);
-                    CtrlSetText(IDC_ANIMATION_SAMPLE_RATE, tmp);
-                }
-                s.anim_sample_rate = tmp;
+                s.frame_step = tmp;
             });
             break;
         case IDC_MANUAL_SYNC:
@@ -548,10 +538,9 @@ void msmaxContext::updateSettingControls()
     CtrlSetCheck(IDC_SYNC_LIGHTS,           s.sync_lights);
     CtrlSetCheck(IDC_AUTO_SYNC,             s.auto_sync);
 
-    CtrlSetText(IDC_ANIMATION_TIME_SCALE,   s.anim_time_scale);
-    CtrlSetText(IDC_ANIMATION_SAMPLE_RATE,  s.anim_sample_rate);
+    CtrlSetText(IDC_FRAME_STEP,             s.frame_step);
 
-    CtrlSetText(IDC_TXT_VERSION, "Plugin Version: " msPluginVersionStr);
+    CtrlSetText(IDC_TEXT_VERSION, "Plugin Version: " msPluginVersionStr);
 }
 
 
@@ -684,26 +673,26 @@ static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, L
                 s.frame_end = tmp;
             });
             break;
-
-        case IDC_CACHE_SAMPLES_PER_FRAME:
+        case IDC_CACHE_FRAME_STEP:
             handle_edit([&]() {
-                float tmp = CtrlGetFloat(IDC_CACHE_SAMPLES_PER_FRAME, s.samples_per_frame);
+                float tmp = CtrlGetFloat(IDC_CACHE_FRAME_STEP, s.frame_step);
                 tmp = mu::clamp(tmp, 0.01f, 100.0f);
-                CtrlSetText(IDC_CACHE_SAMPLES_PER_FRAME, tmp);
-                s.samples_per_frame = tmp;
+                CtrlSetText(IDC_CACHE_FRAME_STEP, tmp);
+                s.frame_step = tmp;
             });
             break;
+        case IDC_MATERIAL_RANGE:
+            handle_combo([&]() {
+                s.material_frame_range = (MaterialFrameRange)CtrlComboGetSelection(IDC_MATERIAL_RANGE);
+            });
+            break;
+
         case IDC_ZSTD_COMPRESSION_LEVEL:
             handle_edit([&]() {
                 int tmp = CtrlGetInt(IDC_ZSTD_COMPRESSION_LEVEL, s.zstd_compression_level);
                 tmp = ms::ClampZSTDCompressionLevel(tmp);
                 CtrlSetText(IDC_ZSTD_COMPRESSION_LEVEL, tmp);
                 s.zstd_compression_level = tmp;
-            });
-            break;
-        case IDC_MATERIAL_RANGE:
-            handle_edit([&]() {
-                s.material_frame_range = (MaterialFrameRange)CtrlComboGetSelection(IDC_MATERIAL_RANGE);
             });
             break;
 
@@ -840,7 +829,7 @@ void msmaxContext::updateCacheControls()
 
     CtrlSetText(IDC_FRAME_BEGIN, s.frame_begin);
     CtrlSetText(IDC_FRAME_END, s.frame_end);
-    CtrlSetText(IDC_CACHE_SAMPLES_PER_FRAME, s.samples_per_frame);
+    CtrlSetText(IDC_CACHE_FRAME_STEP, s.frame_step);
     CtrlSetText(IDC_ZSTD_COMPRESSION_LEVEL, s.zstd_compression_level);
 
     CtrlComboSetSelection(IDC_MATERIAL_RANGE, (int)s.material_frame_range);

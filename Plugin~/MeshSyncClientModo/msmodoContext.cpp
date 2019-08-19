@@ -390,15 +390,14 @@ bool msmodoContext::sendAnimations(ObjectScope scope)
     }
 }
 
-bool msmodoContext::exportCache(const CacheSettings & cache_settings)
+bool msmodoContext::exportCache(const CacheSettings& cache_settings)
 {
     if (!prepare()) {
         return false;
     }
 
-    float frame_rate = (float)getFrameRate();
-    float samples_per_second = frame_rate;
-    float frame_to_second = 1.0f / frame_rate;
+    const float frame_rate = (float)getFrameRate();
+    const float frame_step = std::max(cache_settings.frame_step, 0.1f);
 
     auto settings_old = m_settings;
     m_settings.export_cache = true;
@@ -407,7 +406,7 @@ bool msmodoContext::exportCache(const CacheSettings & cache_settings)
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
-    oscs.sample_rate = samples_per_second;
+    oscs.sample_rate = frame_rate * std::max(1.0f / frame_step, 1.0f);
     oscs.encoder_settings.zstd.compression_level = cache_settings.zstd_compression_level;
     oscs.flatten_hierarchy = cache_settings.flatten_hierarchy;
     oscs.strip_normals = cache_settings.strip_normals;
@@ -420,7 +419,6 @@ bool msmodoContext::exportCache(const CacheSettings & cache_settings)
 
     m_material_manager.setAlwaysMarkDirty(true);
     m_entity_manager.setAlwaysMarkDirty(true);
-    m_texture_manager.clearDirtyFlags();
 
     int scene_index = 0;
     auto material_range = cache_settings.material_frame_range;
@@ -441,6 +439,7 @@ bool msmodoContext::exportCache(const CacheSettings & cache_settings)
         for (auto n : nodes)
             exportObject(n, true);
 
+        m_texture_manager.clearDirtyFlags();
         kickAsyncExport();
         ++scene_index;
     };
@@ -454,7 +453,7 @@ bool msmodoContext::exportCache(const CacheSettings & cache_settings)
         double time_current = m_svc_selection.GetTime();
         double time_start, time_end;
         std::tie(time_start, time_end) = getTimeRange();
-        auto interval = (frame_to_second / cache_settings.samples_per_frame);
+        auto interval = frame_step / frame_rate;
 
         m_ignore_events = true;
         for (double t = time_start;;) {
@@ -588,6 +587,15 @@ void msmodoContext::exportMaterials()
 {
     m_material_index_seed = 0;
 
+    {
+        // todo: handle default material properly
+        auto ret = ms::Material::create();
+        auto& dst = *ret;
+        dst.name = "Default";
+        dst.id = m_material_ids.getID(nullptr);
+        dst.index = ++m_material_index_seed;
+        m_material_manager.add(ret);
+    }
     eachMaterial([this](CLxUser_Item& obj) { exportMaterial(obj); });
     m_material_ids.eraseStaleRecords();
     m_material_manager.eraseStaleMaterials();
@@ -1050,7 +1058,6 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
         dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
         dst.refine_settings.flags.flip_faces = 1;
     }
-    dst.setupMeshDataFlags();
 
     m_parallel_tasks.push_back([this, &n, &dst](){
         // resolve materials (name -> id)
@@ -1061,7 +1068,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             dst.material_ids.resize_discard(num_faces);
             for (int fi = 0; fi < num_faces; ++fi) {
                 auto mname = n.material_names[fi];
-                int mid = -1;
+                int mid = 0;
                 auto it = std::lower_bound(materials.begin(), materials.end(), mname,
                     [](const ms::MaterialPtr& mp, const char *name) { return std::strcmp(mp->name.c_str(), name) < 0; });
                 if (it != materials.end() && (*it)->name == mname)
@@ -1140,12 +1147,15 @@ ms::TransformPtr msmodoContext::exportReplicator(TreeNode& n)
 
 int msmodoContext::exportAnimations(ObjectScope scope)
 {
+    const float frame_rate = (float)getFrameRate();
+    const float frame_step = std::max(m_settings.frame_step, 0.1f);
+
     // create default clip
     m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
     auto& clip = *m_animations.back();
-    clip.frame_rate = (float)getFrameRate();
+    clip.frame_rate = frame_rate * std::max(1.0f / frame_step, 1.0f);
 
     // gather target objects
     int num_exported = 0;
@@ -1174,7 +1184,7 @@ int msmodoContext::exportAnimations(ObjectScope scope)
     double time_current = m_svc_selection.GetTime();
     double time_start, time_end;
     std::tie(time_start, time_end) = getTimeRange();
-    auto interval = (1.0 / std::max(m_settings.animation_sps, 0.01f));
+    auto interval = frame_step / frame_rate;
 
     int reserve_size = int((time_end - time_start) / interval) + 1;
     for (auto& n : m_anim_nodes)
@@ -1182,7 +1192,7 @@ int msmodoContext::exportAnimations(ObjectScope scope)
 
     m_ignore_events = true;
     for (double t = time_start;;) {
-        m_anim_time = (float)(t - time_start) * m_settings.animation_time_scale;
+        m_anim_time = (float)(t - time_start);
         setChannelReadTime(t);
         for (auto& n : m_anim_nodes)
             n->doExtractAnimation(this);

@@ -412,38 +412,31 @@ void msmayaContext::removeNodeCallbacks()
 std::vector<TreeNode*> msmayaContext::getNodes(ObjectScope scope)
 {
     std::vector<TreeNode*> ret;
-    switch (scope) {
-    case ObjectScope::All:
-        {
-            size_t n = m_tree_nodes.size();
-            ret.resize(n);
-            for (size_t i = 0; i < n; ++i)
-                ret[i] = m_tree_nodes[i].get();
+    if (scope == ObjectScope::All) {
+        size_t n = m_tree_nodes.size();
+        ret.resize(n);
+        for (size_t i = 0; i < n; ++i)
+            ret[i] = m_tree_nodes[i].get();
+    }
+    else if (scope == ObjectScope::Selected) {
+        MSelectionList selected;
+        MGlobal::getActiveSelectionList(selected);
+        uint32_t n = selected.length();
+        for (uint32_t i = 0; i < n; ++i) {
+            MObject obj;
+            selected.getDependNode(i, obj);
+            auto it = m_dag_nodes.find(obj);
+            if (it != m_dag_nodes.end())
+                ret.insert(ret.end(), it->second.branches.begin(), it->second.branches.end());
         }
-        break;
-    case ObjectScope::Updated:
+    }
+    else if (scope == ObjectScope::Updated) {
         for (auto& kvp : m_dag_nodes) {
             auto& rec = kvp.second;
             if (rec.dirty) {
                 ret.insert(ret.end(), rec.branches.begin(), rec.branches.end());
             }
         }
-        break;
-    case ObjectScope::Selected:
-        {
-
-            MSelectionList selected;
-            MGlobal::getActiveSelectionList(selected);
-            uint32_t n = selected.length();
-            for (uint32_t i = 0; i < n; ++i) {
-                MObject obj;
-                selected.getDependNode(i, obj);
-                auto it = m_dag_nodes.find(obj);
-                if (it != m_dag_nodes.end())
-                    ret.insert(ret.end(), it->second.branches.begin(), it->second.branches.end());
-            }
-        }
-        break;
     }
     return ret;
 }
@@ -630,10 +623,6 @@ bool msmayaContext::sendAnimations(ObjectScope scope)
 
 bool msmayaContext::exportCache(const CacheSettings& cache_settings)
 {
-    float frame_rate = (float)MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
-    float samples_per_second = frame_rate;
-    float frame_to_second = 1.0f / frame_rate;
-
     auto settings_old = m_settings;
     m_settings.export_cache = true;
     m_settings.remove_namespace = cache_settings.remove_namespace;
@@ -642,11 +631,12 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
-    oscs.sample_rate = samples_per_second;
+    oscs.sample_rate = (float)MTime(std::max(1.0 / cache_settings.frame_step, 1.0), MTime::kSeconds).as(MTime::uiUnit());
     oscs.encoder_settings.zstd.compression_level = cache_settings.zstd_compression_level;
     oscs.flatten_hierarchy = cache_settings.flatten_hierarchy;
     oscs.strip_normals = cache_settings.strip_normals;
     oscs.strip_tangents = cache_settings.strip_tangents;
+
 
     if (!m_cache_writer.open(cache_settings.path.c_str(), oscs)) {
         m_settings = settings_old;
@@ -655,7 +645,6 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
 
     m_material_manager.setAlwaysMarkDirty(true);
     m_entity_manager.setAlwaysMarkDirty(true);
-    m_texture_manager.clearDirtyFlags();
 
     int scene_index = 0;
     auto material_range = cache_settings.material_frame_range;
@@ -676,6 +665,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
         for (auto& n : nodes)
             exportObject(n, true);
 
+        m_texture_manager.clearDirtyFlags();
         kickAsyncExport();
         ++scene_index;
     };
@@ -686,7 +676,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
     }
     else {
         MTime time_current = MAnimControl::currentTime();
-        MTime interval = MTime(1.0f / cache_settings.samples_per_frame, MTime::uiUnit());
+        MTime interval = MTime(m_settings.frame_step, MTime::uiUnit());
         MTime time_start, time_end;
 
         // time range
@@ -705,7 +695,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
         // advance frame and record
         m_ignore_update = true;
         for (MTime t = time_start;;) {
-            m_anim_time = (float)(t - time_start).as(MTime::kSeconds) * m_settings.animation_time_scale;
+            m_anim_time = (float)(t - time_start).as(MTime::kSeconds);
             MGlobal::viewFrame(t);
             do_export();
 
@@ -824,6 +814,9 @@ bool msmayaContext::recvObjects()
 
 static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu::float4& color, std::string& texpath)
 {
+    color = mu::float4::zero();
+    texpath.clear();
+
     MPlug plug = fn.findPlug(plug_name, true);
     if (!plug)
         return false;
@@ -858,33 +851,26 @@ static bool GetColorAndTexture(MFnDependencyNode& fn, const char *plug_name, mu:
         }
     }
 
-    if (texpath.empty()) {
-        auto get_color_element = [](MFnDependencyNode& fn, const char *plug_name, const char *color_name, double def = 0.0) -> double
-        {
-            MString name = plug_name;
-            name += color_name;
-            auto plug = fn.findPlug(name, true);
-            if (!plug.isNull()) {
-                double ret = 0.0;
-                plug.getValue(ret);
-                return ret;
-            }
-            else {
-                return def;
-            }
-        };
-
-        color = {
-            (float)get_color_element(fn, plug_name, "R"),
-            (float)get_color_element(fn, plug_name, "G"),
-            (float)get_color_element(fn, plug_name, "B"),
-            1.0f,
-        };
-    }
-    else {
-        color = mu::float4::one();
-    }
-
+    auto get_color_element = [](MFnDependencyNode& fn, const char *plug_name, const char *color_name, double def = 0.0) -> double
+    {
+        MString name = plug_name;
+        name += color_name;
+        auto plug = fn.findPlug(name, true);
+        if (!plug.isNull()) {
+            double ret = 0.0;
+            plug.getValue(ret);
+            return ret;
+        }
+        else {
+            return def;
+        }
+    };
+    color = {
+        (float)get_color_element(fn, plug_name, "R"),
+        (float)get_color_element(fn, plug_name, "G"),
+        (float)get_color_element(fn, plug_name, "B"),
+        1.0f,
+    };
     return true;
 }
 
@@ -896,6 +882,11 @@ std::string msmayaContext::handleNamespace(const std::string& path)
 int msmayaContext::exportTexture(const std::string& path, ms::TextureType type)
 {
     return m_texture_manager.addFile(path, type);
+}
+
+int msmayaContext::findTexture(const std::string& path)
+{
+    return m_texture_manager.find(path);
 }
 
 void msmayaContext::exportMaterials()
@@ -915,13 +906,17 @@ void msmayaContext::exportMaterials()
             std::string texpath;
             auto& stdmat = ms::AsStandardMaterial(*tmp);
             if (GetColorAndTexture(fn, "color", color, texpath)) {
-                stdmat.setColor(color);
-                if (m_settings.sync_textures)
-                    stdmat.setColorMap(exportTexture(texpath));
+                if (!texpath.empty()) {
+                    stdmat.setColor(ms::float4::one());
+                    stdmat.setColorMap(m_settings.sync_textures ? exportTexture(texpath) : findTexture(texpath));
+                }
+                else {
+                    stdmat.setColor(color);
+                }
             }
             if (GetColorAndTexture(fn, "normalCamera", color, texpath)) {
-                if (m_settings.sync_textures)
-                    stdmat.setBumpMap(exportTexture(texpath));
+                if (!texpath.empty())
+                    stdmat.setBumpMap(m_settings.sync_textures ? exportTexture(texpath) : findTexture(texpath));
             }
         }
         m_material_manager.add(tmp);
@@ -935,7 +930,7 @@ void msmayaContext::exportMaterials()
 ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
 {
     if (!n || n->dst_obj)
-        return nullptr;
+        return nullptr; // null or already exported
 
     auto& trans = n->trans->node;
     auto& shape = n->shape->node;
@@ -984,14 +979,14 @@ ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
             handle_transform();
     }
     else if (shape.hasFn(MFn::kJoint)) {
-        if (m_settings.sync_bones) {
+        if (m_settings.sync_bones && !m_settings.bake_deformers) {
             handle_parent();
             n->dst_obj = exportTransform(n);
         }
         else if (!tip && parent)
             handle_transform();
     }
-    else {
+    else if (!tip) {
         // intermediate node
         handle_transform();
     }
@@ -1239,7 +1234,6 @@ ms::MeshPtr msmayaContext::exportMesh(TreeNode *n)
             if (!m_settings.bake_deformers && m_settings.sync_blendshapes)
                 doExtractBlendshapeWeights(dst, n);
         }
-        dst.setupMeshDataFlags();
         m_entity_manager.add(ret);
     };
     m_extract_tasks[n->shape->branches.front()].add(n, task);
@@ -1398,25 +1392,24 @@ void msmayaContext::doExtractMeshDataImpl(ms::Mesh& dst, MFnMesh &mmesh, MFnMesh
 
     // get face material id
     {
-        std::vector<int> mids;
+        RawVector<int> mids;
         MObjectArray shaders;
-        MIntArray indices;
-        mshape.getConnectedShaders(0, shaders, indices);
-        mids.resize(shaders.length(), ms::InvalidID);
+        MIntArray shader_indices;
+        mshape.getConnectedShaders(0, shaders, shader_indices);
+        mids.resize(shaders.length(), 0);
         for (uint32_t si = 0; si < shaders.length(); si++) {
             MItDependencyGraph it(shaders[si], MFn::kLambert, MItDependencyGraph::kUpstream);
-            if (!it.isDone()) {
+            if (!it.isDone())
                 mids[si] = m_material_ids.getID(it.currentItem());
-            }
         }
 
         if (mids.size() > 0) {
-            const auto* indices_ptr = &indices[0];
-            dst.material_ids.resize(face_count, -1);
-            uint32_t len = std::min(face_count, indices.length());
-            for (uint32_t i = 0; i < len; ++i) {
-                dst.material_ids[i] = mids[indices_ptr[i]];
-            }
+            // MIntArray::operator[] is dllimported function. get raw pointer for faster access.
+            const int* shader_indices_ = &shader_indices[0];
+            dst.material_ids.resize(face_count, 0);
+            uint32_t len = std::min(face_count, shader_indices.length());
+            for (uint32_t i = 0; i < len; ++i)
+                dst.material_ids[i] = mids[shader_indices_[i]];
         }
     }
 }
@@ -1542,7 +1535,8 @@ void msmayaContext::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                 uint32_t base_point = 0;
 
                 MFnPointArrayData fn_points(obj_points);
-                const auto *points_ptr = &fn_points[0];
+                // get raw pointer for faster access.
+                const auto *points_ = &fn_points[0];
 
                 MFnComponentListData fn_cld(obj_cld);
                 uint32_t num_clists = fn_cld.length();
@@ -1554,11 +1548,11 @@ void msmayaContext::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
                     MIntArray indices;
                     MFnSingleIndexedComponent fn_indices(clist);
                     fn_indices.getElements(indices);
-                    const auto *indices_ptr = &indices[0];
+                    const int *indices_ = &indices[0];
 
                     auto len = indices.length();
                     for (uint32_t pi = 0; pi < len; ++pi)
-                        dst_frame.points[indices_ptr[pi]] = to_float3(points_ptr[base_point + pi]);
+                        dst_frame.points[indices_[pi]] = to_float3(points_[base_point + pi]);
 
                     base_point += len;
                 }
@@ -1724,7 +1718,7 @@ int msmayaContext::exportAnimations(ObjectScope scope)
     m_animations.push_back(ms::AnimationClip::create());
 
     auto& clip = *m_animations.back();
-    clip.frame_rate = (float)MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
+    clip.frame_rate = (float)MTime(std::max(1.0 / m_settings.frame_step, 1.0), MTime::kSeconds).as(MTime::uiUnit());
 
     int num_exported = 0;
     auto export_branches = [&](DAGNode& rec) {
@@ -1759,7 +1753,7 @@ int msmayaContext::exportAnimations(ObjectScope scope)
     auto time_current = MAnimControl::currentTime();
     auto time_start = MAnimControl::minTime();
     auto time_end = MAnimControl::maxTime();
-    auto interval = MTime(1.0 / std::max(m_settings.animation_sps, 0.01f), MTime::kSeconds);
+    auto interval = MTime(m_settings.frame_step, MTime::uiUnit());
 
     int reserve_size = int((time_end.as(MTime::kSeconds) - time_start.as(MTime::kSeconds)) / interval.as(MTime::kSeconds)) + 1;
     for (auto& kvp : m_anim_records) {
@@ -1769,7 +1763,7 @@ int msmayaContext::exportAnimations(ObjectScope scope)
     // advance frame and record
     m_ignore_update = true;
     for (MTime t = time_start;;) {
-        m_anim_time = (float)(t - time_start).as(MTime::kSeconds) * m_settings.animation_time_scale;
+        m_anim_time = (float)(t - time_start).as(MTime::kSeconds);
         MGlobal::viewFrame(t);
         for (auto& kvp : m_anim_records)
             kvp.second(this);

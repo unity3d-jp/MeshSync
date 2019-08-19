@@ -52,7 +52,6 @@ public slots:
     void onClickManualSync(bool v);
     void onClickExportCache(bool v);
 
-    void onEditAnimationTimeScale(const QString& v);
     void onEditAnimationSPS(const QString& v);
     void onClickSyncAnimations(bool v);
 
@@ -224,14 +223,8 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         lb_scene->setStyleSheet("font-weight: bold");
         layout->addWidget(lb_scene, iy++, 0, 1, 3);
 
-        layout->addWidget(new QLabel("Time Scale"), iy, 0);
-        auto ed_anim_timescale = new QLineEdit(to_qstring(settings.animation_time_scale));
-        ed_anim_timescale->setValidator(new QDoubleValidator(0.01, 10000.0, 100, this));
-        layout->addWidget(ed_anim_timescale, iy++, 1, 1, 2);
-        connect(ed_anim_timescale, SIGNAL(textEdited(QString)), this, SLOT(onEditAnimationTimeScale(QString)));
-
         layout->addWidget(new QLabel("Samples Per Second"), iy, 0);
-        auto ed_anim_sps = new QLineEdit(to_qstring(settings.animation_sps));
+        auto ed_anim_sps = new QLineEdit(to_qstring(settings.frame_step));
         ed_anim_sps->setValidator(new QDoubleValidator(0.01, 300.0, 100, this));
         layout->addWidget(ed_anim_sps, iy++, 1, 1, 2);
         connect(ed_anim_sps, SIGNAL(textEdited(QString)), this, SLOT(onEditAnimationSPS(QString)));
@@ -418,24 +411,13 @@ void msmodoSettingsWidget::onClickExportCache(bool v)
     }
 }
 
-
-void msmodoSettingsWidget::onEditAnimationTimeScale(const QString& v)
-{
-    auto& settings = msmodoGetSettings();
-    bool ok;
-    float val = v.toFloat(&ok);
-    if (ok && val != 0.0f && settings.animation_time_scale != val) {
-        settings.animation_time_scale = val;
-    }
-}
-
 void msmodoSettingsWidget::onEditAnimationSPS(const QString& v)
 {
     auto& settings = msmodoGetSettings();
     bool ok;
     float val = v.toFloat(&ok);
-    if (ok && val != 0.0f && settings.animation_sps != val) {
-        settings.animation_sps = val;
+    if (ok && val != 0.0f && settings.frame_step != val) {
+        settings.frame_step = val;
     }
 }
 

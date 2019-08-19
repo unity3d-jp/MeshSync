@@ -113,8 +113,7 @@ Value* Settings_cf(Value** arg_list, int count)
         Entry(sync_lights,          bool_result, to_bool);
         Entry(sync_textures,        bool_result, to_bool);
 
-        Entry(anim_time_scale,      Float::intern, to_float);
-        Entry(anim_sample_rate,     Float::intern, to_float);
+        Entry(frame_step,           Float::intern, to_float);
 
         Entry(multithreaded,        bool_result, to_bool);
 
@@ -227,7 +226,7 @@ Value* ExportCache_cf(Value** arg_list, int count)
             else if (name == L"frame_begin")            settings.frame_begin = arg_list[i++]->to_int();
             else if (name == L"frame_end")              settings.frame_end = arg_list[i++]->to_int();
             else if (name == L"zstd_compression_level") settings.zstd_compression_level = arg_list[i++]->to_int();
-            else if (name == L"samples_per_frame")      settings.samples_per_frame = arg_list[i++]->to_float();
+            else if (name == L"samples_per_frame")      settings.frame_step = arg_list[i++]->to_float();
             else if (name == L"ignore_non_renderable")  settings.ignore_non_renderable = arg_list[i++]->to_bool();
             else if (name == L"make_double_sided")      settings.make_double_sided = arg_list[i++]->to_bool();
             else if (name == L"bake_modifiers")         settings.bake_modifiers = arg_list[i++]->to_bool();

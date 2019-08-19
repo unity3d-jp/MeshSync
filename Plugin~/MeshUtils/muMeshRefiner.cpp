@@ -139,7 +139,7 @@ void MeshRefiner::retopology(bool flip_faces)
     }
 }
 
-void MeshRefiner::genSubmeshes(IArray<int> material_ids)
+void MeshRefiner::genSubmeshes(const IArray<int>& material_ids, bool has_face_group)
 {
     if (material_ids.empty()) {
         genSubmeshes();
@@ -157,26 +157,38 @@ void MeshRefiner::genSubmeshes(IArray<int> material_ids)
     int offset_faces = 0;
     RawVector<Submesh> tmp_submeshes;
 
+    auto get_ids = [has_face_group](int base, int& mid, int& gid) {
+        base = std::max(base, 0);
+        if (!has_face_group) {
+            mid = gid = base;
+        }
+        else {
+            mid = base & 0xffff;
+            gid = base >> 16;
+        }
+    };
+
     for (int spi = 0; spi < num_splits; ++spi) {
         auto& split = splits[spi];
         int offset_vertices = split.vertex_offset;
 
         // triangles
         if (split.index_count_tri > 0) {
-            // gen submeshes by material ids
+            // count submesh indices
             for (int fi = 0; fi < split.face_count; ++fi) {
                 int count = new_counts[offset_faces + fi];
                 if (count >= 3) {
-                    int mid = material_ids[offset_faces + fi] + 1; // -1 == no material. adjust to zero based
-                    while (mid >= (int)tmp_submeshes.size()) {
-                        int id = (int)tmp_submeshes.size();
-                        tmp_submeshes.push_back({});
-                        tmp_submeshes.back().material_id = id - 1;
-                    }
-                    tmp_submeshes[mid].index_count += (new_counts[fi] - 2) * 3;
+                    int mid, gid;
+                    get_ids(material_ids[offset_faces + fi], mid, gid);
+                    if (gid >= (int)tmp_submeshes.size())
+                        tmp_submeshes.resize(gid + 1, {});
+                    auto& sm = tmp_submeshes[gid];
+                    sm.material_id = mid;
+                    sm.index_count += (new_counts[fi] - 2) * 3;
                 }
             }
 
+            // allocate submesh indices
             for (int mi = 0; mi < (int)tmp_submeshes.size(); ++mi) {
                 auto& sm = tmp_submeshes[mi];
                 sm.dst_indices = dst_indices;
@@ -188,10 +200,11 @@ void MeshRefiner::genSubmeshes(IArray<int> material_ids)
             for (int fi = 0; fi < split.face_count; ++fi) {
                 int count = new_counts[offset_faces + fi];
                 if (count >= 3) {
-                    int mid = material_ids[offset_faces + fi] + 1;
+                    int mid, gid;
+                    get_ids(material_ids[offset_faces + fi], mid, gid);
                     int nidx = (count - 2) * 3;
                     for (int i = 0; i < nidx; ++i)
-                        *(tmp_submeshes[mid].dst_indices++) = *(src_tri++) - offset_vertices;
+                        *(tmp_submeshes[gid].dst_indices++) = *(src_tri++) - offset_vertices;
                 }
             }
 

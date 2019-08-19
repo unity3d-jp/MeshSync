@@ -76,6 +76,7 @@ private:
     using HostMeshes = std::map<int, ms::MeshPtr>;
 
     void kickAsyncSend();
+    int getMaterialID(int material_index) const;
     int exportTexture(const std::string& path, ms::TextureType type);
     int exportMaterials(MQDocument doc);
 

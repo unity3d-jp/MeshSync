@@ -327,6 +327,8 @@ void Animation::validate(AnimationPtr& anim)
         // no PointsAnimation for now
         TransformAnimation::create(anim)->validate();
         break;
+    default:
+        break;
     }
     anim->clearEmptyCurves();
 }

@@ -10,6 +10,16 @@ static_assert(sizeof(MeshRefineFlags) == sizeof(uint32_t), "");
 // Mesh
 #pragma region Mesh
 
+MeshDataFlags::MeshDataFlags()
+{
+    (uint32_t&)*this = 0;
+}
+
+MeshRefineFlags::MeshRefineFlags()
+{
+    (uint32_t&)*this = 0;
+}
+
 void MeshRefineSettings::clear()
 {
     // *this = {}; causes internal compiler error on gcc
@@ -165,7 +175,9 @@ void Mesh::serialize(std::ostream& os) const
     if (md_flags.unchanged)
         return;
 
-    EachMember(msWrite);
+#define Body(V) if(md_flags.has_##V) write(os, V);
+    EachMember(Body);
+#undef Body
 }
 
 void Mesh::deserialize(std::istream& is)
@@ -175,11 +187,39 @@ void Mesh::deserialize(std::istream& is)
     if (md_flags.unchanged)
         return;
 
-    EachMember(msRead);
+#define Body(V) if(md_flags.has_##V) read(is, V);
+    EachMember(Body);
+#undef Body
 
     bones.erase(
         std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); }),
         bones.end());
+}
+
+void Mesh::setupDataFlags()
+{
+    super::setupDataFlags();
+    md_flags.has_points = !points.empty();
+    md_flags.has_normals = !normals.empty();
+    md_flags.has_tangents = !tangents.empty();
+    md_flags.has_uv0 = !uv0.empty();
+    md_flags.has_uv1 = !uv1.empty();
+    md_flags.has_colors = !colors.empty();
+    md_flags.has_velocities = !velocities.empty();
+    md_flags.has_counts = !counts.empty();
+    md_flags.has_indices = !indices.empty();
+    md_flags.has_material_ids = !material_ids.empty();
+    md_flags.has_face_groups = md_flags.has_face_groups && md_flags.has_material_ids;
+    md_flags.has_root_bone = !root_bone.empty();
+    md_flags.has_bones = !bones.empty();
+    md_flags.has_blendshapes = !blendshapes.empty() && !blendshapes.front()->frames.empty();
+    md_flags.has_blendshape_weights = !blendshapes.empty();
+    md_flags.has_submeshes = !submeshes.empty();
+    md_flags.has_bounds = bounds != Bounds{};
+
+    md_flags.has_refine_settings =
+        (uint32_t&)refine_settings.flags != 0 ||
+        refine_settings.scale_factor != 1.0f;
 }
 
 bool Mesh::isUnchanged() const
@@ -339,17 +379,17 @@ uint64_t Mesh::hash() const
 #define Body(A) ret += vhash(A);
     EachGeometryAttribute(Body);
 #undef Body
-    if (md_flags.has_bones) {
-        for(auto& b : bones)
-            ret += vhash(b->weights);
-    }
-    if (md_flags.has_blendshape_weights) {
-        for (auto& bs : blendshapes) {
-            for (auto& b : bs->frames) {
-                ret += vhash(b->points);
-                ret += vhash(b->normals);
-                ret += vhash(b->tangents);
-            }
+
+    // bones
+    for (auto& b : bones)
+        ret += vhash(b->weights);
+
+    // blendshapes
+    for (auto& bs : blendshapes) {
+        for (auto& b : bs->frames) {
+            ret += vhash(b->points);
+            ret += vhash(b->normals);
+            ret += vhash(b->tangents);
         }
     }
     return ret;
@@ -362,24 +402,24 @@ uint64_t Mesh::checksumGeom() const
 #define Body(A) ret += csum(A);
     EachGeometryAttribute(Body);
 #undef Body
-    if (md_flags.has_bones) {
-        ret += csum(root_bone);
-        for (auto& b : bones) {
-            ret += csum(b->path);
-            ret += csum(b->bindpose);
-            ret += csum(b->weights);
-        }
+
+    // bones
+    ret += csum(root_bone);
+    for (auto& b : bones) {
+        ret += csum(b->path);
+        ret += csum(b->bindpose);
+        ret += csum(b->weights);
     }
-    if (md_flags.has_blendshape_weights) {
-        for (auto& bs : blendshapes) {
-            ret += csum(bs->name);
-            ret += csum(bs->weight);
-            for (auto& b : bs->frames) {
-                ret += csum(b->weight);
-                ret += csum(b->points);
-                ret += csum(b->normals);
-                ret += csum(b->tangents);
-            }
+
+    // blendshapes
+    for (auto& bs : blendshapes) {
+        ret += csum(bs->name);
+        ret += csum(bs->weight);
+        for (auto& b : bs->frames) {
+            ret += csum(b->weight);
+            ret += csum(b->points);
+            ret += csum(b->normals);
+            ret += csum(b->tangents);
         }
     }
     return ret;
@@ -543,7 +583,7 @@ void Mesh::refine()
         // refine
         refiner.refine();
         refiner.retopology(mrs.flags.flip_faces);
-        refiner.genSubmeshes(material_ids);
+        refiner.genSubmeshes(material_ids, md_flags.has_face_groups);
 
         // apply new points & indices
         refiner.new_points.swap(points);
@@ -666,7 +706,7 @@ void Mesh::refine()
     }
 
     mrs.clear();
-    setupMeshDataFlags();
+    setupDataFlags();
 }
 
 void Mesh::makeDoubleSided()
@@ -1152,26 +1192,14 @@ void Mesh::setupBoneWeightsVariable()
     }
 }
 
-void Mesh::setupMeshDataFlags()
+bool Mesh::submeshesHaveUniqueMaterial() const
 {
-    md_flags.has_submeshes= !submeshes.empty();
-    md_flags.has_points = !points.empty();
-    md_flags.has_normals = !normals.empty();
-    md_flags.has_tangents = !tangents.empty();
-    md_flags.has_uv0 = !uv0.empty();
-    md_flags.has_uv1 = !uv1.empty();
-    md_flags.has_colors = !colors.empty();
-    md_flags.has_velocities = !velocities.empty();
-    md_flags.has_counts = !counts.empty();
-    md_flags.has_indices = !indices.empty();
-    md_flags.has_material_ids = !material_ids.empty();
-    md_flags.has_bones = !bones.empty();
-    md_flags.has_blendshape_weights = !blendshapes.empty();
-    md_flags.has_blendshapes = !blendshapes.empty() && !blendshapes.front()->frames.empty();
-
-    md_flags.has_refine_settings =
-        (uint32_t&)refine_settings.flags != 0 ||
-        refine_settings.scale_factor != 1.0f;
+    // O(N^2) but should be acceptable because submeshes are usually 1~5
+    for (auto& s1 : submeshes)
+        for (auto& s2 : submeshes)
+            if (&s1 != &s2 && s1.material_id == s2.material_id)
+                return false;
+    return true;
 }
 
 BoneDataPtr Mesh::addBone(const std::string& _path)

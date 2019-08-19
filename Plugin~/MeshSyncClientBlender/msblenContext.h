@@ -49,7 +49,7 @@ struct SyncSettings
     bool sync_colors = true;
     bool make_double_sided = false;
     bool bake_modifiers = false;
-    bool convert_to_mesh = true;
+    bool curves_as_mesh = true;
     bool flatten_hierarchy = false;
     bool sync_bones = true;
     bool sync_blendshapes = true;
@@ -58,8 +58,7 @@ struct SyncSettings
     bool sync_lights = true;
     bool calc_per_index_normals = true;
 
-    float animation_timescale = 1.0f;
-    int animation_frame_interval = 10;
+    int frame_step = 1;
 
     bool multithreaded = true;
 
@@ -71,13 +70,13 @@ struct CacheSettings
 {
     std::string path;
     ObjectScope object_scope = ObjectScope::All;
-    FrameRange frame_range = FrameRange::Current;
-    MaterialFrameRange material_frame_range = MaterialFrameRange::One;
+    FrameRange frame_range = FrameRange::All;
     int frame_begin = 0;
     int frame_end = 100;
+    int frame_step = 1;
+    MaterialFrameRange material_frame_range = MaterialFrameRange::One;
 
     int zstd_compression_level = 3; // (min) 0 - 22 (max)
-    int frame_step = 1;
 
     bool make_double_sided = false;
     bool bake_modifiers = true;

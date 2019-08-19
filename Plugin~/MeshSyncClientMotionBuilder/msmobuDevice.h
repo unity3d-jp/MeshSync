@@ -8,7 +8,6 @@ struct msmobuSettings
     ms::ClientSettings client_settings;
     int  timeout_ms = 5000;
     float scale_factor = 100.0f;
-    float animation_time_scale = 1.0f;
     float animation_sps = 3.0f;
 
     bool auto_sync = false;
@@ -71,7 +70,7 @@ private:
 
     struct MaterialRecord : public mu::noncopyable
     {
-        int id = ms::InvalidID;
+        int id = 0;
         ms::Material *dst = nullptr;
     };
     using MaterialRecords = std::map<FBMaterial*, MaterialRecord>;

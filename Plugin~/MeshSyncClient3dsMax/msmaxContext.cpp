@@ -305,12 +305,15 @@ bool msmaxContext::sendAnimations(ObjectScope scope)
 {
     m_sender.wait();
 
+    const float frame_rate = (float)::GetFrameRate();
+    const float frame_step = std::max(m_settings.frame_step, 0.1f);
+
     // create default clip
     m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
     auto& clip = *m_animations.back();
-    clip.frame_rate = (float)::GetFrameRate();
+    clip.frame_rate = frame_rate * std::max(1.0f / frame_step, 1.0f);
 
     // gather target data
     int num_exported = 0;
@@ -324,10 +327,10 @@ bool msmaxContext::sendAnimations(ObjectScope scope)
     auto time_range = GetCOREInterface()->GetAnimRange();
     auto time_start = time_range.Start();
     auto time_end = time_range.End();
-    auto interval = ToTicks(1.0f / std::max(m_settings.anim_sample_rate, 0.01f));
+    auto interval = ToTicks(frame_step / frame_rate);
     for (TimeValue t = time_start;;) {
         m_current_time_tick = t;
-        m_anim_time = ToSeconds(t - time_start) * m_settings.anim_time_scale;
+        m_anim_time = ToSeconds(t - time_start);
         for (auto& kvp : m_anim_records)
             kvp.second(this);
 
@@ -355,10 +358,8 @@ static int ExceptionFilter(unsigned int code, struct _EXCEPTION_POINTERS *ep)
 
 bool msmaxContext::exportCache(const CacheSettings& cache_settings)
 {
-    //float sample_rate = m_settings.animation_sps;
-    float samples_per_frame = cache_settings.samples_per_frame;
-    float samples_per_second = samples_per_frame * ::GetFrameRate();
-    int ticks_per_frame = ::GetTicksPerFrame();
+    const float frame_rate = (float)::GetFrameRate();
+    const float frame_step = std::max(cache_settings.frame_step, 0.1f);
 
     auto settings_old = m_settings;
     m_settings.export_scene_cache = true;
@@ -369,7 +370,7 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
-    oscs.sample_rate = samples_per_second;
+    oscs.sample_rate = frame_rate * std::max(1.0f / frame_step, 1.0f);;
     oscs.encoder_settings.zstd.compression_level = cache_settings.zstd_compression_level;
     oscs.flatten_hierarchy = cache_settings.flatten_hierarchy;
     oscs.strip_normals = cache_settings.strip_normals;
@@ -383,22 +384,16 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
 
     m_material_manager.setAlwaysMarkDirty(true);
     m_entity_manager.setAlwaysMarkDirty(true);
-    m_texture_manager.clearDirtyFlags();
 
     int scene_index = 0;
     auto material_range = cache_settings.material_frame_range;
     auto nodes = getNodes(cache_settings.object_scope);
 
     auto do_export = [&]() {
-        if (scene_index == 0) {
+        if (scene_index == 0 || material_range == MaterialFrameRange::All) {
             // exportMaterials() is needed to export material IDs in meshes
             exportMaterials();
-            if (material_range == MaterialFrameRange::None)
-                m_material_manager.clearDirtyFlags();
-        }
-        else {
-            if (material_range == MaterialFrameRange::All)
-                exportMaterials();
+            m_material_manager.clearDirtyFlags();
         }
 
         auto export_objects = [&]() {
@@ -415,6 +410,11 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
         else {
             export_objects();
         }
+
+        if (material_range == MaterialFrameRange::None ||
+            (material_range == MaterialFrameRange::One && scene_index != 0))
+            m_material_manager.clearDirtyFlags();
+        m_texture_manager.clearDirtyFlags();
         kickAsyncExport();
 
         ++scene_index;
@@ -433,8 +433,8 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
 
         if (cache_settings.frame_range == FrameRange::Custom) {
             // custom frame range
-            time_start = cache_settings.frame_begin * ticks_per_frame;
-            time_end = cache_settings.frame_end * ticks_per_frame;
+            time_start = cache_settings.frame_begin * ::GetTicksPerFrame();
+            time_end = cache_settings.frame_end * ::GetTicksPerFrame();
         }
         else {
             // all active frames
@@ -442,7 +442,7 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
             time_start = time_range.Start();
             time_end = time_range.End();
         }
-        interval = TimeValue((float)ticks_per_frame / samples_per_frame);
+        interval = ToTicks(frame_step / frame_rate);
         time_end = std::max(time_end, time_start); // sanitize
 
         for (TimeValue t = time_start;;) {
@@ -786,7 +786,7 @@ mu::float4x4 msmaxContext::getPivotMatrix(INode *n)
     return mu::transform(t, r, mu::float3::one());
 }
 
-mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
+mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t, bool cancel_camera_correction)
 {
     auto obj = n->GetObjectRef();
     bool is_camera = IsCamera(obj);
@@ -805,8 +805,7 @@ mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t)
             r = to_float4x4(m);
         };
 
-        bool is_physical_camera = is_camera && IsPhysicalCamera(obj);
-        if (is_physical_camera) {
+        if (is_camera && IsPhysicalCamera(obj) && cancel_camera_correction) {
             // cancel tilt/shift effect
             MaxSDK::IPhysicalCamera::RenderTransformEvaluationGuard guard(n, t);
             get_matrix();
@@ -875,7 +874,8 @@ void msmaxContext::extractTransform(TreeNode& n)
 
 void msmaxContext::extractCameraData(TreeNode& n, TimeValue t,
     bool& ortho, float& fov, float& near_plane, float& far_plane,
-    float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
+    float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift,
+    mu::float4x4 *view_mat)
 {
     auto *cam = dynamic_cast<GenCamera*>(n.baseobj);
     if (!cam)
@@ -890,8 +890,8 @@ void msmaxContext::extractCameraData(TreeNode& n, TimeValue t,
         fov = vfov * mu::RadToDeg;
     }
     if (cam->GetManualClip()) {
-        near_plane = cam->GetClipDist(t, 0);
-        far_plane = cam->GetClipDist(t, 1);
+        near_plane = cam->GetClipDist(t, CAM_HITHER_CLIP);
+        far_plane = cam->GetClipDist(t, CAM_YON_CLIP);
     }
     else {
         near_plane = far_plane = 0.0f;
@@ -911,6 +911,15 @@ void msmaxContext::extractCameraData(TreeNode& n, TimeValue t,
         auto shift = pcam->GetFilmPlaneOffset(t, interval);
         lens_shift = -to_float2(shift);
         lens_shift.y *= aspect;
+
+        //// todo
+        //if (m_settings.bake_modifiers && view_mat) {
+        //    auto tilt_correction = to_float2(pcam->GetTiltCorrection(t, interval));
+        //    if (tilt_correction != mu::float2::zero()) {
+        //        auto mat = getGlobalMatrix(n.node, t, false);
+        //        *view_mat = mu::invert(mat);
+        //    }
+        //}
     }
     else {
         focal_length = 0.0f;
@@ -1002,7 +1011,8 @@ ms::TransformPtr msmaxContext::exportCamera(TreeNode& n)
     auto& dst = *ret;
     extractTransform(n);
     extractCameraData(n, GetTime(),
-        dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane, dst.focal_length, dst.sensor_size, dst.lens_shift);
+        dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane, dst.focal_length, dst.sensor_size, dst.lens_shift,
+        &dst.view_matrix);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -1212,18 +1222,27 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
             dst.material_ids.resize_discard(num_faces);
 
             const auto& mrec = m_material_records[n->GetMtl()];
+            if (!mrec.submaterial_ids.empty())
+                for (int mid : mrec.submaterial_ids)
+                    m_material_manager.markDirty(mid);
+            else
+                m_material_manager.markDirty(mrec.material_id);
 
             auto *faces = mesh->faces;
             dst.indices.resize_discard(num_indices);
             for (int fi = 0; fi < num_faces; ++fi) {
                 auto& face = faces[fi];
+                int gid = mesh->getFaceMtlIndex(fi);
+                int mid = 0;
+
                 if (!mrec.submaterial_ids.empty()) { // multi-materials
-                    int midx = std::min((int)mesh->getFaceMtlIndex(fi), (int)mrec.submaterial_ids.size() - 1);
-                    dst.material_ids[fi] = mrec.submaterial_ids[midx];
+                    int midx = std::min(gid, (int)mrec.submaterial_ids.size() - 1);
+                    mid = mrec.submaterial_ids[midx];
                 }
-                else { // single material
-                    dst.material_ids[fi] = mrec.material_id;
-                }
+                else // single material
+                    mid = mrec.material_id;
+                // use upper 16 bit as face group id
+                dst.material_ids[fi] = mid | (gid << 16);
 
                 for (int i = 0; i < 3; ++i)
                     dst.indices[fi * 3 + i] = face.v[i];
@@ -1365,7 +1384,7 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
             dst.refine_settings.flags.gen_tangents = 1;
         dst.refine_settings.flags.flip_faces = m_settings.flip_faces;
         dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
-        dst.setupMeshDataFlags();
+        dst.md_flags.has_face_groups = 1;
     }
 }
 

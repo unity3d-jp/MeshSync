@@ -114,9 +114,9 @@ PYBIND11_MODULE(MeshSyncClientBlender, mod)
             BindProperty(bake_modifiers,
                 [](const self_t& self) { return self->getSettings().bake_modifiers; },
                 [](self_t& self, bool v) { self->getSettings().bake_modifiers = v; })
-            BindProperty(convert_to_mesh,
-                [](const self_t& self) { return self->getSettings().convert_to_mesh; },
-                [](self_t& self, bool v) { self->getSettings().convert_to_mesh = v; })
+            BindProperty(curves_as_mesh,
+                [](const self_t& self) { return self->getSettings().curves_as_mesh; },
+                [](self_t& self, bool v) { self->getSettings().curves_as_mesh = v; })
             BindProperty(sync_bones,
                 [](const self_t& self) { return self->getSettings().sync_bones; },
                 [](self_t& self, bool v) { self->getSettings().sync_bones = v; })
@@ -132,12 +132,9 @@ PYBIND11_MODULE(MeshSyncClientBlender, mod)
             BindProperty(sync_lights,
                 [](const self_t& self) { return self->getSettings().sync_lights; },
                 [](self_t& self, bool v) { self->getSettings().sync_lights = v; })
-            BindProperty(animation_ts,
-                [](const self_t& self) { return self->getSettings().animation_timescale; },
-                [](self_t& self, float v) { self->getSettings().animation_timescale = v; })
-            BindProperty(animation_interval,
-                [](const self_t& self) { return self->getSettings().animation_frame_interval; },
-                [](self_t& self, int v) { self->getSettings().animation_frame_interval = v; })
+            BindProperty(frame_step,
+                [](const self_t& self) { return self->getSettings().frame_step; },
+                [](self_t& self, int v) { self->getSettings().frame_step = v; })
             BindProperty(multithreaded,
                 [](const self_t& self) { return self->getSettings().multithreaded; },
                 [](self_t& self, int v) { self->getSettings().multithreaded = v; })

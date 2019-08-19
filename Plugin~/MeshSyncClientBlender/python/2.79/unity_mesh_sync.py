@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Unity Mesh Sync",
     "author": "Unity Technologies",
-    "version": (2019, 8, 8),
+    "version": (2019, 8, 19),
     "blender": (2, 79, 0),
     "description": "Sync Meshes with Unity",
     "location": "View3D > Mesh Sync",
@@ -41,7 +41,7 @@ class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
         layout.prop(scene, "meshsync_sync_meshes")
         if scene.meshsync_sync_meshes:
             b = layout.box()
-            b.prop(scene, "meshsync_convert_to_mesh")
+            b.prop(scene, "meshsync_curves_as_mesh")
             b.prop(scene, "meshsync_make_double_sided")
             b.prop(scene, "meshsync_bake_modifiers")
         layout.prop(scene, "meshsync_sync_bones")
@@ -65,8 +65,7 @@ class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
     def draw(self, context):
         scene = bpy.context.scene
         layout = self.layout
-        layout.prop(scene, "meshsync_animation_ts")
-        layout.prop(scene, "meshsync_animation_fi")
+        layout.prop(scene, "meshsync_frame_step")
         layout.operator("meshsync.export_animations", text="Sync")
 
 

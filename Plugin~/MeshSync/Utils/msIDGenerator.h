@@ -45,7 +45,7 @@ protected:
     int getIDImpl(const void *p)
     {
         if (!p)
-            return InvalidID;
+            return 0;
 
         auto& rec = m_records[p];
         if (rec.id == InvalidID)

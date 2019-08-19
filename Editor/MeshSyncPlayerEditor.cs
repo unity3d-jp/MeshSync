@@ -11,6 +11,7 @@ namespace UTJ.MeshSyncEditor
     {
         protected float m_animationFrameRate = 30.0f;
         protected float m_animationTimeScale = 1.0f;
+        protected float m_animationTimeOffset = 0.0f;
         protected int m_animationDropStep = 2;
         protected float m_reductionThreshold = 0.001f;
         protected bool m_eraseFlatCurves = false;
@@ -26,56 +27,69 @@ namespace UTJ.MeshSyncEditor
 
         public static void DrawPlayerSettings(MeshSyncPlayer t, SerializedObject so)
         {
+            var styleFold = EditorStyles.foldout;
+            styleFold.fontStyle = FontStyle.Bold;
+
             // Sync Settings
-            EditorGUILayout.LabelField("Sync Settings", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(so.FindProperty("m_syncVisibility"), new GUIContent("Visibility"));
-
-            EditorGUILayout.PropertyField(so.FindProperty("m_syncTransform"), new GUIContent("Transform"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_syncCameras"), new GUIContent("Cameras"));
-#if UNITY_2018_1_OR_NEWER
-            if (t.syncCameras)
+            t.foldSyncSettings = EditorGUILayout.Foldout(t.foldSyncSettings, "Sync Settings", true, styleFold);
+            if (t.foldSyncSettings)
             {
-                EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(so.FindProperty("m_usePhysicalCameraParams"), new GUIContent("Physical Camera Params"));
-                EditorGUI.indentLevel--;
-            }
+                EditorGUILayout.PropertyField(so.FindProperty("m_syncVisibility"), new GUIContent("Visibility"));
+
+                EditorGUILayout.PropertyField(so.FindProperty("m_syncTransform"), new GUIContent("Transform"));
+                EditorGUILayout.PropertyField(so.FindProperty("m_syncCameras"), new GUIContent("Cameras"));
+                if (t.syncCameras)
+                {
+                    EditorGUI.indentLevel++;
+#if UNITY_2018_1_OR_NEWER
+                    EditorGUILayout.PropertyField(so.FindProperty("m_usePhysicalCameraParams"), new GUIContent("Physical Camera Params"));
 #endif
-            EditorGUILayout.PropertyField(so.FindProperty("m_syncLights"), new GUIContent("Lights"));
+                    EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
+                    EditorGUI.indentLevel--;
+                }
+                EditorGUILayout.PropertyField(so.FindProperty("m_syncLights"), new GUIContent("Lights"));
 
-            EditorGUILayout.PropertyField(so.FindProperty("m_syncMeshes"), new GUIContent("Meshes"));
-            EditorGUI.indentLevel++;
-            EditorGUILayout.PropertyField(so.FindProperty("m_updateMeshColliders"));
-            EditorGUI.indentLevel--;
+                EditorGUILayout.PropertyField(so.FindProperty("m_syncMeshes"), new GUIContent("Meshes"));
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(so.FindProperty("m_updateMeshColliders"));
+                EditorGUI.indentLevel--;
 
-            //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_syncMaterials"), new GUIContent("Materials"));
-            EditorGUI.indentLevel++;
-            EditorGUILayout.PropertyField(so.FindProperty("m_findMaterialFromAssets"), new GUIContent("Find From AssetDatabase"));
-            EditorGUI.indentLevel--;
+                //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));
+                EditorGUILayout.PropertyField(so.FindProperty("m_syncMaterials"), new GUIContent("Materials"));
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(so.FindProperty("m_findMaterialFromAssets"), new GUIContent("Find From AssetDatabase"));
+                EditorGUI.indentLevel--;
 
-            EditorGUILayout.Space();
+                EditorGUILayout.Space();
+            }
 
             // Import Settings
-            EditorGUILayout.LabelField("Import Settings", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(so.FindProperty("m_animationInterpolation"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_keyframeReduction"));
-            if (t.keyframeReduction)
+            t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, styleFold);
+            if (t.foldImportSettings)
             {
-                EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(so.FindProperty("m_reductionThreshold"), new GUIContent("Threshold"));
-                EditorGUILayout.PropertyField(so.FindProperty("m_reductionEraseFlatCurves"), new GUIContent("Erase Flat Curves"));
-                EditorGUI.indentLevel--;
+                EditorGUILayout.PropertyField(so.FindProperty("m_animationInterpolation"));
+                EditorGUILayout.PropertyField(so.FindProperty("m_keyframeReduction"));
+                if (t.keyframeReduction)
+                {
+                    EditorGUI.indentLevel++;
+                    EditorGUILayout.PropertyField(so.FindProperty("m_reductionThreshold"), new GUIContent("Threshold"));
+                    EditorGUILayout.PropertyField(so.FindProperty("m_reductionEraseFlatCurves"), new GUIContent("Erase Flat Curves"));
+                    EditorGUI.indentLevel--;
+                }
+                EditorGUILayout.PropertyField(so.FindProperty("m_zUpCorrection"), new GUIContent("Z-Up Correction"));
+                EditorGUILayout.Space();
             }
-            EditorGUILayout.PropertyField(so.FindProperty("m_zUpCorrection"), new GUIContent("Z-Up Correction"));
-            EditorGUILayout.Space();
 
             // Misc
-            EditorGUILayout.LabelField("Misc", EditorStyles.boldLabel);
-            //EditorGUILayout.PropertyField(so.FindProperty("m_trackMaterialAssignment"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_progressiveDisplay"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_logging"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_profiling"));
-            EditorGUILayout.Space();
+            t.foldMisc = EditorGUILayout.Foldout(t.foldMisc, "Misc", true, styleFold);
+            if (t.foldMisc)
+            {
+                EditorGUILayout.PropertyField(so.FindProperty("m_syncMaterialList"));
+                EditorGUILayout.PropertyField(so.FindProperty("m_progressiveDisplay"));
+                EditorGUILayout.PropertyField(so.FindProperty("m_logging"));
+                EditorGUILayout.PropertyField(so.FindProperty("m_profiling"));
+                EditorGUILayout.Space();
+            }
         }
 
         public static void DrawMaterialList(MeshSyncPlayer t, bool allowFold = true)
@@ -98,14 +112,17 @@ namespace UTJ.MeshSyncEditor
 
             if (allowFold)
             {
-                var style = EditorStyles.foldout;
-                style.fontStyle = FontStyle.Bold;
-                t.foldMaterialList = EditorGUILayout.Foldout(t.foldMaterialList, "Materials", true, style);
+                var styleFold = EditorStyles.foldout;
+                styleFold.fontStyle = FontStyle.Bold;
+                t.foldMaterialList = EditorGUILayout.Foldout(t.foldMaterialList, "Materials", true, styleFold);
                 if (t.foldMaterialList)
+                {
                     DrawMaterialListElements(t);
-                drawInExportButton();
-                if (GUILayout.Button("Open Material Window", GUILayout.Width(160.0f)))
-                    MaterialWindow.Open(t);
+                    drawInExportButton();
+                    if (GUILayout.Button("Open Material Window", GUILayout.Width(160.0f)))
+                        MaterialWindow.Open(t);
+                    EditorGUILayout.Space();
+                }
             }
             else
             {
@@ -113,8 +130,6 @@ namespace UTJ.MeshSyncEditor
                 DrawMaterialListElements(t);
                 drawInExportButton();
             }
-
-            EditorGUILayout.Space();
         }
 
         static void DrawMaterialListElements(MeshSyncPlayer t)
@@ -123,7 +138,7 @@ namespace UTJ.MeshSyncEditor
             float labelWidth = 60; // minimum
             {
                 var style = GUI.skin.box;
-                foreach (var md in t.materialData)
+                foreach (var md in t.materialList)
                 {
                     var size = style.CalcSize(new GUIContent(md.name));
                     labelWidth = Mathf.Max(labelWidth, size.x);
@@ -132,7 +147,7 @@ namespace UTJ.MeshSyncEditor
                 labelWidth = Mathf.Min(labelWidth, EditorGUIUtility.currentViewWidth - 100);
             }
 
-            foreach (var md in t.materialData)
+            foreach (var md in t.materialList)
             {
                 var rect = EditorGUILayout.BeginHorizontal();
                 EditorGUI.DrawRect(new Rect(rect.x, rect.y, 16, 16), md.color);
@@ -141,12 +156,7 @@ namespace UTJ.MeshSyncEditor
                 {
                     var tmp = EditorGUILayout.ObjectField(md.material, typeof(Material), true) as Material;
                     if (tmp != md.material)
-                    {
-                        Undo.RecordObject(t, "MeshSyncServer");
-                        md.material = tmp;
-                        t.ReassignMaterials();
-                        t.ForceRepaint();
-                    }
+                        t.AssignMaterial(md, tmp);
                 }
                 EditorGUILayout.EndHorizontal();
             }
@@ -160,9 +170,9 @@ namespace UTJ.MeshSyncEditor
 
         public void DrawAnimationTweak(MeshSyncPlayer t)
         {
-            var style = EditorStyles.foldout;
-            style.fontStyle = FontStyle.Bold;
-            t.foldAnimationTweak = EditorGUILayout.Foldout(t.foldAnimationTweak, "Animation Tweak", true, style);
+            var styleFold = EditorStyles.foldout;
+            styleFold.fontStyle = FontStyle.Bold;
+            t.foldAnimationTweak = EditorGUILayout.Foldout(t.foldAnimationTweak, "Animation Tweak", true, styleFold);
             if (t.foldAnimationTweak)
             {
                 // Override Frame Rate
@@ -182,11 +192,12 @@ namespace UTJ.MeshSyncEditor
                 GUILayout.BeginVertical("Box");
                 EditorGUILayout.LabelField("Time Scale", EditorStyles.boldLabel);
                 EditorGUI.indentLevel++;
-                m_animationTimeScale = EditorGUILayout.FloatField("Scale Value", m_animationTimeScale);
+                m_animationTimeScale = EditorGUILayout.FloatField("Scale", m_animationTimeScale);
+                m_animationTimeOffset = EditorGUILayout.FloatField("Offset", m_animationTimeOffset);
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Apply", GUILayout.Width(120.0f)))
-                    ApplyTimeScale(t.GetAnimationClips(), m_animationTimeScale);
+                    ApplyTimeScale(t.GetAnimationClips(), m_animationTimeScale, m_animationTimeOffset);
                 GUILayout.EndHorizontal();
                 EditorGUI.indentLevel--;
                 GUILayout.EndVertical();
@@ -217,9 +228,9 @@ namespace UTJ.MeshSyncEditor
                 GUILayout.EndHorizontal();
                 EditorGUI.indentLevel--;
                 GUILayout.EndVertical();
-            }
 
-            EditorGUILayout.Space();
+                EditorGUILayout.Space();
+            }
         }
 
 
@@ -236,7 +247,7 @@ namespace UTJ.MeshSyncEditor
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         }
 
-        public void ApplyTimeScale(IEnumerable<AnimationClip> clips, float timeScale)
+        public void ApplyTimeScale(IEnumerable<AnimationClip> clips, float timeScale, float timeOffset)
         {
             foreach (var clip in clips)
             {
@@ -259,11 +270,11 @@ namespace UTJ.MeshSyncEditor
                     var keys = curve.keys;
                     var keyCount = keys.Length;
                     for (int ki = 0; ki < keyCount; ++ki)
-                        keys[ki].time = keys[ki].time * timeScale;
+                        keys[ki].time = keys[ki].time * timeScale + timeOffset;
                     curve.keys = keys;
                 }
                 for (int ei = 0; ei < eventCount; ++ei)
-                    events[ei].time = events[ei].time * timeScale;
+                    events[ei].time = events[ei].time * timeScale + timeOffset;
 
                 // apply changes to clip
                 Undo.RegisterCompleteObjectUndo(clip, "ApplyTimeScale");

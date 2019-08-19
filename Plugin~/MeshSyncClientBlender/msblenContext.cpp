@@ -221,7 +221,7 @@ ms::TransformPtr msblenContext::exportObject(Object *obj, bool parent, bool tip)
     case OB_SURF:  //
     case OB_MBALL: // these can be converted to mesh
     {
-        if (m_settings.sync_meshes && m_settings.convert_to_mesh) {
+        if (m_settings.sync_meshes && m_settings.curves_as_mesh) {
             handle_parent();
             ret = exportMesh(obj);
         }
@@ -487,7 +487,6 @@ void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
         dst.refine_settings.flags.gen_tangents = 1;
     dst.refine_settings.flags.flip_faces = 1;
     dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
-    dst.setupMeshDataFlags();
 }
 
 void msblenContext::doExtractBlendshapeWeights(ms::Mesh& dst, Object *obj, Mesh *data)
@@ -1138,11 +1137,14 @@ bool msblenContext::sendAnimations(ObjectScope scope)
     m_ignore_events = true;
 
     auto scene = bl::BScene(bl::BContext::get().scene());
+    const int frame_rate = scene.fps();
+    const int frame_step = std::max(m_settings.frame_step, 1);
+
     m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create()); // create default clip
 
     auto& clip = *m_animations.back();
-    clip.frame_rate = (float)scene.fps();
+    clip.frame_rate = (float)frame_rate;
 
     // list target objects
     if (scope == ObjectScope::Selected) {
@@ -1160,8 +1162,7 @@ bool msblenContext::sendAnimations(ObjectScope scope)
         int frame_current = scene.frame_current();
         int frame_start = scene.frame_start();
         int frame_end = scene.frame_end();
-        int interval = std::max(m_settings.animation_frame_interval, 1);
-        float frame_to_seconds = 1.0f / scene.fps();
+        int interval = frame_step;
         int reserve_size = (frame_end - frame_start) / interval + 1;
 
         for (auto& kvp : m_anim_records) {
@@ -1169,8 +1170,8 @@ bool msblenContext::sendAnimations(ObjectScope scope)
         };
         for (int f = frame_start;;) {
             scene.frame_set(f);
+            m_anim_time = float(f - frame_start) / frame_rate;
 
-            m_anim_time = (f - frame_start) * frame_to_seconds * m_settings.animation_timescale;
             mu::parallel_for_each(m_anim_records.begin(), m_anim_records.end(), [this](auto& kvp) {
                 kvp.second(this);
             });
@@ -1197,19 +1198,18 @@ bool msblenContext::sendAnimations(ObjectScope scope)
 bool msblenContext::exportCache(const CacheSettings& cache_settings)
 {
     auto scene = bl::BScene(bl::BContext::get().scene());
-    float frame_rate = (float)scene.fps();
-    float samples_per_second = frame_rate;
-    float frame_to_second = 1.0f / frame_rate;
+    const int frame_rate = scene.fps();
+    const int frame_step = std::max(cache_settings.frame_step, 1);
 
     auto settings_old = m_settings;
     m_settings.export_cache = true;
     m_settings.make_double_sided = cache_settings.make_double_sided;
-    m_settings.convert_to_mesh = cache_settings.convert_to_mesh;
+    m_settings.curves_as_mesh = cache_settings.convert_to_mesh;
     m_settings.bake_modifiers = cache_settings.bake_modifiers;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
-    oscs.sample_rate = samples_per_second;
+    oscs.sample_rate = (float)frame_rate;
     oscs.encoder_settings.zstd.compression_level = cache_settings.zstd_compression_level;
     oscs.flatten_hierarchy = cache_settings.flatten_hierarchy;
     oscs.strip_normals = cache_settings.strip_normals;
@@ -1222,7 +1222,6 @@ bool msblenContext::exportCache(const CacheSettings& cache_settings)
 
     m_material_manager.setAlwaysMarkDirty(true);
     m_entity_manager.setAlwaysMarkDirty(true);
-    m_texture_manager.clearDirtyFlags();
 
     int scene_index = 0;
     auto material_range = cache_settings.material_frame_range;
@@ -1243,6 +1242,7 @@ bool msblenContext::exportCache(const CacheSettings& cache_settings)
         for (auto& n : nodes)
             exportObject(n, true);
 
+        m_texture_manager.clearDirtyFlags();
         kickAsyncExport();
         ++scene_index;
     };
@@ -1254,8 +1254,6 @@ bool msblenContext::exportCache(const CacheSettings& cache_settings)
     else {
         int frame_current = scene.frame_current();
         int frame_start, frame_end;
-        int interval = std::max(cache_settings.frame_step, 1);
-
         // time range
         if (cache_settings.frame_range == FrameRange::Custom) {
             // custom frame range
@@ -1267,11 +1265,13 @@ bool msblenContext::exportCache(const CacheSettings& cache_settings)
             frame_start = scene.frame_start();
             frame_end = scene.frame_end();
         }
+        int interval = frame_step;
 
         // record
         for (int f = frame_start;;) {
             scene.frame_set(f);
-            m_anim_time = (f - frame_start) * frame_to_second;
+            m_anim_time = float(f - frame_start) / frame_rate;
+
             do_export();
 
             if (f >= frame_end)

@@ -154,12 +154,20 @@ struct tmat3x3
     }
     template<class U> void assign(const tmat3x3<U>& v) { assign((U*)&v); }
 
+    static constexpr tmat3x3 zero()
+    {
+        return{ {
+            { T(0), T(0), T(0) },
+            { T(0), T(0), T(0) },
+            { T(0), T(0), T(0) },
+        } };
+    }
     static constexpr tmat3x3 identity()
     {
         return{ {
-            { T(1.0), T(0.0), T(0.0) },
-            { T(0.0), T(1.0), T(0.0) },
-            { T(0.0), T(0.0), T(1.0) },
+            { T(1), T(0), T(0) },
+            { T(0), T(1), T(0) },
+            { T(0), T(0), T(1) },
         } };
     }
 };
@@ -192,6 +200,15 @@ struct tmat4x4
     }
     template<class U> void assign(const tmat4x4<U>& v) { assign((U*)&v); }
 
+    static constexpr tmat4x4 zero()
+    {
+        return{ {
+            { (T)0, (T)0, (T)0, (T)0 },
+            { (T)0, (T)0, (T)0, (T)0 },
+            { (T)0, (T)0, (T)0, (T)0 },
+            { (T)0, (T)0, (T)0, (T)0 },
+        } };
+    }
     static constexpr tmat4x4 identity()
     {
         return{ {

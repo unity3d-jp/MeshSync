@@ -4,6 +4,14 @@
 
 namespace ms {
 
+template<class Entities>
+static inline void SetupDataFlags(Entities& entities)
+{
+    for (auto& e : entities)
+        e->setupDataFlags();
+}
+
+
 AsyncSceneExporter::~AsyncSceneExporter()
 {
 }
@@ -86,6 +94,8 @@ void AsyncSceneSender::send()
         deleted_entities.empty() && deleted_materials.empty())
         return;
 
+    SetupDataFlags(transforms);
+    SetupDataFlags(geometries);
     AssignIDs(transforms, id_table);
     AssignIDs(geometries, id_table);
     // sort by order. not id.
@@ -268,6 +278,8 @@ void AsyncSceneCacheWriter::write()
     if (assets.empty() && transforms.empty() && geometries.empty())
         return;
 
+    SetupDataFlags(transforms);
+    SetupDataFlags(geometries);
     AssignIDs(transforms, id_table);
     AssignIDs(geometries, id_table);
 

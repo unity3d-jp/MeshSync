@@ -166,8 +166,7 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-sc", "-syncCameras", MSyntax::kBoolean);
     syntax.addFlag("-sl", "-syncLights", MSyntax::kBoolean);
     syntax.addFlag("-sco", "-syncConstraints", MSyntax::kBoolean);
-    syntax.addFlag("-ats", "-animationTS", MSyntax::kDouble);
-    syntax.addFlag("-asp", "-animationSPS", MSyntax::kDouble);
+    syntax.addFlag("-fs", "-frameStep", MSyntax::kDouble);
     syntax.addFlag("-kfr", "-keyframeReduction", MSyntax::kBoolean);
     syntax.addFlag("-kfc", "-keepFlatCurves", MSyntax::kBoolean);
     syntax.addFlag("-rn", "-removeNamespace", MSyntax::kBoolean);
@@ -220,8 +219,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("syncCameras", sync_cameras, true);
     Handle("syncLights", sync_lights, true);
     Handle("syncConstraints", sync_constraints, true);
-    Handle("animationTS", animation_time_scale, false);
-    Handle("animationSPS", animation_sps, false);
+    Handle("frameStep", frame_step, false);
     Handle("removeNamespace", remove_namespace, true);
     Handle("multithreaded", multithreaded, false);
     Handle("fbxCompatibleTransform", fbx_compatible_transform, true);
@@ -354,13 +352,15 @@ MSyntax CmdExportCache::createSyntax()
     syntax.enableQuery(true);
     syntax.enableEdit(false);
     syntax.addFlag("-p", "-path", MSyntax::kString);
-    syntax.addFlag("-os", "-objectScope", MSyntax::kString);
-    syntax.addFlag("-fr", "-frameRange", MSyntax::kString);
+    syntax.addFlag("-os", "-objectScope", MSyntax::kLong);
+    syntax.addFlag("-fr", "-frameRange", MSyntax::kLong);
     syntax.addFlag("-frb", "-frameBegin", MSyntax::kLong);
     syntax.addFlag("-fre", "-frameEnd", MSyntax::kLong);
-    syntax.addFlag("-mfr", "-materialFrameRange", MSyntax::kString);
-    syntax.addFlag("-z", "-ZSTDCompressionLevel", MSyntax::kLong);
-    syntax.addFlag("-spf", "-samplesPerFrame", MSyntax::kDouble);
+    syntax.addFlag("-mfr", "-materialFrameRange", MSyntax::kLong);
+    syntax.addFlag("-fs", "-frameStep", MSyntax::kDouble);
+
+    syntax.addFlag("-z", "-zstdCompressionLevel", MSyntax::kLong);
+    syntax.addFlag("-rn", "-removeNamespace", MSyntax::kBoolean);
     syntax.addFlag("-ds", "-makeDoubleSided", MSyntax::kBoolean);
     syntax.addFlag("-bd", "-bakeDeformers", MSyntax::kBoolean);
     syntax.addFlag("-fh", "-flattenHierarchy", MSyntax::kBoolean);
@@ -374,7 +374,7 @@ MStatus CmdExportCache::doIt(const MArgList& args_)
 {
     MStatus status;
     MArgParser args(syntax(), args_, &status);
-    auto settings = msmayaGetCacheSettings(); // copy
+    auto& settings = msmayaGetCacheSettings();
 
 #define Handle(Name, Value, ...)\
     if (args.isFlagSet(Name)) {\
@@ -390,7 +390,7 @@ MStatus CmdExportCache::doIt(const MArgList& args_)
     Handle("frameBegin", frame_begin);
     Handle("frameEnd", frame_end);
     Handle("materialFrameRange", material_frame_range, (int&));
-    Handle("samplesPerFrame", samples_per_frame);
+    Handle("frameStep", frame_step);
 
     Handle("zstdCompressionLevel", zstd_compression_level);
     Handle("removeNamespace", remove_namespace);

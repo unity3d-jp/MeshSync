@@ -8,8 +8,8 @@ function(setup_ispc)
     if(EXISTS ${ISPC})
         return()
     endif()
-    
-    set(ISPC_VERSION 1.11.0)
+
+    set(ISPC_VERSION 1.12.0)
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         set(ISPC_DIR "ispc-v${ISPC_VERSION}-linux")
         set(ISPC_ARCHIVE_FILE "ispc-v${ISPC_VERSION}-linux.tar.gz")
@@ -40,21 +40,32 @@ endfunction()
 #    OUTDIR "path/to/outputs")
 function(add_ispc_targets)
     cmake_parse_arguments(arg "" "OUTDIR" "SOURCES;HEADERS" ${ARGN})
-    
+
     foreach(source ${arg_SOURCES})
         get_filename_component(name ${source} NAME_WE)
         set(header "${arg_OUTDIR}/${name}.h")
         set(object "${arg_OUTDIR}/${name}${CMAKE_CXX_OUTPUT_EXTENSION}")
-        set(objects 
-            ${object}
-            "${arg_OUTDIR}/${name}_sse4${CMAKE_CXX_OUTPUT_EXTENSION}"
-            "${arg_OUTDIR}/${name}_avx${CMAKE_CXX_OUTPUT_EXTENSION}"
-            "${arg_OUTDIR}/${name}_avx512skx${CMAKE_CXX_OUTPUT_EXTENSION}"
-        )
+        if(ANDROID)
+            # target: arm64
+            set(target --target=neon-i32x4 --arch=aarch64)
+            set(objects 
+                ${object}
+                "${arg_OUTDIR}/${name}_neon${CMAKE_CXX_OUTPUT_EXTENSION}"
+            )
+        else()
+            # target: x86-64
+            set(target --target=sse4-i32x4,avx1-i32x8,avx512skx-i32x16 --arch=x86-64)
+            set(objects 
+                ${object}
+                "${arg_OUTDIR}/${name}_sse4${CMAKE_CXX_OUTPUT_EXTENSION}"
+                "${arg_OUTDIR}/${name}_avx${CMAKE_CXX_OUTPUT_EXTENSION}"
+                "${arg_OUTDIR}/${name}_avx512skx${CMAKE_CXX_OUTPUT_EXTENSION}"
+            )
+        endif()
         set(outputs ${header} ${objects})
         add_custom_command(
             OUTPUT ${outputs}
-            COMMAND ${ISPC} ${source} -o ${object} -h ${header} --pic --target=sse4-i32x4,avx1-i32x8,avx512skx-i32x16 --arch=x86-64 --opt=fast-masked-vload --opt=fast-math --wno-perf
+            COMMAND ${ISPC} ${source} -o ${object} -h ${header} --pic ${target} --opt=fast-masked-vload --opt=fast-math --wno-perf
             DEPENDS ${source} ${arg_HEADERS}
         )
 
@@ -62,11 +73,11 @@ function(add_ispc_targets)
         list(APPEND _ispc_objects ${objects})
         list(APPEND _ispc_outputs ${outputs})
     endforeach()
-    
+
     set(_ispc_headers ${_ispc_headers} PARENT_SCOPE)
     set(_ispc_objects ${_ispc_objects} PARENT_SCOPE)
     set(_ispc_outputs ${_ispc_outputs} PARENT_SCOPE)
-    
+
     execute_process(COMMAND mkdir -p ${arg_OUTDIR})
     foreach(f ${_ispc_outputs})
         if(NOT EXISTS ${f})

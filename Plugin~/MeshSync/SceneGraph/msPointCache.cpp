@@ -5,11 +5,16 @@ namespace ms {
 
 static_assert(sizeof(PointsDataFlags) == sizeof(uint32_t), "");
 
+PointsDataFlags::PointsDataFlags()
+{
+    *(uint32_t*)this = 0;
+}
+
 #pragma region Points
 #define EachArray(F)\
     F(points) F(rotations) F(scales) F(colors) F(velocities) F(ids)
 #define EachMember(F)\
-    F(pd_flags) EachArray(F) F(bounds)
+    EachArray(F) F(bounds)
 
 
 Points::Points() {}
@@ -20,13 +25,37 @@ bool Points::isGeometry() const { return true; }
 void Points::serialize(std::ostream& os) const
 {
     super::serialize(os);
-    EachMember(msWrite);
+    write(os, pd_flags);
+    if (pd_flags.unchanged)
+        return;
+
+#define Body(V) if(pd_flags.has_##V) write(os, V);
+    EachMember(Body);
+#undef Body
 }
 
 void Points::deserialize(std::istream& is)
 {
     super::deserialize(is);
-    EachMember(msRead);
+    read(is, pd_flags);
+    if (pd_flags.unchanged)
+        return;
+
+#define Body(V) if(pd_flags.has_##V) read(is, V);
+        EachMember(Body);
+#undef Body
+}
+
+void Points::setupDataFlags()
+{
+    super::setupDataFlags();
+    pd_flags.has_points = !points.empty();
+    pd_flags.has_rotations = !rotations.empty();
+    pd_flags.has_scales = !scales.empty();
+    pd_flags.has_colors = !colors.empty();
+    pd_flags.has_velocities = !velocities.empty();
+    pd_flags.has_ids = !ids.empty();
+    pd_flags.has_bounds = bounds != Bounds{};
 }
 
 bool Points::isUnchanged() const

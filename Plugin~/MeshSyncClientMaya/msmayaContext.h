@@ -93,8 +93,8 @@ enum class ObjectScope : int
 {
     None = -1,
     All,
-    Updated,
     Selected,
+    Updated,
 };
 
 enum class FrameRange : int
@@ -106,7 +106,7 @@ enum class FrameRange : int
 
 enum class MaterialFrameRange : int
 {
-    None = -1,
+    None,
     One,
     All,
 };
@@ -116,8 +116,7 @@ struct SyncSettings
     ms::ClientSettings client_settings;
 
     float scale_factor = 0.01f;
-    float animation_time_scale = 1.0f;
-    float animation_sps = 3.0f;
+    float frame_step = 3.0f;
     int  timeout_ms = 5000;
     bool auto_sync = false;
     bool sync_meshes = true;
@@ -146,15 +145,14 @@ struct CacheSettings
 {
     std::string path;
     ObjectScope object_scope = ObjectScope::All;
-    FrameRange frame_range = FrameRange::Current;
-    MaterialFrameRange material_frame_range = MaterialFrameRange::One;
+    FrameRange frame_range = FrameRange::All;
     int frame_begin = 0;
     int frame_end = 100;
+    float frame_step = 1.0f;
+    MaterialFrameRange material_frame_range = MaterialFrameRange::One;
 
     bool remove_namespace = true;
     int zstd_compression_level = 3; // (min) 0 - 22 (max)
-    float samples_per_frame = 1.0f;
-
     bool make_double_sided = false;
     bool bake_deformers = true;
     bool flatten_hierarchy = false;
@@ -234,6 +232,7 @@ private:
     std::vector<TreeNode*> getNodes(ObjectScope scope);
 
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
+    int findTexture(const std::string& path);
     void exportMaterials();
 
     ms::TransformPtr exportObject(TreeNode *n, bool parent, bool tip = true);
