@@ -995,7 +995,7 @@ ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
 }
 
 void msmayaContext::extractTransformData(TreeNode *n,
-    mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis,
+    mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis,
     mu::float4x4 *dst_world, mu::float4x4 *dst_local)
 {
     if (n->trans->isInstance()) {
@@ -1092,7 +1092,7 @@ void msmayaContext::extractTransformData(TreeNode *n,
         rot = correct_axis(rot) * mu::rotate_z(180.0f * mu::DegToRad);
 
     scale = td.scale;
-    vis = n->isVisibleInHierarchy();
+    vis = { n->isVisibleInHierarchy(), true, true };
 }
 
 void msmayaContext::extractCameraData(TreeNode *n,
@@ -1169,7 +1169,7 @@ ms::TransformPtr msmayaContext::exportTransform(TreeNode *n)
     auto ret = createEntity<ms::Transform>(*n);
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
 
     m_entity_manager.add(ret);
     return ret;
@@ -1180,7 +1180,7 @@ ms::TransformPtr msmayaContext::exportInstance(TreeNode *n)
     auto ret = createEntity<ms::Transform>(*n);
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
 
     auto primary = n->getPrimaryInstanceNode();
     if (primary && n != primary)
@@ -1195,7 +1195,7 @@ ms::CameraPtr msmayaContext::exportCamera(TreeNode *n)
     auto ret = createEntity<ms::Camera>(*n);
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
     extractCameraData(n, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
         dst.focal_length, dst.sensor_size, dst.lens_shift);
 
@@ -1208,7 +1208,7 @@ ms::LightPtr msmayaContext::exportLight(TreeNode *n)
     auto ret = createEntity<ms::Light>(*n);
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
     extractLightData(n, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.spot_angle);
 
     m_entity_manager.add(ret);
@@ -1220,7 +1220,7 @@ ms::MeshPtr msmayaContext::exportMesh(TreeNode *n)
     auto ret = createEntity<ms::Mesh>(*n);
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
 
     // send mesh contents even if the node is hidden.
 
@@ -1248,14 +1248,14 @@ ms::MeshPtr msmayaContext::exportMesh(TreeNode *n)
     return ret;
 }
 
-void msmayaContext::doExtractBlendshapeWeights(ms::Mesh & dst, TreeNode * n)
+void msmayaContext::doExtractBlendshapeWeights(ms::Mesh& dst, TreeNode *n)
 {
     auto& shape = n->shape->node;
     if (!shape.hasFn(MFn::kMesh))
         return;
 
-    dst.visible = IsVisible(shape);
-    if (!dst.visible)
+    dst.visibility = { IsVisible(shape), true, true };
+    if (!dst.visibility.active)
         return;
 
     MFnMesh mmesh(shape);
@@ -1847,14 +1847,14 @@ void msmayaContext::extractTransformAnimationData(ms::TransformAnimation& dst_, 
     auto pos = mu::float3::zero();
     auto rot = mu::quatf::identity();
     auto scale = mu::float3::one();
-    bool vis = true;
+    ms::VisibilityFlags vis;
     extractTransformData(n, pos, rot, scale, vis);
 
     float t = m_anim_time;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
-    dst.visible.push_back({ t, vis });
+    dst.visible.push_back({ t, (int)vis.active });
 }
 
 void msmayaContext::extractCameraAnimationData(ms::TransformAnimation& dst_, TreeNode *n)

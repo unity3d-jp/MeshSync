@@ -7,7 +7,7 @@ static_assert(sizeof(PointsDataFlags) == sizeof(uint32_t), "");
 
 PointsDataFlags::PointsDataFlags()
 {
-    *(uint32_t*)this = 0;
+    (uint32_t&)*this = 0;
 }
 
 #pragma region Points

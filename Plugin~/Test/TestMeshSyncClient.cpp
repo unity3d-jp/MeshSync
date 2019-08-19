@@ -206,7 +206,7 @@ TestCase(Test_Points)
         node->position = { 0.0f, 0.0f, 0.0f };
         node->rotation = quatf::identity();
         node->scale = { 1.0f, 1.0f, 1.0f };
-        node->visible_hierarchy = false;
+        node->visibility = { false, true, true };
         GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->uv0, 0.1f, 1);
         node->refine_settings.flags.gen_normals = 1;
         node->refine_settings.flags.gen_tangents = 1;

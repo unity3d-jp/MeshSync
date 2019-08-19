@@ -7,7 +7,7 @@
 namespace ms {
 
 static_assert(sizeof(TransformDataFlags) == sizeof(uint32_t), "");
-static_assert(sizeof(HideFlags) == sizeof(uint32_t), "");
+static_assert(sizeof(VisibilityFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(CameraDataFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(LightDataFlags) == sizeof(uint32_t), "");
 
@@ -210,34 +210,38 @@ TransformDataFlags::TransformDataFlags()
     has_position = 1;
     has_rotation = 1;
     has_scale = 1;
-    has_hide_flags = 1;
+    has_visibility = 1;
     has_layer = 0;
     has_reference = 0;
 }
 
-HideFlags::HideFlags()
+VisibilityFlags::VisibilityFlags()
 {
     (uint32_t&)*this = 0;
     active = 1;
     visible_in_render = 1;
     visible_in_viewport = 1;
+    cast_shadows = 1;
+    receive_shadows = 1;
 }
 
-HideFlags::HideFlags(bool active_, bool render, bool viewport)
+VisibilityFlags::VisibilityFlags(bool active_, bool render, bool viewport, bool cast, bool receive)
 {
     (uint32_t&)*this = 0;
     active = active_;
     visible_in_render = render;
     visible_in_viewport = viewport;
+    cast_shadows = cast;
+    receive_shadows = receive;
 }
 
-bool HideFlags::operator==(const HideFlags& v) const { return (uint32_t&)*this == (uint32_t&)v; }
-bool HideFlags::operator!=(const HideFlags& v) const { return !(*this == v); }
+bool VisibilityFlags::operator==(const VisibilityFlags& v) const { return (uint32_t&)*this == (uint32_t&)v; }
+bool VisibilityFlags::operator!=(const VisibilityFlags& v) const { return !(*this == v); }
 
-HideFlags HideFlags::uninitialized()
+VisibilityFlags VisibilityFlags::uninitialized()
 {
     uint32_t ret = ~0u;
-    return (HideFlags&)ret;
+    return (VisibilityFlags&)ret;
 }
 
 std::shared_ptr<Transform> Transform::create(std::istream& is)
@@ -254,7 +258,7 @@ EntityType Transform::getType() const
 }
 
 #define EachMember(F)\
-    F(position) F(rotation) F(scale) F(hide_flags) F(layer) F(index) F(reference)
+    F(position) F(rotation) F(scale) F(visibility) F(layer) F(index) F(reference)
 
 void Transform::serialize(std::ostream& os) const
 {
@@ -283,7 +287,7 @@ void Transform::setupDataFlags()
 {
     super::setupDataFlags();
 
-    td_flags.has_hide_flags = hide_flags != HideFlags::uninitialized();
+    td_flags.has_visibility = visibility != VisibilityFlags::uninitialized();
     td_flags.has_reference = !reference.empty();
 }
 
@@ -298,7 +302,7 @@ static bool NearEqual(const Transform& a, const Transform& b)
         near_equal(a.position, b.position) &&
         near_equal(a.rotation, b.rotation) &&
         near_equal(a.scale, b.scale) &&
-        a.hide_flags == b.hide_flags &&
+        a.visibility == b.visibility &&
         a.layer == b.layer &&
         a.index == b.index &&
         a.reference == b.reference;
@@ -356,7 +360,7 @@ void Transform::clear()
     position = float3::zero();
     rotation = quatf::identity();
     scale = float3::one();
-    hide_flags = HideFlags::uninitialized();
+    visibility = VisibilityFlags::uninitialized();
     layer = 0;
     index = 0;
     reference.clear();
@@ -373,7 +377,7 @@ uint64_t Transform::checksumTrans() const
     ret += csum(position);
     ret += csum(rotation);
     ret += csum(scale);
-    ret += (uint32_t&)hide_flags;
+    ret += (uint32_t&)visibility;
     ret += csum(layer);
     ret += csum(index);
     ret += csum(reference);
@@ -415,7 +419,15 @@ void Transform::applyMatrix(const float4x4& v)
 #pragma region Camera
 CameraDataFlags::CameraDataFlags()
 {
-    *(uint32_t*)this = ~0x1u;
+    (uint32_t&)*this = 0;
+    unchanged = 0;
+    has_is_ortho = 1;
+    has_fov = 1;
+    has_near_plane = 1;
+    has_far_plane = 1;
+    has_focal_length = 0;
+    has_sensor_size = 0;
+    has_lens_shift = 0;
     has_view_matrix = 0;
     has_proj_matrix = 0;
     has_layer_mask = 0;
@@ -578,7 +590,14 @@ EntityPtr Camera::clone(bool /*detach*/)
 #pragma region Light
 LightDataFlags::LightDataFlags()
 {
-    *(uint32_t*)this = ~0x1u;
+    (uint32_t&)*this = 0;
+    unchanged = 0;
+    has_light_type = 1;
+    has_shadow_type = 1;
+    has_color = 1;
+    has_intensity = 1;
+    has_range = 1;
+    has_spot_angle = 1;
     has_layer_mask = 0;
 }
 

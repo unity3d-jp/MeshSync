@@ -833,7 +833,7 @@ mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t, bool cancel_ca
 }
 
 void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
-    mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::HideFlags& vis,
+    mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis,
     mu::float4x4 *dst_world, mu::float4x4 *dst_local)
 {
     vis = { true, VisibleInRender(n.node, t), VisibleInViewport(n.node) };
@@ -887,7 +887,7 @@ void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
 void msmaxContext::extractTransform(TreeNode& n)
 {
     auto& dst = *n.dst;
-    extractTransform(n, GetTime(), dst.position, dst.rotation, dst.scale, dst.hide_flags);
+    extractTransform(n, GetTime(), dst.position, dst.rotation, dst.scale, dst.visibility);
 }
 
 void msmaxContext::extractCameraData(TreeNode& n, TimeValue t,
@@ -1468,7 +1468,7 @@ void msmaxContext::extractTransformAnimation(ms::TransformAnimation& dst_, TreeN
     mu::float3 pos;
     mu::quatf rot;
     mu::float3 scale;
-    ms::HideFlags vis;
+    ms::VisibilityFlags vis;
     extractTransform(*n, m_current_time_tick, pos, rot, scale, vis);
 
     float t = m_anim_time;

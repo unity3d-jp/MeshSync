@@ -149,7 +149,7 @@ bool msmqContext::sendMeshes(MQDocument doc, bool dirty_all)
             ExtractID(rec.dst->path.c_str(), rec.dst->host_id);
 
             bool visible = rec.obj->GetVisible() != 0;
-            rec.dst->visible = visible;
+            rec.dst->visibility = { true, visible, true };
             if (visible)
                 extractMeshData(doc, rec.obj, *rec.dst);
             // add to m_entity_manager will be done later because bone weights affect checksum
@@ -234,7 +234,7 @@ bool msmqContext::sendMeshes(MQDocument doc, bool dirty_all)
             // get weights
             parallel_for_each(m_obj_records.begin(), m_obj_records.end(), [this, &bone_manager, &bone_ids](ObjectRecord& rec) {
                 auto obj = rec.obj;
-                if (!rec.dst->visible)
+                if (!rec.dst->visibility.visible_in_render)
                     return;
 
                 std::vector<UINT> vertex_ids;

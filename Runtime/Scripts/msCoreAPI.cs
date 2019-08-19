@@ -1063,6 +1063,8 @@ namespace UTJ.MeshSync
         public bool active { get { return flags[0]; } }
         public bool visibleInRender { get { return flags[1]; } }
         public bool visibleInViewport { get { return flags[2]; } }
+        public bool castShadows { get { return flags[3]; } }
+        public bool ReceiveShadows { get { return flags[4]; } }
     }
 
     public struct TransformData
@@ -1078,7 +1080,7 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern Vector3 msTransformGetPosition(IntPtr self);
         [DllImport(Lib.name)] static extern Quaternion msTransformGetRotation(IntPtr self);
         [DllImport(Lib.name)] static extern Vector3 msTransformGetScale(IntPtr self);
-        [DllImport(Lib.name)] static extern VisibilityFlags msTransformGetHideFlags(IntPtr self);
+        [DllImport(Lib.name)] static extern VisibilityFlags msTransformGetVisibility(IntPtr self);
         [DllImport(Lib.name)] static extern IntPtr msTransformGetReference(IntPtr self);
 
         [DllImport(Lib.name)] static extern void msTransformSetHostID(IntPtr self, int v);
@@ -1087,7 +1089,7 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern void msTransformSetPosition(IntPtr self, Vector3 v);
         [DllImport(Lib.name)] static extern void msTransformSetRotation(IntPtr self, Quaternion v);
         [DllImport(Lib.name)] static extern void msTransformSetScale(IntPtr self, Vector3 v);
-        [DllImport(Lib.name)] static extern void msTransformSetHideFlags(IntPtr self, VisibilityFlags v);
+        [DllImport(Lib.name)] static extern void msTransformSetVisibility(IntPtr self, VisibilityFlags v);
         [DllImport(Lib.name)] static extern void msTransformSetReference(IntPtr self, string v);
         #endregion
 
@@ -1142,8 +1144,8 @@ namespace UTJ.MeshSync
         }
         public VisibilityFlags visibility
         {
-            get { return msTransformGetHideFlags(self); }
-            set { msTransformSetHideFlags(self, value); }
+            get { return msTransformGetVisibility(self); }
+            set { msTransformSetVisibility(self, value); }
         }
         public string reference
         {

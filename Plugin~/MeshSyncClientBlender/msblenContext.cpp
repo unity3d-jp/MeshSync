@@ -97,7 +97,7 @@ void msblenContext::exportMaterials()
 }
 
 
-void msblenContext::extractTransformData(Object *src, mu::float3& t, mu::quatf& r, mu::float3& s, ms::HideFlags& vis)
+void msblenContext::extractTransformData(Object *src, mu::float3& t, mu::quatf& r, mu::float3& s, ms::VisibilityFlags& vis)
 {
     extract_local_TRS(src, t, r, s);
     vis = {true, visible_in_render(src), visible_in_viewport(src) };
@@ -113,7 +113,7 @@ void msblenContext::extractTransformData(Object *src, mu::float3& t, mu::quatf& 
 }
 void msblenContext::extractTransformData(Object *src, ms::Transform& dst)
 {
-    extractTransformData(src, dst.position, dst.rotation, dst.scale, dst.hide_flags);
+    extractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visibility);
 }
 
 void msblenContext::extractCameraData(Object *src, bool& ortho, float& near_plane, float& far_plane, float& fov,
@@ -313,7 +313,7 @@ ms::TransformPtr msblenContext::exportReference(Object *src, Object *host, const
     extractTransformData(src, *dst);
 
     // todo:
-    dst->hide_flags = {};
+    dst->visibility = {};
 
     exportDupliGroup(src, host, path);
     m_entity_manager.add(dst);
@@ -336,7 +336,7 @@ ms::TransformPtr msblenContext::exportDupliGroup(Object *src, Object *host, cons
     auto dst = ms::Transform::create();
     dst->path = path;
     dst->position = -get_instance_offset(group);
-    dst->hide_flags = { true, visible_in_render(host), visible_in_viewport(host) };
+    dst->visibility = { true, visible_in_render(host), visible_in_viewport(host) };
     m_entity_manager.add(dst);
 
     auto gobjects = bl::list_range((CollectionObject*)group->gobject.first);
@@ -344,7 +344,7 @@ ms::TransformPtr msblenContext::exportDupliGroup(Object *src, Object *host, cons
         auto obj = go->ob;
         if (auto t = exportObject(obj, false)) {
             bool non_lib = obj->id.lib == nullptr;
-            t->hide_flags = { true, non_lib, non_lib };
+            t->visibility = { true, non_lib, non_lib };
         }
         exportReference(obj, host, path);
     }
@@ -945,7 +945,7 @@ void msblenContext::extractTransformAnimationData(ms::TransformAnimation& dst_, 
     mu::float3 pos;
     mu::quatf rot;
     mu::float3 scale;
-    ms::HideFlags vis;
+    ms::VisibilityFlags vis;
     extractTransformData((Object*)obj, pos, rot, scale, vis);
 
     float t = m_anim_time;

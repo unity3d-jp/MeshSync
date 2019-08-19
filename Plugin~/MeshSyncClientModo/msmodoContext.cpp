@@ -141,7 +141,7 @@ void msmodoContext::onIdle()
 }
 
 
-void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis)
 {
     CLxUser_Locator loc(n.item);
 
@@ -155,7 +155,7 @@ void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf
         rot *= mu::rotate_y(180.0f * mu::DegToRad);
     }
     scale = extract_scale(mat);
-    vis = loc.Visible(m_ch_read) == LXe_TRUE;
+    vis = { true, loc.Visible(m_ch_read) == LXe_TRUE, true };
 }
 
 void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,
@@ -709,7 +709,7 @@ ms::TransformPtr msmodoContext::exportTransform(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
 
     m_entity_manager.add(n.dst_obj);
     return ret;
@@ -721,7 +721,7 @@ ms::TransformPtr msmodoContext::exportMeshInstance(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
     enumerateItemGraphR(n.item, LXsGRAPH_MESHINST, [&](CLxUser_Item& g) {
         n.dst_obj->reference = GetPath(g);
     });
@@ -736,7 +736,7 @@ ms::CameraPtr msmodoContext::exportCamera(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
     extractCameraData(n, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
         dst.focal_length, dst.sensor_size, dst.lens_shift);
 
@@ -750,7 +750,7 @@ ms::LightPtr msmodoContext::exportLight(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
     extractLightData(n, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
 
     m_entity_manager.add(n.dst_obj);
@@ -767,7 +767,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     auto& dst = *ret;
     n.dst_obj = ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
 
     // note: this needs to be done in the main thread because accessing CLxUser_Mesh from worker thread causes a crash.
     // but some heavy tasks such as resolving materials can be in parallel. (see m_parallel_tasks)
@@ -1104,7 +1104,7 @@ ms::TransformPtr msmodoContext::exportReplicator(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
     m_entity_manager.add(n.dst_obj);
 
     // export replica
@@ -1283,14 +1283,14 @@ void msmodoContext::extractTransformAnimationData(TreeNode& n)
     auto pos = mu::float3::zero();
     auto rot = mu::quatf::identity();
     auto scale = mu::float3::one();
-    bool vis = true;
+    ms::VisibilityFlags vis;
     extractTransformData(n, pos, rot, scale, vis);
 
     float t = m_anim_time;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
-    dst.visible.push_back({ t, vis });
+    dst.visible.push_back({ t, (int)vis.visible_in_render });
 }
 
 void msmodoContext::extractCameraAnimationData(TreeNode& n)
