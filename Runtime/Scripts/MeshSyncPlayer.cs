@@ -737,7 +737,7 @@ namespace UTJ.MeshSync
                             bones[bi] = FindOrCreateObjectByPath(rec.bonePaths[bi], false, ref dummy);
 
                         Transform root = null;
-                        if (rec.rootBonePath != null && rec.rootBonePath.Length != 0)
+                        if (!string.IsNullOrEmpty(rec.rootBonePath))
                             root = FindOrCreateObjectByPath(rec.rootBonePath, false, ref dummy);
                         if (root == null && boneCount > 0)
                         {
@@ -771,7 +771,7 @@ namespace UTJ.MeshSync
             foreach (var kvp in m_clientObjects)
             {
                 var rec = kvp.Value;
-                if (rec.reference != null)
+                if (!string.IsNullOrEmpty(rec.reference))
                 {
                     EntityRecord srcrec = null;
                     if (m_clientObjects.TryGetValue(rec.reference, out srcrec) && srcrec.go != null)
@@ -1212,7 +1212,7 @@ namespace UTJ.MeshSync
             if (rec == null || dflags.unchanged)
                 return null;
 
-            if (rec.reference != null)
+            if (!string.IsNullOrEmpty(rec.reference))
             {
                 // references will be resolved later in UpdateReference()
                 return null;
@@ -1289,7 +1289,8 @@ namespace UTJ.MeshSync
                 // update bones
                 if (dflags.hasBones)
                 {
-                    rec.rootBonePath = data.rootBonePath;
+                    if (dflags.hasRootBone)
+                        rec.rootBonePath = data.rootBonePath;
                     rec.bonePaths = data.bonePaths;
                     // bones will be resolved in AfterUpdateScene()
                 }
@@ -1589,26 +1590,31 @@ namespace UTJ.MeshSync
             if (trans == null)
                 trans = rec.trans = rec.go.transform;
 
-            rec.index = data.index;
-            var reference = data.reference;
-            rec.reference = reference != "" ? reference : null;
-            rec.visible = data.visible;
-            rec.dataType = data.entityType;
-
-            var dataFlags = data.dataFlags;
-            if (!dataFlags.unchanged)
+            var dflags = data.dataFlags;
+            if (!dflags.unchanged)
             {
+                rec.index = data.index;
+                rec.visible = data.visible;
+                rec.dataType = data.entityType;
+
                 // sync TRS
                 if (m_syncTransform)
                 {
-                    trans.localPosition = data.position;
-                    trans.localRotation = data.rotation;
-                    trans.localScale = data.scale;
+                    if (dflags.hasPosition)
+                        trans.localPosition = data.position;
+                    if (dflags.hasRotation)
+                        trans.localRotation = data.rotation;
+                    if (dflags.hasScale)
+                        trans.localScale = data.scale;
                 }
 
                 // visibility
                 if (m_syncVisibility)
                     trans.gameObject.SetActive(data.visibleHierarchy);
+
+                // reference. will be resolved in AfterUpdateScene()
+                if (dflags.hasReference)
+                    rec.reference = data.reference;
             }
             return rec;
         }

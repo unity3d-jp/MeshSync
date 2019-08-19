@@ -22,6 +22,9 @@ struct Bounds
 {
     float3 center;
     float3 extents;
+
+    bool operator==(const Bounds& v) const { return center == v.center && extents == v.extents; }
+    bool operator!=(const Bounds& v) const { return !(*this == v); }
 };
 
 } // namespace ms

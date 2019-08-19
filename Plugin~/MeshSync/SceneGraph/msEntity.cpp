@@ -221,7 +221,7 @@ EntityType Transform::getType() const
 }
 
 #define EachMember(F)\
-    F(position) F(rotation) F(scale) F(index) F(visible) F(visible_hierarchy) F(layer) F(reference)
+    F(position) F(rotation) F(scale) F(visible) F(visible_hierarchy) F(layer) F(index) F(reference)
 
 void Transform::serialize(std::ostream& os) const
 {
@@ -229,7 +229,10 @@ void Transform::serialize(std::ostream& os) const
     write(os, td_flags);
     if (td_flags.unchanged)
         return;
-    EachMember(msWrite);
+
+#define Body(V) if(td_flags.has_##V) write(os, V);
+    EachMember(Body);
+#undef Body
 }
 void Transform::deserialize(std::istream& is)
 {
@@ -237,12 +240,17 @@ void Transform::deserialize(std::istream& is)
     read(is, td_flags);
     if (td_flags.unchanged)
         return;
-    EachMember(msRead);
+
+#define Body(V) if(td_flags.has_##V) read(is, V);
+    EachMember(Body);
+#undef Body
 }
 
 void Transform::setupDataFlags()
 {
     super::setupDataFlags();
+
+    td_flags.has_reference = !reference.empty();
 }
 
 bool Transform::isUnchanged() const

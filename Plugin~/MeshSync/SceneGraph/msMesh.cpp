@@ -175,7 +175,9 @@ void Mesh::serialize(std::ostream& os) const
     if (md_flags.unchanged)
         return;
 
-    EachMember(msWrite);
+#define Body(V) if(md_flags.has_##V) write(os, V);
+    EachMember(Body);
+#undef Body
 }
 
 void Mesh::deserialize(std::istream& is)
@@ -185,7 +187,9 @@ void Mesh::deserialize(std::istream& is)
     if (md_flags.unchanged)
         return;
 
-    EachMember(msRead);
+#define Body(V) if(md_flags.has_##V) read(is, V);
+    EachMember(Body);
+#undef Body
 
     bones.erase(
         std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); }),
@@ -195,7 +199,6 @@ void Mesh::deserialize(std::istream& is)
 void Mesh::setupDataFlags()
 {
     super::setupDataFlags();
-    md_flags.has_submeshes = !submeshes.empty();
     md_flags.has_points = !points.empty();
     md_flags.has_normals = !normals.empty();
     md_flags.has_tangents = !tangents.empty();
@@ -207,9 +210,12 @@ void Mesh::setupDataFlags()
     md_flags.has_indices = !indices.empty();
     md_flags.has_material_ids = !material_ids.empty();
     md_flags.has_face_groups = md_flags.has_face_groups && md_flags.has_material_ids;
+    md_flags.has_root_bone = !root_bone.empty();
     md_flags.has_bones = !bones.empty();
-    md_flags.has_blendshape_weights = !blendshapes.empty();
     md_flags.has_blendshapes = !blendshapes.empty() && !blendshapes.front()->frames.empty();
+    md_flags.has_blendshape_weights = !blendshapes.empty();
+    md_flags.has_submeshes = !submeshes.empty();
+    md_flags.has_bounds = bounds != Bounds{};
 
     md_flags.has_refine_settings =
         (uint32_t&)refine_settings.flags != 0 ||

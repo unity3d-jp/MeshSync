@@ -8,52 +8,53 @@ namespace ms {
 // must be synced with C# side
 struct MeshDataFlags
 {
-    uint32_t unchanged : 1;
+    uint32_t unchanged : 1;         // 0
     uint32_t topology_unchanged : 1;
     uint32_t has_refine_settings : 1;
-    uint32_t has_submeshes : 1;
     uint32_t has_indices : 1;
     uint32_t has_counts : 1;
-    uint32_t has_points : 1;
+    uint32_t has_points : 1;        // 5
     uint32_t has_normals : 1;
     uint32_t has_tangents : 1;
     uint32_t has_uv0 : 1;
-    uint32_t has_uv1 : 1; // 10
-    uint32_t has_colors : 1;
+    uint32_t has_uv1 : 1;
+    uint32_t has_colors : 1;        // 10
     uint32_t has_velocities : 1;
     uint32_t has_material_ids : 1;
     uint32_t has_face_groups : 1; // use upper 16 bit of material id as face group. mainly for 3ds max
-    uint32_t has_bones : 1;
-    uint32_t has_blendshape_weights : 1;
+    uint32_t has_root_bone : 1;
+    uint32_t has_bones : 1;         // 15
     uint32_t has_blendshapes : 1;
+    uint32_t has_blendshape_weights : 1;
+    uint32_t has_submeshes : 1;
+    uint32_t has_bounds: 1;
 
     MeshDataFlags();
 };
 
 struct MeshRefineFlags
 {
-    uint32_t no_reindexing : 1;
+    uint32_t no_reindexing : 1;     // 0
     uint32_t split : 1;
     uint32_t flip_x : 1;
     uint32_t flip_yz : 1;
     uint32_t flip_faces : 1;
-    uint32_t gen_normals : 1;
+    uint32_t gen_normals : 1;       // 5
     uint32_t gen_normals_with_smooth_angle : 1;
     uint32_t flip_normals : 1;
     uint32_t gen_tangents : 1;
-    uint32_t apply_local2world : 1; // 10
-    uint32_t apply_world2local : 1;
+    uint32_t apply_local2world : 1;
+    uint32_t apply_world2local : 1; // 10
     uint32_t bake_skin : 1;
     uint32_t bake_cloth : 1;
-
     uint32_t flip_u : 1;
     uint32_t flip_v : 1;
-    uint32_t mirror_x : 1;
+    uint32_t mirror_x : 1;          // 15
     uint32_t mirror_y : 1;
     uint32_t mirror_z : 1;
     uint32_t mirror_x_weld : 1;
-    uint32_t mirror_y_weld : 1; // 20
-    uint32_t mirror_z_weld : 1;
+    uint32_t mirror_y_weld : 1;
+    uint32_t mirror_z_weld : 1;     // 20
     uint32_t mirror_basis : 1;
     uint32_t make_double_sided : 1;
     uint32_t quadify : 1;

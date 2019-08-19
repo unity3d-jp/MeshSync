@@ -88,13 +88,14 @@ msDeclPtr(Entity);
 // must be synced with C# side
 struct TransformDataFlags
 {
-    uint32_t unchanged : 1;
+    uint32_t unchanged : 1;             //  0
     uint32_t has_position : 1;
     uint32_t has_rotation: 1;
-    uint32_t has_scale: 1;
+    uint32_t has_scale : 1;
     uint32_t has_visible : 1;
-    uint32_t has_visible_hierarchy : 1;
+    uint32_t has_visible_hierarchy : 1; // 5
     uint32_t has_layer : 1;
+    uint32_t has_index : 1;
     uint32_t has_reference: 1;
 
     TransformDataFlags();
@@ -109,12 +110,11 @@ public:
     float3   position = float3::zero();
     quatf    rotation = quatf::identity();
     float3   scale = float3::one();
-    int index = 0;
-
     bool visible = true;
     bool visible_hierarchy = true;
     int layer = 0;
 
+    int index = 0;
     std::string reference;
 
     // non-serializable
@@ -155,7 +155,7 @@ msDeclPtr(Transform);
 // must be synced with C# side
 struct CameraDataFlags
 {
-    uint32_t unchanged : 1;
+    uint32_t unchanged : 1;         // 0
     uint32_t has_is_ortho : 1;
     uint32_t has_fov : 1;
     uint32_t has_near_plane : 1;
@@ -182,7 +182,7 @@ public:
     float far_plane = 1000.0f;
     float focal_length = 0.0f;          // in mm
     float2 sensor_size = float2::zero();// in mm
-    float2 lens_shift = float2::zero(); // in percent
+    float2 lens_shift = float2::zero(); // 0-1
     float4x4 view_matrix = float4x4::zero();
     float4x4 proj_matrix = float4x4::zero();
     int layer_mask = ~0;
@@ -215,12 +215,12 @@ msDeclPtr(Camera);
 // must be synced with C# side
 struct LightDataFlags
 {
-    uint32_t unchanged : 1;
+    uint32_t unchanged : 1;         // 0
     uint32_t has_light_type : 1;
     uint32_t has_shadow_type : 1;
     uint32_t has_color : 1;
     uint32_t has_intensity : 1;
-    uint32_t has_range : 1;
+    uint32_t has_range : 1;         // 5
     uint32_t has_spot_angle : 1;
     uint32_t has_layer_mask : 1;
 

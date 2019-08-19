@@ -14,7 +14,7 @@ PointsDataFlags::PointsDataFlags()
 #define EachArray(F)\
     F(points) F(rotations) F(scales) F(colors) F(velocities) F(ids)
 #define EachMember(F)\
-    F(pd_flags) EachArray(F) F(bounds)
+    EachArray(F) F(bounds)
 
 
 Points::Points() {}
@@ -25,13 +25,25 @@ bool Points::isGeometry() const { return true; }
 void Points::serialize(std::ostream& os) const
 {
     super::serialize(os);
-    EachMember(msWrite);
+    write(os, pd_flags);
+    if (pd_flags.unchanged)
+        return;
+
+#define Body(V) if(pd_flags.has_##V) write(os, V);
+    EachMember(Body);
+#undef Body
 }
 
 void Points::deserialize(std::istream& is)
 {
     super::deserialize(is);
-    EachMember(msRead);
+    read(is, pd_flags);
+    if (pd_flags.unchanged)
+        return;
+
+#define Body(V) if(pd_flags.has_##V) read(is, V);
+        EachMember(Body);
+#undef Body
 }
 
 void Points::setupDataFlags()
@@ -43,6 +55,7 @@ void Points::setupDataFlags()
     pd_flags.has_colors = !colors.empty();
     pd_flags.has_velocities = !velocities.empty();
     pd_flags.has_ids = !ids.empty();
+    pd_flags.has_bounds = bounds != Bounds{};
 }
 
 bool Points::isUnchanged() const
