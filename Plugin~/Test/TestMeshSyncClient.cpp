@@ -447,6 +447,8 @@ static ms::AudioPtr CreateAudioAsset(const char *name, ms::AudioFormat fmt, int 
     case ms::AudioFormat::F32:
         GenerateAudioSample((float*)samples, a->getSampleLength() * Channels);
         break;
+    default:
+        break;
     }
 
     std::string filename = name;

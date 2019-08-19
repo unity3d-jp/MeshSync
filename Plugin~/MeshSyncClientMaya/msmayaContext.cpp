@@ -412,38 +412,31 @@ void msmayaContext::removeNodeCallbacks()
 std::vector<TreeNode*> msmayaContext::getNodes(ObjectScope scope)
 {
     std::vector<TreeNode*> ret;
-    switch (scope) {
-    case ObjectScope::All:
-        {
-            size_t n = m_tree_nodes.size();
-            ret.resize(n);
-            for (size_t i = 0; i < n; ++i)
-                ret[i] = m_tree_nodes[i].get();
+    if (scope == ObjectScope::All) {
+        size_t n = m_tree_nodes.size();
+        ret.resize(n);
+        for (size_t i = 0; i < n; ++i)
+            ret[i] = m_tree_nodes[i].get();
+    }
+    else if (scope == ObjectScope::Selected) {
+        MSelectionList selected;
+        MGlobal::getActiveSelectionList(selected);
+        uint32_t n = selected.length();
+        for (uint32_t i = 0; i < n; ++i) {
+            MObject obj;
+            selected.getDependNode(i, obj);
+            auto it = m_dag_nodes.find(obj);
+            if (it != m_dag_nodes.end())
+                ret.insert(ret.end(), it->second.branches.begin(), it->second.branches.end());
         }
-        break;
-    case ObjectScope::Updated:
+    }
+    else if (scope == ObjectScope::Updated) {
         for (auto& kvp : m_dag_nodes) {
             auto& rec = kvp.second;
             if (rec.dirty) {
                 ret.insert(ret.end(), rec.branches.begin(), rec.branches.end());
             }
         }
-        break;
-    case ObjectScope::Selected:
-        {
-
-            MSelectionList selected;
-            MGlobal::getActiveSelectionList(selected);
-            uint32_t n = selected.length();
-            for (uint32_t i = 0; i < n; ++i) {
-                MObject obj;
-                selected.getDependNode(i, obj);
-                auto it = m_dag_nodes.find(obj);
-                if (it != m_dag_nodes.end())
-                    ret.insert(ret.end(), it->second.branches.begin(), it->second.branches.end());
-            }
-        }
-        break;
     }
     return ret;
 }

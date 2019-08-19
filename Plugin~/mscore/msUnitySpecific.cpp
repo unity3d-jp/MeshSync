@@ -727,6 +727,8 @@ static void ConvertCurve(ms::AnimationCurve& curve, InterpolationMode it)
             g_fs.FillCurvesQuat(ms::TAnimationCurve<quatf>(curve), dst[0], dst[1], dst[2], dst[3], it);
         }
         break;
+    default:
+        break;
     }
 }
 static void ConvertCurves(ms::Animation& anim, InterpolationMode it)
