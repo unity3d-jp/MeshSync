@@ -159,6 +159,14 @@ private:
     ms::CameraPtr exportCamera(Object *obj);
     ms::LightPtr exportLight(Object *obj);
     ms::MeshPtr exportMesh(Object *obj);
+
+    void extractTransformData(Object *src, mu::float3& t, mu::quatf& r, mu::float3& s, ms::HideFlags& vis);
+    void extractTransformData(Object *src, ms::Transform& dst);
+    void extractCameraData(Object *src, bool& ortho, float& near_plane, float& far_plane, float& fov,
+        float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);
+    void extractLightData(Object *src,
+        ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& range, float& spot_angle);
+
     void doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
     void doExtractBlendshapeWeights(ms::Mesh& dst, Object *obj, Mesh *data);
     void doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data);

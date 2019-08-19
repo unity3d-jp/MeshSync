@@ -1057,6 +1057,14 @@ namespace UTJ.MeshSync
         public bool hasReference { get { return flags[8]; } }
     }
 
+    public struct VisibilityFlags
+    {
+        public BitFlags flags;
+        public bool active { get { return flags[0]; } }
+        public bool visibleInRender { get { return flags[1]; } }
+        public bool visibleInViewport { get { return flags[2]; } }
+    }
+
     public struct TransformData
     {
         #region internal
@@ -1065,22 +1073,21 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern TransformDataFlags msTransformGetDataFlags(IntPtr self);
         [DllImport(Lib.name)] static extern EntityType msTransformGetType(IntPtr self);
         [DllImport(Lib.name)] static extern int msTransformGetHostID(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetHostID(IntPtr self, int v);
         [DllImport(Lib.name)] static extern int msTransformGetIndex(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetIndex(IntPtr self, int v);
         [DllImport(Lib.name)] static extern IntPtr msTransformGetPath(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetPath(IntPtr self, string v);
         [DllImport(Lib.name)] static extern Vector3 msTransformGetPosition(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetPosition(IntPtr self, Vector3 v);
         [DllImport(Lib.name)] static extern Quaternion msTransformGetRotation(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetRotation(IntPtr self, Quaternion v);
         [DllImport(Lib.name)] static extern Vector3 msTransformGetScale(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetScale(IntPtr self, Vector3 v);
-        [DllImport(Lib.name)] static extern byte msTransformGetVisible(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetVisible(IntPtr self, byte v);
-        [DllImport(Lib.name)] static extern byte msTransformGetVisibleHierarchy(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetVisibleHierarchy(IntPtr self, byte v);
+        [DllImport(Lib.name)] static extern VisibilityFlags msTransformGetHideFlags(IntPtr self);
         [DllImport(Lib.name)] static extern IntPtr msTransformGetReference(IntPtr self);
+
+        [DllImport(Lib.name)] static extern void msTransformSetHostID(IntPtr self, int v);
+        [DllImport(Lib.name)] static extern void msTransformSetIndex(IntPtr self, int v);
+        [DllImport(Lib.name)] static extern void msTransformSetPath(IntPtr self, string v);
+        [DllImport(Lib.name)] static extern void msTransformSetPosition(IntPtr self, Vector3 v);
+        [DllImport(Lib.name)] static extern void msTransformSetRotation(IntPtr self, Quaternion v);
+        [DllImport(Lib.name)] static extern void msTransformSetScale(IntPtr self, Vector3 v);
+        [DllImport(Lib.name)] static extern void msTransformSetHideFlags(IntPtr self, VisibilityFlags v);
         [DllImport(Lib.name)] static extern void msTransformSetReference(IntPtr self, string v);
         #endregion
 
@@ -1133,15 +1140,10 @@ namespace UTJ.MeshSync
             get { return msTransformGetScale(self); }
             set { msTransformSetScale(self, value); }
         }
-        public bool visible
+        public VisibilityFlags visibility
         {
-            get { return msTransformGetVisible(self) != 0; }
-            set { msTransformSetVisible(self, (byte)(value ? 1 : 0)); }
-        }
-        public bool visibleHierarchy
-        {
-            get { return msTransformGetVisibleHierarchy(self) != 0; }
-            set { msTransformSetVisibleHierarchy(self, (byte)(value ? 1 : 0)); }
+            get { return msTransformGetHideFlags(self); }
+            set { msTransformSetHideFlags(self, value); }
         }
         public string reference
         {

@@ -201,7 +201,9 @@ private:
 
     mu::float4x4 getPivotMatrix(INode *n);
     mu::float4x4 getGlobalMatrix(INode *n, TimeValue t, bool cancel_camera_correction = true);
-    void extractTransform(TreeNode& node, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
+    void extractTransform(
+        TreeNode& node, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::HideFlags& vis,
+        mu::float4x4 *dst_world = nullptr, mu::float4x4 *dst_local = nullptr);
     void extractTransform(TreeNode& node);
     void extractCameraData(TreeNode& node, TimeValue t,
         bool& ortho, float& fov, float& near_plane, float& far_plane,

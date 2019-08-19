@@ -88,17 +88,29 @@ msDeclPtr(Entity);
 // must be synced with C# side
 struct TransformDataFlags
 {
-    uint32_t unchanged : 1;             //  0
+    uint32_t unchanged : 1;         // 0
     uint32_t has_position : 1;
     uint32_t has_rotation: 1;
     uint32_t has_scale : 1;
-    uint32_t has_visible : 1;
-    uint32_t has_visible_hierarchy : 1; // 5
-    uint32_t has_layer : 1;
+    uint32_t has_hide_flags : 1;
+    uint32_t has_layer : 1;         // 5
     uint32_t has_index : 1;
     uint32_t has_reference: 1;
 
     TransformDataFlags();
+};
+
+struct HideFlags
+{
+    uint32_t active : 1;
+    uint32_t visible_in_render : 1;
+    uint32_t visible_in_viewport : 1;
+
+    HideFlags();
+    HideFlags(bool active_, bool render, bool viewport);
+    bool operator==(const HideFlags& v) const;
+    bool operator!=(const HideFlags& v) const;
+    static HideFlags uninitialized();
 };
 
 class Transform : public Entity
@@ -110,10 +122,8 @@ public:
     float3   position = float3::zero();
     quatf    rotation = quatf::identity();
     float3   scale = float3::one();
-    bool visible = true;
-    bool visible_hierarchy = true;
+    HideFlags hide_flags = HideFlags::uninitialized();
     int layer = 0;
-
     int index = 0;
     std::string reference;
 

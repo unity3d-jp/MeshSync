@@ -43,8 +43,14 @@ std::string get_path(const Object *arm, const Bone *obj)
     return ret;
 }
 
-bool is_visible(const Object * obj)
+bool visible_in_render(const Object * obj)
 {
+    // todo:
+    return bl::BObject(obj).is_visible(bl::BContext::get().scene());
+}
+bool visible_in_viewport(const Object *obj)
+{
+    // todo:
     return bl::BObject(obj).is_visible(bl::BContext::get().scene());
 }
 

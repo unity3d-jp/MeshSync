@@ -97,10 +97,10 @@ void msblenContext::exportMaterials()
 }
 
 
-static void ExtractTransformData(Object *src, mu::float3& t, mu::quatf& r, mu::float3& s, bool& vis)
+void msblenContext::extractTransformData(Object *src, mu::float3& t, mu::quatf& r, mu::float3& s, ms::HideFlags& vis)
 {
     extract_local_TRS(src, t, r, s);
-    vis = is_visible(src);
+    vis = {true, visible_in_render(src), visible_in_viewport(src) };
 
     if (src->type == OB_CAMERA) {
         static const auto cr = mu::rotate_z(180.0f * mu::DegToRad) * mu::rotate_x(180.0f * mu::DegToRad);
@@ -111,12 +111,12 @@ static void ExtractTransformData(Object *src, mu::float3& t, mu::quatf& r, mu::f
         r *= cr;
     }
 }
-static void ExtractTransformData(Object *src, ms::Transform& dst)
+void msblenContext::extractTransformData(Object *src, ms::Transform& dst)
 {
-    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(src, dst.position, dst.rotation, dst.scale, dst.hide_flags);
 }
 
-static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float& far_plane, float& fov,
+void msblenContext::extractCameraData(Object *src, bool& ortho, float& near_plane, float& far_plane, float& fov,
     float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
     bl::BCamera cam(src->data);
@@ -140,7 +140,7 @@ static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float
     lens_shift.y = cam.shift_y() * (fit == CAMERA_SENSOR_FIT_HOR ? aspx : 1.0f); // in percent
 }
 
-static void ExtractLightData(Object *src,
+void msblenContext::extractLightData(Object *src,
     ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& range, float& spot_angle)
 {
     auto data =
@@ -271,7 +271,7 @@ ms::TransformPtr msblenContext::exportTransform(Object *src)
     auto ret = ms::Transform::create();
     auto& dst = *ret;
     dst.path = get_path(src);
-    ExtractTransformData(src, dst);
+    extractTransformData(src, dst);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -291,7 +291,7 @@ ms::TransformPtr msblenContext::exportArmature(Object *src)
     auto ret = ms::Transform::create();
     auto& dst = *ret;
     dst.path = get_path(src);
-    ExtractTransformData(src, dst);
+    extractTransformData(src, dst);
     m_entity_manager.add(ret);
 
     for (auto pose : bl::list_range((bPoseChannel*)src->pose->chanbase.first)) {
@@ -310,8 +310,10 @@ ms::TransformPtr msblenContext::exportReference(Object *src, Object *host, const
     auto dst = ms::Transform::create();
     dst->path = path;
     dst->reference = local_path;
-    ExtractTransformData(src, *dst);
-    dst->visible = true; // todo: correct me
+    extractTransformData(src, *dst);
+
+    // todo:
+    dst->hide_flags = {};
 
     exportDupliGroup(src, host, path);
     m_entity_manager.add(dst);
@@ -334,14 +336,15 @@ ms::TransformPtr msblenContext::exportDupliGroup(Object *src, Object *host, cons
     auto dst = ms::Transform::create();
     dst->path = path;
     dst->position = -get_instance_offset(group);
-    dst->visible_hierarchy = is_visible(host); // todo: correct me
+    dst->hide_flags = { true, visible_in_render(host), visible_in_viewport(host) };
     m_entity_manager.add(dst);
 
     auto gobjects = bl::list_range((CollectionObject*)group->gobject.first);
     for (auto go : gobjects) {
         auto obj = go->ob;
         if (auto t = exportObject(obj, false)) {
-            t->visible = obj->id.lib == nullptr;
+            bool non_lib = obj->id.lib == nullptr;
+            t->hide_flags = { true, non_lib, non_lib };
         }
         exportReference(obj, host, path);
     }
@@ -353,8 +356,8 @@ ms::CameraPtr msblenContext::exportCamera(Object *src)
     auto ret = ms::Camera::create();
     auto& dst = *ret;
     dst.path = get_path(src);
-    ExtractTransformData(src, dst);
-    ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov, dst.focal_length, dst.sensor_size, dst.lens_shift);
+    extractTransformData(src, dst);
+    extractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov, dst.focal_length, dst.sensor_size, dst.lens_shift);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -364,8 +367,8 @@ ms::LightPtr msblenContext::exportLight(Object *src)
     auto ret = ms::Light::create();
     auto& dst = *ret;
     dst.path = get_path(src);
-    ExtractTransformData(src, dst);
-    ExtractLightData(src, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
+    extractTransformData(src, dst);
+    extractLightData(src, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -401,7 +404,7 @@ ms::MeshPtr msblenContext::exportMesh(Object *src)
     dst.path = get_path(src);
 
     // transform
-    ExtractTransformData(src, dst);
+    extractTransformData(src, dst);
 
     if (m_settings.sync_meshes) {
         bool need_convert = 
@@ -942,14 +945,14 @@ void msblenContext::extractTransformAnimationData(ms::TransformAnimation& dst_, 
     mu::float3 pos;
     mu::quatf rot;
     mu::float3 scale;
-    bool vis;
-    ExtractTransformData((Object*)obj, pos, rot, scale, vis);
+    ms::HideFlags vis;
+    extractTransformData((Object*)obj, pos, rot, scale, vis);
 
     float t = m_anim_time;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
-    dst.visible.push_back({ t, vis });
+    dst.visible.push_back({ t, (int)vis.visible_in_render });
 }
 
 void msblenContext::extractPoseAnimationData(ms::TransformAnimation& dst_, void * obj)
@@ -976,7 +979,7 @@ void msblenContext::extractCameraAnimationData(ms::TransformAnimation& dst_, voi
     bool ortho;
     float near_plane, far_plane, fov, focal_length;
     mu::float2 sensor_size, lens_shift;
-    ExtractCameraData((Object*)obj, ortho, near_plane, far_plane, fov, focal_length, sensor_size, lens_shift);
+    extractCameraData((Object*)obj, ortho, near_plane, far_plane, fov, focal_length, sensor_size, lens_shift);
 
     float t = m_anim_time;
     dst.near_plane.push_back({ t , near_plane });
@@ -997,7 +1000,7 @@ void msblenContext::extractLightAnimationData(ms::TransformAnimation& dst_, void
     ms::Light::ShadowType stype;
     mu::float4 color;
     float intensity, range, spot_angle;
-    ExtractLightData((Object*)obj, ltype, stype, color, intensity, range, spot_angle);
+    extractLightData((Object*)obj, ltype, stype, color, intensity, range, spot_angle);
 
     float t = m_anim_time;
     dst.color.push_back({ t, color });

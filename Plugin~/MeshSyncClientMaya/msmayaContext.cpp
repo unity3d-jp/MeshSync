@@ -994,41 +994,48 @@ ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
     return n->dst_obj;
 }
 
-void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+void msmayaContext::extractTransformData(TreeNode *n,
+    mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis,
+    mu::float4x4 *dst_world, mu::float4x4 *dst_local)
 {
     if (n->trans->isInstance()) {
         n = n->getPrimaryInstanceNode();
     }
 
-    auto get_maya_transform = [n]() -> mu::float4x4 {
+    auto get_matrices = [&]() -> mu::float4x4 {
         // get TRS from world matrix.
         // note: world matrix is a result of local TRS + parent TRS + constraints.
         //       handling constraints by ourselves is extremely difficult. so getting TRS from world matrix is most reliable and easy way.
 
-        auto mat = mu::float4x4::identity();
+        auto world = mu::float4x4::identity();
         {
             auto& trans = n->trans->node;
             MObject obj_wmat;
             MFnDependencyNode(trans).findPlug("worldMatrix", true).elementByLogicalIndex(0).getValue(obj_wmat);
-            mat = to_float4x4(MFnMatrixData(obj_wmat).matrix());
+            world = to_float4x4(MFnMatrixData(obj_wmat).matrix());
         }
 
         // get inverse parent matrix to calculate local matrix.
         // note: using parentInverseMatrix plug seems more appropriate, but it seems sometimes have incorrect value on Maya2016...
+        auto local = world;
         if (n->parent) {
             auto& parent = n->parent->trans->node;
             MObject obj_pwmat;
             MFnDependencyNode(parent).findPlug("worldMatrix", true).elementByLogicalIndex(0).getValue(obj_pwmat);
             auto pwmat = to_float4x4(MFnMatrixData(obj_pwmat).matrix());
-            mat *= mu::invert(pwmat);
+            local *= mu::invert(pwmat);
         }
 
-        return mat;
+        if (dst_world)
+            *dst_world = world;
+        if (dst_local)
+            *dst_local = local;
+        return local;
     };
 
     // maya-compatible transform extraction
-    auto maya_compatible_transform_extraction = [n, &get_maya_transform]() {
-        auto mat = get_maya_transform();
+    auto maya_compatible_transform_extraction = [&]() {
+        auto mat = get_matrices();
 
         auto& td = n->transform_data;
         td.translation = extract_position(mat);
@@ -1043,7 +1050,7 @@ void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf
     // fbx-compatible transform extraction
     // - scale pivot is ignored
     // - rotation orientation is ignored
-    auto fbx_compatible_transform_extraction = [n, &get_maya_transform]() {
+    auto fbx_compatible_transform_extraction = [&]() {
         MFnTransform fn_trans(n->getDagPath(false));
 
         MQuaternion r;
@@ -1060,7 +1067,7 @@ void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf
 
         n->model_transform = mu::float4x4::identity();
         (mu::float3&)n->model_transform[3] = -td.pivot;
-        n->maya_transform = get_maya_transform();
+        n->maya_transform = get_matrices();
     };
 
     if (!m_settings.fbx_compatible_transform || n->shape->node.hasFn(MFn::kJoint))
@@ -1088,7 +1095,8 @@ void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf
     vis = n->isVisibleInHierarchy();
 }
 
-void msmayaContext::extractCameraData(TreeNode *n, bool& ortho, float& near_plane, float& far_plane, float& fov,
+void msmayaContext::extractCameraData(TreeNode *n,
+    bool& ortho, float& near_plane, float& far_plane, float& fov,
     float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
     auto& shape = n->shape->node;

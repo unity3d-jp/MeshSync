@@ -22,15 +22,13 @@ namespace UTJ.MeshSync
 #if UNITY_STANDALONE
         #region Fields
         [SerializeField] int m_serverPort = ServerSettings.defaultPort;
-
-        [HideInInspector] [SerializeField] int m_serverPortPrev = 0;
+        [SerializeField] int m_serverPortPrev = 0;
 
         ServerSettings m_serverSettings = ServerSettings.defaultValue;
         Server m_server;
         Server.MessageHandler m_handler;
         bool m_requestRestartServer = true;
         bool m_captureScreenshotInProgress = false;
-
         #endregion
 
         #region Properties

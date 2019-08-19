@@ -163,8 +163,7 @@ msAPI const char* msTransformGetPath(const ms::Transform *self) { return self->p
 msAPI mu::float3 msTransformGetPosition(const ms::Transform *self) { return self->position; }
 msAPI mu::quatf msTransformGetRotation(const ms::Transform *self) { return self->rotation; }
 msAPI mu::float3 msTransformGetScale(const ms::Transform *self) { return self->scale; }
-msAPI bool msTransformGetVisible(const ms::Transform *self) { return self->visible; }
-msAPI bool msTransformGetVisibleHierarchy(const ms::Transform *self) { return self->visible_hierarchy; }
+msAPI uint32_t msTransformGetHideFlags(const ms::Transform *self) { return (uint32_t&)self->hide_flags; }
 msAPI const char* msTransformGetReference(const ms::Transform *self) { return self->reference.c_str(); }
 
 msAPI void msTransformSetHostID(ms::Transform *self, int v) { self->host_id = v; }
@@ -173,8 +172,7 @@ msAPI void msTransformSetPath(ms::Transform *self, const char *v) { self->path =
 msAPI void msTransformSetPosition(ms::Transform *self, mu::float3 v) { self->position = v; }
 msAPI void msTransformSetRotation(ms::Transform *self, mu::quatf v) { self->rotation = v; }
 msAPI void msTransformSetScale(ms::Transform *self, mu::float3 v) { self->scale = v; }
-msAPI void msTransformSetVisible(ms::Transform *self, bool v) { self->visible = v; }
-msAPI void msTransformSetVisibleHierarchy(ms::Transform *self, bool v) { self->visible_hierarchy = v;}
+msAPI void msTransformSetHideFlags(ms::Transform *self, uint32_t v) { (uint32_t&)self->hide_flags = v; }
 msAPI void msTransformSetReference(ms::Transform *self, const char *v) { self->reference = v; }
 #pragma endregion
 
