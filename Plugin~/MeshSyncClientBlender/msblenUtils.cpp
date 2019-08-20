@@ -43,15 +43,13 @@ std::string get_path(const Object *arm, const Bone *obj)
     return ret;
 }
 
-bool visible_in_render(const Object * obj)
+bool visible_in_render(const Object *obj)
 {
-    // todo:
-    return bl::BObject(obj).is_visible(bl::BContext::get().scene());
+    return !bl::BObject(obj).hide_render();
 }
 bool visible_in_viewport(const Object *obj)
 {
-    // todo:
-    return bl::BObject(obj).is_visible(bl::BContext::get().scene());
+    return !bl::BObject(obj).hide_viewport();
 }
 
 ModifierData* find_modofier(Object *obj, ModifierType type)

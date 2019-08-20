@@ -115,7 +115,8 @@ namespace blender
         void* data();
         mu::float4x4 matrix_local() const;
         mu::float4x4 matrix_world() const;
-        bool is_visible(Scene *scene) const;
+        bool hide_viewport() const;
+        bool hide_render() const;
         Mesh* to_mesh() const;
     };
 
