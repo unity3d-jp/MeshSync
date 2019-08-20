@@ -786,7 +786,7 @@ mu::float4x4 msmaxContext::getPivotMatrix(INode *n)
     return mu::transform(t, r, mu::float3::one());
 }
 
-mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t, bool cancel_camera_correction)
+mu::float4x4 msmaxContext::getWorldMatrix(INode *n, TimeValue t, bool cancel_camera_correction)
 {
     auto obj = n->GetObjectRef();
     bool is_camera = IsCamera(obj);
@@ -839,9 +839,7 @@ void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
     vis = { true, VisibleInRender(n.node, t), VisibleInViewport(n.node) };
 
     auto do_extract = [&](const mu::float4x4& mat) {
-        pos = mu::extract_position(mat);
-        rot = mu::extract_rotation(mat);
-        scale = mu::extract_scale(mat);
+        mu::extract_trs(mat, pos, rot, scale);
         if (mu::near_equal(scale, mu::float3::one()))
             scale = mu::float3::one();
         return mat;
@@ -851,7 +849,7 @@ void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
     if (m_settings.bake_modifiers) {
         if (IsCamera(obj) || IsLight(obj)) {
             // on camera/light, extract from global matrix
-            auto mat = do_extract(getGlobalMatrix(n.node, t));
+            auto mat = do_extract(getWorldMatrix(n.node, t));
 
             if (dst_world)
                 *dst_world = mat;
@@ -871,10 +869,10 @@ void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
         }
     }
     else {
-        auto world = getGlobalMatrix(n.node, t);
+        auto world = getWorldMatrix(n.node, t);
         auto local = world;
         if (auto parent = n.node->GetParentNode())
-            local *= mu::invert(getGlobalMatrix(parent, t));
+            local *= mu::invert(getWorldMatrix(parent, t));
 
         do_extract(local);
         if (dst_world)
@@ -887,7 +885,7 @@ void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
 void msmaxContext::extractTransform(TreeNode& n)
 {
     auto& dst = *n.dst;
-    extractTransform(n, GetTime(), dst.position, dst.rotation, dst.scale, dst.visibility);
+    extractTransform(n, GetTime(), dst.position, dst.rotation, dst.scale, dst.visibility, &dst.world_matrix, &dst.local_matrix);
 }
 
 void msmaxContext::extractCameraData(TreeNode& n, TimeValue t,

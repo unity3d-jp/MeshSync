@@ -371,7 +371,7 @@ void Transform::clear()
     order = 0;
     parent = nullptr;
     local_matrix = float4x4::identity();
-    global_matrix = float4x4::identity();
+    world_matrix = float4x4::identity();
 }
 
 uint64_t Transform::checksumTrans() const

@@ -160,7 +160,13 @@ private:
     ms::LightPtr exportLight(Object *obj);
     ms::MeshPtr exportMesh(Object *obj);
 
-    void extractTransformData(Object *src, mu::float3& t, mu::quatf& r, mu::float3& s, ms::VisibilityFlags& vis);
+    mu::float4x4 getWorldMatrix(const Object *obj);
+    mu::float4x4 getLocalMatrix(const Object *obj);
+    mu::float4x4 getLocalMatrix(const Bone *bone);
+    mu::float4x4 getLocalMatrix(const bPoseChannel *pose);
+    void extractTransformData(Object *src,
+        mu::float3& t, mu::quatf& r, mu::float3& s, ms::VisibilityFlags& vis,
+        mu::float4x4 *dst_world = nullptr, mu::float4x4 *dst_local = nullptr);
     void extractTransformData(Object *src, ms::Transform& dst);
     void extractCameraData(Object *src, bool& ortho, float& near_plane, float& far_plane, float& fov,
         float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);

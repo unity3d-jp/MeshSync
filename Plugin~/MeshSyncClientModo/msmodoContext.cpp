@@ -141,21 +141,34 @@ void msmodoContext::onIdle()
 }
 
 
-void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis)
+void msmodoContext::extractTransformData(TreeNode& n,
+    mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis,
+    mu::float4x4 *dst_world, mu::float4x4 *dst_local)
 {
     CLxUser_Locator loc(n.item);
 
-    LXtMatrix4 lxmat;
-    loc.LocalTransform4(m_ch_read, lxmat);
-    mu::float4x4 mat = to_float4x4(lxmat);
-
-    pos = extract_position(mat);
-    rot = extract_rotation(mat);
-    if (n.item.IsA(tCamera) || n.item.IsA(tLight)) {
-        rot *= mu::rotate_y(180.0f * mu::DegToRad);
-    }
-    scale = extract_scale(mat);
+    // visibility
     vis = { true, loc.Visible(m_ch_read) == LXe_TRUE, true };
+
+    // transform
+    {
+        LXtMatrix4 lxmat;
+        loc.LocalTransform4(m_ch_read, lxmat);
+        auto mat = to_float4x4(lxmat);
+
+        mu::extract_trs(mat, pos, rot, scale);
+        if (n.item.IsA(tCamera) || n.item.IsA(tLight))
+            rot *= mu::rotate_y(180.0f * mu::DegToRad);
+        if (dst_local)
+            *dst_local = mat;
+    }
+
+    // world matrix
+    if (dst_world) {
+        LXtMatrix4 lxmat;
+        loc.WorldTransform4(m_ch_read, lxmat);
+        *dst_world = to_float4x4(lxmat);
+    }
 }
 
 void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,

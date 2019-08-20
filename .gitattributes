@@ -3,6 +3,13 @@
 *.c text
 *.hpp text
 *.cpp text
+*.cs text
+*.mel text
+*.py text
+*.plist text
+*.meta text
+*.txt text
+*.md text
 
 *.bat text eol=crlf
 *.sln text eol=crlf

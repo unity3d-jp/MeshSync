@@ -1055,7 +1055,7 @@ namespace UTJ.MeshSync
         public bool hasRotation { get { return flags[2]; } }
         public bool hasScale { get { return flags[3]; } }
         public bool hasVisibility { get { return flags[4]; } }
-        public bool hasReference { get { return flags[8]; } }
+        public bool hasReference { get { return flags[7]; } }
     }
 
     public struct VisibilityFlags

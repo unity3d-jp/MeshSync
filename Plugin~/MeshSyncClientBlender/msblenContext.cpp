@@ -97,26 +97,101 @@ void msblenContext::exportMaterials()
 }
 
 
-void msblenContext::extractTransformData(Object *src, mu::float3& t, mu::quatf& r, mu::float3& s, ms::VisibilityFlags& vis)
-{
-    extract_local_TRS(src, t, r, s);
-    vis = {true, visible_in_render(src), visible_in_viewport(src) };
+static const mu::float4x4 g_arm_to_world = mu::float4x4{
+    1, 0, 0, 0,
+    0, 0,-1, 0,
+    0, 1, 0, 0,
+    0, 0, 0, 1
+};
+static const mu::float4x4 g_world_to_arm = mu::float4x4{
+    1, 0, 0, 0,
+    0, 0, 1, 0,
+    0,-1, 0, 0,
+    0, 0, 0, 1
+};
 
-    if (src->type == OB_CAMERA) {
-        static const auto cr = mu::rotate_z(180.0f * mu::DegToRad) * mu::rotate_x(180.0f * mu::DegToRad);
-        r *= cr;
-    }
-    else if (src->type == OB_LAMP) {
-        static const auto cr = mu::rotate_x(180.0f * mu::DegToRad);
-        r *= cr;
-    }
+mu::float4x4 msblenContext::getWorldMatrix(const Object *obj)
+{
+    return bl::BObject(obj).matrix_world();
 }
+
+mu::float4x4 msblenContext::getLocalMatrix(const Object *obj)
+{
+    auto r = bl::BObject(obj).matrix_local();
+    if (obj->parent && obj->partype == PARBONE) {
+        if (auto bone = find_bone(obj->parent, obj->parsubstr)) {
+            auto arm_obj = obj->parent;
+
+            r *= mu::translate(mu::float3{ 0.0f, mu::length((mu::float3&)bone->tail - (mu::float3&)bone->head), 0.0f });
+            r *= g_world_to_arm;
+        }
+    }
+
+    if (obj->type == OB_CAMERA || obj->type == OB_LAMP) {
+        // camera/light correction
+        r = mu::float4x4{ {
+            {-r[0][0],-r[0][1],-r[0][2],-r[0][3]},
+            { r[1][0], r[1][1], r[1][2], r[1][3]},
+            {-r[2][0],-r[2][1],-r[2][2],-r[2][3]},
+            { r[3][0], r[3][1], r[3][2], r[3][3]},
+        } };
+    }
+    return r;
+}
+
+mu::float4x4 msblenContext::getLocalMatrix(const Bone *bone)
+{
+    auto r = (mu::float4x4&)bone->arm_mat;
+    if (auto parent = bone->parent)
+        r *= mu::invert((mu::float4x4&)parent->arm_mat);
+    else
+        r *= g_arm_to_world;
+    // todo: armature to world here
+    return r;
+}
+
+mu::float4x4 msblenContext::getLocalMatrix(const bPoseChannel *pose)
+{
+    auto r = (mu::float4x4&)pose->pose_mat;
+    if (auto parent = pose->parent)
+        r *= mu::invert((mu::float4x4&)parent->pose_mat);
+    else
+        r *= g_arm_to_world;
+    // todo: armature to world here
+    return r;
+}
+
+static void extract_bone_trs(const mu::float4x4& mat, mu::float3& t, mu::quatf& r, mu::float3& s)
+{
+    mu::extract_trs(mat, t, r, s);
+    // armature-space to world-space
+    t = mu::swap_yz(mu::flip_z(t));
+    r = mu::swap_yz(mu::flip_z(r));
+    s = mu::swap_yz(s);
+}
+
+void msblenContext::extractTransformData(Object *obj,
+    mu::float3& t, mu::quatf& r, mu::float3& s, ms::VisibilityFlags& vis,
+    mu::float4x4 *dst_world, mu::float4x4 *dst_local)
+{
+    vis = { true, visible_in_render(obj), visible_in_viewport(obj) };
+
+    auto local = getLocalMatrix(obj);
+    mu::extract_trs(local, t, r, s);
+
+    if (dst_world)
+        *dst_world = getWorldMatrix(obj);
+    if (dst_local)
+        *dst_local = local;
+}
+
 void msblenContext::extractTransformData(Object *src, ms::Transform& dst)
 {
-    extractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visibility);
+    extractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visibility, &dst.world_matrix, &dst.local_matrix);
 }
 
-void msblenContext::extractCameraData(Object *src, bool& ortho, float& near_plane, float& far_plane, float& fov,
+void msblenContext::extractCameraData(Object *src,
+    bool& ortho, float& near_plane, float& far_plane, float& fov,
     float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
     bl::BCamera cam(src->data);
@@ -281,7 +356,7 @@ ms::TransformPtr msblenContext::exportPose(Object *armature, bPoseChannel *src)
     auto ret = ms::Transform::create();
     auto& dst = *ret;
     dst.path = get_path(armature, src->bone);
-    extract_local_TRS(src, dst.position, dst.rotation, dst.scale);
+    extract_bone_trs(getLocalMatrix(src), dst.position, dst.rotation, dst.scale);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -601,6 +676,13 @@ void msblenContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *d
 
     if (!m_settings.bake_modifiers) {
         // bones
+
+        auto extract_bindpose = [](auto *bone) {
+            auto mat_bone = (mu::float4x4&)bone->arm_mat * g_arm_to_world;
+            // armature-space to world-space
+            return mu::invert(mu::swap_yz(mu::flip_z(mat_bone)));
+        };
+
         if (m_settings.sync_bones) {
             auto *arm_mod = (const ArmatureModifierData*)find_modofier(obj, eModifierType_Armature);
             if (arm_mod) {
@@ -962,7 +1044,7 @@ void msblenContext::extractPoseAnimationData(ms::TransformAnimation& dst_, void 
     mu::float3 pos;
     mu::quatf rot;
     mu::float3 scale;
-    extract_local_TRS((bPoseChannel*)obj, pos, rot, scale);
+    extract_bone_trs(getLocalMatrix((bPoseChannel*)obj), pos, rot, scale);
 
     float t = m_anim_time;
     dst.translation.push_back({ t, pos });

@@ -1038,11 +1038,10 @@ void msmayaContext::extractTransformData(TreeNode *n,
         auto mat = get_matrices();
 
         auto& td = n->transform_data;
-        td.translation = extract_position(mat);
         td.pivot = mu::float3::zero();
         td.pivot_offset = mu::float3::zero();
-        td.rotation = extract_rotation(mat);
-        td.scale = extract_scale(mat);
+        mu::extract_trs(mat, td.translation, td.rotation, td.scale);
+
         n->model_transform = mu::float4x4::identity();
         n->maya_transform = mat;
     };

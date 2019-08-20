@@ -132,8 +132,8 @@ public:
     // non-serializable
     int order;
     Transform *parent;
+    float4x4 world_matrix;
     float4x4 local_matrix;
-    float4x4 global_matrix;
 
 protected:
     Transform();
