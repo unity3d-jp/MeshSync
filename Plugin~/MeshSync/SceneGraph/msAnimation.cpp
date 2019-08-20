@@ -300,6 +300,16 @@ AnimationCurvePtr Animation::getCurve(const std::string& name, DataType type)
     return getCurve(name.c_str(), type);
 }
 
+bool Animation::eraseCurve(const AnimationCurve *curve)
+{
+    auto it = std::find_if(curves.begin(), curves.end(), [&](auto& c) {return c.get() == curve; });
+    if (it != curves.end()) {
+        curves.erase(it);
+        return true;
+    }
+    return false;
+}
+
 void Animation::clearEmptyCurves()
 {
     curves.erase(
@@ -471,8 +481,15 @@ void TransformAnimation::reserve(size_t n)
 
 void TransformAnimation::validate()
 {
-    if (visible && !visible.empty() && visible.equal_all(visible.front().value))
-        visible.clear();
+    auto check_and_erase = [this](auto& curve, auto v) {
+        if (curve && curve.equal_all(v))
+            host->eraseCurve(curve.curve);
+    };
+    check_and_erase(translation, inf<float3>());
+    check_and_erase(rotation, inf<quatf>());
+    check_and_erase(scale, inf<float3>());
+    if(visible && !visible.empty())
+        check_and_erase(visible, visible.front().value);
 }
 
 
@@ -508,18 +525,16 @@ void CameraAnimation::validate()
 {
     super::validate();
 
-    if (fov.equal_all(0.0f))
-        fov.clear();
-    if (near_plane.equal_all(0.0f))
-        near_plane.clear();
-    if (far_plane.equal_all(0.0f))
-        far_plane.clear();
-    if (focal_length.equal_all(0.0f))
-        focal_length.clear();
-    if (sensor_size.equal_all(float2::zero()))
-        sensor_size.clear();
-    if (lens_shift.equal_all(float2::zero()))
-        lens_shift.clear();
+    auto check_and_erase = [this](auto& curve, auto v) {
+        if (curve && curve.equal_all(v))
+            host->eraseCurve(curve.curve);
+    };
+    check_and_erase(fov, 0.0f);
+    check_and_erase(near_plane, 0.0f);
+    check_and_erase(far_plane, 0.0f);
+    check_and_erase(focal_length, 0.0f);
+    check_and_erase(sensor_size, float2::zero());
+    check_and_erase(lens_shift, float2::zero());
 }
 
 
@@ -552,10 +567,14 @@ void LightAnimation::validate()
 {
     super::validate();
 
-    if (range.equal_all(0.0f))
-        range.clear();
-    if (spot_angle.equal_all(0.0f))
-        spot_angle.clear();
+    auto check_and_erase = [this](auto& curve, auto v) {
+        if (curve.equal_all(v))
+            host->eraseCurve(curve.curve);
+    };
+    check_and_erase(color, inf<float4>());
+    check_and_erase(intensity, inf<float>());
+    check_and_erase(range, inf<float>());
+    check_and_erase(spot_angle, inf<float>());
 }
 
 

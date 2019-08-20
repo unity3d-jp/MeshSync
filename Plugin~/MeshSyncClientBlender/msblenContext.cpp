@@ -136,8 +136,8 @@ void msblenContext::extractCameraData(Object *src, bool& ortho, float& near_plan
         fit = sensor_size.x > sensor_size.y ? CAMERA_SENSOR_FIT_HOR : CAMERA_SENSOR_FIT_VERT;
     const float aspx = sensor_size.x / sensor_size.y;
     const float aspy = sensor_size.y / sensor_size.x;
-    lens_shift.x = cam.shift_x() * (fit == CAMERA_SENSOR_FIT_HOR ? 1.0f : aspy); // in percent
-    lens_shift.y = cam.shift_y() * (fit == CAMERA_SENSOR_FIT_HOR ? aspx : 1.0f); // in percent
+    lens_shift.x = cam.shift_x() * (fit == CAMERA_SENSOR_FIT_HOR ? 1.0f : aspy); // 0-1
+    lens_shift.y = cam.shift_y() * (fit == CAMERA_SENSOR_FIT_HOR ? aspx : 1.0f); // 0-1
 }
 
 void msblenContext::extractLightData(Object *src,

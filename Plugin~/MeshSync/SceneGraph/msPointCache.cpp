@@ -17,7 +17,7 @@ PointsDataFlags::PointsDataFlags()
     EachArray(F) F(bounds)
 
 
-Points::Points() {}
+Points::Points() { clear(); }
 Points::~Points() {}
 EntityType Points::getType() const { return Type::Points; }
 bool Points::isGeometry() const { return true; }

@@ -249,7 +249,7 @@ std::shared_ptr<Transform> Transform::create(std::istream& is)
     return std::static_pointer_cast<Transform>(super::create(is));
 }
 
-Transform::Transform() {}
+Transform::Transform() { clear(); }
 Transform::~Transform() {}
 
 EntityType Transform::getType() const
@@ -287,6 +287,9 @@ void Transform::setupDataFlags()
 {
     super::setupDataFlags();
 
+    td_flags.has_position = !is_inf(position);
+    td_flags.has_rotation = !is_inf(rotation);
+    td_flags.has_scale = !is_inf(scale);
     td_flags.has_visibility = visibility != VisibilityFlags::uninitialized();
     td_flags.has_reference = !reference.empty();
 }
@@ -357,9 +360,9 @@ void Transform::clear()
     super::clear();
 
     td_flags = {};
-    position = float3::zero();
-    rotation = quatf::identity();
-    scale = float3::one();
+    position = inf<float3>();
+    rotation = inf<quatf>();
+    scale = inf<float3>();
     visibility = VisibilityFlags::uninitialized();
     layer = 0;
     index = 0;
@@ -422,9 +425,9 @@ CameraDataFlags::CameraDataFlags()
     (uint32_t&)*this = 0;
     unchanged = 0;
     has_is_ortho = 1;
-    has_fov = 1;
-    has_near_plane = 1;
-    has_far_plane = 1;
+    has_fov = 0;
+    has_near_plane = 0;
+    has_far_plane = 0;
     has_focal_length = 0;
     has_sensor_size = 0;
     has_lens_shift = 0;
@@ -433,7 +436,7 @@ CameraDataFlags::CameraDataFlags()
     has_layer_mask = 0;
 }
 
-Camera::Camera() {}
+Camera::Camera() { clear(); }
 Camera::~Camera() {}
 
 EntityType Camera::getType() const
@@ -601,7 +604,7 @@ LightDataFlags::LightDataFlags()
     has_layer_mask = 0;
 }
 
-Light::Light() {}
+Light::Light() { clear(); }
 Light::~Light() {}
 
 EntityType Light::getType() const
@@ -638,11 +641,12 @@ void Light::deserialize(std::istream & is)
 void Light::setupDataFlags()
 {
     super::setupDataFlags();
-
-    //ld_flags.has_color = color != float4::zero();
-    //ld_flags.has_intensity = intensity != 0.0f;
-    //ld_flags.has_range = range != 0.0f;
-    //ld_flags.has_spot_angle = spot_angle != 0.0f;
+    ld_flags.has_light_type = light_type != LightType::Unknown;
+    ld_flags.has_shadow_type= shadow_type != ShadowType::Unknown;
+    ld_flags.has_color      = !is_inf(color);
+    ld_flags.has_intensity  = !is_inf(intensity);
+    ld_flags.has_range      = !is_inf(range);
+    ld_flags.has_spot_angle = !is_inf(spot_angle);
 }
 
 bool Light::isUnchanged() const
@@ -712,12 +716,12 @@ void Light::clear()
     super::clear();
 
     ld_flags = {};
-    light_type = LightType::Directional;
+    light_type = LightType::Unknown;
     shadow_type = ShadowType::Unknown;
-    color = float4::one();
-    intensity = 1.0f;
-    range = 0.0f;
-    spot_angle = 30.0f;
+    color = inf<float4>();
+    intensity = inf<float>();
+    range = inf<float>();
+    spot_angle = inf<float>();
     layer_mask = ~0;
 }
 

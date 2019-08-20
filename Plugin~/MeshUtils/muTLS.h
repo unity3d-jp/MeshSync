@@ -46,7 +46,8 @@ public:
     ~tls()
     {
         std::unique_lock<std::mutex> lock(m_mutex);
-        for (auto p : m_locals) { delete p; }
+        for (auto p : m_locals)
+            delete p;
         m_locals.clear();
     }
 
@@ -77,7 +78,8 @@ public:
     void each(const Body& body)
     {
         std::unique_lock<std::mutex> lock(m_mutex);
-        for (auto p : m_locals) { body(*p); }
+        for (auto p : m_locals)
+            body(*p);
     }
 
 protected:

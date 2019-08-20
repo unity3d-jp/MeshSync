@@ -34,6 +34,7 @@
     <ClInclude Include="MeshUtils\muIntrusiveArray.h" />
     <ClInclude Include="MeshUtils\ispcmath.h" />
     <ClInclude Include="MeshUtils\muIterator.h" />
+    <ClInclude Include="MeshUtils\muLimits.h" />
     <ClInclude Include="MeshUtils\muMeshRefiner.h" />
     <ClInclude Include="MeshUtils\muMisc.h" />
     <ClInclude Include="MeshUtils\muQuat32.h" />

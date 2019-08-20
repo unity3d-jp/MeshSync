@@ -1115,7 +1115,7 @@ void msmayaContext::extractCameraData(TreeNode *n,
         (float)(mcam.horizontalFilmOffset() * mu::InchToMillimeter_d),
         (float)(mcam.verticalFilmOffset() * mu::InchToMillimeter_d),
     };
-    lens_shift = shift / sensor_size; // to percent
+    lens_shift = shift / sensor_size; // to 0-1
 }
 
 void msmayaContext::extractLightData(TreeNode *n,

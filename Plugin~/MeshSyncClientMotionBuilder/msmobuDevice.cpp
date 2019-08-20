@@ -372,10 +372,18 @@ void msmobuDevice::extractCameraData(FBCamera* src, bool& ortho, float& near_pla
     fov = (float)src->FieldOfViewY;
 
     focal_length = (float)src->FocalLength;
-    sensor_size.x = (float)(src->FilmSizeWidth * mu::InchToMillimeter_d);
-    sensor_size.y = (float)(src->FilmSizeHeight * mu::InchToMillimeter_d);
-    lens_shift.x = (float)src->OpticalCenterX;
-    lens_shift.y = (float)src->OpticalCenterY;
+    sensor_size.x = (float)(src->FilmSizeWidth * mu::InchToMillimeter_d);  // mm
+    sensor_size.y = (float)(src->FilmSizeHeight * mu::InchToMillimeter_d); // mm
+
+    // todo:
+    // - MoBu's physical camera params depend on gate fit (ApertureMode in MoBu's term)
+    //   on Unity, gate fit is supported only 2018.3 or newer.
+    // - I couldn't figure out how to convert OpticalCenter to 0.0-1.0...
+
+    // FBCameraApertureMode am = src->ApertureMode;
+
+    //lens_shift.x = (float)src->OpticalCenterX;
+    //lens_shift.y = (float)src->OpticalCenterY;
 }
 
 void msmobuDevice::extractLightData(FBLight* src, ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle)
@@ -774,7 +782,7 @@ bool msmobuDevice::exportMaterial(FBMaterial* src, int index)
 
     auto dst = ms::Material::create();
     rec.dst = dst.get();
-    if (rec.id == ms::InvalidID)
+    if (rec.id == 0)
         rec.id = m_material_ids.getID(src);
 
     dst->id = rec.id;

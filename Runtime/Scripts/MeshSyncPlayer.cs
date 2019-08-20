@@ -65,6 +65,7 @@ namespace UTJ.MeshSync
             public string[] bonePaths;
             public bool smrUpdated = false;
             public bool smrEnabled = false;
+            public bool hasVisibility = false;
             public VisibilityFlags visibility; // for reference
             public bool recved = false;
 
@@ -1278,7 +1279,7 @@ namespace UTJ.MeshSync
                 }
 
                 rec.smrUpdated = true;
-                if (m_syncVisibility)
+                if (m_syncVisibility && dtrans.dataFlags.hasVisibility)
                     rec.smrEnabled = data.transform.visibility.visibleInRender;
                 else
                     rec.smrEnabled = smr.enabled;
@@ -1328,7 +1329,7 @@ namespace UTJ.MeshSync
                     }
                 }
 
-                if (m_syncVisibility)
+                if (m_syncVisibility && dtrans.dataFlags.hasVisibility)
                     mr.enabled = data.transform.visibility.visibleInRender;
                 mf.sharedMesh = rec.mesh;
                 rec.smrEnabled = false;
@@ -1595,7 +1596,6 @@ namespace UTJ.MeshSync
             {
                 var visibility = data.visibility;
                 rec.index = data.index;
-                rec.visibility = visibility;
                 rec.dataType = data.entityType;
 
                 // sync TRS
@@ -1610,8 +1610,13 @@ namespace UTJ.MeshSync
                 }
 
                 // visibility
-                if (m_syncVisibility)
+                if (m_syncVisibility && dflags.hasVisibility)
                     trans.gameObject.SetActive(visibility.active);
+
+                // visibility for reference
+                rec.hasVisibility = dflags.hasVisibility;
+                if (rec.hasVisibility)
+                    rec.visibility = visibility;
 
                 // reference. will be resolved in AfterUpdateScene()
                 if (dflags.hasReference)
@@ -1634,7 +1639,7 @@ namespace UTJ.MeshSync
             var cam = rec.camera;
             if (cam == null)
                 cam = rec.camera = Misc.GetOrAddComponent<Camera>(rec.go);
-            if (m_syncVisibility)
+            if (m_syncVisibility && dtrans.dataFlags.hasVisibility)
                 cam.enabled = dtrans.visibility.visibleInRender;
 
             cam.orthographic = data.orthographic;
@@ -1646,8 +1651,10 @@ namespace UTJ.MeshSync
                 cam.usePhysicalProperties = true;
                 cam.focalLength = data.focalLength;
                 cam.sensorSize = data.sensorSize;
-                if (dflags.hasLensShift)
-                    cam.lensShift = data.lensShift;
+                cam.lensShift = data.lensShift;
+#if UNITY_2018_3_OR_NEWER
+                //todo: gate fit support
+#endif
             }
             else
 #endif
@@ -1664,12 +1671,13 @@ namespace UTJ.MeshSync
 
             if (dflags.hasViewMatrix)
                 cam.worldToCameraMatrix = data.viewMatrix;
-            //cam.ResetWorldToCameraMatrix()
+            //else
+            //    cam.ResetWorldToCameraMatrix();
 
             if (dflags.hasProjMatrix)
                 cam.projectionMatrix = data.projMatrix;
-            //cam.ResetProjectionMatrix()
-
+            //else
+            //    cam.ResetProjectionMatrix();
             return rec;
         }
 
@@ -1688,22 +1696,22 @@ namespace UTJ.MeshSync
             if (lt == null)
                 lt = rec.light = Misc.GetOrAddComponent<Light>(rec.go);
 
-            if (m_syncVisibility)
+            if (m_syncVisibility && dtrans.dataFlags.hasVisibility)
                 lt.enabled = dtrans.visibility.visibleInRender;
 
             var lightType = data.lightType;
             if ((int)lightType != -1)
                 lt.type = data.lightType;
+            if (dflags.hasShadowType)
+                lt.shadows = data.shadowType;
 
-            var shadowType = data.shadowType;
-            if ((int)shadowType != -1)
-                lt.shadows = shadowType;
-
-            lt.color = data.color;
-            lt.intensity = data.intensity;
-            if (data.range > 0.0f)
+            if(dflags.hasColor)
+                lt.color = data.color;
+            if (dflags.hasIntensity)
+                lt.intensity = data.intensity;
+            if (dflags.hasRange)
                 lt.range = data.range;
-            if (data.spotAngle > 0.0f)
+            if (dflags.hasSpotAngle)
                 lt.spotAngle = data.spotAngle;
             return rec;
         }
@@ -1726,7 +1734,7 @@ namespace UTJ.MeshSync
                     var dstcam = dst.camera;
                     if (dstcam == null)
                         dstcam = dst.camera = Misc.GetOrAddComponent<Camera>(dstgo);
-                    if (m_syncVisibility)
+                    if (m_syncVisibility && dst.hasVisibility)
                         dstcam.enabled = dst.visibility.visibleInRender;
                     dstcam.enabled = srccam.enabled;
                     dstcam.orthographic = srccam.orthographic;
@@ -1743,7 +1751,7 @@ namespace UTJ.MeshSync
                     var dstlt = dst.light;
                     if (dstlt == null)
                         dstlt = dst.light = Misc.GetOrAddComponent<Light>(dstgo);
-                    if (m_syncVisibility)
+                    if (m_syncVisibility && dst.hasVisibility)
                         dstlt.enabled = dst.visibility.visibleInRender;
                     dstlt.type = srclt.type;
                     dstlt.color = srclt.color;
@@ -1763,7 +1771,7 @@ namespace UTJ.MeshSync
                     var dstpcr = dst.pointCacheRenderer;
                     if (dstpcr != null)
                     {
-                        if (m_syncVisibility)
+                        if (m_syncVisibility && dst.hasVisibility)
                             dstpcr.enabled = dst.visibility.visibleInRender;
                         dstpcr.sharedMesh = mesh;
 
@@ -1793,7 +1801,7 @@ namespace UTJ.MeshSync
                             dstmf = dst.meshFilter = Misc.GetOrAddComponent<MeshFilter>(dstgo);
                         }
 
-                        if (m_syncVisibility)
+                        if (m_syncVisibility && dst.hasVisibility)
                             dstmr.enabled = dst.visibility.visibleInRender;
                         dstmf.sharedMesh = mesh;
                         dstmr.sharedMaterials = srcmr.sharedMaterials;
@@ -1816,7 +1824,7 @@ namespace UTJ.MeshSync
                         for (int bi = 0; bi < blendShapeCount; ++bi)
                             dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
 
-                        if (m_syncVisibility)
+                        if (m_syncVisibility && dst.hasVisibility)
                             dstsmr.enabled = dst.visibility.visibleInRender;
                         else
                             dstsmr.enabled = oldEnabled;

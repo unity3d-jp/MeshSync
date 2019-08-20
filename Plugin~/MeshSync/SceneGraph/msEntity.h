@@ -121,19 +121,19 @@ using super = Entity;
 public:
     // serializable
     TransformDataFlags td_flags;
-    float3   position = float3::zero();
-    quatf    rotation = quatf::identity();
-    float3   scale = float3::one();
-    VisibilityFlags visibility = VisibilityFlags::uninitialized();
-    int layer = 0;
-    int index = 0;
+    float3   position;
+    quatf    rotation;
+    float3   scale;
+    VisibilityFlags visibility;
+    int layer;
+    int index;
     std::string reference;
 
     // non-serializable
-    int order = 0;
-    Transform *parent = nullptr;
-    float4x4 local_matrix = float4x4::identity();
-    float4x4 global_matrix = float4x4::identity();
+    int order;
+    Transform *parent;
+    float4x4 local_matrix;
+    float4x4 global_matrix;
 
 protected:
     Transform();
@@ -188,16 +188,16 @@ using super = Transform;
 public:
     // serializable
     CameraDataFlags cd_flags;
-    bool is_ortho = false;
-    float fov = 30.0f;
-    float near_plane = 0.3f;
-    float far_plane = 1000.0f;
-    float focal_length = 0.0f;          // in mm
-    float2 sensor_size = float2::zero();// in mm
-    float2 lens_shift = float2::zero(); // 0-1
-    float4x4 view_matrix = float4x4::zero();
-    float4x4 proj_matrix = float4x4::zero();
-    int layer_mask = ~0;
+    bool is_ortho;
+    float fov;
+    float near_plane;
+    float far_plane;
+    float focal_length;     // in mm
+    float2 sensor_size;     // in mm
+    float2 lens_shift;      // 0-1
+    float4x4 view_matrix;
+    float4x4 proj_matrix;
+    int layer_mask;
 
 protected:
     Camera();
@@ -261,14 +261,13 @@ public:
 
     // serializable
     LightDataFlags ld_flags;
-    LightType light_type = LightType::Directional;
-    ShadowType shadow_type = ShadowType::Unknown;
-    float4 color = float4::one();
-    float intensity = 1.0f;
-    float range = 0.0f;
-    float spot_angle = 30.0f; // for spot light
-
-    int layer_mask = ~0;
+    LightType light_type;
+    ShadowType shadow_type;
+    float4 color;
+    float intensity;
+    float range;
+    float spot_angle; // for spot light
+    int layer_mask;
 
 protected:
     Light();

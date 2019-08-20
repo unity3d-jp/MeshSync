@@ -1054,6 +1054,7 @@ namespace UTJ.MeshSync
         public bool hasPosition { get { return flags[1]; } }
         public bool hasRotation { get { return flags[2]; } }
         public bool hasScale { get { return flags[3]; } }
+        public bool hasVisibility { get { return flags[4]; } }
         public bool hasReference { get { return flags[8]; } }
     }
 
@@ -1258,6 +1259,12 @@ namespace UTJ.MeshSync
     {
         public BitFlags flags;
         public bool unchanged { get { return flags[0]; } }
+        public bool hasShadowType { get { return flags[2]; } }
+        public bool hasColor { get { return flags[3]; } }
+        public bool hasIntensity { get { return flags[4]; } }
+        public bool hasRange { get { return flags[5]; } }
+        public bool hasSpotAngle { get { return flags[6]; } }
+        public bool hasLayerMask { get { return flags[7]; } }
     }
 
     [StructLayout(LayoutKind.Explicit)]

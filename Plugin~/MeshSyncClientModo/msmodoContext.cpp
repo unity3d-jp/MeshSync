@@ -185,14 +185,14 @@ void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plan
     m_ch_read.Double(n.item, ch_offset_x, &offset_x);
     m_ch_read.Double(n.item, ch_offset_y, &offset_y);
 
-    // disable clipping planes
+    // ignore clipping planes for now
     near_plane = far_plane = 0.0f;
     ortho = proj == 1;
     focal_length = (float)focal_len;
     sensor_size.x = (float)aperture_x; // in mm
     sensor_size.y = (float)aperture_y; // in mm
-    lens_shift.x = (float)(offset_x / aperture_x); // mm to percent
-    lens_shift.y = (float)(offset_y / aperture_y); // mm to percent
+    lens_shift.x = (float)(offset_x / aperture_x); // mm to 0-1
+    lens_shift.y = (float)(offset_y / aperture_y); // mm to 0-1
     fov = mu::compute_fov((float)aperture_y, focal_length);
 }
 
@@ -1305,8 +1305,8 @@ void msmodoContext::extractCameraAnimationData(TreeNode& n)
     extractCameraData(n, ortho, near_plane, far_plane, fov, focal_length, sensor_size, lens_shift);
 
     float t = m_anim_time;
-    dst.near_plane.push_back({ t, near_plane });
-    dst.far_plane.push_back({ t, far_plane });
+    //dst.near_plane.push_back({ t, near_plane });
+    //dst.far_plane.push_back({ t, far_plane });
     dst.fov.push_back({ t, fov });
     dst.focal_length.push_back({ t, focal_length });
     dst.sensor_size.push_back({ t, sensor_size });
