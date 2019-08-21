@@ -59,6 +59,16 @@ int msblenContext::exportTexture(const std::string & path, ms::TextureType type)
 void msblenContext::exportMaterials()
 {
     int midx = 0;
+    
+    // Blender allows faces to have no material. add dummy material for them.
+    {
+        auto dst = ms::Material::create();
+        dst->id = m_material_ids.getID(nullptr);
+        dst->index = midx++;
+        dst->name = "Default";
+        m_material_manager.add(dst);
+    }
+
     auto bpy_data = bl::BData(bl::BContext::get().data());
     for (auto *mat : bpy_data.materials()) {
         auto ret = ms::Material::create();
