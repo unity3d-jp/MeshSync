@@ -6,10 +6,9 @@
 #define msProtocolVersion 121
 
 //#define msEnableProfiling
-#ifndef msRuntime
-    #define msEnableNetwork
-    #define msEnableSceneCache
-#endif
+#define msEnableNetwork
+#define msEnableSceneCache
+//#define msRuntime
 
 namespace mu {}
 namespace ms {

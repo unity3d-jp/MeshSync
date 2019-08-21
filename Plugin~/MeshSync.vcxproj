@@ -45,6 +45,7 @@
     <ClInclude Include="MeshSync\SceneGraph\msPointCache.h" />
     <ClInclude Include="MeshSync\SceneGraph\msSceneGraph.h" />
     <ClInclude Include="MeshSync\SceneGraph\msTexture.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msVariant.h" />
     <ClInclude Include="MeshSync\Utils\msAsyncSceneExporter.h" />
     <ClInclude Include="MeshSync\Utils\msDebug.h" />
     <ClInclude Include="MeshSync\Utils\msEntityManager.h" />
@@ -77,6 +78,7 @@
     <ClCompile Include="MeshSync\SceneGraph\msPointCache.cpp" />
     <ClCompile Include="MeshSync\SceneGraph\msSceneGraph.cpp" />
     <ClCompile Include="MeshSync\SceneGraph\msTexture.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msVariant.cpp" />
     <ClCompile Include="MeshSync\Utils\msAsyncSceneExporter.cpp" />
     <ClCompile Include="MeshSync\Utils\msEntityManager.cpp" />
     <ClCompile Include="MeshSync\Utils\msIDGenerator.cpp" />
