@@ -2293,7 +2293,7 @@ namespace UTJ.MeshSync
             return ApplyMaterialList(ml);
         }
 
-        void CheckMaterialAssigned()
+        public void CheckMaterialAssigned(bool recordUndo = true)
         {
             bool changed = false;
             foreach (var kvp in m_clientObjects)
@@ -2325,28 +2325,39 @@ namespace UTJ.MeshSync
 
             if (changed)
             {
-                // assume last undo group is "Assign Material" performed by mouse drag & drop.
-                // collapse reassigning materials into it.
-                int group = Undo.GetCurrentGroup() - 1;
-                m_recordAssignMaterials = true;
+                int group = 0;
+                if (recordUndo)
+                {
+                    // assume last undo group is "Assign Material" performed by mouse drag & drop.
+                    // collapse reassigning materials into it.
+                    group = Undo.GetCurrentGroup() - 1;
+                    m_recordAssignMaterials = true;
+                }
                 ReassignMaterials();
-                m_recordAssignMaterials = false;
-                Undo.CollapseUndoOperations(group);
-                Undo.FlushUndoRecordObjects();
-
+                if (recordUndo)
+                {
+                    m_recordAssignMaterials = false;
+                    Undo.CollapseUndoOperations(group);
+                    Undo.FlushUndoRecordObjects();
+                }
                 ForceRepaint();
             }
         }
 
-        public void AssignMaterial(MaterialHolder holder, Material mat)
+        public void AssignMaterial(MaterialHolder holder, Material mat, bool recordUndo = true)
         {
-            Undo.RegisterCompleteObjectUndo(this, "Assign Material");
+            if (recordUndo)
+            {
+                Undo.RegisterCompleteObjectUndo(this, "Assign Material");
+                m_recordAssignMaterials = true;
+            }
             holder.material = mat;
-            m_recordAssignMaterials = true;
             ReassignMaterials();
-            m_recordAssignMaterials = false;
-            Undo.FlushUndoRecordObjects();
-
+            if (recordUndo)
+            {
+                m_recordAssignMaterials = false;
+                Undo.FlushUndoRecordObjects();
+            }
             ForceRepaint();
         }
 
@@ -2387,9 +2398,9 @@ namespace UTJ.MeshSync
 #endif
         #endregion
 
-            #region Events
+        #region Events
 #if UNITY_EDITOR
-            void Reset()
+        void Reset()
         {
             // force disable batching for export
             var method = typeof(UnityEditor.PlayerSettings).GetMethod("SetBatchingForPlatform", BindingFlags.NonPublic | BindingFlags.Static);
