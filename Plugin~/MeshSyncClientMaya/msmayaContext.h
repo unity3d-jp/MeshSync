@@ -125,6 +125,7 @@ struct SyncSettings
     bool sync_colors = true;
     bool make_double_sided = false;
     bool bake_deformers = false;
+    bool bake_transform = false;
     bool flatten_hierarchy = false;
     bool apply_tweak = false;
     bool sync_blendshapes = true;
@@ -155,6 +156,7 @@ struct CacheSettings
     int zstd_compression_level = 3; // (min) 0 - 22 (max)
     bool make_double_sided = false;
     bool bake_deformers = true;
+    bool bake_transform = true;
     bool flatten_hierarchy = false;
     bool merge_meshes = false;
 
@@ -247,9 +249,12 @@ private:
     void doExtractMeshData(ms::Mesh& dst, TreeNode *n);
     void doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n);
 
+    mu::float4x4 getWorldMatrix(TreeNode *n);
+    mu::float4x4 getLocalMatrix(TreeNode *n, mu::float4x4 *dst_world = nullptr);
     void extractTransformData(
         TreeNode *n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis,
         mu::float4x4 *dst_world = nullptr, mu::float4x4 *dst_local = nullptr);
+    void extractTransformData(TreeNode *n, ms::Transform& dst);
     void extractCameraData(TreeNode *n, bool& ortho, float& near_plane, float& far_plane, float& fov,
         float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);
     void extractLightData(TreeNode *n, ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle);

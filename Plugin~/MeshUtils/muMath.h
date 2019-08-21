@@ -1446,6 +1446,8 @@ template<class T> inline void extract_trs(const tmat4x4<T>& m, tvec3<T>& t, tqua
     t = extract_position(m);
     r = extract_rotation(m);
     s = extract_scale(m);
+    if (near_equal(s, tvec3<T>::one()))
+        s = tvec3<T>::one();
 }
 
 // aperture and focal_length must be millimeter. return fov in degree

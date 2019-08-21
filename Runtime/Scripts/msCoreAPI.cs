@@ -1793,6 +1793,12 @@ namespace UTJ.MeshSync
 
 
     #region Scene
+    public enum ZUpCorrectionMode
+    {
+        FlipYZ,
+        RotateX,
+    }
+
     public struct SceneProfileData
     {
         public ulong sizeEncoded;

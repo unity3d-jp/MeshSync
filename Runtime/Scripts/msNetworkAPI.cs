@@ -6,12 +6,6 @@ namespace UTJ.MeshSync
 {
 #if UNITY_STANDALONE
     #region Server
-    public enum ZUpCorrectionMode
-    {
-        FlipYZ,
-        RotateX,
-    }
-
     public struct ServerSettings
     {
         public struct Flags

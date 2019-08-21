@@ -366,6 +366,7 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
     m_settings.ignore_non_renderable = cache_settings.ignore_non_renderable;
     m_settings.make_double_sided = cache_settings.make_double_sided;
     m_settings.bake_modifiers = cache_settings.bake_modifiers;
+    m_settings.bake_transform = cache_settings.bake_transform;
     m_settings.use_render_meshes = cache_settings.use_render_meshes;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
@@ -840,8 +841,6 @@ void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
 
     auto do_extract = [&](const mu::float4x4& mat) {
         mu::extract_trs(mat, pos, rot, scale);
-        if (mu::near_equal(scale, mu::float3::one()))
-            scale = mu::float3::one();
         return mat;
     };
 
@@ -882,9 +881,8 @@ void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
     }
 }
 
-void msmaxContext::extractTransform(TreeNode& n)
+void msmaxContext::extractTransform(TreeNode& n, TimeValue t, ms::Transform& dst)
 {
-    auto& dst = *n.dst;
     extractTransform(n, GetTime(), dst.position, dst.rotation, dst.scale, dst.visibility, &dst.world_matrix, &dst.local_matrix);
 }
 
@@ -999,10 +997,11 @@ std::shared_ptr<T> msmaxContext::createEntity(TreeNode& n)
 
 ms::TransformPtr msmaxContext::exportTransform(TreeNode& n)
 {
+    auto t = GetTime();
     auto ret = createEntity<ms::Transform>(n);
     auto& dst = *ret;
 
-    extractTransform(n);
+    extractTransform(n, t, dst);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -1012,10 +1011,11 @@ ms::TransformPtr msmaxContext::exportInstance(TreeNode& n, ms::TransformPtr base
     if (!base)
         return nullptr;
 
+    auto t = GetTime();
     auto ret = createEntity<ms::Transform>(n);
     auto& dst = *ret;
 
-    extractTransform(n);
+    extractTransform(n, t, dst);
     dst.reference = base->path;
     m_entity_manager.add(ret);
     return ret;
@@ -1023,10 +1023,11 @@ ms::TransformPtr msmaxContext::exportInstance(TreeNode& n, ms::TransformPtr base
 
 ms::TransformPtr msmaxContext::exportCamera(TreeNode& n)
 {
+    auto t = GetTime();
     auto ret = createEntity<ms::Camera>(n);
     auto& dst = *ret;
-    extractTransform(n);
-    extractCameraData(n, GetTime(),
+    extractTransform(n, t, dst);
+    extractCameraData(n, t,
         dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane, dst.focal_length, dst.sensor_size, dst.lens_shift,
         &dst.view_matrix);
     m_entity_manager.add(ret);
@@ -1035,9 +1036,10 @@ ms::TransformPtr msmaxContext::exportCamera(TreeNode& n)
 
 ms::TransformPtr msmaxContext::exportLight(TreeNode& n)
 {
+    auto t = GetTime();
     auto ret = createEntity<ms::Light>(n);
     auto& dst = *ret;
-    extractTransform(n);
+    extractTransform(n, t, dst);
     extractLightData(n, GetTime(),
         dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.spot_angle);
     m_entity_manager.add(ret);
@@ -1160,12 +1162,12 @@ static void GenSmoothNormals(ms::Mesh& dst, Mesh& mesh)
 ms::TransformPtr msmaxContext::exportMesh(TreeNode& n)
 {
     auto inode = n.node;
-    // send mesh contents even if the node is hidden.
-
+    auto t = GetTime();
     Mesh *mesh = nullptr;
     TriObject *tri = nullptr;
     bool needs_delete = false;
 
+    // send mesh contents even if the node is hidden.
     if (m_settings.sync_meshes) {
         tri = m_settings.bake_modifiers ?
             GetFinalMesh(inode, needs_delete) :
@@ -1179,7 +1181,7 @@ ms::TransformPtr msmaxContext::exportMesh(TreeNode& n)
                 // todo: support multiple meshes
                 BOOL del;
                 NullView view;
-                mesh = tri->GetRenderMesh(GetTime(), inode, view, del);
+                mesh = tri->GetRenderMesh(t, inode, view, del);
                 if (del)
                     m_tmp_meshes.push_back(mesh);
             }
@@ -1198,7 +1200,7 @@ ms::TransformPtr msmaxContext::exportMesh(TreeNode& n)
     }
 
     auto ret = createEntity<ms::Mesh>(n);
-    extractTransform(n);
+    extractTransform(n, t, *ret);
 
     auto task = [this, ret, inode, mesh]() {
         doExtractMeshData(*ret, inode, mesh);

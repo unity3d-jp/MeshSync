@@ -49,6 +49,7 @@ struct SyncSettings
     bool sync_colors = true;
     bool make_double_sided = false;
     bool bake_modifiers = false;
+    bool bake_transform = false;
     bool curves_as_mesh = true;
     bool flatten_hierarchy = false;
     bool sync_bones = true;
@@ -80,6 +81,7 @@ struct CacheSettings
 
     bool make_double_sided = false;
     bool bake_modifiers = true;
+    bool bake_transform = true;
     bool convert_to_mesh = true;
     bool flatten_hierarchy = false;
     bool merge_meshes = false;
@@ -115,9 +117,18 @@ public:
     void flushPendingList();
 
 private:
+    // note:
+    // ObjectRecord and Blender's Object is *NOT* 1 on 1 because there is 'dupli group' in Blender.
+    // dupli group is a collection of nodes that will be instanced.
+    // so, only the path is unique. Object maybe shared by multiple ObjectRecord.
     struct ObjectRecord : public mu::noncopyable
     {
         std::string path;
+        std::string name;
+        Object *host = nullptr; // parent of dupli group
+        Object *obj = nullptr;
+        Bone *bone = nullptr;
+
         bool touched = false;
         bool exported = false;
         bool renamed = false;

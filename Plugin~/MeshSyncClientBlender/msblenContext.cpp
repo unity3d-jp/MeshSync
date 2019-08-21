@@ -552,6 +552,10 @@ void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
                 }
             }
         }
+        if (m_settings.bake_transform) {
+            dst.refine_settings.local2world = dst.world_matrix;
+            dst.refine_settings.flags.apply_local2world = 1;
+        }
     }
     else {
         if (!m_settings.bake_modifiers && m_settings.sync_blendshapes) {
@@ -1291,6 +1295,7 @@ bool msblenContext::exportCache(const CacheSettings& cache_settings)
     m_settings.make_double_sided = cache_settings.make_double_sided;
     m_settings.curves_as_mesh = cache_settings.convert_to_mesh;
     m_settings.bake_modifiers = cache_settings.bake_modifiers;
+    m_settings.bake_transform = cache_settings.bake_transform;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;

@@ -157,8 +157,10 @@ void msmodoContext::extractTransformData(TreeNode& n,
         auto mat = to_float4x4(lxmat);
 
         mu::extract_trs(mat, pos, rot, scale);
+        // camera/light correction
         if (n.item.IsA(tCamera) || n.item.IsA(tLight))
             rot *= mu::rotate_y(180.0f * mu::DegToRad);
+
         if (dst_local)
             *dst_local = mat;
     }
@@ -171,7 +173,13 @@ void msmodoContext::extractTransformData(TreeNode& n,
     }
 }
 
-void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,
+void msmodoContext::extractTransformData(TreeNode& n, ms::Transform& dst)
+{
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility, &dst.world_matrix, &dst.local_matrix);
+}
+
+void msmodoContext::extractCameraData(TreeNode& n,
+    bool& ortho, float& near_plane, float& far_plane, float& fov,
     float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
     static uint32_t ch_proj_type, ch_res_x, ch_res_y, ch_clip_dist, ch_focal_len, ch_aperture_x, ch_aperture_y, ch_offset_x, ch_offset_y;
@@ -416,6 +424,7 @@ bool msmodoContext::exportCache(const CacheSettings& cache_settings)
     m_settings.export_cache = true;
     m_settings.make_double_sided = cache_settings.make_double_sided;
     m_settings.bake_deformers = cache_settings.bake_deformers;
+    m_settings.bake_transform = cache_settings.bake_transform;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
@@ -722,7 +731,7 @@ ms::TransformPtr msmodoContext::exportTransform(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
+    extractTransformData(n, dst);
 
     m_entity_manager.add(n.dst_obj);
     return ret;
@@ -734,7 +743,7 @@ ms::TransformPtr msmodoContext::exportMeshInstance(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
+    extractTransformData(n, dst);
     enumerateItemGraphR(n.item, LXsGRAPH_MESHINST, [&](CLxUser_Item& g) {
         n.dst_obj->reference = GetPath(g);
     });
@@ -749,7 +758,7 @@ ms::CameraPtr msmodoContext::exportCamera(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
+    extractTransformData(n, dst);
     extractCameraData(n, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
         dst.focal_length, dst.sensor_size, dst.lens_shift);
 
@@ -763,7 +772,7 @@ ms::LightPtr msmodoContext::exportLight(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
+    extractTransformData(n, dst);
     extractLightData(n, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
 
     m_entity_manager.add(n.dst_obj);
@@ -780,7 +789,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     auto& dst = *ret;
     n.dst_obj = ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
+    extractTransformData(n, dst);
 
     // note: this needs to be done in the main thread because accessing CLxUser_Mesh from worker thread causes a crash.
     // but some heavy tasks such as resolving materials can be in parallel. (see m_parallel_tasks)
@@ -1117,7 +1126,7 @@ ms::TransformPtr msmodoContext::exportReplicator(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility);
+    extractTransformData(n, dst);
     m_entity_manager.add(n.dst_obj);
 
     // export replica
