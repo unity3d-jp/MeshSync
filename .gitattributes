@@ -1,4 +1,4 @@
-* text=false
+* text=true
 *.h text
 *.c text
 *.hpp text
@@ -6,8 +6,6 @@
 *.cs text
 *.mel text
 *.py text
-*.plist text
-*.meta text
 *.txt text
 *.md text
 
