@@ -641,6 +641,16 @@ void msmaxContext::exportMaterials()
     int count = mtllib->Count();
 
     int material_index = 0;
+
+    // 3ds max allows faces to have no material. add dummy material for them.
+    {
+        auto dst = ms::Material::create();
+        dst->id = m_material_ids.getID(nullptr);
+        dst->index = material_index++;
+        dst->name = "Default";
+        m_material_manager.add(dst);
+    }
+
     for (int mi = 0; mi < count; ++mi) {
         auto do_export = [this, &material_index](Mtl *mtl) -> int // return material id
         {
