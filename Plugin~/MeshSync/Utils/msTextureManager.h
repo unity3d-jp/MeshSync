@@ -2,6 +2,7 @@
 
 #include "SceneGraph/msMaterial.h"
 
+#ifndef msRuntime
 namespace ms {
 
 class TextureManager
@@ -50,3 +51,4 @@ private:
 };
 
 } // namespace ms
+#endif // msRuntime

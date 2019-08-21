@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "msMaterialManager.h"
 
+#ifndef msRuntime
 namespace ms {
 
 MaterialManager::MaterialManager()
@@ -147,3 +148,4 @@ MaterialManager::Record& MaterialManager::lockAndGet(int id)
 }
 
 } // namespace ms
+#endif // msRuntime

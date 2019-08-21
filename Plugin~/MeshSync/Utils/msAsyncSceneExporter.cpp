@@ -2,6 +2,7 @@
 #include "msAsyncSceneExporter.h"
 #include "../MeshSync.h"
 
+#ifndef msRuntime
 namespace ms {
 
 template<class Entities>
@@ -317,4 +318,4 @@ void AsyncSceneCacheWriter::write()
 #endif // msEnableSceneCache
 
 } // namespace ms
-
+#endif // msRuntime

@@ -91,8 +91,10 @@ public:
 
     void setData(const void *src);
     void getData(void *dst) const;
+#ifndef msRuntime
     bool readFromFile(const char *path);
     bool writeToFile(const char *path) const;
+#endif // msRuntime
 };
 msSerializable(Texture);
 msDeclPtr(Texture);

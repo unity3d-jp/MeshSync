@@ -95,6 +95,7 @@ void Texture::getData(void *dst) const
     data.copy_to((char*)dst);
 }
 
+#ifndef msRuntime
 bool Texture::readFromFile(const char *path)
 {
     if (!path)
@@ -113,6 +114,7 @@ bool Texture::writeToFile(const char *path) const
         return false;
     return ByteArrayToFile(path, data);
 }
+#endif // msRuntime
 
 #undef EachMember
 

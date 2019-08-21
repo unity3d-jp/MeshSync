@@ -26,7 +26,6 @@ ISceneCacheSettingsBase::ISceneCacheSettingsBase()
     convert_scenes = 1;
     enable_diff = 1;
     preload_scenes = 1;
-    preload_entire_file = 0;
     generate_velocities = 0;
 }
 

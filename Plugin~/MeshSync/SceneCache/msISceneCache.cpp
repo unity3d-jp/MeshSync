@@ -430,25 +430,14 @@ ISceneCacheFile::ISceneCacheFile(const char *path, const ISceneCacheSettings& is
 {
 }
 
-ISceneCacheFile::StreamPtr ISceneCacheFile::createStream(const char *path, const ISceneCacheSettings& iscs)
+ISceneCacheFile::StreamPtr ISceneCacheFile::createStream(const char *path, const ISceneCacheSettings& /*iscs*/)
 {
     if (!path)
         return nullptr;
 
-    if (iscs.preload_entire_file) {
-        RawVector<char> buf;
-        if (FileToByteArray(path, buf)) {
-            auto ret = std::make_shared<MemoryStream>();
-            ret->swap(buf);
-            return ret;
-        }
-    }
-    else {
-        auto ret = std::make_shared<std::ifstream>();
-        ret->open(path, std::ios::binary);
-        return *ret ? ret : nullptr;
-    }
-    return nullptr;
+    auto ret = std::make_shared<std::ifstream>();
+    ret->open(path, std::ios::binary);
+    return *ret ? ret : nullptr;
 }
 
 

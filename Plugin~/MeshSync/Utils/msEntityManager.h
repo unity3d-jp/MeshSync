@@ -2,6 +2,7 @@
 
 #include "../SceneGraph/msSceneGraph.h"
 
+#ifndef msRuntime
 namespace ms {
 
 class EntityManager
@@ -69,3 +70,4 @@ private:
 };
 
 } // namespace ms
+#endif // msRuntime

@@ -5,9 +5,11 @@
 #define msVendor "Unity Technologies"
 #define msProtocolVersion 121
 
-#define msEnableNetwork
-#define msEnableSceneCache
 //#define msEnableProfiling
+#ifndef msRuntime
+    #define msEnableNetwork
+    #define msEnableSceneCache
+#endif
 
 namespace mu {}
 namespace ms {

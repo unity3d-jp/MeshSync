@@ -97,8 +97,10 @@ namespace UTJ.MeshSync
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public AssetData asset;
         [DllImport(Lib.name)] static extern FileAssetData msFileAssetCreate();
+#if UNITY_EDITOR
         [DllImport(Lib.name)] static extern byte msFileAssetReadFromFile(IntPtr self, string path);
         [DllImport(Lib.name)] static extern byte msFileAssetWriteToFile(IntPtr self, string path);
+#endif
         #endregion
 
         public static implicit operator bool(FileAssetData v) { return v.self != IntPtr.Zero; }
@@ -116,8 +118,10 @@ namespace UTJ.MeshSync
             set { asset.name = value; }
         }
 
+#if UNITY_EDITOR
         public bool ReadFromFile(string path) { return msFileAssetReadFromFile(self, path) != 0; }
         public bool WriteToFile(string path) { return msFileAssetWriteToFile(self, path) != 0; }
+#endif
     }
     #endregion
 
@@ -148,8 +152,10 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern void msAudioSetChannels(IntPtr self, int v);
         [DllImport(Lib.name)] static extern int msAudioGetSampleLength(IntPtr self);
         [DllImport(Lib.name)] static extern int msAudioGetDataAsFloat(IntPtr self, float[] dst);
+#if UNITY_EDITOR
         [DllImport(Lib.name)] static extern byte msAudioWriteToFile(IntPtr self, string path);
         [DllImport(Lib.name)] static extern byte msAudioExportAsWave(IntPtr self, string path);
+#endif
         #endregion
 
         public static implicit operator bool(AudioData v) { return v.self != IntPtr.Zero; }
@@ -196,6 +202,7 @@ namespace UTJ.MeshSync
             }
         }
 
+#if UNITY_EDITOR
         public bool WriteToFile(string path)
         {
             return msAudioWriteToFile(self, path) != 0;
@@ -204,6 +211,7 @@ namespace UTJ.MeshSync
         {
             return msAudioExportAsWave(self, path) != 0;
         }
+#endif
     }
     #endregion
 
@@ -312,6 +320,7 @@ namespace UTJ.MeshSync
             get { return msTextureGetDataPtr(self); }
         }
 
+#if UNITY_EDITOR
         public bool WriteToFile(string path)
         {
             return msTextureWriteToFile(self, path) != 0;
@@ -322,6 +331,7 @@ namespace UTJ.MeshSync
                 return msWriteToFile(path, data, data.Length) != 0;
             return false;
         }
+#endif
     }
     #endregion
 

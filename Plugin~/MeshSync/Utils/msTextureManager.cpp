@@ -2,6 +2,7 @@
 #include "msTextureManager.h"
 #include "msMisc.h"
 
+#ifndef msRuntime
 namespace ms {
 
 TextureManager::TextureManager()
@@ -194,3 +195,4 @@ void TextureManager::Record::waitTask()
 }
 
 } // namespace ms
+#endif // msRuntime

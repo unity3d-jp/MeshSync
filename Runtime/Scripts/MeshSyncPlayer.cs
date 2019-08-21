@@ -849,9 +849,10 @@ namespace UTJ.MeshSync
             var format = src.format;
             if (format == AudioFormat.RawFile)
             {
+#if UNITY_EDITOR
+                // create file and import it
                 var dstPath = assetPath + "/" + src.name;
                 src.WriteToFile(dstPath);
-#if UNITY_EDITOR
                 AssetDatabase.ImportAsset(dstPath);
                 ac = AssetDatabase.LoadAssetAtPath<AudioClip>(dstPath);
                 if (ac != null)
@@ -867,6 +868,7 @@ namespace UTJ.MeshSync
             else
             {
 #if UNITY_EDITOR
+                // export as .wav and import it
                 var dstPath = assetPath + "/" + src.name + ".wav";
                 if(src.ExportAsWave(dstPath))
                 {

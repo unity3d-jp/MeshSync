@@ -4,6 +4,7 @@
 #include "../SceneCache/msSceneCache.h"
 #include "msIDGenerator.h"
 
+#ifndef msRuntime
 namespace ms {
 
 class AsyncSceneExporter
@@ -89,3 +90,4 @@ private:
 #endif // msEnableSceneCache
 
 } // namespace ms
+#endif // msRuntime

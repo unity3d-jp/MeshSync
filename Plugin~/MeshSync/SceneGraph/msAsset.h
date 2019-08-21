@@ -61,8 +61,10 @@ public:
     uint64_t hash() const override;
     uint64_t checksum() const override;
 
+#ifndef msRuntime
     bool readFromFile(const char *path);
     bool writeToFile(const char *path) const;
+#endif
 };
 msSerializable(FileAsset);
 msDeclPtr(FileAsset);

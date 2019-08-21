@@ -87,6 +87,28 @@ double Audio::getDuration() const
     return (double)getSampleLength() / (frequency * channels);
 }
 
+bool Audio::convertSamplesToFloat(float *dst) const
+{
+    size_t n = data.size() / SizeOf(format);
+    if (n == 0)
+        return false; // invalid format
+
+    if (format == AudioFormat::U8)
+        U8NToF32(dst, (unorm8n*)data.cdata(), n);
+    else if (format == AudioFormat::S16)
+        S16ToF32(dst, (snorm16*)data.cdata(), n);
+    else if (format == AudioFormat::S24)
+        S24ToF32(dst, (snorm24*)data.cdata(), n);
+    else if (format == AudioFormat::S32)
+        S32ToF32(dst, (snorm32*)data.cdata(), n);
+    else if (format == AudioFormat::F32)
+        data.copy_to((char*)dst);
+    else
+        return false;
+    return true;
+}
+
+#ifndef msRuntime
 bool Audio::readFromFile(const char *path)
 {
     if (!path)
@@ -162,27 +184,6 @@ bool Audio::exportAsWave(const char *path) const
     os.write((char*)&datasize, 4);
     return true;
 }
-
-
-bool Audio::convertSamplesToFloat(float *dst) const
-{
-    size_t n = data.size() / SizeOf(format);
-    if (n == 0)
-        return false; // invalid format
-
-    if (format == AudioFormat::U8)
-        U8NToF32(dst, (unorm8n*)data.cdata(), n);
-    else if (format == AudioFormat::S16)
-        S16ToF32(dst, (snorm16*)data.cdata(), n);
-    else if (format == AudioFormat::S24)
-        S24ToF32(dst, (snorm24*)data.cdata(), n);
-    else if (format == AudioFormat::S32)
-        S32ToF32(dst, (snorm32*)data.cdata(), n);
-    else if (format == AudioFormat::F32)
-        data.copy_to((char*)dst);
-    else
-        return false;
-    return true;
-}
+#endif // msRuntime
 
 } // namespace ms
