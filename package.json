@@ -1,7 +1,7 @@
 {
     "name": "com.unity.meshsync",
     "description": "Live link plugin for Unity + Maya, 3ds Max, Blender, Modo, MotionBuilder, Metasequoia",
-    "version": "1.0.0",
+    "version": "1.0.0-preview",
     "unity": "2018.3",
     "displayName": "MeshSync"
 }
