@@ -163,7 +163,7 @@ void BoneData::clear()
 #define EachMember(F)\
     F(refine_settings) EachGeometryAttribute(F) F(root_bone) F(bones) F(blendshapes) F(submeshes) F(bounds)
 
-Mesh::Mesh() {}
+Mesh::Mesh() { clear(); }
 Mesh::~Mesh() {}
 EntityType Mesh::getType() const { return Type::Mesh; }
 bool Mesh::isGeometry() const { return true; }

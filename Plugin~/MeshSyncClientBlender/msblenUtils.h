@@ -6,16 +6,12 @@ std::string get_name(const Object *obj);
 std::string get_name(const Bone *obj);
 std::string get_path(const Object *obj);
 std::string get_path(const Object *arm, const Bone *obj);
-bool is_visible(const Object *obj);
+bool visible_in_render(const Object *obj);
+bool visible_in_viewport(const Object *obj);
 ModifierData* find_modofier(Object *obj, ModifierType type);
 Bone* find_bone_recursive(Bone *bone, const char *name);
 Bone* find_bone(Object *obj, const char *name);
 bPoseChannel* find_pose(Object *obj, const char *name);
-
-void extract_local_TRS(const Object *obj, mu::float3& t, mu::quatf& r, mu::float3& s);
-void extract_local_TRS(const Bone *bone, mu::float3& t, mu::quatf& r, mu::float3& s);
-void extract_local_TRS(const bPoseChannel *pose, mu::float3& t, mu::quatf& r, mu::float3& s);
-mu::float4x4 extract_bindpose(const Bone *bone);
 
 inline Collection* get_instance_collection(Object *obj)
 {

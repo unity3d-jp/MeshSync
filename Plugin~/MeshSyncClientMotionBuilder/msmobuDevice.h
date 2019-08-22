@@ -104,6 +104,11 @@ private:
     ms::MeshPtr exportMesh(NodeRecord& n);
     void doExtractMesh(ms::Mesh& dst, FBModel* src);
 
+    void extractTransformData(FBModel *src, mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis);
+    void extractCameraData(FBCamera* src, bool& ortho, float& near_plane, float& far_plane, float& fov,
+        float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);
+    void extractLightData(FBLight* src, ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle);
+
     int exportTexture(FBTexture* src, FBMaterialTextureType type);
     bool exportMaterial(FBMaterial* src, int index);
     bool exportMaterials();

@@ -34,15 +34,15 @@ global proc UnityMeshSync_CacheGUI()
 
     separator -h 20 -w 250;
 
-    optionMenu -l "Object Scope" umsCtrlCObjectScope;
-        menuItem -l "All";
-        menuItem -l "Selected";
+    optionMenu -l "Node" umsCtrlCObjectScope;
+        menuItem -l "All Nodes";
+        menuItem -l "Selected Nodes";
     optionMenu -e -sl ($objScope + 1) umsCtrlCObjectScope;
 
-    optionMenu -l "Frame Range" -cc umsCBFrameRange umsCtrlCFrameRange;
-        menuItem -l "Single";
-        menuItem -l "All";
-        menuItem -l "Custom";
+    optionMenu -l "Frame" -cc umsCBFrameRange umsCtrlCFrameRange;
+        menuItem -l "Current Frame";
+        menuItem -l "All Frames";
+        menuItem -l "Custom Range";
     optionMenu -e -sl ($frameRange + 1) umsCtrlCFrameRange;
 
     columnLayout -columnOffset "left" 20 umsCFoldFrameRange;
@@ -57,10 +57,10 @@ global proc UnityMeshSync_CacheGUI()
         text -l "Frame Step"; floatField -w 60 -v $frameStep umsCtrlCFrameStep;
     setParent ..;
 
-    optionMenu -l "Material Frame Range" umsCtrlCMFRange;
+    optionMenu -l "Material" umsCtrlCMFRange;
         menuItem -l "None";
-        menuItem -l "One";
-        menuItem -l "All";
+        menuItem -l "One Frame";
+        menuItem -l "All Frames";
     optionMenu -e -sl ($materialFrameRange + 1) umsCtrlCMFRange;
 
     separator -h 20 -w 250;

@@ -49,6 +49,7 @@ struct SyncSettings
     bool sync_colors = true;
     bool make_double_sided = false;
     bool bake_modifiers = false;
+    bool bake_transform = false;
     bool curves_as_mesh = true;
     bool flatten_hierarchy = false;
     bool sync_bones = true;
@@ -80,6 +81,7 @@ struct CacheSettings
 
     bool make_double_sided = false;
     bool bake_modifiers = true;
+    bool bake_transform = true;
     bool convert_to_mesh = true;
     bool flatten_hierarchy = false;
     bool merge_meshes = false;
@@ -115,9 +117,18 @@ public:
     void flushPendingList();
 
 private:
+    // note:
+    // ObjectRecord and Blender's Object is *NOT* 1 on 1 because there is 'dupli group' in Blender.
+    // dupli group is a collection of nodes that will be instanced.
+    // so, only the path is unique. Object maybe shared by multiple ObjectRecord.
     struct ObjectRecord : public mu::noncopyable
     {
         std::string path;
+        std::string name;
+        Object *host = nullptr; // parent of dupli group
+        Object *obj = nullptr;
+        Bone *bone = nullptr;
+
         bool touched = false;
         bool exported = false;
         bool renamed = false;
@@ -159,6 +170,20 @@ private:
     ms::CameraPtr exportCamera(Object *obj);
     ms::LightPtr exportLight(Object *obj);
     ms::MeshPtr exportMesh(Object *obj);
+
+    mu::float4x4 getWorldMatrix(const Object *obj);
+    mu::float4x4 getLocalMatrix(const Object *obj);
+    mu::float4x4 getLocalMatrix(const Bone *bone);
+    mu::float4x4 getLocalMatrix(const bPoseChannel *pose);
+    void extractTransformData(Object *src,
+        mu::float3& t, mu::quatf& r, mu::float3& s, ms::VisibilityFlags& vis,
+        mu::float4x4 *dst_world = nullptr, mu::float4x4 *dst_local = nullptr);
+    void extractTransformData(Object *src, ms::Transform& dst);
+    void extractCameraData(Object *src, bool& ortho, float& near_plane, float& far_plane, float& fov,
+        float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);
+    void extractLightData(Object *src,
+        ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& range, float& spot_angle);
+
     void doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
     void doExtractBlendshapeWeights(ms::Mesh& dst, Object *obj, Mesh *data);
     void doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data);

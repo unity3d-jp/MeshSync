@@ -628,6 +628,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
     m_settings.remove_namespace = cache_settings.remove_namespace;
     m_settings.make_double_sided = cache_settings.make_double_sided;
     m_settings.bake_deformers = cache_settings.bake_deformers;
+    m_settings.bake_transform = cache_settings.bake_transform;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
@@ -994,48 +995,53 @@ ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
     return n->dst_obj;
 }
 
-void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+mu::float4x4 msmayaContext::getWorldMatrix(TreeNode *n)
+{
+    auto& trans = n->trans->node;
+    MObject obj_wmat;
+    MFnDependencyNode(trans).findPlug("worldMatrix", true).elementByLogicalIndex(0).getValue(obj_wmat);
+    return to_float4x4(MFnMatrixData(obj_wmat).matrix());
+}
+
+mu::float4x4 msmayaContext::getLocalMatrix(TreeNode *n, mu::float4x4 *dst_world)
+{
+    // get local matrix by world matrix * inverse parent world matrix.
+    // using parentInverseMatrix plug seems more appropriate, but it seems sometimes have incorrect value on Maya2016...
+    auto r = getWorldMatrix(n);
+    if (dst_world)
+        *dst_world = r;
+
+    if (n->parent) {
+        auto pw = getWorldMatrix(n->parent);
+        r *= mu::invert(pw);
+    }
+    return r;
+}
+
+void msmayaContext::extractTransformData(TreeNode *n,
+    mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis,
+    mu::float4x4 *dst_world, mu::float4x4 *dst_local)
 {
     if (n->trans->isInstance()) {
         n = n->getPrimaryInstanceNode();
     }
 
-    auto get_maya_transform = [n]() -> mu::float4x4 {
-        // get TRS from world matrix.
-        // note: world matrix is a result of local TRS + parent TRS + constraints.
-        //       handling constraints by ourselves is extremely difficult. so getting TRS from world matrix is most reliable and easy way.
-
-        auto mat = mu::float4x4::identity();
-        {
-            auto& trans = n->trans->node;
-            MObject obj_wmat;
-            MFnDependencyNode(trans).findPlug("worldMatrix", true).elementByLogicalIndex(0).getValue(obj_wmat);
-            mat = to_float4x4(MFnMatrixData(obj_wmat).matrix());
-        }
-
-        // get inverse parent matrix to calculate local matrix.
-        // note: using parentInverseMatrix plug seems more appropriate, but it seems sometimes have incorrect value on Maya2016...
-        if (n->parent) {
-            auto& parent = n->parent->trans->node;
-            MObject obj_pwmat;
-            MFnDependencyNode(parent).findPlug("worldMatrix", true).elementByLogicalIndex(0).getValue(obj_pwmat);
-            auto pwmat = to_float4x4(MFnMatrixData(obj_pwmat).matrix());
-            mat *= mu::invert(pwmat);
-        }
-
-        return mat;
+    auto get_matrices = [&]() -> mu::float4x4 {
+        auto local = getLocalMatrix(n, dst_world);
+        if (dst_local)
+            *dst_local = local;
+        return local;
     };
 
     // maya-compatible transform extraction
-    auto maya_compatible_transform_extraction = [n, &get_maya_transform]() {
-        auto mat = get_maya_transform();
+    auto maya_compatible_transform_extraction = [&]() {
+        auto mat = get_matrices();
 
         auto& td = n->transform_data;
-        td.translation = extract_position(mat);
         td.pivot = mu::float3::zero();
         td.pivot_offset = mu::float3::zero();
-        td.rotation = extract_rotation(mat);
-        td.scale = extract_scale(mat);
+        mu::extract_trs(mat, td.translation, td.rotation, td.scale);
+
         n->model_transform = mu::float4x4::identity();
         n->maya_transform = mat;
     };
@@ -1043,7 +1049,7 @@ void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf
     // fbx-compatible transform extraction
     // - scale pivot is ignored
     // - rotation orientation is ignored
-    auto fbx_compatible_transform_extraction = [n, &get_maya_transform]() {
+    auto fbx_compatible_transform_extraction = [&]() {
         MFnTransform fn_trans(n->getDagPath(false));
 
         MQuaternion r;
@@ -1060,7 +1066,7 @@ void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf
 
         n->model_transform = mu::float4x4::identity();
         (mu::float3&)n->model_transform[3] = -td.pivot;
-        n->maya_transform = get_maya_transform();
+        n->maya_transform = get_matrices();
     };
 
     if (!m_settings.fbx_compatible_transform || n->shape->node.hasFn(MFn::kJoint))
@@ -1085,10 +1091,16 @@ void msmayaContext::extractTransformData(TreeNode *n, mu::float3& pos, mu::quatf
         rot = correct_axis(rot) * mu::rotate_z(180.0f * mu::DegToRad);
 
     scale = td.scale;
-    vis = n->isVisibleInHierarchy();
+    vis = { n->isVisibleInHierarchy(), true, true };
 }
 
-void msmayaContext::extractCameraData(TreeNode *n, bool& ortho, float& near_plane, float& far_plane, float& fov,
+void msmayaContext::extractTransformData(TreeNode *n, ms::Transform& dst)
+{
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility, &dst.world_matrix, &dst.local_matrix);
+}
+
+void msmayaContext::extractCameraData(TreeNode *n,
+    bool& ortho, float& near_plane, float& far_plane, float& fov,
     float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
     auto& shape = n->shape->node;
@@ -1107,7 +1119,7 @@ void msmayaContext::extractCameraData(TreeNode *n, bool& ortho, float& near_plan
         (float)(mcam.horizontalFilmOffset() * mu::InchToMillimeter_d),
         (float)(mcam.verticalFilmOffset() * mu::InchToMillimeter_d),
     };
-    lens_shift = shift / sensor_size; // to percent
+    lens_shift = shift / sensor_size; // to 0-1
 }
 
 void msmayaContext::extractLightData(TreeNode *n,
@@ -1161,7 +1173,7 @@ ms::TransformPtr msmayaContext::exportTransform(TreeNode *n)
     auto ret = createEntity<ms::Transform>(*n);
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    extractTransformData(n, dst);
 
     m_entity_manager.add(ret);
     return ret;
@@ -1172,7 +1184,7 @@ ms::TransformPtr msmayaContext::exportInstance(TreeNode *n)
     auto ret = createEntity<ms::Transform>(*n);
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    extractTransformData(n, dst);
 
     auto primary = n->getPrimaryInstanceNode();
     if (primary && n != primary)
@@ -1187,7 +1199,7 @@ ms::CameraPtr msmayaContext::exportCamera(TreeNode *n)
     auto ret = createEntity<ms::Camera>(*n);
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    extractTransformData(n, dst);
     extractCameraData(n, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
         dst.focal_length, dst.sensor_size, dst.lens_shift);
 
@@ -1200,7 +1212,7 @@ ms::LightPtr msmayaContext::exportLight(TreeNode *n)
     auto ret = createEntity<ms::Light>(*n);
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    extractTransformData(n, dst);
     extractLightData(n, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.spot_angle);
 
     m_entity_manager.add(ret);
@@ -1212,7 +1224,7 @@ ms::MeshPtr msmayaContext::exportMesh(TreeNode *n)
     auto ret = createEntity<ms::Mesh>(*n);
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible_hierarchy);
+    extractTransformData(n, dst);
 
     // send mesh contents even if the node is hidden.
 
@@ -1240,14 +1252,14 @@ ms::MeshPtr msmayaContext::exportMesh(TreeNode *n)
     return ret;
 }
 
-void msmayaContext::doExtractBlendshapeWeights(ms::Mesh & dst, TreeNode * n)
+void msmayaContext::doExtractBlendshapeWeights(ms::Mesh& dst, TreeNode *n)
 {
     auto& shape = n->shape->node;
     if (!shape.hasFn(MFn::kMesh))
         return;
 
-    dst.visible = IsVisible(shape);
-    if (!dst.visible)
+    dst.visibility = { IsVisible(shape), true, true };
+    if (!dst.visibility.active)
         return;
 
     MFnMesh mmesh(shape);
@@ -1839,14 +1851,14 @@ void msmayaContext::extractTransformAnimationData(ms::TransformAnimation& dst_, 
     auto pos = mu::float3::zero();
     auto rot = mu::quatf::identity();
     auto scale = mu::float3::one();
-    bool vis = true;
+    ms::VisibilityFlags vis;
     extractTransformData(n, pos, rot, scale, vis);
 
     float t = m_anim_time;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
-    dst.visible.push_back({ t, vis });
+    dst.visible.push_back({ t, (int)vis.active });
 }
 
 void msmayaContext::extractCameraAnimationData(ms::TransformAnimation& dst_, TreeNode *n)

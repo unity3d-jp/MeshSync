@@ -141,24 +141,45 @@ void msmodoContext::onIdle()
 }
 
 
-void msmodoContext::extractTransformData(TreeNode& n, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+void msmodoContext::extractTransformData(TreeNode& n,
+    mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis,
+    mu::float4x4 *dst_world, mu::float4x4 *dst_local)
 {
     CLxUser_Locator loc(n.item);
 
-    LXtMatrix4 lxmat;
-    loc.LocalTransform4(m_ch_read, lxmat);
-    mu::float4x4 mat = to_float4x4(lxmat);
+    // visibility
+    vis = { true, loc.Visible(m_ch_read) == LXe_TRUE, true };
 
-    pos = extract_position(mat);
-    rot = extract_rotation(mat);
-    if (n.item.IsA(tCamera) || n.item.IsA(tLight)) {
-        rot *= mu::rotate_y(180.0f * mu::DegToRad);
+    // transform
+    {
+        LXtMatrix4 lxmat;
+        loc.LocalTransform4(m_ch_read, lxmat);
+        auto mat = to_float4x4(lxmat);
+
+        mu::extract_trs(mat, pos, rot, scale);
+        // camera/light correction
+        if (n.item.IsA(tCamera) || n.item.IsA(tLight))
+            rot *= mu::rotate_y(180.0f * mu::DegToRad);
+
+        if (dst_local)
+            *dst_local = mat;
     }
-    scale = extract_scale(mat);
-    vis = loc.Visible(m_ch_read) == LXe_TRUE;
+
+    // world matrix
+    if (dst_world) {
+        LXtMatrix4 lxmat;
+        loc.WorldTransform4(m_ch_read, lxmat);
+        *dst_world = to_float4x4(lxmat);
+    }
 }
 
-void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plane, float& far_plane, float& fov,
+void msmodoContext::extractTransformData(TreeNode& n, ms::Transform& dst)
+{
+    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visibility, &dst.world_matrix, &dst.local_matrix);
+}
+
+void msmodoContext::extractCameraData(TreeNode& n,
+    bool& ortho, float& near_plane, float& far_plane, float& fov,
     float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
     static uint32_t ch_proj_type, ch_res_x, ch_res_y, ch_clip_dist, ch_focal_len, ch_aperture_x, ch_aperture_y, ch_offset_x, ch_offset_y;
@@ -185,14 +206,14 @@ void msmodoContext::extractCameraData(TreeNode& n, bool& ortho, float& near_plan
     m_ch_read.Double(n.item, ch_offset_x, &offset_x);
     m_ch_read.Double(n.item, ch_offset_y, &offset_y);
 
-    // disable clipping planes
+    // ignore clipping planes for now
     near_plane = far_plane = 0.0f;
     ortho = proj == 1;
     focal_length = (float)focal_len;
     sensor_size.x = (float)aperture_x; // in mm
     sensor_size.y = (float)aperture_y; // in mm
-    lens_shift.x = (float)(offset_x / aperture_x); // mm to percent
-    lens_shift.y = (float)(offset_y / aperture_y); // mm to percent
+    lens_shift.x = (float)(offset_x / aperture_x); // mm to 0-1
+    lens_shift.y = (float)(offset_y / aperture_y); // mm to 0-1
     fov = mu::compute_fov((float)aperture_y, focal_length);
 }
 
@@ -403,6 +424,7 @@ bool msmodoContext::exportCache(const CacheSettings& cache_settings)
     m_settings.export_cache = true;
     m_settings.make_double_sided = cache_settings.make_double_sided;
     m_settings.bake_deformers = cache_settings.bake_deformers;
+    m_settings.bake_transform = cache_settings.bake_transform;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
@@ -709,7 +731,7 @@ ms::TransformPtr msmodoContext::exportTransform(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(n, dst);
 
     m_entity_manager.add(n.dst_obj);
     return ret;
@@ -721,7 +743,7 @@ ms::TransformPtr msmodoContext::exportMeshInstance(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(n, dst);
     enumerateItemGraphR(n.item, LXsGRAPH_MESHINST, [&](CLxUser_Item& g) {
         n.dst_obj->reference = GetPath(g);
     });
@@ -736,7 +758,7 @@ ms::CameraPtr msmodoContext::exportCamera(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(n, dst);
     extractCameraData(n, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
         dst.focal_length, dst.sensor_size, dst.lens_shift);
 
@@ -750,7 +772,7 @@ ms::LightPtr msmodoContext::exportLight(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(n, dst);
     extractLightData(n, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
 
     m_entity_manager.add(n.dst_obj);
@@ -767,7 +789,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
     auto& dst = *ret;
     n.dst_obj = ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(n, dst);
 
     // note: this needs to be done in the main thread because accessing CLxUser_Mesh from worker thread causes a crash.
     // but some heavy tasks such as resolving materials can be in parallel. (see m_parallel_tasks)
@@ -1104,7 +1126,7 @@ ms::TransformPtr msmodoContext::exportReplicator(TreeNode& n)
     n.dst_obj = ret;
     auto& dst = *ret;
 
-    extractTransformData(n, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(n, dst);
     m_entity_manager.add(n.dst_obj);
 
     // export replica
@@ -1283,14 +1305,14 @@ void msmodoContext::extractTransformAnimationData(TreeNode& n)
     auto pos = mu::float3::zero();
     auto rot = mu::quatf::identity();
     auto scale = mu::float3::one();
-    bool vis = true;
+    ms::VisibilityFlags vis;
     extractTransformData(n, pos, rot, scale, vis);
 
     float t = m_anim_time;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
-    dst.visible.push_back({ t, vis });
+    dst.visible.push_back({ t, (int)vis.visible_in_render });
 }
 
 void msmodoContext::extractCameraAnimationData(TreeNode& n)
@@ -1305,8 +1327,8 @@ void msmodoContext::extractCameraAnimationData(TreeNode& n)
     extractCameraData(n, ortho, near_plane, far_plane, fov, focal_length, sensor_size, lens_shift);
 
     float t = m_anim_time;
-    dst.near_plane.push_back({ t, near_plane });
-    dst.far_plane.push_back({ t, far_plane });
+    //dst.near_plane.push_back({ t, near_plane });
+    //dst.far_plane.push_back({ t, far_plane });
     dst.fov.push_back({ t, fov });
     dst.focal_length.push_back({ t, focal_length });
     dst.sensor_size.push_back({ t, sensor_size });

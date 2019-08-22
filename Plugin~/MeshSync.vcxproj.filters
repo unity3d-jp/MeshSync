@@ -82,6 +82,9 @@
     <ClCompile Include="MeshSync\SceneGraph\msPointCache.cpp">
       <Filter>MeshSync\SceneGraph</Filter>
     </ClCompile>
+    <ClCompile Include="MeshSync\SceneGraph\msVariant.cpp">
+      <Filter>MeshSync\SceneGraph</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSync\msClient.h">
@@ -181,6 +184,9 @@
       <Filter>MeshSync\Utils</Filter>
     </ClInclude>
     <ClInclude Include="MeshSync\SceneGraph\msPointCache.h">
+      <Filter>MeshSync\SceneGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshSync\SceneGraph\msVariant.h">
       <Filter>MeshSync\SceneGraph</Filter>
     </ClInclude>
   </ItemGroup>

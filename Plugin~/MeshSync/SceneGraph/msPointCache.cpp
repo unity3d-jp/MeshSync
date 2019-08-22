@@ -7,7 +7,7 @@ static_assert(sizeof(PointsDataFlags) == sizeof(uint32_t), "");
 
 PointsDataFlags::PointsDataFlags()
 {
-    *(uint32_t*)this = 0;
+    (uint32_t&)*this = 0;
 }
 
 #pragma region Points
@@ -17,7 +17,7 @@ PointsDataFlags::PointsDataFlags()
     EachArray(F) F(bounds)
 
 
-Points::Points() {}
+Points::Points() { clear(); }
 Points::~Points() {}
 EntityType Points::getType() const { return Type::Points; }
 bool Points::isGeometry() const { return true; }

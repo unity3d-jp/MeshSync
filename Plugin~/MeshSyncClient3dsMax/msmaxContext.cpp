@@ -366,6 +366,7 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
     m_settings.ignore_non_renderable = cache_settings.ignore_non_renderable;
     m_settings.make_double_sided = cache_settings.make_double_sided;
     m_settings.bake_modifiers = cache_settings.bake_modifiers;
+    m_settings.bake_transform = cache_settings.bake_transform;
     m_settings.use_render_meshes = cache_settings.use_render_meshes;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
@@ -640,6 +641,16 @@ void msmaxContext::exportMaterials()
     int count = mtllib->Count();
 
     int material_index = 0;
+
+    // 3ds max allows faces to have no material. add dummy material for them.
+    {
+        auto dst = ms::Material::create();
+        dst->id = m_material_ids.getID(nullptr);
+        dst->index = material_index++;
+        dst->name = "Default";
+        m_material_manager.add(dst);
+    }
+
     for (int mi = 0; mi < count; ++mi) {
         auto do_export = [this, &material_index](Mtl *mtl) -> int // return material id
         {
@@ -786,7 +797,7 @@ mu::float4x4 msmaxContext::getPivotMatrix(INode *n)
     return mu::transform(t, r, mu::float3::one());
 }
 
-mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t, bool cancel_camera_correction)
+mu::float4x4 msmaxContext::getWorldMatrix(INode *n, TimeValue t, bool cancel_camera_correction)
 {
     auto obj = n->GetObjectRef();
     bool is_camera = IsCamera(obj);
@@ -833,43 +844,56 @@ mu::float4x4 msmaxContext::getGlobalMatrix(INode *n, TimeValue t, bool cancel_ca
 }
 
 void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
-    mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+    mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis,
+    mu::float4x4 *dst_world, mu::float4x4 *dst_local)
 {
-    vis = (n.node->IsHidden() || !IsVisibleInHierarchy(n.node, t)) ? false : true;
+    vis = { true, VisibleInRender(n.node, t), VisibleInViewport(n.node) };
 
     auto do_extract = [&](const mu::float4x4& mat) {
-        pos = mu::extract_position(mat);
-        rot = mu::extract_rotation(mat);
-        scale = mu::extract_scale(mat);
-        if (mu::near_equal(scale, mu::float3::one()))
-            scale = mu::float3::one();
+        mu::extract_trs(mat, pos, rot, scale);
+        return mat;
     };
 
     auto obj = n.node->GetObjectRef();
     if (m_settings.bake_modifiers) {
         if (IsCamera(obj) || IsLight(obj)) {
             // on camera/light, extract from global matrix
-            do_extract(getGlobalMatrix(n.node, t));
+            auto mat = do_extract(getWorldMatrix(n.node, t));
+
+            if (dst_world)
+                *dst_world = mat;
+            if (dst_local)
+                *dst_local = mat;
         }
         else {
             // on mesh, transform is applied to vertices when 'bake_modifiers' is enabled
             pos = mu::float3::zero();
             rot = mu::quatf::identity();
             scale = mu::float3::one();
+
+            if (dst_world)
+                *dst_world = mu::float4x4::identity();
+            if (dst_local)
+                *dst_local = mu::float4x4::identity();
         }
     }
     else {
-        auto mat = getGlobalMatrix(n.node, t);
+        auto world = getWorldMatrix(n.node, t);
+        auto local = world;
         if (auto parent = n.node->GetParentNode())
-            mat *= mu::invert(getGlobalMatrix(parent, t));
-        do_extract(mat);
+            local *= mu::invert(getWorldMatrix(parent, t));
+
+        do_extract(local);
+        if (dst_world)
+            *dst_world = world;
+        if (dst_local)
+            *dst_local = local;
     }
 }
 
-void msmaxContext::extractTransform(TreeNode& n)
+void msmaxContext::extractTransform(TreeNode& n, TimeValue t, ms::Transform& dst)
 {
-    auto& dst = *n.dst;
-    extractTransform(n, GetTime(), dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransform(n, GetTime(), dst.position, dst.rotation, dst.scale, dst.visibility, &dst.world_matrix, &dst.local_matrix);
 }
 
 void msmaxContext::extractCameraData(TreeNode& n, TimeValue t,
@@ -983,10 +1007,11 @@ std::shared_ptr<T> msmaxContext::createEntity(TreeNode& n)
 
 ms::TransformPtr msmaxContext::exportTransform(TreeNode& n)
 {
+    auto t = GetTime();
     auto ret = createEntity<ms::Transform>(n);
     auto& dst = *ret;
 
-    extractTransform(n);
+    extractTransform(n, t, dst);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -996,10 +1021,11 @@ ms::TransformPtr msmaxContext::exportInstance(TreeNode& n, ms::TransformPtr base
     if (!base)
         return nullptr;
 
+    auto t = GetTime();
     auto ret = createEntity<ms::Transform>(n);
     auto& dst = *ret;
 
-    extractTransform(n);
+    extractTransform(n, t, dst);
     dst.reference = base->path;
     m_entity_manager.add(ret);
     return ret;
@@ -1007,10 +1033,11 @@ ms::TransformPtr msmaxContext::exportInstance(TreeNode& n, ms::TransformPtr base
 
 ms::TransformPtr msmaxContext::exportCamera(TreeNode& n)
 {
+    auto t = GetTime();
     auto ret = createEntity<ms::Camera>(n);
     auto& dst = *ret;
-    extractTransform(n);
-    extractCameraData(n, GetTime(),
+    extractTransform(n, t, dst);
+    extractCameraData(n, t,
         dst.is_ortho, dst.fov, dst.near_plane, dst.far_plane, dst.focal_length, dst.sensor_size, dst.lens_shift,
         &dst.view_matrix);
     m_entity_manager.add(ret);
@@ -1019,9 +1046,10 @@ ms::TransformPtr msmaxContext::exportCamera(TreeNode& n)
 
 ms::TransformPtr msmaxContext::exportLight(TreeNode& n)
 {
+    auto t = GetTime();
     auto ret = createEntity<ms::Light>(n);
     auto& dst = *ret;
-    extractTransform(n);
+    extractTransform(n, t, dst);
     extractLightData(n, GetTime(),
         dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.spot_angle);
     m_entity_manager.add(ret);
@@ -1144,12 +1172,12 @@ static void GenSmoothNormals(ms::Mesh& dst, Mesh& mesh)
 ms::TransformPtr msmaxContext::exportMesh(TreeNode& n)
 {
     auto inode = n.node;
-    // send mesh contents even if the node is hidden.
-
+    auto t = GetTime();
     Mesh *mesh = nullptr;
     TriObject *tri = nullptr;
     bool needs_delete = false;
 
+    // send mesh contents even if the node is hidden.
     if (m_settings.sync_meshes) {
         tri = m_settings.bake_modifiers ?
             GetFinalMesh(inode, needs_delete) :
@@ -1163,7 +1191,7 @@ ms::TransformPtr msmaxContext::exportMesh(TreeNode& n)
                 // todo: support multiple meshes
                 BOOL del;
                 NullView view;
-                mesh = tri->GetRenderMesh(GetTime(), inode, view, del);
+                mesh = tri->GetRenderMesh(t, inode, view, del);
                 if (del)
                     m_tmp_meshes.push_back(mesh);
             }
@@ -1182,7 +1210,7 @@ ms::TransformPtr msmaxContext::exportMesh(TreeNode& n)
     }
 
     auto ret = createEntity<ms::Mesh>(n);
-    extractTransform(n);
+    extractTransform(n, t, *ret);
 
     auto task = [this, ret, inode, mesh]() {
         doExtractMeshData(*ret, inode, mesh);
@@ -1450,14 +1478,14 @@ void msmaxContext::extractTransformAnimation(ms::TransformAnimation& dst_, TreeN
     mu::float3 pos;
     mu::quatf rot;
     mu::float3 scale;
-    bool vis;
+    ms::VisibilityFlags vis;
     extractTransform(*n, m_current_time_tick, pos, rot, scale, vis);
 
     float t = m_anim_time;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
-    dst.visible.push_back({ t, vis });
+    dst.visible.push_back({ t, (int)vis.visible_in_render });
 }
 
 void msmaxContext::extractCameraAnimation(ms::TransformAnimation& dst_, TreeNode *n)

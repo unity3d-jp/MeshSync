@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "msEntityManager.h"
 
+#ifndef msRuntime
 namespace ms {
 
 EntityManager::EntityManager()
@@ -297,3 +298,4 @@ void EntityManager::Record::waitTask()
 }
 
 } // namespace ms
+#endif // msRuntime

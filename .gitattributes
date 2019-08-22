@@ -1,8 +1,13 @@
-* text=auto
+* text=true
 *.h text
 *.c text
 *.hpp text
 *.cpp text
+*.cs text
+*.mel text
+*.py text
+*.txt text
+*.md text
 
 *.bat text eol=crlf
 *.sln text eol=crlf

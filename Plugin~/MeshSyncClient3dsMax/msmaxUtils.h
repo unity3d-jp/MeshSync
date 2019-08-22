@@ -15,7 +15,8 @@ std::string GetCurrentMaxFileName();
 std::tuple<int, int> GetActiveFrameRange();
 
 bool IsRenderable(INode *n);
-bool IsVisibleInHierarchy(INode *n, TimeValue t);
+bool VisibleInRender(INode *n, TimeValue t);
+bool VisibleInViewport(INode *n);
 bool IsInWorldSpace(INode *n, TimeValue t);
 
 bool IsInstanced(INode *n);

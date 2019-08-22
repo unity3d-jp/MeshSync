@@ -59,6 +59,16 @@ int msblenContext::exportTexture(const std::string & path, ms::TextureType type)
 void msblenContext::exportMaterials()
 {
     int midx = 0;
+    
+    // Blender allows faces to have no material. add dummy material for them.
+    {
+        auto dst = ms::Material::create();
+        dst->id = m_material_ids.getID(nullptr);
+        dst->index = midx++;
+        dst->name = "Default";
+        m_material_manager.add(dst);
+    }
+
     auto bpy_data = bl::BData(bl::BContext::get().data());
     for (auto *mat : bpy_data.materials()) {
         auto ret = ms::Material::create();
@@ -97,26 +107,101 @@ void msblenContext::exportMaterials()
 }
 
 
-static void ExtractTransformData(Object *src, mu::float3& t, mu::quatf& r, mu::float3& s, bool& vis)
-{
-    extract_local_TRS(src, t, r, s);
-    vis = is_visible(src);
+static const mu::float4x4 g_arm_to_world = mu::float4x4{
+    1, 0, 0, 0,
+    0, 0,-1, 0,
+    0, 1, 0, 0,
+    0, 0, 0, 1
+};
+static const mu::float4x4 g_world_to_arm = mu::float4x4{
+    1, 0, 0, 0,
+    0, 0, 1, 0,
+    0,-1, 0, 0,
+    0, 0, 0, 1
+};
 
-    if (src->type == OB_CAMERA) {
-        static const auto cr = mu::rotate_z(180.0f * mu::DegToRad) * mu::rotate_x(180.0f * mu::DegToRad);
-        r *= cr;
-    }
-    else if (src->type == OB_LAMP) {
-        static const auto cr = mu::rotate_x(180.0f * mu::DegToRad);
-        r *= cr;
-    }
-}
-static void ExtractTransformData(Object *src, ms::Transform& dst)
+mu::float4x4 msblenContext::getWorldMatrix(const Object *obj)
 {
-    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
+    return bl::BObject(obj).matrix_world();
 }
 
-static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float& far_plane, float& fov,
+mu::float4x4 msblenContext::getLocalMatrix(const Object *obj)
+{
+    auto r = bl::BObject(obj).matrix_local();
+    if (obj->parent && obj->partype == PARBONE) {
+        if (auto bone = find_bone(obj->parent, obj->parsubstr)) {
+            auto arm_obj = obj->parent;
+
+            r *= mu::translate(mu::float3{ 0.0f, mu::length((mu::float3&)bone->tail - (mu::float3&)bone->head), 0.0f });
+            r *= g_world_to_arm;
+        }
+    }
+
+    if (obj->type == OB_CAMERA || obj->type == OB_LAMP) {
+        // camera/light correction
+        r = mu::float4x4{ {
+            {-r[0][0],-r[0][1],-r[0][2],-r[0][3]},
+            { r[1][0], r[1][1], r[1][2], r[1][3]},
+            {-r[2][0],-r[2][1],-r[2][2],-r[2][3]},
+            { r[3][0], r[3][1], r[3][2], r[3][3]},
+        } };
+    }
+    return r;
+}
+
+mu::float4x4 msblenContext::getLocalMatrix(const Bone *bone)
+{
+    auto r = (mu::float4x4&)bone->arm_mat;
+    if (auto parent = bone->parent)
+        r *= mu::invert((mu::float4x4&)parent->arm_mat);
+    else
+        r *= g_arm_to_world;
+    // todo: armature to world here
+    return r;
+}
+
+mu::float4x4 msblenContext::getLocalMatrix(const bPoseChannel *pose)
+{
+    auto r = (mu::float4x4&)pose->pose_mat;
+    if (auto parent = pose->parent)
+        r *= mu::invert((mu::float4x4&)parent->pose_mat);
+    else
+        r *= g_arm_to_world;
+    // todo: armature to world here
+    return r;
+}
+
+static void extract_bone_trs(const mu::float4x4& mat, mu::float3& t, mu::quatf& r, mu::float3& s)
+{
+    mu::extract_trs(mat, t, r, s);
+    // armature-space to world-space
+    t = mu::swap_yz(mu::flip_z(t));
+    r = mu::swap_yz(mu::flip_z(r));
+    s = mu::swap_yz(s);
+}
+
+void msblenContext::extractTransformData(Object *obj,
+    mu::float3& t, mu::quatf& r, mu::float3& s, ms::VisibilityFlags& vis,
+    mu::float4x4 *dst_world, mu::float4x4 *dst_local)
+{
+    vis = { true, visible_in_render(obj), visible_in_viewport(obj) };
+
+    auto local = getLocalMatrix(obj);
+    mu::extract_trs(local, t, r, s);
+
+    if (dst_world)
+        *dst_world = getWorldMatrix(obj);
+    if (dst_local)
+        *dst_local = local;
+}
+
+void msblenContext::extractTransformData(Object *src, ms::Transform& dst)
+{
+    extractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visibility, &dst.world_matrix, &dst.local_matrix);
+}
+
+void msblenContext::extractCameraData(Object *src,
+    bool& ortho, float& near_plane, float& far_plane, float& fov,
     float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
     bl::BCamera cam(src->data);
@@ -136,11 +221,11 @@ static void ExtractCameraData(Object *src, bool& ortho, float& near_plane, float
         fit = sensor_size.x > sensor_size.y ? CAMERA_SENSOR_FIT_HOR : CAMERA_SENSOR_FIT_VERT;
     const float aspx = sensor_size.x / sensor_size.y;
     const float aspy = sensor_size.y / sensor_size.x;
-    lens_shift.x = cam.shift_x() * (fit == CAMERA_SENSOR_FIT_HOR ? 1.0f : aspy); // in percent
-    lens_shift.y = cam.shift_y() * (fit == CAMERA_SENSOR_FIT_HOR ? aspx : 1.0f); // in percent
+    lens_shift.x = cam.shift_x() * (fit == CAMERA_SENSOR_FIT_HOR ? 1.0f : aspy); // 0-1
+    lens_shift.y = cam.shift_y() * (fit == CAMERA_SENSOR_FIT_HOR ? aspx : 1.0f); // 0-1
 }
 
-static void ExtractLightData(Object *src,
+void msblenContext::extractLightData(Object *src,
     ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& range, float& spot_angle)
 {
     auto data =
@@ -271,7 +356,7 @@ ms::TransformPtr msblenContext::exportTransform(Object *src)
     auto ret = ms::Transform::create();
     auto& dst = *ret;
     dst.path = get_path(src);
-    ExtractTransformData(src, dst);
+    extractTransformData(src, dst);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -281,7 +366,7 @@ ms::TransformPtr msblenContext::exportPose(Object *armature, bPoseChannel *src)
     auto ret = ms::Transform::create();
     auto& dst = *ret;
     dst.path = get_path(armature, src->bone);
-    extract_local_TRS(src, dst.position, dst.rotation, dst.scale);
+    extract_bone_trs(getLocalMatrix(src), dst.position, dst.rotation, dst.scale);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -291,7 +376,7 @@ ms::TransformPtr msblenContext::exportArmature(Object *src)
     auto ret = ms::Transform::create();
     auto& dst = *ret;
     dst.path = get_path(src);
-    ExtractTransformData(src, dst);
+    extractTransformData(src, dst);
     m_entity_manager.add(ret);
 
     for (auto pose : bl::list_range((bPoseChannel*)src->pose->chanbase.first)) {
@@ -310,8 +395,10 @@ ms::TransformPtr msblenContext::exportReference(Object *src, Object *host, const
     auto dst = ms::Transform::create();
     dst->path = path;
     dst->reference = local_path;
-    ExtractTransformData(src, *dst);
-    dst->visible = true; // todo: correct me
+    extractTransformData(src, *dst);
+
+    // todo:
+    dst->visibility = {};
 
     exportDupliGroup(src, host, path);
     m_entity_manager.add(dst);
@@ -334,14 +421,15 @@ ms::TransformPtr msblenContext::exportDupliGroup(Object *src, Object *host, cons
     auto dst = ms::Transform::create();
     dst->path = path;
     dst->position = -get_instance_offset(group);
-    dst->visible_hierarchy = is_visible(host); // todo: correct me
+    dst->visibility = { true, visible_in_render(host), visible_in_viewport(host) };
     m_entity_manager.add(dst);
 
     auto gobjects = bl::list_range((CollectionObject*)group->gobject.first);
     for (auto go : gobjects) {
         auto obj = go->ob;
         if (auto t = exportObject(obj, false)) {
-            t->visible = obj->id.lib == nullptr;
+            bool non_lib = obj->id.lib == nullptr;
+            t->visibility = { true, non_lib, non_lib };
         }
         exportReference(obj, host, path);
     }
@@ -353,8 +441,8 @@ ms::CameraPtr msblenContext::exportCamera(Object *src)
     auto ret = ms::Camera::create();
     auto& dst = *ret;
     dst.path = get_path(src);
-    ExtractTransformData(src, dst);
-    ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov, dst.focal_length, dst.sensor_size, dst.lens_shift);
+    extractTransformData(src, dst);
+    extractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov, dst.focal_length, dst.sensor_size, dst.lens_shift);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -364,8 +452,8 @@ ms::LightPtr msblenContext::exportLight(Object *src)
     auto ret = ms::Light::create();
     auto& dst = *ret;
     dst.path = get_path(src);
-    ExtractTransformData(src, dst);
-    ExtractLightData(src, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
+    extractTransformData(src, dst);
+    extractLightData(src, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.range, dst.spot_angle);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -401,7 +489,7 @@ ms::MeshPtr msblenContext::exportMesh(Object *src)
     dst.path = get_path(src);
 
     // transform
-    ExtractTransformData(src, dst);
+    extractTransformData(src, dst);
 
     if (m_settings.sync_meshes) {
         bool need_convert = 
@@ -473,6 +561,10 @@ void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
                     dst.refine_settings.mirror_basis = wm * mu::invert(mm);
                 }
             }
+        }
+        if (m_settings.bake_transform) {
+            dst.refine_settings.local2world = dst.world_matrix;
+            dst.refine_settings.flags.apply_local2world = 1;
         }
     }
     else {
@@ -598,6 +690,13 @@ void msblenContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *d
 
     if (!m_settings.bake_modifiers) {
         // bones
+
+        auto extract_bindpose = [](auto *bone) {
+            auto mat_bone = (mu::float4x4&)bone->arm_mat * g_arm_to_world;
+            // armature-space to world-space
+            return mu::invert(mu::swap_yz(mu::flip_z(mat_bone)));
+        };
+
         if (m_settings.sync_bones) {
             auto *arm_mod = (const ArmatureModifierData*)find_modofier(obj, eModifierType_Armature);
             if (arm_mod) {
@@ -942,14 +1041,14 @@ void msblenContext::extractTransformAnimationData(ms::TransformAnimation& dst_, 
     mu::float3 pos;
     mu::quatf rot;
     mu::float3 scale;
-    bool vis;
-    ExtractTransformData((Object*)obj, pos, rot, scale, vis);
+    ms::VisibilityFlags vis;
+    extractTransformData((Object*)obj, pos, rot, scale, vis);
 
     float t = m_anim_time;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
-    dst.visible.push_back({ t, vis });
+    dst.visible.push_back({ t, (int)vis.visible_in_render });
 }
 
 void msblenContext::extractPoseAnimationData(ms::TransformAnimation& dst_, void * obj)
@@ -959,7 +1058,7 @@ void msblenContext::extractPoseAnimationData(ms::TransformAnimation& dst_, void 
     mu::float3 pos;
     mu::quatf rot;
     mu::float3 scale;
-    extract_local_TRS((bPoseChannel*)obj, pos, rot, scale);
+    extract_bone_trs(getLocalMatrix((bPoseChannel*)obj), pos, rot, scale);
 
     float t = m_anim_time;
     dst.translation.push_back({ t, pos });
@@ -976,7 +1075,7 @@ void msblenContext::extractCameraAnimationData(ms::TransformAnimation& dst_, voi
     bool ortho;
     float near_plane, far_plane, fov, focal_length;
     mu::float2 sensor_size, lens_shift;
-    ExtractCameraData((Object*)obj, ortho, near_plane, far_plane, fov, focal_length, sensor_size, lens_shift);
+    extractCameraData((Object*)obj, ortho, near_plane, far_plane, fov, focal_length, sensor_size, lens_shift);
 
     float t = m_anim_time;
     dst.near_plane.push_back({ t , near_plane });
@@ -997,7 +1096,7 @@ void msblenContext::extractLightAnimationData(ms::TransformAnimation& dst_, void
     ms::Light::ShadowType stype;
     mu::float4 color;
     float intensity, range, spot_angle;
-    ExtractLightData((Object*)obj, ltype, stype, color, intensity, range, spot_angle);
+    extractLightData((Object*)obj, ltype, stype, color, intensity, range, spot_angle);
 
     float t = m_anim_time;
     dst.color.push_back({ t, color });
@@ -1206,6 +1305,7 @@ bool msblenContext::exportCache(const CacheSettings& cache_settings)
     m_settings.make_double_sided = cache_settings.make_double_sided;
     m_settings.curves_as_mesh = cache_settings.convert_to_mesh;
     m_settings.bake_modifiers = cache_settings.bake_modifiers;
+    m_settings.bake_transform = cache_settings.bake_transform;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;

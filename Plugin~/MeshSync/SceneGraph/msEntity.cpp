@@ -7,6 +7,7 @@
 namespace ms {
 
 static_assert(sizeof(TransformDataFlags) == sizeof(uint32_t), "");
+static_assert(sizeof(VisibilityFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(CameraDataFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(LightDataFlags) == sizeof(uint32_t), "");
 
@@ -204,7 +205,44 @@ void Entity::getName(std::string& dst) const
 #pragma region Transform
 TransformDataFlags::TransformDataFlags()
 {
-    *(uint32_t*)this = ~0x1u;
+    (uint32_t&)*this = 0;
+    unchanged = 0;
+    has_position = 1;
+    has_rotation = 1;
+    has_scale = 1;
+    has_visibility = 0;
+    has_layer = 0;
+    has_reference = 0;
+    has_user_properties = 0;
+}
+
+VisibilityFlags::VisibilityFlags()
+{
+    (uint32_t&)*this = 0;
+    active = 1;
+    visible_in_render = 1;
+    visible_in_viewport = 1;
+    cast_shadows = 1;
+    receive_shadows = 1;
+}
+
+VisibilityFlags::VisibilityFlags(bool active_, bool render, bool viewport, bool cast, bool receive)
+{
+    (uint32_t&)*this = 0;
+    active = active_;
+    visible_in_render = render;
+    visible_in_viewport = viewport;
+    cast_shadows = cast;
+    receive_shadows = receive;
+}
+
+bool VisibilityFlags::operator==(const VisibilityFlags& v) const { return (uint32_t&)*this == (uint32_t&)v; }
+bool VisibilityFlags::operator!=(const VisibilityFlags& v) const { return !(*this == v); }
+
+VisibilityFlags VisibilityFlags::uninitialized()
+{
+    uint32_t ret = ~0u;
+    return (VisibilityFlags&)ret;
 }
 
 std::shared_ptr<Transform> Transform::create(std::istream& is)
@@ -212,7 +250,7 @@ std::shared_ptr<Transform> Transform::create(std::istream& is)
     return std::static_pointer_cast<Transform>(super::create(is));
 }
 
-Transform::Transform() {}
+Transform::Transform() { clear(); }
 Transform::~Transform() {}
 
 EntityType Transform::getType() const
@@ -221,7 +259,7 @@ EntityType Transform::getType() const
 }
 
 #define EachMember(F)\
-    F(position) F(rotation) F(scale) F(visible) F(visible_hierarchy) F(layer) F(index) F(reference)
+    F(position) F(rotation) F(scale) F(visibility) F(layer) F(index) F(reference) F(user_properties)
 
 void Transform::serialize(std::ostream& os) const
 {
@@ -250,7 +288,12 @@ void Transform::setupDataFlags()
 {
     super::setupDataFlags();
 
+    td_flags.has_position = !is_inf(position);
+    td_flags.has_rotation = !is_inf(rotation);
+    td_flags.has_scale = !is_inf(scale);
+    td_flags.has_visibility = visibility != VisibilityFlags::uninitialized();
     td_flags.has_reference = !reference.empty();
+    td_flags.has_user_properties = !user_properties.empty();
 }
 
 bool Transform::isUnchanged() const
@@ -264,11 +307,11 @@ static bool NearEqual(const Transform& a, const Transform& b)
         near_equal(a.position, b.position) &&
         near_equal(a.rotation, b.rotation) &&
         near_equal(a.scale, b.scale) &&
+        a.visibility == b.visibility &&
+        a.layer == b.layer &&
         a.index == b.index &&
-        a.visible == b.visible &&
-        a.visible_hierarchy == b.visible_hierarchy &&
         a.reference == b.reference &&
-        a.layer == b.layer;
+        a.user_properties == b.user_properties;
 }
 
 bool Transform::strip(const Entity& base_)
@@ -320,19 +363,19 @@ void Transform::clear()
     super::clear();
 
     td_flags = {};
-    position = float3::zero();
-    rotation = quatf::identity();
-    scale = float3::one();
+    position = inf<float3>();
+    rotation = inf<quatf>();
+    scale = inf<float3>();
+    visibility = VisibilityFlags::uninitialized();
+    layer = 0;
     index = 0;
-
-    visible = true;
-    visible_hierarchy = true;
     reference.clear();
+    user_properties.clear();
 
     order = 0;
     parent = nullptr;
     local_matrix = float4x4::identity();
-    global_matrix = float4x4::identity();
+    world_matrix = float4x4::identity();
 }
 
 uint64_t Transform::checksumTrans() const
@@ -341,9 +384,9 @@ uint64_t Transform::checksumTrans() const
     ret += csum(position);
     ret += csum(rotation);
     ret += csum(scale);
+    ret += (uint32_t&)visibility;
+    ret += csum(layer);
     ret += csum(index);
-    ret += uint32_t(visible) << 8;
-    ret += uint32_t(visible_hierarchy) << 9;
     ret += csum(reference);
     return ret;
 }
@@ -375,6 +418,35 @@ void Transform::applyMatrix(const float4x4& v)
     if (!near_equal(v, float4x4::identity()))
         assignMatrix(v * toMatrix());
 }
+
+void Transform::addUserProperty(const Variant& v)
+{
+    user_properties.push_back(v);
+    std::sort(user_properties.begin(), user_properties.end(),
+        [](auto& a, auto& b) {return a.name < b.name; });
+}
+
+void Transform::addUserProperty(Variant&& v)
+{
+    user_properties.push_back(std::move(v));
+    std::sort(user_properties.begin(), user_properties.end(),
+        [](auto& a, auto& b) {return a.name < b.name; });
+}
+
+const Variant* Transform::getUserProperty(int i) const
+{
+    return &user_properties[i];
+}
+
+const Variant* Transform::findUserProperty(const char *name) const
+{
+    auto it = std::lower_bound(user_properties.begin(), user_properties.end(), name,
+        [](auto& a, auto n) { return a.name < n; });
+    if (it != user_properties.end() && it->name == name)
+        return &(*it);
+    return nullptr;
+}
+
 #undef EachMember
 #pragma endregion
 
@@ -383,13 +455,21 @@ void Transform::applyMatrix(const float4x4& v)
 #pragma region Camera
 CameraDataFlags::CameraDataFlags()
 {
-    *(uint32_t*)this = ~0x1u;
+    (uint32_t&)*this = 0;
+    unchanged = 0;
+    has_is_ortho = 1;
+    has_fov = 0;
+    has_near_plane = 0;
+    has_far_plane = 0;
+    has_focal_length = 0;
+    has_sensor_size = 0;
+    has_lens_shift = 0;
     has_view_matrix = 0;
     has_proj_matrix = 0;
     has_layer_mask = 0;
 }
 
-Camera::Camera() {}
+Camera::Camera() { clear(); }
 Camera::~Camera() {}
 
 EntityType Camera::getType() const
@@ -546,11 +626,18 @@ EntityPtr Camera::clone(bool /*detach*/)
 #pragma region Light
 LightDataFlags::LightDataFlags()
 {
-    *(uint32_t*)this = ~0x1u;
+    (uint32_t&)*this = 0;
+    unchanged = 0;
+    has_light_type = 1;
+    has_shadow_type = 1;
+    has_color = 1;
+    has_intensity = 1;
+    has_range = 1;
+    has_spot_angle = 1;
     has_layer_mask = 0;
 }
 
-Light::Light() {}
+Light::Light() { clear(); }
 Light::~Light() {}
 
 EntityType Light::getType() const
@@ -587,11 +674,12 @@ void Light::deserialize(std::istream & is)
 void Light::setupDataFlags()
 {
     super::setupDataFlags();
-
-    //ld_flags.has_color = color != float4::zero();
-    //ld_flags.has_intensity = intensity != 0.0f;
-    //ld_flags.has_range = range != 0.0f;
-    //ld_flags.has_spot_angle = spot_angle != 0.0f;
+    ld_flags.has_light_type = light_type != LightType::Unknown;
+    ld_flags.has_shadow_type= shadow_type != ShadowType::Unknown;
+    ld_flags.has_color      = !is_inf(color);
+    ld_flags.has_intensity  = !is_inf(intensity);
+    ld_flags.has_range      = !is_inf(range);
+    ld_flags.has_spot_angle = !is_inf(spot_angle);
 }
 
 bool Light::isUnchanged() const
@@ -661,12 +749,12 @@ void Light::clear()
     super::clear();
 
     ld_flags = {};
-    light_type = LightType::Directional;
+    light_type = LightType::Unknown;
     shadow_type = ShadowType::Unknown;
-    color = float4::one();
-    intensity = 1.0f;
-    range = 0.0f;
-    spot_angle = 30.0f;
+    color = inf<float4>();
+    intensity = inf<float>();
+    range = inf<float>();
+    spot_angle = inf<float>();
     layer_mask = ~0;
 }
 

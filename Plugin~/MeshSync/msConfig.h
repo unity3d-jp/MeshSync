@@ -3,11 +3,12 @@
 #define msPluginVersion 20190819
 #define msPluginVersionStr "20190819"
 #define msVendor "Unity Technologies"
-#define msProtocolVersion 120
+#define msProtocolVersion 121
 
+//#define msEnableProfiling
 #define msEnableNetwork
 #define msEnableSceneCache
-//#define msEnableProfiling
+//#define msRuntime
 
 namespace mu {}
 namespace ms {

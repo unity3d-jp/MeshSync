@@ -39,6 +39,7 @@
 #include <future>
 #include <random>
 
+#ifndef msRuntime
 #define POCO_STATIC
 #include "Poco/Path.h"
 #include "Poco/File.h"
@@ -66,3 +67,4 @@
 #include "Poco/Net/StreamSocket.h"
 #include "Poco/Net/SocketStream.h"
 #include "Poco/Net/SocketAddress.h"
+#endif

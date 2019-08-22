@@ -2,6 +2,7 @@
 
 #include "SceneGraph/msMaterial.h"
 
+#ifndef msRuntime
 namespace ms {
 
 class MaterialManager
@@ -52,3 +53,4 @@ private:
 };
 
 } // namespace ms
+#endif // msRuntime

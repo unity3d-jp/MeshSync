@@ -7,6 +7,7 @@
 #include "muHalf.h"
 #include "muMath.h"
 #include "muQuat32.h"
+#include "muLimits.h"
 #include "muSIMD.h"
 #include "muAlgorithm.h"
 #include "muVertex.h"

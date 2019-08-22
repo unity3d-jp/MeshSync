@@ -45,12 +45,14 @@ public:
     void* allocate(int num_samples);
     size_t getSampleLength() const;
     double getDuration() const;
+    // length of dst must be frequency * channels
+    bool convertSamplesToFloat(float *dst) const;
+
+#ifndef msRuntime
     bool readFromFile(const char *path);
     bool writeToFile(const char *path) const;
     bool exportAsWave(const char *path) const;
-
-    // length of dst must be frequency * channels
-    bool convertSamplesToFloat(float *dst) const;
+#endif
 };
 msSerializable(Audio);
 msDeclPtr(Audio);

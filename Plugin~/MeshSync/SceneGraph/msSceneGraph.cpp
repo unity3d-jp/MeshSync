@@ -252,12 +252,12 @@ TransformPtr Scene::findEntity(const std::string& path) const
     return ret;
 }
 
-static float4x4 CalcGlobalMatrix(Transform& t)
+static float4x4 CalcWorldMatrix(Transform& t)
 {
     if (!t.parent)
         return t.local_matrix;
     else
-        return t.local_matrix * CalcGlobalMatrix(*t.parent);
+        return t.local_matrix * CalcWorldMatrix(*t.parent);
 }
 
 void Scene::buildHierarchy()
@@ -284,7 +284,7 @@ void Scene::buildHierarchy()
         std::string path;
         for (int i = begin; i < end; ++i) {
             auto& e = entities[i];
-            e->global_matrix = CalcGlobalMatrix(*e);
+            e->world_matrix = CalcWorldMatrix(*e);
         }
     });
 }

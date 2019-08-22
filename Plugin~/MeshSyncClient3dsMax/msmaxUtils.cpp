@@ -67,12 +67,17 @@ bool IsRenderable(INode *n)
     return n->Renderable() != 0;
 }
 
-bool IsVisibleInHierarchy(INode *n, TimeValue t)
+bool VisibleInRender(INode *n, TimeValue t)
 {
     auto parent = n->GetParentNode();
-    if (parent && !IsVisibleInHierarchy(parent, t))
+    if (parent && !VisibleInRender(parent, t))
         return false;
     return  n->GetVisibility(t) > 0.0f;
+}
+
+bool VisibleInViewport(INode *n)
+{
+    return n->IsHidden() == 0;
 }
 
 bool IsInWorldSpace(INode *n, TimeValue t)

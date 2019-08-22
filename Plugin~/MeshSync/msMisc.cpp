@@ -11,6 +11,7 @@ bool StartWith(const std::string& a, const char *b)
     return std::strncmp(a.c_str(), b, n) == 0;
 }
 
+#ifndef msRuntime
 bool FileToByteArray(const char *path, RawVector<char> &dst)
 {
     if (!path)
@@ -94,5 +95,6 @@ void FindFilesSortedByLastModified(const std::string& path, std::multimap<uint64
         ++dir_itr;
     }
 }
+#endif // msRuntime
 
 } // namespace ms

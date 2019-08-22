@@ -50,6 +50,7 @@ struct SyncSettings
     bool flip_faces = true;
     bool make_double_sided = false;
     bool bake_modifiers = false;
+    bool bake_transform = false;
     bool use_render_meshes = false;
     bool sync_bones = true;
     bool sync_blendshapes = true;
@@ -83,6 +84,7 @@ struct CacheSettings
     bool ignore_non_renderable = true;
     bool make_double_sided = false;
     bool bake_modifiers = true;
+    bool bake_transform = true;
     bool use_render_meshes = true;
     bool flatten_hierarchy = false;
     bool merge_meshes = false;
@@ -200,9 +202,11 @@ private:
     ms::TransformPtr exportMesh(TreeNode& node);
 
     mu::float4x4 getPivotMatrix(INode *n);
-    mu::float4x4 getGlobalMatrix(INode *n, TimeValue t, bool cancel_camera_correction = true);
-    void extractTransform(TreeNode& node, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis);
-    void extractTransform(TreeNode& node);
+    mu::float4x4 getWorldMatrix(INode *n, TimeValue t, bool cancel_camera_correction = true);
+    void extractTransform(
+        TreeNode& node, TimeValue t, mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis,
+        mu::float4x4 *dst_world = nullptr, mu::float4x4 *dst_local = nullptr);
+    void extractTransform(TreeNode& node, TimeValue t, ms::Transform& dst);
     void extractCameraData(TreeNode& node, TimeValue t,
         bool& ortho, float& fov, float& near_plane, float& far_plane,
         float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift,

@@ -20,26 +20,11 @@ static ms::ClientSettings GetClientSettings()
 
 static void Send(ms::ScenePtr scene)
 {
-    for (auto& obj : scene->entities) {
-        if (auto *mesh = dynamic_cast<ms::Mesh*>(obj.get())) {
-            mesh->setupDataFlags();
-        }
-    }
-
-    ms::Client client(GetClientSettings());
-    {
-        ms::FenceMessage mes;
-        mes.type = ms::FenceMessage::FenceType::SceneBegin;
-        client.send(mes);
-    }
-    {
-        ms::SetMessage mes(scene);
-        client.send(mes);
-    }
-    {
-        ms::FenceMessage mes;
-        mes.type = ms::FenceMessage::FenceType::SceneEnd;
-        client.send(mes);
+    ms::AsyncSceneSender sender;
+    sender.client_settings = GetClientSettings();
+    if (sender.isServerAvaileble()) {
+        sender.add(scene);
+        sender.kick();
     }
 }
 
@@ -206,10 +191,15 @@ TestCase(Test_Points)
         node->position = { 0.0f, 0.0f, 0.0f };
         node->rotation = quatf::identity();
         node->scale = { 1.0f, 1.0f, 1.0f };
-        node->visible_hierarchy = false;
+        node->visibility = { false, true, true };
         GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->uv0, 0.1f, 1);
         node->refine_settings.flags.gen_normals = 1;
         node->refine_settings.flags.gen_tangents = 1;
+
+        {
+            ms::Variant test("test", ms::float4::one());
+            node->addUserProperty(std::move(test));
+        }
     }
     {
         auto node = ms::Points::create();

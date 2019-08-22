@@ -97,8 +97,10 @@ namespace UTJ.MeshSync
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public AssetData asset;
         [DllImport(Lib.name)] static extern FileAssetData msFileAssetCreate();
+#if UNITY_EDITOR
         [DllImport(Lib.name)] static extern byte msFileAssetReadFromFile(IntPtr self, string path);
         [DllImport(Lib.name)] static extern byte msFileAssetWriteToFile(IntPtr self, string path);
+#endif
         #endregion
 
         public static implicit operator bool(FileAssetData v) { return v.self != IntPtr.Zero; }
@@ -116,8 +118,10 @@ namespace UTJ.MeshSync
             set { asset.name = value; }
         }
 
+#if UNITY_EDITOR
         public bool ReadFromFile(string path) { return msFileAssetReadFromFile(self, path) != 0; }
         public bool WriteToFile(string path) { return msFileAssetWriteToFile(self, path) != 0; }
+#endif
     }
     #endregion
 
@@ -148,8 +152,10 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern void msAudioSetChannels(IntPtr self, int v);
         [DllImport(Lib.name)] static extern int msAudioGetSampleLength(IntPtr self);
         [DllImport(Lib.name)] static extern int msAudioGetDataAsFloat(IntPtr self, float[] dst);
+#if UNITY_EDITOR
         [DllImport(Lib.name)] static extern byte msAudioWriteToFile(IntPtr self, string path);
         [DllImport(Lib.name)] static extern byte msAudioExportAsWave(IntPtr self, string path);
+#endif
         #endregion
 
         public static implicit operator bool(AudioData v) { return v.self != IntPtr.Zero; }
@@ -196,6 +202,7 @@ namespace UTJ.MeshSync
             }
         }
 
+#if UNITY_EDITOR
         public bool WriteToFile(string path)
         {
             return msAudioWriteToFile(self, path) != 0;
@@ -204,6 +211,7 @@ namespace UTJ.MeshSync
         {
             return msAudioExportAsWave(self, path) != 0;
         }
+#endif
     }
     #endregion
 
@@ -312,6 +320,7 @@ namespace UTJ.MeshSync
             get { return msTextureGetDataPtr(self); }
         }
 
+#if UNITY_EDITOR
         public bool WriteToFile(string path)
         {
             return msTextureWriteToFile(self, path) != 0;
@@ -322,6 +331,7 @@ namespace UTJ.MeshSync
                 return msWriteToFile(path, data, data.Length) != 0;
             return false;
         }
+#endif
     }
     #endregion
 
@@ -1024,6 +1034,162 @@ namespace UTJ.MeshSync
     #endregion
 
 
+    #region Variant
+    public struct VariantData
+    {
+        #region internal
+        public IntPtr self;
+        [DllImport(Lib.name)] static extern IntPtr msVariantGetName(IntPtr self);
+        [DllImport(Lib.name)] static extern Type msVariantGetType(IntPtr self);
+        [DllImport(Lib.name)] static extern int msVariantGetArrayLength(IntPtr self);
+
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, ref int dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, ref float dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, ref Vector2 dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, ref Vector3 dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, ref Vector4 dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, ref Matrix4x4 dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, int[] dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, float[] dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, Vector2[] dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, Vector3[] dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, Vector4[] dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, Matrix4x4[] dst);
+        #endregion
+
+        public static explicit operator bool(VariantData v) { return v.self != IntPtr.Zero; }
+
+        public enum Type
+        {
+            Unknown,
+            String,
+            Int,
+            Float,
+            Float2,
+            Float3,
+            Float4,
+            Quat,
+            Float2x2,
+            Float3x3,
+            Float4x4,
+        }
+
+        string name
+        {
+            get { return Misc.S(msVariantGetName(self)); }
+        }
+        Type type
+        {
+            get { return msVariantGetType(self); }
+        }
+        int arrayLength
+        {
+            get { return msVariantGetArrayLength(self); }
+        }
+
+        public int intValue
+        {
+            get
+            {
+                int ret = 0;
+                msVariantCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public float floatValue
+        {
+            get
+            {
+                float ret = 0;
+                msVariantCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public Vector2 vector2Value
+        {
+            get
+            {
+                Vector2 ret = Vector2.zero;
+                msVariantCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public Vector3 vector3Value
+        {
+            get
+            {
+                Vector3 ret = Vector3.zero;
+                msVariantCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public Vector4 vector4Value
+        {
+            get
+            {
+                Vector4 ret = Vector4.zero;
+                msVariantCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public Matrix4x4 matrixValue
+        {
+            get
+            {
+                Matrix4x4 ret = Matrix4x4.identity;
+                msVariantCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public float[] floatArray
+        {
+            get
+            {
+                var ret = new float[arrayLength];
+                msVariantCopyData(self, ret);
+                return ret;
+            }
+        }
+        public Vector2[] vector2Array
+        {
+            get
+            {
+                var ret = new Vector2[arrayLength];
+                msVariantCopyData(self, ret);
+                return ret;
+            }
+        }
+        public Vector3[] vector3Array
+        {
+            get
+            {
+                var ret = new Vector3[arrayLength];
+                msVariantCopyData(self, ret);
+                return ret;
+            }
+        }
+        public Vector4[] vector4Array
+        {
+            get
+            {
+                var ret = new Vector4[arrayLength];
+                msVariantCopyData(self, ret);
+                return ret;
+            }
+        }
+        public Matrix4x4[] matrixArray
+        {
+            get
+            {
+                var ret = new Matrix4x4[arrayLength];
+                msVariantCopyData(self, ret);
+                return ret;
+            }
+        }
+    }
+
+    #endregion
+
     #region Entities
     public struct Identifier
     {
@@ -1054,7 +1220,18 @@ namespace UTJ.MeshSync
         public bool hasPosition { get { return flags[1]; } }
         public bool hasRotation { get { return flags[2]; } }
         public bool hasScale { get { return flags[3]; } }
-        public bool hasReference { get { return flags[8]; } }
+        public bool hasVisibility { get { return flags[4]; } }
+        public bool hasReference { get { return flags[7]; } }
+    }
+
+    public struct VisibilityFlags
+    {
+        public BitFlags flags;
+        public bool active { get { return flags[0]; } }
+        public bool visibleInRender { get { return flags[1]; } }
+        public bool visibleInViewport { get { return flags[2]; } }
+        public bool castShadows { get { return flags[3]; } }
+        public bool ReceiveShadows { get { return flags[4]; } }
     }
 
     public struct TransformData
@@ -1065,22 +1242,24 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern TransformDataFlags msTransformGetDataFlags(IntPtr self);
         [DllImport(Lib.name)] static extern EntityType msTransformGetType(IntPtr self);
         [DllImport(Lib.name)] static extern int msTransformGetHostID(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetHostID(IntPtr self, int v);
         [DllImport(Lib.name)] static extern int msTransformGetIndex(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetIndex(IntPtr self, int v);
         [DllImport(Lib.name)] static extern IntPtr msTransformGetPath(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetPath(IntPtr self, string v);
         [DllImport(Lib.name)] static extern Vector3 msTransformGetPosition(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetPosition(IntPtr self, Vector3 v);
         [DllImport(Lib.name)] static extern Quaternion msTransformGetRotation(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetRotation(IntPtr self, Quaternion v);
         [DllImport(Lib.name)] static extern Vector3 msTransformGetScale(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetScale(IntPtr self, Vector3 v);
-        [DllImport(Lib.name)] static extern byte msTransformGetVisible(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetVisible(IntPtr self, byte v);
-        [DllImport(Lib.name)] static extern byte msTransformGetVisibleHierarchy(IntPtr self);
-        [DllImport(Lib.name)] static extern void msTransformSetVisibleHierarchy(IntPtr self, byte v);
+        [DllImport(Lib.name)] static extern VisibilityFlags msTransformGetVisibility(IntPtr self);
         [DllImport(Lib.name)] static extern IntPtr msTransformGetReference(IntPtr self);
+        [DllImport(Lib.name)] static extern int msTransformGetNumUserProperties(IntPtr self);
+        [DllImport(Lib.name)] static extern VariantData msTransformGetUserProperty(IntPtr self, int i) ;
+        [DllImport(Lib.name)] static extern VariantData msTransformFindUserProperty(IntPtr self, string name);
+
+        [DllImport(Lib.name)] static extern void msTransformSetHostID(IntPtr self, int v);
+        [DllImport(Lib.name)] static extern void msTransformSetIndex(IntPtr self, int v);
+        [DllImport(Lib.name)] static extern void msTransformSetPath(IntPtr self, string v);
+        [DllImport(Lib.name)] static extern void msTransformSetPosition(IntPtr self, Vector3 v);
+        [DllImport(Lib.name)] static extern void msTransformSetRotation(IntPtr self, Quaternion v);
+        [DllImport(Lib.name)] static extern void msTransformSetScale(IntPtr self, Vector3 v);
+        [DllImport(Lib.name)] static extern void msTransformSetVisibility(IntPtr self, VisibilityFlags v);
         [DllImport(Lib.name)] static extern void msTransformSetReference(IntPtr self, string v);
         #endregion
 
@@ -1133,21 +1312,23 @@ namespace UTJ.MeshSync
             get { return msTransformGetScale(self); }
             set { msTransformSetScale(self, value); }
         }
-        public bool visible
+        public VisibilityFlags visibility
         {
-            get { return msTransformGetVisible(self) != 0; }
-            set { msTransformSetVisible(self, (byte)(value ? 1 : 0)); }
-        }
-        public bool visibleHierarchy
-        {
-            get { return msTransformGetVisibleHierarchy(self) != 0; }
-            set { msTransformSetVisibleHierarchy(self, (byte)(value ? 1 : 0)); }
+            get { return msTransformGetVisibility(self); }
+            set { msTransformSetVisibility(self, value); }
         }
         public string reference
         {
             get { return Misc.S(msTransformGetReference(self)); }
             set { msTransformSetReference(self, value); }
         }
+        public int numUserData
+        {
+            get { return msTransformGetNumUserProperties(self); }
+        }
+
+        VariantData GetUserProperty(int i) { return msTransformGetUserProperty(self, i); }
+        VariantData FindUserProperty(int i, string name) { return msTransformFindUserProperty(self, name); }
     }
 
     public struct CameraDataFlags
@@ -1254,6 +1435,12 @@ namespace UTJ.MeshSync
     {
         public BitFlags flags;
         public bool unchanged { get { return flags[0]; } }
+        public bool hasShadowType { get { return flags[2]; } }
+        public bool hasColor { get { return flags[3]; } }
+        public bool hasIntensity { get { return flags[4]; } }
+        public bool hasRange { get { return flags[5]; } }
+        public bool hasSpotAngle { get { return flags[6]; } }
+        public bool hasLayerMask { get { return flags[7]; } }
     }
 
     [StructLayout(LayoutKind.Explicit)]
@@ -1782,6 +1969,12 @@ namespace UTJ.MeshSync
 
 
     #region Scene
+    public enum ZUpCorrectionMode
+    {
+        FlipYZ,
+        RotateX,
+    }
+
     public struct SceneProfileData
     {
         public ulong sizeEncoded;

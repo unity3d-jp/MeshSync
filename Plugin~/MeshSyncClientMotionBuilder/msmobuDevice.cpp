@@ -341,7 +341,7 @@ ms::TransformPtr msmobuDevice::exportObject(FBModel* src, bool parent, bool tip)
 }
 
 
-static void ExtractTransformData(FBModel *src, mu::float3& pos, mu::quatf& rot, mu::float3& scale, bool& vis)
+void msmobuDevice::extractTransformData(FBModel *src, mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis)
 {
     FBMatrix tmp;
     src->GetMatrix(tmp, kModelTransformation, true, nullptr);
@@ -355,7 +355,7 @@ static void ExtractTransformData(FBModel *src, mu::float3& pos, mu::quatf& rot, 
     pos = extract_position(trs);
     rot = extract_rotation(trs);
     scale = extract_scale(trs);
-    vis = IsVisibleInHierarchy(src);
+    vis = { IsVisibleInHierarchy(src), true, true };
 
     if (IsCamera(src))
         rot *= mu::rotate_y(90.0f * mu::DegToRad);
@@ -363,7 +363,7 @@ static void ExtractTransformData(FBModel *src, mu::float3& pos, mu::quatf& rot, 
         rot *= mu::rotate_x(90.0f * mu::DegToRad);
 }
 
-static void ExtractCameraData(FBCamera* src, bool& ortho, float& near_plane, float& far_plane, float& fov,
+void msmobuDevice::extractCameraData(FBCamera* src, bool& ortho, float& near_plane, float& far_plane, float& fov,
     float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift)
 {
     ortho = src->Type == kFBCameraTypeOrthogonal;
@@ -372,13 +372,21 @@ static void ExtractCameraData(FBCamera* src, bool& ortho, float& near_plane, flo
     fov = (float)src->FieldOfViewY;
 
     focal_length = (float)src->FocalLength;
-    sensor_size.x = (float)(src->FilmSizeWidth * mu::InchToMillimeter_d);
-    sensor_size.y = (float)(src->FilmSizeHeight * mu::InchToMillimeter_d);
-    lens_shift.x = (float)src->OpticalCenterX;
-    lens_shift.y = (float)src->OpticalCenterY;
+    sensor_size.x = (float)(src->FilmSizeWidth * mu::InchToMillimeter_d);  // mm
+    sensor_size.y = (float)(src->FilmSizeHeight * mu::InchToMillimeter_d); // mm
+
+    // todo:
+    // - MoBu's physical camera params depend on gate fit (ApertureMode in MoBu's term)
+    //   on Unity, gate fit is supported only 2018.3 or newer.
+    // - I couldn't figure out how to convert OpticalCenter to 0.0-1.0...
+
+    // FBCameraApertureMode am = src->ApertureMode;
+
+    //lens_shift.x = (float)src->OpticalCenterX;
+    //lens_shift.y = (float)src->OpticalCenterY;
 }
 
-static void ExtractLightData(FBLight* src, ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle)
+void msmobuDevice::extractLightData(FBLight* src, ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle)
 {
     FBLightType light_type = src->LightType;
     if (light_type == kFBLightTypePoint) {
@@ -439,7 +447,7 @@ ms::TransformPtr msmobuDevice::exportTransform(NodeRecord& n)
     auto& dst = *ret;
     auto src = n.src;
 
-    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visibility);
 
     m_entity_manager.add(ret);
     return ret;
@@ -451,8 +459,8 @@ ms::CameraPtr msmobuDevice::exportCamera(NodeRecord& n)
     auto& dst = *ret;
     auto src = static_cast<FBCamera*>(n.src);
 
-    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
-    ExtractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
+    extractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visibility);
+    extractCameraData(src, dst.is_ortho, dst.near_plane, dst.far_plane, dst.fov,
         dst.focal_length, dst.sensor_size, dst.lens_shift);
 
     m_entity_manager.add(ret);
@@ -465,8 +473,8 @@ ms::LightPtr msmobuDevice::exportLight(NodeRecord& n)
     auto& dst = *ret;
     auto src = static_cast<FBLight*>(n.src);
 
-    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
-    ExtractLightData(src, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.spot_angle);
+    extractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visibility);
+    extractLightData(src, dst.light_type, dst.shadow_type, dst.color, dst.intensity, dst.spot_angle);
 
     m_entity_manager.add(ret);
     return ret;
@@ -478,7 +486,7 @@ ms::MeshPtr msmobuDevice::exportBlendshapeWeights(NodeRecord& n)
     auto& dst = *ret;
     auto src = n.src;
 
-    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visibility);
 
     // blendshape weights
     if (FBGeometry *geom = src->Geometry) {
@@ -512,7 +520,7 @@ ms::MeshPtr msmobuDevice::exportMesh(NodeRecord& n)
     auto& dst = *ret;
     auto src = n.src;
 
-    ExtractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visible);
+    extractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visibility);
 
     m_extract_tasks.push_back([this, ret, &dst, src]() {
         doExtractMesh(dst, src);
@@ -774,7 +782,7 @@ bool msmobuDevice::exportMaterial(FBMaterial* src, int index)
 
     auto dst = ms::Material::create();
     rec.dst = dst.get();
-    if (rec.id == ms::InvalidID)
+    if (rec.id == 0)
         rec.id = m_material_ids.getID(src);
 
     dst->id = rec.id;
@@ -932,15 +940,15 @@ void msmobuDevice::extractTransformAnimation(ms::TransformAnimation& dst_, FBMod
     auto pos = mu::float3::zero();
     auto rot = mu::quatf::identity();
     auto scale = mu::float3::one();
-    bool vis = true;
-    ExtractTransformData(src, pos, rot, scale, vis);
+    ms::VisibilityFlags vis;
+    extractTransformData(src, pos, rot, scale, vis);
 
     float t = m_anim_time;
     auto& dst = (ms::TransformAnimation&)dst_;
     dst.translation.push_back({ t, pos });
     dst.rotation.push_back({ t, rot });
     dst.scale.push_back({ t, scale });
-    dst.visible.push_back({ t, vis });
+    dst.visible.push_back({ t, (int)vis.active });
 
     dst.path = GetPath(src);
 }
@@ -954,7 +962,7 @@ void msmobuDevice::extractCameraAnimation(ms::TransformAnimation& dst_, FBModel*
     bool ortho;
     float near_plane, far_plane, fov, focal_length;
     mu::float2 sensor_size, lens_shift;
-    ExtractCameraData(static_cast<FBCamera*>(src), ortho, near_plane, far_plane, fov, focal_length, sensor_size, lens_shift);
+    extractCameraData(static_cast<FBCamera*>(src), ortho, near_plane, far_plane, fov, focal_length, sensor_size, lens_shift);
 
     float t = m_anim_time;
     dst.near_plane.push_back({ t , near_plane });
@@ -977,7 +985,7 @@ void msmobuDevice::extractLightAnimation(ms::TransformAnimation& dst_, FBModel* 
     mu::float4 color;
     float intensity;
     float spot_angle;
-    ExtractLightData(static_cast<FBLight*>(src), ltype, stype, color, intensity, spot_angle);
+    extractLightData(static_cast<FBLight*>(src), ltype, stype, color, intensity, spot_angle);
 
     float t = m_anim_time;
     dst.color.push_back({ t, color });

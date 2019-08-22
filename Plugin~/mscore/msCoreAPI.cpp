@@ -30,8 +30,10 @@ msAPI void              msAssetSetName(ms::Asset *self, const char *v) { self->n
 msAPI ms::FileAsset*    msFileAssetCreate() { return ms::FileAsset::create_raw(); }
 msAPI int               msFileAssetGetDataSize(const ms::FileAsset *self) { return (int)self->data.size(); }
 msAPI const void*       msFileAssetGetDataPtr(const ms::FileAsset *self, int v) { return self->data.cdata(); }
+#ifndef msRuntime
 msAPI bool              msFileAssetWriteToFile(const ms::FileAsset *self, const char *v) { return self->writeToFile(v); }
 msAPI bool              msFileAssetReadFromFile(ms::FileAsset *self, const char *v) { return self->readFromFile(v); }
+#endif // msRuntime
 #pragma endregion
 
 
@@ -42,11 +44,13 @@ msAPI int               msAudioGetFrequency(const ms::Audio *self) { return self
 msAPI int               msAudioGetChannels(const ms::Audio *self) { return self->channels; }
 msAPI int               msAudioGetSampleLength(const ms::Audio *self) { return (int)self->getSampleLength(); }
 msAPI void              msAudioGetDataAsFloat(const ms::Audio *self, float *dst) { self->convertSamplesToFloat(dst); }
-msAPI bool              msAudioWriteToFile(const ms::Audio *self, const char *path) { return self->writeToFile(path); }
-msAPI bool              msAudioExportAsWave(const ms::Audio *self, const char *path) { return self->exportAsWave(path); }
 msAPI void              msAudioSetFormat(ms::Audio *self, ms::AudioFormat v) { self->format = v; }
 msAPI void              msAudioSetFrequency(ms::Audio *self, int v) { self->frequency = v; }
 msAPI void              msAudioSetChannels(ms::Audio *self, int v) { self->channels = v; }
+#ifndef msRuntime
+msAPI bool              msAudioWriteToFile(const ms::Audio *self, const char *path) { return self->writeToFile(path); }
+msAPI bool              msAudioExportAsWave(const ms::Audio *self, const char *path) { return self->exportAsWave(path); }
+#endif // msRuntime
 #pragma endregion
 
 
@@ -59,12 +63,14 @@ msAPI int               msTextureGetHeight(const ms::Texture *self) { return sel
 msAPI void              msTextureGetData(const ms::Texture *self, void *v) { self->getData(v); }
 msAPI const void*       msTextureGetDataPtr(const ms::Texture *self) { return self->data.cdata(); }
 msAPI int               msTextureGetSizeInByte(const ms::Texture *self) { return (int)self->data.size(); }
-msAPI bool              msTextureWriteToFile(const ms::Texture *self, const char *path) { return self->writeToFile(path); }
 msAPI void              msTextureSetType(ms::Texture *self, ms::TextureType v) { self->type = v; }
 msAPI void              msTextureSetFormat(ms::Texture *self, ms::TextureFormat v) { self->format = v; }
 msAPI void              msTextureSetWidth(ms::Texture *self, int v) { self->width = v; }
 msAPI void              msTextureSetHeight(ms::Texture *self, int v) { self->height = v; }
 msAPI void              msTextureSetData(ms::Texture *self, const void *v) { self->setData(v); }
+#ifndef msRuntime
+msAPI bool              msTextureWriteToFile(const ms::Texture *self, const char *path) { return self->writeToFile(path); }
+#endif // msRuntime
 #pragma endregion
 
 
@@ -152,6 +158,13 @@ msAPI ms::Animation*    msAnimationClipGetAnimationData(const ms::AnimationClip 
 #pragma endregion
 
 
+#pragma region Variant
+msAPI const char* msVariantGetName(const ms::Variant *self) { return self->name.c_str(); }
+msAPI ms::Variant::Type msVariantGetType(const ms::Variant *self) { return self->type; }
+msAPI int msVariantGetArrayLength(const ms::Variant *self) { return (int)self->getArrayLength(); }
+msAPI void msVariantCopyData(const ms::Variant *self, void *dst) { self->copy(dst); }
+#pragma endregion
+
 #pragma region Transform
 msAPI ms::Transform* msTransformCreate() { return ms::Transform::create_raw(); }
 msAPI uint32_t msTransformGetDataFlags(const ms::Transform *self) { return (uint32_t&)self->td_flags; }
@@ -163,9 +176,11 @@ msAPI const char* msTransformGetPath(const ms::Transform *self) { return self->p
 msAPI mu::float3 msTransformGetPosition(const ms::Transform *self) { return self->position; }
 msAPI mu::quatf msTransformGetRotation(const ms::Transform *self) { return self->rotation; }
 msAPI mu::float3 msTransformGetScale(const ms::Transform *self) { return self->scale; }
-msAPI bool msTransformGetVisible(const ms::Transform *self) { return self->visible; }
-msAPI bool msTransformGetVisibleHierarchy(const ms::Transform *self) { return self->visible_hierarchy; }
+msAPI uint32_t msTransformGetVisibility(const ms::Transform *self) { return (uint32_t&)self->visibility; }
 msAPI const char* msTransformGetReference(const ms::Transform *self) { return self->reference.c_str(); }
+msAPI int msTransformGetNumUserProperties(const ms::Transform *self) { return (int)self->user_properties.size(); }
+msAPI const ms::Variant* msTransformGetUserProperty(const ms::Transform *self, int i) { return self->getUserProperty(i); }
+msAPI const ms::Variant* msTransformFindUserProperty(const ms::Transform *self, const char *name) { return self->findUserProperty(name); }
 
 msAPI void msTransformSetHostID(ms::Transform *self, int v) { self->host_id = v; }
 msAPI void msTransformSetIndex(ms::Transform *self, int v) { self->index = v; }
@@ -173,8 +188,7 @@ msAPI void msTransformSetPath(ms::Transform *self, const char *v) { self->path =
 msAPI void msTransformSetPosition(ms::Transform *self, mu::float3 v) { self->position = v; }
 msAPI void msTransformSetRotation(ms::Transform *self, mu::quatf v) { self->rotation = v; }
 msAPI void msTransformSetScale(ms::Transform *self, mu::float3 v) { self->scale = v; }
-msAPI void msTransformSetVisible(ms::Transform *self, bool v) { self->visible = v; }
-msAPI void msTransformSetVisibleHierarchy(ms::Transform *self, bool v) { self->visible_hierarchy = v;}
+msAPI void msTransformSetVisibility(ms::Transform *self, uint32_t v) { (uint32_t&)self->visibility = v; }
 msAPI void msTransformSetReference(ms::Transform *self, const char *v) { self->reference = v; }
 #pragma endregion
 
@@ -509,5 +523,7 @@ msAPI ms::SceneProfileData msSceneGetProfileData(const ms::Scene *self) { return
 
 #pragma region Misc
 msAPI uint64_t msGetTime() { return ms::Now(); }
+#ifndef msRuntime
 msAPI bool msWriteToFile(const char *path, const char *data, int size) { return ms::ByteArrayToFile(path, data, size); }
+#endif // msRuntime
 #pragma endregion

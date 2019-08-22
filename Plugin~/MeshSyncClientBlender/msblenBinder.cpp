@@ -21,7 +21,9 @@ Func(BID, evaluated_get);
 Def(BObject);
 Prop(BObject, matrix_local);
 Prop(BObject, matrix_world);
+Prop(BObject, hide);
 Prop(BObject, hide_viewport);
+Prop(BObject, hide_render);
 Func(BObject, is_visible);
 Func(BObject, to_mesh);
 
@@ -111,7 +113,9 @@ void setup(py::object bpy_context)
             each_prop{
                 if (match_prop("matrix_local")) BObject_matrix_local = prop;
                 if (match_prop("matrix_world")) BObject_matrix_world = prop;
+                if (match_prop("hide")) BObject_hide = prop;
                 if (match_prop("hide_viewport")) BObject_hide_viewport = prop;
+                if (match_prop("hide_render")) BObject_hide_render = prop;
             }
             each_func {
                 if (match_func("is_visible")) BObject_is_visible = func;
@@ -425,27 +429,17 @@ mu::float4x4 BObject::matrix_world() const
     get_float_array(m_ptr, (float*)&ret, BObject_matrix_world);
     return ret;
 }
-
-bool BObject::is_visible(Scene * scene) const
+bool BObject::hide_viewport() const
 {
 #if BLENDER_VERSION < 280
-    return call<Object, int, Scene*>(m_ptr, BObject_is_visible, scene) != 0;
+    return get_bool(m_ptr, BObject_hide);
 #else
-    // Object.hide_viewport property seems not work...
-    // based on BKE_object_is_visible() in blenkernel/intern/object.c
-    auto BKE_object_is_visible = [](const Object *ob) -> bool {
-        if ((ob->base_flag & BASE_VISIBLE) == 0) {
-            return false;
-        }
-        if (((ob->transflag & OB_DUPLI) == 0) &&
-            (ob->particlesystem.first == NULL))
-        {
-            return true;
-        }
-        return ((ob->duplicator_visibility_flag & OB_DUPLI_FLAG_VIEWPORT) != 0);
-    };
-    return BKE_object_is_visible(m_ptr);
+    return get_bool(m_ptr, BObject_hide_viewport);
 #endif
+}
+bool BObject::hide_render() const
+{
+    return get_bool(m_ptr, BObject_hide_render);
 }
 
 #if BLENDER_VERSION < 280

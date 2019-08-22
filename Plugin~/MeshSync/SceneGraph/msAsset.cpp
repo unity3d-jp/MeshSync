@@ -123,6 +123,7 @@ uint64_t FileAsset::checksum() const
     return ret;
 }
 
+#ifndef msRuntime
 bool FileAsset::readFromFile(const char *path)
 {
     if (!path)
@@ -140,6 +141,7 @@ bool FileAsset::writeToFile(const char *path) const
         return false;
     return ByteArrayToFile(path, data);
 }
+#endif // msRuntime
 
 #undef EachMember
 

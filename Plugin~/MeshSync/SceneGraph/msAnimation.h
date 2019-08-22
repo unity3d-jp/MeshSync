@@ -127,6 +127,7 @@ public:
     AnimationCurvePtr getCurve(const char *name, DataType type);
     AnimationCurvePtr getCurve(const std::string& name, DataType type);
 
+    bool eraseCurve(const AnimationCurve *curve);
     void clearEmptyCurves();
 
     static void validate(std::shared_ptr<Animation>& anim);

@@ -65,7 +65,8 @@ namespace UTJ.MeshSync
             public string[] bonePaths;
             public bool smrUpdated = false;
             public bool smrEnabled = false;
-            public bool visible = true; // for reference
+            public bool hasVisibility = false;
+            public VisibilityFlags visibility; // for reference
             public bool recved = false;
 
             // return true if modified
@@ -848,9 +849,10 @@ namespace UTJ.MeshSync
             var format = src.format;
             if (format == AudioFormat.RawFile)
             {
+#if UNITY_EDITOR
+                // create file and import it
                 var dstPath = assetPath + "/" + src.name;
                 src.WriteToFile(dstPath);
-#if UNITY_EDITOR
                 AssetDatabase.ImportAsset(dstPath);
                 ac = AssetDatabase.LoadAssetAtPath<AudioClip>(dstPath);
                 if (ac != null)
@@ -866,6 +868,7 @@ namespace UTJ.MeshSync
             else
             {
 #if UNITY_EDITOR
+                // export as .wav and import it
                 var dstPath = assetPath + "/" + src.name + ".wav";
                 if(src.ExportAsWave(dstPath))
                 {
@@ -1278,8 +1281,8 @@ namespace UTJ.MeshSync
                 }
 
                 rec.smrUpdated = true;
-                if (m_syncVisibility)
-                    rec.smrEnabled = data.transform.visible;
+                if (m_syncVisibility && dtrans.dataFlags.hasVisibility)
+                    rec.smrEnabled = data.transform.visibility.visibleInRender;
                 else
                     rec.smrEnabled = smr.enabled;
                 // disable temporarily to prevent error. restore on AfterUpdateScene()
@@ -1328,8 +1331,8 @@ namespace UTJ.MeshSync
                     }
                 }
 
-                if (m_syncVisibility)
-                    mr.enabled = data.transform.visible;
+                if (m_syncVisibility && dtrans.dataFlags.hasVisibility)
+                    mr.enabled = data.transform.visibility.visibleInRender;
                 mf.sharedMesh = rec.mesh;
                 rec.smrEnabled = false;
             }
@@ -1593,8 +1596,8 @@ namespace UTJ.MeshSync
             var dflags = data.dataFlags;
             if (!dflags.unchanged)
             {
+                var visibility = data.visibility;
                 rec.index = data.index;
-                rec.visible = data.visible;
                 rec.dataType = data.entityType;
 
                 // sync TRS
@@ -1609,8 +1612,13 @@ namespace UTJ.MeshSync
                 }
 
                 // visibility
-                if (m_syncVisibility)
-                    trans.gameObject.SetActive(data.visibleHierarchy);
+                if (m_syncVisibility && dflags.hasVisibility)
+                    trans.gameObject.SetActive(visibility.active);
+
+                // visibility for reference
+                rec.hasVisibility = dflags.hasVisibility;
+                if (rec.hasVisibility)
+                    rec.visibility = visibility;
 
                 // reference. will be resolved in AfterUpdateScene()
                 if (dflags.hasReference)
@@ -1633,8 +1641,8 @@ namespace UTJ.MeshSync
             var cam = rec.camera;
             if (cam == null)
                 cam = rec.camera = Misc.GetOrAddComponent<Camera>(rec.go);
-            if (m_syncVisibility)
-                cam.enabled = dtrans.visible;
+            if (m_syncVisibility && dtrans.dataFlags.hasVisibility)
+                cam.enabled = dtrans.visibility.visibleInRender;
 
             cam.orthographic = data.orthographic;
 
@@ -1645,8 +1653,10 @@ namespace UTJ.MeshSync
                 cam.usePhysicalProperties = true;
                 cam.focalLength = data.focalLength;
                 cam.sensorSize = data.sensorSize;
-                if (dflags.hasLensShift)
-                    cam.lensShift = data.lensShift;
+                cam.lensShift = data.lensShift;
+#if UNITY_2018_3_OR_NEWER
+                //todo: gate fit support
+#endif
             }
             else
 #endif
@@ -1663,12 +1673,13 @@ namespace UTJ.MeshSync
 
             if (dflags.hasViewMatrix)
                 cam.worldToCameraMatrix = data.viewMatrix;
-            //cam.ResetWorldToCameraMatrix()
+            //else
+            //    cam.ResetWorldToCameraMatrix();
 
             if (dflags.hasProjMatrix)
                 cam.projectionMatrix = data.projMatrix;
-            //cam.ResetProjectionMatrix()
-
+            //else
+            //    cam.ResetProjectionMatrix();
             return rec;
         }
 
@@ -1687,22 +1698,22 @@ namespace UTJ.MeshSync
             if (lt == null)
                 lt = rec.light = Misc.GetOrAddComponent<Light>(rec.go);
 
-            if (m_syncVisibility)
-                lt.enabled = dtrans.visible;
+            if (m_syncVisibility && dtrans.dataFlags.hasVisibility)
+                lt.enabled = dtrans.visibility.visibleInRender;
 
             var lightType = data.lightType;
             if ((int)lightType != -1)
                 lt.type = data.lightType;
+            if (dflags.hasShadowType)
+                lt.shadows = data.shadowType;
 
-            var shadowType = data.shadowType;
-            if ((int)shadowType != -1)
-                lt.shadows = shadowType;
-
-            lt.color = data.color;
-            lt.intensity = data.intensity;
-            if (data.range > 0.0f)
+            if(dflags.hasColor)
+                lt.color = data.color;
+            if (dflags.hasIntensity)
+                lt.intensity = data.intensity;
+            if (dflags.hasRange)
                 lt.range = data.range;
-            if (data.spotAngle > 0.0f)
+            if (dflags.hasSpotAngle)
                 lt.spotAngle = data.spotAngle;
             return rec;
         }
@@ -1725,8 +1736,8 @@ namespace UTJ.MeshSync
                     var dstcam = dst.camera;
                     if (dstcam == null)
                         dstcam = dst.camera = Misc.GetOrAddComponent<Camera>(dstgo);
-                    if (m_syncVisibility)
-                        dstcam.enabled = dst.visible;
+                    if (m_syncVisibility && dst.hasVisibility)
+                        dstcam.enabled = dst.visibility.visibleInRender;
                     dstcam.enabled = srccam.enabled;
                     dstcam.orthographic = srccam.orthographic;
                     dstcam.fieldOfView = srccam.fieldOfView;
@@ -1742,8 +1753,8 @@ namespace UTJ.MeshSync
                     var dstlt = dst.light;
                     if (dstlt == null)
                         dstlt = dst.light = Misc.GetOrAddComponent<Light>(dstgo);
-                    if (m_syncVisibility)
-                        dstlt.enabled = dst.visible;
+                    if (m_syncVisibility && dst.hasVisibility)
+                        dstlt.enabled = dst.visibility.visibleInRender;
                     dstlt.type = srclt.type;
                     dstlt.color = srclt.color;
                     dstlt.intensity = srclt.intensity;
@@ -1762,8 +1773,8 @@ namespace UTJ.MeshSync
                     var dstpcr = dst.pointCacheRenderer;
                     if (dstpcr != null)
                     {
-                        if (m_syncVisibility)
-                            dstpcr.enabled = dst.visible;
+                        if (m_syncVisibility && dst.hasVisibility)
+                            dstpcr.enabled = dst.visibility.visibleInRender;
                         dstpcr.sharedMesh = mesh;
 
                         if (dstpcr.sharedMaterials == null || dstpcr.sharedMaterials.Length == 0)
@@ -1792,8 +1803,8 @@ namespace UTJ.MeshSync
                             dstmf = dst.meshFilter = Misc.GetOrAddComponent<MeshFilter>(dstgo);
                         }
 
-                        if (m_syncVisibility)
-                            dstmr.enabled = dst.visible;
+                        if (m_syncVisibility && dst.hasVisibility)
+                            dstmr.enabled = dst.visibility.visibleInRender;
                         dstmf.sharedMesh = mesh;
                         dstmr.sharedMaterials = srcmr.sharedMaterials;
                     }
@@ -1815,8 +1826,8 @@ namespace UTJ.MeshSync
                         for (int bi = 0; bi < blendShapeCount; ++bi)
                             dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
 
-                        if (m_syncVisibility)
-                            dstsmr.enabled = dst.visible;
+                        if (m_syncVisibility && dst.hasVisibility)
+                            dstsmr.enabled = dst.visibility.visibleInRender;
                         else
                             dstsmr.enabled = oldEnabled;
                     }
@@ -2284,7 +2295,7 @@ namespace UTJ.MeshSync
             return ApplyMaterialList(ml);
         }
 
-        void CheckMaterialAssigned()
+        public void CheckMaterialAssigned(bool recordUndo = true)
         {
             bool changed = false;
             foreach (var kvp in m_clientObjects)
@@ -2316,28 +2327,39 @@ namespace UTJ.MeshSync
 
             if (changed)
             {
-                // assume last undo group is "Assign Material" performed by mouse drag & drop.
-                // collapse reassigning materials into it.
-                int group = Undo.GetCurrentGroup() - 1;
-                m_recordAssignMaterials = true;
+                int group = 0;
+                if (recordUndo)
+                {
+                    // assume last undo group is "Assign Material" performed by mouse drag & drop.
+                    // collapse reassigning materials into it.
+                    group = Undo.GetCurrentGroup() - 1;
+                    m_recordAssignMaterials = true;
+                }
                 ReassignMaterials();
-                m_recordAssignMaterials = false;
-                Undo.CollapseUndoOperations(group);
-                Undo.FlushUndoRecordObjects();
-
+                if (recordUndo)
+                {
+                    m_recordAssignMaterials = false;
+                    Undo.CollapseUndoOperations(group);
+                    Undo.FlushUndoRecordObjects();
+                }
                 ForceRepaint();
             }
         }
 
-        public void AssignMaterial(MaterialHolder holder, Material mat)
+        public void AssignMaterial(MaterialHolder holder, Material mat, bool recordUndo = true)
         {
-            Undo.RegisterCompleteObjectUndo(this, "Assign Material");
+            if (recordUndo)
+            {
+                Undo.RegisterCompleteObjectUndo(this, "Assign Material");
+                m_recordAssignMaterials = true;
+            }
             holder.material = mat;
-            m_recordAssignMaterials = true;
             ReassignMaterials();
-            m_recordAssignMaterials = false;
-            Undo.FlushUndoRecordObjects();
-
+            if (recordUndo)
+            {
+                m_recordAssignMaterials = false;
+                Undo.FlushUndoRecordObjects();
+            }
             ForceRepaint();
         }
 
@@ -2378,9 +2400,9 @@ namespace UTJ.MeshSync
 #endif
         #endregion
 
-            #region Events
+        #region Events
 #if UNITY_EDITOR
-            void Reset()
+        void Reset()
         {
             // force disable batching for export
             var method = typeof(UnityEditor.PlayerSettings).GetMethod("SetBatchingForPlatform", BindingFlags.NonPublic | BindingFlags.Static);
