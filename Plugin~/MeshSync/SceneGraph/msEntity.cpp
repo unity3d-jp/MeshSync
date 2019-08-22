@@ -210,9 +210,10 @@ TransformDataFlags::TransformDataFlags()
     has_position = 1;
     has_rotation = 1;
     has_scale = 1;
-    has_visibility = 1;
+    has_visibility = 0;
     has_layer = 0;
     has_reference = 0;
+    has_user_properties = 0;
 }
 
 VisibilityFlags::VisibilityFlags()
@@ -258,7 +259,7 @@ EntityType Transform::getType() const
 }
 
 #define EachMember(F)\
-    F(position) F(rotation) F(scale) F(visibility) F(layer) F(index) F(reference)
+    F(position) F(rotation) F(scale) F(visibility) F(layer) F(index) F(reference) F(user_properties)
 
 void Transform::serialize(std::ostream& os) const
 {
@@ -292,6 +293,7 @@ void Transform::setupDataFlags()
     td_flags.has_scale = !is_inf(scale);
     td_flags.has_visibility = visibility != VisibilityFlags::uninitialized();
     td_flags.has_reference = !reference.empty();
+    td_flags.has_user_properties = !user_properties.empty();
 }
 
 bool Transform::isUnchanged() const
@@ -308,7 +310,8 @@ static bool NearEqual(const Transform& a, const Transform& b)
         a.visibility == b.visibility &&
         a.layer == b.layer &&
         a.index == b.index &&
-        a.reference == b.reference;
+        a.reference == b.reference &&
+        a.user_properties == b.user_properties;
 }
 
 bool Transform::strip(const Entity& base_)
@@ -367,6 +370,7 @@ void Transform::clear()
     layer = 0;
     index = 0;
     reference.clear();
+    user_properties.clear();
 
     order = 0;
     parent = nullptr;

@@ -1,17 +1,18 @@
 #include "pch.h"
 #include "msVariant.h"
-#include "msFoundation.h"
 
 namespace ms {
 
 void Variant::serialize(std::ostream& os) const
 {
+    write(os, name);
     write(os, type);
     write(os, data);
 }
 
 void Variant::deserialize(std::istream& is)
 {
+    read(is, name);
     read(is, type);
     read(is, data);
 }
@@ -23,7 +24,7 @@ uint64_t Variant::checksum() const
 
 bool Variant::operator==(const Variant& v) const
 {
-    return type == v.type && data == v.data;
+    return name == v.name &&type == v.type && data == v.data;
 }
 
 bool Variant::operator!=(const Variant& v) const
@@ -32,6 +33,20 @@ bool Variant::operator!=(const Variant& v) const
 }
 
 Variant::Variant() {}
+
+Variant::Variant(const Variant& v)
+{
+    *this = v;
+}
+
+Variant& Variant::operator=(const Variant& v)
+{
+    name = v.name;
+    type = v.type;
+    data = v.data;
+    return *this;
+}
+
 Variant::Variant(Variant&& v) noexcept
 {
     *this = std::move(v);
@@ -39,6 +54,7 @@ Variant::Variant(Variant&& v) noexcept
 
 Variant& Variant::operator=(Variant&& v)
 {
+    name = std::move(v.name);
     type = std::move(v.type);
     data = std::move(v.data);
     return *this;

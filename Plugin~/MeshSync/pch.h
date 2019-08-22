@@ -67,4 +67,4 @@
 #include "Poco/Net/StreamSocket.h"
 #include "Poco/Net/SocketStream.h"
 #include "Poco/Net/SocketAddress.h"
-#endif // msRuntime
+#endif

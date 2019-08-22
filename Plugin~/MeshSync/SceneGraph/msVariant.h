@@ -1,5 +1,5 @@
 #pragma once
-#include "MeshUtils/MeshUtils.h"
+#include "msFoundation.h"
 
 namespace ms {
 
@@ -20,6 +20,7 @@ public:
         Float4x4,
     };
 
+    std::string name;
     Type type = Type::Unknown;
     SharedVector<char> data;
 
@@ -31,6 +32,8 @@ public:
     bool operator!=(const Variant& v) const;
 
     Variant();
+    Variant(const Variant& v);
+    Variant& operator=(const Variant& v);
     Variant(Variant&& v) noexcept; // noexcept to enforce std::vector to use move constructor
     Variant& operator=(Variant&& v);
 
@@ -45,5 +48,6 @@ public:
 
     void copy(void *dst) const;
 };
+msSerializable(Variant);
 
 } // namespace ms
