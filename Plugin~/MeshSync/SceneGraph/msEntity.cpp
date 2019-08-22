@@ -418,6 +418,35 @@ void Transform::applyMatrix(const float4x4& v)
     if (!near_equal(v, float4x4::identity()))
         assignMatrix(v * toMatrix());
 }
+
+void Transform::addUserProperty(const Variant& v)
+{
+    user_properties.push_back(v);
+    std::sort(user_properties.begin(), user_properties.end(),
+        [](auto& a, auto& b) {return a.name < b.name; });
+}
+
+void Transform::addUserProperty(Variant&& v)
+{
+    user_properties.push_back(std::move(v));
+    std::sort(user_properties.begin(), user_properties.end(),
+        [](auto& a, auto& b) {return a.name < b.name; });
+}
+
+const Variant* Transform::getUserProperty(int i) const
+{
+    return &user_properties[i];
+}
+
+const Variant* Transform::findUserProperty(const char *name) const
+{
+    auto it = std::lower_bound(user_properties.begin(), user_properties.end(), name,
+        [](auto& a, auto n) { return a.name < n; });
+    if (it != user_properties.end() && it->name == name)
+        return &(*it);
+    return nullptr;
+}
+
 #undef EachMember
 #pragma endregion
 

@@ -1034,6 +1034,162 @@ namespace UTJ.MeshSync
     #endregion
 
 
+    #region Variant
+    public struct VariantData
+    {
+        #region internal
+        public IntPtr self;
+        [DllImport(Lib.name)] static extern IntPtr msVariantGetName(IntPtr self);
+        [DllImport(Lib.name)] static extern Type msVariantGetType(IntPtr self);
+        [DllImport(Lib.name)] static extern int msVariantGetArrayLength(IntPtr self);
+
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, ref int dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, ref float dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, ref Vector2 dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, ref Vector3 dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, ref Vector4 dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, ref Matrix4x4 dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, int[] dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, float[] dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, Vector2[] dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, Vector3[] dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, Vector4[] dst);
+        [DllImport(Lib.name)] static extern void msVariantCopyData(IntPtr self, Matrix4x4[] dst);
+        #endregion
+
+        public static explicit operator bool(VariantData v) { return v.self != IntPtr.Zero; }
+
+        public enum Type
+        {
+            Unknown,
+            String,
+            Int,
+            Float,
+            Float2,
+            Float3,
+            Float4,
+            Quat,
+            Float2x2,
+            Float3x3,
+            Float4x4,
+        }
+
+        string name
+        {
+            get { return Misc.S(msVariantGetName(self)); }
+        }
+        Type type
+        {
+            get { return msVariantGetType(self); }
+        }
+        int arrayLength
+        {
+            get { return msVariantGetArrayLength(self); }
+        }
+
+        public int intValue
+        {
+            get
+            {
+                int ret = 0;
+                msVariantCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public float floatValue
+        {
+            get
+            {
+                float ret = 0;
+                msVariantCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public Vector2 vector2Value
+        {
+            get
+            {
+                Vector2 ret = Vector2.zero;
+                msVariantCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public Vector3 vector3Value
+        {
+            get
+            {
+                Vector3 ret = Vector3.zero;
+                msVariantCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public Vector4 vector4Value
+        {
+            get
+            {
+                Vector4 ret = Vector4.zero;
+                msVariantCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public Matrix4x4 matrixValue
+        {
+            get
+            {
+                Matrix4x4 ret = Matrix4x4.identity;
+                msVariantCopyData(self, ref ret);
+                return ret;
+            }
+        }
+        public float[] floatArray
+        {
+            get
+            {
+                var ret = new float[arrayLength];
+                msVariantCopyData(self, ret);
+                return ret;
+            }
+        }
+        public Vector2[] vector2Array
+        {
+            get
+            {
+                var ret = new Vector2[arrayLength];
+                msVariantCopyData(self, ret);
+                return ret;
+            }
+        }
+        public Vector3[] vector3Array
+        {
+            get
+            {
+                var ret = new Vector3[arrayLength];
+                msVariantCopyData(self, ret);
+                return ret;
+            }
+        }
+        public Vector4[] vector4Array
+        {
+            get
+            {
+                var ret = new Vector4[arrayLength];
+                msVariantCopyData(self, ret);
+                return ret;
+            }
+        }
+        public Matrix4x4[] matrixArray
+        {
+            get
+            {
+                var ret = new Matrix4x4[arrayLength];
+                msVariantCopyData(self, ret);
+                return ret;
+            }
+        }
+    }
+
+    #endregion
+
     #region Entities
     public struct Identifier
     {
@@ -1093,6 +1249,9 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern Vector3 msTransformGetScale(IntPtr self);
         [DllImport(Lib.name)] static extern VisibilityFlags msTransformGetVisibility(IntPtr self);
         [DllImport(Lib.name)] static extern IntPtr msTransformGetReference(IntPtr self);
+        [DllImport(Lib.name)] static extern int msTransformGetNumUserProperties(IntPtr self);
+        [DllImport(Lib.name)] static extern VariantData msTransformGetUserProperty(IntPtr self, int i) ;
+        [DllImport(Lib.name)] static extern VariantData msTransformFindUserProperty(IntPtr self, string name);
 
         [DllImport(Lib.name)] static extern void msTransformSetHostID(IntPtr self, int v);
         [DllImport(Lib.name)] static extern void msTransformSetIndex(IntPtr self, int v);
@@ -1163,6 +1322,13 @@ namespace UTJ.MeshSync
             get { return Misc.S(msTransformGetReference(self)); }
             set { msTransformSetReference(self, value); }
         }
+        public int numUserData
+        {
+            get { return msTransformGetNumUserProperties(self); }
+        }
+
+        VariantData GetUserProperty(int i) { return msTransformGetUserProperty(self, i); }
+        VariantData FindUserProperty(int i, string name) { return msTransformFindUserProperty(self, name); }
     }
 
     public struct CameraDataFlags

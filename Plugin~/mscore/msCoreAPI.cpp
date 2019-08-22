@@ -158,6 +158,13 @@ msAPI ms::Animation*    msAnimationClipGetAnimationData(const ms::AnimationClip 
 #pragma endregion
 
 
+#pragma region Variant
+msAPI const char* msVariantGetName(const ms::Variant *self) { return self->name.c_str(); }
+msAPI ms::Variant::Type msVariantGetType(const ms::Variant *self) { return self->type; }
+msAPI int msVariantGetArrayLength(const ms::Variant *self) { return (int)self->getArrayLength(); }
+msAPI void msVariantCopyData(const ms::Variant *self, void *dst) { self->copy(dst); }
+#pragma endregion
+
 #pragma region Transform
 msAPI ms::Transform* msTransformCreate() { return ms::Transform::create_raw(); }
 msAPI uint32_t msTransformGetDataFlags(const ms::Transform *self) { return (uint32_t&)self->td_flags; }
@@ -171,6 +178,9 @@ msAPI mu::quatf msTransformGetRotation(const ms::Transform *self) { return self-
 msAPI mu::float3 msTransformGetScale(const ms::Transform *self) { return self->scale; }
 msAPI uint32_t msTransformGetVisibility(const ms::Transform *self) { return (uint32_t&)self->visibility; }
 msAPI const char* msTransformGetReference(const ms::Transform *self) { return self->reference.c_str(); }
+msAPI int msTransformGetNumUserProperties(const ms::Transform *self) { return (int)self->user_properties.size(); }
+msAPI const ms::Variant* msTransformGetUserProperty(const ms::Transform *self, int i) { return self->getUserProperty(i); }
+msAPI const ms::Variant* msTransformFindUserProperty(const ms::Transform *self, const char *name) { return self->findUserProperty(name); }
 
 msAPI void msTransformSetHostID(ms::Transform *self, int v) { self->host_id = v; }
 msAPI void msTransformSetIndex(ms::Transform *self, int v) { self->index = v; }

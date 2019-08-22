@@ -162,6 +162,11 @@ public:
     float4x4 toMatrix() const;
     void assignMatrix(const float4x4& v);
     void applyMatrix(const float4x4& v);
+
+    void addUserProperty(const Variant& v);
+    void addUserProperty(Variant&& v);
+    const Variant* getUserProperty(int i) const;
+    const Variant* findUserProperty(const char *name) const;
 };
 msSerializable(Transform);
 msDeclPtr(Transform);
