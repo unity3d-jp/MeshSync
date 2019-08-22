@@ -31,6 +31,8 @@ public:
     virtual bool isExporting() = 0;
     virtual void wait() = 0;
     virtual void kick() = 0;
+
+    void add(ScenePtr scene);
 };
 
 
