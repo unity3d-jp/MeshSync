@@ -1,3 +1,5 @@
+setlocal
+cd /d "%~dp0"
 call toolchain.bat
 call :Build 2.79 35
 call :Build 2.80 37

@@ -1,3 +1,4 @@
+cd /d "%~dp0"
 start /wait cmd /k "call build_core.bat && exit"
 start /wait cmd /k "call build_mq.bat && exit"
 start /wait cmd /k "call build_xismo.bat && exit"

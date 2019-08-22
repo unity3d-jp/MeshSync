@@ -1,3 +1,5 @@
+setlocal
+cd /d "%~dp0"
 call toolchain.bat
 call :Build LXSDK_525410
 exit /B 0
