@@ -69,6 +69,7 @@ public:
     Handler("syncColors", LXsTYPE_BOOLEAN, settings.sync_colors, true)\
     Handler("makeDoubleSided", LXsTYPE_BOOLEAN, settings.make_double_sided, true)\
     Handler("bakeDeformers", LXsTYPE_BOOLEAN, settings.bake_deformers, true)\
+    Handler("bakeTransform", LXsTYPE_BOOLEAN, settings.bake_transform, true)\
     Handler("syncBlendShapes", LXsTYPE_BOOLEAN, settings.sync_blendshapes, true)\
     Handler("syncBones", LXsTYPE_BOOLEAN, settings.sync_bones, true)\
     Handler("syncTextures", LXsTYPE_BOOLEAN, settings.sync_textures, true)\
@@ -215,6 +216,9 @@ public:
         desc.add("bakeDeformers", LXsTYPE_BOOLEAN);
         desc.default_val(true);
 
+        desc.add("bakeTransform", LXsTYPE_BOOLEAN);
+        desc.default_val(true);
+
         desc.add("flattenHierarchy", LXsTYPE_BOOLEAN);
         desc.default_val(false);
 
@@ -271,6 +275,7 @@ public:
         readArg("zstdCompressionLevel", settings.zstd_compression_level);
         readArg("makeDoubleSided", settings.make_double_sided);
         readArg("bakeDeformers", settings.bake_deformers);
+        readArg("bakeTransform", settings.bake_transform);
         readArg("flattenHierarchy", settings.flatten_hierarchy);
         readArg("mergeMeshes", settings.merge_meshes);
         readArg("stripNormals", settings.strip_normals);

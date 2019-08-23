@@ -142,7 +142,7 @@ void msmodoContext::onIdle()
 
 
 void msmodoContext::extractTransformData(TreeNode& n,
-    mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis,
+    mu::float3& t, mu::quatf& r, mu::float3& s, ms::VisibilityFlags& vis,
     mu::float4x4 *dst_world, mu::float4x4 *dst_local)
 {
     CLxUser_Locator loc(n.item);
@@ -150,26 +150,43 @@ void msmodoContext::extractTransformData(TreeNode& n,
     // visibility
     vis = { true, loc.Visible(m_ch_read) == LXe_TRUE, true };
 
-    // transform
+    // get matrices
+    mu::float4x4 world, local;
+    {
+        LXtMatrix4 lxmat;
+        loc.WorldTransform4(m_ch_read, lxmat);
+        world = to_float4x4(lxmat);
+    }
     {
         LXtMatrix4 lxmat;
         loc.LocalTransform4(m_ch_read, lxmat);
-        auto mat = to_float4x4(lxmat);
-
-        mu::extract_trs(mat, pos, rot, scale);
-        // camera/light correction
-        if (n.item.IsA(tCamera) || n.item.IsA(tLight))
-            rot *= mu::rotate_y(180.0f * mu::DegToRad);
-
-        if (dst_local)
-            *dst_local = mat;
+        local = to_float4x4(lxmat);
     }
+    if (dst_local)
+        *dst_local = local;
+    if (dst_world)
+        *dst_world = world;
 
-    // world matrix
-    if (dst_world) {
-        LXtMatrix4 lxmat;
-        loc.WorldTransform4(m_ch_read, lxmat);
-        *dst_world = to_float4x4(lxmat);
+    auto camera_correction = [](mu::quatf v) {
+        return v * mu::rotate_y(180.0f * mu::DegToRad);
+    };
+
+    // extract TRS
+    if (m_settings.bake_transform) {
+        if (n.item.IsA(tCamera) || n.item.IsA(tLight)) {
+            mu::extract_trs(world, t, r, s);
+            r = camera_correction(r);
+        }
+        else {
+            t = mu::float3::zero();
+            r = mu::quatf::identity();
+            s = mu::float3::one();
+        }
+    }
+    else {
+        mu::extract_trs(local, t, r, s);
+        if (n.item.IsA(tCamera) || n.item.IsA(tLight))
+            r = camera_correction(r);
     }
 }
 
@@ -486,7 +503,7 @@ bool msmodoContext::exportCache(const CacheSettings& cache_settings)
             if (t >= time_end)
                 break;
             else
-                t = std::min(t + interval, time_end);
+                t += interval;
         }
         setChannelReadTime();
         m_ignore_events = false;
@@ -1079,6 +1096,11 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             dst.refine_settings.flags.gen_tangents = 1;
         dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
         dst.refine_settings.flags.flip_faces = 1;
+
+        if (m_settings.bake_transform) {
+            dst.refine_settings.flags.apply_local2world = 1;
+            dst.refine_settings.local2world = dst.world_matrix;
+        }
     }
 
     m_parallel_tasks.push_back([this, &n, &dst](){
@@ -1222,7 +1244,7 @@ int msmodoContext::exportAnimations(ObjectScope scope)
         if (t >= time_end)
             break;
         else
-            t = std::min(t + interval, time_end);
+            t += interval;
     }
     setChannelReadTime();
     m_ignore_events = false;

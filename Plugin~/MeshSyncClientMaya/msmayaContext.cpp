@@ -623,7 +623,8 @@ bool msmayaContext::sendAnimations(ObjectScope scope)
 
 bool msmayaContext::exportCache(const CacheSettings& cache_settings)
 {
-    auto frame_step = cache_settings.frame_step;
+    const float frame_rate = (float)MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
+    const float frame_step = std::max(cache_settings.frame_step, 0.1f);
 
     auto settings_old = m_settings;
     m_settings.export_cache = true;
@@ -634,7 +635,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
-    oscs.sample_rate = (float)MTime(std::max(1.0 / frame_step, 1.0), MTime::kSeconds).as(MTime::uiUnit());
+    oscs.sample_rate = frame_rate * std::max(1.0f / frame_step, 1.0f);
     oscs.encoder_settings.zstd.compression_level = cache_settings.zstd_compression_level;
     oscs.flatten_hierarchy = cache_settings.flatten_hierarchy;
     oscs.strip_normals = cache_settings.strip_normals;
@@ -705,7 +706,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
             if (t >= time_end)
                 break;
             else
-                t = std::min(t + interval, time_end);
+                t += interval;
         }
         MGlobal::viewFrame(time_current);
         m_ignore_update = false;
@@ -949,7 +950,7 @@ ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
 
     // Maya can instantiate any nodes (include its children), but we only care about Meshes (shape).
     auto handle_instance = [&]() -> bool {
-        if (n->isInstanced() && !n->isPrimaryInstance()) {
+        if (!m_settings.bake_transform && n->isInstanced() && !n->isPrimaryInstance()) {
             n->dst_obj = exportInstance(n);
             return true;
         }
@@ -1740,13 +1741,15 @@ void msmayaContext::AnimationRecord::operator()(msmayaContext *_this)
 
 int msmayaContext::exportAnimations(ObjectScope scope)
 {
+    const float frame_rate = (float)MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
+    const float frame_step = std::max(m_settings.frame_step, 0.1f);
+
     // create default clip
     m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
     auto& clip = *m_animations.back();
-    auto frame_step = m_settings.frame_step;
-    clip.frame_rate = (float)MTime(std::max(1.0 / frame_step, 1.0), MTime::kSeconds).as(MTime::uiUnit());
+    clip.frame_rate = frame_rate * std::max(1.0f / frame_step, 1.0f);
 
     int num_exported = 0;
     auto export_branches = [&](DAGNode& rec) {
@@ -1799,7 +1802,7 @@ int msmayaContext::exportAnimations(ObjectScope scope)
         if (t >= time_end)
             break;
         else
-            t = std::min(t + interval, time_end);
+            t += interval;
     }
     MGlobal::viewFrame(time_current);
     m_ignore_update = false;
