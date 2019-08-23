@@ -159,6 +159,7 @@ MSyntax CmdSettings::createSyntax()
     syntax.addFlag("-smc", "-syncColors", MSyntax::kBoolean);
     syntax.addFlag("-ds", "-makeDoubleSided", MSyntax::kBoolean);
     syntax.addFlag("-bd", "-bakeDeformers", MSyntax::kBoolean);
+    syntax.addFlag("-bt", "-bakeTransform", MSyntax::kBoolean);
     syntax.addFlag("-tw", "-applyTweak", MSyntax::kBoolean);
     syntax.addFlag("-sms", "-syncBlendShapes", MSyntax::kBoolean);
     syntax.addFlag("-smb", "-syncBones", MSyntax::kBoolean);
@@ -212,6 +213,7 @@ MStatus CmdSettings::doIt(const MArgList& args_)
     Handle("syncColors", sync_colors, true);
     Handle("makeDoubleSided", make_double_sided, true);
     Handle("bakeDeformers", bake_deformers, true);
+    Handle("bakeTransform", bake_transform, true);
     Handle("applyTweak", apply_tweak, true);
     Handle("syncBlendShapes", sync_blendshapes, true);
     Handle("syncBones", sync_bones, true);
@@ -363,6 +365,7 @@ MSyntax CmdExportCache::createSyntax()
     syntax.addFlag("-rn", "-removeNamespace", MSyntax::kBoolean);
     syntax.addFlag("-ds", "-makeDoubleSided", MSyntax::kBoolean);
     syntax.addFlag("-bd", "-bakeDeformers", MSyntax::kBoolean);
+    syntax.addFlag("-bt", "-bakeTransform", MSyntax::kBoolean);
     syntax.addFlag("-fh", "-flattenHierarchy", MSyntax::kBoolean);
     syntax.addFlag("-mm", "-mergeMeshes", MSyntax::kBoolean);
     syntax.addFlag("-sn", "-stripNormals", MSyntax::kBoolean);
@@ -396,6 +399,7 @@ MStatus CmdExportCache::doIt(const MArgList& args_)
     Handle("removeNamespace", remove_namespace);
     Handle("makeDoubleSided", make_double_sided);
     Handle("bakeDeformers", bake_deformers);
+    Handle("bakeTransform", bake_transform);
     Handle("flattenHierarchy", flatten_hierarchy);
     Handle("mergeMeshes", merge_meshes);
     Handle("stripNormals", strip_normals);

@@ -21,6 +21,7 @@ global proc UnityMeshSync_CacheGUI()
     $zstdCompressionLevel = `UnityMeshSync_Cache -q -zstdCompressionLevel`;
     $makeDoubleSided    = `UnityMeshSync_Cache -q -makeDoubleSided`;
     $bakeDeformers      = `UnityMeshSync_Cache -q -bakeDeformers`;
+    $bakeTransform      = `UnityMeshSync_Cache -q -bakeTransform`;
     $flattenHierarchy   = `UnityMeshSync_Cache -q -flattenHierarchy`;
     $stripNormals       = `UnityMeshSync_Cache -q -stripNormals`;
     $stripTangents      = `UnityMeshSync_Cache -q -stripTangents`;
@@ -72,6 +73,7 @@ global proc UnityMeshSync_CacheGUI()
     checkBox -l "Remove Namespace" -v $removeNamespace umsCtrlCRemoveNamespace;
     checkBox -l "Make Double Sided" -v $makeDoubleSided umsCtrlCMakeDoubleSided;
     checkBox -l "Bake Deformers" -v $bakeDeformers umsCtrlCBakeDeformers;
+    checkBox -l "Bake Transform" -v $bakeTransform umsCtrlCBakeTransform;
     checkBox -l "Flatten Hierarchy" -v $flattenHierarchy umsCtrlCFlattenHierarchy;
     checkBox -l "Strip Normals" -v $stripNormals umsCtrlCStripNormals;
     checkBox -l "Strip Tangents" -v $stripTangents umsCtrlCStripTangents;
@@ -107,6 +109,7 @@ global proc umsCBExportCache()
     $zstdCompression    = `intField -q -v umsCtrlCZSTDCompression`;
     $makeDoubleSided    = `checkBox -q -v umsCtrlCMakeDoubleSided`;
     $bakeDeformers      = `checkBox -q -v umsCtrlCBakeDeformers`;
+    $bakeTransform      = `checkBox -q -v umsCtrlCBakeTransform`;
     $flattenHierarchy   = `checkBox -q -v umsCtrlCFlattenHierarchy`;
     $stripNormals       = `checkBox -q -v umsCtrlCStripNormals`;
     $stripTangents      = `checkBox -q -v umsCtrlCStripTangents`;
@@ -123,6 +126,7 @@ global proc umsCBExportCache()
         -zstdCompressionLevel $zstdCompression
         -makeDoubleSided $makeDoubleSided
         -bakeDeformers $bakeDeformers
+        -bakeTransform $bakeTransform
         -flattenHierarchy $flattenHierarchy
         -stripNormals $stripNormals
         -stripTangents $stripTangents

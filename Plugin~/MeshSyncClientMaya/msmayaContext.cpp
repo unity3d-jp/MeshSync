@@ -5,7 +5,7 @@
 #include "msmayaCommand.h"
 
 
-bool DAGNode::isInstance() const
+bool DAGNode::isInstanced() const
 {
     return branches.size() > 1;
 }
@@ -21,7 +21,7 @@ void TreeNode::clearState()
     dst_anim = nullptr;
 }
 
-bool TreeNode::isInstance() const
+bool TreeNode::isInstanced() const
 {
     return shape->branches.size() > 1;
 }
@@ -623,6 +623,8 @@ bool msmayaContext::sendAnimations(ObjectScope scope)
 
 bool msmayaContext::exportCache(const CacheSettings& cache_settings)
 {
+    auto frame_step = cache_settings.frame_step;
+
     auto settings_old = m_settings;
     m_settings.export_cache = true;
     m_settings.remove_namespace = cache_settings.remove_namespace;
@@ -632,7 +634,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
 
     ms::OSceneCacheSettings oscs;
-    oscs.sample_rate = (float)MTime(std::max(1.0 / cache_settings.frame_step, 1.0), MTime::kSeconds).as(MTime::uiUnit());
+    oscs.sample_rate = (float)MTime(std::max(1.0 / frame_step, 1.0), MTime::kSeconds).as(MTime::uiUnit());
     oscs.encoder_settings.zstd.compression_level = cache_settings.zstd_compression_level;
     oscs.flatten_hierarchy = cache_settings.flatten_hierarchy;
     oscs.strip_normals = cache_settings.strip_normals;
@@ -677,7 +679,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
     }
     else {
         MTime time_current = MAnimControl::currentTime();
-        MTime interval = MTime(m_settings.frame_step, MTime::uiUnit());
+        MTime interval = MTime(frame_step, MTime::uiUnit());
         MTime time_start, time_end;
 
         // time range
@@ -947,7 +949,7 @@ ms::TransformPtr msmayaContext::exportObject(TreeNode *n, bool parent, bool tip)
 
     // Maya can instantiate any nodes (include its children), but we only care about Meshes (shape).
     auto handle_instance = [&]() -> bool {
-        if (n->isInstance() && !n->isPrimaryInstance()) {
+        if (n->isInstanced() && !n->isPrimaryInstance()) {
             n->dst_obj = exportInstance(n);
             return true;
         }
@@ -1019,31 +1021,29 @@ mu::float4x4 msmayaContext::getLocalMatrix(TreeNode *n, mu::float4x4 *dst_world)
 }
 
 void msmayaContext::extractTransformData(TreeNode *n,
-    mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis,
+    mu::float3& t, mu::quatf& r, mu::float3& s, ms::VisibilityFlags& vis,
     mu::float4x4 *dst_world, mu::float4x4 *dst_local)
 {
-    if (n->trans->isInstance()) {
+    if (n->trans->isInstanced()) {
         n = n->getPrimaryInstanceNode();
     }
 
-    auto get_matrices = [&]() -> mu::float4x4 {
-        auto local = getLocalMatrix(n, dst_world);
-        if (dst_local)
-            *dst_local = local;
-        return local;
-    };
+    mu::float4x4 world, local;
+    local = getLocalMatrix(n, &world);
+    if (dst_world)
+        *dst_world = world;
+    if (dst_local)
+        *dst_local = local;
 
     // maya-compatible transform extraction
     auto maya_compatible_transform_extraction = [&]() {
-        auto mat = get_matrices();
-
         auto& td = n->transform_data;
         td.pivot = mu::float3::zero();
         td.pivot_offset = mu::float3::zero();
-        mu::extract_trs(mat, td.translation, td.rotation, td.scale);
+        mu::extract_trs(local, td.translation, td.rotation, td.scale);
 
         n->model_transform = mu::float4x4::identity();
-        n->maya_transform = mat;
+        n->maya_transform = local;
     };
 
     // fbx-compatible transform extraction
@@ -1066,31 +1066,41 @@ void msmayaContext::extractTransformData(TreeNode *n,
 
         n->model_transform = mu::float4x4::identity();
         (mu::float3&)n->model_transform[3] = -td.pivot;
-        n->maya_transform = get_matrices();
+        n->maya_transform = local;
     };
 
-    if (!m_settings.fbx_compatible_transform || n->shape->node.hasFn(MFn::kJoint))
-        maya_compatible_transform_extraction();
-    else
-        fbx_compatible_transform_extraction();
-
-
-    auto& td = n->transform_data;
-    pos = td.translation + td.pivot + td.pivot_offset;
-    if (n->parent)
-        pos -= n->parent->transform_data.pivot;
-
-    rot = td.rotation;
-
-    auto correct_axis = [](mu::quatf v) {
-        return mu::quatf { -v.z, v.w, v.x, -v.y };
+    auto camera_correction = [](mu::quatf v) {
+        return mu::quatf{ -v.z, v.w, v.x, -v.y };
     };
-    if (n->shape->node.hasFn(MFn::kCamera))
-        rot = correct_axis(rot);
-    else if (n->shape->node.hasFn(MFn::kLight))
-        rot = correct_axis(rot) * mu::rotate_z(180.0f * mu::DegToRad);
 
-    scale = td.scale;
+    if (m_settings.bake_transform) {
+        if (n->shape->node.hasFn(MFn::kCamera) || n->shape->node.hasFn(MFn::kLight)) {
+            mu::extract_trs(world, t, r, s);
+            r = camera_correction(r);
+        }
+        else {
+            t = mu::float3::zero();
+            r = mu::quatf::identity();
+            s = mu::float3::one();
+        }
+    }
+    else {
+        if (!m_settings.fbx_compatible_transform || n->shape->node.hasFn(MFn::kJoint))
+            maya_compatible_transform_extraction();
+        else
+            fbx_compatible_transform_extraction();
+
+        auto& td = n->transform_data;
+        t = td.translation + td.pivot + td.pivot_offset;
+        r = td.rotation;
+        s = td.scale;
+
+        if (n->parent)
+            t -= n->parent->transform_data.pivot;
+        if (n->shape->node.hasFn(MFn::kCamera) || n->shape->node.hasFn(MFn::kLight))
+            r = camera_correction(r);
+    }
+
     vis = { n->isVisibleInHierarchy(), true, true };
 }
 
@@ -1234,6 +1244,11 @@ ms::MeshPtr msmayaContext::exportMesh(TreeNode *n)
                 doExtractMeshDataBaked(dst, n);
             else
                 doExtractMeshData(dst, n);
+
+            if (m_settings.bake_transform) {
+                dst.refine_settings.flags.apply_local2world = 1;
+                dst.refine_settings.local2world = dst.world_matrix;
+            }
 
             if (dst.normals.empty())
                 dst.refine_settings.flags.gen_normals = 1;
@@ -1730,7 +1745,8 @@ int msmayaContext::exportAnimations(ObjectScope scope)
     m_animations.push_back(ms::AnimationClip::create());
 
     auto& clip = *m_animations.back();
-    clip.frame_rate = (float)MTime(std::max(1.0 / m_settings.frame_step, 1.0), MTime::kSeconds).as(MTime::uiUnit());
+    auto frame_step = m_settings.frame_step;
+    clip.frame_rate = (float)MTime(std::max(1.0 / frame_step, 1.0), MTime::kSeconds).as(MTime::uiUnit());
 
     int num_exported = 0;
     auto export_branches = [&](DAGNode& rec) {
@@ -1765,7 +1781,7 @@ int msmayaContext::exportAnimations(ObjectScope scope)
     auto time_current = MAnimControl::currentTime();
     auto time_start = MAnimControl::minTime();
     auto time_end = MAnimControl::maxTime();
-    auto interval = MTime(m_settings.frame_step, MTime::uiUnit());
+    auto interval = MTime(frame_step, MTime::uiUnit());
 
     int reserve_size = int((time_end.as(MTime::kSeconds) - time_start.as(MTime::kSeconds)) / interval.as(MTime::kSeconds)) + 1;
     for (auto& kvp : m_anim_records) {
