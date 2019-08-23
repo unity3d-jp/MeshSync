@@ -83,6 +83,7 @@ namespace UTJ.MeshSyncEditor
                 {
                     var srcPath = dataPath.fullPath;
                     var dstPath = Misc.CopyFileToStreamingAssets(dataPath.fullPath);
+                    Undo.RecordObject(t, "SceneCachePlayer");
                     t.OpenCache(dstPath);
                     Repaint();
                 }
@@ -91,6 +92,7 @@ namespace UTJ.MeshSyncEditor
                     t.CloseCache();
                     var srcPath = dataPath.fullPath;
                     var dstPath = Misc.MoveFileToStreamingAssets(dataPath.fullPath);
+                    Undo.RecordObject(t, "SceneCachePlayer");
                     t.OpenCache(dstPath);
                     Repaint();
                 }
