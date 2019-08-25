@@ -16,6 +16,7 @@ def msb_apply_scene_settings(self = None, context = None):
     ctx.sync_meshes = scene.meshsync_sync_meshes
     ctx.make_double_sided = scene.meshsync_make_double_sided
     ctx.bake_modifiers = scene.meshsync_bake_modifiers
+    ctx.bake_transform = scene.meshsync_bake_transform
     ctx.curves_as_mesh = scene.meshsync_curves_as_mesh
     ctx.sync_bones = scene.meshsync_sync_bones
     ctx.sync_blendshapes = scene.meshsync_sync_blendshapes
@@ -61,6 +62,7 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_sync_meshes = bpy.props.BoolProperty(name = "Sync Meshes", default = True, update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_make_double_sided = bpy.props.BoolProperty(name = "Make Double Sided", default = False, update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_bake_modifiers = bpy.props.BoolProperty(name = "Bake Modifiers", default = False, update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_bake_transform  = bpy.props.BoolProperty(name = "Bake Transform", default = False, update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_curves_as_mesh = bpy.props.BoolProperty(name = "Curves as Mesh", default = True, update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(name = "Sync Bones", default = True, update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_sync_blendshapes = bpy.props.BoolProperty(name = "Sync Blend Shapes", default = True, update = msb_on_scene_settings_updated)
@@ -84,8 +86,8 @@ def on_scene_update(context):
         msb_context.exportUpdatedObjects()
 
 
-class MESHSYNC_OT_ExportObjects(bpy.types.Operator):
-    bl_idname = "meshsync.export_objects"
+class MESHSYNC_OT_SendObjects(bpy.types.Operator):
+    bl_idname = "meshsync.send_objects"
     bl_label = "Export Objects"
     def execute(self, context):
         msb_apply_scene_settings()
@@ -94,34 +96,13 @@ class MESHSYNC_OT_ExportObjects(bpy.types.Operator):
         return{'FINISHED'}
 
 
-class MESHSYNC_OT_ExportMaterials(bpy.types.Operator):
-    bl_idname = "meshsync.export_materials"
-    bl_label = "Export Materials"
-    def execute(self, context):
-        msb_apply_scene_settings()
-        msb_context.setup(bpy.context);
-        msb_context.export(msb_context.TARGET_MATERIALS)
-        return{'FINISHED'}
-
-
-class MESHSYNC_OT_ExportAnimations(bpy.types.Operator):
-    bl_idname = "meshsync.export_animations"
+class MESHSYNC_OT_SendAnimations(bpy.types.Operator):
+    bl_idname = "meshsync.send_animations"
     bl_label = "Export Animations"
     def execute(self, context):
         msb_apply_animation_settings()
         msb_context.setup(bpy.context);
         msb_context.export(msb_context.TARGET_ANIMATIONS)
-        return{'FINISHED'}
-
-
-class MESHSYNC_OT_ExportEverything(bpy.types.Operator):
-    bl_idname = "meshsync.export_everything"
-    bl_label = "Export Everything"
-    def execute(self, context):
-        msb_apply_scene_settings()
-        msb_apply_animation_settings()
-        msb_context.setup(bpy.context);
-        msb_context.export(msb_context.TARGET_EVERYTHING)
         return{'FINISHED'}
 
 
@@ -164,6 +145,7 @@ class MESHSYNC_OT_ExportCache(bpy.types.Operator):
     zstd_compression_level = bpy.props.IntProperty(name = "ZSTD Compression", default = 3)
     make_double_sided = bpy.props.BoolProperty(name = "Make Double Sided", default = False)
     bake_modifiers = bpy.props.BoolProperty(name = "Bake Modifiers", default = True)
+    bake_transform = bpy.props.BoolProperty(name = "Bake Transform", default = False)
     convert_to_mesh = bpy.props.BoolProperty(name = "Convert To Mesh", default = True)
     flatten_hierarchy = bpy.props.BoolProperty(name = "Flatten Hierarchy", default = False)
     merge_meshes = bpy.props.BoolProperty(name = "Merge Meshes", default = False)
@@ -181,6 +163,7 @@ class MESHSYNC_OT_ExportCache(bpy.types.Operator):
         ctx.frame_step = self.frame_step
         ctx.make_double_sided = self.make_double_sided
         ctx.bake_modifiers = self.bake_modifiers
+        ctx.bake_transform = self.bake_transform
         ctx.convert_to_mesh = self.convert_to_mesh
         ctx.flatten_hierarchy = self.flatten_hierarchy
         ctx.merge_meshes = self.merge_meshes
@@ -202,6 +185,7 @@ class MESHSYNC_OT_ExportCache(bpy.types.Operator):
         self.frame_step = ctx.frame_step;
         self.make_double_sided = ctx.make_double_sided;
         self.bake_modifiers = ctx.bake_modifiers;
+        self.bake_transform = ctx.bake_transform;
         self.convert_to_mesh = ctx.convert_to_mesh;
         self.flatten_hierarchy = ctx.flatten_hierarchy;
         self.merge_meshes = ctx.merge_meshes;
@@ -235,6 +219,7 @@ class MESHSYNC_OT_ExportCache(bpy.types.Operator):
         layout.prop(self, "frame_step")
         layout.prop(self, "make_double_sided")
         layout.prop(self, "bake_modifiers")
+        layout.prop(self, "bake_transform")
         layout.prop(self, "convert_to_mesh")
         layout.prop(self, "flatten_hierarchy")
         layout.prop(self, "merge_meshes")

@@ -57,6 +57,7 @@ class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
             b.prop(scene, "meshsync_curves_as_mesh")
             b.prop(scene, "meshsync_make_double_sided")
             b.prop(scene, "meshsync_bake_modifiers")
+            b.prop(scene, "meshsync_bake_transform")
         layout.prop(scene, "meshsync_sync_bones")
         layout.prop(scene, "meshsync_sync_blendshapes")
         layout.prop(scene, "meshsync_sync_textures")
@@ -67,7 +68,7 @@ class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
             layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PAUSE")
         else:
             layout.operator("meshsync.auto_sync", text="Auto Sync", icon="PLAY")
-        layout.operator("meshsync.export_objects", text="Manual Sync")
+        layout.operator("meshsync.send_objects", text="Manual Sync")
         layout.operator("meshsync.export_cache", text="Export Cache")
 
 
@@ -81,7 +82,7 @@ class MESHSYNC_PT_Animation(MESHSYNC_PT, bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         layout.prop(scene, "meshsync_frame_step")
-        layout.operator("meshsync.export_animations", text="Sync")
+        layout.operator("meshsync.send_animations", text="Sync")
 
 
 class MESHSYNC_PT_Version(MESHSYNC_PT, bpy.types.Panel):
@@ -133,10 +134,8 @@ classes = (
     MESHSYNC_PT_Scene,
     MESHSYNC_PT_Animation,
     MESHSYNC_PT_Version,
-    MESHSYNC_OT_ExportObjects,
-    MESHSYNC_OT_ExportMaterials,
-    MESHSYNC_OT_ExportAnimations,
-    MESHSYNC_OT_ExportEverything,
+    MESHSYNC_OT_SendObjects,
+    MESHSYNC_OT_SendAnimations,
     MESHSYNC_OT_AutoSync,
     MESHSYNC_OT_ExportCache,
 )

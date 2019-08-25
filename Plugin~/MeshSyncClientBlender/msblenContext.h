@@ -179,6 +179,8 @@ private:
         mu::float3& t, mu::quatf& r, mu::float3& s, ms::VisibilityFlags& vis,
         mu::float4x4 *dst_world = nullptr, mu::float4x4 *dst_local = nullptr);
     void extractTransformData(Object *src, ms::Transform& dst);
+    void extractTransformData(const bPoseChannel *pose, mu::float3& t, mu::quatf& r, mu::float3& s);
+
     void extractCameraData(Object *src, bool& ortho, float& near_plane, float& far_plane, float& fov,
         float& focal_length, mu::float2& sensor_size, mu::float2& lens_shift);
     void extractLightData(Object *src,

@@ -120,9 +120,25 @@ static const mu::float4x4 g_world_to_arm = mu::float4x4{
     0, 0, 0, 1
 };
 
+static inline mu::float4x4 camera_correction(const mu::float4x4& v)
+{
+    return mu::float4x4{ {
+        {-v[0][0],-v[0][1],-v[0][2],-v[0][3]},
+        { v[1][0], v[1][1], v[1][2], v[1][3]},
+        {-v[2][0],-v[2][1],-v[2][2],-v[2][3]},
+        { v[3][0], v[3][1], v[3][2], v[3][3]},
+    } };
+}
+
+
 mu::float4x4 msblenContext::getWorldMatrix(const Object *obj)
 {
-    return bl::BObject(obj).matrix_world();
+    auto r = bl::BObject(obj).matrix_world();
+    if (obj->type == OB_CAMERA || obj->type == OB_LAMP) {
+        // camera/light correction
+        r = camera_correction(r);
+    }
+    return r;
 }
 
 mu::float4x4 msblenContext::getLocalMatrix(const Object *obj)
@@ -130,8 +146,6 @@ mu::float4x4 msblenContext::getLocalMatrix(const Object *obj)
     auto r = bl::BObject(obj).matrix_local();
     if (obj->parent && obj->partype == PARBONE) {
         if (auto bone = find_bone(obj->parent, obj->parsubstr)) {
-            auto arm_obj = obj->parent;
-
             r *= mu::translate(mu::float3{ 0.0f, mu::length((mu::float3&)bone->tail - (mu::float3&)bone->head), 0.0f });
             r *= g_world_to_arm;
         }
@@ -139,12 +153,7 @@ mu::float4x4 msblenContext::getLocalMatrix(const Object *obj)
 
     if (obj->type == OB_CAMERA || obj->type == OB_LAMP) {
         // camera/light correction
-        r = mu::float4x4{ {
-            {-r[0][0],-r[0][1],-r[0][2],-r[0][3]},
-            { r[1][0], r[1][1], r[1][2], r[1][3]},
-            {-r[2][0],-r[2][1],-r[2][2],-r[2][3]},
-            { r[3][0], r[3][1], r[3][2], r[3][3]},
-        } };
+        r = camera_correction(r);
     }
     return r;
 }
@@ -187,17 +196,42 @@ void msblenContext::extractTransformData(Object *obj,
     vis = { true, visible_in_render(obj), visible_in_viewport(obj) };
 
     auto local = getLocalMatrix(obj);
-    mu::extract_trs(local, t, r, s);
-
+    auto world = getWorldMatrix(obj);
     if (dst_world)
-        *dst_world = getWorldMatrix(obj);
+        *dst_world = world;
     if (dst_local)
         *dst_local = local;
+
+    if (m_settings.bake_transform) {
+        if (obj->type == OB_CAMERA || obj->type == OB_LAMP) {
+            mu::extract_trs(world, t, r, s);
+        }
+        else {
+            t = mu::float3::zero();
+            r = mu::quatf::identity();
+            s = mu::float3::one();
+        }
+    }
+    else {
+        mu::extract_trs(local, t, r, s);
+    }
 }
 
 void msblenContext::extractTransformData(Object *src, ms::Transform& dst)
 {
     extractTransformData(src, dst.position, dst.rotation, dst.scale, dst.visibility, &dst.world_matrix, &dst.local_matrix);
+}
+
+void msblenContext::extractTransformData(const bPoseChannel *src, mu::float3& t, mu::quatf& r, mu::float3& s)
+{
+    if (m_settings.bake_transform) {
+        t = mu::float3::zero();
+        r = mu::quatf::identity();
+        s = mu::float3::one();
+    }
+    else {
+        extract_bone_trs(getLocalMatrix(src), t, r, s);
+    }
 }
 
 void msblenContext::extractCameraData(Object *src,
@@ -366,7 +400,7 @@ ms::TransformPtr msblenContext::exportPose(Object *armature, bPoseChannel *src)
     auto ret = ms::Transform::create();
     auto& dst = *ret;
     dst.path = get_path(armature, src->bone);
-    extract_bone_trs(getLocalMatrix(src), dst.position, dst.rotation, dst.scale);
+    extractTransformData(src, dst.position, dst.rotation, dst.scale);
     m_entity_manager.add(ret);
     return ret;
 }
@@ -1051,19 +1085,19 @@ void msblenContext::extractTransformAnimationData(ms::TransformAnimation& dst_, 
     dst.visible.push_back({ t, (int)vis.visible_in_render });
 }
 
-void msblenContext::extractPoseAnimationData(ms::TransformAnimation& dst_, void * obj)
+void msblenContext::extractPoseAnimationData(ms::TransformAnimation& dst_, void *obj)
 {
     auto& dst = (ms::TransformAnimation&)dst_;
 
-    mu::float3 pos;
-    mu::quatf rot;
-    mu::float3 scale;
-    extract_bone_trs(getLocalMatrix((bPoseChannel*)obj), pos, rot, scale);
+    mu::float3 t;
+    mu::quatf r;
+    mu::float3 s;
+    extractTransformData((bPoseChannel*)obj, t, r, s);
 
-    float t = m_anim_time;
-    dst.translation.push_back({ t, pos });
-    dst.rotation.push_back({ t, rot });
-    dst.scale.push_back({ t, scale });
+    float time = m_anim_time;
+    dst.translation.push_back({ time, t });
+    dst.rotation.push_back({ time, r });
+    dst.scale.push_back({ time, s });
 }
 
 void msblenContext::extractCameraAnimationData(ms::TransformAnimation& dst_, void *obj)

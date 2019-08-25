@@ -73,7 +73,9 @@ global proc UnityMeshSync_CacheGUI()
     checkBox -l "Remove Namespace" -v $removeNamespace umsCtrlCRemoveNamespace;
     checkBox -l "Make Double Sided" -v $makeDoubleSided umsCtrlCMakeDoubleSided;
     checkBox -l "Bake Deformers" -v $bakeDeformers umsCtrlCBakeDeformers;
-    checkBox -l "Bake Transform" -v $bakeTransform umsCtrlCBakeTransform;
+    columnLayout -columnOffset "left" 20 umsCFoldBakeDeformers;
+        checkBox -l "Bake Transform" -v $bakeTransform umsCtrlCBakeTransform;
+    setParent ..;
     checkBox -l "Flatten Hierarchy" -v $flattenHierarchy umsCtrlCFlattenHierarchy;
     checkBox -l "Strip Normals" -v $stripNormals umsCtrlCStripNormals;
     checkBox -l "Strip Tangents" -v $stripTangents umsCtrlCStripTangents;
