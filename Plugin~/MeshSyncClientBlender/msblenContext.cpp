@@ -279,7 +279,7 @@ ms::TransformPtr msblenContext::exportObject(Object *obj, bool parent, bool tip)
     switch (obj->type) {
     case OB_ARMATURE:
     {
-        if (!m_settings.bake_modifiers && m_settings.sync_bones) {
+        if (!tip || (!m_settings.bake_modifiers && m_settings.sync_bones)) {
             handle_parent();
             ret = exportArmature(obj);
         }
