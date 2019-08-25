@@ -18,8 +18,8 @@ enum class ObjectScope : int
 {
     None = -1,
     All,
-    Updated,
     Selected,
+    Updated,
 };
 
 enum class FrameRange : int
