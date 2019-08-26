@@ -448,19 +448,34 @@ ms::TransformPtr msblenContext::exportReference(Object *src, const DupliGroupCon
 {
     auto& rec = touchRecord(src);
     if (!rec.dst)
-        exportObject(src, true, false);
+        return nullptr;
 
     auto local_path = get_path(src);
     auto path = ctx.dst->path + local_path;
 
     ms::TransformPtr dst;
-    dst = ms::Transform::create();
+    if (is_mesh(src)) {
+        if (m_settings.bake_transform) {
+            auto mesh = std::static_pointer_cast<ms::Mesh>(rec.dst->clone());
+            mesh->refine_settings.local2world = mesh->world_matrix * ctx.dst->world_matrix;
+            mesh->refine_settings.flags.apply_local2world = 1;
+            dst = mesh;
+        }
+        else {
+            dst = ms::Transform::create();
+            extractTransformData(src, *dst);
+            dst->reference = local_path;
+        }
+    }
+    else {
+        dst = std::static_pointer_cast<ms::Transform>(rec.dst->clone());
+    }
     dst->path = path;
-    dst->reference = local_path;
-    extractTransformData(src, *dst);
 
     // todo:
     dst->visibility = {};
+
+    m_entity_manager.add(dst);
 
     each_child(src, [&](Object *child) {
         exportReference(child, ctx);
@@ -472,7 +487,6 @@ ms::TransformPtr msblenContext::exportReference(Object *src, const DupliGroupCon
         ctx2.dst = dst;
 
         exportDupliGroup(src, ctx2);
-        m_entity_manager.add(dst);
     }
     return dst;
 }
@@ -488,18 +502,25 @@ ms::TransformPtr msblenContext::exportDupliGroup(Object *src, const DupliGroupCo
 
     auto dst = ms::Transform::create();
     dst->path = path;
-    dst->position = -get_instance_offset(group);
     dst->visibility = { true, visible_in_render(ctx.group_host), visible_in_viewport(ctx.group_host) };
+
+    auto offset_pos = -get_instance_offset(group);
+    dst->position = m_settings.bake_transform ? mu::float3::zero() : offset_pos;
+    dst->world_matrix = ctx.dst->world_matrix;
+    (mu::float3&)dst->world_matrix[3] += offset_pos;
     m_entity_manager.add(dst);
 
+    DupliGroupContext ctx2;
+    ctx2.group_host = src;
+    ctx2.dst = dst;
     auto gobjects = bl::list_range((CollectionObject*)group->gobject.first);
     for (auto go : gobjects) {
         auto obj = go->ob;
-        if (auto t = exportObject(obj, false)) {
+        if (auto t = exportObject(obj, true, false)) {
             bool non_lib = obj->id.lib == nullptr;
             t->visibility = { true, non_lib, non_lib };
         }
-        exportReference(obj, ctx);
+        exportReference(obj, ctx2);
     }
     return dst;
 }
@@ -976,11 +997,12 @@ msblenContext::ObjectRecord& msblenContext::touchRecord(Object *obj, const std::
 
     rec.touched = true;
 
-    auto path = base_path + get_path(obj);
-    if (path != rec.path) {
+    auto local_path = get_path(obj);
+    if (local_path != rec.path) {
         rec.renamed = true;
-        rec.path = path;
+        rec.path = local_path;
     }
+    auto path = base_path + local_path;
     m_entity_manager.touch(path);
 
     // trace bones
@@ -992,6 +1014,13 @@ msblenContext::ObjectRecord& msblenContext::touchRecord(Object *obj, const std::
         }
     }
 
+    // care children
+    if (children) {
+        each_child(obj, [&](Object *child) {
+            touchRecord(child, base_path, true);
+        });
+    }
+
     // trace dupli group
     if (auto group = get_instance_collection(obj)) {
         auto group_path = path + '/' + (group->id.name + 2);
@@ -1000,13 +1029,6 @@ msblenContext::ObjectRecord& msblenContext::touchRecord(Object *obj, const std::
         auto gobjects = bl::list_range((CollectionObject*)group->gobject.first);
         for (auto go : gobjects)
             touchRecord(go->ob, group_path, true);
-    }
-
-    // care children
-    if (children) {
-        each_child(obj, [&](Object *child) {
-            touchRecord(child, path, true);
-        });
     }
     return rec;
 }
@@ -1023,7 +1045,7 @@ void msblenContext::eraseStaleObjects()
 }
 
 
-void msblenContext::exportAnimation(Object *obj, bool force, const std::string base_path)
+void msblenContext::exportAnimation(Object *obj, bool force, const std::string& base_path)
 {
     if (!obj)
         return;

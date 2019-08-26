@@ -61,7 +61,7 @@ struct SyncSettings
 
     int frame_step = 1;
 
-    bool multithreaded = true;
+    bool multithreaded = false;
 
     // cache
     bool export_cache = false;
@@ -220,7 +220,7 @@ private:
     ObjectRecord& touchRecord(Object *obj, const std::string& base_path = "", bool children = false);
     void eraseStaleObjects();
 
-    void exportAnimation(Object *obj, bool force, const std::string base_path = "");
+    void exportAnimation(Object *obj, bool force, const std::string& base_path = "");
     void extractTransformAnimationData(ms::TransformAnimation& dst, void *obj);
     void extractPoseAnimationData(ms::TransformAnimation& dst, void *obj);
     void extractCameraAnimationData(ms::TransformAnimation& dst, void *obj);
