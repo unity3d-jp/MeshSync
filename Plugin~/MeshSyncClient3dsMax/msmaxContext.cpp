@@ -698,9 +698,11 @@ void msmaxContext::exportMaterials()
 
         int num_submtls = mtl->NumSubMtls();
         if (num_submtls == 0) {
+            // no submaterials. export self.
             rec.material_id = do_export(mtl);
         }
         else {
+            // export submaterials
             for (int si = 0; si < num_submtls; ++si) {
                 auto submtl = mtl->GetSubMtl(si);
                 if (!submtl)

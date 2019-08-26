@@ -3,6 +3,25 @@
 #include "msblenUtils.h"
 
 
+void msblenContext::NodeRecord::clearState()
+{
+    dst_anim = nullptr;
+    anim_extractor = nullptr;
+}
+
+void msblenContext::NodeRecord::recordAnimation(msblenContext *_this)
+{
+    (_this->*anim_extractor)(*dst_anim, obj);
+}
+
+
+void msblenContext::ObjectRecord::clearState()
+{
+    touched = renamed = false;
+    dst = nullptr;
+}
+
+
 msblenContext& msblenContext::getInstance()
 {
     static msblenContext s_instance;
@@ -134,7 +153,7 @@ static inline mu::float4x4 camera_correction(const mu::float4x4& v)
 mu::float4x4 msblenContext::getWorldMatrix(const Object *obj)
 {
     auto r = bl::BObject(obj).matrix_world();
-    if (obj->type == OB_CAMERA || obj->type == OB_LAMP) {
+    if (is_camera(obj) || is_light(obj)) {
         // camera/light correction
         r = camera_correction(r);
     }
@@ -151,7 +170,7 @@ mu::float4x4 msblenContext::getLocalMatrix(const Object *obj)
         }
     }
 
-    if (obj->type == OB_CAMERA || obj->type == OB_LAMP) {
+    if (is_camera(obj) || is_light(obj)) {
         // camera/light correction
         r = camera_correction(r);
     }
@@ -203,7 +222,7 @@ void msblenContext::extractTransformData(Object *obj,
         *dst_local = local;
 
     if (m_settings.bake_transform) {
-        if (obj->type == OB_CAMERA || obj->type == OB_LAMP) {
+        if (is_camera(obj) || is_light(obj)) {
             mu::extract_trs(world, t, r, s);
         }
         else {
@@ -293,13 +312,12 @@ void msblenContext::extractLightData(Object *src,
 
 ms::TransformPtr msblenContext::exportObject(Object *obj, bool parent, bool tip)
 {
-    ms::TransformPtr ret;
     if (!obj)
-        return ret;
+        return nullptr;
 
     auto& rec = touchRecord(obj);
-    if (rec.exported)
-        return ret; // already exported
+    if (rec.dst)
+        return rec.dst; // already exported
 
     auto handle_parent = [&]() {
         if (parent)
@@ -307,7 +325,7 @@ ms::TransformPtr msblenContext::exportObject(Object *obj, bool parent, bool tip)
     };
     auto handle_transform = [&]() {
         handle_parent();
-        ret = exportTransform(obj);
+        rec.dst = exportTransform(obj);
     };
 
     switch (obj->type) {
@@ -315,7 +333,7 @@ ms::TransformPtr msblenContext::exportObject(Object *obj, bool parent, bool tip)
     {
         if (!tip || (!m_settings.bake_modifiers && m_settings.sync_bones)) {
             handle_parent();
-            ret = exportArmature(obj);
+            rec.dst = exportArmature(obj);
         }
         else if (!tip && parent)
             handle_transform();
@@ -329,7 +347,7 @@ ms::TransformPtr msblenContext::exportObject(Object *obj, bool parent, bool tip)
         }
         if (m_settings.sync_meshes || (!m_settings.bake_modifiers && m_settings.sync_blendshapes)) {
             handle_parent();
-            ret = exportMesh(obj);
+            rec.dst = exportMesh(obj);
         }
         else if (!tip && parent)
             handle_transform();
@@ -342,7 +360,7 @@ ms::TransformPtr msblenContext::exportObject(Object *obj, bool parent, bool tip)
     {
         if (m_settings.sync_meshes && m_settings.curves_as_mesh) {
             handle_parent();
-            ret = exportMesh(obj);
+            rec.dst = exportMesh(obj);
         }
         else if (!tip && parent)
             handle_transform();
@@ -352,7 +370,7 @@ ms::TransformPtr msblenContext::exportObject(Object *obj, bool parent, bool tip)
     {
         if (m_settings.sync_cameras) {
             handle_parent();
-            ret = exportCamera(obj);
+            rec.dst = exportCamera(obj);
         }
         else if (!tip && parent)
             handle_transform();
@@ -362,7 +380,7 @@ ms::TransformPtr msblenContext::exportObject(Object *obj, bool parent, bool tip)
     {
         if (m_settings.sync_lights) {
             handle_parent();
-            ret = exportLight(obj);
+            rec.dst = exportLight(obj);
         }
         else if (!tip && parent)
             handle_transform();
@@ -372,17 +390,22 @@ ms::TransformPtr msblenContext::exportObject(Object *obj, bool parent, bool tip)
     {
         if (get_instance_collection(obj) || (!tip && parent)) {
             handle_parent();
-            ret = exportTransform(obj);
+            rec.dst = exportTransform(obj);
         }
         break;
     }
     }
 
-    if (ret) {
-        exportDupliGroup(obj, obj, ret->path);
-        rec.exported = true;
+    if (rec.dst) {
+        if (get_instance_collection(obj)) {
+            DupliGroupContext ctx;
+            ctx.group_host = obj;
+            ctx.dst = rec.dst;
+
+            exportDupliGroup(obj, ctx);
+        }
     }
-    return ret;
+    return rec.dst;
 }
 
 ms::TransformPtr msblenContext::exportTransform(Object *src)
@@ -421,12 +444,17 @@ ms::TransformPtr msblenContext::exportArmature(Object *src)
     return ret;
 }
 
-ms::TransformPtr msblenContext::exportReference(Object *src, Object *host, const std::string& base_path)
+ms::TransformPtr msblenContext::exportReference(Object *src, const DupliGroupContext& ctx)
 {
-    auto local_path = get_path(src);
-    auto path = base_path + local_path;
+    auto& rec = touchRecord(src);
+    if (!rec.dst)
+        exportObject(src, true, false);
 
-    auto dst = ms::Transform::create();
+    auto local_path = get_path(src);
+    auto path = ctx.dst->path + local_path;
+
+    ms::TransformPtr dst;
+    dst = ms::Transform::create();
     dst->path = path;
     dst->reference = local_path;
     extractTransformData(src, *dst);
@@ -434,28 +462,34 @@ ms::TransformPtr msblenContext::exportReference(Object *src, Object *host, const
     // todo:
     dst->visibility = {};
 
-    exportDupliGroup(src, host, path);
-    m_entity_manager.add(dst);
-
     each_child(src, [&](Object *child) {
-        exportReference(child, host, path);
+        exportReference(child, ctx);
     });
+
+    if (get_instance_collection(src)) {
+        DupliGroupContext ctx2;
+        ctx2.group_host = src;
+        ctx2.dst = dst;
+
+        exportDupliGroup(src, ctx2);
+        m_entity_manager.add(dst);
+    }
     return dst;
 }
 
-ms::TransformPtr msblenContext::exportDupliGroup(Object *src, Object *host, const std::string& base_path)
+ms::TransformPtr msblenContext::exportDupliGroup(Object *src, const DupliGroupContext& ctx)
 {
     auto group = get_instance_collection(src);
     if (!group)
         return nullptr;
 
     auto local_path = std::string("/") + (group->id.name + 2);
-    auto path = base_path + local_path;
+    auto path = ctx.dst->path + local_path;
 
     auto dst = ms::Transform::create();
     dst->path = path;
     dst->position = -get_instance_offset(group);
-    dst->visibility = { true, visible_in_render(host), visible_in_viewport(host) };
+    dst->visibility = { true, visible_in_render(ctx.group_host), visible_in_viewport(ctx.group_host) };
     m_entity_manager.add(dst);
 
     auto gobjects = bl::list_range((CollectionObject*)group->gobject.first);
@@ -465,7 +499,7 @@ ms::TransformPtr msblenContext::exportDupliGroup(Object *src, Object *host, cons
             bool non_lib = obj->id.lib == nullptr;
             t->visibility = { true, non_lib, non_lib };
         }
-        exportReference(obj, host, path);
+        exportReference(obj, ctx);
     }
     return dst;
 }
@@ -501,7 +535,7 @@ ms::MeshPtr msblenContext::exportMesh(Object *src)
 
     bl::BObject bobj(src);
     Mesh *data = nullptr;
-    if (src->type == OB_MESH)
+    if (is_mesh(src))
         data = (Mesh*)src->data;
     bool is_editing = false;
 
@@ -527,7 +561,7 @@ ms::MeshPtr msblenContext::exportMesh(Object *src)
 
     if (m_settings.sync_meshes) {
         bool need_convert = 
-            (!is_editing && m_settings.bake_modifiers) || (src->type != OB_MESH);
+            (!is_editing && m_settings.bake_modifiers) || !is_mesh(src);
 
         if (need_convert) {
 #if BLENDER_VERSION >= 280
@@ -554,7 +588,7 @@ ms::MeshPtr msblenContext::exportMesh(Object *src)
     if (data) {
         auto task = [this, ret, src, data]() {
             auto& dst = *ret;
-            doExtractMeshData(dst, src, data);
+            doExtractMeshData(dst, src, data, dst.world_matrix);
             m_entity_manager.add(ret);
         };
 
@@ -563,12 +597,10 @@ ms::MeshPtr msblenContext::exportMesh(Object *src)
         else
             task();
     }
-    else {
-    }
     return ret;
 }
 
-void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
+void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data, mu::float4x4 world)
 {
     if (m_settings.sync_meshes) {
         bl::BObject bobj(obj);
@@ -597,7 +629,7 @@ void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data)
             }
         }
         if (m_settings.bake_transform) {
-            dst.refine_settings.local2world = dst.world_matrix;
+            dst.refine_settings.local2world = world;
             dst.refine_settings.flags.apply_local2world = 1;
         }
     }
@@ -952,7 +984,7 @@ msblenContext::ObjectRecord& msblenContext::touchRecord(Object *obj, const std::
     m_entity_manager.touch(path);
 
     // trace bones
-    if (obj->type == OB_ARMATURE) {
+    if (is_armature(obj)) {
         auto poses = bl::list_range((bPoseChannel*)obj->pose->chanbase.first);
         for (auto pose : poses) {
             m_obj_records[pose->bone].touched = true;

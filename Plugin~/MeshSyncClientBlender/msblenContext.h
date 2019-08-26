@@ -117,26 +117,45 @@ public:
     void flushPendingList();
 
 private:
+    // todo
+    struct NodeRecord : public mu::noncopyable
+    {
+        NodeRecord *parent = nullptr;
+
+        std::string path;
+        std::string name;
+        Object *host = nullptr; // parent of dupli group
+        Object *obj = nullptr;
+
+        ms::TransformPtr dst;
+        ms::TransformAnimationPtr dst_anim;
+        using AnimationExtractor = void (msblenContext::*)(ms::TransformAnimation& dst, void *obj);
+        AnimationExtractor anim_extractor = nullptr;
+
+        void clearState();
+        void recordAnimation(msblenContext *_this);
+    };
+
     // note:
     // ObjectRecord and Blender's Object is *NOT* 1 on 1 because there is 'dupli group' in Blender.
     // dupli group is a collection of nodes that will be instanced.
     // so, only the path is unique. Object maybe shared by multiple ObjectRecord.
     struct ObjectRecord : public mu::noncopyable
     {
+        //std::vector<NodeRecord*> branches; // todo
+
         std::string path;
         std::string name;
         Object *host = nullptr; // parent of dupli group
         Object *obj = nullptr;
         Bone *bone = nullptr;
 
+        ms::TransformPtr dst;
+
         bool touched = false;
-        bool exported = false;
         bool renamed = false;
 
-        void clearState()
-        {
-            touched = exported = renamed = false;
-        }
+        void clearState();
     };
 
     struct AnimationRecord : public mu::noncopyable
@@ -153,6 +172,12 @@ private:
         }
     };
 
+    struct DupliGroupContext
+    {
+        Object *group_host;
+        ms::TransformPtr dst;
+    };
+
     msblenContext();
     ~msblenContext();
 
@@ -165,8 +190,8 @@ private:
     ms::TransformPtr exportTransform(Object *obj);
     ms::TransformPtr exportPose(Object *armature, bPoseChannel *obj);
     ms::TransformPtr exportArmature(Object *obj);
-    ms::TransformPtr exportReference(Object *obj, Object *host, const std::string& base_path);
-    ms::TransformPtr exportDupliGroup(Object *obj, Object *host, const std::string& base_path);
+    ms::TransformPtr exportReference(Object *obj, const DupliGroupContext& ctx);
+    ms::TransformPtr exportDupliGroup(Object *obj, const DupliGroupContext& ctx);
     ms::CameraPtr exportCamera(Object *obj);
     ms::LightPtr exportLight(Object *obj);
     ms::MeshPtr exportMesh(Object *obj);
@@ -186,7 +211,7 @@ private:
     void extractLightData(Object *src,
         ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& range, float& spot_angle);
 
-    void doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
+    void doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data, mu::float4x4 world);
     void doExtractBlendshapeWeights(ms::Mesh& dst, Object *obj, Mesh *data);
     void doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data);
     void doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data);

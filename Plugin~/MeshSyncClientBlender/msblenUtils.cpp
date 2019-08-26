@@ -96,3 +96,8 @@ bPoseChannel* find_pose(Object *obj, const char *name)
             return it;
     return nullptr;
 }
+
+bool is_mesh(const Object *obj) { return obj->type == OB_MESH; }
+bool is_camera(const Object *obj) { return obj->type == OB_CAMERA; }
+bool is_light(const Object *obj) { return obj->type == OB_LAMP; }
+bool is_armature(const Object *obj) { return obj->type == OB_ARMATURE; }
