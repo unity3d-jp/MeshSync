@@ -210,18 +210,14 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         auto bu_manual_sync = new QPushButton("Manual Sync");
         layout->addWidget(bu_manual_sync, iy++, 0, 1, 3);
         connect(bu_manual_sync, SIGNAL(clicked(bool)), this, SLOT(onClickManualSync(bool)));
-
-        auto bu_export_cache = new QPushButton("Export Cache");
-        layout->addWidget(bu_export_cache, iy++, 0, 1, 3);
-        connect(bu_export_cache, SIGNAL(clicked(bool)), this, SLOT(onClickExportCache(bool)));
     }
 
     // animation
     {
-        auto lb_scene = new QLabel("Animation");
-        lb_scene->setContentsMargins(0, space, 0, 0);
-        lb_scene->setStyleSheet("font-weight: bold");
-        layout->addWidget(lb_scene, iy++, 0, 1, 3);
+        auto lb_animation = new QLabel("Animation");
+        lb_animation->setContentsMargins(0, space, 0, 0);
+        lb_animation->setStyleSheet("font-weight: bold");
+        layout->addWidget(lb_animation, iy++, 0, 1, 3);
 
         layout->addWidget(new QLabel("Samples Per Second"), iy, 0);
         auto ed_anim_sps = new QLineEdit(to_qstring(settings.frame_step));
@@ -232,6 +228,18 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         auto bu_sync_animations = new QPushButton("Sync Animations");
         layout->addWidget(bu_sync_animations, iy++, 0, 1, 3);
         connect(bu_sync_animations, SIGNAL(clicked(bool)), this, SLOT(onClickSyncAnimations(bool)));
+    }
+
+    // cache
+    {
+        auto lb_cache = new QLabel("Cache");
+        lb_cache->setContentsMargins(0, space, 0, 0);
+        lb_cache->setStyleSheet("font-weight: bold");
+        layout->addWidget(lb_cache, iy++, 0, 1, 3);
+
+        auto bu_export_cache = new QPushButton("Export Cache");
+        layout->addWidget(bu_export_cache, iy++, 0, 1, 3);
+        connect(bu_export_cache, SIGNAL(clicked(bool)), this, SLOT(onClickExportCache(bool)));
     }
 
     {
