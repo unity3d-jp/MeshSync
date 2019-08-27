@@ -59,6 +59,7 @@ struct MeshRefineFlags
     uint32_t make_double_sided : 1;
     uint32_t quadify : 1;
     uint32_t quadify_full_search : 1;
+    uint32_t apply_local2world2 : 1; // 25
 
     MeshRefineFlags();
 };
@@ -75,6 +76,7 @@ struct MeshRefineSettings
     float4x4 local2world = float4x4::identity();
     float4x4 world2local = float4x4::identity();
     float4x4 mirror_basis = float4x4::identity();
+    float4x4 local2world2 = float4x4::identity();
 
     void clear();
     uint64_t checksum() const;

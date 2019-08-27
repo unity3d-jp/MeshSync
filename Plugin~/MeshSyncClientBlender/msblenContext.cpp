@@ -456,9 +456,9 @@ ms::TransformPtr msblenContext::exportReference(Object *src, const DupliGroupCon
     ms::TransformPtr dst;
     if (is_mesh(src)) {
         if (m_settings.bake_transform) {
-            auto mesh = std::static_pointer_cast<ms::Mesh>(rec.dst->clone());
-            mesh->refine_settings.local2world = mesh->world_matrix * ctx.dst->world_matrix;
-            mesh->refine_settings.flags.apply_local2world = 1;
+            auto mesh = std::static_pointer_cast<ms::Mesh>(rec.dst->clone(true));
+            mesh->refine_settings.local2world2 = mesh->world_matrix * ctx.dst->world_matrix;
+            mesh->refine_settings.flags.apply_local2world2 = 1;
             dst = mesh;
         }
         else {
@@ -471,6 +471,7 @@ ms::TransformPtr msblenContext::exportReference(Object *src, const DupliGroupCon
         dst = std::static_pointer_cast<ms::Transform>(rec.dst->clone());
     }
     dst->path = path;
+    dst->world_matrix = dst->world_matrix * ctx.dst->world_matrix;
 
     // todo:
     dst->visibility = {};
@@ -593,7 +594,11 @@ ms::MeshPtr msblenContext::exportMesh(Object *src)
 #endif
             if (Mesh *tmp = bobj.to_mesh()) {
                 data = tmp;
+#if BLENDER_VERSION < 280
                 m_tmp_meshes.push_back(tmp); // baked meshes are need to be deleted manually
+#else
+                m_meshes_to_clear.push_back(src);
+#endif
             }
         }
 
@@ -650,8 +655,8 @@ void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data, mu
             }
         }
         if (m_settings.bake_transform) {
-            dst.refine_settings.local2world = world;
-            dst.refine_settings.flags.apply_local2world = 1;
+            dst.refine_settings.local2world2 = world;
+            dst.refine_settings.flags.apply_local2world2 = 1;
         }
     }
     else {
@@ -1492,12 +1497,22 @@ void msblenContext::kickAsyncExport()
     m_async_tasks.clear();
 
     // clear baked meshes
+#if BLENDER_VERSION < 280
     if (!m_tmp_meshes.empty()) {
         bl::BData bd(bl::BContext::get().data());
         for (auto *v : m_tmp_meshes)
             bd.remove(v);
         m_tmp_meshes.clear();
+}
+#else
+    if (!m_meshes_to_clear.empty()) {
+        for (auto *v : m_meshes_to_clear) {
+            bl::BObject bobj(v);
+            bobj.to_mesh_clear();
+        }
+        m_meshes_to_clear.clear();
     }
+#endif
 
     for (auto& kvp : m_obj_records)
         kvp.second.clearState();

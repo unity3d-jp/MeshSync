@@ -26,6 +26,7 @@ Prop(BObject, hide_viewport);
 Prop(BObject, hide_render);
 Func(BObject, is_visible);
 Func(BObject, to_mesh);
+Func(BObject, to_mesh_clear);
 
 Def(BMesh);
 Func(BMesh, calc_normals_split);
@@ -120,6 +121,7 @@ void setup(py::object bpy_context)
             each_func {
                 if (match_func("is_visible")) BObject_is_visible = func;
                 if (match_func("to_mesh")) BObject_to_mesh = func;
+                if (match_func("to_mesh_clear")) BObject_to_mesh_clear = func;
             }
         }
         else if (match_type("Mesh")) {
@@ -452,6 +454,11 @@ Mesh* BObject::to_mesh() const
 Mesh* BObject::to_mesh() const
 {
     return call<Object, Mesh*, bool, Depsgraph*>(m_ptr, BObject_to_mesh, false, nullptr);
+}
+
+void BObject::to_mesh_clear()
+{
+    call<Object, Mesh*>(m_ptr, BObject_to_mesh_clear);
 }
 #endif
 

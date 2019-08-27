@@ -483,6 +483,9 @@ void Mesh::refine()
     if (mrs.flags.mirror_z)
         mirrorMesh({ 0.0f, 0.0f, 1.0f }, 0.0f, true);
 
+    if (mrs.flags.apply_local2world2)
+        transformMesh(mrs.local2world2);
+
     if (!bones.empty()) {
         if (mrs.max_bone_influence == 4)
             setupBoneWeights4();

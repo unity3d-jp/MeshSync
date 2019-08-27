@@ -118,6 +118,9 @@ namespace blender
         bool hide_viewport() const;
         bool hide_render() const;
         Mesh* to_mesh() const;
+#if BLENDER_VERSION >= 280
+        void to_mesh_clear();
+#endif
     };
 
     class BMesh

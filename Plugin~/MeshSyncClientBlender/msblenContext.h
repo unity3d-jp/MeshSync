@@ -236,7 +236,12 @@ private:
     std::map<Bone*, ms::TransformPtr> m_bones;
     std::map<void*, ObjectRecord> m_obj_records; // key can be object or bone
     std::vector<std::future<void>> m_async_tasks;
+
+#if BLENDER_VERSION < 280
     std::vector<Mesh*> m_tmp_meshes;
+#else
+    std::vector<Object*> m_meshes_to_clear;
+#endif
 
     std::vector<ms::AnimationClipPtr> m_animations;
     ms::IDGenerator<Material*> m_material_ids;
