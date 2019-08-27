@@ -324,7 +324,7 @@ void msmodoContext::extractLightData(TreeNode& n,
 
 void msmodoContext::extractReplicaData(
     TreeNode& n, CLxUser_Item& geom, int nth, const mu::float4x4& matrix,
-    std::string& path, mu::float3& pos, mu::quatf& rot, mu::float3& scale)
+    std::string& path, mu::float3& t, mu::quatf& r, mu::float3& s)
 {
     if (n.dst_obj)
         path = n.dst_obj->path;
@@ -339,9 +339,16 @@ void msmodoContext::extractReplicaData(
     sprintf(buf, " (%d)", nth++);
     path += buf;
 
-    pos = mu::extract_position(matrix);
-    rot = mu::extract_rotation(matrix);
-    scale = mu::extract_scale(matrix);
+    if (m_settings.bake_transform) {
+        t = mu::float3::zero();
+        r = mu::quatf::identity();
+        s = mu::float3::one();
+    }
+    else {
+        t = mu::extract_position(matrix);
+        r = mu::extract_rotation(matrix);
+        s = mu::extract_scale(matrix);
+    }
 }
 
 bool msmodoContext::sendMaterials(bool dirty_all)
@@ -758,17 +765,41 @@ ms::TransformPtr msmodoContext::exportTransform(TreeNode& n)
 
 ms::TransformPtr msmodoContext::exportMeshInstance(TreeNode& n)
 {
-    auto ret = createEntity<ms::Transform>(n);
-    n.dst_obj = ret;
-    auto& dst = *ret;
+    CLxUser_Item src;
+    enumerateItemGraphR(n.item, LXsGRAPH_MESHINST, [&](CLxUser_Item& g) { src = g; });
+    if (!src)
+        return nullptr;
 
-    extractTransformData(n, dst);
-    enumerateItemGraphR(n.item, LXsGRAPH_MESHINST, [&](CLxUser_Item& g) {
-        n.dst_obj->reference = GetPath(g);
-    });
+    if (m_settings.bake_transform) {
+        auto& nsrc = m_tree_nodes[src];
+        if (!nsrc.dst_obj)
+            exportObject(src, true, false);
+        if (!nsrc.dst_obj)
+            return nullptr;
 
-    m_entity_manager.add(n.dst_obj);
-    return ret;
+        auto ret = std::static_pointer_cast<ms::Mesh>(nsrc.dst_obj->clone(true));
+        n.dst_obj = ret;
+        auto& dst = *ret;
+
+        dst.path = n.path;
+        dst.index = n.index;
+        extractTransformData(n, dst);
+        dst.refine_settings.local2world2 = dst.world_matrix;
+        dst.refine_settings.flags.apply_local2world2 = 1;
+        m_entity_manager.add(n.dst_obj);
+        return ret;
+    }
+    else {
+        auto ret = createEntity<ms::Transform>(n);
+        n.dst_obj = ret;
+        auto& dst = *ret;
+
+        extractTransformData(n, dst);
+        n.dst_obj->reference = GetPath(src);
+
+        m_entity_manager.add(n.dst_obj);
+        return ret;
+    }
 }
 
 ms::CameraPtr msmodoContext::exportCamera(TreeNode& n)
@@ -1100,8 +1131,8 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
         dst.refine_settings.flags.flip_faces = 1;
 
         if (m_settings.bake_transform) {
-            dst.refine_settings.flags.apply_local2world = 1;
-            dst.refine_settings.local2world = dst.world_matrix;
+            dst.refine_settings.flags.apply_local2world2 = 1;
+            dst.refine_settings.local2world2 = dst.world_matrix;
         }
     }
 
@@ -1156,31 +1187,59 @@ ms::TransformPtr msmodoContext::exportReplicator(TreeNode& n)
     // export replica
     int nth = 0;
     n.replicas.clear();
-    eachReplica(n.item, [&](CLxUser_Item& geom, mu::float4x4 matrix) {
-        auto p = ms::Transform::create();
-        auto& dst = *p;
-        dst.reference = GetPath(geom);
-        extractReplicaData(n, geom, nth++, matrix, dst.path, dst.position, dst.rotation, dst.scale);
+    if (m_settings.bake_transform) {
+        // generate independent meshes
+        eachReplica(n.item, [&](CLxUser_Item& geom, mu::float4x4 matrix) {
+            auto& nsrc = m_tree_nodes[geom];
+            if (!nsrc.dst_obj)
+                exportObject(geom, true, false);
+            if (!nsrc.dst_obj)
+                return;
 
-        n.replicas.push_back(p);
-        m_entity_manager.add(p);
-    });
+            auto rp = std::static_pointer_cast<ms::Mesh>(nsrc.dst_obj->clone(true));
+            auto& r = *rp;
 
-    m_parallel_tasks.push_back([this, &n]() {
-        if (n.replicas.empty() && n.prev_replicas.empty())
-            return;
+            extractReplicaData(n, geom, nth++, matrix, r.path, r.position, r.rotation, r.scale);
+            r.visibility = { true ,true, true };
+            r.world_matrix = matrix;
+            r.refine_settings.local2world2 = r.world_matrix;
+            r.refine_settings.flags.apply_local2world2 = 1;
 
-        // erase from entity manager if the replica no longer exists
-        std::sort(n.replicas.begin(), n.replicas.end(),
-            [](auto& a, auto& b) { return a->path < b->path; });
-        for (auto& p : n.prev_replicas) {
-            auto it = std::lower_bound(n.replicas.begin(), n.replicas.end(), p,
-                [](auto& r, auto& p) { return r->path < p->path; });
-            if (it == n.replicas.end() || (*it)->path != p->path)
-                m_entity_manager.eraseThreadSafe(p);
-        }
-        n.prev_replicas = std::move(n.replicas);
-    });
+            n.replicas.push_back(rp);
+            m_entity_manager.add(rp);
+        });
+    }
+    else {
+        // make references
+        eachReplica(n.item, [&](CLxUser_Item& geom, mu::float4x4 matrix) {
+            auto rp = ms::Transform::create();
+            auto& r = *rp;
+            r.reference = GetPath(geom);
+            extractReplicaData(n, geom, nth++, matrix, r.path, r.position, r.rotation, r.scale);
+
+            n.replicas.push_back(rp);
+            m_entity_manager.add(rp);
+        });
+    }
+
+    if (!m_settings.export_cache) {
+        // check if there are deleted elements
+        m_parallel_tasks.push_back([this, &n]() {
+            if (n.replicas.empty() && n.prev_replicas.empty())
+                return;
+
+            // erase from entity manager if the replica no longer exists
+            std::sort(n.replicas.begin(), n.replicas.end(),
+                [](auto& a, auto& b) { return a->path < b->path; });
+            for (auto& p : n.prev_replicas) {
+                auto it = std::lower_bound(n.replicas.begin(), n.replicas.end(), p,
+                    [](auto& r, auto& p) { return r->path < p->path; });
+                if (it == n.replicas.end() || (*it)->path != p->path)
+                    m_entity_manager.eraseThreadSafe(p);
+            }
+            n.prev_replicas = std::move(n.replicas);
+        });
+    }
 
     return ret;
 }
