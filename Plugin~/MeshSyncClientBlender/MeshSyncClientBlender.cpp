@@ -81,7 +81,7 @@ PYBIND11_MODULE(MeshSyncClientBlender, mod)
             BindConst(MFRANGE_ONE, (int)MaterialFrameRange::One)
             BindConst(MFRANGE_ALL, (int)MaterialFrameRange::All)
 
-            BindConst(is_server_available, self->getErrorMessage())
+            BindConst(is_server_available, self->isServerAvailable())
             BindConst(error_message, self->getErrorMessage())
 
             BindProperty(server_address,
