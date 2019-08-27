@@ -1200,8 +1200,8 @@ ms::TransformPtr msmodoContext::exportReplicator(TreeNode& n)
             auto& r = *rp;
 
             extractReplicaData(n, geom, nth++, matrix, r.path, r.position, r.rotation, r.scale);
-            r.visibility = { true ,true, true };
-            r.world_matrix = matrix;
+            r.visibility = { (bool)dst.visibility.visible_in_render, true, true };
+            r.world_matrix = matrix * dst.world_matrix;
             r.refine_settings.local2world2 = r.world_matrix;
             r.refine_settings.flags.apply_local2world2 = 1;
 
