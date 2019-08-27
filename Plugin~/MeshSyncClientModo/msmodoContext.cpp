@@ -606,6 +606,11 @@ std::vector<CLxUser_Item> msmodoContext::getNodes(ObjectScope scope)
             ret.push_back(obj);
         });
     }
+    else if (scope == ObjectScope::Selected) {
+        eachSelection([&](CLxUser_Item& obj) {
+            ret.push_back(obj);
+        });
+    }
     else if (scope == ObjectScope::Updated) {
         int num_exported = 0;
         for (auto& kvp : m_tree_nodes) {
@@ -615,9 +620,6 @@ std::vector<CLxUser_Item> msmodoContext::getNodes(ObjectScope scope)
                 ++num_exported;
             }
         }
-    }
-    else if (scope == ObjectScope::Selected) {
-        // todo
     }
     return ret;
 }

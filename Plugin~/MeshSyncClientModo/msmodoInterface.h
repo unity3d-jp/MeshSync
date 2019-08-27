@@ -33,6 +33,8 @@ public:
     template<class Body> void enumerateItemGraphF(CLxUser_Item& item, const char *graph_name, const Body& body);
     template<class Body> void enumerateChannelGraphR(CLxUser_Item& item, int channel, const char *graph_name, const Body& body);
 
+    template<class Body> void eachSelection(const Body& body);
+
     template<class Body> void eachObject(LXtItemType type, const Body& body);
     template<class Body> void eachMaterial(const Body& body);
     template<class Body> void eachLocator(const Body& body);
@@ -195,6 +197,19 @@ inline void msmodoInterface::enumerateChannelGraphR(CLxUser_Item& item, int chan
     }
 }
 
+template<class Body>
+void msmodoInterface::eachSelection(const Body& body)
+{
+    CLxUser_Item item;
+    void *pkt;
+    CLxUser_ItemPacketTranslation pkt_item;
+
+    LXtScanInfoID scan = nullptr;
+    while (scan = m_svc_selection.ScanLoopCurrent(scan, tLocator, &pkt)) {
+        pkt_item.GetItem(pkt, item);
+        body(item);
+    }
+}
 
 template<class Body>
 inline void msmodoInterface::eachObject(LXtItemType type, const Body& body)
