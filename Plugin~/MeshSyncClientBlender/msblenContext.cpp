@@ -53,6 +53,11 @@ std::vector<Object*> msblenContext::getNodes(ObjectScope scope)
             ret.push_back(obj);
         });
     }
+    else if (scope == ObjectScope::Selected) {
+        scene.each_selection([&](Object *obj) {
+            ret.push_back(obj);
+        });
+    }
     else if (scope == ObjectScope::Updated) {
         auto bpy_data = bl::BData(bl::BContext::get().data());
         if (bpy_data.objects_is_updated()) {
@@ -62,9 +67,6 @@ std::vector<Object*> msblenContext::getNodes(ObjectScope scope)
                     ret.push_back(obj);
             });
         }
-    }
-    else if (scope == ObjectScope::Selected) {
-        // todo
     }
 
     return ret;

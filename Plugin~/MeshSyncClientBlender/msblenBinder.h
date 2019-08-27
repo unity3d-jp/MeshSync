@@ -115,6 +115,7 @@ namespace blender
         void* data();
         mu::float4x4 matrix_local() const;
         mu::float4x4 matrix_world() const;
+        bool is_selected() const;
         bool hide_viewport() const;
         bool hide_render() const;
         Mesh* to_mesh() const;
@@ -226,6 +227,16 @@ namespace blender
                 body(o->ob);
         }
 #endif
+
+        template<class Body>
+        void each_selection(const Body& body)
+        {
+            each_objects([&](Object *obj) {
+                BObject bo(obj);
+                if (bo.is_selected())
+                    body(obj);
+            });
+        }
     };
 
     class BData

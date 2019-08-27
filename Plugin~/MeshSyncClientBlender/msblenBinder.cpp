@@ -24,7 +24,8 @@ Prop(BObject, matrix_world);
 Prop(BObject, hide);
 Prop(BObject, hide_viewport);
 Prop(BObject, hide_render);
-Func(BObject, is_visible);
+Prop(BObject, select);
+Func(BObject, select_get);
 Func(BObject, to_mesh);
 Func(BObject, to_mesh_clear);
 
@@ -117,9 +118,10 @@ void setup(py::object bpy_context)
                 if (match_prop("hide")) BObject_hide = prop;
                 if (match_prop("hide_viewport")) BObject_hide_viewport = prop;
                 if (match_prop("hide_render")) BObject_hide_render = prop;
+                if (match_prop("select")) BObject_select = prop;
             }
             each_func {
-                if (match_func("is_visible")) BObject_is_visible = func;
+                if (match_func("select_get")) BObject_select_get = func;
                 if (match_func("to_mesh")) BObject_to_mesh = func;
                 if (match_func("to_mesh_clear")) BObject_to_mesh_clear = func;
             }
@@ -444,6 +446,15 @@ bool BObject::hide_render() const
     return get_bool(m_ptr, BObject_hide_render);
 }
 
+bool blender::BObject::is_selected() const
+{
+#if BLENDER_VERSION < 280
+    return get_bool(m_ptr, BObject_select);
+#else
+    return call<Object, bool, ViewLayer*>(m_ptr, BObject_select_get, nullptr);
+#endif
+}
+
 #if BLENDER_VERSION < 280
 Mesh* BObject::to_mesh() const
 {
@@ -595,7 +606,7 @@ Scene* BContext::scene()
     return (Scene*)get_pointer(m_ptr, BContext_scene);
 }
 
-Depsgraph* blender::BContext::evaluated_depsgraph_get()
+Depsgraph* BContext::evaluated_depsgraph_get()
 {
     return call<bContext, Depsgraph*>(m_ptr, BContext_evaluated_depsgraph_get);
 }
@@ -608,7 +619,7 @@ blist_range<Object> BData::objects()
     return list_range((Object*)m_ptr->objects.first);
 #endif
 }
-blist_range<Mesh> blender::BData::meshes()
+blist_range<Mesh> BData::meshes()
 {
 #if BLENDER_VERSION < 280
     return list_range((Mesh*)m_ptr->mesh.first);
