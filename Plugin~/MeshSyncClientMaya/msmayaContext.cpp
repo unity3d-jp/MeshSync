@@ -553,7 +553,7 @@ void msmayaContext::constructTree(const MObject& node, TreeNode *parent, const s
     if (shape != node)
         rec_shape.branches.push_back(n);
 
-    EachChild(node, [&](const MObject & c) {
+    EachChild(node, [&](const MObject& c) {
         if (c.hasFn(MFn::kTransform))
             constructTree(c, n, path);
     });
@@ -584,9 +584,8 @@ bool msmayaContext::sendObjects(ObjectScope scope, bool dirty_all)
     }
     m_pending_scope = ObjectScope::None;
 
-    if (scope == ObjectScope::All) {
+    if (scope != ObjectScope::Updated)
         m_entity_manager.clearEntityRecords();
-    }
 
     m_settings.validate();
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
@@ -597,41 +596,11 @@ bool msmayaContext::sendObjects(ObjectScope scope, bool dirty_all)
         exportMaterials();
 
     int num_exported = 0;
-    auto export_branches = [&](DAGNode& rec, bool parents) {
-        for (auto *tn : rec.branches) {
-            if (exportObject(tn, parents))
-                ++num_exported;
-        }
-        rec.dirty = false;
-    };
-
-    if (scope == ObjectScope::All) {
-        //EnumerateAllNode([](MObject& obj) { PrintNodeInfo(obj); });
-
-        auto handler = [&](MObject& node) {
-            export_branches(m_dag_nodes[node], true);
-        };
-        EnumerateNode(MFn::kJoint, handler);
-        EnumerateNode(MFn::kCamera, handler);
-        EnumerateNode(MFn::kLight, handler);
-        EnumerateNode(MFn::kMesh, handler);
-    }
-    else if (scope == ObjectScope::Updated) {
-        for (auto& kvp : m_dag_nodes) {
-            auto& rec = kvp.second;
-            if (rec.dirty)
-                export_branches(rec, false);
-        }
-    }
-    else if (scope == ObjectScope::Selected) {
-        MSelectionList list;
-        MGlobal::getActiveSelectionList(list);
-        uint32_t n = list.length();
-        for (uint32_t i = 0; i < n; i++) {
-            MObject node;
-            list.getDependNode(i, node);
-            export_branches(m_dag_nodes[node], true);
-        }
+    bool handle_parents = scope != ObjectScope::Updated;
+    for (auto n : getNodes(scope)) {
+        if (exportObject(n, handle_parents))
+            ++num_exported;
+        n->trans->dirty = false;
     }
 
     if (num_exported > 0 || !m_entity_manager.getDeleted().empty()) {
@@ -686,7 +655,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
 
     int scene_index = 0;
     auto material_range = cache_settings.material_frame_range;
-    auto nodes = getNodes(cache_settings.object_scope);
+    auto nodes = getNodes(cache_settings.object_scope, true);
 
     auto do_export = [&]() {
         if (scene_index == 0) {
@@ -1785,33 +1754,11 @@ int msmayaContext::exportAnimations(ObjectScope scope)
     auto& clip = *m_animations.back();
     clip.frame_rate = frame_rate * std::max(1.0f / frame_step, 1.0f);
 
+
     int num_exported = 0;
-    auto export_branches = [&](DAGNode& rec) {
-        for (auto *tn : rec.branches) {
-            if (exportAnimation(tn, false))
-                ++num_exported;
-        }
-    };
-
-
-    // gather target data
-    if (scope == ObjectScope::Selected) {
-        MSelectionList list;
-        MGlobal::getActiveSelectionList(list);
-        for (uint32_t i = 0; i < list.length(); i++) {
-            MObject node;
-            list.getDependNode(i, node);
-            export_branches(m_dag_nodes[node]);
-        }
-    }
-    else { // all
-        auto handler = [&](MObject& node) {
-            export_branches(m_dag_nodes[node]);
-        };
-        EnumerateNode(MFn::kJoint, handler);
-        EnumerateNode(MFn::kCamera, handler);
-        EnumerateNode(MFn::kLight, handler);
-        EnumerateNode(MFn::kMesh, handler);
+    for (auto n : getNodes(scope)) {
+        if (exportAnimation(n, false))
+            ++num_exported;
     }
 
     // extract

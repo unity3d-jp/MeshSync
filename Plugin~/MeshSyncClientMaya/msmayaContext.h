@@ -233,7 +233,7 @@ private:
     void removeGlobalCallbacks();
     void removeNodeCallbacks();
 
-    std::vector<TreeNode*> getNodes(ObjectScope scope, bool include_children = true);
+    std::vector<TreeNode*> getNodes(ObjectScope scope, bool include_children = false);
 
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     int findTexture(const std::string& path);
