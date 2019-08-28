@@ -415,7 +415,7 @@ void msmayaContext::removeNodeCallbacks()
     }
 }
 
-std::vector<TreeNode*> msmayaContext::getNodes(ObjectScope scope)
+std::vector<TreeNode*> msmayaContext::getNodes(ObjectScope scope, bool include_children)
 {
     std::vector<TreeNode*> ret;
     if (scope == ObjectScope::All) {
@@ -428,12 +428,36 @@ std::vector<TreeNode*> msmayaContext::getNodes(ObjectScope scope)
         MSelectionList selected;
         MGlobal::getActiveSelectionList(selected);
         uint32_t n = selected.length();
-        for (uint32_t i = 0; i < n; ++i) {
-            MObject obj;
-            selected.getDependNode(i, obj);
-            auto it = m_dag_nodes.find(obj);
-            if (it != m_dag_nodes.end())
-                ret.insert(ret.end(), it->second.branches.begin(), it->second.branches.end());
+        if (include_children) {
+            std::set<TreeNode*> history;
+            // note: this must be std::function because auto lambda can not recurse
+            std::function<void (TreeNode *n)> gather_children = [&](TreeNode *n) {
+                if (!history.insert(n).second)
+                    return;
+                ret.push_back(n);
+                for (auto c : n->children)
+                    gather_children(c);
+            };
+
+            for (uint32_t i = 0; i < n; ++i) {
+                MObject obj;
+                selected.getDependNode(i, obj);
+
+                auto it = m_dag_nodes.find(obj);
+                if (it != m_dag_nodes.end()) {
+                    for (auto n : it->second.branches)
+                        gather_children(n);
+                }
+            }
+        }
+        else {
+            for (uint32_t i = 0; i < n; ++i) {
+                MObject obj;
+                selected.getDependNode(i, obj);
+                auto it = m_dag_nodes.find(obj);
+                if (it != m_dag_nodes.end())
+                    ret.insert(ret.end(), it->second.branches.begin(), it->second.branches.end());
+            }
         }
     }
     else if (scope == ObjectScope::Updated) {
