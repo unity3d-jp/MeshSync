@@ -33,7 +33,7 @@ public:
     void LogInfo(const char *message);
 
 private:
-    msmqSettings& getSettings();
+    SyncSettings& getSettings();
 
     MQEdit *m_edit_server = nullptr;
     MQEdit *m_edit_port = nullptr;

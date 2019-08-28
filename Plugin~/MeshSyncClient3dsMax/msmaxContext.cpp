@@ -16,6 +16,12 @@
 #pragma comment(lib, "Morpher.lib")
 #endif
 
+void SyncSettings::validate()
+{
+    if (!bake_modifiers)
+        bake_transform = false;
+}
+
 
 static void OnStartup(void *param, NotifyInfo *info)
 {
@@ -248,6 +254,7 @@ bool msmaxContext::sendObjects(ObjectScope scope, bool dirty_all)
     if (m_sender.isExporting())
         return false;
 
+    m_settings.validate();
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
@@ -289,6 +296,7 @@ bool msmaxContext::sendMaterials(bool dirty_all)
     if (m_sender.isExporting())
         return false;
 
+    m_settings.validate();
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(dirty_all);
     exportMaterials();
@@ -304,6 +312,7 @@ bool msmaxContext::sendMaterials(bool dirty_all)
 bool msmaxContext::sendAnimations(ObjectScope scope)
 {
     m_sender.wait();
+    m_settings.validate();
 
     const float frame_rate = (float)::GetFrameRate();
     const float frame_step = std::max(m_settings.frame_step, 0.1f);
@@ -369,6 +378,7 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
     m_settings.bake_transform = cache_settings.bake_transform;
     m_settings.use_render_meshes = cache_settings.use_render_meshes;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
+    m_settings.validate();
 
     ms::OSceneCacheSettings oscs;
     oscs.sample_rate = frame_rate * std::max(1.0f / frame_step, 1.0f);;

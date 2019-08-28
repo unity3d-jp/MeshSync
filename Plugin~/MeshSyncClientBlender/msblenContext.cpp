@@ -3,6 +3,12 @@
 #include "msblenUtils.h"
 
 
+void SyncSettings::validate()
+{
+    if (!bake_modifiers)
+        bake_transform = false;
+}
+
 void msblenContext::NodeRecord::clearState()
 {
     dst_anim = nullptr;
@@ -1273,6 +1279,7 @@ bool msblenContext::sendMaterials(bool dirty_all)
     if (!prepare() || m_sender.isExporting() || m_ignore_events)
         return false;
 
+    m_settings.validate();
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(dirty_all);
     exportMaterials();
@@ -1287,6 +1294,7 @@ bool msblenContext::sendObjects(ObjectScope scope, bool dirty_all)
     if (!prepare() || m_sender.isExporting() || m_ignore_events)
         return false;
 
+    m_settings.validate();
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
@@ -1328,6 +1336,7 @@ bool msblenContext::sendAnimations(ObjectScope scope)
     if (!prepare() || m_sender.isExporting() || m_ignore_events)
         return false;
 
+    m_settings.validate();
     m_ignore_events = true;
 
     auto scene = bl::BScene(bl::BContext::get().scene());
@@ -1402,6 +1411,7 @@ bool msblenContext::exportCache(const CacheSettings& cache_settings)
     m_settings.bake_modifiers = cache_settings.bake_modifiers;
     m_settings.bake_transform = cache_settings.bake_transform;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
+    m_settings.validate();
 
     ms::OSceneCacheSettings oscs;
     oscs.sample_rate = (float)frame_rate;

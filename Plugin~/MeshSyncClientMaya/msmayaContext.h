@@ -140,6 +140,8 @@ struct SyncSettings
 
     // cache
     bool export_cache = false;
+
+    void validate();
 };
 
 struct CacheSettings

@@ -96,6 +96,12 @@ static TreeNode* FindBranch(const DAGNodeMap& dnmap, const MDagPath& dagpath)
     return nullptr;
 }
 
+void SyncSettings::validate()
+{
+    if (!bake_deformers)
+        bake_transform = false;
+}
+
 
 static void OnIdle(float elapsedTime, float lastTime, void *_this)
 {
@@ -536,6 +542,7 @@ bool msmayaContext::sendMaterials(bool dirty_all)
         return false;
     }
 
+    m_settings.validate();
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(dirty_all);
     exportMaterials();
@@ -557,6 +564,7 @@ bool msmayaContext::sendObjects(ObjectScope scope, bool dirty_all)
         m_entity_manager.clearEntityRecords();
     }
 
+    m_settings.validate();
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
@@ -616,6 +624,7 @@ bool msmayaContext::sendAnimations(ObjectScope scope)
     if (m_sender.isExporting())
         return false;
 
+    m_settings.validate();
     if (exportAnimations(scope) > 0)
         kickAsyncExport();
     return true;
@@ -633,6 +642,7 @@ bool msmayaContext::exportCache(const CacheSettings& cache_settings)
     m_settings.bake_deformers = cache_settings.bake_deformers;
     m_settings.bake_transform = cache_settings.bake_transform;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
+    m_settings.validate();
 
     ms::OSceneCacheSettings oscs;
     oscs.sample_rate = frame_rate * std::max(1.0f / frame_step, 1.0f);

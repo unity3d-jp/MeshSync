@@ -238,7 +238,7 @@ void CMainDlg::LogInfo(const char *message)
     m_txt_log.SetWindowTextA(message);
 }
 
-msmqSettings& CMainDlg::getSettings()
+SyncSettings& CMainDlg::getSettings()
 {
     return m_plugin->getContext().getSettings();
 }

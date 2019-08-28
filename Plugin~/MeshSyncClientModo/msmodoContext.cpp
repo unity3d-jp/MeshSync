@@ -3,6 +3,12 @@
 #include "msmodoUtils.h"
 
 
+void SyncSettings::validate()
+{
+    if (!bake_deformers)
+        bake_transform = false;
+}
+
 void msmodoContext::TreeNode::clearState()
 {
     dst_obj = nullptr;
@@ -356,6 +362,7 @@ bool msmodoContext::sendMaterials(bool dirty_all)
     if (!prepare() || m_sender.isExporting())
         return false;
 
+    m_settings.validate();
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(dirty_all);
     exportMaterials();
@@ -373,6 +380,7 @@ bool msmodoContext::sendObjects(ObjectScope scope, bool dirty_all)
     }
     m_pending_scope = ObjectScope::None;
 
+    m_settings.validate();
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
@@ -426,6 +434,7 @@ bool msmodoContext::sendAnimations(ObjectScope scope)
     if (!prepare() || m_sender.isExporting())
         return false;
 
+    m_settings.validate();
     if (exportAnimations(scope) > 0) {
         kickAsyncExport();
         return true;
@@ -450,6 +459,7 @@ bool msmodoContext::exportCache(const CacheSettings& cache_settings)
     m_settings.bake_deformers = cache_settings.bake_deformers;
     m_settings.bake_transform = cache_settings.bake_transform;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
+    m_settings.validate();
 
     ms::OSceneCacheSettings oscs;
     oscs.sample_rate = frame_rate * std::max(1.0f / frame_step, 1.0f);

@@ -5,7 +5,7 @@
 
 using namespace mu;
 
-struct msmqSettings
+struct SyncSettings
 {
     ms::ClientSettings client_settings;
 
@@ -23,6 +23,8 @@ struct msmqSettings
 
     bool bake_skin = false;
     bool bake_cloth = false;
+
+    void validate();
 };
 
 class msmqContext
@@ -31,7 +33,7 @@ public:
     msmqContext(MQBasePlugin *plugin);
     ~msmqContext();
 
-    msmqSettings& getSettings();
+    SyncSettings& getSettings();
 
     void logInfo(const char *format, ...);
     bool isServerAvailable();
@@ -89,7 +91,7 @@ private:
 
     MQBasePlugin *m_plugin = nullptr;
 
-    msmqSettings m_settings;
+    SyncSettings m_settings;
 
     HostMeshes m_host_meshes;
 

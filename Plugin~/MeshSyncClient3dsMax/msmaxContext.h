@@ -67,6 +67,8 @@ struct SyncSettings
     bool multithreaded = false;
 
     bool export_scene_cache = false;
+
+    void validate();
 };
 
 struct CacheSettings
