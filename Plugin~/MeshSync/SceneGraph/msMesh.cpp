@@ -38,6 +38,7 @@ uint64_t MeshRefineSettings::checksum() const
     ret += csum(local2world);
     ret += csum(world2local);
     ret += csum(mirror_basis);
+    ret += csum(local2world2);
     return ret;
 }
 
