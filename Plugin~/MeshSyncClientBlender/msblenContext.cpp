@@ -515,8 +515,7 @@ ms::TransformPtr msblenContext::exportDupliGroup(Object *src, const DupliGroupCo
 
     auto offset_pos = -get_instance_offset(group);
     dst->position = m_settings.bake_transform ? mu::float3::zero() : offset_pos;
-    dst->world_matrix = ctx.dst->world_matrix;
-    (mu::float3&)dst->world_matrix[3] += offset_pos;
+    dst->world_matrix = mu::translate(offset_pos) * ctx.dst->world_matrix;
     m_entity_manager.add(dst);
 
     DupliGroupContext ctx2;
@@ -1302,13 +1301,6 @@ bool msblenContext::sendObjects(ObjectScope scope, bool dirty_all)
     if (m_settings.sync_meshes)
         exportMaterials();
 
-    if (scope == ObjectScope::All) {
-        auto scene = bl::BScene(bl::BContext::get().scene());
-        scene.each_objects([this](Object *obj) {
-            exportObject(obj, true);
-        });
-        eraseStaleObjects();
-    }
     if (scope == ObjectScope::Updated) {
         auto bpy_data = bl::BData(bl::BContext::get().data());
         if (!bpy_data.objects_is_updated())
@@ -1320,11 +1312,14 @@ bool msblenContext::sendObjects(ObjectScope scope, bool dirty_all)
             if (bid.is_updated() || bid.is_updated_data())
                 exportObject(obj, false);
             else
-                touchRecord(obj);
+                touchRecord(obj); // this cannot be covered by getNodes()
         });
         eraseStaleObjects();
     }
-    if (scope == ObjectScope::Selected) {
+    else {
+        for(auto obj : getNodes(scope))
+            exportObject(obj, true);
+        eraseStaleObjects();
     }
 
     kickAsyncExport();
@@ -1350,15 +1345,8 @@ bool msblenContext::sendAnimations(ObjectScope scope)
     clip.frame_rate = (float)frame_rate;
 
     // list target objects
-    if (scope == ObjectScope::Selected) {
-        // todo
-    }
-    else {
-        // all
-        scene.each_objects([this](Object *obj) {
-            exportAnimation(obj, false);
-        });
-    }
+    for (auto obj : getNodes(scope))
+        exportAnimation(obj, false);
 
     // advance frame and record animations
     {
