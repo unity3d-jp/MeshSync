@@ -1407,7 +1407,7 @@ bool msblenContext::exportCache(const CacheSettings& cache_settings)
     auto settings_old = m_settings;
     m_settings.export_cache = true;
     m_settings.make_double_sided = cache_settings.make_double_sided;
-    m_settings.curves_as_mesh = cache_settings.convert_to_mesh;
+    m_settings.curves_as_mesh = cache_settings.curves_as_mesh;
     m_settings.bake_modifiers = cache_settings.bake_modifiers;
     m_settings.bake_transform = cache_settings.bake_transform;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;

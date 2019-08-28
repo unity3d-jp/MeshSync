@@ -84,7 +84,7 @@ struct CacheSettings
     bool make_double_sided = false;
     bool bake_modifiers = true;
     bool bake_transform = true;
-    bool convert_to_mesh = true;
+    bool curves_as_mesh = true;
     bool flatten_hierarchy = false;
     bool merge_meshes = false;
 

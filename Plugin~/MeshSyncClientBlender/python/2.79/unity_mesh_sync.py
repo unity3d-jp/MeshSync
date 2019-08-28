@@ -105,6 +105,14 @@ class MESHSYNC_OT_ExportCache(bpy.types.Operator):
     bl_label = "Export Cache"
     bl_description = "Export Cache"
 
+    def on_bake_modifiers_updated(self = None, context = None):
+        if not self.bake_modifiers:
+            self.bake_transform = False
+
+    def on_bake_transform_updated(self = None, context = None):
+        if self.bake_transform:
+            self.bake_modifiers = True
+
     filepath = bpy.props.StringProperty(subtype = "FILE_PATH")
     filename = bpy.props.StringProperty()
     directory = bpy.props.StringProperty(subtype = "FILE_PATH")
@@ -137,10 +145,10 @@ class MESHSYNC_OT_ExportCache(bpy.types.Operator):
             ("2", "All", "Export all frames of materials"),
         })
     zstd_compression_level = bpy.props.IntProperty(name = "ZSTD Compression", default = 3)
+    curves_as_mesh = bpy.props.BoolProperty(name = "Curves as Mesh", default = True)
     make_double_sided = bpy.props.BoolProperty(name = "Make Double Sided", default = False)
-    bake_modifiers = bpy.props.BoolProperty(name = "Bake Modifiers", default = True)
-    bake_transform = bpy.props.BoolProperty(name = "Bake Transform", default = False)
-    convert_to_mesh = bpy.props.BoolProperty(name = "Convert To Mesh", default = True)
+    bake_modifiers = bpy.props.BoolProperty(name = "Bake Modifiers", default = True, update = on_bake_modifiers_updated)
+    bake_transform = bpy.props.BoolProperty(name = "Bake Transform", default = False, update = on_bake_transform_updated)
     flatten_hierarchy = bpy.props.BoolProperty(name = "Flatten Hierarchy", default = False)
     merge_meshes = bpy.props.BoolProperty(name = "Merge Meshes", default = False)
     strip_normals = bpy.props.BoolProperty(name = "Strip Normals", default = False)
@@ -155,10 +163,10 @@ class MESHSYNC_OT_ExportCache(bpy.types.Operator):
         ctx.material_frame_range = int(self.material_frame_range)
         ctx.zstd_compression_level = self.zstd_compression_level
         ctx.frame_step = self.frame_step
+        ctx.curves_as_mesh = self.curves_as_mesh
         ctx.make_double_sided = self.make_double_sided
         ctx.bake_modifiers = self.bake_modifiers
         ctx.bake_transform = self.bake_transform
-        ctx.convert_to_mesh = self.convert_to_mesh
         ctx.flatten_hierarchy = self.flatten_hierarchy
         ctx.merge_meshes = self.merge_meshes
         ctx.strip_normals = self.strip_normals
@@ -177,10 +185,10 @@ class MESHSYNC_OT_ExportCache(bpy.types.Operator):
         self.frame_end = ctx.frame_end;
         self.zstd_compression_level = ctx.zstd_compression_level;
         self.frame_step = ctx.frame_step;
+        self.curves_as_mesh = ctx.curves_as_mesh;
         self.make_double_sided = ctx.make_double_sided;
         self.bake_modifiers = ctx.bake_modifiers;
         self.bake_transform = ctx.bake_transform;
-        self.convert_to_mesh = ctx.convert_to_mesh;
         self.flatten_hierarchy = ctx.flatten_hierarchy;
         self.merge_meshes = ctx.merge_meshes;
         self.strip_normals = ctx.strip_normals;
@@ -211,12 +219,12 @@ class MESHSYNC_OT_ExportCache(bpy.types.Operator):
         layout.prop(self, "material_frame_range")
         layout.prop(self, "zstd_compression_level")
         layout.prop(self, "frame_step")
+        layout.prop(self, "curves_as_mesh")
         layout.prop(self, "make_double_sided")
         layout.prop(self, "bake_modifiers")
         layout.prop(self, "bake_transform")
-        layout.prop(self, "convert_to_mesh")
         layout.prop(self, "flatten_hierarchy")
-        layout.prop(self, "merge_meshes")
+        #layout.prop(self, "merge_meshes")
         layout.prop(self, "strip_normals")
         layout.prop(self, "strip_tangents")
 

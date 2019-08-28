@@ -183,9 +183,9 @@ PYBIND11_MODULE(MeshSyncClientBlender, mod)
             BindProperty(bake_transform,
                 [](const self_t& self) { return self->getCacheSettings().bake_transform; },
                 [](self_t& self, bool v) { self->getCacheSettings().bake_transform = v; })
-            BindProperty(convert_to_mesh,
-                [](const self_t& self) { return self->getCacheSettings().convert_to_mesh; },
-                [](self_t& self, bool v) { self->getCacheSettings().convert_to_mesh = v; })
+            BindProperty(curves_as_mesh,
+                [](const self_t& self) { return self->getCacheSettings().curves_as_mesh; },
+                [](self_t& self, bool v) { self->getCacheSettings().curves_as_mesh = v; })
             BindProperty(flatten_hierarchy,
                 [](const self_t& self) { return self->getCacheSettings().flatten_hierarchy; },
                 [](self_t& self, bool v) { self->getCacheSettings().flatten_hierarchy = v; })

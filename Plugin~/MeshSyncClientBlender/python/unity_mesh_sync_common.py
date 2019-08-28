@@ -14,10 +14,10 @@ def msb_apply_scene_settings(self = None, context = None):
     ctx.server_port = scene.meshsync_server_port
     ctx.scale_factor = scene.meshsync_scale_factor
     ctx.sync_meshes = scene.meshsync_sync_meshes
+    ctx.curves_as_mesh = scene.meshsync_curves_as_mesh
     ctx.make_double_sided = scene.meshsync_make_double_sided
     ctx.bake_modifiers = scene.meshsync_bake_modifiers
     ctx.bake_transform = scene.meshsync_bake_transform
-    ctx.curves_as_mesh = scene.meshsync_curves_as_mesh
     ctx.sync_bones = scene.meshsync_sync_bones
     ctx.sync_blendshapes = scene.meshsync_sync_blendshapes
     ctx.sync_textures = scene.meshsync_sync_textures
@@ -38,6 +38,18 @@ def msb_on_scene_settings_updated(self = None, context = None):
         msb_context.setup(bpy.context)
         msb_context.export(msb_context.TARGET_OBJECTS)
     return None
+
+def msb_on_bake_modifiers_updated(self = None, context = None):
+    scene = bpy.context.scene
+    if not scene.meshsync_bake_modifiers:
+        scene.meshsync_bake_transform = False
+    return msb_on_scene_settings_updated(self, context)
+
+def msb_on_bake_transform_updated(self = None, context = None):
+    scene = bpy.context.scene
+    if scene.meshsync_bake_transform:
+        scene.meshsync_bake_modifiers = True
+    return msb_on_scene_settings_updated(self, context)
 
 def msb_on_toggle_auto_sync(self = None, context = None):
     msb_apply_scene_settings()
@@ -60,10 +72,10 @@ def msb_initialize_properties():
     bpy.types.Scene.meshsync_server_port = bpy.props.IntProperty(name = "Port", default = 8080, min = 0, max = 65535, update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_scale_factor = bpy.props.FloatProperty(name = "Scale Factor", default = 1.0, update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_sync_meshes = bpy.props.BoolProperty(name = "Sync Meshes", default = True, update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_make_double_sided = bpy.props.BoolProperty(name = "Make Double Sided", default = False, update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_bake_modifiers = bpy.props.BoolProperty(name = "Bake Modifiers", default = False, update = msb_on_scene_settings_updated)
-    bpy.types.Scene.meshsync_bake_transform  = bpy.props.BoolProperty(name = "Bake Transform", default = False, update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_curves_as_mesh = bpy.props.BoolProperty(name = "Curves as Mesh", default = True, update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_make_double_sided = bpy.props.BoolProperty(name = "Make Double Sided", default = False, update = msb_on_scene_settings_updated)
+    bpy.types.Scene.meshsync_bake_modifiers = bpy.props.BoolProperty(name = "Bake Modifiers", default = False, update = msb_on_bake_modifiers_updated)
+    bpy.types.Scene.meshsync_bake_transform  = bpy.props.BoolProperty(name = "Bake Transform", default = False, update = msb_on_bake_transform_updated)
     bpy.types.Scene.meshsync_sync_bones = bpy.props.BoolProperty(name = "Sync Bones", default = True, update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_sync_blendshapes = bpy.props.BoolProperty(name = "Sync Blend Shapes", default = True, update = msb_on_scene_settings_updated)
     bpy.types.Scene.meshsync_sync_textures = bpy.props.BoolProperty(name = "Sync Textures", default = True, update = msb_on_scene_settings_updated)
