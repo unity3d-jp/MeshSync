@@ -20,6 +20,7 @@
 #include <QIntValidator>
 #include <QDoubleValidator>
 #include <QCloseEvent>
+#include <QScrollArea>
 
 #ifdef _WIN32
     #pragma comment(lib, "QtCore4.lib")
@@ -41,8 +42,9 @@ public slots:
     void onToggleSyncMeshes(int v);
     void onToggleSyncBones(int v);
     void onToggleSyncBlendshapes(int v);
-    void onToggleBakeDeformers(int v);
     void onToggleDoubleSided(int v);
+    void onToggleBakeDeformers(int v);
+    void onToggleBakeTransform(int v);
     void onToggleSyncTextures(int v);
     void onToggleSyncMeshInstances(int v);
     void onToggleSyncReplicators(int v);
@@ -56,9 +58,14 @@ public slots:
     void onClickSyncAnimations(bool v);
 
 private:
+    //void resizeEvent(QResizeEvent *event) override;
+
     QWidget *m_widget_mesh = nullptr;
-    QWidget *m_widget_kfoptions = nullptr;
+    QCheckBox *m_ck_bake_deformers = nullptr;
+    QCheckBox *m_ck_bake_transform = nullptr;
     QCheckBox *m_ck_auto_sync = nullptr;
+    QWidget *m_scroll_content = nullptr;
+    QScrollArea *m_scroll_area = nullptr;
 };
 
 
@@ -152,10 +159,15 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         layout_mesh->addWidget(ck_double_sided, iy2++, 0);
         connect(ck_double_sided, SIGNAL(stateChanged(int)), this, SLOT(onToggleDoubleSided(int)));
 
-        auto ck_bake_deformers = new QCheckBox("Bake Deformers");
-        ck_bake_deformers->setCheckState(to_qcheckstate(settings.bake_deformers));
-        layout_mesh->addWidget(ck_bake_deformers, iy2++, 0);
-        connect(ck_bake_deformers, SIGNAL(stateChanged(int)), this, SLOT(onToggleBakeDeformers(int)));
+        m_ck_bake_deformers = new QCheckBox("Bake Deformers");
+        m_ck_bake_deformers->setCheckState(to_qcheckstate(settings.bake_deformers));
+        layout_mesh->addWidget(m_ck_bake_deformers, iy2++, 0);
+        connect(m_ck_bake_deformers, SIGNAL(stateChanged(int)), this, SLOT(onToggleBakeDeformers(int)));
+
+        m_ck_bake_transform = new QCheckBox("Bake Transform");
+        m_ck_bake_transform->setCheckState(to_qcheckstate(settings.bake_transform));
+        layout_mesh->addWidget(m_ck_bake_transform, iy2++, 0);
+        connect(m_ck_bake_transform, SIGNAL(stateChanged(int)), this, SLOT(onToggleBakeTransform(int)));
 
         m_widget_mesh->setLayout(layout_mesh);
         m_widget_mesh->setShown(settings.sync_meshes);
@@ -166,12 +178,12 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
     {
         auto ck_bones = new QCheckBox("Sync Joints");
         ck_bones->setCheckState(to_qcheckstate(settings.sync_bones));
-        layout->addWidget(ck_bones, iy++, 0);
+        layout->addWidget(ck_bones, iy++, 0, 1, 3);
         connect(ck_bones, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncBones(int)));
 
         auto ck_blendshapes = new QCheckBox("Sync Morphs");
         ck_blendshapes->setCheckState(to_qcheckstate(settings.sync_blendshapes));
-        layout->addWidget(ck_blendshapes, iy++, 0);
+        layout->addWidget(ck_blendshapes, iy++, 0, 1, 3);
         connect(ck_blendshapes, SIGNAL(stateChanged(int)), this, SLOT(onToggleSyncBlendshapes(int)));
 
         auto ck_textures = new QCheckBox("Sync Textures");
@@ -247,7 +259,17 @@ msmodoSettingsWidget::msmodoSettingsWidget(QWidget *parent)
         lb_version->setContentsMargins(0, space, 0, 0);
         layout->addWidget(lb_version, iy++, 0, 1, 3);
     }
+
     setLayout(layout);
+
+    //m_scroll_content = new QWidget(this);
+    //m_scroll_content->setLayout(layout);
+
+    //m_scroll_area = new QScrollArea();
+    //m_scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    //m_scroll_area->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    //m_scroll_area->setWidgetResizable(true);
+    //m_scroll_area->setWidget(m_scroll_content);
 }
 
 
@@ -314,18 +336,35 @@ void msmodoSettingsWidget::onToggleSyncBlendshapes(int v)
         msmodoSendObjects();
 }
 
-void msmodoSettingsWidget::onToggleBakeDeformers(int v)
-{
-    auto& settings = msmodoGetSettings();
-    settings.bake_deformers = v;
-    if (settings.auto_sync)
-        msmodoSendObjects();
-}
-
 void msmodoSettingsWidget::onToggleDoubleSided(int v)
 {
     auto& settings = msmodoGetSettings();
     settings.make_double_sided = v;
+    if (settings.auto_sync)
+        msmodoSendObjects();
+}
+
+void msmodoSettingsWidget::onToggleBakeDeformers(int v)
+{
+    auto& settings = msmodoGetSettings();
+    settings.bake_deformers = v;
+    if (!settings.bake_deformers) {
+        settings.bake_transform = false;
+        m_ck_bake_transform->setCheckState(to_qcheckstate(settings.bake_transform));
+    }
+
+    if (settings.auto_sync)
+        msmodoSendObjects();
+}
+
+void msmodoSettingsWidget::onToggleBakeTransform(int v)
+{
+    auto& settings = msmodoGetSettings();
+    settings.bake_transform = v;
+    if (settings.bake_transform) {
+        settings.bake_deformers = true;
+        m_ck_bake_deformers->setCheckState(to_qcheckstate(settings.bake_deformers));
+    }
     if (settings.auto_sync)
         msmodoSendObjects();
 }
@@ -433,6 +472,12 @@ void msmodoSettingsWidget::onClickSyncAnimations(bool v)
 {
     msmodoSendAnimations();
 }
+
+//void msmodoSettingsWidget::resizeEvent(QResizeEvent *event)
+//{
+//    auto s = size();
+//    m_scroll_content->resize(s);
+//}
 
 
 #include "msmodoWidget_moc.h"

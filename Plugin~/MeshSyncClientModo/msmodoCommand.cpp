@@ -222,8 +222,8 @@ public:
         desc.add("flattenHierarchy", LXsTYPE_BOOLEAN);
         desc.default_val(false);
 
-        desc.add("mergeMeshes", LXsTYPE_BOOLEAN);
-        desc.default_val(false);
+        //desc.add("mergeMeshes", LXsTYPE_BOOLEAN);
+        //desc.default_val(false);
 
         desc.add("stripNormals", LXsTYPE_BOOLEAN);
         desc.default_val(false);
@@ -277,7 +277,7 @@ public:
         readArg("bakeDeformers", settings.bake_deformers);
         readArg("bakeTransform", settings.bake_transform);
         readArg("flattenHierarchy", settings.flatten_hierarchy);
-        readArg("mergeMeshes", settings.merge_meshes);
+        //readArg("mergeMeshes", settings.merge_meshes);
         readArg("stripNormals", settings.strip_normals);
         readArg("stripTangents", settings.strip_tangents);
         msmodoGetContext().exportCache(settings);
