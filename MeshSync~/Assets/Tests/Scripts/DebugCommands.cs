@@ -91,7 +91,7 @@ public static class DebugCommands
             return;
 
         var log = new StringBuilder();
-        log.AppendFormat("Mesh \"{0}\"\n", mesh.name);
+        log.AppendFormat("Mesh \"{0}\" ({1:X})\n", mesh.name, mesh.GetInstanceID());
 
         if (smr != null)
         {
