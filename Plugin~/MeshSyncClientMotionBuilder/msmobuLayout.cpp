@@ -33,8 +33,8 @@ bool msmobuLayout::FBCreate()
     const char *idButtonManualSync = "idButtonManualSync";
 
     const char *idLabelAnimation = "idLabelAnimation";
-    const char *idLabelSPS = "idLabelSPS";
-    const char *idEditSPS = "idEditSPS";
+    const char *idLabelFrameStep = "idLabelFrameStep";
+    const char *idEditFrameStep = "idEditFrameStep";
     const char *idButtonSyncAnimations = "idButtonSyncAnimations";
 
     const char *idLabelVersion = "idLabelVersion";
@@ -212,31 +212,31 @@ bool msmobuLayout::FBCreate()
         m_lb_animation.Caption = "Animation";
         m_lb_animation.Style = kFBTextStyleBold;
 
-        AddRegion(idLabelSPS, idLabelSPS,
+        AddRegion(idLabelFrameStep, idLabelFrameStep,
             0, kFBAttachLeft, idLabelAnimation, 1,
             lS, kFBAttachBottom, idLabelAnimation, 1,
             lW, kFBAttachNone, nullptr, 1,
             0, kFBAttachHeight, idLabelAnimation, 1);
-        SetControl(idLabelSPS, m_lb_sps);
-        m_lb_sps.Caption = "Samples Per Sec";
+        SetControl(idLabelFrameStep, m_lb_frame_step);
+        m_lb_frame_step.Caption = "Frame Step";
 
-        AddRegion(idEditSPS, idEditSPS,
-            lS, kFBAttachRight, idLabelSPS, 1,
-            0, kFBAttachTop, idLabelSPS, 1,
+        AddRegion(idEditFrameStep, idEditFrameStep,
+            lS, kFBAttachRight, idLabelFrameStep, 1,
+            0, kFBAttachTop, idLabelFrameStep, 1,
             lW, kFBAttachNone, nullptr, 1,
-            0, kFBAttachHeight, idLabelSPS, 1);
-        SetControl(idEditSPS, m_ed_sps);
-        m_ed_sps.Value = 3;
-        m_ed_sps.Min = 0.01;
-        m_ed_sps.SmallStep = 0.01;
-        m_ed_sps.LargeStep = 0.1;
-        m_ed_sps.OnChange.Add(this, (FBCallback)&msmobuLayout::onAnimationSettingsChange);
+            0, kFBAttachHeight, idLabelFrameStep, 1);
+        SetControl(idEditFrameStep, m_ed_frame_step);
+        m_ed_frame_step.Value = 1;
+        m_ed_frame_step.Min = 0.0;
+        m_ed_frame_step.SmallStep = 1.0;
+        m_ed_frame_step.LargeStep = 1.0;
+        m_ed_frame_step.OnChange.Add(this, (FBCallback)&msmobuLayout::onAnimationSettingsChange);
 
         AddRegion(idButtonSyncAnimations, idButtonSyncAnimations,
-            0, kFBAttachLeft, idLabelSPS, 1,
-            lS, kFBAttachBottom, idLabelSPS, 1,
+            0, kFBAttachLeft, idLabelFrameStep, 1,
+            lS, kFBAttachBottom, idLabelFrameStep, 1,
             lW2, kFBAttachNone, nullptr, 1,
-            0, kFBAttachHeight, idLabelSPS, 1);
+            0, kFBAttachHeight, idLabelFrameStep, 1);
         SetControl(idButtonSyncAnimations, m_bu_sync_animations);
         m_bu_sync_animations.Caption = "Sync Animations";
         m_bu_sync_animations.OnClick.Add(this, (FBCallback)&msmobuLayout::onSyncAnimation);
@@ -283,7 +283,7 @@ void msmobuLayout::onSceneSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 void msmobuLayout::onAnimationSettingsChange(HIRegister pCaller, HKEventBase pEvent)
 {
     auto& settings = m_device->getSettings();
-    settings.animation_sps = (float)m_ed_sps.Value;
+    settings.frame_step = (float)m_ed_frame_step.Value;
 }
 
 void msmobuLayout::onAutoSync(HIRegister pCaller, HKEventBase pEvent)
