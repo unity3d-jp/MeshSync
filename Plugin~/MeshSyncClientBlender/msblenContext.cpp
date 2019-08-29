@@ -83,6 +83,15 @@ int msblenContext::exportTexture(const std::string & path, ms::TextureType type)
     return m_texture_manager.addFile(path, type);
 }
 
+int msblenContext::getMaterialID(Material *m)
+{
+#if BLENDER_VERSION >= 280
+    if (m && m->id.orig_id)
+        m = (Material*)m->id.orig_id;
+#endif
+    return m_material_ids.getID(m);
+}
+
 void msblenContext::exportMaterials()
 {
     int midx = 0;
@@ -718,7 +727,7 @@ void msblenContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *d
 
     std::vector<int> mid_table(mesh.totcol);
     for (int mi = 0; mi < mesh.totcol; ++mi)
-        mid_table[mi] = m_material_ids.getID(mesh.mat[mi]);
+        mid_table[mi] = getMaterialID(mesh.mat[mi]);
     if (mid_table.empty())
         mid_table.push_back(ms::InvalidID);
 
@@ -931,7 +940,7 @@ void msblenContext::doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data
 
     std::vector<int> mid_table(mesh.totcol);
     for (int mi = 0; mi < mesh.totcol; ++mi)
-        mid_table[mi] = m_material_ids.getID(mesh.mat[mi]);
+        mid_table[mi] = getMaterialID(mesh.mat[mi]);
     if (mid_table.empty())
         mid_table.push_back(-1);
 

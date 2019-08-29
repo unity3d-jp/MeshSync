@@ -186,6 +186,7 @@ private:
     std::vector<Object*> getNodes(ObjectScope scope);
 
     int exportTexture(const std::string & path, ms::TextureType type);
+    int getMaterialID(Material *m);
     void exportMaterials();
 
     ms::TransformPtr exportObject(Object *obj, bool parent, bool tip = true);
