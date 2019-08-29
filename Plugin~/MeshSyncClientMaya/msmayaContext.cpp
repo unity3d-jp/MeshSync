@@ -1250,7 +1250,7 @@ ms::MeshPtr msmayaContext::exportMesh(TreeNode *n)
                 doExtractMeshData(dst, n);
 
             if (m_settings.bake_transform) {
-                dst.refine_settings.flags.apply_local2world = 1;
+                dst.refine_settings.flags.local2world = 1;
                 dst.refine_settings.local2world = dst.world_matrix;
             }
 
@@ -1638,7 +1638,7 @@ void msmayaContext::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     // get skinning data
     if (m_settings.sync_bones && !fn_skin.object().isNull()) {
         // request bake TRS
-        dst.refine_settings.flags.apply_local2world = 1;
+        dst.refine_settings.flags.local2world = 1;
         dst.refine_settings.local2world = n->maya_transform;
 
         // get bone data
@@ -1704,7 +1704,7 @@ void msmayaContext::doExtractMeshData(ms::Mesh& dst, TreeNode *n)
     }
     else {
         // apply pivot
-        dst.refine_settings.flags.apply_local2world = 1;
+        dst.refine_settings.flags.local2world = 1;
         dst.refine_settings.local2world = n->model_transform;
     }
 
@@ -1731,7 +1731,7 @@ void msmayaContext::doExtractMeshDataBaked(ms::Mesh& dst, TreeNode *n)
     doExtractMeshDataImpl(dst, mmesh, mmesh);
 
     // apply pivot
-    dst.refine_settings.flags.apply_local2world = 1;
+    dst.refine_settings.flags.local2world = 1;
     dst.refine_settings.local2world = n->model_transform;
 }
 

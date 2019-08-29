@@ -20,6 +20,50 @@ MeshRefineFlags::MeshRefineFlags()
     (uint32_t&)*this = 0;
 }
 
+void MeshRefineSettings::serialize(std::ostream& os) const
+{
+    write(os, flags);
+
+    if (flags.split)
+        write(os, split_unit);
+    write(os, max_bone_influence);
+    write(os, scale_factor);
+    if (flags.gen_normals_with_smooth_angle)
+        write(os, smooth_angle);
+    if (flags.quadify || flags.quadify_full_search)
+        write(os, quadify_threshold);
+    if (flags.local2world)
+        write(os, local2world);
+    if (flags.world2local)
+        write(os, world2local);
+    if (flags.local2world2)
+        write(os, local2world2);
+    if (flags.mirror_basis)
+        write(os, mirror_basis);
+}
+
+void MeshRefineSettings::deserialize(std::istream& is)
+{
+    read(is, flags);
+
+    if (flags.split)
+        read(is, split_unit);
+    read(is, max_bone_influence);
+    read(is, scale_factor);
+    if (flags.gen_normals_with_smooth_angle)
+        read(is, smooth_angle);
+    if (flags.quadify || flags.quadify_full_search)
+        read(is, quadify_threshold);
+    if (flags.local2world)
+        read(is, local2world);
+    if (flags.world2local)
+        read(is, world2local);
+    if (flags.local2world2)
+        read(is, local2world2);
+    if (flags.mirror_basis)
+        read(is, mirror_basis);
+}
+
 void MeshRefineSettings::clear()
 {
     // *this = {}; causes internal compiler error on gcc
@@ -472,9 +516,9 @@ void Mesh::refine()
     if (mrs.flags.flip_v)
         mu::InvertV(uv0.data(), uv0.size());
 
-    if (mrs.flags.apply_local2world)
+    if (mrs.flags.local2world)
         transformMesh(mrs.local2world);
-    if (mrs.flags.apply_world2local)
+    if (mrs.flags.world2local)
         transformMesh(mrs.world2local);
 
     if (mrs.flags.mirror_x)
@@ -484,7 +528,7 @@ void Mesh::refine()
     if (mrs.flags.mirror_z)
         mirrorMesh({ 0.0f, 0.0f, 1.0f }, 0.0f, true);
 
-    if (mrs.flags.apply_local2world2)
+    if (mrs.flags.local2world2)
         transformMesh(mrs.local2world2);
 
     if (!bones.empty()) {

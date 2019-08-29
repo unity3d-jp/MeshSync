@@ -795,7 +795,7 @@ ms::TransformPtr msmodoContext::exportMeshInstance(TreeNode& n)
         dst.index = n.index;
         extractTransformData(n, dst);
         dst.refine_settings.local2world2 = dst.world_matrix;
-        dst.refine_settings.flags.apply_local2world2 = 1;
+        dst.refine_settings.flags.local2world2 = 1;
         m_entity_manager.add(n.dst_obj);
         return ret;
     }
@@ -1078,7 +1078,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
                 });
 
             if (!dst.bones.empty()) {
-                dst.refine_settings.flags.apply_local2world = 1;
+                dst.refine_settings.flags.local2world = 1;
                 dst.refine_settings.local2world = dst.toMatrix();
             }
         }
@@ -1141,7 +1141,7 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
         dst.refine_settings.flags.flip_faces = 1;
 
         if (m_settings.bake_transform) {
-            dst.refine_settings.flags.apply_local2world2 = 1;
+            dst.refine_settings.flags.local2world2 = 1;
             dst.refine_settings.local2world2 = dst.world_matrix;
         }
     }
@@ -1213,7 +1213,7 @@ ms::TransformPtr msmodoContext::exportReplicator(TreeNode& n)
             r.visibility = { (bool)dst.visibility.visible_in_render, true, true };
             r.world_matrix = matrix * dst.world_matrix;
             r.refine_settings.local2world2 = r.world_matrix;
-            r.refine_settings.flags.apply_local2world2 = 1;
+            r.refine_settings.flags.local2world2 = 1;
 
             n.replicas.push_back(rp);
             m_entity_manager.add(rp);

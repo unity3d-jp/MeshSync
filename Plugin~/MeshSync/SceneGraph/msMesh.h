@@ -36,30 +36,30 @@ struct MeshRefineFlags
 {
     uint32_t no_reindexing : 1;     // 0
     uint32_t split : 1;
-    uint32_t flip_x : 1;
+    uint32_t local2world : 1;
+    uint32_t world2local : 1;
+    uint32_t local2world2 : 1;
+    uint32_t flip_x : 1;            // 5
     uint32_t flip_yz : 1;
     uint32_t flip_faces : 1;
-    uint32_t gen_normals : 1;       // 5
+    uint32_t flip_u : 1;
+    uint32_t flip_v : 1;
+    uint32_t gen_normals : 1;       // 10
     uint32_t gen_normals_with_smooth_angle : 1;
     uint32_t flip_normals : 1;
     uint32_t gen_tangents : 1;
-    uint32_t apply_local2world : 1;
-    uint32_t apply_world2local : 1; // 10
-    uint32_t bake_skin : 1;
-    uint32_t bake_cloth : 1;
-    uint32_t flip_u : 1;
-    uint32_t flip_v : 1;
-    uint32_t mirror_x : 1;          // 15
-    uint32_t mirror_y : 1;
+    uint32_t mirror_x : 1;
+    uint32_t mirror_y : 1;          // 15
     uint32_t mirror_z : 1;
     uint32_t mirror_x_weld : 1;
     uint32_t mirror_y_weld : 1;
-    uint32_t mirror_z_weld : 1;     // 20
-    uint32_t mirror_basis : 1;
+    uint32_t mirror_z_weld : 1;
+    uint32_t mirror_basis : 1;      // 20
     uint32_t make_double_sided : 1;
+    uint32_t bake_skin : 1;
+    uint32_t bake_cloth : 1;
     uint32_t quadify : 1;
-    uint32_t quadify_full_search : 1;
-    uint32_t apply_local2world2 : 1; // 25
+    uint32_t quadify_full_search : 1;   // 25
 
     MeshRefineFlags();
 };
@@ -68,21 +68,24 @@ struct MeshRefineSettings
 {
     // serializable
     MeshRefineFlags flags;
+    uint32_t split_unit = 0xffffffff;
+    uint32_t max_bone_influence = 255;
     float scale_factor = 1.0f;
     float smooth_angle = 0.0f; // in degree
     float quadify_threshold = 15.0f; // in degree
-    uint32_t split_unit = 0xffffffff;
-    uint32_t max_bone_influence = 255;
     float4x4 local2world = float4x4::identity();
     float4x4 world2local = float4x4::identity();
-    float4x4 mirror_basis = float4x4::identity();
     float4x4 local2world2 = float4x4::identity();
+    float4x4 mirror_basis = float4x4::identity();
 
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
     void clear();
     uint64_t checksum() const;
     bool operator==(const MeshRefineSettings& v) const;
     bool operator!=(const MeshRefineSettings& v) const;
 };
+msSerializable(MeshRefineSettings);
 
 enum class Topology : int
 {

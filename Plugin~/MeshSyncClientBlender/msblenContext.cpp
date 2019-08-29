@@ -466,7 +466,7 @@ ms::TransformPtr msblenContext::exportReference(Object *src, const DupliGroupCon
         if (m_settings.bake_transform) {
             auto mesh = std::static_pointer_cast<ms::Mesh>(rec.dst->clone(true));
             mesh->refine_settings.local2world2 = mesh->world_matrix * ctx.dst->world_matrix;
-            mesh->refine_settings.flags.apply_local2world2 = 1;
+            mesh->refine_settings.flags.local2world2 = 1;
             dst = mesh;
         }
         else {
@@ -663,7 +663,7 @@ void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data, mu
         }
         if (m_settings.bake_transform) {
             dst.refine_settings.local2world2 = world;
-            dst.refine_settings.flags.apply_local2world2 = 1;
+            dst.refine_settings.flags.local2world2 = 1;
         }
     }
     else {
@@ -800,7 +800,7 @@ void msblenContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *d
             auto *arm_mod = (const ArmatureModifierData*)find_modofier(obj, eModifierType_Armature);
             if (arm_mod) {
                 // request bake TRS
-                dst.refine_settings.flags.apply_local2world = 1;
+                dst.refine_settings.flags.local2world = 1;
                 dst.refine_settings.local2world = ms::transform(dst.position, invert(dst.rotation), dst.scale);
 
                 auto *arm_obj = arm_mod->object;

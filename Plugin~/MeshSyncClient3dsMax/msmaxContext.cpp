@@ -1244,7 +1244,7 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
         if (m_settings.bake_transform) {
             // in this case transform is applied to vertices (dst.position/rotation/scale is identity)
             dst.refine_settings.local2world = to_float4x4(n->GetObjTMAfterWSM(t));
-            dst.refine_settings.flags.apply_local2world = 1;
+            dst.refine_settings.flags.local2world = 1;
         }
         else {
             if (m_settings.bake_modifiers) {
@@ -1253,12 +1253,12 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
                     dst.refine_settings.local2world *= mu::invert(dst.toMatrix());
                 else
                     dst.refine_settings.local2world *= mu::invert(dst.world_matrix);
-                dst.refine_settings.flags.apply_local2world = 1;
+                dst.refine_settings.flags.local2world = 1;
             }
             else {
                 // handle pivot
                 dst.refine_settings.local2world = getPivotMatrix(n);
-                dst.refine_settings.flags.apply_local2world = 1;
+                dst.refine_settings.flags.local2world = 1;
             }
         }
 
