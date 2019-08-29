@@ -41,7 +41,7 @@ msblenContext::msblenContext()
 
 msblenContext::~msblenContext()
 {
-    wait();
+    // no wait() because it can cause deadlock...
 }
 
 SyncSettings& msblenContext::getSettings() { return m_settings; }
