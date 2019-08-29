@@ -71,13 +71,20 @@ uint64_t MeshRefineSettings::checksum() const
 {
     uint64_t ret = 0;
     ret += csum((int&)flags);
-    ret += csum(scale_factor);
-    ret += csum(smooth_angle);
-    ret += csum(split_unit);
+    if (flags.split)
+        ret += csum(split_unit);
     ret += csum(max_bone_influence);
-    ret += csum(local2world);
-    ret += csum(world2local);
-    ret += csum(mirror_basis);
+    ret += csum(scale_factor);
+    if (flags.gen_normals_with_smooth_angle)
+        ret += csum(smooth_angle);
+    if (flags.quadify || flags.quadify_full_search)
+        ret += csum(quadify_threshold);
+    if (flags.local2world)
+        ret += csum(local2world);
+    if (flags.world2local)
+        ret += csum(world2local);
+    if (flags.mirror_basis)
+        ret += csum(mirror_basis);
     return ret;
 }
 

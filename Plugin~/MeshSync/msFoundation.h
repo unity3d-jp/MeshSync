@@ -296,7 +296,7 @@ struct csum_impl<SharedVector<T>>
 {
     uint64_t operator()(const SharedVector<T>& v)
     {
-        return mu::SumInt32(v.data(), sizeof(T) * v.size());
+        return mu::SumInt32(v.cdata(), v.size_in_byte());
     }
 };
 
