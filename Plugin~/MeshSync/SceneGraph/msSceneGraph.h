@@ -65,10 +65,21 @@ struct SceneProfileData
     float lerp_time;    // in ms
 };
 
+struct SceneDataFlags
+{
+    uint32_t has_settings : 1;
+    uint32_t has_assets : 1;
+    uint32_t has_entities : 1;
+    uint32_t has_constraints : 1;
+
+    SceneDataFlags();
+};
+
 class Scene
 {
 public:
     // serializable
+    mutable SceneDataFlags data_flags;
     SceneSettings settings;
     std::vector<AssetPtr> assets;
     std::vector<TransformPtr> entities;
