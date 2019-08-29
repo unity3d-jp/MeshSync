@@ -85,7 +85,7 @@ bool msmobuLayout::FBCreate()
             lW, kFBAttachNone, nullptr, 1,
             0, kFBAttachHeight, idLabelPort, 1);
         SetControl(idEditPort, m_ed_port);
-        m_ed_port.Value = 8080;
+        m_ed_port.Value = (int)settings.client_settings.port;
         m_ed_port.Min = 0;
         m_ed_port.Max = 65535;
         m_ed_port.Precision = 1;
@@ -226,7 +226,7 @@ bool msmobuLayout::FBCreate()
             lW, kFBAttachNone, nullptr, 1,
             0, kFBAttachHeight, idLabelFrameStep, 1);
         SetControl(idEditFrameStep, m_ed_frame_step);
-        m_ed_frame_step.Value = 1;
+        m_ed_frame_step.Value = (double)settings.frame_step;
         m_ed_frame_step.Min = 0.0;
         m_ed_frame_step.SmallStep = 1.0;
         m_ed_frame_step.LargeStep = 1.0;

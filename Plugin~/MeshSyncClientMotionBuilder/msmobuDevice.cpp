@@ -391,6 +391,7 @@ void msmobuDevice::extractCameraData(FBCamera* src, bool& ortho, float& near_pla
 
     //lens_shift.x = (float)src->OpticalCenterX;
     //lens_shift.y = (float)src->OpticalCenterY;
+    lens_shift = mu::float2::zero();
 }
 
 void msmobuDevice::extractLightData(FBLight* src, ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle)

@@ -8,7 +8,7 @@ struct SyncSettings
     ms::ClientSettings client_settings;
     int  timeout_ms = 5000;
     float scale_factor = 100.0f;
-    float frame_step = 3.0f;
+    float frame_step = 1.0f;
 
     bool auto_sync = false;
     bool sync_cameras = true;
