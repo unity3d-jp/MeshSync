@@ -755,6 +755,7 @@ namespace UTJ.MeshSync
                 }
             }
             {
+                SetCurve(clip, path, ttrans, "m_LocalEuler", null, true);
                 SetCurve(clip, path, ttrans, "m_LocalRotation", null, true);
                 var curves = GenCurves(msAnimationGetTransformRotation(self));
                 if (curves != null)
