@@ -13,6 +13,11 @@ Bone* find_bone_recursive(Bone *bone, const char *name);
 Bone* find_bone(Object *obj, const char *name);
 bPoseChannel* find_pose(Object *obj, const char *name);
 
+bool is_mesh(const Object *obj);
+bool is_camera(const Object *obj);
+bool is_light(const Object *obj);
+bool is_armature(const Object *obj);
+
 inline Collection* get_instance_collection(Object *obj)
 {
 #if BLENDER_VERSION < 280

@@ -3,6 +3,12 @@
 #include "msmqUtils.h"
 
 
+void SyncSettings::validate()
+{
+    // nothing to do for now
+}
+
+
 msmqContext::msmqContext(MQBasePlugin *plugin)
 {
     m_plugin = plugin;
@@ -13,7 +19,7 @@ msmqContext::~msmqContext()
     wait();
 }
 
-msmqSettings& msmqContext::getSettings()
+SyncSettings& msmqContext::getSettings()
 {
     return m_settings;
 }
@@ -80,6 +86,7 @@ bool msmqContext::sendMaterials(MQDocument doc, bool dirty_all)
         return false;
     }
 
+    m_settings.validate();
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(dirty_all);
     exportMaterials(doc);
@@ -96,6 +103,7 @@ bool msmqContext::sendMeshes(MQDocument doc, bool dirty_all)
     }
     m_pending_send_meshes = false;
 
+    m_settings.validate();
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
@@ -374,6 +382,7 @@ bool msmqContext::sendCamera(MQDocument doc, bool dirty_all)
         return false;
     }
 
+    m_settings.validate();
     // gather camera data
     if (auto scene = doc->GetScene(0)) { // GetScene(0): perspective view
         if (!m_camera) {

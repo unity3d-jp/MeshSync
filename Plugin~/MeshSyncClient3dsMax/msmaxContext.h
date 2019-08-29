@@ -18,8 +18,8 @@ enum class ObjectScope : int
 {
     None = -1,
     All,
-    Updated,
     Selected,
+    Updated,
 };
 
 enum class FrameRange : int
@@ -67,6 +67,8 @@ struct SyncSettings
     bool multithreaded = false;
 
     bool export_scene_cache = false;
+
+    void validate();
 };
 
 struct CacheSettings

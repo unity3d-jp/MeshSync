@@ -3,6 +3,12 @@
 #include "msmodoUtils.h"
 
 
+void SyncSettings::validate()
+{
+    if (!bake_deformers)
+        bake_transform = false;
+}
+
 void msmodoContext::TreeNode::clearState()
 {
     dst_obj = nullptr;
@@ -142,7 +148,7 @@ void msmodoContext::onIdle()
 
 
 void msmodoContext::extractTransformData(TreeNode& n,
-    mu::float3& pos, mu::quatf& rot, mu::float3& scale, ms::VisibilityFlags& vis,
+    mu::float3& t, mu::quatf& r, mu::float3& s, ms::VisibilityFlags& vis,
     mu::float4x4 *dst_world, mu::float4x4 *dst_local)
 {
     CLxUser_Locator loc(n.item);
@@ -150,26 +156,43 @@ void msmodoContext::extractTransformData(TreeNode& n,
     // visibility
     vis = { true, loc.Visible(m_ch_read) == LXe_TRUE, true };
 
-    // transform
+    // get matrices
+    mu::float4x4 world, local;
+    {
+        LXtMatrix4 lxmat;
+        loc.WorldTransform4(m_ch_read, lxmat);
+        world = to_float4x4(lxmat);
+    }
     {
         LXtMatrix4 lxmat;
         loc.LocalTransform4(m_ch_read, lxmat);
-        auto mat = to_float4x4(lxmat);
-
-        mu::extract_trs(mat, pos, rot, scale);
-        // camera/light correction
-        if (n.item.IsA(tCamera) || n.item.IsA(tLight))
-            rot *= mu::rotate_y(180.0f * mu::DegToRad);
-
-        if (dst_local)
-            *dst_local = mat;
+        local = to_float4x4(lxmat);
     }
+    if (dst_local)
+        *dst_local = local;
+    if (dst_world)
+        *dst_world = world;
 
-    // world matrix
-    if (dst_world) {
-        LXtMatrix4 lxmat;
-        loc.WorldTransform4(m_ch_read, lxmat);
-        *dst_world = to_float4x4(lxmat);
+    auto camera_correction = [](mu::quatf v) {
+        return v * mu::rotate_y(180.0f * mu::DegToRad);
+    };
+
+    // extract TRS
+    if (m_settings.bake_transform) {
+        if (n.item.IsA(tCamera) || n.item.IsA(tLight)) {
+            mu::extract_trs(world, t, r, s);
+            r = camera_correction(r);
+        }
+        else {
+            t = mu::float3::zero();
+            r = mu::quatf::identity();
+            s = mu::float3::one();
+        }
+    }
+    else {
+        mu::extract_trs(local, t, r, s);
+        if (n.item.IsA(tCamera) || n.item.IsA(tLight))
+            r = camera_correction(r);
     }
 }
 
@@ -307,7 +330,7 @@ void msmodoContext::extractLightData(TreeNode& n,
 
 void msmodoContext::extractReplicaData(
     TreeNode& n, CLxUser_Item& geom, int nth, const mu::float4x4& matrix,
-    std::string& path, mu::float3& pos, mu::quatf& rot, mu::float3& scale)
+    std::string& path, mu::float3& t, mu::quatf& r, mu::float3& s)
 {
     if (n.dst_obj)
         path = n.dst_obj->path;
@@ -322,9 +345,16 @@ void msmodoContext::extractReplicaData(
     sprintf(buf, " (%d)", nth++);
     path += buf;
 
-    pos = mu::extract_position(matrix);
-    rot = mu::extract_rotation(matrix);
-    scale = mu::extract_scale(matrix);
+    if (m_settings.bake_transform) {
+        t = mu::float3::zero();
+        r = mu::quatf::identity();
+        s = mu::float3::one();
+    }
+    else {
+        t = mu::extract_position(matrix);
+        r = mu::extract_rotation(matrix);
+        s = mu::extract_scale(matrix);
+    }
 }
 
 bool msmodoContext::sendMaterials(bool dirty_all)
@@ -332,6 +362,7 @@ bool msmodoContext::sendMaterials(bool dirty_all)
     if (!prepare() || m_sender.isExporting())
         return false;
 
+    m_settings.validate();
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(dirty_all);
     exportMaterials();
@@ -349,6 +380,7 @@ bool msmodoContext::sendObjects(ObjectScope scope, bool dirty_all)
     }
     m_pending_scope = ObjectScope::None;
 
+    m_settings.validate();
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
@@ -402,6 +434,7 @@ bool msmodoContext::sendAnimations(ObjectScope scope)
     if (!prepare() || m_sender.isExporting())
         return false;
 
+    m_settings.validate();
     if (exportAnimations(scope) > 0) {
         kickAsyncExport();
         return true;
@@ -426,6 +459,7 @@ bool msmodoContext::exportCache(const CacheSettings& cache_settings)
     m_settings.bake_deformers = cache_settings.bake_deformers;
     m_settings.bake_transform = cache_settings.bake_transform;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
+    m_settings.validate();
 
     ms::OSceneCacheSettings oscs;
     oscs.sample_rate = frame_rate * std::max(1.0f / frame_step, 1.0f);
@@ -486,7 +520,7 @@ bool msmodoContext::exportCache(const CacheSettings& cache_settings)
             if (t >= time_end)
                 break;
             else
-                t = std::min(t + interval, time_end);
+                t += interval;
         }
         setChannelReadTime();
         m_ignore_events = false;
@@ -589,6 +623,11 @@ std::vector<CLxUser_Item> msmodoContext::getNodes(ObjectScope scope)
             ret.push_back(obj);
         });
     }
+    else if (scope == ObjectScope::Selected) {
+        eachSelection([&](CLxUser_Item& obj) {
+            ret.push_back(obj);
+        });
+    }
     else if (scope == ObjectScope::Updated) {
         int num_exported = 0;
         for (auto& kvp : m_tree_nodes) {
@@ -598,9 +637,6 @@ std::vector<CLxUser_Item> msmodoContext::getNodes(ObjectScope scope)
                 ++num_exported;
             }
         }
-    }
-    else if (scope == ObjectScope::Selected) {
-        // todo
     }
     return ret;
 }
@@ -739,17 +775,41 @@ ms::TransformPtr msmodoContext::exportTransform(TreeNode& n)
 
 ms::TransformPtr msmodoContext::exportMeshInstance(TreeNode& n)
 {
-    auto ret = createEntity<ms::Transform>(n);
-    n.dst_obj = ret;
-    auto& dst = *ret;
+    CLxUser_Item src;
+    enumerateItemGraphR(n.item, LXsGRAPH_MESHINST, [&](CLxUser_Item& g) { src = g; });
+    if (!src)
+        return nullptr;
 
-    extractTransformData(n, dst);
-    enumerateItemGraphR(n.item, LXsGRAPH_MESHINST, [&](CLxUser_Item& g) {
-        n.dst_obj->reference = GetPath(g);
-    });
+    if (m_settings.bake_transform) {
+        auto& nsrc = m_tree_nodes[src];
+        if (!nsrc.dst_obj)
+            exportObject(src, true, false);
+        if (!nsrc.dst_obj)
+            return nullptr;
 
-    m_entity_manager.add(n.dst_obj);
-    return ret;
+        auto ret = std::static_pointer_cast<ms::Mesh>(nsrc.dst_obj->clone(true));
+        n.dst_obj = ret;
+        auto& dst = *ret;
+
+        dst.path = n.path;
+        dst.index = n.index;
+        extractTransformData(n, dst);
+        dst.refine_settings.local2world2 = dst.world_matrix;
+        dst.refine_settings.flags.apply_local2world2 = 1;
+        m_entity_manager.add(n.dst_obj);
+        return ret;
+    }
+    else {
+        auto ret = createEntity<ms::Transform>(n);
+        n.dst_obj = ret;
+        auto& dst = *ret;
+
+        extractTransformData(n, dst);
+        n.dst_obj->reference = GetPath(src);
+
+        m_entity_manager.add(n.dst_obj);
+        return ret;
+    }
 }
 
 ms::CameraPtr msmodoContext::exportCamera(TreeNode& n)
@@ -1079,6 +1139,11 @@ ms::MeshPtr msmodoContext::exportMesh(TreeNode& n)
             dst.refine_settings.flags.gen_tangents = 1;
         dst.refine_settings.flags.make_double_sided = m_settings.make_double_sided;
         dst.refine_settings.flags.flip_faces = 1;
+
+        if (m_settings.bake_transform) {
+            dst.refine_settings.flags.apply_local2world2 = 1;
+            dst.refine_settings.local2world2 = dst.world_matrix;
+        }
     }
 
     m_parallel_tasks.push_back([this, &n, &dst](){
@@ -1132,31 +1197,59 @@ ms::TransformPtr msmodoContext::exportReplicator(TreeNode& n)
     // export replica
     int nth = 0;
     n.replicas.clear();
-    eachReplica(n.item, [&](CLxUser_Item& geom, mu::float4x4 matrix) {
-        auto p = ms::Transform::create();
-        auto& dst = *p;
-        dst.reference = GetPath(geom);
-        extractReplicaData(n, geom, nth++, matrix, dst.path, dst.position, dst.rotation, dst.scale);
+    if (m_settings.bake_transform) {
+        // generate independent meshes
+        eachReplica(n.item, [&](CLxUser_Item& geom, mu::float4x4 matrix) {
+            auto& nsrc = m_tree_nodes[geom];
+            if (!nsrc.dst_obj)
+                exportObject(geom, true, false);
+            if (!nsrc.dst_obj)
+                return;
 
-        n.replicas.push_back(p);
-        m_entity_manager.add(p);
-    });
+            auto rp = std::static_pointer_cast<ms::Mesh>(nsrc.dst_obj->clone(true));
+            auto& r = *rp;
 
-    m_parallel_tasks.push_back([this, &n]() {
-        if (n.replicas.empty() && n.prev_replicas.empty())
-            return;
+            extractReplicaData(n, geom, nth++, matrix, r.path, r.position, r.rotation, r.scale);
+            r.visibility = { (bool)dst.visibility.visible_in_render, true, true };
+            r.world_matrix = matrix * dst.world_matrix;
+            r.refine_settings.local2world2 = r.world_matrix;
+            r.refine_settings.flags.apply_local2world2 = 1;
 
-        // erase from entity manager if the replica no longer exists
-        std::sort(n.replicas.begin(), n.replicas.end(),
-            [](auto& a, auto& b) { return a->path < b->path; });
-        for (auto& p : n.prev_replicas) {
-            auto it = std::lower_bound(n.replicas.begin(), n.replicas.end(), p,
-                [](auto& r, auto& p) { return r->path < p->path; });
-            if (it == n.replicas.end() || (*it)->path != p->path)
-                m_entity_manager.eraseThreadSafe(p);
-        }
-        n.prev_replicas = std::move(n.replicas);
-    });
+            n.replicas.push_back(rp);
+            m_entity_manager.add(rp);
+        });
+    }
+    else {
+        // make references
+        eachReplica(n.item, [&](CLxUser_Item& geom, mu::float4x4 matrix) {
+            auto rp = ms::Transform::create();
+            auto& r = *rp;
+            r.reference = GetPath(geom);
+            extractReplicaData(n, geom, nth++, matrix, r.path, r.position, r.rotation, r.scale);
+
+            n.replicas.push_back(rp);
+            m_entity_manager.add(rp);
+        });
+    }
+
+    if (!m_settings.export_cache) {
+        // check if there are deleted elements
+        m_parallel_tasks.push_back([this, &n]() {
+            if (n.replicas.empty() && n.prev_replicas.empty())
+                return;
+
+            // erase from entity manager if the replica no longer exists
+            std::sort(n.replicas.begin(), n.replicas.end(),
+                [](auto& a, auto& b) { return a->path < b->path; });
+            for (auto& p : n.prev_replicas) {
+                auto it = std::lower_bound(n.replicas.begin(), n.replicas.end(), p,
+                    [](auto& r, auto& p) { return r->path < p->path; });
+                if (it == n.replicas.end() || (*it)->path != p->path)
+                    m_entity_manager.eraseThreadSafe(p);
+            }
+            n.prev_replicas = std::move(n.replicas);
+        });
+    }
 
     return ret;
 }
@@ -1222,7 +1315,7 @@ int msmodoContext::exportAnimations(ObjectScope scope)
         if (t >= time_end)
             break;
         else
-            t = std::min(t + interval, time_end);
+            t += interval;
     }
     setChannelReadTime();
     m_ignore_events = false;

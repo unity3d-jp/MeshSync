@@ -171,7 +171,8 @@ BOOL MeshSyncClientPlugin::OnSubCommand(MQDocument doc, int index)
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int height)
 {
-    m_context.update(doc);
+    if (!AutoSyncMeshesImpl(doc))
+        m_context.update(doc);
     AutoSyncCameraImpl(doc);
 }
 
@@ -182,7 +183,7 @@ void MeshSyncClientPlugin::OnDraw(MQDocument doc, MQScene scene, int width, int 
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnNewDocument(MQDocument doc, const char *filename, NEW_DOCUMENT_PARAM& param)
 {
-    AutoSyncMeshesImpl(doc);
+    markSceneDirty();
 }
 
 //---------------------------------------------------------------------------
@@ -192,6 +193,7 @@ void MeshSyncClientPlugin::OnNewDocument(MQDocument doc, const char *filename, N
 void MeshSyncClientPlugin::OnEndDocument(MQDocument doc)
 {
     m_context.clear();
+    markSceneDirty();
 }
 
 //---------------------------------------------------------------------------
@@ -208,7 +210,7 @@ void MeshSyncClientPlugin::OnSaveDocument(MQDocument doc, const char *filename, 
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 {
-    AutoSyncMeshesImpl(doc);
+    markSceneDirty();
     return TRUE;
 }
 
@@ -218,7 +220,7 @@ BOOL MeshSyncClientPlugin::OnUndo(MQDocument doc, int undo_state)
 //---------------------------------------------------------------------------
 BOOL MeshSyncClientPlugin::OnRedo(MQDocument doc, int redo_state)
 {
-    AutoSyncMeshesImpl(doc);
+    markSceneDirty();
     return TRUE;
 }
 
@@ -228,7 +230,7 @@ BOOL MeshSyncClientPlugin::OnRedo(MQDocument doc, int redo_state)
 //---------------------------------------------------------------------------
 void MeshSyncClientPlugin::OnUpdateUndo(MQDocument doc, int undo_state, int undo_size)
 {
-    AutoSyncMeshesImpl(doc);
+    markSceneDirty();
 }
 
 //---------------------------------------------------------------------------
@@ -304,8 +306,8 @@ msmqContext& MeshSyncClientPlugin::getContext()
 
 void MeshSyncClientPlugin::AutoSyncMeshes() { Execute(&MeshSyncClientPlugin::AutoSyncMeshesImpl); }
 void MeshSyncClientPlugin::AutoSyncCamera() { Execute(&MeshSyncClientPlugin::AutoSyncCameraImpl);}
-void MeshSyncClientPlugin::Export() { Execute(&MeshSyncClientPlugin::ExportImpl); }
-void MeshSyncClientPlugin::Import() { Execute(&MeshSyncClientPlugin::ImportImpl); }
+void MeshSyncClientPlugin::Export() { Execute(&MeshSyncClientPlugin::SendImpl); }
+void MeshSyncClientPlugin::Import() { Execute(&MeshSyncClientPlugin::RecvImpl); }
 
 void MeshSyncClientPlugin::LogInfo(const char *message)
 {

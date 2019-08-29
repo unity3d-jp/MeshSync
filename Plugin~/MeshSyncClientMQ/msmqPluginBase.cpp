@@ -15,25 +15,35 @@ msmqContext& msmqPluginBase::getContext()
     return m_context;
 }
 
+void msmqPluginBase::markSceneDirty()
+{
+    m_scene_dirty = true;
+}
+
 bool msmqPluginBase::AutoSyncMeshesImpl(MQDocument doc)
 {
     auto& ctx = m_context;
     auto& settings = ctx.getSettings();
-    if (settings.auto_sync)
+    if (m_scene_dirty && settings.auto_sync) {
+        m_scene_dirty = false;
         ctx.sendMeshes(doc, false);
-    return true;
+        return true;
+    }
+    return false;
 }
 
 bool msmqPluginBase::AutoSyncCameraImpl(MQDocument doc)
 {
     auto& ctx = m_context;
     auto& settings = ctx.getSettings();
-    if (settings.auto_sync && settings.sync_camera)
+    if (settings.auto_sync && settings.sync_camera) {
         ctx.sendCamera(doc, false);
-    return true;
+        return true;
+    }
+    return false;
 }
 
-bool msmqPluginBase::ExportImpl(MQDocument doc)
+bool msmqPluginBase::SendImpl(MQDocument doc)
 {
     auto& ctx = m_context;
     auto& settings = ctx.getSettings();
@@ -47,11 +57,11 @@ bool msmqPluginBase::ExportImpl(MQDocument doc)
         ctx.wait();
         ctx.sendCamera(doc, true);
     }
-    ctx.logInfo("");
+    m_scene_dirty = false;
     return true;
 }
 
-bool msmqPluginBase::ImportImpl(MQDocument doc)
+bool msmqPluginBase::RecvImpl(MQDocument doc)
 {
     auto& ctx = m_context;
     if (!ctx.isServerAvailable()) {
@@ -59,6 +69,5 @@ bool msmqPluginBase::ImportImpl(MQDocument doc)
         return false;
     }
     ctx.importMeshes(doc);
-    ctx.logInfo("");
     return true;
 }

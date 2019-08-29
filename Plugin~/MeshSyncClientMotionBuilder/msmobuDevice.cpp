@@ -6,6 +6,11 @@
 FBDeviceImplementation(msmobuDevice);
 FBRegisterDevice("msmbDevice", msmobuDevice, "UnityMeshSync", "UnityMeshSync for MotionBuilder", FB_DEFAULT_SDK_ICON);
 
+void SyncSettings::validate()
+{
+    // nothing to do for now
+}
+
 ms::Identifier msmobuDevice::NodeRecord::getIdentifier() const
 {
     return { path,id };
@@ -101,7 +106,7 @@ void msmobuDevice::onSynchronization(HIRegister pCaller, HKEventBase pEvent)
     }
 }
 
-msmobuSettings& msmobuDevice::getSettings()
+SyncSettings& msmobuDevice::getSettings()
 {
     return m_settings;
 }
@@ -202,6 +207,7 @@ bool msmobuDevice::sendMaterials(bool dirty_all)
         return false;
     }
 
+    m_settings.validate();
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(dirty_all);
     exportMaterials();
@@ -223,6 +229,7 @@ bool msmobuDevice::sendObjects(bool dirty_all)
         m_dirty_meshes = true;
         m_dirty_textures = true;
     }
+    m_settings.validate();
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
@@ -831,6 +838,7 @@ bool msmobuDevice::sendAnimations()
     if (m_sender.isExporting())
         return false;
 
+    m_settings.validate();
     if (exportAnimations())
         kickAsyncSend();
     return true;

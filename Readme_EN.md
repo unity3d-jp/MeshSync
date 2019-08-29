@@ -13,9 +13,7 @@ MeshSync works as a plugin for Unity and DCC tools, and currently supports: [May
 5. [Blender](#blender)
 6. [Modo](#modo)
 7. [Metasequoia](#Metaseq)
-8. [VRED](#vred)
-9. [xismo](#xismo)
-10. [Unity](#unity)
+8. [Unity](#unity)
 
 <img align="right" src="https://user-images.githubusercontent.com/1488611/39971860-7f6d1330-573e-11e8-9a1e-9d95709cbd50.png" height=400>
 
@@ -183,42 +181,6 @@ Also, dll is different in version 4.7 and later. This is due to changes to the b
 - Subdivisions and metaballs will not be reflected in Unity until you freeze them. 
 - Check "Sync Normals" to reflect vector changes supported by Metasequoia 4 versions. 
 - Check "Sync Bones" to reflect bones supported by Metasequoia 4 versions. Checking "Sync Poses" will reflect the pose designated under "Skinning". 
-
-
-### VRED
-VRED has a special implementation using an API hook. This means that it also has special use methods and that minor version updates to VRED can result in loss of functionality. 
-- Installation:
-  - Download UnityMeshSync_VRED_Windows.zip from [releases](https://github.com/unity3d-jp/MeshSync/releases) and extract files
-  - If the VRED install destination is set to default, double clicking bat files like VREDPro_2019.bat will apply MeshSync and start VRED. 
-  - If the install destination is NOT the default, open the bat file in a text editor and overwrite the "%PROGRAMFILES%\Autodesk\VREDPro-11.0\Bin\WIN64\VREDPro.exe" portion to point to the install destination's VRED exe file (Ex:"D:\My Install Directory\VREDPro-11.0\Bin\WIN64\VREDPro.exe").  
-- While "Auto Sync" is checked, changes to the mesh will automatically be reflected in Unity. If Auto Sync is disabled, use the "Manual Sync" button to sync changes.
-- Some portions of texture sync are supported. The textures designated in the "colorTexture" and "bumpTexture" parameters in the shader will be synced as textures for the color texture, normal map, etc.  
-- Checking "Flip U/V" will invert the U/Vs of the texture coordinates. Even if the mapping method doesn't use U/Vs, this option can still help maintain consistency. 
-- Clicking "Double Sided" will cause the Mesh to be double-sided in Unity.
-- Clicking "Sync Deleted" will delete models in Unity that have been deleted in VRED.
-- Clicking "Sync Camera" will sync the VRED camera. "Camera Path" is the Unity camera path.
-
-&nbsp;  
-  
-- The model in the VRED viewport will be sent to Unity as is, so models can generally be synched.
-  - However objects outside the camera's view will not be synched, due to VRED's culling. 
-- Due to implementation restrictions, object names and tree structures cannot be synched. They will all become root objects in Unity, and the names will change automatically. 
-
-### xismo
-xismo doesn't provide a plugin, so the current implementation (05/2018) uses an API hook.This means that it also has special use methods and that minor version updates to xismo can result in loss of functionality. The current version of MeshSync is confirmed to work with xismo 191～199b.
-- Installation:
-  - Download UnityMeshSync_xismo_Windows.zip from [releases](https://github.com/unity3d-jp/MeshSync/releases) 
-  - Decompress it and place the 2 files (MeshSyncClientXismo.exe, MeshSyncClientXismoHook.dll) in the directory where xismo is installed (same place as xismo.exe)
-- Run MeshSyncClientXismo.exe. xismo will start with MeshSync included.
-- A window->Unity Mesh Sync menu will be added, where various settings can be accessed.
-- While "Auto Sync" is checked, changes to the mesh will automatically be reflected in Unity.
-- Clicking "Double Sided" will cause the Mesh to be double-sided in Unity.
-- Clicking "Sync Camera" will sync the xismo camera. "Camera Path" is the Unity camera path.
-
-&nbsp;  
-
-- The model in the xismo viewport will be sent to Unity as is, so models can generally be synched.
-- Non-model elements (object/material names, bones, etc.) are not supported. Support won't be possible until xismo releases a plugin API, so there are currently no plans to support these elements in MeshSync.  
 
 
 ### Unity

@@ -3,7 +3,7 @@
 #include "MeshSync/MeshSync.h"
 #include "MeshSync/MeshSyncUtils.h"
 
-struct msmobuSettings
+struct SyncSettings
 {
     ms::ClientSettings client_settings;
     int  timeout_ms = 5000;
@@ -20,6 +20,8 @@ struct msmobuSettings
     bool make_double_sided = false;
     bool bake_deformars = false;
     bool parallel_extraction = true;
+
+    void validate();
 };
 
 class msmobuDevice : public FBDevice
@@ -31,7 +33,7 @@ public:
     bool DeviceOperation(kDeviceOperations pOperation) override;
     void DeviceTransportNotify(kTransportMode pMode, FBTime pTime, FBTime pSystem) override;
 
-    msmobuSettings& getSettings();
+    SyncSettings& getSettings();
 
     void logInfo(const char *format, ...);
     void logError(const char *format, ...);
@@ -121,7 +123,7 @@ private:
     void extractMeshAnimation(ms::TransformAnimation& dst, FBModel* src);
 
 private:
-    msmobuSettings m_settings;
+    SyncSettings m_settings;
     bool m_data_updated = false;
     bool m_dirty_meshes = true;
     bool m_dirty_textures = true;

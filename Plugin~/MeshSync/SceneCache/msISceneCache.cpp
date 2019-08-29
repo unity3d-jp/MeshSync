@@ -70,7 +70,7 @@ ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
         CacheFileMetaHeader mh;
         m_ist->read((char*)&mh, sizeof(mh));
 
-        encoded_buf.resize(mh.size);
+        encoded_buf.resize((size_t)mh.size);
         m_ist->read(encoded_buf.data(), encoded_buf.size());
 
         m_encoder->decode(tmp_buf, encoded_buf);
@@ -173,7 +173,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t scene_index, bool wait_preload)
                 msProfileScope("ISceneCacheImpl: [%d] read segment (%d - %u byte)", (int)scene_index, (int)si, (uint32_t)seg.size_encoded);
                 ScopedTimer timer;
 
-                seg.encoded_buf.resize(seg.size_encoded);
+                seg.encoded_buf.resize((size_t)seg.size_encoded);
                 m_ist->read(seg.encoded_buf.data(), seg.encoded_buf.size());
 
                 seg.read_time = timer.elapsed();

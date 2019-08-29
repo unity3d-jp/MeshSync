@@ -186,7 +186,7 @@ Value* Import_cf(Value** arg_list, int count)
     return &ok;
 }
 
-// e.g. UnityMeshSync.ExportCache path:"C:/tmp/hoge.sc" frame_range:"all"
+// e.g. UnityMeshSync.ExportCache path:"C:/tmp/hoge.sc" frame_range:1
 Value* ExportCache_cf(Value** arg_list, int count)
 {
     CacheSettings settings;
@@ -195,46 +195,23 @@ Value* ExportCache_cf(Value** arg_list, int count)
     for (int i = 0; i < count; /**/) {
         std::wstring name = arg_list[i++]->to_string();
         if (i + 1 <= count) {
-            if (name == L"path") {
-                settings.path = mu::ToMBS(arg_list[i++]->to_string());
-            }
-            else if (name == L"object_scope") {
-                std::wstring v = arg_list[i++]->to_string();
-                if (v == L"all")
-                    settings.object_scope = ObjectScope::All;
-                else if (v == L"selected")
-                    settings.object_scope = ObjectScope::Selected;
-            }
-            else if (name == L"frame_range") {
-                std::wstring v = arg_list[i++]->to_string();
-                if (v == L"current")
-                    settings.frame_range = FrameRange::Current;
-                else if (v == L"custom")
-                    settings.frame_range = FrameRange::Custom; // "frame_begin" - "frame_end"
-                else if (v == L"all")
-                    settings.frame_range = FrameRange::All;
-            }
-            else if (name == L"material_frame_range") {
-                std::wstring v = arg_list[i++]->to_string();
-                if (v == L"none")
-                    settings.material_frame_range = MaterialFrameRange::None;
-                else if (v == L"one")
-                    settings.material_frame_range = MaterialFrameRange::One;
-                else if (v == L"all")
-                    settings.material_frame_range = MaterialFrameRange::All;
-            }
-            else if (name == L"frame_begin")            settings.frame_begin = arg_list[i++]->to_int();
-            else if (name == L"frame_end")              settings.frame_end = arg_list[i++]->to_int();
-            else if (name == L"zstd_compression_level") settings.zstd_compression_level = arg_list[i++]->to_int();
-            else if (name == L"samples_per_frame")      settings.frame_step = arg_list[i++]->to_float();
-            else if (name == L"ignore_non_renderable")  settings.ignore_non_renderable = arg_list[i++]->to_bool();
-            else if (name == L"make_double_sided")      settings.make_double_sided = arg_list[i++]->to_bool();
-            else if (name == L"bake_modifiers")         settings.bake_modifiers = arg_list[i++]->to_bool();
-            else if (name == L"use_render_meshes")      settings.use_render_meshes = arg_list[i++]->to_bool();
-            else if (name == L"flatten_hierarchy")      settings.flatten_hierarchy = arg_list[i++]->to_bool();
-            else if (name == L"merge_meshes")           settings.merge_meshes = arg_list[i++]->to_bool();
-            else if (name == L"strip_normals")          settings.strip_normals = arg_list[i++]->to_bool();
-            else if (name == L"strip_tangents")         settings.strip_tangents = arg_list[i++]->to_bool();
+            if      (name == L"path")                   settings.path = mu::ToMBS(arg_list[i++]->to_string());
+            else if (name == L"objectScope")            settings.object_scope = (ObjectScope)arg_list[i++]->to_int();
+            else if (name == L"frameRange")             settings.frame_range = (FrameRange)arg_list[i++]->to_int();
+            else if (name == L"materialFrameRange")     settings.material_frame_range = (MaterialFrameRange)arg_list[i++]->to_int();
+            else if (name == L"frameBegin")             settings.frame_begin = arg_list[i++]->to_int();
+            else if (name == L"frameEnd")               settings.frame_end = arg_list[i++]->to_int();
+            else if (name == L"frameStep")              settings.frame_step = arg_list[i++]->to_float();
+            else if (name == L"zstdCompressionLevel")   settings.zstd_compression_level = arg_list[i++]->to_int();
+            else if (name == L"ignoreNonRenderable")    settings.ignore_non_renderable = arg_list[i++]->to_bool();
+            else if (name == L"makeDoubleSided")        settings.make_double_sided = arg_list[i++]->to_bool();
+            else if (name == L"bakeModifiers")          settings.bake_modifiers = arg_list[i++]->to_bool();
+            else if (name == L"bakeTransform")          settings.bake_transform = arg_list[i++]->to_bool();
+            else if (name == L"useRenderMeshes")        settings.use_render_meshes = arg_list[i++]->to_bool();
+            else if (name == L"flattenHierarchy")       settings.flatten_hierarchy = arg_list[i++]->to_bool();
+            else if (name == L"mergeMeshes")            settings.merge_meshes = arg_list[i++]->to_bool();
+            else if (name == L"stripNormals")           settings.strip_normals = arg_list[i++]->to_bool();
+            else if (name == L"stripTangents")          settings.strip_tangents = arg_list[i++]->to_bool();
         }
     }
     msmaxGetContext().exportCache(settings);

@@ -82,7 +82,7 @@ int MemoryStreamBuf::sync()
 {
     rcount = uint64_t(this->gptr() - this->eback());
     wcount = uint64_t(this->pptr() - this->pbase());
-    buffer.resize(std::max(rcount, wcount));
+    buffer.resize((size_t)std::max(rcount, wcount));
     return 0;
 }
 

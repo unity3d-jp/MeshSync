@@ -1450,6 +1450,20 @@ template<class T> inline void extract_trs(const tmat4x4<T>& m, tvec3<T>& t, tqua
         s = tvec3<T>::one();
 }
 
+template<class T> inline tmat4x4<T> cancel_s(const tmat4x4<T>& m)
+{
+    auto r = m;
+    for (int i = 0; i < 3; ++i)
+        r[i] = normalize(m[i]);
+    return r;
+}
+template<class T> inline tmat4x4<T> cancel_rs(const tmat4x4<T>& m)
+{
+    auto r = tmat4x4<T>::identity();
+    r[3] = m[3];
+    return r;
+}
+
 // aperture and focal_length must be millimeter. return fov in degree
 template<class T> inline T compute_fov(T aperture, T focal_length)
 {

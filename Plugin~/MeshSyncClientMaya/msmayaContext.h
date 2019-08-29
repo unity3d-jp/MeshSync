@@ -36,7 +36,7 @@ struct DAGNode : public mu::noncopyable
     MCallbackId cid = 0;
     bool dirty = true;
 
-    bool isInstance() const;
+    bool isInstanced() const;
 };
 using DAGNodeMap = std::map<MObjectKey, DAGNode>;
 
@@ -68,7 +68,7 @@ struct TreeNode : public mu::noncopyable
 
     ms::Identifier getIdentifier() const;
     void clearState();
-    bool isInstance() const;
+    bool isInstanced() const;
     bool isPrimaryInstance() const;
     TreeNode* getPrimaryInstanceNode() const;
 
@@ -116,7 +116,7 @@ struct SyncSettings
     ms::ClientSettings client_settings;
 
     float scale_factor = 0.01f;
-    float frame_step = 3.0f;
+    float frame_step = 1.0f;
     int  timeout_ms = 5000;
     bool auto_sync = false;
     bool sync_meshes = true;
@@ -140,6 +140,8 @@ struct SyncSettings
 
     // cache
     bool export_cache = false;
+
+    void validate();
 };
 
 struct CacheSettings
@@ -231,7 +233,7 @@ private:
     void removeGlobalCallbacks();
     void removeNodeCallbacks();
 
-    std::vector<TreeNode*> getNodes(ObjectScope scope);
+    std::vector<TreeNode*> getNodes(ObjectScope scope, bool include_children = false);
 
     int exportTexture(const std::string& path, ms::TextureType type = ms::TextureType::Default);
     int findTexture(const std::string& path);

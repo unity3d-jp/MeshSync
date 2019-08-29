@@ -32,12 +32,4 @@ set MODO_SOURCE_DIR=%cd%\External\%MODO_SDK_DIR%\common
 set MQ4_VERSION=.70
 set MQ4_SDK_DIR=%cd%\External\mqsdk470\mqsdk
 
-set XISMO_VERSION=190
-set XISMO_QT_VERSION=5.6.2
-set XISMO_QT_DIR=%cd%\External\Qt\%XISMO_QT_VERSION%\msvc2015_64
-
-set VRED_VERSION=2019
-set VRED_QT_VERSION=5.9.3
-set VRED_QT_DIR=%cd%\External\Qt\%VRED_QT_VERSION%\msvc2017_64
-
 MeshSync_All.sln

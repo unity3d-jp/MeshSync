@@ -38,6 +38,7 @@ uint64_t MeshRefineSettings::checksum() const
     ret += csum(local2world);
     ret += csum(world2local);
     ret += csum(mirror_basis);
+    ret += csum(local2world2);
     return ret;
 }
 
@@ -482,6 +483,9 @@ void Mesh::refine()
         mirrorMesh({ 0.0f, 1.0f, 0.0f }, 0.0f, true);
     if (mrs.flags.mirror_z)
         mirrorMesh({ 0.0f, 0.0f, 1.0f }, 0.0f, true);
+
+    if (mrs.flags.apply_local2world2)
+        transformMesh(mrs.local2world2);
 
     if (!bones.empty()) {
         if (mrs.max_bone_influence == 4)

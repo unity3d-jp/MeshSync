@@ -86,6 +86,8 @@ struct SyncSettings
 
     // cache
     bool export_cache = false;
+
+    void validate();
 };
 
 struct CacheSettings
@@ -101,7 +103,7 @@ struct CacheSettings
     int zstd_compression_level = 3; // (min) 0 - 22 (max)
     bool make_double_sided = false;
     bool bake_deformers = true;
-    bool bake_transform = true;
+    bool bake_transform = false;
     bool flatten_hierarchy = false;
     bool merge_meshes = false;
 

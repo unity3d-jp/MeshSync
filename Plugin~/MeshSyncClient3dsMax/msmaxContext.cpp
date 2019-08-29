@@ -16,6 +16,12 @@
 #pragma comment(lib, "Morpher.lib")
 #endif
 
+void SyncSettings::validate()
+{
+    if (!bake_modifiers)
+        bake_transform = false;
+}
+
 
 static void OnStartup(void *param, NotifyInfo *info)
 {
@@ -248,6 +254,7 @@ bool msmaxContext::sendObjects(ObjectScope scope, bool dirty_all)
     if (m_sender.isExporting())
         return false;
 
+    m_settings.validate();
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_entity_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(false); // false because too heavy
@@ -289,6 +296,7 @@ bool msmaxContext::sendMaterials(bool dirty_all)
     if (m_sender.isExporting())
         return false;
 
+    m_settings.validate();
     m_material_manager.setAlwaysMarkDirty(dirty_all);
     m_texture_manager.setAlwaysMarkDirty(dirty_all);
     exportMaterials();
@@ -304,6 +312,7 @@ bool msmaxContext::sendMaterials(bool dirty_all)
 bool msmaxContext::sendAnimations(ObjectScope scope)
 {
     m_sender.wait();
+    m_settings.validate();
 
     const float frame_rate = (float)::GetFrameRate();
     const float frame_step = std::max(m_settings.frame_step, 0.1f);
@@ -337,7 +346,7 @@ bool msmaxContext::sendAnimations(ObjectScope scope)
         if (t >= time_end)
             break;
         else
-            t = std::min(t + interval, time_end);
+            t += interval;
     }
 
     // cleanup intermediate data
@@ -369,6 +378,7 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
     m_settings.bake_transform = cache_settings.bake_transform;
     m_settings.use_render_meshes = cache_settings.use_render_meshes;
     m_settings.flatten_hierarchy = cache_settings.flatten_hierarchy;
+    m_settings.validate();
 
     ms::OSceneCacheSettings oscs;
     oscs.sample_rate = frame_rate * std::max(1.0f / frame_step, 1.0f);;
@@ -465,7 +475,7 @@ bool msmaxContext::exportCache(const CacheSettings& cache_settings)
                 break;
             }
             else {
-                t = std::min(t + interval, time_end);
+                t += interval;
             }
         }
         ifs->ProgressEnd();
@@ -698,9 +708,11 @@ void msmaxContext::exportMaterials()
 
         int num_submtls = mtl->NumSubMtls();
         if (num_submtls == 0) {
+            // no submaterials. export self.
             rec.material_id = do_export(mtl);
         }
         else {
+            // export submaterials
             for (int si = 0; si < num_submtls; ++si) {
                 auto submtl = mtl->GetSubMtl(si);
                 if (!submtl)
@@ -739,8 +751,8 @@ ms::TransformPtr msmaxContext::exportObject(INode *n, bool tip)
         ret = exportTransform(rec);
     };
     auto handle_instance = [&]() -> bool {
-        // always make per-instance meshes if 'bake modifiers' mode
-        if (m_settings.bake_modifiers)
+        // always make per-instance meshes if bake_transform
+        if (m_settings.bake_transform)
             return false;
 
         // check if the node is instance
@@ -804,7 +816,7 @@ mu::float4x4 msmaxContext::getWorldMatrix(INode *n, TimeValue t, bool cancel_cam
     bool is_light = IsLight(obj);
 
     mu::float4x4 r;
-    if (m_settings.bake_modifiers) {
+    if (m_settings.bake_transform) {
         auto get_matrix = [&]() {
             // https://help.autodesk.com/view/3DSMAX/2016/ENU/?guid=__files_GUID_2E4E41D4_1B52_48C8_8ABA_3D3C9910CB2C_htm
             Matrix3 m;
@@ -855,7 +867,7 @@ void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
     };
 
     auto obj = n.node->GetObjectRef();
-    if (m_settings.bake_modifiers) {
+    if (m_settings.bake_transform) {
         if (IsCamera(obj) || IsLight(obj)) {
             // on camera/light, extract from global matrix
             auto mat = do_extract(getWorldMatrix(n.node, t));
@@ -866,7 +878,7 @@ void msmaxContext::extractTransform(TreeNode& n, TimeValue t,
                 *dst_local = mat;
         }
         else {
-            // on mesh, transform is applied to vertices when 'bake_modifiers' is enabled
+            // on mesh, transform is applied to vertices when bake_transform
             pos = mu::float3::zero();
             rot = mu::quatf::identity();
             scale = mu::float3::one();
@@ -936,7 +948,7 @@ void msmaxContext::extractCameraData(TreeNode& n, TimeValue t,
         lens_shift = -to_float2(shift);
         lens_shift.y *= aspect;
 
-        //// todo
+        //// todo: handle tilt correction
         //if (m_settings.bake_modifiers && view_mat) {
         //    auto tilt_correction = to_float2(pcam->GetTiltCorrection(t, interval));
         //    if (tilt_correction != mu::float2::zero()) {
@@ -1229,16 +1241,25 @@ void msmaxContext::doExtractMeshData(ms::Mesh &dst, INode *n, Mesh *mesh)
 {
     auto t = GetTime();
     if (mesh) {
-        if (!m_settings.bake_modifiers) {
-            // handle pivot
-            dst.refine_settings.flags.apply_local2world = 1;
-            dst.refine_settings.local2world = getPivotMatrix(n);
-        }
-        else {
-            // bake_modifiers is enabled
+        if (m_settings.bake_transform) {
             // in this case transform is applied to vertices (dst.position/rotation/scale is identity)
             dst.refine_settings.local2world = to_float4x4(n->GetObjTMAfterWSM(t));
             dst.refine_settings.flags.apply_local2world = 1;
+        }
+        else {
+            if (m_settings.bake_modifiers) {
+                dst.refine_settings.local2world = to_float4x4(n->GetObjTMAfterWSM(t));
+                if (m_settings.flatten_hierarchy)
+                    dst.refine_settings.local2world *= mu::invert(dst.toMatrix());
+                else
+                    dst.refine_settings.local2world *= mu::invert(dst.world_matrix);
+                dst.refine_settings.flags.apply_local2world = 1;
+            }
+            else {
+                // handle pivot
+                dst.refine_settings.local2world = getPivotMatrix(n);
+                dst.refine_settings.flags.apply_local2world = 1;
+            }
         }
 
         // faces

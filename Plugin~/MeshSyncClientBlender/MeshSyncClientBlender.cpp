@@ -81,7 +81,7 @@ PYBIND11_MODULE(MeshSyncClientBlender, mod)
             BindConst(MFRANGE_ONE, (int)MaterialFrameRange::One)
             BindConst(MFRANGE_ALL, (int)MaterialFrameRange::All)
 
-            BindConst(is_server_available, self->getErrorMessage())
+            BindConst(is_server_available, self->isServerAvailable())
             BindConst(error_message, self->getErrorMessage())
 
             BindProperty(server_address,
@@ -114,6 +114,9 @@ PYBIND11_MODULE(MeshSyncClientBlender, mod)
             BindProperty(bake_modifiers,
                 [](const self_t& self) { return self->getSettings().bake_modifiers; },
                 [](self_t& self, bool v) { self->getSettings().bake_modifiers = v; })
+            BindProperty(bake_transform,
+                [](const self_t& self) { return self->getSettings().bake_transform; },
+                [](self_t& self, bool v) { self->getSettings().bake_transform = v; })
             BindProperty(curves_as_mesh,
                 [](const self_t& self) { return self->getSettings().curves_as_mesh; },
                 [](self_t& self, bool v) { self->getSettings().curves_as_mesh = v; })
@@ -177,9 +180,12 @@ PYBIND11_MODULE(MeshSyncClientBlender, mod)
             BindProperty(bake_modifiers,
                 [](const self_t& self) { return self->getCacheSettings().bake_modifiers; },
                 [](self_t& self, bool v) { self->getCacheSettings().bake_modifiers = v; })
-            BindProperty(convert_to_mesh,
-                [](const self_t& self) { return self->getCacheSettings().convert_to_mesh; },
-                [](self_t& self, bool v) { self->getCacheSettings().convert_to_mesh = v; })
+            BindProperty(bake_transform,
+                [](const self_t& self) { return self->getCacheSettings().bake_transform; },
+                [](self_t& self, bool v) { self->getCacheSettings().bake_transform = v; })
+            BindProperty(curves_as_mesh,
+                [](const self_t& self) { return self->getCacheSettings().curves_as_mesh; },
+                [](self_t& self, bool v) { self->getCacheSettings().curves_as_mesh = v; })
             BindProperty(flatten_hierarchy,
                 [](const self_t& self) { return self->getCacheSettings().flatten_hierarchy; },
                 [](self_t& self, bool v) { self->getCacheSettings().flatten_hierarchy = v; })

@@ -1,3 +1,5 @@
+setlocal
+cd /d "%~dp0"
 call toolchain.bat
 call :BuildMQ4 .64 mqsdk464
 call :BuildMQ4 .70 mqsdk470

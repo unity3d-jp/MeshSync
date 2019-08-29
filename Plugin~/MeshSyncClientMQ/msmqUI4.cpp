@@ -153,7 +153,7 @@ msmqSettingsDlg::msmqSettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& par
     this->AddHideEvent(this, &msmqSettingsDlg::OnHide);
 }
 
-msmqSettings& msmqSettingsDlg::getSettings()
+SyncSettings& msmqSettingsDlg::getSettings()
 {
     return m_plugin->getContext().getSettings();
 }

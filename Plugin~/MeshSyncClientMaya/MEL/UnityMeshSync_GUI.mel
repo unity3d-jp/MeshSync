@@ -14,6 +14,7 @@ global proc UnityMeshSync_GUI()
     int    $syncMeshes      = `UnityMeshSync_Settings -q -syncMeshes`;
     int    $makeDoubleSided = `UnityMeshSync_Settings -q -makeDoubleSided`;
     int    $bakeDeformers   = `UnityMeshSync_Settings -q -bakeDeformers`;
+    int    $bakeTransform   = `UnityMeshSync_Settings -q -bakeTransform`;
     int    $syncBlendShapes = `UnityMeshSync_Settings -q -syncBlendShapes`;
     int    $syncBones       = `UnityMeshSync_Settings -q -syncBones`;
     int    $syncTextures    = `UnityMeshSync_Settings -q -syncTextures`;
@@ -43,6 +44,7 @@ global proc UnityMeshSync_GUI()
     columnLayout -visible $syncMeshes -columnOffset "left" 20 msuFoldMeshes;
         checkBox -l "Make Double Sided" -v $makeDoubleSided -cc "umsCBMakeDoubleSided" umsCtrlMakeDoubleSided;
         checkBox -l "Bake Deformers" -v $bakeDeformers -cc "umsCBBakeDeformers" umsCtrlBakeDeformers;
+        checkBox -l "Bake Transform" -v $bakeTransform -cc "umsCBBakeTransform" umsCtrlBakeTransform;
     setParent ..;
     checkBox -l "Sync Blend Shapes" -v $syncBlendShapes -cc "umsCBSyncBlendShapes" umsCtrlSyncBlendShapes;
     checkBox -l "Sync Bones" -v $syncBones -cc "umsCBSyncBones" umsCtrlSyncBones;
@@ -119,8 +121,20 @@ global proc umsCBMakeDoubleSided()
 
 global proc umsCBBakeDeformers()
 {
-    int $v = `checkBox -q -v umsCtrlBakeDeformers`;
-    UnityMeshSync_Settings -bakeDeformers $v;
+    int $bd = `checkBox -q -v umsCtrlBakeDeformers`;
+    if (!$bd)
+        checkBox -e -v 0 umsCtrlBakeTransform;
+    int $bt = `checkBox -q -v umsCtrlBakeTransform`;
+    UnityMeshSync_Settings -bakeDeformers $bd -bakeTransform $bt;
+}
+
+global proc umsCBBakeTransform()
+{
+    int $bt = `checkBox -q -v umsCtrlBakeTransform`;
+    if ($bt)
+        checkBox -e -v 1 umsCtrlBakeDeformers;
+    int $bd = `checkBox -q -v umsCtrlBakeDeformers`;
+    UnityMeshSync_Settings -bakeDeformers $bd -bakeTransform $bt;
 }
 
 global proc umsCBSyncBlendShapes()

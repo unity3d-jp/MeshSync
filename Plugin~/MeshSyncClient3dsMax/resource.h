@@ -48,6 +48,7 @@
 #define IDC_GROUP_ANIMATION             1056
 #define IDC_GROUP_EXPORT                1057
 #define IDC_TEXT_TO                     1058
+#define IDC_BAKE_TRANSFORM              1059
 
 // Next default values for new objects
 // 

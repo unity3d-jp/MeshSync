@@ -396,9 +396,30 @@ static INT_PTR CALLBACK msmaxSettingWindowCB(HWND hDlg, UINT msg, WPARAM wParam,
         case IDC_BAKE_MODIFIERS:
             handle_button([&]() {
                 s.bake_modifiers = CtrlIsChecked(IDC_BAKE_MODIFIERS);
-                if (!s.bake_modifiers && CtrlIsChecked(IDC_USE_RENDER_MESHES)) {
-                    s.use_render_meshes = false;
-                    CtrlSetCheck(IDC_USE_RENDER_MESHES, false);
+                if (!s.bake_modifiers) {
+                    if (CtrlIsChecked(IDC_BAKE_TRANSFORM)) {
+                        s.bake_transform = false;
+                        CtrlSetCheck(IDC_BAKE_TRANSFORM, false);
+                    }
+                    if (CtrlIsChecked(IDC_USE_RENDER_MESHES)) {
+                        s.use_render_meshes = false;
+                        CtrlSetCheck(IDC_USE_RENDER_MESHES, false);
+                    }
+                }
+                notify_scene_update();
+            });
+            break;
+        case IDC_BAKE_TRANSFORM:
+            handle_button([&]() {
+                if (CtrlIsChecked(IDC_BAKE_TRANSFORM)) {
+                    if (!s.bake_modifiers) {
+                        s.bake_modifiers = true;
+                        CtrlSetCheck(IDC_BAKE_MODIFIERS, true);
+                    }
+                    s.bake_transform = true;
+                }
+                else {
+                    s.bake_transform = false;
                 }
                 notify_scene_update();
             });
@@ -530,6 +551,7 @@ void msmaxContext::updateSettingControls()
     CtrlSetCheck(IDC_MAKE_DOUBLE_SIDED,     s.make_double_sided);
     CtrlSetCheck(IDC_IGNORE_NON_RENDERABLE, s.ignore_non_renderable);
     CtrlSetCheck(IDC_BAKE_MODIFIERS,        s.bake_modifiers);
+    CtrlSetCheck(IDC_BAKE_TRANSFORM,        s.bake_transform);
     CtrlSetCheck(IDC_USE_RENDER_MESHES,     s.use_render_meshes);
     CtrlSetCheck(IDC_SYNC_BLENDSHAPES,      s.sync_blendshapes);
     CtrlSetCheck(IDC_SYNC_BONES,            s.sync_bones);
@@ -709,9 +731,29 @@ static INT_PTR CALLBACK msmaxCacheWindowCB(HWND hDlg, UINT msg, WPARAM wParam, L
         case IDC_BAKE_MODIFIERS:
             handle_button([&]() {
                 s.bake_modifiers = CtrlIsChecked(IDC_BAKE_MODIFIERS);
-                if (!s.bake_modifiers && CtrlIsChecked(IDC_USE_RENDER_MESHES)) {
-                    s.use_render_meshes = false;
-                    CtrlSetCheck(IDC_USE_RENDER_MESHES, false);
+                if (!s.bake_modifiers) {
+                    if (CtrlIsChecked(IDC_BAKE_TRANSFORM)) {
+                        s.bake_transform = false;
+                        CtrlSetCheck(IDC_BAKE_TRANSFORM, false);
+                    }
+                    if (CtrlIsChecked(IDC_USE_RENDER_MESHES)) {
+                        s.use_render_meshes = false;
+                        CtrlSetCheck(IDC_USE_RENDER_MESHES, false);
+                    }
+                }
+            });
+            break;
+        case IDC_BAKE_TRANSFORM:
+            handle_button([&]() {
+                if (CtrlIsChecked(IDC_BAKE_TRANSFORM)) {
+                    if (!s.bake_modifiers) {
+                        s.bake_modifiers = true;
+                        CtrlSetCheck(IDC_BAKE_MODIFIERS, true);
+                    }
+                    s.bake_transform = true;
+                }
+                else {
+                    s.bake_transform = false;
                 }
             });
             break;
@@ -836,6 +878,7 @@ void msmaxContext::updateCacheControls()
     CtrlSetCheck(IDC_MAKE_DOUBLE_SIDED, s.make_double_sided);
     CtrlSetCheck(IDC_IGNORE_NON_RENDERABLE, s.ignore_non_renderable);
     CtrlSetCheck(IDC_BAKE_MODIFIERS, s.bake_modifiers);
+    CtrlSetCheck(IDC_BAKE_TRANSFORM, s.bake_transform);
     CtrlSetCheck(IDC_USE_RENDER_MESHES, s.use_render_meshes);
     CtrlSetCheck(IDC_FLATTEN_HIERARCHY, s.flatten_hierarchy);
 

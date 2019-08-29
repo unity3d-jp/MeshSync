@@ -21,7 +21,7 @@ extern CAppModule _Module;
 #endif
 
 class MeshSyncClientPlugin;
-struct msmqSettings;
+struct SyncSettings;
 
 class CMainDlg : public CDialogImpl<CMainDlg>, public CUpdateUI<CMainDlg>,
         public CMessageFilter, public CIdleHandler
@@ -77,7 +77,7 @@ public:
     void LogInfo(const char *message);
 
 private:
-    msmqSettings& getSettings();
+    SyncSettings& getSettings();
 
     MeshSyncClientPlugin *m_plugin = nullptr;
     CEdit m_edit_server;

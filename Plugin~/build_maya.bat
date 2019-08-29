@@ -1,3 +1,5 @@
+setlocal
+cd /d "%~dp0"
 call toolchain.bat
 call :Build 2019 LT
 call :Build 2018 LT
