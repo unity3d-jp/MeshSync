@@ -289,14 +289,15 @@ void msblenContext::extractCameraData(Object *src,
 void msblenContext::extractLightData(Object *src,
     ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& range, float& spot_angle)
 {
-    auto data =
 #if BLENDER_VERSION < 280
-        (Lamp*)src->data;
+    auto data = (Lamp*)src->data;
+    const float energy_to_intensity = 1.0f;
 #else
-        (Light*)src->data;
+    auto data = (Light*)src->data;
+    const float energy_to_intensity = 0.001f;
 #endif
     color = (mu::float4&)data->r;
-    intensity = data->energy;
+    intensity = data->energy * energy_to_intensity;
     range = data->dist;
 
     switch (data->type) {
