@@ -36,8 +36,6 @@ void MeshRefineSettings::serialize(std::ostream& os) const
         write(os, local2world);
     if (flags.world2local)
         write(os, world2local);
-    if (flags.local2world2)
-        write(os, local2world2);
     if (flags.mirror_basis)
         write(os, mirror_basis);
 }
@@ -58,8 +56,6 @@ void MeshRefineSettings::deserialize(std::istream& is)
         read(is, local2world);
     if (flags.world2local)
         read(is, world2local);
-    if (flags.local2world2)
-        read(is, local2world2);
     if (flags.mirror_basis)
         read(is, mirror_basis);
 }
@@ -82,7 +78,6 @@ uint64_t MeshRefineSettings::checksum() const
     ret += csum(local2world);
     ret += csum(world2local);
     ret += csum(mirror_basis);
-    ret += csum(local2world2);
     return ret;
 }
 
@@ -527,9 +522,6 @@ void Mesh::refine()
         mirrorMesh({ 0.0f, 1.0f, 0.0f }, 0.0f, true);
     if (mrs.flags.mirror_z)
         mirrorMesh({ 0.0f, 0.0f, 1.0f }, 0.0f, true);
-
-    if (mrs.flags.local2world2)
-        transformMesh(mrs.local2world2);
 
     if (!bones.empty()) {
         if (mrs.max_bone_influence == 4)

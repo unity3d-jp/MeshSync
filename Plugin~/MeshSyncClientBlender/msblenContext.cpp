@@ -465,8 +465,8 @@ ms::TransformPtr msblenContext::exportReference(Object *src, const DupliGroupCon
     if (is_mesh(src)) {
         if (m_settings.bake_transform) {
             auto mesh = std::static_pointer_cast<ms::Mesh>(rec.dst->clone(true));
-            mesh->refine_settings.local2world2 = mesh->world_matrix * ctx.dst->world_matrix;
-            mesh->refine_settings.flags.local2world2 = 1;
+            mesh->refine_settings.local2world = mesh->world_matrix * ctx.dst->world_matrix;
+            mesh->refine_settings.flags.local2world = 1;
             dst = mesh;
         }
         else {
@@ -662,8 +662,8 @@ void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data, mu
             }
         }
         if (m_settings.bake_transform) {
-            dst.refine_settings.local2world2 = world;
-            dst.refine_settings.flags.local2world2 = 1;
+            dst.refine_settings.local2world = world;
+            dst.refine_settings.flags.local2world = 1;
         }
     }
     else {
