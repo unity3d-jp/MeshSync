@@ -72,53 +72,9 @@ namespace UTJ.MeshSyncEditor
             var so = serializedObject;
             var t = target as SceneCachePlayer;
 
-            EditorGUILayout.LabelField("Player", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(so.FindProperty("m_cacheFilePath"));
-            var dataPath = t.cacheFilePath;
-            if (dataPath.root != DataPath.Root.StreamingAssets)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Copy to StreamingAssets", GUILayout.Width(160.0f)))
-                {
-                    var srcPath = dataPath.fullPath;
-                    var dstPath = Misc.CopyFileToStreamingAssets(dataPath.fullPath);
-                    Undo.RecordObject(t, "SceneCachePlayer");
-                    t.OpenCache(dstPath);
-                    Repaint();
-                }
-                if (GUILayout.Button("Move to StreamingAssets", GUILayout.Width(160.0f)))
-                {
-                    t.CloseCache();
-                    var srcPath = dataPath.fullPath;
-                    var dstPath = Misc.MoveFileToStreamingAssets(dataPath.fullPath);
-                    Undo.RecordObject(t, "SceneCachePlayer");
-                    t.OpenCache(dstPath);
-                    Repaint();
-                }
-                GUILayout.EndHorizontal();
-            }
             EditorGUILayout.Space();
-
-            {
-                // time / frame
-                EditorGUILayout.PropertyField(so.FindProperty("m_time"));
-
-                int frame = t.frame;
-                EditorGUI.BeginChangeCheck();
-                frame = EditorGUILayout.IntField("Frame", frame);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    Undo.RecordObject(t, "SceneCachePlayer");
-                    t.frame = frame;
-                }
-            }
-
-            EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
-            EditorGUILayout.Space();
-
+            DrawCacheSettings(t, so);
             DrawPlayerSettings(t, so);
-
             if (t.profiling)
             {
                 EditorGUILayout.TextArea(t.dbgProfileReport, GUILayout.Height(120));
@@ -132,6 +88,60 @@ namespace UTJ.MeshSyncEditor
             DrawPluginVersion();
 
             so.ApplyModifiedProperties();
+        }
+
+        public void DrawCacheSettings(SceneCachePlayer t, SerializedObject so)
+        {
+            var styleFold = EditorStyles.foldout;
+            styleFold.fontStyle = FontStyle.Bold;
+
+            t.foldCacheSettings = EditorGUILayout.Foldout(t.foldCacheSettings, "Player", true, styleFold);
+            if (t.foldCacheSettings)
+            {
+                EditorGUILayout.PropertyField(so.FindProperty("m_cacheFilePath"));
+                var dataPath = t.cacheFilePath;
+                if (dataPath.root != DataPath.Root.StreamingAssets)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.FlexibleSpace();
+                    if (GUILayout.Button("Copy to StreamingAssets", GUILayout.Width(160.0f)))
+                    {
+                        var srcPath = dataPath.fullPath;
+                        var dstPath = Misc.CopyFileToStreamingAssets(dataPath.fullPath);
+                        Undo.RecordObject(t, "SceneCachePlayer");
+                        t.OpenCache(dstPath);
+                        Repaint();
+                    }
+                    if (GUILayout.Button("Move to StreamingAssets", GUILayout.Width(160.0f)))
+                    {
+                        t.CloseCache();
+                        var srcPath = dataPath.fullPath;
+                        var dstPath = Misc.MoveFileToStreamingAssets(dataPath.fullPath);
+                        Undo.RecordObject(t, "SceneCachePlayer");
+                        t.OpenCache(dstPath);
+                        Repaint();
+                    }
+                    GUILayout.EndHorizontal();
+                }
+                EditorGUILayout.Space();
+
+                {
+                    // time / frame
+                    EditorGUILayout.PropertyField(so.FindProperty("m_time"));
+
+                    int frame = t.frame;
+                    EditorGUI.BeginChangeCheck();
+                    frame = EditorGUILayout.IntField("Frame", frame);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        Undo.RecordObject(t, "SceneCachePlayer");
+                        t.frame = frame;
+                    }
+                }
+
+                EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
+                EditorGUILayout.Space();
+            }
         }
     }
 }

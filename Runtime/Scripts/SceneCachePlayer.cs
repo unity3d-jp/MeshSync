@@ -20,6 +20,7 @@ namespace UTJ.MeshSync
         bool m_openRequested = false;
 
 #if UNITY_EDITOR
+        [SerializeField] bool m_foldCacheSettings = true;
         float m_dbgSceneGetTime;
         float m_dbgSceneUpdateTime;
         string m_dbgProfileReport;
@@ -53,6 +54,11 @@ namespace UTJ.MeshSync
         }
 
 #if UNITY_EDITOR
+        public bool foldCacheSettings
+        {
+            get { return m_foldCacheSettings; }
+            set { m_foldCacheSettings = value; }
+        }
         public string dbgProfileReport
         {
             get { return m_dbgProfileReport; }

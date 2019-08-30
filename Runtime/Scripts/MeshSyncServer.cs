@@ -29,6 +29,9 @@ namespace UTJ.MeshSync
         Server.MessageHandler m_handler;
         bool m_requestRestartServer = true;
         bool m_captureScreenshotInProgress = false;
+#if UNITY_EDITOR
+        [SerializeField] bool m_foldServerSettings = true;
+#endif
         #endregion
 
         #region Properties
@@ -37,6 +40,13 @@ namespace UTJ.MeshSync
             get { return m_serverPort; }
             set { m_serverPort = value; CheckParamsUpdated(); }
         }
+#if UNITY_EDITOR
+        public bool foldServerSettings
+        {
+            get { return m_foldServerSettings; }
+            set { m_foldServerSettings = value; }
+        }
+#endif
         #endregion
 
 
