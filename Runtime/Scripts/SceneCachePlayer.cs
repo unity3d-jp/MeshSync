@@ -28,7 +28,7 @@ namespace UTJ.MeshSync
         [SerializeField] float m_time;
         [SerializeField] bool m_interpolation = false;
         [SerializeField] BaseFrame m_baseFrame = BaseFrame.One;
-        [SerializeField] int m_frame;
+        [SerializeField] int m_frame = 1;
 
         SceneCacheData m_sceneCache;
         TimeRange m_timeRange;
@@ -137,29 +137,59 @@ namespace UTJ.MeshSync
         }
 
 #if UNITY_EDITOR
-        public bool AddAnimator()
+        public bool ResetTimeAnimation()
         {
             if (m_sceneCache.sceneCount < 2)
                 return false;
 
-            var curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
-            if (curve == null)
-                return false;
+            var animator = Misc.GetOrAddComponent<Animator>(gameObject);
+            AnimationClip clip = null;
+            if (animator.runtimeAnimatorController != null)
+            {
+                var clips = animator.runtimeAnimatorController.animationClips;
+                if (clips != null && clips.Length > 0)
+                {
+                    var tmp = animator.runtimeAnimatorController.animationClips[0];
+                    if (tmp != null)
+                    {
+                        clip = tmp;
+                        Undo.RegisterCompleteObjectUndo(clip, "SceneCachePlayer");
+                    }
+                }
+            }
 
-            var clip = new AnimationClip();
+            if (clip == null)
+            {
+                clip = new AnimationClip();
+
+                var animPath = string.Format("{0}/{1}.anim", assetPath, gameObject.name);
+                var controllerPath = string.Format("{0}/{1}.controller", assetPath, gameObject.name);
+                clip = Misc.SaveAsset(clip, animPath);
+                if (clip == null)
+                    return false;
+
+                animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(controllerPath, clip);
+            }
             var sampleRate = m_sceneCache.sampleRate;
             if (sampleRate > 0.0f)
                 clip.frameRate = sampleRate;
-            clip.SetCurve("", typeof(SceneCachePlayer), "m_time", curve);
 
-            var animPath = string.Format("{0}/{1}.anim", assetPath, gameObject.name);
-            var controllerPath = string.Format("{0}/{1}.controller", assetPath, gameObject.name);
-            clip = Misc.SaveAsset(clip, animPath);
-            if (clip == null)
-                return false;
+            var tPlayer = typeof(SceneCachePlayer);
+            clip.SetCurve("", tPlayer, "m_time", null);
+            clip.SetCurve("", tPlayer, "m_frame", null);
+            if (m_timeUnit == TimeUnit.Seconds)
+            {
+                var curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
+                clip.SetCurve("", tPlayer, "m_time", curve);
+            }
+            else if (m_timeUnit == TimeUnit.Frame)
+            {
+                var curve = m_sceneCache.GetFrameCurve((int)m_baseFrame);
+                clip.SetCurve("", tPlayer, "m_frame", curve);
+            }
 
-            var animator = Misc.GetOrAddComponent<Animator>(gameObject);
-            animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(controllerPath, clip);
+            AssetDatabase.SaveAssets();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
             return true;
         }
 #endif

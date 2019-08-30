@@ -23,6 +23,7 @@ public:
     void refresh() override;
 
     const AnimationCurvePtr getTimeCurve() const override;
+    const AnimationCurvePtr getFrameCurve(int base_frame) override;
 
     void preloadAll();
 
@@ -68,6 +69,7 @@ protected:
     std::vector<SceneRecord> m_records;
     RawVector<CacheFileEntityMeta> m_entity_meta;
     AnimationCurvePtr m_time_curve;
+    AnimationCurvePtr m_frame_curve;
 
     float m_last_time = -1.0f;
     int m_last_index = -1, m_last_index2 = -1;

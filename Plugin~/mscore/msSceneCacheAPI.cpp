@@ -90,6 +90,14 @@ msAPI const ms::AnimationCurve* msISceneCacheGetTimeCurve(ms::ISceneCache *self)
         return nullptr;
     return self->getTimeCurve().get();
 }
+msAPI const ms::AnimationCurve* msISceneCacheGetFrameCurve(ms::ISceneCache *self, int base_frame)
+{
+    msDbgBreadcrumb();
+    if (!self)
+        return nullptr;
+    return self->getFrameCurve(base_frame).get();
+}
+
 #undef msDbgBreadcrumb
 #pragma endregion
 #endif // msEnableSceneCache

@@ -432,6 +432,21 @@ const AnimationCurvePtr ISceneCacheImpl::getTimeCurve() const
     return m_time_curve;
 }
 
+const AnimationCurvePtr ISceneCacheImpl::getFrameCurve(int base_frame)
+{
+    // generate on the fly
+    size_t scene_count = m_records.size();
+    m_frame_curve = AnimationCurve::create();
+    TAnimationCurve<int> curve(m_frame_curve);
+    curve.resize(scene_count);
+    for (size_t i = 0; i < scene_count; ++i) {
+        auto& kvp = curve[i];
+        kvp.time = m_records[i].time;
+        kvp.value = (int)i + base_frame;
+    }
+    return m_frame_curve;
+}
+
 
 ISceneCacheFile::ISceneCacheFile(const char *path, const ISceneCacheSettings& iscs)
     : super(createStream(path, iscs), iscs)

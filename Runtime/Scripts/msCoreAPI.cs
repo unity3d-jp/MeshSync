@@ -2034,6 +2034,7 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern void msISceneCacheRefesh(IntPtr self);
 
         [DllImport(Lib.name)] static extern AnimationCurveData msISceneCacheGetTimeCurve(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msISceneCacheGetFrameCurve(IntPtr self, int baseFrame);
         #endregion
 
         public static implicit operator bool(SceneCacheData v) { return v.self != IntPtr.Zero; }
@@ -2089,6 +2090,19 @@ namespace UTJ.MeshSync
             data.Copy(0, keys);
             return new AnimationCurve(keys);
         }
+
+        public AnimationCurve GetFrameCurve(int baseFrame)
+        {
+            var data = msISceneCacheGetFrameCurve(self, baseFrame);
+            if (!data)
+                return null;
+
+            AnimationClipData.Prepare();
+            data.Convert(InterpolationMode.Constant);
+            var keys = new Keyframe[data.GetKeyCount(0)];
+            data.Copy(0, keys);
+            return new AnimationCurve(keys);
+        }
     }
-#endregion
+    #endregion
 }

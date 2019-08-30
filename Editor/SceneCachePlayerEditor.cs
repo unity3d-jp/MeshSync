@@ -51,7 +51,7 @@ namespace UTJ.MeshSyncEditor
             var player = go.GetComponent<SceneCachePlayer>();
             player.UpdatePlayer();
             player.ExportMaterials(false, true);
-            player.AddAnimator();
+            player.ResetTimeAnimation();
             player.handleAssets = false;
             var scene = player.GetLastScene();
             if (!scene.submeshesHaveUniqueMaterial)
@@ -126,8 +126,19 @@ namespace UTJ.MeshSyncEditor
                 }
                 EditorGUILayout.Space();
 
+
                 // time / frame
+                System.Action resetTimeAnimation = () =>
+                {
+                    so.ApplyModifiedProperties();
+                    t.ResetTimeAnimation();
+                };
+
+                EditorGUI.BeginChangeCheck();
                 EditorGUILayout.PropertyField(so.FindProperty("m_timeUnit"));
+                if (EditorGUI.EndChangeCheck())
+                    resetTimeAnimation();
+
                 if (t.timeUnit == SceneCachePlayer.TimeUnit.Seconds)
                 {
                     EditorGUILayout.PropertyField(so.FindProperty("m_time"));
@@ -135,11 +146,13 @@ namespace UTJ.MeshSyncEditor
                 }
                 else if (t.timeUnit == SceneCachePlayer.TimeUnit.Frame)
                 {
+                    EditorGUI.BeginChangeCheck();
                     EditorGUILayout.PropertyField(so.FindProperty("m_baseFrame"));
+                    if (EditorGUI.EndChangeCheck())
+                        resetTimeAnimation();
+
                     EditorGUILayout.PropertyField(so.FindProperty("m_frame"));
                 }
-
-                EditorGUILayout.Space();
             }
         }
     }
