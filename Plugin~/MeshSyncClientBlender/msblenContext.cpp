@@ -125,6 +125,8 @@ void msblenContext::exportMaterials()
         }
         stdmat.setColor(mu::float4{ color_src->r, color_src->g, color_src->b, 1.0f });
 
+        // todo: handle texture
+#if 0
         if (m_settings.sync_textures) {
             auto export_texture = [this](MTex *mtex, ms::TextureType type) -> int {
                 if (!mtex || !mtex->tex || !mtex->tex->ima)
@@ -135,6 +137,7 @@ void msblenContext::exportMaterials()
             stdmat.setColorMap(export_texture(mat->mtex[0], ms::TextureType::Default));
 #endif
         }
+#endif
 
         m_material_manager.add(ret);
     }

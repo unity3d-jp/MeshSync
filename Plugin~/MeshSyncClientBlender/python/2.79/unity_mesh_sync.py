@@ -47,7 +47,7 @@ class MESHSYNC_PT_Scene(MESHSYNC_PT, bpy.types.Panel):
             b.prop(scene, "meshsync_bake_transform")
         layout.prop(scene, "meshsync_sync_bones")
         layout.prop(scene, "meshsync_sync_blendshapes")
-        layout.prop(scene, "meshsync_sync_textures")
+        #layout.prop(scene, "meshsync_sync_textures")
         layout.prop(scene, "meshsync_sync_cameras")
         layout.prop(scene, "meshsync_sync_lights")
         layout.separator()
