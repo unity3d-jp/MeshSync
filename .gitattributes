@@ -9,6 +9,7 @@
 *.txt text
 *.md text
 
+*.meta text eol=lf
 *.bat text eol=crlf
 *.sln text eol=crlf
 *.vcxproj text eol=crlf

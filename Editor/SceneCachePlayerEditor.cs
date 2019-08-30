@@ -90,7 +90,7 @@ namespace UTJ.MeshSyncEditor
             so.ApplyModifiedProperties();
         }
 
-        public void DrawCacheSettings(SceneCachePlayer t, SerializedObject so)
+        void DrawCacheSettings(SceneCachePlayer t, SerializedObject so)
         {
             var styleFold = EditorStyles.foldout;
             styleFold.fontStyle = FontStyle.Bold;
@@ -98,6 +98,7 @@ namespace UTJ.MeshSyncEditor
             t.foldCacheSettings = EditorGUILayout.Foldout(t.foldCacheSettings, "Player", true, styleFold);
             if (t.foldCacheSettings)
             {
+                // cache file path
                 EditorGUILayout.PropertyField(so.FindProperty("m_cacheFilePath"));
                 var dataPath = t.cacheFilePath;
                 if (dataPath.root != DataPath.Root.StreamingAssets)
@@ -125,21 +126,19 @@ namespace UTJ.MeshSyncEditor
                 }
                 EditorGUILayout.Space();
 
+                // time / frame
+                EditorGUILayout.PropertyField(so.FindProperty("m_timeUnit"));
+                if (t.timeUnit == SceneCachePlayer.TimeUnit.Seconds)
                 {
-                    // time / frame
                     EditorGUILayout.PropertyField(so.FindProperty("m_time"));
-
-                    int frame = t.frame;
-                    EditorGUI.BeginChangeCheck();
-                    frame = EditorGUILayout.IntField("Frame", frame);
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        Undo.RecordObject(t, "SceneCachePlayer");
-                        t.frame = frame;
-                    }
+                    EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
+                }
+                else if (t.timeUnit == SceneCachePlayer.TimeUnit.Frame)
+                {
+                    EditorGUILayout.PropertyField(so.FindProperty("m_baseFrame"));
+                    EditorGUILayout.PropertyField(so.FindProperty("m_frame"));
                 }
 
-                EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
                 EditorGUILayout.Space();
             }
         }

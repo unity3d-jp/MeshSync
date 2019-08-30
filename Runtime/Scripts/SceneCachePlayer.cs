@@ -8,10 +8,27 @@ namespace UTJ.MeshSync
     [ExecuteInEditMode]
     public class SceneCachePlayer : MeshSyncPlayer
     {
+        #region Types
+        public enum TimeUnit
+        {
+            Seconds,
+            Frame,
+        }
+
+        public enum BaseFrame
+        {
+            Zero = 0,
+            One = 1,
+        }
+        #endregion
+
         #region Fields
         [SerializeField] DataPath m_cacheFilePath = new DataPath();
+        [SerializeField] TimeUnit m_timeUnit = TimeUnit.Seconds;
         [SerializeField] float m_time;
         [SerializeField] bool m_interpolation = false;
+        [SerializeField] BaseFrame m_baseFrame = BaseFrame.One;
+        [SerializeField] int m_frame;
 
         SceneCacheData m_sceneCache;
         TimeRange m_timeRange;
@@ -37,20 +54,35 @@ namespace UTJ.MeshSync
             get { return m_sceneCache.sceneCount; }
         }
 
+        public TimeUnit timeUnit
+        {
+            get { return m_timeUnit; }
+            set
+            {
+                m_timeUnit = value;
+                if (m_timeUnit == TimeUnit.Frame)
+                    m_interpolation = false;
+            }
+        }
         public float time
         {
             get { return m_time; }
             set { m_time = value; }
         }
-        public int frame
-        {
-            get { return m_sceneCache.GetFrame(m_time); }
-            set { m_time = m_sceneCache.GetTime(value); }
-        }
         public bool interpolation
         {
             get { return m_interpolation; }
             set { m_interpolation = value; }
+        }
+        public BaseFrame baseFrame
+        {
+            get { return m_baseFrame; }
+            set { m_baseFrame = value; }
+        }
+        public int frame
+        {
+            get { return m_frame; }
+            set { m_frame = value; }
         }
 
 #if UNITY_EDITOR
@@ -137,6 +169,13 @@ namespace UTJ.MeshSync
             if (m_openRequested)
             {
                 OpenCache(m_cacheFilePath.fullPath);
+            }
+
+            if (m_timeUnit == TimeUnit.Frame)
+            {
+                int offset = (int)m_baseFrame;
+                m_frame = Mathf.Clamp(m_frame, offset, frameCount + offset);
+                m_time = m_sceneCache.GetTime(m_frame - offset);
             }
 
             if (m_sceneCache && m_time != m_timePrev)
