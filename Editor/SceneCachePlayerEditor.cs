@@ -100,7 +100,20 @@ namespace UTJ.MeshSyncEditor
             }
             EditorGUILayout.Space();
 
-            EditorGUILayout.PropertyField(so.FindProperty("m_time"));
+            {
+                // time / frame
+                EditorGUILayout.PropertyField(so.FindProperty("m_time"));
+
+                int frame = t.frame;
+                EditorGUI.BeginChangeCheck();
+                frame = EditorGUILayout.IntField("Frame", frame);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(t, "SceneCachePlayer");
+                    t.frame = frame;
+                }
+            }
+
             EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
             EditorGUILayout.Space();
 

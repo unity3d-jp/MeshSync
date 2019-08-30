@@ -31,10 +31,20 @@ namespace UTJ.MeshSync
         {
             get { return m_cacheFilePath; }
         }
+        public int frameCount
+        {
+            get { return m_sceneCache.sceneCount; }
+        }
+
         public float time
         {
             get { return m_time; }
             set { m_time = value; }
+        }
+        public int frame
+        {
+            get { return m_sceneCache.GetFrame(m_time); }
+            set { m_time = m_sceneCache.GetTime(value); }
         }
         public bool interpolation
         {

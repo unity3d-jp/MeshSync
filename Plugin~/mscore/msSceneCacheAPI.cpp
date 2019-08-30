@@ -54,6 +54,13 @@ msAPI float msISceneCacheGetTime(ms::ISceneCache *self, int index)
         return 0.0f;
     return self->getTime(index);
 }
+msAPI int msISceneCacheGetFrameByTime(ms::ISceneCache *self, float time)
+{
+    msDbgBreadcrumb();
+    if (!self)
+        return 0;
+    return self->getFrameByTime(time);
+}
 msAPI ms::Scene* msISceneCacheGetSceneByIndex(ms::ISceneCache *self, int index)
 {
     msDbgBreadcrumb();

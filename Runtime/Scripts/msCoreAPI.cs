@@ -2028,6 +2028,7 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern void msISceneCacheGetTimeRange(IntPtr self, ref float start, ref float end);
         [DllImport(Lib.name)] static extern int msISceneCacheGetNumScenes(IntPtr self);
         [DllImport(Lib.name)] static extern float msISceneCacheGetTime(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern int msISceneCacheGetFrameByTime(IntPtr self, float time);
         [DllImport(Lib.name)] static extern SceneData msISceneCacheGetSceneByIndex(IntPtr self, int i);
         [DllImport(Lib.name)] static extern SceneData msISceneCacheGetSceneByTime(IntPtr self, float time, bool lerp);
         [DllImport(Lib.name)] static extern void msISceneCacheRefesh(IntPtr self);
@@ -2058,6 +2059,10 @@ namespace UTJ.MeshSync
         public float GetTime(int i)
         {
             return msISceneCacheGetTime(self, i);
+        }
+        public int GetFrame(float time)
+        {
+            return msISceneCacheGetFrameByTime(self, time);
         }
         public SceneData GetSceneByIndex(int i)
         {
