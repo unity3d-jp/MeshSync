@@ -144,7 +144,7 @@ namespace UTJ.MeshSyncEditor
                     EditorGUILayout.PropertyField(so.FindProperty("m_time"));
                     EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
                 }
-                else if (t.timeUnit == SceneCachePlayer.TimeUnit.Frame)
+                else if (t.timeUnit == SceneCachePlayer.TimeUnit.Frames)
                 {
                     EditorGUI.BeginChangeCheck();
                     EditorGUILayout.PropertyField(so.FindProperty("m_baseFrame"));

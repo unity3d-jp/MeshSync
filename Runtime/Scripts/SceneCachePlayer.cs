@@ -12,7 +12,7 @@ namespace UTJ.MeshSync
         public enum TimeUnit
         {
             Seconds,
-            Frame,
+            Frames,
         }
 
         public enum BaseFrame
@@ -60,7 +60,7 @@ namespace UTJ.MeshSync
             set
             {
                 m_timeUnit = value;
-                if (m_timeUnit == TimeUnit.Frame)
+                if (m_timeUnit == TimeUnit.Frames)
                     m_interpolation = false;
             }
         }
@@ -182,7 +182,7 @@ namespace UTJ.MeshSync
                 var curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
                 clip.SetCurve("", tPlayer, "m_time", curve);
             }
-            else if (m_timeUnit == TimeUnit.Frame)
+            else if (m_timeUnit == TimeUnit.Frames)
             {
                 var curve = m_sceneCache.GetFrameCurve((int)m_baseFrame);
                 clip.SetCurve("", tPlayer, "m_frame", curve);
@@ -201,7 +201,7 @@ namespace UTJ.MeshSync
                 OpenCache(m_cacheFilePath.fullPath);
             }
 
-            if (m_timeUnit == TimeUnit.Frame)
+            if (m_timeUnit == TimeUnit.Frames)
             {
                 int offset = (int)m_baseFrame;
                 m_frame = Mathf.Clamp(m_frame, offset, frameCount + offset);
