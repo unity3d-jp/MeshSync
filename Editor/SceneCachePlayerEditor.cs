@@ -10,7 +10,8 @@ namespace UTJ.MeshSyncEditor
         [MenuItem("GameObject/MeshSync/Create Cache Player", false, 10)]
         public static void CreateSceneCachePlayerMenu(MenuCommand menuCommand)
         {
-            var path = EditorUtility.OpenFilePanel("Select Cache File", "", "");
+            var path = EditorUtility.OpenFilePanelWithFilters("Select Cache File", "",
+                new string[]{ "All supported files", "sc", "All files", "*" });
             if (path.Length > 0)
             {
                 var go = CreateSceneCachePlayerPrefab(path);
