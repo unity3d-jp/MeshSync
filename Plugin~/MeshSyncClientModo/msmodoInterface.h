@@ -205,7 +205,7 @@ void msmodoInterface::eachSelection(const Body& body)
     CLxUser_ItemPacketTranslation pkt_item;
 
     LXtScanInfoID scan = nullptr;
-    while (scan = m_svc_selection.ScanLoopCurrent(scan, tLocator, &pkt)) {
+    while ((scan = m_svc_selection.ScanLoopCurrent(scan, tLocator, &pkt))) {
         pkt_item.GetItem(pkt, item);
         body(item);
     }
