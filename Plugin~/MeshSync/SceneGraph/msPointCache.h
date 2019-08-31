@@ -46,6 +46,7 @@ public:
 
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void detach() override;
     void setupDataFlags() override;
 
     bool isUnchanged() const override;

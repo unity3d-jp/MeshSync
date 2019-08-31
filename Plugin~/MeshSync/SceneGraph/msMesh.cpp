@@ -105,6 +105,13 @@ std::shared_ptr<BlendShapeFrameData> BlendShapeFrameData::create(std::istream & 
     return make_shared_ptr(ret);
 }
 
+std::shared_ptr<BlendShapeFrameData> BlendShapeFrameData::clone()
+{
+    auto ret = create();
+    *ret = *this;
+    return ret;
+}
+
 BlendShapeFrameData::BlendShapeFrameData() {}
 BlendShapeFrameData::~BlendShapeFrameData() {}
 
@@ -118,6 +125,12 @@ void BlendShapeFrameData::serialize(std::ostream& os) const
 void BlendShapeFrameData::deserialize(std::istream& is)
 {
     EachMember(msRead);
+}
+void BlendShapeFrameData::detach()
+{
+    points.detach();
+    normals.detach();
+    tangents.detach();
 }
 void BlendShapeFrameData::clear()
 {
@@ -137,6 +150,15 @@ std::shared_ptr<BlendShapeData> BlendShapeData::create(std::istream & is)
     return make_shared_ptr(ret);
 }
 
+std::shared_ptr<BlendShapeData> BlendShapeData::clone()
+{
+    auto ret = create();
+    *ret = *this;
+    for (auto& f : ret->frames)
+        f = f->clone();
+    return ret;
+}
+
 
 BlendShapeData::BlendShapeData() {}
 BlendShapeData::~BlendShapeData() {}
@@ -151,6 +173,10 @@ void BlendShapeData::serialize(std::ostream& os) const
 void BlendShapeData::deserialize(std::istream& is)
 {
     EachMember(msRead);
+}
+void BlendShapeData::detach()
+{
+    vdetach(frames);
 }
 void BlendShapeData::clear()
 {
@@ -174,6 +200,13 @@ std::shared_ptr<BoneData> BoneData::create(std::istream & is)
     return make_shared_ptr(ret);
 }
 
+std::shared_ptr<BoneData> BoneData::clone()
+{
+    auto ret = create();
+    *ret = *this;
+    return ret;
+}
+
 BoneData::BoneData() {}
 BoneData::~BoneData() {}
 
@@ -189,6 +222,11 @@ void BoneData::deserialize(std::istream& is)
     read(is, path);
     read(is, bindpose);
     read(is, weights);
+}
+
+void BoneData::detach()
+{
+    weights.detach();
 }
 
 void BoneData::clear()
@@ -241,6 +279,13 @@ void Mesh::deserialize(std::istream& is)
     bones.erase(
         std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); }),
         bones.end());
+}
+
+void Mesh::detach()
+{
+#define Body(A) vdetach(A);
+    EachMember(Body);
+#undef Body
 }
 
 void Mesh::setupDataFlags()
@@ -481,11 +526,8 @@ EntityPtr Mesh::clone(bool detach_)
 {
     auto ret = create();
     *ret = *this;
-    if (detach_) {
-#define Body(A) detach(ret->A);
-        EachMember(Body);
-#undef Body
-    }
+    if (detach_)
+        ret->detach();
     return ret;
 }
 

@@ -46,6 +46,13 @@ void Points::deserialize(std::istream& is)
 #undef Body
 }
 
+void Points::detach()
+{
+#define Body(A) vdetach(A);
+    EachMember(Body);
+#undef Body
+}
+
 void Points::setupDataFlags()
 {
     super::setupDataFlags();
@@ -209,11 +216,8 @@ EntityPtr Points::clone(bool detach_)
 {
     auto ret = create();
     *ret = *this;
-    if (detach_) {
-#define Body(A) detach(ret->A);
-        EachMember(Body);
-#undef Body
-    }
+    if (detach_)
+        ret->detach();
     return ret;
 }
 #undef EachArrays

@@ -99,12 +99,12 @@ namespace UTJ.MeshSyncEditor
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("Import List", GUILayout.Width(110.0f)))
                 {
-                    var path = EditorUtility.OpenFilePanel("Import material list", "", "asset");
+                    var path = EditorUtility.OpenFilePanel("Import material list", "Assets", "asset");
                     t.ImportMaterialList(path);
                 }
                 if (GUILayout.Button("Export List", GUILayout.Width(110.0f)))
                 {
-                    var path = EditorUtility.SaveFilePanel("Export material list", "", t.name + "_MaterialList", "asset");
+                    var path = EditorUtility.SaveFilePanel("Export material list", "Assets", t.name + "_MaterialList", "asset");
                     t.ExportMaterialList(path);
                 }
                 GUILayout.EndHorizontal();

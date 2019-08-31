@@ -116,12 +116,14 @@ protected:
 public:
     msDefinePool(BlendShapeFrameData);
     static std::shared_ptr<BlendShapeFrameData> create(std::istream& is);
-    std::shared_ptr<BlendShapeFrameData> clone(bool detach);
+    std::shared_ptr<BlendShapeFrameData> clone();
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+    void detach();
     void clear();
 };
 msSerializable(BlendShapeFrameData);
+msDetachable(BlendShapeFrameData);
 msDeclPtr(BlendShapeFrameData);
 
 struct BlendShapeData
@@ -137,14 +139,16 @@ protected:
 public:
     msDefinePool(BlendShapeData);
     static std::shared_ptr<BlendShapeData> create(std::istream& is);
-    std::shared_ptr<BlendShapeData> clone(bool detach);
+    std::shared_ptr<BlendShapeData> clone();
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+    void detach();
     void clear();
 
     void sort();
 };
 msSerializable(BlendShapeData);
+msDetachable(BlendShapeData);
 msDeclPtr(BlendShapeData);
 
 struct BoneData 
@@ -160,12 +164,14 @@ protected:
 public:
     msDefinePool(BoneData);
     static std::shared_ptr<BoneData> create(std::istream& is);
-    std::shared_ptr<BoneData> clone(bool detach);
+    std::shared_ptr<BoneData> clone();
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
+    void detach();
     void clear();
 };
 msSerializable(BoneData);
+msDetachable(BoneData);
 msDeclPtr(BoneData);
 
 class Mesh : public Transform
@@ -211,6 +217,7 @@ public:
     bool isGeometry() const override;
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+    void detach() override;
     void setupDataFlags() override;
 
     bool isUnchanged() const override;
