@@ -475,29 +475,50 @@ ms::TransformPtr msblenContext::exportReference(Object *src, const DupliGroupCon
     auto path = ctx.dst->path + local_path;
 
     ms::TransformPtr dst;
+    auto assign_base_params = [&]() {
+        extractTransformData(src, *dst);
+        dst->path = path;
+        // todo:
+        dst->visibility = {};
+        dst->world_matrix *= ctx.dst->world_matrix;
+    };
+
     if (is_mesh(src)) {
         if (m_settings.bake_transform) {
-            auto mesh = std::static_pointer_cast<ms::Mesh>(rec.dst->clone(true));
-            mesh->refine_settings.local2world = mesh->world_matrix * ctx.dst->world_matrix;
-            mesh->refine_settings.flags.local2world = 1;
-            dst = mesh;
+            dst = ms::Mesh::create();
+            auto& dst_mesh = (ms::Mesh&)*dst;
+            auto& src_mesh = (ms::Mesh&)*rec.dst;
+
+            (ms::Transform&)dst_mesh = (ms::Transform&)src_mesh;
+            assign_base_params();
+
+            auto do_merge = [this, dst, &dst_mesh, &src_mesh]() {
+                dst_mesh.merge(src_mesh);
+                if (m_settings.export_cache)
+                    dst_mesh.detach();
+                dst_mesh.refine_settings = src_mesh.refine_settings;
+                dst_mesh.refine_settings.local2world = dst_mesh.world_matrix;
+                dst_mesh.refine_settings.flags.local2world = 1;
+                m_entity_manager.add(dst);
+            };
+            if (m_settings.multithreaded)
+                // deferred to execute after extracting src mesh data is completed
+                m_async_tasks.push_back(std::async(std::launch::deferred, do_merge));
+            else
+                do_merge();
         }
         else {
             dst = ms::Transform::create();
-            extractTransformData(src, *dst);
+            assign_base_params();
             dst->reference = local_path;
+            m_entity_manager.add(dst);
         }
     }
     else {
         dst = std::static_pointer_cast<ms::Transform>(rec.dst->clone());
+        assign_base_params();
+        m_entity_manager.add(dst);
     }
-    dst->path = path;
-    dst->world_matrix = dst->world_matrix * ctx.dst->world_matrix;
-
-    // todo:
-    dst->visibility = {};
-
-    m_entity_manager.add(dst);
 
     each_child(src, [&](Object *child) {
         exportReference(child, ctx);
@@ -653,6 +674,8 @@ void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data, mu
         bl::BMesh bmesh(data);
         bool is_editing = get_edit_mesh(bmesh.ptr()) != nullptr;
 
+        // on edit mode, editing is applied to EditMesh and base Mesh is intact. so get data from EditMesh on edit mode.
+        // todo: Blender 2.8 displays transparent final mesh on edit mode. extract data from it.
         if (is_editing) {
             doExtractEditMeshData(dst, obj, data);
         }

@@ -61,7 +61,7 @@ struct SyncSettings
 
     int frame_step = 1;
 
-    bool multithreaded = false;
+    bool multithreaded = true;
 
     // cache
     bool export_cache = false;
