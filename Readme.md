@@ -42,7 +42,7 @@ Maya 2015, 2016, 2016.5, 2017, 2018, 2019 + Windows, Mac, Linux (CentOS 7) で�
   - "Bake Transform" をチェックすると、位置/回転/スケールを Mesh の頂点に適用し、Unity 側の Transform は初期値になります。pivot が絡む複雑な Transform は Unity では再現できないことがありますが、そのような場合でもこのオプションを使うと Mesh の見た目は一致するようになります。このオプションは "Bake Deformers" が有効なときのみ有効です。
 - "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
 - 負のスケールは部分的にしかサポートしていないので注意が必要です。
-  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます。
+  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます。"Bake Transform" オプションを使うとそのようなケースでも Mesh は一致するようになりますが、デフォーマの情報が失われます。
 - NURBS などポリゴン以外の形状データは対応していません。
 - インスタンシングは対応していますが、スキニングされたメッシュのインスタンスは現在未対応です (Unity 側では全て元インスタンスと同じ位置になっていまいます)。
 - MEL にもコマンドが登録されており、全ての機能に MEL 経由でアクセスできるようになっています。こちらの詳細は[ソースコードを参照ください](https://github.com/unity3d-jp/MeshSync/blob/master/Plugin~/MeshSyncClientMaya/msmayaCommands.cpp)。
@@ -75,11 +75,13 @@ Maya 2015, 2016, 2016.5, 2017, 2018, 2019 + Windows, Mac, Linux (CentOS 7) で�
     - Morph / Skin が複数ある場合、一番下のものが基準として選ばれます。
   - Morh と Skin は Unity 側にそのまま Blendshape / Skin として同期します。
     - Unity 側では常に Blendshape -> Skin の順番で適用されるため、Max 側で順番が逆だと意図しない結果になる可能性があります。
-  - "Bake Deformers" をチェックすると、デフォーマを全て適用した結果を送ります。Max 側と Unity 側で Mesh の内容がほぼ一致するようになりますが、代償として Skinning や Blendshape の情報が失われます。
+  - "Bake Modifiers" をチェックすると、モディファイアを適用した結果を送ります。Max 側と Unity 側で Mesh の内容がほぼ一致するようになりますが、代償として Skinning や Blendshape の情報が失われます。
   - "Bake Transform" をチェックすると、位置/回転/スケールを Mesh の頂点に適用し、Unity 側の Transform は初期値になります。pivot が絡む複雑な Transform は Unity では再現できないことがありますが、そのような場合でもこのオプションを使うと Mesh の見た目は一致するようになります。このオプションは "Bake Modifiers" が有効なときのみ有効です。
+  - "Use Render Meshes" をチェックすると、レンダリング用の Mesh からデータを抽出します。例えば Turbo Smooth は viewport 用とレンダリング用で別の Iteration を指定できますが、レンダリング用の設定が Unity 側に反映されるようになります。また、Fluid などのレンダリング時にしか現れない Mesh も反映できるようになります。
+- "Ignore Non-Rebderable" をチェックすると、renderable ではない Mesh を無視します。例えばボーンの viewport 上の表示用の形状などが renderable ではない Mesh に該当します。
 - "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
 - 負のスケールは部分的にしかサポートしていないので注意が必要です。
-  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます。
+  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます。"Bake Transform" オプションを使うとそのようなケースでも Mesh は一致するようになりますが、モディファイアの情報が失われます。
 - Max script にもコマンドが追加されており、全ての機能に Max script 経由でアクセスできるようになっています。こちらの詳細は[ソースコードを参照ください](https://github.com/unity3d-jp/MeshSync/blob/master/Plugin~/MeshSyncClient3dsMax/msmaxEntryPoint.cpp)
 
 
@@ -132,7 +134,7 @@ Blender 2.79(a,b), 2.80 + Windows, Mac, Linux (CentOS 7) で動作を確認し�
 - "Curves as Mesh" をチェックすると、Curve や Text などポリゴンに変換可能なオブジェクトを変換して同期します。
 - "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
 - 負のスケールは部分的にしかサポートしていないので注意が必要です
-  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
+  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます。"Bake Transform" オプションを使うとそのようなケースでも Mesh は一致するようになりますが、モディファイアの情報が失われます。
 
 
 ### Modo
@@ -143,6 +145,7 @@ Modo 10, 12, 13 + Windows, Mac, Linux (CentOS 7) で動作を確認していま�
 - インストール：
   - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Modo_*.zip をダウンロードして展開
   - Modo 内の System -> Add Plug-in で MeshSyncClientModo.fx を指定
+  - **古いバージョンをインストール済みの場合、古いプラグインをロードしていない状態で再度上記手順を踏む必要があります**。プラグインがロードされるタイミングは主に下記 view (Application -> Custom View -> UnityMeshSync) を表示したタイミングなので、view を出していない状態で一度 modo を終了、再度起動、プラグインをインストール、とすると確実です。
 - インストール後は新たな View が追加されており、ここから各種設定や機能にアクセスできます (Application -> Custom View -> UnityMeshSync)
 - "Auto Sync" がチェックされている間は編集が自動的に Unity 側に反映されます。Auyo Sync が無効でも "Manual Sync" ボタンを押すことで手動で反映できます
 - Animations の Sync を押すと、開始フレームから終了フレームまで時間を進めつつアニメーションをベイクして Unity に送ります。
@@ -157,7 +160,7 @@ Modo 10, 12, 13 + Windows, Mac, Linux (CentOS 7) で動作を確認していま�
   - Mesh Instance や Replicator のスキニングは正しく Unity 側に反映できません。"Bake Deformers" を使う必要があります。
 - "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
 - 負のスケールは部分的にしかサポートしていないので注意が必要です
-  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます
+  - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます。"Bake Transform" オプションを使うとそのようなケースでも Mesh は一致するようになりますが、デフォーマの情報が失われます。
 - コマンドからも MeshSync の機能にアクセスできます。unity.meshsync.settings で設定の変更、unity.meshsync.export でエクスポートできます
 - "Export Cache" で全フレームのデータをファイルにエクスポートできます。エクスポートしたファイルは Unity で再生できます。より詳しくは [Scene Cache](Documentation~/SceneCache.md) を参照ください。
 
