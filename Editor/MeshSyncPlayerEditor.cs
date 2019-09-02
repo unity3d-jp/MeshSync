@@ -44,7 +44,7 @@ namespace UTJ.MeshSyncEditor
 #if UNITY_2018_1_OR_NEWER
                     EditorGUILayout.PropertyField(so.FindProperty("m_usePhysicalCameraParams"), new GUIContent("Physical Camera Params"));
 #endif
-                    EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
+                    //EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
                     EditorGUI.indentLevel--;
                 }
                 EditorGUILayout.PropertyField(so.FindProperty("m_syncLights"), new GUIContent("Lights"));
