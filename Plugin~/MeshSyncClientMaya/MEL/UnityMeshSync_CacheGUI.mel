@@ -1,0 +1,147 @@
+// entry point
+global proc UnityMeshSync_CacheGUI()
+{
+    $paths = `fileDialog2 -fileMode 0 -fileFilter "*.sc"`;
+    if (size($paths) == 0)
+        return;
+
+    global string $Window = "UnityMeshSyncCacheGUI";
+    if (`window -exists $Window`)
+        deleteUI -window $Window;
+    window -t ("Scene Cache") -wh 300 400 $Window;
+
+    $objScope           = `UnityMeshSync_Cache -q -objectScope`;
+    $frameRange         = `UnityMeshSync_Cache -q -frameRange`;
+    $frameBegin         = `UnityMeshSync_Cache -q -frameBegin`;
+    $frameEnd           = `UnityMeshSync_Cache -q -frameEnd`;
+    $materialFrameRange = `UnityMeshSync_Cache -q -materialFrameRange`;
+    $frameStep          = `UnityMeshSync_Cache -q -frameStep`;
+
+    $removeNamespace    = `UnityMeshSync_Cache -q -removeNamespace`;
+    $zstdCompressionLevel = `UnityMeshSync_Cache -q -zstdCompressionLevel`;
+    $makeDoubleSided    = `UnityMeshSync_Cache -q -makeDoubleSided`;
+    $bakeDeformers      = `UnityMeshSync_Cache -q -bakeDeformers`;
+    $bakeTransform      = `UnityMeshSync_Cache -q -bakeTransform`;
+    $flattenHierarchy   = `UnityMeshSync_Cache -q -flattenHierarchy`;
+    $stripNormals       = `UnityMeshSync_Cache -q -stripNormals`;
+    $stripTangents      = `UnityMeshSync_Cache -q -stripTangents`;
+    //$mergeMeshes        = `UnityMeshSync_Cache -q -mergeMeshes`;
+
+    columnLayout -columnOffset "left" 5;
+
+    rowLayout -nc 2;
+        text -l "Path"; textField -text $paths[0] -w 220 umscCtrlPath;
+    setParent ..;
+
+    separator -h 20 -w 250;
+
+    optionMenu -l "Node" umscCtrlObjectScope;
+        menuItem -l "All Nodes";
+        menuItem -l "Selected Nodes";
+    optionMenu -e -sl ($objScope + 1) umscCtrlObjectScope;
+
+    optionMenu -l "Frame" -cc "umscCBFrameRange" umscCtrlFrameRange;
+        menuItem -l "Current Frame";
+        menuItem -l "All Frames";
+        menuItem -l "Custom Range";
+    optionMenu -e -sl ($frameRange + 1) umscCtrlFrameRange;
+
+    columnLayout -columnOffset "left" 20 umsCFoldFrameRange;
+        rowLayout -nc 2;
+            text -l "Frame Begin"; intField -w 60 -v $frameBegin umscCtrlFrameBegin;
+        setParent ..;
+        rowLayout -nc 2;
+            text -l "Frame End"; intField -w 60 -v $frameEnd umscCtrlFrameEnd;
+        setParent ..;
+    setParent ..;
+    rowLayout -nc 2;
+        text -l "Frame Step"; floatField -w 60 -v $frameStep umscCtrlFrameStep;
+    setParent ..;
+
+    optionMenu -l "Material" umscCtrlMFRange;
+        menuItem -l "None";
+        menuItem -l "One Frame";
+        menuItem -l "All Frames";
+    optionMenu -e -sl ($materialFrameRange + 1) umscCtrlMFRange;
+
+    separator -h 20 -w 250;
+
+    rowLayout -nc 2;
+        text -l "ZSTD Compression"; intField -w 60 -v $zstdCompressionLevel umscCtrlZSTDCompression;
+    setParent ..;
+
+    checkBox -l "Remove Namespace" -v $removeNamespace umscCtrlRemoveNamespace;
+    checkBox -l "Make Double Sided" -v $makeDoubleSided umscCtrlMakeDoubleSided;
+    checkBox -l "Bake Deformers" -v $bakeDeformers -cc "umscCBBakeDeformers" umscCtrlBakeDeformers;
+    checkBox -l "Bake Transform" -v $bakeTransform -cc "umscCBBakeTransform" umscCtrlBakeTransform;
+    checkBox -l "Flatten Hierarchy" -v $flattenHierarchy umscCtrlFlattenHierarchy;
+    checkBox -l "Strip Normals" -v $stripNormals umscCtrlStripNormals;
+    checkBox -l "Strip Tangents" -v $stripTangents umscCtrlStripTangents;
+
+    separator -h 5 -w 250 -style none;
+
+    button -l "Export" -c "umscCBExportCache";
+
+    setParent ..;
+
+    umscCBFrameRange();
+    showWindow $Window;
+}
+
+global proc umscCBFrameRange()
+{
+    $v = `optionMenu -q -sl umscCtrlFrameRange`;
+    $visible = $v==3;
+    columnLayout -e -visible $visible umsCFoldFrameRange;
+}
+
+global proc umscCBBakeDeformers()
+{
+    if (!`checkBox -q -v umscCtrlBakeDeformers`)
+        checkBox -e -v 0 umscCtrlBakeTransform;
+}
+
+global proc umscCBBakeTransform()
+{
+    if (`checkBox -q -v umscCtrlBakeTransform`)
+        checkBox -e -v 1 umscCtrlBakeDeformers;
+}
+
+global proc umscCBExportCache()
+{
+    $path               = `textField -q -text umscCtrlPath`;
+    $objectScope        = `optionMenu -q -sl umscCtrlObjectScope` - 1;
+    $frameRange         = `optionMenu -q -sl umscCtrlFrameRange` -  1;
+    $frameBegin         = `intField -q -v umscCtrlFrameBegin`;
+    $frameEnd           = `intField -q -v umscCtrlFrameEnd`;
+    $materialFrameRange = `optionMenu -q -sl umscCtrlMFRange` - 1;
+    $frameStep          = `floatField -q -v umscCtrlFrameStep`;
+
+    $removeNamespace    = `checkBox -q -v umscCtrlRemoveNamespace`;
+    $zstdCompression    = `intField -q -v umscCtrlZSTDCompression`;
+    $makeDoubleSided    = `checkBox -q -v umscCtrlMakeDoubleSided`;
+    $bakeDeformers      = `checkBox -q -v umscCtrlBakeDeformers`;
+    $bakeTransform      = `checkBox -q -v umscCtrlBakeTransform`;
+    $flattenHierarchy   = `checkBox -q -v umscCtrlFlattenHierarchy`;
+    $stripNormals       = `checkBox -q -v umscCtrlStripNormals`;
+    $stripTangents      = `checkBox -q -v umscCtrlStripTangents`;
+
+    UnityMeshSync_Cache
+        -path $path
+        -objectScope $objectScope
+        -frameRange $frameRange
+        -frameBegin $frameBegin
+        -frameEnd $frameEnd
+        -materialFrameRange $materialFrameRange
+        -frameStep $frameStep
+        -removeNamespace $removeNamespace
+        -zstdCompressionLevel $zstdCompression
+        -makeDoubleSided $makeDoubleSided
+        -bakeDeformers $bakeDeformers
+        -bakeTransform $bakeTransform
+        -flattenHierarchy $flattenHierarchy
+        -stripNormals $stripNormals
+        -stripTangents $stripTangents
+        ;
+}
+

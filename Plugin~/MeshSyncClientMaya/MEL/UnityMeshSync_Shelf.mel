@@ -1,0 +1,115 @@
+// entry point
+global proc UnityMeshSync_Shelf() {
+    global string $gBuffStr;
+    global string $gBuffStr0;
+    global string $gBuffStr1;
+    global string $gShelfTopLevel;
+
+    if (`shelfLayout -exists UnityMeshSync`) deleteUI UnityMeshSync;
+    shelfLayout -p $gShelfTopLevel UnityMeshSync;
+
+    shelfButton
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Settings" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -align "center" 
+        -label "Settings" 
+        -labelOffset 0
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "gear.png" 
+        -image1 "gear.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "UnityMeshSync_GUI;" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Send scene objects to Unity" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -align "center" 
+        -label "Send Scene" 
+        -labelOffset 0
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "syncOn.png" 
+        -image1 "syncOn.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "UnityMeshSync_Export;" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Send animations to Unity" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -align "center" 
+        -label "Send Animations" 
+        -labelOffset 0
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "animateSnapshot.png" 
+        -image1 "animateSnapshot.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "UnityMeshSync_Export -target animations;" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Export cache" 
+        -enableBackground 0
+        -backgroundColor 0 0 0 
+        -align "center" 
+        -label "Export Cache" 
+        -labelOffset 0
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "render.png" 
+        -image1 "render.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "UnityMeshSync_CacheGUI;" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+} 

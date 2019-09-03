@@ -1,0 +1,178 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MeshSync\MeshSync.h" />
+    <ClInclude Include="MeshSync\MeshSyncUtils.h" />
+    <ClInclude Include="MeshSync\msClient.h" />
+    <ClInclude Include="MeshSync\msConfig.h" />
+    <ClInclude Include="MeshSync\msFoundation.h" />
+    <ClInclude Include="MeshSync\msMisc.h" />
+    <ClInclude Include="MeshSync\msProtocol.h" />
+    <ClInclude Include="MeshSync\msServer.h" />
+    <ClInclude Include="MeshSync\pch.h" />
+    <ClInclude Include="MeshSync\SceneCache\msEncoder.h" />
+    <ClInclude Include="MeshSync\SceneCache\msISceneCache.h" />
+    <ClInclude Include="MeshSync\SceneCache\msOSceneCache.h" />
+    <ClInclude Include="MeshSync\SceneCache\msSceneCache.h" />
+    <ClInclude Include="MeshSync\SceneCache\msSceneCacheImpl.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msAnimation.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msAsset.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msAudio.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msConstraints.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msEntity.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msEntityConverter.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msIdentifier.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msMaterial.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msMesh.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msPointCache.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msSceneGraph.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msTexture.h" />
+    <ClInclude Include="MeshSync\SceneGraph\msVariant.h" />
+    <ClInclude Include="MeshSync\Utils\msAsyncSceneExporter.h" />
+    <ClInclude Include="MeshSync\Utils\msDebug.h" />
+    <ClInclude Include="MeshSync\Utils\msEntityManager.h" />
+    <ClInclude Include="MeshSync\Utils\msIDGenerator.h" />
+    <ClInclude Include="MeshSync\Utils\msMaterialManager.h" />
+    <ClInclude Include="MeshSync\Utils\msMaterialExt.h" />
+    <ClInclude Include="MeshSync\Utils\msTextureManager.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="MeshSync\msClient.cpp" />
+    <ClCompile Include="MeshSync\msMisc.cpp" />
+    <ClCompile Include="MeshSync\msProtocol.cpp" />
+    <ClCompile Include="MeshSync\msServer.cpp" />
+    <ClCompile Include="MeshSync/pch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="MeshSync\SceneCache\msEncoder.cpp" />
+    <ClCompile Include="MeshSync\SceneCache\msISceneCache.cpp" />
+    <ClCompile Include="MeshSync\SceneCache\msOSceneCache.cpp" />
+    <ClCompile Include="MeshSync\SceneCache\msSceneCacheImpl.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msAnimation.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msAsset.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msAudio.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msConstraints.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msEntity.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msEntityConverter.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msIdentifier.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msMaterial.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msMesh.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msPointCache.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msSceneGraph.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msTexture.cpp" />
+    <ClCompile Include="MeshSync\SceneGraph\msVariant.cpp" />
+    <ClCompile Include="MeshSync\Utils\msAsyncSceneExporter.cpp" />
+    <ClCompile Include="MeshSync\Utils\msEntityManager.cpp" />
+    <ClCompile Include="MeshSync\Utils\msIDGenerator.cpp" />
+    <ClCompile Include="MeshSync\Utils\msMaterialManager.cpp" />
+    <ClCompile Include="MeshSync\Utils\msMaterialExt.cpp" />
+    <ClCompile Include="MeshSync\Utils\msTextureManager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="setup.vcxproj">
+      <Project>{1c5de91b-7ae9-4304-9fa1-0de1aba8c02d}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{7D79CF0C-F0B6-4D4E-BBEE-822E4BDA4061}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IncludePath>$(SolutionDir);$(SolutionDir)MeshSync;$(SolutionDir)External\Poco\include;$(SolutionDir)External\zstd\include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">msEnableZSTD;msDebug;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">msEnableZSTD;msDebug;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FloatingPointModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Fast</FloatingPointModel>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <MapExports>true</MapExports>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>false</OmitFramePointers>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <StringPooling>true</StringPooling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ControlFlowGuard>false</ControlFlowGuard>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">msEnableZSTD;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">msEnableZSTD;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

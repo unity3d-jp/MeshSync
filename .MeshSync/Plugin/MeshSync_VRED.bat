@@ -1,4 +1,0 @@
-set VRED_VERSION=2019
-set VRED_QT_VERSION=5.9.3
-set VRED_QT_DIR=%cd%\External\Qt\%VRED_QT_VERSION%\msvc2017_64
-MeshSync_VRED.sln

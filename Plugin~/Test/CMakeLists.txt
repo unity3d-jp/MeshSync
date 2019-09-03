@@ -1,0 +1,13 @@
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}")
+
+file(GLOB sources *.cpp *.h)
+add_executable(Test ${sources})
+add_dependencies(Test MeshSync MeshUtils)
+target_include_directories(Test PUBLIC "${CMAKE_SOURCE_DIR}")
+target_link_libraries(Test MeshSync MeshUtils ${Poco_LIBRARIES})
+if(ENABLE_ZSTD)
+    target_link_libraries(Test ${ZSTD_LIBRARY})
+endif()
+if(LINUX)
+    target_link_libraries(Test pthread "-Wl,--no-undefined")
+endif()
