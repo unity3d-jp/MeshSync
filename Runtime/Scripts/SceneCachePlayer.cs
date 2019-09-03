@@ -8,10 +8,27 @@ namespace UTJ.MeshSync
     [ExecuteInEditMode]
     public class SceneCachePlayer : MeshSyncPlayer
     {
+        #region Types
+        public enum TimeUnit
+        {
+            Seconds,
+            Frames,
+        }
+
+        public enum BaseFrame
+        {
+            Zero = 0,
+            One = 1,
+        }
+        #endregion
+
         #region Fields
         [SerializeField] DataPath m_cacheFilePath = new DataPath();
+        [SerializeField] TimeUnit m_timeUnit = TimeUnit.Seconds;
         [SerializeField] float m_time;
         [SerializeField] bool m_interpolation = false;
+        [SerializeField] BaseFrame m_baseFrame = BaseFrame.One;
+        [SerializeField] int m_frame = 1;
 
         SceneCacheData m_sceneCache;
         TimeRange m_timeRange;
@@ -20,6 +37,7 @@ namespace UTJ.MeshSync
         bool m_openRequested = false;
 
 #if UNITY_EDITOR
+        [SerializeField] bool m_foldCacheSettings = true;
         float m_dbgSceneGetTime;
         float m_dbgSceneUpdateTime;
         string m_dbgProfileReport;
@@ -31,6 +49,21 @@ namespace UTJ.MeshSync
         {
             get { return m_cacheFilePath; }
         }
+        public int frameCount
+        {
+            get { return m_sceneCache.sceneCount; }
+        }
+
+        public TimeUnit timeUnit
+        {
+            get { return m_timeUnit; }
+            set
+            {
+                m_timeUnit = value;
+                if (m_timeUnit == TimeUnit.Frames)
+                    m_interpolation = false;
+            }
+        }
         public float time
         {
             get { return m_time; }
@@ -41,8 +74,23 @@ namespace UTJ.MeshSync
             get { return m_interpolation; }
             set { m_interpolation = value; }
         }
+        public BaseFrame baseFrame
+        {
+            get { return m_baseFrame; }
+            set { m_baseFrame = value; }
+        }
+        public int frame
+        {
+            get { return m_frame; }
+            set { m_frame = value; }
+        }
 
 #if UNITY_EDITOR
+        public bool foldCacheSettings
+        {
+            get { return m_foldCacheSettings; }
+            set { m_foldCacheSettings = value; }
+        }
         public string dbgProfileReport
         {
             get { return m_dbgProfileReport; }
@@ -89,29 +137,59 @@ namespace UTJ.MeshSync
         }
 
 #if UNITY_EDITOR
-        public bool AddAnimator()
+        public bool ResetTimeAnimation()
         {
             if (m_sceneCache.sceneCount < 2)
                 return false;
 
-            var curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
-            if (curve == null)
-                return false;
+            var animator = Misc.GetOrAddComponent<Animator>(gameObject);
+            AnimationClip clip = null;
+            if (animator.runtimeAnimatorController != null)
+            {
+                var clips = animator.runtimeAnimatorController.animationClips;
+                if (clips != null && clips.Length > 0)
+                {
+                    var tmp = animator.runtimeAnimatorController.animationClips[0];
+                    if (tmp != null)
+                    {
+                        clip = tmp;
+                        Undo.RegisterCompleteObjectUndo(clip, "SceneCachePlayer");
+                    }
+                }
+            }
 
-            var clip = new AnimationClip();
+            if (clip == null)
+            {
+                clip = new AnimationClip();
+
+                var animPath = string.Format("{0}/{1}.anim", assetPath, gameObject.name);
+                var controllerPath = string.Format("{0}/{1}.controller", assetPath, gameObject.name);
+                clip = Misc.SaveAsset(clip, animPath);
+                if (clip == null)
+                    return false;
+
+                animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(controllerPath, clip);
+            }
             var sampleRate = m_sceneCache.sampleRate;
             if (sampleRate > 0.0f)
                 clip.frameRate = sampleRate;
-            clip.SetCurve("", typeof(SceneCachePlayer), "m_time", curve);
 
-            var animPath = string.Format("{0}/{1}.anim", assetPath, gameObject.name);
-            var controllerPath = string.Format("{0}/{1}.controller", assetPath, gameObject.name);
-            clip = Misc.SaveAsset(clip, animPath);
-            if (clip == null)
-                return false;
+            var tPlayer = typeof(SceneCachePlayer);
+            clip.SetCurve("", tPlayer, "m_time", null);
+            clip.SetCurve("", tPlayer, "m_frame", null);
+            if (m_timeUnit == TimeUnit.Seconds)
+            {
+                var curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
+                clip.SetCurve("", tPlayer, "m_time", curve);
+            }
+            else if (m_timeUnit == TimeUnit.Frames)
+            {
+                var curve = m_sceneCache.GetFrameCurve((int)m_baseFrame);
+                clip.SetCurve("", tPlayer, "m_frame", curve);
+            }
 
-            var animator = Misc.GetOrAddComponent<Animator>(gameObject);
-            animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(controllerPath, clip);
+            AssetDatabase.SaveAssets();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
             return true;
         }
 #endif
@@ -121,6 +199,13 @@ namespace UTJ.MeshSync
             if (m_openRequested)
             {
                 OpenCache(m_cacheFilePath.fullPath);
+            }
+
+            if (m_timeUnit == TimeUnit.Frames)
+            {
+                int offset = (int)m_baseFrame;
+                m_frame = Mathf.Clamp(m_frame, offset, frameCount + offset);
+                m_time = m_sceneCache.GetTime(m_frame - offset);
             }
 
             if (m_sceneCache && m_time != m_timePrev)

@@ -31,18 +31,22 @@ static bool msblenSend(msblenContext& self, ExportTarget target, ObjectScope sco
     return true;
 }
 
-class ContextProxy : public std::enable_shared_from_this<ContextProxy>
+class ContextProxy
 {
 public:
+    ContextProxy() {}
+    ~ContextProxy() {}
     msblenContext* operator->() { return &msblenGetContext(); }
     const msblenContext* operator->() const { return &msblenGetContext(); }
     msblenContext& operator*() { return msblenGetContext(); }
     const msblenContext& operator*() const { return msblenGetContext(); }
 };
 
-class CacheProxy : public std::enable_shared_from_this<CacheProxy>
+class CacheProxy
 {
 public:
+    CacheProxy() {}
+    ~CacheProxy() {}
     msblenContext* operator->() { return &msblenGetContext(); }
     const msblenContext* operator->() const { return &msblenGetContext(); }
     msblenContext& operator*() { return msblenGetContext(); }
@@ -50,16 +54,16 @@ public:
 };
 
 
-PYBIND11_MODULE(MeshSyncClientBlender, mod)
+PYBIND11_MODULE(MeshSyncClientBlender, m)
 {
-    mod.doc() = "Python bindings for MeshSync";
+    m.doc() = "Python bindings for MeshSync";
 
 #define BindConst(Name, ...) .def_property_readonly(#Name, [](self_t& self) { return __VA_ARGS__; })
 #define BindMethod(Name, ...) .def(#Name, __VA_ARGS__)
 #define BindProperty(Name, ...) .def_property(#Name, __VA_ARGS__)
     {
         using self_t = ContextProxy;
-        py::class_<ContextProxy, std::shared_ptr<ContextProxy>>(mod, "Context")
+        py::class_<ContextProxy>(m, "Context")
             .def(py::init<>())
             BindConst(PLUGIN_VERSION, std::string(msPluginVersionStr))
             BindConst(PROTOCOL_VERSION, std::to_string(msProtocolVersion))
@@ -151,7 +155,7 @@ PYBIND11_MODULE(MeshSyncClientBlender, mod)
     }
     {
         using self_t = CacheProxy;
-        py::class_<CacheProxy, std::shared_ptr<CacheProxy>>(mod, "Cache")
+        py::class_<CacheProxy>(m, "Cache")
             .def(py::init<>())
             BindProperty(object_scope,
                 [](const self_t& self) { return (int)self->getCacheSettings().object_scope; },
@@ -206,7 +210,7 @@ PYBIND11_MODULE(MeshSyncClientBlender, mod)
             })
             ;
     }
-#undef BindRO
+#undef BindConst
 #undef BindMethod
 #undef BindProperty
 }

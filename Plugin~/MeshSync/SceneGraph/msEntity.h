@@ -58,6 +58,7 @@ public:
     virtual bool isGeometry() const;
     virtual void serialize(std::ostream& os) const;
     virtual void deserialize(std::istream& is);
+    virtual void detach();
     virtual void setupDataFlags();
 
     virtual bool isUnchanged() const;

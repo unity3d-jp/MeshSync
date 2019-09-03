@@ -20,6 +20,46 @@ MeshRefineFlags::MeshRefineFlags()
     (uint32_t&)*this = 0;
 }
 
+void MeshRefineSettings::serialize(std::ostream& os) const
+{
+    write(os, flags);
+
+    if (flags.split)
+        write(os, split_unit);
+    write(os, max_bone_influence);
+    write(os, scale_factor);
+    if (flags.gen_normals_with_smooth_angle)
+        write(os, smooth_angle);
+    if (flags.quadify || flags.quadify_full_search)
+        write(os, quadify_threshold);
+    if (flags.local2world)
+        write(os, local2world);
+    if (flags.world2local)
+        write(os, world2local);
+    if (flags.mirror_basis)
+        write(os, mirror_basis);
+}
+
+void MeshRefineSettings::deserialize(std::istream& is)
+{
+    read(is, flags);
+
+    if (flags.split)
+        read(is, split_unit);
+    read(is, max_bone_influence);
+    read(is, scale_factor);
+    if (flags.gen_normals_with_smooth_angle)
+        read(is, smooth_angle);
+    if (flags.quadify || flags.quadify_full_search)
+        read(is, quadify_threshold);
+    if (flags.local2world)
+        read(is, local2world);
+    if (flags.world2local)
+        read(is, world2local);
+    if (flags.mirror_basis)
+        read(is, mirror_basis);
+}
+
 void MeshRefineSettings::clear()
 {
     // *this = {}; causes internal compiler error on gcc
@@ -31,14 +71,20 @@ uint64_t MeshRefineSettings::checksum() const
 {
     uint64_t ret = 0;
     ret += csum((int&)flags);
-    ret += csum(scale_factor);
-    ret += csum(smooth_angle);
-    ret += csum(split_unit);
+    if (flags.split)
+        ret += csum(split_unit);
     ret += csum(max_bone_influence);
-    ret += csum(local2world);
-    ret += csum(world2local);
-    ret += csum(mirror_basis);
-    ret += csum(local2world2);
+    ret += csum(scale_factor);
+    if (flags.gen_normals_with_smooth_angle)
+        ret += csum(smooth_angle);
+    if (flags.quadify || flags.quadify_full_search)
+        ret += csum(quadify_threshold);
+    if (flags.local2world)
+        ret += csum(local2world);
+    if (flags.world2local)
+        ret += csum(world2local);
+    if (flags.mirror_basis)
+        ret += csum(mirror_basis);
     return ret;
 }
 
@@ -59,6 +105,13 @@ std::shared_ptr<BlendShapeFrameData> BlendShapeFrameData::create(std::istream & 
     return make_shared_ptr(ret);
 }
 
+std::shared_ptr<BlendShapeFrameData> BlendShapeFrameData::clone()
+{
+    auto ret = create();
+    *ret = *this;
+    return ret;
+}
+
 BlendShapeFrameData::BlendShapeFrameData() {}
 BlendShapeFrameData::~BlendShapeFrameData() {}
 
@@ -72,6 +125,12 @@ void BlendShapeFrameData::serialize(std::ostream& os) const
 void BlendShapeFrameData::deserialize(std::istream& is)
 {
     EachMember(msRead);
+}
+void BlendShapeFrameData::detach()
+{
+    points.detach();
+    normals.detach();
+    tangents.detach();
 }
 void BlendShapeFrameData::clear()
 {
@@ -91,6 +150,15 @@ std::shared_ptr<BlendShapeData> BlendShapeData::create(std::istream & is)
     return make_shared_ptr(ret);
 }
 
+std::shared_ptr<BlendShapeData> BlendShapeData::clone()
+{
+    auto ret = create();
+    *ret = *this;
+    for (auto& f : ret->frames)
+        f = f->clone();
+    return ret;
+}
+
 
 BlendShapeData::BlendShapeData() {}
 BlendShapeData::~BlendShapeData() {}
@@ -105,6 +173,10 @@ void BlendShapeData::serialize(std::ostream& os) const
 void BlendShapeData::deserialize(std::istream& is)
 {
     EachMember(msRead);
+}
+void BlendShapeData::detach()
+{
+    vdetach(frames);
 }
 void BlendShapeData::clear()
 {
@@ -128,6 +200,13 @@ std::shared_ptr<BoneData> BoneData::create(std::istream & is)
     return make_shared_ptr(ret);
 }
 
+std::shared_ptr<BoneData> BoneData::clone()
+{
+    auto ret = create();
+    *ret = *this;
+    return ret;
+}
+
 BoneData::BoneData() {}
 BoneData::~BoneData() {}
 
@@ -143,6 +222,11 @@ void BoneData::deserialize(std::istream& is)
     read(is, path);
     read(is, bindpose);
     read(is, weights);
+}
+
+void BoneData::detach()
+{
+    weights.detach();
 }
 
 void BoneData::clear()
@@ -195,6 +279,13 @@ void Mesh::deserialize(std::istream& is)
     bones.erase(
         std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); }),
         bones.end());
+}
+
+void Mesh::detach()
+{
+#define Body(A) vdetach(A);
+    EachMember(Body);
+#undef Body
 }
 
 void Mesh::setupDataFlags()
@@ -435,11 +526,8 @@ EntityPtr Mesh::clone(bool detach_)
 {
     auto ret = create();
     *ret = *this;
-    if (detach_) {
-#define Body(A) detach(ret->A);
-        EachMember(Body);
-#undef Body
-    }
+    if (detach_)
+        ret->detach();
     return ret;
 }
 
@@ -472,9 +560,9 @@ void Mesh::refine()
     if (mrs.flags.flip_v)
         mu::InvertV(uv0.data(), uv0.size());
 
-    if (mrs.flags.apply_local2world)
+    if (mrs.flags.local2world)
         transformMesh(mrs.local2world);
-    if (mrs.flags.apply_world2local)
+    if (mrs.flags.world2local)
         transformMesh(mrs.world2local);
 
     if (mrs.flags.mirror_x)
@@ -483,9 +571,6 @@ void Mesh::refine()
         mirrorMesh({ 0.0f, 1.0f, 0.0f }, 0.0f, true);
     if (mrs.flags.mirror_z)
         mirrorMesh({ 0.0f, 0.0f, 1.0f }, 0.0f, true);
-
-    if (mrs.flags.apply_local2world2)
-        transformMesh(mrs.local2world2);
 
     if (!bones.empty()) {
         if (mrs.max_bone_influence == 4)

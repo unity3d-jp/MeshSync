@@ -44,7 +44,7 @@ namespace UTJ.MeshSyncEditor
 #if UNITY_2018_1_OR_NEWER
                     EditorGUILayout.PropertyField(so.FindProperty("m_usePhysicalCameraParams"), new GUIContent("Physical Camera Params"));
 #endif
-                    EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
+                    //EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
                     EditorGUI.indentLevel--;
                 }
                 EditorGUILayout.PropertyField(so.FindProperty("m_syncLights"), new GUIContent("Lights"));
@@ -99,12 +99,12 @@ namespace UTJ.MeshSyncEditor
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("Import List", GUILayout.Width(110.0f)))
                 {
-                    var path = EditorUtility.OpenFilePanel("Select Cache File", "", "asset");
+                    var path = EditorUtility.OpenFilePanel("Import material list", "Assets", "asset");
                     t.ImportMaterialList(path);
                 }
                 if (GUILayout.Button("Export List", GUILayout.Width(110.0f)))
                 {
-                    var path = EditorUtility.SaveFilePanel("Select Cache File", "", t.name + "_MaterialList", "asset");
+                    var path = EditorUtility.SaveFilePanel("Export material list", "Assets", t.name + "_MaterialList", "asset");
                     t.ExportMaterialList(path);
                 }
                 GUILayout.EndHorizontal();

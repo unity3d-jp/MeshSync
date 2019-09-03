@@ -67,6 +67,10 @@ void Entity::deserialize(std::istream& is)
     read(is, path);
 }
 
+void Entity::detach()
+{
+}
+
 void Entity::setupDataFlags()
 {
 }

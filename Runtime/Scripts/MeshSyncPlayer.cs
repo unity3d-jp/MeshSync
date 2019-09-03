@@ -1623,6 +1623,8 @@ namespace UTJ.MeshSync
                 // reference. will be resolved in AfterUpdateScene()
                 if (dflags.hasReference)
                     rec.reference = data.reference;
+                else
+                    rec.reference = null;
             }
             return rec;
         }

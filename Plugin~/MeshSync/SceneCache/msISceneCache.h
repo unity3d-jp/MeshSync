@@ -16,14 +16,15 @@ public:
     float getSampleRate() const override;
     size_t getNumScenes() const override;
     TimeRange getTimeRange() const override;
-    float getTime(size_t i) const override;
+    float getTime(int i) const override;
+    int getFrameByTime(float time) const override;
     ScenePtr getByIndex(size_t i) override;
     ScenePtr getByTime(float t, bool lerp) override;
     void refresh() override;
 
     const AnimationCurvePtr getTimeCurve() const override;
+    const AnimationCurvePtr getFrameCurve(int base_frame) override;
 
-    int timeToIndex(float time) const;
     void preloadAll();
 
 protected:
@@ -68,6 +69,7 @@ protected:
     std::vector<SceneRecord> m_records;
     RawVector<CacheFileEntityMeta> m_entity_meta;
     AnimationCurvePtr m_time_curve;
+    AnimationCurvePtr m_frame_curve;
 
     float m_last_time = -1.0f;
     int m_last_index = -1, m_last_index2 = -1;

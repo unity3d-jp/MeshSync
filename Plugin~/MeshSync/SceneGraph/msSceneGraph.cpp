@@ -9,9 +9,13 @@
 
 namespace ms {
 
+static_assert(sizeof(SceneDataFlags) == sizeof(uint32_t), "");
 
-// Scene
-#pragma region Scene
+SceneDataFlags::SceneDataFlags()
+{
+    (uint32_t&)*this = 0;
+}
+
 
 #define EachMember(F)\
     F(settings) F(assets) F(entities) F(constraints)
@@ -43,15 +47,29 @@ ScenePtr Scene::clone(bool detach)
 
 void Scene::serialize(std::ostream& os) const
 {
+    data_flags.has_settings = true;
+    data_flags.has_assets = !assets.empty();
+    data_flags.has_entities = !entities.empty();
+    data_flags.has_constraints = !constraints.empty();
+
     uint64_t validation_hash = hash();
     write(os, validation_hash);
-    EachMember(msWrite);
+
+    write(os, data_flags);
+#define Body(V) if(data_flags.has_##V) write(os, V);
+    EachMember(Body);
+#undef Body
 }
 void Scene::deserialize(std::istream& is)
 {
     uint64_t validation_hash;
     read(is, validation_hash);
-    EachMember(msRead);
+
+    read(is, data_flags);
+#define Body(V) if(data_flags.has_##V) read(is, V);
+    EachMember(Body);
+#undef Body
+
     if (validation_hash != hash()) {
         throw std::runtime_error("scene hash doesn't match");
     }
@@ -154,6 +172,7 @@ void Scene::lerp(const Scene& s1, const Scene& s2, float t)
 
 void Scene::clear()
 {
+    data_flags = {};
     settings = {};
     assets.clear();
     entities.clear();
@@ -383,6 +402,5 @@ template std::vector<std::shared_ptr<Mesh>> Scene::getEntities<Mesh>() const;
 template std::vector<std::shared_ptr<Points>> Scene::getEntities<Points>() const;
 
 #undef EachMember
-#pragma endregion
 
 } // namespace ms

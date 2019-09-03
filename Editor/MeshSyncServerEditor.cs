@@ -29,15 +29,10 @@ namespace UTJ.MeshSyncEditor
         public override void OnInspectorGUI()
         {
             var so = serializedObject;
-            var t = target as MeshSyncPlayer;
+            var t = target as MeshSyncServer;
 
-            // server param
-            EditorGUILayout.LabelField("Server", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(so.FindProperty("m_serverPort"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_assetDir"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_rootObject"));
             EditorGUILayout.Space();
-
+            DrawServerSettings(t, so);
             DrawPlayerSettings(t, so);
             DrawMaterialList(t);
             DrawTextureList(t);
@@ -46,6 +41,21 @@ namespace UTJ.MeshSyncEditor
             DrawPluginVersion();
 
             so.ApplyModifiedProperties();
+        }
+
+        public void DrawServerSettings(MeshSyncServer t, SerializedObject so)
+        {
+            var styleFold = EditorStyles.foldout;
+            styleFold.fontStyle = FontStyle.Bold;
+
+            t.foldServerSettings= EditorGUILayout.Foldout(t.foldServerSettings, "Server", true, styleFold);
+            if (t.foldServerSettings)
+            {
+                EditorGUILayout.PropertyField(so.FindProperty("m_serverPort"));
+                EditorGUILayout.PropertyField(so.FindProperty("m_assetDir"));
+                EditorGUILayout.PropertyField(so.FindProperty("m_rootObject"));
+                EditorGUILayout.Space();
+            }
         }
     }
 }

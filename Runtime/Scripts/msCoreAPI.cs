@@ -755,6 +755,7 @@ namespace UTJ.MeshSync
                 }
             }
             {
+                SetCurve(clip, path, ttrans, "m_LocalEuler", null, true);
                 SetCurve(clip, path, ttrans, "m_LocalRotation", null, true);
                 var curves = GenCurves(msAnimationGetTransformRotation(self));
                 if (curves != null)
@@ -2027,11 +2028,13 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern void msISceneCacheGetTimeRange(IntPtr self, ref float start, ref float end);
         [DllImport(Lib.name)] static extern int msISceneCacheGetNumScenes(IntPtr self);
         [DllImport(Lib.name)] static extern float msISceneCacheGetTime(IntPtr self, int i);
+        [DllImport(Lib.name)] static extern int msISceneCacheGetFrameByTime(IntPtr self, float time);
         [DllImport(Lib.name)] static extern SceneData msISceneCacheGetSceneByIndex(IntPtr self, int i);
         [DllImport(Lib.name)] static extern SceneData msISceneCacheGetSceneByTime(IntPtr self, float time, bool lerp);
         [DllImport(Lib.name)] static extern void msISceneCacheRefesh(IntPtr self);
 
         [DllImport(Lib.name)] static extern AnimationCurveData msISceneCacheGetTimeCurve(IntPtr self);
+        [DllImport(Lib.name)] static extern AnimationCurveData msISceneCacheGetFrameCurve(IntPtr self, int baseFrame);
         #endregion
 
         public static implicit operator bool(SceneCacheData v) { return v.self != IntPtr.Zero; }
@@ -2058,6 +2061,10 @@ namespace UTJ.MeshSync
         {
             return msISceneCacheGetTime(self, i);
         }
+        public int GetFrame(float time)
+        {
+            return msISceneCacheGetFrameByTime(self, time);
+        }
         public SceneData GetSceneByIndex(int i)
         {
             return msISceneCacheGetSceneByIndex(self, i);
@@ -2083,6 +2090,19 @@ namespace UTJ.MeshSync
             data.Copy(0, keys);
             return new AnimationCurve(keys);
         }
+
+        public AnimationCurve GetFrameCurve(int baseFrame)
+        {
+            var data = msISceneCacheGetFrameCurve(self, baseFrame);
+            if (!data)
+                return null;
+
+            AnimationClipData.Prepare();
+            data.Convert(InterpolationMode.Constant);
+            var keys = new Keyframe[data.GetKeyCount(0)];
+            data.Copy(0, keys);
+            return new AnimationCurve(keys);
+        }
     }
-#endregion
+    #endregion
 }

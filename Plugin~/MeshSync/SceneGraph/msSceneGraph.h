@@ -47,10 +47,6 @@ struct SceneImportSettings
     uint32_t mesh_split_unit = 0xffffffff;
     int mesh_max_bone_influence = 4; // 4 or 255 (variable up to 255)
     ZUpCorrectionMode zup_correction_mode = ZUpCorrectionMode::FlipYZ;
-
-    SceneImportSettings()
-    {
-    }
 };
 
 struct SceneProfileData
@@ -65,10 +61,21 @@ struct SceneProfileData
     float lerp_time;    // in ms
 };
 
+struct SceneDataFlags
+{
+    uint32_t has_settings : 1;
+    uint32_t has_assets : 1;
+    uint32_t has_entities : 1;
+    uint32_t has_constraints : 1;
+
+    SceneDataFlags();
+};
+
 class Scene
 {
 public:
     // serializable
+    mutable SceneDataFlags data_flags;
     SceneSettings settings;
     std::vector<AssetPtr> assets;
     std::vector<TransformPtr> entities;

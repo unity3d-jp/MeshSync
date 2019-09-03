@@ -391,6 +391,7 @@ void msmobuDevice::extractCameraData(FBCamera* src, bool& ortho, float& near_pla
 
     //lens_shift.x = (float)src->OpticalCenterX;
     //lens_shift.y = (float)src->OpticalCenterY;
+    lens_shift = mu::float2::zero();
 }
 
 void msmobuDevice::extractLightData(FBLight* src, ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& spot_angle)
@@ -849,12 +850,15 @@ bool msmobuDevice::exportAnimations()
     auto& system = FBSystem::TheOne();
     FBPlayerControl control;
 
+    const double frame_rate = control.GetTransportFpsValue();
+    const double frame_step = std::max(m_settings.frame_step, 0.1f);
+
     // create default clip
     m_animations.clear();
     m_animations.push_back(ms::AnimationClip::create());
 
     auto& clip = *m_animations.back();
-    clip.frame_rate = (float)control.GetTransportFpsValue();
+    clip.frame_rate = (float)frame_rate;
 
     // gather models
     int num_animations = 0;
@@ -869,7 +873,7 @@ bool msmobuDevice::exportAnimations()
     FBTime time_current = system.LocalTime;
     double time_begin, time_end;
     std::tie(time_begin, time_end) = GetTimeRange(system.CurrentTake);
-    double interval = 1.0 / std::max(m_settings.animation_sps, 0.01f);
+    double interval = (1.0 / frame_rate) * frame_step;
 
     int reserve_size = int((time_end - time_begin) / interval) + 1;
     for (auto& kvp : m_anim_records) {
@@ -888,7 +892,7 @@ bool msmobuDevice::exportAnimations()
         if (t >= time_end)
             break;
         else
-            t = std::min(t + interval, time_end);
+            t += interval;
     }
 
     // cleanup

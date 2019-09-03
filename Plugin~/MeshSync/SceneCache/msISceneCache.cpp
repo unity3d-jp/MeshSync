@@ -94,14 +94,6 @@ bool ISceneCacheImpl::valid() const
     return !m_records.empty();
 }
 
-int ISceneCacheImpl::timeToIndex(float time) const
-{
-    if (!valid())
-        return 0;
-    auto p = std::lower_bound(m_records.begin(), m_records.end(), time, [](auto& a, float t) { return a.time < t; });
-    return int(std::distance(m_records.begin(), p) - 1);
-}
-
 void ISceneCacheImpl::preloadAll()
 {
     size_t n = m_records.size();
@@ -130,11 +122,27 @@ TimeRange ISceneCacheImpl::getTimeRange() const
     return { m_records.front().time, m_records.back().time };
 }
 
-float ISceneCacheImpl::getTime(size_t i) const
+float ISceneCacheImpl::getTime(int i) const
 {
     if (!valid())
         return 0.0f;
+    if (i <= 0)
+        return m_records.front().time;
+    if (i >= m_records.size())
+        return m_records.back().time;
     return m_records[i].time;
+}
+
+int ISceneCacheImpl::getFrameByTime(float time) const
+{
+    if (!valid())
+        return 0;
+    auto p = std::lower_bound(m_records.begin(), m_records.end(), time, [](auto& a, float t) { return a.time < t; });
+    if (p != m_records.end()) {
+        int d = (int)std::distance(m_records.begin(), p);
+        return p->time == time ? d : d - 1;
+    }
+    return 0;
 }
 
 // thread safe
@@ -374,7 +382,7 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
         ret = getByIndexImpl(si);
     }
     else {
-        int si = timeToIndex(time);
+        int si = getFrameByTime(time);
         if (interpolation) {
             auto t1 = m_records[si + 0].time;
             auto t2 = m_records[si + 1].time;
@@ -422,6 +430,21 @@ void ISceneCacheImpl::refresh()
 const AnimationCurvePtr ISceneCacheImpl::getTimeCurve() const
 {
     return m_time_curve;
+}
+
+const AnimationCurvePtr ISceneCacheImpl::getFrameCurve(int base_frame)
+{
+    // generate on the fly
+    size_t scene_count = m_records.size();
+    m_frame_curve = AnimationCurve::create();
+    TAnimationCurve<int> curve(m_frame_curve);
+    curve.resize(scene_count);
+    for (size_t i = 0; i < scene_count; ++i) {
+        auto& kvp = curve[i];
+        kvp.time = m_records[i].time;
+        kvp.value = (int)i + base_frame;
+    }
+    return m_frame_curve;
 }
 
 

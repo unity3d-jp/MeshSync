@@ -41,7 +41,7 @@ msblenContext::msblenContext()
 
 msblenContext::~msblenContext()
 {
-    wait();
+    // no wait() because it can cause deadlock...
 }
 
 SyncSettings& msblenContext::getSettings() { return m_settings; }
@@ -83,6 +83,15 @@ int msblenContext::exportTexture(const std::string & path, ms::TextureType type)
     return m_texture_manager.addFile(path, type);
 }
 
+int msblenContext::getMaterialID(Material *m)
+{
+#if BLENDER_VERSION >= 280
+    if (m && m->id.orig_id)
+        m = (Material*)m->id.orig_id;
+#endif
+    return m_material_ids.getID(m);
+}
+
 void msblenContext::exportMaterials()
 {
     int midx = 0;
@@ -116,6 +125,8 @@ void msblenContext::exportMaterials()
         }
         stdmat.setColor(mu::float4{ color_src->r, color_src->g, color_src->b, 1.0f });
 
+        // todo: handle texture
+#if 0
         if (m_settings.sync_textures) {
             auto export_texture = [this](MTex *mtex, ms::TextureType type) -> int {
                 if (!mtex || !mtex->tex || !mtex->tex->ima)
@@ -126,6 +137,7 @@ void msblenContext::exportMaterials()
             stdmat.setColorMap(export_texture(mat->mtex[0], ms::TextureType::Default));
 #endif
         }
+#endif
 
         m_material_manager.add(ret);
     }
@@ -289,14 +301,15 @@ void msblenContext::extractCameraData(Object *src,
 void msblenContext::extractLightData(Object *src,
     ms::Light::LightType& ltype, ms::Light::ShadowType& stype, mu::float4& color, float& intensity, float& range, float& spot_angle)
 {
-    auto data =
 #if BLENDER_VERSION < 280
-        (Lamp*)src->data;
+    auto data = (Lamp*)src->data;
+    const float energy_to_intensity = 1.0f;
 #else
-        (Light*)src->data;
+    auto data = (Light*)src->data;
+    const float energy_to_intensity = 0.001f;
 #endif
     color = (mu::float4&)data->r;
-    intensity = data->energy;
+    intensity = data->energy * energy_to_intensity;
     range = data->dist;
 
     switch (data->type) {
@@ -462,29 +475,50 @@ ms::TransformPtr msblenContext::exportReference(Object *src, const DupliGroupCon
     auto path = ctx.dst->path + local_path;
 
     ms::TransformPtr dst;
+    auto assign_base_params = [&]() {
+        extractTransformData(src, *dst);
+        dst->path = path;
+        // todo:
+        dst->visibility = {};
+        dst->world_matrix *= ctx.dst->world_matrix;
+    };
+
     if (is_mesh(src)) {
         if (m_settings.bake_transform) {
-            auto mesh = std::static_pointer_cast<ms::Mesh>(rec.dst->clone(true));
-            mesh->refine_settings.local2world2 = mesh->world_matrix * ctx.dst->world_matrix;
-            mesh->refine_settings.flags.apply_local2world2 = 1;
-            dst = mesh;
+            dst = ms::Mesh::create();
+            auto& dst_mesh = (ms::Mesh&)*dst;
+            auto& src_mesh = (ms::Mesh&)*rec.dst;
+
+            (ms::Transform&)dst_mesh = (ms::Transform&)src_mesh;
+            assign_base_params();
+
+            auto do_merge = [this, dst, &dst_mesh, &src_mesh]() {
+                dst_mesh.merge(src_mesh);
+                if (m_settings.export_cache)
+                    dst_mesh.detach();
+                dst_mesh.refine_settings = src_mesh.refine_settings;
+                dst_mesh.refine_settings.local2world = dst_mesh.world_matrix;
+                dst_mesh.refine_settings.flags.local2world = 1;
+                m_entity_manager.add(dst);
+            };
+            if (m_settings.multithreaded)
+                // deferred to execute after extracting src mesh data is completed
+                m_async_tasks.push_back(std::async(std::launch::deferred, do_merge));
+            else
+                do_merge();
         }
         else {
             dst = ms::Transform::create();
-            extractTransformData(src, *dst);
+            assign_base_params();
             dst->reference = local_path;
+            m_entity_manager.add(dst);
         }
     }
     else {
         dst = std::static_pointer_cast<ms::Transform>(rec.dst->clone());
+        assign_base_params();
+        m_entity_manager.add(dst);
     }
-    dst->path = path;
-    dst->world_matrix = dst->world_matrix * ctx.dst->world_matrix;
-
-    // todo:
-    dst->visibility = {};
-
-    m_entity_manager.add(dst);
 
     each_child(src, [&](Object *child) {
         exportReference(child, ctx);
@@ -640,6 +674,8 @@ void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data, mu
         bl::BMesh bmesh(data);
         bool is_editing = get_edit_mesh(bmesh.ptr()) != nullptr;
 
+        // on edit mode, editing is applied to EditMesh and base Mesh is intact. so get data from EditMesh on edit mode.
+        // todo: Blender 2.8 displays transparent final mesh on edit mode. extract data from it.
         if (is_editing) {
             doExtractEditMeshData(dst, obj, data);
         }
@@ -662,8 +698,8 @@ void msblenContext::doExtractMeshData(ms::Mesh& dst, Object *obj, Mesh *data, mu
             }
         }
         if (m_settings.bake_transform) {
-            dst.refine_settings.local2world2 = world;
-            dst.refine_settings.flags.apply_local2world2 = 1;
+            dst.refine_settings.local2world = world;
+            dst.refine_settings.flags.local2world = 1;
         }
     }
     else {
@@ -717,7 +753,7 @@ void msblenContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *d
 
     std::vector<int> mid_table(mesh.totcol);
     for (int mi = 0; mi < mesh.totcol; ++mi)
-        mid_table[mi] = m_material_ids.getID(mesh.mat[mi]);
+        mid_table[mi] = getMaterialID(mesh.mat[mi]);
     if (mid_table.empty())
         mid_table.push_back(ms::InvalidID);
 
@@ -800,7 +836,7 @@ void msblenContext::doExtractNonEditMeshData(ms::Mesh& dst, Object *obj, Mesh *d
             auto *arm_mod = (const ArmatureModifierData*)find_modofier(obj, eModifierType_Armature);
             if (arm_mod) {
                 // request bake TRS
-                dst.refine_settings.flags.apply_local2world = 1;
+                dst.refine_settings.flags.local2world = 1;
                 dst.refine_settings.local2world = ms::transform(dst.position, invert(dst.rotation), dst.scale);
 
                 auto *arm_obj = arm_mod->object;
@@ -930,7 +966,7 @@ void msblenContext::doExtractEditMeshData(ms::Mesh& dst, Object *obj, Mesh *data
 
     std::vector<int> mid_table(mesh.totcol);
     for (int mi = 0; mi < mesh.totcol; ++mi)
-        mid_table[mi] = m_material_ids.getID(mesh.mat[mi]);
+        mid_table[mi] = getMaterialID(mesh.mat[mi]);
     if (mid_table.empty())
         mid_table.push_back(-1);
 

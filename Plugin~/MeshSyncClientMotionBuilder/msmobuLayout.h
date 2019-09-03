@@ -37,8 +37,8 @@ private:
     FBButton m_bu_bake_deformers;
 
     FBLabel m_lb_animation;
-    FBLabel m_lb_sps;
-    FBEditNumber m_ed_sps;
+    FBLabel m_lb_frame_step;
+    FBEditNumber m_ed_frame_step;
     FBButton m_bu_sync_animations;
 
     FBLabel m_lb_version;

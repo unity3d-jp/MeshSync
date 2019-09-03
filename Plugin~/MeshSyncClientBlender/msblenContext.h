@@ -61,7 +61,7 @@ struct SyncSettings
 
     int frame_step = 1;
 
-    bool multithreaded = false;
+    bool multithreaded = true;
 
     // cache
     bool export_cache = false;
@@ -186,6 +186,7 @@ private:
     std::vector<Object*> getNodes(ObjectScope scope);
 
     int exportTexture(const std::string & path, ms::TextureType type);
+    int getMaterialID(Material *m);
     void exportMaterials();
 
     ms::TransformPtr exportObject(Object *obj, bool parent, bool tip = true);

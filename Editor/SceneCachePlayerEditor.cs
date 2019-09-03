@@ -10,7 +10,8 @@ namespace UTJ.MeshSyncEditor
         [MenuItem("GameObject/MeshSync/Create Cache Player", false, 10)]
         public static void CreateSceneCachePlayerMenu(MenuCommand menuCommand)
         {
-            var path = EditorUtility.OpenFilePanel("Select Cache File", "", "");
+            var path = EditorUtility.OpenFilePanelWithFilters("Select Cache File", "",
+                new string[]{ "All supported files", "sc", "All files", "*" });
             if (path.Length > 0)
             {
                 var go = CreateSceneCachePlayerPrefab(path);
@@ -51,7 +52,7 @@ namespace UTJ.MeshSyncEditor
             var player = go.GetComponent<SceneCachePlayer>();
             player.UpdatePlayer();
             player.ExportMaterials(false, true);
-            player.AddAnimator();
+            player.ResetTimeAnimation();
             player.handleAssets = false;
             var scene = player.GetLastScene();
             if (!scene.submeshesHaveUniqueMaterial)
@@ -72,40 +73,9 @@ namespace UTJ.MeshSyncEditor
             var so = serializedObject;
             var t = target as SceneCachePlayer;
 
-            EditorGUILayout.LabelField("Player", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(so.FindProperty("m_cacheFilePath"));
-            var dataPath = t.cacheFilePath;
-            if (dataPath.root != DataPath.Root.StreamingAssets)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Copy to StreamingAssets", GUILayout.Width(160.0f)))
-                {
-                    var srcPath = dataPath.fullPath;
-                    var dstPath = Misc.CopyFileToStreamingAssets(dataPath.fullPath);
-                    Undo.RecordObject(t, "SceneCachePlayer");
-                    t.OpenCache(dstPath);
-                    Repaint();
-                }
-                if (GUILayout.Button("Move to StreamingAssets", GUILayout.Width(160.0f)))
-                {
-                    t.CloseCache();
-                    var srcPath = dataPath.fullPath;
-                    var dstPath = Misc.MoveFileToStreamingAssets(dataPath.fullPath);
-                    Undo.RecordObject(t, "SceneCachePlayer");
-                    t.OpenCache(dstPath);
-                    Repaint();
-                }
-                GUILayout.EndHorizontal();
-            }
             EditorGUILayout.Space();
-
-            EditorGUILayout.PropertyField(so.FindProperty("m_time"));
-            EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
-            EditorGUILayout.Space();
-
+            DrawCacheSettings(t, so);
             DrawPlayerSettings(t, so);
-
             if (t.profiling)
             {
                 EditorGUILayout.TextArea(t.dbgProfileReport, GUILayout.Height(120));
@@ -119,6 +89,72 @@ namespace UTJ.MeshSyncEditor
             DrawPluginVersion();
 
             so.ApplyModifiedProperties();
+        }
+
+        void DrawCacheSettings(SceneCachePlayer t, SerializedObject so)
+        {
+            var styleFold = EditorStyles.foldout;
+            styleFold.fontStyle = FontStyle.Bold;
+
+            t.foldCacheSettings = EditorGUILayout.Foldout(t.foldCacheSettings, "Player", true, styleFold);
+            if (t.foldCacheSettings)
+            {
+                // cache file path
+                EditorGUILayout.PropertyField(so.FindProperty("m_cacheFilePath"));
+                var dataPath = t.cacheFilePath;
+                if (dataPath.root != DataPath.Root.StreamingAssets)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.FlexibleSpace();
+                    if (GUILayout.Button("Copy to StreamingAssets", GUILayout.Width(160.0f)))
+                    {
+                        var srcPath = dataPath.fullPath;
+                        var dstPath = Misc.CopyFileToStreamingAssets(dataPath.fullPath);
+                        Undo.RecordObject(t, "SceneCachePlayer");
+                        t.OpenCache(dstPath);
+                        Repaint();
+                    }
+                    if (GUILayout.Button("Move to StreamingAssets", GUILayout.Width(160.0f)))
+                    {
+                        t.CloseCache();
+                        var srcPath = dataPath.fullPath;
+                        var dstPath = Misc.MoveFileToStreamingAssets(dataPath.fullPath);
+                        Undo.RecordObject(t, "SceneCachePlayer");
+                        t.OpenCache(dstPath);
+                        Repaint();
+                    }
+                    GUILayout.EndHorizontal();
+                }
+                EditorGUILayout.Space();
+
+
+                // time / frame
+                System.Action resetTimeAnimation = () =>
+                {
+                    so.ApplyModifiedProperties();
+                    t.ResetTimeAnimation();
+                };
+
+                EditorGUI.BeginChangeCheck();
+                EditorGUILayout.PropertyField(so.FindProperty("m_timeUnit"));
+                if (EditorGUI.EndChangeCheck())
+                    resetTimeAnimation();
+
+                if (t.timeUnit == SceneCachePlayer.TimeUnit.Seconds)
+                {
+                    EditorGUILayout.PropertyField(so.FindProperty("m_time"));
+                    EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
+                }
+                else if (t.timeUnit == SceneCachePlayer.TimeUnit.Frames)
+                {
+                    EditorGUI.BeginChangeCheck();
+                    EditorGUILayout.PropertyField(so.FindProperty("m_baseFrame"));
+                    if (EditorGUI.EndChangeCheck())
+                        resetTimeAnimation();
+
+                    EditorGUILayout.PropertyField(so.FindProperty("m_frame"));
+                }
+            }
         }
     }
 }

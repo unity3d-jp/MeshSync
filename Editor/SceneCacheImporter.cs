@@ -20,7 +20,7 @@ namespace UTJ.MeshSyncEditor
             var player = go.GetComponent<SceneCachePlayer>();
             player.UpdatePlayer();
             player.ExportMaterials(false, true);
-            player.AddAnimator();
+            player.ResetTimeAnimation();
             player.handleAssets = false;
 
             ctx.AddObjectToAsset(go.name, go);

@@ -95,6 +95,7 @@ inline void EntityManager::addTransform(TransformPtr obj)
 {
     auto& rec = lockAndGet(obj->path);
     rec.updated = true;
+    rec.waitTask();
 
     if (!rec.entity) {
         rec.entity = obj;
@@ -113,8 +114,10 @@ inline void EntityManager::addTransform(TransformPtr obj)
         }
         else if (m_always_mark_dirty)
             rec.dirty_trans = true;
-
     }
+    rec.checksum_geom = 0;
+    rec.dirty_geom = false;
+
     obj->order = rec.order;
 }
 

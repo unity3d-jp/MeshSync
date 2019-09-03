@@ -54,6 +54,13 @@ msAPI float msISceneCacheGetTime(ms::ISceneCache *self, int index)
         return 0.0f;
     return self->getTime(index);
 }
+msAPI int msISceneCacheGetFrameByTime(ms::ISceneCache *self, float time)
+{
+    msDbgBreadcrumb();
+    if (!self)
+        return 0;
+    return self->getFrameByTime(time);
+}
 msAPI ms::Scene* msISceneCacheGetSceneByIndex(ms::ISceneCache *self, int index)
 {
     msDbgBreadcrumb();
@@ -83,6 +90,14 @@ msAPI const ms::AnimationCurve* msISceneCacheGetTimeCurve(ms::ISceneCache *self)
         return nullptr;
     return self->getTimeCurve().get();
 }
+msAPI const ms::AnimationCurve* msISceneCacheGetFrameCurve(ms::ISceneCache *self, int base_frame)
+{
+    msDbgBreadcrumb();
+    if (!self)
+        return nullptr;
+    return self->getFrameCurve(base_frame).get();
+}
+
 #undef msDbgBreadcrumb
 #pragma endregion
 #endif // msEnableSceneCache

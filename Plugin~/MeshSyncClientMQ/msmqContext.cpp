@@ -427,7 +427,7 @@ bool msmqContext::importMeshes(MQDocument doc)
     ms::GetMessage gd;
     gd.scene_settings.handedness = ms::Handedness::Right;
     gd.scene_settings.scale_factor = m_settings.scale_factor;
-    gd.refine_settings.flags.apply_local2world = 1;
+    gd.refine_settings.flags.local2world = 1;
     gd.refine_settings.flags.flip_v = 1;
     gd.refine_settings.flags.bake_skin = m_settings.bake_skin;
     gd.refine_settings.flags.bake_cloth = m_settings.bake_cloth;
@@ -657,7 +657,7 @@ void msmqContext::extractMeshData(MQDocument doc, MQObject obj, ms::Mesh& dst)
 
     // transform
     {
-        dst.refine_settings.flags.apply_world2local = 1;
+        dst.refine_settings.flags.world2local = 1;
         auto ite = m_host_meshes.find(dst.host_id);
         if (ite != m_host_meshes.end()) {
             dst.refine_settings.world2local = ite->second->refine_settings.world2local;
