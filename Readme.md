@@ -224,8 +224,6 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
   "Flip YZ" は全 Transform と Mesh の頂点を Y-up に直します。"Rotate X" はルートとなるオブジェクトの Transform に -90 の X 回転をかけることで Y-up に直すもので、Mesh は Z-up のままになります。
   多くの場合 "Flip YZ" の方が望ましいと思われますが、Unity 標準の fbx Importer が "Rotate X" 相当の処理を行っているため、選べるようにしてあります。
 
-&nbsp;
-
 - Material List
   - MeshSyncServer や SceneCachePlayer はマテリアルのリストを保持しています。このリストのマテリアルを変更すると、対応するオブジェクトにも変更が反映されます。
   - "Sync Material List" が有効な場合、オブジェクトのマテリアルを変更した際にそれをマテリアルリストにも反映し、同じマテリアルを持つ他のオブジェクトにも変更を伝播します。

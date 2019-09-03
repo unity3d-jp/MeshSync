@@ -5,10 +5,8 @@ Scene Cache は DCC 上のシーンを各フレームそのままファイルに
 他にはマテリアルのサポートなど Alembic にはない要素が追加されていたり、DCC ツールによっては SceneCache の方が再現度が高いこともあります。(例：3ds max の標準の Alembic exporter はレンダリング用 Mesh のエクスポートはサポートしていませんが、SceneCache は可能です)  
 代償として、現状 Unity でしか再生できない、バージョンアップで互換性が失われて再エクスポートが必要になる可能性が高い等、汎用性をほぼ捨てているという欠点もあります。
 
-<img align="right" src="https://user-images.githubusercontent.com/1488611/62694237-ea9d5a00-ba0e-11e9-850c-496ad83ec17a.png" height=400>
-
-## 3ds Max
-UnityMeshSync -> Export Cache メニューでエクスポートの設定が開きます。一部の設定は Alembic のエクスポート設定に準じています。
+<img align="right" src="https://user-images.githubusercontent.com/1488611/64148178-93e43e00-ce5d-11e9-98c2-9a1629debc38.png" height=400>
+右図は 3ds max のエクスポート設定ですが、どのツールも設定は大体同じ内容です。
 
 ### Export
 "All Nodes" だとシーン内の全ノードを、"Selected Nodes" だと選択されたノードのみをエクスポートします。
@@ -33,11 +31,6 @@ UnityMeshSync -> Export Cache メニューでエクスポートの設定が開�
 "One Frame" だと最初の 1 フレームだけ、"All Frames" だと全フレームのマテリアルデータをエクスポートします。
 現状マテリアルのサポートは弱く、基本的に Unity 側で再セットアップする想定なため、"One Frame" をデフォルトとしています。
 
-##### Use Render Meshes
-有効な場合、レンダリング用の Mesh を export します。  
-具体的には、TurboSmooth で Render Iters を設定している場合そちらの設定を見るようになる、
-MaxLiquid などが Mesh としてエクスポートされるようになる、等の違いが現れます。
-
 ##### Flatten Hierarchy
 有効な場合、Mesh や Camera 等、必要なノードのみをルートノードとしてエクスポートします。  
 中間のレンダリングに影響しないノードは無視されます。Unity 側で若干の再生の高速化を期待できます。
@@ -47,9 +40,6 @@ MaxLiquid などが Mesh としてエクスポートされるようになる、�
 法線は手動で編集してある可能性があるため、デフォルトでエクスポートする設定になっています。
 接線はエクスポートするとファイルサイズが大きく増え、それに伴って圧縮/解凍の時間も増えるため、エクスポートするメリットが薄いです。そのため、デフォルトでエクスポートしない設定になっています。(今後のアップデートで改善される可能性はあります)
 
-### 注意点
-- "Bake Modifiers" が有効な場合、Mesh の Transform は頂点に適用されます。  
-例えば、位置が x,y,z = 1,2,3 の Mesh をエクスポートした場合、Mesh の各頂点が 1,2,3 移動し、Unity 上の Transform は位置が 0,0,0 になります。これは Transform の階層では Mesh の変形を再現できないケースがあるためです。
 
 <img align="right" src="https://user-images.githubusercontent.com/1488611/62694488-65ff0b80-ba0f-11e9-8d5e-404e632b0e9a.png" height=400>
 
