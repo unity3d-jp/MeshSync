@@ -19,7 +19,7 @@ Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya
 <img align="right" src="https://user-images.githubusercontent.com/1488611/39971860-7f6d1330-573e-11e8-9a1e-9d95709cbd50.png" height=400>
 
 ### Maya
-Maya 2015, 2016, 2016.5, 2017, 2018, 2019 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
+Maya 2016, 2016.5, 2017, 2018, 2019 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
 - インストール：
   - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Maya_*.zip をダウンロード。
   - Windows: %MAYA_APP_DIR% が設定されている場合はそこに、ない場合は %USERPROFILE%\Documents\maya (←を Explorer のアドレスバーへコピペで直行) に modules ディレクトリをそのままコピー。
@@ -88,7 +88,7 @@ Maya 2015, 2016, 2016.5, 2017, 2018, 2019 + Windows, Mac, Linux (CentOS 7) で�
 <img align="right" src="https://user-images.githubusercontent.com/1488611/45682175-8a919100-bb7a-11e8-96a1-efe2e28146c3.png" height=200>
 
 ### Motion Builder
-Motion Builder 2015, 2016, 2017, 2018, 2019 + Windows, Linux (CentOS 7) で動作を確認しています
+Motion Builder 2016, 2017, 2018, 2019 + Windows, Linux (CentOS 7) で動作を確認しています
 - インストール：
   - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_MotionBuilder_*.zip をダウンロード
   - MeshSyncClientMotionBuilder.dll をプラグイン用パスとして登録されているディレクトリにコピー
@@ -111,7 +111,7 @@ Motion Builder 2015, 2016, 2017, 2018, 2019 + Windows, Linux (CentOS 7) で動�
 <img align="right" src="https://user-images.githubusercontent.com/1488611/49272332-79d39480-f4b4-11e8-8ca3-0ce0bc90a965.png" height=400>
 
 ### Blender
-Blender 2.79(a,b), 2.80 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。[開発版の Blender](https://builder.blender.org/download/) はサポート外で、ほぼ動作しません。  
+Blender 2.79b, 2.80 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。[開発版の Blender](https://builder.blender.org/download/) はサポート外で、ほぼ動作しません。  
 実装の都合上、**Blender のバージョンが上がると互換性が失われる可能性が高い** ことにご注意ください。[Blender version issue](https://github.com/unity3d-jp/MeshSync/issues/89) で最新の状況や hot fix を提供予定です。
 - インストール：
   - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Blender_*.zip をダウンロードして展開
@@ -141,7 +141,7 @@ Blender 2.79(a,b), 2.80 + Windows, Mac, Linux (CentOS 7) で動作を確認し�
 
 <img src="https://user-images.githubusercontent.com/1488611/55697991-d9135980-59fe-11e9-8e9f-8fcfba1b234f.png" height=300><img src="https://user-images.githubusercontent.com/1488611/55697990-d9135980-59fe-11e9-9312-29c95e20e5b0.png" height=300>
 
-Modo 10, 12, 13 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
+Modo 12, 13 + Windows, Mac, Linux (CentOS 7) で動作を確認しています。
 - インストール：
   - [releases](https://github.com/unity3d-jp/MeshSync/releases) から UnityMeshSync_Modo_*.zip をダウンロードして展開
   - Modo 内の System -> Add Plug-in で MeshSyncClientModo.fx を指定
@@ -202,12 +202,15 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
   - [releases](https://github.com/unity3d-jp/MeshSync/releases) から MeshSync.unitypackage をダウンロードし、プロジェクトにインポートします。
     - Unity 2018.3 以降の場合、このリポジトリを直接インポートすることもできます。プロジェクト内にある Packages/manifest.json をテキストエディタで開き、"dependencies" に以下の行を加えます。
     > "com.unity.meshsync": "https://github.com/unity3d-jp/MeshSync.git",
-  
+
   - 古いバージョンをインストール済みの場合、**パッケージインポート前に一度 Unity を終了し、Assets/UTJ/MeshSync を削除** しておくと確実です。プラグイン dll がロードされていると更新に失敗するためです。
   - インポート後は GameObject -> MeshSync メニューが追加されているはずです
-- GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。このサーバーオブジェクトが同期処理を担当します
+- GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。このサーバーオブジェクトが同期処理を担当します ([MeshSyncServer]([#mesh_sync_server))
+- GameObject -> MeshSync -> Create Cache Player で事前にエクスポートしておいたキャッシュを再生するプレイヤーを作成します  ([SceneCachePlayer]([#scene_cache_player))。現在 Maya, 3ds Max, Modo, Blender 用のプラグインがキャッシュのエクスポートをサポートしています。
 
 <img align="right" src="https://user-images.githubusercontent.com/1488611/49274442-c40c4400-f4bb-11e8-99d6-3257cdbe7320.png" height=400>
+
+##### Mesh Sync Server
 
 - Root Object
   - 同期により生成されるオブジェクト群のルートとなるオブジェクトを指定します。未設定の場合、ルートにオブジェクトが生成されていきます。
@@ -230,6 +233,8 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
   - DCC ツール側の編集によって生成された Mesh 郡は、そのままではそのシーン内にしか存在できないオブジェクトです。他のシーンやプロジェクトへ持ち出せるようにするにはアセットファイルとして保存する必要があります。
   MeshSyncServer の "Export Mesh" ボタンを押すとそのアセット化が行われます。("Asset Export Path" で指定されたディレクトリにファイルが生成されます)  
 
+##### Scene Cache Player
+
 
 ## Tips や注意事項など
 - 同期は TCP/IP を介して行われるため、Unity と DCC ツールが別のマシンで動いていても同期させることができます。その場合、クライアントである DCC ツール側は設定項目の Server / Port に Unity 側のマシンを指定してください。
@@ -247,7 +252,6 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
   これが原因でボーンが多いと DCC 側と Unity 側で結果が一致しなくなることがあります。
     - Unity 2019.1 で最大 255 ボーンまで影響できるようになりました (Project Settings -> Quality -> Other の Skin Weights を "Unlimited" に)。
     これにより、フェイシャルなどの多数のボーンを必要とするアニメーションも問題なく持って来れるはずです。
-
 
 - 本プラグインはその性質上エディタでのみの使用を想定していますが、一応ランタイムでも動作するようにしてあります。**意図せず最終ビルドに残さないようご注意ください**。  
   ランタイムではアニメーションの同期は機能しませんが、モデルの同期は一通り動作します。
