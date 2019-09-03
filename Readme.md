@@ -77,8 +77,8 @@ Maya 2016, 2016.5, 2017, 2018, 2019 + Windows, Mac, Linux (CentOS 7) で動作�
     - Unity 側では常に Blendshape -> Skin の順番で適用されるため、Max 側で順番が逆だと意図しない結果になる可能性があります。
   - "Bake Modifiers" をチェックすると、モディファイアを適用した結果を送ります。Max 側と Unity 側で Mesh の内容がほぼ一致するようになりますが、代償として Skinning や Blendshape の情報が失われます。
   - "Bake Transform" をチェックすると、位置/回転/スケールを Mesh の頂点に適用し、Unity 側の Transform は初期値になります。pivot が絡む複雑な Transform は Unity では再現できないことがありますが、そのような場合でもこのオプションを使うと Mesh の見た目は一致するようになります。このオプションは "Bake Modifiers" が有効なときのみ有効です。
-  - "Use Render Meshes" をチェックすると、レンダリング用の Mesh からデータを抽出します。例えば Turbo Smooth は viewport 用とレンダリング用で別の Iteration を指定できますが、レンダリング用の設定が Unity 側に反映されるようになります。また、Fluid などのレンダリング時にしか現れない Mesh も反映できるようになります。
-- "Ignore Non-Rebderable" をチェックすると、renderable ではない Mesh を無視します。例えばボーンの viewport 上の表示用の形状などが renderable ではない Mesh に該当します。
+  - "Use Render Meshes" をチェックすると、レンダリング用の Mesh からデータを抽出します。例えば Turbo Smooth は viewport 用とレンダリング用で別の Iteration を指定できますが、レンダリング用の設定が Unity 側に反映されるようになります。また、Fluid などのレンダリング時にしか現れない Mesh や、Space Warps なども正しく反映されるようになります。
+- "Ignore Non-Rebderable" をチェックすると、renderable ではない Mesh を無視します。例えばボーンの viewport の表示の四角錐のような形状などが renderable ではない Mesh に該当します。
 - "Double Sided" をチェックすると Unity 側で Mesh が両面化されます。
 - 負のスケールは部分的にしかサポートしていないので注意が必要です。
   - XYZ 全てが負の場合は正しく同期できますが、X だけ、Y だけ負のような場合も Unity 側では XYZ 全てが負として扱われてしまいます。"Bake Transform" オプションを使うとそのようなケースでも Mesh は一致するようになりますが、モディファイアの情報が失われます。
@@ -205,12 +205,10 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
 
   - 古いバージョンをインストール済みの場合、**パッケージインポート前に一度 Unity を終了し、Assets/UTJ/MeshSync を削除** しておくと確実です。プラグイン dll がロードされていると更新に失敗するためです。
   - インポート後は GameObject -> MeshSync メニューが追加されているはずです
-- GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。このサーバーオブジェクトが同期処理を担当します ([MeshSyncServer]([#mesh_sync_server))
-- GameObject -> MeshSync -> Create Cache Player で事前にエクスポートしておいたキャッシュを再生するプレイヤーを作成します  ([SceneCachePlayer]([#scene_cache_player))。現在 Maya, 3ds Max, Modo, Blender 用のプラグインがキャッシュのエクスポートをサポートしています。
+- GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。このサーバーオブジェクトが同期処理を担当します
+- GameObject -> MeshSync -> Create Cache Player で事前にエクスポートしておいたキャッシュを再生するプレイヤーを作成します。現在 Maya, 3ds Max, Modo, Blender 用のプラグインがキャッシュのエクスポートをサポートしています。
 
 <img align="right" src="https://user-images.githubusercontent.com/1488611/49274442-c40c4400-f4bb-11e8-99d6-3257cdbe7320.png" height=400>
-
-##### Mesh Sync Server
 
 - Root Object
   - 同期により生成されるオブジェクト群のルートとなるオブジェクトを指定します。未設定の場合、ルートにオブジェクトが生成されていきます。
@@ -228,12 +226,19 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
 &nbsp;
 
 - マテリアルリスト
-  - MeshSyncServer はマテリアルのリストを保持しています。このリストにマテリアルを設定すると、対応するオブジェクトに適切にアサインされます。
+  - MeshSyncServer はマテリアルのリストを保持しています。このリストのマテリアルを変更すると、対応するオブジェクトにも変更が反映されます。
+  - "Track Material Assignment" が有効な場合、オブジェクトのマテリアルを変更した場合それがマテリアルリストに反映され、同じマテリアルを持つ他のオブジェクトにも変更が伝播されます。
+  - "Import List" "Export List" でリストの保存と読み込みができます。キャッシュファイルを更新する場合、これを用いることでマテリアルを引き継ぐことができます。
+
+- Animation Tweak
+基本的なアニメーションの調整がここで可能です。
+  - "Override Frame Rate" でフレームレートを変更できます。Unity 標準の "Set Sample Rate" と異なり、変更するのは純粋にフレームレートだけでキーの時間 (=アニメーションの長さ) は変えません。24 FPS のアニメーションを 60 FPS の環境で再生するとガタガタになってしまうので、そのような場合に無理矢理アニメーションを 120 FPS に変えて緩和する、というような用途を想定したものです。
+  - "Time Scale" で時間のスケーリングを行います。例えば 0.5 を適用すると倍速になります。"Offset" は指定秒分オフセットを加えます。例えば 5 秒のアニメーションに対して スケール -1、オフセット -5 を適用すると逆再生になります。
+  - "Drop Keyframe" はフレームの間引きを行います。30 個のキーが打たれているアニメーションに Step=2 で適用すると奇数フレームを間引き、15 フレームのアニメーションになります。同様に Step=3 だと 10 フレームになります。
+
 - アセット化
   - DCC ツール側の編集によって生成された Mesh 郡は、そのままではそのシーン内にしか存在できないオブジェクトです。他のシーンやプロジェクトへ持ち出せるようにするにはアセットファイルとして保存する必要があります。
   MeshSyncServer の "Export Mesh" ボタンを押すとそのアセット化が行われます。("Asset Export Path" で指定されたディレクトリにファイルが生成されます)  
-
-##### Scene Cache Player
 
 
 ## Tips や注意事項など
