@@ -4,6 +4,9 @@
     <Filter Include="mscore">
       <UniqueIdentifier>{d039ae94-4ce1-4932-b8b3-d9e219efd163}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mscore\GraphicsInterface">
+      <UniqueIdentifier>{6a482ba6-f16f-4216-a287-d4fce062bb12}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mscore\pch.cpp">
@@ -21,6 +24,15 @@
     <ClCompile Include="mscore\msCoreAPI.cpp">
       <Filter>mscore</Filter>
     </ClCompile>
+    <ClCompile Include="mscore\GraphicsInterface\msGraphicsInterfaceD3D11.cpp">
+      <Filter>mscore\GraphicsInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="mscore\GraphicsInterface\msGraphicsInterfaceD3D12.cpp">
+      <Filter>mscore\GraphicsInterface</Filter>
+    </ClCompile>
+    <ClCompile Include="mscore\GraphicsInterface\msGraphicsInterface.cpp">
+      <Filter>mscore\GraphicsInterface</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mscore\pch.h">
@@ -28,6 +40,9 @@
     </ClInclude>
     <ClInclude Include="mscore\msCoreAPI.h">
       <Filter>mscore</Filter>
+    </ClInclude>
+    <ClInclude Include="mscore\GraphicsInterface\msGraphicsInterface.h">
+      <Filter>mscore\GraphicsInterface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

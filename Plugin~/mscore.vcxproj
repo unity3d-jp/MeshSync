@@ -11,6 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="mscore\GraphicsInterface\msGraphicsInterface.cpp" />
+    <ClCompile Include="mscore\GraphicsInterface\msGraphicsInterfaceD3D11.cpp" />
+    <ClCompile Include="mscore\GraphicsInterface\msGraphicsInterfaceD3D12.cpp" />
     <ClCompile Include="mscore\msCoreAPI.cpp" />
     <ClCompile Include="mscore\msSceneCacheAPI.cpp" />
     <ClCompile Include="mscore\msServerAPI.cpp" />
@@ -20,6 +23,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mscore\GraphicsInterface\msGraphicsInterface.h" />
     <ClInclude Include="mscore\msCoreAPI.h" />
     <ClInclude Include="mscore\pch.h" />
   </ItemGroup>
