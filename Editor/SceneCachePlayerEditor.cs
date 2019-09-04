@@ -31,6 +31,7 @@ namespace UTJ.MeshSyncEditor
             player.assetDir = new DataPath(DataPath.Root.DataPath, string.Format("SceneCache/{0}", go.name));
             player.updateMeshColliders = false;
             player.progressiveDisplay = false;
+            player.markMeshesDynamic = true;
             player.dontSaveAssetsInScene = true;
             player.findMaterialFromAssets = false;
             if (!player.OpenCache(path))

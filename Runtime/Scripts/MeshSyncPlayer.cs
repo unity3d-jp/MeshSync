@@ -147,6 +147,7 @@ namespace UTJ.MeshSync
         [SerializeField] protected ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
         [SerializeField] protected bool m_logging = true;
         [SerializeField] protected bool m_profiling = false;
+        [SerializeField] protected bool m_markMeshesDynamic = false;
         [SerializeField] protected bool m_dontSaveAssetsInScene = false;
 
         [SerializeField] protected Material m_dummyMaterial;
@@ -306,6 +307,11 @@ namespace UTJ.MeshSync
             set { m_profiling = value; }
         }
 
+        public bool markMeshesDynamic
+        {
+            get { return m_markMeshesDynamic; }
+            set { m_markMeshesDynamic = value; }
+        }
         public bool dontSaveAssetsInScene
         {
             get { return m_dontSaveAssetsInScene; }
@@ -1250,6 +1256,8 @@ namespace UTJ.MeshSync
                     {
                         rec.mesh = new Mesh();
                         rec.mesh.name = trans.name;
+                        if (m_markMeshesDynamic)
+                            rec.mesh.MarkDynamic();
                         if (m_dontSaveAssetsInScene)
                             rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
 #if UNITY_2017_3_OR_NEWER
