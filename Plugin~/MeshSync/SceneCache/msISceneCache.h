@@ -24,6 +24,7 @@ public:
     ScenePtr getByIndex(size_t i) override;
     ScenePtr getByTime(float t, bool lerp) override;
     void refresh() override;
+    void preload(int f) override;
     void preloadAll() override;
 
     const AnimationCurvePtr getTimeCurve() const override;
@@ -34,6 +35,7 @@ protected:
     ScenePtr postprocess(ScenePtr& sp, size_t scene_index);
     bool kickPreload(size_t i);
     void waitAllPreloads();
+    void popHistory();
 
     struct SceneSegment
     {

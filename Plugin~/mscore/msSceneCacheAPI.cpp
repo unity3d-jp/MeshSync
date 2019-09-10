@@ -100,6 +100,14 @@ msAPI void msISceneCacheRefesh(ms::ISceneCache *self)
     self->refresh();
 }
 
+msAPI void msISceneCachePreload(ms::ISceneCache *self, int v)
+{
+    msDbgBreadcrumb();
+    if (!self)
+        return;
+    self->preload(v);
+}
+
 msAPI const ms::AnimationCurve* msISceneCacheGetTimeCurve(ms::ISceneCache *self)
 {
     msDbgBreadcrumb();

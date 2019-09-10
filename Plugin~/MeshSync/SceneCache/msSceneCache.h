@@ -104,6 +104,7 @@ public:
     virtual ScenePtr getByIndex(size_t i) = 0;
     virtual ScenePtr getByTime(float t, bool lerp) = 0;
     virtual void refresh() = 0;
+    virtual void preload(int f) = 0;
     virtual void preloadAll() = 0;
 
     virtual const AnimationCurvePtr getTimeCurve() const = 0;

@@ -2034,6 +2034,7 @@ namespace UTJ.MeshSync
         [DllImport(Lib.name)] static extern SceneData msISceneCacheGetSceneByIndex(IntPtr self, int i);
         [DllImport(Lib.name)] static extern SceneData msISceneCacheGetSceneByTime(IntPtr self, float time, bool lerp);
         [DllImport(Lib.name)] static extern void msISceneCacheRefesh(IntPtr self);
+        [DllImport(Lib.name)] static extern void msISceneCachePreload(IntPtr self, int frame);
 
         [DllImport(Lib.name)] static extern AnimationCurveData msISceneCacheGetTimeCurve(IntPtr self);
         [DllImport(Lib.name)] static extern AnimationCurveData msISceneCacheGetFrameCurve(IntPtr self, int baseFrame);
@@ -2083,6 +2084,10 @@ namespace UTJ.MeshSync
         public void Refresh()
         {
             msISceneCacheRefesh(self);
+        }
+        public void Preload(int frame)
+        {
+            msISceneCachePreload(self, frame);
         }
 
         public AnimationCurve GetTimeCurve(InterpolationMode im)

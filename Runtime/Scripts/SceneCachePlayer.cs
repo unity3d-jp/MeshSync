@@ -252,7 +252,7 @@ namespace UTJ.MeshSync
                 else if(m_sceneCache.preloadLength != m_preloadLength)
                 {
                     m_sceneCache.preloadLength = m_preloadLength;
-                    m_sceneCache.GetSceneByTime(m_time, m_interpolation);
+                    m_sceneCache.Preload(m_sceneCache.GetFrame(m_time));
                 }
             }
         }

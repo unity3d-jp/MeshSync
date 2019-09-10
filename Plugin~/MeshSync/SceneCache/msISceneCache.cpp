@@ -283,10 +283,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t scene_index, bool wait_preload)
     // push & pop history
     if (!m_header.oscs.strip_unchanged || scene_index != 0) {
         m_history.push_back(scene_index);
-        while (m_history.size() > m_iscs.max_history) {
-            m_records[m_history.front()].scene.reset();
-            m_history.pop_front();
-        }
+        popHistory();
     }
     return ret;
 }
@@ -314,12 +311,7 @@ ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp, size_t scene_index)
     }
 
     // kick preload
-    if (m_iscs.preload_length > 0 && scene_index + 1 < m_records.size()) {
-        int begin_frame = (int)scene_index + 1;
-        int end_frame = std::min((int)scene_index + m_iscs.preload_length, (int)m_records.size());
-        for (int f = begin_frame; f < end_frame; ++f)
-            kickPreload(f);
-    }
+    preload((int)scene_index);
 
     return ret;
 }
@@ -433,12 +425,32 @@ void ISceneCacheImpl::refresh()
     m_last_diff = nullptr;
 }
 
+void ISceneCacheImpl::preload(int frame)
+{
+    // kick preload
+    if (m_iscs.preload_length > 0 && frame + 1 < m_records.size()) {
+        int begin_frame = frame + 1;
+        int end_frame = std::min(frame + m_iscs.preload_length, (int)m_records.size());
+        for (int f = begin_frame; f < end_frame; ++f)
+            kickPreload(f);
+    }
+    popHistory();
+}
+
 void ISceneCacheImpl::preloadAll()
 {
     size_t n = m_records.size();
     m_iscs.max_history = (int)n + 1;
     for (size_t i = 0; i < n; ++i)
         kickPreload(i);
+}
+
+void ISceneCacheImpl::popHistory()
+{
+    while (m_history.size() > m_iscs.max_history) {
+        m_records[m_history.front()].scene.reset();
+        m_history.pop_front();
+    }
 }
 
 const AnimationCurvePtr ISceneCacheImpl::getTimeCurve() const
