@@ -24,6 +24,23 @@ msAPI void msISceneCacheClose(ms::ISceneCache *self)
     msDbgBreadcrumb();
     delete self;
 }
+
+msAPI int msISceneCacheGetPreloadLength(ms::ISceneCache *self)
+{
+    msDbgBreadcrumb();
+    if (!self)
+        return 0;
+    return self->getPreloadLength();
+}
+
+msAPI void msISceneCacheSetPreloadLength(ms::ISceneCache *self, int v)
+{
+    msDbgBreadcrumb();
+    if (!self)
+        return;
+    self->setPreloadLength(v);
+}
+
 msAPI float msISceneCacheGetSampleRate(ms::ISceneCache *self)
 {
     msDbgBreadcrumb();

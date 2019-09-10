@@ -76,13 +76,14 @@ struct ISceneCacheSettingsBase
 {
     uint32_t convert_scenes : 1;
     uint32_t enable_diff : 1;
-    uint32_t preload_scenes : 1;
     uint32_t generate_velocities : 1;
     int max_history = 3;
+    int preload_length = 1;
 
     SceneImportSettings sis;
 
     ISceneCacheSettingsBase();
+    void setPreloadLength(int n);
 };
 struct ISceneCacheSettings : ISceneCacheSettingsBase, SceneImportSettings {};
 
@@ -92,6 +93,9 @@ public:
     virtual ~ISceneCache() {}
     virtual bool valid() const = 0;
 
+    virtual int getPreloadLength() const = 0;
+    virtual void setPreloadLength(int v) = 0;
+
     virtual float getSampleRate() const = 0;
     virtual TimeRange getTimeRange() const = 0;
     virtual size_t getNumScenes() const = 0;
@@ -100,6 +104,7 @@ public:
     virtual ScenePtr getByIndex(size_t i) = 0;
     virtual ScenePtr getByTime(float t, bool lerp) = 0;
     virtual void refresh() = 0;
+    virtual void preloadAll() = 0;
 
     virtual const AnimationCurvePtr getTimeCurve() const = 0;
     virtual const AnimationCurvePtr getFrameCurve(int base_frame) = 0;

@@ -29,6 +29,7 @@ namespace UTJ.MeshSync
         [SerializeField] bool m_interpolation = false;
         [SerializeField] BaseFrame m_baseFrame = BaseFrame.One;
         [SerializeField] int m_frame = 1;
+        [SerializeField] int m_preloadLength = 1;
 
         SceneCacheData m_sceneCache;
         TimeRange m_timeRange;
@@ -83,6 +84,11 @@ namespace UTJ.MeshSync
         {
             get { return m_frame; }
             set { m_frame = value; }
+        }
+        public int preloadLength
+        {
+            get { return m_preloadLength; }
+            set { m_preloadLength = value; }
         }
 
 #if UNITY_EDITOR
@@ -208,36 +214,45 @@ namespace UTJ.MeshSync
                 m_time = m_sceneCache.GetTime(m_frame - offset);
             }
 
-            if (m_sceneCache && m_time != m_timePrev)
+            if (m_sceneCache)
             {
-                m_timePrev = m_time;
-#if UNITY_EDITOR
-                ulong sceneGetBegin = Misc.GetTimeNS();
-#endif
-                // get scene
-                var scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
-#if UNITY_EDITOR
-                m_dbgSceneGetTime = Misc.NS2MS(Misc.GetTimeNS() - sceneGetBegin);
-#endif
-
-                if (scene)
+                if (m_time != m_timePrev)
                 {
+                    m_timePrev = m_time;
+                    m_sceneCache.preloadLength = m_preloadLength;
 #if UNITY_EDITOR
-                    ulong sceneUpdateBegin = Misc.GetTimeNS();
+                    ulong sceneGetBegin = Misc.GetTimeNS();
 #endif
-                    // update scene
-                    this.BeforeUpdateScene();
-                    this.UpdateScene(scene);
-                    this.AfterUpdateScene();
+                    // get scene
+                    var scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
 #if UNITY_EDITOR
-                    this.sortEntities = false;
+                    m_dbgSceneGetTime = Misc.NS2MS(Misc.GetTimeNS() - sceneGetBegin);
+#endif
 
-                    if (m_profiling)
+                    if (scene)
                     {
-                        m_dbgSceneUpdateTime = Misc.NS2MS(Misc.GetTimeNS() - sceneUpdateBegin);
-                        UpdateProfileReport(scene);
-                    }
+#if UNITY_EDITOR
+                        ulong sceneUpdateBegin = Misc.GetTimeNS();
 #endif
+                        // update scene
+                        this.BeforeUpdateScene();
+                        this.UpdateScene(scene);
+                        this.AfterUpdateScene();
+#if UNITY_EDITOR
+                        this.sortEntities = false;
+
+                        if (m_profiling)
+                        {
+                            m_dbgSceneUpdateTime = Misc.NS2MS(Misc.GetTimeNS() - sceneUpdateBegin);
+                            UpdateProfileReport(scene);
+                        }
+#endif
+                    }
+                }
+                else if(m_sceneCache.preloadLength != m_preloadLength)
+                {
+                    m_sceneCache.preloadLength = m_preloadLength;
+                    m_sceneCache.GetSceneByTime(m_time, m_interpolation);
                 }
             }
         }

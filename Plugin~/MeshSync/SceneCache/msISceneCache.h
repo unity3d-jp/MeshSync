@@ -13,6 +13,9 @@ public:
     ~ISceneCacheImpl() override;
     bool valid() const override;
 
+    int getPreloadLength() const override;
+    void setPreloadLength(int v) override;
+
     float getSampleRate() const override;
     size_t getNumScenes() const override;
     TimeRange getTimeRange() const override;
@@ -21,11 +24,10 @@ public:
     ScenePtr getByIndex(size_t i) override;
     ScenePtr getByTime(float t, bool lerp) override;
     void refresh() override;
+    void preloadAll() override;
 
     const AnimationCurvePtr getTimeCurve() const override;
     const AnimationCurvePtr getFrameCurve(int base_frame) override;
-
-    void preloadAll();
 
 protected:
     ScenePtr getByIndexImpl(size_t i, bool wait_preload = true);
