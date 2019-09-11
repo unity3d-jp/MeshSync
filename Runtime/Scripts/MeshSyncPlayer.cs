@@ -563,7 +563,7 @@ namespace UTJ.MeshSync
             Transform ret = null;
             if (parent == null)
             {
-                var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+                var roots = SceneManager.GetActiveScene().GetRootGameObjects();
                 foreach (var go in roots)
                 {
                     if (go.name == name)
@@ -2133,27 +2133,46 @@ namespace UTJ.MeshSync
         #region Tools
         public bool ApplyMaterialList(MaterialList ml)
         {
-            if (ml == null || ml.materials == null || ml.materials.Count == 0)
+            if (ml == null)
                 return false;
 
-            bool updated = false;
-            int materialCount = Mathf.Min(m_materialList.Count, ml.materials.Count);
-            for (int mi = 0; mi < materialCount; ++mi)
+            if (ml.materials != null || ml.materials.Count != 0)
             {
-                var src = ml.materials[mi];
-                if (src.material != null)
+                bool updated = false;
+                int materialCount = Mathf.Min(m_materialList.Count, ml.materials.Count);
+                for (int mi = 0; mi < materialCount; ++mi)
                 {
-                    var dst = m_materialList.Find(a => a.id == src.id);
-                    if (dst != null)
+                    var src = ml.materials[mi];
+                    if (src.material != null)
                     {
-                        dst.material = src.material;
-                        updated = true;
+                        var dst = m_materialList.Find(a => a.id == src.id);
+                        if (dst != null)
+                        {
+                            dst.material = src.material;
+                            updated = true;
+                        }
+                    }
+                }
+                if (updated)
+                    ReassignMaterials();
+            }
+
+            if (ml.nodes != null)
+            {
+                foreach (var node in ml.nodes)
+                {
+                    bool dummy = false;
+                    var trans = FindOrCreateObjectByPath(node.path, false, ref dummy);
+                    if (trans != null)
+                    {
+                        var renderer = trans.GetComponent<Renderer>();
+                        if (renderer != null)
+                            renderer.sharedMaterials = node.materials;
                     }
                 }
             }
-            if (updated)
-                ReassignMaterials();
-            return updated;
+
+            return true;
         }
 
 #if UNITY_EDITOR
@@ -2289,7 +2308,26 @@ namespace UTJ.MeshSync
                 path = path + ".asset";
 
             var ml = ScriptableObject.CreateInstance<MaterialList>();
+            // material list
             ml.materials = m_materialList;
+
+            // extract per-node materials
+            Action<Transform> exportNode = (n) => {
+                foreach (var r in n.GetComponentsInChildren<Renderer>())
+                {
+                    ml.nodes.Add(new MaterialList.Node
+                    {
+                        path = BuildPath(r.transform),
+                        materials = r.sharedMaterials,
+                    });
+                }
+            };
+            if (m_rootObject != null)
+                exportNode(m_rootObject);
+            else
+                foreach (var root in SceneManager.GetActiveScene().GetRootGameObjects())
+                    exportNode(root.transform);
+
             AssetDatabase.CreateAsset(ml, path);
             return true;
         }
