@@ -23,8 +23,5 @@
 #include <type_traits>
 
 #include "muConfig.h"
-#ifdef muEnableHalf
-    #include <OpenEXR/half.h>
-#endif // muEnableHalf
 
 #define muImpl
