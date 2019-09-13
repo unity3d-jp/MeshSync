@@ -259,4 +259,8 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
 - [BlendShapeBuilder](https://github.com/unity3d-jp/BlendShapeBuilder): Unity 上で BlendShape を構築できるようにするツール
 
 ## ライセンス
-[MIT](LICENSE.txt), ただし Blender プラグインは [GPL3](Plugin/MeshSyncClientBlender/LICENSE.txt) (Blender のソースの一部を使っているため)
+- [MIT](LICENSE.txt)
+- [Third Party Notices](Third%20Party%20Notices.md)
+- [Contributing](CONTRIBUTING_EN.md)
+
+
