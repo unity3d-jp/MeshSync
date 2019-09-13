@@ -164,7 +164,8 @@ bool IsMesh(Object *obj)
 {
     if (!obj)
         return false;
-    return obj->SuperClassID() == GEOMOBJECT_CLASS_ID;
+    return obj->SuperClassID() == GEOMOBJECT_CLASS_ID ||
+        obj->CanConvertToType(triObjectClassID);
 }
 
 TriObject* GetSourceMesh(INode * n, bool& needs_delete)
