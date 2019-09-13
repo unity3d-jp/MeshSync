@@ -161,6 +161,8 @@ namespace UTJ.MeshSyncEditor
                     var preloadLength = so.FindProperty("m_preloadLength");
                     preloadLength.intValue = EditorGUILayout.IntSlider("Preload Length", preloadLength.intValue, 0, t.frameCount);
                 }
+
+                EditorGUILayout.Space();
             }
         }
     }

@@ -1,4 +1,4 @@
-* text=true
+* text=auto
 *.h text
 *.c text
 *.hpp text

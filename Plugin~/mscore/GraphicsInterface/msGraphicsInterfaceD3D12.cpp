@@ -32,6 +32,7 @@ private:
     ID3D12FencePtr m_fence;
     uint64_t m_fence_value = 0;
     HANDLE m_fence_event;
+    std::vector<ID3D12ResourcePtr> m_staging_buffers;
 };
 
 
@@ -80,6 +81,7 @@ void GraphicsInterfaceD3D12::release()
 
 bool GraphicsInterfaceD3D12::finish()
 {
+    m_staging_buffers.clear();
     return false;
 }
 
@@ -94,37 +96,33 @@ bool GraphicsInterfaceD3D12::writeBuffer(void *dst_buf, const void *src_mem, siz
         return false;
     memcpy(mapped, src_mem, write_size);
     staging->Unmap(0, nullptr);
+    m_staging_buffers.push_back(staging);
 
     return true;
 }
 
 ID3D12ResourcePtr GraphicsInterfaceD3D12::createStagingBuffer(size_t size)
 {
-    D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_GENERIC_READ;
-
-    D3D12_HEAP_PROPERTIES heap = {};
-    heap.Type = D3D12_HEAP_TYPE_DEFAULT;
-    heap.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    heap.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    heap.CreationNodeMask = 0;
-    heap.VisibleNodeMask = 0;
-    heap.Type = D3D12_HEAP_TYPE_UPLOAD;
+    D3D12_HEAP_PROPERTIES heap = {
+        D3D12_HEAP_TYPE_UPLOAD,
+        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+        D3D12_MEMORY_POOL_UNKNOWN,
+        0,
+        0,
+    };
 
     D3D12_RESOURCE_DESC desc = {};
     desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    desc.Alignment = 0;
     desc.Width = size;
     desc.Height = 1;
     desc.DepthOrArraySize = 1;
     desc.MipLevels = 1;
     desc.Format = DXGI_FORMAT_UNKNOWN;
     desc.SampleDesc.Count = 1;
-    desc.SampleDesc.Quality = 0;
     desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
     ID3D12ResourcePtr ret;
-    m_device->CreateCommittedResource(&heap, D3D12_HEAP_FLAG_NONE, &desc, state, nullptr, IID_PPV_ARGS(&ret));
+    m_device->CreateCommittedResource(&heap, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&ret));
     return ret;
 }
 
