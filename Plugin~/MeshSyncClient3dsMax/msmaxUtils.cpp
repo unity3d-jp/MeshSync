@@ -15,29 +15,47 @@ TimeValue ToTicks(float sec)
     return SecToTicks(sec);
 }
 
+
+// 3ds max allows name to contain '/' or '\\'. replace these with '_'.
+static void SanitizeName(std::wstring& name)
+{
+    for (auto& c : name) {
+        if (c == L'/' || c == L'\\')
+            c = '_';
+    }
+}
+
 std::wstring GetNameW(INode *n)
 {
-    return n->GetName();
+    std::wstring ret = n->GetName();
+    SanitizeName(ret);
+    return ret;
 }
 std::string GetName(INode *n)
 {
-    return mu::ToMBS(n->GetName());
+    return mu::ToMBS(GetNameW(n));
 }
 
 std::wstring GetPathW(INode *n)
 {
     std::wstring ret;
     auto parent = n->GetParentNode();
-    if (parent && parent->GetObjectRef()) {
+    if (parent && parent->GetObjectRef())
         ret = GetPathW(parent);
-    }
     ret += L'/';
-    ret += n->GetName();
+    ret += GetNameW(n);
     return ret;
 }
 std::string GetPath(INode *n)
 {
     return mu::ToMBS(GetPathW(n));
+}
+
+std::string GetName(MtlBase *n)
+{
+    std::wstring ret = n->GetName().data();
+    SanitizeName(ret);
+    return mu::ToMBS(ret);
 }
 
 std::string GetCurrentMaxFileName()

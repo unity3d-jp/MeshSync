@@ -198,6 +198,14 @@ void Scene::sanitizeHierarchyPath(std::string& /*path*/)
     // nothing to do for now
 }
 
+void Scene::sanitizeObjectName(std::string& name)
+{
+    for (auto& c : name) {
+        if (c == '\\' || c == '/')
+            c = '_';
+    }
+}
+
 void Scene::import(const SceneImportSettings& cv)
 {
     // receive and convert assets
@@ -245,6 +253,8 @@ void Scene::import(const SceneImportSettings& cv)
     });
 
     for (auto& asset : assets) {
+        sanitizeObjectName(asset->name);
+
         if (asset->getAssetType() == AssetType::Animation) {
             auto& clip = static_cast<AnimationClip&>(*asset);
             parallel_for_each(clip.animations.begin(), clip.animations.end(), [&](AnimationPtr& anim) {

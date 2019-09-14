@@ -667,7 +667,7 @@ void msmaxContext::exportMaterials()
             auto dst = ms::Material::create();
             dst->id = m_material_ids.getID(mtl);
             dst->index = material_index++;
-            dst->name = mu::ToMBS(mtl->GetName().data());
+            dst->name = GetName(mtl);
 
             auto& dstmat = ms::AsStandardMaterial(*dst);
             dstmat.setColor(to_color(mtl->GetDiffuse()));

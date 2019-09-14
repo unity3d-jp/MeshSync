@@ -10,6 +10,8 @@ std::wstring GetNameW(INode *n);
 std::string  GetName(INode *n);
 std::wstring GetPathW(INode *n);
 std::string  GetPath(INode *n);
+std::string  GetName(MtlBase *n);
+
 // get currently opened filename. '.max' is excluded. 'Untitled' if no file is opened.
 std::string GetCurrentMaxFileName();
 std::tuple<int, int> GetActiveFrameRange();

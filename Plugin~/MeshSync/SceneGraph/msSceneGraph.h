@@ -106,6 +106,7 @@ public:
     uint64_t hash() const;
 
     static void sanitizeHierarchyPath(std::string& path);
+    static void sanitizeObjectName(std::string& name);
     void import(const SceneImportSettings& cv);
 
     TransformPtr findEntity(const std::string& path) const;
