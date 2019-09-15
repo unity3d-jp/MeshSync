@@ -108,7 +108,7 @@ void msblenContext::exportMaterials()
     auto bpy_data = bl::BData(bl::BContext::get().data());
     for (auto *mat : bpy_data.materials()) {
         auto ret = ms::Material::create();
-        ret->name = mat->id.name + 2;
+        ret->name = get_name(mat);
         ret->id = m_material_ids.getID(mat);
         ret->index = midx++;
 

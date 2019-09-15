@@ -3,15 +3,34 @@
 #include "msblenUtils.h"
 #include "msblenBinder.h"
 
+std::string get_name(const Material *obj)
+{
+    std::string ret;
+    if (obj) {
+        ret.assign(obj->id.name + 2);
+        mu::SanitizeNodeName(ret);
+    }
+    return ret;
+}
 
 std::string get_name(const Object *obj)
 {
-    return obj ? std::string(obj->id.name + 2) : "";
+    std::string ret;
+    if (obj) {
+        ret.assign(obj->id.name + 2);
+        mu::SanitizeNodeName(ret);
+    }
+    return ret;
 }
 
 std::string get_name(const Bone *obj)
 {
-    return obj ? std::string(obj->name) : "";
+    std::string ret;
+    if (obj) {
+        ret.assign(obj->name);
+        mu::SanitizeNodeName(ret);
+    }
+    return ret;
 }
 
 std::string get_path(const Object *obj)
@@ -28,7 +47,7 @@ std::string get_path(const Object *obj)
         }
     }
     ret += '/';
-    ret += obj->id.name + 2;
+    ret += get_name(obj);
     return ret;
 }
 std::string get_path(const Object *arm, const Bone *obj)
@@ -39,7 +58,7 @@ std::string get_path(const Object *arm, const Bone *obj)
     else
         ret += get_path(arm);
     ret += '/';
-    ret += obj->name;
+    ret += get_name(obj);
     return ret;
 }
 

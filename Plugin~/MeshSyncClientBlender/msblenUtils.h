@@ -2,6 +2,7 @@
 #include "MeshUtils/MeshUtils.h"
 
 
+std::string get_name(const Material *obj);
 std::string get_name(const Object *obj);
 std::string get_name(const Bone *obj);
 std::string get_path(const Object *obj);
