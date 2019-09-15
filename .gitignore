@@ -33,6 +33,8 @@ TestLocal.meta
 
 MeshSync~/*.csproj
 MeshSync~/*.sln
+MeshSync~/Assets/SceneCache*
+MeshSync~/Assets/UTJ/RaytracedHardShadow*
 Plugin~/dist/
 Plugin~/MeshSyncClientBlender2.*/
 Plugin~/MeshSyncClientMaya20*/

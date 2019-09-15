@@ -13,9 +13,18 @@ std::string GetName(CLxUser_Item& obj)
 {
     if (!valid(obj))
         return std::string();
-    const char *name;
-    obj.UniqueName(&name);
-    return name ? name : std::string();
+
+    std::string ret;
+    {
+        const char *name = nullptr;
+        obj.UniqueName(&name);
+        if (name) {
+            ret = name;
+            // modo allows name to contain '/'
+            mu::SanitizeNodeName(ret);
+        }
+    }
+    return ret;
 }
 
 std::string GetPath(CLxUser_Item& obj)

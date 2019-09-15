@@ -563,6 +563,7 @@ ms::MaterialPtr msmodoContext::exportMaterial(CLxUser_Item obj)
     auto ret = ms::Material::create();
     auto& dst = *ret;
     dst.name = ptag;
+    mu::SanitizeNodeName(dst.name);
     dst.id = m_material_ids.getID(obj);
     dst.index = ++m_material_index_seed;
 

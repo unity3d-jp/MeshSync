@@ -16,19 +16,11 @@ TimeValue ToTicks(float sec)
 }
 
 
-// 3ds max allows name to contain '/' or '\\'. replace these with '_'.
-static void SanitizeName(std::wstring& name)
-{
-    for (auto& c : name) {
-        if (c == L'/' || c == L'\\')
-            c = '_';
-    }
-}
-
 std::wstring GetNameW(INode *n)
 {
     std::wstring ret = n->GetName();
-    SanitizeName(ret);
+    // 3ds max allows name to contain '/'
+    mu::SanitizeNodeName(ret);
     return ret;
 }
 std::string GetName(INode *n)
@@ -54,7 +46,7 @@ std::string GetPath(INode *n)
 std::string GetName(MtlBase *n)
 {
     std::wstring ret = n->GetName().data();
-    SanitizeName(ret);
+    mu::SanitizeNodeName(ret);
     return mu::ToMBS(ret);
 }
 
