@@ -245,4 +245,9 @@ Also, dll is different in version 4.7 and later. This is due to changes to the b
 - [BlendShapeBuilder](https://github.com/unity3d-jp/BlendShapeBuilder): Tool for building BlendShapes in Unity
 
 ## License
-[MIT](LICENSE.txt), the Blender plugin license is [GPL3](Plugin/MeshSyncClientBlender/LICENSE.txt) (because a portion of the Blender source code is used)
+- [MIT](LICENSE.txt)
+- [Third Party Notices](Third%20Party%20Notices.md)
+- [Contributing](CONTRIBUTING_EN.md)
+
+
+
