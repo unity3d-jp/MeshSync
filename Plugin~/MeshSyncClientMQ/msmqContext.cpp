@@ -185,7 +185,8 @@ bool msmqContext::sendMeshes(MQDocument doc, bool dirty_all)
                 brec.bone_id = bid;
 
                 bone_manager.GetName(bid, name);
-                brec.name = ToMBS(name);
+                brec.name = mu::ToMBS(name);
+                mu::SanitizeNodeName(brec.name);
 
                 UINT parent;
                 bone_manager.GetParent(bid, parent);

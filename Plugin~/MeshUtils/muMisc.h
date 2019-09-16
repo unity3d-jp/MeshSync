@@ -24,6 +24,7 @@ std::wstring ToWCS(const std::string& src);
 
 void SanitizeNodeName(std::wstring& dst);
 void SanitizeNodeName(std::string& dst);
+void SanitizeNodeName(char *dst);
 std::string SanitizeFileName(const std::string& src);
 std::string GetFilename(const char *src);
 std::string GetFilename(const wchar_t *src);

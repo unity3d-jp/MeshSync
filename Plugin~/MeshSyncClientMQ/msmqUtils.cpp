@@ -5,6 +5,7 @@ std::string GetName(MQObject obj)
 {
     char name[MaxNameBuffer];
     obj->GetName(name, sizeof(name));
+    SanitizeNodeName(name);
     return ms::ToUTF8(name);
 }
 
@@ -12,6 +13,7 @@ std::string GetName(MQMaterial obj)
 {
     char name[MaxNameBuffer];
     obj->GetName(name, sizeof(name));
+    SanitizeNodeName(name);
     return ms::ToUTF8(name);
 }
 
@@ -20,8 +22,11 @@ static std::string GetPathImpl(MQDocument doc, MQObject obj)
     std::string ret;
     if (auto parent = doc->GetParentObject(obj))
         ret += GetPathImpl(doc, parent);
+
     char name[MaxNameBuffer];
     obj->GetName(name, sizeof(name));
+    SanitizeNodeName(name);
+
     ret += "/";
     ret += name;
     return ret;

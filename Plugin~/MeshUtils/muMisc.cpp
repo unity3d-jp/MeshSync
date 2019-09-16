@@ -148,6 +148,17 @@ void SanitizeNodeName(std::string& dst)
     }
 }
 
+void SanitizeNodeName(char *dst)
+{
+    if (!dst)
+        return;
+    for (int i = 0; dst[i] != '\0'; ++i) {
+        auto& c = dst[i];
+        if (c == '/' || c == '\\')
+            c = '_';
+    }
+}
+
 std::string SanitizeFileName(const std::string& src)
 {
     std::string ret = src;
