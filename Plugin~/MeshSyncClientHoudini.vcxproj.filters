@@ -1,18 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="MeshSyncClientHoudini\mshouSOP.cpp">
+    <ClCompile Include="MeshSyncClientHoudini/pch.cpp">
       <Filter>MeshSyncClientHoudini</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientHoudini/pch.cpp">
+    <ClCompile Include="MeshSyncClientHoudini\mshouSOPSend.cpp">
       <Filter>MeshSyncClientHoudini</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshSyncClientHoudini\mshouSOP.h">
+    <ClInclude Include="MeshSyncClientHoudini/pch.h">
       <Filter>MeshSyncClientHoudini</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncClientHoudini/pch.h">
+    <ClInclude Include="MeshSyncClientHoudini\mshouSOPSend.h">
       <Filter>MeshSyncClientHoudini</Filter>
     </ClInclude>
   </ItemGroup>

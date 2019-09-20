@@ -36,3 +36,16 @@
 // Houdini SDK includes
 
 #include <SOP/SOP_Node.h>
+#include <SOP/SOP_Guide.h>
+#include <GU/GU_Detail.h>
+#include <GA/GA_Iterator.h>
+#include <OP/OP_AutoLockInputs.h>
+#include <OP/OP_Operator.h>
+#include <OP/OP_OperatorTable.h>
+#include <PRM/PRM_Include.h>
+#include <UT/UT_DSOVersion.h>
+#include <UT/UT_Interrupt.h>
+#include <UT/UT_Matrix3.h>
+#include <UT/UT_Matrix4.h>
+#include <UT/UT_Vector3.h>
+#include <SYS/SYS_Math.h>
