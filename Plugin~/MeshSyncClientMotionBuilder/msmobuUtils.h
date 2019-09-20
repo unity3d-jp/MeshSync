@@ -23,7 +23,7 @@ bool IsBone(FBModel *src);
 bool IsMesh(FBModel *src);
 bool IsVisibleInHierarchy(FBModel *src);
 
-const char* GetName(FBModel *src);
+std::string GetName(FBComponent *src);
 std::string GetPath(FBModel *src);
 std::tuple<double, double> GetTimeRange(FBTake *take);
 

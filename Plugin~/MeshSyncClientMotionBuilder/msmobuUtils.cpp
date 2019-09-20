@@ -34,9 +34,11 @@ bool IsVisibleInHierarchy(FBModel *src)
     return src->Visibility;
 }
 
-const char* GetName(FBModel *src)
+std::string GetName(FBComponent *src)
 {
-    return src->LongName;
+    std::string ret = src->LongName;
+    mu::SanitizeNodeName(ret);
+    return ret;
 }
 
 std::string GetPath(FBModel *src)

@@ -795,7 +795,7 @@ bool msmobuDevice::exportMaterial(FBMaterial* src, int index)
 
     dst->id = rec.id;
     dst->index = index;
-    dst->name = src->LongName;
+    dst->name = GetName(src);
 
     auto& stdmat = ms::AsStandardMaterial(*dst);
     stdmat.setColor(to_float4(src->Diffuse));
