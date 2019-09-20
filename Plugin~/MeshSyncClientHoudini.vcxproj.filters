@@ -4,7 +4,7 @@
     <ClCompile Include="MeshSyncClientHoudini/pch.cpp">
       <Filter>MeshSyncClientHoudini</Filter>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientHoudini\mshouSOPSend.cpp">
+    <ClCompile Include="MeshSyncClientHoudini\mshouROPSend.cpp">
       <Filter>MeshSyncClientHoudini</Filter>
     </ClCompile>
   </ItemGroup>
@@ -12,7 +12,7 @@
     <ClInclude Include="MeshSyncClientHoudini/pch.h">
       <Filter>MeshSyncClientHoudini</Filter>
     </ClInclude>
-    <ClInclude Include="MeshSyncClientHoudini\mshouSOPSend.h">
+    <ClInclude Include="MeshSyncClientHoudini\mshouROPSend.h">
       <Filter>MeshSyncClientHoudini</Filter>
     </ClInclude>
   </ItemGroup>

@@ -14,11 +14,11 @@
     <ClCompile Include="MeshSyncClientHoudini/pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="MeshSyncClientHoudini\mshouSOPSend.cpp" />
+    <ClCompile Include="MeshSyncClientHoudini\mshouROPSend.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshSyncClientHoudini/pch.h" />
-    <ClInclude Include="MeshSyncClientHoudini\mshouSOPSend.h" />
+    <ClInclude Include="MeshSyncClientHoudini\mshouROPSend.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="MeshSync.vcxproj">
