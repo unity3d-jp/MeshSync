@@ -4,8 +4,9 @@ class mshouROPSend : public ROP_Node
 {
 using super = ROP_Node;
 public:
-    static PRM_Template myTemplateList[];
-    static OP_Node* myConstructor(OP_Network*, const char*, OP_Operator*);
+    static OP_TemplatePair *getTemplatePair();
+    static OP_VariablePair* getVariablePair();
+    static OP_Node* myConstructor(OP_Network *net, const char *name, OP_Operator *op);
 
     mshouROPSend(OP_Network *net, const char *name, OP_Operator *op);
     ~mshouROPSend() override;
