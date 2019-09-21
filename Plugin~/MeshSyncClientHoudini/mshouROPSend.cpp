@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "mshouROPSend.h"
 
-void newSopOperator(OP_OperatorTable *table)
+void newDriverOperator(OP_OperatorTable *table)
 {
     table->addOperator(new OP_Operator(
         "meshsync_send",
@@ -70,6 +70,8 @@ ROP_RENDER_CODE mshouROPSend::endRender()
 
 bool mshouROPSend::exportNode(OP_Node *n)
 {
+    //OBJ_Node::getDisplaySopPtr() and OBJ_Node::getRenderSopPtr().
+
     int num_children = n->getNchildren();
     for (int i = 0; i < num_children; ++i)
         exportNode(n->getChild(i));
