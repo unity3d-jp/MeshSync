@@ -26,7 +26,8 @@ bool msmqPluginBase::AutoSyncMeshesImpl(MQDocument doc)
     auto& settings = ctx.getSettings();
     if (m_scene_dirty && (settings.auto_sync || settings.recording)) {
         m_scene_dirty = false;
-        ctx.sendMeshes(doc, false);
+        bool dirty_all = settings.recording;
+        ctx.sendMeshes(doc, dirty_all);
         return true;
     }
     return false;

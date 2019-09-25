@@ -8,6 +8,7 @@ size_t countof(T(&arr)[N]) { return std::extent< T[N] >::value; }
 using nanosec = uint64_t;
 nanosec Now();
 inline float NS2MS(nanosec ns) { return (float)((double)ns / 1000000.0); }
+inline float NS2S(nanosec ns) { return (float)((double)ns / 1000000000.0); }
 
 void Print(const char *fmt, ...);
 void Print(const wchar_t *fmt, ...);

@@ -90,6 +90,7 @@ bool msmqContext::startRecording(std::string& path)
     ms::OSceneCacheSettings oscs;
     oscs.sample_rate = 60.0f;
     oscs.encoder_settings.zstd.compression_level = m_cache_settings.zstd_compression_level;
+    oscs.strip_unchanged = false;
     oscs.flatten_hierarchy = m_cache_settings.flatten_hierarchy;
     oscs.strip_normals = m_cache_settings.strip_normals;
     oscs.strip_tangents = m_cache_settings.strip_tangents;
@@ -529,7 +530,7 @@ void msmqContext::kickAsyncExport()
             sender->client_settings = m_settings.client_settings;
         }
         else if (auto writer = dynamic_cast<ms::AsyncSceneCacheWriter*>(exporter)) {
-            writer->time = ms::NS2MS(m_time - m_cache_settings.time_start);
+            writer->time = ms::NS2S(m_time - m_cache_settings.time_start);
         }
 
         auto& t = *exporter;
