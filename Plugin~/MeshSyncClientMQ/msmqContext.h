@@ -27,6 +27,22 @@ struct SyncSettings
     void validate();
 };
 
+struct CacheSettings
+{
+    std::string path;
+    ms::nanosec time_start = 0;
+
+    int zstd_compression_level = 3; // (min) 0 - 22 (max)
+
+    bool make_double_sided = false;
+    bool bake_transform = true;
+    bool flatten_hierarchy = false;
+    bool merge_meshes = false;
+
+    bool strip_normals = false;
+    bool strip_tangents = true;
+};
+
 class msmqContext
 {
 public:
@@ -43,6 +59,9 @@ public:
     void wait();
     void clear();
     void update(MQDocument doc);
+
+    bool startRecording(std::string& path);
+    void endRecording();
 
     bool sendMaterials(MQDocument doc, bool dirty_all);
     bool sendMeshes(MQDocument doc, bool dirty_all);
@@ -77,7 +96,7 @@ private:
 
     using HostMeshes = std::map<int, ms::MeshPtr>;
 
-    void kickAsyncSend();
+    void kickAsyncExport();
     int getMaterialID(int material_index) const;
     int exportTexture(const std::string& path, ms::TextureType type);
     int exportMaterials(MQDocument doc);
@@ -92,6 +111,7 @@ private:
     MQBasePlugin *m_plugin = nullptr;
 
     SyncSettings m_settings;
+    CacheSettings m_cache_settings;
 
     HostMeshes m_host_meshes;
 
@@ -109,5 +129,9 @@ private:
 
     ms::AsyncSceneSender m_send_meshes;
     ms::AsyncSceneSender m_send_camera;
+    ms::AsyncSceneCacheWriter m_cache_writer;
     bool m_pending_send_meshes = false;
+
+    bool m_recording = false;
+    ms::nanosec m_time = 0;
 };

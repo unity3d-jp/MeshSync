@@ -16,6 +16,7 @@ msmqContext::msmqContext(MQBasePlugin *plugin)
 
 msmqContext::~msmqContext()
 {
+    endRecording();
     wait();
 }
 
@@ -80,6 +81,34 @@ void msmqContext::update(MQDocument doc)
     }
 }
 
+bool msmqContext::startRecording(std::string& path)
+{
+    if (m_recording)
+        return false;
+
+    m_cache_settings.path = path;
+    ms::OSceneCacheSettings oscs;
+    oscs.sample_rate = 60.0f;
+    oscs.encoder_settings.zstd.compression_level = m_cache_settings.zstd_compression_level;
+    oscs.flatten_hierarchy = m_cache_settings.flatten_hierarchy;
+    oscs.strip_normals = m_cache_settings.strip_normals;
+    oscs.strip_tangents = m_cache_settings.strip_tangents;
+    if (!m_cache_writer.open(m_cache_settings.path.c_str(), oscs))
+        return false;
+
+    m_recording = true;
+    return true;
+}
+
+void msmqContext::endRecording()
+{
+    if (m_recording) {
+        m_cache_writer.close();
+        m_cache_settings.path.clear();
+        m_recording = false;
+    }
+}
+
 bool msmqContext::sendMaterials(MQDocument doc, bool dirty_all)
 {
     if (isSending()) {
@@ -91,7 +120,7 @@ bool msmqContext::sendMaterials(MQDocument doc, bool dirty_all)
     m_texture_manager.setAlwaysMarkDirty(dirty_all);
     exportMaterials(doc);
 
-    kickAsyncSend();
+    kickAsyncExport();
     return true;
 }
 
@@ -102,6 +131,8 @@ bool msmqContext::sendMeshes(MQDocument doc, bool dirty_all)
         return false;
     }
     m_pending_send_meshes = false;
+
+    m_time = ms::Now();
 
     m_settings.validate();
     m_material_manager.setAlwaysMarkDirty(dirty_all);
@@ -362,7 +393,7 @@ bool msmqContext::sendMeshes(MQDocument doc, bool dirty_all)
 
     m_entity_manager.eraseStaleEntities();
 
-    kickAsyncSend();
+    kickAsyncExport();
     return true;
 }
 
@@ -488,12 +519,20 @@ bool msmqContext::importMeshes(MQDocument doc)
     return true;
 }
 
-void msmqContext::kickAsyncSend()
+void msmqContext::kickAsyncExport()
 {
+    using Exporter = ms::AsyncSceneExporter;
+    auto *exporter = m_recording ? (Exporter*)&m_cache_writer : (Exporter*)&m_send_meshes;
 
-    m_send_meshes.on_prepare = [this]() {
-        auto& t = m_send_meshes;
-        t.client_settings = m_settings.client_settings;
+    exporter->on_prepare = [this, exporter]() {
+        if (auto sender = dynamic_cast<ms::AsyncSceneSender*>(exporter)) {
+            sender->client_settings = m_settings.client_settings;
+        }
+        else if (auto writer = dynamic_cast<ms::AsyncSceneCacheWriter*>(exporter)) {
+            writer->time = ms::NS2MS(m_time - m_cache_settings.time_start);
+        }
+
+        auto& t = *exporter;
         t.scene_settings.handedness = ms::Handedness::Right;
         t.scene_settings.scale_factor = m_settings.scale_factor;
 
@@ -505,13 +544,13 @@ void msmqContext::kickAsyncSend()
         t.deleted_materials = m_material_manager.getDeleted();
         t.deleted_entities = m_entity_manager.getDeleted();
     };
-    m_send_meshes.on_success = [this]() {
+    exporter->on_success = [this]() {
         m_material_ids.clearDirtyFlags();
         m_texture_manager.clearDirtyFlags();
         m_material_manager.clearDirtyFlags();
         m_entity_manager.clearDirtyFlags();
     };
-    m_send_meshes.kick();
+    exporter->kick();
 }
 
 int msmqContext::exportTexture(const std::string& path, ms::TextureType type)
