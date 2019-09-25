@@ -20,6 +20,7 @@ struct SyncSettings
     bool sync_bones = true;
     bool sync_poses = true;
     bool sync_textures = true;
+    bool recording = false;
 
     bool bake_skin = false;
     bool bake_cloth = false;
@@ -61,7 +62,7 @@ public:
     void update(MQDocument doc);
 
     bool startRecording(std::string& path);
-    void endRecording();
+    void stopRecording();
 
     bool sendMaterials(MQDocument doc, bool dirty_all);
     bool sendMeshes(MQDocument doc, bool dirty_all);
@@ -132,6 +133,5 @@ private:
     ms::AsyncSceneCacheWriter m_cache_writer;
     bool m_pending_send_meshes = false;
 
-    bool m_recording = false;
     ms::nanosec m_time = 0;
 };

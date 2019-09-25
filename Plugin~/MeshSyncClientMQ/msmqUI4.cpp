@@ -111,6 +111,10 @@ msmqSettingsDlg::msmqSettingsDlg(MeshSyncClientPlugin *plugin, MQWindowBase& par
 
         m_button_sync = CreateButton(vf, L"Manual Sync");
         m_button_sync->AddClickEvent(this, &msmqSettingsDlg::OnSyncClicked);
+
+        m_check_recording = CreateCheckBox(vf, L"Recording");
+        m_check_recording->SetChecked(s.recording);
+        m_check_recording->AddChangedEvent(this, &msmqSettingsDlg::OnRecordingChange);
     }
 
     {
@@ -274,9 +278,47 @@ BOOL msmqSettingsDlg::OnAutoSyncChange(MQWidgetBase *sender, MQDocument doc)
     return 0;
 }
 
-BOOL msmqSettingsDlg::OnSyncClicked(MQWidgetBase * sender, MQDocument doc)
+BOOL msmqSettingsDlg::OnSyncClicked(MQWidgetBase *sender, MQDocument doc)
 {
     m_plugin->Export();
+    return 0;
+}
+
+static std::string FileSaveDialog()
+{
+#if _WIN32
+    char path[MAX_PATH]{};
+    sprintf(path, "recording.sc");
+
+    ::OPENFILENAME ofn{};
+    ofn.lStructSize = sizeof(ofn);
+    ofn.lpstrFile = path;
+    ofn.nMaxFile = sizeof(path);
+    ofn.lpstrFilter = "Scene Cache (*.sc)\0*.sc;\0All (*.*)\0*.*\0";
+    ofn.lpstrDefExt = "sc";
+    ofn.lpstrTitle = "Save File As";
+    ofn.Flags = OFN_EXPLORER | OFN_OVERWRITEPROMPT;
+    if (::GetOpenFileNameA(&ofn)) {
+        return path;
+    }
+#else
+    // todo: mac
+#endif
+    return "";
+}
+
+BOOL msmqSettingsDlg::OnRecordingChange(MQWidgetBase *sender, MQDocument doc)
+{
+    auto& ctx = m_plugin->getContext();
+    if (m_check_recording->GetChecked()) {
+        auto path = FileSaveDialog();
+        if (!path.empty()) {
+            ctx.startRecording(path);
+        }
+    }
+    else {
+        ctx.stopRecording();
+    }
     return 0;
 }
 

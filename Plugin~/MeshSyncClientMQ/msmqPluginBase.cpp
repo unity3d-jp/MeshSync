@@ -24,7 +24,7 @@ bool msmqPluginBase::AutoSyncMeshesImpl(MQDocument doc)
 {
     auto& ctx = m_context;
     auto& settings = ctx.getSettings();
-    if (m_scene_dirty && settings.auto_sync) {
+    if (m_scene_dirty && (settings.auto_sync || settings.recording)) {
         m_scene_dirty = false;
         ctx.sendMeshes(doc, false);
         return true;
@@ -36,7 +36,7 @@ bool msmqPluginBase::AutoSyncCameraImpl(MQDocument doc)
 {
     auto& ctx = m_context;
     auto& settings = ctx.getSettings();
-    if (settings.auto_sync && settings.sync_camera) {
+    if (settings.sync_camera && (settings.auto_sync || settings.recording)) {
         ctx.sendCamera(doc, false);
         return true;
     }

@@ -16,7 +16,7 @@ msmqContext::msmqContext(MQBasePlugin *plugin)
 
 msmqContext::~msmqContext()
 {
-    endRecording();
+    stopRecording();
     wait();
 }
 
@@ -52,7 +52,7 @@ const std::string& msmqContext::getErrorMessage()
 
 bool msmqContext::isSending()
 {
-    return m_send_meshes.isExporting() || m_send_camera.isExporting();
+    return m_send_meshes.isExporting() || m_send_camera.isExporting() || m_cache_writer.isExporting();
 }
 
 void msmqContext::wait()
@@ -83,7 +83,7 @@ void msmqContext::update(MQDocument doc)
 
 bool msmqContext::startRecording(std::string& path)
 {
-    if (m_recording)
+    if (m_settings.recording)
         return false;
 
     m_cache_settings.path = path;
@@ -96,16 +96,17 @@ bool msmqContext::startRecording(std::string& path)
     if (!m_cache_writer.open(m_cache_settings.path.c_str(), oscs))
         return false;
 
-    m_recording = true;
+    m_cache_settings.time_start = ms::Now();
+    m_settings.recording = true;
     return true;
 }
 
-void msmqContext::endRecording()
+void msmqContext::stopRecording()
 {
-    if (m_recording) {
+    if (m_settings.recording) {
         m_cache_writer.close();
         m_cache_settings.path.clear();
-        m_recording = false;
+        m_settings.recording = false;
     }
 }
 
@@ -131,7 +132,6 @@ bool msmqContext::sendMeshes(MQDocument doc, bool dirty_all)
         return false;
     }
     m_pending_send_meshes = false;
-
     m_time = ms::Now();
 
     m_settings.validate();
@@ -522,7 +522,7 @@ bool msmqContext::importMeshes(MQDocument doc)
 void msmqContext::kickAsyncExport()
 {
     using Exporter = ms::AsyncSceneExporter;
-    auto *exporter = m_recording ? (Exporter*)&m_cache_writer : (Exporter*)&m_send_meshes;
+    auto *exporter = m_settings.recording ? (Exporter*)&m_cache_writer : (Exporter*)&m_send_meshes;
 
     exporter->on_prepare = [this, exporter]() {
         if (auto sender = dynamic_cast<ms::AsyncSceneSender*>(exporter)) {
