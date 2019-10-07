@@ -190,7 +190,7 @@ bool msmqContext::sendMeshes(MQDocument doc, bool dirty_all)
 
             bool visible = rec.obj->GetVisible() != 0;
             rec.dst->visibility = { true, visible, true };
-            if (visible)
+            if (visible || m_settings.recording)
                 extractMeshData(doc, rec.obj, *rec.dst);
             // add to m_entity_manager will be done later because bone weights affect checksum
         });

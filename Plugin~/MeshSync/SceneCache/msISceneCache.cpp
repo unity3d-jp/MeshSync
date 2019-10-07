@@ -297,7 +297,7 @@ ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp, size_t scene_index)
 
     // m_last_scene and m_last_diff keep reference counts and keep scenes alive.
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
-    if (m_last_scene && m_iscs.enable_diff) {
+    if (m_last_scene && (m_iscs.enable_diff && m_header.oscs.strip_unchanged)) {
         msProfileScope("ISceneCacheImpl: [%d] diff", (int)scene_index);
         m_last_diff = Scene::create();
         m_last_diff->diff(*sp, *m_last_scene);

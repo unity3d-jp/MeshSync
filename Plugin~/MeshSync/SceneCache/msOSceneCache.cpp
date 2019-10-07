@@ -123,7 +123,7 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
 
 void OSceneCacheImpl::addScene(ScenePtr scene, float time)
 {
-    while (m_scene_count_in_queue > 0 && (!m_base_scene || m_scene_count_in_queue >= m_oscs.max_queue_size)) {
+    while (m_scene_count_in_queue > 0 && ((m_oscs.strip_unchanged && !m_base_scene) || m_scene_count_in_queue >= m_oscs.max_queue_size)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
@@ -173,10 +173,12 @@ void OSceneCacheImpl::addScene(ScenePtr scene, float time)
             }
 
             // strip unchanged
-            if (!m_base_scene)
-                m_base_scene = scene;
-            else
-                scene->strip(*m_base_scene);
+            if (m_oscs.strip_unchanged) {
+                if (!m_base_scene)
+                    m_base_scene = scene;
+                else
+                    scene->strip(*m_base_scene);
+            }
 
             // split into segments
             auto scene_segments = LoadBalancing(rec.scene, m_oscs.max_scene_segments);
