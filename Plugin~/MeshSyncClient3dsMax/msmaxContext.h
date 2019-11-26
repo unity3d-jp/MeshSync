@@ -235,6 +235,7 @@ private:
     std::vector<TriObject*> m_tmp_triobj;
     std::vector<Mesh*> m_tmp_meshes;
     RenderScope m_render_scope;
+    time_t m_time_to_update_scene;
 
     bool m_dirty = true;
     bool m_scene_updated = true;

@@ -34,7 +34,6 @@ static void OnShutdown(void *param, NotifyInfo *info)
 static void OnNodeRenamed(void *param, NotifyInfo *info)
 {
     msmaxGetContext().onNodeRenamed();
-    msmaxGetContext().update();
 }
 static void OnPreNewScene(void *param, NotifyInfo *info)
 {
@@ -85,8 +84,9 @@ msmaxContext& msmaxContext::getInstance()
     return s_instance;
 }
 
-msmaxContext::msmaxContext()
+msmaxContext::msmaxContext() 
 {
+    std::time( &m_time_to_update_scene);
     RegisterNotification(OnStartup, this, NOTIFY_SYSTEM_STARTUP);
     RegisterNotification(OnShutdown, this, NOTIFY_SYSTEM_SHUTDOWN);
 }
@@ -171,6 +171,10 @@ void msmaxContext::onNodeDeleted(INode * n)
 
 void msmaxContext::onNodeRenamed()
 {
+    const uint32_t UPDATE_DELAY_SEC = 3;
+    time_t cur_time;
+    time( &cur_time );
+    m_time_to_update_scene = cur_time + UPDATE_DELAY_SEC;
     m_scene_updated = true;
 }
 
@@ -231,7 +235,9 @@ void msmaxContext::wait()
 
 void msmaxContext::update()
 {
-    if (m_scene_updated) {
+    time_t cur_time;
+    time( &cur_time );
+    if (m_scene_updated && cur_time > m_time_to_update_scene) {
         updateRecords();
         m_scene_updated = false;
         if (m_settings.auto_sync) {
