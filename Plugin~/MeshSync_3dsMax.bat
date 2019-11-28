@@ -1,4 +1,7 @@
 set MAX_VERSION=2020
-set MAX_LIB_DIR=%cd%\External\3ds Max %MAX_VERSION% SDK\maxsdk\lib\x64\Release
-set MAX_INCLUDE_DIR=%cd%\External\3ds Max %MAX_VERSION% SDK\maxsdk\include
+set "INCLUDE_VAR=MAX_INCLUDE_DIR_%MAX_VERSION%"
+set "LIB_VAR=MAX_LIB_DIR_%MAX_VERSION%"
+
+call set MAX_INCLUDE_DIR=%%%INCLUDE_VAR%%%
+call set MAX_LIB_DIR=%%%LIB_VAR%%%
 MeshSync_3dsMax.sln
