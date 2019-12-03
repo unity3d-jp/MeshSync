@@ -35,6 +35,7 @@ MeshSync~/*.csproj
 MeshSync~/*.sln
 MeshSync~/Assets/SceneCache*
 MeshSync~/Assets/UTJ/RaytracedHardShadow*
+MeshSync~/Logs/*
 Plugin~/dist/
 Plugin~/MeshSyncClientBlender2.*/
 Plugin~/MeshSyncClientMaya20*/
