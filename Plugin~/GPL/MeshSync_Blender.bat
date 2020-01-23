@@ -1,6 +1,6 @@
 set BLENDER_VERSION=2.79
 set BLENDER_PYTHON_VERSION=35
-set PLUGIN_DIR=%cd%\..\Plugin~
+set PLUGIN_DIR=%cd%\..
 set BLENDER_INCLUDE_DIRS=^
 %PLUGIN_DIR%\External\blender-%BLENDER_VERSION%\include\blenkernel;^
 %PLUGIN_DIR%\External\blender-%BLENDER_VERSION%\include\blenlib;^
