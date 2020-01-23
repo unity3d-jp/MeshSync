@@ -62,10 +62,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)mscore;$(SolutionDir)External\Poco\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\Plugin~;$(SolutionDir)..\Plugin~\mscore;$(SolutionDir)..\Plugin~\External\Poco\include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
-    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(SolutionDir)External\zstd\lib64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)..\Plugin~\External\Poco\lib64;$(SolutionDir)..\Plugin~\External\zstd\lib64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PostBuildEvent>
