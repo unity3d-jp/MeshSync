@@ -1,7 +1,6 @@
 set MAX_VERSION=2020
-set "INCLUDE_VAR=MAX_INCLUDE_DIR_%MAX_VERSION%"
-set "LIB_VAR=MAX_LIB_DIR_%MAX_VERSION%"
+set "MAX_SDK_PATH=MAX_SDK_%MAX_VERSION%"
 
-call set MAX_INCLUDE_DIR=%%%INCLUDE_VAR%%%
-call set MAX_LIB_DIR=%%%LIB_VAR%%%
+call set MAX_INCLUDE_DIR=%%%MAX_SDK_PATH%%%\include
+call set MAX_LIB_DIR=%%%MAX_SDK_PATH%%%\lib\x64\Release
 MeshSync_3dsMax.sln
