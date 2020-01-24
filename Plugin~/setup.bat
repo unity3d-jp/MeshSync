@@ -8,7 +8,7 @@ IF NOT EXIST "7za.exe" (
 )
 
 echo "downloading external libararies..."
-powershell.exe -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol=[System.Net.SecurityProtocolType]::Tls12; wget https://github.com/unity3d-jp/MeshSync/releases/download/20171228/External.7z -OutFile External.7z"
+powershell.exe -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol=[System.Net.SecurityProtocolType]::Tls12; wget https://github.com/unity3d-jp/MeshSync/releases/download/20200123/External.7z -OutFile External.7z"
 7za.exe x -aos External.7z
 
 echo "downloading mqsdk470.zip ..."
