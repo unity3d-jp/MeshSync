@@ -57,8 +57,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)External;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)External\Poco\lib64;$(SolutionDir)External\zstd\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)..;$(ProjectDir)..\External;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\External\Poco\lib64;$(ProjectDir)..\External\zstd\lib64;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>

@@ -116,9 +116,9 @@
     <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <IncludePath>$(SolutionDir);$(SolutionDir)MeshSync;$(SolutionDir)External\Poco\include;$(SolutionDir)External\zstd\include;$(IncludePath)</IncludePath>
-    <OutDir>$(SolutionDir)_out\$(Platform)_$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir);$(ProjectDir)MeshSync;$(ProjectDir)External\Poco\include;$(ProjectDir)External\zstd\include;$(IncludePath)</IncludePath>
+    <OutDir>$(ProjectDir)_out\$(Platform)_$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)_tmp\$(ProjectName)_$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
