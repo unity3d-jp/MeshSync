@@ -1,6 +1,6 @@
 ![demo](https://user-images.githubusercontent.com/1488611/39971828-98afa1d8-573d-11e8-9a6f-86263bee8949.gif)
 # MeshSync
-[English](https://translate.google.com/translate?sl=ja&tl=en&u=https://github.com/unity3d-jp/MeshSync)
+[English](README_EN.md)
 
 DCC ツール上のモデルの編集をリアルタイムに Unity に反映させるツールです。ゲーム上でどう見えるかをその場で確認しながらモデリングすることを可能にします。  
 Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya](https://www.autodesk.eu/products/maya/overview), [Maya LT](https://www.autodesk.eu/products/maya-lt/overview), [3ds Max](https://www.autodesk.com/products/3ds-max/overview), [Blender](https://blenderartists.org/), [メタセコイア](http://www.metaseq.net/), [xismo](http://mqdl.jpn.org/) をサポートしています。
@@ -259,7 +259,7 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
 - [BlendShapeBuilder](https://github.com/unity3d-jp/BlendShapeBuilder): Unity 上で BlendShape を構築できるようにするツール
 
 ## ライセンス
-- [MIT](LICENSE.txt)
+- [License](LICENSE.md)
 - [Third Party Notices](Third%20Party%20Notices.md)
 - [Contributing](CONTRIBUTING_EN.md)
 
