@@ -1,7 +1,8 @@
 ![demo](https://user-images.githubusercontent.com/1488611/39971828-98afa1d8-573d-11e8-9a6f-86263bee8949.gif)
 # MeshSync
+[English](README.md)
 
-MeschSync reflects changes to models made in DCC tools in real time in Unity. This allows devs to immediately see how things will look in-game while modelling.  
+MeshSync reflects changes to models made in DCC tools in real time in Unity. This allows devs to immediately see how things will look in-game while modelling.  
 MeshSync works as a plugin for Unity and DCC tools, and currently supports: [Maya](https://www.autodesk.eu/products/maya/overview), [Maya LT](https://www.autodesk.eu/products/maya-lt/overview), [3ds Max](https://www.autodesk.com/products/3ds-max/overview), [Blender](https://blenderartists.org/), [Metasequoia](http://www.metaseq.net/), and [xismo](http://mqdl.jpn.org/).
 
 
@@ -245,7 +246,7 @@ Also, dll is different in version 4.7 and later. This is due to changes to the b
 - [BlendShapeBuilder](https://github.com/unity3d-jp/BlendShapeBuilder): Tool for building BlendShapes in Unity
 
 ## License
-- [MIT](LICENSE.txt)
+- [License](LICENSE.md)
 - [Third Party Notices](Third%20Party%20Notices.md)
 - [Contributing](CONTRIBUTING_EN.md)
 
