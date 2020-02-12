@@ -2,7 +2,7 @@
 #include "MeshSync/MeshSync.h"
 #include "msmodoContext.h"
 
-#define msmodoEnableQt
+//#define msmodoEnableQt
 
 #ifdef msmodoEnableQt
 #include <QApplication>
