@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "msGraphicsInterface.h"
 
 namespace ms {
@@ -54,7 +54,7 @@ GraphicsInterface* GetGraphicsInterface()
     return g_gfx_device;
 }
 
-static void ReleaseGraphicsInterface()
+void ReleaseGraphicsInterface()
 {
     if (g_gfx_device) {
         delete g_gfx_device;
