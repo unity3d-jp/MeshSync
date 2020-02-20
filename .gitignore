@@ -50,3 +50,4 @@ Plugin~/Build/*.xcodeproj/**
 # XCode
 Plugin~/Build/DerivedData
 Plugin~/Build/*.build/*
+Plugin~/Build/Src/**
