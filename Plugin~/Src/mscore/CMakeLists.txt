@@ -1,9 +1,22 @@
-file(GLOB sources *.cpp *.h)
-set(plugins_dir "${CMAKE_SOURCE_DIR}/../Runtime/Plugins/x86_64")
-#add_plugin(mscore SOURCES ${sources} PLUGINS_DIR ${plugins_dir})
+CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 
-#add_dependencies(mscore MeshUtils)
-#target_include_directories(mscore PUBLIC "${CMAKE_SOURCE_DIR}")
+project(mscore)
+file(GLOB_RECURSE sources *.cpp *.h)
+set(plugins_dir "${CMAKE_SOURCE_DIR}/../Runtime/Plugins/x86_64")
+set(src_root   "${CMAKE_SOURCE_DIR}/Src")
+set(mscore_dir "${CMAKE_CURRENT_SOURCE_DIR}")
+
+add_plugin(mscore SOURCES ${sources} PLUGINS_DIR ${plugins_dir})
+
+#Include, pch
+target_include_directories(mscore PRIVATE "${src_root}")
+target_include_directories(mscore PRIVATE ${mscore_dir})
+target_precompile_headers(mscore PRIVATE "${mscore_dir}/pch.h")
+
+# Dependencies
+target_link_libraries(mscore MeshSync MeshUtils)
+
+
 #target_link_libraries(mscore MeshSync MeshUtils ${Poco_LIBRARIES})
 #if(ENABLE_ZSTD)
 #    target_link_libraries(mscore ${ZSTD_LIBRARY})
