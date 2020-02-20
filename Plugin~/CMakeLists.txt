@@ -1,8 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 PROJECT(MeshSync)
 
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_modules)
-set(SRC_DIR ${CMAKE_SOURCE_DIR}/../Src)
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/Build/cmake_modules)
+set(SRC_DIR ${CMAKE_SOURCE_DIR}/Src)
 
 
 #set(Poco_DIR ${CMAKE_SOURCE_DIR}/../External/Poco)
