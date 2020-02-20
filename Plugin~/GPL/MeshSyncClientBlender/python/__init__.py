@@ -1,1 +1,0 @@
-from MeshSyncClientBlender.MeshSyncClientBlender import *
