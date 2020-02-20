@@ -24,7 +24,6 @@
 _out/
 _tmp/
 _build_*/
-external/
 Library/
 Temp/
 obj/
@@ -44,6 +43,10 @@ MeshSyncAssets.meta
 Plugin~/Build/CMakeFiles/*
 Plugin~/Build/CMakeScripts/*
 Plugin~/Build/CMakeCache.txt
-Plugin~/Build/cmake_install.cmake
+Plugin~/Build/**/cmake_install.cmake
 Plugin~/Build/Makefile
 Plugin~/Build/*.xcodeproj/**
+
+# XCode
+Plugin~/Build/DerivedData
+Plugin~/Build/*.build/*
