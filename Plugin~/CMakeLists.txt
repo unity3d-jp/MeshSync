@@ -3,10 +3,6 @@ PROJECT(MeshSync)
 
 # Paths
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-
 
 find_package(Poco COMPONENTS Net QUIET)
 if(APPLE)
@@ -21,35 +17,35 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     set(LINUX ON)
 endif()
 
-include(AddPlugin)
-include(ISPC)
-
-option(ENABLE_ZSTD "Use ZSTD for scene cache compression" ON)
-if(ENABLE_ZSTD)
-    find_package(ZSTD)
-    add_definitions(-DmsEnableZSTD)
-endif()
-
-# Server
-option(BUILD_MSCORE "Build MeshSyncCore" ON)
-
-# Tests
-option(BUILD_TESTS "Tests" OFF)
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++14 -Wno-deprecated")
-
-add_subdirectory(MeshUtils)
-add_subdirectory(MeshSync)
-
-
-# core
-if(BUILD_MSCORE)
-    add_subdirectory(mscore)
-endif()
-
-# Tests
-if(BUILD_TESTS)
-    add_subdirectory(Test)
-endif()
-
+# include(AddPlugin)
+# include(ISPC)
+#
+# option(ENABLE_ZSTD "Use ZSTD for scene cache compression" ON)
+# if(ENABLE_ZSTD)
+#     find_package(ZSTD)
+#     add_definitions(-DmsEnableZSTD)
+# endif()
+#
+# # Server
+# option(BUILD_MSCORE "Build MeshSyncCore" ON)
+#
+# # Tests
+# option(BUILD_TESTS "Tests" OFF)
+#
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++14 -Wno-deprecated")
+#
+# add_subdirectory(MeshUtils)
+# add_subdirectory(MeshSync)
+#
+#
+# # core
+# if(BUILD_MSCORE)
+#     add_subdirectory(mscore)
+# endif()
+#
+# # Tests
+# if(BUILD_TESTS)
+#     add_subdirectory(Test)
+# endif()
+#
