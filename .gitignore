@@ -2,29 +2,11 @@
 
 *.aps
 *.DS_Store
-*.unitypackage
-
-*.exr
-*.gif
-*.png
-*.mp4
-*.h264
-*.aac
-*.webm
-*.ogg
-*.flac
-*.wav
-*.zip
-*.mll
-*.unitypackage
-*.sc
-*.sc.meta
 
 .vs/
 _out/
 _tmp/
 _build_*/
-external/
 Library/
 Temp/
 obj/
@@ -37,10 +19,19 @@ MeshSync~/Assets/SceneCache*
 MeshSync~/Assets/UTJ/RaytracedHardShadow*
 MeshSync~/Logs/*
 Plugin~/dist/
-Plugin~/MeshSyncClientBlender2.*/
-Plugin~/MeshSyncClientMaya20*/
-Plugin~/MeshSyncClientMayaLT20*/
-Plugin~/MeshSyncClientMotionBuilder20*/
-Plugin~/MeshSyncClientMQ4.*/
 MeshSyncAssets/
 MeshSyncAssets.meta
+
+# CMake
+Plugin~/Build/CMakeFiles/*
+Plugin~/Build/CMakeScripts/*
+Plugin~/Build/CMakeCache.txt
+Plugin~/Build/**/cmake_install.cmake
+Plugin~/Build/Makefile
+Plugin~/Build/*.xcodeproj/**
+Plugin~/Build/ispc**
+
+# XCode
+Plugin~/Build/DerivedData
+Plugin~/Build/*.build/*
+Plugin~/Build/Src/**

@@ -2,7 +2,7 @@
 
 #include "msAsset.h"
 #include "msSceneGraph.h"
-#include "msMisc.h"
+#include "MeshSync/msMisc.h"
 
 namespace ms {
 

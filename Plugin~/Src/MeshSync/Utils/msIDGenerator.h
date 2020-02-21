@@ -2,8 +2,8 @@
 
 #include <map>
 #include <vector>
-#include "msFoundation.h"
-#include "SceneGraph/msIdentifier.h"
+#include "MeshSync/msFoundation.h"
+#include "MeshSync/SceneGraph/msIdentifier.h"
 
 namespace ms {
 

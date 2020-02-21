@@ -1,5 +1,5 @@
 #pragma once
-#include "msFoundation.h"
+#include "MeshSync/msFoundation.h"
 
 namespace ms {
 
