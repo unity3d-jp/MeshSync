@@ -5,7 +5,7 @@
 #include <list>
 #include <memory>
 #include "MeshUtils/MeshUtils.h"
-#include "msFoundation.h"
+#include "MeshSync/msFoundation.h"
 
 #include "msAsset.h"
 #include "msEntity.h"

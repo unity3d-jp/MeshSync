@@ -3,8 +3,8 @@
 #include <list>
 #include <mutex>
 #include <future>
-#include "SceneGraph/msSceneGraph.h"
-#include "SceneGraph/msAnimation.h"
+#include "MeshSync/SceneGraph/msSceneGraph.h"
+#include "MeshSync/SceneGraph/msAnimation.h"
 
 #ifdef msEnableSceneCache
 namespace ms {
