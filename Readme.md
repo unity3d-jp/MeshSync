@@ -1,6 +1,29 @@
 ![demo](https://user-images.githubusercontent.com/1488611/39971828-98afa1d8-573d-11e8-9a6f-86263bee8949.gif)
+
 # MeshSync
+
+MeshSync is a package that works together with 
+[MeshSyncDCCPlugin](https://github.com/Unity-Technologies/MeshSyncDCCPlugin)
+to provide features to reflect
+changes to models made in DCC tools into Unity in real time.
+This allows devs to immediately see how things will look in-game while modelling.  
+
+Currently, the MeshSync repository is being restructured in order to deliver
+MeshSync as a package inside Unity's Package Manager, and therefore, 
+most of the previous document below is obsolete, but will be left as a reference for now.
+
+# License
+- [License](LICENSE.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Third Party Notices](Third%20Party%20Notices.md)
+- [Contributing](CONTRIBUTING.md)
+
+
+# OBSOLETE (LEFT AS A REFERENCE)
+
+
 [English](README_EN.md)
+
 
 DCC ツール上のモデルの編集をリアルタイムに Unity に反映させるツールです。ゲーム上でどう見えるかをその場で確認しながらモデリングすることを可能にします。  
 Unity と DCC ツール両方のプラグインとして機能し、現在 [Maya](https://www.autodesk.eu/products/maya/overview), [Maya LT](https://www.autodesk.eu/products/maya-lt/overview), [3ds Max](https://www.autodesk.com/products/3ds-max/overview), [Blender](https://blenderartists.org/), [メタセコイア](http://www.metaseq.net/), [xismo](http://mqdl.jpn.org/) をサポートしています。
@@ -258,9 +281,5 @@ Windows 版 3 系と 4 系 (32bit & 64bit)、Mac 版 (4 系のみ) に対応し�
 - [NormalPainter](https://github.com/unity3d-jp/NormalPainter): Unity 上で法線を編集できるようにするツール
 - [BlendShapeBuilder](https://github.com/unity3d-jp/BlendShapeBuilder): Unity 上で BlendShape を構築できるようにするツール
 
-## ライセンス
-- [License](LICENSE.md)
-- [Third Party Notices](Third%20Party%20Notices.md)
-- [Contributing](CONTRIBUTING_EN.md)
 
 
