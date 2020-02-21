@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SceneGraph/msMaterial.h"
+#include "MeshSync/SceneGraph/msMaterial.h"
 
 namespace ms {
 
