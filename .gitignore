@@ -2,23 +2,6 @@
 
 *.aps
 *.DS_Store
-*.unitypackage
-
-*.exr
-*.gif
-*.png
-*.mp4
-*.h264
-*.aac
-*.webm
-*.ogg
-*.flac
-*.wav
-*.zip
-*.mll
-*.unitypackage
-*.sc
-*.sc.meta
 
 .vs/
 _out/
