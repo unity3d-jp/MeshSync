@@ -9,12 +9,20 @@ set(mscore_dir "${CMAKE_CURRENT_SOURCE_DIR}")
 add_plugin(mscore SOURCES ${sources} PLUGINS_DIR ${plugins_dir})
 
 #Include, pch
-target_include_directories(mscore PRIVATE "${src_root}")
-target_include_directories(mscore PRIVATE ${mscore_dir})
+target_include_directories(mscore PRIVATE 
+    ${src_root}
+    ${mscore_dir}
+)
+target_include_directories(mscore PRIVATE )
 target_precompile_headers(mscore PRIVATE "${mscore_dir}/pch.h")
 
-# Dependencies
-target_link_libraries(mscore MeshSync MeshUtils)
+# Library dependencies
+target_link_libraries(
+    mscore 
+    MeshSync 
+    MeshUtils 
+    ${Poco_LIBRARIES}
+)
 
 
 #target_link_libraries(mscore MeshSync MeshUtils ${Poco_LIBRARIES})

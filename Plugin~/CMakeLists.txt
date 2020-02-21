@@ -1,14 +1,13 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
-PROJECT(MeshSyncRoot)
+PROJECT(MeshSyncProj)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/Build/cmake_modules)
-set(src_dir ${CMAKE_SOURCE_DIR}/Src)
-set(Poco_DIR "${CMAKE_SOURCE_DIR}/External/Poco")
-find_package(Poco COMPONENTS )
+set(src_root ${CMAKE_SOURCE_DIR}/Src)
+
+# prerequisites
+find_package(Poco COMPONENTS Net)
 
 if(APPLE)
-    find_library(COCOA_LIBRARY Cocoa)
-    mark_as_advanced(COCOA_LIBRARY)
     set(PLATFORM "Mac")
     set(MAC ON)
 elseif(ANDROID)
@@ -29,7 +28,6 @@ include(AddPlugin)
 #
 # Server
 
-option(BUILD_MSCORE "Build MeshSyncCore" ON)
 #
 # # Tests
 # option(BUILD_TESTS "Tests" OFF)
@@ -40,9 +38,9 @@ option(BUILD_MSCORE "Build MeshSyncCore" ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 #Specify available modules
-add_subdirectory(${src_dir}/MeshUtils)
-add_subdirectory(${src_dir}/MeshSync)
-add_subdirectory(${src_dir}/mscore)
+add_subdirectory(${src_root}/MeshUtils)
+add_subdirectory(${src_root}/MeshSync)
+add_subdirectory(${src_root}/mscore)
 
 # # Tests
 # if(BUILD_TESTS)
