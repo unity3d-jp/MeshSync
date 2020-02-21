@@ -116,13 +116,8 @@ foreach( component ${components} )
     if(NOT Poco_${component}_LIBRARY)
         find_library(
             Poco_${component}_LIBRARY 
-            NAMES 
-            
-            if(APPLE)
-                libPoco${component}.dylib
-            else 
+            NAMES             
                 libPoco${component}.a               
-            endif()
                 
             HINTS 
                 ${Poco_ROOT_DIR}
