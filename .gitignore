@@ -29,6 +29,7 @@ Plugin~/Build/CMakeCache.txt
 Plugin~/Build/**/cmake_install.cmake
 Plugin~/Build/Makefile
 Plugin~/Build/*.xcodeproj/**
+Plugin~/Build/ispc**
 
 # XCode
 Plugin~/Build/DerivedData
