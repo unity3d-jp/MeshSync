@@ -16,3 +16,7 @@ target_include_directories(MeshSync PRIVATE
     ${MeshSync_dir}    
     ${Poco_INCLUDE_DIRS}
 )
+
+if(ENABLE_ZSTD)
+    target_include_directories(MeshSync PRIVATE ${ZSTD_INCLUDE_DIR})
+endif()
