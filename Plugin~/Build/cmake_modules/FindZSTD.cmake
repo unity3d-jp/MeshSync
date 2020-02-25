@@ -7,10 +7,23 @@ find_path(ZSTD_INCLUDE_DIR
     PATHS
         "/usr/include"
         "/usr/local/include"
+        "$ENV{ZSTD_DIR}/include"
 )
+
 mark_as_advanced(ZSTD_INCLUDE_DIR)
 
-find_file(ZSTD_LIBRARY libzstd.a PATH_SUFFIXES lib)
+find_file(
+    ZSTD_LIBRARY 
+    NAMES
+        libzstd_static.lib  # Windows
+        libzstd.a           # Others
+    HINTS 
+        "$ENV{ZSTD_DIR}"
+       
+    PATH_SUFFIXES 
+        lib
+        static
+)
 mark_as_advanced(ZSTD_LIBRARY)
 
 include(FindPackageHandleStandardArgs)
