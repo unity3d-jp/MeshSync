@@ -117,7 +117,7 @@ foreach( component ${components} )
         find_library(
             Poco_${component}_LIBRARY 
             NAMES             
-                Poco${component}mt.lib # Windows
+                Poco${component}md.lib # Multithreaded-DLL, Windows
                 libPoco${component}.a  # Others
             HINTS 
                 ${Poco_ROOT_DIR}
