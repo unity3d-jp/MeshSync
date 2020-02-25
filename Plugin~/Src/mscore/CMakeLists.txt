@@ -16,12 +16,17 @@ target_include_directories(mscore PRIVATE
 target_include_directories(mscore PRIVATE )
 target_precompile_headers(mscore PRIVATE "${mscore_dir}/pch.h")
 
+# Dependencies on Windows
+if(WIN32)
+    set(Poco_Win_dependencies "ws2_32.lib;Iphlpapi.lib")
+endif()
+
 # Library dependencies
-target_link_libraries(
-    mscore 
+target_link_libraries( mscore 
     MeshSync 
     MeshUtils 
     ${Poco_LIBRARIES}
+    ${Poco_Win_dependencies}
 )
 
 if(ENABLE_ZSTD)
