@@ -7,7 +7,7 @@ find_path(ZSTD_INCLUDE_DIR
     PATHS
         "/usr/include"
         "/usr/local/include"
-        "$ENV{ZSTD_DIR}/include"
+        ${CMAKE_SOURCE_DIR}/External/zstd/include
 )
 
 mark_as_advanced(ZSTD_INCLUDE_DIR)
@@ -16,14 +16,14 @@ find_file(
     ZSTD_LIBRARY 
     NAMES
         libzstd_static.lib  # Windows
-        libzstd.a           # Others
-    HINTS 
-        "$ENV{ZSTD_DIR}"
-       
+        libzstd.a           # Others      
+    PATHS
+        ${CMAKE_SOURCE_DIR}
     PATH_SUFFIXES 
+        External/zstd/lib/win64
         lib
-        static
 )
+
 mark_as_advanced(ZSTD_LIBRARY)
 
 include(FindPackageHandleStandardArgs)
