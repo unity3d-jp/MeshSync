@@ -3,12 +3,6 @@ option(ENABLE_TBB "Use Intel TBB." OFF)
 
 project(MeshUtils)
 
-file(GLOB sources *.cpp *.c *.h)
-add_library(MeshUtils STATIC ${sources} ${MUISPC_OUTPUTS})
-
-#pch
-target_precompile_headers(MeshUtils PRIVATE "${MeshUtils_dir}/pch.h")
-
 if(ENABLE_ISPC)
     #Assume that muEnableISPC has already been defined
     setup_ispc()
@@ -20,6 +14,15 @@ if(ENABLE_ISPC)
     file(GLOB MUISPC_SOURCES *.ispc)
     add_ispc_targets(SOURCES ${MUISPC_SOURCES} HEADERS ${MUISPC_HEADERS} OUTDIR ${MUISPC_OUTDIR})
     set(MUISPC_OUTPUTS ${_ispc_outputs})
+endif()
+
+file(GLOB sources *.cpp *.c *.h)
+add_library(MeshUtils STATIC ${sources} ${MUISPC_OUTPUTS})
+
+#pch
+target_precompile_headers(MeshUtils PRIVATE "${MeshUtils_dir}/pch.h")
+
+if(ENABLE_ISPC)
     target_include_directories(MeshUtils PUBLIC ${MUISPC_OUTDIR})
 endif()
 
