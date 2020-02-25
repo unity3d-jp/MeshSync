@@ -30,6 +30,9 @@ Plugin~/Build/**/cmake_install.cmake
 Plugin~/Build/Makefile
 Plugin~/Build/*.xcodeproj/**
 Plugin~/Build/ispc**
+Plugin~/Build/*.vcxproj**
+Plugin~/Build/*.sln
+Plugin~/Build/x64/**
 
 # XCode
 Plugin~/Build/DerivedData
