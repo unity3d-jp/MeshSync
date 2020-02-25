@@ -112,17 +112,24 @@ foreach( component ${components} )
         list(APPEND Poco_INCLUDE_DIRS ${Poco_${component}_INCLUDE_DIR})
     endif()
 
+    # Determine the library name
+if (WIN32)            
+    set(Poco_component_lib_name Poco${component}mt.lib)
+else()
+    set(Poco_component_lib_name libPoco${component}.a)
+endif()
+
     # release library
     if(NOT Poco_${component}_LIBRARY)
         find_library(
             Poco_${component}_LIBRARY 
             NAMES             
-                libPoco${component}.a               
-                
+                ${Poco_component_lib_name}
             HINTS 
                 ${Poco_ROOT_DIR}
                 ${Poco_ROOT_DIR}/cmake-build
             PATH_SUFFIXES
+                lib/Release
                 lib
                 bin
         )
