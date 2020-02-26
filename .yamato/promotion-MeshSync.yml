@@ -1,5 +1,6 @@
+yamato_name: MeshSync
 test_editors:
-  - version: 2019.1
+  - version: 2019.3
 test_platforms:
   - name: win
     type: Unity::VM
@@ -9,7 +10,7 @@ test_platforms:
 {% for editor in test_editors %}
 {% for platform in test_platforms %}
 promotion_test_{{ platform.name }}_{{ editor.version }}:
-  name : Promotion Test {{ editor.version }} on {{ platform.name }}
+  name : {{ yamato_name }} Promotion Test {{ editor.version }} on {{ platform.name }}
   agent:
     type: {{ platform.type }}
     image: {{ platform.image }}
@@ -20,36 +21,16 @@ promotion_test_{{ platform.name }}_{{ editor.version }}:
     - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
     - upm-ci package test --unity-version {{ editor.version }}
   artifacts:
-    logs:
+    {{ yamato_name }}_promotion_test_results:
       paths:
         - "upm-ci~/test-results/**/*"
   dependencies:
-    - .yamato/upm-ci-meshsync.yml#pack
-{% endfor %}
-{% endfor %}
-
-promotion_test_trigger:
-  name: Promotion Tests Trigger
-  agent:
-    type: Unity::VM
-    image: package-ci/win10:stable
-    flavor: b1.large
-  artifacts:
-    logs:
-      paths:
-        - "upm-ci~/test-results/**/*"
-    packages:
-      paths:
-        - "upm-ci~/packages/**/*"
-  dependencies:
-{% for editor in test_editors %}
-{% for platform in test_platforms %}
-    - .yamato/promotion.yml#promotion_test_{{platform.name}}_{{editor.version}}
+    - .yamato/upm-ci-{{ yamato_name }}.yml#pack
 {% endfor %}
 {% endfor %}
 
 promote:
-  name: Promote to Production
+  name: Promote {{ yamato_name }} to Production
   agent:
     type: Unity::VM
     image: package-ci/win10:stable
@@ -64,13 +45,13 @@ promote:
       only:
         - /^(r|R)elease-\d+\.\d+\.\d+(-preview(\.\d+)?)?$/
   artifacts:
-    artifacts:
+    {{ yamato_name }}_promote_artifacts:
       paths:
         - "upm-ci~/packages/*.tgz"
   dependencies:
-    - .yamato/upm-ci-meshsync.yml#pack
+    - .yamato/upm-ci-{{ yamato_name }}.yml#pack
 {% for editor in test_editors %}
 {% for platform in test_platforms %}
-    - .yamato/promotion.yml#promotion_test_{{ platform.name }}_{{ editor.version }}
+    - .yamato/promotion-{{ yamato_name }}.yml#promotion_test_{{ platform.name }}_{{ editor.version }}
 {% endfor %}
 {% endfor %}
