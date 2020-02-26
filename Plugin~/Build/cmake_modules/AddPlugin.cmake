@@ -31,6 +31,8 @@ option(ENABLE_DEPLOY "Copy built binaries to plugins directory." ON)
 
 function(add_plugin name)
     cmake_parse_arguments(arg "" "PLUGINS_DIR" "SOURCES" ${ARGN})
+    file(TO_NATIVE_PATH ${arg_PLUGINS_DIR} native_plugins_dir)
+    
 
     if(ENABLE_OSX_BUNDLE)
         add_library(${name} MODULE ${arg_SOURCES})
@@ -41,15 +43,29 @@ function(add_plugin name)
     endif()
 
     if(ENABLE_DEPLOY)
-        if(ENABLE_OSX_BUNDLE)            
-            SET(target_filename \${TARGET_BUILD_DIR}/${name}.bundle)
+              
+        if(WIN32) 
+ 
+            # Win: Visual Studio Settings
+            add_custom_command(TARGET ${name} POST_BUILD
+                COMMAND del ${native_plugins_dir}\$(TargetFileName)
+                COMMAND copy $(TargetPath) ${native_plugins_dir}               
+                    
+            )
         else()
-            SET(target_filename $<TARGET_FILE:${name}>)
+            
+            if(ENABLE_OSX_BUNDLE)            
+                SET(target_filename \${TARGET_BUILD_DIR}/${name}.bundle)
+            else()
+                SET(target_filename $<TARGET_FILE:${name}>)
+            endif()
+        
+            # Linux or Mac
+            add_custom_command(TARGET ${name} POST_BUILD
+                COMMAND rm -rf ${arg_PLUGINS_DIR}/${target_filename}
+                COMMAND cp -r ${target_filename} ${native_plugins_dir}               
+            )
         endif()
-        add_custom_target("Deploy${name}" ALL
-            COMMAND rm -rf ${arg_PLUGINS_DIR}/${target_filename}
-            COMMAND cp -r ${target_filename} ${arg_PLUGINS_DIR}
-            DEPENDS ${name}
-        )
+
     endif()
 endfunction()
