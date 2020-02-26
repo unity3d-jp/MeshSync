@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UTJ.MeshSync
+namespace Unity.MeshSync
 {
     public class MaterialList : ScriptableObject
     {

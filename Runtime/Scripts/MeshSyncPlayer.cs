@@ -16,7 +16,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
 
-namespace UTJ.MeshSync
+namespace Unity.MeshSync
 {
     public delegate void SceneHandler();
     public delegate void UpdateAudioHandler(AudioClip audio, AudioData data);

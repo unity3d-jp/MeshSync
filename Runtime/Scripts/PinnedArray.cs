@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace UTJ.MeshSync
+namespace Unity.MeshSync
 {
 
     public class PinnedObject<T> : IDisposable

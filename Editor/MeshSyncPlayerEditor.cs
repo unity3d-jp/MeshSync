@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Unity.MeshSync;
 using UnityEditor;
 using UnityEngine;
-using UTJ.MeshSync;
 
-namespace UTJ.MeshSyncEditor
+namespace UnityEditor.MeshSync
 {
     [CustomEditor(typeof(MeshSyncPlayer))]
     public class MeshSyncPlayerEditor : Editor

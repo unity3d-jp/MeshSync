@@ -1,10 +1,10 @@
+using Unity.MeshSync;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Experimental.AssetImporters;
-using UTJ.MeshSync;
 
 
-namespace UTJ.MeshSyncEditor
+namespace UnityEditor.MeshSync
 {
     [ScriptedImporter(1, "sc")]
     public class SceneCacheImporter : ScriptedImporter

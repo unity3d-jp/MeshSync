@@ -14,7 +14,7 @@ using Unity.Collections;
 using UnityEditor;
 #endif
 
-namespace UTJ.MeshSync
+namespace Unity.MeshSync
 {
     [ExecuteInEditMode]
     public class MeshSyncServer : MeshSyncPlayer

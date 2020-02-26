@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEditor;
 
-namespace UTJ.MeshSync
+namespace Unity.MeshSync
 {
     public static class DeployStreamingAssets
     {

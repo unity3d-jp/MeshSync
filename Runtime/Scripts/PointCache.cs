@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace UTJ.MeshSync
+namespace Unity.MeshSync
 {
     [ExecuteInEditMode]
     public class PointCache : MonoBehaviour
