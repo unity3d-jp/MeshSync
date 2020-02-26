@@ -11,7 +11,7 @@ using Unity.Collections;
 using UnityEditor;
 #endif
 
-namespace UTJ.MeshSync
+namespace Unity.MeshSync
 {
     public static class Misc
     {

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UTJ.MeshSync;
+using Unity.MeshSync;
 
 
 [ExecuteInEditMode]

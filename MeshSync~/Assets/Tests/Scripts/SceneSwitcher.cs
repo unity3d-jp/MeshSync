@@ -8,7 +8,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 #endif
 
-namespace UTJ.MeshSync
+namespace Unity.MeshSync
 {
     [ExecuteInEditMode]
     public class SceneSwitcher : MonoBehaviour

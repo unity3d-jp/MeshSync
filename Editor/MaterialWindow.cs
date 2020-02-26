@@ -1,8 +1,8 @@
+using Unity.MeshSync;
 using UnityEngine;
 using UnityEditor;
-using UTJ.MeshSync;
 
-namespace UTJ.MeshSyncEditor
+namespace Unity.MeshSyncEditor
 {
     class MaterialWindow : EditorWindow
     {

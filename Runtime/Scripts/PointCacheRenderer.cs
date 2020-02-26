@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace UTJ.MeshSync
+namespace Unity.MeshSync
 {
     [ExecuteInEditMode]
     [RequireComponent(typeof(PointCache))]

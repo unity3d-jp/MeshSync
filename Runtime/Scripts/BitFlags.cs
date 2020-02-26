@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace UTJ.MeshSync
+namespace Unity.MeshSync
 {
     [Serializable]
     public struct BitFlags
