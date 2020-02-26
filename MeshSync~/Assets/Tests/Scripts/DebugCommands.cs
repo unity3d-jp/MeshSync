@@ -6,7 +6,7 @@ using UnityEditor;
 
 public static class DebugCommands
 {
-    [MenuItem("Debug/Open Log Directory")]
+    [MenuItem("MeshSyncDebug/Open Log Directory")]
     public static void Open()
     {
         var path = System.Environment.GetEnvironmentVariable("LOCALAPPDATA") + "\\Unity\\Editor";
@@ -14,7 +14,7 @@ public static class DebugCommands
     }
 
 
-    [MenuItem("Debug/Dump Transform")]
+    [MenuItem("MeshSyncDebug/Dump Transform")]
     public static void DumpTransform()
     {
         var go = Selection.activeGameObject;
@@ -64,7 +64,7 @@ public static class DebugCommands
         return log.ToString();
     }
 
-    [MenuItem("Debug/Dump Mesh")]
+    [MenuItem("MeshSyncDebug/Dump Mesh")]
     public static void DumpMesh()
     {
         SkinnedMeshRenderer smr = null;
@@ -138,7 +138,7 @@ public static class DebugCommands
         Debug.Log(log);
     }
 
-    [MenuItem("Debug/Enable All Renderers")]
+    [MenuItem("MeshSyncDebug/Enable All Renderers")]
     public static void EnableAllRenderers()
     {
         foreach (var r in GameObject.FindObjectsOfType<Renderer>())
