@@ -62,7 +62,7 @@ test_{{ platform.name }}_{{ editor.version }}:
     - upm-ci package test --unity-version {{ editor.version }}    
   triggers:
     expression: |
-      push.branch eq "dev" AND
+      pull_request.target eq "dev" AND
       NOT push.changes.all match "Documentation~/**"
   artifacts:
     {{ yamato_name }}_test_results:
