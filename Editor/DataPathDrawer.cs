@@ -1,8 +1,7 @@
 using Unity.MeshSync;
 using UnityEngine;
-using UnityEditor;
 
-namespace Unity.MeshSyncEditor
+namespace UnityEditor.MeshSync
 {
     [CustomPropertyDrawer(typeof(DataPath))]
     class DataPathDrawer : PropertyDrawer

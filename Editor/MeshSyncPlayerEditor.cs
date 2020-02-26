@@ -4,7 +4,7 @@ using Unity.MeshSync;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.MeshSyncEditor
+namespace UnityEditor.MeshSync
 {
     [CustomEditor(typeof(MeshSyncPlayer))]
     public class MeshSyncPlayerEditor : Editor
