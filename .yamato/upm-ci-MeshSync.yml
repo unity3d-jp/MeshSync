@@ -61,9 +61,12 @@ test_{{ platform.name }}_{{ editor.version }}:
     - npm install upm-ci-utils@stable -g --registry https://api.bintray.com/npm/unity/unity-npm
     - upm-ci package test --unity-version {{ editor.version }}    
   triggers:
-    expression: |
-      pull_request.target eq "dev" AND
-      NOT push.changes.all match "Documentation~/**"
+    branches:
+      only:
+        - "/.*/"
+      except:
+        - "dev"
+          
   artifacts:
     {{ yamato_name }}_test_results:
       paths:
