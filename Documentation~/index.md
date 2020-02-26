@@ -7,7 +7,7 @@ to synchronize meshes/models editing in DCC tools into Unity in real time.
 This allows devs to immediately see how things will look in-game while modelling.  
 
 
-# How to use
+# Basic usage
 
 Simple, just create a server object by clicking this menu: GameObject -> MeshSync -> Create Server. 
 This object has MeshSyncServer component that handles the sync process.
@@ -28,12 +28,8 @@ A setting for enabling/disabling sync for individual components.
 This is useful for confirming the results precisely, such as the physics simulation behavior in Play mode
 without being overrided by the transform sync.
 
-- **Update Mesh Collider**  
-On: MeshCollider details will also be updated when the Mesh is updated and has a MeshCollder. 
-
-- **Track Material Assignment**  
-When enabled, if a material is assigned by dragging and dropping in the SceneView, 
-that update will be detected and any other Mesh using the same material will also have its material updated. 
+  - If **Update Mesh Colliders** is enabled and the mesh has a MeshCollider, 
+    MeshCollider properties will also be updated when the mesh is updated. 
 
 - **Animation Interpolation**  
 Sets the animation interpolation method. The default smooth interpolation will be fine in most cases, 
