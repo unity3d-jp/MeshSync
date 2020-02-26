@@ -22,6 +22,10 @@ Plugin~/dist/
 MeshSyncAssets/
 MeshSyncAssets.meta
 
+# Rider
+MeshSync~/*.idea/**
+
+
 # CMake
 Plugin~/Build/CMakeFiles/*
 Plugin~/Build/CMakeScripts/*
@@ -38,3 +42,5 @@ Plugin~/Build/x64/**
 Plugin~/Build/DerivedData
 Plugin~/Build/*.build/*
 Plugin~/Build/Src/**
+
+
