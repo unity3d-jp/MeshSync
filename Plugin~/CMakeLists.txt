@@ -19,6 +19,11 @@ elseif(ANDROID)
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     set(PLATFORM "Linux")
     set(LINUX ON)
+
+elseif(WIN32) 
+    #Compile with MultiThreaded DLL flag to use dynamically-linked runtime library (Poco)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")    
 endif()
 
 
@@ -38,9 +43,6 @@ option(BUILD_TESTS "Tests" OFF)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
-#Compile with MultiThreaded DLL flag to use dynamically-linked runtime library (Poco)
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
 
 #Specify available modules
 add_subdirectory(${src_root}/MeshUtils)

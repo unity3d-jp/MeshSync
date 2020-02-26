@@ -12,11 +12,18 @@ find_path(ZSTD_INCLUDE_DIR
 
 mark_as_advanced(ZSTD_INCLUDE_DIR)
 
+# Decide the name of the zstd lib based on platform
+if(WIN32) 
+    set(zstd_lib_filename "libzstd_static.lib")
+else()
+    set(zstd_lib_filename "libzstd.a")
+endif()        
+
+
 find_file(
     ZSTD_LIBRARY 
     NAMES
-        libzstd_static.lib  # Windows
-        libzstd.a           # Others      
+        ${zstd_lib_filename}
     PATHS
         ${CMAKE_SOURCE_DIR}
     PATH_SUFFIXES 
