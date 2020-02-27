@@ -144,7 +144,7 @@ namespace Unity.MeshSync
     public struct AudioData
     {
         #region internal
-        [FieldOffset(0)] public IntPtr self;
+        [FieldOffset(0)] internal IntPtr self;
         [FieldOffset(0)] internal AssetData asset;
         [DllImport(Lib.name)] static extern AudioData msAudioCreate();
         [DllImport(Lib.name)] static extern AudioFormat msAudioGetFormat(IntPtr self);
@@ -1278,7 +1278,8 @@ namespace Unity.MeshSync
     public struct TransformData
     {
         #region internal
-        public IntPtr self;
+
+        internal IntPtr self;
         [DllImport(Lib.name)] static extern TransformData msTransformCreate();
         [DllImport(Lib.name)] static extern TransformDataFlags msTransformGetDataFlags(IntPtr self);
         [DllImport(Lib.name)] static extern EntityType msTransformGetType(IntPtr self);
@@ -1393,8 +1394,8 @@ namespace Unity.MeshSync
     public struct CameraData
     {
         #region internal
-        [FieldOffset(0)] public IntPtr self;
-        [FieldOffset(0)] public TransformData transform;
+        [FieldOffset(0)] internal IntPtr self;
+        [FieldOffset(0)] internal TransformData transform;
         [DllImport(Lib.name)] static extern CameraData msCameraCreate();
         [DllImport(Lib.name)] static extern CameraDataFlags msCameraGetDataFlags(IntPtr self);
         [DllImport(Lib.name)] static extern byte msCameraIsOrtho(IntPtr self);
@@ -1656,8 +1657,8 @@ namespace Unity.MeshSync
     public struct MeshData
     {
         #region internal
-        [FieldOffset(0)] public IntPtr self;
-        [FieldOffset(0)] public TransformData transform;
+        [FieldOffset(0)] internal IntPtr self;
+        [FieldOffset(0)] internal TransformData transform;
 
         [DllImport(Lib.name)] static extern MeshData msMeshCreate();
         [DllImport(Lib.name)] static extern MeshDataFlags msMeshGetDataFlags(IntPtr self);
@@ -1728,7 +1729,7 @@ namespace Unity.MeshSync
         /// <summary>
         /// Create MeshData
         /// </summary>
-        /// <returns>New MeshData </returns>
+        /// <returns>The newly created MeshData </returns>
         public static MeshData Create()
         {
             return msMeshCreate();
@@ -1893,8 +1894,9 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern void msPointsWriteIDs(IntPtr self, int[] v, int size);
         #endregion
         /// <summary>
-        /// Create PointsData
+        /// Creates a new PointsData
         /// </summary>
+        /// <returns>The newly created PointsData </returns>
         public static PointsData Create()
         {
             return msPointsCreate();
@@ -1926,14 +1928,14 @@ namespace Unity.MeshSync
     internal struct ConstraintData
     {
         #region internal
-        public IntPtr self;
+        internal IntPtr self;
         [DllImport(Lib.name)] static extern ConstraintType msConstraintGetType(IntPtr self);
         [DllImport(Lib.name)] static extern IntPtr msConstraintGetPath(IntPtr self);
         [DllImport(Lib.name)] static extern int msConstraintGetNumSources(IntPtr self);
         [DllImport(Lib.name)] static extern IntPtr msConstraintGetSource(IntPtr self, int i);
         #endregion
 
-        public enum ConstraintType
+        internal enum ConstraintType
         {
             Unknown,
             Aim,
@@ -1943,6 +1945,11 @@ namespace Unity.MeshSync
             Scale,
         }
 
+        /// <summary>
+        /// Assigns a new ConstraintData with the parameter
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>The new ConstraintData</returns>
         public static explicit operator ConstraintData(IntPtr v)
         {
             ConstraintData ret;

@@ -104,7 +104,7 @@ namespace Unity.MeshSync
 
 
     #region dirty
-    public static class PinnedListImpl
+    internal static class PinnedListImpl
     {
         class ListData
         {

@@ -7,7 +7,7 @@ using UnityEditor.Experimental.AssetImporters;
 namespace UnityEditor.MeshSync
 {
     [ScriptedImporter(1, "sc")]
-    public class SceneCacheImporter : ScriptedImporter
+    internal class SceneCacheImporter : ScriptedImporter
     {
         public override void OnImportAsset(AssetImportContext ctx)
         {

@@ -2108,7 +2108,7 @@ namespace Unity.MeshSync
 #endif
         }
 
-        public void ReassignMaterials()
+        internal void ReassignMaterials()
         {
             foreach (var rec in m_clientObjects)
                 AssignMaterials(rec.Value);
