@@ -21,7 +21,7 @@ namespace Unity.MeshSync
         public Flags flags; // reserved
         public uint meshSplitUnit;
         public uint meshMaxBoneInfluence; // 4 or 255 (variable)
-        internal ZUpCorrectionMode zUpCorrectionMode;
+        public ZUpCorrectionMode zUpCorrectionMode;
 
         public static ServerSettings defaultValue
         {
@@ -115,7 +115,7 @@ namespace Unity.MeshSync
 
     internal struct GetFlags
     {
-        internal BitFlags flags;
+        public BitFlags flags;
         public bool getTransform { get { return flags[0]; } }
         public bool getPoints { get { return flags[1]; } }
         public bool getNormals { get { return flags[2]; } }

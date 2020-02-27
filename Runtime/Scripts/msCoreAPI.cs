@@ -95,7 +95,7 @@ namespace Unity.MeshSync
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
-        [FieldOffset(0)] internal AssetData asset;
+        [FieldOffset(0)] public AssetData asset;
         [DllImport(Lib.name)] static extern FileAssetData msFileAssetCreate();
 #if UNITY_EDITOR
         [DllImport(Lib.name)] static extern byte msFileAssetReadFromFile(IntPtr self, string path);
@@ -141,11 +141,11 @@ namespace Unity.MeshSync
     /// AudioData
     /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct AudioData
+    internal struct AudioData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
-        [FieldOffset(0)] internal AssetData asset;
+        [FieldOffset(0)] public IntPtr self;
+        [FieldOffset(0)] public AssetData asset;
         [DllImport(Lib.name)] static extern AudioData msAudioCreate();
         [DllImport(Lib.name)] static extern AudioFormat msAudioGetFormat(IntPtr self);
         [DllImport(Lib.name)] static extern void msAudioSetFormat(IntPtr self, AudioFormat v);
@@ -274,11 +274,11 @@ namespace Unity.MeshSync
     /// TextureData
     /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct TextureData
+    internal struct TextureData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
-        [FieldOffset(0)] internal AssetData asset;
+        [FieldOffset(0)] public IntPtr self;
+        [FieldOffset(0)] public AssetData asset;
         [DllImport(Lib.name)] static extern TextureData msTextureCreate();
         [DllImport(Lib.name)] static extern TextureType msTextureGetType(IntPtr self);
         [DllImport(Lib.name)] static extern void msTextureSetType(IntPtr self, TextureType v);
@@ -494,11 +494,11 @@ namespace Unity.MeshSync
     /// MaterialData
     /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct MaterialData
+    internal struct MaterialData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
-        [FieldOffset(0)] internal AssetData asset;
+        [FieldOffset(0)] public IntPtr self;
+        [FieldOffset(0)] public AssetData asset;
         [DllImport(Lib.name)] static extern MaterialData msMaterialCreate();
         [DllImport(Lib.name)] static extern int msMaterialGetIndex(IntPtr self);
         [DllImport(Lib.name)] static extern void msMaterialSetIndex(IntPtr self, int v);
@@ -701,10 +701,10 @@ namespace Unity.MeshSync
     /// <summary>
     /// AnimationData
     /// </summary>
-    public struct AnimationData
+    internal struct AnimationData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport(Lib.name)] static extern IntPtr msAnimationGetPath(IntPtr self);
         [DllImport(Lib.name)] static extern EntityType msAnimationGetEntityType(IntPtr self);
         [DllImport(Lib.name)] static extern int msAnimationGetNumCurves(IntPtr self);
@@ -1017,11 +1017,11 @@ namespace Unity.MeshSync
     /// AnimationClipData
     /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct AnimationClipData
+    internal struct AnimationClipData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
-        [FieldOffset(0)] internal AssetData asset;
+        [FieldOffset(0)] public IntPtr self;
+        [FieldOffset(0)] public AssetData asset;
         [DllImport(Lib.name)] static extern IntPtr msAssetGetName(IntPtr self);
         [DllImport(Lib.name)] static extern float msAnimationClipGetFrameRate(IntPtr self);
         [DllImport(Lib.name)] static extern int msAnimationClipGetNumAnimations(IntPtr self);
@@ -1280,11 +1280,11 @@ namespace Unity.MeshSync
     /// <summary>
     /// TransformData
     /// </summary>
-    public struct TransformData
+    internal struct TransformData
     {
         #region internal
 
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport(Lib.name)] static extern TransformData msTransformCreate();
         [DllImport(Lib.name)] static extern TransformDataFlags msTransformGetDataFlags(IntPtr self);
         [DllImport(Lib.name)] static extern EntityType msTransformGetType(IntPtr self);
@@ -1409,27 +1409,27 @@ namespace Unity.MeshSync
 
     internal struct CameraDataFlags
     {
-        internal BitFlags flags;
-        internal bool unchanged { get { return flags[0]; } }
-        internal bool hasFov { get { return flags[2]; } }
-        internal bool hasNearPlane { get { return flags[3]; } }
-        internal bool hasFarPlane { get { return flags[4]; } }
-        internal bool hasFocalLength { get { return flags[5]; } }
-        internal bool hasSensorSize { get { return flags[6]; } }
-        internal bool hasLensShift { get { return flags[7]; } }
-        internal bool hasViewMatrix { get { return flags[8]; } }
-        internal bool hasProjMatrix { get { return flags[9]; } }
+        public BitFlags flags;
+        public bool unchanged { get { return flags[0]; } }
+        public bool hasFov { get { return flags[2]; } }
+        public bool hasNearPlane { get { return flags[3]; } }
+        public bool hasFarPlane { get { return flags[4]; } }
+        public bool hasFocalLength { get { return flags[5]; } }
+        public bool hasSensorSize { get { return flags[6]; } }
+        public bool hasLensShift { get { return flags[7]; } }
+        public bool hasViewMatrix { get { return flags[8]; } }
+        public bool hasProjMatrix { get { return flags[9]; } }
     }
 
     /// <summary>
     /// CameraData
     /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct CameraData
+    internal struct CameraData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
-        [FieldOffset(0)] internal TransformData transform;
+        [FieldOffset(0)] public IntPtr self;
+        [FieldOffset(0)] public TransformData transform;
         [DllImport(Lib.name)] static extern CameraData msCameraCreate();
         [DllImport(Lib.name)] static extern CameraDataFlags msCameraGetDataFlags(IntPtr self);
         [DllImport(Lib.name)] static extern byte msCameraIsOrtho(IntPtr self);
@@ -1516,25 +1516,25 @@ namespace Unity.MeshSync
 
     internal struct LightDataFlags
     {
-        internal BitFlags flags;
-        internal bool unchanged { get { return flags[0]; } }
-        internal bool hasShadowType { get { return flags[2]; } }
-        internal bool hasColor { get { return flags[3]; } }
-        internal bool hasIntensity { get { return flags[4]; } }
-        internal bool hasRange { get { return flags[5]; } }
-        internal bool hasSpotAngle { get { return flags[6]; } }
-        internal bool hasLayerMask { get { return flags[7]; } }
+        public BitFlags flags;
+        public bool unchanged { get { return flags[0]; } }
+        public bool hasShadowType { get { return flags[2]; } }
+        public bool hasColor { get { return flags[3]; } }
+        public bool hasIntensity { get { return flags[4]; } }
+        public bool hasRange { get { return flags[5]; } }
+        public bool hasSpotAngle { get { return flags[6]; } }
+        public bool hasLayerMask { get { return flags[7]; } }
     }
 
     /// <summary>
     /// LightData
     /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct LightData
+    internal struct LightData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
-        [FieldOffset(0)] internal TransformData transform;
+        [FieldOffset(0)] public IntPtr self;
+        [FieldOffset(0)] public TransformData transform;
 
         [DllImport(Lib.name)] static extern LightData msLightCreate();
         [DllImport(Lib.name)] static extern LightDataFlags msLightGetDataFlags(IntPtr self);
@@ -1666,7 +1666,7 @@ namespace Unity.MeshSync
 
     internal struct MeshDataFlags
     {
-        internal BitFlags flags;
+        public BitFlags flags;
         public bool unchanged           { get { return flags[0]; } }
         public bool topologyUnchanged   { get { return flags[1]; } }
         public bool hasIndices          { get { return flags[3]; } }
@@ -1688,11 +1688,11 @@ namespace Unity.MeshSync
     /// MeshData
     /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct MeshData
+    internal struct MeshData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
-        [FieldOffset(0)] internal TransformData transform;
+        [FieldOffset(0)] public IntPtr self;
+        [FieldOffset(0)] public TransformData transform;
 
         [DllImport(Lib.name)] static extern MeshData msMeshCreate();
         [DllImport(Lib.name)] static extern MeshDataFlags msMeshGetDataFlags(IntPtr self);
@@ -1904,11 +1904,11 @@ namespace Unity.MeshSync
     /// PointsData
     /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct PointsData
+    internal struct PointsData
     {
         #region internal
-        [FieldOffset(0)] internal IntPtr self;
-        [FieldOffset(0)] internal TransformData transform;
+        [FieldOffset(0)] public IntPtr self;
+        [FieldOffset(0)] public TransformData transform;
 
         [DllImport(Lib.name)] static extern PointsData msPointsCreate();
         [DllImport(Lib.name)] static extern PointsDataFlags msPointsGetFlags(IntPtr self);
@@ -1962,7 +1962,7 @@ namespace Unity.MeshSync
     internal struct ConstraintData
     {
         #region internal
-        internal IntPtr self;
+        public IntPtr self;
         [DllImport(Lib.name)] static extern ConstraintType msConstraintGetType(IntPtr self);
         [DllImport(Lib.name)] static extern IntPtr msConstraintGetPath(IntPtr self);
         [DllImport(Lib.name)] static extern int msConstraintGetNumSources(IntPtr self);
