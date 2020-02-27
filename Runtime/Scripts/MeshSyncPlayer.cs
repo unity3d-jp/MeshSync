@@ -394,12 +394,19 @@ namespace Unity.MeshSync
             values = null;
         }
 
+        /// <summary>
+        /// Called during serialization as an implementation of ISerializationCallbackReceiver
+        /// </summary>
         public void OnBeforeSerialize()
         {
             SerializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
             SerializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
             SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
         }
+
+        /// <summary>
+        /// Called during serialization as an implementation of ISerializationCallbackReceiver
+        /// </summary>
         public void OnAfterDeserialize()
         {
             DeserializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
@@ -410,7 +417,7 @@ namespace Unity.MeshSync
 
         #region Misc
         //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected bool Try(Action act)
+        internal bool Try(Action act)
         {
             try
             {
@@ -425,7 +432,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public void MakeSureAssetDirectoryExists()
+        private void MakeSureAssetDirectoryExists()
         {
 #if UNITY_EDITOR
             m_assetDir.CreateDirectory();
@@ -435,7 +442,7 @@ namespace Unity.MeshSync
         // this function has a complex behavior to keep existing .meta:
         //  if an asset already exists in assetPath, load it and copy the content of obj to it and replace obj with it.
         //  otherwise obj is simply saved by AssetDatabase.CreateAsset().
-        protected bool SaveAsset<T>(ref T obj, string assetPath) where T : UnityEngine.Object
+        private bool SaveAsset<T>(ref T obj, string assetPath) where T : UnityEngine.Object
         {
 #if UNITY_EDITOR
             var ret = Misc.SaveAsset(obj, assetPath);
