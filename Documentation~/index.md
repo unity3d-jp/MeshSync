@@ -1,4 +1,4 @@
-![demo](images/demo.gif)
+![demo](images/Demo.gif)
 # MeshSync
 
 Working together with [MeshSyncDCCPlugin](https://github.com/Unity-Technologies/MeshSyncDCCPlugin), MeshSync is a package for synchronizing meshes/models editing in DCC tools into Unity in real time.
@@ -15,7 +15,7 @@ This allows devs to immediately see how things will look in-game while modelling
 Create a server object by clicking this menu: GameObject -> MeshSync -> Create Server. 
 This object has MeshSyncServer component that handles the sync process.
 
-<img src="images/menu.png" width=320>
+<img src="images/Menu.png" width=320>
 
 
 ## MeshSyncServer

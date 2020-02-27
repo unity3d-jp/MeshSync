@@ -1,4 +1,4 @@
-![demo](Documentation~/images/demo.gif)
+![demo](Documentation~/images/Demo.gif)
 # Other Languages
 - [日本語](Readme_JP.md)
 
@@ -18,7 +18,7 @@ This allows devs to immediately see how things will look in-game while modelling
 Create a server object by clicking this menu: GameObject -> MeshSync -> Create Server. 
 This object has MeshSyncServer component that handles the sync process.
 
-<img src="Documentation~/images/menu.png" width=320>
+<img src="Documentation~/images/Menu.png" width=320>
 
 
 ## MeshSyncServer
