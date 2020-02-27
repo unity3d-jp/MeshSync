@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 namespace Unity.MeshSync
 {
 
-    public class PinnedObject<T> : IDisposable
+    internal class PinnedObject<T> : IDisposable
     {
         T m_data;
         GCHandle m_gch;

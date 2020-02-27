@@ -6,7 +6,7 @@ namespace Unity.MeshSync
 {
 #if UNITY_STANDALONE
     #region Server
-    public struct ServerSettings
+    internal struct ServerSettings
     {
         public struct Flags
         {
@@ -43,7 +43,7 @@ namespace Unity.MeshSync
         public static ushort defaultPort { get { return 8080; } }
     }
 
-    public struct Server
+    internal struct Server
     {
         #region internal
         public IntPtr self;

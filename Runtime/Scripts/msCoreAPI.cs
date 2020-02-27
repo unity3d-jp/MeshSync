@@ -11,7 +11,7 @@ using UnityEditor;
 
 namespace Unity.MeshSync
 {
-    public static class Lib
+    internal static class Lib
     {
         #region internal
         public const string name =
@@ -126,7 +126,7 @@ namespace Unity.MeshSync
     #endregion
 
     #region Audio
-    public enum AudioFormat
+    internal enum AudioFormat
     {
         Unknown = 0,
         U8,
@@ -172,7 +172,7 @@ namespace Unity.MeshSync
             get { return asset.name; }
             set { asset.name = value; }
         }
-        public AudioFormat format
+        internal AudioFormat format
         {
             get { return msAudioGetFormat(self); }
             set { msAudioSetFormat(self, value); }
