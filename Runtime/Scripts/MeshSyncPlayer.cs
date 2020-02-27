@@ -53,6 +53,9 @@ namespace Unity.MeshSync
     /// </summary>
     public delegate void DeleteEntityHandler(GameObject obj);
 
+    /// <summary>
+    /// MeshSyncPlayer
+    /// </summary>
     [ExecuteInEditMode]
     public class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver
     {

@@ -161,6 +161,11 @@ namespace Unity.MeshSync
 #endif
         #endregion
 
+        /// <summary>
+        /// Checks if the AudioData has been assigned
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>True if assigned, false otherwise</returns>        
         public static implicit operator bool(AudioData v) { return v.self != IntPtr.Zero; }
 
         /// <summary>
@@ -492,7 +497,7 @@ namespace Unity.MeshSync
     public struct MaterialData
     {
         #region internal
-        [FieldOffset(0)] public IntPtr self;
+        [FieldOffset(0)] internal IntPtr self;
         [FieldOffset(0)] internal AssetData asset;
         [DllImport(Lib.name)] static extern MaterialData msMaterialCreate();
         [DllImport(Lib.name)] static extern int msMaterialGetIndex(IntPtr self);
@@ -699,7 +704,7 @@ namespace Unity.MeshSync
     public struct AnimationData
     {
         #region internal
-        public IntPtr self;
+        internal IntPtr self;
         [DllImport(Lib.name)] static extern IntPtr msAnimationGetPath(IntPtr self);
         [DllImport(Lib.name)] static extern EntityType msAnimationGetEntityType(IntPtr self);
         [DllImport(Lib.name)] static extern int msAnimationGetNumCurves(IntPtr self);
@@ -1305,10 +1310,39 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern void msTransformSetReference(IntPtr self, string v);
         #endregion
 
+        /// <summary>
+        /// Creates a new TransformData and assign the parameter to it
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>The newly created TransformData</returns>
         public static explicit operator TransformData(IntPtr v) { return new TransformData { self = v }; }
+        
+        /// <summary>
+        /// Creates a new CameraData and assign the parameter to it
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>The newly created CameraData</returns>
         public static explicit operator CameraData(TransformData v) { return new CameraData { self = v.self }; }
+        
+        /// <summary>
+        /// Creates a new LightData and assign the parameter to it
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>The newly created LightData</returns>
         public static explicit operator LightData(TransformData v) { return new LightData { self = v.self }; }
+
+        /// <summary>
+        /// Creates a new MeshData and assign the parameter to it
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>The newly created MeshData</returns>
         public static explicit operator MeshData(TransformData v) { return new MeshData { self = v.self }; }
+
+        /// <summary>
+        /// Creates a new PointsData and assign the parameter to it
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>The newly created PointsData</returns>
         public static explicit operator PointsData(TransformData v) { return new PointsData { self = v.self }; }
 
         internal static TransformData Create()
@@ -1480,7 +1514,7 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct LightDataFlags
+    internal struct LightDataFlags
     {
         internal BitFlags flags;
         internal bool unchanged { get { return flags[0]; } }
@@ -1499,8 +1533,8 @@ namespace Unity.MeshSync
     public struct LightData
     {
         #region internal
-        [FieldOffset(0)] public IntPtr self;
-        [FieldOffset(0)] public TransformData transform;
+        [FieldOffset(0)] internal IntPtr self;
+        [FieldOffset(0)] internal TransformData transform;
 
         [DllImport(Lib.name)] static extern LightData msLightCreate();
         [DllImport(Lib.name)] static extern LightDataFlags msLightGetDataFlags(IntPtr self);
