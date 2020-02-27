@@ -3,54 +3,51 @@ using System.Linq;
 using UnityEngine;
 using Unity.MeshSync;
 
+namespace UnityEditor.MeshSync.Tests {
 
 [ExecuteInEditMode]
 [RequireComponent(typeof(MeshSyncPlayer))]
-public class SceneEventHandler : MonoBehaviour
-{
+public class SceneEventHandler : MonoBehaviour {
     string m_log;
 
-    void OnSceneUpdateBegin()
-    {
+    void OnSceneUpdateBegin() {
         m_log = "SceneUpdateBegin\n";
     }
-    void OnUpdateAudio(AudioClip tex, AudioData data)
-    {
+
+    void OnUpdateAudio(AudioClip tex, AudioData data) {
         m_log += "Audio: " + tex.name + "\n";
     }
-    void OnUpdateTexture(Texture tex, TextureData data)
-    {
+
+    void OnUpdateTexture(Texture tex, TextureData data) {
         m_log += "Texture: " + tex.name + "\n";
     }
-    void OnUpdateMaterial(Material mat, MaterialData data)
-    {
+
+    void OnUpdateMaterial(Material mat, MaterialData data) {
         m_log += "Material: " + mat.name + "\n";
     }
-    void OnUpdateEntity(GameObject obj, TransformData data)
-    {
+
+    void OnUpdateEntity(GameObject obj, TransformData data) {
         m_log += "GameObject: " + obj.name + "\n";
 
     }
-    void OnUpdateAnimation(AnimationClip anim, AnimationClipData data)
-    {
+
+    void OnUpdateAnimation(AnimationClip anim, AnimationClipData data) {
         m_log += "AnimationClip: " + anim.name + "\n";
     }
-    void OnDeleteEntity(GameObject obj)
-    {
+
+    void OnDeleteEntity(GameObject obj) {
         m_log += "Delete: " + obj.name + "\n";
     }
-    void OnSceneUpdateEnd()
-    {
+
+    void OnSceneUpdateEnd() {
         m_log += "SceneUpdateEnd\n";
         Debug.Log(m_log);
     }
 
 
-    void OnEnable()
-    {
+    void OnEnable() {
         var mss = GetComponent<MeshSyncPlayer>();
-        if (mss != null)
-        {
+        if (mss != null) {
             mss.onSceneUpdateBegin += OnSceneUpdateBegin;
             mss.onSceneUpdateEnd += OnSceneUpdateEnd;
             mss.onUpdateAudio += OnUpdateAudio;
@@ -62,11 +59,9 @@ public class SceneEventHandler : MonoBehaviour
         }
     }
 
-    void OnDisable()
-    {
+    void OnDisable() {
         var mss = GetComponent<MeshSyncPlayer>();
-        if (mss != null)
-        {
+        if (mss != null) {
             mss.onSceneUpdateBegin -= OnSceneUpdateBegin;
             mss.onSceneUpdateEnd -= OnSceneUpdateEnd;
             mss.onUpdateAudio -= OnUpdateAudio;
@@ -78,4 +73,6 @@ public class SceneEventHandler : MonoBehaviour
         }
     }
 }
+
+} //end namespace
 
