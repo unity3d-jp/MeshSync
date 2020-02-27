@@ -92,7 +92,7 @@ namespace Unity.MeshSync
         }
 
         [Serializable]
-        public class MaterialHolder
+        internal class MaterialHolder
         {
             public int id;
             public string name;
@@ -104,7 +104,7 @@ namespace Unity.MeshSync
         }
 
         [Serializable]
-        public class TextureHolder
+        internal class TextureHolder
         {
             public int id;
             public string name;
@@ -112,7 +112,7 @@ namespace Unity.MeshSync
         }
 
         [Serializable]
-        public class AudioHolder
+        internal class AudioHolder
         {
             public int id;
             public string name;
@@ -151,9 +151,9 @@ namespace Unity.MeshSync
         [SerializeField] protected bool m_dontSaveAssetsInScene = false;
 
         [SerializeField] protected Material m_dummyMaterial;
-        [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
-        [SerializeField] protected List<TextureHolder> m_textureList = new List<TextureHolder>();
-        [SerializeField] protected List<AudioHolder> m_audioList = new List<AudioHolder>();
+        [SerializeField] internal List<MaterialHolder> m_materialList = new List<MaterialHolder>();
+        [SerializeField] internal List<TextureHolder> m_textureList = new List<TextureHolder>();
+        [SerializeField] internal List<AudioHolder> m_audioList = new List<AudioHolder>();
 
         [SerializeField] string[] m_clientObjects_keys;
         [SerializeField] EntityRecord[] m_clientObjects_values;
@@ -185,63 +185,63 @@ namespace Unity.MeshSync
 
 
         #region Properties
-        public static int pluginVersion { get { return Lib.pluginVersion; } }
-        public static int protocolVersion { get { return Lib.protocolVersion; } }
+        internal static int pluginVersion { get { return Lib.pluginVersion; } }
+        internal static int protocolVersion { get { return Lib.protocolVersion; } }
         internal DataPath assetDir
         {
             get { return m_assetDir; }
             set { m_assetDir = value; }
         }
-        public string assetPath
+        internal string assetPath
         {
             get { return m_assetDir.leaf.Length != 0 ? "Assets/" + m_assetDir.leaf : "Assets"; }
         }
-        public string httpFileRootPath
+        internal string httpFileRootPath
         {
             get { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
         }
-        public Transform rootObject
+        internal Transform rootObject
         {
             get { return m_rootObject; }
             set { m_rootObject = value; }
         }
 
-        public bool syncVisibility
+        internal bool syncVisibility
         {
             get { return m_syncVisibility; }
             set { m_syncVisibility = value; }
         }
-        public bool syncTransform
+        internal bool syncTransform
         {
             get { return m_syncTransform; }
             set { m_syncTransform = value; }
         }
-        public bool syncCameras
+        internal bool syncCameras
         {
             get { return m_syncCameras; }
             set { m_syncCameras = value; }
         }
-        public bool syncLights
+        internal bool syncLights
         {
             get { return m_syncLights; }
             set { m_syncLights = value; }
         }
-        public bool syncMeshes
+        internal bool syncMeshes
         {
             get { return m_syncMeshes; }
             set { m_syncMeshes = value; }
         }
-        public bool syncPoints
+        internal bool syncPoints
         {
             get { return m_syncPoints; }
             set { m_syncPoints = value; }
         }
-        public bool syncMaterials
+        internal bool syncMaterials
         {
             get { return m_syncMaterials; }
             set { m_syncMaterials = value; }
         }
-        public bool handleAssets
+        internal bool handleAssets
         {
             get { return m_handleAssets; }
             set { m_handleAssets = value; }
@@ -252,17 +252,17 @@ namespace Unity.MeshSync
             get { return m_animationInterpolation; }
             set { m_animationInterpolation = value; }
         }
-        public bool keyframeReduction
+        internal bool keyframeReduction
         {
             get { return m_keyframeReduction; }
             set { m_keyframeReduction = value; }
         }
-        public float reductionThreshold
+        internal float reductionThreshold
         {
             get { return m_reductionThreshold; }
             set { m_reductionThreshold = value; }
         }
-        public bool reductionKeepEraseCurves
+        internal bool reductionKeepEraseCurves
         {
             get { return m_reductionEraseFlatCurves; }
             set { m_reductionEraseFlatCurves = value; }
@@ -274,96 +274,96 @@ namespace Unity.MeshSync
         }
 
 #if UNITY_2018_1_OR_NEWER
-        public bool usePhysicalCameraParams
+        internal bool usePhysicalCameraParams
         {
             get { return m_usePhysicalCameraParams; }
             set { m_usePhysicalCameraParams = value; }
         }
 #endif
-        public bool useCustomCameraMatrices
+        internal bool useCustomCameraMatrices
         {
             get { return m_useCustomCameraMatrices; }
             set { m_useCustomCameraMatrices = value; }
         }
-        public bool updateMeshColliders
+        internal bool updateMeshColliders
         {
             get { return m_updateMeshColliders; }
             set { m_updateMeshColliders = value; }
         }
-        public bool findMaterialFromAssets
+        internal bool findMaterialFromAssets
         {
             get { return m_findMaterialFromAssets; }
             set { m_findMaterialFromAssets = value; }
         }
 
-        public bool logging
+        internal bool logging
         {
             get { return m_logging; }
             set { m_logging = value; }
         }
-        public bool profiling
+        internal bool profiling
         {
             get { return m_profiling; }
             set { m_profiling = value; }
         }
 
-        public bool markMeshesDynamic
+        internal bool markMeshesDynamic
         {
             get { return m_markMeshesDynamic; }
             set { m_markMeshesDynamic = value; }
         }
-        public bool dontSaveAssetsInScene
+        internal bool dontSaveAssetsInScene
         {
             get { return m_dontSaveAssetsInScene; }
             set { m_dontSaveAssetsInScene = value; }
         }
 
-        public List<MaterialHolder> materialList { get { return m_materialList; } }
-        public List<TextureHolder> textureList { get { return m_textureList; } }
+        internal List<MaterialHolder> materialList { get { return m_materialList; } }
+        internal List<TextureHolder> textureList { get { return m_textureList; } }
 
 #if UNITY_EDITOR
-        public bool syncMaterialList
+        internal bool syncMaterialList
         {
             get { return m_syncMaterialList; }
             set { m_syncMaterialList = value; }
         }
-        public bool sortEntities
+        internal bool sortEntities
         {
             get { return m_sortEntities; }
             set { m_sortEntities = value; }
         }
-        public bool progressiveDisplay
+        internal bool progressiveDisplay
         {
             get { return m_progressiveDisplay; }
             set { m_progressiveDisplay = value; }
         }
 
-        public bool foldSyncSettings
+        internal bool foldSyncSettings
         {
             get { return m_foldSyncSettings; }
             set { m_foldSyncSettings = value; }
         }
-        public bool foldImportSettings
+        internal bool foldImportSettings
         {
             get { return m_foldImportSettings; }
             set { m_foldImportSettings = value; }
         }
-        public bool foldMisc
+        internal bool foldMisc
         {
             get { return m_foldMisc; }
             set { m_foldMisc = value; }
         }
-        public bool foldMaterialList
+        internal bool foldMaterialList
         {
             get { return m_foldMaterialList; }
             set { m_foldMaterialList = value; }
         }
-        public bool foldAnimationTweak
+        internal bool foldAnimationTweak
         {
             get { return m_foldAnimationTweak; }
             set { m_foldAnimationTweak = value; }
         }
-        public bool foldExportAssets
+        internal bool foldExportAssets
         {
             get { return m_foldExportAssets; }
             set { m_foldExportAssets = value; }
@@ -2394,7 +2394,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public void AssignMaterial(MaterialHolder holder, Material mat, bool recordUndo = true)
+        internal void AssignMaterial(MaterialHolder holder, Material mat, bool recordUndo = true)
         {
             if (recordUndo)
             {
