@@ -57,7 +57,7 @@ namespace Unity.MeshSync
     /// MeshSyncPlayer
     /// </summary>
     [ExecuteInEditMode]
-    public class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver
+    internal class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver
     {
         #region Events
         
