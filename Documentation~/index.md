@@ -40,20 +40,21 @@ but for films it may be preferable to match the number of animation samples to t
 
 - **Keyframe Reduction**  
 Perform keyframe reduction when importing animations.  
-  - **Threshold** is the error tolerance. The number of keys will decrease is the threshold increases, but the error will increase as well.   
-  - If **Erase Flat Curves** is enabled, curves that have no change (flat) will be deleted.
+  - **Threshold**: the error tolerance.   
+  The number of keys will decrease is the threshold increases, but the error will increase as well.   
+  - **Erase Flat Curves**: delete curves that have no change (flat).
   
 - **Z-Up Correction**  
 This setting is related only to 3ds Max and Blender which coordinate system is Z-Up, and specifies how to convert Z-Up to Y-Up.  
 "Flip YZ" converts all vertices of Transform and Mesh to Y-up.  
 "Rotate X" converts the root object's Transform to a Y-up by applying a -90 X rotation to the root object, leaving the Mesh as a Z-up.  
-In many cases, "Flip YZ" is preferable. For your reference, Unity's standard fbx Importer does the equivalent of "Rotate X".
+In many cases, "Flip YZ" is preferable. For reference, Unity's standard fbx Importer does the equivalent of "Rotate X".
 
 - **Material List**  
 MeshSyncServer and [SceneCachePlayer](SceneCache.md) maintain a list of materials.   
 Changing the materials in this list will apply the changes in the corresponding objects.
   - If **Sync Material List** is enabled, changes in an object's material will be reflected in the material list and propagated to other objects with the same material.
-  - You can save and load the list with **Import List, Export List**.  
+  - We can save and load the list with **Import List, Export List**.  
   When updating the cache file, this can be used to carry over the materials. 
 
 - **Progressive Display**  
@@ -69,8 +70,9 @@ Basic animation adjustments.
   For example, applying 0.5 will double the speed.  
        - **Offset** adds an offset for the specified seconds.    
     For example, applying a scale of -1 and an offset of -5 to a 5 second animation will result in reverse playback.    
-  - **Drop Keyframes**: drop keyframes. 
-  If we apply **Step=2** to an animation with 30 keystrokes, then the odd frames will be removed and the animation will become 15 frames. Similarly, if **Step=3**, then the animation will become 10 frames.
+  - **Drop Keyframes**: drop keyframes.   
+  If we apply **Step=2** to an animation with 30 keystrokes, then the odd frames will be removed and the animation will become 15 frames.   
+  Similarly, if **Step=3**, then the animation will become 10 frames.
   
 
 - **Make Asset**  
@@ -78,6 +80,8 @@ Meshes which are created by editing in DCC tools are objects that only exist in 
 In order to use them in other scenes or projects, we can save them as asset files by clicking the "Export Mesh "button.
 
 
+# Advanced Features
+- [SceneCache](en/SceneCache.md)
 
 
 # Tips
