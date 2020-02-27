@@ -108,6 +108,9 @@ Unity 側作業者と DCC 側作業者が別の場合役に立つこともある
 - Unity 2019.1 より前のバージョンでは、このパッケージを使えますが、頂点あたりの最大影響ボーン数が 4 であることに注意が必要です。  
 これが原因でボーンが多いと DCC 側と Unity 側で結果が一致しなくなることがあります。
 
+# プラグイン
+- [ビルド](Plugin~/Docs/BuildPlugins.md)
+
 # ライセンス
 - [License](LICENSE.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)

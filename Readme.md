@@ -112,6 +112,10 @@ If a message is sent from the browser's message form, that message will appear i
 If the model is using too many bones, the model won't sync correctly. 
 
 
+# Plugins
+- [Building](Plugin~/Docs/BuildPlugins.md)
+
+
 
 # License
 - [License](LICENSE.md)
