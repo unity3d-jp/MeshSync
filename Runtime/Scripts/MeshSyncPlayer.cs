@@ -18,26 +18,86 @@ using UnityEditor.SceneManagement;
 
 namespace Unity.MeshSync
 {
+    /// <summary>
+    /// A delegate to handle scene updates
+    /// </summary>
     public delegate void SceneHandler();
+    
+    /// <summary>
+    /// A delegate to handle audio updates
+    /// </summary>
     public delegate void UpdateAudioHandler(AudioClip audio, AudioData data);
+    
+    /// <summary>
+    /// A delegate to handle texture updates
+    /// </summary>
     public delegate void UpdateTextureHandler(Texture2D tex, TextureData data);
+    
+    /// <summary>
+    /// A delegate to handle material updates
+    /// </summary>
     public delegate void UpdateMaterialHandler(Material mat, MaterialData data);
+    
+    /// <summary>
+    /// A delegate to handle entity updates
+    /// </summary>
     public delegate void UpdateEntityHandler(GameObject obj, TransformData data);
+    
+    /// <summary>
+    /// A delegate to handle animation updates
+    /// </summary>
     public delegate void UpdateAnimationHandler(AnimationClip anim, AnimationClipData data);
+    
+    /// <summary>
+    /// A delegate to handle entity deletions
+    /// </summary>
     public delegate void DeleteEntityHandler(GameObject obj);
 
     [ExecuteInEditMode]
     public class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver
     {
         #region Events
+        
+        /// <summary>
+        /// An event that is executed when the scene update is started
+        /// </summary>
         public event SceneHandler onSceneUpdateBegin;
+
+        /// <summary>
+        /// An event that is executed when an audio is updated
+        /// </summary>
         public event UpdateAudioHandler onUpdateAudio;
+
+        /// <summary>
+        /// An event that is executed when a texture is updated
+        /// </summary>
         public event UpdateTextureHandler onUpdateTexture;
+
+        /// <summary>
+        /// An event that is executed when an material is updated
+        /// </summary>
         public event UpdateMaterialHandler onUpdateMaterial;
+
+        /// <summary>
+        /// An event that is executed when an entity is updated
+        /// </summary>
         public event UpdateEntityHandler onUpdateEntity;
+
+        /// <summary>
+        /// An event that is executed when an animation is updated
+        /// </summary>
         public event UpdateAnimationHandler onUpdateAnimation;
+
+        /// <summary>
+        /// An event that is executed when an entity is deleted
+        /// </summary>
         public event DeleteEntityHandler onDeleteEntity;
+
+        /// <summary>
+        /// An event that is executed when the scene update is finished
+        /// </summary>
         public event SceneHandler onSceneUpdateEnd;
+        
         #endregion
 
 
@@ -176,11 +236,11 @@ namespace Unity.MeshSync
         bool m_recordAssignMaterials = false;
 #endif
 
-        protected bool m_needReassignMaterials = false;
+        private bool m_needReassignMaterials = false;
 
         private Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
         internal Dictionary<int, EntityRecord> m_hostObjects = new Dictionary<int, EntityRecord>();
-        protected Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
+        private Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
         #endregion
 
 
@@ -2444,7 +2504,7 @@ namespace Unity.MeshSync
             return ret;
         }
 
-        protected void OnSceneViewGUI(SceneView sceneView)
+        private void OnSceneViewGUI(SceneView sceneView)
         {
             if (m_syncMaterialList)
             {
@@ -2478,6 +2538,9 @@ namespace Unity.MeshSync
             m_tmpC.Dispose();
         }
 
+        /// <summary>
+        /// Monobehaviour's OnEnable(). Can be overridden
+        /// </summary>
         protected virtual void OnEnable()
         {
 #if UNITY_EDITOR
@@ -2489,6 +2552,9 @@ namespace Unity.MeshSync
 #endif
         }
 
+        /// <summary>
+        /// Monobehaviour's OnDisable(). Can be overridden
+        /// </summary>
         protected virtual void OnDisable()
         {
 #if UNITY_EDITOR
