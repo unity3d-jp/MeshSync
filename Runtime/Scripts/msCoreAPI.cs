@@ -1797,7 +1797,7 @@ namespace Unity.MeshSync
     #endregion
 
     #region Point
-    public struct PointsDataFlags
+    internal struct PointsDataFlags
     {
         public BitFlags flags;
         public bool unchanged { get { return flags[0]; } }
@@ -1810,6 +1810,9 @@ namespace Unity.MeshSync
         public bool hasIDs          { get { return flags[7]; } }
     };
 
+    /// <summary>
+    /// PointsData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
     public struct PointsData
     {
@@ -1840,7 +1843,7 @@ namespace Unity.MeshSync
             return msPointsCreate();
         }
 
-        public PointsDataFlags dataFlags { get { return msPointsGetFlags(self); } }
+        internal PointsDataFlags dataFlags { get { return msPointsGetFlags(self); } }
         public Bounds bounds  { get { return msPointsGetBounds(self); } }
         public int numPoints { get { return msPointsGetNumPoints(self); } }
 
@@ -1863,7 +1866,7 @@ namespace Unity.MeshSync
 
 
     #region Constraints
-    public struct ConstraintData
+    internal struct ConstraintData
     {
         #region internal
         public IntPtr self;
@@ -1897,7 +1900,7 @@ namespace Unity.MeshSync
         public string GetSourcePath(int i) { return Misc.S(msConstraintGetSource(self, i)); }
     }
 
-    public struct AimConstraintData
+    internal struct AimConstraintData
     {
         #region internal
         public IntPtr self;
@@ -1912,7 +1915,7 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct ParentConstraintData
+    internal struct ParentConstraintData
     {
         #region internal
         public IntPtr self;
@@ -1931,7 +1934,7 @@ namespace Unity.MeshSync
         public Quaternion GetRotationOffset(int i) { return msParentConstraintGetRotationOffset(self, i); }
     }
 
-    public struct PositionConstraintData
+    internal struct PositionConstraintData
     {
         #region internal
         public IntPtr self;
@@ -1945,7 +1948,7 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct RotationConstraintData
+    internal struct RotationConstraintData
     {
         #region internal
         public IntPtr self;
@@ -1959,7 +1962,7 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct ScaleConstrainData
+    internal struct ScaleConstrainData
     {
         #region internal
         public IntPtr self;
