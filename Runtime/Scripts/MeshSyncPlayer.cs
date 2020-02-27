@@ -123,34 +123,34 @@ namespace Unity.MeshSync
 
         #region Fields
         [SerializeField] private DataPath m_assetDir = new DataPath(DataPath.Root.DataPath, "MeshSyncAssets");
-        [SerializeField] protected Transform m_rootObject;
+        [SerializeField] private Transform m_rootObject;
 
-        [SerializeField] protected bool m_syncVisibility = true;
-        [SerializeField] protected bool m_syncTransform = true;
-        [SerializeField] protected bool m_syncCameras = true;
-        [SerializeField] protected bool m_syncLights = true;
-        [SerializeField] protected bool m_syncMeshes = true;
-        [SerializeField] protected bool m_syncPoints = true;
-        [SerializeField] protected bool m_syncMaterials = true;
-        [SerializeField] protected bool m_handleAssets = true;
+        [SerializeField] private bool m_syncVisibility = true;
+        [SerializeField] private bool m_syncTransform = true;
+        [SerializeField] private bool m_syncCameras = true;
+        [SerializeField] private bool m_syncLights = true;
+        [SerializeField] private bool m_syncMeshes = true;
+        [SerializeField] private bool m_syncPoints = true;
+        [SerializeField] private bool m_syncMaterials = true;
+        [SerializeField] private bool m_handleAssets = true;
 
 #if UNITY_2018_1_OR_NEWER
-        [SerializeField] protected bool m_usePhysicalCameraParams = true;
+        [SerializeField] private bool m_usePhysicalCameraParams = true;
 #endif
-        [SerializeField] protected bool m_useCustomCameraMatrices = true;
-        [SerializeField] protected bool m_updateMeshColliders = true;
-        [SerializeField] protected bool m_findMaterialFromAssets = true;
+        [SerializeField] private bool m_useCustomCameraMatrices = true;
+        [SerializeField] private bool m_updateMeshColliders = true;
+        [SerializeField] private bool m_findMaterialFromAssets = true;
         [SerializeField] private InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
-        [SerializeField] protected bool m_keyframeReduction = true;
-        [SerializeField] protected float m_reductionThreshold = 0.001f;
-        [SerializeField] protected bool m_reductionEraseFlatCurves = false;
+        [SerializeField] private bool m_keyframeReduction = true;
+        [SerializeField] private float m_reductionThreshold = 0.001f;
+        [SerializeField] private bool m_reductionEraseFlatCurves = false;
         [SerializeField] internal ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
-        [SerializeField] protected bool m_logging = true;
-        [SerializeField] protected bool m_profiling = false;
-        [SerializeField] protected bool m_markMeshesDynamic = false;
-        [SerializeField] protected bool m_dontSaveAssetsInScene = false;
+        [SerializeField] internal bool m_logging = true;
+        [SerializeField] internal bool m_profiling = false;
+        [SerializeField] private bool m_markMeshesDynamic = false;
+        [SerializeField] private bool m_dontSaveAssetsInScene = false;
 
-        [SerializeField] protected Material m_dummyMaterial;
+        [SerializeField] private Material m_dummyMaterial;
         [SerializeField] internal List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] internal List<TextureHolder> m_textureList = new List<TextureHolder>();
         [SerializeField] internal List<AudioHolder> m_audioList = new List<AudioHolder>();
