@@ -144,7 +144,7 @@ namespace Unity.MeshSync
         [SerializeField] protected bool m_keyframeReduction = true;
         [SerializeField] protected float m_reductionThreshold = 0.001f;
         [SerializeField] protected bool m_reductionEraseFlatCurves = false;
-        [SerializeField] protected ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
+        [SerializeField] internal ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
         [SerializeField] protected bool m_logging = true;
         [SerializeField] protected bool m_profiling = false;
         [SerializeField] protected bool m_markMeshesDynamic = false;
@@ -267,7 +267,7 @@ namespace Unity.MeshSync
             get { return m_reductionEraseFlatCurves; }
             set { m_reductionEraseFlatCurves = value; }
         }
-        public ZUpCorrectionMode zUpCorrection
+        internal ZUpCorrectionMode zUpCorrection
         {
             get { return m_zUpCorrection; }
             set { m_zUpCorrection = value; }

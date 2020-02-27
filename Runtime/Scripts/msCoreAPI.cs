@@ -1979,13 +1979,13 @@ namespace Unity.MeshSync
 
 
     #region Scene
-    public enum ZUpCorrectionMode
+    internal enum ZUpCorrectionMode
     {
         FlipYZ,
         RotateX,
     }
 
-    public struct SceneProfileData
+    internal struct SceneProfileData
     {
         public ulong sizeEncoded;
         public ulong sizeDecoded;

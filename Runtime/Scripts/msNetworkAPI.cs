@@ -21,7 +21,7 @@ namespace Unity.MeshSync
         public Flags flags; // reserved
         public uint meshSplitUnit;
         public uint meshMaxBoneInfluence; // 4 or 255 (variable)
-        public ZUpCorrectionMode zUpCorrectionMode;
+        internal ZUpCorrectionMode zUpCorrectionMode;
 
         public static ServerSettings defaultValue
         {
@@ -75,7 +75,7 @@ namespace Unity.MeshSync
         public static Server Start(ref ServerSettings settings) { return msServerStart(ref settings); }
         public void Stop() { msServerStop(self); }
 
-        public ZUpCorrectionMode zUpCorrectionMode
+        internal ZUpCorrectionMode zUpCorrectionMode
         {
             set { msServerSetZUpCorrectionMode(self, value); }
         }
