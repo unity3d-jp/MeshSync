@@ -1837,29 +1837,31 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern void msPointsReadIDs(IntPtr self, int[] dst);
         [DllImport(Lib.name)] static extern void msPointsWriteIDs(IntPtr self, int[] v, int size);
         #endregion
-
+        /// <summary>
+        /// Create PointsData
+        /// </summary>
         public static PointsData Create()
         {
             return msPointsCreate();
         }
 
         internal PointsDataFlags dataFlags { get { return msPointsGetFlags(self); } }
-        public Bounds bounds  { get { return msPointsGetBounds(self); } }
-        public int numPoints { get { return msPointsGetNumPoints(self); } }
+        internal Bounds bounds  { get { return msPointsGetBounds(self); } }
+        internal int numPoints { get { return msPointsGetNumPoints(self); } }
 
-        public void ReadPoints(Vector3[] dst) { msPointsReadPoints(self, dst); }
-        public void ReadRotations(Quaternion[] dst) { msPointsReadRotations(self, dst); }
-        public void ReadScales(Vector3[] dst) { msPointsReadScales(self, dst); }
-        public void ReadVelocities(Vector3[] dst) { msPointsReadVelocities(self, dst); }
-        public void ReadColors(Color[] dst) { msPointsReadColors(self, dst); }
-        public void ReadIDs(int[] dst) { msPointsReadIDs(self, dst); }
+        internal void ReadPoints(Vector3[] dst) { msPointsReadPoints(self, dst); }
+        internal void ReadRotations(Quaternion[] dst) { msPointsReadRotations(self, dst); }
+        internal void ReadScales(Vector3[] dst) { msPointsReadScales(self, dst); }
+        internal void ReadVelocities(Vector3[] dst) { msPointsReadVelocities(self, dst); }
+        internal void ReadColors(Color[] dst) { msPointsReadColors(self, dst); }
+        internal void ReadIDs(int[] dst) { msPointsReadIDs(self, dst); }
 
-        public void WritePoints(Vector3[] v) { msPointsWritePoints(self, v, v.Length); }
-        public void WriteRotations(Quaternion[] v) { msPointsWriteRotations(self, v, v.Length); }
-        public void WriteScales(Vector3[] v) { msPointsWriteScales(self, v, v.Length); }
-        public void WriteVelocities(Vector3[] v) { msPointsWriteVelocities(self, v, v.Length); }
-        public void WriteColors(Color[] v) { msPointsWriteColors(self, v, v.Length); }
-        public void WriteIDs(int[] v) { msPointsWriteIDs(self, v, v.Length); }
+        internal void WritePoints(Vector3[] v) { msPointsWritePoints(self, v, v.Length); }
+        internal void WriteRotations(Quaternion[] v) { msPointsWriteRotations(self, v, v.Length); }
+        internal void WriteScales(Vector3[] v) { msPointsWriteScales(self, v, v.Length); }
+        internal void WriteVelocities(Vector3[] v) { msPointsWriteVelocities(self, v, v.Length); }
+        internal void WriteColors(Color[] v) { msPointsWriteColors(self, v, v.Length); }
+        internal void WriteIDs(int[] v) { msPointsWriteIDs(self, v, v.Length); }
     }
     #endregion
     #endregion
