@@ -140,7 +140,7 @@ namespace Unity.MeshSync
         [SerializeField] protected bool m_useCustomCameraMatrices = true;
         [SerializeField] protected bool m_updateMeshColliders = true;
         [SerializeField] protected bool m_findMaterialFromAssets = true;
-        [SerializeField] protected InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
+        [SerializeField] private InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
         [SerializeField] protected bool m_keyframeReduction = true;
         [SerializeField] protected float m_reductionThreshold = 0.001f;
         [SerializeField] protected bool m_reductionEraseFlatCurves = false;
@@ -247,7 +247,7 @@ namespace Unity.MeshSync
             set { m_handleAssets = value; }
         }
 
-        public InterpolationMode animationInterpolation
+        internal InterpolationMode animationInterpolation
         {
             get { return m_animationInterpolation; }
             set { m_animationInterpolation = value; }

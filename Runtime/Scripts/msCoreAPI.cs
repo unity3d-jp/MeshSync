@@ -281,12 +281,12 @@ namespace Unity.MeshSync
 
         public static TextureData Create() { return msTextureCreate(); }
 
-        public int id
+        internal int id
         {
             get { return asset.id; }
             set { asset.id = value; }
         }
-        public string name
+        internal string name
         {
             get { return asset.name; }
             set { asset.name = value; }
@@ -301,31 +301,31 @@ namespace Unity.MeshSync
             get { return msTextureGetFormat(self); }
             set { msTextureSetFormat(self, value); }
         }
-        public int width
+        internal int width
         {
             get { return msTextureGetWidth(self); }
             set { msTextureSetWidth(self, value); }
         }
-        public int height
+        internal int height
         {
             get { return msTextureGetHeight(self); }
             set { msTextureSetHeight(self, value); }
         }
-        public int sizeInByte
+        internal int sizeInByte
         {
             get { return msTextureGetSizeInByte(self); }
         }
-        public IntPtr dataPtr
+        internal IntPtr dataPtr
         {
             get { return msTextureGetDataPtr(self); }
         }
 
 #if UNITY_EDITOR
-        public bool WriteToFile(string path)
+        internal bool WriteToFile(string path)
         {
             return msTextureWriteToFile(self, path) != 0;
         }
-        public static bool WriteToFile(string path, byte[] data)
+        internal static bool WriteToFile(string path, byte[] data)
         {
             if (data != null)
                 return msWriteToFile(path, data, data.Length) != 0;
@@ -507,28 +507,28 @@ namespace Unity.MeshSync
 
         public static MaterialData Create() { return msMaterialCreate(); }
 
-        public int id
+        internal int id
         {
             get { return asset.id; }
             set { asset.id = value; }
         }
-        public string name
+        internal string name
         {
             get { return asset.name; }
             set { asset.name = value; }
         }
-        public int index
+        internal int index
         {
             get { return msMaterialGetIndex(self); }
             set { msMaterialSetIndex(self, value); }
         }
-        public string shader
+        internal string shader
         {
             get { return Misc.S(msMaterialGetShader(self)); }
             set { msMaterialSetShader(self, value); }
         }
 
-        public int numProperties
+        internal int numProperties
         {
             get { return msMaterialGetNumParams(self); }
         }
@@ -541,7 +541,7 @@ namespace Unity.MeshSync
             return msMaterialFindParam(self, name);
         }
 
-        public Color color
+        internal Color color
         {
             get
             {
@@ -557,24 +557,24 @@ namespace Unity.MeshSync
             }
         }
 
-        public void SetInt(string name, int v) { msMaterialSetInt(self, name, v); }
-        public void SetFloat(string name, float v) { msMaterialSetFloat(self, name, v); }
-        public void SetVector(string name, Vector4 v) { msMaterialSetVector(self, name, v); }
-        public void SetMatrix(string name, Matrix4x4 v) { msMaterialSetMatrix(self, name, v); }
-        public void SetFloatArray(string name, float[] v) { msMaterialSetFloatArray(self, name, v, v.Length); }
-        public void SetVectorArray(string name, Vector4[] v) { msMaterialSetVectorArray(self, name, v, v.Length); }
-        public void SetMatrixArray(string name, Matrix4x4[] v) { msMaterialSetMatrixArray(self, name, v, v.Length); }
-        public void SetTexture(string name, TextureData v) { msMaterialSetTexture(self, name, v); }
+        internal void SetInt(string name, int v) { msMaterialSetInt(self, name, v); }
+        internal void SetFloat(string name, float v) { msMaterialSetFloat(self, name, v); }
+        internal void SetVector(string name, Vector4 v) { msMaterialSetVector(self, name, v); }
+        internal void SetMatrix(string name, Matrix4x4 v) { msMaterialSetMatrix(self, name, v); }
+        internal void SetFloatArray(string name, float[] v) { msMaterialSetFloatArray(self, name, v, v.Length); }
+        internal void SetVectorArray(string name, Vector4[] v) { msMaterialSetVectorArray(self, name, v, v.Length); }
+        internal void SetMatrixArray(string name, Matrix4x4[] v) { msMaterialSetMatrixArray(self, name, v, v.Length); }
+        internal void SetTexture(string name, TextureData v) { msMaterialSetTexture(self, name, v); }
 
-        public int numKeywords
+        internal int numKeywords
         {
             get { return msMaterialGetNumKeywords(self); }
         }
-        public MaterialKeywordData GetKeyword(int i)
+        internal MaterialKeywordData GetKeyword(int i)
         {
             return msMaterialGetKeyword(self, i);
         }
-        public void AddKeyword(string name, bool value)
+        internal void AddKeyword(string name, bool value)
         {
             msMaterialAddKeyword(self, name, (byte)(value ? 1 : 0));
         }
@@ -583,19 +583,19 @@ namespace Unity.MeshSync
 
 
     #region Animations
-    public struct TimeRange
+    internal struct TimeRange
     {
         public float start, end;
     }
 
-    public enum InterpolationMode
+    internal enum InterpolationMode
     {
         Smooth,
         Linear,
         Constant,
     }
 
-    public class AnimationImportContext
+    internal class AnimationImportContext
     {
         public AnimationClip clip;
         public Type mainComponentType;
@@ -738,7 +738,7 @@ namespace Unity.MeshSync
             Misc.SetCurve(clip, path, type, prop, curve);
         }
 
-        public void ExportTransformAnimation(AnimationImportContext ctx)
+        internal void ExportTransformAnimation(AnimationImportContext ctx)
         {
             var clip = ctx.clip;
             var path = ctx.path;
@@ -795,7 +795,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public void ExportCameraAnimation(AnimationImportContext ctx)
+        internal void ExportCameraAnimation(AnimationImportContext ctx)
         {
             var tcam = typeof(Camera);
             ctx.mainComponentType = tcam;
@@ -865,7 +865,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public void ExportLightAnimation(AnimationImportContext ctx)
+        internal void ExportLightAnimation(AnimationImportContext ctx)
         {
             var tlight = typeof(Light);
             ctx.mainComponentType = tlight;
@@ -914,7 +914,7 @@ namespace Unity.MeshSync
             s_blendshapes.Add(data);
         }
 
-        public void ExportMeshAnimation(AnimationImportContext ctx)
+        internal void ExportMeshAnimation(AnimationImportContext ctx)
         {
             if (ctx.mainComponentType == null)
                 ctx.mainComponentType = typeof(MeshRenderer);
@@ -942,14 +942,14 @@ namespace Unity.MeshSync
             }
         }
 
-        public void ExportPointsAnimation(AnimationImportContext ctx)
+        internal void ExportPointsAnimation(AnimationImportContext ctx)
         {
             var tpoints = typeof(PointCache);
             ctx.mainComponentType = tpoints;
             ExportTransformAnimation(ctx);
         }
 
-        public void ExportToClip(AnimationImportContext ctx)
+        internal void ExportToClip(AnimationImportContext ctx)
         {
             switch (entityType)
             {
@@ -1022,7 +1022,7 @@ namespace Unity.MeshSync
                 msSetSizeOfKeyframe(Marshal.SizeOf(typeof(Keyframe)));
             }
         }
-        public void Convert(InterpolationMode it)
+        internal void Convert(InterpolationMode it)
         {
             Prepare();
             msAnimationClipConvert(self, it);
@@ -2066,7 +2066,7 @@ namespace Unity.MeshSync
         public int sceneCount {
             get { return msISceneCacheGetNumScenes(self); }
         }
-        public TimeRange timeRange {
+        internal TimeRange timeRange {
             get {
                 var ret = default(TimeRange);
                 msISceneCacheGetTimeRange(self, ref ret.start, ref ret.end);
@@ -2099,7 +2099,7 @@ namespace Unity.MeshSync
             msISceneCachePreload(self, frame);
         }
 
-        public AnimationCurve GetTimeCurve(InterpolationMode im)
+        internal AnimationCurve GetTimeCurve(InterpolationMode im)
         {
             var data = msISceneCacheGetTimeCurve(self);
             if (!data)
