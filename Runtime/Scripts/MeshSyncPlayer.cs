@@ -94,29 +94,29 @@ namespace Unity.MeshSync
         [Serializable]
         internal class MaterialHolder
         {
-            public int id;
-            public string name;
-            public int index;
-            public string shader;
-            public Color color = Color.white;
-            public Material material;
-            public int materialIID;
+            [SerializeField] internal int id;
+            [SerializeField] internal string name;
+            [SerializeField] internal int index;
+            [SerializeField] internal string shader;
+            [SerializeField] internal Color color = Color.white;
+            [SerializeField] internal Material material;
+            [SerializeField] internal int materialIID;
         }
 
         [Serializable]
         internal class TextureHolder
         {
-            public int id;
-            public string name;
-            public Texture2D texture;
+            [SerializeField] internal int id;
+            [SerializeField] internal string name;
+            [SerializeField] internal Texture2D texture;
         }
 
         [Serializable]
         internal class AudioHolder
         {
-            public int id;
-            public string name;
-            public AudioClip audio;
+            [SerializeField] internal int id;
+            [SerializeField] internal string name;
+            [SerializeField] internal AudioClip audio;
         }
         #endregion
 
@@ -455,7 +455,7 @@ namespace Unity.MeshSync
             return false;
         }
 
-        protected bool IsAsset(UnityEngine.Object obj)
+        private bool IsAsset(UnityEngine.Object obj)
         {
 #if UNITY_EDITOR
             return AssetDatabase.Contains(obj);
@@ -464,7 +464,7 @@ namespace Unity.MeshSync
 #endif
         }
 
-        protected bool DestroyIfNotAsset(UnityEngine.Object obj)
+        private bool DestroyIfNotAsset(UnityEngine.Object obj)
         {
             if (obj != null && IsAsset(obj))
             {
@@ -474,7 +474,7 @@ namespace Unity.MeshSync
             return false;
         }
 
-        public string BuildPath(Transform t)
+        internal string BuildPath(Transform t)
         {
             var parent = t.parent;
             if (parent != null && parent != m_rootObject)
@@ -483,7 +483,7 @@ namespace Unity.MeshSync
                 return "/" + t.name;
         }
 
-        public Texture2D FindTexture(int id)
+        internal Texture2D FindTexture(int id)
         {
             if (id == Lib.invalidID)
                 return null;
@@ -491,7 +491,7 @@ namespace Unity.MeshSync
             return rec != null ? rec.texture : null;
         }
 
-        public Material FindMaterial(int id)
+        internal Material FindMaterial(int id)
         {
             if (id == Lib.invalidID)
                 return null;
@@ -499,12 +499,12 @@ namespace Unity.MeshSync
             return rec != null ? rec.material : null;
         }
 
-        public bool EraseMaterialRecord(int id)
+        internal bool EraseMaterialRecord(int id)
         {
             return m_materialList.RemoveAll(v => v.id == id) != 0;
         }
 
-        protected int GetMaterialIndex(Material mat)
+        internal int GetMaterialIndex(Material mat)
         {
             if (mat == null)
                 return Lib.invalidID;
@@ -524,7 +524,7 @@ namespace Unity.MeshSync
             return ret;
         }
 
-        public AudioClip FindAudio(int id)
+        internal AudioClip FindAudio(int id)
         {
             if (id == Lib.invalidID)
                 return null;
@@ -532,7 +532,7 @@ namespace Unity.MeshSync
             return rec != null ? rec.audio : null;
         }
 
-        public int GetObjectlID(GameObject go)
+        internal int GetObjectlID(GameObject go)
         {
             if (go == null)
                 return Lib.invalidID;
@@ -550,7 +550,7 @@ namespace Unity.MeshSync
             return ret;
         }
 
-        public Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created)
+        internal Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created)
         {
             var names = path.Split('/');
             Transform t = m_rootObject;
@@ -565,7 +565,7 @@ namespace Unity.MeshSync
             return t;
         }
 
-        public Transform FindOrCreateObjectByName(Transform parent, string name, bool createIfNotExist, ref bool created)
+        internal Transform FindOrCreateObjectByName(Transform parent, string name, bool createIfNotExist, ref bool created)
         {
             Transform ret = null;
             if (parent == null)
@@ -597,7 +597,7 @@ namespace Unity.MeshSync
             return ret;
         }
 
-        public static Material CreateDefaultMaterial()
+        internal static Material CreateDefaultMaterial()
         {
             // prefer non Standard shader because it will be pink in HDRP
             var shader = Shader.Find("HDRP/Lit");
@@ -609,7 +609,7 @@ namespace Unity.MeshSync
             return ret;
         }
 
-        public void ForceRepaint()
+        internal void ForceRepaint()
         {
 #if UNITY_EDITOR
             if (!EditorApplication.isPlaying && !EditorApplication.isPaused)
@@ -622,7 +622,7 @@ namespace Unity.MeshSync
         #endregion
 
         #region ReceiveScene
-        public void BeforeUpdateScene()
+        internal void BeforeUpdateScene()
         {
             MakeSureAssetDirectoryExists();
 
@@ -720,7 +720,7 @@ namespace Unity.MeshSync
 #endif
         }
 
-        public void AfterUpdateScene()
+        internal void AfterUpdateScene()
         {
             List<string> deadKeys = null;
 

@@ -91,7 +91,7 @@ namespace Unity.MeshSync
     }
 
     [StructLayout(LayoutKind.Explicit)]
-    public struct FileAssetData
+    internal struct FileAssetData
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
