@@ -21,37 +21,37 @@ namespace Unity.MeshSync
     /// <summary>
     /// A delegate to handle scene updates
     /// </summary>
-    public delegate void SceneHandler();
+    internal delegate void SceneHandler();
     
     /// <summary>
     /// A delegate to handle audio updates
     /// </summary>
-    public delegate void UpdateAudioHandler(AudioClip audio, AudioData data);
+    internal delegate void UpdateAudioHandler(AudioClip audio, AudioData data);
     
     /// <summary>
     /// A delegate to handle texture updates
     /// </summary>
-    public delegate void UpdateTextureHandler(Texture2D tex, TextureData data);
+    internal delegate void UpdateTextureHandler(Texture2D tex, TextureData data);
     
     /// <summary>
     /// A delegate to handle material updates
     /// </summary>
-    public delegate void UpdateMaterialHandler(Material mat, MaterialData data);
+    internal delegate void UpdateMaterialHandler(Material mat, MaterialData data);
     
     /// <summary>
     /// A delegate to handle entity updates
     /// </summary>
-    public delegate void UpdateEntityHandler(GameObject obj, TransformData data);
+    internal delegate void UpdateEntityHandler(GameObject obj, TransformData data);
     
     /// <summary>
     /// A delegate to handle animation updates
     /// </summary>
-    public delegate void UpdateAnimationHandler(AnimationClip anim, AnimationClipData data);
+    internal delegate void UpdateAnimationHandler(AnimationClip anim, AnimationClipData data);
     
     /// <summary>
     /// A delegate to handle entity deletions
     /// </summary>
-    public delegate void DeleteEntityHandler(GameObject obj);
+    internal delegate void DeleteEntityHandler(GameObject obj);
 
     /// <summary>
     /// MeshSyncPlayer
@@ -64,42 +64,42 @@ namespace Unity.MeshSync
         /// <summary>
         /// An event that is executed when the scene update is started
         /// </summary>
-        public event SceneHandler onSceneUpdateBegin;
+        internal event SceneHandler onSceneUpdateBegin;
 
         /// <summary>
         /// An event that is executed when an audio is updated
         /// </summary>
-        public event UpdateAudioHandler onUpdateAudio;
+        internal event UpdateAudioHandler onUpdateAudio;
 
         /// <summary>
         /// An event that is executed when a texture is updated
         /// </summary>
-        public event UpdateTextureHandler onUpdateTexture;
+        internal event UpdateTextureHandler onUpdateTexture;
 
         /// <summary>
         /// An event that is executed when an material is updated
         /// </summary>
-        public event UpdateMaterialHandler onUpdateMaterial;
+        internal event UpdateMaterialHandler onUpdateMaterial;
 
         /// <summary>
         /// An event that is executed when an entity is updated
         /// </summary>
-        public event UpdateEntityHandler onUpdateEntity;
+        internal event UpdateEntityHandler onUpdateEntity;
 
         /// <summary>
         /// An event that is executed when an animation is updated
         /// </summary>
-        public event UpdateAnimationHandler onUpdateAnimation;
+        internal event UpdateAnimationHandler onUpdateAnimation;
 
         /// <summary>
         /// An event that is executed when an entity is deleted
         /// </summary>
-        public event DeleteEntityHandler onDeleteEntity;
+        internal event DeleteEntityHandler onDeleteEntity;
 
         /// <summary>
         /// An event that is executed when the scene update is finished
         /// </summary>
-        public event SceneHandler onSceneUpdateEnd;
+        internal event SceneHandler onSceneUpdateEnd;
         
         #endregion
 
