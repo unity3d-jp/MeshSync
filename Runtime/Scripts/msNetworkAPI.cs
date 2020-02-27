@@ -113,9 +113,9 @@ namespace Unity.MeshSync
         Response,
     }
 
-    public struct GetFlags
+    internal struct GetFlags
     {
-        public BitFlags flags;
+        internal BitFlags flags;
         public bool getTransform { get { return flags[0]; } }
         public bool getPoints { get { return flags[1]; } }
         public bool getNormals { get { return flags[2]; } }
@@ -145,7 +145,7 @@ namespace Unity.MeshSync
             return ret;
         }
 
-        public GetFlags flags { get { return msGetGetFlags(self); } }
+        internal GetFlags flags { get { return msGetGetFlags(self); } }
         public bool bakeSkin { get { return msGetGetBakeSkin(self) != 0; } }
         public bool bakeCloth { get { return msGetGetBakeCloth(self) != 0; } }
     }
@@ -170,7 +170,7 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct DeleteMessage
+    internal struct DeleteMessage
     {
         #region internal
         public IntPtr self;
@@ -188,10 +188,10 @@ namespace Unity.MeshSync
         }
 
         public int numEntities { get { return msDeleteGetNumEntities(self); } }
-        public Identifier GetEntity(int i) { return msDeleteGetEntity(self, i); }
+        internal Identifier GetEntity(int i) { return msDeleteGetEntity(self, i); }
 
         public int numMaterials { get { return msDeleteGetNumMaterials(self); } }
-        public Identifier GetMaterial(int i) { return msDeleteGetMaterial(self, i); }
+        internal Identifier GetMaterial(int i) { return msDeleteGetMaterial(self, i); }
     }
 
     public struct FenceMessage

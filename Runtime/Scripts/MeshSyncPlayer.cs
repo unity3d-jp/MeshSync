@@ -2106,7 +2106,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public bool EraseEntityRecord(Identifier identifier)
+        internal bool EraseEntityRecord(Identifier identifier)
         {
             var id = identifier.id;
             var path = identifier.name;

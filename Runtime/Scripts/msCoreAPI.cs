@@ -137,6 +137,9 @@ namespace Unity.MeshSync
         RawFile = 100,
     }
 
+    /// <summary>
+    /// AudioData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
     public struct AudioData
     {
@@ -160,14 +163,18 @@ namespace Unity.MeshSync
 
         public static implicit operator bool(AudioData v) { return v.self != IntPtr.Zero; }
 
+        /// <summary>
+        /// Creates a new AudioData
+        /// </summary>
+        /// <returns>The newly created AudioData</returns>
         public static AudioData Create() { return msAudioCreate(); }
 
-        public int id
+        internal int id
         {
             get { return asset.id; }
             set { asset.id = value; }
         }
-        public string name
+        internal string name
         {
             get { return asset.name; }
             set { asset.name = value; }
@@ -177,22 +184,22 @@ namespace Unity.MeshSync
             get { return msAudioGetFormat(self); }
             set { msAudioSetFormat(self, value); }
         }
-        public int frequency
+        internal int frequency
         {
             get { return msAudioGetFrequency(self); }
             set { msAudioSetFrequency(self, value); }
         }
-        public int channels
+        internal int channels
         {
             get { return msAudioGetChannels(self); }
             set { msAudioSetChannels(self, value); }
         }
-        public int sampleLength
+        internal int sampleLength
         {
             get { return msAudioGetSampleLength(self); }
         }
 
-        public float[] samples
+        internal float[] samples
         {
             get
             {
@@ -203,11 +210,11 @@ namespace Unity.MeshSync
         }
 
 #if UNITY_EDITOR
-        public bool WriteToFile(string path)
+        internal bool WriteToFile(string path)
         {
             return msAudioWriteToFile(self, path) != 0;
         }
-        public bool ExportAsWave(string path)
+        internal bool ExportAsWave(string path)
         {
             return msAudioExportAsWave(self, path) != 0;
         }
@@ -258,11 +265,14 @@ namespace Unity.MeshSync
         RawFile = 0x10 << 4,
     }
 
+    /// <summary>
+    /// TextureData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
     public struct TextureData
     {
         #region internal
-        [FieldOffset(0)] public IntPtr self;
+        [FieldOffset(0)] internal IntPtr self;
         [FieldOffset(0)] internal AssetData asset;
         [DllImport(Lib.name)] static extern TextureData msTextureCreate();
         [DllImport(Lib.name)] static extern TextureType msTextureGetType(IntPtr self);
@@ -279,6 +289,10 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern byte msWriteToFile(string path, byte[] data, int size);
         #endregion
 
+        /// <summary>
+        /// Creates a new TextureData
+        /// </summary>
+        /// <returns>The newly created TextureData</returns>
         public static TextureData Create() { return msTextureCreate(); }
 
         internal int id
@@ -454,7 +468,7 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct MaterialKeywordData
+    internal struct MaterialKeywordData
     {
         #region internal
         public IntPtr self;
@@ -471,6 +485,9 @@ namespace Unity.MeshSync
         public bool value { get { return msMaterialKeywordGetValue(self) != 0; } }
     }
 
+    /// <summary>
+    /// MaterialData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
     public struct MaterialData
     {
@@ -500,11 +517,20 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern void msMaterialAddKeyword(IntPtr self, string name, byte v);
         #endregion
 
+        /// <summary>
+        /// Check if the MaterialData has been assigned 
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>True if assigned, false otherwise</returns>
         public static implicit operator bool(MaterialData v)
         {
             return v.self != IntPtr.Zero;
         }
 
+        /// <summary>
+        /// Creates a new MaterialData
+        /// </summary>
+        /// <returns>The newly created MaterialData</returns>
         public static MaterialData Create() { return msMaterialCreate(); }
 
         internal int id
@@ -667,6 +693,9 @@ namespace Unity.MeshSync
         public void Convert(InterpolationMode it) { msCurveConvert(self, it); }
     }
 
+    /// <summary>
+    /// AnimationData
+    /// </summary>
     public struct AnimationData
     {
         #region internal
@@ -695,16 +724,21 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern AnimationCurveData msAnimationEachBlendshapeCurves(IntPtr self, msCurveCallback cb);
         #endregion
 
+        /// <summary>
+        /// Checks if the AnimationData has been assigned
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>True if assigned, false otherwise</returns>
         public static implicit operator bool(AnimationData v)
         {
             return v.self != IntPtr.Zero;
         }
 
-        public string path
+        internal string path
         {
             get { return Misc.S(msAnimationGetPath(self)); }
         }
-        public EntityType entityType
+        internal EntityType entityType
         {
             get { return msAnimationGetEntityType(self); }
         }
@@ -731,7 +765,7 @@ namespace Unity.MeshSync
 
 
 #if UNITY_EDITOR
-        public static void SetCurve(AnimationClip clip, string path, Type type, string prop, AnimationCurve curve, bool applyNullCurve = false)
+        internal static void SetCurve(AnimationClip clip, string path, Type type, string prop, AnimationCurve curve, bool applyNullCurve = false)
         {
             if (curve == null && !applyNullCurve)
                 return;
@@ -1192,7 +1226,7 @@ namespace Unity.MeshSync
     #endregion
 
     #region Entities
-    public struct Identifier
+    internal struct Identifier
     {
         #region internal
         public IntPtr self;
@@ -1204,7 +1238,7 @@ namespace Unity.MeshSync
         public string name { get { return Misc.S(msIdentifierGetName(self)); } }
     }
 
-    public enum EntityType
+    internal enum EntityType
     {
         Unknown,
         Transform,
@@ -1214,7 +1248,7 @@ namespace Unity.MeshSync
         Points,
     };
 
-    public struct TransformDataFlags
+    internal struct TransformDataFlags
     {
         public BitFlags flags;
         public bool unchanged { get { return flags[0]; } }
@@ -1581,9 +1615,9 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct MeshDataFlags
+    internal struct MeshDataFlags
     {
-        public BitFlags flags;
+        internal BitFlags flags;
         public bool unchanged           { get { return flags[0]; } }
         public bool topologyUnchanged   { get { return flags[1]; } }
         public bool hasIndices          { get { return flags[3]; } }

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Unity.MeshSync
 {
     [Serializable]
-    public struct BitFlags
+    internal struct BitFlags
     {
         // int because uint is not serialized...
         [SerializeField] public int bits;
