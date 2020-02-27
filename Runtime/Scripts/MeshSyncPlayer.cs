@@ -207,16 +207,16 @@ namespace Unity.MeshSync
         [SerializeField] private bool m_keyframeReduction = true;
         [SerializeField] private float m_reductionThreshold = 0.001f;
         [SerializeField] private bool m_reductionEraseFlatCurves = false;
-        [SerializeField] internal ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
-        [SerializeField] internal bool m_logging = true;
-        [SerializeField] internal bool m_profiling = false;
+        [SerializeField] protected ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
+        [SerializeField] protected bool m_logging = true;
+        [SerializeField] protected bool m_profiling = false;
         [SerializeField] private bool m_markMeshesDynamic = false;
         [SerializeField] private bool m_dontSaveAssetsInScene = false;
 
         [SerializeField] private Material m_dummyMaterial;
-        [SerializeField] internal List<MaterialHolder> m_materialList = new List<MaterialHolder>();
-        [SerializeField] internal List<TextureHolder> m_textureList = new List<TextureHolder>();
-        [SerializeField] internal List<AudioHolder> m_audioList = new List<AudioHolder>();
+        [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
+        [SerializeField] protected List<TextureHolder> m_textureList = new List<TextureHolder>();
+        [SerializeField] protected List<AudioHolder> m_audioList = new List<AudioHolder>();
 
         [SerializeField] string[] m_clientObjects_keys;
         [SerializeField] EntityRecord[] m_clientObjects_values;
@@ -242,7 +242,7 @@ namespace Unity.MeshSync
         private bool m_needReassignMaterials = false;
 
         private Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
-        internal Dictionary<int, EntityRecord> m_hostObjects = new Dictionary<int, EntityRecord>();
+        protected Dictionary<int, EntityRecord> m_hostObjects = new Dictionary<int, EntityRecord>();
         private Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
         #endregion
 
@@ -480,7 +480,7 @@ namespace Unity.MeshSync
 
         #region Misc
         //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool Try(Action act)
+        protected bool Try(Action act)
         {
             try
             {
@@ -567,7 +567,7 @@ namespace Unity.MeshSync
             return m_materialList.RemoveAll(v => v.id == id) != 0;
         }
 
-        internal int GetMaterialIndex(Material mat)
+        protected int GetMaterialIndex(Material mat)
         {
             if (mat == null)
                 return Lib.invalidID;
