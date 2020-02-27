@@ -1273,45 +1273,45 @@ namespace Unity.MeshSync
         public static explicit operator MeshData(TransformData v) { return new MeshData { self = v.self }; }
         public static explicit operator PointsData(TransformData v) { return new PointsData { self = v.self }; }
 
-        public static TransformData Create()
+        internal static TransformData Create()
         {
             return msTransformCreate();
         }
 
-        public TransformDataFlags dataFlags
+        internal TransformDataFlags dataFlags
         {
             get { return msTransformGetDataFlags(self); }
         }
-        public EntityType entityType
+        internal EntityType entityType
         {
             get { return msTransformGetType(self); }
         }
-        public int hostID
+        internal int hostID
         {
             get { return msTransformGetHostID(self); }
             set { msTransformSetHostID(self, value); }
         }
-        public int index
+        internal int index
         {
             get { return msTransformGetIndex(self); }
             set { msTransformSetIndex(self, value); }
         }
-        public string path
+        internal string path
         {
             get { return Misc.S(msTransformGetPath(self)); }
             set { msTransformSetPath(self, value); }
         }
-        public Vector3 position
+        internal Vector3 position
         {
             get { return msTransformGetPosition(self); }
             set { msTransformSetPosition(self, value); }
         }
-        public Quaternion rotation
+        internal Quaternion rotation
         {
             get { return msTransformGetRotation(self); }
             set { msTransformSetRotation(self, value); }
         }
-        public Vector3 scale
+        internal Vector3 scale
         {
             get { return msTransformGetScale(self); }
             set { msTransformSetScale(self, value); }
@@ -1321,12 +1321,12 @@ namespace Unity.MeshSync
             get { return msTransformGetVisibility(self); }
             set { msTransformSetVisibility(self, value); }
         }
-        public string reference
+        internal string reference
         {
             get { return Misc.S(msTransformGetReference(self)); }
             set { msTransformSetReference(self, value); }
         }
-        public int numUserData
+        internal int numUserData
         {
             get { return msTransformGetNumUserProperties(self); }
         }
@@ -1337,16 +1337,16 @@ namespace Unity.MeshSync
 
     public struct CameraDataFlags
     {
-        public BitFlags flags;
-        public bool unchanged { get { return flags[0]; } }
-        public bool hasFov { get { return flags[2]; } }
-        public bool hasNearPlane { get { return flags[3]; } }
-        public bool hasFarPlane { get { return flags[4]; } }
-        public bool hasFocalLength { get { return flags[5]; } }
-        public bool hasSensorSize { get { return flags[6]; } }
-        public bool hasLensShift { get { return flags[7]; } }
-        public bool hasViewMatrix { get { return flags[8]; } }
-        public bool hasProjMatrix { get { return flags[9]; } }
+        internal BitFlags flags;
+        internal bool unchanged { get { return flags[0]; } }
+        internal bool hasFov { get { return flags[2]; } }
+        internal bool hasNearPlane { get { return flags[3]; } }
+        internal bool hasFarPlane { get { return flags[4]; } }
+        internal bool hasFocalLength { get { return flags[5]; } }
+        internal bool hasSensorSize { get { return flags[6]; } }
+        internal bool hasLensShift { get { return flags[7]; } }
+        internal bool hasViewMatrix { get { return flags[8]; } }
+        internal bool hasProjMatrix { get { return flags[9]; } }
     }
 
     /// <summary>
@@ -1387,51 +1387,51 @@ namespace Unity.MeshSync
             return msCameraCreate();
         }
 
-        public CameraDataFlags dataFlags
+        internal CameraDataFlags dataFlags
         {
             get { return msCameraGetDataFlags(self); }
         }
-        public bool orthographic
+        internal bool orthographic
         {
             get { return msCameraIsOrtho(self) != 0; }
             set { msCameraSetOrtho(self, (byte)(value ? 1 : 0)); }
         }
-        public float fov
+        internal float fov
         {
             get { return msCameraGetFov(self); }
             set { msCameraSetFov(self, value); }
         }
-        public float nearPlane
+        internal float nearPlane
         {
             get { return msCameraGetNearPlane(self); }
             set { msCameraSetNearPlane(self, value); }
         }
-        public float farPlane
+        internal float farPlane
         {
             get { return msCameraGetFarPlane(self); }
             set { msCameraSetFarPlane(self, value); }
         }
-        public float focalLength
+        internal float focalLength
         {
             get { return msCameraGetFocalLength(self); }
             set { msCameraSetFocalLength(self, value); }
         }
-        public Vector2 sensorSize
+        internal Vector2 sensorSize
         {
             get { return msCameraGetSensorSize(self); }
             set { msCameraSetSensorSize(self, value); }
         }
-        public Vector2 lensShift
+        internal Vector2 lensShift
         {
             get { return msCameraGetLensShift(self); }
             set { msCameraSetLensShift(self, value); }
         }
-        public Matrix4x4 viewMatrix
+        internal Matrix4x4 viewMatrix
         {
             get { return msCameraGetViewMatrix(self); }
             set { msCameraSetViewMatrix(self, value); }
         }
-        public Matrix4x4 projMatrix
+        internal Matrix4x4 projMatrix
         {
             get { return msCameraGetProjMatrix(self); }
             set { msCameraSetProjMatrix(self, value); }
@@ -1440,14 +1440,14 @@ namespace Unity.MeshSync
 
     public struct LightDataFlags
     {
-        public BitFlags flags;
-        public bool unchanged { get { return flags[0]; } }
-        public bool hasShadowType { get { return flags[2]; } }
-        public bool hasColor { get { return flags[3]; } }
-        public bool hasIntensity { get { return flags[4]; } }
-        public bool hasRange { get { return flags[5]; } }
-        public bool hasSpotAngle { get { return flags[6]; } }
-        public bool hasLayerMask { get { return flags[7]; } }
+        internal BitFlags flags;
+        internal bool unchanged { get { return flags[0]; } }
+        internal bool hasShadowType { get { return flags[2]; } }
+        internal bool hasColor { get { return flags[3]; } }
+        internal bool hasIntensity { get { return flags[4]; } }
+        internal bool hasRange { get { return flags[5]; } }
+        internal bool hasSpotAngle { get { return flags[6]; } }
+        internal bool hasLayerMask { get { return flags[7]; } }
     }
 
     [StructLayout(LayoutKind.Explicit)]
@@ -1478,36 +1478,36 @@ namespace Unity.MeshSync
             return msLightCreate();
         }
 
-        public LightDataFlags dataFlags
+        internal LightDataFlags dataFlags
         {
             get { return msLightGetDataFlags(self); }
         }
-        public LightType lightType
+        internal LightType lightType
         {
             get { return msLightGetType(self); }
             set { msLightSetType(self, value); }
         }
-        public LightShadows shadowType
+        internal LightShadows shadowType
         {
             get { return msLightGetShadowType(self); }
             set { msLightSetShadowType(self, value); }
         }
-        public Color color
+        internal Color color
         {
             get { return msLightGetColor(self); }
             set { msLightSetColor(self, value); }
         }
-        public float intensity
+        internal float intensity
         {
             get { return msLightGetIntensity(self); }
             set { msLightSetIntensity(self, value); }
         }
-        public float range
+        internal float range
         {
             get { return msLightGetRange(self); }
             set { msLightSetRange(self, value); }
         }
-        public float spotAngle
+        internal float spotAngle
         {
             get { return msLightGetSpotAngle(self); }
             set { msLightSetSpotAngle(self, value); }
@@ -1515,7 +1515,7 @@ namespace Unity.MeshSync
     }
 
     #region Mesh
-    public struct SubmeshData
+    internal struct SubmeshData
     {
         #region internal
         public IntPtr self;
@@ -1540,7 +1540,7 @@ namespace Unity.MeshSync
         internal void ReadIndices(MeshData mesh, PinnedList<int> dst) { msSubmeshReadIndices(self, mesh.self, dst); }
     }
 
-    public struct BlendShapeData
+    internal struct BlendShapeData
     {
         #region internal
         public IntPtr self;
@@ -1780,16 +1780,16 @@ namespace Unity.MeshSync
             }
         }
 
-        public SubmeshData GetSubmesh(int i)
+        internal SubmeshData GetSubmesh(int i)
         {
             return msMeshGetSubmesh(self, i);
         }
 
-        public BlendShapeData GetBlendShapeData(int i)
+        internal BlendShapeData GetBlendShapeData(int i)
         {
             return msMeshGetBlendShapeData(self, i);
         }
-        public BlendShapeData AddBlendShape(string name)
+        internal BlendShapeData AddBlendShape(string name)
         {
             return msMeshAddBlendShape(self, name);
         }
