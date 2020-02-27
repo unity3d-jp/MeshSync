@@ -2,17 +2,16 @@
 
 # MeshSync
 
-MeshSync is a package that works together with 
-[MeshSyncDCCPlugin](https://github.com/Unity-Technologies/MeshSyncDCCPlugin)
-to provide features to reflect
-changes to models made in DCC tools into Unity in real time.
-This allows devs to immediately see how things will look in-game while modelling.  
-
-Currently, the MeshSync repository is being restructured in order to deliver
-MeshSync as a package inside Unity's Package Manager, and therefore, 
-most of the previous document below is obsolete, but will be left as a reference for now.
+[MeshSyncDCCPlugin](https://github.com/Unity-Technologies/MeshSyncDCCPlugin) と一緒に動作するで、
+MeshSync は DCC ツール上のモデルの編集をリアルタイムに Unity に反映させるパッケージです。  
+ゲーム上でどう見えるかをその場で確認しながらモデリングすることを可能にします。
 
 
+## 動作環境
+
+- Windows 64 bit
+- Mac
+- Linux
 
 # 基本的な使い方
 
@@ -20,7 +19,7 @@ most of the previous document below is obsolete, but will be left as a reference
 
 <img src="../images/menu.png" width=320>
 
-# MeshSyncServer コンポーネント
+## MeshSyncServer コンポーネント
 
 <img align="right" src="../images/MeshSyncServer.png" height=800>
 
@@ -50,9 +49,14 @@ most of the previous document below is obsolete, but will be left as a reference
 多くの場合 "Flip YZ" の方が望ましいと思われますが、Unity 標準の fbx Importer が "Rotate X" 相当の処理を行っているため、選べるようにしてあります。
 
 - **Material List**  
-MeshSyncServer や SceneCachePlayer はマテリアルのリストを保持しています。このリストのマテリアルを変更すると、対応するオブジェクトにも変更が反映されます。
+MeshSyncServer や [SceneCachePlayer](SceneCache.md)  はマテリアルのリストを保持しています。このリストのマテリアルを変更すると、対応するオブジェクトにも変更が反映されます。
   - **Sync Material List** が有効な場合、オブジェクトのマテリアルを変更した際にそれをマテリアルリストにも反映し、同じマテリアルを持つ他のオブジェクトにも変更を伝播します。
-  - **Import List, Export List** でリストの保存と読み込みができます。キャッシュファイルを更新する場合、これを用いることでマテリアルを引き継ぐことができます。
+  - **Import List, Export List** でリストの保存と読み込みができます。  
+  キャッシュファイルを更新する場合、これを用いることでマテリアルを引き継ぐことができます。
+
+- **Progressive Display**  
+オン：受信途中のシーンの更新をリアルタイムで反映していきます。  
+オフ：シーン全体のデータの受信が完了するまで待ってから更新を反映します。
 
 - **Animation Tweak**  
 基本的なアニメーションの調整がここで可能です。
@@ -65,27 +69,23 @@ DCC ツール側の編集によって生成された Mesh 郡は、そのまま�
 MeshSyncServer の "Export Mesh" ボタンを押すとそのアセット化が行われます。("Asset Export Path" で指定されたディレクトリにファイルが生成されます)  
 
 
-## 動作環境
-
-- Windows 64 bit
-- Mac
-- Linux
-
-
 # アドバンスト 機能
 - [SceneCache](SceneCache.md)
 
 # Tips 
-- Unity 2019.1 で最大 255 ボーンまで影響できるようになりました。
+- Unity 2019.1 で最大 255 ボーンまで影響できるようになりました。  
 これにより、フェイシャルなどの多数のボーンを必要とするアニメーションも問題なく持って来れるはずです。
-詳しくは, [Quality Settings-Blend Weights](https://docs.unity3d.com/ja/current/Manual/class-QualitySettings.html) をご参照ください.
+詳しくは, [Quality Settings-Blend Weights](https://docs.unity3d.com/ja/current/Manual/class-QualitySettings.html) をご参照ください。
 
-- 同期は TCP/IP を介して行われるため、Unity と DCC ツールが別のマシンで動いていても同期させることができます。その場合、クライアントである DCC ツール側は設定項目の Server / Port に Unity 側のマシンを指定してください。
+- 同期は TCP/IP を介して行われるため、Unity と DCC ツールが別のマシンで動いていても同期させることができます。  
+その場合、クライアントである DCC ツール側は設定項目の Server / Port に Unity 側のマシンを指定してください。
 
 - Unity 上に MeshSyncServer オブジェクトがあるときにサーバーのアドレス:ポートをブラウザで開くと、サーバー側の Unity の GameView をブラウザで見ることができます。 (デフォルトでは [127.0.0.1:8080](http://127.0.0.1:8080))  
-  このブラウザの画面のメッセージフォームからメッセージを送ると、Unity の Console にそのメッセージが出るようになっています。Unity 側作業者と DCC 側作業者が別の場合役に立つこともあるかもしれません。
+このブラウザの画面のメッセージフォームからメッセージを送ると、Unity の Console にそのメッセージが出るようになっています。  
+Unity 側作業者と DCC 側作業者が別の場合役に立つこともあるかもしれません。
   
-- ポーズ/アニメーションのみを編集中の場合、**Sync Meshes** を切っておくことをおすすめします。メッシュデータを送らなくなるので動作が軽快になるでしょう。
+- ポーズ/アニメーションのみを編集中の場合、**Sync Meshes** を切っておくことをおすすめします。  
+メッシュデータを送らなくなるので動作が軽快になるでしょう。
 
 
 # 注意事項
@@ -94,7 +94,7 @@ MeshSyncServer の "Export Mesh" ボタンを押すとそのアセット化が�
 **意図せず最終ビルドに残さないようご注意ください。**
 
 - Unity 2019.1 より前のバージョンでは、このパッケージを使えますが、頂点あたりの最大影響ボーン数が 4 であることに注意が必要です。  
-  これが原因でボーンが多いと DCC 側と Unity 側で結果が一致しなくなることがあります。
+これが原因でボーンが多いと DCC 側と Unity 側で結果が一致しなくなることがあります。
 
 # 他の言語
 - [English](../index.md)
