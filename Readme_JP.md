@@ -82,7 +82,7 @@ MeshSyncServer の "Export Mesh" ボタンを押すとそのアセット化が�
 
 
 # アドバンスト 機能
-- [SceneCache](SceneCache.md)
+- [SceneCache](Documentation~/jp/SceneCache.md)
 
 # Tips 
 - Unity 2019.1 で最大 255 ボーンまで影響できるようになりました。  

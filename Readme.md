@@ -84,7 +84,7 @@ In order to use them in other scenes or projects, we can save them as asset file
 
 
 # Advanced Features
-- [SceneCache](en/SceneCache.md)
+- [SceneCache](Documentation~/en/SceneCache.md)
 
 
 # Tips
