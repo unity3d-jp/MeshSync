@@ -1601,6 +1601,9 @@ namespace Unity.MeshSync
         public bool hasBounds           { get { return flags[19]; } }
     };
 
+    /// <summary>
+    /// MeshData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
     public struct MeshData
     {
@@ -1674,20 +1677,24 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern BlendShapeData msMeshAddBlendShape(IntPtr self, string name);
         #endregion
 
+        /// <summary>
+        /// Create MeshData
+        /// </summary>
+        /// <returns>New MeshData </returns>
         public static MeshData Create()
         {
             return msMeshCreate();
         }
 
-        public MeshDataFlags dataFlags
+        internal MeshDataFlags dataFlags
         {
             get { return msMeshGetDataFlags(self); }
             set { msMeshSetFlags(self, value); }
         }
 
-        public int numPoints { get { return msMeshGetNumPoints(self); } }
-        public int numIndices { get { return msMeshGetNumIndices(self); } }
-        public Bounds bounds { get { return msMeshGetBounds(self); } }
+        internal int numPoints { get { return msMeshGetNumPoints(self); } }
+        internal int numIndices { get { return msMeshGetNumIndices(self); } }
+        internal Bounds bounds { get { return msMeshGetBounds(self); } }
 
         internal void ReadPoints(PinnedList<Vector3> dst) { msMeshReadPoints(self, dst); }
         internal void ReadNormals(PinnedList<Vector3> dst) { msMeshReadNormals(self, dst); }
@@ -1696,42 +1703,42 @@ namespace Unity.MeshSync
         internal void ReadUV1(PinnedList<Vector2> dst) { msMeshReadUV1(self, dst); }
         internal void ReadColors(PinnedList<Color> dst) { msMeshReadColors(self, dst); }
         internal void ReadVelocities(PinnedList<Vector3> dst) { msMeshReadVelocities(self, dst); }
-        public void ReadBoneWeights4(IntPtr dst) { msMeshReadBoneWeights4(self, dst); }
+        internal void ReadBoneWeights4(IntPtr dst) { msMeshReadBoneWeights4(self, dst); }
 #if UNITY_2019_1_OR_NEWER
-        public void ReadBoneCounts(IntPtr dst) { msMeshReadBoneCounts(self, dst); }
-        public void ReadBoneWeightsV(IntPtr dst) { msMeshReadBoneWeightsV(self, dst); }
+        internal void ReadBoneCounts(IntPtr dst) { msMeshReadBoneCounts(self, dst); }
+        internal void ReadBoneWeightsV(IntPtr dst) { msMeshReadBoneWeightsV(self, dst); }
 #endif
-        public void ReadIndices(IntPtr dst) { msMeshReadIndices(self, dst); }
+        internal void ReadIndices(IntPtr dst) { msMeshReadIndices(self, dst); }
 
-        public void WritePoints(Vector3[] v) { msMeshWritePoints(self, v, v.Length); }
-        public void WriteNormals(Vector3[] v) { msMeshWriteNormals(self, v, v.Length); }
-        public void WriteTangents(Vector4[] v) { msMeshWriteTangents(self, v, v.Length); }
-        public void WriteUV0(Vector2[] v) { msMeshWriteUV0(self, v, v.Length); }
-        public void WriteUV1(Vector2[] v) { msMeshWriteUV1(self, v, v.Length); }
-        public void WriteColors(Color[] v) { msMeshWriteColors(self, v, v.Length); }
-        public void WriteVelocities(Vector3[] v) { msMeshWriteVelocities(self, v, v.Length); }
-        public void WriteBoneWeights4(BoneWeight[] v) { msMeshWriteBoneWeights4(self, v, v.Length); }
+        internal void WritePoints(Vector3[] v) { msMeshWritePoints(self, v, v.Length); }
+        internal void WriteNormals(Vector3[] v) { msMeshWriteNormals(self, v, v.Length); }
+        internal void WriteTangents(Vector4[] v) { msMeshWriteTangents(self, v, v.Length); }
+        internal void WriteUV0(Vector2[] v) { msMeshWriteUV0(self, v, v.Length); }
+        internal void WriteUV1(Vector2[] v) { msMeshWriteUV1(self, v, v.Length); }
+        internal void WriteColors(Color[] v) { msMeshWriteColors(self, v, v.Length); }
+        internal void WriteVelocities(Vector3[] v) { msMeshWriteVelocities(self, v, v.Length); }
+        internal void WriteBoneWeights4(BoneWeight[] v) { msMeshWriteBoneWeights4(self, v, v.Length); }
 #if UNITY_2019_1_OR_NEWER
-        public void WriteBoneWeightsV(ref NativeArray<byte> counts, ref NativeArray<BoneWeight1> weights)
+        internal void WriteBoneWeightsV(ref NativeArray<byte> counts, ref NativeArray<BoneWeight1> weights)
         {
             msMeshWriteBoneWeightsV(self, Misc.ForceGetPointer(ref counts), counts.Length, Misc.ForceGetPointer(ref weights), weights.Length);
         }
 #endif
-        public void WriteIndices(int[] v) { msMeshWriteIndices(self, v, v.Length); }
+        internal void WriteIndices(int[] v) { msMeshWriteIndices(self, v, v.Length); }
 
-        public Matrix4x4 local2world { set { msMeshSetLocal2World(self, ref value); } }
-        public Matrix4x4 world2local { set { msMeshSetWorld2Local(self, ref value); } }
+        internal Matrix4x4 local2world { set { msMeshSetLocal2World(self, ref value); } }
+        internal Matrix4x4 world2local { set { msMeshSetWorld2Local(self, ref value); } }
 
-        public void WriteSubmeshTriangles(int[] indices, int materialID)
+        internal void WriteSubmeshTriangles(int[] indices, int materialID)
         {
             msMeshWriteSubmeshTriangles(self, indices, indices.Length, materialID);
         }
 
-        public int numBones
+        internal int numBones
         {
             get { return msMeshGetNumBones(self); }
         }
-        public string[] bonePaths
+        internal string[] bonePaths
         {
             get
             {
@@ -1742,16 +1749,16 @@ namespace Unity.MeshSync
                 return ret;
             }
         }
-        public string rootBonePath
+        internal string rootBonePath
         {
             get { return Misc.S(msMeshGetRootBonePath(self)); }
             set { msMeshSetRootBonePath(self, value); }
         }
-        public int numBoneWeights
+        internal int numBoneWeights
         {
             get { return msMeshGetNumBoneWeights(self); }
         }
-        public int numSubmeshes
+        internal int numSubmeshes
         {
             get { return msMeshGetNumSubmeshes(self); }
         }
@@ -1760,7 +1767,7 @@ namespace Unity.MeshSync
             get { return msMeshGetNumBlendShapes(self); }
         }
 
-        public Matrix4x4[] bindposes
+        internal Matrix4x4[] bindposes
         {
             get
             {
@@ -2029,7 +2036,7 @@ namespace Unity.MeshSync
 
 
     #region SceneCache
-    public struct SceneCacheData
+    internal struct SceneCacheData
     {
         #region internal
         public IntPtr self;
