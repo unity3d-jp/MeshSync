@@ -150,7 +150,7 @@ namespace Unity.MeshSync
         public bool bakeCloth { get { return msGetGetBakeCloth(self) != 0; } }
     }
 
-    public struct SetMessage
+    internal struct SetMessage
     {
         #region internal
         public IntPtr self;

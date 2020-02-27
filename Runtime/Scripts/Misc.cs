@@ -215,7 +215,7 @@ namespace Unity.MeshSync
         }
 #endif
 
-        public static UnityEngine.TextureFormat ToUnityTextureFormat(TextureFormat v)
+        internal static UnityEngine.TextureFormat ToUnityTextureFormat(TextureFormat v)
         {
             switch (v)
             {
@@ -233,7 +233,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public static TextureFormat ToMSTextureFormat(UnityEngine.TextureFormat v)
+        internal static TextureFormat ToMSTextureFormat(UnityEngine.TextureFormat v)
         {
             switch (v)
             {

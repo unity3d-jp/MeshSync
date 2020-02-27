@@ -623,7 +623,7 @@ namespace Unity.MeshSync
                 onSceneUpdateBegin.Invoke();
         }
 
-        public void UpdateScene(SceneData scene)
+        internal void UpdateScene(SceneData scene)
         {
             // handle assets
             Try(() =>

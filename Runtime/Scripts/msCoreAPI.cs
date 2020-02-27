@@ -44,7 +44,7 @@ namespace Unity.MeshSync
 
 
     #region Asset
-    public enum AssetType
+    internal enum AssetType
     {
         Unknown,
         File,
@@ -56,7 +56,7 @@ namespace Unity.MeshSync
 
 
     [StructLayout(LayoutKind.Explicit)]
-    public struct AssetData
+    internal struct AssetData
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
@@ -95,7 +95,7 @@ namespace Unity.MeshSync
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
-        [FieldOffset(0)] public AssetData asset;
+        [FieldOffset(0)] internal AssetData asset;
         [DllImport(Lib.name)] static extern FileAssetData msFileAssetCreate();
 #if UNITY_EDITOR
         [DllImport(Lib.name)] static extern byte msFileAssetReadFromFile(IntPtr self, string path);
@@ -142,7 +142,7 @@ namespace Unity.MeshSync
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
-        [FieldOffset(0)] public AssetData asset;
+        [FieldOffset(0)] internal AssetData asset;
         [DllImport(Lib.name)] static extern AudioData msAudioCreate();
         [DllImport(Lib.name)] static extern AudioFormat msAudioGetFormat(IntPtr self);
         [DllImport(Lib.name)] static extern void msAudioSetFormat(IntPtr self, AudioFormat v);
@@ -216,13 +216,13 @@ namespace Unity.MeshSync
     #endregion
 
     #region Texture
-    public enum TextureType
+    internal enum TextureType
     {
         Default,
         NormalMap,
     }
 
-    public enum TextureFormat
+    internal enum TextureFormat
     {
         Unknown = 0,
 
@@ -263,7 +263,7 @@ namespace Unity.MeshSync
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
-        [FieldOffset(0)] public AssetData asset;
+        [FieldOffset(0)] internal AssetData asset;
         [DllImport(Lib.name)] static extern TextureData msTextureCreate();
         [DllImport(Lib.name)] static extern TextureType msTextureGetType(IntPtr self);
         [DllImport(Lib.name)] static extern void msTextureSetType(IntPtr self, TextureType v);
@@ -291,12 +291,12 @@ namespace Unity.MeshSync
             get { return asset.name; }
             set { asset.name = value; }
         }
-        public TextureType type
+        internal TextureType type
         {
             get { return msTextureGetType(self); }
             set { msTextureSetType(self, value); }
         }
-        public TextureFormat format
+        internal TextureFormat format
         {
             get { return msTextureGetFormat(self); }
             set { msTextureSetFormat(self, value); }
@@ -476,7 +476,7 @@ namespace Unity.MeshSync
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
-        [FieldOffset(0)] public AssetData asset;
+        [FieldOffset(0)] internal AssetData asset;
         [DllImport(Lib.name)] static extern MaterialData msMaterialCreate();
         [DllImport(Lib.name)] static extern int msMaterialGetIndex(IntPtr self);
         [DllImport(Lib.name)] static extern void msMaterialSetIndex(IntPtr self, int v);
@@ -979,7 +979,7 @@ namespace Unity.MeshSync
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
-        [FieldOffset(0)] public AssetData asset;
+        [FieldOffset(0)] internal AssetData asset;
         [DllImport(Lib.name)] static extern IntPtr msAssetGetName(IntPtr self);
         [DllImport(Lib.name)] static extern float msAnimationClipGetFrameRate(IntPtr self);
         [DllImport(Lib.name)] static extern int msAnimationClipGetNumAnimations(IntPtr self);
@@ -1988,7 +1988,7 @@ namespace Unity.MeshSync
         public float lerpTime;      // in ms
     };
 
-    public struct SceneData
+    internal struct SceneData
     {
         #region internal
         public IntPtr self;
@@ -2073,11 +2073,11 @@ namespace Unity.MeshSync
         {
             return msISceneCacheGetFrameByTime(self, time);
         }
-        public SceneData GetSceneByIndex(int i)
+        internal SceneData GetSceneByIndex(int i)
         {
             return msISceneCacheGetSceneByIndex(self, i);
         }
-        public SceneData GetSceneByTime(float t, bool lerp)
+        internal SceneData GetSceneByTime(float t, bool lerp)
         {
             return msISceneCacheGetSceneByTime(self, t, lerp);
         }
