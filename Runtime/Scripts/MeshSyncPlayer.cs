@@ -43,7 +43,7 @@ namespace Unity.MeshSync
 
         #region Types
         [Serializable]
-        public class EntityRecord
+        internal class EntityRecord
         {
             public EntityType dataType;
             public int index;
@@ -122,7 +122,7 @@ namespace Unity.MeshSync
 
 
         #region Fields
-        [SerializeField] internal DataPath m_assetDir = new DataPath(DataPath.Root.DataPath, "MeshSyncAssets");
+        [SerializeField] private DataPath m_assetDir = new DataPath(DataPath.Root.DataPath, "MeshSyncAssets");
         [SerializeField] protected Transform m_rootObject;
 
         [SerializeField] protected bool m_syncVisibility = true;
@@ -178,8 +178,8 @@ namespace Unity.MeshSync
 
         protected bool m_needReassignMaterials = false;
 
-        protected Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
-        protected Dictionary<int, EntityRecord> m_hostObjects = new Dictionary<int, EntityRecord>();
+        private Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
+        internal Dictionary<int, EntityRecord> m_hostObjects = new Dictionary<int, EntityRecord>();
         protected Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
         #endregion
 
@@ -2049,7 +2049,7 @@ namespace Unity.MeshSync
                 AssignMaterials(rec.Value);
         }
 
-        public void AssignMaterials(EntityRecord rec)
+        internal void AssignMaterials(EntityRecord rec)
         {
             if (rec.go == null || rec.mesh == null || rec.materialIDs == null)
                 return;

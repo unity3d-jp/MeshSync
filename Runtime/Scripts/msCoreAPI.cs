@@ -1531,7 +1531,7 @@ namespace Unity.MeshSync
         public int numIndices { get { return msSubmeshGetNumIndices(self); } }
         public Topology topology { get { return msSubmeshGetTopology(self); } }
         public int materialID { get { return msSubmeshGetMaterialID(self); } }
-        public void ReadIndices(MeshData mesh, PinnedList<int> dst) { msSubmeshReadIndices(self, mesh.self, dst); }
+        internal void ReadIndices(MeshData mesh, PinnedList<int> dst) { msSubmeshReadIndices(self, mesh.self, dst); }
     }
 
     public struct BlendShapeData
@@ -1565,9 +1565,9 @@ namespace Unity.MeshSync
             get { return msBlendShapeGetNumFrames(self); }
         }
         public float GetWeight(int f) { return msBlendShapeGetFrameWeight(self, f); }
-        public void ReadPoints(int f, PinnedList<Vector3> dst) { msBlendShapeReadPoints(self, f, dst); }
-        public void ReadNormals(int f, PinnedList<Vector3> dst) { msBlendShapeReadNormals(self, f, dst); }
-        public void ReadTangents(int f, PinnedList<Vector3> dst) { msBlendShapeReadTangents(self, f, dst); }
+        internal void ReadPoints(int f, PinnedList<Vector3> dst) { msBlendShapeReadPoints(self, f, dst); }
+        internal void ReadNormals(int f, PinnedList<Vector3> dst) { msBlendShapeReadNormals(self, f, dst); }
+        internal void ReadTangents(int f, PinnedList<Vector3> dst) { msBlendShapeReadTangents(self, f, dst); }
 
         public void AddFrame(float w, Vector3[] v, Vector3[] n, Vector3[] t)
         {
@@ -1683,13 +1683,13 @@ namespace Unity.MeshSync
         public int numIndices { get { return msMeshGetNumIndices(self); } }
         public Bounds bounds { get { return msMeshGetBounds(self); } }
 
-        public void ReadPoints(PinnedList<Vector3> dst) { msMeshReadPoints(self, dst); }
-        public void ReadNormals(PinnedList<Vector3> dst) { msMeshReadNormals(self, dst); }
-        public void ReadTangents(PinnedList<Vector4> dst) { msMeshReadTangents(self, dst); }
-        public void ReadUV0(PinnedList<Vector2> dst) { msMeshReadUV0(self, dst); }
-        public void ReadUV1(PinnedList<Vector2> dst) { msMeshReadUV1(self, dst); }
-        public void ReadColors(PinnedList<Color> dst) { msMeshReadColors(self, dst); }
-        public void ReadVelocities(PinnedList<Vector3> dst) { msMeshReadVelocities(self, dst); }
+        internal void ReadPoints(PinnedList<Vector3> dst) { msMeshReadPoints(self, dst); }
+        internal void ReadNormals(PinnedList<Vector3> dst) { msMeshReadNormals(self, dst); }
+        internal void ReadTangents(PinnedList<Vector4> dst) { msMeshReadTangents(self, dst); }
+        internal void ReadUV0(PinnedList<Vector2> dst) { msMeshReadUV0(self, dst); }
+        internal void ReadUV1(PinnedList<Vector2> dst) { msMeshReadUV1(self, dst); }
+        internal void ReadColors(PinnedList<Color> dst) { msMeshReadColors(self, dst); }
+        internal void ReadVelocities(PinnedList<Vector3> dst) { msMeshReadVelocities(self, dst); }
         public void ReadBoneWeights4(IntPtr dst) { msMeshReadBoneWeights4(self, dst); }
 #if UNITY_2019_1_OR_NEWER
         public void ReadBoneCounts(IntPtr dst) { msMeshReadBoneCounts(self, dst); }

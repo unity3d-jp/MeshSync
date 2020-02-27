@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 namespace Unity.MeshSync
 {
     [ExecuteInEditMode]
-    public class PointCache : MonoBehaviour
+    internal class PointCache : MonoBehaviour
     {
         [SerializeField] public Vector3[] points;
         [SerializeField] public Quaternion[] rotations;
