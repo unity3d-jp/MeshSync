@@ -18,10 +18,11 @@ Game Object -> MeshSync -> Create Cache Player メニューを選択し、DCC �
 ## Scene Cache Player
 このコンポーネントが再生を担当します。多くの設定は [MeshSyncServer](index.md#MeshSyncServer) と共通です。
 
-"Create Cache Player" メニューを選択した時、同時に AnimationClip が作成されて SceneCachePlayer に結び付いています。  
-この clip がアニメーションの再生を担当します。Timeline で再生する場合も、この clip を AnimationTrack に配置することで対応できます。
+"Create Cache Player" メニューを選択した時、同時に アニメーションの再生を担当する AnimationClip が作成されて SceneCachePlayer に結び付いています。  
+Timeline で再生する場合も、この clip を AnimationTrack に配置することで対応できます。
 
-また、"Create Cache Player" した直後はキャッシュファイルへのパスが絶対パスになっており、その PC でしか再生できません。  
+- **Cache File Path**  
+初期時に、 *.sc* ファイルへのパスが絶対パスになっており、その PC でしか再生できません。  
 "Copy to StreamingAssets" 、又は "Move to StreamingAssets" ボタンを押すと、キャッシュファイルを StreamingAssets にコピー、又は移動します。  
 これを行っておくと、プロジェクトを他の PC にコピーした場合や、プロジェクトをビルドして他の PC で動かした場合も再生できるようになります。
 
@@ -31,5 +32,5 @@ Game Object -> MeshSync -> Create Cache Player メニューを選択し、DCC �
 通常これは AnimationClip で制御することになるでしょう。
 
 - **Interpolation**  
-これが有効な場合、前後のフレームの Mesh や Transform を補間してアニメーションを滑らかにします。  
+前後のフレームの Mesh や Transform を補間してアニメーションを滑らかにします。  
 Mesh はトポロジが一致している (インデックスが不変) もののみ補間されます。
