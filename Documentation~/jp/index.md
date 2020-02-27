@@ -19,7 +19,7 @@ MeshSync は DCC ツール上のモデルの編集をリアルタイムに Unity
 
 <img src="../images/menu.png" width=320>
 
-## MeshSyncServer コンポーネント
+## MeshSyncServer
 
 <img align="right" src="../images/MeshSyncServer.png" height=800>
 
