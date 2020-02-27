@@ -94,29 +94,29 @@ namespace Unity.MeshSync
         [Serializable]
         internal class MaterialHolder
         {
-            [SerializeField] internal int id;
-            [SerializeField] internal string name;
-            [SerializeField] internal int index;
-            [SerializeField] internal string shader;
-            [SerializeField] internal Color color = Color.white;
-            [SerializeField] internal Material material;
-            [SerializeField] internal int materialIID;
+            public int id;
+            public string name;
+            public int index;
+            public string shader;
+            public Color color = Color.white;
+            public Material material;
+            public int materialIID;
         }
 
         [Serializable]
         internal class TextureHolder
         {
-            [SerializeField] internal int id;
-            [SerializeField] internal string name;
-            [SerializeField] internal Texture2D texture;
+            public int id;
+            public string name;
+            public Texture2D texture;
         }
 
         [Serializable]
         internal class AudioHolder
         {
-            [SerializeField] internal int id;
-            [SerializeField] internal string name;
-            [SerializeField] internal AudioClip audio;
+            public int id;
+            public string name;
+            public AudioClip audio;
         }
         #endregion
 
