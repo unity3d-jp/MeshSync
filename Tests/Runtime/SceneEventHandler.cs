@@ -1,10 +1,9 @@
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Unity.MeshSync;
 
 namespace UnityEditor.MeshSync.Tests {
 
+    
 [ExecuteInEditMode]
 [RequireComponent(typeof(MeshSyncPlayer))]
 public class SceneEventHandler : MonoBehaviour {
