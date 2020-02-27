@@ -122,7 +122,7 @@ namespace Unity.MeshSync
 
 
         #region Fields
-        [SerializeField] protected DataPath m_assetDir = new DataPath(DataPath.Root.DataPath, "MeshSyncAssets");
+        [SerializeField] internal DataPath m_assetDir = new DataPath(DataPath.Root.DataPath, "MeshSyncAssets");
         [SerializeField] protected Transform m_rootObject;
 
         [SerializeField] protected bool m_syncVisibility = true;
@@ -187,7 +187,7 @@ namespace Unity.MeshSync
         #region Properties
         public static int pluginVersion { get { return Lib.pluginVersion; } }
         public static int protocolVersion { get { return Lib.protocolVersion; } }
-        public DataPath assetDir
+        internal DataPath assetDir
         {
             get { return m_assetDir; }
             set { m_assetDir = value; }
@@ -2131,7 +2131,7 @@ namespace Unity.MeshSync
         #endregion
 
         #region Tools
-        public bool ApplyMaterialList(MaterialList ml)
+        internal bool ApplyMaterialList(MaterialList ml)
         {
             if (ml == null)
                 return false;

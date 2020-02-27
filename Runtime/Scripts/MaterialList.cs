@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Unity.MeshSync
 {
-    public class MaterialList : ScriptableObject
+    internal class MaterialList : ScriptableObject
     {
         [Serializable]
         public class Node

@@ -17,7 +17,7 @@ using UnityEditor;
 namespace Unity.MeshSync
 {
     [ExecuteInEditMode]
-    public class MeshSyncServer : MeshSyncPlayer
+    internal class MeshSyncServer : MeshSyncPlayer
     {
 #if UNITY_STANDALONE
         #region Fields
