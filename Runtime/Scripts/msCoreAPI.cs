@@ -336,7 +336,7 @@ namespace Unity.MeshSync
     #endregion
 
     #region Material
-    public struct MaterialPropertyData
+    internal struct MaterialPropertyData
     {
         #region internal
         public IntPtr self;
@@ -532,11 +532,11 @@ namespace Unity.MeshSync
         {
             get { return msMaterialGetNumParams(self); }
         }
-        public MaterialPropertyData GetProperty(int i)
+        internal MaterialPropertyData GetProperty(int i)
         {
             return msMaterialGetParam(self, i);
         }
-        public MaterialPropertyData FindProperty(string name)
+        internal MaterialPropertyData FindProperty(string name)
         {
             return msMaterialFindParam(self, name);
         }
@@ -608,7 +608,7 @@ namespace Unity.MeshSync
 #endif
     }
 
-    public struct AnimationCurveData
+    internal struct AnimationCurveData
     {
         #region internal
         public IntPtr self;
@@ -691,7 +691,7 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetLightIntensity(IntPtr self);
         [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetLightRange(IntPtr self);
         [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetLightSpotAngle(IntPtr self);
-        public delegate void msCurveCallback(AnimationCurveData data);
+        internal delegate void msCurveCallback(AnimationCurveData data);
         [DllImport(Lib.name)] static extern AnimationCurveData msAnimationEachBlendshapeCurves(IntPtr self, msCurveCallback cb);
         #endregion
 
@@ -1036,7 +1036,7 @@ namespace Unity.MeshSync
 
 
     #region Variant
-    public struct VariantData
+    internal struct VariantData
     {
         #region internal
         public IntPtr self;
@@ -1225,7 +1225,7 @@ namespace Unity.MeshSync
         public bool hasReference { get { return flags[7]; } }
     }
 
-    public struct VisibilityFlags
+    internal struct VisibilityFlags
     {
         public BitFlags flags;
         public bool active { get { return flags[0]; } }
@@ -1235,6 +1235,9 @@ namespace Unity.MeshSync
         public bool ReceiveShadows { get { return flags[4]; } }
     }
 
+    /// <summary>
+    /// TransformData
+    /// </summary>
     public struct TransformData
     {
         #region internal
@@ -1313,7 +1316,7 @@ namespace Unity.MeshSync
             get { return msTransformGetScale(self); }
             set { msTransformSetScale(self, value); }
         }
-        public VisibilityFlags visibility
+        internal VisibilityFlags visibility
         {
             get { return msTransformGetVisibility(self); }
             set { msTransformSetVisibility(self, value); }
@@ -1346,6 +1349,9 @@ namespace Unity.MeshSync
         public bool hasProjMatrix { get { return flags[9]; } }
     }
 
+    /// <summary>
+    /// CameraData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
     public struct CameraData
     {
