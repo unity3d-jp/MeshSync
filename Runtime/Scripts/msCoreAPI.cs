@@ -1008,11 +1008,14 @@ namespace Unity.MeshSync
 #endif
         }
 
+    /// <summary>
+    /// AnimationClipData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
     public struct AnimationClipData
     {
         #region internal
-        [FieldOffset(0)] public IntPtr self;
+        [FieldOffset(0)] internal IntPtr self;
         [FieldOffset(0)] internal AssetData asset;
         [DllImport(Lib.name)] static extern IntPtr msAssetGetName(IntPtr self);
         [DllImport(Lib.name)] static extern float msAnimationClipGetFrameRate(IntPtr self);
@@ -1025,30 +1028,30 @@ namespace Unity.MeshSync
         static bool s_prepared = false;
         #endregion
 
-        public int id
+        internal int id
         {
             get { return asset.id; }
             set { asset.id = value; }
         }
-        public string name
+        internal string name
         {
             get { return asset.name; }
             set { asset.name = value; }
         }
-        public float frameRate
+        internal float frameRate
         {
             get { return msAnimationClipGetFrameRate(self); }
         }
-        public int numAnimations
+        internal int numAnimations
         {
             get { return msAnimationClipGetNumAnimations(self); }
         }
-        public AnimationData GetAnimation(int i)
+        internal AnimationData GetAnimation(int i)
         {
             return msAnimationClipGetAnimationData(self, i);
         }
 
-        public static void Prepare()
+        internal static void Prepare()
         {
             if (!s_prepared)
             {
@@ -1061,7 +1064,7 @@ namespace Unity.MeshSync
             Prepare();
             msAnimationClipConvert(self, it);
         }
-        public void KeyframeReduction(float threshold, bool eraseFlatCurves)
+        internal void KeyframeReduction(float threshold, bool eraseFlatCurves)
         {
             msAnimationClipKeyframeReduction(self, threshold, Misc.ToByte(eraseFlatCurves));
         }
@@ -1369,7 +1372,7 @@ namespace Unity.MeshSync
         VariantData FindUserProperty(int i, string name) { return msTransformFindUserProperty(self, name); }
     }
 
-    public struct CameraDataFlags
+    internal struct CameraDataFlags
     {
         internal BitFlags flags;
         internal bool unchanged { get { return flags[0]; } }
@@ -1416,6 +1419,10 @@ namespace Unity.MeshSync
         #endregion
 
 
+        /// <summary>
+        /// Creates a new CameraData
+        /// </summary>
+        /// <returns>The newly created CameraData</returns>
         public static CameraData Create()
         {
             return msCameraCreate();
@@ -1484,6 +1491,9 @@ namespace Unity.MeshSync
         internal bool hasLayerMask { get { return flags[7]; } }
     }
 
+    /// <summary>
+    /// LightData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
     public struct LightData
     {
@@ -1507,6 +1517,10 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern void msLightSetSpotAngle(IntPtr self, float v);
         #endregion
 
+        /// <summary>
+        /// Creates a new LightData
+        /// </summary>
+        /// <returns>The newly created LightData</returns>
         public static LightData Create()
         {
             return msLightCreate();
@@ -1796,7 +1810,7 @@ namespace Unity.MeshSync
         {
             get { return msMeshGetNumSubmeshes(self); }
         }
-        public int numBlendShapes
+        internal int numBlendShapes
         {
             get { return msMeshGetNumBlendShapes(self); }
         }
@@ -1858,8 +1872,8 @@ namespace Unity.MeshSync
     public struct PointsData
     {
         #region internal
-        [FieldOffset(0)] public IntPtr self;
-        [FieldOffset(0)] public TransformData transform;
+        [FieldOffset(0)] internal IntPtr self;
+        [FieldOffset(0)] internal TransformData transform;
 
         [DllImport(Lib.name)] static extern PointsData msPointsCreate();
         [DllImport(Lib.name)] static extern PointsDataFlags msPointsGetFlags(IntPtr self);
