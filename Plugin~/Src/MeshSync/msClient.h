@@ -21,7 +21,7 @@ public:
 
     // if failed, you can get reason by getErrorMessage()
     // (could not reach server, protocol version doesn't match, etc)
-    bool isServerAvailable(int timeout_ms = 100);
+    bool isServerAvailable(int timeout_ms = 1000);
 
     ScenePtr send(const GetMessage& mes);
     bool send(const SetMessage& mes);
