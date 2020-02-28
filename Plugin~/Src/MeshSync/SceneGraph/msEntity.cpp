@@ -292,6 +292,8 @@ void Transform::setupDataFlags()
 {
     super::setupDataFlags();
 
+    //[TODO-sin: 2020-2-8] Because /fp:fast is used in Windows, both NaN and infinity will cause
+    //is_inf to be true. This might not work in other platforms
     td_flags.has_position = !is_inf(position);
     td_flags.has_rotation = !is_inf(rotation);
     td_flags.has_scale = !is_inf(scale);
