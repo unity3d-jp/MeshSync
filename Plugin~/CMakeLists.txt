@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
-PROJECT(MeshSyncProj)
+PROJECT(MeshSyncPlugin)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/Build/cmake_modules)
 set(src_root ${CMAKE_SOURCE_DIR}/Src)
