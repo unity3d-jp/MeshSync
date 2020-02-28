@@ -96,7 +96,7 @@ publish:
   dependencies:
     - .yamato/upm-ci-{{ yamato_name }}.yml#pack
     {% for editor in test_editors %}
-    {% for platform in test_platforms %}
+    {% for platform in platforms %}
     - .yamato/upm-ci-{{ yamato_name }}.yml#test_{{ platform.name }}_{{ editor.version }}
     {% endfor %}
     {% endfor %}
@@ -122,7 +122,7 @@ publish_dry_run:
   dependencies:
     - .yamato/upm-ci-{{ yamato_name }}.yml#pack
     {% for editor in test_editors %}
-    {% for platform in test_platforms %}
+    {% for platform in platforms %}
     - .yamato/upm-ci-{{ yamato_name }}.yml#test_{{ platform.name }}_{{ editor.version }}
     {% endfor %}
     {% endfor %}
