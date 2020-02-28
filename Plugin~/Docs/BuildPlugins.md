@@ -36,6 +36,9 @@ $ cmake -G "Visual Studio 15 2017" -A x64 ..
 $ msbuild MeshSyncProj.sln /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
 ```
 
+> For a regular "Command Prompt", there is a script: *VsDevCmd_2017.bat* 
+> under the *Build* folder, which if executed, will turn the prompt into a 
+> "Developer Command Prompt for VS 2017".
 
 # Building on Mac OSX
 
