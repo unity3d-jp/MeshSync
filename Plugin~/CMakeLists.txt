@@ -24,6 +24,9 @@ elseif(WIN32)
     #Compile with MultiThreaded DLL flag to use dynamically-linked runtime library (Poco)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")    
+    
+    #Set /fp. We need so that -infinity == infinity == NaN. See Transform::setupDataFlags()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast")
 endif()
 
 
