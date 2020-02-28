@@ -79,4 +79,19 @@ $ xcodebuild -scheme mscore -configuration Release build
 ```
 
 
+# Tips
+
+There is a test project that can be created by specifying `-DBUILD_TESTS=ON`.
+
+For example in Windows:
+``` 
+$ cmake -G "Visual Studio 15 2017" -A x64 .. -DBUILD_TESTS=ON
+```
+
+When this project is executed, it will send data to 
+[MeshSyncServer](../../Readme.md#MeshSyncServer) in Unity.
+
+<img src="Images/MeshSyncTest.png" width=480>
+
+
 
