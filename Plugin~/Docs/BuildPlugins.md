@@ -10,7 +10,8 @@
     $ git clone -b master https://github.com/pocoproject/poco.git
     $ mkdir cmake-build
     $ cd cmake-build
-    $ cmake .. -DBUILD_SHARED_LIBS=OFF -G "Visual Studio 15 2017" -A x64 && cmake --build . --config Release
+    $ cmake .. -DBUILD_SHARED_LIBS=OFF -G "Visual Studio 15 2017" -A x64
+    $ cmake --build . --config Release && cmake --build . --config Debug
     ```
 1. Add *Poco_DIR* environment variable to point to the Poco root folder above
 1. Build [zstd](https://github.com/facebook/zstd/releases)  
@@ -53,7 +54,8 @@ $ msbuild MeshSyncProj.sln /t:Build /p:Configuration=Release /p:Platform=x64 /m 
     $ git clone -b master https://github.com/pocoproject/poco.git
     $ mkdir cmake-build
     $ cd cmake-build
-    $ cmake .. -DBUILD_SHARED_LIBS=OFF -G "Visual Studio 15 2017" -A x64 && cmake --build . --config Release
+    $ cmake .. -DBUILD_SHARED_LIBS=OFF 
+    $ cmake --build . --config Release && cmake --build . --config Debug
     ```
 1. Add *Poco_DIR* environment variable to point to the Poco root folder above. For example:  
     ``` 
