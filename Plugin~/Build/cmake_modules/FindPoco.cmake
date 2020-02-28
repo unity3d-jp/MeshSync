@@ -131,10 +131,34 @@ foreach( component ${components} )
             message(STATUS "Found Poco ${component}: ${Poco_${component}_LIBRARY}")
         endif()
     endif()
+    
     if(Poco_${component}_LIBRARY)
-        list(APPEND Poco_LIBRARIES ${Poco_${component}_LIBRARY})
+        list(APPEND Poco_LIBRARIES "optimized" ${Poco_${component}_LIBRARY} )    
     endif()
-
+    
+	# debug library
+	if(NOT Poco_${component}_LIBRARY_DEBUG)
+        find_library(
+            Poco_${component}_LIBRARY_DEBUG
+            NAMES             
+                Poco${component}mdd.lib # Multithreaded-DLL, Windows
+                libPoco${component}d.a  # Others
+            HINTS 
+                ${Poco_ROOT_DIR}
+                ${Poco_ROOT_DIR}/cmake-build
+            PATH_SUFFIXES
+                lib/Debug
+                lib
+                bin
+        )
+        if(Poco_${component}_LIBRARY_DEBUG)
+            message(STATUS "Found Poco ${component} Debug: ${Poco_${component}_LIBRARY}")
+        endif()
+	endif(NOT Poco_${component}_LIBRARY_DEBUG)
+	if(Poco_${component}_LIBRARY_DEBUG)
+		list(APPEND Poco_LIBRARIES "debug" ${Poco_${component}_LIBRARY_DEBUG})
+	endif()    
+    
     # mark component as found or handle not finding it
     if(Poco_${component}_LIBRARY)
         set(Poco_${component}_FOUND TRUE)

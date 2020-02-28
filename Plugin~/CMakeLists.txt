@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
-PROJECT(MeshSyncProj)
+PROJECT(MeshSyncPlugin)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/Build/cmake_modules)
 set(src_root ${CMAKE_SOURCE_DIR}/Src)
@@ -24,6 +24,9 @@ elseif(WIN32)
     #Compile with MultiThreaded DLL flag to use dynamically-linked runtime library (Poco)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")    
+    
+    #Set /fp. We need so that -infinity == infinity == NaN. See Transform::setupDataFlags()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast")
 endif()
 
 
