@@ -5,7 +5,7 @@ using UnityEngine;
 namespace UnityEditor.MeshSync
 {
     [CustomEditor(typeof(SceneCachePlayer))]
-    public class SceneCachePlayerEditor : MeshSyncPlayerEditor
+    internal class SceneCachePlayerEditor : MeshSyncPlayerEditor
     {
         [MenuItem("GameObject/MeshSync/Create Cache Player", false, 10)]
         public static void CreateSceneCachePlayerMenu(MenuCommand menuCommand)

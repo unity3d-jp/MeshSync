@@ -18,32 +18,95 @@ using UnityEditor.SceneManagement;
 
 namespace Unity.MeshSync
 {
-    public delegate void SceneHandler();
-    public delegate void UpdateAudioHandler(AudioClip audio, AudioData data);
-    public delegate void UpdateTextureHandler(Texture2D tex, TextureData data);
-    public delegate void UpdateMaterialHandler(Material mat, MaterialData data);
-    public delegate void UpdateEntityHandler(GameObject obj, TransformData data);
-    public delegate void UpdateAnimationHandler(AnimationClip anim, AnimationClipData data);
-    public delegate void DeleteEntityHandler(GameObject obj);
+    /// <summary>
+    /// A delegate to handle scene updates
+    /// </summary>
+    internal delegate void SceneHandler();
+    
+    /// <summary>
+    /// A delegate to handle audio updates
+    /// </summary>
+    internal delegate void UpdateAudioHandler(AudioClip audio, AudioData data);
+    
+    /// <summary>
+    /// A delegate to handle texture updates
+    /// </summary>
+    internal delegate void UpdateTextureHandler(Texture2D tex, TextureData data);
+    
+    /// <summary>
+    /// A delegate to handle material updates
+    /// </summary>
+    internal delegate void UpdateMaterialHandler(Material mat, MaterialData data);
+    
+    /// <summary>
+    /// A delegate to handle entity updates
+    /// </summary>
+    internal delegate void UpdateEntityHandler(GameObject obj, TransformData data);
+    
+    /// <summary>
+    /// A delegate to handle animation updates
+    /// </summary>
+    internal delegate void UpdateAnimationHandler(AnimationClip anim, AnimationClipData data);
+    
+    /// <summary>
+    /// A delegate to handle entity deletions
+    /// </summary>
+    internal delegate void DeleteEntityHandler(GameObject obj);
 
+    /// <summary>
+    /// MeshSyncPlayer
+    /// </summary>
     [ExecuteInEditMode]
-    public class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver
+    internal class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver
     {
         #region Events
-        public event SceneHandler onSceneUpdateBegin;
-        public event UpdateAudioHandler onUpdateAudio;
-        public event UpdateTextureHandler onUpdateTexture;
-        public event UpdateMaterialHandler onUpdateMaterial;
-        public event UpdateEntityHandler onUpdateEntity;
-        public event UpdateAnimationHandler onUpdateAnimation;
-        public event DeleteEntityHandler onDeleteEntity;
-        public event SceneHandler onSceneUpdateEnd;
+        
+        /// <summary>
+        /// An event that is executed when the scene update is started
+        /// </summary>
+        internal event SceneHandler onSceneUpdateBegin;
+
+        /// <summary>
+        /// An event that is executed when an audio is updated
+        /// </summary>
+        internal event UpdateAudioHandler onUpdateAudio;
+
+        /// <summary>
+        /// An event that is executed when a texture is updated
+        /// </summary>
+        internal event UpdateTextureHandler onUpdateTexture;
+
+        /// <summary>
+        /// An event that is executed when an material is updated
+        /// </summary>
+        internal event UpdateMaterialHandler onUpdateMaterial;
+
+        /// <summary>
+        /// An event that is executed when an entity is updated
+        /// </summary>
+        internal event UpdateEntityHandler onUpdateEntity;
+
+        /// <summary>
+        /// An event that is executed when an animation is updated
+        /// </summary>
+        internal event UpdateAnimationHandler onUpdateAnimation;
+
+        /// <summary>
+        /// An event that is executed when an entity is deleted
+        /// </summary>
+        internal event DeleteEntityHandler onDeleteEntity;
+
+        /// <summary>
+        /// An event that is executed when the scene update is finished
+        /// </summary>
+        internal event SceneHandler onSceneUpdateEnd;
+        
         #endregion
 
 
         #region Types
         [Serializable]
-        public class EntityRecord
+        internal class EntityRecord
         {
             public EntityType dataType;
             public int index;
@@ -92,7 +155,7 @@ namespace Unity.MeshSync
         }
 
         [Serializable]
-        public class MaterialHolder
+        internal class MaterialHolder
         {
             public int id;
             public string name;
@@ -104,7 +167,7 @@ namespace Unity.MeshSync
         }
 
         [Serializable]
-        public class TextureHolder
+        internal class TextureHolder
         {
             public int id;
             public string name;
@@ -112,7 +175,7 @@ namespace Unity.MeshSync
         }
 
         [Serializable]
-        public class AudioHolder
+        internal class AudioHolder
         {
             public int id;
             public string name;
@@ -122,35 +185,35 @@ namespace Unity.MeshSync
 
 
         #region Fields
-        [SerializeField] protected DataPath m_assetDir = new DataPath(DataPath.Root.DataPath, "MeshSyncAssets");
-        [SerializeField] protected Transform m_rootObject;
+        [SerializeField] private DataPath m_assetDir = new DataPath(DataPath.Root.DataPath, "MeshSyncAssets");
+        [SerializeField] private Transform m_rootObject;
 
-        [SerializeField] protected bool m_syncVisibility = true;
-        [SerializeField] protected bool m_syncTransform = true;
-        [SerializeField] protected bool m_syncCameras = true;
-        [SerializeField] protected bool m_syncLights = true;
-        [SerializeField] protected bool m_syncMeshes = true;
-        [SerializeField] protected bool m_syncPoints = true;
-        [SerializeField] protected bool m_syncMaterials = true;
-        [SerializeField] protected bool m_handleAssets = true;
+        [SerializeField] private bool m_syncVisibility = true;
+        [SerializeField] private bool m_syncTransform = true;
+        [SerializeField] private bool m_syncCameras = true;
+        [SerializeField] private bool m_syncLights = true;
+        [SerializeField] private bool m_syncMeshes = true;
+        [SerializeField] private bool m_syncPoints = true;
+        [SerializeField] private bool m_syncMaterials = true;
+        [SerializeField] private bool m_handleAssets = true;
 
 #if UNITY_2018_1_OR_NEWER
-        [SerializeField] protected bool m_usePhysicalCameraParams = true;
+        [SerializeField] private bool m_usePhysicalCameraParams = true;
 #endif
-        [SerializeField] protected bool m_useCustomCameraMatrices = true;
-        [SerializeField] protected bool m_updateMeshColliders = true;
-        [SerializeField] protected bool m_findMaterialFromAssets = true;
-        [SerializeField] protected InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
-        [SerializeField] protected bool m_keyframeReduction = true;
-        [SerializeField] protected float m_reductionThreshold = 0.001f;
-        [SerializeField] protected bool m_reductionEraseFlatCurves = false;
+        [SerializeField] private bool m_useCustomCameraMatrices = true;
+        [SerializeField] private bool m_updateMeshColliders = true;
+        [SerializeField] private bool m_findMaterialFromAssets = true;
+        [SerializeField] private InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
+        [SerializeField] private bool m_keyframeReduction = true;
+        [SerializeField] private float m_reductionThreshold = 0.001f;
+        [SerializeField] private bool m_reductionEraseFlatCurves = false;
         [SerializeField] protected ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
         [SerializeField] protected bool m_logging = true;
         [SerializeField] protected bool m_profiling = false;
-        [SerializeField] protected bool m_markMeshesDynamic = false;
-        [SerializeField] protected bool m_dontSaveAssetsInScene = false;
+        [SerializeField] private bool m_markMeshesDynamic = false;
+        [SerializeField] private bool m_dontSaveAssetsInScene = false;
 
-        [SerializeField] protected Material m_dummyMaterial;
+        [SerializeField] private Material m_dummyMaterial;
         [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] protected List<TextureHolder> m_textureList = new List<TextureHolder>();
         [SerializeField] protected List<AudioHolder> m_audioList = new List<AudioHolder>();
@@ -176,194 +239,194 @@ namespace Unity.MeshSync
         bool m_recordAssignMaterials = false;
 #endif
 
-        protected bool m_needReassignMaterials = false;
+        private bool m_needReassignMaterials = false;
 
-        protected Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
+        private Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
         protected Dictionary<int, EntityRecord> m_hostObjects = new Dictionary<int, EntityRecord>();
-        protected Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
+        private Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
         #endregion
 
 
         #region Properties
-        public static int pluginVersion { get { return Lib.pluginVersion; } }
-        public static int protocolVersion { get { return Lib.protocolVersion; } }
-        public DataPath assetDir
+        internal static int pluginVersion { get { return Lib.pluginVersion; } }
+        internal static int protocolVersion { get { return Lib.protocolVersion; } }
+        internal DataPath assetDir
         {
             get { return m_assetDir; }
             set { m_assetDir = value; }
         }
-        public string assetPath
+        internal string assetPath
         {
             get { return m_assetDir.leaf.Length != 0 ? "Assets/" + m_assetDir.leaf : "Assets"; }
         }
-        public string httpFileRootPath
+        internal string httpFileRootPath
         {
             get { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
         }
-        public Transform rootObject
+        internal Transform rootObject
         {
             get { return m_rootObject; }
             set { m_rootObject = value; }
         }
 
-        public bool syncVisibility
+        internal bool syncVisibility
         {
             get { return m_syncVisibility; }
             set { m_syncVisibility = value; }
         }
-        public bool syncTransform
+        internal bool syncTransform
         {
             get { return m_syncTransform; }
             set { m_syncTransform = value; }
         }
-        public bool syncCameras
+        internal bool syncCameras
         {
             get { return m_syncCameras; }
             set { m_syncCameras = value; }
         }
-        public bool syncLights
+        internal bool syncLights
         {
             get { return m_syncLights; }
             set { m_syncLights = value; }
         }
-        public bool syncMeshes
+        internal bool syncMeshes
         {
             get { return m_syncMeshes; }
             set { m_syncMeshes = value; }
         }
-        public bool syncPoints
+        internal bool syncPoints
         {
             get { return m_syncPoints; }
             set { m_syncPoints = value; }
         }
-        public bool syncMaterials
+        internal bool syncMaterials
         {
             get { return m_syncMaterials; }
             set { m_syncMaterials = value; }
         }
-        public bool handleAssets
+        internal bool handleAssets
         {
             get { return m_handleAssets; }
             set { m_handleAssets = value; }
         }
 
-        public InterpolationMode animationInterpolation
+        internal InterpolationMode animationInterpolation
         {
             get { return m_animationInterpolation; }
             set { m_animationInterpolation = value; }
         }
-        public bool keyframeReduction
+        internal bool keyframeReduction
         {
             get { return m_keyframeReduction; }
             set { m_keyframeReduction = value; }
         }
-        public float reductionThreshold
+        internal float reductionThreshold
         {
             get { return m_reductionThreshold; }
             set { m_reductionThreshold = value; }
         }
-        public bool reductionKeepEraseCurves
+        internal bool reductionKeepEraseCurves
         {
             get { return m_reductionEraseFlatCurves; }
             set { m_reductionEraseFlatCurves = value; }
         }
-        public ZUpCorrectionMode zUpCorrection
+        internal ZUpCorrectionMode zUpCorrection
         {
             get { return m_zUpCorrection; }
             set { m_zUpCorrection = value; }
         }
 
 #if UNITY_2018_1_OR_NEWER
-        public bool usePhysicalCameraParams
+        internal bool usePhysicalCameraParams
         {
             get { return m_usePhysicalCameraParams; }
             set { m_usePhysicalCameraParams = value; }
         }
 #endif
-        public bool useCustomCameraMatrices
+        internal bool useCustomCameraMatrices
         {
             get { return m_useCustomCameraMatrices; }
             set { m_useCustomCameraMatrices = value; }
         }
-        public bool updateMeshColliders
+        internal bool updateMeshColliders
         {
             get { return m_updateMeshColliders; }
             set { m_updateMeshColliders = value; }
         }
-        public bool findMaterialFromAssets
+        internal bool findMaterialFromAssets
         {
             get { return m_findMaterialFromAssets; }
             set { m_findMaterialFromAssets = value; }
         }
 
-        public bool logging
+        internal bool logging
         {
             get { return m_logging; }
             set { m_logging = value; }
         }
-        public bool profiling
+        internal bool profiling
         {
             get { return m_profiling; }
             set { m_profiling = value; }
         }
 
-        public bool markMeshesDynamic
+        internal bool markMeshesDynamic
         {
             get { return m_markMeshesDynamic; }
             set { m_markMeshesDynamic = value; }
         }
-        public bool dontSaveAssetsInScene
+        internal bool dontSaveAssetsInScene
         {
             get { return m_dontSaveAssetsInScene; }
             set { m_dontSaveAssetsInScene = value; }
         }
 
-        public List<MaterialHolder> materialList { get { return m_materialList; } }
-        public List<TextureHolder> textureList { get { return m_textureList; } }
+        internal List<MaterialHolder> materialList { get { return m_materialList; } }
+        internal List<TextureHolder> textureList { get { return m_textureList; } }
 
 #if UNITY_EDITOR
-        public bool syncMaterialList
+        internal bool syncMaterialList
         {
             get { return m_syncMaterialList; }
             set { m_syncMaterialList = value; }
         }
-        public bool sortEntities
+        internal bool sortEntities
         {
             get { return m_sortEntities; }
             set { m_sortEntities = value; }
         }
-        public bool progressiveDisplay
+        internal bool progressiveDisplay
         {
             get { return m_progressiveDisplay; }
             set { m_progressiveDisplay = value; }
         }
 
-        public bool foldSyncSettings
+        internal bool foldSyncSettings
         {
             get { return m_foldSyncSettings; }
             set { m_foldSyncSettings = value; }
         }
-        public bool foldImportSettings
+        internal bool foldImportSettings
         {
             get { return m_foldImportSettings; }
             set { m_foldImportSettings = value; }
         }
-        public bool foldMisc
+        internal bool foldMisc
         {
             get { return m_foldMisc; }
             set { m_foldMisc = value; }
         }
-        public bool foldMaterialList
+        internal bool foldMaterialList
         {
             get { return m_foldMaterialList; }
             set { m_foldMaterialList = value; }
         }
-        public bool foldAnimationTweak
+        internal bool foldAnimationTweak
         {
             get { return m_foldAnimationTweak; }
             set { m_foldAnimationTweak = value; }
         }
-        public bool foldExportAssets
+        internal bool foldExportAssets
         {
             get { return m_foldExportAssets; }
             set { m_foldExportAssets = value; }
@@ -394,12 +457,19 @@ namespace Unity.MeshSync
             values = null;
         }
 
+        /// <summary>
+        /// Called during serialization as an implementation of ISerializationCallbackReceiver
+        /// </summary>
         public void OnBeforeSerialize()
         {
             SerializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
             SerializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
             SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
         }
+
+        /// <summary>
+        /// Called during serialization as an implementation of ISerializationCallbackReceiver
+        /// </summary>
         public void OnAfterDeserialize()
         {
             DeserializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
@@ -425,7 +495,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public void MakeSureAssetDirectoryExists()
+        private void MakeSureAssetDirectoryExists()
         {
 #if UNITY_EDITOR
             m_assetDir.CreateDirectory();
@@ -435,7 +505,7 @@ namespace Unity.MeshSync
         // this function has a complex behavior to keep existing .meta:
         //  if an asset already exists in assetPath, load it and copy the content of obj to it and replace obj with it.
         //  otherwise obj is simply saved by AssetDatabase.CreateAsset().
-        protected bool SaveAsset<T>(ref T obj, string assetPath) where T : UnityEngine.Object
+        private bool SaveAsset<T>(ref T obj, string assetPath) where T : UnityEngine.Object
         {
 #if UNITY_EDITOR
             var ret = Misc.SaveAsset(obj, assetPath);
@@ -448,7 +518,7 @@ namespace Unity.MeshSync
             return false;
         }
 
-        protected bool IsAsset(UnityEngine.Object obj)
+        private bool IsAsset(UnityEngine.Object obj)
         {
 #if UNITY_EDITOR
             return AssetDatabase.Contains(obj);
@@ -457,7 +527,7 @@ namespace Unity.MeshSync
 #endif
         }
 
-        protected bool DestroyIfNotAsset(UnityEngine.Object obj)
+        private bool DestroyIfNotAsset(UnityEngine.Object obj)
         {
             if (obj != null && IsAsset(obj))
             {
@@ -467,7 +537,7 @@ namespace Unity.MeshSync
             return false;
         }
 
-        public string BuildPath(Transform t)
+        internal string BuildPath(Transform t)
         {
             var parent = t.parent;
             if (parent != null && parent != m_rootObject)
@@ -476,7 +546,7 @@ namespace Unity.MeshSync
                 return "/" + t.name;
         }
 
-        public Texture2D FindTexture(int id)
+        internal Texture2D FindTexture(int id)
         {
             if (id == Lib.invalidID)
                 return null;
@@ -484,7 +554,7 @@ namespace Unity.MeshSync
             return rec != null ? rec.texture : null;
         }
 
-        public Material FindMaterial(int id)
+        internal Material FindMaterial(int id)
         {
             if (id == Lib.invalidID)
                 return null;
@@ -492,7 +562,7 @@ namespace Unity.MeshSync
             return rec != null ? rec.material : null;
         }
 
-        public bool EraseMaterialRecord(int id)
+        internal bool EraseMaterialRecord(int id)
         {
             return m_materialList.RemoveAll(v => v.id == id) != 0;
         }
@@ -517,7 +587,7 @@ namespace Unity.MeshSync
             return ret;
         }
 
-        public AudioClip FindAudio(int id)
+        internal AudioClip FindAudio(int id)
         {
             if (id == Lib.invalidID)
                 return null;
@@ -525,7 +595,7 @@ namespace Unity.MeshSync
             return rec != null ? rec.audio : null;
         }
 
-        public int GetObjectlID(GameObject go)
+        internal int GetObjectlID(GameObject go)
         {
             if (go == null)
                 return Lib.invalidID;
@@ -543,7 +613,7 @@ namespace Unity.MeshSync
             return ret;
         }
 
-        public Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created)
+        internal Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created)
         {
             var names = path.Split('/');
             Transform t = m_rootObject;
@@ -558,7 +628,7 @@ namespace Unity.MeshSync
             return t;
         }
 
-        public Transform FindOrCreateObjectByName(Transform parent, string name, bool createIfNotExist, ref bool created)
+        internal Transform FindOrCreateObjectByName(Transform parent, string name, bool createIfNotExist, ref bool created)
         {
             Transform ret = null;
             if (parent == null)
@@ -590,7 +660,7 @@ namespace Unity.MeshSync
             return ret;
         }
 
-        public static Material CreateDefaultMaterial()
+        internal static Material CreateDefaultMaterial()
         {
             // prefer non Standard shader because it will be pink in HDRP
             var shader = Shader.Find("HDRP/Lit");
@@ -602,7 +672,7 @@ namespace Unity.MeshSync
             return ret;
         }
 
-        public void ForceRepaint()
+        internal void ForceRepaint()
         {
 #if UNITY_EDITOR
             if (!EditorApplication.isPlaying && !EditorApplication.isPaused)
@@ -615,7 +685,7 @@ namespace Unity.MeshSync
         #endregion
 
         #region ReceiveScene
-        public void BeforeUpdateScene()
+        internal void BeforeUpdateScene()
         {
             MakeSureAssetDirectoryExists();
 
@@ -623,7 +693,7 @@ namespace Unity.MeshSync
                 onSceneUpdateBegin.Invoke();
         }
 
-        public void UpdateScene(SceneData scene)
+        internal void UpdateScene(SceneData scene)
         {
             // handle assets
             Try(() =>
@@ -713,7 +783,7 @@ namespace Unity.MeshSync
 #endif
         }
 
-        public void AfterUpdateScene()
+        internal void AfterUpdateScene()
         {
             List<string> deadKeys = null;
 
@@ -2041,7 +2111,7 @@ namespace Unity.MeshSync
 #endif
         }
 
-        public void ReassignMaterials()
+        internal void ReassignMaterials()
         {
             foreach (var rec in m_clientObjects)
                 AssignMaterials(rec.Value);
@@ -2049,7 +2119,7 @@ namespace Unity.MeshSync
                 AssignMaterials(rec.Value);
         }
 
-        public void AssignMaterials(EntityRecord rec)
+        internal void AssignMaterials(EntityRecord rec)
         {
             if (rec.go == null || rec.mesh == null || rec.materialIDs == null)
                 return;
@@ -2099,7 +2169,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public bool EraseEntityRecord(Identifier identifier)
+        internal bool EraseEntityRecord(Identifier identifier)
         {
             var id = identifier.id;
             var path = identifier.name;
@@ -2131,7 +2201,7 @@ namespace Unity.MeshSync
         #endregion
 
         #region Tools
-        public bool ApplyMaterialList(MaterialList ml)
+        internal bool ApplyMaterialList(MaterialList ml)
         {
             if (ml == null)
                 return false;
@@ -2394,7 +2464,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public void AssignMaterial(MaterialHolder holder, Material mat, bool recordUndo = true)
+        internal void AssignMaterial(MaterialHolder holder, Material mat, bool recordUndo = true)
         {
             if (recordUndo)
             {
@@ -2437,7 +2507,7 @@ namespace Unity.MeshSync
             return ret;
         }
 
-        protected void OnSceneViewGUI(SceneView sceneView)
+        private void OnSceneViewGUI(SceneView sceneView)
         {
             if (m_syncMaterialList)
             {
@@ -2471,6 +2541,9 @@ namespace Unity.MeshSync
             m_tmpC.Dispose();
         }
 
+        /// <summary>
+        /// Monobehaviour's OnEnable(). Can be overridden
+        /// </summary>
         protected virtual void OnEnable()
         {
 #if UNITY_EDITOR
@@ -2482,6 +2555,9 @@ namespace Unity.MeshSync
 #endif
         }
 
+        /// <summary>
+        /// Monobehaviour's OnDisable(). Can be overridden
+        /// </summary>
         protected virtual void OnDisable()
         {
 #if UNITY_EDITOR

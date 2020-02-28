@@ -7,7 +7,7 @@ namespace Unity.MeshSync
 {
     [ExecuteInEditMode]
     [RequireComponent(typeof(PointCache))]
-    public class PointCacheRenderer : MonoBehaviour
+    internal class PointCacheRenderer : MonoBehaviour
     {
         #region Fields
         [SerializeField] Mesh m_mesh;
@@ -66,7 +66,7 @@ namespace Unity.MeshSync
             return a != null && a.Length > 0;
         }
 
-        public void Flush(PointCache data)
+        internal void Flush(PointCache data)
         {
             if (data == null || data.points == null || data.points.Length == 0)
                 return;

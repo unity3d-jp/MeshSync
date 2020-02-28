@@ -7,14 +7,14 @@ using UnityEngine;
 namespace UnityEditor.MeshSync
 {
     [CustomEditor(typeof(MeshSyncPlayer))]
-    public class MeshSyncPlayerEditor : Editor
+    internal class MeshSyncPlayerEditor : Editor
     {
-        protected float m_animationFrameRate = 30.0f;
-        protected float m_animationTimeScale = 1.0f;
-        protected float m_animationTimeOffset = 0.0f;
-        protected int m_animationDropStep = 2;
-        protected float m_reductionThreshold = 0.001f;
-        protected bool m_eraseFlatCurves = false;
+        private float m_animationFrameRate = 30.0f;
+        private float m_animationTimeScale = 1.0f;
+        private float m_animationTimeOffset = 0.0f;
+        private int m_animationDropStep = 2;
+        private float m_reductionThreshold = 0.001f;
+        private bool m_eraseFlatCurves = false;
 
         public virtual void OnEnable()
         {

@@ -6,7 +6,7 @@ using UnityEditor;
 namespace Unity.MeshSync
 {
     [ExecuteInEditMode]
-    public class SceneCachePlayer : MeshSyncPlayer
+    internal class SceneCachePlayer : MeshSyncPlayer
     {
         #region Types
         public enum TimeUnit
@@ -46,7 +46,7 @@ namespace Unity.MeshSync
         #endregion
 
         #region Properties
-        public DataPath cacheFilePath
+        internal DataPath cacheFilePath
         {
             get { return m_cacheFilePath; }
         }

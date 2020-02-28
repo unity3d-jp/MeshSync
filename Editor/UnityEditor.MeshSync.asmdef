@@ -1,5 +1,5 @@
 {
-    "name": "UTJ.MeshSyncEditor",
+    "name": "UnityEditor.MeshSync",
     "references": [
         "GUID:7d4eb09b40a1fd44499a1121e9e14394"
     ],

@@ -13,7 +13,7 @@ using UnityEditor;
 
 namespace Unity.MeshSync
 {
-    public static class Misc
+    internal static class Misc
     {
         #region internal
         [DllImport(Lib.name)] static extern ulong msGetTime();
@@ -215,7 +215,7 @@ namespace Unity.MeshSync
         }
 #endif
 
-        public static UnityEngine.TextureFormat ToUnityTextureFormat(TextureFormat v)
+        internal static UnityEngine.TextureFormat ToUnityTextureFormat(TextureFormat v)
         {
             switch (v)
             {
@@ -233,7 +233,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public static TextureFormat ToMSTextureFormat(UnityEngine.TextureFormat v)
+        internal static TextureFormat ToMSTextureFormat(UnityEngine.TextureFormat v)
         {
             switch (v)
             {
@@ -280,7 +280,7 @@ namespace Unity.MeshSync
             return union.pointer;
         }
 #endif
-        public class UniqueNameGenerator
+        internal class UniqueNameGenerator
         {
             public string Gen(string name)
             {

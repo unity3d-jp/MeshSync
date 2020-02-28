@@ -11,7 +11,7 @@ using UnityEditor;
 
 namespace Unity.MeshSync
 {
-    public static class Lib
+    internal static class Lib
     {
         #region internal
         public const string name =
@@ -44,7 +44,7 @@ namespace Unity.MeshSync
 
 
     #region Asset
-    public enum AssetType
+    internal enum AssetType
     {
         Unknown,
         File,
@@ -56,7 +56,7 @@ namespace Unity.MeshSync
 
 
     [StructLayout(LayoutKind.Explicit)]
-    public struct AssetData
+    internal struct AssetData
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
@@ -91,7 +91,7 @@ namespace Unity.MeshSync
     }
 
     [StructLayout(LayoutKind.Explicit)]
-    public struct FileAssetData
+    internal struct FileAssetData
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
@@ -126,7 +126,7 @@ namespace Unity.MeshSync
     #endregion
 
     #region Audio
-    public enum AudioFormat
+    internal enum AudioFormat
     {
         Unknown = 0,
         U8,
@@ -137,8 +137,11 @@ namespace Unity.MeshSync
         RawFile = 100,
     }
 
+    /// <summary>
+    /// AudioData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct AudioData
+    internal struct AudioData
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
@@ -158,41 +161,50 @@ namespace Unity.MeshSync
 #endif
         #endregion
 
+        /// <summary>
+        /// Checks if the AudioData has been assigned
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>True if assigned, false otherwise</returns>        
         public static implicit operator bool(AudioData v) { return v.self != IntPtr.Zero; }
 
+        /// <summary>
+        /// Creates a new AudioData
+        /// </summary>
+        /// <returns>The newly created AudioData</returns>
         public static AudioData Create() { return msAudioCreate(); }
 
-        public int id
+        internal int id
         {
             get { return asset.id; }
             set { asset.id = value; }
         }
-        public string name
+        internal string name
         {
             get { return asset.name; }
             set { asset.name = value; }
         }
-        public AudioFormat format
+        internal AudioFormat format
         {
             get { return msAudioGetFormat(self); }
             set { msAudioSetFormat(self, value); }
         }
-        public int frequency
+        internal int frequency
         {
             get { return msAudioGetFrequency(self); }
             set { msAudioSetFrequency(self, value); }
         }
-        public int channels
+        internal int channels
         {
             get { return msAudioGetChannels(self); }
             set { msAudioSetChannels(self, value); }
         }
-        public int sampleLength
+        internal int sampleLength
         {
             get { return msAudioGetSampleLength(self); }
         }
 
-        public float[] samples
+        internal float[] samples
         {
             get
             {
@@ -203,11 +215,11 @@ namespace Unity.MeshSync
         }
 
 #if UNITY_EDITOR
-        public bool WriteToFile(string path)
+        internal bool WriteToFile(string path)
         {
             return msAudioWriteToFile(self, path) != 0;
         }
-        public bool ExportAsWave(string path)
+        internal bool ExportAsWave(string path)
         {
             return msAudioExportAsWave(self, path) != 0;
         }
@@ -216,13 +228,13 @@ namespace Unity.MeshSync
     #endregion
 
     #region Texture
-    public enum TextureType
+    internal enum TextureType
     {
         Default,
         NormalMap,
     }
 
-    public enum TextureFormat
+    internal enum TextureFormat
     {
         Unknown = 0,
 
@@ -258,8 +270,11 @@ namespace Unity.MeshSync
         RawFile = 0x10 << 4,
     }
 
+    /// <summary>
+    /// TextureData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct TextureData
+    internal struct TextureData
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
@@ -279,53 +294,57 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern byte msWriteToFile(string path, byte[] data, int size);
         #endregion
 
+        /// <summary>
+        /// Creates a new TextureData
+        /// </summary>
+        /// <returns>The newly created TextureData</returns>
         public static TextureData Create() { return msTextureCreate(); }
 
-        public int id
+        internal int id
         {
             get { return asset.id; }
             set { asset.id = value; }
         }
-        public string name
+        internal string name
         {
             get { return asset.name; }
             set { asset.name = value; }
         }
-        public TextureType type
+        internal TextureType type
         {
             get { return msTextureGetType(self); }
             set { msTextureSetType(self, value); }
         }
-        public TextureFormat format
+        internal TextureFormat format
         {
             get { return msTextureGetFormat(self); }
             set { msTextureSetFormat(self, value); }
         }
-        public int width
+        internal int width
         {
             get { return msTextureGetWidth(self); }
             set { msTextureSetWidth(self, value); }
         }
-        public int height
+        internal int height
         {
             get { return msTextureGetHeight(self); }
             set { msTextureSetHeight(self, value); }
         }
-        public int sizeInByte
+        internal int sizeInByte
         {
             get { return msTextureGetSizeInByte(self); }
         }
-        public IntPtr dataPtr
+        internal IntPtr dataPtr
         {
             get { return msTextureGetDataPtr(self); }
         }
 
 #if UNITY_EDITOR
-        public bool WriteToFile(string path)
+        internal bool WriteToFile(string path)
         {
             return msTextureWriteToFile(self, path) != 0;
         }
-        public static bool WriteToFile(string path, byte[] data)
+        internal static bool WriteToFile(string path, byte[] data)
         {
             if (data != null)
                 return msWriteToFile(path, data, data.Length) != 0;
@@ -336,7 +355,7 @@ namespace Unity.MeshSync
     #endregion
 
     #region Material
-    public struct MaterialPropertyData
+    internal struct MaterialPropertyData
     {
         #region internal
         public IntPtr self;
@@ -454,7 +473,7 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct MaterialKeywordData
+    internal struct MaterialKeywordData
     {
         #region internal
         public IntPtr self;
@@ -471,8 +490,11 @@ namespace Unity.MeshSync
         public bool value { get { return msMaterialKeywordGetValue(self) != 0; } }
     }
 
+    /// <summary>
+    /// MaterialData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct MaterialData
+    internal struct MaterialData
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
@@ -500,48 +522,57 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern void msMaterialAddKeyword(IntPtr self, string name, byte v);
         #endregion
 
+        /// <summary>
+        /// Check if the MaterialData has been assigned 
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>True if assigned, false otherwise</returns>
         public static implicit operator bool(MaterialData v)
         {
             return v.self != IntPtr.Zero;
         }
 
+        /// <summary>
+        /// Creates a new MaterialData
+        /// </summary>
+        /// <returns>The newly created MaterialData</returns>
         public static MaterialData Create() { return msMaterialCreate(); }
 
-        public int id
+        internal int id
         {
             get { return asset.id; }
             set { asset.id = value; }
         }
-        public string name
+        internal string name
         {
             get { return asset.name; }
             set { asset.name = value; }
         }
-        public int index
+        internal int index
         {
             get { return msMaterialGetIndex(self); }
             set { msMaterialSetIndex(self, value); }
         }
-        public string shader
+        internal string shader
         {
             get { return Misc.S(msMaterialGetShader(self)); }
             set { msMaterialSetShader(self, value); }
         }
 
-        public int numProperties
+        internal int numProperties
         {
             get { return msMaterialGetNumParams(self); }
         }
-        public MaterialPropertyData GetProperty(int i)
+        internal MaterialPropertyData GetProperty(int i)
         {
             return msMaterialGetParam(self, i);
         }
-        public MaterialPropertyData FindProperty(string name)
+        internal MaterialPropertyData FindProperty(string name)
         {
             return msMaterialFindParam(self, name);
         }
 
-        public Color color
+        internal Color color
         {
             get
             {
@@ -557,24 +588,24 @@ namespace Unity.MeshSync
             }
         }
 
-        public void SetInt(string name, int v) { msMaterialSetInt(self, name, v); }
-        public void SetFloat(string name, float v) { msMaterialSetFloat(self, name, v); }
-        public void SetVector(string name, Vector4 v) { msMaterialSetVector(self, name, v); }
-        public void SetMatrix(string name, Matrix4x4 v) { msMaterialSetMatrix(self, name, v); }
-        public void SetFloatArray(string name, float[] v) { msMaterialSetFloatArray(self, name, v, v.Length); }
-        public void SetVectorArray(string name, Vector4[] v) { msMaterialSetVectorArray(self, name, v, v.Length); }
-        public void SetMatrixArray(string name, Matrix4x4[] v) { msMaterialSetMatrixArray(self, name, v, v.Length); }
-        public void SetTexture(string name, TextureData v) { msMaterialSetTexture(self, name, v); }
+        internal void SetInt(string name, int v) { msMaterialSetInt(self, name, v); }
+        internal void SetFloat(string name, float v) { msMaterialSetFloat(self, name, v); }
+        internal void SetVector(string name, Vector4 v) { msMaterialSetVector(self, name, v); }
+        internal void SetMatrix(string name, Matrix4x4 v) { msMaterialSetMatrix(self, name, v); }
+        internal void SetFloatArray(string name, float[] v) { msMaterialSetFloatArray(self, name, v, v.Length); }
+        internal void SetVectorArray(string name, Vector4[] v) { msMaterialSetVectorArray(self, name, v, v.Length); }
+        internal void SetMatrixArray(string name, Matrix4x4[] v) { msMaterialSetMatrixArray(self, name, v, v.Length); }
+        internal void SetTexture(string name, TextureData v) { msMaterialSetTexture(self, name, v); }
 
-        public int numKeywords
+        internal int numKeywords
         {
             get { return msMaterialGetNumKeywords(self); }
         }
-        public MaterialKeywordData GetKeyword(int i)
+        internal MaterialKeywordData GetKeyword(int i)
         {
             return msMaterialGetKeyword(self, i);
         }
-        public void AddKeyword(string name, bool value)
+        internal void AddKeyword(string name, bool value)
         {
             msMaterialAddKeyword(self, name, (byte)(value ? 1 : 0));
         }
@@ -583,19 +614,19 @@ namespace Unity.MeshSync
 
 
     #region Animations
-    public struct TimeRange
+    internal struct TimeRange
     {
         public float start, end;
     }
 
-    public enum InterpolationMode
+    internal enum InterpolationMode
     {
         Smooth,
         Linear,
         Constant,
     }
 
-    public class AnimationImportContext
+    internal class AnimationImportContext
     {
         public AnimationClip clip;
         public Type mainComponentType;
@@ -608,7 +639,7 @@ namespace Unity.MeshSync
 #endif
     }
 
-    public struct AnimationCurveData
+    internal struct AnimationCurveData
     {
         #region internal
         public IntPtr self;
@@ -667,7 +698,10 @@ namespace Unity.MeshSync
         public void Convert(InterpolationMode it) { msCurveConvert(self, it); }
     }
 
-    public struct AnimationData
+    /// <summary>
+    /// AnimationData
+    /// </summary>
+    internal struct AnimationData
     {
         #region internal
         public IntPtr self;
@@ -691,20 +725,25 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetLightIntensity(IntPtr self);
         [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetLightRange(IntPtr self);
         [DllImport(Lib.name)] static extern AnimationCurveData msAnimationGetLightSpotAngle(IntPtr self);
-        public delegate void msCurveCallback(AnimationCurveData data);
+        internal delegate void msCurveCallback(AnimationCurveData data);
         [DllImport(Lib.name)] static extern AnimationCurveData msAnimationEachBlendshapeCurves(IntPtr self, msCurveCallback cb);
         #endregion
 
+        /// <summary>
+        /// Checks if the AnimationData has been assigned
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>True if assigned, false otherwise</returns>
         public static implicit operator bool(AnimationData v)
         {
             return v.self != IntPtr.Zero;
         }
 
-        public string path
+        internal string path
         {
             get { return Misc.S(msAnimationGetPath(self)); }
         }
-        public EntityType entityType
+        internal EntityType entityType
         {
             get { return msAnimationGetEntityType(self); }
         }
@@ -731,14 +770,14 @@ namespace Unity.MeshSync
 
 
 #if UNITY_EDITOR
-        public static void SetCurve(AnimationClip clip, string path, Type type, string prop, AnimationCurve curve, bool applyNullCurve = false)
+        internal static void SetCurve(AnimationClip clip, string path, Type type, string prop, AnimationCurve curve, bool applyNullCurve = false)
         {
             if (curve == null && !applyNullCurve)
                 return;
             Misc.SetCurve(clip, path, type, prop, curve);
         }
 
-        public void ExportTransformAnimation(AnimationImportContext ctx)
+        internal void ExportTransformAnimation(AnimationImportContext ctx)
         {
             var clip = ctx.clip;
             var path = ctx.path;
@@ -795,7 +834,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public void ExportCameraAnimation(AnimationImportContext ctx)
+        internal void ExportCameraAnimation(AnimationImportContext ctx)
         {
             var tcam = typeof(Camera);
             ctx.mainComponentType = tcam;
@@ -865,7 +904,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public void ExportLightAnimation(AnimationImportContext ctx)
+        internal void ExportLightAnimation(AnimationImportContext ctx)
         {
             var tlight = typeof(Light);
             ctx.mainComponentType = tlight;
@@ -914,7 +953,7 @@ namespace Unity.MeshSync
             s_blendshapes.Add(data);
         }
 
-        public void ExportMeshAnimation(AnimationImportContext ctx)
+        internal void ExportMeshAnimation(AnimationImportContext ctx)
         {
             if (ctx.mainComponentType == null)
                 ctx.mainComponentType = typeof(MeshRenderer);
@@ -942,14 +981,14 @@ namespace Unity.MeshSync
             }
         }
 
-        public void ExportPointsAnimation(AnimationImportContext ctx)
+        internal void ExportPointsAnimation(AnimationImportContext ctx)
         {
             var tpoints = typeof(PointCache);
             ctx.mainComponentType = tpoints;
             ExportTransformAnimation(ctx);
         }
 
-        public void ExportToClip(AnimationImportContext ctx)
+        internal void ExportToClip(AnimationImportContext ctx)
         {
             switch (entityType)
             {
@@ -974,8 +1013,11 @@ namespace Unity.MeshSync
 #endif
         }
 
+    /// <summary>
+    /// AnimationClipData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct AnimationClipData
+    internal struct AnimationClipData
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
@@ -991,30 +1033,30 @@ namespace Unity.MeshSync
         static bool s_prepared = false;
         #endregion
 
-        public int id
+        internal int id
         {
             get { return asset.id; }
             set { asset.id = value; }
         }
-        public string name
+        internal string name
         {
             get { return asset.name; }
             set { asset.name = value; }
         }
-        public float frameRate
+        internal float frameRate
         {
             get { return msAnimationClipGetFrameRate(self); }
         }
-        public int numAnimations
+        internal int numAnimations
         {
             get { return msAnimationClipGetNumAnimations(self); }
         }
-        public AnimationData GetAnimation(int i)
+        internal AnimationData GetAnimation(int i)
         {
             return msAnimationClipGetAnimationData(self, i);
         }
 
-        public static void Prepare()
+        internal static void Prepare()
         {
             if (!s_prepared)
             {
@@ -1022,12 +1064,12 @@ namespace Unity.MeshSync
                 msSetSizeOfKeyframe(Marshal.SizeOf(typeof(Keyframe)));
             }
         }
-        public void Convert(InterpolationMode it)
+        internal void Convert(InterpolationMode it)
         {
             Prepare();
             msAnimationClipConvert(self, it);
         }
-        public void KeyframeReduction(float threshold, bool eraseFlatCurves)
+        internal void KeyframeReduction(float threshold, bool eraseFlatCurves)
         {
             msAnimationClipKeyframeReduction(self, threshold, Misc.ToByte(eraseFlatCurves));
         }
@@ -1036,7 +1078,7 @@ namespace Unity.MeshSync
 
 
     #region Variant
-    public struct VariantData
+    internal struct VariantData
     {
         #region internal
         public IntPtr self;
@@ -1192,7 +1234,7 @@ namespace Unity.MeshSync
     #endregion
 
     #region Entities
-    public struct Identifier
+    internal struct Identifier
     {
         #region internal
         public IntPtr self;
@@ -1204,7 +1246,7 @@ namespace Unity.MeshSync
         public string name { get { return Misc.S(msIdentifierGetName(self)); } }
     }
 
-    public enum EntityType
+    internal enum EntityType
     {
         Unknown,
         Transform,
@@ -1214,7 +1256,7 @@ namespace Unity.MeshSync
         Points,
     };
 
-    public struct TransformDataFlags
+    internal struct TransformDataFlags
     {
         public BitFlags flags;
         public bool unchanged { get { return flags[0]; } }
@@ -1225,7 +1267,7 @@ namespace Unity.MeshSync
         public bool hasReference { get { return flags[7]; } }
     }
 
-    public struct VisibilityFlags
+    internal struct VisibilityFlags
     {
         public BitFlags flags;
         public bool active { get { return flags[0]; } }
@@ -1235,9 +1277,13 @@ namespace Unity.MeshSync
         public bool ReceiveShadows { get { return flags[4]; } }
     }
 
-    public struct TransformData
+    /// <summary>
+    /// TransformData
+    /// </summary>
+    internal struct TransformData
     {
         #region internal
+
         public IntPtr self;
         [DllImport(Lib.name)] static extern TransformData msTransformCreate();
         [DllImport(Lib.name)] static extern TransformDataFlags msTransformGetDataFlags(IntPtr self);
@@ -1264,66 +1310,95 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern void msTransformSetReference(IntPtr self, string v);
         #endregion
 
+        /// <summary>
+        /// Creates a new TransformData and assign the parameter to it
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>The newly created TransformData</returns>
         public static explicit operator TransformData(IntPtr v) { return new TransformData { self = v }; }
+        
+        /// <summary>
+        /// Creates a new CameraData and assign the parameter to it
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>The newly created CameraData</returns>
         public static explicit operator CameraData(TransformData v) { return new CameraData { self = v.self }; }
+        
+        /// <summary>
+        /// Creates a new LightData and assign the parameter to it
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>The newly created LightData</returns>
         public static explicit operator LightData(TransformData v) { return new LightData { self = v.self }; }
+
+        /// <summary>
+        /// Creates a new MeshData and assign the parameter to it
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>The newly created MeshData</returns>
         public static explicit operator MeshData(TransformData v) { return new MeshData { self = v.self }; }
+
+        /// <summary>
+        /// Creates a new PointsData and assign the parameter to it
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>The newly created PointsData</returns>
         public static explicit operator PointsData(TransformData v) { return new PointsData { self = v.self }; }
 
-        public static TransformData Create()
+        internal static TransformData Create()
         {
             return msTransformCreate();
         }
 
-        public TransformDataFlags dataFlags
+        internal TransformDataFlags dataFlags
         {
             get { return msTransformGetDataFlags(self); }
         }
-        public EntityType entityType
+        internal EntityType entityType
         {
             get { return msTransformGetType(self); }
         }
-        public int hostID
+        internal int hostID
         {
             get { return msTransformGetHostID(self); }
             set { msTransformSetHostID(self, value); }
         }
-        public int index
+        internal int index
         {
             get { return msTransformGetIndex(self); }
             set { msTransformSetIndex(self, value); }
         }
-        public string path
+        internal string path
         {
             get { return Misc.S(msTransformGetPath(self)); }
             set { msTransformSetPath(self, value); }
         }
-        public Vector3 position
+        internal Vector3 position
         {
             get { return msTransformGetPosition(self); }
             set { msTransformSetPosition(self, value); }
         }
-        public Quaternion rotation
+        internal Quaternion rotation
         {
             get { return msTransformGetRotation(self); }
             set { msTransformSetRotation(self, value); }
         }
-        public Vector3 scale
+        internal Vector3 scale
         {
             get { return msTransformGetScale(self); }
             set { msTransformSetScale(self, value); }
         }
-        public VisibilityFlags visibility
+        internal VisibilityFlags visibility
         {
             get { return msTransformGetVisibility(self); }
             set { msTransformSetVisibility(self, value); }
         }
-        public string reference
+        internal string reference
         {
             get { return Misc.S(msTransformGetReference(self)); }
             set { msTransformSetReference(self, value); }
         }
-        public int numUserData
+        internal int numUserData
         {
             get { return msTransformGetNumUserProperties(self); }
         }
@@ -1332,7 +1407,7 @@ namespace Unity.MeshSync
         VariantData FindUserProperty(int i, string name) { return msTransformFindUserProperty(self, name); }
     }
 
-    public struct CameraDataFlags
+    internal struct CameraDataFlags
     {
         public BitFlags flags;
         public bool unchanged { get { return flags[0]; } }
@@ -1346,8 +1421,11 @@ namespace Unity.MeshSync
         public bool hasProjMatrix { get { return flags[9]; } }
     }
 
+    /// <summary>
+    /// CameraData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct CameraData
+    internal struct CameraData
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
@@ -1376,63 +1454,67 @@ namespace Unity.MeshSync
         #endregion
 
 
+        /// <summary>
+        /// Creates a new CameraData
+        /// </summary>
+        /// <returns>The newly created CameraData</returns>
         public static CameraData Create()
         {
             return msCameraCreate();
         }
 
-        public CameraDataFlags dataFlags
+        internal CameraDataFlags dataFlags
         {
             get { return msCameraGetDataFlags(self); }
         }
-        public bool orthographic
+        internal bool orthographic
         {
             get { return msCameraIsOrtho(self) != 0; }
             set { msCameraSetOrtho(self, (byte)(value ? 1 : 0)); }
         }
-        public float fov
+        internal float fov
         {
             get { return msCameraGetFov(self); }
             set { msCameraSetFov(self, value); }
         }
-        public float nearPlane
+        internal float nearPlane
         {
             get { return msCameraGetNearPlane(self); }
             set { msCameraSetNearPlane(self, value); }
         }
-        public float farPlane
+        internal float farPlane
         {
             get { return msCameraGetFarPlane(self); }
             set { msCameraSetFarPlane(self, value); }
         }
-        public float focalLength
+        internal float focalLength
         {
             get { return msCameraGetFocalLength(self); }
             set { msCameraSetFocalLength(self, value); }
         }
-        public Vector2 sensorSize
+        internal Vector2 sensorSize
         {
             get { return msCameraGetSensorSize(self); }
             set { msCameraSetSensorSize(self, value); }
         }
-        public Vector2 lensShift
+        internal Vector2 lensShift
         {
             get { return msCameraGetLensShift(self); }
             set { msCameraSetLensShift(self, value); }
         }
-        public Matrix4x4 viewMatrix
+        internal Matrix4x4 viewMatrix
         {
             get { return msCameraGetViewMatrix(self); }
             set { msCameraSetViewMatrix(self, value); }
         }
-        public Matrix4x4 projMatrix
+        internal Matrix4x4 projMatrix
         {
             get { return msCameraGetProjMatrix(self); }
             set { msCameraSetProjMatrix(self, value); }
         }
     }
 
-    public struct LightDataFlags
+    internal struct LightDataFlags
     {
         public BitFlags flags;
         public bool unchanged { get { return flags[0]; } }
@@ -1444,8 +1526,11 @@ namespace Unity.MeshSync
         public bool hasLayerMask { get { return flags[7]; } }
     }
 
+    /// <summary>
+    /// LightData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct LightData
+    internal struct LightData
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
@@ -1467,41 +1552,45 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern void msLightSetSpotAngle(IntPtr self, float v);
         #endregion
 
+        /// <summary>
+        /// Creates a new LightData
+        /// </summary>
+        /// <returns>The newly created LightData</returns>
         public static LightData Create()
         {
             return msLightCreate();
         }
 
-        public LightDataFlags dataFlags
+        internal LightDataFlags dataFlags
         {
             get { return msLightGetDataFlags(self); }
         }
-        public LightType lightType
+        internal LightType lightType
         {
             get { return msLightGetType(self); }
             set { msLightSetType(self, value); }
         }
-        public LightShadows shadowType
+        internal LightShadows shadowType
         {
             get { return msLightGetShadowType(self); }
             set { msLightSetShadowType(self, value); }
         }
-        public Color color
+        internal Color color
         {
             get { return msLightGetColor(self); }
             set { msLightSetColor(self, value); }
         }
-        public float intensity
+        internal float intensity
         {
             get { return msLightGetIntensity(self); }
             set { msLightSetIntensity(self, value); }
         }
-        public float range
+        internal float range
         {
             get { return msLightGetRange(self); }
             set { msLightSetRange(self, value); }
         }
-        public float spotAngle
+        internal float spotAngle
         {
             get { return msLightGetSpotAngle(self); }
             set { msLightSetSpotAngle(self, value); }
@@ -1509,7 +1598,7 @@ namespace Unity.MeshSync
     }
 
     #region Mesh
-    public struct SubmeshData
+    internal struct SubmeshData
     {
         #region internal
         public IntPtr self;
@@ -1531,10 +1620,10 @@ namespace Unity.MeshSync
         public int numIndices { get { return msSubmeshGetNumIndices(self); } }
         public Topology topology { get { return msSubmeshGetTopology(self); } }
         public int materialID { get { return msSubmeshGetMaterialID(self); } }
-        public void ReadIndices(MeshData mesh, PinnedList<int> dst) { msSubmeshReadIndices(self, mesh.self, dst); }
+        internal void ReadIndices(MeshData mesh, PinnedList<int> dst) { msSubmeshReadIndices(self, mesh.self, dst); }
     }
 
-    public struct BlendShapeData
+    internal struct BlendShapeData
     {
         #region internal
         public IntPtr self;
@@ -1565,9 +1654,9 @@ namespace Unity.MeshSync
             get { return msBlendShapeGetNumFrames(self); }
         }
         public float GetWeight(int f) { return msBlendShapeGetFrameWeight(self, f); }
-        public void ReadPoints(int f, PinnedList<Vector3> dst) { msBlendShapeReadPoints(self, f, dst); }
-        public void ReadNormals(int f, PinnedList<Vector3> dst) { msBlendShapeReadNormals(self, f, dst); }
-        public void ReadTangents(int f, PinnedList<Vector3> dst) { msBlendShapeReadTangents(self, f, dst); }
+        internal void ReadPoints(int f, PinnedList<Vector3> dst) { msBlendShapeReadPoints(self, f, dst); }
+        internal void ReadNormals(int f, PinnedList<Vector3> dst) { msBlendShapeReadNormals(self, f, dst); }
+        internal void ReadTangents(int f, PinnedList<Vector3> dst) { msBlendShapeReadTangents(self, f, dst); }
 
         public void AddFrame(float w, Vector3[] v, Vector3[] n, Vector3[] t)
         {
@@ -1575,7 +1664,7 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct MeshDataFlags
+    internal struct MeshDataFlags
     {
         public BitFlags flags;
         public bool unchanged           { get { return flags[0]; } }
@@ -1595,8 +1684,11 @@ namespace Unity.MeshSync
         public bool hasBounds           { get { return flags[19]; } }
     };
 
+    /// <summary>
+    /// MeshData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct MeshData
+    internal struct MeshData
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
@@ -1668,64 +1760,68 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern BlendShapeData msMeshAddBlendShape(IntPtr self, string name);
         #endregion
 
+        /// <summary>
+        /// Create MeshData
+        /// </summary>
+        /// <returns>The newly created MeshData </returns>
         public static MeshData Create()
         {
             return msMeshCreate();
         }
 
-        public MeshDataFlags dataFlags
+        internal MeshDataFlags dataFlags
         {
             get { return msMeshGetDataFlags(self); }
             set { msMeshSetFlags(self, value); }
         }
 
-        public int numPoints { get { return msMeshGetNumPoints(self); } }
-        public int numIndices { get { return msMeshGetNumIndices(self); } }
-        public Bounds bounds { get { return msMeshGetBounds(self); } }
+        internal int numPoints { get { return msMeshGetNumPoints(self); } }
+        internal int numIndices { get { return msMeshGetNumIndices(self); } }
+        internal Bounds bounds { get { return msMeshGetBounds(self); } }
 
-        public void ReadPoints(PinnedList<Vector3> dst) { msMeshReadPoints(self, dst); }
-        public void ReadNormals(PinnedList<Vector3> dst) { msMeshReadNormals(self, dst); }
-        public void ReadTangents(PinnedList<Vector4> dst) { msMeshReadTangents(self, dst); }
-        public void ReadUV0(PinnedList<Vector2> dst) { msMeshReadUV0(self, dst); }
-        public void ReadUV1(PinnedList<Vector2> dst) { msMeshReadUV1(self, dst); }
-        public void ReadColors(PinnedList<Color> dst) { msMeshReadColors(self, dst); }
-        public void ReadVelocities(PinnedList<Vector3> dst) { msMeshReadVelocities(self, dst); }
-        public void ReadBoneWeights4(IntPtr dst) { msMeshReadBoneWeights4(self, dst); }
+        internal void ReadPoints(PinnedList<Vector3> dst) { msMeshReadPoints(self, dst); }
+        internal void ReadNormals(PinnedList<Vector3> dst) { msMeshReadNormals(self, dst); }
+        internal void ReadTangents(PinnedList<Vector4> dst) { msMeshReadTangents(self, dst); }
+        internal void ReadUV0(PinnedList<Vector2> dst) { msMeshReadUV0(self, dst); }
+        internal void ReadUV1(PinnedList<Vector2> dst) { msMeshReadUV1(self, dst); }
+        internal void ReadColors(PinnedList<Color> dst) { msMeshReadColors(self, dst); }
+        internal void ReadVelocities(PinnedList<Vector3> dst) { msMeshReadVelocities(self, dst); }
+        internal void ReadBoneWeights4(IntPtr dst) { msMeshReadBoneWeights4(self, dst); }
 #if UNITY_2019_1_OR_NEWER
-        public void ReadBoneCounts(IntPtr dst) { msMeshReadBoneCounts(self, dst); }
-        public void ReadBoneWeightsV(IntPtr dst) { msMeshReadBoneWeightsV(self, dst); }
+        internal void ReadBoneCounts(IntPtr dst) { msMeshReadBoneCounts(self, dst); }
+        internal void ReadBoneWeightsV(IntPtr dst) { msMeshReadBoneWeightsV(self, dst); }
 #endif
-        public void ReadIndices(IntPtr dst) { msMeshReadIndices(self, dst); }
+        internal void ReadIndices(IntPtr dst) { msMeshReadIndices(self, dst); }
 
-        public void WritePoints(Vector3[] v) { msMeshWritePoints(self, v, v.Length); }
-        public void WriteNormals(Vector3[] v) { msMeshWriteNormals(self, v, v.Length); }
-        public void WriteTangents(Vector4[] v) { msMeshWriteTangents(self, v, v.Length); }
-        public void WriteUV0(Vector2[] v) { msMeshWriteUV0(self, v, v.Length); }
-        public void WriteUV1(Vector2[] v) { msMeshWriteUV1(self, v, v.Length); }
-        public void WriteColors(Color[] v) { msMeshWriteColors(self, v, v.Length); }
-        public void WriteVelocities(Vector3[] v) { msMeshWriteVelocities(self, v, v.Length); }
-        public void WriteBoneWeights4(BoneWeight[] v) { msMeshWriteBoneWeights4(self, v, v.Length); }
+        internal void WritePoints(Vector3[] v) { msMeshWritePoints(self, v, v.Length); }
+        internal void WriteNormals(Vector3[] v) { msMeshWriteNormals(self, v, v.Length); }
+        internal void WriteTangents(Vector4[] v) { msMeshWriteTangents(self, v, v.Length); }
+        internal void WriteUV0(Vector2[] v) { msMeshWriteUV0(self, v, v.Length); }
+        internal void WriteUV1(Vector2[] v) { msMeshWriteUV1(self, v, v.Length); }
+        internal void WriteColors(Color[] v) { msMeshWriteColors(self, v, v.Length); }
+        internal void WriteVelocities(Vector3[] v) { msMeshWriteVelocities(self, v, v.Length); }
+        internal void WriteBoneWeights4(BoneWeight[] v) { msMeshWriteBoneWeights4(self, v, v.Length); }
 #if UNITY_2019_1_OR_NEWER
-        public void WriteBoneWeightsV(ref NativeArray<byte> counts, ref NativeArray<BoneWeight1> weights)
+        internal void WriteBoneWeightsV(ref NativeArray<byte> counts, ref NativeArray<BoneWeight1> weights)
         {
             msMeshWriteBoneWeightsV(self, Misc.ForceGetPointer(ref counts), counts.Length, Misc.ForceGetPointer(ref weights), weights.Length);
         }
 #endif
-        public void WriteIndices(int[] v) { msMeshWriteIndices(self, v, v.Length); }
+        internal void WriteIndices(int[] v) { msMeshWriteIndices(self, v, v.Length); }
 
-        public Matrix4x4 local2world { set { msMeshSetLocal2World(self, ref value); } }
-        public Matrix4x4 world2local { set { msMeshSetWorld2Local(self, ref value); } }
+        internal Matrix4x4 local2world { set { msMeshSetLocal2World(self, ref value); } }
+        internal Matrix4x4 world2local { set { msMeshSetWorld2Local(self, ref value); } }
 
-        public void WriteSubmeshTriangles(int[] indices, int materialID)
+        internal void WriteSubmeshTriangles(int[] indices, int materialID)
         {
             msMeshWriteSubmeshTriangles(self, indices, indices.Length, materialID);
         }
 
-        public int numBones
+        internal int numBones
         {
             get { return msMeshGetNumBones(self); }
         }
-        public string[] bonePaths
+        internal string[] bonePaths
         {
             get
             {
@@ -1736,25 +1832,25 @@ namespace Unity.MeshSync
                 return ret;
             }
         }
-        public string rootBonePath
+        internal string rootBonePath
         {
             get { return Misc.S(msMeshGetRootBonePath(self)); }
             set { msMeshSetRootBonePath(self, value); }
         }
-        public int numBoneWeights
+        internal int numBoneWeights
         {
             get { return msMeshGetNumBoneWeights(self); }
         }
-        public int numSubmeshes
+        internal int numSubmeshes
         {
             get { return msMeshGetNumSubmeshes(self); }
         }
-        public int numBlendShapes
+        internal int numBlendShapes
         {
             get { return msMeshGetNumBlendShapes(self); }
         }
 
-        public Matrix4x4[] bindposes
+        internal Matrix4x4[] bindposes
         {
             get
             {
@@ -1764,7 +1860,7 @@ namespace Unity.MeshSync
             }
             set { msMeshWriteBindPoses(self, value, value.Length); }
         }
-        public void SetBonePaths(MeshSyncPlayer mss, Transform[] bones)
+        internal void SetBonePaths(MeshSyncPlayer mss, Transform[] bones)
         {
             int n = bones.Length;
             for (int i = 0; i < n; ++i)
@@ -1774,16 +1870,16 @@ namespace Unity.MeshSync
             }
         }
 
-        public SubmeshData GetSubmesh(int i)
+        internal SubmeshData GetSubmesh(int i)
         {
             return msMeshGetSubmesh(self, i);
         }
 
-        public BlendShapeData GetBlendShapeData(int i)
+        internal BlendShapeData GetBlendShapeData(int i)
         {
             return msMeshGetBlendShapeData(self, i);
         }
-        public BlendShapeData AddBlendShape(string name)
+        internal BlendShapeData AddBlendShape(string name)
         {
             return msMeshAddBlendShape(self, name);
         }
@@ -1791,7 +1887,7 @@ namespace Unity.MeshSync
     #endregion
 
     #region Point
-    public struct PointsDataFlags
+    internal struct PointsDataFlags
     {
         public BitFlags flags;
         public bool unchanged { get { return flags[0]; } }
@@ -1804,8 +1900,11 @@ namespace Unity.MeshSync
         public bool hasIDs          { get { return flags[7]; } }
     };
 
+    /// <summary>
+    /// PointsData
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
-    public struct PointsData
+    internal struct PointsData
     {
         #region internal
         [FieldOffset(0)] public IntPtr self;
@@ -1828,36 +1927,39 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern void msPointsReadIDs(IntPtr self, int[] dst);
         [DllImport(Lib.name)] static extern void msPointsWriteIDs(IntPtr self, int[] v, int size);
         #endregion
-
+        /// <summary>
+        /// Creates a new PointsData
+        /// </summary>
+        /// <returns>The newly created PointsData </returns>
         public static PointsData Create()
         {
             return msPointsCreate();
         }
 
-        public PointsDataFlags dataFlags { get { return msPointsGetFlags(self); } }
-        public Bounds bounds  { get { return msPointsGetBounds(self); } }
-        public int numPoints { get { return msPointsGetNumPoints(self); } }
+        internal PointsDataFlags dataFlags { get { return msPointsGetFlags(self); } }
+        internal Bounds bounds  { get { return msPointsGetBounds(self); } }
+        internal int numPoints { get { return msPointsGetNumPoints(self); } }
 
-        public void ReadPoints(Vector3[] dst) { msPointsReadPoints(self, dst); }
-        public void ReadRotations(Quaternion[] dst) { msPointsReadRotations(self, dst); }
-        public void ReadScales(Vector3[] dst) { msPointsReadScales(self, dst); }
-        public void ReadVelocities(Vector3[] dst) { msPointsReadVelocities(self, dst); }
-        public void ReadColors(Color[] dst) { msPointsReadColors(self, dst); }
-        public void ReadIDs(int[] dst) { msPointsReadIDs(self, dst); }
+        internal void ReadPoints(Vector3[] dst) { msPointsReadPoints(self, dst); }
+        internal void ReadRotations(Quaternion[] dst) { msPointsReadRotations(self, dst); }
+        internal void ReadScales(Vector3[] dst) { msPointsReadScales(self, dst); }
+        internal void ReadVelocities(Vector3[] dst) { msPointsReadVelocities(self, dst); }
+        internal void ReadColors(Color[] dst) { msPointsReadColors(self, dst); }
+        internal void ReadIDs(int[] dst) { msPointsReadIDs(self, dst); }
 
-        public void WritePoints(Vector3[] v) { msPointsWritePoints(self, v, v.Length); }
-        public void WriteRotations(Quaternion[] v) { msPointsWriteRotations(self, v, v.Length); }
-        public void WriteScales(Vector3[] v) { msPointsWriteScales(self, v, v.Length); }
-        public void WriteVelocities(Vector3[] v) { msPointsWriteVelocities(self, v, v.Length); }
-        public void WriteColors(Color[] v) { msPointsWriteColors(self, v, v.Length); }
-        public void WriteIDs(int[] v) { msPointsWriteIDs(self, v, v.Length); }
+        internal void WritePoints(Vector3[] v) { msPointsWritePoints(self, v, v.Length); }
+        internal void WriteRotations(Quaternion[] v) { msPointsWriteRotations(self, v, v.Length); }
+        internal void WriteScales(Vector3[] v) { msPointsWriteScales(self, v, v.Length); }
+        internal void WriteVelocities(Vector3[] v) { msPointsWriteVelocities(self, v, v.Length); }
+        internal void WriteColors(Color[] v) { msPointsWriteColors(self, v, v.Length); }
+        internal void WriteIDs(int[] v) { msPointsWriteIDs(self, v, v.Length); }
     }
     #endregion
     #endregion
 
 
     #region Constraints
-    public struct ConstraintData
+    internal struct ConstraintData
     {
         #region internal
         public IntPtr self;
@@ -1867,7 +1969,7 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern IntPtr msConstraintGetSource(IntPtr self, int i);
         #endregion
 
-        public enum ConstraintType
+        internal enum ConstraintType
         {
             Unknown,
             Aim,
@@ -1877,6 +1979,11 @@ namespace Unity.MeshSync
             Scale,
         }
 
+        /// <summary>
+        /// Assigns a new ConstraintData with the parameter
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>The new ConstraintData</returns>
         public static explicit operator ConstraintData(IntPtr v)
         {
             ConstraintData ret;
@@ -1891,7 +1998,7 @@ namespace Unity.MeshSync
         public string GetSourcePath(int i) { return Misc.S(msConstraintGetSource(self, i)); }
     }
 
-    public struct AimConstraintData
+    internal struct AimConstraintData
     {
         #region internal
         public IntPtr self;
@@ -1906,7 +2013,7 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct ParentConstraintData
+    internal struct ParentConstraintData
     {
         #region internal
         public IntPtr self;
@@ -1925,7 +2032,7 @@ namespace Unity.MeshSync
         public Quaternion GetRotationOffset(int i) { return msParentConstraintGetRotationOffset(self, i); }
     }
 
-    public struct PositionConstraintData
+    internal struct PositionConstraintData
     {
         #region internal
         public IntPtr self;
@@ -1939,7 +2046,7 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct RotationConstraintData
+    internal struct RotationConstraintData
     {
         #region internal
         public IntPtr self;
@@ -1953,7 +2060,7 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct ScaleConstrainData
+    internal struct ScaleConstrainData
     {
         #region internal
         public IntPtr self;
@@ -1970,13 +2077,13 @@ namespace Unity.MeshSync
 
 
     #region Scene
-    public enum ZUpCorrectionMode
+    internal enum ZUpCorrectionMode
     {
         FlipYZ,
         RotateX,
     }
 
-    public struct SceneProfileData
+    internal struct SceneProfileData
     {
         public ulong sizeEncoded;
         public ulong sizeDecoded;
@@ -1988,7 +2095,7 @@ namespace Unity.MeshSync
         public float lerpTime;      // in ms
     };
 
-    public struct SceneData
+    internal struct SceneData
     {
         #region internal
         public IntPtr self;
@@ -2018,7 +2125,7 @@ namespace Unity.MeshSync
 
 
     #region SceneCache
-    public struct SceneCacheData
+    internal struct SceneCacheData
     {
         #region internal
         public IntPtr self;
@@ -2057,7 +2164,7 @@ namespace Unity.MeshSync
         public int sceneCount {
             get { return msISceneCacheGetNumScenes(self); }
         }
-        public TimeRange timeRange {
+        internal TimeRange timeRange {
             get {
                 var ret = default(TimeRange);
                 msISceneCacheGetTimeRange(self, ref ret.start, ref ret.end);
@@ -2073,11 +2180,11 @@ namespace Unity.MeshSync
         {
             return msISceneCacheGetFrameByTime(self, time);
         }
-        public SceneData GetSceneByIndex(int i)
+        internal SceneData GetSceneByIndex(int i)
         {
             return msISceneCacheGetSceneByIndex(self, i);
         }
-        public SceneData GetSceneByTime(float t, bool lerp)
+        internal SceneData GetSceneByTime(float t, bool lerp)
         {
             return msISceneCacheGetSceneByTime(self, t, lerp);
         }
@@ -2090,7 +2197,7 @@ namespace Unity.MeshSync
             msISceneCachePreload(self, frame);
         }
 
-        public AnimationCurve GetTimeCurve(InterpolationMode im)
+        internal AnimationCurve GetTimeCurve(InterpolationMode im)
         {
             var data = msISceneCacheGetTimeCurve(self);
             if (!data)

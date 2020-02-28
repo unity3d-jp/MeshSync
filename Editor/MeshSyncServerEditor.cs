@@ -6,7 +6,7 @@ using UnityEngine;
 namespace UnityEditor.MeshSync
 {
     [CustomEditor(typeof(MeshSyncServer))]
-    public class MeshSyncServerEditor : MeshSyncPlayerEditor
+    internal class MeshSyncServerEditor : MeshSyncPlayerEditor
     {
         [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
         public static void CreateMeshSyncServerMenu(MenuCommand menuCommand)

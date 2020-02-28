@@ -6,7 +6,7 @@ namespace Unity.MeshSync
 {
 #if UNITY_STANDALONE
     #region Server
-    public struct ServerSettings
+    internal struct ServerSettings
     {
         public struct Flags
         {
@@ -43,7 +43,7 @@ namespace Unity.MeshSync
         public static ushort defaultPort { get { return 8080; } }
     }
 
-    public struct Server
+    internal struct Server
     {
         #region internal
         public IntPtr self;
@@ -75,7 +75,7 @@ namespace Unity.MeshSync
         public static Server Start(ref ServerSettings settings) { return msServerStart(ref settings); }
         public void Stop() { msServerStop(self); }
 
-        public ZUpCorrectionMode zUpCorrectionMode
+        internal ZUpCorrectionMode zUpCorrectionMode
         {
             set { msServerSetZUpCorrectionMode(self, value); }
         }
@@ -113,7 +113,7 @@ namespace Unity.MeshSync
         Response,
     }
 
-    public struct GetFlags
+    internal struct GetFlags
     {
         public BitFlags flags;
         public bool getTransform { get { return flags[0]; } }
@@ -145,12 +145,12 @@ namespace Unity.MeshSync
             return ret;
         }
 
-        public GetFlags flags { get { return msGetGetFlags(self); } }
+        internal GetFlags flags { get { return msGetGetFlags(self); } }
         public bool bakeSkin { get { return msGetGetBakeSkin(self) != 0; } }
         public bool bakeCloth { get { return msGetGetBakeCloth(self) != 0; } }
     }
 
-    public struct SetMessage
+    internal struct SetMessage
     {
         #region internal
         public IntPtr self;
@@ -170,7 +170,7 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct DeleteMessage
+    internal struct DeleteMessage
     {
         #region internal
         public IntPtr self;
@@ -188,10 +188,10 @@ namespace Unity.MeshSync
         }
 
         public int numEntities { get { return msDeleteGetNumEntities(self); } }
-        public Identifier GetEntity(int i) { return msDeleteGetEntity(self, i); }
+        internal Identifier GetEntity(int i) { return msDeleteGetEntity(self, i); }
 
         public int numMaterials { get { return msDeleteGetNumMaterials(self); } }
-        public Identifier GetMaterial(int i) { return msDeleteGetMaterial(self, i); }
+        internal Identifier GetMaterial(int i) { return msDeleteGetMaterial(self, i); }
     }
 
     public struct FenceMessage

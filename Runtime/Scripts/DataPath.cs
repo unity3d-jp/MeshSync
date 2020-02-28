@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Unity.MeshSync
 {
     [Serializable]
-    public class DataPath
+    internal class DataPath
     {
         public enum Root
         {

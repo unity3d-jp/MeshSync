@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
 
 namespace UnityEditor.MeshSync.Tests {
-public class MeshSyncServerTest  {
+internal class MeshSyncServerTest  {
     [Test]
     public void CreateServer()
     {
