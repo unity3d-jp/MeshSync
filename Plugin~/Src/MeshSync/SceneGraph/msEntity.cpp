@@ -356,6 +356,8 @@ bool Transform::lerp(const Entity& e1_, const Entity& e2_, float t)
     auto& e1 = static_cast<const Transform&>(e1_);
     auto& e2 = static_cast<const Transform&>(e2_);
 
+    //[TODO-sin: 2020-2-8] If the pos/rot is infinity, then this will cause the pos/rot to be NaN
+    //And this position is used by setupDataFlags() to decide if this entity has a pos/rot
     position = mu::lerp(e1.position, e2.position, t);
     rotation = mu::slerp(e1.rotation, e2.rotation, t);
     scale = mu::lerp(e1.scale, e2.scale, t);
