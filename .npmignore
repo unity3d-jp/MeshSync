@@ -21,3 +21,5 @@ build.sh.meta
 build.bat
 build.bat.meta
 
+# Artifacts
+meshSync*prepack_artifacts*
