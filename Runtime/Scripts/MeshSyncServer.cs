@@ -36,7 +36,7 @@ namespace Unity.MeshSync
         internal int GetServerPort() { return m_serverPort; }
         internal void SetServerPort(int port ) { m_serverPort = port; }
         internal bool IsAutoStart() { return m_autoStartServer; }
-        internal void SetAutoStart(bool autoStart) { m_autoStartServer = autoStart; }
+
 
         internal bool IsServerStarted() { return m_serverStarted;}
         #endregion
@@ -80,13 +80,16 @@ namespace Unity.MeshSync
         }
         
 //----------------------------------------------------------------------------------------------------------------------        
+        internal void SetAutoStartServer(bool autoStart) {
+            m_autoStartServer = autoStart; 
+            if (m_autoStartServer && !m_serverStarted) {
+                StartServer();
+            }
+        }
+//----------------------------------------------------------------------------------------------------------------------        
         
         void CheckParamsUpdated()  {
 
-            if (m_autoStartServer && !m_serverStarted) {
-                m_requestRestartServer = true;
-            }
-            
             if (m_server) {
                 m_server.zUpCorrectionMode = m_zUpCorrection;
             }

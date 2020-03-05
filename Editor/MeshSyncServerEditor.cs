@@ -61,7 +61,7 @@ namespace UnityEditor.MeshSync
             if (t.foldServerSettings) {
                 
                 bool autoStart = EditorGUILayout.Toggle("Auto Start", m_asset.IsAutoStart());
-                m_asset.SetAutoStart(autoStart);
+                m_asset.SetAutoStartServer(autoStart);
 
                 //Draw GUI that are disabled when autoStart is true
                 EditorGUI.BeginDisabledGroup(autoStart);
