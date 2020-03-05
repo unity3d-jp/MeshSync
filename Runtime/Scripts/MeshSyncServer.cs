@@ -418,7 +418,6 @@ namespace Unity.MeshSync
 #if UNITY_EDITOR
         void OnValidate()
         {
-            Debug.Log("test");
             CheckParamsUpdated();
         }
 #endif
