@@ -9,23 +9,30 @@ namespace UnityEditor.MeshSync
     internal class MeshSyncServerEditor : MeshSyncPlayerEditor   {
         [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
         internal static void CreateMeshSyncServerMenu(MenuCommand menuCommand) {
-            Transform t = CreateMeshSyncServer();
-            if (t != null)
-                Undo.RegisterCreatedObjectUndo(t.gameObject, "MeshSyncServer");
-            Selection.activeTransform = t;
+            MeshSyncServer mss = CreateMeshSyncServer();
+            if (mss != null)
+                Undo.RegisterCreatedObjectUndo(mss.gameObject, "MeshSyncServer");
+            Selection.activeTransform = mss.transform;
         }
         
 //----------------------------------------------------------------------------------------------------------------------
-        internal static Transform CreateMeshSyncServer() {
+        internal static MeshSyncServer CreateMeshSyncServer() {
             GameObject go = new GameObject("MeshSyncServer");
             MeshSyncServer mss = go.AddComponent<MeshSyncServer>();
             Transform t = go.GetComponent<Transform>();
             mss.rootObject = t;
-            return t;
+            return mss;
         }
 
 //----------------------------------------------------------------------------------------------------------------------
 
+        public override void OnEnable() {
+            base.OnEnable();
+            m_asset = target as MeshSyncServer;
+
+        }
+
+//----------------------------------------------------------------------------------------------------------------------
         public override void OnInspectorGUI()
         {
             var so = serializedObject;
@@ -48,14 +55,38 @@ namespace UnityEditor.MeshSync
             var styleFold = EditorStyles.foldout;
             styleFold.fontStyle = FontStyle.Bold;
 
-            t.foldServerSettings= EditorGUILayout.Foldout(t.foldServerSettings, "Server", true, styleFold);
-            if (t.foldServerSettings)
-            {
-                EditorGUILayout.PropertyField(so.FindProperty("m_serverPort"));
+            bool isServerStarted = m_asset.IsServerStarted();
+            string serverStatus = isServerStarted ? "Server (Status: Started)" : "Server (Status: Stopped)";
+            t.foldServerSettings= EditorGUILayout.Foldout(t.foldServerSettings, serverStatus, true, styleFold);
+            if (t.foldServerSettings) {
+                
+                bool autoStart = EditorGUILayout.Toggle("Auto Start", m_asset.IsAutoStart());
+                m_asset.SetAutoStart(autoStart);
+
+                //Draw GUI that are disabled when autoStart is true
+                EditorGUI.BeginDisabledGroup(autoStart);
+                m_asset.SetServerPort(EditorGUILayout.IntField("Server Port:", m_asset.GetServerPort()));
+                GUILayout.BeginHorizontal();
+                if (isServerStarted) {
+                    if (GUILayout.Button("Stop", GUILayout.Width(110.0f))) {
+                        m_asset.StopServer();
+                    }
+                } else {
+                    if (GUILayout.Button("Start", GUILayout.Width(110.0f))) {
+                        m_asset.StartServer();
+                    }
+ 
+                }
+                GUILayout.EndHorizontal();
+                EditorGUI.EndDisabledGroup();
+                
                 EditorGUILayout.PropertyField(so.FindProperty("m_assetDir"));
                 EditorGUILayout.PropertyField(so.FindProperty("m_rootObject"));
                 EditorGUILayout.Space();
             }
         }
+
+//----------------------------------------------------------------------------------------------------------------------                
+        private MeshSyncServer m_asset = null;        
     }
 }
