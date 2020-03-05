@@ -101,7 +101,6 @@ namespace Unity.MeshSync
         #region MessageHandlers
         public void PollServerEvents()
         {
-            Debug.Log("PollServerEvents: " + Application.targetFrameRate + " vSync:" + QualitySettings.vSyncCount);
             if (m_requestRestartServer)
             {
                 m_requestRestartServer = false;
