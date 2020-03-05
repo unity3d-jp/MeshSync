@@ -6,25 +6,25 @@ using UnityEngine;
 namespace UnityEditor.MeshSync
 {
     [CustomEditor(typeof(MeshSyncServer))]
-    internal class MeshSyncServerEditor : MeshSyncPlayerEditor
-    {
+    internal class MeshSyncServerEditor : MeshSyncPlayerEditor   {
         [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
-        public static void CreateMeshSyncServerMenu(MenuCommand menuCommand)
-        {
-            var go = CreateMeshSyncServer();
-            if (go != null)
-                Undo.RegisterCreatedObjectUndo(go, "MeshSyncServer");
+        internal static void CreateMeshSyncServerMenu(MenuCommand menuCommand) {
+            Transform t = CreateMeshSyncServer();
+            if (t != null)
+                Undo.RegisterCreatedObjectUndo(t.gameObject, "MeshSyncServer");
+            Selection.activeTransform = t;
+        }
+        
+//----------------------------------------------------------------------------------------------------------------------
+        internal static Transform CreateMeshSyncServer() {
+            GameObject go = new GameObject("MeshSyncServer");
+            MeshSyncServer mss = go.AddComponent<MeshSyncServer>();
+            Transform t = go.GetComponent<Transform>();
+            mss.rootObject = t;
+            return t;
         }
 
-        public static GameObject CreateMeshSyncServer()
-        {
-            var go = new GameObject();
-            go.name = "MeshSyncServer";
-            var mss = go.AddComponent<MeshSyncServer>();
-            mss.rootObject = go.GetComponent<Transform>();
-            return go;
-        }
-
+//----------------------------------------------------------------------------------------------------------------------
 
         public override void OnInspectorGUI()
         {
