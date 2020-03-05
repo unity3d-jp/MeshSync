@@ -93,11 +93,6 @@ namespace Unity.MeshSync
         }
         #endregion
 
-        //test
-        public void Update() {
-            Debug.Log("Update");
-        }
-
         #region MessageHandlers
         public void PollServerEvents()
         {
