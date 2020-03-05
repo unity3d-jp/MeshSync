@@ -459,7 +459,7 @@ namespace Unity.MeshSync
         ServerSettings m_serverSettings = ServerSettings.defaultValue;
         Server m_server;
         Server.MessageHandler m_handler;
-        bool m_requestRestartServer = true;
+        bool m_requestRestartServer = false;
         bool m_captureScreenshotInProgress = false;
         private bool m_serverStarted = false;
 #if UNITY_EDITOR
