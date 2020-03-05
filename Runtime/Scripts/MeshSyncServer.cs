@@ -456,7 +456,7 @@ namespace Unity.MeshSync
 
         #region Fields
 
-        [SerializeField] private bool m_autoStartServer = true;
+        [SerializeField] private bool m_autoStartServer = false;
         [SerializeField] int m_serverPort = ServerSettings.defaultPort;
 
         ServerSettings m_serverSettings = ServerSettings.defaultValue;
