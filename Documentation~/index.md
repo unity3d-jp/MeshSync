@@ -120,7 +120,7 @@ If the model is using too many bones, the model won't sync correctly.
 
 
 # Other Languages
-- [Japanese](jp/index.md)
+- [日本語](jp/index.md)
 
 
 
