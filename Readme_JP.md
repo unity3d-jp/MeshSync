@@ -27,6 +27,11 @@ MeshSync は DCC ツール上のモデルの編集をリアルタイムに Unity
 
 <img align="right" src="Documentation~/images/MeshSyncServer.png" height=800>
 
+- **Auto Start**  
+  On: 特定のポートで、自動的にサーバーを起動する。  
+  Off: サーバーを起動、又は止めるため、手動的に **Start/Stop** をクリックする。
+
+  > 注意：パブリックネットワークで、サーバーが起動した状態では、他のユーザーも MeshSync にアクセスすることができてしまう。例えば、Unity のスクリーンを見ることができるなど.
 
 - **Root Object**  
 同期により生成されるオブジェクト群のルートとなるオブジェクトを指定します。
