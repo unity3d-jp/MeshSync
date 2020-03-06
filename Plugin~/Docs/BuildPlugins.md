@@ -39,7 +39,7 @@ Start "Developer Command Prompt for VS 2017" and execute the following:
     $ msbuild MeshSyncPlugin.sln /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
     ```  
 
-This release build will be linked againts Poco's release libraries with configurations in the following order:  
+This release build is linked against Poco's release libraries with the following configurations, whichever is found first:  
 
 1. MinSizeRel  
 1. Release  
