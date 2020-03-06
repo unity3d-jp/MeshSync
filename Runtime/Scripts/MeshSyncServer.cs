@@ -19,27 +19,10 @@ namespace Unity.MeshSync
     [ExecuteInEditMode]
     internal class MeshSyncServer : MeshSyncPlayer
     {
+        
 #if UNITY_STANDALONE
-        #region Fields
-        [SerializeField] int m_serverPort = ServerSettings.defaultPort;
-        [SerializeField] int m_serverPortPrev = 0;
-
-        ServerSettings m_serverSettings = ServerSettings.defaultValue;
-        Server m_server;
-        Server.MessageHandler m_handler;
-        bool m_requestRestartServer = true;
-        bool m_captureScreenshotInProgress = false;
-#if UNITY_EDITOR
-        [SerializeField] bool m_foldServerSettings = true;
-#endif
-        #endregion
 
         #region Properties
-        public int serverPort
-        {
-            get { return m_serverPort; }
-            set { m_serverPort = value; CheckParamsUpdated(); }
-        }
 #if UNITY_EDITOR
         public bool foldServerSettings
         {
@@ -48,10 +31,19 @@ namespace Unity.MeshSync
         }
 #endif
         #endregion
+        
+        #region Getter/Setter
+        internal int GetServerPort() { return m_serverPort; }
+        internal void SetServerPort(int port ) { m_serverPort = port; }
+        internal bool IsAutoStart() { return m_autoStartServer; }
+
+
+        internal bool IsServerStarted() { return m_serverStarted;}
+        #endregion
 
 
         #region Impl
-        void StartServer()
+        internal void StartServer()
         {
             StopServer();
 
@@ -65,32 +57,40 @@ namespace Unity.MeshSync
 #endif
             if (m_logging)
                 Debug.Log("MeshSync: server started (port: " + m_serverSettings.port + ")");
+
+            m_serverStarted = true;
         }
 
-        void StopServer()
-        {
-            if (m_server)
-            {
+//----------------------------------------------------------------------------------------------------------------------        
+
+        internal void StopServer() {
+            if (!m_server) 
+                return;
+            
 #if UNITY_EDITOR
-                EditorApplication.update -= PollServerEvents;
+            EditorApplication.update -= PollServerEvents;
 #endif
-                m_server.Stop();
-                m_server = default(Server);
+            m_server.Stop();
+            m_server = default(Server);
 
-                if (m_logging)
-                    Debug.Log("MeshSync: server stopped (port: " + m_serverSettings.port + ")");
+            if (m_logging)
+                Debug.Log("MeshSync: server stopped (port: " + m_serverSettings.port + ")");
+
+            m_serverStarted = false;
+        }
+        
+//----------------------------------------------------------------------------------------------------------------------        
+        internal void SetAutoStartServer(bool autoStart) {
+            m_autoStartServer = autoStart; 
+            if (m_autoStartServer && !m_serverStarted) {
+                StartServer();
             }
         }
+//----------------------------------------------------------------------------------------------------------------------        
+        
+        void CheckParamsUpdated()  {
 
-        void CheckParamsUpdated()
-        {
-            if (m_serverPort != m_serverPortPrev)
-            {
-                m_serverPortPrev = m_serverPort;
-                m_requestRestartServer = true;
-            }
-            if (m_server)
-            {
+            if (m_server) {
                 m_server.zUpCorrectionMode = m_zUpCorrection;
             }
         }
@@ -435,7 +435,9 @@ namespace Unity.MeshSync
         protected override void OnEnable()
         {
             base.OnEnable();
-            m_requestRestartServer = true;
+            if (m_autoStartServer) {
+                m_requestRestartServer = true;
+            }
         }
 
         protected override void OnDisable()
@@ -449,6 +451,25 @@ namespace Unity.MeshSync
             PollServerEvents();
         }
         #endregion
+
+//----------------------------------------------------------------------------------------------------------------------
+
+        #region Fields
+
+        [SerializeField] private bool m_autoStartServer = false;
+        [SerializeField] int m_serverPort = ServerSettings.defaultPort;
+
+        ServerSettings m_serverSettings = ServerSettings.defaultValue;
+        Server m_server;
+        Server.MessageHandler m_handler;
+        bool m_requestRestartServer = false;
+        bool m_captureScreenshotInProgress = false;
+        private bool m_serverStarted = false;
+#if UNITY_EDITOR
+        [SerializeField] bool m_foldServerSettings = true;
+#endif
+        #endregion
+        
 #endif // UNITY_STANDALONE
     }
 }
