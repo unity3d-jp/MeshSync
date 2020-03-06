@@ -81,7 +81,7 @@ msAPI int msGetPluginVersion() {
     return msPluginVersion;
 }
 
-msAPI string msGetPluginVersionStr() {
+msAPI const char* msGetPluginVersionStr() {
     return msPluginVersionStr;
 }
 
