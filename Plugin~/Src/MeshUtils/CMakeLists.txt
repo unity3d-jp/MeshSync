@@ -4,7 +4,6 @@ option(ENABLE_TBB "Use Intel TBB." OFF)
 project(MeshUtils)
 
 if(ENABLE_ISPC)
-    #Assume that muEnableISPC has already been defined
     setup_ispc()
     set(MUISPC_OUTDIR ${CMAKE_CURRENT_BINARY_DIR}/ISPC)
     set(MUISPC_HEADERS
@@ -23,6 +22,7 @@ add_library(MeshUtils STATIC ${sources} ${MUISPC_OUTPUTS})
 target_precompile_headers(MeshUtils PRIVATE "${MeshUtils_dir}/pch.h")
 
 if(ENABLE_ISPC)
+    add_definitions(-DmuEnableISPC)
     target_include_directories(MeshUtils PUBLIC ${MUISPC_OUTDIR})
 endif()
 

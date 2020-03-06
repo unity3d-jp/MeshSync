@@ -11,8 +11,9 @@
     $ mkdir cmake-build
     $ cd cmake-build
     $ cmake .. -DBUILD_SHARED_LIBS=OFF -G "Visual Studio 15 2017" -A x64
-    $ cmake --build . --config Release && cmake --build . --config Debug
+    $ cmake --build . --config MinSizeRel && cmake --build . --config Debug
     ```
+    > For other types of Poco configurations, see [Poco's Getting Started](https://pocoproject.org/docs/00200-GettingStarted.html).
 1. Add *Poco_DIR* environment variable to point to the Poco root folder above
 1. Build [zstd](https://github.com/facebook/zstd/releases)  
    * Download and extract one of the releases in a folder
@@ -28,14 +29,21 @@
 
 ## Build Steps (Win)
 
-Start "Developer Command Prompt for VS 2017" and execute the following
 
-``` 
-$ git clone https://github.com/unity3d-jp/MeshSync
-$ cd MeshSync~\Plugin~\Build
-$ cmake -G "Visual Studio 15 2017" -A x64 ..
-$ msbuild MeshSyncProj.sln /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
-```
+Start "Developer Command Prompt for VS 2017" and execute the following:
+
+    ``` 
+    $ git clone https://github.com/unity3d-jp/MeshSync
+    $ cd MeshSync~\Plugin~\Build
+    $ cmake -G "Visual Studio 15 2017" -A x64 ..
+    $ msbuild MeshSyncPlugin.sln /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
+    ```  
+
+This release build is linked against Poco's release libraries with the following configurations, whichever is found first:  
+
+1. MinSizeRel  
+1. Release  
+1. RelWithDebInfo 
 
 > For a regular "Command Prompt", there is a script: *VsDevCmd_2017.bat* 
 > under the *Build* folder, which if executed, will turn the prompt into a 
@@ -49,14 +57,15 @@ $ msbuild MeshSyncProj.sln /t:Build /p:Configuration=Release /p:Platform=x64 /m 
 1. Install [XCode](https://developer.apple.com/xcode/)
 1. Install [Homebrew](https://brew.sh/)
 1. Install git. For example: [SourceTree](https://www.sourcetreeapp.com/)
-1. Download and build [Poco](https://pocoproject.org) (static libraries).  
+1. Download and build the debug and release versions of [Poco](https://pocoproject.org) (static libraries).  
     ``` 
     $ git clone -b master https://github.com/pocoproject/poco.git
     $ mkdir cmake-build
     $ cd cmake-build
-    $ cmake .. -DBUILD_SHARED_LIBS=OFF 
-    $ cmake --build . --config Release && cmake --build . --config Debug
+    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=MinSizeRel && cmake --build . 
+    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Debug && cmake --build . 
     ```
+    > For other types of Poco configurations, see [Poco's Getting Started](https://pocoproject.org/docs/00200-GettingStarted.html).
 1. Add *Poco_DIR* environment variable to point to the Poco root folder above. For example:  
     ``` 
     export Poco_DIR=~/MySDK/poco
@@ -67,13 +76,15 @@ $ msbuild MeshSyncProj.sln /t:Build /p:Configuration=Release /p:Platform=x64 /m 
     $ brew install zstd
     ```  
 
+
+
 ## Build Steps (Mac)
 
 Open "Developer Command Prompt for VS 2017" and execute the following
 
 ``` 
 $ git clone https://github.com/unity3d-jp/MeshSync
-$ cd MeshSync~\Plugin~\Build
+$ cd MeshSync\Plugin~\Build
 $ cmake -GXcode ..
 $ xcodebuild -scheme mscore -configuration Release build
 ```
@@ -83,10 +94,14 @@ $ xcodebuild -scheme mscore -configuration Release build
 
 There is a test project that can be created by specifying `-DBUILD_TESTS=ON`.
 
-For example in Windows:
-``` 
-$ cmake -G "Visual Studio 15 2017" -A x64 .. -DBUILD_TESTS=ON
-```
+1. Windows  
+    ``` 
+    $ cmake -G "Visual Studio 15 2017" -A x64 .. -DBUILD_TESTS=ON
+    ```
+2. Mac  
+    ``` 
+    $ cmake -GXcode .. -DBUILD_TESTS=ON
+    ```
 
 When this project is executed, it will send data to 
 [MeshSyncServer](../../Readme.md#MeshSyncServer) in Unity.
