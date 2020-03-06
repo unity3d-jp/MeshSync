@@ -47,6 +47,11 @@ namespace Unity.MeshSync
         {
             StopServer();
 
+#if UNITY_EDITOR 
+            //Deploy HTTP assets to StreamingAssets
+            DeployStreamingAssets.Deploy();
+#endif
+            
             m_serverSettings.port = (ushort)m_serverPort;
             m_serverSettings.zUpCorrectionMode = m_zUpCorrection;
             m_server = Server.Start(ref m_serverSettings);
@@ -425,12 +430,6 @@ namespace Unity.MeshSync
         }
 #endif
 
-        void Awake()
-        {
-#if UNITY_EDITOR
-            DeployStreamingAssets.Deploy();
-#endif
-        }
 
         protected override void OnEnable()
         {

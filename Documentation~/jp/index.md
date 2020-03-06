@@ -86,6 +86,7 @@ MeshSyncServer の "Export Mesh" ボタンを押すとそのアセット化が�
 - [SceneCache](SceneCache.md)
 
 # Tips 
+
 - Unity 2019.1 で最大 255 ボーンまで影響できるようになりました。  
 これにより、フェイシャルなどの多数のボーンを必要とするアニメーションも問題なく持って来れるはずです。
 詳しくは, [Quality Settings-Blend Weights](https://docs.unity3d.com/ja/current/Manual/class-QualitySettings.html) をご参照ください。
@@ -94,14 +95,19 @@ MeshSyncServer の "Export Mesh" ボタンを押すとそのアセット化が�
 その場合、クライアントである DCC ツール側は設定項目の Server / Port に Unity 側のマシンを指定してください。
 
 - Unity 上に MeshSyncServer オブジェクトがあるときにサーバーのアドレス:ポートをブラウザで開くと、サーバー側の Unity の GameView をブラウザで見ることができます。 (デフォルトでは [127.0.0.1:8080](http://127.0.0.1:8080))  
-このブラウザの画面のメッセージフォームからメッセージを送ると、Unity の Console にそのメッセージが出るようになっています。  
-Unity 側作業者と DCC 側作業者が別の場合役に立つこともあるかもしれません。
+  このブラウザの画面のメッセージフォームからメッセージを送ると、Unity の Console にそのメッセージが出るようになっています。  
+  Unity 側作業者と DCC 側作業者が別の場合役に立つこともあるかもしれません。
+  
+  <img src="../images/GameViewInBrowser.png" width=640>
   
 - ポーズ/アニメーションのみを編集中の場合、**Sync Meshes** を切っておくことをおすすめします。  
 メッシュデータを送らなくなるので動作が軽快になるでしょう。
 
 
 # 注意事項
+- MeshSyncServer が起動された時に、*StreamingAssets/MeshSyncServerRoot* の下に必要な MeshSync のアセットが自動的にコピーされます。  
+  これをそのままにして下さい。 
+
 - 本パッケージはその性質上エディタでのみの使用を想定していますが、一応
 ランタイムでもモデルの同期は一通り動作します。アニメーションの同期は機能しません。  
 **意図せず最終ビルドに残さないようご注意ください。**
