@@ -386,7 +386,11 @@ namespace UnityEditor.MeshSync
 
         public static void DrawPluginVersion()
         {
+#if !UNITY_STANDALONE_LINUX
+            EditorGUILayout.LabelField("Plugin Version: " + Lib.GetPluginVersion());
+#else
             EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.pluginVersion);
+#endif
         }
     }
 }

@@ -248,7 +248,9 @@ namespace Unity.MeshSync
 
 
         #region Properties
+        [ObsoleteAttribute("Replaced with Lib.GetPluginVersion()")]
         internal static int pluginVersion { get { return Lib.pluginVersion; } }
+
         internal static int protocolVersion { get { return Lib.protocolVersion; } }
         internal DataPath assetDir
         {
