@@ -114,7 +114,7 @@ In order to use them in other scenes or projects, we can save them as asset file
 
 # Caveats
 
-- When MeshSyncServer runs, it will automatically copy required MeshSync assets to *StreamingAssets/MeshSyncServerRoot*. 
+- When MeshSyncServer runs, it will automatically copy required MeshSync assets to *StreamingAssets/MeshSyncServerRoot*.  
   Please keep them as they are.
   
 - Although this package is designed to be used in the Editor, model syncing will still work in runtime as well, but not the animations.  
