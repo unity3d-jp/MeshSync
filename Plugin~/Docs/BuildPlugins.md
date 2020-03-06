@@ -62,8 +62,8 @@ This release build will be linked againts Poco's release libraries with configur
     $ git clone -b master https://github.com/pocoproject/poco.git
     $ mkdir cmake-build
     $ cd cmake-build
-    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=MinSizeRel & cmake --build . 
-    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Debug & cmake --build . 
+    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=MinSizeRel && cmake --build . 
+    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Debug && cmake --build . 
     ```
     > For other types of Poco configurations, see [Poco's Getting Started](https://pocoproject.org/docs/00200-GettingStarted.html).
 1. Add *Poco_DIR* environment variable to point to the Poco root folder above. For example:  
