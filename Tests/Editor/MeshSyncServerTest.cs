@@ -28,7 +28,7 @@ internal class MeshSyncServerTest  {
         Assert.IsFalse(mss.IsServerStarted());
 
         yield return null;
-        Assert.IsFalse(mss.IsServerStarted()); //because the default is auto
+        Assert.IsFalse(mss.IsServerStarted()); //Still not started
 
         mss.StartServer();
         yield return null;
