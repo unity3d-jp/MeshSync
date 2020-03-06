@@ -76,12 +76,16 @@ msAPI void msQueryAddResponseText(ms::QueryMessage *self, const char *text)
 
 
 #pragma region Server
-msAPI int msGetPluginVersion()
-{
+[[deprecated("Replaced with msGetPluginVersionStr()")]]
+msAPI int msGetPluginVersion() {
     return msPluginVersion;
 }
-msAPI int msGetProtocolVersion()
-{
+
+msAPI string msGetPluginVersionStr() {
+    return msPluginVersionStr;
+}
+
+msAPI int msGetProtocolVersion() {
     return msProtocolVersion;
 }
 

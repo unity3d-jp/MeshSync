@@ -1,7 +1,7 @@
 #pragma once
 
-#define msPluginVersion 20190902
-#define msPluginVersionStr "20190902"
+#define msPluginVersion 20200306
+#define msPluginVersionStr "0.0.1-preview.2"
 #define msVendor "Unity Technologies"
 #define msProtocolVersion 122
 
