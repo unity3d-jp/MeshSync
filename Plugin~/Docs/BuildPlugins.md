@@ -36,7 +36,7 @@ Start "Developer Command Prompt for VS 2017" and execute the following:
     $ git clone https://github.com/unity3d-jp/MeshSync
     $ cd MeshSync~\Plugin~\Build
     $ cmake -G "Visual Studio 15 2017" -A x64 ..
-    $ msbuild MeshSyncProj.sln /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
+    $ msbuild MeshSyncPlugin.sln /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
     ```  
 
 This release build will be linked againts Poco's release libraries with configurations in the following order:  
