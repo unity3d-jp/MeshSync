@@ -7,8 +7,9 @@ using UnityEditor;
 namespace Unity.MeshSync {
     internal static class DeployStreamingAssets  {
 
+        internal const string SERVER_ROOT_DIR_NAME = "MeshSyncServerRoot";
+
         internal static bool Deploy(bool overwrite = false) {
-            const string SERVER_ROOT_DIR_NAME = "MeshSyncServerRoot";
             string serverRootSrcDir = Path.Combine("Packages","com.unity.meshsync","Editor",SERVER_ROOT_DIR_NAME);
 
             string srcPath = Path.GetFullPath(serverRootSrcDir);

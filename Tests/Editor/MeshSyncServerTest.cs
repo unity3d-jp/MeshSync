@@ -1,7 +1,9 @@
 ﻿using System.Collections;
+using System.IO;
 using NUnit.Framework;
 using Unity.MeshSync;
 using UnityEditor.SceneManagement;
+using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace UnityEditor.MeshSync.Tests {
@@ -9,15 +11,20 @@ internal class MeshSyncServerTest  {
     [UnityTest]
     public IEnumerator CreateAutoServer()  {
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
+
+        //Delete Server Root Path
+        string serverRootPath = Path.Combine(Application.streamingAssetsPath,DeployStreamingAssets.SERVER_ROOT_DIR_NAME);
+        if (Directory.Exists(serverRootPath))
+            Directory.Delete(serverRootPath,true);
+        Assert.IsFalse(Directory.Exists(serverRootPath));
+        
         MeshSyncServer mss = MeshSyncServerEditor.CreateMeshSyncServer(true);
         Assert.IsTrue(mss.IsServerStarted());
-
-
-        
-        //[TODO-sin: 2020-2-26] Add test to make sure that the StreamingAssets are populated
-        Assert.True(true);
-        
         yield return null;
+
+        //Make sure the server files have been deployed
+        Assert.IsTrue(Directory.Exists(serverRootPath));
+        
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
