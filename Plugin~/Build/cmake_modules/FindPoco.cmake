@@ -123,7 +123,9 @@ foreach( component ${components} )
                 ${Poco_ROOT_DIR}
                 ${Poco_ROOT_DIR}/cmake-build
             PATH_SUFFIXES
+                lib/MinSizeRel
                 lib/Release
+                lib/RelWithDebInfo
                 lib
                 bin
         )
