@@ -9,9 +9,7 @@
 
 #ifdef _WIN32
     #define muEnablePPL
-    #define muEnableISPC
     #define muEnableAMP
-
     #define muEnableSymbol
 #endif
 
