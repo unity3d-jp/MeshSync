@@ -102,8 +102,11 @@ In order to use them in other scenes or projects, we can save them as asset file
 
 
 - When there is a MeshSyncServer object in the scene in Unity, we can open the server's address:port in our browser to view the server's 
-Unity GameView via the browser (the default is [127.0.0.1:8080](http://127.0.0.1:8080)).  
-If a message is sent from the browser's message form, that message will appear in Unity's Console. This communication method can be useful when Unity and the DCC tool are being used by different people. 
+  Unity GameView via the browser (the default is [127.0.0.1:8080](http://127.0.0.1:8080)).  
+  If a message is sent from the browser's message form, that message will appear in Unity's Console. This communication method can be useful when Unity and the DCC tool are being used by different people. 
+
+  <img src="Documentation~/images/GameViewInBrowser.png" width=640>
+
 
 - If only the pose/animation are being edited, we recommend disabling **Sync Meshes** in MeshSyncServer component, which can make the performance lighter.
 
@@ -111,6 +114,9 @@ If a message is sent from the browser's message form, that message will appear i
 
 # Caveats
 
+- When MeshSyncServer runs, it will automatically copy required MeshSync assets to *StreamingAssets/MeshSyncServerRoot*. 
+  Please keep them as they are.
+  
 - Although this package is designed to be used in the Editor, model syncing will still work in runtime as well, but not the animations.  
 **For performance reasons, make sure that the syncing is not executed in the final build, unless it is required.**
 
