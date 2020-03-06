@@ -94,12 +94,11 @@ $ xcodebuild -scheme mscore -configuration Release build
 
 There is a test project that can be created by specifying `-DBUILD_TESTS=ON`.
 
-For example:
-1. Windows
+1. Windows  
     ``` 
     $ cmake -G "Visual Studio 15 2017" -A x64 .. -DBUILD_TESTS=ON
     ```
-2. Mac
+2. Mac  
     ``` 
     $ cmake -GXcode .. -DBUILD_TESTS=ON
     ```
