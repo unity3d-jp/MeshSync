@@ -84,7 +84,7 @@ Open a terminal and execute the following
 
 ``` 
 $ git clone https://github.com/unity3d-jp/MeshSync
-$ cd MeshSync\Plugin~\Build
+$ cd MeshSync/Plugin~/Build
 $ cmake -GXcode ..
 $ xcodebuild -scheme mscore -configuration MinSizeRel build
 ```
