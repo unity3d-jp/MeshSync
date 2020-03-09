@@ -125,7 +125,7 @@ If the model is using too many bones, the model won't sync correctly.
 
 
 # Plugins
-- [Building](Plugin~/Docs/BuildPlugins.md)
+- [Building](Plugin~/Docs/en/BuildPlugins.md)
 
 
 
