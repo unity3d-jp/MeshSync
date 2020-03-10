@@ -15,16 +15,10 @@ target_include_directories(MeshSyncTest PUBLIC
     ${src_root}
 )
 
-# Dependencies on Windows
-if(WIN32)
-    set(Poco_Win_dependencies "ws2_32.lib;Iphlpapi.lib")
-endif()
-
 target_link_libraries(MeshSyncTest 
     MeshSync 
     MeshUtils 
     ${Poco_LIBRARIES}
-    ${Poco_Win_dependencies}    
 )
 
 if(ENABLE_ZSTD)
