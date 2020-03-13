@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.0.2-preview] - 2020-03-13
+* chore: Add additional Windows dependencies directly in Poco_LIBRARIES	
+* chore: Add missing Tests.meta
+* docs: Fix broken links
+* docs: Specify the version of Poco and zstd used. Also some other minor updates
+
+
 ## [0.0.1-preview.3] - 2020-03-10
 * chore: fix script to build plugin
 
