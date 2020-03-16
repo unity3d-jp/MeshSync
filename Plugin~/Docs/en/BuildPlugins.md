@@ -120,7 +120,8 @@ There is a test project that can be created by specifying `-DBUILD_TESTS=ON`.
 When this project is executed, it will send data to 
 [MeshSyncServer](../../../Readme.md#MeshSyncServer) in Unity.
 
-<img src="../Images/MeshSyncTest.png" width=480>
+![MeshSyncTest](../Images/MeshSyncTest.png)
+
 
 
 

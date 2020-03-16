@@ -20,11 +20,11 @@ MeshSync は DCC ツール上のモデルの編集をリアルタイムに Unity
 
 メニューから GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。このサーバーオブジェクトが同期処理を担当する MeshSyncServer のコンポーネントを持っています。
 
-<img src="Documentation~/images/Menu.png" width=320>
+![Menu](Documentation~/images/Menu.png)
 
 ## MeshSyncServer
 
-<img align="right" src="Documentation~/images/MeshSyncServer.png" height=800>
+![MeshSyncServer](Documentation~/images/MeshSyncServer.png)
 
 - **Auto Start**  
   On: 特定のポートで、自動的にサーバーを起動する。  
@@ -59,7 +59,7 @@ MeshSync は DCC ツール上のモデルの編集をリアルタイムに Unity
 多くの場合 "Flip YZ" の方が望ましいと思われますが、Unity 標準の fbx Importer が "Rotate X" 相当の処理を行っているため、選べるようにしてあります。
 
 - **Material List**  
-MeshSyncServer や [SceneCachePlayer](SceneCache.md)  はマテリアルのリストを保持しています。このリストのマテリアルを変更すると、対応するオブジェクトにも変更が反映されます。
+MeshSyncServer や [SceneCachePlayer](Documentation~/jp/SceneCache.md)  はマテリアルのリストを保持しています。このリストのマテリアルを変更すると、対応するオブジェクトにも変更が反映されます。
   - **Sync Material List** が有効な場合、オブジェクトのマテリアルを変更した際にそれをマテリアルリストにも反映し、同じマテリアルを持つ他のオブジェクトにも変更を伝播します。
   - **Import List, Export List** でリストの保存と読み込みができます。  
   キャッシュファイルを更新する場合、これを用いることでマテリアルを引き継ぐことができます。
@@ -100,8 +100,8 @@ MeshSyncServer の "Export Mesh" ボタンを押すとそのアセット化が�
   このブラウザの画面のメッセージフォームからメッセージを送ると、Unity の Console にそのメッセージが出るようになっています。  
   Unity 側作業者と DCC 側作業者が別の場合役に立つこともあるかもしれません。
   
-  <img src="Documentation~/images/GameViewInBrowser.png" width=640>
-  
+  ![GameViewInBrowser](Documentation~/images/GameViewInBrowser.png)
+    
 - ポーズ/アニメーションのみを編集中の場合、**Sync Meshes** を切っておくことをおすすめします。  
 メッシュデータを送らなくなるので動作が軽快になるでしょう。
 

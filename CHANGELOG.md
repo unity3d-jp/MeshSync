@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.0.2-preview.1] - 2020-03-16
+* chore: Removing unused meta files	
+* docs: Updating img tag to MD
+
 ## [0.0.2-preview] - 2020-03-13
 * chore: Add additional Windows dependencies directly in Poco_LIBRARIES	
 * chore: Add missing Tests.meta

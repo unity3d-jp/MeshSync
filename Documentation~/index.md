@@ -15,13 +15,12 @@ This allows devs to immediately see how things will look in-game while modelling
 Create a server object by clicking this menu: GameObject -> MeshSync -> Create Server. 
 This object has MeshSyncServer component that handles the sync process.
 
-<img src="images/Menu.png" width=320>
+![Menu](images/Menu.png)
 
 
 ## MeshSyncServer
 
-
-<img align="right" src="images/MeshSyncServer.png" height=800>
+![MeshSyncServer](images/MeshSyncServer.png)
 
 - **Auto Start**  
   On: automatically start the server using the specified port.  
@@ -57,7 +56,7 @@ This setting is related only to 3ds Max and Blender which coordinate system is Z
 In many cases, "Flip YZ" is preferable. For reference, Unity's standard fbx Importer does the equivalent of "Rotate X".
 
 - **Material List**  
-MeshSyncServer and [SceneCachePlayer](SceneCache.md) maintain a list of materials.   
+MeshSyncServer and [SceneCachePlayer](en/SceneCache.md) maintain a list of materials.   
 Changing the materials in this list will apply the changes in the corresponding objects.
   - If **Sync Material List** is enabled, changes in an object's material will be reflected in the material list and propagated to other objects with the same material.
   - We can save and load the list with **Import List, Export List**.  
@@ -102,7 +101,7 @@ In order to use them in other scenes or projects, we can save them as asset file
   Unity GameView via the browser (the default is [127.0.0.1:8080](http://127.0.0.1:8080)).  
   If a message is sent from the browser's message form, that message will appear in Unity's Console. This communication method can be useful when Unity and the DCC tool are being used by different people. 
 
-  <img src="images/GameViewInBrowser.png" width=640>
+  ![GameViewInBrowser](images/GameViewInBrowser.png)
 
 
 - If only the pose/animation are being edited, we recommend disabling **Sync Meshes** in MeshSyncServer component, which can make the performance lighter.
