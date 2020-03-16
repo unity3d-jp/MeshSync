@@ -18,11 +18,11 @@ MeshSync は DCC ツール上のモデルの編集をリアルタイムに Unity
 
 メニューから GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。このサーバーオブジェクトが同期処理を担当する MeshSyncServer のコンポーネントを持っています。
 
-<img src="../images/Menu.png" width=320>
+![Menu](../images/Menu.png)
 
 ## MeshSyncServer
 
-<img align="right" src="../images/MeshSyncServer.png" height=800>
+![MeshSyncServer](../images/MeshSyncServer.png)
 
 - **Auto Start**  
   On: 特定のポートで、自動的にサーバーを起動する。  
@@ -99,7 +99,7 @@ MeshSyncServer の "Export Mesh" ボタンを押すとそのアセット化が�
   このブラウザの画面のメッセージフォームからメッセージを送ると、Unity の Console にそのメッセージが出るようになっています。  
   Unity 側作業者と DCC 側作業者が別の場合役に立つこともあるかもしれません。
   
-  <img src="../images/GameViewInBrowser.png" width=640>
+  ![GameViewInBrowser](../images/GameViewInBrowser.png)
   
 - ポーズ/アニメーションのみを編集中の場合、**Sync Meshes** を切っておくことをおすすめします。  
 メッシュデータを送らなくなるので動作が軽快になるでしょう。
