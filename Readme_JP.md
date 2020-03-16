@@ -59,7 +59,7 @@ MeshSync は DCC ツール上のモデルの編集をリアルタイムに Unity
 多くの場合 "Flip YZ" の方が望ましいと思われますが、Unity 標準の fbx Importer が "Rotate X" 相当の処理を行っているため、選べるようにしてあります。
 
 - **Material List**  
-MeshSyncServer や [SceneCachePlayer](SceneCache.md)  はマテリアルのリストを保持しています。このリストのマテリアルを変更すると、対応するオブジェクトにも変更が反映されます。
+MeshSyncServer や [SceneCachePlayer](Documentation~/jp/SceneCache.md)  はマテリアルのリストを保持しています。このリストのマテリアルを変更すると、対応するオブジェクトにも変更が反映されます。
   - **Sync Material List** が有効な場合、オブジェクトのマテリアルを変更した際にそれをマテリアルリストにも反映し、同じマテリアルを持つ他のオブジェクトにも変更を伝播します。
   - **Import List, Export List** でリストの保存と読み込みができます。  
   キャッシュファイルを更新する場合、これを用いることでマテリアルを引き継ぐことができます。

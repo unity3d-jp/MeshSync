@@ -59,7 +59,7 @@ This setting is related only to 3ds Max and Blender which coordinate system is Z
 In many cases, "Flip YZ" is preferable. For reference, Unity's standard fbx Importer does the equivalent of "Rotate X".
 
 - **Material List**  
-MeshSyncServer and [SceneCachePlayer](SceneCache.md) maintain a list of materials.   
+MeshSyncServer and [SceneCachePlayer](Documentation~/en/SceneCache.md) maintain a list of materials.   
 Changing the materials in this list will apply the changes in the corresponding objects.
   - If **Sync Material List** is enabled, changes in an object's material will be reflected in the material list and propagated to other objects with the same material.
   - We can save and load the list with **Import List, Export List**.  
