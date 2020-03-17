@@ -6,7 +6,6 @@
 
 ## Building on Windows
 
-
 ### Prerequisites (Win)
 
 1. Install [cmake](https://cmake.org/)   
