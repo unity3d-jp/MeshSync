@@ -54,10 +54,16 @@ The build process will try to link againts Poco's release libraries in the follo
 1. RelWithDebInfo 
 
 The build process also links againts [zstd v1.4.4](https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz) 
-library which has previously been built using Visual Studio 2017 with Windows SDK 8.1 
+library which has previously been built using Visual Studio 2017 
 and put inside the [External](../../External/zstd) folder for convenience.  
 For reference, the steps to build zstd are as follows:
 
+1. Install the following Visual Studio 2017 components:
+   * Windows SDK 8.1
+   * Windows Universal CRT SDK
+
+2. Download [zstd v1.4.4](https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz) and extract to a folder.
+3. Go to where zstd was extracted and execute the following
 ```
 $ cd build\VS2010
 $ devenv zstd.sln /upgrade
