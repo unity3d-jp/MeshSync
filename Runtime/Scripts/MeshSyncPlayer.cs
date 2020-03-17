@@ -246,10 +246,15 @@ namespace Unity.MeshSync
         private Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
         #endregion
 
-
+        
         #region Properties
-        [ObsoleteAttribute("Replaced with Lib.GetPluginVersion()")]
-        internal static int pluginVersion { get { return Lib.pluginVersion; } }
+        internal static string GetPluginVersion() {
+#if !UNITY_STANDALONE_LINUX
+            return Lib.GetPluginVersion();
+#else                
+            return Lib.pluginVersion.ToString();
+#endif                
+        }
 
         internal static int protocolVersion { get { return Lib.protocolVersion; } }
         internal DataPath assetDir
