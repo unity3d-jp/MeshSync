@@ -1,7 +1,7 @@
 # Building Plugins
 
-1. [Windows](#building_on_windows)
-1. [Mac OSX](#building_on_mac_osx)
+1. [Windows](#building-on-windows)
+1. [Mac OSX](#building-on-mac_osx)
 1. [Tips](#tips)
 
 ## Building on Windows
