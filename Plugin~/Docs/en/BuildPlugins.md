@@ -46,15 +46,23 @@ Start "Developer Command Prompt for VS 2017" and execute the following:
 > "Developer Command Prompt for VS 2017".
 
 
-### Notes
+#### Notes
 
 The build process will try to link againts Poco's release libraries in the following order:  
 1. MinSizeRel  
 1. Release  
 1. RelWithDebInfo 
 
-The build process is using [zstd v1.4.4](https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-v1.4.4-win64.zip) 
-which has already been put inside the [External](../../External/zstd) folder for convenience.
+The build process also links againts [zstd v1.4.4](https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz) 
+library which has previously been built using Visual Studio 2017 with Windows SDK 8.1 
+and put inside the [External](../../External/zstd) folder for convenience.  
+For reference, the steps to build zstd are as follows:
+
+```
+$ cd build\VS2010
+$ devenv zstd.sln /upgrade
+$ msbuild zstd.sln /p:Configuration=Release /p:Platform=x64
+```
 
 ## Building on Mac OSX
 
