@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.0.2-preview.2] - 2020-03-17
+* fix: pluginVersion warning
+
 ## [0.0.2-preview.1] - 2020-03-16
 * chore: Removing unused meta files	
 * docs: Updating img tag to MD
