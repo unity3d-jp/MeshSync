@@ -218,7 +218,7 @@ namespace Unity.MeshSync
             switch (data.queryType)
             {
                 case QueryMessage.QueryType.PluginVersion:
-                    data.AddResponseText(MeshSyncPlayer.pluginVersion.ToString());
+                    data.AddResponseText(MeshSyncPlayer.GetPluginVersion());
                     break;
                 case QueryMessage.QueryType.ProtocolVersion:
                     data.AddResponseText(MeshSyncPlayer.protocolVersion.ToString());
