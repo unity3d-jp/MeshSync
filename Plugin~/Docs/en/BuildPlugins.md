@@ -163,16 +163,13 @@ $ xcodebuild -scheme mscore -configuration MinSizeRel build
     export Poco_DIR=~/MySDK/poco
     ```  
     It might also be good to add this command to *~/.bash_profile*
-1. Install the following via Homebrew  
-    ``` 
-    $ brew install zstd
-    $ brew install tbb
-    ```  
-    
-    Currently, the used version of each is:
-    * zstd: `stable 1.4.4`.
-    * tbb:  `stable 2020_U1`.
 
+1. Build zstd
+
+```
+$ cd build/cmake
+$ cmake . -DCMAKE_POSITION_INDEPENDENT_CODE=ON && cmake --build .
+```
 
 ### Build Steps (Linux)
 
