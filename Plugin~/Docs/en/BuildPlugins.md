@@ -124,6 +124,17 @@ $ xcodebuild -scheme mscore -configuration MinSizeRel build
 
 ## Building on Linux
 
+### Prerequisites (Linux)
+
+1. Make sure C++14 development is supported, and define `CC` and `CXX` environment variables to point to C++14 dev tools.
+   For example, by installing 
+   [devtoolset-7](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/). 
+   And then defining `CC` and `CXX` environment variables as follows:
+   ``` 
+   export CC=/opt/rh/devtoolset-7/root/usr/bin/gcc
+   export CXX=/opt/rh/devtoolset-7/root/usr/bin/g++
+   ``` 
+
 1. Install [cmake](https://cmake.org/)  version 3.5 or later.  
    Example:
     ``` 
@@ -135,13 +146,6 @@ $ xcodebuild -scheme mscore -configuration MinSizeRel build
     make install    
     ```  
    
-1. Install [XCode](https://developer.apple.com/xcode/)
-1. Install XCode Command Line tools  
-    ``` 
-    xcode-select --install
-    ```  
-1. Install [Homebrew](https://brew.sh/)
-1. Install git. For example: [SourceTree](https://www.sourcetreeapp.com/)
 1. Build [Poco](https://pocoproject.org) (static libraries).  
    * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder
    * Open a terminal and go to where Poco was extracted
@@ -149,8 +153,8 @@ $ xcodebuild -scheme mscore -configuration MinSizeRel build
     ``` 
     $ mkdir cmake-build
     $ cd cmake-build
-    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=MinSizeRel && cmake --build . 
-    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Debug && cmake --build . 
+    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_POSITION_INDEPENDENT_CODE=ON && cmake --build . 
+    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Debug -DCMAKE_POSITION_INDEPENDENT_CODE=ON && cmake --build . 
     ```
     > For other types of Poco configurations, see [Poco's Getting Started](https://pocoproject.org/docs/00200-GettingStarted.html).
     
@@ -169,6 +173,16 @@ $ xcodebuild -scheme mscore -configuration MinSizeRel build
     * zstd: `stable 1.4.4`.
     * tbb:  `stable 2020_U1`.
 
+
+### Build Steps (Linux)
+
+Open a terminal and execute the following
+
+``` 
+$ git clone https://github.com/unity3d-jp/MeshSync
+$ cd MeshSync/Plugin~/Build
+$ cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel && cmake --build . 
+```
 
 ## Tips
 
