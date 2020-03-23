@@ -2,13 +2,14 @@
 
 1. [Windows](#building-on-windows)
 1. [Mac OSX](#building-on-mac_osx)
+1. [Linux](#building-on-linux)
 1. [Tips](#tips)
 
 ## Building on Windows
 
 ### Prerequisites (Win)
 
-1. Install [cmake](https://cmake.org/)   
+1. Install [cmake](https://cmake.org/)  version 3.5 or later
    Make sure to choose one of the "Add CMake to the System PATH ..." options as shown below.
    ![CMakeInstallation](../Images/CMakeInstallation.png)
 1. Install Visual Studio 2017
@@ -74,7 +75,7 @@ $ msbuild zstd.sln /p:Configuration=Release /p:Platform=x64
 
 ### Prerequisites (Mac)
 
-1. Install [cmake](https://cmake.org/) 
+1. Install [cmake](https://cmake.org/)  version 3.5 or later, if not already installed.
 1. Install [XCode](https://developer.apple.com/xcode/)
 1. Install XCode Command Line tools  
     ``` 
@@ -120,6 +121,53 @@ $ cd MeshSync/Plugin~/Build
 $ cmake -GXcode ..
 $ xcodebuild -scheme mscore -configuration MinSizeRel build
 ```
+
+## Building on Linux
+
+1. Install [cmake](https://cmake.org/)  version 3.5 or later.  
+   Example:
+    ``` 
+    wget https://github.com/Kitware/CMake/releases/download/v3.17.0/cmake-3.17.0.tar.gz    
+    tar zxvf cmake-3.17.0.tar.gz
+    cd cmake-3.17.0
+    ./bootstrap --prefix=/usr/local
+    make -j$(nproc)
+    make install    
+    ```  
+   
+1. Install [XCode](https://developer.apple.com/xcode/)
+1. Install XCode Command Line tools  
+    ``` 
+    xcode-select --install
+    ```  
+1. Install [Homebrew](https://brew.sh/)
+1. Install git. For example: [SourceTree](https://www.sourcetreeapp.com/)
+1. Build [Poco](https://pocoproject.org) (static libraries).  
+   * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder
+   * Open a terminal and go to where Poco was extracted
+   * Execute the following in the command prompt      
+    ``` 
+    $ mkdir cmake-build
+    $ cd cmake-build
+    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=MinSizeRel && cmake --build . 
+    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Debug && cmake --build . 
+    ```
+    > For other types of Poco configurations, see [Poco's Getting Started](https://pocoproject.org/docs/00200-GettingStarted.html).
+    
+1. Add *Poco_DIR* environment variable to point to the Poco root folder above. For example:  
+    ``` 
+    export Poco_DIR=~/MySDK/poco
+    ```  
+    It might also be good to add this command to *~/.bash_profile*
+1. Install the following via Homebrew  
+    ``` 
+    $ brew install zstd
+    $ brew install tbb
+    ```  
+    
+    Currently, the used version of each is:
+    * zstd: `stable 1.4.4`.
+    * tbb:  `stable 2020_U1`.
 
 
 ## Tips

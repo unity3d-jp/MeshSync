@@ -5,8 +5,6 @@ find_path(ZSTD_INCLUDE_DIR
     NAMES
         "zstd.h"
     PATHS
-        "/usr/include"
-        "/usr/local/include"
         ${CMAKE_SOURCE_DIR}/External/zstd/include
 )
 
@@ -15,7 +13,9 @@ mark_as_advanced(ZSTD_INCLUDE_DIR)
 # Decide the name of the zstd lib based on platform
 if(WIN32) 
     set(zstd_lib_filename "libzstd_static.lib")
-else()
+elseif(LINUX)
+    set(zstd_lib_filename "libzstd.a")
+elseif(APPLE)
     set(zstd_lib_filename "libzstd.a")
 endif()        
 
@@ -30,7 +30,7 @@ find_file(
         External/zstd/lib/win64
         lib
 )
-
+message( ${zstd_lib_filename})
 mark_as_advanced(ZSTD_LIBRARY)
 
 include(FindPackageHandleStandardArgs)
