@@ -8,7 +8,7 @@ set(src_root ${CMAKE_CURRENT_SOURCE_DIR}/Src)
 include(AddPlugin)
 
 # prerequisites
-find_package(Poco COMPONENTS Net)
+find_package(Poco REQUIRED COMPONENTS Net)
 include(ISPC)
 
 if(APPLE)
