@@ -1,5 +1,7 @@
 # Building zstd
 
+Generate the binary by following the steps below, and copy it to the [External](../../External/zstd) folder depending on the platform.
+
 ## Windows
 
 1. Install the following Visual Studio 2017 components:
