@@ -86,7 +86,7 @@ The build process will try to link againts Poco's release libraries in the follo
     export Poco_DIR=~/MySDK/poco
     ```  
     It might be convenient to add this command to *~/.bash_profile*.
-1. Install `tbb`` via Homebrew  
+1. Install tbb via Homebrew  
     ``` 
     $ brew install tbb
     ```  
@@ -159,7 +159,7 @@ $ cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel && cmake --build .
 
 ## Prebuilt External Libraries
 
-MeshSync plugin requires other libraries, which have been prebuilt and put inside the [External](../../External) folder for convenience.
+MeshSync plugin requires other libraries, which have been prebuilt and put inside the [`External`](../../External) folder for convenience.
 Follow the links below for the steps to rebuild them.
 
 1. [zstd](Build_zstd.md)
