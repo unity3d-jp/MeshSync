@@ -249,11 +249,7 @@ namespace Unity.MeshSync
         
         #region Properties
         internal static string GetPluginVersion() {
-#if !UNITY_STANDALONE_LINUX
             return Lib.GetPluginVersion();
-#else                
-            return Lib.pluginVersion.ToString();
-#endif                
         }
 
         internal static int protocolVersion { get { return Lib.protocolVersion; } }

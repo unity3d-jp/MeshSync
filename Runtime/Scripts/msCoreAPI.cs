@@ -19,25 +19,20 @@ namespace Unity.MeshSync
 #else
             "mscore";
 #endif
+
+
+        [ObsoleteAttribute("Replaced with msGetPluginVersionStr")]
         [DllImport(name)] static extern int msGetPluginVersion();
-#if !UNITY_STANDALONE_LINUX
         [DllImport(name)] static extern IntPtr msGetPluginVersionStr();
-#endif        
         [DllImport(name)] static extern int msGetProtocolVersion();
         #endregion
         
-#if !UNITY_STANDALONE_LINUX
-        [ObsoleteAttribute("Replaced with GetPluginVersion()")]
-#endif        
-        public static int pluginVersion { get { return msGetPluginVersion(); } }
         
-#if !UNITY_STANDALONE_LINUX
         public static string GetPluginVersion() {
             IntPtr nativeStr = msGetPluginVersionStr();//Not direct marshalling because there is no free on C# side.
             return Marshal.PtrToStringAnsi(nativeStr);
         }
 
-#endif
         public static int protocolVersion { get { return msGetProtocolVersion(); } }
 
         public const int invalidID = -1;

@@ -1,14 +1,25 @@
-# Building on Windows
+# Building Plugins
 
-## Prerequisites (Win)
+1. [Windows](#building-on-windows)
+1. [Mac OSX](#building-on-mac-osx)
+1. [Linux](#building-on-linux)
+1. [Prebuilt External Libraries](#prebuilt-external-libraries)
+1. [Tips](#tips)
 
-1. Install [cmake](https://cmake.org/) 
-1. Install Visual Studio 2017
+## Building on Windows
+
+### Prerequisites (Win)
+
+1. Install [cmake](https://cmake.org/)  version 3.5 or later.  
+   Make sure to choose one of the "Add CMake to the System PATH ..." options as shown below.  
+   ![CMakeInstallation](../Images/CMakeInstallation.png)
+   
+1. Install Visual Studio 2017.
 1. Install git. For example: [SourceTree](https://www.sourcetreeapp.com/)
 1. Build [Poco](https://pocoproject.org) (static libraries).  
-   * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder
-   * Start "Developer Command Prompt for VS 2017" and go to where Poco was extracted
-   * Execute the following in the command prompt      
+   * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder.
+   * Start "Developer Command Prompt for VS 2017" and go to where Poco was extracted.
+   * Execute the following in the command prompt:      
     ``` 
     $ mkdir cmake-build
     $ cd cmake-build
@@ -16,58 +27,52 @@
     $ cmake --build . --config MinSizeRel && cmake --build . --config Debug
     ```
     
-    > For other types of Poco configurations, see [Poco's Getting Started](https://pocoproject.org/docs/00200-GettingStarted.html).
+    > To build Poco libraries with other configurations, see [Poco's Getting Started](https://pocoproject.org/docs/00200-GettingStarted.html).
 
-1. Add *Poco_DIR* environment variable to point to the Poco root folder above
-1. Build [zstd](https://github.com/facebook/zstd/releases)  
-   * Download [zstd-v1.4.4-win64](https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-v1.4.4-win64.zip) and extract the file in a folder
-   * Start "Developer Command Prompt for VS 2017" and go to where zstd was extracted
-   * Execute the following in the command prompt      
-    ``` 
-    $ cd build\VS2010
-    $ devenv zstd.sln /upgrade
-    $ msbuild zstd.sln /p:Configuration=Release /p:Platform=x64
-    ```
+1. Add *Poco_DIR* environment variable to point to the Poco root folder above.
     
 
-## Build Steps (Win)
+### Build Steps (Win)
 
 
 Start "Developer Command Prompt for VS 2017" and execute the following:
 
     ``` 
     $ git clone https://github.com/unity3d-jp/MeshSync
-    $ cd MeshSync~\Plugin~\Build
+    $ cd MeshSync\Plugin~\Build
     $ cmake -G "Visual Studio 15 2017" -A x64 ..
     $ msbuild MeshSyncPlugin.sln /t:Build /p:Configuration=MinSizeRel /p:Platform=x64 /m /nologo
     ```  
-
-This release build is linked against Poco's release libraries with the following configurations, whichever is found first:  
-
-1. MinSizeRel  
-1. Release  
-1. RelWithDebInfo 
 
 > For a regular "Command Prompt", there is a script: *VsDevCmd_2017.bat* 
 > under the *Build* folder, which if executed, will turn the prompt into a 
 > "Developer Command Prompt for VS 2017".
 
-# Building on Mac OSX
 
-## Prerequisites (Mac)
+#### Notes
 
-1. Install [cmake](https://cmake.org/) 
-1. Install [XCode](https://developer.apple.com/xcode/)
-1. Install XCode Command Line tools  
+The build process will try to link againts Poco's release libraries in the following order:  
+1. MinSizeRel  
+1. Release  
+1. RelWithDebInfo 
+
+
+## Building on Mac OSX
+
+### Prerequisites (Mac)
+
+1. Install [cmake](https://cmake.org/)  version 3.5 or later, if not already installed.
+1. Install [XCode](https://developer.apple.com/xcode/).
+1. Install XCode Command Line tools.
     ``` 
     xcode-select --install
     ```  
-1. Install [Homebrew](https://brew.sh/)
+1. Install [Homebrew](https://brew.sh/).
 1. Install git. For example: [SourceTree](https://www.sourcetreeapp.com/)
 1. Build [Poco](https://pocoproject.org) (static libraries).  
-   * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder
-   * Open a terminal and go to where Poco was extracted
-   * Execute the following in the command prompt      
+   * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder.
+   * Open a terminal and go to where Poco was extracted.
+   * Execute the following in the command prompt:   
     ``` 
     $ mkdir cmake-build
     $ cd cmake-build
@@ -80,19 +85,16 @@ This release build is linked against Poco's release libraries with the following
     ``` 
     export Poco_DIR=~/MySDK/poco
     ```  
-    It might also be good to add this command to *~/.bash_profile*
-1. Install the following via Homebrew  
+    It might be convenient to add this command to *~/.bash_profile*.
+1. Install tbb via Homebrew  
     ``` 
-    $ brew install zstd
     $ brew install tbb
     ```  
     
-    Currently, the used version of each is:
-    * zstd: `stable 1.4.4`.
-    * tbb:  `stable 2020_U1`.
+    Currently, the used version is `stable 2020_U1`.
 
 
-## Build Steps (Mac)
+### Build Steps (Mac)
 
 Open a terminal and execute the following
 
@@ -103,8 +105,67 @@ $ cmake -GXcode ..
 $ xcodebuild -scheme mscore -configuration MinSizeRel build
 ```
 
+## Building on Linux
 
-# Tips
+### Prerequisites (Linux)
+
+1. Make sure C++14 development is supported, and define `CC` and `CXX` environment variables to point to C++14 dev tools.  
+   For example, by installing [devtoolset-7](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/) in in CentOS 7, 
+   and then defining `CC` and `CXX` environment variables as follows:
+   ``` 
+   export CC=/opt/rh/devtoolset-7/root/usr/bin/gcc
+   export CXX=/opt/rh/devtoolset-7/root/usr/bin/g++
+   ``` 
+
+1. Install [cmake](https://cmake.org/)  version 3.5 or later.  
+   Example:
+    ``` 
+    wget https://github.com/Kitware/CMake/releases/download/v3.17.0/cmake-3.17.0.tar.gz    
+    tar zxvf cmake-3.17.0.tar.gz
+    cd cmake-3.17.0
+    ./bootstrap --prefix=/usr/local
+    make -j$(nproc)
+    make install    
+    ```  
+1. Install git.   
+1. Build [Poco](https://pocoproject.org) (static libraries).  
+   * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder.
+   * Open a terminal and go to where Poco was extracted.
+   * Execute the following in the command prompt:
+    ``` 
+    $ mkdir cmake-build
+    $ cd cmake-build
+    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_POSITION_INDEPENDENT_CODE=ON && cmake --build . 
+    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Debug -DCMAKE_POSITION_INDEPENDENT_CODE=ON && cmake --build . 
+    ```
+    > For other types of Poco configurations, see [Poco's Getting Started](https://pocoproject.org/docs/00200-GettingStarted.html).
+    
+1. Add *Poco_DIR* environment variable to point to the Poco root folder above. For example:  
+    ``` 
+    export Poco_DIR=~/MySDK/poco
+    ```  
+    It might be convenient to add this command to *~/.bash_profile*.
+
+
+### Build Steps (Linux)
+
+Open a terminal and execute the following
+
+``` 
+$ git clone https://github.com/unity3d-jp/MeshSync
+$ cd MeshSync/Plugin~/Build
+$ cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel && cmake --build . 
+```
+
+## Prebuilt External Libraries
+
+MeshSync plugin requires other libraries, which have been prebuilt and put inside the [`External`](../../External) folder for convenience.
+Follow the links below for the steps to rebuild them.
+
+1. [zstd](Build_zstd.md)
+
+
+## Tips
 
 There is a test project that can be created by specifying `-DBUILD_TESTS=ON`.
 
