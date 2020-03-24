@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.0.3-preview] - 2020-03-24
+* chore: prebuilding zstd on Mac and Linux
+* chore: update zstd library on Windows to 1.4.4
+* chore: use Unicode for building plugins
+* docs: update plugin build steps for Windows and Mac
+* docs: add Linux section for building plugins
+* docs: add a separate doc page for building zstd
+
+
 ## [0.0.2-preview.2] - 2020-03-17
 * fix: pluginVersion warning
 
