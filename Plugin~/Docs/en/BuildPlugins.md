@@ -1,17 +1,19 @@
 # Building Plugins
 
 1. [Windows](#building-on-windows)
-1. [Mac OSX](#building-on-mac_osx)
+1. [Mac OSX](#building-on-mac-osx)
 1. [Linux](#building-on-linux)
+1. [Prebuilt External Libraries](#prebuilt-external-libraries)
 1. [Tips](#tips)
 
 ## Building on Windows
 
 ### Prerequisites (Win)
 
-1. Install [cmake](https://cmake.org/)  version 3.5 or later
-   Make sure to choose one of the "Add CMake to the System PATH ..." options as shown below.
+1. Install [cmake](https://cmake.org/)  version 3.5 or later.  
+   Make sure to choose one of the "Add CMake to the System PATH ..." options as shown below.  
    ![CMakeInstallation](../Images/CMakeInstallation.png)
+   
 1. Install Visual Studio 2017
 1. Install git. For example: [SourceTree](https://www.sourcetreeapp.com/)
 1. Build [Poco](https://pocoproject.org) (static libraries).  
@@ -27,7 +29,7 @@
     
     > To build Poco libraries with other configurations, see [Poco's Getting Started](https://pocoproject.org/docs/00200-GettingStarted.html).
 
-1. Add *Poco_DIR* environment variable to point to the Poco root folder above
+1. Add *Poco_DIR* environment variable to point to the Poco root folder above.
     
 
 ### Build Steps (Win)
@@ -54,22 +56,6 @@ The build process will try to link againts Poco's release libraries in the follo
 1. Release  
 1. RelWithDebInfo 
 
-The build process also links againts [zstd v1.4.4](https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz) 
-library which has previously been built using Visual Studio 2017 
-and put inside the [External](../../External/zstd) folder for convenience.  
-For reference, the steps to build zstd are as follows:
-
-1. Install the following Visual Studio 2017 components:
-   * Windows SDK 8.1
-   * Windows Universal CRT SDK
-
-2. Download [zstd v1.4.4](https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz) and extract to a folder.
-3. Go to where zstd was extracted and execute the following
-```
-$ cd build\VS2010
-$ devenv zstd.sln /upgrade
-$ msbuild zstd.sln /p:Configuration=Release /p:Platform=x64
-```
 
 ## Building on Mac OSX
 
@@ -102,12 +88,10 @@ $ msbuild zstd.sln /p:Configuration=Release /p:Platform=x64
     It might also be good to add this command to *~/.bash_profile*
 1. Install the following via Homebrew  
     ``` 
-    $ brew install zstd
     $ brew install tbb
     ```  
     
     Currently, the used version of each is:
-    * zstd: `stable 1.4.4`.
     * tbb:  `stable 2020_U1`.
 
 
@@ -126,10 +110,9 @@ $ xcodebuild -scheme mscore -configuration MinSizeRel build
 
 ### Prerequisites (Linux)
 
-1. Make sure C++14 development is supported, and define `CC` and `CXX` environment variables to point to C++14 dev tools.
-   For example, by installing 
-   [devtoolset-7](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/). 
-   And then defining `CC` and `CXX` environment variables as follows:
+1. Make sure C++14 development is supported, and define `CC` and `CXX` environment variables to point to C++14 dev tools.  
+   For example, by installing [devtoolset-7](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/) in in CentOS 7, 
+   and then defining `CC` and `CXX` environment variables as follows:
    ``` 
    export CC=/opt/rh/devtoolset-7/root/usr/bin/gcc
    export CXX=/opt/rh/devtoolset-7/root/usr/bin/g++
@@ -164,12 +147,6 @@ $ xcodebuild -scheme mscore -configuration MinSizeRel build
     ```  
     It might also be good to add this command to *~/.bash_profile*
 
-1. Build zstd
-
-```
-$ cd build/cmake
-$ cmake . -DCMAKE_POSITION_INDEPENDENT_CODE=ON && cmake --build .
-```
 
 ### Build Steps (Linux)
 
@@ -180,6 +157,14 @@ $ git clone https://github.com/unity3d-jp/MeshSync
 $ cd MeshSync/Plugin~/Build
 $ cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel && cmake --build . 
 ```
+
+## Prebuilt External Libraries
+
+MeshSync plugin requires other libraries, which have been prebuilt and put inside the [External](../../External) folder for convenience.
+Follow the links below for the steps to rebuild them.
+
+1. [zstd](Build_zstd.md)
+
 
 ## Tips
 
