@@ -6,6 +6,7 @@ find_path(ZSTD_INCLUDE_DIR
         "zstd.h"
     PATHS
         ${CMAKE_SOURCE_DIR}/External/zstd/include
+    NO_DEFAULT_PATH                        
 )
 
 mark_as_advanced(ZSTD_INCLUDE_DIR)
