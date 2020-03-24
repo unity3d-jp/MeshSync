@@ -14,7 +14,7 @@
    Make sure to choose one of the "Add CMake to the System PATH ..." options as shown below.  
    ![CMakeInstallation](../Images/CMakeInstallation.png)
    
-1. Install Visual Studio 2017
+1. Install Visual Studio 2017.
 1. Install git. For example: [SourceTree](https://www.sourcetreeapp.com/)
 1. Build [Poco](https://pocoproject.org) (static libraries).  
    * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder
@@ -62,12 +62,12 @@ The build process will try to link againts Poco's release libraries in the follo
 ### Prerequisites (Mac)
 
 1. Install [cmake](https://cmake.org/)  version 3.5 or later, if not already installed.
-1. Install [XCode](https://developer.apple.com/xcode/)
-1. Install XCode Command Line tools  
+1. Install [XCode](https://developer.apple.com/xcode/).
+1. Install XCode Command Line tools.
     ``` 
     xcode-select --install
     ```  
-1. Install [Homebrew](https://brew.sh/)
+1. Install [Homebrew](https://brew.sh/).
 1. Install git. For example: [SourceTree](https://www.sourcetreeapp.com/)
 1. Build [Poco](https://pocoproject.org) (static libraries).  
    * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder
@@ -85,14 +85,13 @@ The build process will try to link againts Poco's release libraries in the follo
     ``` 
     export Poco_DIR=~/MySDK/poco
     ```  
-    It might also be good to add this command to *~/.bash_profile*
-1. Install the following via Homebrew  
+    It might be convenient to add this command to *~/.bash_profile*.
+1. Install `tbb`` via Homebrew  
     ``` 
     $ brew install tbb
     ```  
     
-    Currently, the used version of each is:
-    * tbb:  `stable 2020_U1`.
+    Currently, the used version is `stable 2020_U1`.
 
 
 ### Build Steps (Mac)
@@ -145,7 +144,7 @@ $ xcodebuild -scheme mscore -configuration MinSizeRel build
     ``` 
     export Poco_DIR=~/MySDK/poco
     ```  
-    It might also be good to add this command to *~/.bash_profile*
+    It might be convenient to add this command to *~/.bash_profile*.
 
 
 ### Build Steps (Linux)
