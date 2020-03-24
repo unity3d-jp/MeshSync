@@ -17,9 +17,9 @@
 1. Install Visual Studio 2017.
 1. Install git. For example: [SourceTree](https://www.sourcetreeapp.com/)
 1. Build [Poco](https://pocoproject.org) (static libraries).  
-   * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder
-   * Start "Developer Command Prompt for VS 2017" and go to where Poco was extracted
-   * Execute the following in the command prompt      
+   * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder.
+   * Start "Developer Command Prompt for VS 2017" and go to where Poco was extracted.
+   * Execute the following in the command prompt:      
     ``` 
     $ mkdir cmake-build
     $ cd cmake-build
@@ -70,9 +70,9 @@ The build process will try to link againts Poco's release libraries in the follo
 1. Install [Homebrew](https://brew.sh/).
 1. Install git. For example: [SourceTree](https://www.sourcetreeapp.com/)
 1. Build [Poco](https://pocoproject.org) (static libraries).  
-   * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder
-   * Open a terminal and go to where Poco was extracted
-   * Execute the following in the command prompt      
+   * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder.
+   * Open a terminal and go to where Poco was extracted.
+   * Execute the following in the command prompt:   
     ``` 
     $ mkdir cmake-build
     $ cd cmake-build
@@ -127,11 +127,11 @@ $ xcodebuild -scheme mscore -configuration MinSizeRel build
     make -j$(nproc)
     make install    
     ```  
-   
+1. Install git.   
 1. Build [Poco](https://pocoproject.org) (static libraries).  
-   * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder
-   * Open a terminal and go to where Poco was extracted
-   * Execute the following in the command prompt      
+   * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder.
+   * Open a terminal and go to where Poco was extracted.
+   * Execute the following in the command prompt:
     ``` 
     $ mkdir cmake-build
     $ cd cmake-build
