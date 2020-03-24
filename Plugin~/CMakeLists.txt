@@ -45,11 +45,11 @@ endif()
 option(BUILD_TESTS "Tests" OFF)
 
 # ---
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++14 -Wno-deprecated")
+
+# Force Unicode character set
+add_definitions(-DUNICODE -D_UNICODE)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-
 
 #Specify available modules
 add_subdirectory(${src_root}/MeshUtils)
