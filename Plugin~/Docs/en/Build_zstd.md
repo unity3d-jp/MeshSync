@@ -1,6 +1,6 @@
 # Building zstd
 
-Generate the binary by following the steps below, and copy it to the [External](../../External/zstd) folder depending on the platform.
+Generate the binary by following the steps below, and copy it to the [External/zstd/lib](../../External/zstd/lib) folder depending on the platform.
 
 ## Windows
 
