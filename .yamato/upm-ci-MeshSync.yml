@@ -13,7 +13,14 @@ platforms:
     image:         package-ci/mac:stable     
     prepack_image: slough-ops/macos-10.14-xcode
     flavor: m1.mac
+    plugin_path: Runtime/Plugins/x86_64/**    
+  - name: ubuntu
+    type: Unity::VM
+    image:         package-ci/ubuntu:stable     
+    prepack_image: package-ci/ubuntu:stable
+    flavor: b1.large
     plugin_path: Runtime/Plugins/x86_64/**
+
 ---
 {% for platform in platforms %}
 prepack_{{ platform.name }}:
