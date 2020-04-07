@@ -8,7 +8,6 @@
 //   muEnableSymbol
 
 #ifdef _WIN32
-    #define muEnablePPL
     #define muEnableAMP
     #define muEnableSymbol
 #endif
