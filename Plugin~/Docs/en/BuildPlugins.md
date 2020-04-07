@@ -41,7 +41,7 @@ Start "Developer Command Prompt for VS 2017" and execute the following:
     $ git clone https://github.com/unity3d-jp/MeshSync
     $ cd MeshSync\Plugin~\Build
     $ cmake -G "Visual Studio 15 2017" -A x64 ..
-    $ msbuild MeshSyncPlugin.sln /t:Build /p:Configuration=MinSizeRel /p:Platform=x64 /m /nologo
+    $ msbuild MeshSyncPlugin.sln /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
     ```  
 
 > For a regular "Command Prompt", there is a script: *VsDevCmd_2017.bat* 
@@ -52,8 +52,8 @@ Start "Developer Command Prompt for VS 2017" and execute the following:
 #### Notes
 
 The build process will try to link againts Poco's release libraries in the following order:  
-1. MinSizeRel  
 1. Release  
+1. MinSizeRel  
 1. RelWithDebInfo 
 
 
@@ -102,7 +102,7 @@ Open a terminal and execute the following
 $ git clone https://github.com/unity3d-jp/MeshSync
 $ cd MeshSync/Plugin~/Build
 $ cmake -GXcode ..
-$ xcodebuild -scheme mscore -configuration MinSizeRel build
+$ xcodebuild -scheme mscore -configuration Release build
 ```
 
 ## Building on Linux
@@ -154,7 +154,7 @@ Open a terminal and execute the following
 ``` 
 $ git clone https://github.com/unity3d-jp/MeshSync
 $ cd MeshSync/Plugin~/Build
-$ cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel && cmake --build . 
+$ cmake .. -DCMAKE_BUILD_TYPE=Release && cmake --build . 
 ```
 
 ## Prebuilt External Libraries
