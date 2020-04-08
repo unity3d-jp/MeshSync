@@ -8,7 +8,7 @@ namespace Unity.AnimeToolbox {
 /// <summary>
 /// An extension class to extend the functionality of UnityEditor.PackageManager.Requests classes
 /// </summary>
-public static class RequestExtensions
+internal static class RequestExtensions
 {
     /// <summary>
     /// Find a PackageInfo which has the passed parameter 

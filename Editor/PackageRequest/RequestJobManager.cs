@@ -11,7 +11,7 @@ namespace Unity.AnimeToolbox {
 /// An editor class to manage requests to UnityEditor.PackageManager.Client
 /// This class will perform its operations in background while Unity is running.
 /// </summary>
-public static class RequestJobManager 
+internal static class RequestJobManager 
 {
     [UnityEditor.InitializeOnLoadMethod]
     static void OnLoad() {    

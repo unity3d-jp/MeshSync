@@ -11,7 +11,7 @@ namespace UnityEditor.MeshSync {
 public static class MeshSyncMenu  {
 
     
-    [MenuItem("Assets/MeshSync/Copy or Download DCC Plugins", false, 100)]
+     [MenuItem("Assets/MeshSync/Copy or Download DCC Plugins", false, 100)]
      static void DownloadDCCPlugins() {
          
          string destFolder = EditorUtility.OpenFolderPanel("Select copy destination", "", "");
