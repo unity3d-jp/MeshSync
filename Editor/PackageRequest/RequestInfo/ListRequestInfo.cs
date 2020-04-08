@@ -4,18 +4,18 @@ using UnityEditor.PackageManager;           //PackageCollection
 
 namespace Unity.AnimeToolbox {
 internal class ListRequestInfo {
-    internal readonly bool m_offlineMode;
-    internal readonly bool m_includeIndirectIndependencies;
-    internal readonly Action<Request<PackageCollection>> m_onSuccessAction;
-    internal readonly Action<Request<PackageCollection>> m_onFailAction;
+    internal readonly bool OfflineMode;
+    internal readonly bool IncludeIndirectIndependencies;
+    internal readonly Action<Request<PackageCollection>> OnSuccessAction;
+    internal readonly Action<Request<PackageCollection>> OnFailAction;
 
     internal ListRequestInfo(bool offlineMode, bool includeIndirectDependencies,
         Action<Request<PackageCollection>> onSuccess, Action<Request<PackageCollection>> onFail)
     {
-        m_offlineMode = offlineMode;
-        m_includeIndirectIndependencies = includeIndirectDependencies;
-        m_onSuccessAction = onSuccess;
-        m_onFailAction = onFail;
+        OfflineMode = offlineMode;
+        IncludeIndirectIndependencies = includeIndirectDependencies;
+        OnSuccessAction = onSuccess;
+        OnFailAction = onFail;
     }
 }
 

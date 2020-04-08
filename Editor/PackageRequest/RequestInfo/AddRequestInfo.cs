@@ -5,15 +5,15 @@ using UnityEditor.PackageManager;           //PackageInfo
 namespace Unity.AnimeToolbox {
 
 internal class AddRequestInfo {
-    internal readonly string m_packageName;
-    internal readonly Action<Request<PackageInfo>> m_onSuccessAction;
-    internal readonly Action<Request<PackageInfo>> m_onFailAction;
+    internal readonly string PackageName;
+    internal readonly Action<Request<PackageInfo>> OnSuccessAction;
+    internal readonly Action<Request<PackageInfo>> OnFailAction;
     internal AddRequestInfo(string packageName,
         Action<Request<PackageInfo>> onSuccess, Action<Request<PackageInfo>> onFail)
     {
-        m_packageName = packageName;
-        m_onSuccessAction = onSuccess;
-        m_onFailAction = onFail;
+        PackageName = packageName;
+        OnSuccessAction = onSuccess;
+        OnFailAction = onFail;
     }
 }
 

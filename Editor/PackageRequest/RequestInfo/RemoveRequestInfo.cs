@@ -2,16 +2,16 @@
 
 namespace Unity.AnimeToolbox {
 internal class RemoveRequestInfo{
-    internal readonly string m_packageName;
-    internal readonly Action m_onSuccessAction;
-    internal readonly Action m_onFailAction;
+    internal readonly string PackageName;
+    internal readonly Action OnSuccessAction;
+    internal readonly Action OnFailAction;
 
     internal RemoveRequestInfo(string packageName,
         Action onSuccess, Action onFail)
     {
-        m_packageName = packageName;
-        m_onSuccessAction = onSuccess;
-        m_onFailAction = onFail;
+        PackageName = packageName;
+        OnSuccessAction = onSuccess;
+        OnFailAction = onFail;
     }
 }
 
