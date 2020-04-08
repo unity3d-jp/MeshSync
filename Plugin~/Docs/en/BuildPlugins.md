@@ -24,7 +24,7 @@
     $ mkdir cmake-build
     $ cd cmake-build
     $ cmake .. -DBUILD_SHARED_LIBS=OFF -G "Visual Studio 15 2017" -A x64
-    $ cmake --build . --config MinSizeRel && cmake --build . --config Debug
+    $ cmake --build . --config Release && cmake --build . --config Debug
     ```
     
     > To build Poco libraries with other configurations, see [Poco's Getting Started](https://pocoproject.org/docs/00200-GettingStarted.html).
@@ -41,7 +41,7 @@ Start "Developer Command Prompt for VS 2017" and execute the following:
     $ git clone https://github.com/unity3d-jp/MeshSync
     $ cd MeshSync\Plugin~\Build
     $ cmake -G "Visual Studio 15 2017" -A x64 ..
-    $ msbuild MeshSyncPlugin.sln /t:Build /p:Configuration=MinSizeRel /p:Platform=x64 /m /nologo
+    $ msbuild MeshSyncPlugin.sln /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
     ```  
 
 > For a regular "Command Prompt", there is a script: *VsDevCmd_2017.bat* 
@@ -52,8 +52,8 @@ Start "Developer Command Prompt for VS 2017" and execute the following:
 #### Notes
 
 The build process will try to link againts Poco's release libraries in the following order:  
-1. MinSizeRel  
 1. Release  
+1. MinSizeRel  
 1. RelWithDebInfo 
 
 
@@ -76,7 +76,7 @@ The build process will try to link againts Poco's release libraries in the follo
     ``` 
     $ mkdir cmake-build
     $ cd cmake-build
-    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=MinSizeRel && cmake --build . 
+    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release && cmake --build . 
     $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Debug && cmake --build . 
     ```
     > For other types of Poco configurations, see [Poco's Getting Started](https://pocoproject.org/docs/00200-GettingStarted.html).
@@ -102,7 +102,7 @@ Open a terminal and execute the following
 $ git clone https://github.com/unity3d-jp/MeshSync
 $ cd MeshSync/Plugin~/Build
 $ cmake -GXcode ..
-$ xcodebuild -scheme mscore -configuration MinSizeRel build
+$ xcodebuild -scheme mscore -configuration Release build
 ```
 
 ## Building on Linux
@@ -135,7 +135,7 @@ $ xcodebuild -scheme mscore -configuration MinSizeRel build
     ``` 
     $ mkdir cmake-build
     $ cd cmake-build
-    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_POSITION_INDEPENDENT_CODE=ON && cmake --build . 
+    $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON && cmake --build . 
     $ cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Debug -DCMAKE_POSITION_INDEPENDENT_CODE=ON && cmake --build . 
     ```
     > For other types of Poco configurations, see [Poco's Getting Started](https://pocoproject.org/docs/00200-GettingStarted.html).
@@ -154,7 +154,7 @@ Open a terminal and execute the following
 ``` 
 $ git clone https://github.com/unity3d-jp/MeshSync
 $ cd MeshSync/Plugin~/Build
-$ cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel && cmake --build . 
+$ cmake .. -DCMAKE_BUILD_TYPE=Release && cmake --build . 
 ```
 
 ## Prebuilt External Libraries
