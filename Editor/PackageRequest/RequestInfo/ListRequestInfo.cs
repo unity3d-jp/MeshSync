@@ -3,20 +3,19 @@ using UnityEditor.PackageManager.Requests;  //ListRequest, AddRequest, etc
 using UnityEditor.PackageManager;           //PackageCollection
 
 namespace Unity.AnimeToolbox {
-
-class ListRequestInfo {
-    internal bool OfflineMode;
-    internal bool IncludeIndirectIndependencies;
-    internal Action<Request<PackageCollection>> OnSuccessAction;
-    internal Action<Request<PackageCollection>> OnFailAction;
+internal class ListRequestInfo {
+    internal readonly bool m_offlineMode;
+    internal readonly bool m_includeIndirectIndependencies;
+    internal readonly Action<Request<PackageCollection>> m_onSuccessAction;
+    internal readonly Action<Request<PackageCollection>> m_onFailAction;
 
     internal ListRequestInfo(bool offlineMode, bool includeIndirectDependencies,
         Action<Request<PackageCollection>> onSuccess, Action<Request<PackageCollection>> onFail)
     {
-        OfflineMode = offlineMode;
-        IncludeIndirectIndependencies = includeIndirectDependencies;
-        OnSuccessAction = onSuccess;
-        OnFailAction = onFail;
+        m_offlineMode = offlineMode;
+        m_includeIndirectIndependencies = includeIndirectDependencies;
+        m_onSuccessAction = onSuccess;
+        m_onFailAction = onFail;
     }
 }
 

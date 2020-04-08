@@ -23,11 +23,15 @@ public static class RequestExtensions
             return null;
         }
 
-        var enumerator = packageInfoCollection.GetEnumerator();
-        while (enumerator.MoveNext()) {
-            PackageInfo curInfo = enumerator.Current;
-            if (curInfo.name == packageName) {
-                return curInfo;
+        using (var enumerator = packageInfoCollection.GetEnumerator()) {
+
+            while (enumerator.MoveNext()) {
+                PackageInfo curInfo = enumerator.Current;
+                if (null == curInfo)
+                    continue;
+                if (curInfo.name == packageName) {
+                    return curInfo;
+                }
             }
         }
 

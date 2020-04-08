@@ -117,8 +117,8 @@ public static class RequestJobManager
                 ListRequestInfo info = enumerator.Current;
                 if (null == info)
                     continue;
-                ListRequest listReq = Client.List(info.OfflineMode, info.IncludeIndirectIndependencies);
-                m_requestJobs.Add(new RequestJob<PackageCollection>(listReq,info.OnSuccessAction,info.OnFailAction));               
+                ListRequest listReq = Client.List(info.m_offlineMode, info.m_includeIndirectIndependencies);
+                m_requestJobs.Add(new RequestJob<PackageCollection>(listReq,info.m_onSuccessAction,info.m_onFailAction));               
             }
             m_pendingListRequests.Clear();
         }
@@ -129,8 +129,8 @@ public static class RequestJobManager
                 AddRequestInfo info = enumerator.Current;
                 if (null == info)
                     continue;
-                AddRequest addReq = Client.Add(info.PackageName);
-                m_requestJobs.Add(new RequestJob<PackageInfo>(addReq,info.OnSuccessAction,info.OnFailAction));
+                AddRequest addReq = Client.Add(info.m_packageName);
+                m_requestJobs.Add(new RequestJob<PackageInfo>(addReq,info.m_onSuccessAction,info.m_onFailAction));
             }
             m_pendingAddRequests.Clear();
         }
@@ -142,8 +142,8 @@ public static class RequestJobManager
                 RemoveRequestInfo info = enumerator.Current;
                 if (null == info)
                     continue;
-                RemoveRequest removeReq = Client.Remove(info.PackageName);
-                m_requestJobs.Add(new RequestJob(removeReq,info.OnSuccessAction,info.OnFailAction));
+                RemoveRequest removeReq = Client.Remove(info.m_packageName);
+                m_requestJobs.Add(new RequestJob(removeReq,info.m_onSuccessAction,info.m_onFailAction));
             }
             m_pendingRemoveRequests.Clear();
         }
@@ -155,8 +155,8 @@ public static class RequestJobManager
                 SearchRequestInfo info = enumerator.Current;
                 if (null == info)
                     continue;
-                SearchRequest searchReq = Client.Search(info.PackageName, info.OfflineMode);
-                m_requestJobs.Add(new RequestJob<PackageInfo[]>(searchReq,info.OnSuccessAction,info.OnFailAction));
+                SearchRequest searchReq = Client.Search(info.m_packageName, info.m_offlineMode);
+                m_requestJobs.Add(new RequestJob<PackageInfo[]>(searchReq,info.m_onSuccessAction,info.m_onFailAction));
             }
             m_pendingSearchRequests.Clear();
         }
@@ -167,8 +167,8 @@ public static class RequestJobManager
                 SearchAllRequestInfo info = enumerator.Current;
                 if (null == info)
                     continue;
-                SearchRequest searchReq = Client.SearchAll(info.OfflineMode);
-                m_requestJobs.Add(new RequestJob<PackageInfo[]>(searchReq,info.OnSuccessAction,info.OnFailAction));
+                SearchRequest searchReq = Client.SearchAll(info.m_offlineMode);
+                m_requestJobs.Add(new RequestJob<PackageInfo[]>(searchReq,info.m_onSuccessAction,info.m_onFailAction));
             }
             m_pendingSearchAllRequests.Clear();
         }
@@ -205,8 +205,8 @@ public static class RequestJobManager
     static readonly Queue<SearchRequestInfo>  m_pendingSearchRequests = new Queue<SearchRequestInfo>();
     static readonly Queue<SearchAllRequestInfo>  m_pendingSearchAllRequests = new Queue<SearchAllRequestInfo>();
 
-    static readonly System.Collections.Generic.HashSet<IRequestJob> m_requestJobs = new HashSet<IRequestJob>();
-    static readonly System.Collections.Generic.List<IRequestJob> m_jobsToDelete = new List<IRequestJob>();
+    static readonly HashSet<IRequestJob> m_requestJobs = new HashSet<IRequestJob>();
+    static readonly List<IRequestJob> m_jobsToDelete = new List<IRequestJob>();
 
 }
 

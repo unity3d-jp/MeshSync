@@ -22,17 +22,16 @@ internal class RequestJob : IRequestJob  {
             return StatusCode.Failure;
         }
 
-        if (m_request.IsCompleted) {
-            if (StatusCode.Success == m_request.Status ) {
-                OnSuccess();          
-                return StatusCode.Success;
-            } else {
-                OnFail();          
-                return StatusCode.Failure;
-            }
+        if (!m_request.IsCompleted) 
+            return StatusCode.InProgress;
+        
+        if (StatusCode.Success == m_request.Status ) {
+            OnSuccess();          
+            return StatusCode.Success;
+        } else {
+            OnFail();          
+            return StatusCode.Failure;
         }
-
-        return StatusCode.InProgress;
 
     }
 
@@ -40,24 +39,18 @@ internal class RequestJob : IRequestJob  {
 
 
     void OnSuccess() {
-        if (null==m_onSuccess)
-            return;
-
-        m_onSuccess();
+        m_onSuccess?.Invoke();
     }
 
 //---------------------------------------------------------------------------------------------------------------------
 
     void OnFail() {
-        if (null==m_onFail)
-            return;
-
-        m_onFail();
+        m_onFail?.Invoke();
     }
 
-    Request m_request;
-    Action m_onSuccess;
-    Action m_onFail;
+    readonly Request m_request;
+    readonly Action m_onSuccess;
+    readonly Action m_onFail;
 } //end RequestJob (non-generics version)
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -80,17 +73,16 @@ internal class RequestJob<T> : IRequestJob  {
             return StatusCode.Failure;
         }
 
-        if (m_request.IsCompleted) {
-            if (StatusCode.Success == m_request.Status ) {
-                OnSuccess();          
-                return StatusCode.Success;
-            } else {
-                OnFail();          
-                return StatusCode.Failure;
-            }
-        }
+        if (!m_request.IsCompleted) 
+            return StatusCode.InProgress;
 
-        return StatusCode.InProgress;
+        if (StatusCode.Success == m_request.Status ) {
+            OnSuccess();          
+            return StatusCode.Success;
+        } else {
+            OnFail();          
+            return StatusCode.Failure;
+        }
 
     }
 
@@ -98,26 +90,20 @@ internal class RequestJob<T> : IRequestJob  {
 
 
     void OnSuccess() {
-        if (null==m_onSuccess)
-            return;
-
-        m_onSuccess(m_request);
+        m_onSuccess?.Invoke(m_request);
     }
 
 //---------------------------------------------------------------------------------------------------------------------
 
     void OnFail() {
-        if (null==m_onFail)
-            return;
-
-        m_onFail(m_request);
+        m_onFail?.Invoke(m_request);
     }
 
 //---------------------------------------------------------------------------------------------------------------------
 
-    Request<T> m_request;
-    Action<Request<T>> m_onSuccess;
-    Action<Request<T>> m_onFail;
+    readonly Request<T> m_request;
+    readonly Action<Request<T>> m_onSuccess;
+    readonly Action<Request<T>> m_onFail;
 }
 
 } //Unity.AnimeToolbox
