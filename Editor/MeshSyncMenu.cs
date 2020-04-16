@@ -146,7 +146,7 @@ public static class MeshSyncMenu  {
         //Sample link;
         //https://github.com/Unity-Technologies/MeshSyncDCCPlugin/releases/download/0.0.3-preview/UnityMeshSync_0.0.3-preview_3DSMAX_Windows.zip
         internal DCCPluginDownloadInfo(string version, string pluginName, string destFolder) {
-            URL = "https://github.com/Unity-Technologies/MeshSyncDCCPlugin/releases/download/" 
+            URL = "https://github.com/Unity-Technologies/MeshSyncDCCPlugins/releases/download/" 
                    + version + "/UnityMeshSync_" + version + "_" + pluginName;
             FilePath =  Path.Combine(destFolder,Path.GetFileName(URL));
             
