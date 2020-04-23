@@ -2,6 +2,6 @@
     
     <!-- Button and label -->
     <Button class="toolbar-button">
-        <Label class="toolbar-button-label"/>
+        <Label class="label"/>
     </Button>
 </UXML>
