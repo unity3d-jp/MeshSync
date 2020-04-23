@@ -46,46 +46,81 @@ class MeshSyncSettingsProvider : SettingsProvider {
 
 	private static int temp = 0;
 
+	private void DoSomething(VisualElement element) {
+		
+	}
 	
-	public MeshSyncSettingsProvider(string path, SettingsScope scope = SettingsScope.Project) : base(path,scope) {
+	MeshSyncSettingsProvider(string path, SettingsScope scope = SettingsScope.Project) : base(path,scope) {
 		// activateHandler is called when the user clicks on the Settings item in the Settings window.
-		activateHandler = (searchContext, rootElement) =>
-		{
+		activateHandler = (searchContext, rootElement) => {
 			m_rootElement = rootElement;
-			var settings = MyCustomSettings.GetSerializedSettings();
+			
+			// Loads and clones our VisualTree (eg. our UXML structure) inside the root.
+			VisualTreeAsset projectSettingsElement = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(
+				Path.Combine(UIELEMENTS_PATH,"ProjectSettings_Main.uxml")
+			);
+			projectSettingsElement.CloneTree(m_rootElement);
 
-			// rootElement is a VisualElement. If you add any children to it, the OnGUI function
-			// isn't called because the SettingsProvider uses the UIElements drawing framework.
-			//var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Editor/settings_ui.uss");
-			//rootElement.styleSheets.Add(styleSheet);
-			var title = new Label() {
-				text = "Custom UI Elements"
-			};
-			title.AddToClassList("title");
-			title.RegisterCallback<MouseDownEvent>(OnMouseDownEvent);
+			UQueryBuilder<VisualElement> container = m_rootElement.Query<VisualElement>("ToolbarContainer");
+			VisualElement asu = container.First();
+			Debug.Log("Asu: " + asu);
+			
+			//Add toolbar buttons
+			VisualTreeAsset toolbarButtonTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(
+				Path.Combine(UIELEMENTS_PATH,"ToolbarButtonTemplate.uxml")
+			);
+			
+			Debug.Log("ToolbarButton: " + toolbarButtonTemplate);
 
-			rootElement.Add(title);
 
-			var properties = new VisualElement() {
-				style = {
-					flexDirection = FlexDirection.Column
-				}
-			};
-			properties.AddToClassList("property-list");
-			rootElement.Add(properties);
+			TemplateContainer myButton = toolbarButtonTemplate.CloneTree();
+			Label myButtonLabel = myButton.Query<Label>().First();
+			myButtonLabel.text = "General Settings";
+			
+			asu.Add(myButton);
+			asu.Add(toolbarButtonTemplate.CloneTree());
+			asu.Add(toolbarButtonTemplate.CloneTree());
+			
 
-			var tf = new TextField() {
-				value = settings.FindProperty("m_SomeString").stringValue
-			};
-			tf.AddToClassList("property-value");
-			properties.Add(tf);
+			//Style
+			StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
+				Path.Combine(UIELEMENTS_PATH,"ProjectSettings_Style.uss")
+			);
+
+			m_rootElement.styleSheets.Add(styleSheet);
+			
+			// var settings = MyCustomSettings.GetSerializedSettings();
+			//
+			// // rootElement is a VisualElement. If you add any children to it, the OnGUI function
+			// // isn't called because the SettingsProvider uses the UIElements drawing framework.
+			// //var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Editor/settings_ui.uss");
+			// //rootElement.styleSheets.Add(styleSheet);
+			// var title = new Label() {
+			// 	text = "Custom UI Elements"
+			// };
+			// title.AddToClassList("title");
+			// title.RegisterCallback<MouseDownEvent>(OnMouseDownEvent);
+			//
+			// rootElement.Add(title);
+			//
+			// var properties = new VisualElement() {
+			// 	style = {
+			// 		flexDirection = FlexDirection.Column
+			// 	}
+			// };
+			// properties.AddToClassList("property-list");
+			// rootElement.Add(properties);
+			//
+			// var tf = new TextField() {
+			// 	value = settings.FindProperty("m_SomeString").stringValue
+			// };
+			// tf.AddToClassList("property-value");
+			// properties.Add(tf);
 		};
 
 		// Populate the search keywords to enable smart search filtering and label highlighting:
 		keywords = new HashSet<string>(new[] {"Number", "Some String"});
 		
-		Debug.Log("In constructor. Hello");
-
 	}
 
 	
@@ -117,6 +152,10 @@ class MeshSyncSettingsProvider : SettingsProvider {
 	    MeshSyncSettingsProvider provider = new MeshSyncSettingsProvider("Project/MeshSync", SettingsScope.Project);
 	    return provider;
     }
+    
+//----------------------------------------------------------------------------------------------------------------------
+
+	private const string UIELEMENTS_PATH = "Packages/com.unity.meshsync/Editor/UIElements/ProjectSettings";
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -153,6 +192,12 @@ class MeshSyncSettingsProvider : SettingsProvider {
 	// 				m_execTab.OnGUI ();
 	// 				break;
 	// 		}
+	
+	
+	
+	
+	
+	
 	// 	}
 	// 	
 	// 	
