@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using Unity.AnimeToolbox;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -40,55 +40,47 @@ class MyCustomSettings : ScriptableObject
 }
 
 
-// Register a SettingsProvider using UIElements for the drawing framework:
 class MeshSyncSettingsProvider : SettingsProvider {
-	private static VisualElement m_rootElement;
-
-	private static int temp = 0;
 
 	private void DoSomething(VisualElement element) {
 		
 	}
 	
-	MeshSyncSettingsProvider(string path, SettingsScope scope = SettingsScope.Project) : base(path,scope) {
-		// activateHandler is called when the user clicks on the Settings item in the Settings window.
-		activateHandler = (searchContext, rootElement) => {
-			m_rootElement = rootElement;
+	MeshSyncSettingsProvider() : base(PROJECT_SETTINGS_MENU_PATH,SettingsScope.Project) {
+
+		//activateHandler is called when the user clicks on the Settings item in the Settings window.
+		activateHandler = (string searchContext, VisualElement rootElement) => {
+
+			var rootElement1 = rootElement;
 			
-			// Loads and clones our VisualTree (eg. our UXML structure) inside the root.
-			VisualTreeAsset projectSettingsElement = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(
-				Path.Combine(UIELEMENTS_PATH,"ProjectSettings_Main.uxml")
+			//Main Tree
+			VisualTreeAsset main = UIElementsEditorUtility.LoadVisualTreeAsset(
+				Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "ProjectSettings_Main")
 			);
-			projectSettingsElement.CloneTree(m_rootElement);
+			main.CloneTree(rootElement1);
 
-			UQueryBuilder<VisualElement> container = m_rootElement.Query<VisualElement>("ToolbarContainer");
-			VisualElement asu = container.First();
-			Debug.Log("Asu: " + asu);
-			
-			//Add toolbar buttons
-			VisualTreeAsset toolbarButtonTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(
-				Path.Combine(UIELEMENTS_PATH,"ToolbarButtonTemplate.uxml")
+
+			//Buttons
+			VisualElement toolbarContainer = rootElement1.Query<VisualElement>("ToolbarContainer");
+			VisualTreeAsset toolbarButtonTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
+				Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "ToolbarButtonTemplate")
 			);
 			
-			Debug.Log("ToolbarButton: " + toolbarButtonTemplate);
-
-
-			TemplateContainer myButton = toolbarButtonTemplate.CloneTree();
-			Label myButtonLabel = myButton.Query<Label>().First();
-			myButtonLabel.text = "General Settings";
 			
-			asu.Add(myButton);
-			asu.Add(toolbarButtonTemplate.CloneTree());
-			asu.Add(toolbarButtonTemplate.CloneTree());
+			toolbarContainer.Add(CreateButton(toolbarButtonTemplate, "General Settings", OnGeneralSettingsTabMouseDown));
+			toolbarContainer.Add(CreateButton(toolbarButtonTemplate, "DCC Tools", OnDCCToolsTabMouseDown));
 			
 
 			//Style
-			StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
-				Path.Combine(UIELEMENTS_PATH,"ProjectSettings_Style.uss")
+			UIElementsEditorUtility.LoadAndAddStyle(
+				rootElement1.styleSheets,
+				Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH,"ProjectSettings_Style")
 			);
 
-			m_rootElement.styleSheets.Add(styleSheet);
-			
+			m_content = rootElement1.Query<VisualElement>("Content");
+			RefreshContent();
+
+
 			// var settings = MyCustomSettings.GetSerializedSettings();
 			//
 			// // rootElement is a VisualElement. If you add any children to it, the OnGUI function
@@ -122,40 +114,80 @@ class MeshSyncSettingsProvider : SettingsProvider {
 		keywords = new HashSet<string>(new[] {"Number", "Some String"});
 		
 	}
-
 	
-	static void OnMouseDownEvent(MouseEventBase<MouseDownEvent> evt)
+//----------------------------------------------------------------------------------------------------------------------	
+
+	private ProjectSettingsTab GetSelectedTab() { return m_selectedTab; } 
+
+//----------------------------------------------------------------------------------------------------------------------	
+	private TemplateContainer CreateButton(VisualTreeAsset template, string labelText, 
+		EventCallback<MouseEventBase<MouseDownEvent>> mouseDownEvent) 
 	{
-		Debug.Log("Mouse Down " + evt + " in " + evt.propagationPhase + " for target " + evt.target);
-		Debug.Log("RootElement: " + m_rootElement);
-		
-		
-		var title = new Label()
-		{
-			text = "Custom UI Elements"
-		};
-		title.AddToClassList("title");
-		m_rootElement.Add(title);
-		++temp;
+		TemplateContainer button = template.CloneTree();
+		Label buttonLabel = button.Query<Label>().First();
+		buttonLabel.text = labelText;
+		buttonLabel.RegisterCallback<MouseDownEvent>(mouseDownEvent);
+		return button;
+	}
+	
+//----------------------------------------------------------------------------------------------------------------------	
 
-		if (temp >= 5) {
-			m_rootElement.Clear();
-		}
+	#region Button Events
+	
+	static void OnGeneralSettingsTabMouseDown(MouseEventBase<MouseDownEvent> evt) {
+		if (ProjectSettingsTab.GENERAL_SETTINGS == m_settingsProvider.GetSelectedTab())
+			return;
+		
+		m_settingsProvider.SetTab(ProjectSettingsTab.GENERAL_SETTINGS);
+	}
 
-	}	
+	static void OnDCCToolsTabMouseDown(MouseEventBase<MouseDownEvent> evt) {
+		if (ProjectSettingsTab.DCC_TOOLS == m_settingsProvider.GetSelectedTab())
+			return;
+		
+		m_settingsProvider.SetTab(ProjectSettingsTab.DCC_TOOLS);
+	}
+	#endregion	
+
+//----------------------------------------------------------------------------------------------------------------------
+	
+	private void SetTab(ProjectSettingsTab tab) {
+		m_selectedTab = tab;
+		RefreshContent();
+	}
+	
+//----------------------------------------------------------------------------------------------------------------------
+	
+	private void RefreshContent() {
+		m_content.Clear();
+		switch (m_selectedTab) {
+			case ProjectSettingsTab.GENERAL_SETTINGS:
+				m_content.Add(new Label("General Settings Content"));
+				break;
+			case ProjectSettingsTab.DCC_TOOLS :
+				m_content.Add(new Label("DCC Tools Content"));
+				break;
+		}	
+	}
 	
 	
 //----------------------------------------------------------------------------------------------------------------------
 
     [SettingsProvider]
     public static SettingsProvider CreateMeshSyncSettingsProvider() {
-	    MeshSyncSettingsProvider provider = new MeshSyncSettingsProvider("Project/MeshSync", SettingsScope.Project);
-	    return provider;
+	    m_settingsProvider = new MeshSyncSettingsProvider();
+	    return m_settingsProvider;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
 
-	private const string UIELEMENTS_PATH = "Packages/com.unity.meshsync/Editor/UIElements/ProjectSettings";
+	private ProjectSettingsTab m_selectedTab = ProjectSettingsTab.DCC_TOOLS;
+	private VisualElement m_content = null;
+
+	private static MeshSyncSettingsProvider m_settingsProvider = null;
+
+	private const string PROJECT_SETTINGS_MENU_PATH = "Project/MeshSync";
+	private const string PROJECT_SETTINGS_UIELEMENTS_PATH = "Packages/com.unity.meshsync/Editor/UIElements/ProjectSettings";
 }
 
 //----------------------------------------------------------------------------------------------------------------------
