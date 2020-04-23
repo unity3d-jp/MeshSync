@@ -1,11 +1,13 @@
 {
   "dependencies": {
     "com.unity.animation.rigging": "0.1.4-preview",
+    "com.unity.assetgraph": "1.6.0-preview",
     "com.unity.collab-proxy": "1.2.16",
     "com.unity.ext.nunit": "1.0.0",
     "com.unity.formats.fbx": "2.0.1-preview.11",
     "com.unity.ide.rider": "1.1.4",
     "com.unity.ide.vscode": "1.1.4",
+    "com.unity.inputsystem": "1.0.0-preview.7",
     "com.unity.package-validation-suite": "0.8.1-preview",
     "com.unity.quicksearch": "1.5.2",
     "com.unity.test-framework": "1.1.13",
