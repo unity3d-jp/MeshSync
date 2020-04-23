@@ -1,0 +1,19 @@
+
+.toolbar-container {
+    -unity-text-align: middle-center;
+    justify-content: center;    
+    /* Populates the elements in this container horizontally. */
+    flex-direction: row;
+    /* Makes the content of the container wrap when resized. */
+    flex-wrap: wrap;
+}
+
+.toolbar-button {
+    width: 50px;
+    height: 50px;
+    /* Style rule that aligns items on the horizontal axis. */
+    align-items: flex-start;
+    /* Style rule that aligns items on the vertical axis. */
+    justify-content: center;
+}
+

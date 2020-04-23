@@ -1,0 +1,7 @@
+<UXML xmlns="UnityEngine.UIElements">
+    
+    <!-- Button and label -->
+    <Button class="toolbar-button">
+        <Label class="toolbar-button-label"/>
+    </Button>
+</UXML>

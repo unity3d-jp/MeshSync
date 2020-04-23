@@ -1,0 +1,6 @@
+<UXML xmlns="UnityEngine.UIElements">
+    <!-- Toolbar buttons will be created here in code. -->
+    <VisualElement name="ToolbarContainer" class="toolbar-container">
+        <Label text="Hello World! From UXML" />
+    </VisualElement>
+</UXML>
