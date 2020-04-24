@@ -10,7 +10,7 @@
 /*-------------------------------------------- Toolbar Buttons ------------------------------------------------------ */
 
 
-.toolbar-container {
+.tabs-container {
     -unity-text-align: middle-center;
     justify-content: center;    
     /* Populates the elements in this container horizontally. */
@@ -19,7 +19,7 @@
     flex-wrap: wrap;
 }
 
-.toolbar-button {
+.tab-button {
     width:  150px;
     height:  30px;
     margin:   0;
@@ -30,7 +30,7 @@
     justify-content: center;
 }
 
-.toolbar-button .label {
+.tab-button .label {
     width: 150px;
     -unity-text-align: middle-center;
 }

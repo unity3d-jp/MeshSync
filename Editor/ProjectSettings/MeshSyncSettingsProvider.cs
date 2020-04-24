@@ -47,7 +47,6 @@ class MeshSyncSettingsProvider : SettingsProvider {
 		m_tabs[MeshSyncEditorConstants.GENERAL_SETTINGS_TAB] = new GeneralSettingsTab();
 		m_tabs[MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_TAB] = new DCCToolsSettingsTab();
 		
-
 		//activateHandler is called when the user clicks on the Settings item in the Settings window.
 		activateHandler = (string searchContext, VisualElement rootElement) => {
 
@@ -61,7 +60,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 
 
 			//Buttons
-			VisualElement toolbarContainer = rootElement1.Query<VisualElement>("ToolbarContainer");
+			VisualElement toolbarContainer = rootElement1.Query<VisualElement>("TabsContainer");
 			VisualTreeAsset toolbarButtonTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
 				Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "ToolbarButtonTemplate")
 			);
