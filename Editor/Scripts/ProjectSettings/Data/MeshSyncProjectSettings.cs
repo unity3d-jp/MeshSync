@@ -30,9 +30,7 @@ internal class MeshSyncProjectSettings {
             settings.AddDCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2019");
             settings.AddDCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020");
 
-            Directory.CreateDirectory(Path.GetDirectoryName(path));
-            string json = JsonUtility.ToJson(settings);
-            File.WriteAllText(path, json);
+            settings.Save();
             
         }
         return settings;
@@ -46,10 +44,18 @@ internal class MeshSyncProjectSettings {
             Version = version,
         });
 
+        Save();
+        
         //[TODO-sin: 2020-4-20] Should return if successfully added or not
         return true;
     }
 
+    void Save() {
+        Directory.CreateDirectory(Path.GetDirectoryName(MESHSYNC_PROJECT_SETTINGS_PATH));
+        string json = JsonUtility.ToJson(this);
+        File.WriteAllText(MESHSYNC_PROJECT_SETTINGS_PATH, json);
+        
+    }
 //----------------------------------------------------------------------------------------------------------------------
 
     internal IList<DCCToolInfo> GetDCCToolInfos() { return m_dccToolInfoList; }
