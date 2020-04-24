@@ -62,7 +62,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 			//Buttons
 			VisualElement toolbarContainer = rootElement1.Query<VisualElement>("TabsContainer");
 			VisualTreeAsset toolbarButtonTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
-				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "ToolbarButtonTemplate")
+				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "TabButtonTemplate")
 			);
 			
 			
