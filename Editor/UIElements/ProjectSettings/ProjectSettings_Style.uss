@@ -7,7 +7,7 @@
 }
 
 
-/*-------------------------------------------- Toolbar Buttons ------------------------------------------------------ */
+/*----------------------------------------------- Tabs Buttons ------------------------------------------------------ */
 
 
 .tabs-container {
@@ -34,3 +34,52 @@
     width: 150px;
     -unity-text-align: middle-center;
 }
+
+/*----------------------------------------------- DCC Tool Info ----------------------------------------------------- */
+
+.dcc-tool-info-container {
+    -unity-text-align: middle-center;
+    justify-content: center;
+    flex-direction: row;
+    width: auto;
+    background-color: #505050;
+    margin: 30px;
+    height: 150px;
+    flex-wrap: nowrap;
+}
+
+.dcc-tool-info-container .image-container {
+    background-color: #FF0000;
+    width:  50px;
+    height: 50px;
+    flex-wrap: nowrap;
+    flex-grow:0;
+}
+
+.dcc-tool-info-container .text-container {
+    background-color: #00FF00;
+    width: auto;
+    -unity-text-align: middle-left;
+    justify-content: center;
+
+    /* Populates the elements in this container horizontally. */
+    flex-direction: column;
+    flex-grow:1;
+    
+    
+    flex-wrap: nowrap;
+}
+
+.dcc-tool-info-container .buttons-container {
+    background-color: #0000FF;
+    width: 100px;
+
+    flex-direction: column-reverse;
+    flex-wrap: nowrap;
+    flex-grow:0;
+}
+
+
+
+
+

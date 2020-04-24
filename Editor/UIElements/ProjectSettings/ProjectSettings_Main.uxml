@@ -5,7 +5,10 @@
     <!-- Toolbar buttons will be created here in code. -->
     <VisualElement name="TabsContainer" class="tabs-container">
     </VisualElement>
-    <VisualElement name="Content">
-    </VisualElement>
+    
+    <ScrollView show-vertical-scroller="true">
+        <VisualElement name="Content">
+        </VisualElement>
+    </ScrollView>
     
 </UXML>
