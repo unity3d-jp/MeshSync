@@ -9,7 +9,7 @@ using UnityEngine.UIElements;
 
 
 namespace UnityEditor.MeshSync {
-	public class DCCToolsTab {
+	public class DCCToolsSettingsTab {
 
 
         internal class Styles
@@ -39,7 +39,7 @@ namespace UnityEditor.MeshSync {
         }
 
 
-        public DCCToolsTab() {
+        public DCCToolsSettingsTab() {
         }
 
         internal void AddVisualElements(VisualElement root) {
