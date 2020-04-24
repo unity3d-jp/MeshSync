@@ -1,9 +1,8 @@
 
 .header {
     margin-left:       10px;      
-    font-size:         20;
+    font-size:         20px;
     -unity-font-style: bold;
-    
 }
 
 
@@ -15,8 +14,12 @@
     justify-content: center;    
     /* Populates the elements in this container horizontally. */
     flex-direction: row;
-    /* Makes the content of the container wrap when resized. */
-    flex-wrap: wrap;
+
+    height: 30px;
+
+    flex-shrink:0;
+    margin-bottom: 10px;
+    
 }
 
 .tab-button {
@@ -43,9 +46,8 @@
     flex-direction: row;
     width: auto;
     background-color: #505050;
-    margin: 30px;
+    margin: 10px;
     height: 150px;
-    flex-wrap: nowrap;
 }
 
 .dcc-tool-info-container .image-container {
@@ -62,7 +64,6 @@
     -unity-text-align: middle-left;
     justify-content: center;
 
-    /* Populates the elements in this container horizontally. */
     flex-direction: column;
     flex-grow:1;
     

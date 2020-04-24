@@ -22,26 +22,46 @@ namespace UnityEditor.MeshSync {
 
         public DCCToolsSettingsTab() {
             
-            m_dccToolInfoTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
-                Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "DCCToolInfoTemplate")
-            );
             
         }
 
 //----------------------------------------------------------------------------------------------------------------------        
         public void Setup(VisualElement root) {
+
+            VisualTreeAsset container = UIElementsEditorUtility.LoadVisualTreeAsset(
+                Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "DCCToolsSettingsTab")
+            );
             
-            root.Add(m_dccToolInfoTemplate.CloneTree());
-            root.Add(m_dccToolInfoTemplate.CloneTree());
-            root.Add(m_dccToolInfoTemplate.CloneTree());
-            root.Add(m_dccToolInfoTemplate.CloneTree());
-            root.Add(m_dccToolInfoTemplate.CloneTree());
+            VisualTreeAsset dccToolInfoTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
+                Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "DCCToolInfoTemplate")
+            );
+
+            TemplateContainer containerInstance = container.CloneTree();
+            ScrollView scrollView = containerInstance.Query<ScrollView>().First();
+
+            //[TODO-sin: 2020-4-24] Auto detect installed DCC tools + check MeshSync status
+            scrollView.Add(dccToolInfoTemplate.CloneTree());
+            scrollView.Add(dccToolInfoTemplate.CloneTree());
+            scrollView.Add(dccToolInfoTemplate.CloneTree());
+            scrollView.Add(dccToolInfoTemplate.CloneTree());
+            scrollView.Add(dccToolInfoTemplate.CloneTree());
             
+            Button addDCCToolButton = containerInstance.Query<Button>("AddDCCToolButton").First();
+            addDCCToolButton.RegisterCallback<MouseDownEvent>(OnAddDCCToolButtonMouseDown);
+
+            
+            //Add the container of this tab to root
+            root.Add(containerInstance);
         }
         
 //----------------------------------------------------------------------------------------------------------------------        
+        
+        static void OnAddDCCToolButtonMouseDown(MouseEventBase<MouseDownEvent> evt) {
+            Debug.Log("Adding DCC Tool");
+        }
+        
 
-        private readonly VisualTreeAsset m_dccToolInfoTemplate = null;
 
     }
-}
+    
+} //end namespace

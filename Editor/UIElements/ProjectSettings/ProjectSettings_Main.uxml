@@ -6,9 +6,7 @@
     <VisualElement name="TabsContainer" class="tabs-container">
     </VisualElement>
     
-    <ScrollView show-vertical-scroller="true">
-        <VisualElement name="Content">
-        </VisualElement>
-    </ScrollView>
+    <VisualElement name="Content">
+    </VisualElement>
     
 </UXML>
