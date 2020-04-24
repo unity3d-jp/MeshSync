@@ -80,6 +80,10 @@ class MeshSyncSettingsProvider : SettingsProvider {
 			SetupTab(MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_TAB);
 
 		};
+		
+		deactivateHandler = () => {
+			m_selectedTab = MeshSyncEditorConstants.UNINITIALIZED_TAB;
+		};
 
 		//TODO-sin: 2020-4-24 Fill in more keywords
 		keywords = new HashSet<string>(new[] {
