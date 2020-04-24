@@ -3,12 +3,9 @@
     <ScrollView name="DCCToolsScrollView" show-vertical-scroller="true">
     </ScrollView>
     
-    <Button name="AddDCCToolButton" text="+"/>
-    
+    <Button name="AddDCCToolButton" text="+" class="add-dcc-tool-button"/>
     
     <!--    <Button name="CheckForUpdatesButton" text="Check for Updates"/> */ -->
-        
-        
         
         
 </UXML>
