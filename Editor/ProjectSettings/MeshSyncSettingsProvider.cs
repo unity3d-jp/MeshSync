@@ -1,7 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Unity.AnimeToolbox;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -44,6 +44,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 
 	MeshSyncSettingsProvider() : base(PROJECT_SETTINGS_MENU_PATH,SettingsScope.Project) {
 		m_tabs = new IMeshSyncSettingsTab[MeshSyncEditorConstants.MAX_SETTINGS_TAB];
+		m_tabButtons = new Button[MeshSyncEditorConstants.MAX_SETTINGS_TAB];		
 		m_tabs[MeshSyncEditorConstants.GENERAL_SETTINGS_TAB] = new GeneralSettingsTab();
 		m_tabs[MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_TAB] = new DCCToolsSettingsTab();
 		
@@ -59,17 +60,19 @@ class MeshSyncSettingsProvider : SettingsProvider {
 			main.CloneTree(rootElement1);
 
 
-			//Buttons
-			VisualElement toolbarContainer = rootElement1.Query<VisualElement>("TabsContainer");
-			VisualTreeAsset toolbarButtonTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
+			//Tab Buttons
+			VisualElement tabsContainer = rootElement1.Query<VisualElement>("TabsContainer");
+			VisualTreeAsset tabButtonTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
 				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "TabButtonTemplate")
 			);
-			
-			
-			toolbarContainer.Add(CreateButton(toolbarButtonTemplate, "General Settings", OnGeneralSettingsTabMouseDown));
-			toolbarContainer.Add(CreateButton(toolbarButtonTemplate, "DCC Tools", OnDCCToolsTabMouseDown));
-			
 
+			m_tabButtons[0] = CreateButton(tabButtonTemplate, "General Settings", OnGeneralSettingsTabClicked);
+			m_tabButtons[1] = CreateButton(tabButtonTemplate, "DCC Tools", OnDCCToolsTabClicked);
+
+			foreach (Button tabButton in m_tabButtons) {
+				tabsContainer.Add(tabButton);
+			}
+			
 			//Style
 			UIElementsEditorUtility.LoadAndAddStyle(
 				rootElement1.styleSheets,
@@ -78,11 +81,11 @@ class MeshSyncSettingsProvider : SettingsProvider {
 
 			m_content = rootElement1.Query<VisualElement>("Content");
 			SetupTab(MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_TAB);
-
+			
 		};
 		
 		deactivateHandler = () => {
-			m_selectedTab = MeshSyncEditorConstants.UNINITIALIZED_TAB;
+			SetupTab(MeshSyncEditorConstants.UNINITIALIZED_TAB);
 		};
 
 		//TODO-sin: 2020-4-24 Fill in more keywords
@@ -91,19 +94,17 @@ class MeshSyncSettingsProvider : SettingsProvider {
 		});
 		
 	}
-	
-//----------------------------------------------------------------------------------------------------------------------	
 
-	private int GetSelectedTab() { return m_selectedTab; } 
 
 //----------------------------------------------------------------------------------------------------------------------	
-	private TemplateContainer CreateButton(VisualTreeAsset template, string labelText, 
-		EventCallback<MouseEventBase<MouseDownEvent>> mouseDownEvent) 
+	private Button CreateButton(VisualTreeAsset template, string labelText, Action onClicked) 
 	{
-		TemplateContainer button = template.CloneTree();
-		Label buttonLabel = button.Query<Label>().First();
-		buttonLabel.text = labelText;
-		buttonLabel.RegisterCallback<MouseDownEvent>(mouseDownEvent);
+		TemplateContainer container = template.CloneTree();
+		Button button = container.Query<Button>().First();
+
+		button.text = labelText;
+		button.clickable.clicked += onClicked;
+		
 		return button;
 	}
 	
@@ -111,11 +112,11 @@ class MeshSyncSettingsProvider : SettingsProvider {
 
 	#region Button Events
 	
-	static void OnGeneralSettingsTabMouseDown(MouseEventBase<MouseDownEvent> evt) {
+	static void OnGeneralSettingsTabClicked() {
 		m_settingsProvider.SetupTab(MeshSyncEditorConstants.GENERAL_SETTINGS_TAB);
 	}
 
-	static void OnDCCToolsTabMouseDown(MouseEventBase<MouseDownEvent> evt) {
+	static void OnDCCToolsTabClicked() {
 		m_settingsProvider.SetupTab(MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_TAB);
 	}
 	#endregion	
@@ -125,15 +126,26 @@ class MeshSyncSettingsProvider : SettingsProvider {
 	private void SetupTab(int tab) {
 		if (tab == m_selectedTab)
 			return;
+
+		const string ACTIVE_TAB_BUTTON_CLASS = "tab-button-active";
+		
+		m_selectedTabButton?.ToggleInClassList(ACTIVE_TAB_BUTTON_CLASS); //Deactivate the previous one
 		
 		m_selectedTab = tab;
-		
 		m_content.Clear();
+
+		if (MeshSyncEditorConstants.UNINITIALIZED_TAB == m_selectedTab) {
+			m_selectedTabButton = null;
+			return;
+		}
+		
+		//Activate the selected tab button
+		m_selectedTabButton = m_tabButtons[m_selectedTab];
+		m_selectedTabButton.ToggleInClassList(ACTIVE_TAB_BUTTON_CLASS); 
+		
 		m_tabs[m_selectedTab].Setup(m_content);
 		
 	}
-	
-	
 //----------------------------------------------------------------------------------------------------------------------
 
     [SettingsProvider]
@@ -145,8 +157,10 @@ class MeshSyncSettingsProvider : SettingsProvider {
 //----------------------------------------------------------------------------------------------------------------------
 
 	private int m_selectedTab = MeshSyncEditorConstants.UNINITIALIZED_TAB;
-	private IMeshSyncSettingsTab[] m_tabs = null;
-	
+	private readonly IMeshSyncSettingsTab[] m_tabs = null;
+	private Button m_selectedTabButton = null;
+	private readonly Button[] m_tabButtons = null;
+
 	private VisualElement m_content = null;
 
 	private static MeshSyncSettingsProvider m_settingsProvider = null;

@@ -26,6 +26,7 @@
     width:  150px;
     height:  30px;
     margin:   0;
+    background-color: #505050;
 
     /* Style rule that aligns items on the horizontal axis. */
     align-items: flex-start;
@@ -33,10 +34,11 @@
     justify-content: center;
 }
 
-.tab-button .label {
-    width: 150px;
-    -unity-text-align: middle-center;
+.tab-button-active {
+    background-color: #808080;
 }
+
+
 
 /*----------------------------------------------- DCC Tool Info ----------------------------------------------------- */
 
