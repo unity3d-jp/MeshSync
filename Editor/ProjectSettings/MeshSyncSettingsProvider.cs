@@ -54,7 +54,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 			
 			//Main Tree
 			VisualTreeAsset main = UIElementsEditorUtility.LoadVisualTreeAsset(
-				Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "ProjectSettings_Main")
+				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "ProjectSettings_Main")
 			);
 			main.CloneTree(rootElement1);
 
@@ -62,7 +62,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 			//Buttons
 			VisualElement toolbarContainer = rootElement1.Query<VisualElement>("TabsContainer");
 			VisualTreeAsset toolbarButtonTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
-				Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "ToolbarButtonTemplate")
+				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "ToolbarButtonTemplate")
 			);
 			
 			
@@ -73,7 +73,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 			//Style
 			UIElementsEditorUtility.LoadAndAddStyle(
 				rootElement1.styleSheets,
-				Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH,"ProjectSettings_Style")
+				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH,"ProjectSettings_Style")
 			);
 
 			m_content = rootElement1.Query<VisualElement>("Content");
@@ -148,7 +148,6 @@ class MeshSyncSettingsProvider : SettingsProvider {
 	private static MeshSyncSettingsProvider m_settingsProvider = null;
 
 	private const string PROJECT_SETTINGS_MENU_PATH = "Project/MeshSync";
-	private const string PROJECT_SETTINGS_UIELEMENTS_PATH = "Packages/com.unity.meshsync/Editor/UIElements/ProjectSettings";
 }
 
 	
