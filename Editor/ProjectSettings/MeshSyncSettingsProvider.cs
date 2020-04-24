@@ -42,11 +42,13 @@ class MyCustomSettings : ScriptableObject
 
 class MeshSyncSettingsProvider : SettingsProvider {
 
-	private void DoSomething(VisualElement element) {
-		
-	}
+	
 	
 	MeshSyncSettingsProvider() : base(PROJECT_SETTINGS_MENU_PATH,SettingsScope.Project) {
+		m_tabs = new IMeshSyncSettingsTab[MeshSyncEditorConstants.MAX_SETTINGS_TAB];
+		m_tabs[MeshSyncEditorConstants.GENERAL_SETTINGS_TAB] = new GeneralSettingsTab();
+		m_tabs[MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_TAB] = new DCCToolsSettingsTab();
+		
 
 		//activateHandler is called when the user clicks on the Settings item in the Settings window.
 		activateHandler = (string searchContext, VisualElement rootElement) => {
@@ -78,7 +80,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 			);
 
 			m_content = rootElement1.Query<VisualElement>("Content");
-			RefreshContent();
+			SetupTab(MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_TAB);
 
 
 			// var settings = MyCustomSettings.GetSerializedSettings();
@@ -117,7 +119,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 	
 //----------------------------------------------------------------------------------------------------------------------	
 
-	private ProjectSettingsTab GetSelectedTab() { return m_selectedTab; } 
+	private int GetSelectedTab() { return m_selectedTab; } 
 
 //----------------------------------------------------------------------------------------------------------------------	
 	private TemplateContainer CreateButton(VisualTreeAsset template, string labelText, 
@@ -135,39 +137,25 @@ class MeshSyncSettingsProvider : SettingsProvider {
 	#region Button Events
 	
 	static void OnGeneralSettingsTabMouseDown(MouseEventBase<MouseDownEvent> evt) {
-		if (ProjectSettingsTab.GENERAL_SETTINGS == m_settingsProvider.GetSelectedTab())
-			return;
-		
-		m_settingsProvider.SetTab(ProjectSettingsTab.GENERAL_SETTINGS);
+		m_settingsProvider.SetupTab(MeshSyncEditorConstants.GENERAL_SETTINGS_TAB);
 	}
 
 	static void OnDCCToolsTabMouseDown(MouseEventBase<MouseDownEvent> evt) {
-		if (ProjectSettingsTab.DCC_TOOLS == m_settingsProvider.GetSelectedTab())
-			return;
-		
-		m_settingsProvider.SetTab(ProjectSettingsTab.DCC_TOOLS);
+		m_settingsProvider.SetupTab(MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_TAB);
 	}
 	#endregion	
 
 //----------------------------------------------------------------------------------------------------------------------
 	
-	private void SetTab(ProjectSettingsTab tab) {
+	private void SetupTab(int tab) {
+		if (tab == m_selectedTab)
+			return;
+		
 		m_selectedTab = tab;
-		RefreshContent();
-	}
-	
-//----------------------------------------------------------------------------------------------------------------------
-	
-	private void RefreshContent() {
+		
 		m_content.Clear();
-		switch (m_selectedTab) {
-			case ProjectSettingsTab.GENERAL_SETTINGS:
-				m_content.Add(new Label("General Settings Content"));
-				break;
-			case ProjectSettingsTab.DCC_TOOLS :
-				m_content.Add(new Label("DCC Tools Content"));
-				break;
-		}	
+		m_tabs[m_selectedTab].Setup(m_content);
+		
 	}
 	
 	
@@ -181,7 +169,9 @@ class MeshSyncSettingsProvider : SettingsProvider {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-	private ProjectSettingsTab m_selectedTab = ProjectSettingsTab.DCC_TOOLS;
+	private int m_selectedTab = MeshSyncEditorConstants.UNINITIALIZED_TAB;
+	private IMeshSyncSettingsTab[] m_tabs = null;
+	
 	private VisualElement m_content = null;
 
 	private static MeshSyncSettingsProvider m_settingsProvider = null;
@@ -191,60 +181,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-
-	//
-	// class AssetGraphSettingsProvider : SettingsProvider
-	// {
-	// 	private AssetBundlesSettingsTab     m_abTab;
-	// 	private ExecutionOrderSettingsTab   m_execTab;
-	// 	private Mode m_mode;
-	//
-	// 	enum Mode : int {
-	// 		AssetBundleSettings,
-	// 		ExecutionOrderSettings
-	// 	}
-	// 	
-	// 	public AssetGraphSettingsProvider(string path, SettingsScope scope = SettingsScope.Project)
-	// 		: base(path, scope)
-	// 	{
-	// 		m_abTab = new AssetBundlesSettingsTab ();
-	// 		m_execTab = new ExecutionOrderSettingsTab ();
-	// 		m_mode = Mode.AssetBundleSettings;			
-	// 	}
-	//
-	// 	public override void OnGUI(string searchContext)
-	// 	{
-	// 		DrawToolBar ();
-	//
-	// 		switch (m_mode) {
-	// 			case Mode.AssetBundleSettings:
-	// 				m_abTab.OnGUI ();
-	// 				break;
-	// 			case Mode.ExecutionOrderSettings:
-	// 				m_execTab.OnGUI ();
-	// 				break;
-	// 		}
 	
-	
-	
-	
-	
-	
-	// 	}
-	// 	
-	// 	
-	// 	
-	// 	private void DrawToolBar() {
-	// 		GUILayout.BeginHorizontal();
-	// 		GUILayout.FlexibleSpace();
-	// 		float toolbarWidth = 300f;
-	// 		string[] labels = new string[] { "Asset Bundles", "Execution Order" };
-	// 		m_mode = (Mode)GUILayout.Toolbar((int)m_mode, labels, "LargeButton", GUILayout.Width(toolbarWidth) );
-	// 		GUILayout.FlexibleSpace();
-	// 		GUILayout.EndHorizontal();
-	// 		GUILayout.Space(8f);
-	// 	}
-	// 	
 	// 	class Styles
 	// 	{
 	// 		public static GUIContent number = new GUIContent("My Number");

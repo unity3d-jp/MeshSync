@@ -9,11 +9,10 @@ using UnityEngine.UIElements;
 
 
 namespace UnityEditor.MeshSync {
-	public class DCCToolsSettingsTab {
+	internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
 
 
-        internal class Styles
-        {
+        internal class Styles {
             public static readonly GUIContent defaultExecutionOrder = EditorGUIUtility.TrTextContent("Default Execution Order");
             public static readonly GUIContent executionOrderLabel = EditorGUIUtility.TrTextContent("AssetPostprocessor Graph Execution Order");
         }
@@ -42,7 +41,9 @@ namespace UnityEditor.MeshSync {
         public DCCToolsSettingsTab() {
         }
 
-        internal void AddVisualElements(VisualElement root) {
+//----------------------------------------------------------------------------------------------------------------------        
+        public void Setup(VisualElement root) {
+            root.Add(new Label("DCC Tools Settings Content"));
             
         }
         

@@ -1,9 +1,10 @@
 using UnityEditor;
 using System.IO;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.MeshSync {
-	public class GeneralSettingsTab {
+	internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 
         internal class Styles
         {
@@ -34,6 +35,12 @@ namespace UnityEditor.MeshSync {
         {
         }
 
+//----------------------------------------------------------------------------------------------------------------------        
+        public void Setup(VisualElement root) {
+            root.Add(new Label("General Settings Content"));
+            
+        }
+        
 
 	}
 }
