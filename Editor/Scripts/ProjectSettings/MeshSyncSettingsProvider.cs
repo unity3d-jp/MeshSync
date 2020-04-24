@@ -7,39 +7,6 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.MeshSync {
 	
-// Create a new type of Settings Asset.
-class MyCustomSettings : ScriptableObject
-{
-    public const string k_MyCustomSettingsPath = "Assets/Editor/MyCustomSettings.asset";
-
-    [SerializeField]
-    private int m_Number;
-
-    [SerializeField]
-    private string m_SomeString;
-
-    internal static MyCustomSettings GetOrCreateSettings()
-    {
-        var settings = AssetDatabase.LoadAssetAtPath<MyCustomSettings>(k_MyCustomSettingsPath);
-        if (settings == null)
-        {
-            settings = ScriptableObject.CreateInstance<MyCustomSettings>();
-            settings.m_Number = 42;
-            settings.m_SomeString = "The answer to the universe";
-            Directory.CreateDirectory(k_MyCustomSettingsPath);
-            AssetDatabase.CreateAsset(settings, k_MyCustomSettingsPath);
-            AssetDatabase.SaveAssets();
-        }
-        return settings;
-    }
-
-    internal static SerializedObject GetSerializedSettings()
-    {
-        return new SerializedObject(GetOrCreateSettings());
-    }
-}
-
-
 class MeshSyncSettingsProvider : SettingsProvider {
 
 	MeshSyncSettingsProvider() : base(PROJECT_SETTINGS_MENU_PATH,SettingsScope.Project) {
@@ -49,19 +16,18 @@ class MeshSyncSettingsProvider : SettingsProvider {
 		m_tabs[MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_TAB] = new DCCToolsSettingsTab();
 		
 		//activateHandler is called when the user clicks on the Settings item in the Settings window.
-		activateHandler = (string searchContext, VisualElement rootElement) => {
+		activateHandler = (string searchContext, VisualElement root) => {
 
-			var rootElement1 = rootElement;
 			
 			//Main Tree
 			VisualTreeAsset main = UIElementsEditorUtility.LoadVisualTreeAsset(
 				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "ProjectSettings_Main")
 			);
-			main.CloneTree(rootElement1);
+			main.CloneTree(root);
 
 
 			//Tab Buttons
-			VisualElement tabsContainer = rootElement1.Query<VisualElement>("TabsContainer");
+			VisualElement tabsContainer = root.Query<VisualElement>("TabsContainer");
 			VisualTreeAsset tabButtonTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
 				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "TabButtonTemplate")
 			);
@@ -75,11 +41,11 @@ class MeshSyncSettingsProvider : SettingsProvider {
 			
 			//Style
 			UIElementsEditorUtility.LoadAndAddStyle(
-				rootElement1.styleSheets,
+				root.styleSheets,
 				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH,"ProjectSettings_Style")
 			);
 
-			m_content = rootElement1.Query<VisualElement>("Content");
+			m_content = root.Query<VisualElement>("Content");
 			SetupTab(MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_TAB);
 			
 		};
@@ -149,7 +115,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 //----------------------------------------------------------------------------------------------------------------------
 
     [SettingsProvider]
-    public static SettingsProvider CreateMeshSyncSettingsProvider() {
+    internal static SettingsProvider CreateMeshSyncSettingsProvider() {
 	    m_settingsProvider = new MeshSyncSettingsProvider();
 	    return m_settingsProvider;
     }
