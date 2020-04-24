@@ -29,7 +29,7 @@ namespace UnityEditor.MeshSync {
         public void Setup(VisualElement root) {
 
             VisualTreeAsset container = UIElementsEditorUtility.LoadVisualTreeAsset(
-                Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "DCCToolsSettingsTab")
+                Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "DCCToolsSettings_Container")
             );
             
             VisualTreeAsset dccToolInfoTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
