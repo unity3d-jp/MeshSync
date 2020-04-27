@@ -99,6 +99,7 @@
     flex-direction: row;
     margin-left: 30px;
     margin-right: 45px;
+    flex-shrink: 0;
 }
 
 .add-dcc-tool-button {
