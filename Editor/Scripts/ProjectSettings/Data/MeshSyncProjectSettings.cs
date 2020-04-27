@@ -96,7 +96,6 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
     }
 
     public void OnAfterDeserialize() {
-        Debug.Log("OnAfterDeserialize");
         m_dictionary = new SortedDictionary<string, DCCToolInfo>();
         foreach (DCCToolInfo info in m_serializedDCCToolInfo) {
             if (m_dictionary.ContainsKey(info.AppPath)) {
@@ -120,7 +119,7 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
     
     //Key: DCC Tool app path
     private SortedDictionary<string,DCCToolInfo> m_dictionary;
-    [SerializeField] private List<DCCToolInfo> m_serializedDCCToolInfo;
+    [SerializeField] private List<DCCToolInfo> m_serializedDCCToolInfo = null;
 
     
 }
