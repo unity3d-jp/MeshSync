@@ -54,7 +54,8 @@ class MeshSyncSettingsProvider : SettingsProvider {
 			SetupTab(MeshSyncEditorConstants.UNINITIALIZED_TAB);
 		};
 
-		//TODO-sin: 2020-4-24 Fill in more keywords
+		//TODO-sin: 2020-4-24 Fill in more keywords by using GetSearchKeywordsFromGUIContentProperties
+		//or GetSearchKeywordsFromPath
 		keywords = new HashSet<string>(new[] {
 			"MeshSync",
 		});

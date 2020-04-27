@@ -13,14 +13,7 @@ using UnityEngine.UIElements;
 namespace UnityEditor.MeshSync {
 	internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
 
-
-        internal class Styles {
-            public static readonly GUIContent defaultExecutionOrder = EditorGUIUtility.TrTextContent("Default Execution Order");
-            public static readonly GUIContent executionOrderLabel = EditorGUIUtility.TrTextContent("AssetPostprocessor Graph Execution Order");
-        }
         
-        
-
         public DCCToolsSettingsTab() {
             
             
