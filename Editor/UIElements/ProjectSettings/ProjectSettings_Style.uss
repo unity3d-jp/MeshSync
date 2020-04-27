@@ -1,0 +1,101 @@
+
+.header {
+    margin-left:       10px;      
+    font-size:         20px;
+    -unity-font-style: bold;
+}
+
+
+/*----------------------------------------------- Tabs Buttons ------------------------------------------------------ */
+
+
+.tabs-container {
+    -unity-text-align: middle-center;
+    justify-content: center;    
+    /* Populates the elements in this container horizontally. */
+    flex-direction: row;
+
+    height: 30px;
+
+    flex-shrink:0;
+    margin-bottom: 10px;
+    
+}
+
+.tab-button {
+    width:  150px;
+    height:  30px;
+    margin:   0;
+    background-color: #505050;
+
+    /* Style rule that aligns items on the horizontal axis. */
+    align-items: flex-start;
+    /* Style rule that aligns items on the vertical axis. */
+    justify-content: center;
+}
+
+.tab-button-active {
+    background-color: #808080;
+}
+
+
+
+/*----------------------------------------------- DCC Tool Info ----------------------------------------------------- */
+
+.dcc-tool-info-container {
+    -unity-text-align: middle-center;
+    justify-content: center;
+    flex-direction: row;
+    width: auto;
+    background-color: #505050;
+    margin: 10px 30px;
+    height: 100px;
+}
+
+.dcc-tool-info-container .image-container {
+    width:  100px;
+    height: 100px;
+    align-self:center;
+    flex-shrink: 0;
+}
+
+.dcc-tool-info-container .text-container {
+    width: auto;
+    -unity-text-align: middle-left;
+    justify-content: center;
+    padding: 10px 10px;
+
+    flex-direction: column;
+    flex-grow:1;
+    flex-wrap: nowrap;
+}
+
+.dcc-tool-info-container .text-container > Label {
+    font-size:  14px;
+    padding: 3px 0;
+}
+
+.dcc-tool-info-container .buttons-container {
+    width: 100px;
+
+    justify-content:flex-end;
+    flex-wrap: nowrap;
+    flex-grow:0;
+    flex-shrink: 0;
+    padding-bottom: 10px;
+    
+}
+
+.dcc-tool-info-container .buttons-container > Button {
+    background-color: #303030;
+}
+
+.add-dcc-tool-button {
+    align-self: flex-end;
+    width: 100px;
+    margin-right: 40px;
+}
+
+
+
+

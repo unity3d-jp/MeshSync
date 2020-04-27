@@ -1,0 +1,12 @@
+<UXML xmlns="UnityEngine.UIElements">
+
+    <Label text="Mesh Sync" class="header"/>
+    
+    <!-- Toolbar buttons will be created here in code. -->
+    <VisualElement name="TabsContainer" class="tabs-container">
+    </VisualElement>
+    
+    <VisualElement name="Content">
+    </VisualElement>
+    
+</UXML>
