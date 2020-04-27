@@ -6,9 +6,9 @@
         </VisualElement>
 
         <VisualElement class="text-container">
-            <Label name= "DCCToolName" text="3DS Max 2019"/>
-            <Label name= "DCCToolPath" text="c:¥Program Files"/>
-            <Label name= "DCCToolStatus" text="Plugin Installed"/>
+            <Label name= "DCCToolName" />
+            <Label name= "DCCToolPath" />
+            <Label name= "DCCToolStatus"/>
         </VisualElement>
 
         <VisualElement class="buttons-container">
