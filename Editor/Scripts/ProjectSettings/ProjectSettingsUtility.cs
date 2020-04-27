@@ -105,19 +105,14 @@ public class ProjectSettingsUtility {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    // /// <summary>
-    // /// Find Maya and 3DsMax installations at default install path.
-    // /// Add results to given dictionary.
-    // /// 
-    // /// If MAYA_LOCATION is set, add this to the list as well.
-    // /// </summary>
-    internal static void AutoDetectDCCInstallations(MeshSyncProjectSettings curSettings) {
+    /// <summary>
+    /// Find DCC Tools by searching default installation folders, and looking at default environment variables.
+    /// </summary>
+    internal static Dictionary<string, DCCToolInfo> FindInstalledDCCTools() {
         List<string> vendorDirs = GetDefaultVendorDirectories();
-
+        Dictionary<string, DCCToolInfo> dccPaths = new Dictionary<string, DCCToolInfo>();
         
-        SortedDictionary<string, DCCToolInfo> dccPaths = new SortedDictionary<string, DCCToolInfo>();
-        
-        //Folder
+        //From default Folders
         foreach (string vendorDir in vendorDirs) {
             foreach (var dcc in DEFAULT_DCC_TOOLS_BY_FOLDER) {
                 string dir = Path.Combine(vendorDir, dcc.Key);
@@ -130,12 +125,11 @@ public class ProjectSettingsUtility {
                     continue;
                 }
                 
-                //[TODO: 2020-4-27] Need to new Info
-                dccPaths.Add(appPath, dcc.Value);
+                dccPaths.Add(appPath, new DCCToolInfo(dcc.Value));
             }
         }
         
-        //Environment vars:
+        //From default environment vars:
         foreach (var dcc in DEFAULT_DCC_TOOLS_BY_ENV_VAR) {
             string dir = Environment.GetEnvironmentVariable(dcc.Key);
             if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir))
@@ -146,15 +140,12 @@ public class ProjectSettingsUtility {
                 continue;
             }
                 
-            //[TODO: 2020-4-27] Need to new Info
-            dccPaths.Add(appPath, dcc.Value);
+            dccPaths.Add(appPath, new DCCToolInfo(dcc.Value));
         }
-
-        foreach (var test in dccPaths) {
-            Debug.Log("DCC Path: " + test.Key);
-        }
-
+        
+        return dccPaths;
     }
+    
 
 //----------------------------------------------------------------------------------------------------------------------    
     

@@ -38,8 +38,8 @@ namespace UnityEditor.MeshSync {
 
             //[TODO-sin: 2020-4-24] Auto detect installed DCC tools + check MeshSync status
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
-            foreach (DCCToolInfo dccToolInfo in settings.GetDCCToolInfos()) {
-                AddDCCToolSettingsContainer(dccToolInfo, scrollView, dccToolInfoTemplate);                
+            foreach (var dccToolInfo in settings.GetDCCToolInfos()) {
+                AddDCCToolSettingsContainer(dccToolInfo.Value, scrollView, dccToolInfoTemplate);                
             }
             
             //Buttons
@@ -73,17 +73,18 @@ namespace UnityEditor.MeshSync {
         void OnAddDCCToolButtonClicked() {
             //[TODO-sin: 2020-4-24] Show window to add  ?
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
-            settings.AddDCCToolInfo(DCCToolType.AUTODESK_MAYA, "2020");
+            if (settings.AddDCCToolInfo("Test", DCCToolType.AUTODESK_MAYA, "2020")) {
+                Setup(m_root);
+            }
             
-            Setup(m_root);
             
         }
         
         void OnAutoDetectButtonClicked() {
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
-            ProjectSettingsUtility.AutoDetectDCCInstallations(settings);
-            
-            
+            if (settings.AddInstalledDCCTools()) {
+                Setup(m_root);
+            }
         }
         #endregion
 
