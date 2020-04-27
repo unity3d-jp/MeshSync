@@ -21,7 +21,10 @@ namespace UnityEditor.MeshSync {
 
 //----------------------------------------------------------------------------------------------------------------------        
         public void Setup(VisualElement root) {
-
+            
+            m_root = root;
+            m_root.Clear();
+            
             VisualTreeAsset container = UIElementsEditorUtility.LoadVisualTreeAsset(
                 Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "DCCToolsSettings_Container")
             );
@@ -62,20 +65,18 @@ namespace UnityEditor.MeshSync {
         }
         
 //----------------------------------------------------------------------------------------------------------------------        
-        
-        static void OnAddDCCToolButtonClicked() {
-            //[TODO-sin: 2020-4-24] Show window to add 
+
+        void OnAddDCCToolButtonClicked() {
+            //[TODO-sin: 2020-4-24] Show window to add  ?
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
             settings.AddDCCToolInfo(DCCToolType.AUTODESK_MAYA, "2020");
             
+            Setup(m_root);
             
-            //Set dirty
-
-            
-            Debug.Log("Adding DCC Tool");
         }
 
 
+        private VisualElement m_root = null;
     }
     
 } //end namespace
