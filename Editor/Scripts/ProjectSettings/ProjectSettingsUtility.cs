@@ -108,7 +108,8 @@ public class ProjectSettingsUtility {
     /// <summary>
     /// Find DCC Tools by searching default installation folders, and looking at default environment variables.
     /// </summary>
-    internal static Dictionary<string, DCCToolInfo> FindInstalledDCCTools() {
+    /// <returns>A dictionary containing the detected DCC tools, with their paths as keys</returns>
+    public static Dictionary<string, DCCToolInfo> FindInstalledDCCTools() {
         List<string> vendorDirs = GetDefaultVendorDirectories();
         Dictionary<string, DCCToolInfo> dccPaths = new Dictionary<string, DCCToolInfo>();
         
@@ -125,7 +126,10 @@ public class ProjectSettingsUtility {
                     continue;
                 }
                 
-                dccPaths.Add(appPath, new DCCToolInfo(dcc.Value));
+                
+                dccPaths.Add(appPath, new DCCToolInfo(dcc.Value) {
+                    AppPath =  appPath,
+                });
             }
         }
         
@@ -140,7 +144,9 @@ public class ProjectSettingsUtility {
                 continue;
             }
                 
-            dccPaths.Add(appPath, new DCCToolInfo(dcc.Value));
+            dccPaths.Add(appPath, new DCCToolInfo(dcc.Value) {
+                AppPath =  appPath,
+            });
         }
         
         return dccPaths;
