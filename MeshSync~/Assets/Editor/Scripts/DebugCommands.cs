@@ -1,7 +1,8 @@
-#if UNITY_EDITOR
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.MeshSync;
 
 
 public static class DebugCommands
@@ -147,5 +148,15 @@ public static class DebugCommands
             r.enabled = true;
         }
     }
+    
+    [MenuItem("MeshSyncDebug/Print Installed DCC Tools")]
+    public static void PrintInstalledDCCTools() {
+        Dictionary<string, DCCToolInfo> dccPaths = ProjectSettingsUtility.FindInstalledDCCTools();
+        foreach (var dcc in dccPaths) {
+            
+            DCCToolInfo info = dcc.Value;
+            Debug.Log(info.Type.ToString() + " " + info.Version.ToString() + " " + info.AppPath);
+        }
+    }
+    
 }
-#endif // UNITY_EDITOR
