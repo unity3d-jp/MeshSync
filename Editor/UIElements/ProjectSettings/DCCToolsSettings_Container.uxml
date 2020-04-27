@@ -4,7 +4,7 @@
     </ScrollView>
 
     <VisualElement class="dcc-tool-footer-container">
-        <Button name="AutoDetect" text="Auto Detect" class="auto-detect-button"/>
+        <Button name="AutoDetectButton" text="Auto Detect" class="auto-detect-button"/>
         <Button name="AddDCCToolButton" text="+" class="add-dcc-tool-button"/>
     </VisualElement>
     

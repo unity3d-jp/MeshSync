@@ -43,7 +43,7 @@ namespace UnityEditor.MeshSync {
             }
             
             //Buttons
-            Button autoDetectButton = containerInstance.Query<Button>("AutoDetect").First();
+            Button autoDetectButton = containerInstance.Query<Button>("AutoDetectButton").First();
             autoDetectButton.clickable.clicked += OnAutoDetectButtonClicked;
             Button addDCCToolButton = containerInstance.Query<Button>("AddDCCToolButton").First();
             addDCCToolButton.clickable.clicked += OnAddDCCToolButtonClicked;
@@ -58,10 +58,22 @@ namespace UnityEditor.MeshSync {
         void AddDCCToolSettingsContainer(DCCToolInfo info, VisualElement top, VisualTreeAsset dccToolInfoTemplate) {
             TemplateContainer container = dccToolInfoTemplate.CloneTree();
             container.Query<Label>("DCCToolName").First().text = info.Type.ToString() + " " + info.Version;
-            container.Query<Label>("DCCToolPath").First().text = "Path to " + info.Type.ToString();
+            container.Query<Label>("DCCToolPath").First().text = "Path: " + info.AppPath;
 
             if (string.IsNullOrEmpty(info.PluginVersion)) {
                 container.Query<Label>("DCCToolStatus").First().text = "Plugin not installed";
+            }
+
+            {
+                Button button = container.Query<Button>("RemoveDCCToolButton").First();
+                button.clickable.clickedWithEventInfo += OnRemoveDCCToolButtonClicked;
+                button.userData = info.AppPath;
+            }
+
+            {
+                Button button = container.Query<Button>("InstallPluginButton").First();
+                button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
+                button.userData = info.AppPath;
             }
             
             top.Add(container);
@@ -85,6 +97,15 @@ namespace UnityEditor.MeshSync {
             if (settings.AddInstalledDCCTools()) {
                 Setup(m_root);
             }
+        }
+
+        
+        void OnRemoveDCCToolButtonClicked(EventBase evt) {
+            
+            Debug.Log("Removing: " + evt.target);
+        }
+        void OnInstallPluginButtonClicked(EventBase evt) {
+            Debug.Log("Installing: " + evt.target);
         }
         #endregion
 

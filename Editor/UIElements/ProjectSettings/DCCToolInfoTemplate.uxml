@@ -12,8 +12,8 @@
         </VisualElement>
 
         <VisualElement class="buttons-container">
-            <Button text="Select"/>
-            <Button text="Install plugin"/>
+            <Button name="RemoveDCCToolButton" text="Remove" />
+            <Button name="InstallPluginButton" text="Install plugin" />
         </VisualElement>
         
         

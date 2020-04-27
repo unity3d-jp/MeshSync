@@ -78,16 +78,16 @@
 .dcc-tool-info-container .buttons-container {
     width: 100px;
 
-    justify-content:flex-end;
+    justify-content: space-between;
     flex-wrap: nowrap;
     flex-grow:0;
     flex-shrink: 0;
-    padding-bottom: 10px;
+    padding-top: 15px;
+    padding-bottom: 15px;
     
 }
 
 .dcc-tool-info-container .buttons-container > Button {
-    background-color: #303030;
 }
 
 
