@@ -90,12 +90,23 @@
     background-color: #303030;
 }
 
-.add-dcc-tool-button {
-    align-self: flex-end;
-    width: 100px;
-    margin-right: 40px;
+
+/*---------------------------------------------- DCC Tools Footer ----------------------------------------------------- */
+
+.dcc-tool-footer-container  {
+    background-color: #FF3030;
+    height: 30px;
+    justify-content: space-between;
+    flex-direction: row;
+    margin-left: 30px;
+    margin-right: 45px;
 }
 
+.add-dcc-tool-button {
+    width: 100px;
+}
 
-
+.auto-detect-button {
+    width: 100px;
+}
 
