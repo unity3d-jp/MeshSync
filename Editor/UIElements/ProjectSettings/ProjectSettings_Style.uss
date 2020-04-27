@@ -94,7 +94,6 @@
 /*---------------------------------------------- DCC Tools Footer ----------------------------------------------------- */
 
 .dcc-tool-footer-container  {
-    background-color: #FF3030;
     height: 30px;
     justify-content: space-between;
     flex-direction: row;
