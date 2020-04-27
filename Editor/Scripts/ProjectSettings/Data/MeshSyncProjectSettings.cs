@@ -30,7 +30,7 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    internal bool AddDCCToolInfo(string path, DCCToolType t, string version, bool save=true) {
+    internal bool AddDCCTool(string path, DCCToolType t, string version, bool save=true) {
         if (m_dictionary.ContainsKey(path))
             return false;
 
@@ -50,6 +50,34 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
     }
 
 //----------------------------------------------------------------------------------------------------------------------
+    internal bool RemoveDCCTool(string appPath) {
+        if (!m_dictionary.ContainsKey(appPath)) {
+            return false;
+        }
+
+
+        int numDCCTools = m_serializedDCCToolInfo.Count;
+        int itemToRemove = numDCCTools;
+        for (int i = 0; i < numDCCTools; ++i) {
+            if (m_serializedDCCToolInfo[i].AppPath == appPath) {
+                itemToRemove = i;
+                break;
+            }
+        }
+
+        if (itemToRemove >= numDCCTools) {
+            Debug.LogError("[MeshSync] Internal error: " + appPath);
+            return false;
+        }
+
+        m_serializedDCCToolInfo.RemoveAt(itemToRemove);
+        m_dictionary.Remove(appPath);
+        SaveProjectSettings();
+
+        return true;
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
 
     //return true if there is any change
     internal bool AddInstalledDCCTools() {
@@ -58,9 +86,10 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
         Dictionary<string, DCCToolInfo> dccPaths = ProjectSettingsUtility.FindInstalledDCCTools();
         foreach (var dcc in dccPaths) {
             DCCToolInfo info = dcc.Value;
-            ret = ret || AddDCCToolInfo(dcc.Key, info.Type, info.Version, false);
+            ret = ret || AddDCCTool(dcc.Key, info.Type, info.Version, false);
         }
 
+        SaveProjectSettings();
         return ret;
     }
     
@@ -90,11 +119,13 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
 //----------------------------------------------------------------------------------------------------------------------
 
     #region ISerializationCallbackReceiver
+    /// <inheritdoc/>
     public void OnBeforeSerialize() {
         //[Note-sin: 2020-4-27] the list and dictionary should be already sync-end when in memory, 
         //so no need to do anything here
     }
 
+    /// <inheritdoc/>
     public void OnAfterDeserialize() {
         m_dictionary = new SortedDictionary<string, DCCToolInfo>();
         foreach (DCCToolInfo info in m_serializedDCCToolInfo) {

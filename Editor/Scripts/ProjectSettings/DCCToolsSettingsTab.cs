@@ -85,7 +85,7 @@ namespace UnityEditor.MeshSync {
         void OnAddDCCToolButtonClicked() {
             //[TODO-sin: 2020-4-24] Show window to add  ?
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
-            if (settings.AddDCCToolInfo("Test", DCCToolType.AUTODESK_MAYA, "2020")) {
+            if (settings.AddDCCTool("Test", DCCToolType.AUTODESK_MAYA, "2020")) {
                 Setup(m_root);
             }
             
@@ -101,8 +101,23 @@ namespace UnityEditor.MeshSync {
 
         
         void OnRemoveDCCToolButtonClicked(EventBase evt) {
+            Button button = evt.target as Button;
+            if (null == button) {
+                Debug.LogWarning("[MeshSync] Failed to Remove DCC Tool");
+                return;
+            }
+
+            string appPath = button.userData as string;
+            if (string.IsNullOrEmpty(appPath)) {
+                Debug.LogWarning("[MeshSync] Failed to Remove DCC Tool");
+                return;
+            }
             
-            Debug.Log("Removing: " + evt.target);
+            MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+            if (settings.RemoveDCCTool(appPath)) {
+                Setup(m_root);
+            }
+            
         }
         void OnInstallPluginButtonClicked(EventBase evt) {
             Debug.Log("Installing: " + evt.target);
