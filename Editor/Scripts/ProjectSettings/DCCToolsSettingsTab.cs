@@ -81,7 +81,7 @@ namespace UnityEditor.MeshSync {
         
         void OnAutoDetectButtonClicked() {
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
-            MeshSyncProjectSettings.AutoDetectDCCInstallations(settings);
+            ProjectSettingsUtility.AutoDetectDCCInstallations(settings);
             
             
         }
