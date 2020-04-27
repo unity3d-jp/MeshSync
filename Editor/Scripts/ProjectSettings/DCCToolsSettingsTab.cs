@@ -42,6 +42,9 @@ namespace UnityEditor.MeshSync {
                 AddDCCToolSettingsContainer(dccToolInfo, scrollView, dccToolInfoTemplate);                
             }
             
+            //Buttons
+            Button autoDetectButton = containerInstance.Query<Button>("AutoDetect").First();
+            autoDetectButton.clickable.clicked += OnAutoDetectButtonClicked;
             Button addDCCToolButton = containerInstance.Query<Button>("AddDCCToolButton").First();
             addDCCToolButton.clickable.clicked += OnAddDCCToolButtonClicked;
 
@@ -66,6 +69,7 @@ namespace UnityEditor.MeshSync {
         
 //----------------------------------------------------------------------------------------------------------------------        
 
+        #region Button callbacks
         void OnAddDCCToolButtonClicked() {
             //[TODO-sin: 2020-4-24] Show window to add  ?
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
@@ -74,6 +78,14 @@ namespace UnityEditor.MeshSync {
             Setup(m_root);
             
         }
+        
+        void OnAutoDetectButtonClicked() {
+            MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+            MeshSyncProjectSettings.AutoDetectDCCInstallations(settings);
+            
+            
+        }
+        #endregion
 
 
         private VisualElement m_root = null;
