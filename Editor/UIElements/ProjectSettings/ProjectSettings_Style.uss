@@ -86,7 +86,7 @@
 }
 
 .plugin-installed {
-    color: #00FF00
+    color: #00FF00;
     -unity-font-style:bold;
 }
 
