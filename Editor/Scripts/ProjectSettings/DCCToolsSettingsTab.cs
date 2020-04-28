@@ -38,10 +38,13 @@ namespace UnityEditor.MeshSync {
 
             //[TODO-sin: 2020-4-24] Auto detect installed DCC tools + check MeshSync status
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
-            foreach (DCCToolInfo dccToolInfo in settings.GetDCCToolInfos()) {
-                AddDCCToolSettingsContainer(dccToolInfo, scrollView, dccToolInfoTemplate);                
+            foreach (var dccToolInfo in settings.GetDCCToolInfos()) {
+                AddDCCToolSettingsContainer(dccToolInfo.Value, scrollView, dccToolInfoTemplate);                
             }
             
+            //Buttons
+            Button autoDetectButton = containerInstance.Query<Button>("AutoDetectButton").First();
+            autoDetectButton.clickable.clicked += OnAutoDetectButtonClicked;
             Button addDCCToolButton = containerInstance.Query<Button>("AddDCCToolButton").First();
             addDCCToolButton.clickable.clicked += OnAddDCCToolButtonClicked;
 
@@ -55,10 +58,22 @@ namespace UnityEditor.MeshSync {
         void AddDCCToolSettingsContainer(DCCToolInfo info, VisualElement top, VisualTreeAsset dccToolInfoTemplate) {
             TemplateContainer container = dccToolInfoTemplate.CloneTree();
             container.Query<Label>("DCCToolName").First().text = info.Type.ToString() + " " + info.Version;
-            container.Query<Label>("DCCToolPath").First().text = "Path to " + info.Type.ToString();
+            container.Query<Label>("DCCToolPath").First().text = "Path: " + info.AppPath;
 
             if (string.IsNullOrEmpty(info.PluginVersion)) {
                 container.Query<Label>("DCCToolStatus").First().text = "Plugin not installed";
+            }
+
+            {
+                Button button = container.Query<Button>("RemoveDCCToolButton").First();
+                button.clickable.clickedWithEventInfo += OnRemoveDCCToolButtonClicked;
+                button.userData = info.AppPath;
+            }
+
+            {
+                Button button = container.Query<Button>("InstallPluginButton").First();
+                button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
+                button.userData = info.AppPath;
             }
             
             top.Add(container);
@@ -66,17 +81,87 @@ namespace UnityEditor.MeshSync {
         
 //----------------------------------------------------------------------------------------------------------------------        
 
+        #region Button callbacks
         void OnAddDCCToolButtonClicked() {
-            //[TODO-sin: 2020-4-24] Show window to add  ?
+            string folder = EditorUtility.OpenFolderPanel("Add DCC Tool", m_lastOpenedFolder, "");
+            if (string.IsNullOrEmpty(folder)) {
+                return;
+            }
+
+            m_lastOpenedFolder = folder;
+
+            //Find the path to the actual app
+            DCCToolType lastDCCToolType = DCCToolType.AUTODESK_MAYA;
+            string appPath = null;
+            for (int i = 0; i < (int) (DCCToolType.NUM_DCC_TOOL_TYPES) && string.IsNullOrEmpty(appPath); ++i) {
+                lastDCCToolType = (DCCToolType) (i);
+                appPath = ProjectSettingsUtility.FindDCCToolAppPathInDirectory(lastDCCToolType, m_lastOpenedFolder);
+            }
+
+            if (string.IsNullOrEmpty(appPath)) {
+                EditorUtility.DisplayDialog("MeshSync Project Settings", "No DCC Tool is detected", "Ok");
+                return;
+            }
+
+            //Find version
+            string version = null;
+            switch (lastDCCToolType) {
+                case DCCToolType.AUTODESK_MAYA: {
+                    version = ProjectSettingsUtility.FindMayaVersion(appPath);
+                    break;
+                }
+                case DCCToolType.AUTODESK_3DSMAX: {
+                    version = ProjectSettingsUtility.Find3DSMaxVersion(appPath);
+                    break;
+                }
+            }
+
+            //Add
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
-            settings.AddDCCToolInfo(DCCToolType.AUTODESK_MAYA, "2020");
+            if (settings.AddDCCTool(appPath, lastDCCToolType, version)) {
+                Setup(m_root);
+            }
             
-            Setup(m_root);
             
         }
+        
+        void OnAutoDetectButtonClicked() {
+            MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+            if (settings.AddInstalledDCCTools()) {
+                Setup(m_root);
+            }
+        }
 
+        
+        void OnRemoveDCCToolButtonClicked(EventBase evt) {
+            Button button = evt.target as Button;
+            if (null == button) {
+                Debug.LogWarning("[MeshSync] Failed to Remove DCC Tool");
+                return;
+            }
+
+            string appPath = button.userData as string;
+            if (string.IsNullOrEmpty(appPath)) {
+                Debug.LogWarning("[MeshSync] Failed to Remove DCC Tool");
+                return;
+            }
+            
+            MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+            if (settings.RemoveDCCTool(appPath)) {
+                Setup(m_root);
+            }
+            
+        }
+        void OnInstallPluginButtonClicked(EventBase evt) {
+            Debug.Log("Installing: " + evt.target);
+        }
+        #endregion
+
+//----------------------------------------------------------------------------------------------------------------------        
 
         private VisualElement m_root = null;
+        private string m_lastOpenedFolder = "";
+
     }
     
 } //end namespace

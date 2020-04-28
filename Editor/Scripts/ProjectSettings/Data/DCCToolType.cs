@@ -2,13 +2,15 @@
 
 namespace UnityEditor.MeshSync {
 
-    
+/// <summary>
+/// DCC Tools which MeshSync provides integration support
+/// </summary>
 [Serializable]
-
-internal enum DCCToolType {
-    AUTODESK_MAYA,
+public enum DCCToolType {
+    AUTODESK_MAYA = 0,
     AUTODESK_3DSMAX,
-    AUTODESK_MOTION_BUILDER,
+    NUM_DCC_TOOL_TYPES,
+//    AUTODESK_MOTION_BUILDER,
     
 }
 
