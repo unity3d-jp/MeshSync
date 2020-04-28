@@ -29,6 +29,10 @@ public class ProjectSettingsUtility {
                 searchDirectories.Add("/Applications/Autodesk");
                 break;
             }
+            case RuntimePlatform.LinuxEditor: {
+                searchDirectories.Add("~/");
+                break;
+            }
             default: {
                 throw new System.NotImplementedException();
             }
