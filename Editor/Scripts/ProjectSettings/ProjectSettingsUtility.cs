@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Unity.AnimeToolbox;
 using UnityEngine;
 
 
@@ -81,18 +82,67 @@ public class ProjectSettingsUtility {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    private static string Find3DSMaxAppPathInDirectory(string dir) {
-        //[TODO-sin: 2020-4-27] Implement this
-        throw new System.NotImplementedException();
+    internal static string FindMayaVersion(string appPath) {
+        
+        string productDir = null;
+        switch (Application.platform) {
+            case RuntimePlatform.WindowsEditor: {
+                
+                //2 levels up: "/bin/maya.exe";
+                productDir = PathUtility.TryGetDirectoryName(appPath, 2);
+                break;
+            }
+            case RuntimePlatform.OSXEditor: {
+                //4 levels up: "/Maya.app/Contents/MacOS/Maya";
+                productDir = PathUtility.TryGetDirectoryName(appPath, 4);
+        
+                break;
+            }
+            default:
+                throw new NotImplementedException ();
+        }
+
+        if (string.IsNullOrEmpty(productDir)) {
+            return "Unknown";
+        }
+
+        const string MAYA_STR = "maya";
+        int index = productDir.IndexOf(MAYA_STR, StringComparison.OrdinalIgnoreCase);
+        if (index == -1) {
+            return "Unknown";
+        }
+        
+        string version = productDir.Substring (index + MAYA_STR.Length);
+        return version.Trim();
     }
 
-    
 //----------------------------------------------------------------------------------------------------------------------
 
-    //May return null if no app is detected
-    private static string FindDCCToolAppPathInDirectory(DCCToolInfo info, string dir) {
-        switch (info.Type) {
+    //3DS Max is only available for Windows
+    private static string Find3DSMaxAppPathInDirectory(string dir) {
+        if (RuntimePlatform.WindowsEditor != Application.platform) {
+            return null;
+        }
+        
+        string appPath = string.Format("{0}/{1}", dir.Replace("\\", "/"), "3dsmax.exe");
+        return File.Exists(appPath) ? appPath : null;
+    }
+//----------------------------------------------------------------------------------------------------------------------
+
+    internal static string Find3DSMaxVersion(string appPath) {
+        //4 levels up: "C:/Program Files/3dsMax 2019/3dsmax.exe";
+        return PathUtility.TryGetDirectoryName(appPath, 1);
+    }
+
+
+//----------------------------------------------------------------------------------------------------------------------
+
+    //Returns the path to the application file of the DCC tool.
+    //May return null if no app is found
+    internal static string FindDCCToolAppPathInDirectory(DCCToolType toolType, string dir) {
+        switch (toolType) {
             case DCCToolType.AUTODESK_MAYA: {
+                Debug.Log("MAYA!!!");
                 return FindMayaAppPathInDirectory(dir);
             }
             case DCCToolType.AUTODESK_3DSMAX: {
@@ -119,15 +169,15 @@ public class ProjectSettingsUtility {
                 string dir = Path.Combine(vendorDir, dcc.Key);
                 if (!Directory.Exists(dir))
                     continue;
+                DCCToolInfo dccToolInfo = dcc.Value;
 
-                string appPath = FindDCCToolAppPathInDirectory(dcc.Value, dir);
+                string appPath = FindDCCToolAppPathInDirectory(dccToolInfo.Type, dir);
 
                 if (string.IsNullOrEmpty(appPath)) {
                     continue;
                 }
                 
-                
-                dccPaths.Add(appPath, new DCCToolInfo(dcc.Value) {
+                dccPaths.Add(appPath, new DCCToolInfo(dccToolInfo) {
                     AppPath =  appPath,
                 });
             }
@@ -138,13 +188,14 @@ public class ProjectSettingsUtility {
             string dir = Environment.GetEnvironmentVariable(dcc.Key);
             if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir))
                 continue;
+            DCCToolInfo dccToolInfo = dcc.Value;
             
-            string appPath = FindDCCToolAppPathInDirectory(dcc.Value, dir);
+            string appPath = FindDCCToolAppPathInDirectory(dccToolInfo.Type, dir);
             if (string.IsNullOrEmpty(appPath)) {
                 continue;
             }
                 
-            dccPaths.Add(appPath, new DCCToolInfo(dcc.Value) {
+            dccPaths.Add(appPath, new DCCToolInfo(dccToolInfo) {
                 AppPath =  appPath,
             });
         }

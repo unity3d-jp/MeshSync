@@ -84,8 +84,42 @@ namespace UnityEditor.MeshSync {
         #region Button callbacks
         void OnAddDCCToolButtonClicked() {
             //[TODO-sin: 2020-4-24] Show window to add  ?
+            string folder = EditorUtility.OpenFolderPanel("Add DCC Tool", m_lastOpenedFolder, "");
+            if (string.IsNullOrEmpty(folder)) {
+                return;
+            }
+
+            m_lastOpenedFolder = folder;
+
+            //Find the path to the actual app
+            DCCToolType lastDCCToolType = DCCToolType.AUTODESK_MAYA;
+            string appPath = null;
+            for (int i = 0; i < (int) (DCCToolType.NUM_DCC_TOOL_TYPES) && string.IsNullOrEmpty(appPath); ++i) {
+                lastDCCToolType = (DCCToolType) (i);
+                appPath = ProjectSettingsUtility.FindDCCToolAppPathInDirectory(lastDCCToolType, m_lastOpenedFolder);
+            }
+
+            if (string.IsNullOrEmpty(appPath)) {
+                EditorUtility.DisplayDialog("MeshSync Project Settings", "No DCC Tool is detected", "Ok");
+                return;
+            }
+
+            //Find version
+            string version = null;
+            switch (lastDCCToolType) {
+                case DCCToolType.AUTODESK_MAYA: {
+                    version = ProjectSettingsUtility.FindMayaVersion(appPath);
+                    break;
+                }
+                case DCCToolType.AUTODESK_3DSMAX: {
+                    version = ProjectSettingsUtility.Find3DSMaxVersion(appPath);
+                    break;
+                }
+            }
+
+            //Add
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
-            if (settings.AddDCCTool("Test", DCCToolType.AUTODESK_MAYA, "2020")) {
+            if (settings.AddDCCTool(appPath, lastDCCToolType, version)) {
                 Setup(m_root);
             }
             
@@ -124,8 +158,11 @@ namespace UnityEditor.MeshSync {
         }
         #endregion
 
+//----------------------------------------------------------------------------------------------------------------------        
 
         private VisualElement m_root = null;
+        private string m_lastOpenedFolder = "";
+
     }
     
 } //end namespace

@@ -7,8 +7,9 @@ namespace UnityEditor.MeshSync {
 /// </summary>
 [Serializable]
 public enum DCCToolType {
-    AUTODESK_MAYA,
+    AUTODESK_MAYA = 0,
     AUTODESK_3DSMAX,
+    NUM_DCC_TOOL_TYPES,
 //    AUTODESK_MOTION_BUILDER,
     
 }
