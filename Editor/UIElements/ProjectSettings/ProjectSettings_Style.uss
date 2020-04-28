@@ -53,6 +53,7 @@
 }
 
 .dcc-tool-info-container .image-container {
+    background-color: #808080;
     width:  100px;
     height: 100px;
     align-self:center;
@@ -75,6 +76,20 @@
     padding: 3px 0;
 }
 
+.dcc-tool-info-container .text-container .dcc-tool-name {
+    -unity-font-style:bold;
+}
+
+.plugin-not-found {
+    color: #FF3333;
+    -unity-font-style:bold;
+}
+
+.plugin-installed {
+    color: #00FF00
+    -unity-font-style:bold;
+}
+
 .dcc-tool-info-container .buttons-container {
     width: 100px;
 
@@ -84,6 +99,7 @@
     flex-shrink: 0;
     padding-top: 15px;
     padding-bottom: 15px;
+    margin-right: 10px;
     
 }
 
@@ -97,6 +113,7 @@
     height: 30px;
     justify-content: space-between;
     flex-direction: row;
+    margin-top: 10px;
     margin-left: 30px;
     margin-right: 45px;
     flex-shrink: 0;

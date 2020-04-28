@@ -6,9 +6,9 @@
         </VisualElement>
 
         <VisualElement class="text-container">
-            <Label name= "DCCToolName" />
+            <Label name= "DCCToolName" class="dcc-tool-name"/>
             <Label name= "DCCToolPath" />
-            <Label name= "DCCToolStatus"/>
+            <Label name= "DCCToolStatus" class="plugin-not-found"/>
         </VisualElement>
 
         <VisualElement class="buttons-container">

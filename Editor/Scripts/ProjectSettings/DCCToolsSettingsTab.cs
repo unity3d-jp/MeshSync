@@ -57,13 +57,29 @@ namespace UnityEditor.MeshSync {
 
         void AddDCCToolSettingsContainer(DCCToolInfo info, VisualElement top, VisualTreeAsset dccToolInfoTemplate) {
             TemplateContainer container = dccToolInfoTemplate.CloneTree();
-            container.Query<Label>("DCCToolName").First().text = info.Type.ToString() + " " + info.Version;
+            Label nameLabel = container.Query<Label>("DCCToolName").First();
+            switch (info.Type) {
+                case DCCToolType.AUTODESK_MAYA: {
+                    nameLabel.text = "Maya " + info.Version;
+                    break;
+                }
+                case DCCToolType.AUTODESK_3DSMAX: {
+                    nameLabel.text = "3DS Max " + info.Version;
+                    break;
+                }
+            }
+            
             container.Query<Label>("DCCToolPath").First().text = "Path: " + info.AppPath;
 
+            Label statusLabel = container.Query<Label>("DCCToolStatus").First();
             if (string.IsNullOrEmpty(info.PluginVersion)) {
-                container.Query<Label>("DCCToolStatus").First().text = "Plugin not installed";
+                statusLabel.text = "MeshSync Plugin not installed";
+            } else {
+                statusLabel.AddToClassList("plugin-installed");
+                statusLabel.text = "MeshSync Plugin installed";
             }
 
+            //Buttons
             {
                 Button button = container.Query<Button>("RemoveDCCToolButton").First();
                 button.clickable.clickedWithEventInfo += OnRemoveDCCToolButtonClicked;
