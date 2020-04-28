@@ -146,7 +146,6 @@ public class ProjectSettingsUtility {
     internal static string FindDCCToolAppPathInDirectory(DCCToolType toolType, string dir) {
         switch (toolType) {
             case DCCToolType.AUTODESK_MAYA: {
-                Debug.Log("MAYA!!!");
                 return FindMayaAppPathInDirectory(dir);
             }
             case DCCToolType.AUTODESK_3DSMAX: {
