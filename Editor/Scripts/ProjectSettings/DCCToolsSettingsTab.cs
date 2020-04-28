@@ -83,7 +83,6 @@ namespace UnityEditor.MeshSync {
 
         #region Button callbacks
         void OnAddDCCToolButtonClicked() {
-            //[TODO-sin: 2020-4-24] Show window to add  ?
             string folder = EditorUtility.OpenFolderPanel("Add DCC Tool", m_lastOpenedFolder, "");
             if (string.IsNullOrEmpty(folder)) {
                 return;
