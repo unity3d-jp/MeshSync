@@ -6,8 +6,11 @@ using UnityEngine;
 
 
 namespace UnityEditor.MeshSync {
-
-public class ProjectSettingsUtility {
+    
+/// <summary>
+/// A class that provides various utility functions related to ProjectSettings for MeshSync
+/// </summary>
+public static class ProjectSettingsUtility {
     
     //Find the location of supported DCC tools on Windows and Mac.
     //Currently only support Autodesk products
@@ -31,6 +34,7 @@ public class ProjectSettingsUtility {
             }
             case RuntimePlatform.LinuxEditor: {
                 searchDirectories.Add("~/");
+                searchDirectories.Add("/usr/autodesk");
                 break;
             }
             default: {
@@ -77,6 +81,10 @@ public class ProjectSettingsUtility {
 
                 break;
             }
+            case RuntimePlatform.LinuxEditor: {
+                path+= "/bin/maya";
+                break;
+            }
             default:
                 throw new NotImplementedException ();
         }
@@ -102,6 +110,14 @@ public class ProjectSettingsUtility {
         
                 break;
             }
+            case RuntimePlatform.LinuxEditor: {
+                //2 levels up:/usr/autodesk/maya2019/bin/maya
+                productDir = PathUtility.TryGetDirectoryName(appPath, 2);
+                break;
+            }
+
+
+
             default:
                 throw new NotImplementedException ();
         }
