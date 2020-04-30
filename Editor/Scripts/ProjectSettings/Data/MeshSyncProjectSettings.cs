@@ -106,6 +106,11 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
         
         string json = File.ReadAllText(path);
         MeshSyncProjectSettings settings = JsonUtility.FromJson<MeshSyncProjectSettings>(json);
+        
+        //Validate PluginVersion
+        
+        
+        
         return settings;
     }
     
