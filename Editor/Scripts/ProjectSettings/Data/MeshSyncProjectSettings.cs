@@ -25,6 +25,7 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
 
     //Constructor
     MeshSyncProjectSettings() {
+        m_serializedDCCToolInfo = new List<DCCToolInfo>();
         m_dictionary = new SortedDictionary<string, DCCToolInfo>();
     }
 
