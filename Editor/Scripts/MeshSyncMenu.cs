@@ -24,7 +24,6 @@ internal static class MeshSyncMenu  {
             "Maya_Linux.zip",
             "Maya_Mac.zip",
             "Maya_Windows.zip",
-            "Metasequoia_Mac.zip",
             "Metasequoia_Windows.zip",
             "MotionBuilder_Linux.zip",
             "MotionBuilder_Windows.zip", 
