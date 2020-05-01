@@ -5,13 +5,14 @@ using UnityEngine;
 using System.Net;
 using Unity.AnimeToolbox;
 using System.IO;
-
+using System.Security.Cryptography;
 
 namespace UnityEditor.MeshSync {
 
+
 internal static class MeshSyncMenu  {
 
-
+    
     [MenuItem("Assets/MeshSync/Download DCC Plugins", false, 100)]
     static void DownloadDCCPlugins() {
 
@@ -77,6 +78,12 @@ internal static class MeshSyncMenu  {
         WebClient client = new WebClient();
         int initialQueueCount = pluginSuffixes.Count;
 
+        DCCPluginMeta meta = TryDownloadDCCPluginMeta(version);
+        if (null == meta) {
+            EditorUtility.ClearProgressBar();
+            return;
+        }
+        
 
         //Prepare WebClient
         client.DownloadFileCompleted += (object sender, AsyncCompletedEventArgs e) => {
@@ -104,7 +111,9 @@ internal static class MeshSyncMenu  {
             pluginSuffixes.Dequeue();
 
             
-            DCCPluginDownloadInfo nextInfo = FindNextPluginToDownload(version, destFolder, pluginSuffixes, skipExistingPlugins);
+            DCCPluginDownloadInfo nextInfo = FindNextPluginToDownload(meta, version, destFolder, 
+                pluginSuffixes, skipExistingPlugins
+            );
             if (null == nextInfo) {
                 EditorUtility.ClearProgressBar();
                 onComplete();
@@ -132,7 +141,10 @@ internal static class MeshSyncMenu  {
         };
 
         
-        DCCPluginDownloadInfo downloadInfo = FindNextPluginToDownload(version, destFolder, pluginSuffixes, skipExistingPlugins);
+        DCCPluginDownloadInfo downloadInfo = FindNextPluginToDownload(meta, version, destFolder, 
+            pluginSuffixes, skipExistingPlugins
+        );
+
         if (null == downloadInfo) {
             EditorUtility.ClearProgressBar();
             onComplete();
@@ -146,16 +158,27 @@ internal static class MeshSyncMenu  {
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
-    static DCCPluginDownloadInfo FindNextPluginToDownload(string version, string destFolder, 
+    static DCCPluginDownloadInfo FindNextPluginToDownload(DCCPluginMeta meta, string version, 
+        string destFolder, 
         Queue<string> pluginSuffixes, bool skipExistingPlugins) {
 
+        
         DCCPluginDownloadInfo ret = null;
 
         while (pluginSuffixes.Count > 0 && null == ret) {
             DCCPluginDownloadInfo downloadInfo = new DCCPluginDownloadInfo(version, pluginSuffixes.Peek(), destFolder);
-            //[TODO-sin: 2020-5-1] Check MD5
             if (skipExistingPlugins && File.Exists(downloadInfo.FilePath)) {
-                pluginSuffixes.Dequeue();
+                
+                //Check MD5
+                string md5 = ComputeFileMD5(downloadInfo.FilePath);
+                DCCPluginSignature signature = meta.GetSignature(Path.GetFileName(downloadInfo.FilePath));
+                if (signature.MD5 != md5) {
+                    ret = downloadInfo;
+                } else {
+                    //The same file has been downloaded. Skip.
+                    pluginSuffixes.Dequeue();
+                }
+
             } else {
                 ret = downloadInfo;
             }
@@ -164,6 +187,32 @@ internal static class MeshSyncMenu  {
         return ret;
     }
 
+
+//----------------------------------------------------------------------------------------------------------------------        
+
+    //Download meta file synchronously
+    static DCCPluginMeta TryDownloadDCCPluginMeta(string version) {
+        string metaURL = GITHUB_RELEASE_URL + version + "/meta.txt";
+        string tempPath = FileUtil.GetUniqueTempPathInProject();
+        
+        WebClient client = new WebClient();
+        DCCPluginMeta ret = null;
+        try {
+            client.DownloadFile(new Uri(metaURL), tempPath);
+            string json = File.ReadAllText(tempPath);
+            ret = JsonUtility.FromJson<DCCPluginMeta>(json);
+        }
+        catch {
+            Debug.LogError("[MeshSync] Error when downloading meta: " + metaURL);
+        }
+
+        if (File.Exists(tempPath)) {
+            File.Delete(tempPath);
+        }
+
+        return ret;
+
+    }
     
 //----------------------------------------------------------------------------------------------------------------------        
     static void CopyDCCPluginsFromPackage(string destFolder, Queue<string> pluginSuffixes) {
@@ -171,6 +220,16 @@ internal static class MeshSyncMenu  {
         
     }
 
+//----------------------------------------------------------------------------------------------------------------------        
+    static string ComputeFileMD5(string path) {
+        using (var md5 = MD5.Create()) {
+            using (var stream = File.OpenRead(path)) {
+                byte[] hash = md5.ComputeHash(stream);
+                string str = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                return str;
+            }
+        }
+    }
 
 //----------------------------------------------------------------------------------------------------------------------        
     class DCCPluginDownloadInfo {
@@ -180,16 +239,16 @@ internal static class MeshSyncMenu  {
         //Sample link;
         //https://github.com/Unity-Technologies/MeshSyncDCCPlugin/releases/download/0.0.3-preview/UnityMeshSync_0.0.3-preview_3DSMAX_Windows.zip
         internal DCCPluginDownloadInfo(string version, string pluginName, string destFolder) {
-            URL = "https://github.com/Unity-Technologies/MeshSyncDCCPlugins/releases/download/" 
-                   + version + "/UnityMeshSync_" + version + "_" + pluginName;
+            URL = GITHUB_RELEASE_URL + version + "/UnityMeshSync_" + version + "_" + pluginName;
             FilePath =  Path.Combine(destFolder,Path.GetFileName(URL));
-            
         }
 
     }
+
     
 //----------------------------------------------------------------------------------------------------------------------        
 
+    const string GITHUB_RELEASE_URL = "https://github.com/Unity-Technologies/MeshSyncDCCPlugins/releases/download/";
     const string LATEST_KNOWN_VERSION = "0.1.0-preview";
     private const string MESHSYNC_PACKAGE = "com.unity.meshsync";
     private const string MESHSYNC_DCC_PLUGIN_PACKAGE = "com.unity.meshsync-dcc-plugins";
