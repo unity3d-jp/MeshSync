@@ -64,70 +64,69 @@ internal static class MeshSyncMenu  {
     
 //-------------------------------------------------1---------------------------------------------------------------------
 
-     static void DownloadDCCPlugins(string version, string destFolder, string[] pluginSuffixes) {
-         Directory.CreateDirectory(destFolder);
-         int numPlugins = pluginSuffixes.Length;
-         int curPluginIndex = 0;
-         WebClient client = new WebClient();
+    static void DownloadDCCPlugins(string version, string destFolder, string[] pluginSuffixes) {
+        Directory.CreateDirectory(destFolder);
+        int numPlugins = pluginSuffixes.Length;
+        int curPluginIndex = 0;
+        WebClient client = new WebClient();
 
 
-         //Prepare WebClient
-         client.DownloadFileCompleted += (object sender, AsyncCompletedEventArgs e) => {
-             if (e.Error != null) {
-                 
-                 DCCPluginDownloadInfo lastInfo = new DCCPluginDownloadInfo(version, pluginSuffixes[curPluginIndex], destFolder);
-                 if (File.Exists(lastInfo.FilePath)) {
-                     File.Delete(lastInfo.FilePath);
-                 }
-                 
-                 //Try downloading using the latest known version to work.
-                 if (version != LATEST_KNOWN_VERSION) {
-                     
-                     DownloadDCCPlugins(LATEST_KNOWN_VERSION, destFolder, pluginSuffixes);
-                 } else {
-                     Debug.LogError("Failed to download DCC plugins. URL: " 
-                         + lastInfo.URL + ". Error: " + e.Error);
-                     EditorUtility.ClearProgressBar();
-                 }
-                 return;
-             }
+        //Prepare WebClient
+        client.DownloadFileCompleted += (object sender, AsyncCompletedEventArgs e) => {
+            if (e.Error != null) {
              
+                DCCPluginDownloadInfo lastInfo = new DCCPluginDownloadInfo(version, pluginSuffixes[curPluginIndex], destFolder);
+                if (File.Exists(lastInfo.FilePath)) {
+                    File.Delete(lastInfo.FilePath);
+                }
 
-             ++curPluginIndex;
-             
-             //if finished downloading all files
-             if (curPluginIndex >= numPlugins) {
-                 EditorUtility.RevealInFinder(destFolder);
-                 EditorUtility.ClearProgressBar();
-                 Debug.Log("Downloaded MeshSync DCC Plugins to " + destFolder);
-             } else {
-               //Download the next one  
-               DCCPluginDownloadInfo curInfo = new DCCPluginDownloadInfo(version, pluginSuffixes[curPluginIndex], destFolder);
-               client.DownloadFileAsync(new Uri(curInfo.URL), curInfo.FilePath);
-             }
-         };
+                //Try downloading using the latest known version to work.
+                if (version != LATEST_KNOWN_VERSION) {
+                 
+                    DownloadDCCPlugins(LATEST_KNOWN_VERSION, destFolder, pluginSuffixes);
+                } else {
+                    Debug.LogError("Failed to download DCC plugins. URL: " 
+                     + lastInfo.URL + ". Error: " + e.Error);
+                    EditorUtility.ClearProgressBar();
+                }
+                return;
+            }
+            
+            ++curPluginIndex;
          
-         client.DownloadProgressChanged += (object sender, DownloadProgressChangedEventArgs e) =>
-         {
-             float inverseNumPlugins = 1.0f / numPlugins;
-             float curFileProgress = (curPluginIndex) * inverseNumPlugins;
-             float nextFileProgress = (curPluginIndex+1) * inverseNumPlugins;
+            //if finished downloading all files
+            if (curPluginIndex >= numPlugins) {
+                EditorUtility.RevealInFinder(destFolder);
+                EditorUtility.ClearProgressBar();
+                Debug.Log("Downloaded MeshSync DCC Plugins to " + destFolder);
+            } else {
+                //Download the next one  
+                DCCPluginDownloadInfo curInfo = new DCCPluginDownloadInfo(version, pluginSuffixes[curPluginIndex], destFolder);
+                client.DownloadFileAsync(new Uri(curInfo.URL), curInfo.FilePath);
+            }
+        };
 
-             float progress = curFileProgress + (e.ProgressPercentage * 0.01f * (nextFileProgress - curFileProgress));
-             if(EditorUtility.DisplayCancelableProgressBar("Downloading MeshSync DCC Plugins", 
-                 pluginSuffixes[curPluginIndex], progress)) 
-             {
-                 client.CancelAsync();
-             }
-         };
+        client.DownloadProgressChanged += (object sender, DownloadProgressChangedEventArgs e) =>
+        {
+            float inverseNumPlugins = 1.0f / numPlugins;
+            float curFileProgress = (curPluginIndex) * inverseNumPlugins;
+            float nextFileProgress = (curPluginIndex+1) * inverseNumPlugins;
+
+            float progress = curFileProgress + (e.ProgressPercentage * 0.01f * (nextFileProgress - curFileProgress));
+            if(EditorUtility.DisplayCancelableProgressBar("Downloading MeshSync DCC Plugins", 
+                pluginSuffixes[curPluginIndex], progress)) 
+            {
+                client.CancelAsync();
+            }
+        };
 
 
-         //Execute downloading recursively
-         EditorUtility.DisplayProgressBar("Downloading MeshSync DCC Plugins",pluginSuffixes[curPluginIndex],0);
-         DCCPluginDownloadInfo downloadInfo = new DCCPluginDownloadInfo(version, pluginSuffixes[curPluginIndex], destFolder);
-         client.DownloadFileAsync(new Uri(downloadInfo.URL), downloadInfo.FilePath);
+        //Execute downloading recursively
+        EditorUtility.DisplayProgressBar("Downloading MeshSync DCC Plugins",pluginSuffixes[curPluginIndex],0);
+        DCCPluginDownloadInfo downloadInfo = new DCCPluginDownloadInfo(version, pluginSuffixes[curPluginIndex], destFolder);
+        client.DownloadFileAsync(new Uri(downloadInfo.URL), downloadInfo.FilePath);
 
-     }
+    }
 
 
     
