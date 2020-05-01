@@ -8,50 +8,14 @@ using System.IO;
 
 namespace UnityEditor.MeshSync {
 
-public static class MeshSyncMenu  {
+internal static class MeshSyncMenu  {
 
     
      [MenuItem("Assets/MeshSync/Download DCC Plugins", false, 100)]
      static void DownloadDCCPlugins() {
          
-         string destFolder = EditorUtility.OpenFolderPanel("Select copy destination", "", "");
-         if (string.IsNullOrEmpty(destFolder))
-             return;
-
-         EditorUtility.DisplayProgressBar("Copying MeshSync DCC Plugins","",0);
-         TryCopyDCCPluginsFromPackage(destFolder, (version) => {
-             DownloadDCCPlugins(version, destFolder);
-         });
-         EditorUtility.ClearProgressBar();
-         
-     }
-     
-//----------------------------------------------------------------------------------------------------------------------        
-    static void TryCopyDCCPluginsFromPackage(string destFolder, Action<string> onFail) {
-        RequestJobManager.CreateListRequest(true,true, (listReq) => {
-            PackageManager.PackageInfo packageInfo = listReq.FindPackage(MESHSYNC_DCC_PLUGIN_PACKAGE);
-            if (null != packageInfo) {
-                //Package is already installed.
-                CopyDCCPluginsFromPackage(destFolder);
-                return;
-            }
-
-            RequestJobManager.CreateAddRequest(MESHSYNC_DCC_PLUGIN_PACKAGE, (addReq) => {
-                //Package was successfully added
-                CopyDCCPluginsFromPackage(destFolder);
-            }, (req) => {
-                PackageManager.PackageInfo meshSyncInfo = listReq.FindPackage(MESHSYNC_PACKAGE);
-                onFail?.Invoke(meshSyncInfo.version);
-            });
-        }, null);
-        
-    }
-    
-//-------------------------------------------------1---------------------------------------------------------------------
-
-     static void DownloadDCCPlugins(string version, string destFolder) {
-         //Sample link:
-         string[] plugins = {
+         //Actual plugin name: UnityMeshSync_<version>_<postfix>
+         string[] pluginSuffixes = {
              "3DSMAX_Windows.zip",
              "Blender_Linux.zip",
              "Blender_Mac.zip",
@@ -64,9 +28,45 @@ public static class MeshSyncMenu  {
              "MotionBuilder_Linux.zip",
              "MotionBuilder_Windows.zip",
          };
+         
+         string destFolder = EditorUtility.OpenFolderPanel("Select copy destination", "", "");
+         if (string.IsNullOrEmpty(destFolder))
+             return;
 
+         EditorUtility.DisplayProgressBar("Copying MeshSync DCC Plugins","",0);
+         TryCopyDCCPluginsFromPackage(destFolder,pluginSuffixes, (version) => {
+             DownloadDCCPlugins(version, destFolder, pluginSuffixes);
+         });
+         EditorUtility.ClearProgressBar();
+     }
+     
+     
+//----------------------------------------------------------------------------------------------------------------------        
+    static void TryCopyDCCPluginsFromPackage(string destFolder, string[] pluginSuffixes, Action<string> onFail) {
+        RequestJobManager.CreateListRequest(true,true, (listReq) => {
+            PackageManager.PackageInfo packageInfo = listReq.FindPackage(MESHSYNC_DCC_PLUGIN_PACKAGE);
+            if (null != packageInfo) {
+                //Package is already installed.
+                CopyDCCPluginsFromPackage(destFolder, pluginSuffixes);
+                return;
+            }
+
+            RequestJobManager.CreateAddRequest(MESHSYNC_DCC_PLUGIN_PACKAGE, (addReq) => {
+                //Package was successfully added
+                CopyDCCPluginsFromPackage(destFolder, pluginSuffixes);
+            }, (req) => {
+                PackageManager.PackageInfo meshSyncInfo = listReq.FindPackage(MESHSYNC_PACKAGE);
+                onFail?.Invoke(meshSyncInfo.version);
+            });
+        }, null);
+        
+    }
+    
+//-------------------------------------------------1---------------------------------------------------------------------
+
+     static void DownloadDCCPlugins(string version, string destFolder, string[] pluginSuffixes) {
          Directory.CreateDirectory(destFolder);
-         int numPlugins = plugins.Length;
+         int numPlugins = pluginSuffixes.Length;
          int curPluginIndex = 0;
          WebClient client = new WebClient();
 
@@ -75,7 +75,7 @@ public static class MeshSyncMenu  {
          client.DownloadFileCompleted += (object sender, AsyncCompletedEventArgs e) => {
              if (e.Error != null) {
                  
-                 DCCPluginDownloadInfo lastInfo = new DCCPluginDownloadInfo(version, plugins[curPluginIndex], destFolder);
+                 DCCPluginDownloadInfo lastInfo = new DCCPluginDownloadInfo(version, pluginSuffixes[curPluginIndex], destFolder);
                  if (File.Exists(lastInfo.FilePath)) {
                      File.Delete(lastInfo.FilePath);
                  }
@@ -83,7 +83,7 @@ public static class MeshSyncMenu  {
                  //Try downloading using the latest known version to work.
                  if (version != LATEST_KNOWN_VERSION) {
                      
-                     DownloadDCCPlugins(LATEST_KNOWN_VERSION, destFolder);
+                     DownloadDCCPlugins(LATEST_KNOWN_VERSION, destFolder, pluginSuffixes);
                  } else {
                      Debug.LogError("Failed to download DCC plugins. URL: " 
                          + lastInfo.URL + ". Error: " + e.Error);
@@ -102,7 +102,7 @@ public static class MeshSyncMenu  {
                  Debug.Log("Downloaded MeshSync DCC Plugins to " + destFolder);
              } else {
                //Download the next one  
-               DCCPluginDownloadInfo curInfo = new DCCPluginDownloadInfo(version, plugins[curPluginIndex], destFolder);
+               DCCPluginDownloadInfo curInfo = new DCCPluginDownloadInfo(version, pluginSuffixes[curPluginIndex], destFolder);
                client.DownloadFileAsync(new Uri(curInfo.URL), curInfo.FilePath);
              }
          };
@@ -115,7 +115,7 @@ public static class MeshSyncMenu  {
 
              float progress = curFileProgress + (e.ProgressPercentage * 0.01f * (nextFileProgress - curFileProgress));
              if(EditorUtility.DisplayCancelableProgressBar("Downloading MeshSync DCC Plugins", 
-                 plugins[curPluginIndex], progress)) 
+                 pluginSuffixes[curPluginIndex], progress)) 
              {
                  client.CancelAsync();
              }
@@ -123,8 +123,8 @@ public static class MeshSyncMenu  {
 
 
          //Execute downloading recursively
-         EditorUtility.DisplayProgressBar("Downloading MeshSync DCC Plugins",plugins[curPluginIndex],0);
-         DCCPluginDownloadInfo downloadInfo = new DCCPluginDownloadInfo(version, plugins[curPluginIndex], destFolder);
+         EditorUtility.DisplayProgressBar("Downloading MeshSync DCC Plugins",pluginSuffixes[curPluginIndex],0);
+         DCCPluginDownloadInfo downloadInfo = new DCCPluginDownloadInfo(version, pluginSuffixes[curPluginIndex], destFolder);
          client.DownloadFileAsync(new Uri(downloadInfo.URL), downloadInfo.FilePath);
 
      }
@@ -132,7 +132,7 @@ public static class MeshSyncMenu  {
 
     
 //----------------------------------------------------------------------------------------------------------------------        
-    static void CopyDCCPluginsFromPackage(string destFolder) {
+    static void CopyDCCPluginsFromPackage(string destFolder, string[] pluginSuffixes) {
         //[TODO-sin: 2020-4-8] Assume that package was successfully installed. Copy the plugins somewhere
         
     }
