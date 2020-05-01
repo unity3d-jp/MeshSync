@@ -190,7 +190,7 @@ internal static class MeshSyncMenu  {
     
 //----------------------------------------------------------------------------------------------------------------------        
 
-    const string LATEST_KNOWN_VERSION = "0.0.3-preview";
+    const string LATEST_KNOWN_VERSION = "0.1.0-preview";
     private const string MESHSYNC_PACKAGE = "com.unity.meshsync";
     private const string MESHSYNC_DCC_PLUGIN_PACKAGE = "com.unity.meshsync-dcc-plugins";
 }
