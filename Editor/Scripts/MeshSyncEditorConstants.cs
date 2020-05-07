@@ -11,6 +11,10 @@ internal class MeshSyncEditorConstants {
 
     //
     internal const string PROJECT_SETTINGS_UIELEMENTS_PATH = "Packages/com.unity.meshsync/Editor/UIElements/ProjectSettings";
+
+    //
+    internal const string DCC_PLUGINS_GITHUB_RELEASE_URL = "https://github.com/Unity-Technologies/MeshSyncDCCPlugins/releases/download/";
+
     
 }    
     

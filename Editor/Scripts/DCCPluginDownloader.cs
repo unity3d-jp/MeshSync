@@ -174,7 +174,7 @@ internal class DCCPluginDownloader  {
 
     //Download meta file synchronously
     static DCCPluginMeta TryDownloadDCCPluginMeta(string version) {
-        string metaURL = GITHUB_RELEASE_URL + version + "/meta.txt";
+        string metaURL = MeshSyncEditorConstants.DCC_PLUGINS_GITHUB_RELEASE_URL + version + "/meta.txt";
         string tempPath = FileUtil.GetUniqueTempPathInProject();
         
         WebClient client = new WebClient();
@@ -242,26 +242,11 @@ internal class DCCPluginDownloader  {
     
     #endregion
     
-//----------------------------------------------------------------------------------------------------------------------        
-    class DCCPluginDirectDownloadInfo {
-        public readonly string URL;
-        public readonly string LocalFilePath;
-
-        //Sample link;
-        //https://github.com/Unity-Technologies/MeshSyncDCCPlugin/releases/download/0.0.3-preview/UnityMeshSync_0.0.3-preview_3DSMAX_Windows.zip
-        internal DCCPluginDirectDownloadInfo(string version, string pluginName, string destFolder) {
-            URL = GITHUB_RELEASE_URL + version + "/UnityMeshSync_" + version + "_" + pluginName;
-            LocalFilePath =  Path.Combine(destFolder,Path.GetFileName(URL));
-        }
-
-    }
-
     
 //----------------------------------------------------------------------------------------------------------------------        
 
     private readonly bool m_showProgressBar;
 
-    const string GITHUB_RELEASE_URL = "https://github.com/Unity-Technologies/MeshSyncDCCPlugins/releases/download/";
     const string LATEST_KNOWN_VERSION = "0.1.0-preview";
     private const string MESHSYNC_PACKAGE = "com.unity.meshsync";
     private const string MESHSYNC_DCC_PLUGIN_PACKAGE = "com.unity.meshsync-dcc-plugins";
