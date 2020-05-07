@@ -173,7 +173,8 @@ namespace UnityEditor.MeshSync {
                 return;
             }
 
-            DCCIntegrationUtility.InstallPlugin(info);
+            BaseDCCIntegrator integrator = DCCIntegratorFactory.Create(info.Type);
+            integrator.Integrate();
 
         }
         #endregion
