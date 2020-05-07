@@ -58,16 +58,7 @@ namespace UnityEditor.MeshSync {
         void AddDCCToolSettingsContainer(DCCToolInfo info, VisualElement top, VisualTreeAsset dccToolInfoTemplate) {
             TemplateContainer container = dccToolInfoTemplate.CloneTree();
             Label nameLabel = container.Query<Label>("DCCToolName").First();
-            switch (info.Type) {
-                case DCCToolType.AUTODESK_MAYA: {
-                    nameLabel.text = "Maya " + info.Version;
-                    break;
-                }
-                case DCCToolType.AUTODESK_3DSMAX: {
-                    nameLabel.text = "3DS Max " + info.Version;
-                    break;
-                }
-            }
+            nameLabel.text = info.GetDescription();
             
             container.Query<Label>("DCCToolPath").First().text = "Path: " + info.AppPath;
 
@@ -83,13 +74,13 @@ namespace UnityEditor.MeshSync {
             {
                 Button button = container.Query<Button>("RemoveDCCToolButton").First();
                 button.clickable.clickedWithEventInfo += OnRemoveDCCToolButtonClicked;
-                button.userData = info.AppPath;
+                button.userData = info;
             }
 
             {
                 Button button = container.Query<Button>("InstallPluginButton").First();
                 button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
-                button.userData = info.AppPath;
+                button.userData = info;
             }
             
             top.Add(container);
@@ -156,14 +147,14 @@ namespace UnityEditor.MeshSync {
                 return;
             }
 
-            string appPath = button.userData as string;
-            if (string.IsNullOrEmpty(appPath)) {
+            DCCToolInfo info = button.userData as DCCToolInfo;
+            if (null==info || string.IsNullOrEmpty(info.AppPath)) {
                 Debug.LogWarning("[MeshSync] Failed to Remove DCC Tool");
                 return;
             }
             
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
-            if (settings.RemoveDCCTool(appPath)) {
+            if (settings.RemoveDCCTool(info.AppPath)) {
                 Setup(m_root);
             }
             
