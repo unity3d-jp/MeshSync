@@ -180,8 +180,7 @@ internal class DCCPluginDownloader  {
         string metaURL = MeshSyncEditorConstants.DCC_PLUGINS_GITHUB_RELEASE_URL + version + "/meta.txt";
         string localPath = Path.Combine(m_destFolder, "meta_" + version + ".txt");
         if (File.Exists(localPath)) {
-            string json = File.ReadAllText(localPath);
-            ret = JsonUtility.FromJson<DCCPluginMeta>(json);
+            ret = FileUtility.DeserializeFromJson<DCCPluginMeta>(localPath);
         }
 
         if (null != ret) {
@@ -191,8 +190,7 @@ internal class DCCPluginDownloader  {
         WebClient client = new WebClient();
         try {
             client.DownloadFile(new Uri(metaURL), localPath);
-            string json = File.ReadAllText(localPath);
-            ret = JsonUtility.FromJson<DCCPluginMeta>(json);
+            ret = FileUtility.DeserializeFromJson<DCCPluginMeta>(localPath);
         }
         catch {
             Debug.LogWarning("[MeshSync] Meta info can't be downloaded from: " + metaURL);

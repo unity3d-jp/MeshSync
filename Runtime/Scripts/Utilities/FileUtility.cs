@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Security.Cryptography;
+using UnityEngine;
 
 namespace Unity.AnimeToolbox {
 
@@ -15,6 +16,14 @@ internal static class FileUtility {
                 return str;
             }
         }
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
+
+    internal static T DeserializeFromJson<T>(string path) {
+        string json = File.ReadAllText(path);
+        return JsonUtility.FromJson<T>(json);
+        
     }
     
 }
