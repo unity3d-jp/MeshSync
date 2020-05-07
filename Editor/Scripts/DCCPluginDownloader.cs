@@ -76,7 +76,7 @@ internal class DCCPluginDownloader  {
         int initialQueueCount = m_dccPlatformNames.Count;
 
         //meta can be null when we failed to download it
-        DCCPluginMeta meta = TryDownloadDCCPluginMeta(version);
+        DCCPluginMeta meta = GetOrDownloadDCCPluginMeta(version);
 
         //Prepare WebClient
         client.DownloadFileCompleted += (object sender, AsyncCompletedEventArgs e) => {
@@ -174,24 +174,33 @@ internal class DCCPluginDownloader  {
 //----------------------------------------------------------------------------------------------------------------------        
 
     //Download meta file synchronously
-    static DCCPluginMeta TryDownloadDCCPluginMeta(string version) {
+    DCCPluginMeta GetOrDownloadDCCPluginMeta(string version) {
+        
+        DCCPluginMeta ret = null;
         string metaURL = MeshSyncEditorConstants.DCC_PLUGINS_GITHUB_RELEASE_URL + version + "/meta.txt";
-        string tempPath = FileUtil.GetUniqueTempPathInProject();
+        string localPath = Path.Combine(m_destFolder, "meta_" + version + ".txt");
+        if (File.Exists(localPath)) {
+            string json = File.ReadAllText(localPath);
+            ret = JsonUtility.FromJson<DCCPluginMeta>(json);
+        }
+
+        if (null != ret) {
+            return ret;
+        }
         
         WebClient client = new WebClient();
-        DCCPluginMeta ret = null;
         try {
-            client.DownloadFile(new Uri(metaURL), tempPath);
-            string json = File.ReadAllText(tempPath);
+            client.DownloadFile(new Uri(metaURL), localPath);
+            string json = File.ReadAllText(localPath);
             ret = JsonUtility.FromJson<DCCPluginMeta>(json);
         }
         catch {
             Debug.LogWarning("[MeshSync] Meta info can't be downloaded from: " + metaURL);
+            if (File.Exists(localPath)) {
+                File.Delete(localPath);
+            }
         }
 
-        if (File.Exists(tempPath)) {
-            File.Delete(tempPath);
-        }
 
         return ret;
 
