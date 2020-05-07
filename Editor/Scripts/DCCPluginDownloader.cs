@@ -153,7 +153,7 @@ internal class DCCPluginDownloader  {
             if (null!=meta && File.Exists(directDownloadInfo.LocalFilePath)) {
                 
                 //Check MD5
-                string md5 = ComputeFileMD5(directDownloadInfo.LocalFilePath);
+                string md5 = FileUtility.ComputeMD5(directDownloadInfo.LocalFilePath);
                 DCCPluginSignature signature = meta.GetSignature(Path.GetFileName(directDownloadInfo.LocalFilePath));
                 if (signature.MD5 != md5) {
                     ret = directDownloadInfo;
@@ -203,16 +203,6 @@ internal class DCCPluginDownloader  {
         
     }
 
-//----------------------------------------------------------------------------------------------------------------------        
-    static string ComputeFileMD5(string path) {
-        using (var md5 = MD5.Create()) {
-            using (var stream = File.OpenRead(path)) {
-                byte[] hash = md5.ComputeHash(stream);
-                string str = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-                return str;
-            }
-        }
-    }
 
     
 //----------------------------------------------------------------------------------------------------------------------        
