@@ -35,7 +35,7 @@ internal class DCCPluginDownloader  {
         TryCopyDCCPluginsFromPackage(destFolder,dccPlatformNames, onSuccessAndCleanUp, (version) => {
 
             //Getting files from the package has failed. Download directly
-            DownloadDCCPlugins(version, destFolder, dccPlatformNames, true, onSuccessAndCleanUp, onFailAndCleanUp);
+            DownloadDCCPlugins(version, destFolder, dccPlatformNames, onSuccessAndCleanUp, onFailAndCleanUp);
         });
      }
      
@@ -68,7 +68,7 @@ internal class DCCPluginDownloader  {
 //-------------------------------------------------1---------------------------------------------------------------------
 
     void DownloadDCCPlugins(string version, string destFolder, Queue<string> dccPlatformNames, 
-        bool skipExistingPlugins, Action onComplete, Action onFail) 
+        Action onComplete, Action onFail) 
     {
         Directory.CreateDirectory(destFolder);
         WebClient client = new WebClient();
@@ -90,7 +90,7 @@ internal class DCCPluginDownloader  {
                 //Try downloading using the latest known version to work.
                 if (version != LATEST_KNOWN_VERSION) {
                  
-                    DownloadDCCPlugins(LATEST_KNOWN_VERSION, destFolder, dccPlatformNames, skipExistingPlugins, onComplete, onFail);
+                    DownloadDCCPlugins(LATEST_KNOWN_VERSION, destFolder, dccPlatformNames, onComplete, onFail);
                 } else {
                     onFail();
                 }
