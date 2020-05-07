@@ -161,7 +161,20 @@ namespace UnityEditor.MeshSync {
         }
         void OnInstallPluginButtonClicked(EventBase evt) {
             
-            Debug.Log("Installing: " + evt.target);
+            Button button = evt.target as Button;
+            if (null == button) {
+                Debug.LogWarning("[MeshSync] Failed to Install Plugin");
+                return;
+            }
+
+            DCCToolInfo info = button.userData as DCCToolInfo;
+            if (null==info) {
+                Debug.LogWarning("[MeshSync] Failed to Install Plugin");
+                return;
+            }
+
+            DCCIntegrationUtility.InstallPlugin(info);
+
         }
         #endregion
 
