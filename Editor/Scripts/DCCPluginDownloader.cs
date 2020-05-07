@@ -80,7 +80,7 @@ internal class DCCPluginDownloader  {
 
         //Prepare WebClient
         client.DownloadFileCompleted += (object sender, AsyncCompletedEventArgs e) => {
-            DCCPluginDirectDownloadInfo lastInfo = new DCCPluginDirectDownloadInfo(version, m_dccPlatformNames.Peek(), m_destFolder);
+            DCCPluginDownloadInfo lastInfo = new DCCPluginDownloadInfo(version, m_dccPlatformNames.Peek(), m_destFolder);
             if (e.Error != null) {
                 if (File.Exists(lastInfo.LocalFilePath)) {
                     File.Delete(lastInfo.LocalFilePath);
@@ -101,7 +101,7 @@ internal class DCCPluginDownloader  {
             m_finishedDCCPluginLocalPaths.Add(lastInfo.LocalFilePath);
 
             
-            DCCPluginDirectDownloadInfo nextInfo = FindNextPluginToDownload(meta, version);
+            DCCPluginDownloadInfo nextInfo = FindNextPluginToDownload(meta, version);
             if (null == nextInfo) {
                 onComplete();
             } else {
@@ -127,42 +127,42 @@ internal class DCCPluginDownloader  {
         };
 
         
-        DCCPluginDirectDownloadInfo directDownloadInfo = FindNextPluginToDownload(meta, version);
+        DCCPluginDownloadInfo downloadInfo = FindNextPluginToDownload(meta, version);
 
-        if (null == directDownloadInfo) {
+        if (null == downloadInfo) {
             onComplete();
             return;
         }
 
         //Execute downloading
         DisplayProgressBar("Downloading MeshSync DCC Plugins",m_dccPlatformNames.Peek(),0);
-        client.DownloadFileAsync(new Uri(directDownloadInfo.URL), directDownloadInfo.LocalFilePath);
+        client.DownloadFileAsync(new Uri(downloadInfo.URL), downloadInfo.LocalFilePath);
 
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
-    DCCPluginDirectDownloadInfo FindNextPluginToDownload(DCCPluginMeta meta, string version) {
+    DCCPluginDownloadInfo FindNextPluginToDownload(DCCPluginMeta meta, string version) {
         
-        DCCPluginDirectDownloadInfo ret = null;
+        DCCPluginDownloadInfo ret = null;
 
         while (m_dccPlatformNames.Count > 0 && null == ret) {
-            DCCPluginDirectDownloadInfo directDownloadInfo = new DCCPluginDirectDownloadInfo(version, 
+            DCCPluginDownloadInfo downloadInfo = new DCCPluginDownloadInfo(version, 
                 m_dccPlatformNames.Peek(), m_destFolder);
-            if (null!=meta && File.Exists(directDownloadInfo.LocalFilePath)) {
+            if (null!=meta && File.Exists(downloadInfo.LocalFilePath)) {
                 
                 //Check MD5
-                string md5 = FileUtility.ComputeMD5(directDownloadInfo.LocalFilePath);
-                DCCPluginSignature signature = meta.GetSignature(Path.GetFileName(directDownloadInfo.LocalFilePath));
+                string md5 = FileUtility.ComputeMD5(downloadInfo.LocalFilePath);
+                DCCPluginSignature signature = meta.GetSignature(Path.GetFileName(downloadInfo.LocalFilePath));
                 if (signature.MD5 != md5) {
-                    ret = directDownloadInfo;
+                    ret = downloadInfo;
                 } else {
                     //The same file has been downloaded. Skip.
                     m_dccPlatformNames.Dequeue();
-                    m_finishedDCCPluginLocalPaths.Add(directDownloadInfo.LocalFilePath);
+                    m_finishedDCCPluginLocalPaths.Add(downloadInfo.LocalFilePath);
                 }
 
             } else {
-                ret = directDownloadInfo;
+                ret = downloadInfo;
             }
         }
 
@@ -206,6 +206,7 @@ internal class DCCPluginDownloader  {
 //----------------------------------------------------------------------------------------------------------------------        
     static void CopyDCCPluginsFromPackage() {
         //[TODO-sin: 2020-4-8] Assume that package was successfully installed. Copy the plugins to m_destFolder
+        //And add to m_finishedDCCPluginLocalPaths
         
     }
 
