@@ -169,6 +169,7 @@ namespace UnityEditor.MeshSync {
             
         }
         void OnInstallPluginButtonClicked(EventBase evt) {
+            
             Debug.Log("Installing: " + evt.target);
         }
         #endregion

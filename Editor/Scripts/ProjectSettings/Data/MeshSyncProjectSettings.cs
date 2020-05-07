@@ -106,6 +106,7 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
         
         string json = File.ReadAllText(path);
         MeshSyncProjectSettings settings = JsonUtility.FromJson<MeshSyncProjectSettings>(json);
+        
         return settings;
     }
     
