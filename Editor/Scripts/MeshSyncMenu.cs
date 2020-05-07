@@ -78,12 +78,8 @@ internal static class MeshSyncMenu  {
         WebClient client = new WebClient();
         int initialQueueCount = dccPlatformNames.Count;
 
+        //meta can be null when we failed to download it
         DCCPluginMeta meta = TryDownloadDCCPluginMeta(version);
-        if (null == meta) {
-            EditorUtility.ClearProgressBar();
-            return;
-        }
-        
 
         //Prepare WebClient
         client.DownloadFileCompleted += (object sender, AsyncCompletedEventArgs e) => {
@@ -198,7 +194,7 @@ internal static class MeshSyncMenu  {
             ret = JsonUtility.FromJson<DCCPluginMeta>(json);
         }
         catch {
-            Debug.LogError("[MeshSync] Error when downloading meta: " + metaURL);
+            Debug.LogWarning("[MeshSync] Meta info can't be downloaded from: " + metaURL);
         }
 
         if (File.Exists(tempPath)) {
