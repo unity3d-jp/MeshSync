@@ -111,9 +111,7 @@ internal static class MeshSyncMenu  {
             pluginSuffixes.Dequeue();
 
             
-            DCCPluginDownloadInfo nextInfo = FindNextPluginToDownload(meta, version, destFolder, 
-                pluginSuffixes, skipExistingPlugins
-            );
+            DCCPluginDownloadInfo nextInfo = FindNextPluginToDownload(meta, version, destFolder, pluginSuffixes);
             if (null == nextInfo) {
                 EditorUtility.ClearProgressBar();
                 onComplete();
@@ -141,9 +139,7 @@ internal static class MeshSyncMenu  {
         };
 
         
-        DCCPluginDownloadInfo downloadInfo = FindNextPluginToDownload(meta, version, destFolder, 
-            pluginSuffixes, skipExistingPlugins
-        );
+        DCCPluginDownloadInfo downloadInfo = FindNextPluginToDownload(meta, version, destFolder, pluginSuffixes);
 
         if (null == downloadInfo) {
             EditorUtility.ClearProgressBar();
@@ -160,14 +156,13 @@ internal static class MeshSyncMenu  {
 //----------------------------------------------------------------------------------------------------------------------    
     static DCCPluginDownloadInfo FindNextPluginToDownload(DCCPluginMeta meta, string version, 
         string destFolder, 
-        Queue<string> pluginSuffixes, bool skipExistingPlugins) {
-
+        Queue<string> pluginSuffixes) {
         
         DCCPluginDownloadInfo ret = null;
 
         while (pluginSuffixes.Count > 0 && null == ret) {
             DCCPluginDownloadInfo downloadInfo = new DCCPluginDownloadInfo(version, pluginSuffixes.Peek(), destFolder);
-            if (skipExistingPlugins && File.Exists(downloadInfo.FilePath)) {
+            if (null!=meta && File.Exists(downloadInfo.FilePath)) {
                 
                 //Check MD5
                 string md5 = ComputeFileMD5(downloadInfo.FilePath);
