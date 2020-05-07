@@ -102,7 +102,7 @@ namespace UnityEditor.MeshSync {
             string appPath = null;
             for (int i = 0; i < (int) (DCCToolType.NUM_DCC_TOOL_TYPES) && string.IsNullOrEmpty(appPath); ++i) {
                 lastDCCToolType = (DCCToolType) (i);
-                appPath = ProjectSettingsUtility.FindDCCToolAppPathInDirectory(lastDCCToolType, m_lastOpenedFolder);
+                appPath = DCCFinderUtility.FindDCCToolAppPathInDirectory(lastDCCToolType, m_lastOpenedFolder);
             }
 
             if (string.IsNullOrEmpty(appPath)) {
@@ -114,11 +114,11 @@ namespace UnityEditor.MeshSync {
             string version = null;
             switch (lastDCCToolType) {
                 case DCCToolType.AUTODESK_MAYA: {
-                    version = ProjectSettingsUtility.FindMayaVersion(appPath);
+                    version = DCCFinderUtility.FindMayaVersion(appPath);
                     break;
                 }
                 case DCCToolType.AUTODESK_3DSMAX: {
-                    version = ProjectSettingsUtility.Find3DSMaxVersion(appPath);
+                    version = DCCFinderUtility.Find3DSMaxVersion(appPath);
                     break;
                 }
             }

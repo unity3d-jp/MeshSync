@@ -8,9 +8,9 @@ using UnityEngine;
 namespace UnityEditor.MeshSync {
     
 /// <summary>
-/// A class that provides various utility functions related to ProjectSettings for MeshSync
+/// A utility class for finding DCC Tools
 /// </summary>
-public static class ProjectSettingsUtility {
+public static class DCCFinderUtility {
     
     //Find the location of supported DCC tools on Windows and Mac.
     //Currently only support Autodesk products
