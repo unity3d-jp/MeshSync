@@ -82,9 +82,9 @@ internal class DCCPluginDownloader  {
             if (e.Error != null) {
 
 
-                DCCPluginDownloadInfo lastInfo = new DCCPluginDownloadInfo(version, dccPlatformNames.Peek(), destFolder);
-                if (File.Exists(lastInfo.FilePath)) {
-                    File.Delete(lastInfo.FilePath);
+                DCCPluginDirectDownloadInfo lastInfo = new DCCPluginDirectDownloadInfo(version, dccPlatformNames.Peek(), destFolder);
+                if (File.Exists(lastInfo.LocalFilePath)) {
+                    File.Delete(lastInfo.LocalFilePath);
                 }
 
                 //Try downloading using the latest known version to work.
@@ -101,13 +101,13 @@ internal class DCCPluginDownloader  {
             dccPlatformNames.Dequeue();
 
             
-            DCCPluginDownloadInfo nextInfo = FindNextPluginToDownload(meta, version, destFolder, dccPlatformNames);
+            DCCPluginDirectDownloadInfo nextInfo = FindNextPluginToDownload(meta, version, destFolder, dccPlatformNames);
             if (null == nextInfo) {
                 onComplete();
             } else {
                 
                 //Download the next one  
-                client.DownloadFileAsync(new Uri(nextInfo.URL), nextInfo.FilePath);
+                client.DownloadFileAsync(new Uri(nextInfo.URL), nextInfo.LocalFilePath);
             }
 
         };
@@ -127,42 +127,42 @@ internal class DCCPluginDownloader  {
         };
 
         
-        DCCPluginDownloadInfo downloadInfo = FindNextPluginToDownload(meta, version, destFolder, dccPlatformNames);
+        DCCPluginDirectDownloadInfo directDownloadInfo = FindNextPluginToDownload(meta, version, destFolder, dccPlatformNames);
 
-        if (null == downloadInfo) {
+        if (null == directDownloadInfo) {
             onComplete();
             return;
         }
 
         //Execute downloading
         DisplayProgressBar("Downloading MeshSync DCC Plugins",dccPlatformNames.Peek(),0);
-        client.DownloadFileAsync(new Uri(downloadInfo.URL), downloadInfo.FilePath);
+        client.DownloadFileAsync(new Uri(directDownloadInfo.URL), directDownloadInfo.LocalFilePath);
 
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
-    static DCCPluginDownloadInfo FindNextPluginToDownload(DCCPluginMeta meta, string version, 
+    static DCCPluginDirectDownloadInfo FindNextPluginToDownload(DCCPluginMeta meta, string version, 
         string destFolder, 
         Queue<string> dccPlatformNames) {
         
-        DCCPluginDownloadInfo ret = null;
+        DCCPluginDirectDownloadInfo ret = null;
 
         while (dccPlatformNames.Count > 0 && null == ret) {
-            DCCPluginDownloadInfo downloadInfo = new DCCPluginDownloadInfo(version, dccPlatformNames.Peek(), destFolder);
-            if (null!=meta && File.Exists(downloadInfo.FilePath)) {
+            DCCPluginDirectDownloadInfo directDownloadInfo = new DCCPluginDirectDownloadInfo(version, dccPlatformNames.Peek(), destFolder);
+            if (null!=meta && File.Exists(directDownloadInfo.LocalFilePath)) {
                 
                 //Check MD5
-                string md5 = ComputeFileMD5(downloadInfo.FilePath);
-                DCCPluginSignature signature = meta.GetSignature(Path.GetFileName(downloadInfo.FilePath));
+                string md5 = ComputeFileMD5(directDownloadInfo.LocalFilePath);
+                DCCPluginSignature signature = meta.GetSignature(Path.GetFileName(directDownloadInfo.LocalFilePath));
                 if (signature.MD5 != md5) {
-                    ret = downloadInfo;
+                    ret = directDownloadInfo;
                 } else {
                     //The same file has been downloaded. Skip.
                     dccPlatformNames.Dequeue();
                 }
 
             } else {
-                ret = downloadInfo;
+                ret = directDownloadInfo;
             }
         }
 
@@ -243,15 +243,15 @@ internal class DCCPluginDownloader  {
     #endregion
     
 //----------------------------------------------------------------------------------------------------------------------        
-    class DCCPluginDownloadInfo {
+    class DCCPluginDirectDownloadInfo {
         public readonly string URL;
-        public readonly string FilePath;
+        public readonly string LocalFilePath;
 
         //Sample link;
         //https://github.com/Unity-Technologies/MeshSyncDCCPlugin/releases/download/0.0.3-preview/UnityMeshSync_0.0.3-preview_3DSMAX_Windows.zip
-        internal DCCPluginDownloadInfo(string version, string pluginName, string destFolder) {
+        internal DCCPluginDirectDownloadInfo(string version, string pluginName, string destFolder) {
             URL = GITHUB_RELEASE_URL + version + "/UnityMeshSync_" + version + "_" + pluginName;
-            FilePath =  Path.Combine(destFolder,Path.GetFileName(URL));
+            LocalFilePath =  Path.Combine(destFolder,Path.GetFileName(URL));
         }
 
     }
