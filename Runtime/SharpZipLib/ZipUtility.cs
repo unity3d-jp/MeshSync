@@ -1,9 +1,9 @@
-﻿using ICSharpCode.SharpZipLib.Core;
-using ICSharpCode.SharpZipLib.Zip;
+﻿using ICSharpCode.SharpZipLibUnity.Core;
+using ICSharpCode.SharpZipLibUnity.Zip;
 using System;
 using System.IO;
 
-namespace Unity.SharpZipLib.Utils {
+namespace Unity.SharpZipLibUnity.Utils {
 
 //[TODO-sin: 2020-4-30] Move this to another package
 internal static class ZipUtility {
