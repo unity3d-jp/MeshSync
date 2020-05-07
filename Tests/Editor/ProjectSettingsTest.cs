@@ -27,8 +27,8 @@ internal class ProjectSettingsTest {
     [UnityPlatform(RuntimePlatform.OSXEditor)]
     public void FindDCCToolVersionsOnOSX() {
 
+        //[TODO-sin: 2020-5-7] Add tests for Windows and Linux
         string version = null;
-        
         version = DCCFinderUtility.FindMayaVersion("/Applications/Maya 2019/Maya.app/Contents/MacOS/Maya");
         Assert.AreEqual("2019", version);
 
