@@ -5,7 +5,6 @@ using UnityEngine;
 using System.Net;
 using Unity.AnimeToolbox;
 using System.IO;
-using System.Security.Cryptography;
 
 namespace UnityEditor.MeshSync {
 
@@ -17,15 +16,16 @@ internal class DCCPluginDownloader  {
         m_showProgressBar = showProgressBar;
         m_destFolder = destFolder;
         m_dccPlatformNames = new Queue<string>(dccPlatformNames);
+        m_finishedDCCPluginLocalPaths = new List<string>();
     } 
     
 //----------------------------------------------------------------------------------------------------------------------    
     
-    internal void Execute(Action onSuccess, Action onFail) {
+    internal void Execute(Action<List<string>> onSuccess, Action onFail) {
 
         Action onSuccessAndCleanUp = () => {
             ClearProgressBar();
-            onSuccess();
+            onSuccess(m_finishedDCCPluginLocalPaths);
         };
         
         Action onFailAndCleanUp = () => {
@@ -80,10 +80,8 @@ internal class DCCPluginDownloader  {
 
         //Prepare WebClient
         client.DownloadFileCompleted += (object sender, AsyncCompletedEventArgs e) => {
+            DCCPluginDirectDownloadInfo lastInfo = new DCCPluginDirectDownloadInfo(version, m_dccPlatformNames.Peek(), m_destFolder);
             if (e.Error != null) {
-
-
-                DCCPluginDirectDownloadInfo lastInfo = new DCCPluginDirectDownloadInfo(version, m_dccPlatformNames.Peek(), m_destFolder);
                 if (File.Exists(lastInfo.LocalFilePath)) {
                     File.Delete(lastInfo.LocalFilePath);
                 }
@@ -100,9 +98,10 @@ internal class DCCPluginDownloader  {
 
             //Remove the finished one from queue
             m_dccPlatformNames.Dequeue();
+            m_finishedDCCPluginLocalPaths.Add(lastInfo.LocalFilePath);
 
             
-            DCCPluginDirectDownloadInfo nextInfo = FindNextPluginToDownload(meta, version, m_destFolder, m_dccPlatformNames);
+            DCCPluginDirectDownloadInfo nextInfo = FindNextPluginToDownload(meta, version);
             if (null == nextInfo) {
                 onComplete();
             } else {
@@ -128,7 +127,7 @@ internal class DCCPluginDownloader  {
         };
 
         
-        DCCPluginDirectDownloadInfo directDownloadInfo = FindNextPluginToDownload(meta, version, m_destFolder, m_dccPlatformNames);
+        DCCPluginDirectDownloadInfo directDownloadInfo = FindNextPluginToDownload(meta, version);
 
         if (null == directDownloadInfo) {
             onComplete();
@@ -142,14 +141,13 @@ internal class DCCPluginDownloader  {
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
-    static DCCPluginDirectDownloadInfo FindNextPluginToDownload(DCCPluginMeta meta, string version, 
-        string destFolder, Queue<string> dccPlatformNames) 
-    {
+    DCCPluginDirectDownloadInfo FindNextPluginToDownload(DCCPluginMeta meta, string version) {
         
         DCCPluginDirectDownloadInfo ret = null;
 
-        while (dccPlatformNames.Count > 0 && null == ret) {
-            DCCPluginDirectDownloadInfo directDownloadInfo = new DCCPluginDirectDownloadInfo(version, dccPlatformNames.Peek(), destFolder);
+        while (m_dccPlatformNames.Count > 0 && null == ret) {
+            DCCPluginDirectDownloadInfo directDownloadInfo = new DCCPluginDirectDownloadInfo(version, 
+                m_dccPlatformNames.Peek(), m_destFolder);
             if (null!=meta && File.Exists(directDownloadInfo.LocalFilePath)) {
                 
                 //Check MD5
@@ -159,7 +157,8 @@ internal class DCCPluginDownloader  {
                     ret = directDownloadInfo;
                 } else {
                     //The same file has been downloaded. Skip.
-                    dccPlatformNames.Dequeue();
+                    m_dccPlatformNames.Dequeue();
+                    m_finishedDCCPluginLocalPaths.Add(directDownloadInfo.LocalFilePath);
                 }
 
             } else {
@@ -246,6 +245,8 @@ internal class DCCPluginDownloader  {
     private readonly bool m_showProgressBar;
     private readonly string m_destFolder;
     private readonly Queue<string> m_dccPlatformNames;
+    private readonly List<string> m_finishedDCCPluginLocalPaths;
+    
     
     const string LATEST_KNOWN_VERSION = "0.1.0-preview";
     private const string MESHSYNC_PACKAGE = "com.unity.meshsync";

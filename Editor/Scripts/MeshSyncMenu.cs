@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace UnityEditor.MeshSync {
 
@@ -29,8 +30,8 @@ internal static class MeshSyncMenu  {
 
         
         DCCPluginDownloader downloader = new DCCPluginDownloader(true, destFolder, dccPlatformNames);
-        downloader.Execute(() => {
-            Debug.Log("Downloaded MeshSync DCC Plugins to " + destFolder);
+        downloader.Execute((List<string> dccPluginLocalPaths) => {
+            Debug.Log("Downloaded " + dccPluginLocalPaths.Count + "MeshSync DCC Plugins to " + destFolder);
             EditorUtility.RevealInFinder(destFolder);
         }, () => {
             Debug.LogError("Failed to download MeshSync DCC plugins.");

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -16,7 +17,7 @@ internal abstract class BaseDCCIntegrator {
 
         string dccName = GetDCCName();
         EditorUtility.DisplayProgressBar("MeshSync", "Installing plugin for " + dccName,0);
-        downloader.Execute(() => {
+        downloader.Execute((List<string> dccPluginLocalPaths) => {
 
             IntegrateInternal();
             Debug.Log("File copied to: " + SAVED_PLUGINS_FOLDER);
