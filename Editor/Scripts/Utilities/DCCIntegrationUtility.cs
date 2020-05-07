@@ -15,7 +15,8 @@ internal static class DCCIntegrationUtility {
                 break;
             }
             case DCCToolType.AUTODESK_3DSMAX: {
-                throw new NotImplementedException();
+                Install3DSMaxPlugin();
+                break;
             }
             default: {
                 throw new NotImplementedException();
@@ -57,6 +58,31 @@ internal static class DCCIntegrationUtility {
         });
     }
 
+//----------------------------------------------------------------------------------------------------------------------
+
+    static void Install3DSMaxPlugin() {
+        
+        const string PLUGIN_NAME = "3DSMax";
+        string dccPlatformName = PLUGIN_NAME + "_" + GetCurrentDCCPluginPlatform() + ".zip";
+        
+        //Make sure the file exists first
+        DCCPluginDownloader downloader = new DCCPluginDownloader(false,SAVED_PLUGINS_FOLDER, 
+            new string[] { dccPlatformName }
+        );
+        
+        EditorUtility.DisplayProgressBar("MeshSync", "Installing plugin for " + PLUGIN_NAME,0);
+        downloader.Execute(() => {
+            Debug.Log("File copied to: " + SAVED_PLUGINS_FOLDER);
+            
+            //[TODO-sin: 2020-5-7] Implement this
+            //Copy the file to The plugin path under the installation directory,
+            //e.g: C:\Program Files\Autodesk\3ds Max 2019\Plugins            
+            EditorUtility.ClearProgressBar();
+        }, () => {
+            Debug.LogError("Failed to download DCC Plugin for " + PLUGIN_NAME);
+            EditorUtility.ClearProgressBar();
+        });
+    }
 //----------------------------------------------------------------------------------------------------------------------    
 
     static string GetCurrentDCCPluginPlatform() {
