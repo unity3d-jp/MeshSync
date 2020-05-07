@@ -5,7 +5,6 @@ using System.Threading;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
-using UnityScript.Macros;
 
 namespace UnityEditor.MeshSync.Tests {
 internal class ProjectSettingsTest {
