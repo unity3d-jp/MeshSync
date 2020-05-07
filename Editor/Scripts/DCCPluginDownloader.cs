@@ -13,7 +13,7 @@ namespace UnityEditor.MeshSync {
 internal class DCCPluginDownloader  {
 
     //dccPlatformNames example: Maya_Windows.zip
-    DCCPluginDownloader(bool showProgressBar, string destFolder, string[] dccPlatformNames) {
+    internal DCCPluginDownloader(bool showProgressBar, string destFolder, string[] dccPlatformNames) {
         m_showProgressBar = showProgressBar;
         m_destFolder = destFolder;
         m_dccPlatformNames = new Queue<string>(dccPlatformNames);
