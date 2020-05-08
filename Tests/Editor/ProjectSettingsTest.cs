@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -23,43 +21,6 @@ internal class ProjectSettingsTest {
         Assert.NotNull(settings);
     }    
 
-//----------------------------------------------------------------------------------------------------------------------    
-    [UnityTest]
-    public IEnumerator DownloadDCCPlugin()  {
-        string destFolder = FileUtil.GetUniqueTempPathInProject();
-
-
-        string[] requestedDCCPlatformNames = new string[] {
-            "Maya_Windows.zip",
-        };
-
-        DCCPluginDownloader downloader = new DCCPluginDownloader(false, destFolder, requestedDCCPlatformNames);
-
-        bool finished = false;
-        downloader.Execute((List<string> dccPluginLocalPaths) => {
-        
-            Assert.AreEqual(requestedDCCPlatformNames.Length, dccPluginLocalPaths.Count);
-
-            //Clean up files
-            foreach (string tempDCCPluginLocalPath in dccPluginLocalPaths) {
-                Assert.True(File.Exists(tempDCCPluginLocalPath));
-                File.Delete(tempDCCPluginLocalPath);
-            }
-
-            finished = true;
-        }, () =>
-        {
-            finished = true;
-            Assert.Fail();
-            
-        });
-
-        while (!finished) {
-            yield return null;
-        }
-        
-    }    
-    
 //----------------------------------------------------------------------------------------------------------------------    
     
     [Test]
