@@ -26,6 +26,36 @@ internal static class FileUtility {
         
     }
     
+//---------------------------------------------------------------------------------------------------------------------
+
+    internal static bool DeleteFilesAndFolders(string path) {
+        return FileUtility.DeleteFilesAndFolders(new DirectoryInfo(path));        
+    }
+
+//---------------------------------------------------------------------------------------------------------------------
+
+    internal static bool DeleteFilesAndFolders(DirectoryInfo di) {
+        //Try to delete the internal contents of the directory 
+        try {
+            foreach (FileInfo file in di.EnumerateFiles()) {
+                file.Delete(); 
+            }
+            foreach (DirectoryInfo dir in di.EnumerateDirectories()) {
+                dir.Delete(true); 
+            }
+        } catch {
+            Debug.LogError("Error when trying to delete: " + di.FullName);
+            return false;
+        }        
+
+        //Try delete the directory itself at the end.
+        try {
+            di.Delete(true);
+        } catch {
+        }        
+        return true;
+    }    
+    
 }
 
 }
