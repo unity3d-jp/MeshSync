@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using Unity.AnimeToolbox;
-using Unity.SharpZipLibUnity.Utils;
+using Unity.SharpZipLib.Utils;
 using UnityEngine;
 
 namespace UnityEditor.MeshSync {
@@ -14,13 +14,16 @@ internal class MayaIntegrator : BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------
     protected override void IntegrateInternal(string localPluginPath) {
 
-        /*
         string tempPath = FileUtil.GetUniqueTempPathInProject();
         Directory.CreateDirectory(tempPath);
-        
-        ZipUtility.UncompressFromZip(pluginPath, null, tempPath);
-        */
+        ZipUtility.UncompressFromZip(localPluginPath, null, tempPath);
 
+        string srcFolder = Path.Combine(tempPath, Path.GetFileNameWithoutExtension(localPluginPath));
+        if (!Directory.Exists(srcFolder)) {
+            Debug.LogError("[MeshSync] Failed to install DCC Plugin for Maya");
+            return;
+        }
+ 
         
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
@@ -29,15 +32,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
                 break;
             }
             case RuntimePlatform.OSXEditor: {
-                try {
-                    Debug.Log(localPluginPath);
-                    ZipUtility.UncompressFromZip(localPluginPath, null, "/Users/Shared/Autodesk/modules/maya");
-
-                }
-                catch {
-                    Debug.LogError("FAIL");
-                }
-                
+                FileUtility.CopyRecursive(srcFolder, "/Users/Shared/Autodesk/modules/maya",true);
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
@@ -51,7 +46,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         
 
         //Cleanup
-        //FileUtility.DeleteFilesAndFolders(tempPath);
+        FileUtility.DeleteFilesAndFolders(tempPath);
     }
     
 }
