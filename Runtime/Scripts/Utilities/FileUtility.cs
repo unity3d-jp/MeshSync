@@ -56,6 +56,21 @@ internal static class FileUtility {
         return true;
     }    
     
+//----------------------------------------------------------------------------------------------------------------------
+    internal static void CopyRecursive(string sourceDir, string targetDir, bool overwrite)
+    {
+        System.IO.Directory.CreateDirectory(targetDir);
+
+        DirectoryInfo sourceDI = new DirectoryInfo(sourceDir);
+        foreach (FileInfo file in sourceDI.EnumerateFiles()) {
+            File.Copy(file.FullName, Path.Combine(targetDir, file.Name), overwrite);
+        }
+        foreach (DirectoryInfo dir in sourceDI.EnumerateDirectories()) {
+            CopyRecursive(dir.FullName, Path.Combine(targetDir, dir.Name), overwrite);
+        }
+
+    }    
+    
 }
 
 }
