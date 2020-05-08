@@ -12,12 +12,12 @@ internal class MayaIntegrator : BaseDCCIntegrator {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    protected override string GetDCCName() {
+    protected override string GetDCCToolName() {
         return "Maya";
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override string IntegrateInternal(string localPluginPath) {
+    protected override string ConfigureDCCTool(string localPluginPath) {
 
         string tempPath = FileUtil.GetUniqueTempPathInProject();
         Directory.CreateDirectory(tempPath);
@@ -33,7 +33,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         //const string AUTOLOAD_SETUP = "pluginInfo -edit -autoload true MeshSyncClientMaya;";
         //const string SHELF_SETUP = "UnityMeshSync_Shelf;";
 
-        string integrationFolder = FindIntegrationFolder();
+        string configFolder = FindConfigFolder();
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
                 // If MAYA_APP_DIR environment variable is setup, copy the modules directory there.
@@ -50,7 +50,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
                 // string argument = string.Format(commandString, loadPlugin+AUTOLOAD_SETUP+SHELF_SETUP+MAYA_CLOSE_COMMAND);
                 // ConfigureMaya(argument);
                 
-                FileUtility.CopyRecursive(srcFolder, integrationFolder,true);
+                FileUtility.CopyRecursive(srcFolder, configFolder,true);
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
@@ -66,12 +66,12 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         //Cleanup
         FileUtility.DeleteFilesAndFolders(tempPath);
         
-        return integrationFolder;
+        return configFolder;
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
     
-    protected override string FindIntegrationFolder() {
+    protected override string FindConfigFolder() {
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
                 // If MAYA_APP_DIR environment variable is setup, copy the modules directory there.
@@ -95,7 +95,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
     
     // [SecurityPermission(SecurityAction.InheritanceDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
     // [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
-    int ConfigureMaya(string mayaPath, string startArgument) {
+    int SetupAutoLoadPlugin(string mayaPath, string startArgument) {
         int exitCode = 0;
 
         try {

@@ -21,22 +21,22 @@ internal abstract class BaseDCCIntegrator {
             new string[] { dccPluginFileName }
         );
 
-        string dccName = GetDCCName();
+        string dccName = GetDCCToolName();
         EditorUtility.DisplayProgressBar("MeshSync", "Installing plugin for " + dccName,0);
         downloader.Execute((string pluginVersion, List<string> dccPluginLocalPaths) =>
         {
 
-            string integrationFolder = null;
+            string configFolder = null;
             if (dccPluginLocalPaths.Count >0 && File.Exists(dccPluginLocalPaths[0])) {
-                integrationFolder = IntegrateInternal(dccPluginLocalPaths[0]);
+                configFolder = ConfigureDCCTool(dccPluginLocalPaths[0]);
             }
 
-            if (string.IsNullOrEmpty(integrationFolder)) {
+            if (string.IsNullOrEmpty(configFolder)) {
                 Debug.LogError("[MeshSync] Unknown error when installing plugin for " + dccName);
             } else {
                 //Write DCCPluginInstallInfo for the version
                 DCCPluginInstallInfo installInfo = new DCCPluginInstallInfo(pluginVersion);
-                FileUtility.SerializeToJson(installInfo, Path.Combine(integrationFolder,INSTALL_INFO_FILENAME));
+                FileUtility.SerializeToJson(installInfo, Path.Combine(configFolder,INSTALL_INFO_FILENAME));
             }
             EditorUtility.ClearProgressBar();
 
@@ -49,7 +49,7 @@ internal abstract class BaseDCCIntegrator {
 
 //----------------------------------------------------------------------------------------------------------------------    
     internal DCCPluginInstallInfo FindInstallInfo() {
-        string path = Path.Combine(FindIntegrationFolder(), INSTALL_INFO_FILENAME);
+        string path = Path.Combine(FindConfigFolder(), INSTALL_INFO_FILENAME);
         if (!File.Exists(path))
             return null;
 
@@ -58,17 +58,17 @@ internal abstract class BaseDCCIntegrator {
     
 //----------------------------------------------------------------------------------------------------------------------    
 
-    protected abstract string GetDCCName();
+    protected abstract string GetDCCToolName();
 
     //returns null when failed
-    protected abstract string IntegrateInternal(string localPluginPath);
+    protected abstract string ConfigureDCCTool(string localPluginPath);
 
-    protected abstract string FindIntegrationFolder();
+    protected abstract string FindConfigFolder();
     
 //----------------------------------------------------------------------------------------------------------------------    
 
     private string GetDCCPluginFileName() {
-        return GetDCCName() + "_" + GetCurrentDCCPluginPlatform() + ".zip";
+        return GetDCCToolName() + "_" + GetCurrentDCCPluginPlatform() + ".zip";
         
     }
     
