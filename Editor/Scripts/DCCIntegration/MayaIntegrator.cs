@@ -17,14 +17,14 @@ internal class MayaIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override string ConfigureDCCTool(string localPluginPath) {
+    protected override DCCPluginInstallInfo ConfigureDCCTool(DCCToolInfo dccToolInfo, string localPluginPath) {
 
         string tempPath = FileUtil.GetUniqueTempPathInProject();
         Directory.CreateDirectory(tempPath);
         ZipUtility.UncompressFromZip(localPluginPath, null, tempPath);
 
-        string srcFolder = Path.Combine(tempPath, Path.GetFileNameWithoutExtension(localPluginPath));
-        if (!Directory.Exists(srcFolder)) {
+        string srcRoot = Path.Combine(tempPath, Path.GetFileNameWithoutExtension(localPluginPath));
+        if (!Directory.Exists(srcRoot)) {
             Debug.LogError("[MeshSync] Failed to install DCC Plugin for Maya");
             return null;
         }
@@ -50,7 +50,15 @@ internal class MayaIntegrator : BaseDCCIntegrator {
                 // string argument = string.Format(commandString, loadPlugin+AUTOLOAD_SETUP+SHELF_SETUP+MAYA_CLOSE_COMMAND);
                 // ConfigureMaya(argument);
                 
-                FileUtility.CopyRecursive(srcFolder, configFolder,true);
+                //Copy files
+                const string MOD_FILE = "UnityMeshSync.mod";
+                string SCRIPT_FOLDER = Path.Combine("UnityMeshSync",dccToolInfo.DCCToolVersion);
+                File.Copy(Path.Combine(srcRoot,MOD_FILE), Path.Combine(configFolder,MOD_FILE), true);
+                FileUtility.CopyRecursive(Path.Combine(srcRoot, SCRIPT_FOLDER), 
+                                          Path.Combine(configFolder, SCRIPT_FOLDER),
+                                          true);
+                
+                //Setup Auto Load
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
@@ -66,7 +74,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         //Cleanup
         FileUtility.DeleteFilesAndFolders(tempPath);
         
-        return configFolder;
+        return new DCCPluginInstallInfo(dccToolInfo.DCCToolVersion);
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
