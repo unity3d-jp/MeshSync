@@ -3,7 +3,7 @@ using ICSharpCode.SharpZipLibUnity.Zip;
 using System;
 using System.IO;
 
-namespace Unity.SharpZipLibUnity.Utils {
+namespace Unity.SharpZipLib.Utils {
 
 //[TODO-sin: 2020-4-30] Move this to another package
 internal static class ZipUtility {
