@@ -17,8 +17,7 @@ internal class DCCPluginInstallInfo {
     /// </summary>
     public string         PluginVersion;
 
-    // ReSharper disable once NotAccessedField.Local
-    [SerializeField] private int m_classVersion = 1;
+    [SerializeField] internal int ClassVersion = 1;
 
 }
 
