@@ -20,10 +20,10 @@ internal abstract class BaseDCCIntegrator {
         DCCPluginDownloader downloader = new DCCPluginDownloader(false,SAVED_PLUGINS_FOLDER, 
             new string[] { dccPluginFileName }
         );
+        
+        string dccDesc = m_dccToolInfo.GetDescription();
 
-        string dccName = GetDCCToolName();
-
-        string progressBarInfo = $"Installing plugin for {dccName} {m_dccToolInfo.DCCToolVersion}";
+        string progressBarInfo = "Installing plugin for " + dccDesc;
         EditorUtility.DisplayProgressBar("MeshSync", progressBarInfo,0);
         downloader.Execute((string pluginVersion, List<string> dccPluginLocalPaths) => {
 
@@ -35,7 +35,7 @@ internal abstract class BaseDCCIntegrator {
             }
 
             if (null == installInfo) {
-                Debug.LogError("[MeshSync] Unknown error when installing plugin for " + dccName);
+                Debug.LogError("[MeshSync] Unknown error when installing plugin for " + dccDesc);
             } else {
 
                 //Write DCCPluginInstallInfo for the version
@@ -46,7 +46,7 @@ internal abstract class BaseDCCIntegrator {
 
             onComplete();
         }, () => {
-            Debug.LogError("[MeshSync] Failed to download DCC Plugin for " + dccName);
+            Debug.LogError("[MeshSync] Failed to download DCC Plugin for " + dccDesc);
             EditorUtility.ClearProgressBar();
         });
     }
@@ -66,6 +66,7 @@ internal abstract class BaseDCCIntegrator {
 
 //----------------------------------------------------------------------------------------------------------------------    
 
+    //The name of the DCCTool in the filename of the DCC plugin
     protected abstract string GetDCCToolName();
 
     //returns null when failed
