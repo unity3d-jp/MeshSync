@@ -87,7 +87,7 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
         Dictionary<string, DCCToolInfo> dccPaths = DCCFinderUtility.FindInstalledDCCTools();
         foreach (var dcc in dccPaths) {
             DCCToolInfo info = dcc.Value;
-            bool added = AddDCCTool(dcc.Key, info.Type, info.Version, false);
+            bool added = AddDCCTool(dcc.Key, info.Type, info.DCCToolVersion, false);
             ret = ret || added;
         }
 
