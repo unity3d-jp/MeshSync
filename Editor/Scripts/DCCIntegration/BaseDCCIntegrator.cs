@@ -67,7 +67,7 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
 
     //The name of the DCCTool in the filename of the DCC plugin
-    protected abstract string GetDCCToolName();
+    protected abstract string GetDCCToolInFileName();
 
     //returns null when failed
     protected abstract DCCPluginInstallInfo ConfigureDCCTool( DCCToolInfo dccToolInfo, 
@@ -78,7 +78,7 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
 
     private string GetDCCPluginFileName() {
-        return GetDCCToolName() + "_" + GetCurrentDCCPluginPlatform() + ".zip";
+        return GetDCCToolInFileName() + "_" + GetCurrentDCCPluginPlatform() + ".zip";
         
     }
     

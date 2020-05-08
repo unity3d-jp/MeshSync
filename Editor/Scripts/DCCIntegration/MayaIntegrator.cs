@@ -12,7 +12,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    protected override string GetDCCToolName() {
+    protected override string GetDCCToolInFileName() {
         return "Maya";
     }
 
