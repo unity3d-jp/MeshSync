@@ -17,7 +17,6 @@ public class DCCToolInfo {
     internal DCCToolInfo(DCCToolInfo other)  {
         Type = other.Type;
         DCCToolVersion = other.DCCToolVersion;
-        PluginVersion = other.PluginVersion;
         AppPath = other.AppPath;
     }
 
@@ -54,11 +53,6 @@ public class DCCToolInfo {
     /// The version of DCC Tool
     /// </summary>
     public string         DCCToolVersion; //DCC Tool Version
-    
-    /// <summary>
-    /// MeshSync plugin version installed for this DCC tool
-    /// </summary>
-    public string         PluginVersion;
     
     /// <summary>
     /// The path to the DCC Tool application file
