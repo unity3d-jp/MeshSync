@@ -54,6 +54,8 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
 
     protected abstract string GetDCCName();
+
+    //returns null when failed
     protected abstract string IntegrateInternal(string localPluginPath);
 
     protected abstract string FindIntegrationFolder();
