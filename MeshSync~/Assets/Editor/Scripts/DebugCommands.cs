@@ -151,7 +151,7 @@ public static class DebugCommands
     
     [MenuItem("MeshSyncDebug/Print Installed DCC Tools")]
     public static void PrintInstalledDCCTools() {
-        Dictionary<string, DCCToolInfo> dccPaths = ProjectSettingsUtility.FindInstalledDCCTools();
+        Dictionary<string, DCCToolInfo> dccPaths = DCCFinderUtility.FindInstalledDCCTools();
         foreach (var dcc in dccPaths) {
             
             DCCToolInfo info = dcc.Value;

@@ -19,6 +19,29 @@ public class DCCToolInfo {
         PluginVersion = other.PluginVersion;
         AppPath = other.AppPath;
     }
+
+//----------------------------------------------------------------------------------------------------------------------    
+
+    internal string GetDescription() {
+        string desc = null;
+        switch (Type) {
+            case DCCToolType.AUTODESK_MAYA: {
+                desc = "Maya " + Version;
+                break;
+            }
+            case DCCToolType.AUTODESK_3DSMAX: {
+                desc = "3DS Max " + Version;
+                break;
+            }
+            default: {
+                desc = "";
+                break;
+            }
+        }
+
+        return desc;
+    }
+    
     
 //----------------------------------------------------------------------------------------------------------------------    
     /// <summary>
