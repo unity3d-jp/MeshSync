@@ -10,7 +10,9 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override DCCPluginInstallInfo ConfigureDCCTool(DCCToolInfo dccToolInfo, string localPluginPath) {
+    protected override DCCPluginInstallInfo ConfigureDCCTool(DCCToolInfo dccToolInfo, string configFolder, 
+        string localPluginPath) 
+    {
         //[TODO-sin: 2020-5-7] Implement this
         //Copy the file to The plugin path under the installation directory,
         //e.g: C:\Program Files\Autodesk\3ds Max 2019\Plugins            

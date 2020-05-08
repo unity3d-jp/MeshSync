@@ -17,7 +17,9 @@ internal class MayaIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override DCCPluginInstallInfo ConfigureDCCTool(DCCToolInfo dccToolInfo, string localPluginPath) {
+    protected override DCCPluginInstallInfo ConfigureDCCTool(DCCToolInfo dccToolInfo, string configFolder, 
+        string localPluginPath) 
+    {
 
         string tempPath = FileUtil.GetUniqueTempPathInProject();
         Directory.CreateDirectory(tempPath);
@@ -33,7 +35,6 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         //const string AUTOLOAD_SETUP = "pluginInfo -edit -autoload true MeshSyncClientMaya;";
         //const string SHELF_SETUP = "UnityMeshSync_Shelf;";
 
-        string configFolder = FindConfigFolder();
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
                 // If MAYA_APP_DIR environment variable is setup, copy the modules directory there.

@@ -25,10 +25,10 @@ internal abstract class BaseDCCIntegrator {
         EditorUtility.DisplayProgressBar("MeshSync", "Installing plugin for " + dccName,0);
         downloader.Execute((string pluginVersion, List<string> dccPluginLocalPaths) => {
 
-            string configFolder = null;
+            string configFolder = FindConfigFolder();
             DCCPluginInstallInfo installInfo = null;
             if (dccPluginLocalPaths.Count >0 && File.Exists(dccPluginLocalPaths[0])) {
-                installInfo = ConfigureDCCTool(m_dccToolInfo, dccPluginLocalPaths[0]);
+                installInfo = ConfigureDCCTool(m_dccToolInfo, configFolder, dccPluginLocalPaths[0]);
             }
 
             if (null == installInfo) {
@@ -36,7 +36,7 @@ internal abstract class BaseDCCIntegrator {
             } else {
 
                 //Write DCCPluginInstallInfo for the version
-                string installInfoPath = FindInstallInfoPath();
+                string installInfoPath = GetInstallInfoPath(configFolder, m_dccToolInfo.DCCToolVersion);
                 FileUtility.SerializeToJson(installInfo, installInfoPath);
             }
             EditorUtility.ClearProgressBar();
@@ -50,8 +50,8 @@ internal abstract class BaseDCCIntegrator {
 
 //----------------------------------------------------------------------------------------------------------------------    
     internal DCCPluginInstallInfo FindInstallInfo() {
-
-        string path = FindInstallInfoPath();
+        
+        string path = GetInstallInfoPath(FindConfigFolder(), m_dccToolInfo.DCCToolVersion);
         if (!File.Exists(path))
             return null;
 
@@ -63,7 +63,8 @@ internal abstract class BaseDCCIntegrator {
     protected abstract string GetDCCToolName();
 
     //returns null when failed
-    protected abstract DCCPluginInstallInfo ConfigureDCCTool( DCCToolInfo dccToolInfo, string localPluginPath);
+    protected abstract DCCPluginInstallInfo ConfigureDCCTool( DCCToolInfo dccToolInfo, 
+        string dccConfigFolder, string localPluginPath);
 
     protected abstract string FindConfigFolder();
     
@@ -75,10 +76,9 @@ internal abstract class BaseDCCIntegrator {
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
-    private string FindInstallInfoPath() {
+    private static string GetInstallInfoPath(string dccConfigFolder, string dccToolVersion) {
         const string INSTALL_INFO_FILENAME = "UnityMeshSyncInstallInfo";
-        string configFolder = FindConfigFolder();
-        return Path.Combine(configFolder, INSTALL_INFO_FILENAME + m_dccToolInfo.DCCToolVersion + ".json");
+        return Path.Combine(dccConfigFolder, INSTALL_INFO_FILENAME + dccToolVersion + ".json");
     }    
     
 //----------------------------------------------------------------------------------------------------------------------    
