@@ -8,19 +8,22 @@ namespace UnityEditor.MeshSync {
 internal abstract class BaseDCCIntegrator {
 
     internal void Integrate() {
-        string dccPluginZipFileName = GetDCCPluginFileName();
+        string dccPluginFileName = GetDCCPluginFileName();
     
         //Make sure the DCC plugin zip file exists first
         DCCPluginDownloader downloader = new DCCPluginDownloader(false,SAVED_PLUGINS_FOLDER, 
-            new string[] { dccPluginZipFileName }
+            new string[] { dccPluginFileName }
         );
 
         string dccName = GetDCCName();
         EditorUtility.DisplayProgressBar("MeshSync", "Installing plugin for " + dccName,0);
         downloader.Execute((List<string> dccPluginLocalPaths) => {
 
-            IntegrateInternal();
-            Debug.Log("File copied to: " + SAVED_PLUGINS_FOLDER);
+            if (dccPluginLocalPaths.Count <= 0 || !File.Exists(dccPluginLocalPaths[0])) {
+                Debug.LogError("[MeshSync] Unknown error when installing plugin for " + dccName);
+            } else {
+                IntegrateInternal(dccPluginLocalPaths[0]);
+            }
         
             EditorUtility.ClearProgressBar();
         }, () => {
@@ -32,7 +35,7 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
 
     protected abstract string GetDCCName();
-    protected abstract void IntegrateInternal();
+    protected abstract void IntegrateInternal(string localPluginPath);
 
 
 //----------------------------------------------------------------------------------------------------------------------    
