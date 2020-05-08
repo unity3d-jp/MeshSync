@@ -55,32 +55,37 @@ namespace UnityEditor.MeshSync {
 
 //----------------------------------------------------------------------------------------------------------------------        
 
-        void AddDCCToolSettingsContainer(DCCToolInfo info, VisualElement top, VisualTreeAsset dccToolInfoTemplate) {
+        void AddDCCToolSettingsContainer(DCCToolInfo dccToolInfo, VisualElement top, VisualTreeAsset dccToolInfoTemplate) {
             TemplateContainer container = dccToolInfoTemplate.CloneTree();
             Label nameLabel = container.Query<Label>("DCCToolName").First();
-            nameLabel.text = info.GetDescription();
+            nameLabel.text = dccToolInfo.GetDescription();
             
-            container.Query<Label>("DCCToolPath").First().text = "Path: " + info.AppPath;
+            container.Query<Label>("DCCToolPath").First().text = "Path: " + dccToolInfo.AppPath;
+
+            
+            BaseDCCIntegrator integrator = DCCIntegratorFactory.Create(dccToolInfo.Type);
+            DCCPluginInstallInfo installInfo = integrator.FindInstallInfo();
 
             Label statusLabel = container.Query<Label>("DCCToolStatus").First();
-            if (string.IsNullOrEmpty(info.PluginVersion)) {
+            if (null==installInfo || string.IsNullOrEmpty(installInfo.PluginVersion)) {
                 statusLabel.text = "MeshSync Plugin not installed";
             } else {
                 statusLabel.AddToClassList("plugin-installed");
-                statusLabel.text = "MeshSync Plugin installed";
+                statusLabel.text = "MeshSync Plugin installed. Version: " + installInfo.PluginVersion;
             }
 
             //Buttons
             {
                 Button button = container.Query<Button>("RemoveDCCToolButton").First();
                 button.clickable.clickedWithEventInfo += OnRemoveDCCToolButtonClicked;
-                button.userData = info;
+                button.userData = dccToolInfo;
             }
 
+            
             {
                 Button button = container.Query<Button>("InstallPluginButton").First();
                 button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
-                button.userData = info;
+                button.userData = integrator;
             }
             
             top.Add(container);
@@ -167,14 +172,15 @@ namespace UnityEditor.MeshSync {
                 return;
             }
 
-            DCCToolInfo info = button.userData as DCCToolInfo;
-            if (null==info) {
+            BaseDCCIntegrator integrator = button.userData as BaseDCCIntegrator;
+            if (null==integrator) {
                 Debug.LogWarning("[MeshSync] Failed to Install Plugin");
                 return;
             }
 
-            BaseDCCIntegrator integrator = DCCIntegratorFactory.Create(info.Type);
-            integrator.Integrate();
+            integrator.Integrate(() => {
+                Setup(m_root);
+            });
 
         }
         #endregion
