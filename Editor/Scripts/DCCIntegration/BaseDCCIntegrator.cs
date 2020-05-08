@@ -11,7 +11,7 @@ internal abstract class BaseDCCIntegrator {
     internal BaseDCCIntegrator(DCCToolInfo dccToolInfo) {
         m_dccToolInfo = dccToolInfo;
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------    
     internal void Integrate(Action onComplete) {
         string dccPluginFileName = GetDCCPluginFileName();
@@ -22,9 +22,12 @@ internal abstract class BaseDCCIntegrator {
         );
 
         string dccName = GetDCCToolName();
-        EditorUtility.DisplayProgressBar("MeshSync", "Installing plugin for " + dccName,0);
+
+        string progressBarInfo = $"Installing plugin for {dccName} {m_dccToolInfo.DCCToolVersion}";
+        EditorUtility.DisplayProgressBar("MeshSync", progressBarInfo,0);
         downloader.Execute((string pluginVersion, List<string> dccPluginLocalPaths) => {
 
+            EditorUtility.DisplayProgressBar("MeshSync", progressBarInfo, 0.5f);
             string configFolder = FindConfigFolder();
             DCCPluginInstallInfo installInfo = null;
             if (dccPluginLocalPaths.Count >0 && File.Exists(dccPluginLocalPaths[0])) {
@@ -58,6 +61,9 @@ internal abstract class BaseDCCIntegrator {
         return FileUtility.DeserializeFromJson<DCCPluginInstallInfo>(path);
     }
     
+//----------------------------------------------------------------------------------------------------------------------    
+    internal DCCToolInfo GetDCCToolInfo() { return m_dccToolInfo; }
+
 //----------------------------------------------------------------------------------------------------------------------    
 
     protected abstract string GetDCCToolName();

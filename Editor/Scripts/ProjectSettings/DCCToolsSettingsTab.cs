@@ -178,7 +178,13 @@ namespace UnityEditor.MeshSync {
                 return;
             }
 
-            integrator.Integrate(() => {
+            integrator.Integrate(() =>
+            {
+                DCCToolInfo dccToolInfo = integrator.GetDCCToolInfo();
+                EditorUtility.DisplayDialog("MeshSync",
+                    "MeshSync plugin installed for " + dccToolInfo.GetDescription(), 
+                    "Ok"
+                );                
                 Setup(m_root);
             });
 
