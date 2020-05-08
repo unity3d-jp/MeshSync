@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Unity.AnimeToolbox;
 using UnityEngine;
 
 namespace UnityEditor.MeshSync {
@@ -17,15 +18,21 @@ internal abstract class BaseDCCIntegrator {
 
         string dccName = GetDCCName();
         EditorUtility.DisplayProgressBar("MeshSync", "Installing plugin for " + dccName,0);
-        downloader.Execute((string version, List<string> dccPluginLocalPaths) => {
+        downloader.Execute((string pluginVersion, List<string> dccPluginLocalPaths) =>
+        {
 
-            if (dccPluginLocalPaths.Count <= 0 || !File.Exists(dccPluginLocalPaths[0])) {
+            string integrationRootFolder = null;
+            if (dccPluginLocalPaths.Count >0 && File.Exists(dccPluginLocalPaths[0])) {
+                integrationRootFolder = IntegrateInternal(dccPluginLocalPaths[0]);
+            }
+
+            if (string.IsNullOrEmpty(integrationRootFolder)) {
                 Debug.LogError("[MeshSync] Unknown error when installing plugin for " + dccName);
             } else {
-                IntegrateInternal(dccPluginLocalPaths[0]);
+                //Write DCCPluginInstallInfo for the version
+                DCCPluginInstallInfo installInfo = new DCCPluginInstallInfo(pluginVersion);
+                FileUtility.SerializeToJson(installInfo, Path.Combine(integrationRootFolder,INSTALL_INFO_FILENAME));
             }
-            
-            //Write metafile for the version
         
             EditorUtility.ClearProgressBar();
         }, () => {
@@ -37,7 +44,7 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
 
     protected abstract string GetDCCName();
-    protected abstract void IntegrateInternal(string localPluginPath);
+    protected abstract string IntegrateInternal(string localPluginPath);
 
 
 //----------------------------------------------------------------------------------------------------------------------    
@@ -66,6 +73,7 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
 
     private static readonly string SAVED_PLUGINS_FOLDER = Path.Combine(Application.dataPath, "MeshSyncDCCPlugins~");
+    private const string INSTALL_INFO_FILENAME = "UnityMeshSyncInstallInfo.json";
     
 }
 

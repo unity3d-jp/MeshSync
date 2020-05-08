@@ -12,7 +12,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override void IntegrateInternal(string localPluginPath) {
+    protected override string IntegrateInternal(string localPluginPath) {
 
         string tempPath = FileUtil.GetUniqueTempPathInProject();
         Directory.CreateDirectory(tempPath);
@@ -21,10 +21,10 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         string srcFolder = Path.Combine(tempPath, Path.GetFileNameWithoutExtension(localPluginPath));
         if (!Directory.Exists(srcFolder)) {
             Debug.LogError("[MeshSync] Failed to install DCC Plugin for Maya");
-            return;
+            return null;
         }
- 
-        
+
+        string integrationRootFolder = null;
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
                 // If MAYA_APP_DIR environment variable is setup, copy the modules directory there.
@@ -32,7 +32,8 @@ internal class MayaIntegrator : BaseDCCIntegrator {
                 break;
             }
             case RuntimePlatform.OSXEditor: {
-                FileUtility.CopyRecursive(srcFolder, "/Users/Shared/Autodesk/modules/maya",true);
+                integrationRootFolder = "/Users/Shared/Autodesk/modules/maya";
+                FileUtility.CopyRecursive(srcFolder, integrationRootFolder,true);
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
@@ -47,6 +48,8 @@ internal class MayaIntegrator : BaseDCCIntegrator {
 
         //Cleanup
         FileUtility.DeleteFilesAndFolders(tempPath);
+        
+        return integrationRootFolder;
     }
     
 }
