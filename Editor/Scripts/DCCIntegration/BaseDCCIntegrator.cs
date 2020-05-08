@@ -8,7 +8,7 @@ namespace UnityEditor.MeshSync {
 
 internal abstract class BaseDCCIntegrator {
 
-    internal void Integrate() {
+    internal void Integrate(Action onComplete) {
         string dccPluginFileName = GetDCCPluginFileName();
     
         //Make sure the DCC plugin zip file exists first
@@ -21,32 +21,43 @@ internal abstract class BaseDCCIntegrator {
         downloader.Execute((string pluginVersion, List<string> dccPluginLocalPaths) =>
         {
 
-            string integrationRootFolder = null;
+            string integrationFolder = null;
             if (dccPluginLocalPaths.Count >0 && File.Exists(dccPluginLocalPaths[0])) {
-                integrationRootFolder = IntegrateInternal(dccPluginLocalPaths[0]);
+                integrationFolder = IntegrateInternal(dccPluginLocalPaths[0]);
             }
 
-            if (string.IsNullOrEmpty(integrationRootFolder)) {
+            if (string.IsNullOrEmpty(integrationFolder)) {
                 Debug.LogError("[MeshSync] Unknown error when installing plugin for " + dccName);
             } else {
                 //Write DCCPluginInstallInfo for the version
                 DCCPluginInstallInfo installInfo = new DCCPluginInstallInfo(pluginVersion);
-                FileUtility.SerializeToJson(installInfo, Path.Combine(integrationRootFolder,INSTALL_INFO_FILENAME));
+                FileUtility.SerializeToJson(installInfo, Path.Combine(integrationFolder,INSTALL_INFO_FILENAME));
             }
-        
             EditorUtility.ClearProgressBar();
+
+            onComplete();
         }, () => {
             Debug.LogError("Failed to download DCC Plugin for " + dccName);
             EditorUtility.ClearProgressBar();
         });
-        
     }
+
+//----------------------------------------------------------------------------------------------------------------------    
+    internal DCCPluginInstallInfo FindInstallInfo() {
+        string path = Path.Combine(FindIntegrationFolder(), INSTALL_INFO_FILENAME);
+        if (!File.Exists(path))
+            return null;
+
+        return FileUtility.DeserializeFromJson<DCCPluginInstallInfo>(path);
+    }
+    
 //----------------------------------------------------------------------------------------------------------------------    
 
     protected abstract string GetDCCName();
     protected abstract string IntegrateInternal(string localPluginPath);
 
-
+    protected abstract string FindIntegrationFolder();
+    
 //----------------------------------------------------------------------------------------------------------------------    
 
     private string GetDCCPluginFileName() {

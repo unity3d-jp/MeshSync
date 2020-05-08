@@ -15,6 +15,12 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         throw new NotImplementedException();
     }
 
+    
+//----------------------------------------------------------------------------------------------------------------------
+    protected override string FindIntegrationFolder() {
+        throw new NotImplementedException();
+    }
+    
 }
 
 } //end namespace

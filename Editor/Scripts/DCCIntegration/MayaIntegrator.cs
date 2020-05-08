@@ -24,7 +24,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
             return null;
         }
 
-        string integrationRootFolder = null;
+        string integrationFolder = FindIntegrationFolder();
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
                 // If MAYA_APP_DIR environment variable is setup, copy the modules directory there.
@@ -32,8 +32,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
                 break;
             }
             case RuntimePlatform.OSXEditor: {
-                integrationRootFolder = "/Users/Shared/Autodesk/modules/maya";
-                FileUtility.CopyRecursive(srcFolder, integrationRootFolder,true);
+                FileUtility.CopyRecursive(srcFolder, integrationFolder,true);
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
@@ -49,8 +48,31 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         //Cleanup
         FileUtility.DeleteFilesAndFolders(tempPath);
         
-        return integrationRootFolder;
+        return integrationFolder;
     }
     
+//----------------------------------------------------------------------------------------------------------------------    
+    
+    protected override string FindIntegrationFolder() {
+        switch (Application.platform) {
+            case RuntimePlatform.WindowsEditor: {
+                // If MAYA_APP_DIR environment variable is setup, copy the modules directory there.
+                //     If not, go to %USERPROFILE%\Documents\maya in Windows Explorer, and copy the modules directory there.
+                break;
+            }
+            case RuntimePlatform.OSXEditor: { return "/Users/Shared/Autodesk/modules/maya"; }
+            case RuntimePlatform.LinuxEditor: {
+                // Copy the modules directory to ~/maya/<maya_version)            
+                break;
+            }
+            default: {
+                throw new NotImplementedException();
+            }
+        }
+
+        return null;
+    }
 }
+
+
 } // end namespace
