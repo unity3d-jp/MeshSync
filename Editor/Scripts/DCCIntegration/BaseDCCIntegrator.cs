@@ -17,13 +17,15 @@ internal abstract class BaseDCCIntegrator {
 
         string dccName = GetDCCName();
         EditorUtility.DisplayProgressBar("MeshSync", "Installing plugin for " + dccName,0);
-        downloader.Execute((List<string> dccPluginLocalPaths) => {
+        downloader.Execute((string version, List<string> dccPluginLocalPaths) => {
 
             if (dccPluginLocalPaths.Count <= 0 || !File.Exists(dccPluginLocalPaths[0])) {
                 Debug.LogError("[MeshSync] Unknown error when installing plugin for " + dccName);
             } else {
                 IntegrateInternal(dccPluginLocalPaths[0]);
             }
+            
+            //Write metafile for the version
         
             EditorUtility.ClearProgressBar();
         }, () => {

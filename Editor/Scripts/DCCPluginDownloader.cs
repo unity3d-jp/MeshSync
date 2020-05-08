@@ -21,44 +21,45 @@ internal class DCCPluginDownloader  {
     
 //----------------------------------------------------------------------------------------------------------------------    
     
-    internal void Execute(Action<List<string>> onSuccess, Action onFail) {
-
-        Action onSuccessAndCleanUp = () => {
-            ClearProgressBar();
-            onSuccess(m_finishedDCCPluginLocalPaths);
-        };
+    internal void Execute(Action<string, List<string>> onSuccess, Action onFail) {
         
-        Action onFailAndCleanUp = () => {
-            ClearProgressBar();
-            onFail();
-        };
         
         //Try to get the files from package first. If failed, then try downloading directly
         DisplayProgressBar("Copying MeshSync DCC Plugins","",0);
-        TryCopyDCCPluginsFromPackage(onSuccessAndCleanUp, (version) => {
+        TryCopyDCCPluginsFromPackage((string version) => {
+            ClearProgressBar();
+            onSuccess(version, m_finishedDCCPluginLocalPaths);
+            
+        }, (string version) => {
 
             //Getting files from the package has failed. Download directly
-            DownloadDCCPlugins(version, onSuccessAndCleanUp, onFailAndCleanUp);
+            DownloadDCCPlugins(version, ()=> {
+                ClearProgressBar();
+                onSuccess(version, m_finishedDCCPluginLocalPaths);
+            }, ()=> {
+                ClearProgressBar();
+                onFail();
+            });
         });
      }
      
      
 //----------------------------------------------------------------------------------------------------------------------        
-    void TryCopyDCCPluginsFromPackage(Action onSuccess, Action<string> onFail) 
+    void TryCopyDCCPluginsFromPackage(Action<string> onSuccess, Action<string> onFail) 
     {
         RequestJobManager.CreateListRequest(true,true, (listReq) => {
             PackageManager.PackageInfo packageInfo = listReq.FindPackage(MESHSYNC_DCC_PLUGIN_PACKAGE);
             if (null != packageInfo) {
                 //Package is already installed.
                 CopyDCCPluginsFromPackage();
-                onSuccess();
+                onSuccess(packageInfo.version);
                 return;
             }
 
             RequestJobManager.CreateAddRequest(MESHSYNC_DCC_PLUGIN_PACKAGE, (addReq) => {
                 //Package was successfully added
                 CopyDCCPluginsFromPackage();
-                onSuccess();
+                onSuccess(packageInfo.version);
             }, (req) => {
                 PackageManager.PackageInfo meshSyncInfo = listReq.FindPackage(MESHSYNC_PACKAGE);
                 onFail?.Invoke(meshSyncInfo.version);

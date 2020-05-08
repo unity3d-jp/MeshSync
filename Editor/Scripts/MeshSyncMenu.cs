@@ -30,8 +30,9 @@ internal static class MeshSyncMenu  {
 
         
         DCCPluginDownloader downloader = new DCCPluginDownloader(true, destFolder, dccPlatformNames);
-        downloader.Execute((List<string> dccPluginLocalPaths) => {
-            Debug.Log("Downloaded " + dccPluginLocalPaths.Count + "MeshSync DCC Plugins to " + destFolder);
+        downloader.Execute((string version, List<string> dccPluginLocalPaths) => {
+            Debug.Log("Downloaded " + dccPluginLocalPaths.Count 
+                       + "MeshSync DCC Plugins to " + destFolder + " Version: " + version);
             EditorUtility.RevealInFinder(destFolder);
         }, () => {
             Debug.LogError("Failed to download MeshSync DCC plugins.");
