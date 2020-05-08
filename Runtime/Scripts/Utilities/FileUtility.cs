@@ -20,11 +20,18 @@ internal static class FileUtility {
     
 //----------------------------------------------------------------------------------------------------------------------
 
+    #region json
     internal static T DeserializeFromJson<T>(string path) {
         string json = File.ReadAllText(path);
         return JsonUtility.FromJson<T>(json);
-        
     }
+    
+    internal static void SerializeToJson<T>(T obj, string path, bool prettyPrint=false) {
+        string json = JsonUtility.ToJson(obj, prettyPrint);
+        File.WriteAllText(path, json);
+    }
+    #endregion
+    
     
 //---------------------------------------------------------------------------------------------------------------------
 
