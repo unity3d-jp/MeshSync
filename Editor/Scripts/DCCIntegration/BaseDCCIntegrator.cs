@@ -8,6 +8,11 @@ namespace UnityEditor.MeshSync {
 
 internal abstract class BaseDCCIntegrator {
 
+    internal BaseDCCIntegrator(DCCToolInfo dccToolInfo) {
+        m_dccToolInfo = dccToolInfo;
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------    
     internal void Integrate(Action onComplete) {
         string dccPluginFileName = GetDCCPluginFileName();
     
@@ -84,6 +89,8 @@ internal abstract class BaseDCCIntegrator {
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
+
+    private readonly DCCToolInfo m_dccToolInfo = null;
 
     private static readonly string SAVED_PLUGINS_FOLDER = Path.Combine(Application.dataPath, "MeshSyncDCCPlugins~");
     private const string INSTALL_INFO_FILENAME = "UnityMeshSyncInstallInfo.json";

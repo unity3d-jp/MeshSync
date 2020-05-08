@@ -63,7 +63,7 @@ namespace UnityEditor.MeshSync {
             container.Query<Label>("DCCToolPath").First().text = "Path: " + dccToolInfo.AppPath;
 
             
-            BaseDCCIntegrator integrator = DCCIntegratorFactory.Create(dccToolInfo.Type);
+            BaseDCCIntegrator integrator = DCCIntegratorFactory.Create(dccToolInfo);
             DCCPluginInstallInfo installInfo = integrator.FindInstallInfo();
 
             Label statusLabel = container.Query<Label>("DCCToolStatus").First();

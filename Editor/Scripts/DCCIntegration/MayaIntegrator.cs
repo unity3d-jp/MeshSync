@@ -7,6 +7,11 @@ using UnityEngine;
 namespace UnityEditor.MeshSync {
 
 internal class MayaIntegrator : BaseDCCIntegrator {
+
+    internal MayaIntegrator(DCCToolInfo dccToolInfo) : base(dccToolInfo) { }
+
+//----------------------------------------------------------------------------------------------------------------------
+
     protected override string GetDCCName() {
         return "Maya";
     }

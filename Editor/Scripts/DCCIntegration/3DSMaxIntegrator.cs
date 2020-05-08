@@ -2,6 +2,9 @@
 
 namespace UnityEditor.MeshSync {
 internal class _3DSMaxIntegrator : BaseDCCIntegrator {
+    internal _3DSMaxIntegrator(DCCToolInfo dccToolInfo) : base(dccToolInfo) { }
+//----------------------------------------------------------------------------------------------------------------------
+
     protected override string GetDCCName() {
         return "3DSMAX";
     }
@@ -14,7 +17,6 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         
         throw new NotImplementedException();
     }
-
     
 //----------------------------------------------------------------------------------------------------------------------
     protected override string FindIntegrationFolder() {
