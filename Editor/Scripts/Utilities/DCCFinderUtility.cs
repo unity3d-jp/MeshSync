@@ -21,10 +21,9 @@ public static class DCCFinderUtility {
 
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
-                //[TODO-sin: 2020-4-27]: Test on Windows
                 DriveInfo[] allDrives = DriveInfo.GetDrives();
                 foreach (DriveInfo drive in allDrives) {
-                    searchDirectories.Add(Path.Combine(drive.Name, "Program Files/Autodesk") );
+                    searchDirectories.Add(Path.Combine(drive.Name, @"Program Files\Autodesk") );
                 }
                 break;
             }
@@ -63,7 +62,7 @@ public static class DCCFinderUtility {
         string path = dir;
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
-                path+= "/bin/maya.exe";
+                path+= @"\bin\maya.exe";
                 break;
             }
             case RuntimePlatform.OSXEditor: {
@@ -78,7 +77,6 @@ public static class DCCFinderUtility {
                 } else {
                     path+= "/Maya.app/Contents/MacOS/Maya";
                 }
-
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
@@ -144,13 +142,13 @@ public static class DCCFinderUtility {
             return null;
         }
         
-        string appPath = string.Format("{0}/{1}", dir.Replace("\\", "/"), "3dsmax.exe");
+        string appPath = dir + @"\3dsmax.exe";
         return File.Exists(appPath) ? appPath : null;
     }
 //----------------------------------------------------------------------------------------------------------------------
 
     internal static string Find3DSMaxVersion(string appPath) {
-        //4 levels up: "C:/Program Files/3dsMax 2019/3dsmax.exe";
+        //4 levels up: "C:\Program Files\3dsMax 2019\3dsmax.exe";
         return PathUtility.TryGetDirectoryName(appPath, 1);
     }
 

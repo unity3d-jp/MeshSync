@@ -10,7 +10,7 @@ internal static class PathUtility {
     /// </summary>
     /// <param name="path">the base path</param>
     /// <param name="n">how many levels up</param>
-    /// <returns>the directory name with "/" as the separator</returns>
+    /// <returns>the directory name</returns>
     internal static string TryGetDirectoryName(string path, int n = 1) {
         if (string.IsNullOrEmpty(path) || n<1)
             return null;
@@ -23,7 +23,7 @@ internal static class PathUtility {
             return TryGetDirectoryName(curDir, n - 1);
         }
 
-        return curDir.Replace("\\", "/");
+        return curDir;
 
 
     }
