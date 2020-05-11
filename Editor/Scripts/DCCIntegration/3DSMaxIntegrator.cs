@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace UnityEditor.MeshSync {
 internal class _3DSMaxIntegrator : BaseDCCIntegrator {
@@ -22,7 +23,9 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
     
 //----------------------------------------------------------------------------------------------------------------------
     protected override string FindConfigFolder() {
-        throw new NotImplementedException();
+        //Sample: "C:\Program Files\Autodesk\3ds Max 2019\Plugins"
+        DCCToolInfo dccToolInfo = GetDCCToolInfo();
+        return Path.GetDirectoryName(dccToolInfo.AppPath) + @"\Plugins";
     }
     
 }
