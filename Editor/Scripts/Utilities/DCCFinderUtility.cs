@@ -175,7 +175,12 @@ public static class DCCFinderUtility {
 
     internal static string Find3DSMaxVersion(string appPath) {
         //4 levels up: "C:\Program Files\3dsMax 2019\3dsmax.exe";
-        return PathUtility.TryGetDirectoryName(appPath, 1);
+        string folderName = Path.GetFileName(Path.GetDirectoryName(appPath));
+        int len = folderName.Length;
+        if (len > 4) {
+            return folderName.Substring(len - 4, 4);
+        }
+        return folderName;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
