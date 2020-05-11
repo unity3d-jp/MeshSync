@@ -40,7 +40,20 @@ internal abstract class BaseDCCIntegrator {
 
                 //Write DCCPluginInstallInfo for the version
                 string installInfoPath = GetInstallInfoPath(configFolder, m_dccToolInfo.DCCToolVersion);
-                FileUtility.SerializeToJson(installInfo, installInfoPath);
+
+                try {
+                    FileUtility.SerializeToJson(installInfo, installInfoPath);
+                } catch {
+                    EditorUtility.ClearProgressBar();
+                    EditorUtility.DisplayDialog("MeshSync", "Can't save to " 
+                                                + Path.GetDirectoryName(installInfoPath) 
+                                                + Environment.NewLine
+                                                + "Please try running Unity as admin", "Ok")
+                    ;           
+                    
+                    return;
+                }
+                
             }
             EditorUtility.ClearProgressBar();
 
