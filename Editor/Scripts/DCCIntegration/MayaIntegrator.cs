@@ -17,8 +17,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override DCCPluginInstallInfo ConfigureDCCTool(DCCToolInfo dccToolInfo, string configFolder, 
-        string localPluginPath) 
+    protected override bool ConfigureDCCTool(DCCToolInfo dccToolInfo, string configFolder, string localPluginPath) 
     {
         string tempPath = FileUtil.GetUniqueTempPathInProject();
         
@@ -27,7 +26,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
 
         string srcRoot = Path.Combine(tempPath, Path.GetFileNameWithoutExtension(localPluginPath));
         if (!Directory.Exists(srcRoot)) {
-            return null;
+            return false;
         }
 
         const string AUTOLOAD_SETUP = "pluginInfo -edit -autoload true MeshSyncClientMaya;";
@@ -81,7 +80,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         string scriptFolder = Path.Combine("UnityMeshSync",dccToolInfo.DCCToolVersion);
         string srcModFile = Path.Combine(copySrcFolder, MOD_FILE);
         if (!File.Exists(srcModFile)) {
-            return null;
+            return false;
         }
         try {
             Directory.CreateDirectory(copyDestFolder);
@@ -90,7 +89,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
                 Path.Combine(copyDestFolder, scriptFolder),
                 true);
         } catch {
-            return null;
+            return false;
         }
 
         //Auto Load
@@ -100,10 +99,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         //Cleanup
         FileUtility.DeleteFilesAndFolders(tempPath);
 
-        if (0 != exitCode)
-            return null;
-        
-        return new DCCPluginInstallInfo(dccToolInfo.DCCToolVersion);
+        return (0 == exitCode);
     }
     
 //----------------------------------------------------------------------------------------------------------------------    

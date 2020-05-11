@@ -14,7 +14,7 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override DCCPluginInstallInfo ConfigureDCCTool(DCCToolInfo dccToolInfo, string configFolder, 
+    protected override bool  ConfigureDCCTool(DCCToolInfo dccToolInfo, string configFolder, 
         string localPluginPath) 
     {
         //[TODO-sin: 2020-5-7] Implement this
@@ -27,11 +27,10 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         Directory.CreateDirectory(tempPath);
         ZipUtility.UncompressFromZip(localPluginPath, null, tempPath);
         
-        
         //Cleanup
         FileUtility.DeleteFilesAndFolders(tempPath);
         
-        return new DCCPluginInstallInfo(dccToolInfo.DCCToolVersion);
+        return false;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
