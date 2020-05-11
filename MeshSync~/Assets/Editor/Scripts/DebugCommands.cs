@@ -155,7 +155,7 @@ public static class DebugCommands
         foreach (var dcc in dccPaths) {
             
             DCCToolInfo info = dcc.Value;
-            Debug.Log(info.Type.ToString() + " " + info.Version.ToString() + " " + info.AppPath);
+            Debug.Log(info.Type.ToString() + " " + info.DCCToolVersion.ToString() + " " + info.AppPath);
         }
     }
     

@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 
 namespace UnityEditor.MeshSync {
 
@@ -8,15 +9,14 @@ namespace UnityEditor.MeshSync {
 [Serializable]
 public class DCCToolInfo {
 
-    internal DCCToolInfo(DCCToolType type, string version) {
+    internal DCCToolInfo(DCCToolType type, string dccToolVersion) {
         Type = type;
-        Version = version;
+        DCCToolVersion = dccToolVersion;
     }
 
     internal DCCToolInfo(DCCToolInfo other)  {
         Type = other.Type;
-        Version = other.Version;
-        PluginVersion = other.PluginVersion;
+        DCCToolVersion = other.DCCToolVersion;
         AppPath = other.AppPath;
     }
 
@@ -26,11 +26,11 @@ public class DCCToolInfo {
         string desc = null;
         switch (Type) {
             case DCCToolType.AUTODESK_MAYA: {
-                desc = "Maya " + Version;
+                desc = "Maya " + DCCToolVersion;
                 break;
             }
             case DCCToolType.AUTODESK_3DSMAX: {
-                desc = "3DS Max " + Version;
+                desc = "3DS Max " + DCCToolVersion;
                 break;
             }
             default: {
@@ -52,17 +52,16 @@ public class DCCToolInfo {
     /// <summary>
     /// The version of DCC Tool
     /// </summary>
-    public string         Version; //DCC Tool Version
-    
-    /// <summary>
-    /// MeshSync plugin version installed for this DCC tool
-    /// </summary>
-    public string         PluginVersion;
+    public string         DCCToolVersion; //DCC Tool Version
     
     /// <summary>
     /// The path to the DCC Tool application file
     /// </summary>
     public string         AppPath;
+
+    [SerializeField] internal int ClassVersion = 1;
+    
+    
 }
 
 }
