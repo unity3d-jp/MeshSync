@@ -31,17 +31,14 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    internal bool AddDCCTool(string path, DCCToolType t, string version, bool save=true) {
-        if (m_dictionary.ContainsKey(path))
+    internal bool AddDCCTool(DCCToolInfo dccToolInfo, bool save=true) {
+        if (m_dictionary.ContainsKey(dccToolInfo.AppPath))
             return false;
 
-        DCCToolInfo newInfo = new DCCToolInfo(t, version) {
-            AppPath = path
-        };
 
         //
-        m_dictionary.Add(path, newInfo);
-        m_serializedDCCToolInfo.Add(newInfo);
+        m_dictionary.Add(dccToolInfo.AppPath, dccToolInfo);
+        m_serializedDCCToolInfo.Add(dccToolInfo);
 
         if (save) {
             SaveProjectSettings();
@@ -87,7 +84,7 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
         Dictionary<string, DCCToolInfo> dccPaths = DCCFinderUtility.FindInstalledDCCTools();
         foreach (var dcc in dccPaths) {
             DCCToolInfo info = dcc.Value;
-            bool added = AddDCCTool(dcc.Key, info.Type, info.DCCToolVersion, false);
+            bool added = AddDCCTool(info, false);
             ret = ret || added;
         }
 

@@ -104,33 +104,20 @@ namespace UnityEditor.MeshSync {
 
             //Find the path to the actual app
             DCCToolType lastDCCToolType = DCCToolType.AUTODESK_MAYA;
-            string appPath = null;
-            for (int i = 0; i < (int) (DCCToolType.NUM_DCC_TOOL_TYPES) && string.IsNullOrEmpty(appPath); ++i) {
+            DCCToolInfo dccToolInfo = null;
+            for (int i = 0; i < (int) (DCCToolType.NUM_DCC_TOOL_TYPES) && null==dccToolInfo; ++i) {
                 lastDCCToolType = (DCCToolType) (i);
-                appPath = DCCFinderUtility.FindDCCToolAppPathInDirectory(lastDCCToolType, m_lastOpenedFolder);
+                dccToolInfo = DCCFinderUtility.FindDCCToolInDirectory(lastDCCToolType, null, m_lastOpenedFolder);
             }
 
-            if (string.IsNullOrEmpty(appPath)) {
+            if (null==dccToolInfo) {
                 EditorUtility.DisplayDialog("MeshSync Project Settings", "No DCC Tool is detected", "Ok");
                 return;
             }
-
-            //Find version
-            string version = null;
-            switch (lastDCCToolType) {
-                case DCCToolType.AUTODESK_MAYA: {
-                    version = DCCFinderUtility.FindMayaVersion(appPath);
-                    break;
-                }
-                case DCCToolType.AUTODESK_3DSMAX: {
-                    version = DCCFinderUtility.Find3DSMaxVersion(appPath);
-                    break;
-                }
-            }
-
+            
             //Add
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
-            if (settings.AddDCCTool(appPath, lastDCCToolType, version)) {
+            if (settings.AddDCCTool(dccToolInfo)) {
                 Setup(m_root);
             }
             
