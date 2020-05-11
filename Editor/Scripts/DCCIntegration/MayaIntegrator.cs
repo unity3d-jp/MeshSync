@@ -20,7 +20,6 @@ internal class MayaIntegrator : BaseDCCIntegrator {
     protected override DCCPluginInstallInfo ConfigureDCCTool(DCCToolInfo dccToolInfo, string configFolder, 
         string localPluginPath) 
     {
-
         string tempPath = FileUtil.GetUniqueTempPathInProject();
         
         Directory.CreateDirectory(tempPath);
@@ -35,9 +34,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         const string SHELF_SETUP = "UnityMeshSync_Shelf;";
         const string MAYA_CLOSE_COMMAND = "scriptJob -idleEvent quit;";
         const string FINALIZE_SETUP = AUTOLOAD_SETUP + SHELF_SETUP + MAYA_CLOSE_COMMAND;
-
-        int exitCode = 0;
-
+        
         string copySrcFolder  = srcRoot;
         string copyDestFolder = configFolder;
         string argFormat = null;
@@ -79,7 +76,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
             }
         }
 
-        //Copy files
+        //Copy files to config folder
         const string MOD_FILE = "UnityMeshSync.mod";
         string scriptFolder = Path.Combine("UnityMeshSync",dccToolInfo.DCCToolVersion);
         string srcModFile = Path.Combine(copySrcFolder, MOD_FILE);
@@ -98,7 +95,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
 
         //Auto Load
         string arg = string.Format(argFormat, loadPluginCmd+FINALIZE_SETUP);
-        exitCode = SetupAutoLoadPlugin(dccToolInfo.AppPath, arg);
+        int exitCode = SetupAutoLoadPlugin(dccToolInfo.AppPath, arg);
 
         //Cleanup
         FileUtility.DeleteFilesAndFolders(tempPath);
