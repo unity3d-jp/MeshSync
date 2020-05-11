@@ -90,10 +90,21 @@ internal class MayaIntegrator : BaseDCCIntegrator {
     protected override string FindConfigFolder() {
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
-                // If MAYA_APP_DIR environment variable is setup, copy the modules directory there.
-                //     If not, go to %USERPROFILE%\Documents\maya in Windows Explorer, and copy the modules directory there.
-                break;
+
+                //If MAYA_APP_DIR environment variable is setup, use that config folder
+                //If not, use %USERPROFILE%\Documents\maya 
+                string path = Environment.GetEnvironmentVariable("MAYA_APP_DIR");
+                if (!string.IsNullOrEmpty(path))
+                    return path;
+
+                path = Directory.GetParent(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)).FullName;
+                if (Environment.OSVersion.Version.Major >= 6) {
+                    path = Directory.GetParent(path).ToString();
+                }
+                path+= @"\Documents\maya";
+                return path;
             }
+
             case RuntimePlatform.OSXEditor: { return "/Users/Shared/Autodesk/modules/maya"; }
             case RuntimePlatform.LinuxEditor: {
                 // Copy the modules directory to ~/maya/<maya_version)            
