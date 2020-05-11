@@ -14,7 +14,9 @@ internal abstract class BaseDCCIntegrator {
 
 //----------------------------------------------------------------------------------------------------------------------    
     internal void Integrate(Action onComplete) {
-        string dccPluginFileName = GetDCCPluginFileName();
+
+        string dccToolName = GetDCCToolInFileName();
+        string dccPluginFileName = dccToolName + "_" + GetCurrentDCCPluginPlatform() + ".zip";
     
         //Make sure the DCC plugin zip file exists first
         DCCPluginDownloader downloader = new DCCPluginDownloader(false,SAVED_PLUGINS_FOLDER, 
@@ -34,23 +36,20 @@ internal abstract class BaseDCCIntegrator {
                 installInfo = ConfigureDCCTool(m_dccToolInfo, configFolder, dccPluginLocalPaths[0]);
             }
 
-            if (null == installInfo) {
+            string installInfoPath = FindInstallInfoPath(dccToolName, m_dccToolInfo.DCCToolVersion);
+            string installInfoFolder = Path.GetDirectoryName(installInfoPath);
+            if (null == installInfo || null == installInfoPath || null == installInfoFolder) {
                 Debug.LogError("[MeshSync] Unknown error when installing plugin for " + dccDesc);
             } else {
 
                 //Write DCCPluginInstallInfo for the version
-                string installInfoPath = GetInstallInfoPath(configFolder, m_dccToolInfo.DCCToolVersion);
+                Directory.CreateDirectory(installInfoFolder);                
 
                 try {
                     FileUtility.SerializeToJson(installInfo, installInfoPath);
                 } catch {
                     EditorUtility.ClearProgressBar();
-                    EditorUtility.DisplayDialog("MeshSync", "Can't save to " 
-                                                + Path.GetDirectoryName(installInfoPath) 
-                                                + Environment.NewLine
-                                                + "Please try running Unity as admin", "Ok")
-                    ;           
-                    
+                    Debug.LogError("[MeshSync] Unknown error when installing plugin for " + dccDesc);
                     return;
                 }
                 
@@ -67,7 +66,7 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
     internal DCCPluginInstallInfo FindInstallInfo() {
         
-        string path = GetInstallInfoPath(FindConfigFolder(), m_dccToolInfo.DCCToolVersion);
+        string path = FindInstallInfoPath(GetDCCToolInFileName(), m_dccToolInfo.DCCToolVersion);
         if (!File.Exists(path))
             return null;
 
@@ -88,21 +87,25 @@ internal abstract class BaseDCCIntegrator {
 
     protected abstract string FindConfigFolder();
     
-//----------------------------------------------------------------------------------------------------------------------    
-
-    private string GetDCCPluginFileName() {
-        return GetDCCToolInFileName() + "_" + GetCurrentDCCPluginPlatform() + ".zip";
-        
-    }
     
 //----------------------------------------------------------------------------------------------------------------------    
-    private static string GetInstallInfoPath(string dccConfigFolder, string dccToolVersion) {
-        const string INSTALL_INFO_FILENAME = "UnityMeshSyncInstallInfo";
-        return Path.Combine(dccConfigFolder, INSTALL_INFO_FILENAME + dccToolVersion + ".json");
+    private static string FindInstallInfoPath(string dccToolName, string dccToolVersion) {
+        string localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        string installInfoFolder = Path.Combine(localAppDataFolder, "Unity", "MeshSync");
+
+        switch (Application.platform) {
+            case RuntimePlatform.LinuxEditor: 
+                throw new NotImplementedException();
+            default: {
+                break;
+            }
+        }
+
+        return Path.Combine(installInfoFolder, $"UnityMeshSyncInstallInfo_{dccToolName}_{dccToolVersion}.json");
     }    
     
 //----------------------------------------------------------------------------------------------------------------------    
-    static string GetCurrentDCCPluginPlatform() {
+    private static string GetCurrentDCCPluginPlatform() {
         string platform = null;
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: platform = "Windows"; break;
