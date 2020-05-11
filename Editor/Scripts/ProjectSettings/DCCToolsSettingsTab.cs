@@ -60,9 +60,17 @@ namespace UnityEditor.MeshSync {
             Label nameLabel = container.Query<Label>("DCCToolName").First();
             nameLabel.text = dccToolInfo.GetDescription();
             
+            //TODO-sin: 2020-5-11: Support ico ?
+            //Load icon
+            if (!string.IsNullOrEmpty(dccToolInfo.AppPath) && File.Exists(dccToolInfo.IconPath))     {
+                byte[] fileData = File.ReadAllBytes(dccToolInfo.IconPath);
+                Texture2D tex = new Texture2D(2, 2);
+                tex.LoadImage(fileData, true);                
+                container.Query<Image>("DCCToolImage").First().image = tex;
+            }
+            
             container.Query<Label>("DCCToolPath").First().text = "Path: " + dccToolInfo.AppPath;
 
-            
             BaseDCCIntegrator integrator = DCCIntegratorFactory.Create(dccToolInfo);
             DCCPluginInstallInfo installInfo = integrator.FindInstallInfo();
 
