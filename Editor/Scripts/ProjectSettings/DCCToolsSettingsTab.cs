@@ -155,6 +155,12 @@ namespace UnityEditor.MeshSync {
             
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
             if (settings.RemoveDCCTool(info.AppPath)) {
+                //Delete install info too
+                string installInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(info);
+                if (File.Exists(installInfoPath)) {
+                    File.Delete(installInfoPath);
+                }
+                
                 Setup(m_root);
             }
             
