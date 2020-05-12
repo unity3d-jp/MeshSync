@@ -15,7 +15,7 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
     internal void Integrate(Action onComplete) {
 
-        string dccToolName = GetDCCToolInFileName();
+        string dccToolName = GetDCCToolInFileNameV();
         string dccPluginFileName = dccToolName + "_" + GetCurrentDCCPluginPlatform() + ".zip";
     
         //Make sure the DCC plugin zip file exists first
@@ -30,10 +30,10 @@ internal abstract class BaseDCCIntegrator {
         downloader.Execute((string pluginVersion, List<string> dccPluginLocalPaths) => {
 
             EditorUtility.DisplayProgressBar("MeshSync", progressBarInfo, 0.5f);
-            string configFolder = FindConfigFolder();
+            string configFolder = FindConfigFolderV();
             bool dccConfigured = false;
             if (dccPluginLocalPaths.Count >0 && File.Exists(dccPluginLocalPaths[0])) {
-                dccConfigured = ConfigureDCCTool(m_dccToolInfo, configFolder, dccPluginLocalPaths[0]);
+                dccConfigured = ConfigureDCCToolV(m_dccToolInfo, configFolder, dccPluginLocalPaths[0]);
             }
             
             if (!dccConfigured) {
@@ -61,6 +61,8 @@ internal abstract class BaseDCCIntegrator {
             }
             
             EditorUtility.ClearProgressBar();
+            FinalizeDCCConfigurationV();
+            
             onComplete();
         }, () => {
             Debug.LogError("[MeshSync] Failed to download DCC Plugin for " + dccDesc);
@@ -84,14 +86,15 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
 
     //The name of the DCCTool in the filename of the DCC plugin
-    protected abstract string GetDCCToolInFileName();
+    protected abstract string GetDCCToolInFileNameV();
 
     //returns null when failed
-    protected abstract bool ConfigureDCCTool( DCCToolInfo dccToolInfo, 
+    protected abstract bool ConfigureDCCToolV( DCCToolInfo dccToolInfo, 
         string dccConfigFolder, string localPluginPath);
 
-    protected abstract string FindConfigFolder();
+    protected abstract string FindConfigFolderV();
     
+    protected abstract void FinalizeDCCConfigurationV();
     
     
 //----------------------------------------------------------------------------------------------------------------------    

@@ -12,12 +12,12 @@ internal class MayaIntegrator : BaseDCCIntegrator {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    protected override string GetDCCToolInFileName() {
+    protected override string GetDCCToolInFileNameV() {
         return "Maya";
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override bool ConfigureDCCTool(DCCToolInfo dccToolInfo, string configFolder, string localPluginPath) 
+    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string configFolder, string localPluginPath) 
     {
         string tempPath = FileUtil.GetUniqueTempPathInProject();
         
@@ -31,8 +31,8 @@ internal class MayaIntegrator : BaseDCCIntegrator {
 
         const string AUTOLOAD_SETUP = "pluginInfo -edit -autoload true MeshSyncClientMaya;";
         const string SHELF_SETUP = "UnityMeshSync_Shelf;";
-        const string MAYA_CLOSE_COMMAND = "scriptJob -idleEvent quit;";
-        const string FINALIZE_SETUP = AUTOLOAD_SETUP + SHELF_SETUP + MAYA_CLOSE_COMMAND;
+        //const string MAYA_CLOSE_COMMAND = "scriptJob -idleEvent quit;";
+        const string FINALIZE_SETUP = AUTOLOAD_SETUP + SHELF_SETUP;
         
         string copySrcFolder  = srcRoot;
         string copyDestFolder = configFolder;
@@ -60,8 +60,10 @@ internal class MayaIntegrator : BaseDCCIntegrator {
                 
                 argFormat = @"-command '{0}'";
                 //Example: "/Users/Shared/Autodesk/Modules/maya/UnityMeshSync/2020/plug-ins/MeshSyncClientMaya.bundle";
-                loadPluginCmd = "loadPlugin \"" + configFolder + "/UnityMeshSync/"+ dccToolInfo.DCCToolVersion 
-                                       + "/plug-ins/MeshSyncClientMaya.bundle\";";
+                string mayaPluginPath = Path.Combine(copyDestFolder, "UnityMeshSync", dccToolInfo.DCCToolVersion, 
+                    @"plug-ins/MeshSyncClientMaya.bundle");
+                
+                loadPluginCmd = "loadPlugin \"" + mayaPluginPath + "\";";
                 
                 break;
             }
@@ -104,17 +106,29 @@ internal class MayaIntegrator : BaseDCCIntegrator {
 
         //Auto Load
         string arg = string.Format(argFormat, loadPluginCmd+FINALIZE_SETUP);
-        int exitCode = SetupAutoLoadPlugin(dccToolInfo.AppPath, arg);
+        bool setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, arg);
 
         //Cleanup
         FileUtility.DeleteFilesAndFolders(tempPath);
 
-        return (0 == exitCode);
+        return setupSuccessful;
+    }
+    
+    
+//----------------------------------------------------------------------------------------------------------------------    
+    protected override void FinalizeDCCConfigurationV() {
+        DCCToolInfo dccToolInfo = GetDCCToolInfo();
+        
+        EditorUtility.DisplayDialog("MeshSync",
+            $"Launching {dccToolInfo.GetDescription()} for finalizing configuration", 
+            "Ok"
+        );                
+        
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
     
-    protected override string FindConfigFolder() {
+    protected override string FindConfigFolderV() {
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
 
@@ -149,13 +163,12 @@ internal class MayaIntegrator : BaseDCCIntegrator {
     
     // [SecurityPermission(SecurityAction.InheritanceDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
     // [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.UnmanagedCode)]
-    int SetupAutoLoadPlugin(string mayaPath, string startArgument) {
-        int exitCode = 0;
+    bool SetupAutoLoadPlugin(string mayaPath, string startArgument) {
         
         try {
             if (!System.IO.File.Exists(mayaPath)) {
                 Debug.LogError("[MeshSync] No maya installation found at " + mayaPath);
-                return -1;
+                return false;
             }
 
             //[note-sin: 2020-5-12] WindowStyle=Hidden (requires UseShellExecute=true and RedirectStandardError=false),
@@ -163,32 +176,26 @@ internal class MayaIntegrator : BaseDCCIntegrator {
             System.Diagnostics.Process mayaProcess = new System.Diagnostics.Process {
                 StartInfo = {
                     FileName = mayaPath,
-//                    WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                    RedirectStandardError = true,
+                    // WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
+                    // CreateNoWindow = true,
+                    UseShellExecute = true,
+                    RedirectStandardError = false,
                     Arguments = startArgument
                 },
                 EnableRaisingEvents = true
             };
             mayaProcess.Start();
 
-            string stderr = mayaProcess.StandardError.ReadToEnd();
-            mayaProcess.WaitForExit();
-            exitCode = mayaProcess.ExitCode;
-            // Debug.Log(string.Format("Ran maya: [{0}]\nWith args [{1}]\nResult {2}",
-            //     mayaPath, mayaProcess.StartInfo.Arguments, exitCode));
-
-            // see if we got any error messages
-            if(exitCode != 0 && !string.IsNullOrEmpty(stderr)){
-                Debug.LogError($"[MeshSync] Maya installation error (exit code: {exitCode}): {stderr}");
-            }
-
+            // string stderr = mayaProcess.StandardError.ReadToEnd();
+            // mayaProcess.WaitForExit();
+            // int exitCode = mayaProcess.ExitCode;
+            
         } catch (Exception e) {
             Debug.LogError("[MeshSync] Failed to start Maya. Exception: " + e.Message);
-            exitCode = -1;
+            return false;
         }
-        return exitCode;
+
+        return true;
     }
     
     
