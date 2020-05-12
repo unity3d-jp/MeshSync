@@ -43,7 +43,7 @@ internal abstract class BaseDCCIntegrator {
             
             DCCPluginInstallInfo installInfo = new DCCPluginInstallInfo(pluginVersion);
 
-            string installInfoPath = FindInstallInfoPath(dccToolName, m_dccToolInfo.DCCToolVersion);
+            string installInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(m_dccToolInfo);
             string installInfoFolder = Path.GetDirectoryName(installInfoPath);
             if (null == installInfoPath || null == installInfoFolder) {
                 HandleFailedIntegration($"Invalid path: {installInfoPath}",dccDesc);
@@ -71,7 +71,7 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
     internal DCCPluginInstallInfo FindInstallInfo() {
         
-        string path = FindInstallInfoPath(GetDCCToolInFileName(), m_dccToolInfo.DCCToolVersion);
+        string path = DCCPluginInstallInfo.GetInstallInfoPath(m_dccToolInfo);
         if (!File.Exists(path))
             return null;
 
@@ -93,21 +93,6 @@ internal abstract class BaseDCCIntegrator {
     protected abstract string FindConfigFolder();
     
     
-//----------------------------------------------------------------------------------------------------------------------    
-    private static string FindInstallInfoPath(string dccToolName, string dccToolVersion) {
-        string localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        string installInfoFolder = Path.Combine(localAppDataFolder, "Unity", "MeshSync");
-
-        switch (Application.platform) {
-            case RuntimePlatform.LinuxEditor: 
-                throw new NotImplementedException();
-            default: {
-                break;
-            }
-        }
-
-        return Path.Combine(installInfoFolder, $"UnityMeshSyncInstallInfo_{dccToolName}_{dccToolVersion}.json");
-    }    
     
 //----------------------------------------------------------------------------------------------------------------------    
     private static string GetCurrentDCCPluginPlatform() {

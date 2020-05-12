@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using UnityEngine;
 
 namespace UnityEditor.MeshSync {
@@ -10,6 +11,37 @@ internal class DCCPluginInstallInfo {
         PluginVersion = pluginVersion;
     }
 
+//----------------------------------------------------------------------------------------------------------------------    
+
+    internal static string GetInstallInfoPath(DCCToolInfo info) {
+        string localAppDataFolder = null;
+        
+        switch (Application.platform) {
+            case RuntimePlatform.WindowsEditor: {
+                localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                break;
+            }
+            case RuntimePlatform.OSXEditor: {
+                string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                localAppDataFolder = Path.Combine(userProfile, "Library/Application Support");
+                break;
+            }
+            case RuntimePlatform.LinuxEditor: {
+                string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                localAppDataFolder = Path.Combine(userProfile, ".config/unity3d");
+                break;
+            }
+            default: {
+                throw new NotImplementedException();
+            }
+        }
+
+        string desc = info.GetDescription().Replace(' ', '_');
+        string installInfoFolder = Path.Combine(localAppDataFolder, "Unity", "MeshSync");
+        return Path.Combine(installInfoFolder, $"UnityMeshSyncInstallInfo_{desc}.json");
+    }    
+    
+    
 //----------------------------------------------------------------------------------------------------------------------
 
     /// <summary>
