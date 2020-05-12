@@ -159,7 +159,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
             }
 
             //[note-sin: 2020-5-12] WindowStyle=Hidden (requires UseShellExecute=true and RedirectStandardError=false),
-            //doesn't seem to be able to hide Maya window.
+            //seems to be able to hide only the splash screen, but not the Maya window.
             System.Diagnostics.Process mayaProcess = new System.Diagnostics.Process {
                 StartInfo = {
                     FileName = mayaPath,
