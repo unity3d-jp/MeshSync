@@ -53,6 +53,23 @@ internal class ProjectSettingsTest {
         Assert.AreEqual("2020", version);
 
     }    
+
+//----------------------------------------------------------------------------------------------------------------------    
+    [Test]
+    public void CheckInstallInfoPath() {
+        string mayaInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(
+            new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2019")
+        );
+        Assert.NotNull(mayaInfoPath);
+        
+        string _3dsMaxInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(
+            new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2019")
+        );
+        Assert.NotNull(_3dsMaxInfoPath);
+        
+        Assert.AreNotEqual(mayaInfoPath,_3dsMaxInfoPath);
+        
+    }    
     
 }
 
