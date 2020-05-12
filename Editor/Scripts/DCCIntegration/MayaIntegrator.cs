@@ -12,12 +12,12 @@ internal class MayaIntegrator : BaseDCCIntegrator {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    protected override string GetDCCToolInFileName() {
+    protected override string GetDCCToolInFileNameV() {
         return "Maya";
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override bool ConfigureDCCTool(DCCToolInfo dccToolInfo, string configFolder, string localPluginPath) 
+    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string configFolder, string localPluginPath) 
     {
         string tempPath = FileUtil.GetUniqueTempPathInProject();
         
@@ -114,9 +114,21 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         return setupSuccessful;
     }
     
+    
+//----------------------------------------------------------------------------------------------------------------------    
+    protected override void FinalizeDCCConfigurationV() {
+        DCCToolInfo dccToolInfo = GetDCCToolInfo();
+        
+        EditorUtility.DisplayDialog("MeshSync",
+            $"Launching {dccToolInfo.GetDescription()} for finalizing configuration", 
+            "Ok"
+        );                
+        
+    }
+    
 //----------------------------------------------------------------------------------------------------------------------    
     
-    protected override string FindConfigFolder() {
+    protected override string FindConfigFolderV() {
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
 
