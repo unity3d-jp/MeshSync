@@ -43,7 +43,7 @@ internal abstract class BaseDCCIntegrator {
             
             DCCPluginInstallInfo installInfo = new DCCPluginInstallInfo(pluginVersion);
 
-            string installInfoPath = FindInstallInfoPath(dccToolName, m_dccToolInfo.DCCToolVersion);
+            string installInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(dccToolName, m_dccToolInfo.DCCToolVersion);
             string installInfoFolder = Path.GetDirectoryName(installInfoPath);
             if (null == installInfoPath || null == installInfoFolder) {
                 HandleFailedIntegration($"Invalid path: {installInfoPath}",dccDesc);
@@ -71,7 +71,7 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
     internal DCCPluginInstallInfo FindInstallInfo() {
         
-        string path = FindInstallInfoPath(GetDCCToolInFileName(), m_dccToolInfo.DCCToolVersion);
+        string path = DCCPluginInstallInfo.GetInstallInfoPath(GetDCCToolInFileName(), m_dccToolInfo.DCCToolVersion);
         if (!File.Exists(path))
             return null;
 
@@ -93,26 +93,6 @@ internal abstract class BaseDCCIntegrator {
     protected abstract string FindConfigFolder();
     
     
-//----------------------------------------------------------------------------------------------------------------------    
-    private static string FindInstallInfoPath(string dccToolName, string dccToolVersion) {
-        string localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-
-        switch (Application.platform) {
-            case RuntimePlatform.OSXEditor: {
-                string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                localAppDataFolder = Path.Combine(userProfile, "Library/Application Support");
-                break;
-            }
-            case RuntimePlatform.LinuxEditor: 
-                throw new NotImplementedException();
-            default: {
-                break;
-            }
-        }
-
-        string installInfoFolder = Path.Combine(localAppDataFolder, "Unity", "MeshSync");
-        return Path.Combine(installInfoFolder, $"UnityMeshSyncInstallInfo_{dccToolName}_{dccToolVersion}.json");
-    }    
     
 //----------------------------------------------------------------------------------------------------------------------    
     private static string GetCurrentDCCPluginPlatform() {
