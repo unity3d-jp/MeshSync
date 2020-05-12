@@ -43,7 +43,7 @@ internal abstract class BaseDCCIntegrator {
             
             DCCPluginInstallInfo installInfo = new DCCPluginInstallInfo(pluginVersion);
 
-            string installInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(dccToolName, m_dccToolInfo.DCCToolVersion);
+            string installInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(m_dccToolInfo);
             string installInfoFolder = Path.GetDirectoryName(installInfoPath);
             if (null == installInfoPath || null == installInfoFolder) {
                 HandleFailedIntegration($"Invalid path: {installInfoPath}",dccDesc);
@@ -71,7 +71,7 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
     internal DCCPluginInstallInfo FindInstallInfo() {
         
-        string path = DCCPluginInstallInfo.GetInstallInfoPath(GetDCCToolInFileName(), m_dccToolInfo.DCCToolVersion);
+        string path = DCCPluginInstallInfo.GetInstallInfoPath(m_dccToolInfo);
         if (!File.Exists(path))
             return null;
 

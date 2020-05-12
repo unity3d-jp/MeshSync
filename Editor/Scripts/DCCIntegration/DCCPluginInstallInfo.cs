@@ -13,7 +13,7 @@ internal class DCCPluginInstallInfo {
 
 //----------------------------------------------------------------------------------------------------------------------    
 
-    internal static string GetInstallInfoPath(string dccToolName, string dccToolVersion) {
+    internal static string GetInstallInfoPath(DCCToolInfo info) {
         string localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
         switch (Application.platform) {
@@ -29,8 +29,9 @@ internal class DCCPluginInstallInfo {
             }
         }
 
+        string desc = info.GetDescription().Replace(' ', '_');
         string installInfoFolder = Path.Combine(localAppDataFolder, "Unity", "MeshSync");
-        return Path.Combine(installInfoFolder, $"UnityMeshSyncInstallInfo_{dccToolName}_{dccToolVersion}.json");
+        return Path.Combine(installInfoFolder, $"UnityMeshSyncInstallInfo_{desc}.json");
     }    
     
     
