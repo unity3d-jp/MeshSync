@@ -14,18 +14,25 @@ internal class DCCPluginInstallInfo {
 //----------------------------------------------------------------------------------------------------------------------    
 
     internal static string GetInstallInfoPath(DCCToolInfo info) {
-        string localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-
+        string localAppDataFolder = null;
+        
         switch (Application.platform) {
+            case RuntimePlatform.WindowsEditor: {
+                localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                break;
+            }
             case RuntimePlatform.OSXEditor: {
                 string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 localAppDataFolder = Path.Combine(userProfile, "Library/Application Support");
                 break;
             }
-            case RuntimePlatform.LinuxEditor: 
-                throw new NotImplementedException();
-            default: {
+            case RuntimePlatform.LinuxEditor: {
+                string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                localAppDataFolder = Path.Combine(userProfile, ".config/unity3d");
                 break;
+            }
+            default: {
+                throw new NotImplementedException();
             }
         }
 
