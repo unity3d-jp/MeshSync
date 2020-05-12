@@ -74,11 +74,14 @@ public static class DCCFinderUtility {
                 // and allow just having it be the app bundle or a
                 // directory that holds the app bundle.
                 if (dir.EndsWith(".app/Contents")) {
-                    appPath+= "/MacOS/Maya";
+                    appPath  += "/MacOS/Maya";
+                    iconPath += "/icons/mayaico.png";
                 } else if (dir.EndsWith(".app")) {
-                    appPath+= "/Contents/MacOS/Maya";
+                    appPath  += "/Contents/MacOS/Maya";
+                    iconPath += "/Contents/icons/mayaico.png";
                 } else {
-                    appPath+= "/Maya.app/Contents/MacOS/Maya";
+                    appPath  += "/Maya.app/Contents/MacOS/Maya";
+                    iconPath += "/Maya.app/Contents/icons/mayaico.png";
                 }
                 break;
             }
