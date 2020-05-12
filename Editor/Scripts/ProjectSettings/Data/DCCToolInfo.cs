@@ -59,6 +59,11 @@ public class DCCToolInfo {
     /// </summary>
     public string         AppPath;
 
+    /// <summary>
+    /// The path to the icon of the DCC Tool
+    /// </summary>
+    public string         IconPath;
+    
     [SerializeField] internal int ClassVersion = 1;
     
     

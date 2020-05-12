@@ -60,9 +60,17 @@ namespace UnityEditor.MeshSync {
             Label nameLabel = container.Query<Label>("DCCToolName").First();
             nameLabel.text = dccToolInfo.GetDescription();
             
+            //TODO-sin: 2020-5-11: Support ico ?
+            //Load icon
+            if (!string.IsNullOrEmpty(dccToolInfo.AppPath) && File.Exists(dccToolInfo.IconPath))     {
+                byte[] fileData = File.ReadAllBytes(dccToolInfo.IconPath);
+                Texture2D tex = new Texture2D(2, 2);
+                tex.LoadImage(fileData, true);                
+                container.Query<Image>("DCCToolImage").First().image = tex;
+            }
+            
             container.Query<Label>("DCCToolPath").First().text = "Path: " + dccToolInfo.AppPath;
 
-            
             BaseDCCIntegrator integrator = DCCIntegratorFactory.Create(dccToolInfo);
             DCCPluginInstallInfo installInfo = integrator.FindInstallInfo();
 
@@ -104,33 +112,20 @@ namespace UnityEditor.MeshSync {
 
             //Find the path to the actual app
             DCCToolType lastDCCToolType = DCCToolType.AUTODESK_MAYA;
-            string appPath = null;
-            for (int i = 0; i < (int) (DCCToolType.NUM_DCC_TOOL_TYPES) && string.IsNullOrEmpty(appPath); ++i) {
+            DCCToolInfo dccToolInfo = null;
+            for (int i = 0; i < (int) (DCCToolType.NUM_DCC_TOOL_TYPES) && null==dccToolInfo; ++i) {
                 lastDCCToolType = (DCCToolType) (i);
-                appPath = DCCFinderUtility.FindDCCToolAppPathInDirectory(lastDCCToolType, m_lastOpenedFolder);
+                dccToolInfo = DCCFinderUtility.FindDCCToolInDirectory(lastDCCToolType, null, m_lastOpenedFolder);
             }
 
-            if (string.IsNullOrEmpty(appPath)) {
+            if (null==dccToolInfo) {
                 EditorUtility.DisplayDialog("MeshSync Project Settings", "No DCC Tool is detected", "Ok");
                 return;
             }
-
-            //Find version
-            string version = null;
-            switch (lastDCCToolType) {
-                case DCCToolType.AUTODESK_MAYA: {
-                    version = DCCFinderUtility.FindMayaVersion(appPath);
-                    break;
-                }
-                case DCCToolType.AUTODESK_3DSMAX: {
-                    version = DCCFinderUtility.Find3DSMaxVersion(appPath);
-                    break;
-                }
-            }
-
+            
             //Add
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
-            if (settings.AddDCCTool(appPath, lastDCCToolType, version)) {
+            if (settings.AddDCCTool(dccToolInfo)) {
                 Setup(m_root);
             }
             

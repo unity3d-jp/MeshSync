@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using JetBrains.Annotations;
 using Unity.AnimeToolbox;
 using UnityEngine;
 
@@ -21,10 +22,9 @@ public static class DCCFinderUtility {
 
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
-                //[TODO-sin: 2020-4-27]: Test on Windows
                 DriveInfo[] allDrives = DriveInfo.GetDrives();
                 foreach (DriveInfo drive in allDrives) {
-                    searchDirectories.Add(Path.Combine(drive.Name, "Program Files/Autodesk") );
+                    searchDirectories.Add(Path.Combine(drive.Name, @"Program Files\Autodesk") );
                 }
                 break;
             }
@@ -57,13 +57,15 @@ public static class DCCFinderUtility {
     /// Find the maya application at the passed dir.
     /// Returns null if not found
     /// </summary>
-    /// <returns>The maya application path.</returns>
     /// <param name="dir">Directory to be searched</param>
-    private static string FindMayaAppPathInDirectory(string dir) {
-        string path = dir;
+    /// <param name="version">known Maya version</param>
+    private static DCCToolInfo FindMayaInDirectory(string dir, string version) {
+        string appPath = dir;
+        string iconPath = dir;
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
-                path+= "/bin/maya.exe";
+                appPath+= @"\bin\maya.exe";
+                iconPath += @"\icons\mayaico.png";
                 break;
             }
             case RuntimePlatform.OSXEditor: {
@@ -72,24 +74,34 @@ public static class DCCFinderUtility {
                 // and allow just having it be the app bundle or a
                 // directory that holds the app bundle.
                 if (dir.EndsWith(".app/Contents")) {
-                    path+= "/MacOS/Maya";
+                    appPath+= "/MacOS/Maya";
                 } else if (dir.EndsWith(".app")) {
-                    path+= "/Contents/MacOS/Maya";
+                    appPath+= "/Contents/MacOS/Maya";
                 } else {
-                    path+= "/Maya.app/Contents/MacOS/Maya";
+                    appPath+= "/Maya.app/Contents/MacOS/Maya";
                 }
-
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
-                path+= "/bin/maya";
+                appPath+= "/bin/maya";
                 break;
             }
             default:
                 throw new NotImplementedException ();
         }
 
-        return File.Exists(path) ? path : null;
+        if (!File.Exists(appPath))
+            return null;
+        
+        iconPath = (!File.Exists(iconPath)) ? null : iconPath;
+
+        version = (string.IsNullOrEmpty(version)) ? FindMayaVersion(appPath) : version;
+
+        return new DCCToolInfo(DCCToolType.AUTODESK_MAYA,version) {
+            AppPath = appPath,
+            IconPath = iconPath
+        };
+        
     }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -139,33 +151,56 @@ public static class DCCFinderUtility {
 //----------------------------------------------------------------------------------------------------------------------
 
     //3DS Max is only available for Windows
-    private static string Find3DSMaxAppPathInDirectory(string dir) {
+    private static DCCToolInfo Find3DSMaxInDirectory(string dir, string version) {
         if (RuntimePlatform.WindowsEditor != Application.platform) {
             return null;
         }
         
-        string appPath = string.Format("{0}/{1}", dir.Replace("\\", "/"), "3dsmax.exe");
-        return File.Exists(appPath) ? appPath : null;
+        string appPath = dir + @"\3dsmax.exe";
+        string iconPath = dir + @"\Icons\icon_main.ico";
+        
+        if (!File.Exists(appPath))
+            return null;
+        
+        iconPath = (!File.Exists(iconPath)) ? null : iconPath;       
+        version = (string.IsNullOrEmpty(version)) ? Find3DSMaxVersion(appPath) : version;
+        
+        return new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX,version) {
+            AppPath = appPath,
+            IconPath = iconPath
+        };
+        
     }
 //----------------------------------------------------------------------------------------------------------------------
 
     internal static string Find3DSMaxVersion(string appPath) {
-        //4 levels up: "C:/Program Files/3dsMax 2019/3dsmax.exe";
+        //4 levels up: "C:\Program Files\3dsMax 2019\3dsmax.exe";
+        string folderName = Path.GetFileName(Path.GetDirectoryName(appPath));
+        int len = folderName.Length;
+        if (len > 4) {
+            return folderName.Substring(len - 4, 4);
+        }
+        return folderName;
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
+    internal static string FindMayaIcon(string appPath) {
+        //4 levels up: "C:\Program Files\3dsMax 2019\3dsmax.exe";
         return PathUtility.TryGetDirectoryName(appPath, 1);
     }
 
-
 //----------------------------------------------------------------------------------------------------------------------
 
-    //Returns the path to the application file of the DCC tool.
-    //May return null if no app is found
-    internal static string FindDCCToolAppPathInDirectory(DCCToolType toolType, string dir) {
+    //Returns the DCCToolInfo of the DCC tool.
+    //If version is null, then the correct version will be returned if found
+    [CanBeNull]
+    internal static DCCToolInfo FindDCCToolInDirectory(DCCToolType toolType, string version, string dir) {
         switch (toolType) {
             case DCCToolType.AUTODESK_MAYA: {
-                return FindMayaAppPathInDirectory(dir);
+                return FindMayaInDirectory(dir, version);
             }
             case DCCToolType.AUTODESK_3DSMAX: {
-                return Find3DSMaxAppPathInDirectory(dir);
+                return Find3DSMaxInDirectory(dir, version);
             }
         }
 
@@ -190,15 +225,11 @@ public static class DCCFinderUtility {
                     continue;
                 DCCToolInfo dccToolInfo = dcc.Value;
 
-                string appPath = FindDCCToolAppPathInDirectory(dccToolInfo.Type, dir);
-
-                if (string.IsNullOrEmpty(appPath)) {
+                DCCToolInfo foundDCC = FindDCCToolInDirectory(dccToolInfo.Type, dccToolInfo.DCCToolVersion, dir);
+                if (null == foundDCC)
                     continue;
-                }
                 
-                dccPaths.Add(appPath, new DCCToolInfo(dccToolInfo) {
-                    AppPath =  appPath,
-                });
+                dccPaths.Add(foundDCC.AppPath, foundDCC);
             }
         }
         
@@ -208,15 +239,12 @@ public static class DCCFinderUtility {
             if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir))
                 continue;
             DCCToolInfo dccToolInfo = dcc.Value;
-            
-            string appPath = FindDCCToolAppPathInDirectory(dccToolInfo.Type, dir);
-            if (string.IsNullOrEmpty(appPath)) {
+
+            DCCToolInfo foundDCC = FindDCCToolInDirectory(dccToolInfo.Type, dccToolInfo.DCCToolVersion, dir);
+            if (null == foundDCC)
                 continue;
-            }
                 
-            dccPaths.Add(appPath, new DCCToolInfo(dccToolInfo) {
-                AppPath =  appPath,
-            });
+            dccPaths.Add(foundDCC.AppPath, foundDCC);
         }
         
         return dccPaths;

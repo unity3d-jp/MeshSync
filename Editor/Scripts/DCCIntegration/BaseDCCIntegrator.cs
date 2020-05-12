@@ -14,7 +14,9 @@ internal abstract class BaseDCCIntegrator {
 
 //----------------------------------------------------------------------------------------------------------------------    
     internal void Integrate(Action onComplete) {
-        string dccPluginFileName = GetDCCPluginFileName();
+
+        string dccToolName = GetDCCToolInFileName();
+        string dccPluginFileName = dccToolName + "_" + GetCurrentDCCPluginPlatform() + ".zip";
     
         //Make sure the DCC plugin zip file exists first
         DCCPluginDownloader downloader = new DCCPluginDownloader(false,SAVED_PLUGINS_FOLDER, 
@@ -29,21 +31,36 @@ internal abstract class BaseDCCIntegrator {
 
             EditorUtility.DisplayProgressBar("MeshSync", progressBarInfo, 0.5f);
             string configFolder = FindConfigFolder();
-            DCCPluginInstallInfo installInfo = null;
+            bool dccConfigured = false;
             if (dccPluginLocalPaths.Count >0 && File.Exists(dccPluginLocalPaths[0])) {
-                installInfo = ConfigureDCCTool(m_dccToolInfo, configFolder, dccPluginLocalPaths[0]);
+                dccConfigured = ConfigureDCCTool(m_dccToolInfo, configFolder, dccPluginLocalPaths[0]);
+            }
+            
+            if (!dccConfigured) {
+                HandleFailedIntegration("Failed in configuring DCC ", dccDesc);
+                return;
+            }
+            
+            DCCPluginInstallInfo installInfo = new DCCPluginInstallInfo(pluginVersion);
+
+            string installInfoPath = FindInstallInfoPath(dccToolName, m_dccToolInfo.DCCToolVersion);
+            string installInfoFolder = Path.GetDirectoryName(installInfoPath);
+            if (null == installInfoPath || null == installInfoFolder) {
+                HandleFailedIntegration($"Invalid path: {installInfoPath}",dccDesc);
+                return;
             }
 
-            if (null == installInfo) {
-                Debug.LogError("[MeshSync] Unknown error when installing plugin for " + dccDesc);
-            } else {
+            //Write DCCPluginInstallInfo for the version
+            Directory.CreateDirectory(installInfoFolder);                
 
-                //Write DCCPluginInstallInfo for the version
-                string installInfoPath = GetInstallInfoPath(configFolder, m_dccToolInfo.DCCToolVersion);
+            try {
                 FileUtility.SerializeToJson(installInfo, installInfoPath);
+            } catch (Exception e) {
+                HandleFailedIntegration(e.ToString(), dccDesc);
+                return;
             }
+            
             EditorUtility.ClearProgressBar();
-
             onComplete();
         }, () => {
             Debug.LogError("[MeshSync] Failed to download DCC Plugin for " + dccDesc);
@@ -54,7 +71,7 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
     internal DCCPluginInstallInfo FindInstallInfo() {
         
-        string path = GetInstallInfoPath(FindConfigFolder(), m_dccToolInfo.DCCToolVersion);
+        string path = FindInstallInfoPath(GetDCCToolInFileName(), m_dccToolInfo.DCCToolVersion);
         if (!File.Exists(path))
             return null;
 
@@ -70,26 +87,30 @@ internal abstract class BaseDCCIntegrator {
     protected abstract string GetDCCToolInFileName();
 
     //returns null when failed
-    protected abstract DCCPluginInstallInfo ConfigureDCCTool( DCCToolInfo dccToolInfo, 
+    protected abstract bool ConfigureDCCTool( DCCToolInfo dccToolInfo, 
         string dccConfigFolder, string localPluginPath);
 
     protected abstract string FindConfigFolder();
     
-//----------------------------------------------------------------------------------------------------------------------    
-
-    private string GetDCCPluginFileName() {
-        return GetDCCToolInFileName() + "_" + GetCurrentDCCPluginPlatform() + ".zip";
-        
-    }
     
 //----------------------------------------------------------------------------------------------------------------------    
-    private static string GetInstallInfoPath(string dccConfigFolder, string dccToolVersion) {
-        const string INSTALL_INFO_FILENAME = "UnityMeshSyncInstallInfo";
-        return Path.Combine(dccConfigFolder, INSTALL_INFO_FILENAME + dccToolVersion + ".json");
+    private static string FindInstallInfoPath(string dccToolName, string dccToolVersion) {
+        string localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        string installInfoFolder = Path.Combine(localAppDataFolder, "Unity", "MeshSync");
+
+        switch (Application.platform) {
+            case RuntimePlatform.LinuxEditor: 
+                throw new NotImplementedException();
+            default: {
+                break;
+            }
+        }
+
+        return Path.Combine(installInfoFolder, $"UnityMeshSyncInstallInfo_{dccToolName}_{dccToolVersion}.json");
     }    
     
 //----------------------------------------------------------------------------------------------------------------------    
-    static string GetCurrentDCCPluginPlatform() {
+    private static string GetCurrentDCCPluginPlatform() {
         string platform = null;
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: platform = "Windows"; break;
@@ -103,6 +124,14 @@ internal abstract class BaseDCCIntegrator {
         return platform;
 
     }
+    
+//----------------------------------------------------------------------------------------------------------------------    
+
+    private static void HandleFailedIntegration(string errMessage, string dccDesc) {
+        EditorUtility.ClearProgressBar();
+        Debug.LogError($"[MeshSync] Error: {errMessage}, when installing plugin for " + dccDesc);
+    }
+    
     
 //----------------------------------------------------------------------------------------------------------------------    
 
