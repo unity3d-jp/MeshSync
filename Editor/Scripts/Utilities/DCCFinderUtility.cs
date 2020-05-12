@@ -86,7 +86,8 @@ public static class DCCFinderUtility {
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
-                appPath+= "/bin/maya";
+                appPath  += "/bin/maya";
+                iconPath += "/icons/mayaico.png";
                 break;
             }
             default:
@@ -186,12 +187,6 @@ public static class DCCFinderUtility {
         return folderName;
     }
     
-//----------------------------------------------------------------------------------------------------------------------
-    internal static string FindMayaIcon(string appPath) {
-        //4 levels up: "C:\Program Files\3dsMax 2019\3dsmax.exe";
-        return PathUtility.TryGetDirectoryName(appPath, 1);
-    }
-
 //----------------------------------------------------------------------------------------------------------------------
 
     //Returns the DCCToolInfo of the DCC tool.
