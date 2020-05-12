@@ -58,7 +58,6 @@ internal class MayaIntegrator : BaseDCCIntegrator {
             }
             case RuntimePlatform.OSXEditor: {
                 
-                //Setup Auto Load
                 argFormat = @"-command '{0}'";
                 //Example: "/Users/Shared/Autodesk/Modules/maya/UnityMeshSync/2020/plug-ins/MeshSyncClientMaya.bundle";
                 loadPluginCmd = "loadPlugin \"" + configFolder + "/UnityMeshSync/"+ dccToolInfo.DCCToolVersion 
@@ -67,8 +66,18 @@ internal class MayaIntegrator : BaseDCCIntegrator {
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
-                // Copy the modules directory to ~/maya/<maya_version)            
-                throw new NotImplementedException();
+                //Example: /home/Unity/maya/2019/modules
+                const string FOLDER_PREFIX = "modules";
+                copySrcFolder  = Path.Combine(srcRoot, FOLDER_PREFIX);
+                copyDestFolder = Path.Combine(configFolder, FOLDER_PREFIX);
+
+                argFormat = @"-command '{0}'";
+
+                string mayaPluginPath = Path.Combine(copyDestFolder, "UnityMeshSync", dccToolInfo.DCCToolVersion, 
+                    @"plug-ins/MeshSyncClientMaya.so");
+                loadPluginCmd = "loadPlugin \"" + mayaPluginPath + "\";";
+                
+                break;
             }
             default: {
                 throw new NotImplementedException();
@@ -91,6 +100,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         } catch {
             return false;
         }
+
 
         //Auto Load
         string arg = string.Format(argFormat, loadPluginCmd+FINALIZE_SETUP);
@@ -124,15 +134,15 @@ internal class MayaIntegrator : BaseDCCIntegrator {
 
             case RuntimePlatform.OSXEditor: { return "/Users/Shared/Autodesk/modules/maya"; }
             case RuntimePlatform.LinuxEditor: {
-                // Copy the modules directory to ~/maya/<maya_version)            
-                break;
+                string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                DCCToolInfo dccToolInfo = GetDCCToolInfo();
+                return Path.Combine(userProfile, "maya", dccToolInfo.DCCToolVersion);
             }
             default: {
                 throw new NotImplementedException();
             }
         }
 
-        return null;
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
