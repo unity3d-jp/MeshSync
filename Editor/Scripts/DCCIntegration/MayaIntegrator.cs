@@ -60,8 +60,10 @@ internal class MayaIntegrator : BaseDCCIntegrator {
                 
                 argFormat = @"-command '{0}'";
                 //Example: "/Users/Shared/Autodesk/Modules/maya/UnityMeshSync/2020/plug-ins/MeshSyncClientMaya.bundle";
-                loadPluginCmd = "loadPlugin \"" + configFolder + "/UnityMeshSync/"+ dccToolInfo.DCCToolVersion 
-                                       + "/plug-ins/MeshSyncClientMaya.bundle\";";
+                string mayaPluginPath = Path.Combine(copyDestFolder, "UnityMeshSync", dccToolInfo.DCCToolVersion, 
+                    @"plug-ins/MeshSyncClientMaya.bundle");
+                
+                loadPluginCmd = "loadPlugin \"" + mayaPluginPath + "\";";
                 
                 break;
             }
