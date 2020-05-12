@@ -96,9 +96,13 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
     private static string FindInstallInfoPath(string dccToolName, string dccToolVersion) {
         string localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        string installInfoFolder = Path.Combine(localAppDataFolder, "Unity", "MeshSync");
 
         switch (Application.platform) {
+            case RuntimePlatform.OSXEditor: {
+                string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                localAppDataFolder = Path.Combine(userProfile, "Library/Application Support");
+                break;
+            }
             case RuntimePlatform.LinuxEditor: 
                 throw new NotImplementedException();
             default: {
@@ -106,6 +110,7 @@ internal abstract class BaseDCCIntegrator {
             }
         }
 
+        string installInfoFolder = Path.Combine(localAppDataFolder, "Unity", "MeshSync");
         return Path.Combine(installInfoFolder, $"UnityMeshSyncInstallInfo_{dccToolName}_{dccToolVersion}.json");
     }    
     
