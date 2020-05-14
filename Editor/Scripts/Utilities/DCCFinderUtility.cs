@@ -300,7 +300,6 @@ public static class DCCFinderUtility {
         foreach (string vendorDir in vendorDirs) {
             foreach (var dcc in DEFAULT_DCC_TOOLS_BY_FOLDER) {
                 string dir = Path.Combine(vendorDir, dcc.Key);
-                Debug.Log(dir);
                 if (!Directory.Exists(dir))
                     continue;
                 DCCToolInfo dccToolInfo = dcc.Value;
