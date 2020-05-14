@@ -342,7 +342,11 @@ public static class DCCFinderUtility {
         { "3ds Max 2018", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2018" ) },
         { "3ds Max 2019", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2019" ) },
         { "3ds Max 2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020" ) },
+
+#if UNITY_EDITOR_OSX        
         { "Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
+        { "Blender/Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
+#endif        
     };
     
     //environment variables
