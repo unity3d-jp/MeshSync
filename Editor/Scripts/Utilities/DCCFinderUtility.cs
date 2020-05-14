@@ -335,14 +335,14 @@ public static class DCCFinderUtility {
     
     //key: default folder name
     static readonly Dictionary<string, DCCToolInfo> DEFAULT_DCC_TOOLS_BY_FOLDER = new Dictionary<string, DCCToolInfo>() {
-        // { "maya2017", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2017" ) },
-        // { "maya2018", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2018" ) },
-        // { "maya2019", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2019" ) },
-        // { "maya2020", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2020" ) },
-        // { "3ds Max 2017", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2017" ) },
-        // { "3ds Max 2018", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2018" ) },
-        // { "3ds Max 2019", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2019" ) },
-        // { "3ds Max 2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020" ) },
+        { "maya2017", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2017" ) },
+        { "maya2018", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2018" ) },
+        { "maya2019", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2019" ) },
+        { "maya2020", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2020" ) },
+        { "3ds Max 2017", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2017" ) },
+        { "3ds Max 2018", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2018" ) },
+        { "3ds Max 2019", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2019" ) },
+        { "3ds Max 2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020" ) },
         { "Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
     };
     
