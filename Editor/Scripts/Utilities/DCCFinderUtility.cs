@@ -14,7 +14,6 @@ namespace UnityEditor.MeshSync {
 public static class DCCFinderUtility {
     
     //Find the location of supported DCC tools on Windows and Mac.
-    //Currently only support Autodesk products
     private static List<string> GetDefaultVendorDirectories() {
 
         List<string> existingDirectories = new List<string>();
@@ -30,6 +29,7 @@ public static class DCCFinderUtility {
             }
             case RuntimePlatform.OSXEditor: {
                 searchDirectories.Add("/Applications/Autodesk");
+                searchDirectories.Add("/Applications");
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
@@ -132,8 +132,6 @@ public static class DCCFinderUtility {
                 break;
             }
 
-
-
             default:
                 throw new NotImplementedException ();
         }
@@ -186,6 +184,86 @@ public static class DCCFinderUtility {
         }
         return folderName;
     }
+
+//----------------------------------------------------------------------------------------------------------------------    
+    
+    #region Blender
+    private static DCCToolInfo FindBlenderInDirectory(string dir, string version) {
+        string appPath = dir;
+        string iconPath = dir;
+        switch (Application.platform) {
+            case RuntimePlatform.WindowsEditor: {
+                throw new NotImplementedException();
+            }
+            case RuntimePlatform.OSXEditor: {
+                const string CONTENTS_APP_PATH = "/MacOS/Blender";
+                const string CONTENTS_ICON_PATH = "/Resources/blender icon.icns";
+
+                if (dir.EndsWith(".app/Contents")) {
+                    appPath  += CONTENTS_APP_PATH;
+                    iconPath += CONTENTS_ICON_PATH;
+                } else if (dir.EndsWith(".app")) {
+                    appPath  += $"/Contents{CONTENTS_APP_PATH}";
+                    iconPath += $"/Contents{CONTENTS_ICON_PATH}";
+                } else {
+                    appPath  += $"/Blender.app/Contents{CONTENTS_APP_PATH}";
+                    iconPath += $"/Blender.app/Contents{CONTENTS_ICON_PATH}";
+                }
+                break;
+            }
+            case RuntimePlatform.LinuxEditor: {
+                throw new NotImplementedException();
+            }
+            default:
+                throw new NotImplementedException ();
+        }
+
+        if (!File.Exists(appPath))
+            return null;
+        
+        iconPath = (!File.Exists(iconPath)) ? null : iconPath;
+
+        version = (string.IsNullOrEmpty(version)) ? FindBlenderVersion(appPath) : version;
+
+        return new DCCToolInfo(DCCToolType.BLENDER,version) {
+            AppPath = appPath,
+            IconPath = iconPath
+        };
+        
+    }
+    
+    internal static string FindBlenderVersion(string appPath) {
+        
+        switch (Application.platform) {
+            case RuntimePlatform.WindowsEditor: {
+                throw new NotImplementedException();
+            }
+            case RuntimePlatform.OSXEditor: {
+                //4 levels up: "/Blender.app/Contents/MacOS/Blender";
+                string resourcesDir = PathUtility.TryGetDirectoryName(appPath, 2);
+                resourcesDir = Path.Combine(resourcesDir, "Resources");
+
+                if (!Directory.Exists(resourcesDir))
+                    return "Unknown";
+                
+                //just return the first folder found
+                foreach (string version in Directory.EnumerateDirectories(resourcesDir)) {
+                    return Path.GetFileName(version);
+                }
+                break;
+            }
+            case RuntimePlatform.LinuxEditor: {
+                throw new NotImplementedException();
+            }
+
+            default:
+                throw new NotImplementedException ();
+        }
+        throw new NotImplementedException ();
+
+    }
+    
+    #endregion
     
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -200,9 +278,12 @@ public static class DCCFinderUtility {
             case DCCToolType.AUTODESK_3DSMAX: {
                 return Find3DSMaxInDirectory(dir, version);
             }
+            case DCCToolType.BLENDER: {
+                return FindBlenderInDirectory(dir, version);
+            }
+            default:
+                throw new NotImplementedException();
         }
-
-        return null;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -219,6 +300,7 @@ public static class DCCFinderUtility {
         foreach (string vendorDir in vendorDirs) {
             foreach (var dcc in DEFAULT_DCC_TOOLS_BY_FOLDER) {
                 string dir = Path.Combine(vendorDir, dcc.Key);
+                Debug.Log(dir);
                 if (!Directory.Exists(dir))
                     continue;
                 DCCToolInfo dccToolInfo = dcc.Value;
@@ -253,14 +335,15 @@ public static class DCCFinderUtility {
     
     //key: default folder name
     static readonly Dictionary<string, DCCToolInfo> DEFAULT_DCC_TOOLS_BY_FOLDER = new Dictionary<string, DCCToolInfo>() {
-        { "maya2017", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2017" ) },
-        { "maya2018", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2018" ) },
-        { "maya2019", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2019" ) },
-        { "maya2020", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2020" ) },
-        { "3ds Max 2017", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2017" ) },
-        { "3ds Max 2018", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2018" ) },
-        { "3ds Max 2019", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2019" ) },
-        { "3ds Max 2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020" ) },
+        // { "maya2017", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2017" ) },
+        // { "maya2018", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2018" ) },
+        // { "maya2019", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2019" ) },
+        // { "maya2020", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2020" ) },
+        // { "3ds Max 2017", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2017" ) },
+        // { "3ds Max 2018", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2018" ) },
+        // { "3ds Max 2019", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2019" ) },
+        // { "3ds Max 2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020" ) },
+        { "Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
     };
     
     //environment variables
