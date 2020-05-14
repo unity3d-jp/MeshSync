@@ -30,10 +30,9 @@ internal abstract class BaseDCCIntegrator {
         downloader.Execute((string pluginVersion, List<string> dccPluginLocalPaths) => {
 
             EditorUtility.DisplayProgressBar("MeshSync", progressBarInfo, 0.5f);
-            string configFolder = FindConfigFolderV();
             bool dccConfigured = false;
             if (dccPluginLocalPaths.Count >0 && File.Exists(dccPluginLocalPaths[0])) {
-                dccConfigured = ConfigureDCCToolV(m_dccToolInfo, configFolder, dccPluginLocalPaths[0]);
+                dccConfigured = ConfigureDCCToolV(m_dccToolInfo, dccPluginLocalPaths[0]);
             }
             
             if (!dccConfigured) {
@@ -89,10 +88,7 @@ internal abstract class BaseDCCIntegrator {
     protected abstract string GetDCCToolInFileNameV();
 
     //returns null when failed
-    protected abstract bool ConfigureDCCToolV( DCCToolInfo dccToolInfo, 
-        string dccConfigFolder, string localPluginPath);
-
-    protected abstract string FindConfigFolderV();
+    protected abstract bool ConfigureDCCToolV( DCCToolInfo dccToolInfo, string localPluginPath);
     
     protected abstract void FinalizeDCCConfigurationV();
     
