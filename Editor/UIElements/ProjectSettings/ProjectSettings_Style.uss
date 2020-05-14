@@ -56,8 +56,9 @@
     background-color: #808080;
     width:  100px;
     height: 100px;
-    align-self:center;
+    justify-content: center;
     flex-shrink: 0;
+    font-size:  64px;
 }
 
 .dcc-tool-info-container .text-container {
