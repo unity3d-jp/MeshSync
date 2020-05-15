@@ -380,7 +380,7 @@ public static class DCCFinderUtility {
         { "ADSK_3DSMAX_SDK_2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020" ) },
     };
 
-    const string UNKNOWN_VERSION = "Unknown";
+    private const string UNKNOWN_VERSION = "Unknown";
 
 }
 
