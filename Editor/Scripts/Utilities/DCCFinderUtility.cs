@@ -34,7 +34,8 @@ public static class DCCFinderUtility {
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
-                searchDirectories.Add("~/");
+                
+                searchDirectories.Add(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
                 searchDirectories.Add("/usr/autodesk");
                 break;
             }
@@ -215,7 +216,9 @@ public static class DCCFinderUtility {
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
-                throw new NotImplementedException();
+                appPath  += @"/blender";
+                iconPath += @"/blender.svg";
+                break;
             }
             default:
                 throw new NotImplementedException ();
@@ -365,7 +368,13 @@ public static class DCCFinderUtility {
 #elif UNITY_EDITOR_OSX        
         { "Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
         { "Blender/Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
+#elif UNITY_EDITOR_LINUX
+        { "blender-2.79b-linux-glibc219-x86_64", new DCCToolInfo(DCCToolType.BLENDER, "2.79" ) },
+        { "blender-2.80rc3-linux-glibc217-x86_64", new DCCToolInfo(DCCToolType.BLENDER, "2.80" ) },
+        { "blender-2.81a-linux-glibc217-x86_64", new DCCToolInfo(DCCToolType.BLENDER, "2.81" ) },
+        { "blender-2.82a-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.82" ) },
 #endif        
+        
     };
     
     //environment variables
