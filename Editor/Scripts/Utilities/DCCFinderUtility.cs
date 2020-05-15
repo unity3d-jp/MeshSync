@@ -360,7 +360,7 @@ public static class DCCFinderUtility {
 
 #if   UNITY_EDITOR_WIN        
         { "Blender",      new DCCToolInfo(DCCToolType.BLENDER, null ) },
-        { "Blender 2.81", new DCCToolInfo(DCCToolType.BLENDER, "2.8" ) },
+        { "Blender 2.81", new DCCToolInfo(DCCToolType.BLENDER, "2.81" ) },
         { "Blender 2.82", new DCCToolInfo(DCCToolType.BLENDER, "2.82" ) },
 #elif UNITY_EDITOR_OSX        
         { "Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
