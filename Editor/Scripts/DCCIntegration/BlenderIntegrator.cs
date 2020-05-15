@@ -54,12 +54,15 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
         
         //Prepare remove script to remove old plugin
         string uninstallScriptFilename = $"UninstallBlenderPlugin_{ver}.py";
-        string uninstallScript = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH,uninstallScriptFilename );
-        if (!File.Exists(uninstallScript)) {
+        string uninstallScriptPath = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH,uninstallScriptFilename );
+        if (!File.Exists(uninstallScriptPath)) {
             return false;
         }
       
-        bool setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, uninstallScript, installScriptPath);
+        bool setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, 
+            Path.GetFullPath(uninstallScriptPath), 
+            Path.GetFullPath(installScriptPath)
+        );
 
         //Cleanup
         File.Delete(installScriptPath);
@@ -97,7 +100,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
                     // CreateNoWindow = true,
                     UseShellExecute = false,
                     RedirectStandardError = true,
-                    Arguments = $"-b -P {uninstallScriptPath}"         //Execute batch mode
+                    Arguments = $"-b -P {uninstallScriptPath} --python-exit-code 10"         //Execute batch mode
                 },
                 EnableRaisingEvents = true
             };            
@@ -106,13 +109,14 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
 
 
             //Install
-            process.StartInfo.Arguments = $"-b -P {installScriptPath}";
+            process.StartInfo.Arguments = $"-b -P {installScriptPath} --python-exit-code 10";
             process.Start();
             process.WaitForExit();
             string stderr = process.StandardError.ReadToEnd();
+            int exitCode = process.ExitCode;
             
-            if (stderr.Contains("PermissionError")) {
-                Debug.LogError($"[MeshSync] Installation error. {stderr}");
+            if (0!=exitCode || stderr.Contains("PermissionError")) {
+                Debug.LogError($"[MeshSync] Installation error. ExitCode: {exitCode}. {stderr}");
                 return false;
             }
             
