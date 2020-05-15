@@ -92,8 +92,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
                 return false;
             }
 
-            const int PYTHON_EXIT_CODE = 10;
-            //Try to uninstall first. The uninstallation may have error messages, but they can be ignored
+            //Try to uninstall first. The uninstallation may have exceptions/error messages, but they can be ignored
             System.Diagnostics.Process process = new System.Diagnostics.Process {
                 StartInfo = {
                     FileName = appPath,
@@ -101,7 +100,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
                     // CreateNoWindow = true,
                     UseShellExecute = false,
                     RedirectStandardError = true,
-                    Arguments = $"-b -P {uninstallScriptPath} --python-exit-code {PYTHON_EXIT_CODE}"         //Execute batch mode
+                    Arguments = $"-b -P {uninstallScriptPath}"         //Execute batch mode
                 },
                 EnableRaisingEvents = true
             };            
@@ -109,13 +108,14 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
             process.WaitForExit();
             
             //Install
+            const int PYTHON_EXIT_CODE = 10;
             process.StartInfo.Arguments = $"-b -P {installScriptPath} --python-exit-code {PYTHON_EXIT_CODE}";
             process.Start();
             process.WaitForExit();
-            string stderr = process.StandardError.ReadToEnd();
             int exitCode = process.ExitCode;
             
-            if (0!=exitCode || stderr.Contains("PermissionError")) {
+            if (0!=exitCode) {
+                string stderr = process.StandardError.ReadToEnd();
                 Debug.LogError($"[MeshSync] Installation error. ExitCode: {exitCode}. {stderr}");
                 return false;
             }
