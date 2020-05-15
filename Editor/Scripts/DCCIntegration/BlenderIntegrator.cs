@@ -31,8 +31,9 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
         if (string.IsNullOrEmpty(extractedPath))
             return false;
 
+        //Must use '/' for the pluginFile which is going to be inserted into the template
         string ver = dccToolInfo.DCCToolVersion;
-        string pluginFile = Path.Combine(extractedPath, $"blender-{ver}.zip");
+        string pluginFile = Path.Combine(extractedPath, $"blender-{ver}.zip").Replace(Path.DirectorySeparatorChar,'/');
         
         if (!File.Exists(pluginFile)) {
             return false;
@@ -46,11 +47,12 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
         }
 
        
-        //Replace the path in the template with actual path
+        //Replace the path in the template with actual path.
         string installScriptFormat = File.ReadAllText(templatePath);
         string installScript = String.Format(installScriptFormat,pluginFile);
         string installScriptPath = Path.Combine(tempPath, installScriptFileName);
         File.WriteAllText(installScriptPath, installScript);
+        
       
         bool setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, installScriptPath);
 
@@ -94,13 +96,13 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
                 EnableRaisingEvents = true
             };
             process.Start();
+            
 
             string stderr = process.StandardError.ReadToEnd();
             process.WaitForExit();
-            int exitCode = process.ExitCode;
-            
-            if(exitCode != 0 && !string.IsNullOrEmpty(stderr)) {
-                Debug.LogError($"Installation error. ExitCode: {exitCode}: {stderr}");
+
+            if (stderr.Contains("Error")) {
+                Debug.LogError($"Installation error. {stderr}");
                 return false;
             }
             
