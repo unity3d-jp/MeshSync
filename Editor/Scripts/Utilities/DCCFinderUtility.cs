@@ -245,7 +245,6 @@ public static class DCCFinderUtility {
         
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
-                //Just get the first directory. Examples:
                 //- C:\Program Files\Blender Foundation\Blender\2.80
                 //- C:\Program Files\Blender Foundation\Blender 2.82\2.82
                 versionParentDir = Path.GetDirectoryName(appPath);
