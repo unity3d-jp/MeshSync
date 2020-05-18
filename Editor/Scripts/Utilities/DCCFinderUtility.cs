@@ -240,46 +240,26 @@ public static class DCCFinderUtility {
 
     private static string FindBlenderVersion(string appPath) {
 
+        //Blender has a directory in one of its subfolders with the version as its name
+        string versionParentDir = null;
         
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
                 //Just get the first directory. Examples:
                 //- C:\Program Files\Blender Foundation\Blender\2.80
                 //- C:\Program Files\Blender Foundation\Blender 2.82\2.82
-                string appDir = Path.GetDirectoryName(appPath);
-                if (string.IsNullOrEmpty(appDir)) {
-                    return UNKNOWN_VERSION;
-                }
-                
-                foreach (string versionDir in Directory.EnumerateDirectories(appDir)) {
-                    return Path.GetFileName(versionDir);
-                }
+                versionParentDir = Path.GetDirectoryName(appPath);
                 break;
             }
             case RuntimePlatform.OSXEditor: {
                 //2 levels up: "/Blender.app/Contents/MacOS/Blender";
                 string resourcesDir = PathUtility.TryGetDirectoryName(appPath, 2);
-                resourcesDir = Path.Combine(resourcesDir, "Resources");
-
-                if (!Directory.Exists(resourcesDir))
-                    return UNKNOWN_VERSION;
-                
-                //just return the first folder found
-                foreach (string versionDir in Directory.EnumerateDirectories(resourcesDir)) {
-                    return Path.GetFileName(versionDir);
-                }
+                versionParentDir = Path.Combine(resourcesDir, "Resources");
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
                 //Example: /home/Unity/blender-2.82a-linux64/2.82
-                string appDir = Path.GetDirectoryName(appPath);
-                if (string.IsNullOrEmpty(appDir)) {
-                    return UNKNOWN_VERSION;
-                }
-                
-                foreach (string versionDir in Directory.EnumerateDirectories(appDir)) {
-                    return Path.GetFileName(versionDir);
-                }
+                versionParentDir = Path.GetDirectoryName(appPath);
                 break;
 
             }
@@ -288,6 +268,17 @@ public static class DCCFinderUtility {
                 throw new NotImplementedException ();
         }
 
+        
+        if (string.IsNullOrEmpty(versionParentDir)) {
+            return UNKNOWN_VERSION;
+        }
+                
+        foreach (string versionDir in Directory.EnumerateDirectories(versionParentDir)) {
+            string dirName = Path.GetFileName(versionDir);
+            if (Single.TryParse(dirName, out float number))
+                return dirName;
+        }
+        
         return UNKNOWN_VERSION;
     }
     
