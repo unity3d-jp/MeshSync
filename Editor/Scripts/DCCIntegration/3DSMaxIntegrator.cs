@@ -38,7 +38,7 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
     }
     
 //----------------------------------------------------------------------------------------------------------------------
-    private string FindConfigFolderV() {
+    private string FindConfigFolder() {
         //Sample: "C:\Program Files\Autodesk\3ds Max 2019\Plugins"
         DCCToolInfo dccToolInfo = GetDCCToolInfo();
         return Path.GetDirectoryName(dccToolInfo.AppPath) + @"\Plugins";
