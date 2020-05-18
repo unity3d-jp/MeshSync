@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using JetBrains.Annotations;
@@ -257,7 +257,7 @@ public static class DCCFinderUtility {
                 break;
             }
             case RuntimePlatform.OSXEditor: {
-                //4 levels up: "/Blender.app/Contents/MacOS/Blender";
+                //2 levels up: "/Blender.app/Contents/MacOS/Blender";
                 string resourcesDir = PathUtility.TryGetDirectoryName(appPath, 2);
                 resourcesDir = Path.Combine(resourcesDir, "Resources");
 
@@ -271,7 +271,17 @@ public static class DCCFinderUtility {
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
-                throw new NotImplementedException();
+                //Example: /home/Unity/blender-2.82a-linux64/2.82
+                string appDir = Path.GetDirectoryName(appPath);
+                if (string.IsNullOrEmpty(appDir)) {
+                    return UNKNOWN_VERSION;
+                }
+                
+                foreach (string versionDir in Directory.EnumerateDirectories(appDir)) {
+                    return Path.GetFileName(versionDir);
+                }
+                break;
+
             }
 
             default:
