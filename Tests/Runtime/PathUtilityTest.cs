@@ -5,6 +5,7 @@ using UnityEngine.TestTools;
 namespace Unity.AnimeToolbox.Tests {
     internal class PathUtilityTest
     {
+        //TODO-sin: Move this to com.unity.anime-toolbox
         [Test]
         [UnityPlatform(RuntimePlatform.OSXEditor)]
         public void GetDirectoryNamesOnOSX() {
