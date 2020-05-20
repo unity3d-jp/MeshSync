@@ -7,15 +7,15 @@ using UnityEngine;
 namespace UnityEditor.MeshSync {
 
 [Serializable]
-internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
+internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
 
-    internal static MeshSyncProjectSettings GetOrCreateSettings() {
-        MeshSyncProjectSettings settings = LoadProjectSettings();
+    internal static MeshSyncEditorSettings GetOrCreateSettings() {
+        MeshSyncEditorSettings settings = LoadEditorSettings();
         if (null != settings) {
             return settings;
         }
 
-        settings = new MeshSyncProjectSettings();
+        settings = new MeshSyncEditorSettings();
         settings.AddInstalledDCCTools();
         settings.SaveProjectSettings();
         return settings;
@@ -24,7 +24,7 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
 //----------------------------------------------------------------------------------------------------------------------
 
     //Constructor
-    MeshSyncProjectSettings() {
+    MeshSyncEditorSettings() {
         m_serializedDCCToolInfo = new List<DCCToolInfo>();
         m_dictionary = new SortedDictionary<string, DCCToolInfo>();
     }
@@ -95,22 +95,22 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
 //----------------------------------------------------------------------------------------------------------------------
 
     #region File Load/Save for Serialization/deserialization
-    static MeshSyncProjectSettings LoadProjectSettings() {
-        string path = MESHSYNC_PROJECT_SETTINGS_PATH;
+    static MeshSyncEditorSettings LoadEditorSettings() {
+        string path = MESHSYNC_EDITOR_SETTINGS_PATH;
         if (!File.Exists(path)) {
             return null;
         }
         
         string json = File.ReadAllText(path);
-        MeshSyncProjectSettings settings = JsonUtility.FromJson<MeshSyncProjectSettings>(json);
+        MeshSyncEditorSettings settings = JsonUtility.FromJson<MeshSyncEditorSettings>(json);
         
         return settings;
     }
     
     void SaveProjectSettings() {
-        Directory.CreateDirectory(Path.GetDirectoryName(MESHSYNC_PROJECT_SETTINGS_PATH));
+        Directory.CreateDirectory(Path.GetDirectoryName(MESHSYNC_EDITOR_SETTINGS_PATH));
         string json = JsonUtility.ToJson(this);
-        File.WriteAllText(MESHSYNC_PROJECT_SETTINGS_PATH, json);
+        File.WriteAllText(MESHSYNC_EDITOR_SETTINGS_PATH, json);
         
     }
     #endregion
@@ -145,7 +145,7 @@ internal class MeshSyncProjectSettings : ISerializationCallbackReceiver{
 //----------------------------------------------------------------------------------------------------------------------
 
 
-    const string MESHSYNC_PROJECT_SETTINGS_PATH = "Library/MeshSync/MeshSyncProjectSettings.asset";
+    const string MESHSYNC_EDITOR_SETTINGS_PATH = "Library/MeshSync/MeshSyncEditorSettings.asset";
 
     
     //Key: DCC Tool app path

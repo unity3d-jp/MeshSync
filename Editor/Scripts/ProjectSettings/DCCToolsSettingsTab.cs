@@ -38,7 +38,7 @@ namespace UnityEditor.MeshSync {
             ScrollView scrollView = containerInstance.Query<ScrollView>().First();
 
             //[TODO-sin: 2020-4-24] Auto detect installed DCC tools + check MeshSync status
-            MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+            MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
             foreach (var dccToolInfo in settings.GetDCCToolInfos()) {
                 AddDCCToolSettingsContainer(dccToolInfo.Value, scrollView, dccToolInfoTemplate);                
             }
@@ -125,7 +125,7 @@ namespace UnityEditor.MeshSync {
             }
             
             //Add
-            MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+            MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
             if (settings.AddDCCTool(dccToolInfo)) {
                 Setup(m_root);
             }
@@ -134,7 +134,7 @@ namespace UnityEditor.MeshSync {
         }
         
         void OnAutoDetectButtonClicked() {
-            MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+            MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
             if (settings.AddInstalledDCCTools()) {
                 Setup(m_root);
             }
@@ -154,7 +154,7 @@ namespace UnityEditor.MeshSync {
                 return;
             }
             
-            MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+            MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
             if (settings.RemoveDCCTool(info.AppPath)) {
                 //Delete install info too
                 string installInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(info);
