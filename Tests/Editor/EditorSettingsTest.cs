@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace UnityEditor.MeshSync.Tests {
-internal class ProjectSettingsTest {
+internal class EditorSettingsTest {
     
     
     [Test]
@@ -18,7 +18,7 @@ internal class ProjectSettingsTest {
 //----------------------------------------------------------------------------------------------------------------------    
     [Test]
     public void CheckCurrentSettings() {
-        MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+        MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
         Assert.NotNull(settings);
     }    
 
