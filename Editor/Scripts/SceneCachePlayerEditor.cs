@@ -23,10 +23,10 @@ namespace UnityEditor.MeshSync
         public static GameObject CreateSceneCachePlayer(string path)
         {
             // create temporary GO to make prefab
-            var go = new GameObject();
+            GameObject go = new GameObject();
             go.name = System.IO.Path.GetFileNameWithoutExtension(path);
 
-            var player = go.AddComponent<SceneCachePlayer>();
+            SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
             player.rootObject = go.GetComponent<Transform>();
             player.assetDir = new DataPath(DataPath.Root.DataPath, string.Format("SceneCache/{0}", go.name));
             player.updateMeshColliders = false;
