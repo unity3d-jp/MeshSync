@@ -188,18 +188,11 @@ namespace Unity.MeshSync
         [SerializeField] private DataPath m_assetDir = new DataPath(DataPath.Root.DataPath, "MeshSyncAssets");
         [SerializeField] private Transform m_rootObject;
 
-        [SerializeField] private bool m_syncVisibility = true;
-        [SerializeField] private bool m_syncTransform = true;
-        [SerializeField] private bool m_syncCameras = true;
-        [SerializeField] private bool m_syncLights = true;
-        [SerializeField] private bool m_syncMeshes = true;
-        [SerializeField] private bool m_syncPoints = true;
-        [SerializeField] private bool m_syncMaterials = true;
+        [SerializeField] private AssetSyncSettings m_syncSettings;
+        
         [SerializeField] private bool m_handleAssets = true;
 
-#if UNITY_2018_1_OR_NEWER
         [SerializeField] private bool m_usePhysicalCameraParams = true;
-#endif
         [SerializeField] private bool m_useCustomCameraMatrices = true;
         [SerializeField] private bool m_updateMeshColliders = true;
         [SerializeField] private bool m_findMaterialFromAssets = true;
@@ -272,41 +265,8 @@ namespace Unity.MeshSync
             set { m_rootObject = value; }
         }
 
-        internal bool syncVisibility
-        {
-            get { return m_syncVisibility; }
-            set { m_syncVisibility = value; }
-        }
-        internal bool syncTransform
-        {
-            get { return m_syncTransform; }
-            set { m_syncTransform = value; }
-        }
-        internal bool syncCameras
-        {
-            get { return m_syncCameras; }
-            set { m_syncCameras = value; }
-        }
-        internal bool syncLights
-        {
-            get { return m_syncLights; }
-            set { m_syncLights = value; }
-        }
-        internal bool syncMeshes
-        {
-            get { return m_syncMeshes; }
-            set { m_syncMeshes = value; }
-        }
-        internal bool syncPoints
-        {
-            get { return m_syncPoints; }
-            set { m_syncPoints = value; }
-        }
-        internal bool syncMaterials
-        {
-            get { return m_syncMaterials; }
-            set { m_syncMaterials = value; }
-        }
+        internal AssetSyncSettings GetSyncSettings() { return m_syncSettings; }
+
         internal bool handleAssets
         {
             get { return m_handleAssets; }
@@ -1131,7 +1091,7 @@ namespace Unity.MeshSync
                 m_materialList.Add(dst);
             }
 #if UNITY_EDITOR
-            if (m_findMaterialFromAssets && m_syncMaterials && (dst.material == null || dst.name != materialName))
+            if (m_findMaterialFromAssets && m_syncSettings.SyncMaterials && (dst.material == null || dst.name != materialName))
             {
                 Material candidate = null;
 
@@ -1180,8 +1140,8 @@ namespace Unity.MeshSync
             dst.shader = src.shader;
             dst.color = src.color;
 
-            var dstmat = dst.material;
-            if (m_syncMaterials && dst.materialIID == dst.material.GetInstanceID())
+            Material dstmat = dst.material;
+            if (m_syncSettings.SyncMaterials && dst.materialIID == dst.material.GetInstanceID())
             {
                 int numKeywords = src.numKeywords;
                 for (int ki = 0; ki < numKeywords; ++ki)
@@ -1285,7 +1245,7 @@ namespace Unity.MeshSync
 
         EntityRecord UpdateMesh(MeshData data)
         {
-            if (!m_syncMeshes)
+            if (!m_syncSettings.SyncMeshes)
                 return null;
 
             var dtrans = data.transform;
@@ -1362,7 +1322,7 @@ namespace Unity.MeshSync
                 }
 
                 rec.smrUpdated = true;
-                if (m_syncVisibility && dtrans.dataFlags.hasVisibility)
+                if (m_syncSettings.SyncVisibility && dtrans.dataFlags.hasVisibility)
                     rec.smrEnabled = data.transform.visibility.visibleInRender;
                 else
                     rec.smrEnabled = smr.enabled;
@@ -1412,7 +1372,7 @@ namespace Unity.MeshSync
                     }
                 }
 
-                if (m_syncVisibility && dtrans.dataFlags.hasVisibility)
+                if (m_syncSettings.SyncVisibility && dtrans.dataFlags.hasVisibility)
                     mr.enabled = data.transform.visibility.visibleInRender;
                 mf.sharedMesh = rec.mesh;
                 rec.smrEnabled = false;
@@ -1582,7 +1542,7 @@ namespace Unity.MeshSync
 
         EntityRecord UpdatePoints(PointsData data)
         {
-            if (!m_syncPoints)
+            if (!m_syncSettings.SyncPoints)
                 return null;
 
             var dtrans = data.transform;
@@ -1682,7 +1642,7 @@ namespace Unity.MeshSync
                 rec.dataType = data.entityType;
 
                 // sync TRS
-                if (m_syncTransform)
+                if (m_syncSettings.SyncTransform)
                 {
                     if (dflags.hasPosition)
                         trans.localPosition = data.position;
@@ -1693,7 +1653,7 @@ namespace Unity.MeshSync
                 }
 
                 // visibility
-                if (m_syncVisibility && dflags.hasVisibility)
+                if (m_syncSettings.SyncVisibility && dflags.hasVisibility)
                     trans.gameObject.SetActive(visibility.active);
 
                 // visibility for reference
@@ -1712,7 +1672,7 @@ namespace Unity.MeshSync
 
         EntityRecord UpdateCamera(CameraData data)
         {
-            if (!m_syncCameras)
+            if (!m_syncSettings.SyncCameras)
                 return null;
 
             var dtrans = data.transform;
@@ -1724,7 +1684,7 @@ namespace Unity.MeshSync
             var cam = rec.camera;
             if (cam == null)
                 cam = rec.camera = Misc.GetOrAddComponent<Camera>(rec.go);
-            if (m_syncVisibility && dtrans.dataFlags.hasVisibility)
+            if (m_syncSettings.SyncVisibility && dtrans.dataFlags.hasVisibility)
                 cam.enabled = dtrans.visibility.visibleInRender;
 
             cam.orthographic = data.orthographic;
@@ -1768,7 +1728,7 @@ namespace Unity.MeshSync
 
         EntityRecord UpdateLight(LightData data)
         {
-            if (!m_syncLights)
+            if (!m_syncSettings.SyncLights)
                 return null;
 
             var dtrans = data.transform;
@@ -1781,7 +1741,7 @@ namespace Unity.MeshSync
             if (lt == null)
                 lt = rec.light = Misc.GetOrAddComponent<Light>(rec.go);
 
-            if (m_syncVisibility && dtrans.dataFlags.hasVisibility)
+            if (m_syncSettings.SyncVisibility && dtrans.dataFlags.hasVisibility)
                 lt.enabled = dtrans.visibility.visibleInRender;
 
             var lightType = data.lightType;
@@ -1819,7 +1779,7 @@ namespace Unity.MeshSync
                     var dstcam = dst.camera;
                     if (dstcam == null)
                         dstcam = dst.camera = Misc.GetOrAddComponent<Camera>(dstgo);
-                    if (m_syncVisibility && dst.hasVisibility)
+                    if (m_syncSettings.SyncVisibility && dst.hasVisibility)
                         dstcam.enabled = dst.visibility.visibleInRender;
                     dstcam.enabled = srccam.enabled;
                     dstcam.orthographic = srccam.orthographic;
@@ -1836,7 +1796,7 @@ namespace Unity.MeshSync
                     var dstlt = dst.light;
                     if (dstlt == null)
                         dstlt = dst.light = Misc.GetOrAddComponent<Light>(dstgo);
-                    if (m_syncVisibility && dst.hasVisibility)
+                    if (m_syncSettings.SyncVisibility && dst.hasVisibility)
                         dstlt.enabled = dst.visibility.visibleInRender;
                     dstlt.type = srclt.type;
                     dstlt.color = srclt.color;
@@ -1856,7 +1816,7 @@ namespace Unity.MeshSync
                     var dstpcr = dst.pointCacheRenderer;
                     if (dstpcr != null)
                     {
-                        if (m_syncVisibility && dst.hasVisibility)
+                        if (m_syncSettings.SyncVisibility && dst.hasVisibility)
                             dstpcr.enabled = dst.visibility.visibleInRender;
                         dstpcr.sharedMesh = mesh;
 
@@ -1886,7 +1846,7 @@ namespace Unity.MeshSync
                             dstmf = dst.meshFilter = Misc.GetOrAddComponent<MeshFilter>(dstgo);
                         }
 
-                        if (m_syncVisibility && dst.hasVisibility)
+                        if (m_syncSettings.SyncVisibility && dst.hasVisibility)
                             dstmr.enabled = dst.visibility.visibleInRender;
                         dstmf.sharedMesh = mesh;
                         dstmr.sharedMaterials = srcmr.sharedMaterials;
@@ -1909,7 +1869,7 @@ namespace Unity.MeshSync
                         for (int bi = 0; bi < blendShapeCount; ++bi)
                             dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
 
-                        if (m_syncVisibility && dst.hasVisibility)
+                        if (m_syncSettings.SyncVisibility && dst.hasVisibility)
                             dstsmr.enabled = dst.visibility.visibleInRender;
                         else
                             dstsmr.enabled = oldEnabled;
@@ -2092,7 +2052,7 @@ namespace Unity.MeshSync
                     root = root.gameObject,
                     target = target.gameObject,
                     path = animPath,
-                    enableVisibility = m_syncVisibility,
+                    enableVisibility = m_syncSettings.SyncVisibility,
 #if UNITY_2018_1_OR_NEWER
                     usePhysicalCameraParams = m_usePhysicalCameraParams,
 #endif

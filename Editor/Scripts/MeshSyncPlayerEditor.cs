@@ -38,7 +38,7 @@ namespace UnityEditor.MeshSync
 
                 EditorGUILayout.PropertyField(so.FindProperty("m_syncTransform"), new GUIContent("Transform"));
                 EditorGUILayout.PropertyField(so.FindProperty("m_syncCameras"), new GUIContent("Cameras"));
-                if (t.syncCameras)
+                if (t.GetSyncSettings().SyncCameras)
                 {
                     EditorGUI.indentLevel++;
 #if UNITY_2018_1_OR_NEWER
