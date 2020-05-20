@@ -18,7 +18,7 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
 
         settings = new MeshSyncEditorSettings();
         settings.AddInstalledDCCTools();
-        settings.SaveProjectSettings();
+        settings.SaveEditorSettings();
         return settings;
             
     }
@@ -42,7 +42,7 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
         m_serializedDCCToolInfo.Add(dccToolInfo);
 
         if (save) {
-            SaveProjectSettings();
+            SaveEditorSettings();
         }
         
         return true;
@@ -71,7 +71,7 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
 
         m_serializedDCCToolInfo.RemoveAt(itemToRemove);
         m_dictionary.Remove(appPath);
-        SaveProjectSettings();
+        SaveEditorSettings();
 
         return true;
     }
@@ -89,7 +89,7 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
             ret = ret || added;
         }
 
-        SaveProjectSettings();
+        SaveEditorSettings();
         return ret;
     }
     
@@ -108,7 +108,7 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
         return settings;
     }
     
-    void SaveProjectSettings() {
+    void SaveEditorSettings() {
         Directory.CreateDirectory(Path.GetDirectoryName(MESHSYNC_EDITOR_SETTINGS_PATH));
         string json = JsonUtility.ToJson(this);
         File.WriteAllText(MESHSYNC_EDITOR_SETTINGS_PATH, json);
@@ -152,12 +152,6 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
     //Key: DCC Tool app path
     private SortedDictionary<string,DCCToolInfo> m_dictionary;
     [SerializeField] private List<DCCToolInfo> m_serializedDCCToolInfo = null;
-
-
-    //Load
-    private AssetSyncSettings[] m_syncSettings = new AssetSyncSettings[];
-    
-
 
 
 }
