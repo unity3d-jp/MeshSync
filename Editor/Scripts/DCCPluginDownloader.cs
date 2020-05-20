@@ -5,6 +5,7 @@ using UnityEngine;
 using System.Net;
 using Unity.AnimeToolbox;
 using System.IO;
+using Unity.AnimeToolbox.Editor;
 
 namespace UnityEditor.MeshSync {
 
