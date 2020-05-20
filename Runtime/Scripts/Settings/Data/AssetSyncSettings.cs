@@ -1,10 +1,27 @@
 ﻿using System;
+using UnityEngine;
 
 namespace Unity.MeshSync {
     
 [Serializable]
-internal class AssetSyncSettings {
+internal class AssetSyncSettings { //: ScriptableObject{
 
+    // internal static AssetSyncSettings GetOrCreateSettings() {
+    //     var settings = AssetDatabase.LoadAssetAtPath<MyCustomSettings>(k_MyCustomSettingsPath);
+    //     if (settings == null)
+    //     {
+    //         settings = ScriptableObject.CreateInstance<AssetSyncSettings>();
+    //         settings.m_Number = 42;
+    //         settings.m_SomeString = "The answer to the universe";
+    //         AssetDatabase.CreateAsset(settings, k_MyCustomSettingsPath);
+    //         AssetDatabase.SaveAssets();
+    //     }
+    //     return settings;        
+    // }
+    //
+//----------------------------------------------------------------------------------------------------------------------
+    
+    
     public bool SyncVisibility = true;
     public bool SyncTransform = true;
     public bool SyncCameras = true;
@@ -19,6 +36,8 @@ internal class AssetSyncSettings {
     //TODO-sin: 2020-5-20 The defaults for SceneCachePlayer is different
     //player.updateMeshColliders = false;
     //player.findMaterialFromAssets = false;
+    
+    
     
 }
     

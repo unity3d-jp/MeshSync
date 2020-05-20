@@ -59,6 +59,8 @@ namespace Unity.MeshSync
     [ExecuteInEditMode]
     internal class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver
     {
+
+        
         #region Events
         
         /// <summary>
@@ -2481,6 +2483,9 @@ namespace Unity.MeshSync
                 method.Invoke(null, new object[] { BuildTarget.StandaloneWindows, 0, 0 });
                 method.Invoke(null, new object[] { BuildTarget.StandaloneWindows64, 0, 0 });
             }
+            
+            //Load m_syncS        ettings from file
+            SettingsUtility.Load();
         }
 #endif
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Unity.MeshSync;
 using UnityEngine;
 
 
@@ -152,7 +153,13 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
     private SortedDictionary<string,DCCToolInfo> m_dictionary;
     [SerializeField] private List<DCCToolInfo> m_serializedDCCToolInfo = null;
 
+
+    //Load
+    private AssetSyncSettings[] m_syncSettings = new AssetSyncSettings[];
     
+
+
+
 }
 
 } //end namespace
