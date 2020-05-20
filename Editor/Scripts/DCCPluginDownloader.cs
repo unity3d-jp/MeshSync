@@ -5,6 +5,7 @@ using UnityEngine;
 using System.Net;
 using Unity.AnimeToolbox;
 using System.IO;
+using Unity.AnimeToolbox.Editor;
 
 namespace UnityEditor.MeshSync {
 
@@ -152,7 +153,7 @@ internal class DCCPluginDownloader  {
             if (null!=meta && File.Exists(downloadInfo.LocalFilePath)) {
                 
                 //Check MD5
-                string md5 = FileUtility.ComputeMD5(downloadInfo.LocalFilePath);
+                string md5 = FileUtility.ComputeFileMD5(downloadInfo.LocalFilePath);
                 DCCPluginSignature signature = meta.GetSignature(Path.GetFileName(downloadInfo.LocalFilePath));
                 if (signature.MD5 != md5) {
                     ret = downloadInfo;

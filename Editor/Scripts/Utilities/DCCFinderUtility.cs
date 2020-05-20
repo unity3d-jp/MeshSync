@@ -117,18 +117,18 @@ public static class DCCFinderUtility {
             case RuntimePlatform.WindowsEditor: {
                 
                 //2 levels up: "/bin/maya.exe";
-                productDir = PathUtility.TryGetDirectoryName(appPath, 2);
+                productDir = PathUtility.GetDirectoryName(appPath, 2);
                 break;
             }
             case RuntimePlatform.OSXEditor: {
                 //4 levels up: "/Maya.app/Contents/MacOS/Maya";
-                productDir = PathUtility.TryGetDirectoryName(appPath, 4);
+                productDir = PathUtility.GetDirectoryName(appPath, 4);
         
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
                 //2 levels up:/usr/autodesk/maya2019/bin/maya
-                productDir = PathUtility.TryGetDirectoryName(appPath, 2);
+                productDir = PathUtility.GetDirectoryName(appPath, 2);
                 break;
             }
 

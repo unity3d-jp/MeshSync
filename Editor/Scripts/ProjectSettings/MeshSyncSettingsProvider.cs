@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Unity.AnimeToolbox;
+using Unity.AnimeToolbox.Editor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
