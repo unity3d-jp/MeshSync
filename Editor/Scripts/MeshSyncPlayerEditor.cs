@@ -40,12 +40,12 @@ namespace UnityEditor.MeshSync
             t.foldSyncSettings = EditorGUILayout.Foldout(t.foldSyncSettings, "Asset Sync Settings", true, styleFold);
             if (t.foldSyncSettings) {
 
-                AssetSyncSettings syncSettings = m_asset.GetSyncSettings();
-                EditorGUIToggle(new GUIContent("Visibility"), ref syncSettings.SyncVisibility );
-                EditorGUIToggle(new GUIContent("Transform"), ref syncSettings.SyncTransform );
-                EditorGUIToggle(new GUIContent("Cameras"), ref syncSettings.SyncCameras );
+                MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
+                EditorGUIToggle(new GUIContent("Visibility"), ref playerConfig.SyncVisibility );
+                EditorGUIToggle(new GUIContent("Transform"), ref playerConfig.SyncTransform );
+                EditorGUIToggle(new GUIContent("Cameras"), ref playerConfig.SyncCameras );
 
-                if (syncSettings.SyncCameras)
+                if (playerConfig.SyncCameras)
                 {
                     EditorGUI.indentLevel++;
 #if UNITY_2018_1_OR_NEWER
@@ -54,17 +54,17 @@ namespace UnityEditor.MeshSync
                     //EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
                     EditorGUI.indentLevel--;
                 }
-                EditorGUIToggle(new GUIContent("Lights"), ref syncSettings.SyncLights );
-                EditorGUIToggle(new GUIContent("Meshes"), ref syncSettings.SyncMeshes );
+                EditorGUIToggle(new GUIContent("Lights"), ref playerConfig.SyncLights );
+                EditorGUIToggle(new GUIContent("Meshes"), ref playerConfig.SyncMeshes );
 
                 EditorGUI.indentLevel++;
-                EditorGUIToggle(new GUIContent("Update Mesh Colliders"), ref syncSettings.UpdateMeshColliders );
+                EditorGUIToggle(new GUIContent("Update Mesh Colliders"), ref playerConfig.UpdateMeshColliders );
                 EditorGUI.indentLevel--;
 
                 //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));
-                EditorGUIToggle(new GUIContent("Materials"), ref syncSettings.SyncMaterials );
+                EditorGUIToggle(new GUIContent("Materials"), ref playerConfig.SyncMaterials );
                 EditorGUI.indentLevel++;
-                EditorGUIToggle(new GUIContent("Find From AssetDatabase"), ref syncSettings.FindMaterialFromAssets );
+                EditorGUIToggle(new GUIContent("Find From AssetDatabase"), ref playerConfig.FindMaterialFromAssets );
                 EditorGUI.indentLevel--;
 
                 EditorGUILayout.Space();

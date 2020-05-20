@@ -4,13 +4,13 @@ using UnityEngine;
 namespace Unity.MeshSync {
     
 [Serializable]
-internal class AssetSyncSettings { //: ScriptableObject{
+internal class MeshSyncPlayerConfig { //: ScriptableObject{
 
-    // internal static AssetSyncSettings GetOrCreateSettings() {
+    // internal static MeshSyncPlayerConfig GetOrCreateSettings() {
     //     var settings = AssetDatabase.LoadAssetAtPath<MyCustomSettings>(k_MyCustomSettingsPath);
     //     if (settings == null)
     //     {
-    //         settings = ScriptableObject.CreateInstance<AssetSyncSettings>();
+    //         settings = ScriptableObject.CreateInstance<MeshSyncPlayerConfig>();
     //         settings.m_Number = 42;
     //         settings.m_SomeString = "The answer to the universe";
     //         AssetDatabase.CreateAsset(settings, k_MyCustomSettingsPath);
