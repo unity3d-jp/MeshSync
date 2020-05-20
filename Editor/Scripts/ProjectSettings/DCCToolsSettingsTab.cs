@@ -6,6 +6,7 @@ using System.Linq;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Unity.AnimeToolbox;
+using Unity.AnimeToolbox.Editor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
