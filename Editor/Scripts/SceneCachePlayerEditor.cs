@@ -29,11 +29,13 @@ namespace UnityEditor.MeshSync
             SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
             player.rootObject = go.GetComponent<Transform>();
             player.assetDir = new DataPath(DataPath.Root.DataPath, string.Format("SceneCache/{0}", go.name));
-            player.updateMeshColliders = false;
             player.progressiveDisplay = false;
             player.markMeshesDynamic = true;
             player.dontSaveAssetsInScene = true;
-            player.findMaterialFromAssets = false;
+
+            //[TODO-sin:2020-5-20] Get the default settings
+            // player.updateMeshColliders = false;
+            // player.findMaterialFromAssets = false;
             if (!player.OpenCache(path))
             {
                 Debug.LogError("Failed to open " + path + ". Possible reasons: file format version does not match, or the file is not scene cache.");

@@ -58,13 +58,13 @@ namespace UnityEditor.MeshSync
                 EditorGUIToggle(new GUIContent("Meshes"), ref syncSettings.SyncMeshes );
 
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(so.FindProperty("m_updateMeshColliders"));
+                EditorGUIToggle(new GUIContent("Update Mesh Colliders"), ref syncSettings.UpdateMeshColliders );
                 EditorGUI.indentLevel--;
 
                 //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));
                 EditorGUIToggle(new GUIContent("Materials"), ref syncSettings.SyncMaterials );
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(so.FindProperty("m_findMaterialFromAssets"), new GUIContent("Find From AssetDatabase"));
+                EditorGUIToggle(new GUIContent("Find From AssetDatabase"), ref syncSettings.FindMaterialFromAssets );
                 EditorGUI.indentLevel--;
 
                 EditorGUILayout.Space();

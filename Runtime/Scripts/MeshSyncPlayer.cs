@@ -194,8 +194,6 @@ namespace Unity.MeshSync
 
         [SerializeField] private bool m_usePhysicalCameraParams = true;
         [SerializeField] private bool m_useCustomCameraMatrices = true;
-        [SerializeField] private bool m_updateMeshColliders = true;
-        [SerializeField] private bool m_findMaterialFromAssets = true;
         [SerializeField] private InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
         [SerializeField] private bool m_keyframeReduction = true;
         [SerializeField] private float m_reductionThreshold = 0.001f;
@@ -310,16 +308,6 @@ namespace Unity.MeshSync
         {
             get { return m_useCustomCameraMatrices; }
             set { m_useCustomCameraMatrices = value; }
-        }
-        internal bool updateMeshColliders
-        {
-            get { return m_updateMeshColliders; }
-            set { m_updateMeshColliders = value; }
-        }
-        internal bool findMaterialFromAssets
-        {
-            get { return m_findMaterialFromAssets; }
-            set { m_findMaterialFromAssets = value; }
         }
 
         internal bool logging
@@ -1091,15 +1079,16 @@ namespace Unity.MeshSync
                 m_materialList.Add(dst);
             }
 #if UNITY_EDITOR
-            if (m_findMaterialFromAssets && m_syncSettings.SyncMaterials && (dst.material == null || dst.name != materialName))
+            if (m_syncSettings.FindMaterialFromAssets && m_syncSettings.SyncMaterials 
+                && (dst.material == null || dst.name != materialName))
             {
                 Material candidate = null;
 
-                var guids = AssetDatabase.FindAssets("t:Material " + materialName);
-                foreach (var guid in guids)
+                string[] guids = AssetDatabase.FindAssets("t:Material " + materialName);
+                foreach (string guid in guids)
                 {
-                    var path = AssetDatabase.GUIDToAssetPath(guid);
-                    var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+                    string path = AssetDatabase.GUIDToAssetPath(guid);
+                    Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
                     if (material.name == materialName)
                     {
                         candidate = material;
@@ -1380,7 +1369,7 @@ namespace Unity.MeshSync
 
             if (meshUpdated)
             {
-                var collider = m_updateMeshColliders ? trans.GetComponent<MeshCollider>() : null;
+                MeshCollider collider = m_syncSettings.UpdateMeshColliders ? trans.GetComponent<MeshCollider>() : null;
                 if (collider != null &&
                     (collider.sharedMesh == null || collider.sharedMesh == rec.mesh))
                 {
@@ -1876,12 +1865,12 @@ namespace Unity.MeshSync
                     }
 
                     // handle mesh collider
-                    if (m_updateMeshColliders)
+                    if (m_syncSettings.UpdateMeshColliders)
                     {
-                        var srcmc = srcgo.GetComponent<MeshCollider>();
+                        MeshCollider srcmc = srcgo.GetComponent<MeshCollider>();
                         if (srcmc != null && srcmc.sharedMesh == mesh)
                         {
-                            var dstmc = Misc.GetOrAddComponent<MeshCollider>(dstgo);
+                            MeshCollider dstmc = Misc.GetOrAddComponent<MeshCollider>(dstgo);
                             dstmc.enabled = srcmc.enabled;
                             dstmc.isTrigger = srcmc.isTrigger;
                             dstmc.sharedMaterial = srcmc.sharedMaterial;
