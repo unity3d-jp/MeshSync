@@ -72,7 +72,7 @@ internal class SingletonJsonSettings<T> where T: class , new() {
 #endif 
     
 //----------------------------------------------------------------------------------------------------------------------
-    private static string GetSettingsPath()  {
+    internal static string GetSettingsPath()  {
         foreach(var attr in typeof(T).GetCustomAttributes(true)) {
             PathAttribute pathAttribute = attr as PathAttribute;
             if (null == pathAttribute)

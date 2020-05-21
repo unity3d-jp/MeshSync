@@ -24,8 +24,11 @@ internal class ProjectSettingsTest {
 
         MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
         Assert.NotNull(projectSettings);
+        Assert.True(File.Exists(MeshSyncProjectSettings.GetSettingsPath()));
+            
     }    
 
+    
 //----------------------------------------------------------------------------------------------------------------------    
     
     [Test]
