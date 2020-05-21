@@ -430,7 +430,7 @@ namespace Unity.MeshSync
         }
 
         void Reset() {
-            MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+            MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
             m_config = projectSettings.GetDefaultPlayerConfig(MeshSyncObjectType.SERVER);            
         }
 #endif

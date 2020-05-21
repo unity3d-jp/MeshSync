@@ -6,7 +6,7 @@ namespace Unity.MeshSync {
 [Serializable]
 internal class MeshSyncPlayerConfig { //: ScriptableObject{
 
-    // internal static MeshSyncPlayerConfig GetOrCreateSettings() {
+    // internal static MeshSyncPlayerConfig GetInstance() {
     //     var settings = AssetDatabase.LoadAssetAtPath<MyCustomSettings>(k_MyCustomSettingsPath);
     //     if (settings == null)
     //     {

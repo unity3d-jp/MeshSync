@@ -1,18 +1,45 @@
 ﻿using System;
 using System.IO;
+using Unity.AnimeToolbox;
 using UnityEngine;
 
 
 namespace Unity.MeshSync {
 
 [Serializable]
-[Path(MESHSYNC_PROJECT_SETTINGS_PATH)]
-internal class MeshSyncProjectSettings : SingletonJsonSettings<MeshSyncProjectSettings> {
+internal class MeshSyncProjectSettings : BaseJsonSettings {
 
+    internal static MeshSyncProjectSettings GetInstance() {
+        
+        if (null != m_instance) {
+            return m_instance;
+        }
+
+        const string PATH = MESHSYNC_PROJECT_SETTINGS_PATH;
+        lock (m_instanceLock) {           
+        
+#if UNITY_EDITOR
+            m_instance = FileUtility.DeserializeFromJson<MeshSyncProjectSettings>(PATH);
+            if (null != m_instance) {
+                return m_instance;
+            }
+#endif
+            
+            m_instance = new MeshSyncProjectSettings();
+        }        
+
+#if UNITY_EDITOR
+        m_instance.SaveSettings();
+#endif
+        return m_instance;
+        
+    }
+
+    
 //----------------------------------------------------------------------------------------------------------------------
 
     //Constructor
-    public MeshSyncProjectSettings() {
+    private MeshSyncProjectSettings() {
         
         m_defaultPlayerConfigs = new MeshSyncPlayerConfig[(int) MeshSyncObjectType.NUM_TYPES]; 
 
@@ -23,16 +50,23 @@ internal class MeshSyncProjectSettings : SingletonJsonSettings<MeshSyncProjectSe
         m_defaultPlayerConfigs[(int) MeshSyncObjectType.CACHE_PLAYER] = config;
     }
    
+//----------------------------------------------------------------------------------------------------------------------
+    protected override object GetLock() { return m_instanceLock; }
+    public override string GetSettingsPath() { return MESHSYNC_PROJECT_SETTINGS_PATH;}
 
 //----------------------------------------------------------------------------------------------------------------------
 
     internal MeshSyncPlayerConfig GetDefaultPlayerConfig(MeshSyncObjectType objectType) {
         return m_defaultPlayerConfigs[(int) objectType];
     }
+
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    const string MESHSYNC_PROJECT_SETTINGS_PATH = "ProjectSettings/MeshSyncSettings.asset";
+    private static MeshSyncProjectSettings m_instance = null;
+    private static readonly object m_instanceLock = new object();
+
+    private const string MESHSYNC_PROJECT_SETTINGS_PATH = "ProjectSettings/MeshSyncSettings.asset";
 
     [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
 

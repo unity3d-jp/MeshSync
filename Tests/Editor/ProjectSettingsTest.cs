@@ -22,7 +22,7 @@ internal class ProjectSettingsTest {
         MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
         Assert.NotNull(settings);
 
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
         Assert.NotNull(projectSettings);
         Assert.True(File.Exists(MeshSyncProjectSettings.GetSettingsPath()));
             

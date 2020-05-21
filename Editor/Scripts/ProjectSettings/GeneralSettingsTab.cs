@@ -43,7 +43,7 @@ namespace UnityEditor.MeshSync {
 	        playerSettingsContainer.Add(playerSettingsPopup);        
 	        
 	        //Add toggles	           
-	        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+	        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
 	        MeshSyncPlayerConfig playerConfig = projectSettings.GetDefaultPlayerConfig(MeshSyncObjectType.SERVER);
 	        
 	        VisualTreeAsset toggleTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
