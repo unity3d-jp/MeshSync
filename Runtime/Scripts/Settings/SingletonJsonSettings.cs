@@ -8,24 +8,31 @@ namespace Unity.MeshSync {
 
 [Serializable]
 internal class SingletonJsonSettings<T> where T: class , new() {
-
+    
     internal static T GetOrCreateSettings() {
-#if UNITY_EDITOR
-        T settings = LoadSettings();
-        if (null != settings) {
-            return settings;
-        }
-#endif
-       
-        settings = new T();
 
+        if (null != m_settings) {
+            return m_settings;
+        }
+
+        lock (m_settingsLock) {           
+        
 #if UNITY_EDITOR
-        SaveSettings(settings);
+            m_settings = LoadSettings();
+            if (null != m_settings) {
+                return m_settings;
+            }
+            m_settings = new T();
+            SaveSettings(m_settings);
+#else
+            m_settings = new T();
 #endif
-        return settings;            
+        }        
+        return m_settings;            
     }
     
 //----------------------------------------------------------------------------------------------------------------------
+#if UNITY_EDITOR
 
     #region File Load/Save for Serialization/deserialization
     static T LoadSettings() {
@@ -53,6 +60,8 @@ internal class SingletonJsonSettings<T> where T: class , new() {
         return true;
     }
     #endregion
+
+#endif 
     
 //----------------------------------------------------------------------------------------------------------------------
     private static string GetSettingsPath()  {
@@ -70,8 +79,10 @@ internal class SingletonJsonSettings<T> where T: class , new() {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-
+    private static T m_settings = null;
+    private static readonly object m_settingsLock = new object();
 }
+
 [AttributeUsage(AttributeTargets.Class)]
 internal class PathAttribute : Attribute {
       
