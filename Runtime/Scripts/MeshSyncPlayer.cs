@@ -4,12 +4,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-#if UNITY_2017_1_OR_NEWER
 using UnityEngine.Animations;
-#endif
-#if UNITY_2019_1_OR_NEWER
 using Unity.Collections;
-#endif
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -190,7 +186,7 @@ namespace Unity.MeshSync
         [SerializeField] private DataPath m_assetDir = new DataPath(DataPath.Root.DataPath, "MeshSyncAssets");
         [SerializeField] private Transform m_rootObject;
 
-        [SerializeField] private MeshSyncPlayerConfig m_config;
+        [SerializeField] protected MeshSyncPlayerConfig m_config;
         
         [SerializeField] private bool m_handleAssets = true;
 
@@ -299,13 +295,12 @@ namespace Unity.MeshSync
             set { m_zUpCorrection = value; }
         }
 
-#if UNITY_2018_1_OR_NEWER
         internal bool usePhysicalCameraParams
         {
             get { return m_usePhysicalCameraParams; }
             set { m_usePhysicalCameraParams = value; }
         }
-#endif
+        
         internal bool useCustomCameraMatrices
         {
             get { return m_useCustomCameraMatrices; }
@@ -2483,9 +2478,8 @@ namespace Unity.MeshSync
                 method.Invoke(null, new object[] { BuildTarget.StandaloneWindows, 0, 0 });
                 method.Invoke(null, new object[] { BuildTarget.StandaloneWindows64, 0, 0 });
             }
-            
-            //Load m_syncS        ettings from file
-            SettingsUtility.Load();
+
+                      
         }
 #endif
 
