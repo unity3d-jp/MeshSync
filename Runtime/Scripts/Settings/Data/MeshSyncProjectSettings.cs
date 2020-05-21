@@ -26,6 +26,12 @@ internal class MeshSyncProjectSettings : SingletonJsonSettings<MeshSyncProjectSe
 
 //----------------------------------------------------------------------------------------------------------------------
 
+    internal MeshSyncPlayerConfig GetDefaultPlayerConfig(MeshSyncObjectType objectType) {
+        return m_defaultPlayerConfigs[(int) objectType];
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
+
     const string MESHSYNC_PROJECT_SETTINGS_PATH = "ProjectSettings/MeshSyncSettings.asset";
 
     [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
