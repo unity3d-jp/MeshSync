@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
+using Unity.MeshSync;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -20,6 +21,9 @@ internal class ProjectSettingsTest {
     public void CheckCurrentSettings() {
         MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
         Assert.NotNull(settings);
+
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+        Assert.NotNull(projectSettings);
     }    
 
 //----------------------------------------------------------------------------------------------------------------------    
