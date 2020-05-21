@@ -1,7 +1,7 @@
 ﻿namespace Unity.MeshSync {
 
 //Only add, don't remove
-internal enum MeshSyncObjectType {
+internal enum MeshSyncPlayerType {
     SERVER =0,
     CACHE_PLAYER,
     NUM_TYPES

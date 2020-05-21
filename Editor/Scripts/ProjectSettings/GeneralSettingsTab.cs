@@ -28,8 +28,8 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
         VisualElement playerSettingsContainer = containerInstance.Query<VisualElement>("PlayerSettingsContainer").First();
         
         List<string> objectTypes = new List<string> {
-	        MeshSyncObjectType.SERVER.ToString(),
-	        MeshSyncObjectType.CACHE_PLAYER.ToString(),
+	        MeshSyncPlayerType.SERVER.ToString(),
+	        MeshSyncPlayerType.CACHE_PLAYER.ToString(),
         };	        
         
         //Add the container of this tab to root
@@ -38,7 +38,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
         playerSettingsContainer.Add(playerSettingsPopup);        
         
         MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
-        MeshSyncPlayerConfig serverConfig = projectSettings.GetDefaultPlayerConfig(MeshSyncObjectType.SERVER);
+        MeshSyncPlayerConfig serverConfig = projectSettings.GetDefaultPlayerConfig(MeshSyncPlayerType.SERVER);
        
         VisualTreeAsset toggleTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
 	        Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "GeneralSettingsToggleTemplate")

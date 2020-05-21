@@ -321,7 +321,7 @@ namespace Unity.MeshSync
 
             m_logging = false;
             MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
-            m_config = projectSettings.GetDefaultPlayerConfig(MeshSyncObjectType.CACHE_PLAYER);            
+            m_config = projectSettings.GetDefaultPlayerConfig(MeshSyncPlayerType.CACHE_PLAYER);            
         }
 
         void OnValidate()

@@ -43,13 +43,13 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
     //Constructor
     private MeshSyncProjectSettings() {
         
-        m_defaultPlayerConfigs = new MeshSyncPlayerConfig[(int) MeshSyncObjectType.NUM_TYPES]; 
+        m_defaultPlayerConfigs = new MeshSyncPlayerConfig[(int) MeshSyncPlayerType.NUM_TYPES]; 
 
         MeshSyncPlayerConfig config = new MeshSyncPlayerConfig();
-        m_defaultPlayerConfigs[(int) MeshSyncObjectType.SERVER] = config;
+        m_defaultPlayerConfigs[(int) MeshSyncPlayerType.SERVER] = config;
         
         config = new MeshSyncPlayerConfig();
-        m_defaultPlayerConfigs[(int) MeshSyncObjectType.CACHE_PLAYER] = config;
+        m_defaultPlayerConfigs[(int) MeshSyncPlayerType.CACHE_PLAYER] = config;
     }
    
 //----------------------------------------------------------------------------------------------------------------------
@@ -58,8 +58,8 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    internal MeshSyncPlayerConfig GetDefaultPlayerConfig(MeshSyncObjectType objectType) {
-        return m_defaultPlayerConfigs[(int) objectType];
+    internal MeshSyncPlayerConfig GetDefaultPlayerConfig(MeshSyncPlayerType playerType) {
+        return m_defaultPlayerConfigs[(int) playerType];
     }
 
     
