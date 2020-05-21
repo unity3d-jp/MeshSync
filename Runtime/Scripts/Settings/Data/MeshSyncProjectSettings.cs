@@ -12,7 +12,7 @@ internal class MeshSyncProjectSettings : SingletonJsonSettings<MeshSyncProjectSe
 //----------------------------------------------------------------------------------------------------------------------
 
     //Constructor
-    private MeshSyncProjectSettings() {
+    public MeshSyncProjectSettings() {
         
         m_defaultPlayerConfigs = new MeshSyncPlayerConfig[(int) MeshSyncObjectType.NUM_TYPES]; 
 
