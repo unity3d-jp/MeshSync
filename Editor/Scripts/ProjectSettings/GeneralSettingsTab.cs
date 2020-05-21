@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using System.IO;
@@ -50,7 +51,15 @@ namespace UnityEditor.MeshSync {
 	        );
 	        TemplateContainer toggleContainer = toggleTemplate.CloneTree();
 	        Toggle toggle = toggleContainer.Query<Toggle>().First();
-	        toggle.bindingPath = "a";
+//	        toggle.bindingPath = "a";
+//	        toggle.Bind(new SerializedObject(projectSettings));
+
+	        RegisterGetSetCallbacks<bool>(toggle, () => { return playerConfig.SyncCameras; }, (bool a) => {
+		        Debug.Log("setting");
+		        playerConfig.SyncCameras = a;
+	        });
+	        
+	        
 //	        toggle.Bind(new SerializedObject(playerConfig));
 //	        toggle.bind
 	        
@@ -63,6 +72,26 @@ namespace UnityEditor.MeshSync {
 	        root.Add(containerInstance);
         }
 
+		
+		public static BaseField<T> RegisterGetSetCallbacks<T>(BaseField<T> field, Func<T> getter, Action<T> setter)
+		{
+//			field.RegisterValueChangedCallback().OnValueChanged(s => { setter(s.newValue); });
+			field.RegisterCallback<BlurEvent>(evt => { field.value = getter(); }, TrickleDown.TrickleDown);
+ 
+			T fieldValue = getter();
+			field.value = fieldValue;
+			setter(fieldValue);
+ 
+			field.schedule.Execute(() =>
+			{
+				if (field.focusController.focusedElement != field)
+				{
+					var val = getter();
+					field.value = val;
+				}
+			}).Every(100);
+			return field;
+		}		
 		
 		private class SliderProgressTestObject : ScriptableObject
 		{
