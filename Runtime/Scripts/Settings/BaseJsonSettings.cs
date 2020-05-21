@@ -10,7 +10,7 @@ internal abstract class BaseJsonSettings  {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    protected bool SaveSettings() {
+    internal bool SaveSettings() {
         string path = GetSettingsPath();
         string dir = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(dir)) {

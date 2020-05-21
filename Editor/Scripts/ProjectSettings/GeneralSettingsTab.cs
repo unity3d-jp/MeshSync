@@ -31,86 +31,118 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	        MeshSyncObjectType.SERVER.ToString(),
 	        MeshSyncObjectType.CACHE_PLAYER.ToString(),
         };	        
-        //
-        // TemplateContainer containerInstance = container.CloneTree();
-        // ScrollView scrollView = containerInstance.Query<ScrollView>().First();
         
         //Add the container of this tab to root
         PopupField<string> playerSettingsPopup = new PopupField<string>(objectTypes, objectTypes[0]);
-        
-
-        playerSettingsPopup.RegisterValueChangedCallback(OnToggleValueChanged);
+//        playerSettingsPopup.RegisterValueChangedCallback(OnToggleValueChanged);
         playerSettingsContainer.Add(playerSettingsPopup);        
         
-        //Add toggles	           
         MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
-        MeshSyncPlayerConfig playerConfig = projectSettings.GetDefaultPlayerConfig(MeshSyncObjectType.SERVER);
-        
+        MeshSyncPlayerConfig serverConfig = projectSettings.GetDefaultPlayerConfig(MeshSyncObjectType.SERVER);
+       
         VisualTreeAsset toggleTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
 	        Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "GeneralSettingsToggleTemplate")
         );
-        TemplateContainer toggleContainer = toggleTemplate.CloneTree();
-        Toggle toggle = toggleContainer.Query<Toggle>().First();
-//	        toggle.bindingPath = "a";
-//	        toggle.Bind(new SerializedObject(projectSettings));
 
-        RegisterGetSetCallbacks<bool>(toggle, () => { return playerConfig.SyncCameras; }, (bool a) => {
-	        Debug.Log("setting");
-	        playerConfig.SyncCameras = a;
-        });
-        
-        
-//	        toggle.Bind(new SerializedObject(playerConfig));
-//	        toggle.bind
-        
-        // hello a = new hello();
-        // a.
+	    //Add toggles	           
+	    m_syncVisibilityToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
+	    m_syncTransformToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
+	    m_syncCamerasToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
+	    m_syncLightsToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
+	    m_syncMeshesToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
+	    m_updateMeshCollidersToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
+	    m_syncPointsToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
+	    m_syncMaterialsToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
+	    m_findMaterialFromAssetsToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
+	    
 
-        playerSettingsContainer.Add(toggleContainer);
+		//Register callbacks
+	    RegisterToggleCallback(m_syncVisibilityToggle, 		    
+		    (MeshSyncPlayerConfig playerConfig) => playerConfig.SyncVisibility,
+		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncVisibility = newValue; }
+		);
+	    RegisterToggleCallback(m_syncTransformToggle, 		    
+		    (MeshSyncPlayerConfig playerConfig) => playerConfig.SyncTransform,
+		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncTransform = newValue; }
+	    );
+	    RegisterToggleCallback(m_syncCamerasToggle, 		    
+		    (MeshSyncPlayerConfig playerConfig) => playerConfig.SyncCameras,
+		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncCameras = newValue; }
+	    );
+	    RegisterToggleCallback(m_syncLightsToggle, 		    
+		    (MeshSyncPlayerConfig playerConfig) => playerConfig.SyncLights,
+		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncLights = newValue; }
+	    );
+	    RegisterToggleCallback(m_syncMeshesToggle, 		    
+		    (MeshSyncPlayerConfig playerConfig) => playerConfig.SyncMeshes,
+		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncMeshes = newValue; }
+	    );
+	    RegisterToggleCallback(m_updateMeshCollidersToggle, 		    
+		    (MeshSyncPlayerConfig playerConfig) => playerConfig.UpdateMeshColliders,
+		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.UpdateMeshColliders = newValue; }
+	    );
+	    RegisterToggleCallback(m_syncPointsToggle, 		    
+		    (MeshSyncPlayerConfig playerConfig) => playerConfig.SyncPoints,
+		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncPoints = newValue; }
+	    );
+	    RegisterToggleCallback(m_syncMaterialsToggle, 		    
+		    (MeshSyncPlayerConfig playerConfig) => playerConfig.SyncMaterials,
+		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncMaterials = newValue; }
+	    );
+	    RegisterToggleCallback(m_findMaterialFromAssetsToggle, 		    
+		    (MeshSyncPlayerConfig playerConfig) => playerConfig.FindMaterialFromAssets,
+		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.FindMaterialFromAssets = newValue; }
+	    );
 
-        
+
+	    
         root.Add(containerInstance);
     }
 
-	
-	public static BaseField<T> RegisterGetSetCallbacks<T>(BaseField<T> field, Func<T> getter, Action<T> setter)
-	{
-//			field.RegisterValueChangedCallback().OnValueChanged(s => { setter(s.newValue); });
-		field.RegisterCallback<BlurEvent>(evt => { field.value = getter(); }, TrickleDown.TrickleDown);
+//----------------------------------------------------------------------------------------------------------------------	
+	private Toggle AddToggle(VisualTreeAsset template, VisualElement container, MeshSyncPlayerConfig config) {
 
-		T fieldValue = getter();
-		field.value = fieldValue;
-		setter(fieldValue);
+		TemplateContainer toggleContainer = template.CloneTree();
+		Toggle toggle = toggleContainer.Query<Toggle>().First();
+		toggle.userData = config;
 
-		field.schedule.Execute(() =>
-		{
-			if (field.focusController.focusedElement != field)
-			{
-				var val = getter();
-				field.value = val;
-			}
-		}).Every(100);
-		return field;
-	}		
-	
-	private class SliderProgressTestObject : ScriptableObject
-	{
-		public int exampleValue = 0;
-	}
-	
-
-	private void OnSomething(VisualElement e) {
+		container.Add(toggleContainer);
 		
+		return toggle;
 	}
-	private void OnToggleValueChanged(ChangeEvent<string> changeEvt)
+//----------------------------------------------------------------------------------------------------------------------	
+
+	
+	private void RegisterToggleCallback(Toggle toggle, 
+		Func<MeshSyncPlayerConfig, bool> getter,
+		Action<MeshSyncPlayerConfig,bool> setter) 
 	{
-		PopupField<string> target = changeEvt.target as PopupField<string>;
-		if (null == target) {
+		MeshSyncPlayerConfig config = toggle.userData as MeshSyncPlayerConfig;
+		if (null == config) {
+			Debug.LogError("[MeshSync] Toggle doesn't have the correct user data");
 			return;
 		}
 		
-		Debug.Log(target.index);
-	}		
+		toggle.value = getter(config);		
+		toggle.RegisterValueChangedCallback((changeEvent) => {
+			setter(config, changeEvent.newValue);
+			MeshSyncProjectSettings.GetInstance().SaveSettings();
+		});		
+	}
+
+	
+//----------------------------------------------------------------------------------------------------------------------
+	
+	private Toggle m_syncVisibilityToggle;
+	private Toggle m_syncTransformToggle;
+	private Toggle m_syncCamerasToggle;
+	private Toggle m_syncLightsToggle;
+	private Toggle m_syncMeshesToggle;
+	private Toggle m_updateMeshCollidersToggle;
+	private Toggle m_syncPointsToggle;
+	private Toggle m_syncMaterialsToggle;
+	private Toggle m_findMaterialFromAssetsToggle;
+	
 
 }
 

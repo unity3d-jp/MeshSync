@@ -19,7 +19,9 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
         lock (m_instanceLock) {           
         
 #if UNITY_EDITOR
-            m_instance = FileUtility.DeserializeFromJson<MeshSyncProjectSettings>(PATH);
+            if (File.Exists(PATH)) {
+                m_instance = FileUtility.DeserializeFromJson<MeshSyncProjectSettings>(PATH);                
+            }
             if (null != m_instance) {
                 return m_instance;
             }
