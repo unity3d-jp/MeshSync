@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace UnityEditor.MeshSync.Tests {
-internal class EditorSettingsTest {
+internal class ProjectSettingsTest {
     
     
     [Test]
