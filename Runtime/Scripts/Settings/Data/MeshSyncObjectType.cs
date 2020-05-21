@@ -1,10 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿namespace Unity.MeshSync {
 
 public enum MeshSyncObjectType
 {
     SERVER =0,
     CACHE_PLAYER,
+    NUM_TYPES
     
 }
+
+} //end namespacye
