@@ -22,13 +22,15 @@ internal class SingletonJsonSettings<T> where T: class , new() {
             if (null != m_settings) {
                 return m_settings;
             }
-            m_settings = new T();
-            SaveSettings(m_settings);
-#else
-            m_settings = new T();
 #endif
+            
+            m_settings = new T();
         }        
-        return m_settings;            
+
+#if UNITY_EDITOR
+        SaveSettings();
+#endif
+        return m_settings;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -43,7 +45,7 @@ internal class SingletonJsonSettings<T> where T: class , new() {
         return FileUtility.DeserializeFromJson<T>(path);
     }
     
-    static bool SaveSettings(T obj) {
+    internal static bool SaveSettings() {
         string path = GetSettingsPath();
         if (string.IsNullOrEmpty(path)) {
             Debug.LogError("[MeshSync] Missing PathAttribute for " + typeof(T).ToString());
@@ -53,13 +55,19 @@ internal class SingletonJsonSettings<T> where T: class , new() {
         string dir = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(dir)) {
             Directory.CreateDirectory(dir);
-           
+
         }
-        
-        FileUtility.SerializeToJson<T>(obj, path);
+
+        lock (m_settingsLock) {
+            FileUtility.SerializeToJson<T>(m_settings, path);
+        }
+
         return true;
     }
+    
     #endregion
+    
+    
 
 #endif 
     
