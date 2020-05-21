@@ -1,0 +1,28 @@
+<UXML xmlns="UnityEngine.UIElements">
+    
+    <ScrollView name="DCCToolsScrollView" show-vertical-scroller="true">
+    </ScrollView>
+
+    <VisualElement name="PlayerSettingsContainer"/>
+    
+    
+    
+    <Toggle text="aa"/>
+    <Toggle text="aa"/>
+    <Toggle text="aa"/>
+    <Toggle text="aa"/>
+    
+    <Foldout text="asasf">
+        <Toggle text="bb"/>
+        <Toggle text="bb"/>
+        <Toggle text="bb"/>
+        <Toggle text="bb"/>
+
+
+    </Foldout>
+    
+    
+    <!--    <Button name="CheckForUpdatesButton" text="Check for Updates"/> */ -->
+        
+        
+</UXML>

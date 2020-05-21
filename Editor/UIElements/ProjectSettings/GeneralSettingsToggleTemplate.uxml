@@ -1,0 +1,6 @@
+<UXML xmlns="UnityEngine.UIElements">
+
+    <Label text="something"/>
+    <Toggle text="from toggle template"/>
+
+</UXML>
