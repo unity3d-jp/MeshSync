@@ -51,7 +51,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	    m_updateMeshCollidersToggle = AddToggle(toggleTemplate, syncSettingsFoldout, "Update Mesh Colliders");
 	    m_syncMaterialsToggle = AddToggle(toggleTemplate, syncSettingsFoldout, "Materials");
 	    m_findMaterialFromAssetsToggle = AddToggle(toggleTemplate, syncSettingsFoldout, "Find Materials from Asset Database");
-	    UpdatePlayerTypeUIElements(MeshSyncPlayerType.SERVER);
+	    UpdatePlayerConfigUIElements(MeshSyncPlayerType.SERVER);
 
 		//Register callbacks
 	    RegisterToggleCallback(m_syncVisibilityToggle, 		    
@@ -128,14 +128,14 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 			return;
 		}
 
-		UpdatePlayerTypeUIElements(playerType);
+		UpdatePlayerConfigUIElements(playerType);
 		changeEvt.StopPropagation();
 
 	}
 
 //----------------------------------------------------------------------------------------------------------------------	
 
-	private void UpdatePlayerTypeUIElements(MeshSyncPlayerType playerType) {
+	private void UpdatePlayerConfigUIElements(MeshSyncPlayerType playerType) {
 		MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
 		MeshSyncPlayerConfig config = projectSettings.GetDefaultPlayerConfig(playerType);
 
