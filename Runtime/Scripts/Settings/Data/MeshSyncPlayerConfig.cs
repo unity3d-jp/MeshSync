@@ -4,23 +4,7 @@ using UnityEngine;
 namespace Unity.MeshSync {
     
 [Serializable]
-internal class MeshSyncPlayerConfig { //: ScriptableObject{
-
-    // internal static MeshSyncPlayerConfig GetInstance() {
-    //     var settings = AssetDatabase.LoadAssetAtPath<MyCustomSettings>(k_MyCustomSettingsPath);
-    //     if (settings == null)
-    //     {
-    //         settings = ScriptableObject.CreateInstance<MeshSyncPlayerConfig>();
-    //         settings.m_Number = 42;
-    //         settings.m_SomeString = "The answer to the universe";
-    //         AssetDatabase.CreateAsset(settings, k_MyCustomSettingsPath);
-    //         AssetDatabase.SaveAssets();
-    //     }
-    //     return settings;        
-    // }
-    //
-//----------------------------------------------------------------------------------------------------------------------
-    
+internal class MeshSyncPlayerConfig { 
     
     public bool SyncVisibility = true;
     public bool SyncTransform = true;
