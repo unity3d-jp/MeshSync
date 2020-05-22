@@ -64,7 +64,9 @@ public class DCCToolInfo {
     /// </summary>
     public string         IconPath;
     
-    [SerializeField] private int m_classVersion = 1;
+#pragma warning disable 414
+    [SerializeField] private readonly int m_classVersion = 1;
+#pragma warning restore 414
     
     
 }
