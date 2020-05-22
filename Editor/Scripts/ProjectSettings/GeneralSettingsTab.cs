@@ -132,7 +132,6 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		}
 
 		UpdatePlayerTypeUIElements(playerType);
-		Debug.Log("OnPlayerTypePopupChanged " + changeEvt.bubbles);
 		changeEvt.StopPropagation();
 
 	}
@@ -145,6 +144,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 
 		//values
 		m_syncVisibilityToggle.SetValueWithoutNotify(config.SyncVisibility);
+		m_syncTransformToggle.SetValueWithoutNotify(config.SyncTransform);
 		m_syncCamerasToggle.SetValueWithoutNotify(config.SyncCameras);
 		m_syncLightsToggle.SetValueWithoutNotify(config.SyncLights);
 		m_syncMeshesToggle.SetValueWithoutNotify(config.SyncMeshes);
