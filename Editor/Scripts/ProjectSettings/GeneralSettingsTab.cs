@@ -43,15 +43,15 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
         );
 
 	    //Add toggles	           
-	    m_syncVisibilityToggle = AddToggle(toggleTemplate, playerSettingsContainer);
-	    m_syncTransformToggle = AddToggle(toggleTemplate, playerSettingsContainer);
-	    m_syncCamerasToggle = AddToggle(toggleTemplate, playerSettingsContainer);
-	    m_syncLightsToggle = AddToggle(toggleTemplate, playerSettingsContainer);
-	    m_syncMeshesToggle = AddToggle(toggleTemplate, playerSettingsContainer);
-	    m_updateMeshCollidersToggle = AddToggle(toggleTemplate, playerSettingsContainer);
-	    m_syncPointsToggle = AddToggle(toggleTemplate, playerSettingsContainer);
-	    m_syncMaterialsToggle = AddToggle(toggleTemplate, playerSettingsContainer);
-	    m_findMaterialFromAssetsToggle = AddToggle(toggleTemplate, playerSettingsContainer);
+	    m_syncVisibilityToggle = AddToggle(toggleTemplate, playerSettingsContainer, "Visibility");
+	    m_syncTransformToggle = AddToggle(toggleTemplate, playerSettingsContainer, "Transform");
+	    m_syncCamerasToggle = AddToggle(toggleTemplate, playerSettingsContainer,"Cameras");
+	    m_syncLightsToggle = AddToggle(toggleTemplate, playerSettingsContainer,"Lights");
+	    m_syncMeshesToggle = AddToggle(toggleTemplate, playerSettingsContainer,"Meshes");
+	    m_updateMeshCollidersToggle = AddToggle(toggleTemplate, playerSettingsContainer, "Update Mesh Colliders");
+	    m_syncPointsToggle = AddToggle(toggleTemplate, playerSettingsContainer, "");
+	    m_syncMaterialsToggle = AddToggle(toggleTemplate, playerSettingsContainer, "Materials");
+	    m_findMaterialFromAssetsToggle = AddToggle(toggleTemplate, playerSettingsContainer, "Find Materials from Asset Database");
 	    UpdatePlayerTypeUIElements(MeshSyncPlayerType.SERVER);
 
 		//Register callbacks
@@ -89,11 +89,11 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
     }
 
 //----------------------------------------------------------------------------------------------------------------------	
-	private Toggle AddToggle(VisualTreeAsset template, VisualElement container) {
+	private Toggle AddToggle(VisualTreeAsset template, VisualElement container, string text) {
 
 		TemplateContainer toggleContainer = template.CloneTree();
 		Toggle toggle = toggleContainer.Query<Toggle>().First();
-
+		toggle.label = text;
 		container.Add(toggleContainer);
 		
 		return toggle;
