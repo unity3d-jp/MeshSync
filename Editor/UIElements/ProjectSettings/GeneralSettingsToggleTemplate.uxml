@@ -1,5 +1,8 @@
 <UXML xmlns="UnityEngine.UIElements">
 
-    <Toggle value="false"/>
+    <VisualElement name="ToggleContainer" class="general-settings-toggle-container">
+        <Label text="label"/>
+        <Toggle value="false"/>        
+    </VisualElement>
 
 </UXML>

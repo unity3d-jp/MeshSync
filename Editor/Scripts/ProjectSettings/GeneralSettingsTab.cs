@@ -23,7 +23,6 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
         );
         TemplateContainer containerInstance = container.CloneTree();
         
-	    Foldout syncSettingsFoldOut = containerInstance.Query<Foldout>("SyncSettingsContainer").First();
         
         List<string> objectTypes = new List<string> {
 	        MeshSyncPlayerType.SERVER.ToString(),
@@ -31,25 +30,27 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
         };	        
         
         //Add the container of this tab to root
+	    VisualElement playerTypePopupContainer = containerInstance.Query<VisualElement>("PlayerTypePopupContainer").First();
         PopupField<string> playerTypePopup = new PopupField<string>(objectTypes, objectTypes[0]);
         playerTypePopup.RegisterValueChangedCallback(OnPlayerTypePopupChanged);
-	    playerTypePopup.label = "MeshSync Object Type";
-        syncSettingsFoldOut.Add(playerTypePopup);        
+	    playerTypePopup.label = "Object Type";
+	    playerTypePopupContainer.Add(playerTypePopup);        
         
       
+	    Foldout syncSettingsFoldout = containerInstance.Query<Foldout>("SyncSettingsFoldout").First();
         VisualTreeAsset toggleTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
 	        Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "GeneralSettingsToggleTemplate")
         );
 
 	    //Add toggles	           
-	    m_syncVisibilityToggle = AddToggle(toggleTemplate, syncSettingsFoldOut, "Visibility");
-	    m_syncTransformToggle = AddToggle(toggleTemplate, syncSettingsFoldOut, "Transform");
-	    m_syncCamerasToggle = AddToggle(toggleTemplate, syncSettingsFoldOut,"Cameras");
-	    m_syncLightsToggle = AddToggle(toggleTemplate, syncSettingsFoldOut,"Lights");
-	    m_syncMeshesToggle = AddToggle(toggleTemplate, syncSettingsFoldOut,"Meshes");
-	    m_updateMeshCollidersToggle = AddToggle(toggleTemplate, syncSettingsFoldOut, "Update Mesh Colliders");
-	    m_syncMaterialsToggle = AddToggle(toggleTemplate, syncSettingsFoldOut, "Materials");
-	    m_findMaterialFromAssetsToggle = AddToggle(toggleTemplate, syncSettingsFoldOut, "Find Materials from Asset Database");
+	    m_syncVisibilityToggle = AddToggle(toggleTemplate, syncSettingsFoldout, "Visibility");
+	    m_syncTransformToggle = AddToggle(toggleTemplate, syncSettingsFoldout, "Transform");
+	    m_syncCamerasToggle = AddToggle(toggleTemplate, syncSettingsFoldout,"Cameras");
+	    m_syncLightsToggle = AddToggle(toggleTemplate, syncSettingsFoldout,"Lights");
+	    m_syncMeshesToggle = AddToggle(toggleTemplate, syncSettingsFoldout,"Meshes");
+	    m_updateMeshCollidersToggle = AddToggle(toggleTemplate, syncSettingsFoldout, "Update Mesh Colliders");
+	    m_syncMaterialsToggle = AddToggle(toggleTemplate, syncSettingsFoldout, "Materials");
+	    m_findMaterialFromAssetsToggle = AddToggle(toggleTemplate, syncSettingsFoldout, "Find Materials from Asset Database");
 	    UpdatePlayerTypeUIElements(MeshSyncPlayerType.SERVER);
 
 		//Register callbacks
@@ -88,7 +89,8 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 
 		TemplateContainer toggleContainer = template.CloneTree();
 		Toggle toggle = toggleContainer.Query<Toggle>().First();
-		toggle.label = text;
+		Label label = toggleContainer.Query<Label>().First();
+		label.text = text;
 		container.Add(toggleContainer);
 		
 		return toggle;

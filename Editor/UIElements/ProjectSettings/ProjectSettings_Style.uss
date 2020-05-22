@@ -39,6 +39,21 @@
 }
 
 
+/*----------------------------------------------- General Settings--------------------------------------------------- */
+
+.general-player-type-popup-container {
+    width: 300px;    
+}
+
+.general-sync-settings-foldout {
+    width: 250px;
+}
+
+.general-settings-toggle-container {
+    flex-direction: row;
+    justify-content: space-between;
+
+}
 
 /*----------------------------------------------- DCC Tool Info ----------------------------------------------------- */
 
