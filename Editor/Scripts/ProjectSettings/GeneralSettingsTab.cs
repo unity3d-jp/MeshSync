@@ -104,13 +104,15 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	private void RegisterToggleCallback(Toggle toggle, 
 		Action<MeshSyncPlayerConfig,bool> setter) 
 	{
-		MeshSyncPlayerConfig config = toggle.userData as MeshSyncPlayerConfig;
-		if (null == config) {
-			Debug.LogError("[MeshSync] Toggle doesn't have the correct user data");
-			return;
-		}
 		
-		toggle.RegisterValueChangedCallback((changeEvent) => {
+		toggle.RegisterValueChangedCallback((ChangeEvent<bool> changeEvent) => {
+
+			MeshSyncPlayerConfig config = toggle.userData as MeshSyncPlayerConfig;
+			if (null == config) {
+				Debug.LogError("[MeshSync] Toggle doesn't have the correct user data");
+				return;
+			}
+			
 			setter(config, changeEvent.newValue);
 			MeshSyncProjectSettings.GetInstance().SaveSettings();
 		});		
@@ -130,6 +132,9 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		}
 
 		UpdatePlayerTypeUIElements(playerType);
+		Debug.Log("OnPlayerTypePopupChanged " + changeEvt.bubbles);
+		changeEvt.StopPropagation();
+
 	}
 
 //----------------------------------------------------------------------------------------------------------------------	
@@ -137,18 +142,17 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	private void UpdatePlayerTypeUIElements(MeshSyncPlayerType playerType) {
 		MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
 		MeshSyncPlayerConfig config = projectSettings.GetDefaultPlayerConfig(playerType);
-		
-		//values
-		m_syncVisibilityToggle.value = config.SyncVisibility;
-		m_syncTransformToggle.value = config.SyncTransform;
-		m_syncCamerasToggle.value = config.SyncCameras;
-		m_syncLightsToggle.value = config.SyncLights;
-		m_syncMeshesToggle.value = config.SyncMeshes;
-		m_updateMeshCollidersToggle.value = config.SyncMeshes;
-		m_syncPointsToggle.value = config.SyncPoints;
-		m_syncMaterialsToggle.value = config.SyncMaterials;
-		m_findMaterialFromAssetsToggle.value = config.FindMaterialFromAssets;
 
+		//values
+		m_syncVisibilityToggle.SetValueWithoutNotify(config.SyncVisibility);
+		m_syncCamerasToggle.SetValueWithoutNotify(config.SyncCameras);
+		m_syncLightsToggle.SetValueWithoutNotify(config.SyncLights);
+		m_syncMeshesToggle.SetValueWithoutNotify(config.SyncMeshes);
+		m_updateMeshCollidersToggle.SetValueWithoutNotify(config.UpdateMeshColliders);
+		m_syncPointsToggle.SetValueWithoutNotify(config.SyncPoints);
+		m_syncMaterialsToggle.SetValueWithoutNotify(config.SyncMaterials);
+		m_findMaterialFromAssetsToggle.SetValueWithoutNotify(config.FindMaterialFromAssets);
+		
 		//userData
 		m_syncVisibilityToggle.userData = config;
 		m_syncTransformToggle.userData = config;
@@ -160,7 +164,6 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		m_syncMaterialsToggle.userData = config;
 		m_findMaterialFromAssetsToggle.userData = config;	
 		m_selectedPlayerType = playerType;
-		
 	}
 	
 	
@@ -177,7 +180,6 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	private Toggle m_syncMaterialsToggle;
 	private Toggle m_findMaterialFromAssetsToggle;
 	private MeshSyncPlayerType m_selectedPlayerType = MeshSyncPlayerType.INVALID;
-	
 
 }
 
