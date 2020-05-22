@@ -47,7 +47,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 			);
 
 			m_content = root.Query<VisualElement>("Content");
-			SetupTab(MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_TAB);
+			SetupTab(MeshSyncEditorConstants.GENERAL_SETTINGS_TAB);
 			
 		};
 		
