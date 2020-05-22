@@ -33,9 +33,6 @@ namespace UnityEditor.MeshSync
             player.markMeshesDynamic = true;
             player.dontSaveAssetsInScene = true;
 
-            //[TODO-sin:2020-5-20] Get the default settings
-            // player.updateMeshColliders = false;
-            // player.findMaterialFromAssets = false;
             if (!player.OpenCache(path))
             {
                 Debug.LogError("Failed to open " + path + ". Possible reasons: file format version does not match, or the file is not scene cache.");

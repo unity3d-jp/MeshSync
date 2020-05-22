@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 
 namespace Unity.MeshSync {
     
@@ -13,7 +14,8 @@ internal class MeshSyncPlayerConfig {
     public bool UpdateMeshColliders = true;
     public bool SyncMaterials = true;
     public bool FindMaterialFromAssets = true;
-    
+
+    [SerializeField] private int m_classVersion = 1;
 }
     
 } //end namespace
