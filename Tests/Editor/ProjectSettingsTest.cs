@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
+using Unity.MeshSync;
 using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace UnityEditor.MeshSync.Tests {
-internal class EditorSettingsTest {
+internal class ProjectSettingsTest {
     
     
     [Test]
@@ -20,8 +21,14 @@ internal class EditorSettingsTest {
     public void CheckCurrentSettings() {
         MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
         Assert.NotNull(settings);
+
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
+        Assert.NotNull(projectSettings);
+        Assert.True(File.Exists(projectSettings.GetSettingsPath()));
+            
     }    
 
+    
 //----------------------------------------------------------------------------------------------------------------------    
     
     [Test]

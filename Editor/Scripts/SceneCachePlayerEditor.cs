@@ -23,17 +23,16 @@ namespace UnityEditor.MeshSync
         public static GameObject CreateSceneCachePlayer(string path)
         {
             // create temporary GO to make prefab
-            var go = new GameObject();
+            GameObject go = new GameObject();
             go.name = System.IO.Path.GetFileNameWithoutExtension(path);
 
-            var player = go.AddComponent<SceneCachePlayer>();
+            SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
             player.rootObject = go.GetComponent<Transform>();
             player.assetDir = new DataPath(DataPath.Root.DataPath, string.Format("SceneCache/{0}", go.name));
-            player.updateMeshColliders = false;
             player.progressiveDisplay = false;
             player.markMeshesDynamic = true;
             player.dontSaveAssetsInScene = true;
-            player.findMaterialFromAssets = false;
+
             if (!player.OpenCache(path))
             {
                 Debug.LogError("Failed to open " + path + ". Possible reasons: file format version does not match, or the file is not scene cache.");

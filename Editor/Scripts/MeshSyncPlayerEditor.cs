@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Unity.MeshSync;
-using UnityEditor;
 using UnityEngine;
 
 namespace UnityEditor.MeshSync
@@ -16,29 +15,37 @@ namespace UnityEditor.MeshSync
         private float m_reductionThreshold = 0.001f;
         private bool m_eraseFlatCurves = false;
 
-        public virtual void OnEnable()
-        {
-            var t = target as MeshSyncPlayer;
-            var clips = t.GetAnimationClips();
+        public virtual void OnEnable() {
+            m_asset = target as MeshSyncPlayer;
+            if (null == m_asset)
+                return;
+            
+            List<AnimationClip> clips = m_asset.GetAnimationClips();
             if (clips.Count > 0)
                 m_animationFrameRate = clips[0].frameRate;
         }
+        
+//----------------------------------------------------------------------------------------------------------------------
 
-
-        public static void DrawPlayerSettings(MeshSyncPlayer t, SerializedObject so)
+        static void EditorGUIToggle(GUIContent content, ref bool src) {
+            src = EditorGUILayout.Toggle(content, src);
+        }
+        
+        protected void DrawPlayerSettings(MeshSyncPlayer t, SerializedObject so)
         {
             var styleFold = EditorStyles.foldout;
             styleFold.fontStyle = FontStyle.Bold;
 
-            // Sync Settings
-            t.foldSyncSettings = EditorGUILayout.Foldout(t.foldSyncSettings, "Sync Settings", true, styleFold);
-            if (t.foldSyncSettings)
-            {
-                EditorGUILayout.PropertyField(so.FindProperty("m_syncVisibility"), new GUIContent("Visibility"));
+            // Asset Sync Settings
+            t.foldSyncSettings = EditorGUILayout.Foldout(t.foldSyncSettings, "Asset Sync Settings", true, styleFold);
+            if (t.foldSyncSettings) {
 
-                EditorGUILayout.PropertyField(so.FindProperty("m_syncTransform"), new GUIContent("Transform"));
-                EditorGUILayout.PropertyField(so.FindProperty("m_syncCameras"), new GUIContent("Cameras"));
-                if (t.syncCameras)
+                MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
+                EditorGUIToggle(new GUIContent("Visibility"), ref playerConfig.SyncVisibility );
+                EditorGUIToggle(new GUIContent("Transform"), ref playerConfig.SyncTransform );
+                EditorGUIToggle(new GUIContent("Cameras"), ref playerConfig.SyncCameras );
+
+                if (playerConfig.SyncCameras)
                 {
                     EditorGUI.indentLevel++;
 #if UNITY_2018_1_OR_NEWER
@@ -47,17 +54,17 @@ namespace UnityEditor.MeshSync
                     //EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
                     EditorGUI.indentLevel--;
                 }
-                EditorGUILayout.PropertyField(so.FindProperty("m_syncLights"), new GUIContent("Lights"));
+                EditorGUIToggle(new GUIContent("Lights"), ref playerConfig.SyncLights );
+                EditorGUIToggle(new GUIContent("Meshes"), ref playerConfig.SyncMeshes );
 
-                EditorGUILayout.PropertyField(so.FindProperty("m_syncMeshes"), new GUIContent("Meshes"));
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(so.FindProperty("m_updateMeshColliders"));
+                EditorGUIToggle(new GUIContent("Update Mesh Colliders"), ref playerConfig.UpdateMeshColliders );
                 EditorGUI.indentLevel--;
 
                 //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));
-                EditorGUILayout.PropertyField(so.FindProperty("m_syncMaterials"), new GUIContent("Materials"));
+                EditorGUIToggle(new GUIContent("Materials"), ref playerConfig.SyncMaterials );
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(so.FindProperty("m_findMaterialFromAssets"), new GUIContent("Find From AssetDatabase"));
+                EditorGUIToggle(new GUIContent("Find From AssetDatabase"), ref playerConfig.FindMaterialFromAssets );
                 EditorGUI.indentLevel--;
 
                 EditorGUILayout.Space();
@@ -384,9 +391,14 @@ namespace UnityEditor.MeshSync
             EditorGUILayout.Space();
         }
 
-        public static void DrawPluginVersion()
-        {
+        public static void DrawPluginVersion() {
             EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.GetPluginVersion());
         }
+
+//----------------------------------------------------------------------------------------------------------------------
+
+        private MeshSyncPlayer m_asset = null;
+
+
     }
-}
+} // end namespace

@@ -423,10 +423,15 @@ namespace Unity.MeshSync
 
 
         #region Events
+
 #if UNITY_EDITOR
-        void OnValidate()
-        {
+        void OnValidate() {
             CheckParamsUpdated();
+        }
+
+        void Reset() {
+            MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
+            m_config = projectSettings.GetDefaultPlayerConfig(MeshSyncPlayerType.SERVER);            
         }
 #endif
 

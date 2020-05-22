@@ -1,6 +1,8 @@
 {
     "name": "Unity.MeshSync",
-    "references": [],
+    "references": [
+        "GUID:6abadd3f26ad5aa4cab1a48773c8eed7"
+    ],
     "includePlatforms": [
         "Editor",
         "LinuxStandalone64",

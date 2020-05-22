@@ -29,7 +29,7 @@ namespace UnityEditor.MeshSync
 
         public override void OnEnable() {
             base.OnEnable();
-            m_asset = target as MeshSyncServer;
+            m_serverAsset = target as MeshSyncServer;
 
         }
 
@@ -56,25 +56,25 @@ namespace UnityEditor.MeshSync
             var styleFold = EditorStyles.foldout;
             styleFold.fontStyle = FontStyle.Bold;
 
-            bool isServerStarted = m_asset.IsServerStarted();
+            bool isServerStarted = m_serverAsset.IsServerStarted();
             string serverStatus = isServerStarted ? "Server (Status: Started)" : "Server (Status: Stopped)";
             t.foldServerSettings= EditorGUILayout.Foldout(t.foldServerSettings, serverStatus, true, styleFold);
             if (t.foldServerSettings) {
                 
-                bool autoStart = EditorGUILayout.Toggle("Auto Start", m_asset.IsAutoStart());
-                m_asset.SetAutoStartServer(autoStart);
+                bool autoStart = EditorGUILayout.Toggle("Auto Start", m_serverAsset.IsAutoStart());
+                m_serverAsset.SetAutoStartServer(autoStart);
 
                 //Draw GUI that are disabled when autoStart is true
                 EditorGUI.BeginDisabledGroup(autoStart);
-                m_asset.SetServerPort(EditorGUILayout.IntField("Server Port:", m_asset.GetServerPort()));
+                m_serverAsset.SetServerPort(EditorGUILayout.IntField("Server Port:", m_serverAsset.GetServerPort()));
                 GUILayout.BeginHorizontal();
                 if (isServerStarted) {
                     if (GUILayout.Button("Stop", GUILayout.Width(110.0f))) {
-                        m_asset.StopServer();
+                        m_serverAsset.StopServer();
                     }
                 } else {
                     if (GUILayout.Button("Start", GUILayout.Width(110.0f))) {
-                        m_asset.StartServer();
+                        m_serverAsset.StartServer();
                     }
  
                 }
@@ -88,6 +88,6 @@ namespace UnityEditor.MeshSync
         }
 
 //----------------------------------------------------------------------------------------------------------------------                
-        private MeshSyncServer m_asset = null;        
+        private MeshSyncServer m_serverAsset = null;        
     }
 }
