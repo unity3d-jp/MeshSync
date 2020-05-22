@@ -11,7 +11,6 @@ internal class MeshSyncPlayerConfig {
     public bool SyncLights = true;
     public bool SyncMeshes = true;
     public bool UpdateMeshColliders = true;
-    public bool SyncPoints = true;
     public bool SyncMaterials = true;
     public bool FindMaterialFromAssets = true;
     

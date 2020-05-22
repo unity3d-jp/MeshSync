@@ -49,7 +49,6 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	    m_syncLightsToggle = AddToggle(toggleTemplate, playerSettingsContainer,"Lights");
 	    m_syncMeshesToggle = AddToggle(toggleTemplate, playerSettingsContainer,"Meshes");
 	    m_updateMeshCollidersToggle = AddToggle(toggleTemplate, playerSettingsContainer, "Update Mesh Colliders");
-	    m_syncPointsToggle = AddToggle(toggleTemplate, playerSettingsContainer, "");
 	    m_syncMaterialsToggle = AddToggle(toggleTemplate, playerSettingsContainer, "Materials");
 	    m_findMaterialFromAssetsToggle = AddToggle(toggleTemplate, playerSettingsContainer, "Find Materials from Asset Database");
 	    UpdatePlayerTypeUIElements(MeshSyncPlayerType.SERVER);
@@ -72,9 +71,6 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	    );
 	    RegisterToggleCallback(m_updateMeshCollidersToggle, 		    
 		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.UpdateMeshColliders = newValue; }
-	    );
-	    RegisterToggleCallback(m_syncPointsToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncPoints = newValue; }
 	    );
 	    RegisterToggleCallback(m_syncMaterialsToggle, 		    
 		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncMaterials = newValue; }
@@ -149,7 +145,6 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		m_syncLightsToggle.SetValueWithoutNotify(config.SyncLights);
 		m_syncMeshesToggle.SetValueWithoutNotify(config.SyncMeshes);
 		m_updateMeshCollidersToggle.SetValueWithoutNotify(config.UpdateMeshColliders);
-		m_syncPointsToggle.SetValueWithoutNotify(config.SyncPoints);
 		m_syncMaterialsToggle.SetValueWithoutNotify(config.SyncMaterials);
 		m_findMaterialFromAssetsToggle.SetValueWithoutNotify(config.FindMaterialFromAssets);
 		
@@ -160,7 +155,6 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		m_syncLightsToggle.userData = config;
 		m_syncMeshesToggle.userData = config;
 		m_updateMeshCollidersToggle.userData = config;
-		m_syncPointsToggle.userData = config;
 		m_syncMaterialsToggle.userData = config;
 		m_findMaterialFromAssetsToggle.userData = config;	
 		m_selectedPlayerType = playerType;
@@ -176,7 +170,6 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	private Toggle m_syncLightsToggle;
 	private Toggle m_syncMeshesToggle;
 	private Toggle m_updateMeshCollidersToggle;
-	private Toggle m_syncPointsToggle;
 	private Toggle m_syncMaterialsToggle;
 	private Toggle m_findMaterialFromAssetsToggle;
 	private MeshSyncPlayerType m_selectedPlayerType = MeshSyncPlayerType.INVALID;

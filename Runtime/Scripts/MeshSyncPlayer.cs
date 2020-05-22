@@ -1528,8 +1528,6 @@ namespace Unity.MeshSync
 
         EntityRecord UpdatePoints(PointsData data)
         {
-            if (!m_config.SyncPoints)
-                return null;
 
             var dtrans = data.transform;
             var dflags = data.dataFlags;
