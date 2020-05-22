@@ -1,5 +1,4 @@
 ﻿using System;
-using UnityEngine;
 
 namespace Unity.MeshSync {
     
@@ -15,13 +14,6 @@ internal class MeshSyncPlayerConfig {
     public bool SyncPoints = true;
     public bool SyncMaterials = true;
     public bool FindMaterialFromAssets = true;
-
-
-    //TODO-sin: 2020-5-20 The defaults for SceneCachePlayer is different
-    //player.updateMeshColliders = false;
-    //player.findMaterialFromAssets = false;
-    
-    
     
 }
     
