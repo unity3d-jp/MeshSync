@@ -33,64 +33,53 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
         };	        
         
         //Add the container of this tab to root
-        PopupField<string> playerSettingsPopup = new PopupField<string>(objectTypes, objectTypes[0]);
-//        playerSettingsPopup.RegisterValueChangedCallback(OnToggleValueChanged);
-        playerSettingsContainer.Add(playerSettingsPopup);        
+        PopupField<string> playerTypePopup = new PopupField<string>(objectTypes, objectTypes[0]);
+        playerTypePopup.RegisterValueChangedCallback(OnPlayerTypePopupChanged);
+        playerSettingsContainer.Add(playerTypePopup);        
         
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
-        MeshSyncPlayerConfig serverConfig = projectSettings.GetDefaultPlayerConfig(MeshSyncPlayerType.SERVER);
-       
+      
         VisualTreeAsset toggleTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
 	        Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "GeneralSettingsToggleTemplate")
         );
 
 	    //Add toggles	           
-	    m_syncVisibilityToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
-	    m_syncTransformToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
-	    m_syncCamerasToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
-	    m_syncLightsToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
-	    m_syncMeshesToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
-	    m_updateMeshCollidersToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
-	    m_syncPointsToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
-	    m_syncMaterialsToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
-	    m_findMaterialFromAssetsToggle = AddToggle(toggleTemplate, playerSettingsContainer,serverConfig);
-	    
+	    m_syncVisibilityToggle = AddToggle(toggleTemplate, playerSettingsContainer);
+	    m_syncTransformToggle = AddToggle(toggleTemplate, playerSettingsContainer);
+	    m_syncCamerasToggle = AddToggle(toggleTemplate, playerSettingsContainer);
+	    m_syncLightsToggle = AddToggle(toggleTemplate, playerSettingsContainer);
+	    m_syncMeshesToggle = AddToggle(toggleTemplate, playerSettingsContainer);
+	    m_updateMeshCollidersToggle = AddToggle(toggleTemplate, playerSettingsContainer);
+	    m_syncPointsToggle = AddToggle(toggleTemplate, playerSettingsContainer);
+	    m_syncMaterialsToggle = AddToggle(toggleTemplate, playerSettingsContainer);
+	    m_findMaterialFromAssetsToggle = AddToggle(toggleTemplate, playerSettingsContainer);
+	    UpdatePlayerTypeUIElements(MeshSyncPlayerType.SERVER);
 
 		//Register callbacks
 	    RegisterToggleCallback(m_syncVisibilityToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig) => playerConfig.SyncVisibility,
 		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncVisibility = newValue; }
 		);
 	    RegisterToggleCallback(m_syncTransformToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig) => playerConfig.SyncTransform,
 		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncTransform = newValue; }
 	    );
 	    RegisterToggleCallback(m_syncCamerasToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig) => playerConfig.SyncCameras,
 		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncCameras = newValue; }
 	    );
 	    RegisterToggleCallback(m_syncLightsToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig) => playerConfig.SyncLights,
 		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncLights = newValue; }
 	    );
 	    RegisterToggleCallback(m_syncMeshesToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig) => playerConfig.SyncMeshes,
 		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncMeshes = newValue; }
 	    );
 	    RegisterToggleCallback(m_updateMeshCollidersToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig) => playerConfig.UpdateMeshColliders,
 		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.UpdateMeshColliders = newValue; }
 	    );
 	    RegisterToggleCallback(m_syncPointsToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig) => playerConfig.SyncPoints,
 		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncPoints = newValue; }
 	    );
 	    RegisterToggleCallback(m_syncMaterialsToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig) => playerConfig.SyncMaterials,
 		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncMaterials = newValue; }
 	    );
 	    RegisterToggleCallback(m_findMaterialFromAssetsToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig) => playerConfig.FindMaterialFromAssets,
 		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.FindMaterialFromAssets = newValue; }
 	    );
 
@@ -100,11 +89,10 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
     }
 
 //----------------------------------------------------------------------------------------------------------------------	
-	private Toggle AddToggle(VisualTreeAsset template, VisualElement container, MeshSyncPlayerConfig config) {
+	private Toggle AddToggle(VisualTreeAsset template, VisualElement container) {
 
 		TemplateContainer toggleContainer = template.CloneTree();
 		Toggle toggle = toggleContainer.Query<Toggle>().First();
-		toggle.userData = config;
 
 		container.Add(toggleContainer);
 		
@@ -114,7 +102,6 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 
 	
 	private void RegisterToggleCallback(Toggle toggle, 
-		Func<MeshSyncPlayerConfig, bool> getter,
 		Action<MeshSyncPlayerConfig,bool> setter) 
 	{
 		MeshSyncPlayerConfig config = toggle.userData as MeshSyncPlayerConfig;
@@ -123,13 +110,60 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 			return;
 		}
 		
-		toggle.value = getter(config);		
 		toggle.RegisterValueChangedCallback((changeEvent) => {
 			setter(config, changeEvent.newValue);
 			MeshSyncProjectSettings.GetInstance().SaveSettings();
 		});		
 	}
 
+//----------------------------------------------------------------------------------------------------------------------	
+	private void OnPlayerTypePopupChanged(ChangeEvent<string> changeEvt) {
+		PopupField<string> popup = changeEvt.target as PopupField<string>;
+		if (null == popup) {
+			Debug.LogError("[MeshSync] ChangeEvent wasn't passed correctly");
+			return;
+		}
+
+		MeshSyncPlayerType playerType = (MeshSyncPlayerType) popup.index;
+		if (m_selectedPlayerType == playerType || popup.index >=(int)MeshSyncPlayerType.NUM_TYPES) {
+			return;
+		}
+
+		UpdatePlayerTypeUIElements(playerType);
+	}
+
+//----------------------------------------------------------------------------------------------------------------------	
+
+	private void UpdatePlayerTypeUIElements(MeshSyncPlayerType playerType) {
+		MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
+		MeshSyncPlayerConfig config = projectSettings.GetDefaultPlayerConfig(playerType);
+		
+		//values
+		m_syncVisibilityToggle.value = config.SyncVisibility;
+		m_syncTransformToggle.value = config.SyncTransform;
+		m_syncCamerasToggle.value = config.SyncCameras;
+		m_syncLightsToggle.value = config.SyncLights;
+		m_syncMeshesToggle.value = config.SyncMeshes;
+		m_updateMeshCollidersToggle.value = config.SyncMeshes;
+		m_syncPointsToggle.value = config.SyncPoints;
+		m_syncMaterialsToggle.value = config.SyncMaterials;
+		m_findMaterialFromAssetsToggle.value = config.FindMaterialFromAssets;
+
+		//userData
+		m_syncVisibilityToggle.userData = config;
+		m_syncTransformToggle.userData = config;
+		m_syncCamerasToggle.userData = config;
+		m_syncLightsToggle.userData = config;
+		m_syncMeshesToggle.userData = config;
+		m_updateMeshCollidersToggle.userData = config;
+		m_syncPointsToggle.userData = config;
+		m_syncMaterialsToggle.userData = config;
+		m_findMaterialFromAssetsToggle.userData = config;	
+		m_selectedPlayerType = playerType;
+		
+	}
+	
+	
 	
 //----------------------------------------------------------------------------------------------------------------------
 	
@@ -142,6 +176,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	private Toggle m_syncPointsToggle;
 	private Toggle m_syncMaterialsToggle;
 	private Toggle m_findMaterialFromAssetsToggle;
+	private MeshSyncPlayerType m_selectedPlayerType = MeshSyncPlayerType.INVALID;
 	
 
 }

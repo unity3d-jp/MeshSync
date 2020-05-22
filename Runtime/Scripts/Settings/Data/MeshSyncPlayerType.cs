@@ -2,7 +2,8 @@
 
 //Only add, don't remove
 internal enum MeshSyncPlayerType {
-    SERVER =0,
+    INVALID =-1,
+    SERVER  = 0,
     CACHE_PLAYER,
     NUM_TYPES
     
