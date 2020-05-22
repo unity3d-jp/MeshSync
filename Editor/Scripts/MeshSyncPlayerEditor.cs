@@ -30,6 +30,15 @@ namespace UnityEditor.MeshSync
         static void EditorGUIToggle(GUIContent content, ref bool src) {
             src = EditorGUILayout.Toggle(content, src);
         }
+
+        static void EditorGUIFloatField(GUIContent content, ref float src) {
+            src = EditorGUILayout.FloatField(content, src);
+        }
+  
+        static void EditorGUIPopup(GUIContent content, string[] options, ref int src) {
+            src = EditorGUILayout.Popup(content, src, options);                
+        }
+//----------------------------------------------------------------------------------------------------------------------
         
         protected void DrawPlayerSettings(MeshSyncPlayer t, SerializedObject so)
         {
@@ -38,9 +47,9 @@ namespace UnityEditor.MeshSync
 
             // Asset Sync Settings
             t.foldSyncSettings = EditorGUILayout.Foldout(t.foldSyncSettings, "Asset Sync Settings", true, styleFold);
+            MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
             if (t.foldSyncSettings) {
 
-                MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
                 EditorGUIToggle(new GUIContent("Visibility"), ref playerConfig.SyncVisibility );
                 EditorGUIToggle(new GUIContent("Transform"), ref playerConfig.SyncTransform );
                 EditorGUIToggle(new GUIContent("Cameras"), ref playerConfig.SyncCameras );
@@ -48,9 +57,7 @@ namespace UnityEditor.MeshSync
                 if (playerConfig.SyncCameras)
                 {
                     EditorGUI.indentLevel++;
-#if UNITY_2018_1_OR_NEWER
                     EditorGUILayout.PropertyField(so.FindProperty("m_usePhysicalCameraParams"), new GUIContent("Physical Camera Params"));
-#endif
                     //EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
                     EditorGUI.indentLevel--;
                 }
@@ -74,16 +81,18 @@ namespace UnityEditor.MeshSync
             t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, styleFold);
             if (t.foldImportSettings)
             {
-                EditorGUILayout.PropertyField(so.FindProperty("m_animationInterpolation"));
-                EditorGUILayout.PropertyField(so.FindProperty("m_keyframeReduction"));
-                if (t.keyframeReduction)
+                EditorGUIPopup(new GUIContent("Animation Interpolation"), 
+                    m_animationInterpolationEnums, ref playerConfig.AnimationInterpolation
+                );
+                EditorGUIToggle(new GUIContent("Keyframe Reduction"), ref playerConfig.KeyframeReduction );
+                if (playerConfig.KeyframeReduction)
                 {
                     EditorGUI.indentLevel++;
-                    EditorGUILayout.PropertyField(so.FindProperty("m_reductionThreshold"), new GUIContent("Threshold"));
-                    EditorGUILayout.PropertyField(so.FindProperty("m_reductionEraseFlatCurves"), new GUIContent("Erase Flat Curves"));
+                    EditorGUIFloatField(new GUIContent("Threshold"),ref playerConfig.ReductionThreshold);
+                    EditorGUIToggle(new GUIContent("Erase Flat Curves"), ref playerConfig.ReductionEraseFlatCurves );
                     EditorGUI.indentLevel--;
                 }
-                EditorGUILayout.PropertyField(so.FindProperty("m_zUpCorrection"), new GUIContent("Z-Up Correction"));
+                EditorGUIPopup(new GUIContent("Z-Up Correction"),m_zUpCorrectionEnums, ref playerConfig.ZUpCorrection);
                 EditorGUILayout.Space();
             }
 
@@ -398,6 +407,8 @@ namespace UnityEditor.MeshSync
 //----------------------------------------------------------------------------------------------------------------------
 
         private MeshSyncPlayer m_asset = null;
+        private readonly string[] m_animationInterpolationEnums = System.Enum.GetNames( typeof( InterpolationMode ) );
+        private readonly string[] m_zUpCorrectionEnums          = System.Enum.GetNames( typeof( ZUpCorrectionMode ) );
 
 
     }

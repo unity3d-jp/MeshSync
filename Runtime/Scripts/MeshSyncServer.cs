@@ -53,7 +53,7 @@ namespace Unity.MeshSync
 #endif
             
             m_serverSettings.port = (ushort)m_serverPort;
-            m_serverSettings.zUpCorrectionMode = m_zUpCorrection;
+            m_serverSettings.zUpCorrectionMode = (ZUpCorrectionMode) m_config.ZUpCorrection;
             m_server = Server.Start(ref m_serverSettings);
             m_server.fileRootPath = httpFileRootPath;
             m_handler = OnServerMessage;
@@ -96,7 +96,7 @@ namespace Unity.MeshSync
         void CheckParamsUpdated()  {
 
             if (m_server) {
-                m_server.zUpCorrectionMode = m_zUpCorrection;
+                m_server.zUpCorrectionMode = (ZUpCorrectionMode) m_config.ZUpCorrection;
             }
         }
         #endregion
