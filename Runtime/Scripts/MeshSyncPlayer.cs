@@ -212,7 +212,6 @@ namespace Unity.MeshSync
         [SerializeField] int m_objIDSeed = 0;
 
 #if UNITY_EDITOR
-        [SerializeField] bool m_syncMaterialList = true;
         [SerializeField] bool m_sortEntities = true;
         [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_foldSyncSettings = true;
@@ -304,11 +303,6 @@ namespace Unity.MeshSync
         internal List<TextureHolder> textureList { get { return m_textureList; } }
 
 #if UNITY_EDITOR
-        internal bool syncMaterialList
-        {
-            get { return m_syncMaterialList; }
-            set { m_syncMaterialList = value; }
-        }
         internal bool sortEntities
         {
             get { return m_sortEntities; }
@@ -2405,13 +2399,7 @@ namespace Unity.MeshSync
 
             Action<GameObject> gatherClips = (go) => {
                 AnimationClip[] clips = null;
-#if UNITY_2018_3_OR_NEWER
                 clips = AnimationUtility.GetAnimationClips(go);
-#else
-                var animator = go.GetComponent<Animator>();
-                if (animator != null && animator.runtimeAnimatorController != null)
-                    clips = animator.runtimeAnimatorController.animationClips;
-#endif
                 if (clips != null && clips.Length > 0)
                     ret.AddRange(clips);
             };
@@ -2427,13 +2415,12 @@ namespace Unity.MeshSync
 
         private void OnSceneViewGUI(SceneView sceneView)
         {
-            if (m_syncMaterialList)
-            {
+            if (m_config.SyncMaterialList) {
                 if (Event.current.type == EventType.DragExited && Event.current.button == 0)
                     CheckMaterialAssigned();
             }
         }
-#endif
+#endif //UNITY_EDITOR
         #endregion
 
         #region Events

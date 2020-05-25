@@ -23,6 +23,10 @@ internal class MeshSyncPlayerConfig {
     public bool    ReductionEraseFlatCurves = false;
     public int     ZUpCorrection = (int) ZUpCorrectionMode.FlipYZ;
     
+    
+    //Misc
+    public bool SyncMaterialList = true;
+    
     [SerializeField] internal readonly int ClassVersion = 1;
 }
     
