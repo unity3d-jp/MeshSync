@@ -320,7 +320,7 @@ namespace Unity.MeshSync
             m_cacheFilePath.showRootSelector = true;
 
             m_config.Logging = false;
-            m_config = MeshSyncProjectSettings.CreateDefaultPlayerConfig(MeshSyncPlayerType.CACHE_PLAYER);            
+            m_config = MeshSyncProjectSettings.CreatePlayerConfig(MeshSyncPlayerType.CACHE_PLAYER);            
         }
 
         void OnValidate()
