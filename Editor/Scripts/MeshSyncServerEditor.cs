@@ -88,6 +88,11 @@ namespace UnityEditor.MeshSync
         }
 
 //----------------------------------------------------------------------------------------------------------------------                
+        protected override AnimationTweakEditorSettings GetDefaultAnimationTweakSettings() {
+            MeshSyncEditorSettings editorSettings = MeshSyncEditorSettings.GetOrCreateSettings();
+            return editorSettings.GetAnimationTweakSettings(MeshSyncPlayerType.SERVER);
+        }
+//----------------------------------------------------------------------------------------------------------------------                
         private MeshSyncServer m_serverAsset = null;        
     }
 }

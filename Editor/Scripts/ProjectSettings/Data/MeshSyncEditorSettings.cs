@@ -135,6 +135,19 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
             }
             m_dictionary.Add(info.AppPath, info);
         }
+
+        //Initialize AnimationTweakSettings
+        int numPlayerTypes = (int) MeshSyncPlayerType.NUM_TYPES;
+        if (null == m_defaultAnimationTweakSettings) {
+            m_defaultAnimationTweakSettings = new List<AnimationTweakEditorSettings>(numPlayerTypes);
+        }
+
+        while (m_defaultAnimationTweakSettings.Count < numPlayerTypes) {
+            m_defaultAnimationTweakSettings.Add(
+                new AnimationTweakEditorSettings()
+            );
+        }
+        
     }
     #endregion
 
@@ -142,6 +155,10 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
 //----------------------------------------------------------------------------------------------------------------------
 
     internal IDictionary<string, DCCToolInfo> GetDCCToolInfos() { return m_dictionary; }
+
+    internal AnimationTweakEditorSettings GetAnimationTweakSettings(MeshSyncPlayerType playerType) {
+        return m_defaultAnimationTweakSettings[(int)playerType];
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -152,7 +169,7 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
     //Key: DCC Tool app path
     private SortedDictionary<string,DCCToolInfo> m_dictionary;
     [SerializeField] private List<DCCToolInfo> m_serializedDCCToolInfo = null;
-
+    [SerializeField] private List<AnimationTweakEditorSettings> m_defaultAnimationTweakSettings;
 
 }
 
