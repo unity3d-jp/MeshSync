@@ -108,7 +108,7 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
         return settings;
     }
     
-    void SaveEditorSettings() {
+    internal void SaveEditorSettings() {
         Directory.CreateDirectory(Path.GetDirectoryName(MESHSYNC_EDITOR_SETTINGS_PATH));
         string json = JsonUtility.ToJson(this);
         File.WriteAllText(MESHSYNC_EDITOR_SETTINGS_PATH, json);
