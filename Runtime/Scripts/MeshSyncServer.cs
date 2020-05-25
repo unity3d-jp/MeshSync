@@ -434,6 +434,7 @@ namespace Unity.MeshSync
         }
 #endif
 
+
         protected override void OnEnable()
         {
             base.OnEnable();
