@@ -66,7 +66,8 @@ namespace UnityEditor.MeshSync
 
                 //Draw GUI that are disabled when autoStart is true
                 EditorGUI.BeginDisabledGroup(autoStart);
-                m_serverAsset.SetServerPort(EditorGUILayout.IntField("Server Port:", m_serverAsset.GetServerPort()));
+                int serverPort = EditorGUILayout.IntField("Server Port:", (int) m_serverAsset.GetServerPort());
+                m_serverAsset.SetServerPort((ushort) serverPort);
                 GUILayout.BeginHorizontal();
                 if (isServerStarted) {
                     if (GUILayout.Button("Stop", GUILayout.Width(110.0f))) {

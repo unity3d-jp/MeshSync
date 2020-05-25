@@ -41,6 +41,13 @@
 
 /*----------------------------------------------- General Settings--------------------------------------------------- */
 
+.general-header-container {
+    width: 300px;
+    -unity-font-style: normal;
+    font-size:  12px;
+    flex-direction: column;
+}
+
 .general-player-type-popup-container {
     width: 300px;
     -unity-font-style: normal;

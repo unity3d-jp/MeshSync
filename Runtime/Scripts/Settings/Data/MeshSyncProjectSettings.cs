@@ -60,6 +60,8 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
     protected override object GetLock() { return m_instanceLock; }
     public override string GetSettingsPath() { return MESHSYNC_PROJECT_SETTINGS_PATH;}
 
+    internal ushort GetDefaultServerPort() { return m_defaultServerPort;}
+    internal void SetDefaultServerPort(ushort port) { m_defaultServerPort = port;}
 //----------------------------------------------------------------------------------------------------------------------
 
     internal MeshSyncPlayerConfig GetDefaultPlayerConfig(MeshSyncPlayerType playerType) {
@@ -73,13 +75,21 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
 
     
 //----------------------------------------------------------------------------------------------------------------------
+    
+    [SerializeField] private ushort m_defaultServerPort = MeshSyncConstants.DEFAULT_SERVER_PORT;
+    [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
+
+    [SerializeField] internal int ClassVersion = 1;    
+    
+//----------------------------------------------------------------------------------------------------------------------
 
     private static MeshSyncProjectSettings m_instance = null;
     private static readonly object m_instanceLock = new object();
 
     private const string MESHSYNC_PROJECT_SETTINGS_PATH = "ProjectSettings/MeshSyncSettings.asset";
 
-    [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
+    
+    
 
 }
 
