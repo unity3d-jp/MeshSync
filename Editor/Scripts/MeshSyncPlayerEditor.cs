@@ -102,8 +102,8 @@ namespace UnityEditor.MeshSync
             {
                 EditorGUIToggle(new GUIContent("Sync Material List"), ref playerConfig.SyncMaterialList );
                 EditorGUIToggle(new GUIContent("Progressive Display"), ref playerConfig.ProgressiveDisplay );
-                EditorGUILayout.PropertyField(so.FindProperty("m_logging"));
-                EditorGUILayout.PropertyField(so.FindProperty("m_profiling"));
+                EditorGUIToggle(new GUIContent("Logging"), ref playerConfig.Logging );
+                EditorGUIToggle(new GUIContent("Profiling"), ref playerConfig.Profiling );
                 EditorGUILayout.Space();
             }
         }

@@ -68,12 +68,13 @@ namespace UnityEditor.MeshSync
         public override void OnInspectorGUI()
         {
             var so = serializedObject;
-            var t = target as SceneCachePlayer;
+            SceneCachePlayer t = target as SceneCachePlayer;
 
             EditorGUILayout.Space();
             DrawCacheSettings(t, so);
             DrawPlayerSettings(t, so);
-            if (t.profiling)
+            MeshSyncPlayerConfig config = t.GetConfig();
+            if (config.Profiling)
             {
                 EditorGUILayout.TextArea(t.dbgProfileReport, GUILayout.Height(120));
                 EditorGUILayout.Space();

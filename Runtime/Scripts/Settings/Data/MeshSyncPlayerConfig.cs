@@ -27,7 +27,9 @@ internal class MeshSyncPlayerConfig {
     //Misc
     public bool SyncMaterialList = true;
     public bool ProgressiveDisplay = true;
-    
+    public bool Logging = true;
+    public bool Profiling = false;
+
     [SerializeField] internal readonly int ClassVersion = 1;
 }
     

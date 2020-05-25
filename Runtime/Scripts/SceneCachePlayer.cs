@@ -119,13 +119,13 @@ namespace Unity.MeshSync
                 m_cacheFilePath.fullPath = path;
                 m_pathPrev = path;
                 m_timeRange = m_sceneCache.timeRange;
-                if (m_logging)
+                if (m_config.Logging)
                     Debug.Log(string.Format("SceneCachePlayer: cache opened ({0})", path));
                 return true;
             }
             else
             {
-                if (m_logging)
+                if (m_config.Logging)
                     Debug.Log(string.Format("SceneCachePlayer: cache open failed ({0})", path));
                 return false;
             }
@@ -136,7 +136,7 @@ namespace Unity.MeshSync
             if (m_sceneCache)
             {
                 m_sceneCache.Close();
-                if (m_logging)
+                if (m_config.Logging)
                     Debug.Log(string.Format("SceneCachePlayer: cache closed ({0})", m_cacheFilePath));
             }
             m_timePrev = -1;
@@ -241,7 +241,7 @@ namespace Unity.MeshSync
 #if UNITY_EDITOR
                         this.sortEntities = false;
 
-                        if (m_profiling)
+                        if (m_config.Profiling)
                         {
                             m_dbgSceneUpdateTime = Misc.NS2MS(Misc.GetTimeNS() - sceneUpdateBegin);
                             UpdateProfileReport(scene);
@@ -319,7 +319,7 @@ namespace Unity.MeshSync
             m_cacheFilePath.readOnly = true;
             m_cacheFilePath.showRootSelector = true;
 
-            m_logging = false;
+            m_config.Logging = false;
             MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
             m_config = projectSettings.GetDefaultPlayerConfig(MeshSyncPlayerType.CACHE_PLAYER);            
         }

@@ -193,8 +193,6 @@ namespace Unity.MeshSync
         [SerializeField] private bool m_usePhysicalCameraParams = true;
         [SerializeField] private bool m_useCustomCameraMatrices = true;
                 
-        [SerializeField] protected bool m_logging = true;
-        [SerializeField] protected bool m_profiling = false;
         [SerializeField] private bool m_markMeshesDynamic = false;
         [SerializeField] private bool m_dontSaveAssetsInScene = false;
 
@@ -274,17 +272,6 @@ namespace Unity.MeshSync
         {
             get { return m_useCustomCameraMatrices; }
             set { m_useCustomCameraMatrices = value; }
-        }
-
-        internal bool logging
-        {
-            get { return m_logging; }
-            set { m_logging = value; }
-        }
-        internal bool profiling
-        {
-            get { return m_profiling; }
-            set { m_profiling = value; }
         }
 
         internal bool markMeshesDynamic
@@ -396,7 +383,7 @@ namespace Unity.MeshSync
             }
             catch (Exception e)
             {
-                if (m_logging)
+                if (m_config.Logging)
                     Debug.LogError(e);
                 return false;
             }
@@ -631,7 +618,7 @@ namespace Unity.MeshSync
                                 save = true;
                                 break;
                             default:
-                                if (m_logging)
+                                if (m_config.Logging)
                                     Debug.Log("unknown asset: " + asset.name);
                                 break;
                         }
@@ -2202,7 +2189,7 @@ namespace Unity.MeshSync
                 if (overwrite || existing == null)
                 {
                     SaveAsset(ref mat, dstPath);
-                    if (m_logging)
+                    if (m_config.Logging)
                         Debug.Log("exported material " + dstPath);
                 }
                 else if (useExistingOnes && existing != null)
@@ -2239,7 +2226,7 @@ namespace Unity.MeshSync
                 {
                     SaveAsset(ref mesh, dstPath);
                     kvp.Value.mesh = mesh; // mesh maybe updated by SaveAsset()
-                    if (m_logging)
+                    if (m_config.Logging)
                         Debug.Log("exported material " + dstPath);
                 }
                 else if (useExistingOnes && existing != null)
@@ -2266,7 +2253,7 @@ namespace Unity.MeshSync
                 if (smr != null)
                     smr.sharedMesh = rec.origMesh;
 
-                if (m_logging)
+                if (m_config.Logging)
                     Debug.Log("updated mesh " + rec.origMesh.name);
                 ++n;
             }

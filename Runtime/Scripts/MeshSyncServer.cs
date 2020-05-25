@@ -60,7 +60,7 @@ namespace Unity.MeshSync
 #if UNITY_EDITOR
             EditorApplication.update += PollServerEvents;
 #endif
-            if (m_logging)
+            if (m_config.Logging)
                 Debug.Log("MeshSync: server started (port: " + m_serverSettings.port + ")");
 
             m_serverStarted = true;
@@ -78,7 +78,7 @@ namespace Unity.MeshSync
             m_server.Stop();
             m_server = default(Server);
 
-            if (m_logging)
+            if (m_config.Logging)
                 Debug.Log("MeshSync: server stopped (port: " + m_serverSettings.port + ")");
 
             m_serverStarted = false;
@@ -161,7 +161,7 @@ namespace Unity.MeshSync
                 ServeMaterial(mat.material, mes);
             m_server.EndServe();
 
-            if (m_logging)
+            if (m_config.Logging)
                 Debug.Log("MeshSyncServer: served");
         }
 
