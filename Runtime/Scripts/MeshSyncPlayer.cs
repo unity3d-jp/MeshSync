@@ -193,8 +193,6 @@ namespace Unity.MeshSync
         [SerializeField] private bool m_usePhysicalCameraParams = true;
         [SerializeField] private bool m_useCustomCameraMatrices = true;
                 
-        [SerializeField] protected bool m_logging = true;
-        [SerializeField] protected bool m_profiling = false;
         [SerializeField] private bool m_markMeshesDynamic = false;
         [SerializeField] private bool m_dontSaveAssetsInScene = false;
 
@@ -212,9 +210,7 @@ namespace Unity.MeshSync
         [SerializeField] int m_objIDSeed = 0;
 
 #if UNITY_EDITOR
-        [SerializeField] bool m_syncMaterialList = true;
         [SerializeField] bool m_sortEntities = true;
-        [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_foldSyncSettings = true;
         [SerializeField] bool m_foldImportSettings = true;
         [SerializeField] bool m_foldMisc = true;
@@ -278,16 +274,6 @@ namespace Unity.MeshSync
             set { m_useCustomCameraMatrices = value; }
         }
 
-        internal bool logging
-        {
-            get { return m_logging; }
-            set { m_logging = value; }
-        }
-        internal bool profiling
-        {
-            get { return m_profiling; }
-            set { m_profiling = value; }
-        }
 
         internal bool markMeshesDynamic
         {
@@ -304,20 +290,10 @@ namespace Unity.MeshSync
         internal List<TextureHolder> textureList { get { return m_textureList; } }
 
 #if UNITY_EDITOR
-        internal bool syncMaterialList
-        {
-            get { return m_syncMaterialList; }
-            set { m_syncMaterialList = value; }
-        }
         internal bool sortEntities
         {
             get { return m_sortEntities; }
             set { m_sortEntities = value; }
-        }
-        internal bool progressiveDisplay
-        {
-            get { return m_progressiveDisplay; }
-            set { m_progressiveDisplay = value; }
         }
 
         internal bool foldSyncSettings
@@ -408,7 +384,7 @@ namespace Unity.MeshSync
             }
             catch (Exception e)
             {
-                if (m_logging)
+                if (m_config.Logging)
                     Debug.LogError(e);
                 return false;
             }
@@ -643,7 +619,7 @@ namespace Unity.MeshSync
                                 save = true;
                                 break;
                             default:
-                                if (m_logging)
+                                if (m_config.Logging)
                                     Debug.Log("unknown asset: " + asset.name);
                                 break;
                         }
@@ -697,7 +673,7 @@ namespace Unity.MeshSync
             });
 #endif
 #if UNITY_EDITOR
-            if (m_progressiveDisplay)
+            if (m_config.ProgressiveDisplay)
                 ForceRepaint();
 #endif
         }
@@ -2214,7 +2190,7 @@ namespace Unity.MeshSync
                 if (overwrite || existing == null)
                 {
                     SaveAsset(ref mat, dstPath);
-                    if (m_logging)
+                    if (m_config.Logging)
                         Debug.Log("exported material " + dstPath);
                 }
                 else if (useExistingOnes && existing != null)
@@ -2251,7 +2227,7 @@ namespace Unity.MeshSync
                 {
                     SaveAsset(ref mesh, dstPath);
                     kvp.Value.mesh = mesh; // mesh maybe updated by SaveAsset()
-                    if (m_logging)
+                    if (m_config.Logging)
                         Debug.Log("exported material " + dstPath);
                 }
                 else if (useExistingOnes && existing != null)
@@ -2278,7 +2254,7 @@ namespace Unity.MeshSync
                 if (smr != null)
                     smr.sharedMesh = rec.origMesh;
 
-                if (m_logging)
+                if (m_config.Logging)
                     Debug.Log("updated mesh " + rec.origMesh.name);
                 ++n;
             }
@@ -2405,13 +2381,7 @@ namespace Unity.MeshSync
 
             Action<GameObject> gatherClips = (go) => {
                 AnimationClip[] clips = null;
-#if UNITY_2018_3_OR_NEWER
                 clips = AnimationUtility.GetAnimationClips(go);
-#else
-                var animator = go.GetComponent<Animator>();
-                if (animator != null && animator.runtimeAnimatorController != null)
-                    clips = animator.runtimeAnimatorController.animationClips;
-#endif
                 if (clips != null && clips.Length > 0)
                     ret.AddRange(clips);
             };
@@ -2427,13 +2397,12 @@ namespace Unity.MeshSync
 
         private void OnSceneViewGUI(SceneView sceneView)
         {
-            if (m_syncMaterialList)
-            {
+            if (m_config.SyncMaterialList) {
                 if (Event.current.type == EventType.DragExited && Event.current.button == 0)
                     CheckMaterialAssigned();
             }
         }
-#endif
+#endif //UNITY_EDITOR
         #endregion
 
         #region Events

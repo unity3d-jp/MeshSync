@@ -29,7 +29,6 @@ namespace UnityEditor.MeshSync
             SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
             player.rootObject = go.GetComponent<Transform>();
             player.assetDir = new DataPath(DataPath.Root.DataPath, string.Format("SceneCache/{0}", go.name));
-            player.progressiveDisplay = false;
             player.markMeshesDynamic = true;
             player.dontSaveAssetsInScene = true;
 
@@ -44,26 +43,24 @@ namespace UnityEditor.MeshSync
 
         public static GameObject CreateSceneCachePlayerPrefab(string path)
         {
-            var go = CreateSceneCachePlayer(path);
+            GameObject go = CreateSceneCachePlayer(path);
             if (go == null)
                 return null;
 
             // export materials & animation and generate prefab
-            var player = go.GetComponent<SceneCachePlayer>();
+            SceneCachePlayer player = go.GetComponent<SceneCachePlayer>();
             player.UpdatePlayer();
             player.ExportMaterials(false, true);
             player.ResetTimeAnimation();
             player.handleAssets = false;
-            var scene = player.GetLastScene();
-            if (!scene.submeshesHaveUniqueMaterial)
-                player.syncMaterialList = false;
+            SceneData scene = player.GetLastScene();
+            if (!scene.submeshesHaveUniqueMaterial) {
+                MeshSyncPlayerConfig config = player.GetConfig();
+                config.SyncMaterialList = false;
+            }
 
-            var prefabPath = string.Format("Assets/SceneCache/{0}.prefab", go.name);
-#if UNITY_2018_3_OR_NEWER
+            string prefabPath = string.Format("Assets/SceneCache/{0}.prefab", go.name);
             PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabPath, InteractionMode.AutomatedAction);
-#else
-            PrefabUtility.CreatePrefab(prefabPath, go, ReplacePrefabOptions.ConnectToPrefab);
-#endif
             return go;
         }
 
@@ -71,12 +68,13 @@ namespace UnityEditor.MeshSync
         public override void OnInspectorGUI()
         {
             var so = serializedObject;
-            var t = target as SceneCachePlayer;
+            SceneCachePlayer t = target as SceneCachePlayer;
 
             EditorGUILayout.Space();
             DrawCacheSettings(t, so);
             DrawPlayerSettings(t, so);
-            if (t.profiling)
+            MeshSyncPlayerConfig config = t.GetConfig();
+            if (config.Profiling)
             {
                 EditorGUILayout.TextArea(t.dbgProfileReport, GUILayout.Height(120));
                 EditorGUILayout.Space();

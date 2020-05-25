@@ -100,10 +100,10 @@ namespace UnityEditor.MeshSync
             t.foldMisc = EditorGUILayout.Foldout(t.foldMisc, "Misc", true, styleFold);
             if (t.foldMisc)
             {
-                EditorGUILayout.PropertyField(so.FindProperty("m_syncMaterialList"));
-                EditorGUILayout.PropertyField(so.FindProperty("m_progressiveDisplay"));
-                EditorGUILayout.PropertyField(so.FindProperty("m_logging"));
-                EditorGUILayout.PropertyField(so.FindProperty("m_profiling"));
+                EditorGUIToggle(new GUIContent("Sync Material List"), ref playerConfig.SyncMaterialList );
+                EditorGUIToggle(new GUIContent("Progressive Display"), ref playerConfig.ProgressiveDisplay );
+                EditorGUIToggle(new GUIContent("Logging"), ref playerConfig.Logging );
+                EditorGUIToggle(new GUIContent("Profiling"), ref playerConfig.Profiling );
                 EditorGUILayout.Space();
             }
         }
