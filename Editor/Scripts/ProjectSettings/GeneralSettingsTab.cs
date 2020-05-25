@@ -260,7 +260,14 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		m_progressiveDisplayToggle.SetValueWithoutNotify(config.ProgressiveDisplay);
 		m_loggingToggle.SetValueWithoutNotify(config.Logging);
 		m_profilingToggle.SetValueWithoutNotify(config.Profiling);
-		
+
+		//Animation Tweak
+		AnimationTweakSettings animationTweakSettings = config.GetAnimationTweakSettings();
+		m_animationTweakTimeScaleField.SetValueWithoutNotify(animationTweakSettings.TimeScale);
+		m_animationTweakTimeOffsetField.SetValueWithoutNotify(animationTweakSettings.TimeOffset);
+		m_animationTweakDropStepField.SetValueWithoutNotify(animationTweakSettings.DropStep);
+		m_animationTweakReductionThresholdField.SetValueWithoutNotify(animationTweakSettings.ReductionThreshold);
+		m_animationTweakEraseFlatCurvesToggle.SetValueWithoutNotify(animationTweakSettings.EraseFlatCurves);
 	
 		//userData
 		foreach (VisualElement uiElement in m_playerConfigUIElements) {
