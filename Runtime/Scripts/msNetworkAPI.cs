@@ -25,13 +25,12 @@ namespace Unity.MeshSync
 
         public static ServerSettings defaultValue
         {
-            get
-            {
-                var ret = new ServerSettings
-                {
+            get {
+                MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+                ServerSettings ret = new ServerSettings {
                     maxQueue = 512,
                     maxThreads = 8,
-                    port = defaultPort,
+                    port = settings.GetDefaultServerPort(),
                     meshSplitUnit = Lib.maxVerticesPerMesh,
                     meshMaxBoneInfluence = Lib.maxBoneInfluence,
                     zUpCorrectionMode = ZUpCorrectionMode.FlipYZ,
@@ -39,8 +38,6 @@ namespace Unity.MeshSync
                 return ret;
             }
         }
-
-        public static ushort defaultPort { get { return 8080; } }
     }
 
     internal struct Server

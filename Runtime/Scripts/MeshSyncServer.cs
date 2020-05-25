@@ -430,7 +430,10 @@ namespace Unity.MeshSync
         }
 
         void Reset() {
-            m_config = MeshSyncProjectSettings.CreatePlayerConfig(MeshSyncPlayerType.SERVER);            
+            MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+            m_config = MeshSyncProjectSettings.CreatePlayerConfig(MeshSyncPlayerType.SERVER);
+            m_serverPort = projectSettings.GetDefaultServerPort();
+            
         }
 #endif
 
@@ -460,7 +463,7 @@ namespace Unity.MeshSync
         #region Fields
 
         [SerializeField] private bool m_autoStartServer = false;
-        [SerializeField] int m_serverPort = ServerSettings.defaultPort;
+        [SerializeField] int m_serverPort;
 
         ServerSettings m_serverSettings = ServerSettings.defaultValue;
         Server m_server;

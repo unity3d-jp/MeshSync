@@ -28,17 +28,30 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	        MeshSyncPlayerType.CACHE_PLAYER.ToString(),
         };	        
         
-        //Add the parent of this tab to root
-	    VisualElement playerTypePopupContainer = containerInstance.Query<VisualElement>("PlayerTypePopupContainer").First();
-        PopupField<string> playerTypePopup = new PopupField<string>(objectTypes, objectTypes[0]);
-        playerTypePopup.RegisterValueChangedCallback(OnPlayerTypePopupChanged);
-	    playerTypePopup.label = "Settings for object type";
-	    playerTypePopupContainer.Add(playerTypePopup);        
-
 	    //Templates
 	    VisualTreeAsset fieldTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
 		    Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "GeneralSettingsFieldTemplate")
 	    );
+
+	    //Add server port
+	    MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+	    VisualElement  headerContainer = containerInstance.Query<VisualElement>("HeaderContainer").First();
+	    m_serverPortField = new IntegerField("Server Port");
+	    m_serverPortField.SetValueWithoutNotify(projectSettings.GetDefaultServerPort());
+	    
+	    m_serverPortField.RegisterValueChangedCallback((ChangeEvent<int> evt) => {
+		    MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+		    settings.SetDefaultServerPort((ushort) evt.newValue);
+		    settings.SaveSettings();
+	    });
+	    headerContainer.Add(m_serverPortField);        
+	    
+        //Add playerType popup
+	    VisualElement playerTypePopupContainer = containerInstance.Query<VisualElement>("PlayerTypePopupContainer").First();
+        PopupField<string> playerTypePopup = new PopupField<string>("Settings for object type",objectTypes, objectTypes[0]);
+        playerTypePopup.RegisterValueChangedCallback(OnPlayerTypePopupChanged);
+	    playerTypePopupContainer.Add(playerTypePopup);        
+
       
 	    Foldout syncSettingsFoldout = containerInstance.Query<Foldout>("SyncSettingsFoldout").First();
 
@@ -228,8 +241,6 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		}
 
 		UpdatePlayerConfigUIElements(playerType);
-		changeEvt.StopPropagation();
-
 	}
 
 //----------------------------------------------------------------------------------------------------------------------	
@@ -237,7 +248,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	private void UpdatePlayerConfigUIElements(MeshSyncPlayerType playerType) {
 		MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
 		MeshSyncPlayerConfig config = projectSettings.GetDefaultPlayerConfig(playerType);
-
+	
 		//sync
 		m_syncVisibilityToggle.SetValueWithoutNotify(config.SyncVisibility);
 		m_syncTransformToggle.SetValueWithoutNotify(config.SyncTransform);
@@ -280,6 +291,8 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 
 
 //----------------------------------------------------------------------------------------------------------------------
+	
+	private IntegerField m_serverPortField;
 	
 	//Sync Settings
 	private Toggle m_syncVisibilityToggle;
