@@ -142,7 +142,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 			}
 			
 			onValueChanged(config, changeEvent.newValue);
-			MeshSyncProjectSettings.GetInstance().SaveSettings();
+			MeshSyncProjectSettings.GetOrCreateSettings().SaveSettings();
 		});		
 		
 		fieldContainer.Add(field);
@@ -172,7 +172,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 			}
 			
 			onValueChanged(config, popupField.index);
-			MeshSyncProjectSettings.GetInstance().SaveSettings();
+			MeshSyncProjectSettings.GetOrCreateSettings().SaveSettings();
 		});
 				
 		fieldContainer.Add(popupField);
@@ -203,7 +203,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 //----------------------------------------------------------------------------------------------------------------------	
 
 	private void UpdatePlayerConfigUIElements(MeshSyncPlayerType playerType) {
-		MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
+		MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
 		MeshSyncPlayerConfig config = projectSettings.GetDefaultPlayerConfig(playerType);
 
 		//sync
