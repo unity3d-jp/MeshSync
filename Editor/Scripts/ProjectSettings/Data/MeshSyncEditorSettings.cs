@@ -138,7 +138,7 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
 
         //Initialize AnimationTweakSettings
         if (null == m_defaultAnimationTweakSettings) {
-            m_defaultAnimationTweakSettings = new AnimationTweakEditorSettings();
+            m_defaultAnimationTweakSettings = new AnimationTweakSettings();
         }
         
     }
@@ -150,13 +150,13 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
     internal IDictionary<string, DCCToolInfo> GetDCCToolInfos() { return m_dictionary; }
 
 //----------------------------------------------------------------------------------------------------------------------
-    internal AnimationTweakEditorSettings GetDefaultAnimationTweakSettings() {
+    internal AnimationTweakSettings GetDefaultAnimationTweakSettings() {
         return m_defaultAnimationTweakSettings;
     }
     
-    internal static AnimationTweakEditorSettings CreateAnimationTweakSettings() {
+    internal static AnimationTweakSettings CreateAnimationTweakSettings() {
         MeshSyncEditorSettings settings = GetOrCreateSettings();
-        return new AnimationTweakEditorSettings(settings.GetDefaultAnimationTweakSettings());
+        return new AnimationTweakSettings(settings.GetDefaultAnimationTweakSettings());
     }
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -167,7 +167,7 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
     //Key: DCC Tool app path
     private SortedDictionary<string,DCCToolInfo> m_dictionary;
     [SerializeField] private List<DCCToolInfo> m_serializedDCCToolInfo = null;
-    [SerializeField] AnimationTweakEditorSettings m_defaultAnimationTweakSettings;
+    [SerializeField] AnimationTweakSettings m_defaultAnimationTweakSettings;
 
     [SerializeField] internal int ClassVersion = 1;
 

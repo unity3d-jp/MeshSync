@@ -299,7 +299,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 //----------------------------------------------------------------------------------------------------------------------
 	private void UpdateEditorUIElements() {
 		MeshSyncEditorSettings editorSettings = MeshSyncEditorSettings.GetOrCreateSettings();
-		AnimationTweakEditorSettings animationTweakSettings = editorSettings.GetDefaultAnimationTweakSettings();
+		AnimationTweakSettings animationTweakSettings = editorSettings.GetDefaultAnimationTweakSettings();
 		m_animationTweakTimeScaleField.SetValueWithoutNotify(animationTweakSettings.TimeScale);
 		m_animationTweakTimeOffsetField.SetValueWithoutNotify(animationTweakSettings.TimeOffset);
 		m_animationTweakDropStepField.SetValueWithoutNotify(animationTweakSettings.DropStep);

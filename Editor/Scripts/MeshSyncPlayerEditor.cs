@@ -6,7 +6,7 @@ using UnityEngine;
 namespace UnityEditor.MeshSync
 {
     [CustomEditor(typeof(MeshSyncPlayer))]
-    internal abstract class MeshSyncPlayerEditor : Editor {
+    internal class MeshSyncPlayerEditor : Editor {
                 
         private float m_animationFrameRate = 30.0f;
        
@@ -419,7 +419,7 @@ namespace UnityEditor.MeshSync
         private MeshSyncPlayer m_asset = null;
         private readonly string[] m_animationInterpolationEnums = System.Enum.GetNames( typeof( InterpolationMode ) );
         private readonly string[] m_zUpCorrectionEnums          = System.Enum.GetNames( typeof( ZUpCorrectionMode ) );
-        private AnimationTweakEditorSettings m_animationTweakSettings;
+        private AnimationTweakSettings m_animationTweakSettings;
 
 
     }
