@@ -5,7 +5,9 @@ namespace Unity.MeshSync {
 [Serializable]
 internal class MeshSyncPlayerConfig {
 
-    internal MeshSyncPlayerConfig() { }
+    internal MeshSyncPlayerConfig() {
+        m_animationTweakSettings = new AnimationTweakSettings();        
+    }
 //----------------------------------------------------------------------------------------------------------------------    
 
     internal MeshSyncPlayerConfig(MeshSyncPlayerConfig other) {
@@ -32,7 +34,12 @@ internal class MeshSyncPlayerConfig {
         ProgressiveDisplay = other.ProgressiveDisplay;
         Logging            = other.Logging;
         Profiling          = other.Profiling;
+        
+        m_animationTweakSettings = new AnimationTweakSettings(other.GetAnimationTweakSettings());
     }
+
+//----------------------------------------------------------------------------------------------------------------------    
+    internal AnimationTweakSettings GetAnimationTweakSettings() { return m_animationTweakSettings;}
 
 //----------------------------------------------------------------------------------------------------------------------    
     //Sync Settings
@@ -59,6 +66,9 @@ internal class MeshSyncPlayerConfig {
     public bool Logging            = true;
     public bool Profiling          = false;
 
+//----------------------------------------------------------------------------------------------------------------------    
+    
+    [SerializeField] AnimationTweakSettings m_animationTweakSettings;
     [SerializeField] internal readonly int ClassVersion = 1;
 }
 } //end namespace

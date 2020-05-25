@@ -134,7 +134,7 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
                 continue;
             }
             m_dictionary.Add(info.AppPath, info);
-        }
+        }        
     }
     #endregion
 
@@ -142,7 +142,7 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
 //----------------------------------------------------------------------------------------------------------------------
 
     internal IDictionary<string, DCCToolInfo> GetDCCToolInfos() { return m_dictionary; }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
 
 
@@ -153,6 +153,7 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
     private SortedDictionary<string,DCCToolInfo> m_dictionary;
     [SerializeField] private List<DCCToolInfo> m_serializedDCCToolInfo = null;
 
+    [SerializeField] internal int ClassVersion = 1;
 
 }
 

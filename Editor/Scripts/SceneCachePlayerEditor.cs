@@ -163,4 +163,4 @@ namespace UnityEditor.MeshSync
             }
         }
     }
-}
+} //end namespace

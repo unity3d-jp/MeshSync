@@ -32,7 +32,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	    VisualElement playerTypePopupContainer = containerInstance.Query<VisualElement>("PlayerTypePopupContainer").First();
         PopupField<string> playerTypePopup = new PopupField<string>(objectTypes, objectTypes[0]);
         playerTypePopup.RegisterValueChangedCallback(OnPlayerTypePopupChanged);
-	    playerTypePopup.label = "Object Type";
+	    playerTypePopup.label = "Settings for object type";
 	    playerTypePopupContainer.Add(playerTypePopup);        
 
 	    //Templates
@@ -112,7 +112,39 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.Profiling = newValue; }
 	    );
 	    
-    
+	    //Animation Tweak
+	    Foldout animationTweakSettingsFoldout = containerInstance.Query<Foldout>("AnimationTweakSettingsFoldout").First();
+	    m_animationTweakTimeScaleField = AddField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
+		    "Time Scale",
+		    (MeshSyncPlayerConfig config, float newValue) => {
+			    config.GetAnimationTweakSettings().TimeScale = newValue;
+		    }
+	    );
+	    m_animationTweakTimeOffsetField = AddField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
+		    "Time Offset",
+		    (MeshSyncPlayerConfig config, float newValue) => {
+			    config.GetAnimationTweakSettings().TimeOffset = newValue;
+		    }
+	    );
+	    m_animationTweakDropStepField = AddField<IntegerField, int>(fieldTemplate, animationTweakSettingsFoldout, 
+		    "Drop Step",
+		    (MeshSyncPlayerConfig config, int newValue) => {
+			    config.GetAnimationTweakSettings().DropStep = newValue;
+		    }
+	    );
+	    m_animationTweakReductionThresholdField = AddField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
+		    "Reduction Threshold",
+		    (MeshSyncPlayerConfig config, float newValue) => {
+			    config.GetAnimationTweakSettings().ReductionThreshold = newValue;
+		    }
+	    );
+	    m_animationTweakEraseFlatCurvesToggle = AddField<Toggle, bool>(fieldTemplate, animationTweakSettingsFoldout, 
+		    "Erase Flat Curves",
+		    (MeshSyncPlayerConfig config, bool newValue) => {
+			    config.GetAnimationTweakSettings().EraseFlatCurves = newValue;
+		    }
+	    );
+	    	       
 	    UpdatePlayerConfigUIElements(MeshSyncPlayerType.SERVER);
 	    
         root.Add(containerInstance);
@@ -228,7 +260,14 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		m_progressiveDisplayToggle.SetValueWithoutNotify(config.ProgressiveDisplay);
 		m_loggingToggle.SetValueWithoutNotify(config.Logging);
 		m_profilingToggle.SetValueWithoutNotify(config.Profiling);
-		
+
+		//Animation Tweak
+		AnimationTweakSettings animationTweakSettings = config.GetAnimationTweakSettings();
+		m_animationTweakTimeScaleField.SetValueWithoutNotify(animationTweakSettings.TimeScale);
+		m_animationTweakTimeOffsetField.SetValueWithoutNotify(animationTweakSettings.TimeOffset);
+		m_animationTweakDropStepField.SetValueWithoutNotify(animationTweakSettings.DropStep);
+		m_animationTweakReductionThresholdField.SetValueWithoutNotify(animationTweakSettings.ReductionThreshold);
+		m_animationTweakEraseFlatCurvesToggle.SetValueWithoutNotify(animationTweakSettings.EraseFlatCurves);
 	
 		//userData
 		foreach (VisualElement uiElement in m_playerConfigUIElements) {
@@ -238,9 +277,8 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		
 		m_selectedPlayerType = playerType;
 	}
-	
-	
-	
+
+
 //----------------------------------------------------------------------------------------------------------------------
 	
 	//Sync Settings
@@ -265,6 +303,13 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	private Toggle m_progressiveDisplayToggle;
 	private Toggle m_loggingToggle;
 	private Toggle m_profilingToggle;
+	
+	//AnimationTweak Settings
+	public FloatField   m_animationTweakTimeScaleField;
+	public FloatField   m_animationTweakTimeOffsetField;
+	public IntegerField m_animationTweakDropStepField;
+	public FloatField   m_animationTweakReductionThresholdField;
+	public Toggle       m_animationTweakEraseFlatCurvesToggle;
 	
 	
 	private MeshSyncPlayerType m_selectedPlayerType = MeshSyncPlayerType.INVALID;

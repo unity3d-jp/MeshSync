@@ -42,13 +42,16 @@
 /*----------------------------------------------- General Settings--------------------------------------------------- */
 
 .general-player-type-popup-container {
-    width: 300px;    
+    width: 300px;
+    -unity-font-style: normal;
+    font-size:  12px;
 }
 
-.general-sync-settings-foldout {
+.general-settings-foldout {
     width: 500px;
     -unity-font-style:bold;
     font-size:  14px;
+    margin: 1px 15px;
 }
 
 .general-settings-field-container {
