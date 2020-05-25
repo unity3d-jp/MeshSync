@@ -49,9 +49,7 @@ internal class DCCPluginInstallInfo {
     /// </summary>
     public string         PluginVersion;
 
-#pragma warning disable 414
-    [SerializeField] private readonly int m_classVersion = 1;
-#pragma warning restore 414
+    [SerializeField] internal readonly int ClassVersion = 1;
 
 }
 

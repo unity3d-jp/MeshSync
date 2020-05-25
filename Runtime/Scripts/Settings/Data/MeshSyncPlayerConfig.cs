@@ -23,9 +23,7 @@ internal class MeshSyncPlayerConfig {
     public bool    ReductionEraseFlatCurves = false;
     public int     ZUpCorrection = (int) ZUpCorrectionMode.FlipYZ;
     
-#pragma warning disable 414
-    [SerializeField] private readonly int m_classVersion = 1;
-#pragma warning restore 414
+    [SerializeField] internal readonly int ClassVersion = 1;
 }
     
 } //end namespace
