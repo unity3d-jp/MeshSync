@@ -114,39 +114,38 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	    
 	    //Animation Tweak
 	    Foldout animationTweakSettingsFoldout = containerInstance.Query<Foldout>("AnimationTweakSettingsFoldout").First();
-	    m_animationTweakTimeScaleField = AddEditorField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
+	    m_animationTweakTimeScaleField = AddField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
 		    "Time Scale",
-		    (MeshSyncEditorSettings editorSettings, float newValue) => {
-			    editorSettings.GetDefaultAnimationTweakSettings().TimeScale = newValue;
+		    (MeshSyncPlayerConfig config, float newValue) => {
+			    config.GetAnimationTweakSettings().TimeScale = newValue;
 		    }
 	    );
-	    m_animationTweakTimeOffsetField = AddEditorField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
+	    m_animationTweakTimeOffsetField = AddField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
 		    "Time Offset",
-		    (MeshSyncEditorSettings editorSettings, float newValue) => {
-			    editorSettings.GetDefaultAnimationTweakSettings().TimeOffset = newValue;
+		    (MeshSyncPlayerConfig config, float newValue) => {
+			    config.GetAnimationTweakSettings().TimeOffset = newValue;
 		    }
 	    );
-	    m_animationTweakDropStepField = AddEditorField<IntegerField, int>(fieldTemplate, animationTweakSettingsFoldout, 
+	    m_animationTweakDropStepField = AddField<IntegerField, int>(fieldTemplate, animationTweakSettingsFoldout, 
 		    "Drop Step",
-		    (MeshSyncEditorSettings editorSettings, int newValue) => {
-			    editorSettings.GetDefaultAnimationTweakSettings().DropStep = newValue;
+		    (MeshSyncPlayerConfig config, int newValue) => {
+			    config.GetAnimationTweakSettings().DropStep = newValue;
 		    }
 	    );
-	    m_animationTweakReductionThresholdField = AddEditorField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
+	    m_animationTweakReductionThresholdField = AddField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
 		    "Reduction Threshold",
-		    (MeshSyncEditorSettings editorSettings, float newValue) => {
-			    editorSettings.GetDefaultAnimationTweakSettings().ReductionThreshold = newValue;
+		    (MeshSyncPlayerConfig config, float newValue) => {
+			    config.GetAnimationTweakSettings().ReductionThreshold = newValue;
 		    }
 	    );
-	    m_animationTweakEraseFlatCurvesToggle = AddEditorField<Toggle, bool>(fieldTemplate, animationTweakSettingsFoldout, 
+	    m_animationTweakEraseFlatCurvesToggle = AddField<Toggle, bool>(fieldTemplate, animationTweakSettingsFoldout, 
 		    "Erase Flat Curves",
-		    (MeshSyncEditorSettings editorSettings, bool newValue) => {
-			    editorSettings.GetDefaultAnimationTweakSettings().EraseFlatCurves = newValue;
+		    (MeshSyncPlayerConfig config, bool newValue) => {
+			    config.GetAnimationTweakSettings().EraseFlatCurves = newValue;
 		    }
 	    );
 	    	       
 	    UpdatePlayerConfigUIElements(MeshSyncPlayerType.SERVER);
-	    UpdateEditorUIElements();
 	    
         root.Add(containerInstance);
     }
@@ -214,29 +213,6 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		return popupField;
 	}
 	
-//----------------------------------------------------------------------------------------------------------------------	
-	private F AddEditorField<F,V>(VisualTreeAsset template, VisualElement parent, string text,
-		Action<MeshSyncEditorSettings,V> onValueChanged) where F: VisualElement,INotifyValueChanged<V>, new()  
-	{
-
-		TemplateContainer templateInstance = template.CloneTree();
-		VisualElement     fieldContainer   = templateInstance.Query<VisualElement>("FieldContainer").First();
-		Label label = templateInstance.Query<Label>().First();
-		label.text = text;
-		
-		F field = new F();
-		field.AddToClassList("general-settings-field");
-		field.RegisterValueChangedCallback((ChangeEvent<V> changeEvent) => {
-
-			MeshSyncEditorSettings editorSettings =  MeshSyncEditorSettings.GetOrCreateSettings();			
-			onValueChanged(editorSettings, changeEvent.newValue);
-			editorSettings.SaveEditorSettings();
-		});		
-		
-		fieldContainer.Add(field);
-		parent.Add(templateInstance);
-		return field;
-	}
 
 //----------------------------------------------------------------------------------------------------------------------	
 	private void OnPlayerTypePopupChanged(ChangeEvent<string> changeEvt) {
@@ -293,18 +269,6 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		
 		
 		m_selectedPlayerType = playerType;
-	}
-
-
-//----------------------------------------------------------------------------------------------------------------------
-	private void UpdateEditorUIElements() {
-		MeshSyncEditorSettings editorSettings = MeshSyncEditorSettings.GetOrCreateSettings();
-		AnimationTweakSettings animationTweakSettings = editorSettings.GetDefaultAnimationTweakSettings();
-		m_animationTweakTimeScaleField.SetValueWithoutNotify(animationTweakSettings.TimeScale);
-		m_animationTweakTimeOffsetField.SetValueWithoutNotify(animationTweakSettings.TimeOffset);
-		m_animationTweakDropStepField.SetValueWithoutNotify(animationTweakSettings.DropStep);
-		m_animationTweakReductionThresholdField.SetValueWithoutNotify(animationTweakSettings.ReductionThreshold);
-		m_animationTweakEraseFlatCurvesToggle.SetValueWithoutNotify(animationTweakSettings.EraseFlatCurves);
 	}
 
 

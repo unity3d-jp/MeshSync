@@ -108,7 +108,7 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
         return settings;
     }
     
-    internal void SaveEditorSettings() {
+    void SaveEditorSettings() {
         Directory.CreateDirectory(Path.GetDirectoryName(MESHSYNC_EDITOR_SETTINGS_PATH));
         string json = JsonUtility.ToJson(this);
         File.WriteAllText(MESHSYNC_EDITOR_SETTINGS_PATH, json);
@@ -134,13 +134,7 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
                 continue;
             }
             m_dictionary.Add(info.AppPath, info);
-        }
-
-        //Initialize AnimationTweakSettings
-        if (null == m_defaultAnimationTweakSettings) {
-            m_defaultAnimationTweakSettings = new AnimationTweakSettings();
-        }
-        
+        }        
     }
     #endregion
 
@@ -150,15 +144,6 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
     internal IDictionary<string, DCCToolInfo> GetDCCToolInfos() { return m_dictionary; }
 
 //----------------------------------------------------------------------------------------------------------------------
-    internal AnimationTweakSettings GetDefaultAnimationTweakSettings() {
-        return m_defaultAnimationTweakSettings;
-    }
-    
-    internal static AnimationTweakSettings CreateAnimationTweakSettings() {
-        MeshSyncEditorSettings settings = GetOrCreateSettings();
-        return new AnimationTweakSettings(settings.GetDefaultAnimationTweakSettings());
-    }
-//----------------------------------------------------------------------------------------------------------------------
 
 
     const string MESHSYNC_EDITOR_SETTINGS_PATH = "Library/MeshSync/MeshSyncEditorSettings.asset";
@@ -167,7 +152,6 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
     //Key: DCC Tool app path
     private SortedDictionary<string,DCCToolInfo> m_dictionary;
     [SerializeField] private List<DCCToolInfo> m_serializedDCCToolInfo = null;
-    [SerializeField] AnimationTweakSettings m_defaultAnimationTweakSettings;
 
     [SerializeField] internal int ClassVersion = 1;
 

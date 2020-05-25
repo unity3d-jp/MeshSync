@@ -16,9 +16,7 @@ namespace UnityEditor.MeshSync
             
             if (null == m_asset)
                 return;
-
-            m_animationTweakSettings = MeshSyncEditorSettings.CreateAnimationTweakSettings();
-            
+           
             List<AnimationClip> clips = m_asset.GetAnimationClips();
             if (clips.Count > 0)
                 m_animationFrameRate = clips[0].frameRate;
@@ -191,8 +189,11 @@ namespace UnityEditor.MeshSync
             var styleFold = EditorStyles.foldout;
             styleFold.fontStyle = FontStyle.Bold;
             t.foldAnimationTweak = EditorGUILayout.Foldout(t.foldAnimationTweak, "Animation Tweak", true, styleFold);
-            if (t.foldAnimationTweak)
-            {
+            if (t.foldAnimationTweak) {
+                MeshSyncPlayerConfig config = m_asset.GetConfig();
+                AnimationTweakSettings animationTweakSettings = config.GetAnimationTweakSettings();
+                    
+                
                 // Override Frame Rate
                 GUILayout.BeginVertical("Box");
                 EditorGUILayout.LabelField("Override Frame Rate", EditorStyles.boldLabel);
@@ -210,13 +211,13 @@ namespace UnityEditor.MeshSync
                 GUILayout.BeginVertical("Box");
                 EditorGUILayout.LabelField("Time Scale", EditorStyles.boldLabel);
                 EditorGUI.indentLevel++;
-                EditorGUIFloatField("Scale", ref m_animationTweakSettings.TimeScale);
-                EditorGUIFloatField("Offset", ref m_animationTweakSettings.TimeOffset);
+                EditorGUIFloatField("Scale", ref animationTweakSettings.TimeScale);
+                EditorGUIFloatField("Offset", ref animationTweakSettings.TimeOffset);
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Apply", GUILayout.Width(120.0f))) {
-                    ApplyTimeScale(t.GetAnimationClips(), m_animationTweakSettings.TimeScale, 
-                        m_animationTweakSettings.TimeOffset
+                    ApplyTimeScale(t.GetAnimationClips(), animationTweakSettings.TimeScale, 
+                        animationTweakSettings.TimeOffset
                     );                   
                 }
                 GUILayout.EndHorizontal();
@@ -227,11 +228,11 @@ namespace UnityEditor.MeshSync
                 GUILayout.BeginVertical("Box");
                 EditorGUILayout.LabelField("Drop Keyframes", EditorStyles.boldLabel);
                 EditorGUI.indentLevel++;
-                EditorGUIIntField("Step", ref m_animationTweakSettings.DropStep);
+                EditorGUIIntField("Step", ref animationTweakSettings.DropStep);
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Apply", GUILayout.Width(120.0f))) {
-                    ApplyDropKeyframes(t.GetAnimationClips(), m_animationTweakSettings.DropStep);                    
+                    ApplyDropKeyframes(t.GetAnimationClips(), animationTweakSettings.DropStep);                    
                 }
                 GUILayout.EndHorizontal();
                 EditorGUI.indentLevel--;
@@ -241,13 +242,13 @@ namespace UnityEditor.MeshSync
                 GUILayout.BeginVertical("Box");
                 EditorGUILayout.LabelField("Keyframe Reduction", EditorStyles.boldLabel);
                 EditorGUI.indentLevel++;
-                EditorGUIFloatField("Threshold", ref m_animationTweakSettings.ReductionThreshold);
-                EditorGUIToggle("Erase Flat Curves", ref m_animationTweakSettings.EraseFlatCurves);
+                EditorGUIFloatField("Threshold", ref animationTweakSettings.ReductionThreshold);
+                EditorGUIToggle("Erase Flat Curves", ref animationTweakSettings.EraseFlatCurves);
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Apply", GUILayout.Width(120.0f))) {
-                    ApplyKeyframeReduction(t.GetAnimationClips(), m_animationTweakSettings.ReductionThreshold, 
-                        m_animationTweakSettings.EraseFlatCurves
+                    ApplyKeyframeReduction(t.GetAnimationClips(), animationTweakSettings.ReductionThreshold, 
+                        animationTweakSettings.EraseFlatCurves
                     );                    
                 }
                 GUILayout.EndHorizontal();
@@ -419,8 +420,6 @@ namespace UnityEditor.MeshSync
         private MeshSyncPlayer m_asset = null;
         private readonly string[] m_animationInterpolationEnums = System.Enum.GetNames( typeof( InterpolationMode ) );
         private readonly string[] m_zUpCorrectionEnums          = System.Enum.GetNames( typeof( ZUpCorrectionMode ) );
-        private AnimationTweakSettings m_animationTweakSettings;
-
 
     }
 } // end namespace
