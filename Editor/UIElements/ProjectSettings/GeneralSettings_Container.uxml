@@ -8,6 +8,8 @@
             </Foldout>
             <Foldout name="ImportSettingsFoldout" text="Import Settings" class="general-sync-settings-foldout">
             </Foldout>
+            <Foldout name="MiscSettingsFoldout" text="Misc Settings" class="general-sync-settings-foldout">
+            </Foldout>
 
         </VisualElement>
     </ScrollView>

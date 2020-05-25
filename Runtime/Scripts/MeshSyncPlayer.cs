@@ -274,6 +274,7 @@ namespace Unity.MeshSync
             set { m_useCustomCameraMatrices = value; }
         }
 
+
         internal bool markMeshesDynamic
         {
             get { return m_markMeshesDynamic; }

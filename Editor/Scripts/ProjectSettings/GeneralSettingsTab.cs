@@ -92,8 +92,27 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		    "Z-Up correction", m_zUpCorrectionEnums,
 		    (MeshSyncPlayerConfig config, int newValue) => { config.ZUpCorrection = newValue; }
 	    );
-
 	    
+	    //Misc 
+	    Foldout miscSettingsFoldout = containerInstance.Query<Foldout>("MiscSettingsFoldout").First();
+	    m_syncMaterialListToggle = AddField<Toggle,bool>(fieldTemplate, miscSettingsFoldout, 
+		    "Sync Material List",
+		    (MeshSyncPlayerConfig config, bool newValue) => { config.SyncMaterialList = newValue; }
+	    );
+	    m_progressiveDisplayToggle = AddField<Toggle,bool>(fieldTemplate, miscSettingsFoldout, 
+		    "Progressive Display",
+		    (MeshSyncPlayerConfig config, bool newValue) => { config.ProgressiveDisplay = newValue; }
+	    );
+	    m_loggingToggle = AddField<Toggle,bool>(fieldTemplate, miscSettingsFoldout, 
+		    "Logging",
+		    (MeshSyncPlayerConfig config, bool newValue) => { config.Logging = newValue; }
+	    );
+	    m_profilingToggle = AddField<Toggle,bool>(fieldTemplate, miscSettingsFoldout, 
+		    "Profiling",
+		    (MeshSyncPlayerConfig config, bool newValue) => { config.Profiling = newValue; }
+	    );
+	    
+    
 	    UpdatePlayerConfigUIElements(MeshSyncPlayerType.SERVER);
 	    
         root.Add(containerInstance);
@@ -203,7 +222,14 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		m_reductionThresholdField.SetValueWithoutNotify(config.ReductionThreshold);
 		m_reductionEraseFlatCurves.SetValueWithoutNotify(config.ReductionEraseFlatCurves);
 		m_zUpCorrectionPopup.SetValueWithoutNotify(m_zUpCorrectionEnums[config.ZUpCorrection]);
+
+		//Misc
+		m_syncMaterialListToggle.SetValueWithoutNotify(config.SyncMaterialList);
+		m_progressiveDisplayToggle.SetValueWithoutNotify(config.ProgressiveDisplay);
+		m_loggingToggle.SetValueWithoutNotify(config.Logging);
+		m_profilingToggle.SetValueWithoutNotify(config.Profiling);
 		
+	
 		//userData
 		foreach (VisualElement uiElement in m_playerConfigUIElements) {
 			uiElement.userData = config;
@@ -228,11 +254,18 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	private Toggle m_findMaterialFromAssetsToggle;
 	
 	//Import Settings
-	public PopupField<string> m_animationInterpolationPopup;
-	public Toggle m_keyframeReductionToggle;
-	public FloatField m_reductionThresholdField;
-	public Toggle m_reductionEraseFlatCurves;
-	public PopupField<string> m_zUpCorrectionPopup;
+	private PopupField<string> m_animationInterpolationPopup;
+	private Toggle m_keyframeReductionToggle;
+	private FloatField m_reductionThresholdField;
+	private Toggle m_reductionEraseFlatCurves;
+	private PopupField<string> m_zUpCorrectionPopup;
+	
+	//Misc Settings
+	private Toggle m_syncMaterialListToggle;
+	private Toggle m_progressiveDisplayToggle;
+	private Toggle m_loggingToggle;
+	private Toggle m_profilingToggle;
+	
 	
 	private MeshSyncPlayerType m_selectedPlayerType = MeshSyncPlayerType.INVALID;
 	private List<VisualElement> m_playerConfigUIElements;
