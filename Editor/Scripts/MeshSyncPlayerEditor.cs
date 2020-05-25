@@ -7,10 +7,8 @@ namespace UnityEditor.MeshSync
 {
     [CustomEditor(typeof(MeshSyncPlayer))]
     internal abstract class MeshSyncPlayerEditor : Editor {
-        
-        
+                
         private float m_animationFrameRate = 30.0f;
-
        
 //----------------------------------------------------------------------------------------------------------------------        
         public virtual void OnEnable() {
@@ -19,7 +17,7 @@ namespace UnityEditor.MeshSync
             if (null == m_asset)
                 return;
 
-            m_animationTweakSettings = MeshSyncEditorSettings.CreateAnimationTweakSettings(m_asset.GetPlayerType());
+            m_animationTweakSettings = MeshSyncEditorSettings.CreateAnimationTweakSettings();
             
             List<AnimationClip> clips = m_asset.GetAnimationClips();
             if (clips.Count > 0)

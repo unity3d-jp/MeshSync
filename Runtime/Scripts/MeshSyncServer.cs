@@ -434,8 +434,6 @@ namespace Unity.MeshSync
         }
 #endif
 
-        internal override MeshSyncPlayerType GetPlayerType() { return MeshSyncPlayerType.SERVER; }
-
         protected override void OnEnable()
         {
             base.OnEnable();

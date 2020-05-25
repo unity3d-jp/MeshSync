@@ -137,15 +137,8 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
         }
 
         //Initialize AnimationTweakSettings
-        int numPlayerTypes = (int) MeshSyncPlayerType.NUM_TYPES;
         if (null == m_defaultAnimationTweakSettings) {
-            m_defaultAnimationTweakSettings = new List<AnimationTweakEditorSettings>(numPlayerTypes);
-        }
-
-        while (m_defaultAnimationTweakSettings.Count < numPlayerTypes) {
-            m_defaultAnimationTweakSettings.Add(
-                new AnimationTweakEditorSettings()
-            );
+            m_defaultAnimationTweakSettings = new AnimationTweakEditorSettings();
         }
         
     }
@@ -157,13 +150,13 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
     internal IDictionary<string, DCCToolInfo> GetDCCToolInfos() { return m_dictionary; }
 
 //----------------------------------------------------------------------------------------------------------------------
-    internal AnimationTweakEditorSettings GetAnimationTweakSettings(MeshSyncPlayerType playerType) {
-        return m_defaultAnimationTweakSettings[(int)playerType];
+    internal AnimationTweakEditorSettings GetDefaultAnimationTweakSettings() {
+        return m_defaultAnimationTweakSettings;
     }
     
-    internal static AnimationTweakEditorSettings CreateAnimationTweakSettings(MeshSyncPlayerType playerType) {
+    internal static AnimationTweakEditorSettings CreateAnimationTweakSettings() {
         MeshSyncEditorSettings settings = GetOrCreateSettings();
-        return new AnimationTweakEditorSettings(settings.GetAnimationTweakSettings(playerType));
+        return new AnimationTweakEditorSettings(settings.GetDefaultAnimationTweakSettings());
     }
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -174,7 +167,9 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
     //Key: DCC Tool app path
     private SortedDictionary<string,DCCToolInfo> m_dictionary;
     [SerializeField] private List<DCCToolInfo> m_serializedDCCToolInfo = null;
-    [SerializeField] private List<AnimationTweakEditorSettings> m_defaultAnimationTweakSettings;
+    [SerializeField] AnimationTweakEditorSettings m_defaultAnimationTweakSettings;
+
+    [SerializeField] internal int ClassVersion = 1;
 
 }
 
