@@ -212,13 +212,13 @@ namespace UnityEditor.MeshSync
                 GUILayout.BeginVertical("Box");
                 EditorGUILayout.LabelField("Time Scale", EditorStyles.boldLabel);
                 EditorGUI.indentLevel++;
-                EditorGUIFloatField("Scale", ref m_animationTweakSettings.AnimationTimeScale);
-                EditorGUIFloatField("Offset", ref m_animationTweakSettings.AnimationTimeOffset);
+                EditorGUIFloatField("Scale", ref m_animationTweakSettings.TimeScale);
+                EditorGUIFloatField("Offset", ref m_animationTweakSettings.TimeOffset);
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Apply", GUILayout.Width(120.0f))) {
-                    ApplyTimeScale(t.GetAnimationClips(), m_animationTweakSettings.AnimationTimeScale, 
-                        m_animationTweakSettings.AnimationTimeOffset
+                    ApplyTimeScale(t.GetAnimationClips(), m_animationTweakSettings.TimeScale, 
+                        m_animationTweakSettings.TimeOffset
                     );                   
                 }
                 GUILayout.EndHorizontal();
@@ -229,11 +229,11 @@ namespace UnityEditor.MeshSync
                 GUILayout.BeginVertical("Box");
                 EditorGUILayout.LabelField("Drop Keyframes", EditorStyles.boldLabel);
                 EditorGUI.indentLevel++;
-                EditorGUIIntField("Step", ref m_animationTweakSettings.AnimationDropStep);
+                EditorGUIIntField("Step", ref m_animationTweakSettings.DropStep);
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Apply", GUILayout.Width(120.0f))) {
-                    ApplyDropKeyframes(t.GetAnimationClips(), m_animationTweakSettings.AnimationDropStep);                    
+                    ApplyDropKeyframes(t.GetAnimationClips(), m_animationTweakSettings.DropStep);                    
                 }
                 GUILayout.EndHorizontal();
                 EditorGUI.indentLevel--;
