@@ -76,7 +76,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    [SerializeField] private ushort m_defaultServerPort = 8080;
+    [SerializeField] private ushort m_defaultServerPort = MeshSyncConstants.DEFAULT_SERVER_PORT;
     [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
 
     [SerializeField] internal int ClassVersion = 1;    

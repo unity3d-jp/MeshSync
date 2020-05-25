@@ -463,7 +463,7 @@ namespace Unity.MeshSync
         #region Fields
 
         [SerializeField] private bool m_autoStartServer = false;
-        [SerializeField] int m_serverPort;
+        [SerializeField] int m_serverPort = MeshSyncConstants.DEFAULT_SERVER_PORT;
 
         ServerSettings m_serverSettings = ServerSettings.defaultValue;
         Server m_server;
