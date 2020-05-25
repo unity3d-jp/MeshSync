@@ -229,7 +229,6 @@ namespace Unity.MeshSync
 
         
         #region Properties
-
         internal static string GetPluginVersion() {
             return Lib.GetPluginVersion();
         }
