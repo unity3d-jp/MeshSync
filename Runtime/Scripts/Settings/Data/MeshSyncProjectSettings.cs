@@ -9,7 +9,7 @@ namespace Unity.MeshSync {
 [Serializable]
 internal class MeshSyncProjectSettings : BaseJsonSettings {
 
-    internal static MeshSyncProjectSettings GetInstance() {
+    internal static MeshSyncProjectSettings GetOrCreateSettings() {
         
         if (null != m_instance) {
             return m_instance;
@@ -67,7 +67,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
     }
 
     internal static MeshSyncPlayerConfig CreateDefaultPlayerConfig(MeshSyncPlayerType playerType) {
-        MeshSyncProjectSettings settings = GetInstance();
+        MeshSyncProjectSettings settings = GetOrCreateSettings();
         return new MeshSyncPlayerConfig(settings.GetDefaultPlayerConfig(playerType));
     }
 
