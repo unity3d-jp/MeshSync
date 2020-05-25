@@ -3,7 +3,7 @@
     <ScrollView name="GeneralSettingsScrollView" show-vertical-scroller="true">
         <VisualElement name="PlayerSettingsContainer">
             
-            <Foldout name="MeshSyncObjectSettingsFoldout" text="Default MeshSync Object Settings" class="general-settings-foldout">
+            <Foldout name="MeshSyncObjectSettingsFoldout" text="MeshSync Object Settings" class="general-settings-foldout">
                 <VisualElement name="PlayerTypePopupContainer" class ="general-player-type-popup-container">
                 </VisualElement>
                 <Foldout name="SyncSettingsFoldout" text="Sync" class="general-settings-foldout">
@@ -13,7 +13,7 @@
                 <Foldout name="MiscSettingsFoldout" text="Misc" class="general-settings-foldout">
                 </Foldout>
             </Foldout>
-            <Foldout name="AnimationTweakSettingsFoldout" text="Animation Tweak Settings" class="general-settings-foldout">
+            <Foldout name="AnimationTweakSettingsFoldout" text="Default Animation Tweak Settings" class="general-settings-foldout">
             </Foldout>
 
         </VisualElement>
