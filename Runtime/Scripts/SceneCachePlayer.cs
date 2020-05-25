@@ -328,7 +328,7 @@ namespace Unity.MeshSync
             CheckParamsUpdated();
         }
 #endif
-        
+
         protected override void OnEnable() 
         {
             base.OnEnable();
