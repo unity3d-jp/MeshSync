@@ -32,7 +32,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	    VisualElement playerTypePopupContainer = containerInstance.Query<VisualElement>("PlayerTypePopupContainer").First();
         PopupField<string> playerTypePopup = new PopupField<string>(objectTypes, objectTypes[0]);
         playerTypePopup.RegisterValueChangedCallback(OnPlayerTypePopupChanged);
-	    playerTypePopup.label = "Object Type";
+	    playerTypePopup.label = "Settings for object type";
 	    playerTypePopupContainer.Add(playerTypePopup);        
 
 	    //Templates
