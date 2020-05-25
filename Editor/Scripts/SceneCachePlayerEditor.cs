@@ -29,7 +29,6 @@ namespace UnityEditor.MeshSync
             SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
             player.rootObject = go.GetComponent<Transform>();
             player.assetDir = new DataPath(DataPath.Root.DataPath, string.Format("SceneCache/{0}", go.name));
-            player.progressiveDisplay = false;
             player.markMeshesDynamic = true;
             player.dontSaveAssetsInScene = true;
 

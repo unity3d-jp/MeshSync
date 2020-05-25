@@ -50,7 +50,8 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
 
         config = new MeshSyncPlayerConfig {
             UpdateMeshColliders = false, 
-            FindMaterialFromAssets = false
+            FindMaterialFromAssets = false,
+            ProgressiveDisplay = false,
         };
         m_defaultPlayerConfigs[(int) MeshSyncPlayerType.CACHE_PLAYER] = config;
     }

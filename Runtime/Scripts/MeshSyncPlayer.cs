@@ -213,7 +213,6 @@ namespace Unity.MeshSync
 
 #if UNITY_EDITOR
         [SerializeField] bool m_sortEntities = true;
-        [SerializeField] bool m_progressiveDisplay = true;
         [SerializeField] bool m_foldSyncSettings = true;
         [SerializeField] bool m_foldImportSettings = true;
         [SerializeField] bool m_foldMisc = true;
@@ -307,11 +306,6 @@ namespace Unity.MeshSync
         {
             get { return m_sortEntities; }
             set { m_sortEntities = value; }
-        }
-        internal bool progressiveDisplay
-        {
-            get { return m_progressiveDisplay; }
-            set { m_progressiveDisplay = value; }
         }
 
         internal bool foldSyncSettings
@@ -691,7 +685,7 @@ namespace Unity.MeshSync
             });
 #endif
 #if UNITY_EDITOR
-            if (m_progressiveDisplay)
+            if (m_config.ProgressiveDisplay)
                 ForceRepaint();
 #endif
         }
