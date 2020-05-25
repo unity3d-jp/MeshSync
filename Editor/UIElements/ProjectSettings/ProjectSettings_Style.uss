@@ -51,7 +51,7 @@
     width: 500px;
     -unity-font-style:bold;
     font-size:  14px;
-    margin: 0 15px;
+    margin: 1px 15px;
 }
 
 .general-settings-field-container {
