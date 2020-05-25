@@ -66,6 +66,11 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
         return m_defaultPlayerConfigs[(int) playerType];
     }
 
+    internal static MeshSyncPlayerConfig CreateDefaultPlayerConfig(MeshSyncPlayerType playerType) {
+        MeshSyncProjectSettings settings = GetInstance();
+        return new MeshSyncPlayerConfig(settings.GetDefaultPlayerConfig(playerType));
+    }
+
     
 //----------------------------------------------------------------------------------------------------------------------
 
