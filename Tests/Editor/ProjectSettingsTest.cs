@@ -18,7 +18,7 @@ internal class ProjectSettingsTest {
     
 //----------------------------------------------------------------------------------------------------------------------    
     [Test]
-    public void CheckCurrentSettings() {
+    public void CreateSettings() {
         MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
         Assert.NotNull(settings);
 
