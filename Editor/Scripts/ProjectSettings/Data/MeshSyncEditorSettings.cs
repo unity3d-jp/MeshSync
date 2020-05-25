@@ -156,10 +156,15 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
 
     internal IDictionary<string, DCCToolInfo> GetDCCToolInfos() { return m_dictionary; }
 
+//----------------------------------------------------------------------------------------------------------------------
     internal AnimationTweakEditorSettings GetAnimationTweakSettings(MeshSyncPlayerType playerType) {
         return m_defaultAnimationTweakSettings[(int)playerType];
     }
     
+    internal static AnimationTweakEditorSettings CreateAnimationTweakSettings(MeshSyncPlayerType playerType) {
+        MeshSyncEditorSettings settings = GetOrCreateSettings();
+        return new AnimationTweakEditorSettings(settings.GetAnimationTweakSettings(playerType));
+    }
 //----------------------------------------------------------------------------------------------------------------------
 
 

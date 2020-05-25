@@ -11,15 +11,15 @@ namespace UnityEditor.MeshSync
         
         private float m_animationFrameRate = 30.0f;
 
-        internal MeshSyncPlayerEditor() {
-            m_animationTweakSettings = new AnimationTweakEditorSettings(GetDefaultAnimationTweakSettings());
-        }
-        
+       
 //----------------------------------------------------------------------------------------------------------------------        
         public virtual void OnEnable() {
             m_asset = target as MeshSyncPlayer;
+            
             if (null == m_asset)
                 return;
+
+            m_animationTweakSettings = MeshSyncEditorSettings.CreateAnimationTweakSettings(m_asset.GetPlayerType());
             
             List<AnimationClip> clips = m_asset.GetAnimationClips();
             if (clips.Count > 0)
@@ -415,9 +415,6 @@ namespace UnityEditor.MeshSync
             EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.GetPluginVersion());
         }
 
-//----------------------------------------------------------------------------------------------------------------------
-
-        protected abstract AnimationTweakEditorSettings GetDefaultAnimationTweakSettings();
         
 //----------------------------------------------------------------------------------------------------------------------
 

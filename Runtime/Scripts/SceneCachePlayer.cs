@@ -329,8 +329,9 @@ namespace Unity.MeshSync
         }
 #endif
 
-        protected override void OnEnable()
-        {
+        internal override MeshSyncPlayerType GetPlayerType() { return MeshSyncPlayerType.CACHE_PLAYER; }
+        
+        protected override void OnEnable() {
             base.OnEnable();
             CheckParamsUpdated();
         }

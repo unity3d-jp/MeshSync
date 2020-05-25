@@ -53,7 +53,7 @@ namespace Unity.MeshSync
     /// MeshSyncPlayer
     /// </summary>
     [ExecuteInEditMode]
-    internal class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver
+    internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver
     {
 
         
@@ -229,6 +229,8 @@ namespace Unity.MeshSync
 
         
         #region Properties
+
+        internal abstract MeshSyncPlayerType GetPlayerType();
         internal static string GetPluginVersion() {
             return Lib.GetPluginVersion();
         }

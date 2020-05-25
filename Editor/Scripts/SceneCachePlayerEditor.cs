@@ -162,10 +162,6 @@ namespace UnityEditor.MeshSync
                 EditorGUILayout.Space();
             }
         }
-        protected override AnimationTweakEditorSettings GetDefaultAnimationTweakSettings() {
-            MeshSyncEditorSettings editorSettings = MeshSyncEditorSettings.GetOrCreateSettings();
-            return editorSettings.GetAnimationTweakSettings(MeshSyncPlayerType.CACHE_PLAYER);
-        }
     }
 
 } //end namespace
