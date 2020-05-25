@@ -192,11 +192,7 @@ namespace Unity.MeshSync
 
         [SerializeField] private bool m_usePhysicalCameraParams = true;
         [SerializeField] private bool m_useCustomCameraMatrices = true;
-        [SerializeField] private InterpolationMode m_animationInterpolation = InterpolationMode.Smooth;
-        [SerializeField] private bool m_keyframeReduction = true;
-        [SerializeField] private float m_reductionThreshold = 0.001f;
-        [SerializeField] private bool m_reductionEraseFlatCurves = false;
-        [SerializeField] protected ZUpCorrectionMode m_zUpCorrection = ZUpCorrectionMode.FlipYZ;
+                
         [SerializeField] protected bool m_logging = true;
         [SerializeField] protected bool m_profiling = false;
         [SerializeField] private bool m_markMeshesDynamic = false;
@@ -269,31 +265,6 @@ namespace Unity.MeshSync
             set { m_handleAssets = value; }
         }
 
-        internal InterpolationMode animationInterpolation
-        {
-            get { return m_animationInterpolation; }
-            set { m_animationInterpolation = value; }
-        }
-        internal bool keyframeReduction
-        {
-            get { return m_keyframeReduction; }
-            set { m_keyframeReduction = value; }
-        }
-        internal float reductionThreshold
-        {
-            get { return m_reductionThreshold; }
-            set { m_reductionThreshold = value; }
-        }
-        internal bool reductionKeepEraseCurves
-        {
-            get { return m_reductionEraseFlatCurves; }
-            set { m_reductionEraseFlatCurves = value; }
-        }
-        internal ZUpCorrectionMode zUpCorrection
-        {
-            get { return m_zUpCorrection; }
-            set { m_zUpCorrection = value; }
-        }
 
         internal bool usePhysicalCameraParams
         {
@@ -1956,9 +1927,9 @@ namespace Unity.MeshSync
             if (!m_handleAssets)
                 return;
 
-            clipData.Convert(m_animationInterpolation);
-            if (m_keyframeReduction)
-                clipData.KeyframeReduction(m_reductionThreshold, m_reductionEraseFlatCurves);
+            clipData.Convert((InterpolationMode) m_config.AnimationInterpolation);
+            if (m_config.KeyframeReduction)
+                clipData.KeyframeReduction(m_config.ReductionThreshold, m_config.ReductionEraseFlatCurves);
 
             //float start = Time.realtimeSinceStartup;
 

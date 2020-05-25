@@ -49,7 +49,7 @@ internal class DCCPluginInstallInfo {
     /// </summary>
     public string         PluginVersion;
 
-    [SerializeField] private int m_classVersion = 1;
+    [SerializeField] internal readonly int ClassVersion = 1;
 
 }
 

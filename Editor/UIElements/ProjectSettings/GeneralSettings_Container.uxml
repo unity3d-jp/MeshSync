@@ -6,6 +6,8 @@
             </VisualElement>
             <Foldout name="SyncSettingsFoldout" text="Sync Settings" class="general-sync-settings-foldout">
             </Foldout>
+            <Foldout name="ImportSettingsFoldout" text="Import Settings" class="general-sync-settings-foldout">
+            </Foldout>
 
         </VisualElement>
     </ScrollView>

@@ -6,6 +6,7 @@ namespace Unity.MeshSync {
 [Serializable]
 internal class MeshSyncPlayerConfig { 
     
+    //Sync Settings
     public bool SyncVisibility = true;
     public bool SyncTransform = true;
     public bool SyncCameras = true;
@@ -15,7 +16,14 @@ internal class MeshSyncPlayerConfig {
     public bool SyncMaterials = true;
     public bool FindMaterialFromAssets = true;
 
-    [SerializeField] private int m_classVersion = 1;
+    //Import Settings   
+    public int     AnimationInterpolation = (int) InterpolationMode.Smooth;
+    public bool    KeyframeReduction = true;
+    public float   ReductionThreshold = 0.001f;
+    public bool    ReductionEraseFlatCurves = false;
+    public int     ZUpCorrection = (int) ZUpCorrectionMode.FlipYZ;
+    
+    [SerializeField] internal readonly int ClassVersion = 1;
 }
     
 } //end namespace

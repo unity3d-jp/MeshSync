@@ -46,13 +46,24 @@
 }
 
 .general-sync-settings-foldout {
+    width: 500px;
+    -unity-font-style:bold;
+    font-size:  14px;
+}
+
+.general-settings-field-container {
+    flex-direction: row;
+    -unity-font-style: normal;
+    font-size:  12px;
+
+}
+
+.general-settings-field-container > Label {
     width: 250px;
 }
 
-.general-settings-toggle-container {
-    flex-direction: row;
-    justify-content: space-between;
-
+.general-settings-field {
+    width: 100px;
 }
 
 /*----------------------------------------------- DCC Tool Info ----------------------------------------------------- */

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor;
 using System.IO;
 using Unity.AnimeToolbox.Editor;
 using UnityEngine;
@@ -17,7 +16,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 
 //----------------------------------------------------------------------------------------------------------------------        
     public void Setup(VisualElement root) {
-        
+	    m_playerConfigUIElements = new List<VisualElement>();
         VisualTreeAsset container = UIElementsEditorUtility.LoadVisualTreeAsset(
 	        Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "GeneralSettings_Container")
         );
@@ -29,91 +28,140 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	        MeshSyncPlayerType.CACHE_PLAYER.ToString(),
         };	        
         
-        //Add the container of this tab to root
+        //Add the parent of this tab to root
 	    VisualElement playerTypePopupContainer = containerInstance.Query<VisualElement>("PlayerTypePopupContainer").First();
         PopupField<string> playerTypePopup = new PopupField<string>(objectTypes, objectTypes[0]);
         playerTypePopup.RegisterValueChangedCallback(OnPlayerTypePopupChanged);
 	    playerTypePopup.label = "Object Type";
 	    playerTypePopupContainer.Add(playerTypePopup);        
-        
+
+	    //Templates
+	    VisualTreeAsset fieldTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
+		    Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "GeneralSettingsFieldTemplate")
+	    );
       
 	    Foldout syncSettingsFoldout = containerInstance.Query<Foldout>("SyncSettingsFoldout").First();
-        VisualTreeAsset toggleTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
-	        Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "GeneralSettingsToggleTemplate")
-        );
 
-	    //Add toggles	           
-	    m_syncVisibilityToggle = AddToggle(toggleTemplate, syncSettingsFoldout, "Visibility");
-	    m_syncTransformToggle = AddToggle(toggleTemplate, syncSettingsFoldout, "Transform");
-	    m_syncCamerasToggle = AddToggle(toggleTemplate, syncSettingsFoldout,"Cameras");
-	    m_syncLightsToggle = AddToggle(toggleTemplate, syncSettingsFoldout,"Lights");
-	    m_syncMeshesToggle = AddToggle(toggleTemplate, syncSettingsFoldout,"Meshes");
-	    m_updateMeshCollidersToggle = AddToggle(toggleTemplate, syncSettingsFoldout, "Update Mesh Colliders");
-	    m_syncMaterialsToggle = AddToggle(toggleTemplate, syncSettingsFoldout, "Materials");
-	    m_findMaterialFromAssetsToggle = AddToggle(toggleTemplate, syncSettingsFoldout, "Find Materials from Asset Database");
-	    UpdatePlayerConfigUIElements(MeshSyncPlayerType.SERVER);
+	    //Sync	           
+	    m_syncVisibilityToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, "Visibility",
+		    (MeshSyncPlayerConfig config, bool newValue) => { config.SyncVisibility = newValue; }
+	    );
+	    m_syncTransformToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, "Transform",
+		    (MeshSyncPlayerConfig config, bool newValue) => { config.SyncTransform = newValue; }
+	    );
+	    m_syncCamerasToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout,"Cameras",
+		    (MeshSyncPlayerConfig config, bool newValue) => { config.SyncCameras = newValue; }
+	    );
+	    m_syncLightsToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout,"Lights",
+		    (MeshSyncPlayerConfig config, bool newValue) => { config.SyncLights = newValue; }
+	    );
+	    m_syncMeshesToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout,"Meshes",
+		    (MeshSyncPlayerConfig config, bool newValue) => { config.SyncMeshes = newValue; }
+	    );
+	    m_updateMeshCollidersToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, 
+		    "Update Mesh Colliders",
+		    (MeshSyncPlayerConfig config, bool newValue) => { config.UpdateMeshColliders = newValue; }
+	    );
+	    m_syncMaterialsToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, "Materials",
+		    (MeshSyncPlayerConfig config, bool newValue) => { config.SyncMaterials = newValue; }
+	    );
+	    m_findMaterialFromAssetsToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, 
+		    "Find Materials from Asset Database",
+		    (MeshSyncPlayerConfig config, bool newValue) => { config.FindMaterialFromAssets = newValue; }
+	    );
 
-		//Register callbacks
-	    RegisterToggleCallback(m_syncVisibilityToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncVisibility = newValue; }
+		//import
+	    Foldout importSettingsFoldout = containerInstance.Query<Foldout>("ImportSettingsFoldout").First();
+
+	    m_animationInterpolationPopup = AddPopupField(fieldTemplate, importSettingsFoldout, 
+		    "Animation Interpolation", m_animationInterpolationEnums,
+		    (MeshSyncPlayerConfig config, int newValue) => { config.AnimationInterpolation = newValue; }
+	    );
+	    m_keyframeReductionToggle = AddField<Toggle,bool>(fieldTemplate, importSettingsFoldout, "Keyframe Reduction",
+		    (MeshSyncPlayerConfig config, bool newValue) => { config.KeyframeReduction = newValue; }
+	    );
+	    m_reductionThresholdField = AddField<FloatField, float>(fieldTemplate, importSettingsFoldout, 
+		    "Reduction Threshold",
+		    (MeshSyncPlayerConfig config, float newValue) => { config.ReductionThreshold = newValue; }
 		);
-	    RegisterToggleCallback(m_syncTransformToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncTransform = newValue; }
-	    );
-	    RegisterToggleCallback(m_syncCamerasToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncCameras = newValue; }
-	    );
-	    RegisterToggleCallback(m_syncLightsToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncLights = newValue; }
-	    );
-	    RegisterToggleCallback(m_syncMeshesToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncMeshes = newValue; }
-	    );
-	    RegisterToggleCallback(m_updateMeshCollidersToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.UpdateMeshColliders = newValue; }
-	    );
-	    RegisterToggleCallback(m_syncMaterialsToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.SyncMaterials = newValue; }
-	    );
-	    RegisterToggleCallback(m_findMaterialFromAssetsToggle, 		    
-		    (MeshSyncPlayerConfig playerConfig, bool newValue) => { playerConfig.FindMaterialFromAssets = newValue; }
+	    m_reductionEraseFlatCurves = AddField<Toggle,bool>(fieldTemplate, importSettingsFoldout, 
+		    "Reduction Erase Flat Curves",
+		    (MeshSyncPlayerConfig config, bool newValue) => { config.ReductionEraseFlatCurves = newValue; }
+		);
+	    m_zUpCorrectionPopup = AddPopupField(fieldTemplate, importSettingsFoldout, 
+		    "Z-Up correction", m_zUpCorrectionEnums,
+		    (MeshSyncPlayerConfig config, int newValue) => { config.ZUpCorrection = newValue; }
 	    );
 
-
+	    
+	    UpdatePlayerConfigUIElements(MeshSyncPlayerType.SERVER);
 	    
         root.Add(containerInstance);
     }
 
 //----------------------------------------------------------------------------------------------------------------------	
-	private Toggle AddToggle(VisualTreeAsset template, VisualElement container, string text) {
 
-		TemplateContainer toggleContainer = template.CloneTree();
-		Toggle toggle = toggleContainer.Query<Toggle>().First();
-		Label label = toggleContainer.Query<Label>().First();
-		label.text = text;
-		container.Add(toggleContainer);
-		
-		return toggle;
-	}
-//----------------------------------------------------------------------------------------------------------------------	
-
-	
-	private void RegisterToggleCallback(Toggle toggle, 
-		Action<MeshSyncPlayerConfig,bool> setter) 
+	//Support Toggle, FloatField, etc
+	private F AddField<F,V>(VisualTreeAsset template, VisualElement parent, string text,
+		Action<MeshSyncPlayerConfig,V> onValueChanged) where F: VisualElement,INotifyValueChanged<V>, new()  
 	{
-		
-		toggle.RegisterValueChangedCallback((ChangeEvent<bool> changeEvent) => {
 
-			MeshSyncPlayerConfig config = toggle.userData as MeshSyncPlayerConfig;
+		TemplateContainer templateInstance = template.CloneTree();
+		VisualElement fieldContainer = templateInstance.Query<VisualElement>("FieldContainer").First();
+//		F field = templateInstance.Query<F>().First();
+		Label label = templateInstance.Query<Label>().First();
+		label.text = text;
+		
+		F field = new F();
+		field.AddToClassList("general-settings-field");
+		field.RegisterValueChangedCallback((ChangeEvent<V> changeEvent) => {
+
+			MeshSyncPlayerConfig config = field.userData as MeshSyncPlayerConfig;
+			if (null == config) {
+				Debug.LogError("[MeshSync] Field doesn't have the correct user data");
+				return;
+			}
+			
+			onValueChanged(config, changeEvent.newValue);
+			MeshSyncProjectSettings.GetInstance().SaveSettings();
+		});		
+		
+		fieldContainer.Add(field);
+		parent.Add(templateInstance);
+		m_playerConfigUIElements.Add(field);		
+		return field;
+	}
+	
+//----------------------------------------------------------------------------------------------------------------------	
+	private PopupField<T> AddPopupField<T>(VisualTreeAsset template, VisualElement parent, string text,
+		List<T> options, Action<MeshSyncPlayerConfig,int> onValueChanged) 
+	{
+
+		TemplateContainer templateInstance = template.CloneTree();
+		VisualElement fieldContainer = templateInstance.Query<VisualElement>("FieldContainer").First();
+		PopupField<T> popupField = new PopupField<T>(options,options[0]);
+		popupField.AddToClassList("general-settings-field");
+		
+		Label label = templateInstance.Query<Label>().First();
+		label.text = text;
+		popupField.RegisterValueChangedCallback( ( ChangeEvent<T> changeEvent)  => {
+		
+			MeshSyncPlayerConfig config = popupField.userData as MeshSyncPlayerConfig;
 			if (null == config) {
 				Debug.LogError("[MeshSync] Toggle doesn't have the correct user data");
 				return;
 			}
 			
-			setter(config, changeEvent.newValue);
+			onValueChanged(config, popupField.index);
 			MeshSyncProjectSettings.GetInstance().SaveSettings();
-		});		
+		});
+				
+		fieldContainer.Add(popupField);
+		parent.Add(templateInstance);
+		m_playerConfigUIElements.Add(popupField);		
+		return popupField;
 	}
+	
 
 //----------------------------------------------------------------------------------------------------------------------	
 	private void OnPlayerTypePopupChanged(ChangeEvent<string> changeEvt) {
@@ -139,7 +187,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetInstance();
 		MeshSyncPlayerConfig config = projectSettings.GetDefaultPlayerConfig(playerType);
 
-		//values
+		//sync
 		m_syncVisibilityToggle.SetValueWithoutNotify(config.SyncVisibility);
 		m_syncTransformToggle.SetValueWithoutNotify(config.SyncTransform);
 		m_syncCamerasToggle.SetValueWithoutNotify(config.SyncCameras);
@@ -148,16 +196,20 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		m_updateMeshCollidersToggle.SetValueWithoutNotify(config.UpdateMeshColliders);
 		m_syncMaterialsToggle.SetValueWithoutNotify(config.SyncMaterials);
 		m_findMaterialFromAssetsToggle.SetValueWithoutNotify(config.FindMaterialFromAssets);
+
+		//Import
+		m_animationInterpolationPopup.SetValueWithoutNotify(m_animationInterpolationEnums[config.AnimationInterpolation]);
+		m_keyframeReductionToggle.SetValueWithoutNotify(config.KeyframeReduction);
+		m_reductionThresholdField.SetValueWithoutNotify(config.ReductionThreshold);
+		m_reductionEraseFlatCurves.SetValueWithoutNotify(config.ReductionEraseFlatCurves);
+		m_zUpCorrectionPopup.SetValueWithoutNotify(m_zUpCorrectionEnums[config.ZUpCorrection]);
 		
 		//userData
-		m_syncVisibilityToggle.userData = config;
-		m_syncTransformToggle.userData = config;
-		m_syncCamerasToggle.userData = config;
-		m_syncLightsToggle.userData = config;
-		m_syncMeshesToggle.userData = config;
-		m_updateMeshCollidersToggle.userData = config;
-		m_syncMaterialsToggle.userData = config;
-		m_findMaterialFromAssetsToggle.userData = config;	
+		foreach (VisualElement uiElement in m_playerConfigUIElements) {
+			uiElement.userData = config;
+		}
+		
+		
 		m_selectedPlayerType = playerType;
 	}
 	
@@ -165,6 +217,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	
 //----------------------------------------------------------------------------------------------------------------------
 	
+	//Sync Settings
 	private Toggle m_syncVisibilityToggle;
 	private Toggle m_syncTransformToggle;
 	private Toggle m_syncCamerasToggle;
@@ -173,8 +226,20 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	private Toggle m_updateMeshCollidersToggle;
 	private Toggle m_syncMaterialsToggle;
 	private Toggle m_findMaterialFromAssetsToggle;
+	
+	//Import Settings
+	public PopupField<string> m_animationInterpolationPopup;
+	public Toggle m_keyframeReductionToggle;
+	public FloatField m_reductionThresholdField;
+	public Toggle m_reductionEraseFlatCurves;
+	public PopupField<string> m_zUpCorrectionPopup;
+	
 	private MeshSyncPlayerType m_selectedPlayerType = MeshSyncPlayerType.INVALID;
+	private List<VisualElement> m_playerConfigUIElements;
 
+	private readonly List<string> m_animationInterpolationEnums = new List<string>(Enum.GetNames( typeof( InterpolationMode )));
+	private readonly List<string> m_zUpCorrectionEnums = new List<string>(Enum.GetNames( typeof( ZUpCorrectionMode )));
+	
 }
 
 } //end namespace 
