@@ -51,7 +51,7 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
             installScriptPath = CreateInstallScript("Install3dsMaxPlugin2018.ms", configFolder, extractedTempPath);
             
             //3dsmax -U MAXScript install_script.ms
-            setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, $"-U MAXScript {installScriptPath}");
+            setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, $"-U MAXScript \"{installScriptPath}\"");
         } else {
             installScriptPath = CreateInstallScript("Install3dsMaxPlugin2019.ms", configFolder, extractedTempPath);
             string dccAppDir = Path.GetDirectoryName(dccToolInfo.AppPath);
@@ -122,10 +122,14 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
                 },
                 EnableRaisingEvents = true
             };
+            
+            EditorUtility.DisplayProgressBar("MeshSync","Launching app to finalize installation",0.75f);
+            
             process.Start();
             process.WaitForExit();
             int exitCode = process.ExitCode;
-
+            EditorUtility.ClearProgressBar();               
+            
             if (0!=exitCode) {
                 string stderr = process.StandardError.ReadToEnd();
                 Debug.LogError($"[MeshSync] 3dsMax plugin installation error. ExitCode: {exitCode}. {stderr}");
