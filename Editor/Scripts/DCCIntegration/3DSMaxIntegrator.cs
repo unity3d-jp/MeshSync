@@ -46,13 +46,14 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
 
         //Check version
         bool versionIsInt = int.TryParse(dccToolInfo.DCCToolVersion, out int versionInt);
+        string installScriptPath = null;        
         if (versionIsInt && versionInt <= 2018) {
-            string installScriptPath = CreateInstallScript("Install3dsMaxPlugin2018.ms", configFolder, extractedTempPath);
+            installScriptPath = CreateInstallScript("Install3dsMaxPlugin2018.ms", configFolder, extractedTempPath);
             
             //3dsmax -U MAXScript install_script.ms
             setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, $"-U MAXScript {installScriptPath}");
         } else {
-            string installScriptPath = CreateInstallScript("Install3dsMaxPlugin2019.ms", configFolder, extractedTempPath);
+            installScriptPath = CreateInstallScript("Install3dsMaxPlugin2019.ms", configFolder, extractedTempPath);
             string dccAppDir = Path.GetDirectoryName(dccToolInfo.AppPath);
             if (string.IsNullOrEmpty(dccAppDir))
                 return false;
@@ -62,6 +63,8 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
             setupSuccessful = SetupAutoLoadPlugin(dccBatchPath, installScriptPath);
         }
         
+        File.Delete(installScriptPath);
+       
        
         return setupSuccessful;
     }
@@ -93,7 +96,7 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         string installScript         = String.Format(installScriptFormat,configFolder.Replace("\\","\\\\"));
         string installScriptPath     = Path.Combine(tempPath, installScriptFileName);
         File.WriteAllText(installScriptPath, installScript);
-        return installScriptPath;
+        return Path.GetFullPath(installScriptPath);
     }
     
 //----------------------------------------------------------------------------------------------------------------------
