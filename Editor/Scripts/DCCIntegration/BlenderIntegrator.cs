@@ -1,7 +1,5 @@
 ﻿using System;
 using System.IO;
-using Unity.AnimeToolbox;
-using Unity.SharpZipLib.Utils;
 using UnityEngine;
 
 namespace UnityEditor.MeshSync {
@@ -14,16 +12,11 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override bool  ConfigureDCCToolV(DCCToolInfo dccToolInfo, string localPluginPath) 
-    {
-        string tempPath = FileUtil.GetUniqueTempPathInProject();
-        
-        Directory.CreateDirectory(tempPath);
-        ZipUtility.UncompressFromZip(localPluginPath, null, tempPath);
-        
+    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileName, string extractedTempPath) 
+    {        
         //Go down one folder
         string extractedPath = null;
-        foreach (string dir in Directory.EnumerateDirectories(tempPath)) {
+        foreach (string dir in Directory.EnumerateDirectories(extractedTempPath)) {
             extractedPath = dir;
             break;
         }
@@ -49,7 +42,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
         //Replace the path in the template with actual path.
         string installScriptFormat = File.ReadAllText(templatePath);
         string installScript = String.Format(installScriptFormat,pluginFile);
-        string installScriptPath = Path.Combine(tempPath, installScriptFileName);
+        string installScriptPath = Path.Combine(extractedTempPath, installScriptFileName);
         File.WriteAllText(installScriptPath, installScript);
         
         //Prepare remove script to remove old plugin
@@ -66,7 +59,6 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
 
         //Cleanup
         File.Delete(installScriptPath);
-        FileUtility.DeleteFilesAndFolders(tempPath);
 
         return setupSuccessful;
     }
@@ -76,7 +68,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
         DCCToolInfo dccToolInfo = GetDCCToolInfo();
         
         EditorUtility.DisplayDialog("MeshSync",
-            $"MeshSync plugin installed for {dccToolInfo.GetDescription()}", 
+            $"MeshSync plugin configured. Please restart {dccToolInfo.GetDescription()} to complete the installation.", 
             "Ok"
         );
     }
