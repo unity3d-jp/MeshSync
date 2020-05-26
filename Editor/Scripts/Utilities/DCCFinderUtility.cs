@@ -252,7 +252,7 @@ public static class DCCFinderUtility {
             }
             case RuntimePlatform.OSXEditor: {
                 //2 levels up: "/Blender.app/Contents/MacOS/Blender";
-                string resourcesDir = PathUtility.TryGetDirectoryName(appPath, 2);
+                string resourcesDir = PathUtility.GetDirectoryName(appPath, 2);
                 versionParentDir = Path.Combine(resourcesDir, "Resources");
                 break;
             }
