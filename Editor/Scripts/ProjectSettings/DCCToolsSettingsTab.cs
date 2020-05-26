@@ -1,10 +1,4 @@
-using UnityEditor;
-using UnityEditorInternal;
-
 using System.IO;
-using System.Linq;
-using System.Collections.Generic;
-using NUnit.Framework;
 using Unity.AnimeToolbox;
 using Unity.AnimeToolbox.Editor;
 using UnityEngine;
@@ -57,17 +51,17 @@ namespace UnityEditor.MeshSync {
 //----------------------------------------------------------------------------------------------------------------------        
 
         void AddDCCToolSettingsContainer(DCCToolInfo dccToolInfo, VisualElement top, VisualTreeAsset dccToolInfoTemplate) {
+            string desc = dccToolInfo.GetDescription();
             TemplateContainer container = dccToolInfoTemplate.CloneTree();
             Label nameLabel = container.Query<Label>("DCCToolName").First();
-            nameLabel.text = dccToolInfo.GetDescription();
+            nameLabel.text = desc;
             
-            //TODO-sin: 2020-5-11: Support ico ?
             //Load icon
-            if (!string.IsNullOrEmpty(dccToolInfo.AppPath) && File.Exists(dccToolInfo.IconPath))     {
-                byte[] fileData = File.ReadAllBytes(dccToolInfo.IconPath);
-                Texture2D tex = new Texture2D(2, 2);
-                tex.LoadImage(fileData, true);                
-                container.Query<Image>("DCCToolImage").First().image = tex;
+            Texture2D iconTex = LoadIcon(dccToolInfo.IconPath);
+            if (null != iconTex) {
+                container.Query<Image>("DCCToolImage").First().image = iconTex;
+            } else {
+                container.Query<Label>("DCCToolImageLabel").First().text = desc[0].ToString();
             }
             
             container.Query<Label>("DCCToolPath").First().text = "Path: " + dccToolInfo.AppPath;
@@ -189,6 +183,26 @@ namespace UnityEditor.MeshSync {
 
 //----------------------------------------------------------------------------------------------------------------------        
 
+        Texture2D LoadIcon(string iconPath) {
+
+            if (string.IsNullOrEmpty(iconPath) || !File.Exists(iconPath)) {
+                return null;
+            }
+
+            //TODO-sin: 2020-5-11: Support ico ?
+            string ext = Path.GetExtension(iconPath).ToLower();
+            if (ext != ".png") {
+                return null;
+            }
+           
+
+            byte[] fileData = File.ReadAllBytes(iconPath);
+            Texture2D tex = new Texture2D(2, 2);
+            tex.LoadImage(fileData, true);
+            return tex;
+        }
+        
+//----------------------------------------------------------------------------------------------------------------------        
         private VisualElement m_root = null;
         private string m_lastOpenedFolder = "";
 

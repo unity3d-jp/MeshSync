@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using JetBrains.Annotations;
@@ -14,7 +14,6 @@ namespace UnityEditor.MeshSync {
 public static class DCCFinderUtility {
     
     //Find the location of supported DCC tools on Windows and Mac.
-    //Currently only support Autodesk products
     private static List<string> GetDefaultVendorDirectories() {
 
         List<string> existingDirectories = new List<string>();
@@ -25,15 +24,18 @@ public static class DCCFinderUtility {
                 DriveInfo[] allDrives = DriveInfo.GetDrives();
                 foreach (DriveInfo drive in allDrives) {
                     searchDirectories.Add(Path.Combine(drive.Name, @"Program Files\Autodesk") );
+                    searchDirectories.Add(Path.Combine(drive.Name, @"Program Files\Blender Foundation") );
                 }
                 break;
             }
             case RuntimePlatform.OSXEditor: {
                 searchDirectories.Add("/Applications/Autodesk");
+                searchDirectories.Add("/Applications");
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
-                searchDirectories.Add("~/");
+                
+                searchDirectories.Add(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
                 searchDirectories.Add("/usr/autodesk");
                 break;
             }
@@ -132,20 +134,18 @@ public static class DCCFinderUtility {
                 break;
             }
 
-
-
             default:
                 throw new NotImplementedException ();
         }
 
         if (string.IsNullOrEmpty(productDir)) {
-            return "Unknown";
+            return UNKNOWN_VERSION;
         }
 
         const string MAYA_STR = "maya";
         int index = productDir.IndexOf(MAYA_STR, StringComparison.OrdinalIgnoreCase);
         if (index == -1) {
-            return "Unknown";
+            return UNKNOWN_VERSION;
         }
         
         string version = productDir.Substring (index + MAYA_STR.Length);
@@ -186,6 +186,102 @@ public static class DCCFinderUtility {
         }
         return folderName;
     }
+
+//----------------------------------------------------------------------------------------------------------------------    
+    
+    #region Blender
+    private static DCCToolInfo FindBlenderInDirectory(string dir, string version) {
+        string appPath = dir;
+        string iconPath = dir;
+        switch (Application.platform) {
+            case RuntimePlatform.WindowsEditor: {
+                appPath+= @"\blender.exe";
+                iconPath = null;
+                break;
+            }
+            case RuntimePlatform.OSXEditor: {
+                const string CONTENTS_APP_PATH = "/MacOS/Blender";
+                const string CONTENTS_ICON_PATH = "/Resources/blender icon.icns";
+
+                if (dir.EndsWith(".app/Contents")) {
+                    appPath  += CONTENTS_APP_PATH;
+                    iconPath += CONTENTS_ICON_PATH;
+                } else if (dir.EndsWith(".app")) {
+                    appPath  += $"/Contents{CONTENTS_APP_PATH}";
+                    iconPath += $"/Contents{CONTENTS_ICON_PATH}";
+                } else {
+                    appPath  += $"/Blender.app/Contents{CONTENTS_APP_PATH}";
+                    iconPath += $"/Blender.app/Contents{CONTENTS_ICON_PATH}";
+                }
+                break;
+            }
+            case RuntimePlatform.LinuxEditor: {
+                appPath  += @"/blender";
+                iconPath += @"/blender.svg";
+                break;
+            }
+            default:
+                throw new NotImplementedException ();
+        }
+
+        if (!File.Exists(appPath))
+            return null;
+        
+        iconPath = (!File.Exists(iconPath)) ? null : iconPath;
+
+        version = (string.IsNullOrEmpty(version)) ? FindBlenderVersion(appPath) : version;
+
+        return new DCCToolInfo(DCCToolType.BLENDER,version) {
+            AppPath = appPath,
+            IconPath = iconPath
+        };
+        
+    }
+
+    private static string FindBlenderVersion(string appPath) {
+
+        //Blender has a directory in one of its subfolders with the version as its name
+        string versionParentDir = null;
+        
+        switch (Application.platform) {
+            case RuntimePlatform.WindowsEditor: {
+                //- C:\Program Files\Blender Foundation\Blender\2.80
+                //- C:\Program Files\Blender Foundation\Blender 2.82\2.82
+                versionParentDir = Path.GetDirectoryName(appPath);
+                break;
+            }
+            case RuntimePlatform.OSXEditor: {
+                //2 levels up: "/Blender.app/Contents/MacOS/Blender";
+                string resourcesDir = PathUtility.TryGetDirectoryName(appPath, 2);
+                versionParentDir = Path.Combine(resourcesDir, "Resources");
+                break;
+            }
+            case RuntimePlatform.LinuxEditor: {
+                //Example: /home/Unity/blender-2.82a-linux64/2.82
+                versionParentDir = Path.GetDirectoryName(appPath);
+                break;
+
+            }
+
+            default:
+                throw new NotImplementedException ();
+        }
+
+        
+        if (string.IsNullOrEmpty(versionParentDir)) {
+            return UNKNOWN_VERSION;
+        }
+                
+        foreach (string versionDir in Directory.EnumerateDirectories(versionParentDir)) {
+            string dirName = Path.GetFileName(versionDir);
+            if (Single.TryParse(dirName, out float number))
+                return dirName;
+        }
+        
+        return UNKNOWN_VERSION;
+    }
+    
+    #endregion
     
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -200,9 +296,12 @@ public static class DCCFinderUtility {
             case DCCToolType.AUTODESK_3DSMAX: {
                 return Find3DSMaxInDirectory(dir, version);
             }
+            case DCCToolType.BLENDER: {
+                return FindBlenderInDirectory(dir, version);
+            }
+            default:
+                throw new NotImplementedException();
         }
-
-        return null;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -261,6 +360,21 @@ public static class DCCFinderUtility {
         { "3ds Max 2018", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2018" ) },
         { "3ds Max 2019", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2019" ) },
         { "3ds Max 2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020" ) },
+
+#if   UNITY_EDITOR_WIN        
+        { "Blender",      new DCCToolInfo(DCCToolType.BLENDER, null ) },
+        { "Blender 2.81", new DCCToolInfo(DCCToolType.BLENDER, "2.81" ) },
+        { "Blender 2.82", new DCCToolInfo(DCCToolType.BLENDER, "2.82" ) },
+#elif UNITY_EDITOR_OSX        
+        { "Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
+        { "Blender/Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
+#elif UNITY_EDITOR_LINUX
+        { "blender-2.79b-linux-glibc219-x86_64", new DCCToolInfo(DCCToolType.BLENDER, "2.79" ) },
+        { "blender-2.80rc3-linux-glibc217-x86_64", new DCCToolInfo(DCCToolType.BLENDER, "2.80" ) },
+        { "blender-2.81a-linux-glibc217-x86_64", new DCCToolInfo(DCCToolType.BLENDER, "2.81" ) },
+        { "blender-2.82a-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.82" ) },
+#endif        
+        
     };
     
     //environment variables
@@ -275,7 +389,8 @@ public static class DCCFinderUtility {
         { "ADSK_3DSMAX_SDK_2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020" ) },
     };
 
-    
+    private const string UNKNOWN_VERSION = "Unknown";
+
 }
 
 }

@@ -17,8 +17,8 @@ internal class MayaIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string configFolder, string localPluginPath) 
-    {
+    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string localPluginPath) {
+        string configFolder = FindConfigFolder();
         string tempPath = FileUtil.GetUniqueTempPathInProject();
         
         Directory.CreateDirectory(tempPath);
@@ -128,7 +128,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
     
 //----------------------------------------------------------------------------------------------------------------------    
     
-    protected override string FindConfigFolderV() {
+    private string FindConfigFolder() {
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
 

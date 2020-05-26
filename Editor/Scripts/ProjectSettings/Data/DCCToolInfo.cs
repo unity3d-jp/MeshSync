@@ -26,20 +26,23 @@ public class DCCToolInfo {
         string desc = null;
         switch (Type) {
             case DCCToolType.AUTODESK_MAYA: {
-                desc = "Maya " + DCCToolVersion;
+                desc = "Maya ";
                 break;
             }
             case DCCToolType.AUTODESK_3DSMAX: {
-                desc = "3DS Max " + DCCToolVersion;
+                desc = "3DS Max ";
+                break;
+            }
+            case DCCToolType.BLENDER: {
+                desc = "Blender ";
                 break;
             }
             default: {
-                desc = "";
-                break;
+                throw new NotImplementedException();
             }
         }
 
-        return desc;
+        return desc + DCCToolVersion;
     }
     
     

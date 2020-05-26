@@ -3,6 +3,7 @@
     <VisualElement class="dcc-tool-info-container">
         <VisualElement class="image-container">
             <Image name="DCCToolImage"/>
+            <Label name= "DCCToolImageLabel"  />
         </VisualElement>
 
         <VisualElement class="text-container">
