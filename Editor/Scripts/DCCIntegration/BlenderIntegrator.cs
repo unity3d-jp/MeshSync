@@ -68,7 +68,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
         DCCToolInfo dccToolInfo = GetDCCToolInfo();
         
         EditorUtility.DisplayDialog("MeshSync",
-            $"MeshSync plugin installed for {dccToolInfo.GetDescription()}", 
+            $"MeshSync plugin configured. Please restart {dccToolInfo.GetDescription()} to complete the installation.", 
             "Ok"
         );
     }
