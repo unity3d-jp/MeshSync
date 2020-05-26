@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Unity.AnimeToolbox;
+using Unity.SharpZipLib.Utils;
 using UnityEngine;
 
 namespace UnityEditor.MeshSync {
@@ -32,7 +33,18 @@ internal abstract class BaseDCCIntegrator {
             EditorUtility.DisplayProgressBar("MeshSync", progressBarInfo, 0.5f);
             bool dccConfigured = false;
             if (dccPluginLocalPaths.Count >0 && File.Exists(dccPluginLocalPaths[0])) {
-                dccConfigured = ConfigureDCCToolV(m_dccToolInfo, dccPluginLocalPaths[0]);
+                
+                //Extract
+                string localPluginPath = dccPluginLocalPaths[0];
+                string tempPath = FileUtil.GetUniqueTempPathInProject();        
+                Directory.CreateDirectory(tempPath);
+                ZipUtility.UncompressFromZip(localPluginPath, null, tempPath);
+                
+                dccConfigured = ConfigureDCCToolV(m_dccToolInfo, Path.GetFileNameWithoutExtension(localPluginPath),tempPath);
+                
+                //Cleanup
+                FileUtility.DeleteFilesAndFolders(tempPath);
+                
             }
             
             if (!dccConfigured) {
@@ -88,7 +100,8 @@ internal abstract class BaseDCCIntegrator {
     protected abstract string GetDCCToolInFileNameV();
 
     //returns null when failed
-    protected abstract bool ConfigureDCCToolV( DCCToolInfo dccToolInfo, string localPluginPath);
+    protected abstract bool ConfigureDCCToolV( DCCToolInfo dccToolInfo, string pluginFileNameWithoutExt, 
+        string extractedTempPath);
     
     protected abstract void FinalizeDCCConfigurationV();
     
