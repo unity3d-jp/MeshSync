@@ -16,9 +16,6 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
     protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileName, string extractedTempPath) 
     {        
 
-        string appVersion = $"3dsMax{dccToolInfo.DCCToolVersion}";
-        string configFolder = FindConfigFolder(appVersion);
-        Directory.CreateDirectory(configFolder);
         
         //Go down one folder
         string extractedPluginRootFolder = null;
@@ -30,6 +27,13 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         if (null == extractedPluginRootFolder)
             return false;
         
+        string appVersion = $"3dsMax{dccToolInfo.DCCToolVersion}";
+        
+        //configFolder example: "C:\Users\Unity\AppData\Local\Unity\MeshSync\3dsMax2019"
+        string appDataLocal = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        string configFolder = Path.Combine(appDataLocal, "Unity", "MeshSync", appVersion);        
+        Directory.CreateDirectory(configFolder);
+
         //Copy dlu file to configFolder
         string srcPluginPath = Path.Combine(extractedPluginRootFolder, appVersion);
         if (!Directory.Exists(srcPluginPath)) {
@@ -79,14 +83,6 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         );
     }
     
-//----------------------------------------------------------------------------------------------------------------------
-    private string FindConfigFolder(string appVersion) {
-
-        //Sample: "C:\Users\Unity\AppData\Local\Unity\MeshSync\3dsMax2019"
-        string appDataLocal = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(appDataLocal, "Unity", "MeshSync", appVersion);
-        
-    }
 
 //----------------------------------------------------------------------------------------------------------------------
     //create installation script
@@ -109,8 +105,6 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
                 return false;
             }
 
-            //[note-sin: 2020-5-12] WindowStyle=Hidden (requires UseShellExecute=true and RedirectStandardError=false),
-            //seems to be able to hide only the splash screen, but not the Maya window.
             System.Diagnostics.Process process = new System.Diagnostics.Process {
                 StartInfo = {
                     FileName = appPath,
