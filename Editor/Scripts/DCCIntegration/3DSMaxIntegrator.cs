@@ -13,20 +13,15 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileName, string extractedTempPath) 
+    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileNameWithoutExt, 
+        string extractedTempPath) 
     {        
 
-        
-        //Go down one folder
-        string extractedPluginRootFolder = null;
-        foreach (string dir in Directory.EnumerateDirectories(extractedTempPath)) {
-            extractedPluginRootFolder = dir;
-            break;
-        }
-
-        if (null == extractedPluginRootFolder)
+        string extractedPluginRootFolder = Path.Combine(extractedTempPath, pluginFileNameWithoutExt);
+        if (!Directory.Exists(extractedPluginRootFolder)) {
             return false;
-        
+        }
+               
         string appVersion = $"3dsMax{dccToolInfo.DCCToolVersion}";
         
         //configFolder example: "C:\Users\Unity\AppData\Local\Unity\MeshSync\3dsMax2019"
