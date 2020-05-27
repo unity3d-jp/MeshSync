@@ -12,7 +12,8 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileName, string extractedTempPath) 
+    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileNameWithoutExt, 
+        string extractedTempPath) 
     {        
         //Go down one folder
         string extractedPath = null;
