@@ -25,7 +25,7 @@ MeshSync は DCC ツール上のモデルの編集をリアルタイムに Unity
 # 設定
 
 DCC ツールの統合などといった、様々な MeshSync の設定を 
-[Project Settings](Documentation~/en/ProjectSettings.md) ウィンドウで設定することができます。
+[Project Settings](Documentation~/jp/ProjectSettings.md) ウィンドウで設定することができます。
 
 ![Settings](Documentation~/images/ProjectSettings.png)
 
