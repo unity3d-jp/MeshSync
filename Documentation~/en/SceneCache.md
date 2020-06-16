@@ -14,6 +14,8 @@ On the downside, SceneCache sacrifices portability as the playback is only possi
 From the menu, select Game Object-> MeshSync-> Create Cache Player, and then select the *.sc* file exported by the DCC tool.  
 This will automatically create a playback object.
 
+![Menu](../images/MenuCreateCachePlayer.png)
+
 
 ## Scene Cache Player
 

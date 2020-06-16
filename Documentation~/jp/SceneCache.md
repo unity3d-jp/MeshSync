@@ -13,9 +13,13 @@ DCC 側のモデル、カメラ、アニメーションを忠実に、かつ高�
 
 Game Object -> MeshSync -> Create Cache Player メニューを選択し、DCC 側でエクスポートした *.sc* ファイルを選択し、再生用オブジェクトを作成します。
 
-![SceneCachePlayer](../images/SceneCachePlayer.png)
+![Menu](../images/MenuCreateCachePlayer.png)
+
 
 ## Scene Cache Player
+
+![SceneCachePlayer](../images/SceneCachePlayer.png)
+
 このコンポーネントが再生を担当します。多くの設定は [MeshSyncServer](index.md#MeshSyncServer) と共通です。
 
 "Create Cache Player" メニューを選択した時、同時に アニメーションの再生を担当する AnimationClip が作成されて SceneCachePlayer に結び付いています。  
