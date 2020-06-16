@@ -27,11 +27,11 @@ display them inside the tab.
 
 | Legend  | Use                                                                                       | 
 | ------- | ----------------------------------------------------------------------------------------- | 
-| A       | The name of the DCC tool, its path, and its MeshSyncDCCPlugins installation status        |   
-| B       | Click to remove the DCC tool from the tab                                                 |   
-| C       | Click to install MeshSyncDCCPlugins in the DCC tool                                       |  
-| D       | Click to detect and add DCC tools which have been installed in their default locations    |  
-| E       | Click to add a DCC tool manually                                                          | 
+| A       | Display the name of the DCC tool, its path, and its MeshSyncDCCPlugins installation status|   
+| B       | Remove the DCC tool from the tab                                                          |   
+| C       | Install MeshSyncDCCPlugins in the DCC tool                                                |  
+| D       | Detect and add DCC tools which have been installed in their default locations             |  
+| E       | Add a DCC tool manually                                                                   | 
 
 ### Supported DCC Tools
 

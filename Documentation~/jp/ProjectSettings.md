@@ -5,7 +5,7 @@
 
 ## General Settings
 
-General settings ƒ^ƒu‚ÅAMeshSync ‚ÌƒIƒuƒWƒFƒNƒg‚Ì‚ÌƒvƒƒpƒeƒB‚ÌŠù’è’l‚ðÝ’è‚Å‚«‚Ü‚·B
+General settings ã‚¿ãƒ–ã§ã€MeshSync ã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ã®ãƒ—ãƒ­ãƒ‘ãƒ†ã‚£ã®æ—¢å®šå€¤ã‚’è¨­å®šã§ãã¾ã™ã€‚
 1. [MeshSyncServer](MeshSyncServer.md)
 2. [SceneCache](SceneCache.md)
 
@@ -14,40 +14,40 @@ General settings ƒ^ƒu‚ÅAMeshSync ‚ÌƒIƒuƒWƒFƒNƒg‚Ì‚ÌƒvƒƒpƒeƒB‚ÌŠù’è’l‚ðÝ’è‚Å‚«
 
 ## DCC Tools
 
-DCC Tools ƒ^ƒu‚ÅAƒTƒ|[ƒg‚³‚ê‚Ä‚¢‚é DCC ƒc[ƒ‹‚É
+DCC Tools ã‚¿ãƒ–ã§ã€ã‚µãƒãƒ¼ãƒˆã•ã‚Œã¦ã„ã‚‹ DCC ãƒ„ãƒ¼ãƒ«ã«
 [MeshSyncDCCPlugins](https://github.com/Unity-Technologies/MeshSyncDCCPlugins) 
-‚ðƒCƒ“ƒXƒg[ƒ‹‚Å‚«‚Ü‚·B 
-‰‚ß‚Ä‚±‚Ìƒ^ƒu‚ªŠJ‚©‚ê‚½ŽžAƒfƒtƒHƒ‹ƒgƒpƒX‚ÉƒCƒ“ƒXƒg[ƒ‹‚³‚ê‚½ DCC ƒc[ƒ‹‚ªŽ©“®“I‚É
-ŒŸo‚³‚êAƒ^ƒu‚É•\Ž¦‚³‚ê‚Ü‚·B
+ã‚’ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã§ãã¾ã™ã€‚ 
+åˆã‚ã¦ã“ã®ã‚¿ãƒ–ãŒé–‹ã‹ã‚ŒãŸæ™‚ã€ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆãƒ‘ã‚¹ã«ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã•ã‚ŒãŸ DCC ãƒ„ãƒ¼ãƒ«ãŒè‡ªå‹•çš„ã«
+æ¤œå‡ºã•ã‚Œã€ã‚¿ãƒ–ã«è¡¨ç¤ºã•ã‚Œã¾ã™ã€‚
 
 ![ProjectSettingsDCCTools](../images/ProjectSettingsDCCTools.png)
 
-| ‹L†    | —p“r                                                                                       | 
+| è¨˜å·    | ç”¨é€”                                                                                       | 
 | ------- | ----------------------------------------------------------------------------------------- | 
-| A       | DCC ƒc[ƒ‹‚Ì–¼‘OAƒpƒXA‚Æ‚»‚Ì MeshSyncDCCPlugins ‚ÌƒCƒ“ƒXƒg[ƒ‹ó‹µ                          |   
-| B       | ƒ^ƒu‚©‚ç DCC ƒc[ƒ‹‚ðíœ‚µ‚Ü‚·                                                             |   
-| C       | DCC ƒc[ƒ‹ ‚É MeshSyncDCCPlugins ‚ðƒCƒ“ƒXƒg[ƒ‹                                             |  
-| D       | ƒfƒtƒHƒ‹ƒgƒpƒX‚ÉƒCƒ“ƒXƒg[ƒ‹‚³‚ê‚½ DCC ƒc[ƒ‹‚ðŒŸo‚µAƒ^ƒu‚É•\Ž¦‚µ‚Ü‚·                         |  
-| E       | Žè“®‚Å DCC ƒc[ƒ‹‚ð’Ç‰Á‚µ‚Ü‚·                                                               | 
+| A       | DCC ãƒ„ãƒ¼ãƒ«ã®åå‰ã€ãƒ‘ã‚¹ã€ã¨ãã® MeshSyncDCCPlugins ã®ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«çŠ¶æ³ã‚’è¡¨ç¤ºã™ã‚‹                 |   
+| B       | ã‚¿ãƒ–ã‹ã‚‰ DCC ãƒ„ãƒ¼ãƒ«ã‚’å‰Šé™¤ã™ã‚‹                                                               |   
+| C       | DCC ãƒ„ãƒ¼ãƒ« ã« MeshSyncDCCPlugins ã‚’ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã™ã‚‹                                         |  
+| D       | ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆãƒ‘ã‚¹ã«ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã•ã‚ŒãŸ DCC ãƒ„ãƒ¼ãƒ«ã‚’æ¤œå‡ºã—ã€ã‚¿ãƒ–ã«è¡¨ç¤ºã™ã‚‹                           |  
+| E       | æ‰‹å‹•ã§ DCC ãƒ„ãƒ¼ãƒ«ã‚’è¿½åŠ ã™ã‚‹                                                                 | 
 
-### ƒTƒ|[ƒg‚³‚ê‚Ä‚¢‚é DCC ƒc[ƒ‹
+### ã‚µãƒãƒ¼ãƒˆã•ã‚Œã¦ã„ã‚‹ DCC ãƒ„ãƒ¼ãƒ«
 
 1. Maya 2017 - 2020
 2. 3ds Max 2017 - 2020
 3. Blender 2.79, 2.80, 2.81, 2.82
 
-### ’ˆÓ
+### æ³¨æ„
 
-1. MeshSyncDCCPlugins ‚ðƒCƒ“ƒXƒg[ƒ‹‚·‚é‘O‚ÉADCC ƒc[ƒ‹‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‚ðI—¹‚µ‚Ä‚­‚¾‚³‚¢B
-2. ˆê•”‚Ì DCC ƒc[ƒ‹‚ÅAMeshSyncDCCPlugins ‚ÌƒCƒ“ƒXƒg[ƒ‹‚ðŠ®—¹‚³‚¹‚é‚½‚ß‚ÉA
-   ‚»‚Ì DCC ƒc[ƒ‹‚ª‹N“®‚³‚ê‚éê‡‚ª‚ ‚è‚Ü‚·B
+1. MeshSyncDCCPlugins ã‚’ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã™ã‚‹å‰ã«ã€DCC ãƒ„ãƒ¼ãƒ«ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’çµ‚äº†ã—ã¦ãã ã•ã„ã€‚
+2. ä¸€éƒ¨ã® DCC ãƒ„ãƒ¼ãƒ«ã§ã€MeshSyncDCCPlugins ã®ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã‚’å®Œäº†ã•ã›ã‚‹ãŸã‚ã«ã€
+   ãã® DCC ãƒ„ãƒ¼ãƒ«ãŒèµ·å‹•ã•ã‚Œã‚‹å ´åˆãŒã‚ã‚Šã¾ã™ã€‚
 
 
-### MeshSyncDCCPlugins ‚ÌƒCƒ“ƒXƒg[ƒ‹ó‹µ
+### MeshSyncDCCPlugins ã®ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«çŠ¶æ³
 
-ƒCƒ“ƒXƒg[ƒ‹ó‹µ‚Í‰º‹L‚ÌƒpƒX‚Å•Û‘¶‚³‚ê‚Ü‚·B
+ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«çŠ¶æ³ã¯ä¸‹è¨˜ã®ãƒ‘ã‚¹ã§ä¿å­˜ã•ã‚Œã¾ã™ã€‚
 
-| OS                | ƒpƒX                                              | 
+| OS                | ãƒ‘ã‚¹                                              | 
 | ----------------- | --------------------------------------------------| 
 | Linux             | ~/.config/unity3d/Unity/MeshSync                  |   
 | macOS             | ~/Library/Application Support/Unity/MeshSync      |   
