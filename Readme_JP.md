@@ -20,7 +20,7 @@ MeshSync は DCC ツール上のモデルの編集をリアルタイムに Unity
 メニューから GameObject -> MeshSync -> Create Server でサーバーオブジェクトを作成します。
 このサーバーオブジェクトが同期処理を担当する [MeshSyncServer](Documentation~/en/MeshSyncServer.md) のコンポーネントを持っています。
 
-![Menu](Documentation~/images/Menu.png)
+![Menu](Documentation~/images/MenuCreateServer.png)
 
 
 # アドバンスト 機能

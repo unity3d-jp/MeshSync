@@ -15,7 +15,7 @@ This allows devs to immediately see how things will look in-game while modelling
 Create a server object by clicking this menu: GameObject -> MeshSync -> Create Server. 
 This object has [MeshSyncServer](en/MeshSyncServer.md) component that handles the sync process.
 
-![Menu](images/Menu.png)
+![Menu](images/MenuCreateServer.png)
 
 # Advanced Features
 - [SceneCache](en/SceneCache.md)
