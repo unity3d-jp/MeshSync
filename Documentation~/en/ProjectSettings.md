@@ -23,13 +23,16 @@ display them inside the tab.
 
 ![ProjectSettingsDCCTools](../images/ProjectSettingsDCCTools.png)
 
-| A | The name of the DCC tool, its path, and its MeshSync plugin installation status           |   
-| B | Click to remove this DCC tool from the tab                                                |   
-| C | Click to install MeshSync plugin to the DCC tool                                          |  
-| D | Click to detect and add DCC tools which have been installed in their default locations    |  
-| E | Click to add a DCC tool manuall                                                           | 
+| Legend  | Use                                                                                       | 
+| ------- | ----------------------------------------------------------------------------------------- | 
+| A       | The name of the DCC tool, its path, and its MeshSync plugin installation status           |   
+| B       | Click to remove this DCC tool from the tab                                                |   
+| C       | Click to install MeshSync plugin to the DCC tool                                          |  
+| D       | Click to detect and add DCC tools which have been installed in their default locations    |  
+| E       | Click to add a DCC tool manual                                                            | 
 
-At this moment, DCC Tools tab supports the following DCC Tools:
+### Supported DCC Tools
+
 1. Maya 2017 - 2020
 2. 3ds Max 2017 - 2020
 3. Blender 2.79, 2.80, 2.81, 2.82
