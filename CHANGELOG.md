@@ -7,6 +7,7 @@ All notable changes to the MeshSync package will be documented in this file.
 * feat: add DCC Tools integration support for 3ds Max 2017-2020
 * feat: add DCC Tools integration support for Blender 2.79, 2.80, 2.81, 2.82, 2.83
 * doc: add documentation about Project Settings
+* chore: use com.unity.sharp-zip-lib
 
 
 ## [0.1.0-preview] - 2020-04-16
