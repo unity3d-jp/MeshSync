@@ -6,7 +6,7 @@
 # MeshSync
 
 [MeshSyncDCCPlugins](https://github.com/Unity-Technologies/MeshSyncDCCPlugins) と連携し、
-MeshSync は DCC ツール上のモデルの編集をリアルタイムに Unity に反映させるためのパッケージです。  
+MeshSync は DCC ツール上のモデルの編集をリアルタイムに Unity に反映させるためのパッケージです。
 ゲーム上でどう見えるかをその場で確認しながらモデリングすることを可能にします。
 
 インストールは [Package Manager](https://docs.unity3d.com/ja/current/Manual/upm-ui.html)
