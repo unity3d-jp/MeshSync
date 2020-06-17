@@ -9,6 +9,12 @@
 MeshSync は DCC ツール上のモデルの編集をリアルタイムに Unity に反映させるためのパッケージです。  
 ゲーム上でどう見えるかをその場で確認しながらモデリングすることを可能にします。
 
+インストールは [Package Manager](https://docs.unity3d.com/Manual/Packages.html)
+経由で行います。  
+MeshSync を検索する際、*Show preview packages* にチェックが付いているかを確認してください。
+
+![Menu](Documentation~/images/PackageManager.png)
+
 ## 動作環境
 
 - Windows 64 bit
