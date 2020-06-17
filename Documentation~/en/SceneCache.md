@@ -9,10 +9,12 @@ In addition, SceneCache supports several elements which are not supported in Ale
 On the downside, SceneCache sacrifices portability as the playback is only possible with Unity at the moment, and there is no guarantee of file compatibility among different Unity versions, so re-export may be required to use the same files with a different Unity version.
 
 
-#How to use
+# How to use
 
 From the menu, select Game Object-> MeshSync-> Create Cache Player, and then select the *.sc* file exported by the DCC tool.  
 This will automatically create a playback object.
+
+![Menu](../images/MenuCreateCachePlayer.png)
 
 
 ## Scene Cache Player
