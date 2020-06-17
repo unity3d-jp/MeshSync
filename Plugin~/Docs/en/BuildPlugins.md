@@ -37,12 +37,12 @@
 
 Start "Developer Command Prompt for VS 2017" and execute the following:
 
-    ``` 
-    $ git clone https://github.com/unity3d-jp/MeshSync
-    $ cd MeshSync\Plugin~\Build
-    $ cmake -G "Visual Studio 15 2017" -A x64 ..
-    $ msbuild MeshSyncPlugin.sln /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
-    ```  
+``` 
+$ git clone https://github.com/unity3d-jp/MeshSync
+$ cd MeshSync\Plugin~\Build
+$ cmake -G "Visual Studio 15 2017" -A x64 ..
+$ msbuild MeshSyncPlugin.sln /t:Build /p:Configuration=Release /p:Platform=x64 /m /nologo
+```  
 
 > For a regular "Command Prompt", there is a script: *VsDevCmd_2017.bat* 
 > under the *Build* folder, which if executed, will turn the prompt into a 
