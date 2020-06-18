@@ -1,11 +1,11 @@
-* [MeshSync](index)
+* [MeshSync](index.md)
 * Components
-    * [MeshSyncServer](en/MeshSyncServer)
-    * [SceneCache](en/SceneCache)
-* [Project Settings](en/ProjectSettings)
+    * [MeshSyncServer](en/MeshSyncServer.md)
+    * [SceneCache](en/SceneCache.md)
+* [Project Settings](en/ProjectSettings.md)
 * 日本語
-    * [MeshSync](jp/index)
+    * [MeshSync](jp/index.md)
     * コンポーネント
-        * [MeshSyncServer](jp/MeshSyncServer)
-        * [SceneCache](jp/SceneCache)
-    * [プロジェクト設定](jp/ProjectSettings)
+        * [MeshSyncServer](jp/MeshSyncServer.md)
+        * [SceneCache](jp/SceneCache.md)
+    * [プロジェクト設定](jp/ProjectSettings.md)
