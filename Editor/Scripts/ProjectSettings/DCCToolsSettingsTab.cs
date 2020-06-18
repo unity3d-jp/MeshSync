@@ -1,11 +1,12 @@
 using System.IO;
 using Unity.AnimeToolbox;
 using Unity.AnimeToolbox.Editor;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 	internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
 
         

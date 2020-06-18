@@ -2,7 +2,7 @@
 using UnityEngine.UIElements;
 
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 	internal interface IMeshSyncSettingsTab {
 		void Setup(VisualElement root);
 

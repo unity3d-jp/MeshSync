@@ -6,8 +6,10 @@ using System.Net;
 using Unity.AnimeToolbox;
 using System.IO;
 using Unity.AnimeToolbox.Editor;
+using UnityEditor;
+using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 
 
 internal class DCCPluginDownloader  {
@@ -49,7 +51,7 @@ internal class DCCPluginDownloader  {
     void TryCopyDCCPluginsFromPackage(Action<string> onSuccess, Action<string> onFail) 
     {
         RequestJobManager.CreateListRequest(true,true, (listReq) => {
-            PackageManager.PackageInfo packageInfo = listReq.FindPackage(MESHSYNC_DCC_PLUGIN_PACKAGE);
+            PackageInfo packageInfo = listReq.FindPackage(MESHSYNC_DCC_PLUGIN_PACKAGE);
             if (null != packageInfo) {
                 //Package is already installed.
                 CopyDCCPluginsFromPackage();
@@ -62,7 +64,7 @@ internal class DCCPluginDownloader  {
                 CopyDCCPluginsFromPackage();
                 onSuccess(packageInfo.version);
             }, (req) => {
-                PackageManager.PackageInfo meshSyncInfo = listReq.FindPackage(MESHSYNC_PACKAGE);
+                PackageInfo meshSyncInfo = listReq.FindPackage(MESHSYNC_PACKAGE);
                 onFail?.Invoke(meshSyncInfo.version);
             });
         }, null);

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO;
 using Unity.AnimeToolbox;
+using UnityEditor;
 using UnityEngine;
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 internal class _3DSMaxIntegrator : BaseDCCIntegrator {
     internal _3DSMaxIntegrator(DCCToolInfo dccToolInfo) : base(dccToolInfo) { }
 //----------------------------------------------------------------------------------------------------------------------

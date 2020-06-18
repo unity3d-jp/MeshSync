@@ -5,7 +5,7 @@ using Unity.MeshSync;
 using UnityEngine;
 
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 
 [Serializable]
 internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{

@@ -1,7 +1,7 @@
 using UnityEngine;
 using Unity.MeshSync;
 
-namespace UnityEditor.MeshSync.Tests {
+namespace Unity.MeshSync.Editor.Tests {
 
     
 [ExecuteInEditMode]

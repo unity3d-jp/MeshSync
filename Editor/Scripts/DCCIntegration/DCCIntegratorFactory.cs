@@ -1,7 +1,7 @@
 ﻿using System;
 
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 
 internal class DCCIntegratorFactory {
 

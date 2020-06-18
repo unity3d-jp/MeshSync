@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 using Unity.MeshSync;
 using UnityEditor.UIElements;
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	
     public GeneralSettingsTab() {

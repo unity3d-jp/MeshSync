@@ -5,7 +5,7 @@ using Unity.MeshSync;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace UnityEditor.MeshSync.Tests {
+namespace Unity.MeshSync.Editor.Tests {
 internal class ProjectSettingsTest {
     
     

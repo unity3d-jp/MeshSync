@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 
 
 internal static class MeshSyncMenu  {

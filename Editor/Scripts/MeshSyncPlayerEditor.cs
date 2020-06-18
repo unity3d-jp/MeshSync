@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using Unity.MeshSync;
+using UnityEditor;
 using UnityEngine;
 
-namespace UnityEditor.MeshSync
+namespace Unity.MeshSync.Editor
 {
     [CustomEditor(typeof(MeshSyncPlayer))]
-    internal class MeshSyncPlayerEditor : Editor {
+    internal class MeshSyncPlayerEditor : UnityEditor.Editor {
                 
         private float m_animationFrameRate = 30.0f;
        

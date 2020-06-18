@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 
 /// <summary>
 /// Basic information about DCCTool
