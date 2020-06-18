@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.2.0-preview] - 2020-06-17
+* feat: add Project Settings to configure MeshSync objects and DCC Tools integrations
+* feat: add DCC Tools integration support for Maya 2017-2020
+* feat: add DCC Tools integration support for 3ds Max 2017-2020
+* feat: add DCC Tools integration support for Blender 2.79, 2.80, 2.81, 2.82, 2.83
+* doc: add documentation about Project Settings
+* chore: use com.unity.sharp-zip-lib
+
+
 ## [0.1.0-preview] - 2020-04-16
 * feat: add a menu item to download DCC plugins
 * chore: change plugin build configuration to Release from MinSizeRel
