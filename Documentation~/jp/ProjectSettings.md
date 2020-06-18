@@ -1,4 +1,4 @@
-# Project Settings
+# プロジェクト設定
 
 1. [General Settings](#general-settings)
 1. [DCC Tools](#dcc-tools)
@@ -34,7 +34,7 @@ DCC Tools タブで、サポートされている DCC ツールに
 
 1. Maya 2017 - 2020
 2. 3ds Max 2017 - 2020
-3. Blender 2.79, 2.80, 2.81, 2.82
+3. Blender 2.79, 2.80, 2.81, 2.82, 2.83
 
 ### 注意
 

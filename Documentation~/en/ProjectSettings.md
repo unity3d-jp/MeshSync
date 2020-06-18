@@ -37,7 +37,7 @@ display them inside the tab.
 
 1. Maya 2017 - 2020
 2. 3ds Max 2017 - 2020
-3. Blender 2.79, 2.80, 2.81, 2.82
+3. Blender 2.79, 2.80, 2.81, 2.82, 2.83
 
 ### Notes
 
