@@ -18,8 +18,8 @@ MeshSync は現在プレビューパッケージとして存在し、それに�
 
 * Unity 2020.x  
   Preview packages を有効にするの手順：
-  1. Edit > Project Settings　を開く
-  1. Project Settings ウィンドウでパッケージマネージャーを選択する
+  1. 編集 > プロジェクト設定　を開く
+  1. プロジェクト設定のウィンドウでパッケージマネージャーを選択する
   1. **Enable Preview Packages** のチェックボックスをチェックする
   1. **I understand** をクリックする
     
