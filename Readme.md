@@ -24,6 +24,7 @@ MeshSync is currently a preview package, and therefore the installation requires
   
   Then, open [Package Manager](https://docs.unity3d.com/Manual/upm-ui.html) and search for MeshSync.
 
+
 ## Supported Platforms
 
 - Windows 64 bit
