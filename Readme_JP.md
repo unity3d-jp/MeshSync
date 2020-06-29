@@ -9,7 +9,7 @@
 MeshSync は DCC ツール上のモデルの編集をリアルタイムに Unity に反映させるためのパッケージです。
 ゲーム上でどう見えるかをその場で確認しながらモデリングすることを可能にします。
 
-MeshSync は現在プレビューパッケージとして存在し、それによってインストールする為にプレビューパッケージを有効にする必要があります。
+MeshSync は現在プレビューパッケージとして存在しているので、インストールする為にプレビューパッケージを有効にする必要があります。
 
 * Unity 2019.x  
   [パッケージマネージャー](https://docs.unity3d.com/ja/current/Manual/upm-ui.html)を開き、
@@ -17,7 +17,7 @@ MeshSync は現在プレビューパッケージとして存在し、それに�
   ![Menu](Documentation~/images/PackageManager.png)
 
 * Unity 2020.x  
-  Preview packages を有効にするの手順：
+  Preview packages を有効にする為の手順：
   1. 編集 > プロジェクト設定　を開く
   1. プロジェクト設定のウィンドウでパッケージマネージャーを選択する
   1. **Enable Preview Packages** のチェックボックスをチェックする
