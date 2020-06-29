@@ -68,7 +68,8 @@ class MeshSyncSettingsProvider : SettingsProvider {
 
 		//keywords
 		HashSet<string> meshSyncKeywords = new HashSet<string>(new[] { "MeshSync",});
-		meshSyncKeywords.UnionWith(GetSearchKeywordsFromGUIContentProperties<Contents>());
+		meshSyncKeywords.UnionWith(GetSearchKeywordsFromGUIContentProperties<MeshSyncSettingsProvider.Contents>());
+		meshSyncKeywords.UnionWith(GetSearchKeywordsFromGUIContentProperties<GeneralSettingsTab.Contents>());
 
 		keywords = meshSyncKeywords;
 		
