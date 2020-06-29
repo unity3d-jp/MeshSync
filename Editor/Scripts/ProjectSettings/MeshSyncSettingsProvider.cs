@@ -66,8 +66,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 			SetupTab(MeshSyncEditorConstants.UNINITIALIZED_TAB);
 		};
 
-		//TODO-sin: 2020-4-24 Fill in more keywords by using GetSearchKeywordsFromGUIContentProperties
-		//or GetSearchKeywordsFromPath
+		//keywords
 		HashSet<string> meshSyncKeywords = new HashSet<string>(new[] { "MeshSync",});
 		meshSyncKeywords.UnionWith(GetSearchKeywordsFromGUIContentProperties<Contents>());
 
