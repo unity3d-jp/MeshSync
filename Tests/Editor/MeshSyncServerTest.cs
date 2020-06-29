@@ -46,8 +46,8 @@ internal class MeshSyncServerTest  {
     [UnityTest]
     public IEnumerator CheckServerSettings() {
         MeshSyncServer mss = MeshSyncServerEditor.CreateMeshSyncServer(true);
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
-        Assert.AreEqual(projectSettings.GetDefaultServerPort(), mss.GetServerPort());
+        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        Assert.AreEqual(runtimeSettings.GetDefaultServerPort(), mss.GetServerPort());
         yield return null;
     }
 

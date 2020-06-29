@@ -34,13 +34,13 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	    );
 
 	    //Add server port
-	    MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+	    MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
 	    VisualElement  headerContainer = containerInstance.Query<VisualElement>("HeaderContainer").First();
 	    m_serverPortField = new IntegerField("Server Port");
-	    m_serverPortField.SetValueWithoutNotify(projectSettings.GetDefaultServerPort());
+	    m_serverPortField.SetValueWithoutNotify(runtimeSettings.GetDefaultServerPort());
 	    
 	    m_serverPortField.RegisterValueChangedCallback((ChangeEvent<int> evt) => {
-		    MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+		    MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
 		    settings.SetDefaultServerPort((ushort) evt.newValue);
 		    settings.SaveSettings();
 	    });
@@ -187,7 +187,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 			}
 			
 			onValueChanged(config, changeEvent.newValue);
-			MeshSyncProjectSettings.GetOrCreateSettings().SaveSettings();
+			MeshSyncRuntimeSettings.GetOrCreateSettings().SaveSettings();
 		});		
 		
 		fieldContainer.Add(field);
@@ -217,7 +217,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 			}
 			
 			onValueChanged(config, popupField.index);
-			MeshSyncProjectSettings.GetOrCreateSettings().SaveSettings();
+			MeshSyncRuntimeSettings.GetOrCreateSettings().SaveSettings();
 		});
 				
 		fieldContainer.Add(popupField);
@@ -246,8 +246,8 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 //----------------------------------------------------------------------------------------------------------------------	
 
 	private void UpdatePlayerConfigUIElements(MeshSyncPlayerType playerType) {
-		MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
-		MeshSyncPlayerConfig config = projectSettings.GetDefaultPlayerConfig(playerType);
+		MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+		MeshSyncPlayerConfig config = runtimeSettings.GetDefaultPlayerConfig(playerType);
 	
 		//sync
 		m_syncVisibilityToggle.SetValueWithoutNotify(config.SyncVisibility);
