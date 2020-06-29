@@ -22,6 +22,9 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
         return settings;
             
     }
+
+    internal static string GetSettingsPath() { return MESHSYNC_EDITOR_SETTINGS_PATH; }
+
 //----------------------------------------------------------------------------------------------------------------------
 
     //Constructor
