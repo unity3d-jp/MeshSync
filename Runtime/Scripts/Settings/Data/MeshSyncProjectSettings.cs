@@ -58,7 +58,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
    
 //----------------------------------------------------------------------------------------------------------------------
     protected override object GetLock() { return m_instanceLock; }
-    public override string GetSettingsPath() { return MESHSYNC_PROJECT_SETTINGS_PATH;}
+    internal override string GetSettingsPath() { return MESHSYNC_PROJECT_SETTINGS_PATH;}
 
     internal ushort GetDefaultServerPort() { return m_defaultServerPort;}
     internal void SetDefaultServerPort(ushort port) { m_defaultServerPort = port;}
