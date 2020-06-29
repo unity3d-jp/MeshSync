@@ -10,7 +10,14 @@ using UnityEngine.UIElements;
 namespace Unity.MeshSync.Editor {
 	
 class MeshSyncSettingsProvider : SettingsProvider {
-
+	
+	private class Contents {
+		public static readonly GUIContent GeneralSettings = EditorGUIUtility.TrTextContent("General Settings");
+		public static readonly GUIContent DCCTools = EditorGUIUtility.TrTextContent("DCC Tools");
+	}
+	
+//----------------------------------------------------------------------------------------------------------------------	
+	
 	MeshSyncSettingsProvider() : base(PROJECT_SETTINGS_MENU_PATH,SettingsScope.Project) {
 		m_tabs = new IMeshSyncSettingsTab[MeshSyncEditorConstants.MAX_SETTINGS_TAB];
 		Button[] tabButtons = new Button[MeshSyncEditorConstants.MAX_SETTINGS_TAB];		
@@ -34,8 +41,8 @@ class MeshSyncSettingsProvider : SettingsProvider {
 				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "TabButtonTemplate")
 			);
 
-			tabButtons[0] = CreateButton(tabButtonTemplate, "General Settings", OnGeneralSettingsTabClicked);
-			tabButtons[1] = CreateButton(tabButtonTemplate, "DCC Tools", OnDCCToolsTabClicked);
+			tabButtons[0] = CreateButton(tabButtonTemplate, Contents.GeneralSettings, OnGeneralSettingsTabClicked);
+			tabButtons[1] = CreateButton(tabButtonTemplate, Contents.DCCTools, OnDCCToolsTabClicked);
 
 			foreach (Button tabButton in tabButtons) {
 				tabsContainer.Add(tabButton);
@@ -61,20 +68,22 @@ class MeshSyncSettingsProvider : SettingsProvider {
 
 		//TODO-sin: 2020-4-24 Fill in more keywords by using GetSearchKeywordsFromGUIContentProperties
 		//or GetSearchKeywordsFromPath
-		keywords = new HashSet<string>(new[] {
-			"MeshSync",
-		});
+		HashSet<string> meshSyncKeywords = new HashSet<string>(new[] { "MeshSync",});
+		meshSyncKeywords.UnionWith(GetSearchKeywordsFromGUIContentProperties<Contents>());
+
+		keywords = meshSyncKeywords;
 		
 	}
 
 
 //----------------------------------------------------------------------------------------------------------------------	
-	private Button CreateButton(VisualTreeAsset template, string labelText, Action<EventBase> onClicked) 
+	private Button CreateButton(VisualTreeAsset template, GUIContent content, Action<EventBase> onClicked) 
 	{
 		TemplateContainer container = template.CloneTree();
 		Button button = container.Query<Button>().First();
 
-		button.text = labelText;
+		button.text = content.text;
+		button.tooltip = content.tooltip;
 		button.clickable.clickedWithEventInfo += onClicked;
 		
 		return button;
