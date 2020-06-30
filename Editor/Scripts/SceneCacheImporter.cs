@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEditor.Experimental.AssetImporters;
 
 
-namespace UnityEditor.MeshSync
+namespace Unity.MeshSync.Editor
 {
     [ScriptedImporter(1, "sc")]
     internal class SceneCacheImporter : ScriptedImporter

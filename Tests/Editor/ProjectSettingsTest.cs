@@ -5,7 +5,7 @@ using Unity.MeshSync;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace UnityEditor.MeshSync.Tests {
+namespace Unity.MeshSync.Editor.Tests {
 internal class ProjectSettingsTest {
     
     
@@ -21,10 +21,11 @@ internal class ProjectSettingsTest {
     public void CreateSettings() {
         MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
         Assert.NotNull(settings);
+        Assert.True(File.Exists(MeshSyncEditorSettings.GetSettingsPath()));
 
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
-        Assert.NotNull(projectSettings);
-        Assert.True(File.Exists(projectSettings.GetSettingsPath()));
+        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        Assert.NotNull(runtimeSettings);
+        Assert.True(File.Exists(runtimeSettings.GetSettingsPath()));
             
     }    
 

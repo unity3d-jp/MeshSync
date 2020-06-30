@@ -6,7 +6,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace UnityEditor.MeshSync.Tests {
+namespace Unity.MeshSync.Editor.Tests {
 internal class MeshSyncServerTest  {
     [UnityTest]
     public IEnumerator CreateAutoServer()  {
@@ -46,8 +46,8 @@ internal class MeshSyncServerTest  {
     [UnityTest]
     public IEnumerator CheckServerSettings() {
         MeshSyncServer mss = MeshSyncServerEditor.CreateMeshSyncServer(true);
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
-        Assert.AreEqual(projectSettings.GetDefaultServerPort(), mss.GetServerPort());
+        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        Assert.AreEqual(runtimeSettings.GetDefaultServerPort(), mss.GetServerPort());
         yield return null;
     }
 

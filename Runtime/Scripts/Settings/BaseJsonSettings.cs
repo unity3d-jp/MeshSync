@@ -30,7 +30,7 @@ internal abstract class BaseJsonSettings  {
 
 //----------------------------------------------------------------------------------------------------------------------
     protected abstract object GetLock();
-    public abstract string GetSettingsPath();
+    internal abstract string GetSettingsPath();
 
 //----------------------------------------------------------------------------------------------------------------------
 

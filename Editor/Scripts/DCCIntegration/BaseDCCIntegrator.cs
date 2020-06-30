@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using Unity.AnimeToolbox;
 using Unity.SharpZipLib.Utils;
+using UnityEditor;
 using UnityEngine;
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 
 internal abstract class BaseDCCIntegrator {
 

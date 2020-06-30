@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 
 
 internal static class MeshSyncMenu  {
 
     
-    [MenuItem("Assets/MeshSync/Download DCC Plugins", false, 100)]
+    //[MenuItem("Assets/MeshSync/Download DCC Plugins", false, 100)]
     static void DownloadDCCPlugins() {
 
         //Actual plugin name: UnityMeshSync_<version>_<postfix>
@@ -38,7 +39,7 @@ internal static class MeshSyncMenu  {
             Debug.LogError("Failed to download MeshSync DCC plugins.");
         });
         
-     }
+    }
     
 
 }

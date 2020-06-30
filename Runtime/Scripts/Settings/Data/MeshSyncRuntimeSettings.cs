@@ -7,27 +7,27 @@ using UnityEngine;
 namespace Unity.MeshSync {
 
 [Serializable]
-internal class MeshSyncProjectSettings : BaseJsonSettings {
+internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 
-    internal static MeshSyncProjectSettings GetOrCreateSettings() {
+    internal static MeshSyncRuntimeSettings GetOrCreateSettings() {
         
         if (null != m_instance) {
             return m_instance;
         }
 
-        const string PATH = MESHSYNC_PROJECT_SETTINGS_PATH;
+        const string PATH = MESHSYNC_RUNTIME_SETTINGS_PATH;
         lock (m_instanceLock) {           
         
 #if UNITY_EDITOR
             if (File.Exists(PATH)) {
-                m_instance = FileUtility.DeserializeFromJson<MeshSyncProjectSettings>(PATH);                
+                m_instance = FileUtility.DeserializeFromJson<MeshSyncRuntimeSettings>(PATH);                
             }
             if (null != m_instance) {
                 return m_instance;
             }
 #endif
             
-            m_instance = new MeshSyncProjectSettings();
+            m_instance = new MeshSyncRuntimeSettings();
         }        
 
 #if UNITY_EDITOR
@@ -41,7 +41,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
 //----------------------------------------------------------------------------------------------------------------------
 
     //Constructor
-    private MeshSyncProjectSettings() {
+    private MeshSyncRuntimeSettings() {
         
         m_defaultPlayerConfigs = new MeshSyncPlayerConfig[(int) MeshSyncPlayerType.NUM_TYPES]; 
 
@@ -58,7 +58,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
    
 //----------------------------------------------------------------------------------------------------------------------
     protected override object GetLock() { return m_instanceLock; }
-    public override string GetSettingsPath() { return MESHSYNC_PROJECT_SETTINGS_PATH;}
+    internal override string GetSettingsPath() { return MESHSYNC_RUNTIME_SETTINGS_PATH;}
 
     internal ushort GetDefaultServerPort() { return m_defaultServerPort;}
     internal void SetDefaultServerPort(ushort port) { m_defaultServerPort = port;}
@@ -69,7 +69,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
     }
 
     internal static MeshSyncPlayerConfig CreatePlayerConfig(MeshSyncPlayerType playerType) {
-        MeshSyncProjectSettings settings = GetOrCreateSettings();
+        MeshSyncRuntimeSettings settings = GetOrCreateSettings();
         return new MeshSyncPlayerConfig(settings.GetDefaultPlayerConfig(playerType));
     }
 
@@ -79,14 +79,14 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
     [SerializeField] private ushort m_defaultServerPort = MeshSyncConstants.DEFAULT_SERVER_PORT;
     [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
 
-    [SerializeField] internal int ClassVersion = 1;    
+    [SerializeField] internal int ClassVersion = 2;    
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    private static MeshSyncProjectSettings m_instance = null;
+    private static MeshSyncRuntimeSettings m_instance = null;
     private static readonly object m_instanceLock = new object();
 
-    private const string MESHSYNC_PROJECT_SETTINGS_PATH = "ProjectSettings/MeshSyncSettings.asset";
+    private const string MESHSYNC_RUNTIME_SETTINGS_PATH = "ProjectSettings/MeshSyncSettings.asset";
 
     
     

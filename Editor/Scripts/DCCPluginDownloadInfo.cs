@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 
 
 internal class DCCPluginDownloadInfo {

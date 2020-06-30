@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
     
 [Serializable]
 internal class DCCPluginMeta : ISerializationCallbackReceiver {

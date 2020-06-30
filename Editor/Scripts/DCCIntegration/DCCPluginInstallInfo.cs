@@ -2,7 +2,7 @@
 using System.IO;
 using UnityEngine;
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 
 [Serializable]
 internal class DCCPluginInstallInfo {

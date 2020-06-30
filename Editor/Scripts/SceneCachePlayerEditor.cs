@@ -2,7 +2,7 @@ using Unity.MeshSync;
 using UnityEditor;
 using UnityEngine;
 
-namespace UnityEditor.MeshSync
+namespace Unity.MeshSync.Editor
 {
     [CustomEditor(typeof(SceneCachePlayer))]
     internal class SceneCachePlayerEditor : MeshSyncPlayerEditor

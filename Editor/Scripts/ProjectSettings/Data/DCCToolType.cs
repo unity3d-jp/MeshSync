@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 
 /// <summary>
 /// DCC Tools which MeshSync provides integration support

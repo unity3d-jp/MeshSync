@@ -1,2 +1,2 @@
 using System.Runtime.CompilerServices;
-[assembly: InternalsVisibleTo("UnityEditor.MeshSync.Tests")]
+[assembly: InternalsVisibleTo("Unity.MeshSync.EditorTests")]

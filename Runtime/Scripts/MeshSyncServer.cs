@@ -430,9 +430,9 @@ namespace Unity.MeshSync
         }
 
         void Reset() {
-            MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
-            m_config = MeshSyncProjectSettings.CreatePlayerConfig(MeshSyncPlayerType.SERVER);
-            m_serverPort = projectSettings.GetDefaultServerPort();
+            MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+            m_config = MeshSyncRuntimeSettings.CreatePlayerConfig(MeshSyncPlayerType.SERVER);
+            m_serverPort = runtimeSettings.GetDefaultServerPort();
             
         }
 #endif

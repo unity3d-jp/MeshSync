@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
+using UnityEditor;
 using UnityEngine;
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 internal class BlenderIntegrator : BaseDCCIntegrator {
     internal BlenderIntegrator(DCCToolInfo dccToolInfo) : base(dccToolInfo) { }
 //----------------------------------------------------------------------------------------------------------------------

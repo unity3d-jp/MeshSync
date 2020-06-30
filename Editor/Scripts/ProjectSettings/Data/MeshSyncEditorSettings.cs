@@ -5,7 +5,7 @@ using Unity.MeshSync;
 using UnityEngine;
 
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
 
 [Serializable]
 internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
@@ -22,6 +22,9 @@ internal class MeshSyncEditorSettings : ISerializationCallbackReceiver{
         return settings;
             
     }
+
+    internal static string GetSettingsPath() { return MESHSYNC_EDITOR_SETTINGS_PATH; }
+
 //----------------------------------------------------------------------------------------------------------------------
 
     //Constructor

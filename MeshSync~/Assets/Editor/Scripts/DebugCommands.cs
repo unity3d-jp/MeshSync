@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEditor;
-using UnityEditor.MeshSync;
+using Unity.MeshSync.Editor;
 
 
 public static class DebugCommands

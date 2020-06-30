@@ -6,7 +6,7 @@ using Unity.AnimeToolbox;
 using UnityEngine;
 
 
-namespace UnityEditor.MeshSync {
+namespace Unity.MeshSync.Editor {
     
 /// <summary>
 /// A utility class for finding DCC Tools
