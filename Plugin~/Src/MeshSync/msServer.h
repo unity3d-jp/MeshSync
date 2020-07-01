@@ -26,8 +26,7 @@ struct ServerSettings
     SceneImportSettings import_settings;
 };
 
-class Server
-{
+class Server {
 public:
     Server(const ServerSettings& settings);
     ~Server();
@@ -36,6 +35,9 @@ public:
     void stop();
     void clear();
     ServerSettings& getSettings();
+
+    inline const bool IsPublicAccessAllowed();
+    inline void AllowPublicAccess(const bool access);
 
     using MessageHandler = std::function<void(Message::Type type, Message& data)>;
     int getNumMessages() const;
@@ -97,6 +99,7 @@ private:
     using PollMessages = std::vector<PollMessagePtr>;
 
     bool m_serving = true;
+    bool m_allowPublicAccess = false;
     ServerSettings m_settings;
     HTTPServerPtr m_server;
     std::map<std::string, std::string> m_mimetypes;
@@ -119,6 +122,9 @@ msDeclPtr(Server);
 //----------------------------------------------------------------------------------------------------------------------
 
 const std::string& Server::GetFileRootPath() const { return m_file_root_path; }
+const bool Server::IsPublicAccessAllowed() { return m_allowPublicAccess; }
+inline void Server::AllowPublicAccess(const bool access) { m_allowPublicAccess = access; }
+
 
 } // namespace ms
 #endif // msEnableNetwork

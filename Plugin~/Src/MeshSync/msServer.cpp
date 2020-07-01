@@ -38,6 +38,16 @@ RequestHandler::RequestHandler(Server *server)
 
 void RequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
 {
+    //check the source connection
+    if (!m_server->IsPublicAccessAllowed()) {
+        const IPAddress& ipAddress = request.clientAddress().host();
+        const bool isLocal = ipAddress.isLoopback() || ipAddress.isSiteLocal();
+        if (!isLocal) {
+            m_server->serveText(response, "", HTTPResponse::HTTP_SERVICE_UNAVAILABLE);
+            return;
+        }
+    }
+
     if (!m_server->isServing()) {
         m_server->serveText(response, "", HTTPResponse::HTTP_SERVICE_UNAVAILABLE);
         return;
@@ -93,7 +103,7 @@ HTTPRequestHandler* RequestHandlerFactory::createRequestHandler(const HTTPServer
     return new RequestHandler(m_server);
 }
 
-
+//----------------------------------------------------------------------------------------------------------------------
 
 
 Server::Server(const ServerSettings& settings)
