@@ -12,7 +12,7 @@ bool StartWith(const std::string& a, const char *b)
 }
 
 bool StartsWith(const std::string& a, const std::string& b) {
-    return a.rfind(b, 0);
+    return (a.rfind(b, 0) == 0);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
