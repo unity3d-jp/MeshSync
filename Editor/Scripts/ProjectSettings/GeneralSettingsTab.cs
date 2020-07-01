@@ -80,10 +80,10 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 
 	    m_allowPublicAccessToggle = new Toggle(Contents.AllowPublicAccess.text);
 	    m_allowPublicAccessToggle.tooltip = Contents.AllowPublicAccess.tooltip;
-	    m_allowPublicAccessToggle.SetValueWithoutNotify(runtimeSettings.GetPublicAccess());
+	    m_allowPublicAccessToggle.SetValueWithoutNotify(runtimeSettings.GetServerPublicAccess());
 	    m_allowPublicAccessToggle.RegisterValueChangedCallback( (ChangeEvent<bool> evt) => {
 		    MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-		    settings.SetPublicAccess(evt.newValue);
+		    settings.SetServerPublicAccess(evt.newValue);
 		    settings.SaveSettings();
 	    });
 	    headerContainer.Add(m_allowPublicAccessToggle);

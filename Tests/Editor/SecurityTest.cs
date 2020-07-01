@@ -29,21 +29,21 @@ internal class SecurityTest  {
         yield return null;
 
         //Check the original public access
-        bool origPublicAccess = runtimeSettings.GetPublicAccess();
+        bool origPublicAccess = runtimeSettings.GetServerPublicAccess();
         UnityEngine.Assertions.Assert.AreEqual(origPublicAccess, mss.DoesServerAllowPublicAccess());
         yield return null;
         
         //Change the public access and check
-        runtimeSettings.SetPublicAccess(!origPublicAccess);
+        runtimeSettings.SetServerPublicAccess(!origPublicAccess);
         mss.StopServer();
         mss.StartServer();
         Assert.IsTrue(mss.IsServerStarted());       
         yield return null;
-        UnityEngine.Assertions.Assert.AreEqual(runtimeSettings.GetPublicAccess(), mss.DoesServerAllowPublicAccess());        
+        UnityEngine.Assertions.Assert.AreEqual(runtimeSettings.GetServerPublicAccess(), mss.DoesServerAllowPublicAccess());        
         
         //Change back
-        runtimeSettings.SetPublicAccess(origPublicAccess);
-        UnityEngine.Assertions.Assert.AreEqual(origPublicAccess, runtimeSettings.GetPublicAccess());
+        runtimeSettings.SetServerPublicAccess(origPublicAccess);
+        UnityEngine.Assertions.Assert.AreEqual(origPublicAccess, runtimeSettings.GetServerPublicAccess());
         
     }
     

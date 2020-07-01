@@ -61,7 +61,7 @@ namespace Unity.MeshSync
 
             m_server = Server.Start(ref m_serverSettings);
             m_server.fileRootPath = GetServerDocRootPath();
-            m_server.AllowPublicAccess(runtimeSettings.GetPublicAccess());
+            m_server.AllowPublicAccess(runtimeSettings.GetServerPublicAccess());
             
             m_handler = OnServerMessage;
 
