@@ -1,6 +1,6 @@
-#include "msServer.h"
 #include "pch.h"
 #include "msServer.h"
+#include "msServerRequestHandler.h"
 #include "SceneGraph/msMaterial.h"
 #include "SceneGraph/msAnimation.h"
 #include "SceneGraph/msEntityConverter.h"
@@ -9,101 +9,6 @@
 namespace ms {
 
 using namespace Poco::Net;
-
-class RequestHandler : public HTTPRequestHandler
-{
-public:
-    RequestHandler(Server *server);
-    void handleRequest(HTTPServerRequest& request, HTTPServerResponse& response) override;
-
-private:
-    Server *m_server = nullptr;
-};
-
-class RequestHandlerFactory : public HTTPRequestHandlerFactory
-{
-public:
-    RequestHandlerFactory(Server *server);
-    HTTPRequestHandler* createRequestHandler(const HTTPServerRequest &request) override;
-
-private:
-    Server *m_server = nullptr;
-};
-
-
-RequestHandler::RequestHandler(Server *server)
-    : m_server(server)
-{
-}
-
-void RequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
-{
-    //check the source connection
-    if (!m_server->IsPublicAccessAllowed()) {
-        const IPAddress& ipAddress = request.clientAddress().host();
-        const bool isLocal = ipAddress.isLoopback() || ipAddress.isSiteLocal();
-        if (!isLocal) {
-            m_server->serveText(response, "", HTTPResponse::HTTP_SERVICE_UNAVAILABLE);
-            return;
-        }
-    }
-
-    if (!m_server->isServing()) {
-        m_server->serveText(response, "", HTTPResponse::HTTP_SERVICE_UNAVAILABLE);
-        return;
-    }
-
-    auto& uri = request.getURI();
-    if (uri == "set") {
-        m_server->recvSet(request, response);
-    }
-    else if (uri == "delete") {
-        m_server->recvDelete(request, response);
-    }
-    else if (uri == "fence") {
-        m_server->recvFence(request, response);
-    }
-    else if (uri == "get") {
-        m_server->recvGet(request, response);
-    }
-    else if (uri == "query") {
-        m_server->recvQuery(request, response);
-    }
-    else if (uri == "text" || StartWith(uri, "/text")) {
-        m_server->recvText(request, response);
-    }
-    else if (StartWith(uri, "/screenshot")) {
-        m_server->recvScreenshot(request, response);
-    }
-    else if (StartWith(uri, "/poll")) {
-        m_server->recvPoll(request, response);
-    }
-    else if (StartWith(uri, "/protocol_version")) {
-        static const auto res = std::to_string(msProtocolVersion);
-        m_server->serveText(response, res.c_str());
-    }
-    else if (StartWith(uri, "/plugin_version")) {
-        m_server->serveText(response, msPluginVersionStr);
-    }
-    else {
-        // note: Poco handles commas in URI
-        // e.g. "hoge/hage/../hige" -> "hoge/hige"
-        //      "../../secret_file" -> "/"
-        m_server->serveFiles(response, uri);
-    }
-}
-
-RequestHandlerFactory::RequestHandlerFactory(Server *server)
-    : m_server(server)
-{
-}
-
-HTTPRequestHandler* RequestHandlerFactory::createRequestHandler(const HTTPServerRequest&)
-{
-    return new RequestHandler(m_server);
-}
-
-//----------------------------------------------------------------------------------------------------------------------
 
 
 Server::Server(const ServerSettings& settings)
@@ -128,7 +33,7 @@ bool Server::start()
 
         try {
             ServerSocket svs(m_settings.port);
-            m_server.reset(new HTTPServer(new RequestHandlerFactory(this), svs, params));
+            m_server.reset(new HTTPServer(new ServerRequestHandlerFactory(this), svs, params));
             m_server->start();
         }
         catch (Poco::IOException &e) {
