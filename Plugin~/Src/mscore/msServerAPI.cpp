@@ -207,6 +207,11 @@ msAPI void msServerAllowPublicAccess(ms::Server *server, const bool access) {
     server->AllowPublicAccess(access);
 }
 
+msAPI bool msServerIsPublicAccessAllowed(ms::Server *server) {
+    if (!server) { return; }
+    return server->IsPublicAccessAllowed();
+}
+
 msAPI void msServerSetScreenshotFilePath(ms::Server *server, const char *path)
 {
     if (!server) { return; }
