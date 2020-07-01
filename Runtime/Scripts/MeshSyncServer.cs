@@ -39,6 +39,8 @@ namespace Unity.MeshSync
 
 
         internal bool IsServerStarted() { return m_serverStarted;}
+
+        internal bool DoesServerAllowPublicAccess() { return m_server.IsPublicAccessAllowed();}
         #endregion
 
 
