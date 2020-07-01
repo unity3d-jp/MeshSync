@@ -208,7 +208,7 @@ msAPI void msServerAllowPublicAccess(ms::Server *server, const bool access) {
 }
 
 msAPI bool msServerIsPublicAccessAllowed(ms::Server *server) {
-    if (!server) { return; }
+    if (!server) { return false; }
     return server->IsPublicAccessAllowed();
 }
 
