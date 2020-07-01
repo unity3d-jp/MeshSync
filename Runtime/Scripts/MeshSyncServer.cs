@@ -51,11 +51,14 @@ namespace Unity.MeshSync
             //Deploy HTTP assets to StreamingAssets
             DeployStreamingAssets.Deploy();
 #endif
+            MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+            
             
             m_serverSettings.port = (ushort)m_serverPort;
             m_serverSettings.zUpCorrectionMode = (ZUpCorrectionMode) m_config.ZUpCorrection;
-            m_server = Server.Start(ref m_serverSettings);
             m_server.fileRootPath = GetServerDocRootPath();
+            m_server.AllowPublicAccess(runtimeSettings.GetPublicAccess());
+            m_server = Server.Start(ref m_serverSettings);
             m_handler = OnServerMessage;
 #if UNITY_EDITOR
             EditorApplication.update += PollServerEvents;

@@ -14,6 +14,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	internal class Contents {
 
 		public static readonly GUIContent ServerPort = EditorGUIUtility.TrTextContent("Server Port");
+		public static readonly GUIContent AllowPublicAccess = EditorGUIUtility.TrTextContent("Allow public access");
 		public static readonly GUIContent Visibility = EditorGUIUtility.TrTextContent("Visibility");
 		public static readonly GUIContent Transform  = EditorGUIUtility.TrTextContent("Transform");
 		public static readonly GUIContent Cameras = EditorGUIUtility.TrTextContent("Cameras");
@@ -75,6 +76,14 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		    settings.SaveSettings();
 	    });
 	    headerContainer.Add(m_serverPortField);        
+	    
+	    m_allowPublicAccessToggle  = AddField<Toggle,bool>(fieldTemplate, headerContainer, Contents.AllowPublicAccess,
+		    (MeshSyncPlayerConfig config, bool newValue) => {
+			    MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+			    settings.SetPublicAccess(newValue);
+		    }
+	    );
+	    
 	    
         //Add playerType popup
 	    VisualElement playerTypePopupContainer = containerInstance.Query<VisualElement>("PlayerTypePopupContainer").First();
@@ -326,6 +335,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 //----------------------------------------------------------------------------------------------------------------------
 	
 	private IntegerField m_serverPortField;
+	private Toggle m_allowPublicAccessToggle;
 	
 	//Sync Settings
 	private Toggle m_syncVisibilityToggle;
