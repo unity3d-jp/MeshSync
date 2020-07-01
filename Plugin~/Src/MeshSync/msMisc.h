@@ -5,6 +5,7 @@
 namespace ms {
 
 bool StartWith(const std::string& a, const char *b);
+bool StartsWith(const std::string& a, const std::string& b);
 #ifndef msRuntime
 bool FileToByteArray(const char *path, RawVector<char> &out);
 bool FileToByteArray(const char *path, SharedVector<char> &out);

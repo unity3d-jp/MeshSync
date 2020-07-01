@@ -11,6 +11,12 @@ bool StartWith(const std::string& a, const char *b)
     return std::strncmp(a.c_str(), b, n) == 0;
 }
 
+bool StartsWith(const std::string& a, const std::string& b) {
+    return a.rfind(b, 0);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 #ifndef msRuntime
 bool FileToByteArray(const char *path, RawVector<char> &dst)
 {

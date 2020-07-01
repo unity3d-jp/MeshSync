@@ -199,7 +199,7 @@ void Server::serveFiles(Poco::Net::HTTPServerResponse& response, const std::stri
     //check if we are outside root;
     std::string filePathStr = filePath.toString();
     std::replace(filePathStr.begin(), filePathStr.end(), '\\', '/');
-    if (0!=filePathStr.rfind(rootPath, 0)) {
+    if (!StartsWith(filePathStr, rootPath)) {
         serveText(response, "", HTTPResponse::HTTP_NOT_FOUND);
         return;
     }
