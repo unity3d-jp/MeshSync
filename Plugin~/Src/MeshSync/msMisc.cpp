@@ -3,7 +3,7 @@
 
 namespace ms {
 
-bool StartWith(const std::string& a, const char *b)
+bool StartsWith(const std::string& a, const char *b)
 {
     if (!b)
         return false;

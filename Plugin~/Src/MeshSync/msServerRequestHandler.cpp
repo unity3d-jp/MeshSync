@@ -2,7 +2,7 @@
 #include "msServerRequestHandler.h"
 #include "msServer.h"
 
-#include "msMisc.h" //StartWith()
+#include "msMisc.h" //StartsWith()
 
 #ifdef msEnableNetwork
 namespace ms {
@@ -54,20 +54,20 @@ void ServerRequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerR
     else if (uri == "query") {
         m_server->recvQuery(request, response);
     }
-    else if (uri == "text" || StartWith(uri, "/text")) {
+    else if (uri == "text" || StartsWith(uri, "/text")) {
         m_server->recvText(request, response);
     }
-    else if (StartWith(uri, "/screenshot")) {
+    else if (StartsWith(uri, "/screenshot")) {
         m_server->recvScreenshot(request, response);
     }
-    else if (StartWith(uri, "/poll")) {
+    else if (StartsWith(uri, "/poll")) {
         m_server->recvPoll(request, response);
     }
-    else if (StartWith(uri, "/protocol_version")) {
+    else if (StartsWith(uri, "/protocol_version")) {
         static const auto res = std::to_string(msProtocolVersion);
         m_server->serveText(response, res.c_str());
     }
-    else if (StartWith(uri, "/plugin_version")) {
+    else if (StartsWith(uri, "/plugin_version")) {
         m_server->serveText(response, msPluginVersionStr);
     }
     else {
