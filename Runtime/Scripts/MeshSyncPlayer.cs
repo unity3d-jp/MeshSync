@@ -243,10 +243,8 @@ namespace Unity.MeshSync
         {
             get { return m_assetDir.leaf.Length != 0 ? "Assets/" + m_assetDir.leaf : "Assets"; }
         }
-        internal string httpFileRootPath
-        {
-            get { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
-        }
+        protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
+        
         internal Transform rootObject
         {
             get { return m_rootObject; }

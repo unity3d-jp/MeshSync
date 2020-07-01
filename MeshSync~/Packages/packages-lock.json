@@ -74,7 +74,7 @@
       }
     },
     "com.unity.package-validation-suite": {
-      "version": "0.8.1-preview",
+      "version": "0.11.0-preview",
       "depth": 0,
       "source": "registry",
       "dependencies": {
