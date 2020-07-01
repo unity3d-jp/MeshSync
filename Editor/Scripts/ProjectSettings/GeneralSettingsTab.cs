@@ -67,7 +67,8 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	    //Add server port
 	    MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
 	    VisualElement  headerContainer = containerInstance.Query<VisualElement>("HeaderContainer").First();
-	    m_serverPortField = new IntegerField("Server Port");
+	    m_serverPortField = new IntegerField(Contents.ServerPort.text);
+	    m_serverPortField.tooltip = Contents.ServerPort.tooltip;
 	    m_serverPortField.SetValueWithoutNotify(runtimeSettings.GetDefaultServerPort());
 	    
 	    m_serverPortField.RegisterValueChangedCallback((ChangeEvent<int> evt) => {
