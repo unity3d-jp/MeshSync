@@ -75,15 +75,18 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		    settings.SetDefaultServerPort((ushort) evt.newValue);
 		    settings.SaveSettings();
 	    });
-	    headerContainer.Add(m_serverPortField);        
-	    
-	    m_allowPublicAccessToggle  = AddField<Toggle,bool>(fieldTemplate, headerContainer, Contents.AllowPublicAccess,
-		    (MeshSyncPlayerConfig config, bool newValue) => {
-			    MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-			    settings.SetPublicAccess(newValue);
-		    }
-	    );
-	    
+	    headerContainer.Add(m_serverPortField);
+
+	    m_allowPublicAccessToggle = new Toggle(Contents.AllowPublicAccess.text);
+	    m_allowPublicAccessToggle.tooltip = Contents.AllowPublicAccess.tooltip;
+	    m_allowPublicAccessToggle.SetValueWithoutNotify(runtimeSettings.GetPublicAccess());
+	    m_allowPublicAccessToggle.RegisterValueChangedCallback( (ChangeEvent<bool> evt) => {
+		    MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+		    settings.SetPublicAccess(evt.newValue);
+		    settings.SaveSettings();
+	    });
+	    headerContainer.Add(m_allowPublicAccessToggle);
+	        
 	    
         //Add playerType popup
 	    VisualElement playerTypePopupContainer = containerInstance.Query<VisualElement>("PlayerTypePopupContainer").First();
