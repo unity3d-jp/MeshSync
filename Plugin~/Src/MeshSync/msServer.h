@@ -53,7 +53,6 @@ public:
 
     void setScrrenshotFilePath(const std::string& path);
     void setFileRootPath(const std::string& path);
-    const std::string& getFileRootPath() const;
 
     void notifyPoll(PollMessage::PollType t);
 
@@ -90,6 +89,7 @@ private:
 
     bool loadMIMETypes(const std::string& path);
     const std::string& getMIMEType(const std::string& filename);
+    inline const std::string& GetFileRootPath() const;
 
 private:
     using HTTPServerPtr = std::shared_ptr<Poco::Net::HTTPServer>;
@@ -115,6 +115,10 @@ private:
     std::string m_file_root_path;
 };
 msDeclPtr(Server);
+
+//----------------------------------------------------------------------------------------------------------------------
+
+const std::string& Server::GetFileRootPath() const { return m_file_root_path; }
 
 } // namespace ms
 #endif // msEnableNetwork

@@ -261,8 +261,8 @@ void Server::serveBinary(Poco::Net::HTTPServerResponse & response, const void *d
     os.flush();
 }
 
-void Server::serveFiles(Poco::Net::HTTPServerResponse& response, const std::string& uri)
-{
+//----------------------------------------------------------------------------------------------------------------------
+void Server::serveFiles(Poco::Net::HTTPServerResponse& response, const std::string& uri) {
     // filename start with '.' is treated as hidden file. just return 404
     auto filename = GetFilename(uri.c_str());
     if (filename[0] == '.') {
@@ -270,15 +270,28 @@ void Server::serveFiles(Poco::Net::HTTPServerResponse& response, const std::stri
         return;
     }
 
-    std::string path = getFileRootPath();
-    if (uri.empty() || uri == "/")
-        path += "/index.html";
-    else
-        path += uri;
+    const std::string rootPath = GetFileRootPath();
 
-    Poco::File f(path);
+    Poco::Path filePath = rootPath;
+    if (uri.empty() || uri == "/")
+        filePath.append("/index.html");
+    else {
+
+        filePath.append(uri);
+        filePath = filePath.makeAbsolute();
+    }
+
+    //check if we are outside root;
+    std::string filePathStr = filePath.toString();
+    std::replace(filePathStr.begin(), filePathStr.end(), '\\', '/');
+    if (0!=filePathStr.rfind(rootPath, 0)) {
+        serveText(response, "", HTTPResponse::HTTP_NOT_FOUND);
+        return;
+    }
+
+    Poco::File f(filePath);
     if (f.exists())
-        response.sendFile(path, getMIMEType(path));
+        response.sendFile(filePathStr, getMIMEType(filePathStr));
     else
         serveText(response, "", HTTPResponse::HTTP_NOT_FOUND);
 }
@@ -397,10 +410,6 @@ void Server::setFileRootPath(const std::string& path)
     loadMIMETypes(m_file_root_path + "/mimetypes.txt");
 }
 
-const std::string& Server::getFileRootPath() const
-{
-    return m_file_root_path;
-}
 
 Scene* Server::getHostScene()
 {
