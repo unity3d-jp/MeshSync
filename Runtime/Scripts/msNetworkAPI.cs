@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Unity.MeshSync
 {
@@ -85,8 +86,15 @@ namespace Unity.MeshSync
 
         public string fileRootPath { set { msServerSetFileRootPath(self, value); } }
 
-        public void AllowPublicAccess(bool access) { msServerAllowPublicAccess(self, access);  }
-        public void IsPublicAccessAllowed() { msServerIsPublicAccessAllowed(self);  }
+        public void AllowPublicAccess(bool access) {
+            Assert.IsFalse(self == IntPtr.Zero);
+            msServerAllowPublicAccess(self, access);
+        }
+
+        public bool IsPublicAccessAllowed() {
+            Assert.IsFalse(self == IntPtr.Zero);
+            return msServerIsPublicAccessAllowed(self);
+        }
 
         
         public string screenshotPath { set { msServerSetScreenshotFilePath(self, value); } }
