@@ -64,30 +64,27 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		    Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "GeneralSettingsFieldTemplate")
 	    );
 
-	    //Add server port
 	    MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
 	    VisualElement  headerContainer = containerInstance.Query<VisualElement>("HeaderContainer").First();
-	    m_serverPortField = new IntegerField(Contents.ServerPort.text);
-	    m_serverPortField.tooltip = Contents.ServerPort.tooltip;
-	    m_serverPortField.SetValueWithoutNotify(runtimeSettings.GetDefaultServerPort());
 	    
-	    m_serverPortField.RegisterValueChangedCallback((ChangeEvent<int> evt) => {
-		    MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-		    settings.SetDefaultServerPort((ushort) evt.newValue);
-		    settings.SaveSettings();
-	    });
-	    headerContainer.Add(m_serverPortField);
+	    //Add server port
+	    Foldout serverSettingsFoldout = containerInstance.Query<Foldout>("ServerSettingsFoldout").First();
+	    m_serverPortField = AddField<IntegerField,int>(fieldTemplate, serverSettingsFoldout, Contents.ServerPort,
+		    runtimeSettings.GetDefaultServerPort(),
+		    (int newValue) => {
+			    MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+			    settings.SetDefaultServerPort((ushort) newValue);
+		    }
+	    );
 
-	    m_allowPublicAccessToggle = new Toggle(Contents.AllowPublicAccess.text);
-	    m_allowPublicAccessToggle.tooltip = Contents.AllowPublicAccess.tooltip;
-	    m_allowPublicAccessToggle.SetValueWithoutNotify(runtimeSettings.GetServerPublicAccess());
-	    m_allowPublicAccessToggle.RegisterValueChangedCallback( (ChangeEvent<bool> evt) => {
-		    MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-		    settings.SetServerPublicAccess(evt.newValue);
-		    settings.SaveSettings();
-	    });
-	    headerContainer.Add(m_allowPublicAccessToggle);
-	        
+	    m_allowPublicAccessToggle = AddField<Toggle,bool>(fieldTemplate, serverSettingsFoldout, Contents.AllowPublicAccess,
+		    runtimeSettings.GetServerPublicAccess(),
+		    (bool  newValue) => {
+			    MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+			    settings.SetServerPublicAccess(newValue);
+		    }
+	    );
+	            
 	    
         //Add playerType popup
 	    VisualElement playerTypePopupContainer = containerInstance.Query<VisualElement>("PlayerTypePopupContainer").First();
@@ -207,6 +204,30 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
         root.Add(containerInstance);
     }
 
+	//Support Toggle, FloatField, etc
+	private F AddField<F,V>(VisualTreeAsset template, VisualElement parent, GUIContent content,
+		V initialValue, Action<V> onValueChanged) where F: VisualElement,INotifyValueChanged<V>, new()  
+	{
+		TemplateContainer templateInstance = template.CloneTree();
+		VisualElement     fieldContainer   = templateInstance.Query<VisualElement>("FieldContainer").First();
+		Label label = templateInstance.Query<Label>().First();
+		label.text    = content.text;
+		label.tooltip = content.tooltip;
+		
+		F field = new F();
+		field.AddToClassList("general-settings-field");
+		field.SetValueWithoutNotify(initialValue);
+		field.RegisterValueChangedCallback((ChangeEvent<V> changeEvent) => {
+		
+			onValueChanged(changeEvent.newValue);
+			MeshSyncRuntimeSettings.GetOrCreateSettings().SaveSettings();
+		});		
+		
+		fieldContainer.Add(field);
+		parent.Add(templateInstance);
+		return field;
+	}
+	
 //----------------------------------------------------------------------------------------------------------------------	
 
 	//Support Toggle, FloatField, etc

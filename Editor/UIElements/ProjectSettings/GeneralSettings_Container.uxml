@@ -4,6 +4,8 @@
 
         <VisualElement name="HeaderContainer" class="general-header-container">
         </VisualElement>
+
+        <Foldout name="ServerSettingsFoldout" text="Server" class="general-settings-foldout"/>
         
         <VisualElement name="PlayerSettingsContainer">            
             <VisualElement name="PlayerTypePopupContainer" class ="general-player-type-popup-container">
