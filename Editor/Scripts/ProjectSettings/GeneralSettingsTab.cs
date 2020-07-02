@@ -13,7 +13,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 
 	internal class Contents {
 
-		public static readonly GUIContent ServerPort = EditorGUIUtility.TrTextContent("Default server port");
+		public static readonly GUIContent ServerPort = EditorGUIUtility.TrTextContent("Server port");
 		public static readonly GUIContent AllowPublicAccess = EditorGUIUtility.TrTextContent("Allow public access");
 		public static readonly GUIContent Visibility = EditorGUIUtility.TrTextContent("Visibility");
 		public static readonly GUIContent Transform  = EditorGUIUtility.TrTextContent("Transform");
