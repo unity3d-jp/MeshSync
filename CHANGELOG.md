@@ -4,7 +4,7 @@ All notable changes to the MeshSync package will be documented in this file.
 ## [0.2.1-preview] - 2020-07-02
 
 * fix: fix a bug in ProjectSettings when switching tab
-* fix: prevent root path traversal 
+* fix: prevent server root path traversal 
 * fix: prevent public access to the server by default 
 * chore: Update latest known MeshSyncDCCPlugins version to 0.2.0-preview
 * chore: various polishes
