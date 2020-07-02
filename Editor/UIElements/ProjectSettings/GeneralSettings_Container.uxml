@@ -6,8 +6,8 @@
         </VisualElement>
 
         <Foldout name="ServerSettingsFoldout" text="Server" class="general-settings-foldout"/>
-        
-        <VisualElement name="PlayerSettingsContainer">            
+
+        <Foldout name="PlayerSettingsFoldout" text="MeshSync Objects" class="general-settings-foldout">
             <VisualElement name="PlayerTypePopupContainer" class ="general-player-type-popup-container">
             </VisualElement>
             <Foldout name="SyncSettingsFoldout" text="Sync" class="general-settings-foldout"/>
@@ -15,7 +15,7 @@
             <Foldout name="MiscSettingsFoldout" text="Misc" class="general-settings-foldout"/>
             <Foldout name="AnimationTweakSettingsFoldout" text="Animation Tweak" class="general-settings-foldout"/>
 
-        </VisualElement>
+        </Foldout>
     </ScrollView>
 
         
