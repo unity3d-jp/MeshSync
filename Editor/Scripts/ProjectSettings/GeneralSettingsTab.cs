@@ -13,34 +13,34 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 
 	internal class Contents {
 
-		public static readonly GUIContent ServerPort = EditorGUIUtility.TrTextContent("Server Port");
+		public static readonly GUIContent ServerPort = EditorGUIUtility.TrTextContent("Default server port");
 		public static readonly GUIContent AllowPublicAccess = EditorGUIUtility.TrTextContent("Allow public access");
 		public static readonly GUIContent Visibility = EditorGUIUtility.TrTextContent("Visibility");
 		public static readonly GUIContent Transform  = EditorGUIUtility.TrTextContent("Transform");
 		public static readonly GUIContent Cameras = EditorGUIUtility.TrTextContent("Cameras");
 		public static readonly GUIContent Lights  = EditorGUIUtility.TrTextContent("Lights");
 		public static readonly GUIContent Meshes = EditorGUIUtility.TrTextContent("Meshes");
-		public static readonly GUIContent UpdateMeshColliders = EditorGUIUtility.TrTextContent("Update Mesh Colliders");
+		public static readonly GUIContent UpdateMeshColliders = EditorGUIUtility.TrTextContent("Update mesh colliders");
 		public static readonly GUIContent Materials = EditorGUIUtility.TrTextContent("Materials");
-		public static readonly GUIContent FindMaterialsFromAssetDatabase = EditorGUIUtility.TrTextContent("Find Materials from Asset Database");
+		public static readonly GUIContent FindMaterialsFromAssetDatabase = EditorGUIUtility.TrTextContent("Find materials from asset database");
 
-		public static readonly GUIContent AnimationInterpolation = EditorGUIUtility.TrTextContent("Animation Interpolation");
-		public static readonly GUIContent KeyframeReduction  = EditorGUIUtility.TrTextContent("Keyframe Reduction");
-		public static readonly GUIContent ReductionThreshold = EditorGUIUtility.TrTextContent("Reduction Threshold");
-		public static readonly GUIContent ReductionEraseFlatCurves = EditorGUIUtility.TrTextContent("Reduction Erase Flat Curves");
+		public static readonly GUIContent AnimationInterpolation = EditorGUIUtility.TrTextContent("Animation interpolation");
+		public static readonly GUIContent KeyframeReduction  = EditorGUIUtility.TrTextContent("Keyframe reduction");
+		public static readonly GUIContent ReductionThreshold = EditorGUIUtility.TrTextContent("Reduction threshold");
+		public static readonly GUIContent ReductionEraseFlatCurves = EditorGUIUtility.TrTextContent("Reduction erase flat curves");
 		public static readonly GUIContent ZUpCorrection = EditorGUIUtility.TrTextContent("Z-Up correction");
 
 		
-		public static readonly GUIContent SyncMaterialList = EditorGUIUtility.TrTextContent("Sync Material List");
-		public static readonly GUIContent ProgressiveDisplay = EditorGUIUtility.TrTextContent("Progressive Display");
+		public static readonly GUIContent SyncMaterialList = EditorGUIUtility.TrTextContent("Sync material list");
+		public static readonly GUIContent ProgressiveDisplay = EditorGUIUtility.TrTextContent("Progressive display");
 		public static readonly GUIContent Logging = EditorGUIUtility.TrTextContent("Logging");
 		public static readonly GUIContent Profiling = EditorGUIUtility.TrTextContent("Profiling");
 
-		public static readonly GUIContent TweakTimeScale = EditorGUIUtility.TrTextContent("Time Scale");
-		public static readonly GUIContent TweakTimeOffset = EditorGUIUtility.TrTextContent("Time Offset");
-		public static readonly GUIContent TweakDropStep = EditorGUIUtility.TrTextContent("Drop Step");
-		public static readonly GUIContent TweakReductionThreshold = EditorGUIUtility.TrTextContent("Reduction Threshold");
-		public static readonly GUIContent TweakEraseFlatCurves = EditorGUIUtility.TrTextContent("Erase Flat Curves");
+		public static readonly GUIContent TweakTimeScale = EditorGUIUtility.TrTextContent("Time scale");
+		public static readonly GUIContent TweakTimeOffset = EditorGUIUtility.TrTextContent("Time offset");
+		public static readonly GUIContent TweakDropStep = EditorGUIUtility.TrTextContent("Drop step");
+		public static readonly GUIContent TweakReductionThreshold = EditorGUIUtility.TrTextContent("Reduction threshold");
+		public static readonly GUIContent TweakEraseFlatCurves = EditorGUIUtility.TrTextContent("Erase flat curves");
 		
 	}
 
@@ -88,7 +88,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	    
         //Add playerType popup
 	    VisualElement playerTypePopupContainer = containerInstance.Query<VisualElement>("PlayerTypePopupContainer").First();
-        PopupField<string> playerTypePopup = new PopupField<string>("Settings for object type",objectTypes, objectTypes[0]);
+        PopupField<string> playerTypePopup = new PopupField<string>("Settings for Object Type",objectTypes, objectTypes[0]);
         playerTypePopup.RegisterValueChangedCallback(OnPlayerTypePopupChanged);
 	    playerTypePopupContainer.Add(playerTypePopup);        
 
