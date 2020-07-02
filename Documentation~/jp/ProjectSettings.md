@@ -5,11 +5,21 @@
 
 ## General Settings
 
-General settings タブで、MeshSync のオブジェクトののプロパティの既定値を設定できます。
-1. [MeshSyncServer](MeshSyncServer.md)
-2. [SceneCache](SceneCache.md)
-
 ![ProjectSettingsGeneral](../images/ProjectSettingsGeneral.png)
+
+General settings タブで、下記のプロパティの既定値を設定できます。
+1. サーバー:
+   * **Server Port**  
+     デフォルトのサーバーのポート。
+   * **Allow public access**  
+     パブリック IP から MeshSync へのアクセスを許可する。 通常、この設定はオフになっており、
+     ローカルネットワーク (127.0.0.1, 10.0.0.0/24, 192.168.0.0/16 or 172.16.0.0 to 172.31.255.255)
+     にある端末のみ、MeshSync へアクセスできます。     
+
+2. MeshSync のオブジェクト
+   1. [MeshSyncServer](MeshSyncServer.md)
+   2. [SceneCache](SceneCache.md)
+
 
 
 ## DCC Tools
