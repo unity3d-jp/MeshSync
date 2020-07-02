@@ -5,12 +5,22 @@
 
 ## General Settings
 
-Use the general settings tab to set the default property values of
-MeshSync objects:
-1. [MeshSyncServer](MeshSyncServer.md)
-2. [SceneCache](SceneCache.md)
-
 ![ProjectSettingsGeneral](../images/ProjectSettingsGeneral.png)
+
+Use the general settings tab to set the default setting values for 
+1. The server:
+   * **Server Port**  
+     The default server port.
+   * **Allow public access**  
+     Allows public access to MeshSync. By default, this setting is turned off, 
+     and only computers in local network 
+     (127.0.0.1, 10.0.0.0/24, 192.168.0.0/16 or 172.16.0.0 to 172.31.255.255)
+     can connect to MeshSync.
+
+2. MeshSync objects
+   1. [MeshSyncServer](MeshSyncServer.md)
+   2. [SceneCache](SceneCache.md)
+
 
 
 ## DCC Tools
