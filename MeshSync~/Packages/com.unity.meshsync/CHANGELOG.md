@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.2.1-preview] - 2020-07-02
+
+* fix: fix a bug in ProjectSettings when switching tab
+* fix: prevent server root path traversal 
+* fix: prevent public access to the server by default 
+* chore: Update latest known MeshSyncDCCPlugins version to 0.2.0-preview
+* chore: various polishes
+* doc: Add installation steps for Unity 2020 in the top readme
+
 ## [0.2.0-preview] - 2020-06-17
 * feat: add Project Settings to configure MeshSync objects and DCC Tools integrations
 * feat: add DCC Tools integration support for Maya 2017-2020
