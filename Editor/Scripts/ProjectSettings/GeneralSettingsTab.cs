@@ -99,29 +99,29 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	    Foldout syncSettingsFoldout = containerInstance.Query<Foldout>("SyncSettingsFoldout").First();
 
 	    //Sync	           
-	    m_syncVisibilityToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Visibility,
+	    m_syncVisibilityToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Visibility,
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.SyncVisibility = newValue; }
 	    );
-	    m_syncTransformToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Transform,
+	    m_syncTransformToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Transform,
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.SyncTransform = newValue; }
 	    );
-	    m_syncCamerasToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Cameras,
+	    m_syncCamerasToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Cameras,
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.SyncCameras = newValue; }
 	    );
-	    m_syncLightsToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Lights,
+	    m_syncLightsToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Lights,
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.SyncLights = newValue; }
 	    );
-	    m_syncMeshesToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Meshes,
+	    m_syncMeshesToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Meshes,
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.SyncMeshes = newValue; }
 	    );
-	    m_updateMeshCollidersToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, 
+	    m_updateMeshCollidersToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, 
 		    Contents.UpdateMeshColliders,
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.UpdateMeshColliders = newValue; }
 	    );
-	    m_syncMaterialsToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Materials,
+	    m_syncMaterialsToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Materials,
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.SyncMaterials = newValue; }
 	    );
-	    m_findMaterialFromAssetsToggle = AddField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, 
+	    m_findMaterialFromAssetsToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, 
 		    Contents.FindMaterialsFromAssetDatabase,
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.FindMaterialFromAssets = newValue; }
 	    );
@@ -129,73 +129,73 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		//import
 	    Foldout importSettingsFoldout = containerInstance.Query<Foldout>("ImportSettingsFoldout").First();
 
-	    m_animationInterpolationPopup = AddPopupField(fieldTemplate, importSettingsFoldout, 
+	    m_animationInterpolationPopup = AddPlayerConfigPopupField(fieldTemplate, importSettingsFoldout, 
 		    Contents.AnimationInterpolation, m_animationInterpolationEnums,
 		    (MeshSyncPlayerConfig config, int newValue) => { config.AnimationInterpolation = newValue; }
 	    );
-	    m_keyframeReductionToggle = AddField<Toggle,bool>(fieldTemplate, importSettingsFoldout, 
+	    m_keyframeReductionToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, importSettingsFoldout, 
 		    Contents.KeyframeReduction,
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.KeyframeReduction = newValue; }
 	    );
-	    m_reductionThresholdField = AddField<FloatField, float>(fieldTemplate, importSettingsFoldout, 
+	    m_reductionThresholdField = AddPlayerConfigField<FloatField, float>(fieldTemplate, importSettingsFoldout, 
 		    Contents.ReductionThreshold,
 		    (MeshSyncPlayerConfig config, float newValue) => { config.ReductionThreshold = newValue; }
 		);
-	    m_reductionEraseFlatCurves = AddField<Toggle,bool>(fieldTemplate, importSettingsFoldout, 
+	    m_reductionEraseFlatCurves = AddPlayerConfigField<Toggle,bool>(fieldTemplate, importSettingsFoldout, 
 		    Contents.ReductionEraseFlatCurves,
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.ReductionEraseFlatCurves = newValue; }
 		);
-	    m_zUpCorrectionPopup = AddPopupField(fieldTemplate, importSettingsFoldout, 
+	    m_zUpCorrectionPopup = AddPlayerConfigPopupField(fieldTemplate, importSettingsFoldout, 
 		    Contents.ZUpCorrection, m_zUpCorrectionEnums,
 		    (MeshSyncPlayerConfig config, int newValue) => { config.ZUpCorrection = newValue; }
 	    );
 	    
 	    //Misc 
 	    Foldout miscSettingsFoldout = containerInstance.Query<Foldout>("MiscSettingsFoldout").First();
-	    m_syncMaterialListToggle = AddField<Toggle,bool>(fieldTemplate, miscSettingsFoldout, 
+	    m_syncMaterialListToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, miscSettingsFoldout, 
 		    Contents.SyncMaterialList,
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.SyncMaterialList = newValue; }
 	    );
-	    m_progressiveDisplayToggle = AddField<Toggle,bool>(fieldTemplate, miscSettingsFoldout, 
+	    m_progressiveDisplayToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, miscSettingsFoldout, 
 		    Contents.ProgressiveDisplay,
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.ProgressiveDisplay = newValue; }
 	    );
-	    m_loggingToggle = AddField<Toggle,bool>(fieldTemplate, miscSettingsFoldout, 
+	    m_loggingToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, miscSettingsFoldout, 
 		    Contents.Logging,
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.Logging = newValue; }
 	    );
-	    m_profilingToggle = AddField<Toggle,bool>(fieldTemplate, miscSettingsFoldout, 
+	    m_profilingToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, miscSettingsFoldout, 
 		    Contents.Profiling,
 		    (MeshSyncPlayerConfig config, bool newValue) => { config.Profiling = newValue; }
 	    );
 	    
 	    //Animation Tweak
 	    Foldout animationTweakSettingsFoldout = containerInstance.Query<Foldout>("AnimationTweakSettingsFoldout").First();
-	    m_animationTweakTimeScaleField = AddField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
+	    m_animationTweakTimeScaleField = AddPlayerConfigField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
 		    Contents.TweakTimeScale,
 		    (MeshSyncPlayerConfig config, float newValue) => {
 			    config.GetAnimationTweakSettings().TimeScale = newValue;
 		    }
 	    );
-	    m_animationTweakTimeOffsetField = AddField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
+	    m_animationTweakTimeOffsetField = AddPlayerConfigField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
 		    Contents.TweakTimeOffset,
 		    (MeshSyncPlayerConfig config, float newValue) => {
 			    config.GetAnimationTweakSettings().TimeOffset = newValue;
 		    }
 	    );
-	    m_animationTweakDropStepField = AddField<IntegerField, int>(fieldTemplate, animationTweakSettingsFoldout, 
+	    m_animationTweakDropStepField = AddPlayerConfigField<IntegerField, int>(fieldTemplate, animationTweakSettingsFoldout, 
 		    Contents.TweakDropStep,
 		    (MeshSyncPlayerConfig config, int newValue) => {
 			    config.GetAnimationTweakSettings().DropStep = newValue;
 		    }
 	    );
-	    m_animationTweakReductionThresholdField = AddField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
+	    m_animationTweakReductionThresholdField = AddPlayerConfigField<FloatField, float>(fieldTemplate, animationTweakSettingsFoldout, 
 		    Contents.TweakReductionThreshold,
 		    (MeshSyncPlayerConfig config, float newValue) => {
 			    config.GetAnimationTweakSettings().ReductionThreshold = newValue;
 		    }
 	    );
-	    m_animationTweakEraseFlatCurvesToggle = AddField<Toggle, bool>(fieldTemplate, animationTweakSettingsFoldout, 
+	    m_animationTweakEraseFlatCurvesToggle = AddPlayerConfigField<Toggle, bool>(fieldTemplate, animationTweakSettingsFoldout, 
 		    Contents.TweakEraseFlatCurves,
 		    (MeshSyncPlayerConfig config, bool newValue) => {
 			    config.GetAnimationTweakSettings().EraseFlatCurves = newValue;
@@ -210,7 +210,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 //----------------------------------------------------------------------------------------------------------------------	
 
 	//Support Toggle, FloatField, etc
-	private F AddField<F,V>(VisualTreeAsset template, VisualElement parent, GUIContent content,
+	private F AddPlayerConfigField<F,V>(VisualTreeAsset template, VisualElement parent, GUIContent content,
 		Action<MeshSyncPlayerConfig,V> onValueChanged) where F: VisualElement,INotifyValueChanged<V>, new()  
 	{
 
@@ -242,7 +242,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	}
 	
 //----------------------------------------------------------------------------------------------------------------------	
-	private PopupField<T> AddPopupField<T>(VisualTreeAsset template, VisualElement parent, GUIContent content,
+	private PopupField<T> AddPlayerConfigPopupField<T>(VisualTreeAsset template, VisualElement parent, GUIContent content,
 		List<T> options, Action<MeshSyncPlayerConfig,int> onValueChanged) 
 	{
 
