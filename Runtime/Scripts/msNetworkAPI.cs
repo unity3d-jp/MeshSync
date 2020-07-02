@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Unity.MeshSync
 {
@@ -60,7 +61,10 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern void msServerServeMesh(IntPtr self, MeshData data);
         [DllImport(Lib.name)] static extern void msServerServeTexture(IntPtr self, TextureData data);
         [DllImport(Lib.name)] static extern void msServerServeMaterial(IntPtr self, MaterialData data);
+        [DllImport(Lib.name)] static extern void msServerAllowPublicAccess(IntPtr self, bool access);
+        [DllImport(Lib.name)] static extern bool msServerIsPublicAccessAllowed(IntPtr self);
         [DllImport(Lib.name)] static extern void msServerSetFileRootPath(IntPtr self, string path);
+        
         [DllImport(Lib.name)] static extern void msServerSetScreenshotFilePath(IntPtr self, string path);
         [DllImport(Lib.name)] static extern void msServerNotifyPoll(IntPtr self, PollMessage.PollType t);
         #endregion
@@ -81,6 +85,18 @@ namespace Unity.MeshSync
         public void ProcessMessages(MessageHandler handler) { msServerProcessMessages(self, handler); }
 
         public string fileRootPath { set { msServerSetFileRootPath(self, value); } }
+
+        public void AllowPublicAccess(bool access) {
+            Assert.IsFalse(self == IntPtr.Zero);
+            msServerAllowPublicAccess(self, access);
+        }
+
+        public bool IsPublicAccessAllowed() {
+            Assert.IsFalse(self == IntPtr.Zero);
+            return msServerIsPublicAccessAllowed(self);
+        }
+
+        
         public string screenshotPath { set { msServerSetScreenshotFilePath(self, value); } }
 
         public void BeginServe() { msServerBeginServe(self); }

@@ -298,7 +298,7 @@ public:
         auto i = std::lower_bound(anim.curves.begin(), anim.curves.end(), mskMeshBlendshape, [](auto& curve, auto *tag) {
             return std::strcmp(curve->name.c_str(), tag) < 0;
         });
-        while (i != anim.curves.end() && ms::StartWith((*i)->name, mskMeshBlendshape))
+        while (i != anim.curves.end() && ms::StartsWith((*i)->name, mskMeshBlendshape))
             body(*(i++));
     }
 };

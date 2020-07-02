@@ -19,6 +19,36 @@ internal class SecurityTest  {
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
+    [UnityTest]
+    public IEnumerator SetServerPublicAccess() {
+        EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
+
+        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        MeshSyncServer mss = MeshSyncServerEditor.CreateMeshSyncServer(true);
+        Assert.IsTrue(mss.IsServerStarted());       
+        yield return null;
+
+        //Check the original public access
+        bool origPublicAccess = runtimeSettings.GetServerPublicAccess();
+        UnityEngine.Assertions.Assert.AreEqual(origPublicAccess, mss.DoesServerAllowPublicAccess());
+        yield return null;
+        
+        //Change the public access and check
+        runtimeSettings.SetServerPublicAccess(!origPublicAccess);
+        mss.StopServer();
+        mss.StartServer();
+        Assert.IsTrue(mss.IsServerStarted());       
+        yield return null;
+        UnityEngine.Assertions.Assert.AreEqual(runtimeSettings.GetServerPublicAccess(), mss.DoesServerAllowPublicAccess());        
+        
+        //Change back
+        runtimeSettings.SetServerPublicAccess(origPublicAccess);
+        UnityEngine.Assertions.Assert.AreEqual(origPublicAccess, runtimeSettings.GetServerPublicAccess());
+        
+    }
+    
+    
+//----------------------------------------------------------------------------------------------------------------------    
     
     bool CanAccessFileOutsideServerRoot() {
 

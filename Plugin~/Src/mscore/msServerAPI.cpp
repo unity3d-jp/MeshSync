@@ -201,6 +201,17 @@ msAPI void msServerSetFileRootPath(ms::Server *server, const char *path)
     if (!server) { return; }
     server->setFileRootPath(path);
 }
+
+msAPI void msServerAllowPublicAccess(ms::Server *server, const bool access) {
+    if (!server) { return; }
+    server->AllowPublicAccess(access);
+}
+
+msAPI bool msServerIsPublicAccessAllowed(ms::Server *server) {
+    if (!server) { return false; }
+    return server->IsPublicAccessAllowed();
+}
+
 msAPI void msServerSetScreenshotFilePath(ms::Server *server, const char *path)
 {
     if (!server) { return; }

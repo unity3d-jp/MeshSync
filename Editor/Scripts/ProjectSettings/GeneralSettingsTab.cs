@@ -14,6 +14,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	internal class Contents {
 
 		public static readonly GUIContent ServerPort = EditorGUIUtility.TrTextContent("Server Port");
+		public static readonly GUIContent AllowPublicAccess = EditorGUIUtility.TrTextContent("Allow public access");
 		public static readonly GUIContent Visibility = EditorGUIUtility.TrTextContent("Visibility");
 		public static readonly GUIContent Transform  = EditorGUIUtility.TrTextContent("Transform");
 		public static readonly GUIContent Cameras = EditorGUIUtility.TrTextContent("Cameras");
@@ -66,7 +67,8 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 	    //Add server port
 	    MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
 	    VisualElement  headerContainer = containerInstance.Query<VisualElement>("HeaderContainer").First();
-	    m_serverPortField = new IntegerField("Server Port");
+	    m_serverPortField = new IntegerField(Contents.ServerPort.text);
+	    m_serverPortField.tooltip = Contents.ServerPort.tooltip;
 	    m_serverPortField.SetValueWithoutNotify(runtimeSettings.GetDefaultServerPort());
 	    
 	    m_serverPortField.RegisterValueChangedCallback((ChangeEvent<int> evt) => {
@@ -74,7 +76,18 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 		    settings.SetDefaultServerPort((ushort) evt.newValue);
 		    settings.SaveSettings();
 	    });
-	    headerContainer.Add(m_serverPortField);        
+	    headerContainer.Add(m_serverPortField);
+
+	    m_allowPublicAccessToggle = new Toggle(Contents.AllowPublicAccess.text);
+	    m_allowPublicAccessToggle.tooltip = Contents.AllowPublicAccess.tooltip;
+	    m_allowPublicAccessToggle.SetValueWithoutNotify(runtimeSettings.GetServerPublicAccess());
+	    m_allowPublicAccessToggle.RegisterValueChangedCallback( (ChangeEvent<bool> evt) => {
+		    MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+		    settings.SetServerPublicAccess(evt.newValue);
+		    settings.SaveSettings();
+	    });
+	    headerContainer.Add(m_allowPublicAccessToggle);
+	        
 	    
         //Add playerType popup
 	    VisualElement playerTypePopupContainer = containerInstance.Query<VisualElement>("PlayerTypePopupContainer").First();
@@ -326,6 +339,7 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 //----------------------------------------------------------------------------------------------------------------------
 	
 	private IntegerField m_serverPortField;
+	private Toggle m_allowPublicAccessToggle;
 	
 	//Sync Settings
 	private Toggle m_syncVisibilityToggle;

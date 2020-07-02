@@ -113,7 +113,7 @@ msAPI int           msCurveGetNumSamples(const ms::AnimationCurve *self) { retur
 msAPI const char* msCurveGetBlendshapeName(const ms::AnimationCurve *self)
 {
     static const size_t s_name_pos = std::strlen(mskMeshBlendshape) + 1; // +1 for trailing '.'
-    if (ms::StartWith(self->name, mskMeshBlendshape))
+    if (ms::StartsWith(self->name, mskMeshBlendshape))
         return &self->name[s_name_pos];
     return "";
 }

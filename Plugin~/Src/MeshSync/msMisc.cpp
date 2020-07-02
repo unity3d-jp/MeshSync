@@ -3,13 +3,19 @@
 
 namespace ms {
 
-bool StartWith(const std::string& a, const char *b)
+bool StartsWith(const std::string& a, const char *b)
 {
     if (!b)
         return false;
     size_t n = std::strlen(b);
     return std::strncmp(a.c_str(), b, n) == 0;
 }
+
+bool StartsWith(const std::string& a, const std::string& b) {
+    return (a.rfind(b, 0) == 0);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 
 #ifndef msRuntime
 bool FileToByteArray(const char *path, RawVector<char> &dst)

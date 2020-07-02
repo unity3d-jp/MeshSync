@@ -62,6 +62,10 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 
     internal ushort GetDefaultServerPort() { return m_defaultServerPort;}
     internal void SetDefaultServerPort(ushort port) { m_defaultServerPort = port;}
+
+    internal bool GetServerPublicAccess() { return m_serverPublicAccess; }
+    internal void SetServerPublicAccess(bool access) { m_serverPublicAccess = access;}
+    
 //----------------------------------------------------------------------------------------------------------------------
 
     internal MeshSyncPlayerConfig GetDefaultPlayerConfig(MeshSyncPlayerType playerType) {
@@ -77,9 +81,10 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 //----------------------------------------------------------------------------------------------------------------------
     
     [SerializeField] private ushort m_defaultServerPort = MeshSyncConstants.DEFAULT_SERVER_PORT;
+    [SerializeField] private bool  m_serverPublicAccess = false;
     [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
 
-    [SerializeField] internal int ClassVersion = 2;    
+    [SerializeField] internal int ClassVersion = 3;    
     
 //----------------------------------------------------------------------------------------------------------------------
 
