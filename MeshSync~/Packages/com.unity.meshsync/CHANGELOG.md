@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.2.2-preview] - 2020-07-03
+* fix: prevent access using DNS rebinding
+
 ## [0.2.1-preview] - 2020-07-02
 
 * fix: fix a bug in ProjectSettings when switching tab
