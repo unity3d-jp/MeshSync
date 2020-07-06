@@ -21,7 +21,8 @@ This will automatically create a playback object.
 
 ![SceneCachePlayer](../images/SceneCachePlayer.png)
 
-This component handles the playback. There are many settings which are in common with [MeshSyncServer](../index.md#MeshSyncServer).
+This component handles the playback. 
+There are many settings which are in common with [MeshSyncServer](MeshSyncServer.md).
 
 When "Create Cache Player" on the menu is selected, an AnimationClip, which also handles the animation Playback, will be created and tied to the SceneCachePlayer.  
 We can place this clip on an AnimationTrack to play it in Timeline.
