@@ -3,6 +3,7 @@
 #include "msServer.h"
 
 #include "msMisc.h" //StartsWith()
+#include "Utils/msNetworkUtils.h" //IsLocalHost()
 
 #ifdef msEnableNetwork
 namespace ms {
@@ -27,11 +28,13 @@ void ServerRequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerR
     if (!m_server->IsPublicAccessAllowed()) {
 
         //const IPAddress& ipAddress = request.clientAddress().host(); //This one doesn't represent the real source
-        //const std::string& hostAndPort = "s-11.22.33.44-567.0.0.1-123456789-xx-y.foo.bar.zoo:8080"; //A sample
-        const SocketAddress hostSocket (request.getHost());
+        const std::string& hostAndPort = request.getHost();
+        const SocketAddress hostSocket (hostAndPort);
         const IPAddress& ipAddress = hostSocket.host();
+        const bool isLoopback = ipAddress.isLoopback() && NetworkUtils::IsLocalHost(hostAndPort);
+        const bool isSiteLocal = ipAddress.isSiteLocal();
 
-        const bool isLocal = ipAddress.isLoopback() || ipAddress.isSiteLocal();
+        const bool isLocal = isLoopback || isSiteLocal;
         if (!isLocal) {
             m_server->serveText(response, "", HTTPResponse::HTTP_SERVICE_UNAVAILABLE);
             return;
