@@ -31,7 +31,8 @@ void ServerRequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerR
         const std::string& hostAndPort = request.getHost();
         const SocketAddress hostSocket (hostAndPort);
         const IPAddress& ipAddress = hostSocket.host();
-        const bool isLoopback = ipAddress.isLoopback() && NetworkUtils::IsLocalHost(hostAndPort);
+        //const bool isLoopback = ipAddress.isLoopback(); //Can't prevent DNS rebinding
+        const bool isLoopback = NetworkUtils::IsLocalHost(hostAndPort);
         const bool isSiteLocal = ipAddress.isSiteLocal();
 
         const bool isLocal = isLoopback || isSiteLocal;
