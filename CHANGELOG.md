@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.2.3-preview] - 2020-07-08
+* fix: bug in preventing DNS rebinding
+* fix: broken links in docs and package warnings
+
+
 ## [0.2.2-preview] - 2020-07-03
 * fix: prevent access using DNS rebinding
 
