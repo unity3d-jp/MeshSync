@@ -5,6 +5,8 @@
     #include <windows.h>
 #endif
 
+#include "MeshSync/msConfig.h"
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -26,3 +28,4 @@
 #include <random>
 #include <regex>
 #include <iterator>
+
