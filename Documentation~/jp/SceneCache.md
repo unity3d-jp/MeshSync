@@ -20,7 +20,7 @@ Game Object -> MeshSync -> Create Cache Player メニューを選択し、DCC �
 
 ![SceneCachePlayer](../images/SceneCachePlayer.png)
 
-このコンポーネントが再生を担当します。多くの設定は [MeshSyncServer](index.md#MeshSyncServer) と共通です。
+このコンポーネントが再生を担当します。多くの設定は [MeshSyncServer](MeshSyncServer.md) と共通です。
 
 "Create Cache Player" メニューを選択した時、同時に アニメーションの再生を担当する AnimationClip が作成されて SceneCachePlayer に結び付いています。  
 Timeline で再生する場合も、この clip を AnimationTrack に配置することで対応できます。
