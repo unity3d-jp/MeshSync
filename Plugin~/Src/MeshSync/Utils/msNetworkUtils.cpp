@@ -1,11 +1,12 @@
 #include "pch.h"
 #include "msNetworkUtils.h"
 
-#include "msMisc.h" //StartsWith()
+#include <Poco/RegularExpression.h>
+
 
 namespace ms {
 
-bool NetworkUtils::IsLocalHost(const std::string& hostAndPort) {
+bool NetworkUtils::IsInLocalNetwork(const std::string& hostAndPort) {
     const uint32_t MAX_TOKENS = 3;
     std::vector<std::string> tokens(MAX_TOKENS);
     std::istringstream input(hostAndPort);
@@ -15,8 +16,21 @@ bool NetworkUtils::IsLocalHost(const std::string& hostAndPort) {
         ++i;
     }
 
+    if (i >= MAX_TOKENS)
+        return false;
 
-    return (i < MAX_TOKENS && (tokens[0] == "localhost" || tokens[0] == "127.0.0.1"));
+
+    static const Poco::RegularExpression regex(
+        "(^localhost$)"
+        "(^127\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$)"
+        "|(^10\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$)"
+        "|(^172\\.1[6-9]{1}[0-9]{0,1}\\.[0-9]{1,3}\\.[0-9]{1,3}$)"
+        "|(^172\\.2[0-9]{1}[0-9]{0,1}\\.[0-9]{1,3}\\.[0-9]{1,3}$)"
+        "|(^172\\.3[0-1]{1}[0-9]{0,1}\\.[0-9]{1,3}\\.[0-9]{1,3}$)|(^192\\.168\\.[0-9]{1,3}\\.[0-9]{1,3}$)");
+
+
+    return regex.match(tokens[0]);
+
 }
 
 } // namespace ms

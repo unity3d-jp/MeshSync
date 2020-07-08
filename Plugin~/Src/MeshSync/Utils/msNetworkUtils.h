@@ -6,7 +6,7 @@ namespace ms {
 class NetworkUtils
 {
 public:
-    static bool IsLocalHost(const std::string& hostAndPort);
+    static bool IsInLocalNetwork(const std::string& hostAndPort);
 };
 
 

@@ -31,11 +31,12 @@ void ServerRequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerR
         const std::string& hostAndPort = request.getHost();
         const SocketAddress hostSocket (hostAndPort);
         const IPAddress& ipAddress = hostSocket.host();
-        //const bool isLoopback = ipAddress.isLoopback(); //Can't prevent DNS rebinding
-        const bool isLoopback = NetworkUtils::IsLocalHost(hostAndPort);
-        const bool isSiteLocal = ipAddress.isSiteLocal();
 
-        const bool isLocal = isLoopback || isSiteLocal;
+        //Can't prevent DNS rebinding
+        //const bool isLoopback = ipAddress.isLoopback(); 
+        //const bool isSiteLocal = ipAddress.isSiteLocal();
+        //
+        const bool isLocal = NetworkUtils::IsInLocalNetwork(hostAndPort);
         if (!isLocal) {
             m_server->serveText(response, "", HTTPResponse::HTTP_SERVICE_UNAVAILABLE);
             return;
