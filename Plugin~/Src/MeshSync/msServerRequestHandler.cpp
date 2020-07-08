@@ -3,7 +3,7 @@
 #include "msServer.h"
 
 #include "msMisc.h" //StartsWith()
-#include "Utils/msNetworkUtils.h" //IsLocalHost()
+#include "Utils/msNetworkUtils.h" //IsInLocalNetwork()
 
 #ifdef msEnableNetwork
 namespace ms {
