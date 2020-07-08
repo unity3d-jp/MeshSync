@@ -42,6 +42,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 # Force Unicode character set
 add_definitions(-DUNICODE -D_UNICODE)
 
+# Use Poco static lib
+add_definitions(-DPOCO_STATIC)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
