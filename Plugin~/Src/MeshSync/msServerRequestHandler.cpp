@@ -29,10 +29,10 @@ void ServerRequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerR
 
         //const IPAddress& ipAddress = request.clientAddress().host(); //This one doesn't represent the real source
         const std::string& hostAndPort = request.getHost();
-        const SocketAddress hostSocket (hostAndPort);
-        const IPAddress& ipAddress = hostSocket.host();
 
         //Can't prevent DNS rebinding
+        //const SocketAddress hostSocket (hostAndPort);
+        //const IPAddress& ipAddress = hostSocket.host();
         //const bool isLoopback = ipAddress.isLoopback(); 
         //const bool isSiteLocal = ipAddress.isSiteLocal();
         //
