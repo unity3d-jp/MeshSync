@@ -15,10 +15,10 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
             return m_instance;
         }
 
-        const string PATH = MESHSYNC_RUNTIME_SETTINGS_PATH;
         lock (m_instanceLock) {           
         
 #if UNITY_EDITOR
+            const string PATH = MESHSYNC_RUNTIME_SETTINGS_PATH;
             if (File.Exists(PATH)) {
                 m_instance = FileUtility.DeserializeFromJson<MeshSyncRuntimeSettings>(PATH);                
             }
