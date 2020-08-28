@@ -1349,16 +1349,14 @@ namespace Unity.MeshSync
                 m_tmpV4.Resize(numPoints);
                 data.ReadTangents(m_tmpV4);
                 mesh.SetTangents(m_tmpV4.List);
-            }            
-            if (dataFlags.hasUV0) {
-                m_tmpV2.Resize(numPoints);
-                data.ReadUV0(m_tmpV2);
-                mesh.SetUVs(0, m_tmpV2.List);
             }
-            if (dataFlags.hasUV1) {
-                m_tmpV2.Resize(numPoints);
-                data.ReadUV1(m_tmpV2);
-                mesh.SetUVs(1, m_tmpV2.List);
+
+            for (int i = 0; i < APIConstants.MAX_UV; ++i) {
+                if (dataFlags.HasUV(i)) {
+                    m_tmpV2.Resize(numPoints);
+                    data.ReadUV(m_tmpV2,i);
+                    mesh.SetUVs(i, m_tmpV2.List);
+                }                
             }
             if (dataFlags.hasColors) {
                 m_tmpC.Resize(numPoints);
