@@ -310,14 +310,14 @@ msAPI void msMeshWriteUV0(ms::Mesh *self, const float2 *v, int size)
 {
     if (size > 0) {
         self->uv0.assign(v, v + size);
-        self->md_flags.has_uv0 = 1;
+        self->md_flags.HasUV0 = 1;
     }
 }
 msAPI void msMeshWriteUV1(ms::Mesh *self, const float2 *v, int size)
 {
     if (size > 0) {
         self->uv1.assign(v, v + size);
-        self->md_flags.has_uv1 = 1;
+        self->md_flags.HasUV1 = 1;
     }
 }
 msAPI void msMeshWriteColors(ms::Mesh *self, const float4 *v, int size)

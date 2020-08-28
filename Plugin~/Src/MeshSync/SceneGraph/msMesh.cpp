@@ -239,14 +239,36 @@ void BoneData::clear()
 #define EachTopologyAttribute(F)\
     F(counts) F(indices) F(material_ids)
 
+#define EachVertexAttributeNoUV(F)\
+    F(points) F(normals) F(tangents) F(colors) F(velocities) 
+
 #define EachVertexAttribute(F)\
-    F(points) F(normals) F(tangents) F(uv0) F(uv1) F(colors) F(velocities)
+    EachVertexAttributeNoUV(F) F(uv0) F(uv1) 
 
 #define EachGeometryAttribute(F)\
     EachVertexAttribute(F) EachTopologyAttribute(F)
 
+#define EachGeometryAttributeNoUV(F)\
+    EachVertexAttributeNoUV(F) EachTopologyAttribute(F)
+
 #define EachMember(F)\
     F(refine_settings) EachGeometryAttribute(F) F(root_bone) F(bones) F(blendshapes) F(submeshes) F(bounds)
+
+#define EachMemberNoUV(F)\
+    F(refine_settings) EachGeometryAttributeNoUV(F) F(root_bone) F(bones) F(blendshapes) F(submeshes) F(bounds)
+
+//----------------------------------------------------------------------------------------------------------------------
+
+#define EachUVInMeshDataFlags(flags, op, stream) {               \
+    if (flags.HasUV0) { \
+        op(stream, uv0); \
+    } \
+    if (flags.HasUV1) { \
+        op(stream, uv1); \
+    } \
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 
 Mesh::Mesh() { clear(); }
 Mesh::~Mesh() {}
@@ -261,9 +283,12 @@ void Mesh::serialize(std::ostream& os) const
         return;
 
 #define Body(V) if(md_flags.has_##V) write(os, V);
-    EachMember(Body);
+    EachMemberNoUV(Body);
 #undef Body
+
+    EachUVInMeshDataFlags(md_flags, write, os);
 }
+
 
 void Mesh::deserialize(std::istream& is)
 {
@@ -273,8 +298,10 @@ void Mesh::deserialize(std::istream& is)
         return;
 
 #define Body(V) if(md_flags.has_##V) read(is, V);
-    EachMember(Body);
+    EachMemberNoUV(Body);
 #undef Body
+
+    EachUVInMeshDataFlags(md_flags, read, is);
 
     bones.erase(
         std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); }),
@@ -294,8 +321,8 @@ void Mesh::setupDataFlags()
     md_flags.has_points = !points.empty();
     md_flags.has_normals = !normals.empty();
     md_flags.has_tangents = !tangents.empty();
-    md_flags.has_uv0 = !uv0.empty();
-    md_flags.has_uv1 = !uv1.empty();
+    md_flags.HasUV0 = !uv0.empty();
+    md_flags.HasUV1 = !uv1.empty();
     md_flags.has_colors = !colors.empty();
     md_flags.has_velocities = !velocities.empty();
     md_flags.has_counts = !counts.empty();
