@@ -310,7 +310,7 @@ msAPI void msMeshWriteTangents(ms::Mesh *self, const float4 *v, int size)
         self->md_flags.has_tangents = 1;
     }
 }
-msAPI void msMeshWriteUV(ms::Mesh *self, const float2 *v, int index, int size)
+msAPI void msMeshWriteUV(ms::Mesh *self, int index, const float2 *v, int size)
 {
     if (size <= 0)
         return;
