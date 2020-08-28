@@ -40,7 +40,6 @@
 #include <random>
 
 #ifndef msRuntime
-#define POCO_STATIC
 #include "Poco/Path.h"
 #include "Poco/File.h"
 #include "Poco/FileStream.h"
