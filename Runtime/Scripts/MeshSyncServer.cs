@@ -372,14 +372,13 @@ internal class MeshSyncServer : MeshSyncPlayer
             data.WriteUV1(mesh.uv2);
         
         //TODO
-        data.WriteUV(mesh.uv2,1);
-        data.WriteUV(mesh.uv3,2);
-        data.WriteUV(mesh.uv4,3);
-        data.WriteUV(mesh.uv5,4);
-        data.WriteUV(mesh.uv6,5);
-        data.WriteUV(mesh.uv7,6);
-        data.WriteUV(mesh.uv8,7);            
-        
+        data.WriteUV(2, mesh.uv3);
+        data.WriteUV(3, mesh.uv4);
+        data.WriteUV(4, mesh.uv5);
+        data.WriteUV(5, mesh.uv6);
+        data.WriteUV(6, mesh.uv7);
+        data.WriteUV(7, mesh.uv8);
+               
         if (flags.getColors)
             data.WriteColors(mesh.colors);
         if (flags.getIndices) {

@@ -1732,7 +1732,7 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern void msMeshWritePoints(IntPtr self, Vector3[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshWriteNormals(IntPtr self, Vector3[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshWriteTangents(IntPtr self, Vector4[] v, int size);
-        [DllImport(Lib.name)] static extern void msMeshWriteUV(IntPtr self, Vector2[] v, int index, int size);        
+        [DllImport(Lib.name)] static extern void msMeshWriteUV(IntPtr self, int index, Vector2[] v, int size);        
         [DllImport(Lib.name)] static extern void msMeshWriteColors(IntPtr self, Color[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshWriteVelocities(IntPtr self, Vector3[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshWriteIndices(IntPtr self, int[] v, int size);
@@ -1801,10 +1801,10 @@ namespace Unity.MeshSync
 #endif
         internal void ReadIndices(IntPtr dst) { msMeshReadIndices(self, dst); }
 
-        internal void WritePoints(Vector3[] v)          { msMeshWritePoints(self, v, v.Length); }
-        internal void WriteNormals(Vector3[] v)         { msMeshWriteNormals(self, v, v.Length); }
-        internal void WriteTangents(Vector4[] v)        { msMeshWriteTangents(self, v, v.Length); }
-        internal void WriteUV(Vector2[] v, int index)   { msMeshWriteUV(self, v, index, v.Length ); }
+        internal void WritePoints(Vector3[] v)   { msMeshWritePoints(self, v, v.Length); }
+        internal void WriteNormals(Vector3[] v)  { msMeshWriteNormals(self, v, v.Length); }
+        internal void WriteTangents(Vector4[] v) { msMeshWriteTangents(self, v, v.Length); }
+        internal void WriteUV(int index, Vector2[] v)   { msMeshWriteUV(self, index, v, v.Length ); }
         internal void WriteColors(Color[] v)            { msMeshWriteColors(self, v, v.Length); }
         internal void WriteVelocities(Vector3[] v)      { msMeshWriteVelocities(self, v, v.Length); }
         internal void WriteBoneWeights4(BoneWeight[] v) { msMeshWriteBoneWeights4(self, v, v.Length); }
