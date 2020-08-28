@@ -315,7 +315,7 @@ msAPI void msMeshWriteUV(ms::Mesh *self, const float2 *v, int index, int size)
     if (size <= 0)
         return;
 
-    assert(index >= 0 && index < ms::msConstants::MAX_UV && "msMeshReadUV() invalid index");
+    assert(index >= 0 && index < ms::msConstants::MAX_UV && "msMeshWriteUV() invalid index");
 
     self->m_uv[index].assign(v, v + size);
 
