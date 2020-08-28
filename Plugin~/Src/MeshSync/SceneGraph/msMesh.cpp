@@ -260,10 +260,10 @@ void BoneData::clear()
 //----------------------------------------------------------------------------------------------------------------------
 
 #define EachUVInMeshDataFlags(flags, op, stream) {               \
-    if (flags.HasUV0) { \
+    if ((flags).HasUV0) { \
         op(stream, uv0); \
     } \
-    if (flags.HasUV1) { \
+    if ((flags).HasUV1) { \
         op(stream, uv1); \
     } \
 }
