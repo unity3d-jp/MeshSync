@@ -38,6 +38,7 @@
 #include <thread>
 #include <future>
 #include <random>
+#include <cassert>
 
 #ifndef msRuntime
 #include "Poco/Path.h"
