@@ -319,6 +319,7 @@ msAPI void msMeshWriteUV(ms::Mesh *self, const float2 *v, int index, int size)
 
     self->m_uv[index].assign(v, v + size);
 
+    //TODO
     switch (index) {
         case 0: self->md_flags.HasUV0 = 1; break;
         case 1: self->md_flags.HasUV1 = 1; break;
@@ -328,6 +329,7 @@ msAPI void msMeshWriteUV(ms::Mesh *self, const float2 *v, int index, int size)
         case 5: self->md_flags.HasUV5 = 1; break;
         case 6: self->md_flags.HasUV6 = 1; break;
         case 7: self->md_flags.HasUV7 = 1; break;
+    default: ;
     }
 }
 
