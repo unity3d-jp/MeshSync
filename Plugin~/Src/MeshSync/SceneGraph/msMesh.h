@@ -29,6 +29,19 @@ struct MeshDataFlags
     uint32_t has_submeshes : 1;
     uint32_t has_bounds: 1;
 
+    uint32_t Unused_20: 1;
+    uint32_t Unused_21: 1;
+    uint32_t Unused_22: 1;
+    uint32_t Unused_23: 1;
+    uint32_t Unused_24: 1;
+    uint32_t Unused_25: 1;
+    uint32_t Unused_26: 1;
+    uint32_t Unused_27: 1;
+    uint32_t Unused_28: 1;
+    uint32_t Unused_29: 1;
+    uint32_t Unused_30: 1;
+    uint32_t Unused_31: 1;
+
     MeshDataFlags();
 };
 
