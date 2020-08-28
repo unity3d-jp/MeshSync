@@ -1,4 +1,5 @@
 #pragma once
+#include "msConstants.h"
 #include "msIdentifier.h"
 #include "msMeshDataFlags.h"
 
@@ -158,12 +159,12 @@ public:
     SharedVector<float3> points;
     SharedVector<float3> normals;    // can be empty, per-vertex or per-index data
     SharedVector<float4> tangents;   // can be empty, per-vertex or per-index data
-    SharedVector<float2> uv0, uv1;   // can be empty, per-vertex or per-index data
     SharedVector<float4> colors;     // can be empty, per-vertex or per-index data
     SharedVector<float3> velocities; // can be empty or per-vertex data
     SharedVector<int>    counts;
     SharedVector<int>    indices;
     SharedVector<int>    material_ids; // can be empty or per-face data
+    SharedVector<float2> m_uv[msConstants::MAX_UV];
 
     std::string root_bone;
     std::vector<BoneDataPtr> bones;

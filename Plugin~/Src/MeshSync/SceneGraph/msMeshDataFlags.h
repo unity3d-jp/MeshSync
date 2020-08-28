@@ -30,14 +30,14 @@ struct MeshDataFlags
     uint32_t Unused_21: 1;
     uint32_t Unused_22: 1;
     uint32_t Unused_23: 1;
-    uint32_t HasUV0: 1;             //24
-    uint32_t HasUV1: 1;
-    uint32_t Unused_26: 1;
-    uint32_t Unused_27: 1;
-    uint32_t Unused_28: 1;
-    uint32_t Unused_29: 1;
-    uint32_t Unused_30: 1;
-    uint32_t Unused_31: 1;
+    uint32_t HasUV0     : 1;             //24
+    uint32_t HasUV1     : 1;
+    uint32_t HasUV2     : 1;
+    uint32_t HasUV3     : 1;
+    uint32_t HasUV4     : 1;
+    uint32_t HasUV5     : 1;
+    uint32_t HasUV6     : 1;
+    uint32_t HasUV7     : 1;
 
     MeshDataFlags();
 };
