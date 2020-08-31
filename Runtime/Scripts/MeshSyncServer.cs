@@ -366,18 +366,16 @@ internal class MeshSyncServer : MeshSyncPlayer
             data.WriteNormals(mesh.normals);
         if (flags.getTangents)
             data.WriteTangents(mesh.tangents);
-        if (flags.getUV0)
-            data.WriteUV0(mesh.uv);
-        if (flags.getUV1)
-            data.WriteUV1(mesh.uv2);
         
-        //TODO
-        data.WriteUV(2, mesh.uv3);
-        data.WriteUV(3, mesh.uv4);
-        data.WriteUV(4, mesh.uv5);
-        data.WriteUV(5, mesh.uv6);
-        data.WriteUV(6, mesh.uv7);
-        data.WriteUV(7, mesh.uv8);
+        //UV
+        if (flags.GetUV(0)) { data.WriteUV(0, mesh.uv); }
+        if (flags.GetUV(1)) { data.WriteUV(1, mesh.uv2); }
+        if (flags.GetUV(2)) { data.WriteUV(2, mesh.uv3); }
+        if (flags.GetUV(3)) { data.WriteUV(3, mesh.uv4); }
+        if (flags.GetUV(4)) { data.WriteUV(4, mesh.uv5); }
+        if (flags.GetUV(5)) { data.WriteUV(5, mesh.uv6); }
+        if (flags.GetUV(6)) { data.WriteUV(6, mesh.uv7); }
+        if (flags.GetUV(7)) { data.WriteUV(7, mesh.uv8); }
                
         if (flags.getColors)
             data.WriteColors(mesh.colors);

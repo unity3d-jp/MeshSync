@@ -126,20 +126,21 @@ namespace Unity.MeshSync
         Response,
     }
 
-    internal struct GetFlags
-    {
+    internal struct GetFlags {
         public BitFlags flags;
         public bool getTransform { get { return flags[0]; } }
         public bool getPoints { get { return flags[1]; } }
         public bool getNormals { get { return flags[2]; } }
         public bool getTangents { get { return flags[3]; } }
-        public bool getUV0 { get { return flags[4]; } }
-        public bool getUV1 { get { return flags[5]; } }
         public bool getColors { get { return flags[6]; } }
         public bool getIndices { get { return flags[7]; } }
         public bool getMaterialIDs { get { return flags[8]; } }
         public bool getBones { get { return flags[9]; } }
         public bool getBlendShapes { get { return flags[10]; } }
+
+        const  int  UV_START_BIT_POS = 24;
+        public bool GetUV(int index) { return flags[UV_START_BIT_POS + index]; } 
+        
     }
 
     public struct GetMessage
