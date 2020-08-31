@@ -319,7 +319,7 @@ msAPI void msMeshWriteUV(ms::Mesh *self, int index, const float2 *v, int size)
 
     self->m_uv[index].assign(v, v + size);
 
-    //TODO
+    //[TODO-sin: 2020-8-31] Use bit shifting
     switch (index) {
         case 0: self->md_flags.HasUV0 = 1; break;
         case 1: self->md_flags.HasUV1 = 1; break;
