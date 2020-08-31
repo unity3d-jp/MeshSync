@@ -1,10 +1,7 @@
-using System;
-using Unity.MeshSync;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.MeshSync.Editor
-{
+namespace Unity.MeshSync.Editor  {
     [CustomEditor(typeof(MeshSyncServer))]
     internal class MeshSyncServerEditor : MeshSyncPlayerEditor   {
         [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
