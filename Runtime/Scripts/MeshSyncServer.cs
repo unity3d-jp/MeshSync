@@ -1,14 +1,13 @@
+#if UNITY_STANDALONE
 using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
-using UnityEngine;
-#if UNITY_2017_1_OR_NEWER
 using UnityEngine.Animations;
-#endif
-#if UNITY_2019_1_OR_NEWER
 using Unity.Collections;
 #endif
+
+using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -20,9 +19,23 @@ namespace Unity.MeshSync
     internal class MeshSyncServer : MeshSyncPlayer
     {
         
-#if UNITY_STANDALONE
+#region Getter/Setter
+        internal bool IsServerStarted()             { return m_serverStarted;}
+        internal bool IsAutoStart()                 { return m_autoStartServer; }
+        internal int  GetServerPort()               { return m_serverPort; }
+        internal void SetServerPort(int port )      { m_serverPort = port; }
+#endregion
 
-        #region Properties
+//----------------------------------------------------------------------------------------------------------------------        
+        internal void SetAutoStartServer(bool autoStart) {
+            m_autoStartServer = autoStart; 
+            if (m_autoStartServer && !m_serverStarted) {
+                StartServer();
+            }
+        }
+        
+//----------------------------------------------------------------------------------------------------------------------        
+        
 #if UNITY_EDITOR
         public bool foldServerSettings
         {
@@ -30,23 +43,21 @@ namespace Unity.MeshSync
             set { m_foldServerSettings = value; }
         }
 #endif
-        #endregion
+
+//----------------------------------------------------------------------------------------------------------------------        
+
+
+        internal bool DoesServerAllowPublicAccess() {
+            bool ret = false;
+#if UNITY_STANDALONE            
+            ret = m_server.IsPublicAccessAllowed();
+#endif
+            return ret;
+        }
         
-        #region Getter/Setter
-        internal int GetServerPort() { return m_serverPort; }
-        internal void SetServerPort(int port ) { m_serverPort = port; }
-        internal bool IsAutoStart() { return m_autoStartServer; }
-
-
-        internal bool IsServerStarted() { return m_serverStarted;}
-
-        internal bool DoesServerAllowPublicAccess() { return m_server.IsPublicAccessAllowed();}
-        #endregion
-
-
-        #region Impl
         internal void StartServer()
         {
+#if UNITY_STANDALONE            
             StopServer();
 
 #if UNITY_EDITOR 
@@ -72,11 +83,13 @@ namespace Unity.MeshSync
                 Debug.Log("MeshSync: server started (port: " + m_serverSettings.port + ")");
 
             m_serverStarted = true;
+#endif //UNITY_STANDALONE
         }
 
 //----------------------------------------------------------------------------------------------------------------------        
 
         internal void StopServer() {
+#if UNITY_STANDALONE            
             if (!m_server) 
                 return;
             
@@ -90,16 +103,13 @@ namespace Unity.MeshSync
                 Debug.Log("MeshSync: server stopped (port: " + m_serverSettings.port + ")");
 
             m_serverStarted = false;
+#endif //UNITY_STANDALONE
         }
         
 //----------------------------------------------------------------------------------------------------------------------        
-        internal void SetAutoStartServer(bool autoStart) {
-            m_autoStartServer = autoStart; 
-            if (m_autoStartServer && !m_serverStarted) {
-                StartServer();
-            }
-        }
-//----------------------------------------------------------------------------------------------------------------------        
+
+#if UNITY_STANDALONE
+        #region Impl
         
         void CheckParamsUpdated()  {
 
@@ -202,29 +212,21 @@ namespace Unity.MeshSync
             mes.Print();
         }
 
-        void OnRecvSet(SetMessage mes)
-        {
+        void OnRecvSet(SetMessage mes) {
             UpdateScene(mes.scene);
         }
 
-        void OnRecvScreenshot(IntPtr data)
-        {
+        void OnRecvScreenshot(IntPtr data) {
             ForceRepaint();
 
-#if UNITY_2017_1_OR_NEWER
             ScreenCapture.CaptureScreenshot("screenshot.png");
-#else
-            Application.CaptureScreenshot("screenshot.png");
-#endif
             // actual capture will be done at end of frame. not done immediately.
             // just set flag now.
             m_captureScreenshotInProgress = true;
         }
 
-        void OnRecvQuery(QueryMessage data)
-        {
-            switch (data.queryType)
-            {
+        void OnRecvQuery(QueryMessage data) {
+            switch (data.queryType) {
                 case QueryMessage.QueryType.PluginVersion:
                     data.AddResponseText(MeshSyncPlayer.GetPluginVersion());
                     break;
@@ -256,23 +258,19 @@ namespace Unity.MeshSync
         #endregion
 
         #region ServeScene
-        bool ServeMesh(Renderer renderer, GetMessage mes)
-        {
+        bool ServeMesh(Renderer renderer, GetMessage mes) {
             bool ret = false;
             Mesh origMesh = null;
 
             var dst = MeshData.Create();
-            if (renderer.GetType() == typeof(MeshRenderer))
-            {
+            if (renderer.GetType() == typeof(MeshRenderer)){
                 ret = CaptureMeshRenderer(ref dst, renderer as MeshRenderer, mes, ref origMesh);
             }
-            else if (renderer.GetType() == typeof(SkinnedMeshRenderer))
-            {
+            else if (renderer.GetType() == typeof(SkinnedMeshRenderer)){
                 ret = CaptureSkinnedMeshRenderer(ref dst, renderer as SkinnedMeshRenderer, mes, ref origMesh);
             }
 
-            if (ret)
-            {
+            if (ret) {
                 var dstTrans = dst.transform;
                 var trans = renderer.GetComponent<Transform>();
                 dstTrans.hostID = GetObjectlID(renderer.gameObject);
@@ -296,16 +294,14 @@ namespace Unity.MeshSync
             }
             return ret;
         }
-        bool ServeTexture(Texture2D v, GetMessage mes)
-        {
+        bool ServeTexture(Texture2D v, GetMessage mes) {
             var data = TextureData.Create();
             data.name = v.name;
             // todo
             m_server.ServeTexture(data);
             return true;
         }
-        bool ServeMaterial(Material mat, GetMessage mes)
-        {
+        bool ServeMaterial(Material mat, GetMessage mes) {
             var data = MaterialData.Create();
             data.name = mat.name;
             if (mat.HasProperty("_Color"))
@@ -468,22 +464,21 @@ namespace Unity.MeshSync
 
 //----------------------------------------------------------------------------------------------------------------------
 
-        #region Fields
-
-        [SerializeField] private bool m_autoStartServer = false;
-        [SerializeField] int m_serverPort = MeshSyncConstants.DEFAULT_SERVER_PORT;
 
         ServerSettings m_serverSettings = ServerSettings.defaultValue;
         Server m_server;
         Server.MessageHandler m_handler;
         bool m_requestRestartServer = false;
         bool m_captureScreenshotInProgress = false;
-        private bool m_serverStarted = false;
+        
+#endif // UNITY_STANDALONE
+        
+        [SerializeField] private bool m_autoStartServer = false;
+        [SerializeField]         int  m_serverPort      = MeshSyncConstants.DEFAULT_SERVER_PORT;
 #if UNITY_EDITOR
         [SerializeField] bool m_foldServerSettings = true;
 #endif
-        #endregion
+        private bool m_serverStarted = false;
         
-#endif // UNITY_STANDALONE
     }
 }
