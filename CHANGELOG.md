@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.2.5-preview] - 2020-08-31
+* fix: compile error when targeting Android platform
+
 ## [0.2.4-preview] - 2020-07-28
 * fix: fix errors when building app build
 
