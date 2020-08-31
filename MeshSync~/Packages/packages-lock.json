@@ -15,7 +15,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.anime-toolbox": {
-      "version": "0.1.4-preview",
+      "version": "0.1.6-preview",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -69,7 +69,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.unity.anime-toolbox": "0.1.4-preview",
+        "com.unity.anime-toolbox": "0.1.6-preview",
         "com.unity.sharp-zip-lib": "1.2.2-preview"
       }
     },
