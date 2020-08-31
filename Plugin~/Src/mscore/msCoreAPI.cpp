@@ -246,8 +246,10 @@ msAPI int msMeshGetNumCounts(const ms::Mesh *self) { return (int)self->counts.si
 msAPI void msMeshReadPoints(const ms::Mesh *self, float3 *dst) { self->points.copy_to(dst); }
 msAPI void msMeshReadNormals(const ms::Mesh *self, float3 *dst) { self->normals.copy_to(dst); }
 msAPI void msMeshReadTangents(const ms::Mesh *self, float4 *dst) { self->tangents.copy_to(dst); }
-msAPI void msMeshReadUV0(const ms::Mesh *self, float2 *dst) { self->uv0.copy_to(dst); }
-msAPI void msMeshReadUV1(const ms::Mesh *self, float2 *dst) { self->uv1.copy_to(dst); }
+msAPI void msMeshReadUV(const ms::Mesh *self, float2 *dst, int index) {
+    assert(index >= 0 && index < ms::msConstants::MAX_UV && "msMeshReadUV() invalid index");
+    self->m_uv[index].copy_to(dst);
+}
 msAPI void msMeshReadColors(const ms::Mesh *self, float4 *dst) { self->colors.copy_to(dst); }
 msAPI void msMeshReadVelocities(const ms::Mesh *self, float3 *dst) { self->velocities.copy_to(dst); }
 msAPI void msMeshReadIndices(const ms::Mesh *self, int *dst) { self->indices.copy_to(dst); }
@@ -255,8 +257,10 @@ msAPI void msMeshReadCounts(const ms::Mesh *self, int *dst) { self->counts.copy_
 msAPI const ms::float3* msMeshGetPointsPtr(const ms::Mesh *self) { return self->points.cdata(); }
 msAPI const ms::float3* msMeshGetNormalsPtr(const ms::Mesh *self) { return self->normals.cdata(); }
 msAPI const ms::float4* msMeshGetTangentsPtr(const ms::Mesh *self) { return self->tangents.cdata(); }
-msAPI const ms::float2* msMeshGetUV0Ptr(const ms::Mesh *self) { return self->uv0.cdata(); }
-msAPI const ms::float2* msMeshGetUV1Ptr(const ms::Mesh *self) { return self->uv1.cdata(); }
+msAPI const ms::float2* msMeshGetUVPtr(const ms::Mesh *self, int index) {
+    assert(index >= 0 && index < ms::msConstants::MAX_UV && "msMeshGetUVPtr() invalid index");
+    return self->m_uv[index].cdata();
+}
 msAPI const ms::float4* msMeshGetColorsPtr(const ms::Mesh *self) { return self->colors.cdata(); }
 msAPI const ms::float3* msMeshGetVelocitiesPtr(const ms::Mesh *self) { return self->velocities.cdata(); }
 msAPI const int* msMeshGetIndicesPtr(const ms::Mesh *self) { return self->indices.cdata(); }
@@ -306,20 +310,29 @@ msAPI void msMeshWriteTangents(ms::Mesh *self, const float4 *v, int size)
         self->md_flags.has_tangents = 1;
     }
 }
-msAPI void msMeshWriteUV0(ms::Mesh *self, const float2 *v, int size)
+msAPI void msMeshWriteUV(ms::Mesh *self, int index, const float2 *v, int size)
 {
-    if (size > 0) {
-        self->uv0.assign(v, v + size);
-        self->md_flags.has_uv0 = 1;
+    if (size <= 0)
+        return;
+
+    assert(index >= 0 && index < ms::msConstants::MAX_UV && "msMeshWriteUV() invalid index");
+
+    self->m_uv[index].assign(v, v + size);
+
+    //[TODO-sin: 2020-8-31] Use bit shifting
+    switch (index) {
+        case 0: self->md_flags.HasUV0 = 1; break;
+        case 1: self->md_flags.HasUV1 = 1; break;
+        case 2: self->md_flags.HasUV2 = 1; break;
+        case 3: self->md_flags.HasUV3 = 1; break;
+        case 4: self->md_flags.HasUV4 = 1; break;
+        case 5: self->md_flags.HasUV5 = 1; break;
+        case 6: self->md_flags.HasUV6 = 1; break;
+        case 7: self->md_flags.HasUV7 = 1; break;
+    default: ;
     }
 }
-msAPI void msMeshWriteUV1(ms::Mesh *self, const float2 *v, int size)
-{
-    if (size > 0) {
-        self->uv1.assign(v, v + size);
-        self->md_flags.has_uv1 = 1;
-    }
-}
+
 msAPI void msMeshWriteColors(ms::Mesh *self, const float4 *v, int size)
 {
     if (size > 0) {

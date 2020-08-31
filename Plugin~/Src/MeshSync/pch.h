@@ -38,9 +38,9 @@
 #include <thread>
 #include <future>
 #include <random>
+#include <cassert>
 
 #ifndef msRuntime
-#define POCO_STATIC
 #include "Poco/Path.h"
 #include "Poco/File.h"
 #include "Poco/FileStream.h"

@@ -1,37 +1,11 @@
 #pragma once
+#include "MeshSync/msConstants.h"
 #include "msIdentifier.h"
+#include "msMeshDataFlags.h"
 
 namespace ms {
 
 // Mesh
-
-// must be synced with C# side
-struct MeshDataFlags
-{
-    uint32_t unchanged : 1;         // 0
-    uint32_t topology_unchanged : 1;
-    uint32_t has_refine_settings : 1;
-    uint32_t has_indices : 1;
-    uint32_t has_counts : 1;
-    uint32_t has_points : 1;        // 5
-    uint32_t has_normals : 1;
-    uint32_t has_tangents : 1;
-    uint32_t has_uv0 : 1;
-    uint32_t has_uv1 : 1;
-    uint32_t has_colors : 1;        // 10
-    uint32_t has_velocities : 1;
-    uint32_t has_material_ids : 1;
-    uint32_t has_face_groups : 1; // use upper 16 bit of material id as face group. mainly for 3ds max
-    uint32_t has_root_bone : 1;
-    uint32_t has_bones : 1;         // 15
-    uint32_t has_blendshapes : 1;
-    uint32_t has_blendshape_weights : 1;
-    uint32_t has_submeshes : 1;
-    uint32_t has_bounds: 1;
-
-    MeshDataFlags();
-};
-
 struct MeshRefineFlags
 {
     uint32_t no_reindexing : 1;     // 0
@@ -185,12 +159,12 @@ public:
     SharedVector<float3> points;
     SharedVector<float3> normals;    // can be empty, per-vertex or per-index data
     SharedVector<float4> tangents;   // can be empty, per-vertex or per-index data
-    SharedVector<float2> uv0, uv1;   // can be empty, per-vertex or per-index data
     SharedVector<float4> colors;     // can be empty, per-vertex or per-index data
     SharedVector<float3> velocities; // can be empty or per-vertex data
     SharedVector<int>    counts;
     SharedVector<int>    indices;
     SharedVector<int>    material_ids; // can be empty or per-face data
+    SharedVector<float2> m_uv[msConstants::MAX_UV];
 
     std::string root_bone;
     std::vector<BoneDataPtr> bones;

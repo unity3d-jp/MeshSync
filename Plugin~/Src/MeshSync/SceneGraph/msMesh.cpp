@@ -239,14 +239,44 @@ void BoneData::clear()
 #define EachTopologyAttribute(F)\
     F(counts) F(indices) F(material_ids)
 
+#define EachVertexAttributeNoUV(F)\
+    F(points) F(normals) F(tangents) F(colors) F(velocities) 
+
 #define EachVertexAttribute(F)\
-    F(points) F(normals) F(tangents) F(uv0) F(uv1) F(colors) F(velocities)
+    EachVertexAttributeNoUV(F) F(m_uv[0]) F(m_uv[1]) F(m_uv[2]) F(m_uv[3]) F(m_uv[4]) F(m_uv[5]) F(m_uv[6]) F(m_uv[7])
 
 #define EachGeometryAttribute(F)\
     EachVertexAttribute(F) EachTopologyAttribute(F)
 
+#define EachGeometryAttributeNoUV(F)\
+    EachVertexAttributeNoUV(F) EachTopologyAttribute(F)
+
 #define EachMember(F)\
     F(refine_settings) EachGeometryAttribute(F) F(root_bone) F(bones) F(blendshapes) F(submeshes) F(bounds)
+
+#define EachMemberNoUV(F)\
+    F(refine_settings) EachGeometryAttributeNoUV(F) F(root_bone) F(bones) F(blendshapes) F(submeshes) F(bounds)
+
+//----------------------------------------------------------------------------------------------------------------------
+
+#define SINGLE_UV_IN_MESH_DATA_FLAG(flags, op, stream, index) { \
+    if ((flags).HasUV##index) { \
+        op(stream, m_uv[index]); \
+    } \
+}
+
+#define ALL_UV_IN_MESH_DATA_FLAGS(flags, op, stream) {      \
+    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,0) \
+    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,1) \
+    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,2) \
+    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,3) \
+    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,4) \
+    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,5) \
+    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,6) \
+    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,7) \
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 
 Mesh::Mesh() { clear(); }
 Mesh::~Mesh() {}
@@ -261,9 +291,12 @@ void Mesh::serialize(std::ostream& os) const
         return;
 
 #define Body(V) if(md_flags.has_##V) write(os, V);
-    EachMember(Body);
+    EachMemberNoUV(Body);
 #undef Body
+
+    ALL_UV_IN_MESH_DATA_FLAGS(md_flags, write, os);
 }
+
 
 void Mesh::deserialize(std::istream& is)
 {
@@ -273,8 +306,10 @@ void Mesh::deserialize(std::istream& is)
         return;
 
 #define Body(V) if(md_flags.has_##V) read(is, V);
-    EachMember(Body);
+    EachMemberNoUV(Body);
 #undef Body
+
+    ALL_UV_IN_MESH_DATA_FLAGS(md_flags, read, is);
 
     bones.erase(
         std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); }),
@@ -294,8 +329,16 @@ void Mesh::setupDataFlags()
     md_flags.has_points = !points.empty();
     md_flags.has_normals = !normals.empty();
     md_flags.has_tangents = !tangents.empty();
-    md_flags.has_uv0 = !uv0.empty();
-    md_flags.has_uv1 = !uv1.empty();
+
+    md_flags.HasUV0 = !m_uv[0].empty();
+    md_flags.HasUV1 = !m_uv[1].empty();
+    md_flags.HasUV2 = !m_uv[2].empty();
+    md_flags.HasUV3 = !m_uv[3].empty();
+    md_flags.HasUV4 = !m_uv[4].empty();
+    md_flags.HasUV5 = !m_uv[5].empty();
+    md_flags.HasUV6 = !m_uv[6].empty();
+    md_flags.HasUV7 = !m_uv[7].empty();
+
     md_flags.has_colors = !colors.empty();
     md_flags.has_velocities = !velocities.empty();
     md_flags.has_counts = !counts.empty();
@@ -415,8 +458,10 @@ bool Mesh::lerp(const Entity& e1_, const Entity& e2_, float t)
         return false;
 #define DoLerp(N) N.resize_discard(e1.N.size()); Lerp(N.data(), e1.N.data(), e2.N.data(), N.size(), t)
     DoLerp(points);
-    DoLerp(uv0);
-    DoLerp(uv1);
+    for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
+        DoLerp(m_uv[i]);
+
+    }
     DoLerp(colors);
     DoLerp(velocities);
 #undef DoLerp
@@ -556,9 +601,9 @@ void Mesh::refine()
     auto& mrs = refine_settings;
 
     if (mrs.flags.flip_u)
-        mu::InvertU(uv0.data(), uv0.size());
+        mu::InvertU(m_uv[0].data(), m_uv[0].size());
     if (mrs.flags.flip_v)
-        mu::InvertV(uv0.data(), uv0.size());
+        mu::InvertV(m_uv[0].data(), m_uv[0].size());
 
     if (mrs.flags.local2world)
         transformMesh(mrs.local2world);
@@ -607,10 +652,10 @@ void Mesh::refine()
 
     auto handle_tangents = [this, &mrs]() {
         // generating tangents require normals and uvs
-        if (mrs.flags.gen_tangents && normals.size() == points.size() && uv0.size() == points.size()) {
+        if (mrs.flags.gen_tangents && normals.size() == points.size() && m_uv[0].size() == points.size()) {
             tangents.resize(points.size());
             GenerateTangentsTriangleIndexed(tangents.data(),
-                points.cdata(), uv0.cdata(), normals.cdata(), indices.cdata(), (int)indices.size() / 3, (int)points.size());
+                points.cdata(), m_uv[0].cdata(), normals.cdata(), indices.cdata(), (int)indices.size() / 3, (int)points.size());
         }
     };
 
@@ -629,8 +674,9 @@ void Mesh::refine()
         // when re-indexing is disabled, all vertex attributes length must be the same as points. check it.
         CheckAttr(normals);
         CheckAttr(tangents);
-        CheckAttr(uv0);
-        CheckAttr(uv1);
+        for(uint32_t i=0;i<msConstants::MAX_UV;++i) {
+            CheckAttr(m_uv[i]);
+        }
         CheckAttr(colors);
         CheckAttr(velocities);
         for (auto& bs : blendshapes) {
@@ -649,9 +695,10 @@ void Mesh::refine()
         size_t num_points_old = points.size();
 
         RawVector<float3> tmp_normals;
-        RawVector<float2> tmp_uv0, tmp_uv1;
+        RawVector<float2> tmp_uv[msConstants::MAX_UV];
+        RawVector<int> remap_uv[msConstants::MAX_UV];
         RawVector<float4> tmp_colors;
-        RawVector<int> remap_normals, remap_uv0, remap_uv1, remap_colors;
+        RawVector<int> remap_normals, remap_colors;
 
         mu::MeshRefiner refiner;
         refiner.split_unit = mrs.flags.split ? mrs.split_unit : INT_MAX;
@@ -660,12 +707,18 @@ void Mesh::refine()
         refiner.counts = counts;
         refiner.buildConnection();
 
-        if (normals.size() == indices.size())
+        const size_t numIndices = indices.size();
+
+        if (normals.size() == numIndices)
             refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
-        if (uv0.size() == indices.size())
-            refiner.addExpandedAttribute<float2>(uv0, tmp_uv0, remap_uv0);
-        if (uv1.size() == indices.size())
-            refiner.addExpandedAttribute<float2>(uv1, tmp_uv1, remap_uv1);
+        for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
+            if (m_uv[i].size() != numIndices) {
+                continue;
+            }
+
+            refiner.addExpandedAttribute<float2>(m_uv[i], tmp_uv[i], remap_uv[i]);
+        }
+
         if (colors.size() == indices.size())
             refiner.addExpandedAttribute<float4>(colors, tmp_colors, remap_colors);
 
@@ -695,14 +748,17 @@ void Mesh::refine()
             Remap(tmp_normals, normals, !remap_normals.empty() ? remap_normals : refiner.new2old_points);
             tmp_normals.swap(normals);
         }
-        if (!uv0.empty()) {
-            Remap(tmp_uv0, uv0, !remap_uv0.empty() ? remap_uv0 : refiner.new2old_points);
-            tmp_uv0.swap(uv0);
+
+        for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
+
+            if (m_uv[i].empty())
+                continue;
+
+            Remap(tmp_uv[i], m_uv[i], !remap_uv[i].empty() ? remap_uv[i] : refiner.new2old_points);
+            tmp_uv[i].swap(m_uv[i]);
+
         }
-        if (!uv1.empty()) {
-            Remap(tmp_uv1, uv1, !remap_uv1.empty() ? remap_uv1 : refiner.new2old_points);
-            tmp_uv1.swap(uv1);
-        }
+
         if (!colors.empty()) {
             Remap(tmp_colors, colors, !remap_colors.empty() ? remap_colors : refiner.new2old_points);
             tmp_colors.swap(colors);
@@ -901,8 +957,11 @@ void Mesh::makeDoubleSided()
         for (size_t ii = 0; ii < num_back_indices; ++ii)
             (float3&)n[ii] *= -1.0f;
     }
-    copy_index_elements(uv0);
-    copy_index_elements(uv1);
+
+    for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
+        copy_index_elements(m_uv[i]);
+
+    }
     copy_index_elements(colors);
 }
 
@@ -982,32 +1041,25 @@ void Mesh::mirrorMesh(const float3 & plane_n, float plane_d, bool /*welding*/)
         }
     }
 
-    // uv
-    if (!uv0.empty()) {
-        if (uv0.size() == num_points_old) {
-            uv0.resize(points.size());
-            mu::CopyWithIndices(&uv0[num_points_old], uv0.cdata(), copylist);
+    for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
+        SharedVector<float2>& curUV = m_uv[i];
+        if (curUV.empty())
+            continue;
+
+
+        // uv
+        if (curUV.size() == num_points_old) {
+            curUV.resize(points.size());
+            mu::CopyWithIndices(&curUV[num_points_old], curUV.cdata(), copylist);
         }
-        else if (uv0.size() == num_indices_old) {
-            uv0.resize(indices.size());
-            auto dst = &uv0[num_indices_old];
-            mu::EnumerateReverseFaceIndices(IArray<int>{counts.cdata(), num_faces_old}, [dst, this](int, int idx, int ridx) {
-                dst[idx] = uv0[ridx];
+        else if (curUV.size() == num_indices_old) {
+            curUV.resize(indices.size());
+            tvec2<float>* dst = &curUV[num_indices_old];
+            mu::EnumerateReverseFaceIndices(IArray<int>{counts.cdata(), num_faces_old}, [dst, this,curUV](int, int idx, int ridx) {
+                dst[idx] = curUV[ridx];
             });
         }
-    }
-    if (!uv1.empty()) {
-        if (uv1.size() == num_points_old) {
-            uv1.resize(points.size());
-            mu::CopyWithIndices(&uv1[num_points_old], uv1.cdata(), copylist);
-        }
-        else if (uv1.size() == num_indices_old) {
-            uv1.resize(indices.size());
-            auto dst = &uv1[num_indices_old];
-            mu::EnumerateReverseFaceIndices(IArray<int>{counts.cdata(), num_faces_old}, [dst, this](int, int idx, int ridx) {
-                dst[idx] = uv1[ridx];
-            });
-        }
+
     }
 
     // colors
@@ -1169,8 +1221,9 @@ void Mesh::mergeMesh(const Mesh& v)
     expand_face_attribute(material_ids, v.material_ids);
     expand_vertex_attribute(normals, v.normals);
     expand_vertex_attribute(tangents, v.tangents);
-    expand_vertex_attribute(uv0, v.uv0);
-    expand_vertex_attribute(uv1, v.uv1);
+    for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
+        expand_vertex_attribute(m_uv[i], v.m_uv[i]);
+    }
     expand_vertex_attribute(colors, v.colors);
     expand_vertex_attribute(velocities, v.velocities);
 

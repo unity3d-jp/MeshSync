@@ -1681,8 +1681,6 @@ namespace Unity.MeshSync
         public bool hasPoints           { get { return flags[5]; } }
         public bool hasNormals          { get { return flags[6]; } }
         public bool hasTangents         { get { return flags[7]; } }
-        public bool hasUV0              { get { return flags[8]; } }
-        public bool hasUV1              { get { return flags[9]; } }
         public bool hasColors           { get { return flags[10]; } }
         public bool hasVelocities       { get { return flags[11]; } }
         public bool hasRootBone         { get { return flags[14]; } }
@@ -1690,6 +1688,10 @@ namespace Unity.MeshSync
         public bool hasBlendshapes      { get { return flags[16]; } }
         public bool hasBlendshapeWeights{ get { return flags[17]; } }
         public bool hasBounds           { get { return flags[19]; } }
+        
+        const int UV_START_BIT_POS = 24;
+        public bool HasUV(int index) { return flags[UV_START_BIT_POS + index]; } 
+        
     };
 
     /// <summary>
@@ -1712,8 +1714,8 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern void msMeshReadPoints(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshReadNormals(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshReadTangents(IntPtr self, IntPtr dst);
-        [DllImport(Lib.name)] static extern void msMeshReadUV0(IntPtr self, IntPtr dst);
-        [DllImport(Lib.name)] static extern void msMeshReadUV1(IntPtr self, IntPtr dst);
+        [DllImport(Lib.name)] static extern void msMeshReadUV(IntPtr self, IntPtr dst, int index);
+
         [DllImport(Lib.name)] static extern void msMeshReadColors(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshReadVelocities(IntPtr self, IntPtr dst);
         [DllImport(Lib.name)] static extern void msMeshReadIndices(IntPtr self, IntPtr dst);
@@ -1730,8 +1732,7 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern void msMeshWritePoints(IntPtr self, Vector3[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshWriteNormals(IntPtr self, Vector3[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshWriteTangents(IntPtr self, Vector4[] v, int size);
-        [DllImport(Lib.name)] static extern void msMeshWriteUV0(IntPtr self, Vector2[] v, int size);
-        [DllImport(Lib.name)] static extern void msMeshWriteUV1(IntPtr self, Vector2[] v, int size);
+        [DllImport(Lib.name)] static extern void msMeshWriteUV(IntPtr self, int index, Vector2[] v, int size);        
         [DllImport(Lib.name)] static extern void msMeshWriteColors(IntPtr self, Color[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshWriteVelocities(IntPtr self, Vector3[] v, int size);
         [DllImport(Lib.name)] static extern void msMeshWriteIndices(IntPtr self, int[] v, int size);
@@ -1790,8 +1791,7 @@ namespace Unity.MeshSync
         internal void ReadPoints(PinnedList<Vector3> dst) { msMeshReadPoints(self, dst); }
         internal void ReadNormals(PinnedList<Vector3> dst) { msMeshReadNormals(self, dst); }
         internal void ReadTangents(PinnedList<Vector4> dst) { msMeshReadTangents(self, dst); }
-        internal void ReadUV0(PinnedList<Vector2> dst) { msMeshReadUV0(self, dst); }
-        internal void ReadUV1(PinnedList<Vector2> dst) { msMeshReadUV1(self, dst); }
+        internal void ReadUV(PinnedList<Vector2> dst, int index) { msMeshReadUV(self, dst, index); }
         internal void ReadColors(PinnedList<Color> dst) { msMeshReadColors(self, dst); }
         internal void ReadVelocities(PinnedList<Vector3> dst) { msMeshReadVelocities(self, dst); }
         internal void ReadBoneWeights4(IntPtr dst) { msMeshReadBoneWeights4(self, dst); }
@@ -1801,13 +1801,12 @@ namespace Unity.MeshSync
 #endif
         internal void ReadIndices(IntPtr dst) { msMeshReadIndices(self, dst); }
 
-        internal void WritePoints(Vector3[] v) { msMeshWritePoints(self, v, v.Length); }
-        internal void WriteNormals(Vector3[] v) { msMeshWriteNormals(self, v, v.Length); }
+        internal void WritePoints(Vector3[] v)   { msMeshWritePoints(self, v, v.Length); }
+        internal void WriteNormals(Vector3[] v)  { msMeshWriteNormals(self, v, v.Length); }
         internal void WriteTangents(Vector4[] v) { msMeshWriteTangents(self, v, v.Length); }
-        internal void WriteUV0(Vector2[] v) { msMeshWriteUV0(self, v, v.Length); }
-        internal void WriteUV1(Vector2[] v) { msMeshWriteUV1(self, v, v.Length); }
-        internal void WriteColors(Color[] v) { msMeshWriteColors(self, v, v.Length); }
-        internal void WriteVelocities(Vector3[] v) { msMeshWriteVelocities(self, v, v.Length); }
+        internal void WriteUV(int index, Vector2[] v)   { msMeshWriteUV(self, index, v, v.Length ); }
+        internal void WriteColors(Color[] v)            { msMeshWriteColors(self, v, v.Length); }
+        internal void WriteVelocities(Vector3[] v)      { msMeshWriteVelocities(self, v, v.Length); }
         internal void WriteBoneWeights4(BoneWeight[] v) { msMeshWriteBoneWeights4(self, v, v.Length); }
 #if UNITY_2019_1_OR_NEWER
         internal void WriteBoneWeightsV(ref NativeArray<byte> counts, ref NativeArray<BoneWeight1> weights)

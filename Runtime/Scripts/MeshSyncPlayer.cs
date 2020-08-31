@@ -1174,14 +1174,15 @@ namespace Unity.MeshSync
                 onUpdateMaterial.Invoke(dstmat, src);
         }
 
-        EntityRecord UpdateMesh(MeshData data)
-        {
+//----------------------------------------------------------------------------------------------------------------------
+        
+        EntityRecord UpdateMesh(MeshData data) {
             if (!m_config.SyncMeshes)
                 return null;
 
-            var dtrans = data.transform;
-            var dflags = data.dataFlags;
-            var rec = UpdateTransform(dtrans);
+            TransformData dtrans = data.transform;
+            MeshDataFlags dflags = data.dataFlags;
+            EntityRecord rec = UpdateTransform(dtrans);
             if (rec == null || dflags.unchanged)
                 return null;
 
@@ -1191,9 +1192,9 @@ namespace Unity.MeshSync
                 return null;
             }
 
-            var path = dtrans.path;
-            var go = rec.go;
-            var trans = go.transform;
+            string path = dtrans.path;
+            GameObject go = rec.go;
+            Transform trans = go.transform;
             bool activeInHierarchy = go.activeInHierarchy;
             if (!activeInHierarchy && !dflags.hasPoints)
                 return null;
@@ -1203,21 +1204,16 @@ namespace Unity.MeshSync
             bool materialsUpdated = rec.BuildMaterialData(data);
             bool meshUpdated = false;
 
-            if (dflags.hasPoints && dflags.hasIndices)
-            {
+            if (dflags.hasPoints && dflags.hasIndices) {
                 // note:
                 // assume there is always only 1 mesh split.
                 // old versions supported multiple splits because vertex index was 16 bit (pre-Unity 2017.3),
                 // but that code path was removed for simplicity and my sanity.
-                if (data.numIndices == 0)
-                {
+                if (data.numIndices == 0) {
                     if (rec.mesh != null)
                         rec.mesh.Clear();
-                }
-                else
-                {
-                    if (rec.mesh == null)
-                    {
+                } else {
+                    if (rec.mesh == null) {
                         rec.mesh = new Mesh();
                         rec.mesh.name = trans.name;
                         if (m_markMeshesDynamic)
@@ -1233,20 +1229,16 @@ namespace Unity.MeshSync
                 meshUpdated = true;
             }
 
-            if (dflags.hasBones || dflags.hasBlendshapes)
-            {
+            if (dflags.hasBones || dflags.hasBlendshapes) {
                 var smr = rec.skinnedMeshRenderer;
-                if (smr == null)
-                {
+                if (smr == null) {
                     materialsUpdated = true;
                     smr = rec.skinnedMeshRenderer = Misc.GetOrAddComponent<SkinnedMeshRenderer>(trans.gameObject);
-                    if (rec.meshRenderer != null)
-                    {
+                    if (rec.meshRenderer != null) {
                         DestroyImmediate(rec.meshRenderer);
                         rec.meshRenderer = null;
                     }
-                    if (rec.meshFilter != null)
-                    {
+                    if (rec.meshFilter != null) {
                         DestroyImmediate(rec.meshFilter);
                         rec.meshFilter = null;
                     }
@@ -1262,41 +1254,32 @@ namespace Unity.MeshSync
                 smr.sharedMesh = rec.mesh;
 
                 // update bones
-                if (dflags.hasBones)
-                {
+                if (dflags.hasBones) {
                     if (dflags.hasRootBone)
                         rec.rootBonePath = data.rootBonePath;
                     rec.bonePaths = data.bonePaths;
                     // bones will be resolved in AfterUpdateScene()
-                }
-                else
-                {
+                } else {
                     smr.localBounds = rec.mesh.bounds;
                     smr.updateWhenOffscreen = false;
                 }
 
                 // update blendshape weights
-                if (dflags.hasBlendshapes)
-                {
+                if (dflags.hasBlendshapes) {
                     int numBlendShapes = Math.Min(data.numBlendShapes, rec.mesh.blendShapeCount);
-                    for (int bi = 0; bi < numBlendShapes; ++bi)
-                    {
+                    for (int bi = 0; bi < numBlendShapes; ++bi) {
                         var bsd = data.GetBlendShapeData(bi);
                         smr.SetBlendShapeWeight(bi, bsd.weight);
                     }
                 }
-            }
-            else if (meshUpdated)
-            {
-                var mf = rec.meshFilter;
-                var mr = rec.meshRenderer;
-                if (mf == null)
-                {
+            } else if (meshUpdated) {
+                MeshFilter mf = rec.meshFilter;
+                MeshRenderer mr = rec.meshRenderer;
+                if (mf == null) {
                     materialsUpdated = true;
                     mf = rec.meshFilter = Misc.GetOrAddComponent<MeshFilter>(trans.gameObject);
                     mr = rec.meshRenderer = Misc.GetOrAddComponent<MeshRenderer>(trans.gameObject);
-                    if (rec.skinnedMeshRenderer != null)
-                    {
+                    if (rec.skinnedMeshRenderer != null) {
                         mr.sharedMaterials = rec.skinnedMeshRenderer.sharedMaterials;
                         DestroyImmediate(rec.skinnedMeshRenderer);
                         rec.skinnedMeshRenderer = null;
@@ -1309,8 +1292,7 @@ namespace Unity.MeshSync
                 rec.smrEnabled = false;
             }
 
-            if (meshUpdated)
-            {
+            if (meshUpdated) {
                 MeshCollider collider = m_config.UpdateMeshColliders ? trans.GetComponent<MeshCollider>() : null;
                 if (collider != null &&
                     (collider.sharedMesh == null || collider.sharedMesh == rec.mesh))
@@ -1325,12 +1307,16 @@ namespace Unity.MeshSync
 
             return rec;
         }
+        
+//----------------------------------------------------------------------------------------------------------------------
 
         PinnedList<int> m_tmpI = new PinnedList<int>();
         PinnedList<Vector2> m_tmpV2 = new PinnedList<Vector2>();
         PinnedList<Vector3> m_tmpV3 = new PinnedList<Vector3>();
         PinnedList<Vector4> m_tmpV4 = new PinnedList<Vector4>();
         PinnedList<Color> m_tmpC = new PinnedList<Color>();
+        
+//----------------------------------------------------------------------------------------------------------------------
 
         void UpdateMesh(ref Mesh mesh, MeshData data)
         {
@@ -1347,46 +1333,37 @@ namespace Unity.MeshSync
                 }
             }
 
-            var numPoints = data.numPoints;
-            var dataFlags = data.dataFlags;
-            if (dataFlags.hasPoints)
-            {
+            int numPoints = data.numPoints;
+            MeshDataFlags dataFlags = data.dataFlags;
+            if (dataFlags.hasPoints) {
                 m_tmpV3.Resize(numPoints);
                 data.ReadPoints(m_tmpV3);
                 mesh.SetVertices(m_tmpV3.List);
             }
-            if (dataFlags.hasNormals)
-            {
+            if (dataFlags.hasNormals) {
                 m_tmpV3.Resize(numPoints);
                 data.ReadNormals(m_tmpV3);
                 mesh.SetNormals(m_tmpV3.List);
             }
-            if (dataFlags.hasTangents)
-            {
+            if (dataFlags.hasTangents) {
                 m_tmpV4.Resize(numPoints);
                 data.ReadTangents(m_tmpV4);
                 mesh.SetTangents(m_tmpV4.List);
             }
-            if (dataFlags.hasUV0)
-            {
-                m_tmpV2.Resize(numPoints);
-                data.ReadUV0(m_tmpV2);
-                mesh.SetUVs(0, m_tmpV2.List);
+
+            for (int i = 0; i < CoreAPIConstants.MAX_UV; ++i) {
+                if (dataFlags.HasUV(i)) {
+                    m_tmpV2.Resize(numPoints);
+                    data.ReadUV(m_tmpV2,i);
+                    mesh.SetUVs(i, m_tmpV2.List);
+                }                
             }
-            if (dataFlags.hasUV1)
-            {
-                m_tmpV2.Resize(numPoints);
-                data.ReadUV1(m_tmpV2);
-                mesh.SetUVs(1, m_tmpV2.List);
-            }
-            if (dataFlags.hasColors)
-            {
+            if (dataFlags.hasColors) {
                 m_tmpC.Resize(numPoints);
                 data.ReadColors(m_tmpC);
                 mesh.SetColors(m_tmpC.List);
             }
-            if (dataFlags.hasBones)
-            {
+            if (dataFlags.hasBones) {
                 mesh.bindposes = data.bindposes;
 #if UNITY_2019_1_OR_NEWER
                 {
@@ -1410,24 +1387,19 @@ namespace Unity.MeshSync
                 }
 #endif
             }
-            if (dataFlags.hasIndices && !keepIndices)
-            {
+            if (dataFlags.hasIndices && !keepIndices) {
                 int subMeshCount = data.numSubmeshes;
                 mesh.subMeshCount = subMeshCount;
-                for (int smi = 0; smi < subMeshCount; ++smi)
-                {
-                    var submesh = data.GetSubmesh(smi);
-                    var topology = submesh.topology;
+                for (int smi = 0; smi < subMeshCount; ++smi) {
+                    SubmeshData          submesh  = data.GetSubmesh(smi);
+                    SubmeshData.Topology topology = submesh.topology;
 
                     m_tmpI.Resize(submesh.numIndices);
                     submesh.ReadIndices(data, m_tmpI);
 
-                    if (topology == SubmeshData.Topology.Triangles)
-                    {
+                    if (topology == SubmeshData.Topology.Triangles) {
                         mesh.SetTriangles(m_tmpI.List, smi, false);
-                    }
-                    else
-                    {
+                    } else {
                         var mt = MeshTopology.Points;
                         switch (topology)
                         {
@@ -1441,20 +1413,17 @@ namespace Unity.MeshSync
 
                 }
             }
-            if (dataFlags.hasBlendshapes)
-            {
-                var tmpBSP = new PinnedList<Vector3>(numPoints);
-                var tmpBSN = new PinnedList<Vector3>(numPoints);
-                var tmpBST = new PinnedList<Vector3>(numPoints);
+            if (dataFlags.hasBlendshapes) {
+                PinnedList<Vector3> tmpBSP = new PinnedList<Vector3>(numPoints);
+                PinnedList<Vector3> tmpBSN = new PinnedList<Vector3>(numPoints);
+                PinnedList<Vector3> tmpBST = new PinnedList<Vector3>(numPoints);
 
                 int numBlendShapes = data.numBlendShapes;
-                for (int bi = 0; bi < numBlendShapes; ++bi)
-                {
-                    var bsd = data.GetBlendShapeData(bi);
-                    var name = bsd.name;
-                    var numFrames = bsd.numFrames;
-                    for (int fi = 0; fi < numFrames; ++fi)
-                    {
+                for (int bi = 0; bi < numBlendShapes; ++bi) {
+                    BlendShapeData bsd = data.GetBlendShapeData(bi);
+                    string name = bsd.name;
+                    float numFrames = bsd.numFrames;
+                    for (int fi = 0; fi < numFrames; ++fi) {
                         bsd.ReadPoints(fi, tmpBSP);
                         bsd.ReadNormals(fi, tmpBSN);
                         bsd.ReadTangents(fi, tmpBST);
@@ -1471,6 +1440,7 @@ namespace Unity.MeshSync
             mesh.UploadMeshData(false);
         }
 
+//----------------------------------------------------------------------------------------------------------------------        
         EntityRecord UpdatePoints(PointsData data)
         {
 
