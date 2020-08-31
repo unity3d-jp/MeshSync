@@ -74,9 +74,11 @@ internal class MeshSyncServer : MeshSyncPlayer
         EditorApplication.update += PollServerEvents;
 #endif
         if (m_config.Logging)
-            Debug.Log("MeshSync: server started (port: " + m_serverSettings.port + ")");
+            Debug.Log("[MeshSync] Server started (port: " + m_serverSettings.port + ")");
 
         m_serverStarted = true;
+#else
+        Debug.LogWarning("[MeshSync] Server functions are not supported in non-Standalone platform");
 #endif //UNITY_STANDALONE
     }
 
@@ -94,9 +96,11 @@ internal class MeshSyncServer : MeshSyncPlayer
         m_server = default(Server);
 
         if (m_config.Logging)
-            Debug.Log("MeshSync: server stopped (port: " + m_serverSettings.port + ")");
+            Debug.Log("[MeshSync] Server stopped (port: " + m_serverSettings.port + ")");
 
         m_serverStarted = false;
+#else
+        Debug.LogWarning("[MeshSync] Server functions are not supported in non-Standalone platform");
 #endif //UNITY_STANDALONE
     }
     
@@ -167,7 +171,7 @@ internal class MeshSyncServer : MeshSyncPlayer
         m_server.EndServe();
 
         if (m_config.Logging)
-            Debug.Log("MeshSyncServer: served");
+            Debug.Log("[MeshSync] served");
     }
 
     void OnRecvDelete(DeleteMessage mes) {
