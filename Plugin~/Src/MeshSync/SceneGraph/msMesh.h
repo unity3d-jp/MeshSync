@@ -1,5 +1,5 @@
 #pragma once
-#include "msConstants.h"
+#include "MeshSync/msConstants.h"
 #include "msIdentifier.h"
 #include "msMeshDataFlags.h"
 
