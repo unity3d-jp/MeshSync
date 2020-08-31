@@ -261,7 +261,7 @@ void BoneData::clear()
 
 #define SINGLE_UV_IN_MESH_DATA_FLAG(flags, op, stream, index) { \
     if ((flags).HasUV##index) { \
-        op(stream, m_uv[##index]); \
+        op(stream, m_uv[index]); \
     } \
 }
 
