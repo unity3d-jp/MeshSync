@@ -23,9 +23,12 @@ internal class MeshSyncServer : MeshSyncPlayer
 //----------------------------------------------------------------------------------------------------------------------        
     internal void SetAutoStartServer(bool autoStart) {
         m_autoStartServer = autoStart; 
+
+#if UNITY_STANDALONE        
         if (m_autoStartServer && !m_serverStarted) {
             StartServer();
         }
+#endif
     }
     
 //----------------------------------------------------------------------------------------------------------------------        
