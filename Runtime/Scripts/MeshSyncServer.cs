@@ -1,7 +1,7 @@
 #if UNITY_STANDALONE
 using System;
 #endif
-
+using Unity.Collections;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -114,15 +114,12 @@ internal class MeshSyncServer : MeshSyncPlayer
     #endregion
 
     #region MessageHandlers
-    public void PollServerEvents()
-    {
-        if (m_requestRestartServer)
-        {
+    public void PollServerEvents() {
+        if (m_requestRestartServer) {
             m_requestRestartServer = false;
             StartServer();
         }
-        if (m_captureScreenshotInProgress)
-        {
+        if (m_captureScreenshotInProgress) {
             m_captureScreenshotInProgress = false;
             m_server.screenshotPath = "screenshot.png";
         }
@@ -131,12 +128,9 @@ internal class MeshSyncServer : MeshSyncPlayer
             m_server.ProcessMessages(m_handler);
     }
 
-    void OnServerMessage(MessageType type, IntPtr data)
-    {
-        Try(() =>
-        {
-            switch (type)
-            {
+    void OnServerMessage(MessageType type, IntPtr data) {
+        Try(() => {
+            switch (type) {
                 case MessageType.Get:
                     OnRecvGet((GetMessage)data);
                     break;
@@ -164,12 +158,11 @@ internal class MeshSyncServer : MeshSyncPlayer
         });
     }
 
-    void OnRecvGet(GetMessage mes)
-    {
+    void OnRecvGet(GetMessage mes) {
         m_server.BeginServe();
-        foreach (var mr in FindObjectsOfType<Renderer>())
+        foreach (Renderer mr in FindObjectsOfType<Renderer>())
             ServeMesh(mr, mes);
-        foreach (var mat in m_materialList)
+        foreach (MaterialHolder mat in m_materialList)
             ServeMaterial(mat.material, mes);
         m_server.EndServe();
 
@@ -177,8 +170,7 @@ internal class MeshSyncServer : MeshSyncPlayer
             Debug.Log("MeshSyncServer: served");
     }
 
-    void OnRecvDelete(DeleteMessage mes)
-    {
+    void OnRecvDelete(DeleteMessage mes) {
         int numEntities = mes.numEntities;
         for (int i = 0; i < numEntities; ++i)
             EraseEntityRecord(mes.GetEntity(i));
@@ -188,21 +180,16 @@ internal class MeshSyncServer : MeshSyncPlayer
             EraseMaterialRecord(mes.GetMaterial(i).id);
     }
 
-    void OnRecvFence(FenceMessage mes)
-    {
-        if (mes.type == FenceMessage.FenceType.SceneBegin)
-        {
+    void OnRecvFence(FenceMessage mes) {
+        if (mes.type == FenceMessage.FenceType.SceneBegin) {
             BeforeUpdateScene();
-        }
-        else if (mes.type == FenceMessage.FenceType.SceneEnd)
-        {
+        } else if (mes.type == FenceMessage.FenceType.SceneEnd) {
             AfterUpdateScene();
             m_server.NotifyPoll(PollMessage.PollType.SceneUpdate);
         }
     }
 
-    void OnRecvText(TextMessage mes)
-    {
+    void OnRecvText(TextMessage mes) {
         mes.Print();
     }
 
@@ -232,18 +219,17 @@ internal class MeshSyncServer : MeshSyncPlayer
                 break;
             case QueryMessage.QueryType.RootNodes:
                 {
-                    var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
-                    foreach (var go in roots)
-                        data.AddResponseText(BuildPath(go.GetComponent<Transform>()));
+                    GameObject[] roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+                    foreach (GameObject go in roots)
+                        data.AddResponseText(BuildPath(go.transform));
                 }
                 break;
-            case QueryMessage.QueryType.AllNodes:
-                {
-                    var objects = FindObjectsOfType<Transform>();
-                    foreach (var go in objects)
-                        data.AddResponseText(BuildPath(go.GetComponent<Transform>()));
-                }
+            case QueryMessage.QueryType.AllNodes: {
+                Transform[] objTransforms = FindObjectsOfType<Transform>();
+                foreach (Transform t in objTransforms)
+                    data.AddResponseText(BuildPath(t));
                 break;
+            }
             default:
                 break;
         }
@@ -252,51 +238,50 @@ internal class MeshSyncServer : MeshSyncPlayer
     #endregion
 
     #region ServeScene
-    bool ServeMesh(Renderer renderer, GetMessage mes) {
+    bool ServeMesh(Renderer objRenderer, GetMessage mes) {
         bool ret = false;
         Mesh origMesh = null;
 
-        var dst = MeshData.Create();
-        if (renderer.GetType() == typeof(MeshRenderer)){
-            ret = CaptureMeshRenderer(ref dst, renderer as MeshRenderer, mes, ref origMesh);
+        MeshData dst = MeshData.Create();
+        if (objRenderer.GetType() == typeof(MeshRenderer)){
+            ret = CaptureMeshRenderer(ref dst, objRenderer as MeshRenderer, mes, ref origMesh);
         }
-        else if (renderer.GetType() == typeof(SkinnedMeshRenderer)){
-            ret = CaptureSkinnedMeshRenderer(ref dst, renderer as SkinnedMeshRenderer, mes, ref origMesh);
+        else if (objRenderer.GetType() == typeof(SkinnedMeshRenderer)){
+            ret = CaptureSkinnedMeshRenderer(ref dst, objRenderer as SkinnedMeshRenderer, mes, ref origMesh);
         }
 
         if (ret) {
-            var dstTrans = dst.transform;
-            var trans = renderer.GetComponent<Transform>();
-            dstTrans.hostID = GetObjectlID(renderer.gameObject);
-            dstTrans.position = trans.localPosition;
-            dstTrans.rotation = trans.localRotation;
-            dstTrans.scale = trans.localScale;
-            dst.local2world = trans.localToWorldMatrix;
-            dst.world2local = trans.worldToLocalMatrix;
+            TransformData dstTrans = dst.transform;
+            Transform rendererTransform = objRenderer.transform;
+            dstTrans.hostID = GetObjectlID(objRenderer.gameObject);
+            dstTrans.position = rendererTransform.localPosition;
+            dstTrans.rotation = rendererTransform.localRotation;
+            dstTrans.scale = rendererTransform.localScale;
+            dst.local2world = rendererTransform.localToWorldMatrix;
+            dst.world2local = rendererTransform.worldToLocalMatrix;
 
             EntityRecord rec;
-            if (!m_hostObjects.TryGetValue(dstTrans.hostID, out rec))
-            {
+            if (!m_hostObjects.TryGetValue(dstTrans.hostID, out rec)) {
                 rec = new EntityRecord();
                 m_hostObjects.Add(dstTrans.hostID, rec);
             }
-            rec.go = renderer.gameObject;
+            rec.go = objRenderer.gameObject;
             rec.origMesh = origMesh;
 
-            dstTrans.path = BuildPath(renderer.GetComponent<Transform>());
+            dstTrans.path = BuildPath(rendererTransform);
             m_server.ServeMesh(dst);
         }
         return ret;
     }
     bool ServeTexture(Texture2D v, GetMessage mes) {
-        var data = TextureData.Create();
+        TextureData data = TextureData.Create();
         data.name = v.name;
         // todo
         m_server.ServeTexture(data);
         return true;
     }
     bool ServeMaterial(Material mat, GetMessage mes) {
-        var data = MaterialData.Create();
+        MaterialData data = MaterialData.Create();
         data.name = mat.name;
         if (mat.HasProperty("_Color"))
             data.color = mat.GetColor("_Color");
@@ -304,12 +289,10 @@ internal class MeshSyncServer : MeshSyncPlayer
         return true;
     }
 
-    bool CaptureMeshRenderer(ref MeshData dst, MeshRenderer mr, GetMessage mes, ref Mesh mesh)
-    {
+    bool CaptureMeshRenderer(ref MeshData dst, MeshRenderer mr, GetMessage mes, ref Mesh mesh) {
         mesh = mr.GetComponent<MeshFilter>().sharedMesh;
         if (mesh == null) return false;
-        if (!mesh.isReadable)
-        {
+        if (!mesh.isReadable) {
             Debug.LogWarning("Mesh " + mr.name + " is not readable and be ignored");
             return false;
         }
@@ -318,61 +301,47 @@ internal class MeshSyncServer : MeshSyncPlayer
         return true;
     }
 
-    bool CaptureSkinnedMeshRenderer(ref MeshData dst, SkinnedMeshRenderer smr, GetMessage mes, ref Mesh mesh)
-    {
+    bool CaptureSkinnedMeshRenderer(ref MeshData dst, SkinnedMeshRenderer smr, GetMessage mes, ref Mesh mesh) {
         mesh = smr.sharedMesh;
         if (mesh == null) return false;
 
-        if (!mes.bakeSkin && !mesh.isReadable)
-        {
+        if (!mes.bakeSkin && !mesh.isReadable) {
             Debug.LogWarning("Mesh " + smr.name + " is not readable and be ignored");
             return false;
         }
 
         Cloth cloth = smr.GetComponent<Cloth>();
-        if (cloth != null && mes.bakeCloth)
-        {
+        if (cloth != null && mes.bakeCloth) {
             CaptureMesh(ref dst, mesh, cloth, mes.flags, smr.sharedMaterials);
         }
 
-        if (mes.bakeSkin)
-        {
-            var tmp = new Mesh();
+        if (mes.bakeSkin) {
+            Mesh tmp = new Mesh();
             smr.BakeMesh(tmp);
             CaptureMesh(ref dst, tmp, null, mes.flags, smr.sharedMaterials);
-        }
-        else
-        {
+        } else {
             CaptureMesh(ref dst, mesh, null, mes.flags, smr.sharedMaterials);
 
             // bones
-            if (mes.flags.getBones)
-            {
+            if (mes.flags.getBones) {
                 dst.SetBonePaths(this, smr.bones);
                 dst.bindposes = mesh.bindposes;
 
-#if UNITY_2019_1_OR_NEWER
-                var bonesPerVertex = mesh.GetBonesPerVertex();
-                var weights = mesh.GetAllBoneWeights();
+                NativeArray<byte>        bonesPerVertex = mesh.GetBonesPerVertex();
+                NativeArray<BoneWeight1> weights        = mesh.GetAllBoneWeights();
                 dst.WriteBoneWeightsV(ref bonesPerVertex, ref weights);
-#else
-                dst.WriteBoneWeights4(mesh.boneWeights);
-#endif
             }
 
             // blendshapes
-            if (mes.flags.getBlendShapes && mesh.blendShapeCount > 0)
-            {
-                var v = new Vector3[mesh.vertexCount];
-                var n = new Vector3[mesh.vertexCount];
-                var t = new Vector3[mesh.vertexCount];
-                for (int bi = 0; bi < mesh.blendShapeCount; ++bi)
-                {
-                    var bd = dst.AddBlendShape(mesh.GetBlendShapeName(bi));
+            if (mes.flags.getBlendShapes && mesh.blendShapeCount > 0) {
+                Vector3[] v = new Vector3[mesh.vertexCount];
+                Vector3[] n = new Vector3[mesh.vertexCount];
+                Vector3[] t = new Vector3[mesh.vertexCount];
+                for (int bi = 0; bi < mesh.blendShapeCount; ++bi) {
+                    BlendShapeData bd = dst.AddBlendShape(mesh.GetBlendShapeName(bi));
                     bd.weight = smr.GetBlendShapeWeight(bi);
                     int frameCount = mesh.GetBlendShapeFrameCount(bi);
-                    for (int fi = 0; fi < frameCount; ++fi)
-                    {
+                    for (int fi = 0; fi < frameCount; ++fi) {
                         mesh.GetBlendShapeFrameVertices(bi, fi, v, n, t);
                         float w = mesh.GetBlendShapeFrameWeight(bi, fi);
                         bd.AddFrame(w, v, n, t);
@@ -383,8 +352,7 @@ internal class MeshSyncServer : MeshSyncPlayer
         return true;
     }
 
-    void CaptureMesh(ref MeshData data, Mesh mesh, Cloth cloth, GetFlags flags, Material[] materials)
-    {
+    void CaptureMesh(ref MeshData data, Mesh mesh, Cloth cloth, GetFlags flags, Material[] materials) {
         if (flags.getPoints)
             data.WritePoints(mesh.vertices);
         if (flags.getNormals)
@@ -397,18 +365,13 @@ internal class MeshSyncServer : MeshSyncPlayer
             data.WriteUV1(mesh.uv2);
         if (flags.getColors)
             data.WriteColors(mesh.colors);
-        if (flags.getIndices)
-        {
-            if (!flags.getMaterialIDs || materials == null || materials.Length == 0)
-            {
+        if (flags.getIndices) {
+            if (!flags.getMaterialIDs || materials == null || materials.Length == 0) {
                 data.WriteIndices(mesh.triangles);
-            }
-            else
-            {
+            } else {
                 int n = mesh.subMeshCount;
-                for (int i = 0; i < n; ++i)
-                {
-                    var indices = mesh.GetIndices(i);
+                for (int i = 0; i < n; ++i) {
+                    int[] indices = mesh.GetIndices(i);
                     int mid = i < materials.Length ? GetMaterialIndex(materials[i]) : 0;
                     data.WriteSubmeshTriangles(indices, mid);
                 }
@@ -417,7 +380,7 @@ internal class MeshSyncServer : MeshSyncPlayer
 
         // bones & blendshapes are handled by CaptureSkinnedMeshRenderer()
     }
-    #endregion
+    #endregion //ServeScene
 
 
     #region Events
@@ -436,22 +399,19 @@ internal class MeshSyncServer : MeshSyncPlayer
 #endif
 
 
-    protected override void OnEnable()
-    {
+    protected override void OnEnable() {
         base.OnEnable();
         if (m_autoStartServer) {
             m_requestRestartServer = true;
         }
     }
 
-    protected override void OnDisable()
-    {
+    protected override void OnDisable() {
         base.OnDisable();
         StopServer();
     }
 
-    void LateUpdate()
-    {
+    void LateUpdate() {
         PollServerEvents();
     }
     #endregion
