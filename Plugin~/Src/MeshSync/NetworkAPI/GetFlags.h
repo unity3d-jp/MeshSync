@@ -2,41 +2,49 @@
 
 namespace ms {
 
-struct GetFlags {
-    uint32_t get_transform : 1;
-    uint32_t get_points : 1;
-    uint32_t get_normals : 1;
-    uint32_t get_tangents : 1;
-    uint32_t GetUV0_obsolete : 1;
-    uint32_t GetUV1_obsolete : 1;
-    uint32_t get_colors : 1;
-    uint32_t get_indices : 1;
-    uint32_t get_material_ids : 1; //8
-    uint32_t get_bones : 1;
-    uint32_t get_blendshapes : 1; 
-    uint32_t apply_culling : 1;
-    uint32_t Unused_12 : 1;
-    uint32_t Unused_13 : 1;
-    uint32_t Unused_14 : 1;
-    uint32_t Unused_15 : 1;
-    uint32_t Unused_16 : 1;     //16
-    uint32_t Unused_17 : 1;
-    uint32_t Unused_18 : 1;
-    uint32_t Unused_19 : 1;
-    uint32_t Unused_20 : 1;
-    uint32_t Unused_21 : 1;
-    uint32_t Unused_22 : 1;
-    uint32_t Unused_23 : 1;
-    uint32_t GetUV0: 1;         //24
-    uint32_t GetUV1: 1;
-    uint32_t GetUV2: 1;
-    uint32_t GetUV3: 1;
-    uint32_t GetUV4: 1;
-    uint32_t GetUV5: 1;
-    uint32_t GetUV6: 1;
-    uint32_t GetUV7: 1;
-
-    void setAllGetFlags();
+enum GetFlagsBit {
+    GET_TRANSFORM = 0,
+    GET_POINTS,
+    GET_NORMALS,
+    GET_TANGENTS,
+    UNUSED_4,
+    UNUSED_5,
+    GET_COLORS,
+    GET_INDICES,
+    GET_MATERIAL_IDS, //8
+    GET_BONES,
+    GET_BLENDSHAPES,
+    APPLY_CULLING,
+    UNUSED_12,
+    UNUSED_13,
+    UNUSED_14,
+    UNUSED_15,
+    UNUSED_16,
+    UNUSED_17,
+    UNUSED_18,
+    UNUSED_19,
+    UNUSED_20,
+    UNUSED_21,
+    UNUSED_22,
+    UNUSED_23,
+    GET_UV0,    //24
+    GET_UV1,
+    GET_UV2,
+    GET_UV3,
+    GET_UV4,
+    GET_UV5,
+    GET_UV6,
+    GET_UV7,
 };
+
+//----------------------------------------------------------------------------------------------------------------------
+
+struct GetFlags {
+    uint32_t m_bitFlags = 0;
+};
+
+inline void SetAllGetFlags(GetFlags& flags) {
+    flags.m_bitFlags = 0xFFFFFFFF;
+}
 
 } // namespace ms
