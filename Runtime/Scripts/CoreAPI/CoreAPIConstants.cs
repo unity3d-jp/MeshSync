@@ -1,7 +1,7 @@
 namespace Unity.MeshSync
 {
 
-internal static class APIConstants {
+internal static class CoreAPIConstants {
     internal const int MAX_UV = 8;
 }
 

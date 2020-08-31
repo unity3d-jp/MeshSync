@@ -1351,7 +1351,7 @@ namespace Unity.MeshSync
                 mesh.SetTangents(m_tmpV4.List);
             }
 
-            for (int i = 0; i < APIConstants.MAX_UV; ++i) {
+            for (int i = 0; i < CoreAPIConstants.MAX_UV; ++i) {
                 if (dataFlags.HasUV(i)) {
                     m_tmpV2.Resize(numPoints);
                     data.ReadUV(m_tmpV2,i);
