@@ -12,6 +12,7 @@
 #include <cstring>
 #include <cstdint>
 #include <cstdarg>
+#include <cassert>
 #include <cmath>
 #include <string>
 #include <vector>
