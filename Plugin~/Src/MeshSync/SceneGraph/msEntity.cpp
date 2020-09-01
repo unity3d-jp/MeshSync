@@ -407,18 +407,6 @@ EntityPtr Camera::clone(bool /*detach*/)
 
 // Light
 #pragma region Light
-LightDataFlags::LightDataFlags()
-{
-    (uint32_t&)*this = 0;
-    unchanged = 0;
-    has_light_type = 1;
-    has_shadow_type = 1;
-    has_color = 1;
-    has_intensity = 1;
-    has_range = 1;
-    has_spot_angle = 1;
-    has_layer_mask = 0;
-}
 
 Light::Light() { clear(); }
 Light::~Light() {}
@@ -428,6 +416,15 @@ EntityType Light::getType() const
     return Type::Light;
 }
 
+#define SERIALIZE_LIGHT(flags, op, stream) {   \
+    if (flags.Get(LIGHT_DATA_FLAG_HAS_LIGHT_TYPE))  { op(stream, light_type); } \
+    if (flags.Get(LIGHT_DATA_FLAG_HAS_SHADOW_TYPE))  { op(stream, shadow_type); } \
+    if (flags.Get(LIGHT_DATA_FLAG_HAS_COLOR))  { op(stream, color); } \
+    if (flags.Get(LIGHT_DATA_FLAG_HAS_INTENSITY))  { op(stream, intensity); } \
+    if (flags.Get(LIGHT_DATA_FLAG_HAS_RANGE))  { op(stream, range); } \
+    if (flags.Get(LIGHT_DATA_FLAG_HAS_SPOT_ANGLE))  { op(stream, spot_angle); } \
+    if (flags.Get(LIGHT_DATA_FLAG_HAS_LAYER_MASK))  { op(stream, layer_mask); } \
+}
 #define EachMember(F)\
     F(light_type) F(shadow_type) F(color) F(intensity) F(range) F(spot_angle) F(layer_mask)
 
@@ -435,39 +432,35 @@ void Light::serialize(std::ostream & os) const
 {
     super::serialize(os);
     write(os, ld_flags);
-    if (ld_flags.unchanged)
+    if (ld_flags.Get(LIGHT_DATA_FLAG_UNCHANGED))
         return;
 
-#define Body(V) if(ld_flags.has_##V) write(os, V);
-    EachMember(Body);
-#undef Body
+    SERIALIZE_LIGHT(ld_flags, write, os);
 }
 void Light::deserialize(std::istream & is)
 {
     super::deserialize(is);
     read(is, ld_flags);
-    if (ld_flags.unchanged)
+    if (ld_flags.Get(LIGHT_DATA_FLAG_UNCHANGED))
         return;
 
-#define Body(V) if(ld_flags.has_##V) read(is, V);
-    EachMember(Body);
-#undef Body
+    SERIALIZE_LIGHT(ld_flags, read, is);
 }
 
 void Light::setupDataFlags()
 {
     super::setupDataFlags();
-    ld_flags.has_light_type = light_type != LightType::Unknown;
-    ld_flags.has_shadow_type= shadow_type != ShadowType::Unknown;
-    ld_flags.has_color      = !is_inf(color);
-    ld_flags.has_intensity  = !is_inf(intensity);
-    ld_flags.has_range      = !is_inf(range);
-    ld_flags.has_spot_angle = !is_inf(spot_angle);
+    ld_flags.Set(LIGHT_DATA_FLAG_HAS_LIGHT_TYPE, light_type != LightType::Unknown);
+    ld_flags.Set(LIGHT_DATA_FLAG_HAS_SHADOW_TYPE,  shadow_type != ShadowType::Unknown);
+    ld_flags.Set(LIGHT_DATA_FLAG_HAS_COLOR, !is_inf(color));
+    ld_flags.Set(LIGHT_DATA_FLAG_HAS_INTENSITY, !is_inf(intensity));
+    ld_flags.Set(LIGHT_DATA_FLAG_HAS_RANGE, !is_inf(range));
+    ld_flags.Set(LIGHT_DATA_FLAG_HAS_SPOT_ANGLE, !is_inf(spot_angle));
 }
 
 bool Light::isUnchanged() const
 {
-    return td_flags.Get(TRANSFORM_DATA_FLAG_UNCHANGED) && ld_flags.unchanged;
+    return td_flags.Get(TRANSFORM_DATA_FLAG_UNCHANGED) && ld_flags.Get(LIGHT_DATA_FLAG_UNCHANGED);
 }
 
 static bool NearEqual(const Light& a, const Light& b)
@@ -487,7 +480,7 @@ bool Light::strip(const Entity& base)
     if (!super::strip(base))
         return false;
 
-    ld_flags.unchanged = NearEqual(*this, static_cast<const Light&>(base));
+    ld_flags.Set(LIGHT_DATA_FLAG_UNCHANGED, NearEqual(*this, static_cast<const Light&>(base)));
     return true;
 }
 
@@ -496,7 +489,7 @@ bool Light::merge(const Entity& base_)
     if (!super::merge(base_))
         return false;
     auto& base = static_cast<const Light&>(base_);
-    if (ld_flags.unchanged) {
+    if (ld_flags.Get(LIGHT_DATA_FLAG_UNCHANGED)) {
         EachMember(CopyMember);
     }
     return true;
@@ -507,7 +500,7 @@ bool Light::diff(const Entity& e1_, const Entity& e2_)
     if (!super::diff(e1_, e2_))
         return false;
 
-    ld_flags.unchanged = NearEqual(static_cast<const Light&>(e1_), static_cast<const Light&>(e2_));
+    ld_flags.Set(LIGHT_DATA_FLAG_UNCHANGED, NearEqual(static_cast<const Light&>(e1_), static_cast<const Light&>(e2_)));
     return true;
 }
 
