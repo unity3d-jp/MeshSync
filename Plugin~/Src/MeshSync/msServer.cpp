@@ -258,7 +258,7 @@ void Server::endServeScene()
             return;
 
         auto& mesh = *pmesh;
-        mesh.md_flags.has_refine_settings = 1;
+        mesh.md_flags.Set(MESH_DATA_FLAG_HAS_REFINE_SETTINGS,true);
         mesh.refine_settings.flags = request.refine_settings.flags;
         mesh.refine_settings.scale_factor = request.refine_settings.scale_factor;
         mesh.refine_settings.smooth_angle = 180.0f;

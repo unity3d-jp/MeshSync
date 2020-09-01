@@ -10,11 +10,6 @@ static_assert(sizeof(MeshRefineFlags) == sizeof(uint32_t), "");
 // Mesh
 #pragma region Mesh
 
-MeshDataFlags::MeshDataFlags()
-{
-    (uint32_t&)*this = 0;
-}
-
 MeshRefineFlags::MeshRefineFlags()
 {
     (uint32_t&)*this = 0;
@@ -239,41 +234,42 @@ void BoneData::clear()
 #define EachTopologyAttribute(F)\
     F(counts) F(indices) F(material_ids)
 
-#define EachVertexAttributeNoUV(F)\
-    F(points) F(normals) F(tangents) F(colors) F(velocities) 
-
 #define EachVertexAttribute(F)\
-    EachVertexAttributeNoUV(F) F(m_uv[0]) F(m_uv[1]) F(m_uv[2]) F(m_uv[3]) F(m_uv[4]) F(m_uv[5]) F(m_uv[6]) F(m_uv[7])
+    F(points) F(normals) F(tangents) F(colors) F(velocities) \
+    F(m_uv[0]) F(m_uv[1]) F(m_uv[2]) F(m_uv[3]) F(m_uv[4]) F(m_uv[5]) F(m_uv[6]) F(m_uv[7])
 
 #define EachGeometryAttribute(F)\
     EachVertexAttribute(F) EachTopologyAttribute(F)
 
-#define EachGeometryAttributeNoUV(F)\
-    EachVertexAttributeNoUV(F) EachTopologyAttribute(F)
-
 #define EachMember(F)\
     F(refine_settings) EachGeometryAttribute(F) F(root_bone) F(bones) F(blendshapes) F(submeshes) F(bounds)
 
-#define EachMemberNoUV(F)\
-    F(refine_settings) EachGeometryAttributeNoUV(F) F(root_bone) F(bones) F(blendshapes) F(submeshes) F(bounds)
-
 //----------------------------------------------------------------------------------------------------------------------
 
-#define SINGLE_UV_IN_MESH_DATA_FLAG(flags, op, stream, index) { \
-    if ((flags).HasUV##index) { \
-        op(stream, m_uv[index]); \
+//[TODO-sin: 2020-9-1] These flags are not synced. Are they necessary ?
+//MESH_DATA_FLAG_HAS_BLENDSHAPE_WEIGHTS,
+//MESH_DATA_FLAG_HAS_FACE_GROUPS,
+#define SERIALIZE_MESH(flags, op, stream) {   \
+    if (flags.Get(MESH_DATA_FLAG_HAS_REFINE_SETTINGS))  { op(stream, refine_settings); } \
+    if (flags.Get(MESH_DATA_FLAG_HAS_INDICES))          { op(stream, indices); } \
+    if (flags.Get(MESH_DATA_FLAG_HAS_COUNTS))           { op(stream, counts);  } \
+    if (flags.Get(MESH_DATA_FLAG_HAS_POINTS))           { op(stream, points); } \
+    if (flags.Get(MESH_DATA_FLAG_HAS_NORMALS))          { op(stream, normals);  } \
+    if (flags.Get(MESH_DATA_FLAG_HAS_TANGENTS))         { op(stream, tangents); } \
+    if (flags.Get(MESH_DATA_FLAG_HAS_COLORS))           { op(stream, colors); } \
+    if (flags.Get(MESH_DATA_FLAG_HAS_VELOCITIES))       { op(stream, velocities); } \
+    if (flags.Get(MESH_DATA_FLAG_HAS_MATERIAL_IDS))     { op(stream, material_ids); } \
+    if (flags.Get(MESH_DATA_FLAG_HAS_ROOT_BONE))        { op(stream, root_bone); } \
+    if (flags.Get(MESH_DATA_FLAG_HAS_BONES))            { op(stream, bones); } \
+    if (flags.Get(MESH_DATA_FLAG_HAS_BLENDSHAPES))      { op(stream, blendshapes); } \
+    if (flags.Get(MESH_DATA_FLAG_HAS_BLENDSHAPE_WEIGHTS)) { op(stream, refine_settings); } \
+    if (flags.Get(MESH_DATA_FLAG_HAS_SUBMESHES))        { op(stream, submeshes); } \
+    if (flags.Get(MESH_DATA_FLAG_HAS_BOUNDS))           { op(stream, bounds); } \
+    for (uint32_t i=0;i<msConstants::MAX_UV;++i) { \
+        if ((flags).GetUV(index)) { \
+            op(stream, m_uv[index]); \
+        } \
     } \
-}
-
-#define ALL_UV_IN_MESH_DATA_FLAGS(flags, op, stream) {      \
-    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,0) \
-    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,1) \
-    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,2) \
-    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,3) \
-    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,4) \
-    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,5) \
-    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,6) \
-    SINGLE_UV_IN_MESH_DATA_FLAG(flags,op,stream,7) \
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -287,14 +283,10 @@ void Mesh::serialize(std::ostream& os) const
 {
     super::serialize(os);
     write(os, md_flags);
-    if (md_flags.unchanged)
+    if (md_flags.Get(MESH_DATA_FLAG_UNCHANGED))
         return;
 
-#define Body(V) if(md_flags.has_##V) write(os, V);
-    EachMemberNoUV(Body);
-#undef Body
-
-    ALL_UV_IN_MESH_DATA_FLAGS(md_flags, write, os);
+    SERIALIZE_MESH(md_flags, write, os);
 }
 
 
@@ -302,14 +294,10 @@ void Mesh::deserialize(std::istream& is)
 {
     super::deserialize(is);
     read(is, md_flags);
-    if (md_flags.unchanged)
+    if (md_flags.Get(MESH_DATA_FLAG_UNCHANGED))
         return;
 
-#define Body(V) if(md_flags.has_##V) read(is, V);
-    EachMemberNoUV(Body);
-#undef Body
-
-    ALL_UV_IN_MESH_DATA_FLAGS(md_flags, read, is);
+    SERIALIZE_MESH(md_flags, read, is);
 
     bones.erase(
         std::remove_if(bones.begin(), bones.end(), [](BoneDataPtr& b) { return b->path.empty(); }),
@@ -326,45 +314,40 @@ void Mesh::detach()
 void Mesh::setupDataFlags()
 {
     super::setupDataFlags();
-    md_flags.has_points = !points.empty();
-    md_flags.has_normals = !normals.empty();
-    md_flags.has_tangents = !tangents.empty();
+    md_flags.Set(MESH_DATA_FLAG_HAS_POINTS,!points.empty());
+    md_flags.Set(MESH_DATA_FLAG_HAS_NORMALS, !normals.empty());
+    md_flags.Set(MESH_DATA_FLAG_HAS_TANGENTS, !tangents.empty());
 
-    md_flags.HasUV0 = !m_uv[0].empty();
-    md_flags.HasUV1 = !m_uv[1].empty();
-    md_flags.HasUV2 = !m_uv[2].empty();
-    md_flags.HasUV3 = !m_uv[3].empty();
-    md_flags.HasUV4 = !m_uv[4].empty();
-    md_flags.HasUV5 = !m_uv[5].empty();
-    md_flags.HasUV6 = !m_uv[6].empty();
-    md_flags.HasUV7 = !m_uv[7].empty();
+    for (uint32_t i = 0; i < msConstants::MAX_UV;++i) {
+        md_flags.Set(i, !m_uv[i].empty());
+    }
 
-    md_flags.has_colors = !colors.empty();
-    md_flags.has_velocities = !velocities.empty();
-    md_flags.has_counts = !counts.empty();
-    md_flags.has_indices = !indices.empty();
-    md_flags.has_material_ids = !material_ids.empty();
-    md_flags.has_face_groups = md_flags.has_face_groups && md_flags.has_material_ids;
-    md_flags.has_root_bone = !root_bone.empty();
-    md_flags.has_bones = !bones.empty();
-    md_flags.has_blendshapes = !blendshapes.empty() && !blendshapes.front()->frames.empty();
-    md_flags.has_blendshape_weights = !blendshapes.empty();
-    md_flags.has_submeshes = !submeshes.empty();
-    md_flags.has_bounds = bounds != Bounds{};
+    md_flags.Set(MESH_DATA_FLAG_HAS_COLORS, !colors.empty());
+    md_flags.Set(MESH_DATA_FLAG_HAS_VELOCITIES, !velocities.empty());
+    md_flags.Set(MESH_DATA_FLAG_HAS_COUNTS, !counts.empty());
+    md_flags.Set(MESH_DATA_FLAG_HAS_INDICES, !indices.empty());
+    md_flags.Set(MESH_DATA_FLAG_HAS_MATERIAL_IDS, !material_ids.empty());
+    md_flags.Set(MESH_DATA_FLAG_HAS_FACE_GROUPS, md_flags.Get(MESH_DATA_FLAG_HAS_FACE_GROUPS) && !material_ids.empty());
+    md_flags.Set(MESH_DATA_FLAG_HAS_ROOT_BONE, !root_bone.empty());
+    md_flags.Set(MESH_DATA_FLAG_HAS_BONES, !bones.empty());
+    md_flags.Set(MESH_DATA_FLAG_HAS_BLENDSHAPES, !blendshapes.empty() && !blendshapes.front()->frames.empty());
+    md_flags.Set(MESH_DATA_FLAG_HAS_BLENDSHAPE_WEIGHTS, !blendshapes.empty());
+    md_flags.Set(MESH_DATA_FLAG_HAS_SUBMESHES, (!submeshes.empty()));
+    md_flags.Set(MESH_DATA_FLAG_HAS_BOUNDS, bounds != Bounds{});
 
-    md_flags.has_refine_settings =
+    md_flags.Set(MESH_DATA_FLAG_HAS_REFINE_SETTINGS, 
         (uint32_t&)refine_settings.flags != 0 ||
-        refine_settings.scale_factor != 1.0f;
+        refine_settings.scale_factor != 1.0f);
 }
 
 bool Mesh::isUnchanged() const
 {
-    return td_flags.unchanged && md_flags.unchanged;
+    return td_flags.unchanged && md_flags.Get(MESH_DATA_FLAG_UNCHANGED);
 }
 
 bool Mesh::isTopologyUnchanged() const
 {
-    return md_flags.topology_unchanged;
+    return md_flags.Get(MESH_DATA_FLAG_TOPOLOGY_UNCHANGED);
 }
 
 bool Mesh::strip(const Entity& base_)
@@ -386,10 +369,10 @@ bool Mesh::strip(const Entity& base_)
     auto& base = static_cast<const Mesh&>(base_);
 #define Body(A) clear_if_identical(A, base.A);
     EachTopologyAttribute(Body);
-    md_flags.topology_unchanged = unchanged;
+    md_flags.Set(MESH_DATA_FLAG_TOPOLOGY_UNCHANGED, unchanged);
     EachVertexAttribute(Body);
 #undef Body
-    md_flags.unchanged = unchanged && refine_settings == base.refine_settings;
+    md_flags.Set(MESH_DATA_FLAG_UNCHANGED, unchanged && refine_settings == base.refine_settings);
 
     //if (!md_flags.topology_unchanged) {
     //    mu::Print("Mesh::strip() !topology_unchanged %s\n", base.path.c_str());
@@ -403,7 +386,7 @@ bool Mesh::merge(const Entity& base_)
         return false;
     auto& base = static_cast<const Mesh&>(base_);
 
-    if (md_flags.unchanged) {
+    if (md_flags.Get(MESH_DATA_FLAG_UNCHANGED)) {
 #define Body(A) A = base.A;
         EachMember(Body);
 #undef Body
@@ -436,14 +419,12 @@ bool Mesh::diff(const Entity& e1_, const Entity& e2_)
 
 #define Body(A) compare_attribute(e1.A, e2.A);
     EachTopologyAttribute(Body);
-    md_flags.topology_unchanged = unchanged;
+    md_flags.Set(MESH_DATA_FLAG_TOPOLOGY_UNCHANGED, unchanged);
     EachVertexAttribute(Body);
 #undef Body
 
-    if (unchanged && e1.refine_settings == e2.refine_settings)
-        md_flags.unchanged = 1;
-    else
-        md_flags.unchanged = 0;
+    md_flags.Set(MESH_DATA_FLAG_UNCHANGED, unchanged && e1.refine_settings == e2.refine_settings);
+
     return true;
 }
 
@@ -451,8 +432,8 @@ bool Mesh::lerp(const Entity& e1_, const Entity& e2_, float t)
 {
     if (!super::lerp(e1_, e2_, t))
         return false;
-    auto& e1 = static_cast<const Mesh&>(e1_);
-    auto& e2 = static_cast<const Mesh&>(e2_);
+    const Mesh& e1 = dynamic_cast<const Mesh&>(e1_);
+    const Mesh& e2 = dynamic_cast<const Mesh&>(e2_);
 
     if (e1.points.size() != e2.points.size() || e1.indices.size() != e2.indices.size())
         return false;
@@ -518,12 +499,12 @@ uint64_t Mesh::hash() const
 #undef Body
 
     // bones
-    for (auto& b : bones)
+    for (const std::vector<std::shared_ptr<BoneData>>::value_type& b : bones)
         ret += vhash(b->weights);
 
     // blendshapes
-    for (auto& bs : blendshapes) {
-        for (auto& b : bs->frames) {
+    for (const std::vector<std::shared_ptr<BlendShapeData>>::value_type& bs : blendshapes) {
+        for (std::vector<std::shared_ptr<BlendShapeFrameData>>::value_type& b : bs->frames) {
             ret += vhash(b->points);
             ret += vhash(b->normals);
             ret += vhash(b->tangents);
@@ -569,7 +550,7 @@ uint64_t Mesh::vertexCount() const
 
 EntityPtr Mesh::clone(bool detach_)
 {
-    auto ret = create();
+    std::shared_ptr<Mesh> ret = create();
     *ret = *this;
     if (detach_)
         ret->detach();
@@ -725,7 +706,7 @@ void Mesh::refine()
         // refine
         refiner.refine();
         refiner.retopology(mrs.flags.flip_faces);
-        refiner.genSubmeshes(material_ids, md_flags.has_face_groups);
+        refiner.genSubmeshes(material_ids, md_flags.Get(MESH_DATA_FLAG_HAS_FACE_GROUPS));
 
         // apply new points & indices
         refiner.new_points.swap(points);
