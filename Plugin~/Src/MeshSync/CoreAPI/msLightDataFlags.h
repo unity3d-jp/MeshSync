@@ -54,7 +54,7 @@ struct LightDataFlags {
     inline void Set(uint32_t index, const bool val);
     inline bool Get(uint32_t index) const;
 private:
-    uint32_t m_bitFlags = 0;
+    uint32_t m_bitFlags;
 
 };
 
