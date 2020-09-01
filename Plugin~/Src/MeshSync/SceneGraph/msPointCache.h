@@ -1,6 +1,6 @@
 #pragma once
 #include "msIdentifier.h"
-#include "msEntity.h"
+#include "msTransform.h"
 
 namespace ms {
 

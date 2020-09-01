@@ -2,6 +2,7 @@
 #include "MeshSync/msConstants.h"
 #include "msIdentifier.h"
 #include "msMeshDataFlags.h"
+#include "msTransform.h"
 
 namespace ms {
 

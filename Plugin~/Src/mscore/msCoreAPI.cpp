@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "MeshUtils/MeshUtils.h"
 #include "MeshSync/MeshSync.h"
+#include "MeshSync/SceneGraph/msCamera.h"
+#include "MeshSync/SceneGraph/msLight.h"
 #include "msCoreAPI.h"
 
 using namespace mu;

@@ -5,6 +5,8 @@
 #include "msMaterial.h"
 #include "msAudio.h"
 #include "msEntityConverter.h"
+#include "msCamera.h"
+#include "msLight.h"
 
 
 namespace ms {

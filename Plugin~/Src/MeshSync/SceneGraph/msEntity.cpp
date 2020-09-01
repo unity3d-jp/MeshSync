@@ -3,6 +3,8 @@
 #include "msEntity.h"
 #include "msMesh.h"
 #include "msPointCache.h"
+#include "msCamera.h"
+#include "msLight.h"
 
 namespace ms {
 
