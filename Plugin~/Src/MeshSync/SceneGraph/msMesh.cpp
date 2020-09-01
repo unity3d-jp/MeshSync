@@ -10,75 +10,55 @@ static_assert(sizeof(MeshRefineFlags) == sizeof(uint32_t), "");
 // Mesh
 #pragma region Mesh
 
-MeshRefineFlags::MeshRefineFlags()
-{
-    (uint32_t&)*this = 0;
+#define SERIALIZE_MESH_REFINE_SETTINGS(flags, op, stream) {   \
+    op(stream, flags); \
+    op(stream, max_bone_influence); \
+    op(stream, scale_factor);   \
+    \
+    if (flags.Get(MESH_REFINE_FLAG_SPLIT))                              { op(stream, split_unit); } \
+    if (flags.Get(MESH_REFINE_FLAG_GEN_NORMALS_WITH_SMOOTH_ANGLE))      { op(stream, smooth_angle); } \
+    if (flags.Get(MESH_REFINE_FLAG_LOCAL2WORLD))                        { op(stream, local2world); } \
+    if (flags.Get(MESH_REFINE_FLAG_WORLD2LOCAL))                        { op(stream, world2local); } \
+    if (flags.Get(MESH_REFINE_FLAG_MIRROR_BASIS))                       { op(stream, mirror_basis); } \
+    if (flags.Get(MESH_REFINE_FLAG_QUADIFY) || flags.Get(MESH_REFINE_FLAG_QUADIFY_FULL_SEARCH)) { \
+        op(stream, quadify_threshold); \
+    } \
 }
 
-void MeshRefineSettings::serialize(std::ostream& os) const
-{
-    write(os, flags);
 
-    if (flags.split)
-        write(os, split_unit);
-    write(os, max_bone_influence);
-    write(os, scale_factor);
-    if (flags.gen_normals_with_smooth_angle)
-        write(os, smooth_angle);
-    if (flags.quadify || flags.quadify_full_search)
-        write(os, quadify_threshold);
-    if (flags.local2world)
-        write(os, local2world);
-    if (flags.world2local)
-        write(os, world2local);
-    if (flags.mirror_basis)
-        write(os, mirror_basis);
+void MeshRefineSettings::serialize(std::ostream& os) const {
+    SERIALIZE_MESH_REFINE_SETTINGS(flags, write, os);
 }
 
 void MeshRefineSettings::deserialize(std::istream& is)
 {
-    read(is, flags);
-
-    if (flags.split)
-        read(is, split_unit);
-    read(is, max_bone_influence);
-    read(is, scale_factor);
-    if (flags.gen_normals_with_smooth_angle)
-        read(is, smooth_angle);
-    if (flags.quadify || flags.quadify_full_search)
-        read(is, quadify_threshold);
-    if (flags.local2world)
-        read(is, local2world);
-    if (flags.world2local)
-        read(is, world2local);
-    if (flags.mirror_basis)
-        read(is, mirror_basis);
+    SERIALIZE_MESH_REFINE_SETTINGS(flags, read, is);
 }
 
 void MeshRefineSettings::clear()
 {
     // *this = {}; causes internal compiler error on gcc
     *this = MeshRefineSettings();
-    flags.no_reindexing = 1;
+    flags.Set(MESH_REFINE_FLAG_NO_REINDEXING, true);
 }
 
 uint64_t MeshRefineSettings::checksum() const
 {
     uint64_t ret = 0;
     ret += csum((int&)flags);
-    if (flags.split)
+    if (flags.Get(MESH_REFINE_FLAG_SPLIT))
         ret += csum(split_unit);
     ret += csum(max_bone_influence);
     ret += csum(scale_factor);
-    if (flags.gen_normals_with_smooth_angle)
+    if (flags.Get(MESH_REFINE_FLAG_GEN_NORMALS_WITH_SMOOTH_ANGLE))
         ret += csum(smooth_angle);
-    if (flags.quadify || flags.quadify_full_search)
+    if (flags.Get(MESH_REFINE_FLAG_QUADIFY) || flags.Get(MESH_REFINE_FLAG_QUADIFY_FULL_SEARCH))
         ret += csum(quadify_threshold);
-    if (flags.local2world)
+    if (flags.Get(MESH_REFINE_FLAG_LOCAL2WORLD))
         ret += csum(local2world);
-    if (flags.world2local)
+    if (flags.Get(MESH_REFINE_FLAG_WORLD2LOCAL))
         ret += csum(world2local);
-    if (flags.mirror_basis)
+    if (flags.Get(MESH_REFINE_FLAG_MIRROR_BASIS))
         ret += csum(mirror_basis);
     return ret;
 }
@@ -530,10 +510,10 @@ uint64_t Mesh::checksumGeom() const
     }
 
     // blendshapes
-    for (auto& bs : blendshapes) {
+    for (const std::vector<std::shared_ptr<BlendShapeData>>::value_type& bs : blendshapes) {
         ret += csum(bs->name);
         ret += csum(bs->weight);
-        for (auto& b : bs->frames) {
+        for (std::vector<std::shared_ptr<BlendShapeFrameData>>::value_type& b : bs->frames) {
             ret += csum(b->weight);
             ret += csum(b->points);
             ret += csum(b->normals);
@@ -579,23 +559,23 @@ void Mesh::refine()
     if (cache_flags.constant)
         return;
 
-    auto& mrs = refine_settings;
+    MeshRefineSettings& mrs = refine_settings;
 
-    if (mrs.flags.flip_u)
+    if (mrs.flags.Get(MESH_REFINE_FLAG_FLIP_U))
         mu::InvertU(m_uv[0].data(), m_uv[0].size());
-    if (mrs.flags.flip_v)
+    if (mrs.flags.Get(MESH_REFINE_FLAG_FLIP_V))
         mu::InvertV(m_uv[0].data(), m_uv[0].size());
 
-    if (mrs.flags.local2world)
+    if (mrs.flags.Get(MESH_REFINE_FLAG_LOCAL2WORLD))
         transformMesh(mrs.local2world);
-    if (mrs.flags.world2local)
+    if (mrs.flags.Get(MESH_REFINE_FLAG_WORLD2LOCAL))
         transformMesh(mrs.world2local);
 
-    if (mrs.flags.mirror_x)
+    if (mrs.flags.Get(MESH_REFINE_FLAG_MIRROR_X))
         mirrorMesh({ 1.0f, 0.0f, 0.0f }, 0.0f, true);
-    if (mrs.flags.mirror_y)
+    if (mrs.flags.Get(MESH_REFINE_FLAG_MIRROR_Y))
         mirrorMesh({ 0.0f, 1.0f, 0.0f }, 0.0f, true);
-    if (mrs.flags.mirror_z)
+    if (mrs.flags.Get(MESH_REFINE_FLAG_MIRROR_Z))
         mirrorMesh({ 0.0f, 0.0f, 1.0f }, 0.0f, true);
 
     if (!bones.empty()) {
@@ -612,35 +592,39 @@ void Mesh::refine()
     }
 
     // normals
-    bool flip_normals = mrs.flags.flip_normals ^ mrs.flags.flip_faces;
-    if (mrs.flags.gen_normals || (mrs.flags.gen_normals_with_smooth_angle && mrs.smooth_angle >= 180.0f)) {
+    const bool flip_normals = mrs.flags.Get(MESH_REFINE_FLAG_FLIP_NORMALS) ^ mrs.flags.Get(MESH_REFINE_FLAG_FLIP_FACES);
+    if (mrs.flags.Get(MESH_REFINE_FLAG_GEN_NORMALS) 
+        || (mrs.flags.Get(MESH_REFINE_FLAG_GEN_NORMALS_WITH_SMOOTH_ANGLE) && mrs.smooth_angle >= 180.0f)) 
+    {
         if (!counts.empty()) {
             GenerateNormalsPoly(normals.as_raw(), points, counts, indices, flip_normals);
         }
         else {
             normals.resize_discard(points.size());
-            GenerateNormalsTriangleIndexed(normals.data(), points.cdata(), indices.cdata(), (int)indices.size() / 3, (int)points.size());
+            GenerateNormalsTriangleIndexed(normals.data(), points.cdata(), indices.cdata(), 
+                                           static_cast<int>(indices.size()) / 3, static_cast<int>(points.size()));
         }
-    }
-    else if (mrs.flags.gen_normals_with_smooth_angle && !mrs.flags.no_reindexing) {
+    } else if (mrs.flags.Get(MESH_REFINE_FLAG_GEN_NORMALS_WITH_SMOOTH_ANGLE) 
+               && !mrs.flags.Get(MESH_REFINE_FLAG_NO_REINDEXING)) 
+    {
         GenerateNormalsWithSmoothAngle(normals.as_raw(), points, counts, indices, mrs.smooth_angle, flip_normals);
     }
 
     // generate back faces
     // this must be after generating normals.
-    if (mrs.flags.make_double_sided)
+    if (mrs.flags.Get(MESH_REFINE_FLAG_MAKE_DOUBLE_SIDED))
         makeDoubleSided();
 
     auto handle_tangents = [this, &mrs]() {
         // generating tangents require normals and uvs
-        if (mrs.flags.gen_tangents && normals.size() == points.size() && m_uv[0].size() == points.size()) {
+        if (mrs.flags.Get(MESH_REFINE_FLAG_GEN_TANGENTS) && normals.size() == points.size() && m_uv[0].size() == points.size()) {
             tangents.resize(points.size());
             GenerateTangentsTriangleIndexed(tangents.data(),
                 points.cdata(), m_uv[0].cdata(), normals.cdata(), indices.cdata(), (int)indices.size() / 3, (int)points.size());
         }
     };
 
-    if (mrs.flags.no_reindexing) {
+    if (mrs.flags.Get(MESH_REFINE_FLAG_NO_REINDEXING)) {
         // tangents
         // normals and tangents can be generated on the fly even if re-indexing is disabled.
         handle_tangents();
@@ -660,9 +644,9 @@ void Mesh::refine()
         }
         CheckAttr(colors);
         CheckAttr(velocities);
-        for (auto& bs : blendshapes) {
-            for (auto& fp : bs->frames) {
-                auto& bs_frame = *fp;
+        for (std::vector<std::shared_ptr<BlendShapeData>>::value_type& bs : blendshapes) {
+            for (std::vector<std::shared_ptr<BlendShapeFrameData>>::value_type& fp : bs->frames) {
+                BlendShapeFrameData& bs_frame = *fp;
                 CheckAttr(bs_frame.points);
                 CheckAttr(bs_frame.normals);
                 CheckAttr(bs_frame.tangents);
@@ -682,7 +666,7 @@ void Mesh::refine()
         RawVector<int> remap_normals, remap_colors;
 
         mu::MeshRefiner refiner;
-        refiner.split_unit = mrs.flags.split ? mrs.split_unit : INT_MAX;
+        refiner.split_unit = mrs.flags.Get(MESH_REFINE_FLAG_SPLIT)? mrs.split_unit : INT_MAX;
         refiner.points = points;
         refiner.indices = indices;
         refiner.counts = counts;
@@ -705,7 +689,7 @@ void Mesh::refine()
 
         // refine
         refiner.refine();
-        refiner.retopology(mrs.flags.flip_faces);
+        refiner.retopology(mrs.flags.Get(MESH_REFINE_FLAG_FLIP_FACES));
         refiner.genSubmeshes(material_ids, md_flags.Get(MESH_DATA_FLAG_HAS_FACE_GROUPS));
 
         // apply new points & indices
@@ -970,16 +954,16 @@ void Mesh::mirrorMesh(const float3 & plane_n, float plane_d, bool /*welding*/)
         }
     }
 
-    size_t num_additional_points = copylist.size();
-    size_t num_additional_indices = num_indices_old;
+    const size_t num_additional_points = copylist.size();
+    const size_t num_additional_indices = num_indices_old;
 
     // points
-    if (refine_settings.flags.mirror_basis)
+    if (refine_settings.flags.Get(MESH_REFINE_FLAG_MIRROR_BASIS))
         mu::MulPoints(refine_settings.mirror_basis, points.cdata(), points.data(), points.size());
     points.resize(num_points_old + num_additional_points);
     mu::CopyWithIndices(&points[num_points_old], points.cdata(), copylist);
     mu::MirrorPoints(&points[num_points_old], num_additional_points, plane_n, plane_d);
-    if (refine_settings.flags.mirror_basis)
+    if (refine_settings.flags.Get(MESH_REFINE_FLAG_MIRROR_BASIS))
         mu::MulPoints(mu::invert(refine_settings.mirror_basis), points.cdata(), points.data(), points.size());
 
     // indices

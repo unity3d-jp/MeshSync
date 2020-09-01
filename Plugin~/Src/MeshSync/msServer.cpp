@@ -233,10 +233,12 @@ void Server::beginServeScene()
 
     auto& request = *m_current_get_request;
     request.refine_settings.scale_factor = request.scene_settings.scale_factor;
-    request.refine_settings.flags.flip_x =
-        request.scene_settings.handedness == Handedness::Right || request.scene_settings.handedness == Handedness::RightZUp;
-    request.refine_settings.flags.flip_yz =
-        request.scene_settings.handedness == Handedness::LeftZUp || request.scene_settings.handedness == Handedness::RightZUp;
+    request.refine_settings.flags.Set(MESH_REFINE_FLAG_FLIP_X,
+        request.scene_settings.handedness == Handedness::Right || request.scene_settings.handedness == Handedness::RightZUp
+    );
+    request.refine_settings.flags.Set(MESH_REFINE_FLAG_FLIP_YZ,
+        request.scene_settings.handedness == Handedness::LeftZUp || request.scene_settings.handedness == Handedness::RightZUp
+    );
     m_host_scene->settings = request.scene_settings;
 }
 

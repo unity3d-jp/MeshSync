@@ -238,12 +238,12 @@ void Scene::import(const SceneImportSettings& cv)
         sanitizeHierarchyPath(obj->path);
         sanitizeHierarchyPath(obj->reference);
 
-        bool is_mesh = obj->getType() == EntityType::Mesh;
+        const bool is_mesh = obj->getType() == EntityType::Mesh;
         if (is_mesh) {
-            auto& mesh = static_cast<Mesh&>(*obj);
-            for (auto& bone : mesh.bones)
+            Mesh& mesh = dynamic_cast<Mesh&>(*obj);
+            for (std::vector<std::shared_ptr<BoneData>>::value_type& bone : mesh.bones)
                 sanitizeHierarchyPath(bone->path);
-            mesh.refine_settings.flags.split = 1;
+            mesh.refine_settings.flags.Set(MESH_REFINE_FLAG_SPLIT, true);
             mesh.refine_settings.split_unit = cv.mesh_split_unit;
             mesh.refine_settings.max_bone_influence = cv.mesh_max_bone_influence;
             mesh.refine();
