@@ -299,7 +299,7 @@ void Mesh::setupDataFlags()
     md_flags.Set(MESH_DATA_FLAG_HAS_TANGENTS, !tangents.empty());
 
     for (uint32_t i = 0; i < msConstants::MAX_UV;++i) {
-        md_flags.Set(i, !m_uv[i].empty());
+        md_flags.SetUV(i, !m_uv[i].empty());
     }
 
     md_flags.Set(MESH_DATA_FLAG_HAS_COLORS, !colors.empty());
