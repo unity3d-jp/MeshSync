@@ -207,18 +207,6 @@ void Entity::getName(std::string& dst) const
 
 // Transform
 #pragma region Transform
-TransformDataFlags::TransformDataFlags()
-{
-    (uint32_t&)*this = 0;
-    unchanged = 0;
-    has_position = 1;
-    has_rotation = 1;
-    has_scale = 1;
-    has_visibility = 0;
-    has_layer = 0;
-    has_reference = 0;
-    has_user_properties = 0;
-}
 
 VisibilityFlags::VisibilityFlags()
 {
@@ -262,6 +250,17 @@ EntityType Transform::getType() const
     return Type::Transform;
 }
 
+#define SERIALIZE_TRANSFORM(flags, op, stream) {   \
+    if (flags.Get(TRANSFORM_DATA_FLAG_HAS_POSITION))  { op(stream, position); } \
+    if (flags.Get(TRANSFORM_DATA_FLAG_HAS_ROTATION))  { op(stream, rotation); } \
+    if (flags.Get(TRANSFORM_DATA_FLAG_HAS_SCALE))  { op(stream, scale); } \
+    if (flags.Get(TRANSFORM_DATA_FLAG_HAS_VISIBILITY))  { op(stream, visibility); } \
+    if (flags.Get(TRANSFORM_DATA_FLAG_HAS_LAYER))  { op(stream, layer); } \
+    if (flags.Get(TRANSFORM_DATA_FLAG_HAS_INDEX))  { op(stream, index); } \
+    if (flags.Get(TRANSFORM_DATA_FLAG_HAS_REFERENCE))  { op(stream, reference); } \
+    if (flags.Get(TRANSFORM_DATA_FLAG_HAS_USER_PROPERTIES))  { op(stream, user_properties); } \
+}
+
 #define EachMember(F)\
     F(position) F(rotation) F(scale) F(visibility) F(layer) F(index) F(reference) F(user_properties)
 
@@ -269,23 +268,19 @@ void Transform::serialize(std::ostream& os) const
 {
     super::serialize(os);
     write(os, td_flags);
-    if (td_flags.unchanged)
+    if (td_flags.Get(TRANSFORM_DATA_FLAG_UNCHANGED))
         return;
 
-#define Body(V) if(td_flags.has_##V) write(os, V);
-    EachMember(Body);
-#undef Body
+    SERIALIZE_TRANSFORM(td_flags, write, os);
 }
 void Transform::deserialize(std::istream& is)
 {
     super::deserialize(is);
     read(is, td_flags);
-    if (td_flags.unchanged)
+    if (td_flags.Get(TRANSFORM_DATA_FLAG_UNCHANGED))
         return;
 
-#define Body(V) if(td_flags.has_##V) read(is, V);
-    EachMember(Body);
-#undef Body
+    SERIALIZE_TRANSFORM(td_flags, read, is);
 }
 
 void Transform::setupDataFlags()
@@ -294,17 +289,18 @@ void Transform::setupDataFlags()
 
     //[TODO-sin: 2020-2-8] Because /fp:fast is used in Windows, both NaN and infinity will cause
     //is_inf to be true. This might not work in other platforms
-    td_flags.has_position = !is_inf(position);
-    td_flags.has_rotation = !is_inf(rotation);
-    td_flags.has_scale = !is_inf(scale);
-    td_flags.has_visibility = visibility != VisibilityFlags::uninitialized();
-    td_flags.has_reference = !reference.empty();
-    td_flags.has_user_properties = !user_properties.empty();
+    td_flags.Set(TRANSFORM_DATA_FLAG_HAS_POSITION, !is_inf(position));
+    td_flags.Set(TRANSFORM_DATA_FLAG_HAS_ROTATION, !is_inf(rotation));
+    td_flags.Set(TRANSFORM_DATA_FLAG_HAS_SCALE, !is_inf(scale));
+    td_flags.Set(TRANSFORM_DATA_FLAG_HAS_VISIBILITY, visibility != VisibilityFlags::uninitialized());
+    td_flags.Set(TRANSFORM_DATA_FLAG_HAS_REFERENCE, !reference.empty());
+    td_flags.Set(TRANSFORM_DATA_FLAG_HAS_USER_PROPERTIES, !user_properties.empty());
+
 }
 
 bool Transform::isUnchanged() const
 {
-    return td_flags.unchanged;
+    return td_flags.Get(TRANSFORM_DATA_FLAG_UNCHANGED);
 }
 
 static bool NearEqual(const Transform& a, const Transform& b)
@@ -325,7 +321,7 @@ bool Transform::strip(const Entity& base_)
     if (!super::strip(base_))
         return false;
 
-    td_flags.unchanged = NearEqual(*this, static_cast<const Transform&>(base_));
+    td_flags.Set(TRANSFORM_DATA_FLAG_UNCHANGED, NearEqual(*this, static_cast<const Transform&>(base_)));
     return true;
 }
 
@@ -334,7 +330,7 @@ bool Transform::merge(const Entity& base_)
     if (!super::merge(base_))
         return false;
     auto& base = static_cast<const Transform&>(base_);
-    if (td_flags.unchanged) {
+    if (td_flags.Get(TRANSFORM_DATA_FLAG_UNCHANGED)) {
         EachMember(CopyMember);
     }
     return true;
@@ -345,9 +341,9 @@ bool Transform::diff(const Entity& e1_, const Entity& e2_)
     if (!super::diff(e1_, e2_))
         return false;
 
-    td_flags.unchanged = NearEqual(
+    td_flags.Set(TRANSFORM_DATA_FLAG_UNCHANGED, NearEqual(
         static_cast<const Transform&>(e1_),
-        static_cast<const Transform&>(e2_));
+        static_cast<const Transform&>(e2_)));
     return true;
 }
 
@@ -527,7 +523,7 @@ void Camera::setupDataFlags()
 
 bool Camera::isUnchanged() const
 {
-    return td_flags.unchanged && cd_flags.unchanged;
+    return td_flags.Get(TRANSFORM_DATA_FLAG_UNCHANGED) && cd_flags.unchanged;
 }
 
 static bool NearEqual(const Camera& a, const Camera& b)
@@ -692,7 +688,7 @@ void Light::setupDataFlags()
 
 bool Light::isUnchanged() const
 {
-    return td_flags.unchanged && ld_flags.unchanged;
+    return td_flags.Get(TRANSFORM_DATA_FLAG_UNCHANGED) && ld_flags.unchanged;
 }
 
 static bool NearEqual(const Light& a, const Light& b)

@@ -342,7 +342,7 @@ void Mesh::setupDataFlags()
 
 bool Mesh::isUnchanged() const
 {
-    return td_flags.unchanged && md_flags.Get(MESH_DATA_FLAG_UNCHANGED);
+    return td_flags.Get(TRANSFORM_DATA_FLAG_UNCHANGED) && md_flags.Get(MESH_DATA_FLAG_UNCHANGED);
 }
 
 bool Mesh::isTopologyUnchanged() const

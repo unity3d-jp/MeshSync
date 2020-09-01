@@ -67,7 +67,7 @@ void Points::setupDataFlags()
 
 bool Points::isUnchanged() const
 {
-    return td_flags.unchanged && pd_flags.unchanged;
+    return td_flags.Get(TRANSFORM_DATA_FLAG_UNCHANGED) && pd_flags.unchanged;
 }
 
 bool Points::isTopologyUnchanged() const
