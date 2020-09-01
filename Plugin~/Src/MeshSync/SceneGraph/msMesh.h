@@ -1,7 +1,7 @@
 #pragma once
 #include "MeshSync/msConstants.h"
 #include "msIdentifier.h"
-#include "msMeshDataFlags.h"
+#include "MeshSync/CoreAPI/msMeshDataFlags.h"
 #include "msTransform.h"
 
 namespace ms {
