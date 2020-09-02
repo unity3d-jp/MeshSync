@@ -7,7 +7,6 @@
 #include "Utility/TestUtility.h"
 using namespace mu;
 
-
 #ifdef msEnableNetwork
 
 TestCase(Test_SendMesh) {
@@ -70,15 +69,15 @@ TestCase(Test_SceneCacheRead)
 {
     ms::ISceneCacheSettings iscs;
     iscs.enable_diff = false;
-    auto isc = ms::OpenISceneCacheFile("wave_c2.sc", iscs);
+    ms::ISceneCachePtr isc = ms::OpenISceneCacheFile("wave_c2.sc", iscs);
     Expect(isc);
     if (!isc)
         return;
 
-    auto range = isc->getTimeRange();
-    float step = 0.1f;
+    const auto range = isc->getTimeRange();
+    const float step = 0.1f;
     for (float t = range.start; t < range.end; t += step) {
-        auto scene = isc->getByTime(t, true);
+        const ms::ScenePtr scene = isc->getByTime(t, true);
         if (!scene)
             break;
         TestUtility::Send(scene);
@@ -89,9 +88,9 @@ TestCase(Test_SceneCacheRead)
 
 TestCase(Test_Animation)
 {
-    auto scene = ms::Scene::create();
+    std::shared_ptr<ms::Scene> scene = ms::Scene::create();
     {
-        auto node = ms::Mesh::create();
+        std::shared_ptr<ms::Mesh> node = ms::Mesh::create();
         scene->entities.push_back(node);
 
         node->path = "/Test/Animation";
@@ -104,10 +103,10 @@ TestCase(Test_Animation)
         node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
     }
     {
-        auto clip = ms::AnimationClip::create();
+        std::shared_ptr<ms::AnimationClip> clip = ms::AnimationClip::create();
         scene->assets.push_back(clip);
 
-        auto anim = ms::TransformAnimation::create();
+        std::shared_ptr<ms::TransformAnimation> anim = ms::TransformAnimation::create();
         clip->addAnimation(anim);
 
         anim->path = "/Test/Animation";
