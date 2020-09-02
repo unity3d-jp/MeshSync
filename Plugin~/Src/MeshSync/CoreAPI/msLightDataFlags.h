@@ -1,5 +1,5 @@
 #pragma once
-#include "Utils/msBitUtility.h"
+#include "MeshSync/Utils/msBitUtility.h"
 
 namespace ms {
 
