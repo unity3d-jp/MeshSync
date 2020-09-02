@@ -9,30 +9,8 @@ using namespace mu;
 
 
 #ifdef msEnableNetwork
-static ms::ClientSettings GetClientSettings()
-{
-    ms::ClientSettings ret;
-    GetArg("server", ret.server);
-    int port;
-    if (GetArg("port", port))
-        ret.port = (uint16_t)port;
-    return ret;
-}
 
-static void Send(ms::ScenePtr scene)
-{
-    ms::AsyncSceneSender sender;
-    sender.client_settings = GetClientSettings();
-    if (sender.isServerAvaileble()) {
-        sender.add(scene);
-        sender.kick();
-    }
-}
-
-
-
-TestCase(Test_SendMesh)
-{
+TestCase(Test_SendMesh) {
     ms::OSceneCacheSettings c0;
     c0.strip_unchanged = 0;
     c0.flatten_hierarchy = 0;
@@ -51,9 +29,9 @@ TestCase(Test_SendMesh)
     writer2.open("wave_c2.sc", c2);
 
     for (int i = 0; i < 8; ++i) {
-        auto scene = ms::Scene::create();
+        std::shared_ptr<ms::Scene> scene = ms::Scene::create();
 
-        auto mesh = ms::Mesh::create();
+        std::shared_ptr<ms::Mesh> mesh = ms::Mesh::create();
         scene->entities.push_back(mesh);
 
         mesh->path = "/Test/Wave";
@@ -83,7 +61,7 @@ TestCase(Test_SendMesh)
         writer2.geometries.emplace_back(std::static_pointer_cast<ms::Transform>(mesh->clone(true)));
         writer2.kick();
 
-        Send(scene);
+        TestUtility::Send(scene);
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
 }
@@ -103,7 +81,7 @@ TestCase(Test_SceneCacheRead)
         auto scene = isc->getByTime(t, true);
         if (!scene)
             break;
-        Send(scene);
+        TestUtility::Send(scene);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
@@ -148,7 +126,7 @@ TestCase(Test_Animation)
         anim->scale.push_back({ 2.0f, {1.0f, 1.0f, 1.0f} });
         anim->scale.push_back({ 3.0f, {2.0f, 2.0f, 2.0f} });
     }
-    Send(scene);
+    TestUtility::Send(scene);
 }
 
 TestCase(Test_MeshMerge)
@@ -177,7 +155,7 @@ TestCase(Test_MeshMerge)
 
         mesh->mergeMesh(*sphere);
     }
-    Send(scene);
+    TestUtility::Send(scene);
 }
 
 TestCase(Test_Points)
@@ -258,7 +236,7 @@ TestCase(Test_Points)
         node->setupPointsDataFlags();
 
     }
-    Send(scene);
+    TestUtility::Send(scene);
 
     // animation
     {
@@ -269,7 +247,7 @@ TestCase(Test_Points)
             for (int i = 0; i < node->points.size(); ++i)
                 node->points[i] += node->velocities[i];
 
-            Send(scene);
+            TestUtility::Send(scene);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
@@ -297,7 +275,7 @@ TestCase(Test_SendTexture) {
             }
         }
         if (!scene->assets.empty())
-            Send(scene);
+            TestUtility::Send(scene);
     }
 
     {
@@ -360,7 +338,7 @@ TestCase(Test_SendTexture) {
             standardMaterial.addKeyword({ "_EMISSION", true });
             standardMaterial.addKeyword({ "_INVALIDKEYWORD", true });
         }
-        Send(scene);
+        TestUtility::Send(scene);
     }
 }
 
@@ -434,7 +412,7 @@ TestCase(Test_Audio)
     scene->assets.push_back(CreateAudioAsset("audio_f32", ms::AudioFormat::F32, ids++));
     if (ms::AudioPtr afa = CreateAudioFileAsset("explosion1.wav", ids++))
         scene->assets.push_back(afa);
-    Send(scene);
+    TestUtility::Send(scene);
 }
 
 TestCase(Test_FileAsset)
@@ -447,13 +425,13 @@ TestCase(Test_FileAsset)
         if (as->readFromFile("pch.h"))
             scene->assets.push_back(as);
     }
-    Send(scene);
+    TestUtility::Send(scene);
 }
 
 
 TestCase(Test_Query)
 {
-    ms::Client client(GetClientSettings());
+    ms::Client client(TestUtility::GetClientSettings());
     if (!client.isServerAvailable()) {
         const std::string& log = client.getErrorMessage();
         Print("Server not available. error log: %s\n", log.c_str());
