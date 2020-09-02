@@ -37,7 +37,7 @@ void StandardMaterial::setColorMap(const TexturePtr v)
 }
 
 Material::TextureRecord* StandardMaterial::getColorMap() const {
-    const MaterialProperty* p = findProperty("_MainTex");
+    const MaterialProperty* p = findProperty(_MainTex);
     return p ? &p->get<TextureRecord>() : nullptr;
 }
 
