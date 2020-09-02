@@ -263,7 +263,7 @@ TestCase(Test_Points)
     // animation
     {
         const int F = 20;
-        auto node = std::static_pointer_cast<ms::Points>(scene->entities.back());
+        std::shared_ptr<ms::Points> node = std::static_pointer_cast<ms::Points>(scene->entities.back());
 
         for (int fi = 0; fi < F; ++fi) {
             for (int i = 0; i < node->points.size(); ++i)
@@ -275,8 +275,7 @@ TestCase(Test_Points)
     }
 }
 
-TestCase(Test_SendTexture)
-{
+TestCase(Test_SendTexture) {
     auto gen_id = []() {
         static int id_seed = 0;
         return ++id_seed;
@@ -302,7 +301,7 @@ TestCase(Test_SendTexture)
     }
 
     {
-        auto scene = ms::Scene::create();
+        std::shared_ptr<ms::Scene> scene = ms::Scene::create();
 
         const int width = 512;
         const int height = 512;
@@ -310,37 +309,37 @@ TestCase(Test_SendTexture)
             // Ru8
             const unorm8 black{ 0.0f };
             const unorm8 white{ 1.0f };
-            scene->assets.push_back(TestUtility::CreateCheckerImageTexture(black, white, width, height, gen_id(), "Ru8"));
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<unorm8>(black, white, width, height, gen_id(), "Ru8"));
         }
         {
             // RGu8
             const unorm8x2 black{ 0.0f, 0.0f };
             const unorm8x2 white{ 1.0f, 1.0f };
-            scene->assets.push_back(TestUtility::CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGu8"));
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<unorm8x2>(black, white, width, height, gen_id(), "RGu8"));
         }
         {
             // RGBAu8
             const unorm8x3 black{ 0.0f, 0.0f, 0.0f };
             const unorm8x3 white{ 1.0f, 1.0f, 1.0f };
-            scene->assets.push_back(TestUtility::CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBu8"));
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<unorm8x3>(black, white, width, height, gen_id(), "RGBu8"));
         }
         {
             // RGBAu8
             const unorm8x4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             const unorm8x4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene->assets.push_back(TestUtility::CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAu8"));
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<unorm8x4>(black, white, width, height, gen_id(), "RGBAu8"));
         }
         {
             // RGBAf16
             const half4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             const half4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene->assets.push_back(TestUtility::CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf16"));
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<half4>(black, white, width, height, gen_id(), "RGBAf16"));
         }
         {
             // RGBAf32
             const float4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             const float4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene->assets.push_back(TestUtility::CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf32"));
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<float4>(black, white, width, height, gen_id(), "RGBAf32"));
         }
 
         // material
@@ -349,17 +348,17 @@ TestCase(Test_SendTexture)
             scene->assets.push_back(mat);
             mat->name = "TestMaterial1";
             mat->id = 0;
-            ms::StandardMaterial& stdmat = ms::AsStandardMaterial(*mat);
-            stdmat.setColor({ 0.3f, 0.3f, 0.5f, 1.0f });
-            stdmat.setEmissionColor({ 0.7f, 0.1f, 0.2f, 1.0f });
-            stdmat.setMetallic(0.2f);
-            stdmat.setSmoothness(0.8f);
-            stdmat.setColorMap(1);
-            stdmat.setMetallicMap(5);
-            stdmat.setEmissionMap(4);
+            ms::StandardMaterial& standardMaterial = ms::AsStandardMaterial(*mat);
+            standardMaterial.setColor({ 0.3f, 0.3f, 0.5f, 1.0f });
+            standardMaterial.setEmissionColor({ 0.7f, 0.1f, 0.2f, 1.0f });
+            standardMaterial.setMetallic(0.2f);
+            standardMaterial.setSmoothness(0.8f);
+            standardMaterial.setColorMap(1);
+            standardMaterial.setMetallicMap(5);
+            standardMaterial.setEmissionMap(4);
 
-            stdmat.addKeyword({ "_EMISSION", true });
-            stdmat.addKeyword({ "_INVALIDKEYWORD", true });
+            standardMaterial.addKeyword({ "_EMISSION", true });
+            standardMaterial.addKeyword({ "_INVALIDKEYWORD", true });
         }
         Send(scene);
     }
