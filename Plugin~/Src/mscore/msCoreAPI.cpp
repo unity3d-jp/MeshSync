@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "MeshUtils/MeshUtils.h"
 #include "MeshSync/MeshSync.h"
+#include "MeshSync/SceneGraph/msCamera.h"
+#include "MeshSync/SceneGraph/msLight.h"
 #include "msCoreAPI.h"
 
 using namespace mu;
@@ -293,21 +295,21 @@ msAPI void msMeshWritePoints(ms::Mesh *self, const float3 *v, int size)
 {
     if (size > 0) {
         self->points.assign(v, v + size);
-        self->md_flags.has_points = 1;
+        self->md_flags.Set(ms::MESH_DATA_FLAG_HAS_POINTS,true);
     }
 }
 msAPI void msMeshWriteNormals(ms::Mesh *self, const float3 *v, int size)
 {
     if (size > 0) {
         self->normals.assign(v, v + size);
-        self->md_flags.has_normals = 1;
+        self->md_flags.Set(ms::MESH_DATA_FLAG_HAS_NORMALS,true);
     }
 }
 msAPI void msMeshWriteTangents(ms::Mesh *self, const float4 *v, int size)
 {
     if (size > 0) {
         self->tangents.assign(v, v + size);
-        self->md_flags.has_tangents = 1;
+        self->md_flags.Set(ms::MESH_DATA_FLAG_HAS_TANGENTS,true);
     }
 }
 msAPI void msMeshWriteUV(ms::Mesh *self, int index, const float2 *v, int size)
@@ -318,33 +320,21 @@ msAPI void msMeshWriteUV(ms::Mesh *self, int index, const float2 *v, int size)
     assert(index >= 0 && index < ms::msConstants::MAX_UV && "msMeshWriteUV() invalid index");
 
     self->m_uv[index].assign(v, v + size);
-
-    //[TODO-sin: 2020-8-31] Use bit shifting
-    switch (index) {
-        case 0: self->md_flags.HasUV0 = 1; break;
-        case 1: self->md_flags.HasUV1 = 1; break;
-        case 2: self->md_flags.HasUV2 = 1; break;
-        case 3: self->md_flags.HasUV3 = 1; break;
-        case 4: self->md_flags.HasUV4 = 1; break;
-        case 5: self->md_flags.HasUV5 = 1; break;
-        case 6: self->md_flags.HasUV6 = 1; break;
-        case 7: self->md_flags.HasUV7 = 1; break;
-    default: ;
-    }
+    self->md_flags.SetUV(index, true);
 }
 
 msAPI void msMeshWriteColors(ms::Mesh *self, const float4 *v, int size)
 {
     if (size > 0) {
         self->colors.assign(v, v + size);
-        self->md_flags.has_colors = 1;
+        self->md_flags.Set(ms::MESH_DATA_FLAG_HAS_COLORS,true);
     }
 }
 msAPI void msMeshWriteVelocities(ms::Mesh *self, const float3 *v, int size)
 {
     if (size > 0) {
         self->velocities.assign(v, v + size);
-        self->md_flags.has_velocities = 1;
+        self->md_flags.Set(ms::MESH_DATA_FLAG_HAS_VELOCITIES,true);
     }
 }
 msAPI void msMeshWriteIndices(ms::Mesh *self, const int *v, int size)
@@ -353,8 +343,8 @@ msAPI void msMeshWriteIndices(ms::Mesh *self, const int *v, int size)
         self->indices.assign(v, v + size);
         self->counts.clear();
         self->counts.resize(size / 3, 3);
-        self->md_flags.has_indices = 1;
-        self->md_flags.has_counts = 1;
+        self->md_flags.Set(ms::MESH_DATA_FLAG_HAS_INDICES,true);
+        self->md_flags.Set(ms::MESH_DATA_FLAG_HAS_COUNTS, true);
     }
 }
 msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *self, const int *v, int size, int materialID)
@@ -363,9 +353,9 @@ msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *self, const int *v, int size, i
         self->indices.insert(self->indices.end(), v, v + size);
         self->counts.resize(self->counts.size() + (size / 3), 3);
         self->material_ids.resize(self->material_ids.size() + (size / 3), materialID);
-        self->md_flags.has_indices = 1;
-        self->md_flags.has_counts = 1;
-        self->md_flags.has_material_ids = 1;
+        self->md_flags.Set(ms::MESH_DATA_FLAG_HAS_INDICES,true);
+        self->md_flags.Set(ms::MESH_DATA_FLAG_HAS_COUNTS, true);
+        self->md_flags.Set(ms::MESH_DATA_FLAG_HAS_MATERIAL_IDS, true);
     }
 }
 msAPI void msMeshWriteBoneWeights4(ms::Mesh *self, const ms::Weights4 *data, int size)

@@ -146,15 +146,15 @@ void OSceneCacheImpl::addScene(ScenePtr scene, float time)
             if (m_oscs.strip_normals) {
                 scene->eachEntity<Mesh>([](Mesh& mesh) {
                     mesh.normals.clear();
-                    mesh.md_flags.has_normals = 0;
-                    mesh.refine_settings.flags.gen_normals = 0;
+                    mesh.md_flags.Set(MESH_DATA_FLAG_HAS_NORMALS , false);
+                    mesh.refine_settings.flags.Set(MESH_REFINE_FLAG_GEN_NORMALS, false );
                 });
             }
             if (m_oscs.strip_tangents) {
                 scene->eachEntity<Mesh>([](Mesh& mesh) {
                     mesh.tangents.clear();
-                    mesh.md_flags.has_tangents = 0;
-                    mesh.refine_settings.flags.gen_tangents = 0;
+                    mesh.md_flags.Set(MESH_DATA_FLAG_HAS_TANGENTS,false);
+                    mesh.refine_settings.flags.Set(MESH_REFINE_FLAG_GEN_TANGENTS, false);
                 });
             }
 
@@ -163,12 +163,12 @@ void OSceneCacheImpl::addScene(ScenePtr scene, float time)
 
             if (m_oscs.strip_normals) {
                 scene->eachEntity<Mesh>([](Mesh& mesh) {
-                    mesh.refine_settings.flags.gen_normals = 1;
+                    mesh.refine_settings.flags.Set(MESH_REFINE_FLAG_GEN_NORMALS, true);
                 });
             }
             if (m_oscs.strip_tangents) {
                 scene->eachEntity<Mesh>([](Mesh& mesh) {
-                    mesh.refine_settings.flags.gen_tangents = 1;
+                    mesh.refine_settings.flags.Set(MESH_REFINE_FLAG_GEN_TANGENTS, true);
                 });
             }
 

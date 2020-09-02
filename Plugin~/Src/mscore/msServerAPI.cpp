@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "MeshUtils/MeshUtils.h"
 #include "MeshSync/MeshSync.h"
+#include "MeshSync/SceneGraph/msCamera.h"
+#include "MeshSync/SceneGraph/msLight.h"
 #include "msCoreAPI.h"
 
 #ifdef msEnableNetwork
@@ -225,11 +227,11 @@ msAPI void msServerNotifyPoll(ms::Server *server, ms::PollMessage::PollType t)
 
 msAPI int msGetGetBakeSkin(ms::GetMessage *self)
 {
-    return self->refine_settings.flags.bake_skin;
+    return self->refine_settings.flags.Get(ms::MESH_REFINE_FLAG_BAKE_SKIN);
 }
 msAPI int msGetGetBakeCloth(ms::GetMessage *self)
 {
-    return self->refine_settings.flags.bake_cloth;
+    return self->refine_settings.flags.Get(ms::MESH_REFINE_FLAG_BAKE_CLOTH);
 }
 
 msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *self)

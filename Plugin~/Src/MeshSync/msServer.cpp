@@ -233,10 +233,12 @@ void Server::beginServeScene()
 
     auto& request = *m_current_get_request;
     request.refine_settings.scale_factor = request.scene_settings.scale_factor;
-    request.refine_settings.flags.flip_x =
-        request.scene_settings.handedness == Handedness::Right || request.scene_settings.handedness == Handedness::RightZUp;
-    request.refine_settings.flags.flip_yz =
-        request.scene_settings.handedness == Handedness::LeftZUp || request.scene_settings.handedness == Handedness::RightZUp;
+    request.refine_settings.flags.Set(MESH_REFINE_FLAG_FLIP_X,
+        request.scene_settings.handedness == Handedness::Right || request.scene_settings.handedness == Handedness::RightZUp
+    );
+    request.refine_settings.flags.Set(MESH_REFINE_FLAG_FLIP_YZ,
+        request.scene_settings.handedness == Handedness::LeftZUp || request.scene_settings.handedness == Handedness::RightZUp
+    );
     m_host_scene->settings = request.scene_settings;
 }
 
@@ -258,7 +260,7 @@ void Server::endServeScene()
             return;
 
         auto& mesh = *pmesh;
-        mesh.md_flags.has_refine_settings = 1;
+        mesh.md_flags.Set(MESH_DATA_FLAG_HAS_REFINE_SETTINGS,true);
         mesh.refine_settings.flags = request.refine_settings.flags;
         mesh.refine_settings.scale_factor = request.refine_settings.scale_factor;
         mesh.refine_settings.smooth_angle = 180.0f;

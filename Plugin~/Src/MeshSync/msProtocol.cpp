@@ -25,35 +25,9 @@ void Message::deserialize(std::istream& is)
     read(is, timestamp_send);
 }
 
-
-void GetFlags::setAllGetFlags()
-{
-    get_transform = 1;
-    get_points = 1;
-    get_normals = 1;
-    get_tangents = 1;
-    GetUV0_obsolete = 1;
-    GetUV1_obsolete = 1;
-    get_colors = 1;
-    get_indices = 1;
-    get_material_ids = 1;
-    get_bones = 1;
-    get_blendshapes = 1;
-
-
-    GetUV0 = 1;
-    GetUV1 = 1;
-    GetUV2 = 1;
-    GetUV3 = 1;
-    GetUV4 = 1;
-    GetUV5 = 1;
-    GetUV6 = 1;
-    GetUV7 = 1;
-}
-
 GetMessage::GetMessage()
 {
-    flags.setAllGetFlags();
+    SetAllGetFlags(flags);
 }
 void GetMessage::serialize(std::ostream& os) const
 {

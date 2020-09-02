@@ -56,8 +56,8 @@ TestCase(Test_SendMesh)
         scene->entities.push_back(mesh);
 
         mesh->path = "/Test/Wave";
-        mesh->refine_settings.flags.gen_normals = 1;
-        mesh->refine_settings.flags.gen_tangents = 1;
+        mesh->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
+        mesh->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
 
 
         SharedVector<float3>& points = mesh->points;
@@ -120,8 +120,9 @@ TestCase(Test_Animation)
         node->rotation = quatf::identity();
         node->scale = { 1.0f, 1.0f, 1.0f };
         GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->m_uv[0], 0.5f, 1);
-        node->refine_settings.flags.gen_normals = 1;
-        node->refine_settings.flags.gen_tangents = 1;
+
+        node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
+        node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
     }
     {
         auto clip = ms::AnimationClip::create();
@@ -162,8 +163,8 @@ TestCase(Test_MeshMerge)
         mesh->scale = { 1.0f, 1.0f, 1.0f };
 
         GenerateWaveMesh(mesh->counts, mesh->indices, mesh->points, mesh->m_uv[0], 2.0f, 1.0f, 16, 90.0f * mu::DegToRad);
-        mesh->refine_settings.flags.gen_normals = 1;
-        mesh->refine_settings.flags.gen_tangents = 1;
+        mesh->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
+        mesh->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
         mesh->material_ids.resize(mesh->counts.size(), 0);
     }
 
@@ -193,9 +194,8 @@ TestCase(Test_Points)
         node->scale = { 1.0f, 1.0f, 1.0f };
         node->visibility = { false, true, true };
         GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->m_uv[0], 0.1f, 1);
-        node->refine_settings.flags.gen_normals = 1;
-        node->refine_settings.flags.gen_tangents = 1;
-
+        node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
+        node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
         {
             ms::Variant test("test", ms::float4::one());
             node->addUserProperty(std::move(test));
@@ -447,7 +447,7 @@ static ms::AudioPtr CreateAudioAsset(const char *name, ms::AudioFormat fmt, int 
     return a;
 }
 
-static ms::AudioPtr CreateAudioFileAsset(const char *path, int id)
+static ms::AudioPtr CreateAudioFileAsset(const char *path, const int id)
 {
     auto a = ms::Audio::create();
     a->id = id;
@@ -465,7 +465,7 @@ TestCase(Test_Audio)
     scene->assets.push_back(CreateAudioAsset("audio_s24", ms::AudioFormat::S24, ids++));
     scene->assets.push_back(CreateAudioAsset("audio_s32", ms::AudioFormat::S32, ids++));
     scene->assets.push_back(CreateAudioAsset("audio_f32", ms::AudioFormat::F32, ids++));
-    if (auto afa = CreateAudioFileAsset("explosion1.wav", ids++))
+    if (ms::AudioPtr afa = CreateAudioFileAsset("explosion1.wav", ids++))
         scene->assets.push_back(afa);
     Send(scene);
 }

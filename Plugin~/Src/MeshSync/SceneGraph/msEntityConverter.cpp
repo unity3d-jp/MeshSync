@@ -4,6 +4,8 @@
 #include "msPointCache.h"
 #include "msAnimation.h"
 #include "msEntityConverter.h"
+#include "msCamera.h"
+#include "msLight.h"
 
 namespace ms {
 
@@ -11,19 +13,19 @@ void EntityConverter::convert(Entity &e)
 {
     switch (e.getType()) {
     case EntityType::Transform:
-        convertTransform(static_cast<Transform&>(e));
+        convertTransform(dynamic_cast<Transform&>(e));
         break;
     case EntityType::Camera:
-        convertCamera(static_cast<Camera&>(e));
+        convertCamera(dynamic_cast<Camera&>(e));
         break;
     case EntityType::Light:
-        convertLight(static_cast<Light&>(e));
+        convertLight(dynamic_cast<Light&>(e));
         break;
     case EntityType::Mesh:
-        convertMesh(static_cast<Mesh&>(e));
+        convertMesh(dynamic_cast<Mesh&>(e));
         break;
     case EntityType::Points:
-        convertPoints(static_cast<Points&>(e));
+        convertPoints(dynamic_cast<Points&>(e));
         break;
     default:
         break;
