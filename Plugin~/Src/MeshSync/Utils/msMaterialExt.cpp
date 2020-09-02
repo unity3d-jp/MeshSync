@@ -13,6 +13,7 @@ static const char _EmissionMap[] = "_EmissionMap";
 static const char _MetallicGlossMap[] = "_MetallicGlossMap";
 static const char _BumpScale[] = "_BumpScale";
 static const char _BumpMap[] = "_BumpMap";
+static const char DETAIL_ALBEDO_MAP_SHADER_VAR[] = "_DetailAlbedoMap";
 
 using TextureRecord = MaterialProperty::TextureRecord;
 
@@ -27,18 +28,36 @@ float4 StandardMaterial::getColor() const
 }
 void StandardMaterial::setColorMap(const TextureRecord& v)
 {
-    addProperty({ _MainTex,v });
+    addProperty( MaterialProperty(_MainTex,v));
 }
-void StandardMaterial::setColorMap(TexturePtr v)
+void StandardMaterial::setColorMap(const TexturePtr v)
 {
     if (v)
         addProperty({ _MainTex, v });
 }
-Material::TextureRecord* StandardMaterial::getColorMap() const
-{
+
+Material::TextureRecord* StandardMaterial::getColorMap() const {
     const MaterialProperty* p = findProperty("_MainTex");
     return p ? &p->get<TextureRecord>() : nullptr;
 }
+
+//----------------------------------------------------------------------------------------------------------------------
+void StandardMaterial::SetDetailAlbedoMap(const TextureRecord& v) {
+    addProperty( MaterialProperty(DETAIL_ALBEDO_MAP_SHADER_VAR,v));
+}
+
+void StandardMaterial::SetDetailAlbedoMap(TexturePtr v) {
+    assert(v);
+    addProperty( MaterialProperty(DETAIL_ALBEDO_MAP_SHADER_VAR,v));
+
+}
+TextureRecord* StandardMaterial::GetDetailAlbedoMap() const {
+    const MaterialProperty* p = findProperty(DETAIL_ALBEDO_MAP_SHADER_VAR);
+    return p ? &p->get<TextureRecord>() : nullptr;
+
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 
 void StandardMaterial::setEmissionColor(float4 v)
 {
