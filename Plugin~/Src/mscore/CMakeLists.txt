@@ -7,6 +7,7 @@ set(SRC_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/..")
 set(plugins_dir "${SRC_ROOT}/../../Runtime/Plugins/x86_64")
 
 add_plugin(mscore SOURCES ${sources} PLUGINS_DIR ${plugins_dir})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${sources})
 
 #Include, pch
 target_include_directories(mscore PRIVATE 

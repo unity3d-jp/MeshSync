@@ -10,7 +10,7 @@ set(SRC_ROOT   "${CMAKE_CURRENT_SOURCE_DIR}/..")
 # setup as a library
 add_library(MeshSync STATIC ${sources} ${MUISPC_OUTPUTS})
 
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "" FILES ${sources})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${sources})
 
 #Include, pch
 target_precompile_headers(MeshSync PRIVATE "${MeshSync_dir}/pch.h")
