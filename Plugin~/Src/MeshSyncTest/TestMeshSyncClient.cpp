@@ -259,23 +259,28 @@ TestCase(Test_SendTexture) {
     };
 
     // raw file textures
-    {
-        const char *raw_files[] = {
-            "Texture_RGBA_u8.png",
-            "Texture_RGBA_f16.exr",
-        };
+    const char* testTextures[] = {
+        "Texture_RGBA_u8.png",
+        "Texture_RGBA_f16.exr",
+    };
 
-        std::shared_ptr<ms::Scene> scene = ms::Scene::create();
-        for (const char* filename : raw_files) {
-            std::shared_ptr<ms::Texture> tex = ms::Texture::create();
-            if (tex->readFromFile(filename)) {
-                scene->assets.push_back(tex);
-                tex->id = gen_id();
-            }
-        }
-        if (!scene->assets.empty())
-            TestUtility::Send(scene);
+    const uint32_t numTestTextures = sizeof(testTextures) / sizeof(testTextures[0]);
+    int testTexturesID[numTestTextures];
+
+    std::shared_ptr<ms::Scene> scene = ms::Scene::create();
+    for (uint32_t i =0;i<numTestTextures;++i) {
+
+        std::shared_ptr<ms::Texture> tex = ms::Texture::create();
+        const bool canReadTex = tex->readFromFile(testTextures[i]);
+        assert( canReadTex && "Test_SendTexture() failed in loading textures");
+        scene->assets.push_back(tex);
+        testTexturesID[i] = gen_id();
+        tex->id = testTexturesID[i];
     }
+
+    if (!scene->assets.empty())
+        TestUtility::Send(scene);
+
 
     {
         std::shared_ptr<ms::Scene> scene = ms::Scene::create();
@@ -288,17 +293,19 @@ TestCase(Test_SendTexture) {
             const unorm8 white{ 1.0f };
             scene->assets.push_back(TestUtility::CreateCheckerImageTexture<unorm8>(black, white, width, height, gen_id(), "Ru8"));
         }
+        const int emissionTexID = gen_id();
         {
             // RGu8
             const unorm8x2 black{ 0.0f, 0.0f };
             const unorm8x2 white{ 1.0f, 1.0f };
-            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<unorm8x2>(black, white, width, height, gen_id(), "RGu8"));
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<unorm8x2>(black, white, width, height, emissionTexID, "RGu8"));
         }
+        const int metallicTexID = gen_id();
         {
-            // RGBAu8
+            // RGBu8
             const unorm8x3 black{ 0.0f, 0.0f, 0.0f };
             const unorm8x3 white{ 1.0f, 1.0f, 1.0f };
-            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<unorm8x3>(black, white, width, height, gen_id(), "RGBu8"));
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<unorm8x3>(black, white, width, height, metallicTexID, "RGBu8"));
         }
         {
             // RGBAu8
@@ -330,9 +337,9 @@ TestCase(Test_SendTexture) {
             standardMaterial.setEmissionColor({ 0.7f, 0.1f, 0.2f, 1.0f });
             standardMaterial.setMetallic(0.2f);
             standardMaterial.setSmoothness(0.8f);
-            standardMaterial.setColorMap(1);
-            standardMaterial.setMetallicMap(5);
-            standardMaterial.setEmissionMap(4);
+            standardMaterial.setColorMap(testTexturesID[0]);
+            standardMaterial.setMetallicMap(metallicTexID);
+            standardMaterial.setEmissionMap(emissionTexID);
 
             standardMaterial.addKeyword({ "_EMISSION", true });
             standardMaterial.addKeyword({ "_INVALIDKEYWORD", true });
