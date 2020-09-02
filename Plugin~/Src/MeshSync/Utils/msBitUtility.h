@@ -11,7 +11,7 @@ public:
 void BitUtility::Set(uint32_t* val, uint32_t bitPos, const bool bitValue) {
     assert(bitPos < (sizeof(bitPos) * 8) && "BitUtility::Set() invalid index");
     const uint32_t mask = (1 << bitPos);
-    if (val) {
+    if (bitValue) {
         *val |= mask;
     } else {
         *val &= ~mask;    
