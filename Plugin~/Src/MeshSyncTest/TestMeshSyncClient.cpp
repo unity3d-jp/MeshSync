@@ -152,9 +152,9 @@ TestCase(Test_Animation)
 
 TestCase(Test_MeshMerge)
 {
-    auto scene = ms::Scene::create();
+    std::shared_ptr<ms::Scene> scene = ms::Scene::create();
 
-    auto mesh = ms::Mesh::create();
+    std::shared_ptr<ms::Mesh> mesh = ms::Mesh::create();
     scene->entities.push_back(mesh);
     {
         mesh->path = "/Test/Merge";
@@ -169,7 +169,7 @@ TestCase(Test_MeshMerge)
     }
 
     {
-        auto sphere = ms::Mesh::create();
+        std::shared_ptr<ms::Mesh> sphere = ms::Mesh::create();
         GenerateIcoSphereMesh(sphere->counts, sphere->indices, sphere->points, sphere->m_uv[0], 0.5f, 1);
         sphere->material_ids.resize(sphere->counts.size(), 1);
         sphere->transformMesh(mu::translate(float3{ 0.0f, 1.5f, 0.0f }));
@@ -183,9 +183,9 @@ TestCase(Test_Points)
 {
     Random rand;
 
-    auto scene = ms::Scene::create();
+    std::shared_ptr<ms::Scene> scene = ms::Scene::create();
     {
-        auto node = ms::Mesh::create();
+        std::shared_ptr<ms::Mesh> node = ms::Mesh::create();
         scene->entities.push_back(node);
 
         node->path = "/Test/PointMesh";
@@ -202,7 +202,7 @@ TestCase(Test_Points)
         }
     }
     {
-        auto node = ms::Points::create();
+        std::shared_ptr<ms::Points> node = ms::Points::create();
         scene->entities.push_back(node);
 
         node->path = "/Test/PointsT";
@@ -217,14 +217,14 @@ TestCase(Test_Points)
         node->setupPointsDataFlags();
     }
     {
-        auto node = ms::Points::create();
+        std::shared_ptr<ms::Points> node = ms::Points::create();
         scene->entities.push_back(node);
 
         node->path = "/Test/PointsTR";
         node->reference = "/Test/PointMesh";
         node->position = { 0.0f, 0.0f, 0.0f };
 
-        int N = 100;
+        const int N = 100;
         node->points.resize_discard(N);
         node->rotations.resize_discard(N);
         for (int i = 0; i < N; ++i) {
@@ -234,7 +234,7 @@ TestCase(Test_Points)
         node->setupPointsDataFlags();
     }
     {
-        auto node = ms::Points::create();
+        std::shared_ptr<ms::Points> node = ms::Points::create();
         scene->entities.push_back(node);
 
         node->path = "/Test/PointsTRS";
@@ -278,13 +278,13 @@ TestCase(Test_Points)
 template<class color_t>
 void CreateCheckerImage(SharedVector<char>& dst, color_t black, color_t white, int width, int height)
 {
-    int num_pixels = width * height;
-    int checker_size = 8;
+    const int num_pixels = width * height;
+    const int checker_size = 8;
     dst.resize_discard(num_pixels * sizeof(color_t));
     color_t *data = (color_t*)dst.data();
     for (int iy = 0; iy < height; ++iy) {
         for (int ix = 0; ix < width; ++ix) {
-            bool cy = (iy / checker_size) % 2 == 0;
+            const bool cy = (iy / checker_size) % 2 == 0;
             bool cx = (ix / checker_size) % 2 == 0;
             if (cy)
                 *data++ = cx ? white : black;
@@ -297,7 +297,7 @@ void CreateCheckerImage(SharedVector<char>& dst, color_t black, color_t white, i
 template<class color_t>
 ms::TexturePtr CreateCheckerImageTexture(color_t black, color_t white, int width, int height, int id, const char *name)
 {
-    auto tex = ms::Texture::create();
+    std::shared_ptr<ms::Texture> tex = ms::Texture::create();
     tex->id = id;
     tex->name = name;
     tex->format = ms::GetTextureFormat<color_t>::result;
@@ -321,8 +321,8 @@ TestCase(Test_SendTexture)
             "Texture_RGBA_f16.exr",
         };
 
-        auto scene = ms::Scene::create();
-        for (auto filename : raw_files) {
+        std::shared_ptr<ms::Scene> scene = ms::Scene::create();
+        for (const char* filename : raw_files) {
             auto tex = ms::Texture::create();
             if (tex->readFromFile(filename)) {
                 scene->assets.push_back(tex);
@@ -340,38 +340,38 @@ TestCase(Test_SendTexture)
         const int height = 512;
         {
             // Ru8
-            unorm8 black{ 0.0f };
-            unorm8 white{ 1.0f };
+            const unorm8 black{ 0.0f };
+            const unorm8 white{ 1.0f };
             scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "Ru8"));
         }
         {
             // RGu8
-            unorm8x2 black{ 0.0f, 0.0f };
-            unorm8x2 white{ 1.0f, 1.0f };
+            const unorm8x2 black{ 0.0f, 0.0f };
+            const unorm8x2 white{ 1.0f, 1.0f };
             scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGu8"));
         }
         {
             // RGBAu8
-            unorm8x3 black{ 0.0f, 0.0f, 0.0f };
-            unorm8x3 white{ 1.0f, 1.0f, 1.0f };
+            const unorm8x3 black{ 0.0f, 0.0f, 0.0f };
+            const unorm8x3 white{ 1.0f, 1.0f, 1.0f };
             scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBu8"));
         }
         {
             // RGBAu8
-            unorm8x4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
-            unorm8x4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
+            const unorm8x4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
+            const unorm8x4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
             scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAu8"));
         }
         {
             // RGBAf16
-            half4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
-            half4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
+            const half4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
+            const half4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
             scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf16"));
         }
         {
             // RGBAf32
-            float4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
-            float4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
+            const float4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
+            const float4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
             scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf32"));
         }
 
@@ -381,7 +381,7 @@ TestCase(Test_SendTexture)
             scene->assets.push_back(mat);
             mat->name = "TestMaterial1";
             mat->id = 0;
-            auto& stdmat = ms::AsStandardMaterial(*mat);
+            ms::StandardMaterial& stdmat = ms::AsStandardMaterial(*mat);
             stdmat.setColor({ 0.3f, 0.3f, 0.5f, 1.0f });
             stdmat.setEmissionColor({ 0.7f, 0.1f, 0.2f, 1.0f });
             stdmat.setMetallic(0.2f);
@@ -406,36 +406,36 @@ template<class T >
 static void GenerateAudioSample(T *dst, int n)
 {
     for (int i = 0; i < n; ++i) {
-        float s = std::pow(float(n - i) / n, 0.5f);
-        dst[i] = std::sin((float(i) * 1.5f * ms::DegToRad)) * s;
+        float s = std::pow(static_cast<float>(n - i) / n, 0.5f);
+        dst[i] = std::sin((static_cast<float>(i) * 1.5f * ms::DegToRad)) * s;
     }
 }
 
 static ms::AudioPtr CreateAudioAsset(const char *name, ms::AudioFormat fmt, int id)
 {
-    auto a = ms::Audio::create();
+    std::shared_ptr<ms::Audio> a = ms::Audio::create();
     a->id = id;
     a->name = name;
     a->format = fmt;
     a->frequency = Frequency;
     a->channels = Channels;
 
-    auto samples = a->allocate(Frequency / 2); // 0.5 sec
+    const auto samples = a->allocate(Frequency / 2); // 0.5 sec
     switch (fmt) {
     case ms::AudioFormat::U8:
-        GenerateAudioSample((unorm8n*)samples, a->getSampleLength() * Channels);
+        GenerateAudioSample(static_cast<unorm8n*>(samples), a->getSampleLength() * Channels);
         break;
     case ms::AudioFormat::S16:
-        GenerateAudioSample((snorm16*)samples, a->getSampleLength() * Channels);
+        GenerateAudioSample(static_cast<snorm16*>(samples), a->getSampleLength() * Channels);
         break;
     case ms::AudioFormat::S24:
-        GenerateAudioSample((snorm24*)samples, a->getSampleLength() * Channels);
+        GenerateAudioSample(static_cast<snorm24*>(samples), a->getSampleLength() * Channels);
         break;
     case ms::AudioFormat::S32:
-        GenerateAudioSample((snorm32*)samples, a->getSampleLength() * Channels);
+        GenerateAudioSample(static_cast<snorm32*>(samples), a->getSampleLength() * Channels);
         break;
     case ms::AudioFormat::F32:
-        GenerateAudioSample((float*)samples, a->getSampleLength() * Channels);
+        GenerateAudioSample(static_cast<float*>(samples), a->getSampleLength() * Channels);
         break;
     default:
         break;
@@ -449,7 +449,7 @@ static ms::AudioPtr CreateAudioAsset(const char *name, ms::AudioFormat fmt, int 
 
 static ms::AudioPtr CreateAudioFileAsset(const char *path, const int id)
 {
-    auto a = ms::Audio::create();
+    std::shared_ptr<ms::Audio> a = ms::Audio::create();
     a->id = id;
     if (a->readFromFile(path))
         return a;
@@ -459,7 +459,7 @@ static ms::AudioPtr CreateAudioFileAsset(const char *path, const int id)
 TestCase(Test_Audio)
 {
     int ids = 0;
-    auto scene = ms::Scene::create();
+    std::shared_ptr<ms::Scene> scene = ms::Scene::create();
     scene->assets.push_back(CreateAudioAsset("audio_u8", ms::AudioFormat::U8, ids++));
     scene->assets.push_back(CreateAudioAsset("audio_s16", ms::AudioFormat::S16, ids++));
     scene->assets.push_back(CreateAudioAsset("audio_s24", ms::AudioFormat::S24, ids++));
@@ -472,11 +472,11 @@ TestCase(Test_Audio)
 
 TestCase(Test_FileAsset)
 {
-    auto scene = ms::Scene::create();
+    std::shared_ptr<ms::Scene> scene = ms::Scene::create();
 
     // file asset
     {
-        auto as = ms::FileAsset::create();
+        std::shared_ptr<ms::FileAsset> as = ms::FileAsset::create();
         if (as->readFromFile("pch.h"))
             scene->assets.push_back(as);
     }
@@ -488,7 +488,7 @@ TestCase(Test_Query)
 {
     ms::Client client(GetClientSettings());
     if (!client.isServerAvailable()) {
-        auto& log = client.getErrorMessage();
+        const std::string& log = client.getErrorMessage();
         Print("Server not available. error log: %s\n", log.c_str());
         return;
     }
@@ -496,7 +496,7 @@ TestCase(Test_Query)
     auto send_query_impl = [&](ms::QueryMessage::QueryType qt, const char *query_name) {
         ms::QueryMessage query;
         query.query_type = qt;
-        auto response = client.send(query);
+        ms::ResponseMessagePtr response = client.send(query);
 
         Print("query: %s\n", query_name);
         Print("response:\n");
