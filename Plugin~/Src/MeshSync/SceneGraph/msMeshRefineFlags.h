@@ -51,18 +51,11 @@ private:
 };
 
 void MeshRefineFlags::Set(uint32_t index, const bool val) {
-    assert(index < (sizeof(index) * 8) && "MeshRefineFlags::Get() invalid index");
-    const uint32_t mask = (1 << index);
-    if (val) {
-        m_bitFlags |= mask;
-    } else {
-        m_bitFlags &= ~mask;    
-    }
+    BitUtility::Set(&m_bitFlags, index, val);
 }
 
 bool MeshRefineFlags::Get(uint32_t index) const {
-    assert(index < (sizeof(index) * 8) && "MeshRefineFlags::Get() invalid index");
-    return (m_bitFlags & (1 << index));
+    return BitUtility::Get(&m_bitFlags, index);
 }
 
 } // namespace ms
