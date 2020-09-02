@@ -8,21 +8,21 @@
 Working together with [MeshSyncDCCPlugins](https://github.com/Unity-Technologies/MeshSyncDCCPlugins), MeshSync is a package for synchronizing meshes/models editing in DCC tools into Unity in real time. 
 This allows devs to immediately see how things will look in-game while modelling.  
 
-MeshSync is currently a preview package, and therefore the installation requires preview packages to be enabled.
+MeshSync is currently a preview package and the steps to install it 
+differ based on the version of Unity.
 
 * Unity 2019.x  
-  Open [Package Manager](https://docs.unity3d.com/Manual/upm-ui.html) and ensure that **Show preview packages** is checked. 
-  Then, search for MeshSync.
-  ![Menu](Documentation~/images/PackageManager.png)
+  ![PackageManager2019](Documentation~/images/PackageManager2019.png)
+  1. Open [Package Manager](https://docs.unity3d.com/Manual/upm-ui.html) 
+  2. Ensure that **Show preview packages** is checked. 
+  3. Search for *MeshSync*.
   
-* Unity 2020.x  
-  Steps to enable preview packages:
-  1. Go to Edit > Project Settings
-  1. Select Package Manager in the Project Settings window
-  1. Check **Enable Preview Packages** checkbox
-  1. Click **I understand**
-  
-  Then, open [Package Manager](https://docs.unity3d.com/Manual/upm-ui.html) and search for MeshSync.
+* Unity 2020.1  
+  ![PackageManager2020](Documentation~/images/PackageManager2020.1.png)
+  1. Open [Package Manager](https://docs.unity3d.com/Manual/upm-ui.html) 
+  2. Click the **+** button, and choose **Add package from git URL** 
+  3. Type in `com.unity.meshsync@` followed by the version.  
+     For example: `com.unity.meshsync@0.2.5-preview`
 
 
 ## Supported Platforms
