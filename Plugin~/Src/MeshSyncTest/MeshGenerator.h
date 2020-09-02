@@ -1,6 +1,8 @@
 #pragma once
 
 #include "MeshUtils/MeshUtils.h"
+#include "MeshSync/msConstants.h"
+
 using namespace mu;
 
 void GenerateIcoSphereMesh(
@@ -24,7 +26,7 @@ void GenerateWaveMesh(
     RawVector<int>& counts,
     RawVector<int>& indices,
     RawVector<float3> &points,
-    RawVector<float2> &uv,
+    SharedVector<float2> uv[ms::msConstants::MAX_UV],
     float size, float height,
     int resolution,
     float angle,
@@ -34,7 +36,7 @@ void GenerateWaveMesh(
     SharedVector<int>& counts,
     SharedVector<int>& indices,
     SharedVector<float3> &points,
-    SharedVector<float2> &uv,
+    SharedVector<float2> uv[ms::msConstants::MAX_UV],
     float size, float height,
     int resolution,
     float angle,

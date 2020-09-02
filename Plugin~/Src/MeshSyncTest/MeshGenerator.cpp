@@ -131,7 +131,7 @@ void GenerateWaveMesh(
     RawVector<int>& counts,
     RawVector<int>& indices,
     RawVector<float3> &points,
-    SharedVector<float2> &uv,
+    SharedVector<float2> uv[ms::msConstants::MAX_UV],
     float size, float height,
     int resolution,
     float angle,
@@ -141,24 +141,30 @@ void GenerateWaveMesh(
 
     // vertices
     points.resize(num_vertices);
-    uv.resize(num_vertices);
+    for (uint32_t i=0;i< ms::msConstants::MAX_UV;++i) {
+        uv[i].resize(num_vertices);
+    }
+
     for (int iy = 0; iy < resolution; ++iy) {
         for (int ix = 0; ix < resolution; ++ix) {
-            int i = resolution*iy + ix;
-            float2 pos = {
-                float(ix) / float(resolution - 1) - 0.5f,
-                float(iy) / float(resolution - 1) - 0.5f
+            const int vertexIndex = resolution*iy + ix;
+            const float2 pos = {
+                static_cast<float>(ix) / static_cast<float>(resolution - 1) - 0.5f,
+                static_cast<float>(iy) / static_cast<float>(resolution - 1) - 0.5f
             };
             float d = std::sqrt(pos.x*pos.x + pos.y*pos.y);
 
-            float3& v = points[i];
+            float3& v = points[vertexIndex];
             v.x = pos.x * size;
             v.y = std::sin(d * 10.0f + angle) * std::max<float>(1.0 - d, 0.0f) * height;
             v.z = pos.y * size;
 
-            float2& t = uv[i];
-            t.x = pos.x * 0.5 + 0.5;
-            t.y = pos.y * 0.5 + 0.5;
+            for (uint32_t uvIndex=0;uvIndex< ms::msConstants::MAX_UV;++uvIndex) {
+                float2& t = uv[uvIndex][vertexIndex];
+                t.x = pos.x * 0.5f + (0.5f * uvIndex);
+                t.y = pos.y * 0.5f + (0.5f * uvIndex);
+            }
+
         }
     }
 
@@ -205,7 +211,7 @@ void GenerateWaveMesh(
     SharedVector<int>& counts,
     SharedVector<int>& indices,
     SharedVector<float3>& points,
-    SharedVector<float2>& uv,
+    SharedVector<float2> uv[ms::msConstants::MAX_UV],
     float size,
     float height,
     int resolution,

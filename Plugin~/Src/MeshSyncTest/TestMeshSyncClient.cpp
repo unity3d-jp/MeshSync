@@ -39,7 +39,7 @@ TestCase(Test_SendMesh) {
 
 
         SharedVector<float3>& points = mesh->points;
-        SharedVector<tvec2<float>>& uv = mesh->m_uv[0];
+        SharedVector<tvec2<float>>* uv = mesh->m_uv;
         SharedVector<int>& counts = mesh->counts;
         SharedVector<int>& indices = mesh->indices;
         SharedVector<int>& materialIDs = mesh->material_ids;
@@ -338,6 +338,7 @@ TestCase(Test_SendTexture) {
             standardMaterial.setMetallic(0.2f);
             standardMaterial.setSmoothness(0.8f);
             standardMaterial.setColorMap(testTexturesID[0]);
+            standardMaterial.SetDetailAlbedoMap(testTexturesID[1]);
             standardMaterial.setMetallicMap(metallicTexID);
             standardMaterial.setEmissionMap(emissionTexID);
 
