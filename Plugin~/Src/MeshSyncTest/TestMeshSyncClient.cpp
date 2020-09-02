@@ -4,6 +4,7 @@
 #include "MeshGenerator.h"
 #include "../MeshSync/MeshSync.h"
 #include "../MeshSync/MeshSyncUtils.h"
+#include "Utility/TestUtility.h"
 using namespace mu;
 
 
@@ -274,39 +275,6 @@ TestCase(Test_Points)
     }
 }
 
-
-template<class color_t>
-void CreateCheckerImage(SharedVector<char>& dst, color_t black, color_t white, int width, int height)
-{
-    const int num_pixels = width * height;
-    const int checker_size = 8;
-    dst.resize_discard(num_pixels * sizeof(color_t));
-    color_t *data = (color_t*)dst.data();
-    for (int iy = 0; iy < height; ++iy) {
-        for (int ix = 0; ix < width; ++ix) {
-            const bool cy = (iy / checker_size) % 2 == 0;
-            bool cx = (ix / checker_size) % 2 == 0;
-            if (cy)
-                *data++ = cx ? white : black;
-            else
-                *data++ = cx ? black : white;
-        }
-    }
-}
-
-template<class color_t>
-ms::TexturePtr CreateCheckerImageTexture(color_t black, color_t white, int width, int height, int id, const char *name)
-{
-    std::shared_ptr<ms::Texture> tex = ms::Texture::create();
-    tex->id = id;
-    tex->name = name;
-    tex->format = ms::GetTextureFormat<color_t>::result;
-    tex->width = width;
-    tex->height = height;
-    CreateCheckerImage(tex->data, black, white, width, height);
-    return tex;
-}
-
 TestCase(Test_SendTexture)
 {
     auto gen_id = []() {
@@ -342,37 +310,37 @@ TestCase(Test_SendTexture)
             // Ru8
             const unorm8 black{ 0.0f };
             const unorm8 white{ 1.0f };
-            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "Ru8"));
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture(black, white, width, height, gen_id(), "Ru8"));
         }
         {
             // RGu8
             const unorm8x2 black{ 0.0f, 0.0f };
             const unorm8x2 white{ 1.0f, 1.0f };
-            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGu8"));
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGu8"));
         }
         {
             // RGBAu8
             const unorm8x3 black{ 0.0f, 0.0f, 0.0f };
             const unorm8x3 white{ 1.0f, 1.0f, 1.0f };
-            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBu8"));
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBu8"));
         }
         {
             // RGBAu8
             const unorm8x4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             const unorm8x4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAu8"));
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAu8"));
         }
         {
             // RGBAf16
             const half4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             const half4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf16"));
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf16"));
         }
         {
             // RGBAf32
             const float4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
             const float4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf32"));
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf32"));
         }
 
         // material
