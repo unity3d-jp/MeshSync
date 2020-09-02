@@ -321,7 +321,7 @@ TestCase(Test_SendTexture) {
 
         // material
         {
-            auto mat = ms::Material::create();
+            std::shared_ptr<ms::Material> mat = ms::Material::create();
             scene->assets.push_back(mat);
             mat->name = "TestMaterial1";
             mat->id = 0;
