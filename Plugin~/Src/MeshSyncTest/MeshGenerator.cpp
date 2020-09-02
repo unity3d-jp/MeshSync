@@ -125,12 +125,13 @@ void GenerateIcoSphereMesh(
     GenerateIcoSphereMesh(counts.as_raw(), indices.as_raw(), points.as_raw(), uv.as_raw(), radius, iteration);
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 
 void GenerateWaveMesh(
     RawVector<int>& counts,
     RawVector<int>& indices,
     RawVector<float3> &points,
-    RawVector<float2> &uv,
+    SharedVector<float2> &uv,
     float size, float height,
     int resolution,
     float angle,
@@ -163,8 +164,8 @@ void GenerateWaveMesh(
 
     // topology
     if (triangulate) {
-        int num_faces = (resolution - 1) * (resolution - 1) * 2;
-        int num_indices = num_faces * 3;
+        const int num_faces = (resolution - 1) * (resolution - 1) * 2;
+        const int num_indices = num_faces * 3;
 
         counts.resize(num_faces);
         indices.resize(num_indices);
@@ -181,10 +182,9 @@ void GenerateWaveMesh(
                 indices[i * 6 + 5] = resolution*iy + (ix + 1);
             }
         }
-    }
-    else {
-        int num_faces = (resolution - 1) * (resolution - 1);
-        int num_indices = num_faces * 4;
+    } else {
+        const int num_faces = (resolution - 1) * (resolution - 1);
+        const int num_indices = num_faces * 4;
 
         counts.resize(num_faces);
         indices.resize(num_indices);
@@ -212,5 +212,5 @@ void GenerateWaveMesh(
     float angle,
     bool triangulate)
 {
-    GenerateWaveMesh(counts.as_raw(), indices.as_raw(), points.as_raw(), uv.as_raw(), size, height, resolution, angle, triangulate);
+    GenerateWaveMesh(counts.as_raw(), indices.as_raw(), points.as_raw(), uv, size, height, resolution, angle, triangulate);
 }
