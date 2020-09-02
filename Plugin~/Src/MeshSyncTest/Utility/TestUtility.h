@@ -1,4 +1,5 @@
 #pragma once
+#include "MeshSync/msClient.h"  //ms::ClientSettings
 #include "MeshSync/SceneGraph/msAsset.h" //ms::TexturePtr
 
 class TestUtility {
@@ -35,5 +36,9 @@ public:
         CreateCheckerImage(tex->data, black, white, width, height);
         return tex;
     }
+
+    static ms::ClientSettings GetClientSettings();
+    static void Send(ms::ScenePtr scene);
+
 
 };
