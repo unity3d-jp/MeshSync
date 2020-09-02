@@ -267,7 +267,7 @@ TestCase(Test_SendTexture) {
 
         std::shared_ptr<ms::Scene> scene = ms::Scene::create();
         for (const char* filename : raw_files) {
-            auto tex = ms::Texture::create();
+            std::shared_ptr<ms::Texture> tex = ms::Texture::create();
             if (tex->readFromFile(filename)) {
                 scene->assets.push_back(tex);
                 tex->id = gen_id();
