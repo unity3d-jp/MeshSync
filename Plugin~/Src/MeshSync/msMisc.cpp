@@ -23,15 +23,21 @@ bool FileToByteArray(const char *path, RawVector<char> &dst)
     if (!path)
         return false;
 
+    const Poco::File file = Poco::File(path);
+    if (!file.exists())
+        return false;
+
     // note: FILE or std::fstream may fail to open files if path contains multi-byte characters
     Poco::FileStream f(path, std::ios::in);
     if (!f)
         return false;
-    auto size = Poco::File(path).getSize();
-    dst.resize_discard((size_t)size);
-    f.read(dst.data(), (size_t)size);
+
+    const Poco::File::FileSize size = file.getSize();
+    dst.resize_discard(static_cast<size_t>(size));
+    f.read(dst.data(), static_cast<size_t>(size));
     return true;
 }
+
 bool FileToByteArray(const char *path, SharedVector<char>& out)
 {
     return FileToByteArray(path, out.as_raw());
