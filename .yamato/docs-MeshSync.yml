@@ -1,0 +1,46 @@
+yamato_name: MeshSync
+languages:
+  - en
+  - ja
+
+---
+
+{% for lang in languages %}
+build_{{lang}}_docs_win10:
+  name: Build {{lang}} docs for {{ yamato_name }}
+  agent:
+    type: Unity::VM
+    image: documentation/packagedocs-cli-win10:latest
+    flavor: b1.large
+  commands:
+    - packagedocs-cli build --package-language {{lang}}
+  artifacts:
+    {{ yamato_name }}_{{ lang }}_docs:  
+      paths:
+        - packagedocs-cli/documentation/**
+    {{ yamato_name }}_{{ lang }}_logs:  
+      paths:
+        - packagedocs-cli.log
+        - UnityEditor.log        
+{% endfor %}
+
+build_all_languages_docs_win10:
+  name: Build all languages docs for {{ yamato_name }}
+  agent:
+    type: Unity::VM
+    image: documentation/packagedocs-cli-win10:latest
+    flavor: b1.large
+  commands:
+    - ls
+  artifacts:
+    {{ yamato_name }}_all_languages_docs:  
+      paths:
+        - packagedocs-cli/documentation/**
+    {{ yamato_name }}_all_languages_logs:  
+      paths:
+        - packagedocs-cli.log
+        - UnityEditor.log        
+  dependencies:
+{% for lang in languages %}
+    - .yamato/docs-{{ yamato_name }}.yml#build_{{lang}}_docs_win10
+{% endfor %}
