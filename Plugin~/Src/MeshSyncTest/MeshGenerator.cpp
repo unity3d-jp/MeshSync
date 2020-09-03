@@ -152,7 +152,7 @@ void GenerateWaveMesh(
                 static_cast<float>(ix) / static_cast<float>(resolution - 1) - 0.5f,
                 static_cast<float>(iy) / static_cast<float>(resolution - 1) - 0.5f
             };
-            float d = std::sqrt(pos.x*pos.x + pos.y*pos.y);
+            const float d = std::sqrt(pos.x*pos.x + pos.y*pos.y);
 
             float3& v = points[vertexIndex];
             v.x = pos.x * size;
