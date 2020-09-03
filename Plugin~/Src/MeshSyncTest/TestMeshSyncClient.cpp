@@ -330,7 +330,7 @@ TestCase(Test_SendTexture) {
         {
             std::shared_ptr<ms::Material> mat = ms::Material::create();
             scene->assets.push_back(mat);
-            mat->name = "TestMaterial1";
+            mat->name = "MeshSyncTest Material";
             mat->id = 0;
             ms::StandardMaterial& standardMaterial = ms::AsStandardMaterial(*mat);
             standardMaterial.setColor({ 0.3f, 0.3f, 0.5f, 1.0f });
@@ -338,9 +338,11 @@ TestCase(Test_SendTexture) {
             standardMaterial.setMetallic(0.2f);
             standardMaterial.setSmoothness(0.8f);
             standardMaterial.setColorMap(testTexturesID[0]);
-            standardMaterial.SetDetailAlbedoMap(testTexturesID[1]);
             standardMaterial.setMetallicMap(metallicTexID);
             standardMaterial.setEmissionMap(emissionTexID);
+
+            standardMaterial.SetDetailAlbedoMap(testTexturesID[1]);
+            standardMaterial.SetSecondaryUV(1);
 
             standardMaterial.addKeyword({ "_EMISSION", true });
             standardMaterial.addKeyword({ "_INVALIDKEYWORD", true });
