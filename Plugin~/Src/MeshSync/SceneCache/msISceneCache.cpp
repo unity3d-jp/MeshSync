@@ -52,7 +52,7 @@ ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
         }
     }
 
-    size_t scene_count = m_records.size();
+    const size_t scene_count = m_records.size();
     std::sort(m_records.begin(), m_records.end(), [](auto& a, auto& b) { return a.time < b.time; });
 
     m_time_curve = AnimationCurve::create();
