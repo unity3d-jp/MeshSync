@@ -4,8 +4,7 @@
 #include <vector>
 #include <list>
 #include <memory>
-#include "MeshUtils/MeshUtils.h"
-#include "MeshSync/msFoundation.h"
+#include "MeshSync/MeshSync.h"
 
 #include "msAsset.h"
 #include "msEntity.h"

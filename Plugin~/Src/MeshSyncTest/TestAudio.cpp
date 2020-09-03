@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "Test.h"
-#include "../MeshSync/MeshSync.h"
+#include "MeshSync/SceneGraph/msAudio.h"
 #include "Utility/TestUtility.h"
+
 using namespace mu;
 
 

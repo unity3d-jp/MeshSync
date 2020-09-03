@@ -1,8 +1,15 @@
 #include "pch.h"
 #include "MeshUtils/MeshUtils.h"
-#include "MeshSync/MeshSync.h"
+
+#include "MeshSync/SceneGraph/msAnimation.h"
+#include "MeshSync/SceneGraph/msAudio.h"
 #include "MeshSync/SceneGraph/msCamera.h"
+#include "MeshSync/SceneGraph/msConstraints.h"
 #include "MeshSync/SceneGraph/msLight.h"
+#include "MeshSync/SceneGraph/msMaterial.h"
+#include "MeshSync/SceneGraph/msTexture.h"
+
+
 #include "msCoreAPI.h"
 
 using namespace mu;

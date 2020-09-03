@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MeshSync/msProtocol.h" //ms::Message
+
 #ifdef _WIN32
     #define msAPI extern "C" __declspec(dllexport)
 #else

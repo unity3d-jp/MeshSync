@@ -58,6 +58,5 @@ public:
     const Variant* findUserProperty(const char *name) const;
 };
 msSerializable(Transform);
-msDeclPtr(Transform);
 
 } // namespace ms

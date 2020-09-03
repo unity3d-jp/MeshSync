@@ -1,8 +1,10 @@
 #include "pch.h"
 #include "MeshUtils/MeshUtils.h"
-#include "MeshSync/MeshSync.h"
+#include "MeshSync/msServer.h"
 #include "MeshSync/SceneGraph/msCamera.h"
 #include "MeshSync/SceneGraph/msLight.h"
+#include "MeshSync/SceneGraph/msMaterial.h"
+
 #include "msCoreAPI.h"
 
 #ifdef msEnableNetwork

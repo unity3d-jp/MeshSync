@@ -2,6 +2,9 @@
 #include "msAsyncSceneExporter.h"
 #include "../MeshSync.h"
 
+#include "SceneGraph/msMaterial.h"
+#include "SceneGraph/msTexture.h"
+
 #ifndef msRuntime
 namespace ms {
 
