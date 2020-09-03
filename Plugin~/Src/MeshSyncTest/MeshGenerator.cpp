@@ -160,10 +160,13 @@ void GenerateWaveMesh(
             v.z = pos.y * size;
 
             for (uint32_t uvIndex=0;uvIndex< ms::msConstants::MAX_UV;++uvIndex) {
+
+                const float offset = (uvIndex % 2 * -1.0f) + (uvIndex * 0.25f);
+
                 //[-0.5f .. 0.5f] to [0..1]
                 float2& t = uv[uvIndex][vertexIndex];
-                t.x = pos.x + 0.5f;
-                t.y = pos.y + 0.5f;
+                t.x = pos.x + 0.5f + offset;
+                t.y = pos.y + 0.5f + offset;
             }
 
         }
