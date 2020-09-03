@@ -17,6 +17,7 @@ endif()
 
 file(GLOB sources *.cpp *.c *.h)
 add_library(MeshUtils STATIC ${sources} ${MUISPC_OUTPUTS})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${sources})
 
 #pch
 target_precompile_headers(MeshUtils PRIVATE "${MeshUtils_dir}/pch.h")

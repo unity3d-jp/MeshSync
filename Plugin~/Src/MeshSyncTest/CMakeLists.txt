@@ -7,6 +7,7 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}")
 
 file(GLOB sources *.cpp *.h)
 add_executable(MeshSyncTest ${sources})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${sources})
 add_dependencies(MeshSyncTest MeshSync MeshUtils)
 
 #includes

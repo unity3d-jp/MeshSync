@@ -1,8 +1,11 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.7)
 PROJECT(MeshSyncPlugin)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/Build/cmake_modules)
 set(src_root ${CMAKE_CURRENT_SOURCE_DIR}/Src)
+
+# allow CMake to organize files by folders
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Custom scripts
 include(AddPlugin)

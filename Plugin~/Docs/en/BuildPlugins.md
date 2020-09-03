@@ -10,7 +10,7 @@
 
 ### Prerequisites (Win)
 
-1. Install [cmake](https://cmake.org/)  version 3.5 or later.  
+1. Install [cmake](https://cmake.org/)  version 3.7 or later.  
    Make sure to choose one of the "Add CMake to the System PATH ..." options as shown below.  
    ![CMakeInstallation](../Images/CMakeInstallation.png)
    
@@ -117,7 +117,7 @@ $ xcodebuild -scheme mscore -configuration Release build
    export CXX=/opt/rh/devtoolset-7/root/usr/bin/g++
    ``` 
 
-1. Install [cmake](https://cmake.org/)  version 3.5 or later.  
+1. Install [cmake](https://cmake.org/)  version 3.7 or later.  
    Example:
     ``` 
     wget https://github.com/Kitware/CMake/releases/download/v3.17.0/cmake-3.17.0.tar.gz    
