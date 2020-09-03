@@ -35,10 +35,11 @@ public:
     TextureRecord* getBumpMap() const;
 };
 msDeclPtr(StandardMaterial);
-inline StandardMaterial& AsStandardMaterial(Material& p) { return static_cast<StandardMaterial&>(p); }
-inline StandardMaterial* AsStandardMaterial(Material* p) { return static_cast<StandardMaterial*>(p); }
+inline StandardMaterial& AsStandardMaterial(Material& p) { return reinterpret_cast<StandardMaterial&>(p); }
+inline StandardMaterial* AsStandardMaterial(Material* p) { return reinterpret_cast<StandardMaterial*>(p); }
 inline StandardMaterialPtr AsStandardMaterial(MaterialPtr p) { return std::static_pointer_cast<StandardMaterial>(p); }
 
+//----------------------------------------------------------------------------------------------------------------------
 
 class StandardSpecMaterial : public StandardMaterial
 {
@@ -52,8 +53,8 @@ private:
     void setupShader();
 };
 msDeclPtr(StandardSpecMaterial);
-inline StandardSpecMaterial& AsStandardSpecMaterial(Material& p) { return static_cast<StandardSpecMaterial&>(p); }
-inline StandardSpecMaterial* AsStandardSpecMaterial(Material* p) { return static_cast<StandardSpecMaterial*>(p); }
+inline StandardSpecMaterial& AsStandardSpecMaterial(Material& p) { return reinterpret_cast<StandardSpecMaterial&>(p); }
+inline StandardSpecMaterial* AsStandardSpecMaterial(Material* p) { return reinterpret_cast<StandardSpecMaterial*>(p); }
 inline StandardSpecMaterialPtr AsStandardSpecMaterial(MaterialPtr p) { return std::static_pointer_cast<StandardSpecMaterial>(p); }
 
 } // namespace ms

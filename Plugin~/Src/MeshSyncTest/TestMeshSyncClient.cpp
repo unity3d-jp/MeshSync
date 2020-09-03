@@ -4,34 +4,12 @@
 #include "MeshGenerator.h"
 #include "../MeshSync/MeshSync.h"
 #include "../MeshSync/MeshSyncUtils.h"
+#include "Utility/TestUtility.h"
 using namespace mu;
 
-
 #ifdef msEnableNetwork
-static ms::ClientSettings GetClientSettings()
-{
-    ms::ClientSettings ret;
-    GetArg("server", ret.server);
-    int port;
-    if (GetArg("port", port))
-        ret.port = (uint16_t)port;
-    return ret;
-}
 
-static void Send(ms::ScenePtr scene)
-{
-    ms::AsyncSceneSender sender;
-    sender.client_settings = GetClientSettings();
-    if (sender.isServerAvaileble()) {
-        sender.add(scene);
-        sender.kick();
-    }
-}
-
-
-
-TestCase(Test_SendMesh)
-{
+TestCase(Test_SendMesh) {
     ms::OSceneCacheSettings c0;
     c0.strip_unchanged = 0;
     c0.flatten_hierarchy = 0;
@@ -50,9 +28,9 @@ TestCase(Test_SendMesh)
     writer2.open("wave_c2.sc", c2);
 
     for (int i = 0; i < 8; ++i) {
-        auto scene = ms::Scene::create();
+        std::shared_ptr<ms::Scene> scene = ms::Scene::create();
 
-        auto mesh = ms::Mesh::create();
+        std::shared_ptr<ms::Mesh> mesh = ms::Mesh::create();
         scene->entities.push_back(mesh);
 
         mesh->path = "/Test/Wave";
@@ -82,7 +60,7 @@ TestCase(Test_SendMesh)
         writer2.geometries.emplace_back(std::static_pointer_cast<ms::Transform>(mesh->clone(true)));
         writer2.kick();
 
-        Send(scene);
+        TestUtility::Send(scene);
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
 }
@@ -91,18 +69,18 @@ TestCase(Test_SceneCacheRead)
 {
     ms::ISceneCacheSettings iscs;
     iscs.enable_diff = false;
-    auto isc = ms::OpenISceneCacheFile("wave_c2.sc", iscs);
+    ms::ISceneCachePtr isc = ms::OpenISceneCacheFile("wave_c2.sc", iscs);
     Expect(isc);
     if (!isc)
         return;
 
-    auto range = isc->getTimeRange();
-    float step = 0.1f;
+    const auto range = isc->getTimeRange();
+    const float step = 0.1f;
     for (float t = range.start; t < range.end; t += step) {
-        auto scene = isc->getByTime(t, true);
+        const ms::ScenePtr scene = isc->getByTime(t, true);
         if (!scene)
             break;
-        Send(scene);
+        TestUtility::Send(scene);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
@@ -110,9 +88,9 @@ TestCase(Test_SceneCacheRead)
 
 TestCase(Test_Animation)
 {
-    auto scene = ms::Scene::create();
+    std::shared_ptr<ms::Scene> scene = ms::Scene::create();
     {
-        auto node = ms::Mesh::create();
+        std::shared_ptr<ms::Mesh> node = ms::Mesh::create();
         scene->entities.push_back(node);
 
         node->path = "/Test/Animation";
@@ -125,10 +103,10 @@ TestCase(Test_Animation)
         node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
     }
     {
-        auto clip = ms::AnimationClip::create();
+        std::shared_ptr<ms::AnimationClip> clip = ms::AnimationClip::create();
         scene->assets.push_back(clip);
 
-        auto anim = ms::TransformAnimation::create();
+        std::shared_ptr<ms::TransformAnimation> anim = ms::TransformAnimation::create();
         clip->addAnimation(anim);
 
         anim->path = "/Test/Animation";
@@ -147,14 +125,14 @@ TestCase(Test_Animation)
         anim->scale.push_back({ 2.0f, {1.0f, 1.0f, 1.0f} });
         anim->scale.push_back({ 3.0f, {2.0f, 2.0f, 2.0f} });
     }
-    Send(scene);
+    TestUtility::Send(scene);
 }
 
 TestCase(Test_MeshMerge)
 {
-    auto scene = ms::Scene::create();
+    std::shared_ptr<ms::Scene> scene = ms::Scene::create();
 
-    auto mesh = ms::Mesh::create();
+    std::shared_ptr<ms::Mesh> mesh = ms::Mesh::create();
     scene->entities.push_back(mesh);
     {
         mesh->path = "/Test/Merge";
@@ -169,23 +147,23 @@ TestCase(Test_MeshMerge)
     }
 
     {
-        auto sphere = ms::Mesh::create();
+        std::shared_ptr<ms::Mesh> sphere = ms::Mesh::create();
         GenerateIcoSphereMesh(sphere->counts, sphere->indices, sphere->points, sphere->m_uv[0], 0.5f, 1);
         sphere->material_ids.resize(sphere->counts.size(), 1);
         sphere->transformMesh(mu::translate(float3{ 0.0f, 1.5f, 0.0f }));
 
         mesh->mergeMesh(*sphere);
     }
-    Send(scene);
+    TestUtility::Send(scene);
 }
 
 TestCase(Test_Points)
 {
     Random rand;
 
-    auto scene = ms::Scene::create();
+    std::shared_ptr<ms::Scene> scene = ms::Scene::create();
     {
-        auto node = ms::Mesh::create();
+        std::shared_ptr<ms::Mesh> node = ms::Mesh::create();
         scene->entities.push_back(node);
 
         node->path = "/Test/PointMesh";
@@ -202,7 +180,7 @@ TestCase(Test_Points)
         }
     }
     {
-        auto node = ms::Points::create();
+        std::shared_ptr<ms::Points> node = ms::Points::create();
         scene->entities.push_back(node);
 
         node->path = "/Test/PointsT";
@@ -217,14 +195,14 @@ TestCase(Test_Points)
         node->setupPointsDataFlags();
     }
     {
-        auto node = ms::Points::create();
+        std::shared_ptr<ms::Points> node = ms::Points::create();
         scene->entities.push_back(node);
 
         node->path = "/Test/PointsTR";
         node->reference = "/Test/PointMesh";
         node->position = { 0.0f, 0.0f, 0.0f };
 
-        int N = 100;
+        const int N = 100;
         node->points.resize_discard(N);
         node->rotations.resize_discard(N);
         for (int i = 0; i < N; ++i) {
@@ -234,7 +212,7 @@ TestCase(Test_Points)
         node->setupPointsDataFlags();
     }
     {
-        auto node = ms::Points::create();
+        std::shared_ptr<ms::Points> node = ms::Points::create();
         scene->entities.push_back(node);
 
         node->path = "/Test/PointsTRS";
@@ -257,238 +235,138 @@ TestCase(Test_Points)
         node->setupPointsDataFlags();
 
     }
-    Send(scene);
+    TestUtility::Send(scene);
 
     // animation
     {
         const int F = 20;
-        auto node = std::static_pointer_cast<ms::Points>(scene->entities.back());
+        std::shared_ptr<ms::Points> node = std::static_pointer_cast<ms::Points>(scene->entities.back());
 
         for (int fi = 0; fi < F; ++fi) {
             for (int i = 0; i < node->points.size(); ++i)
                 node->points[i] += node->velocities[i];
 
-            Send(scene);
+            TestUtility::Send(scene);
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 }
 
-
-template<class color_t>
-void CreateCheckerImage(SharedVector<char>& dst, color_t black, color_t white, int width, int height)
-{
-    int num_pixels = width * height;
-    int checker_size = 8;
-    dst.resize_discard(num_pixels * sizeof(color_t));
-    color_t *data = (color_t*)dst.data();
-    for (int iy = 0; iy < height; ++iy) {
-        for (int ix = 0; ix < width; ++ix) {
-            bool cy = (iy / checker_size) % 2 == 0;
-            bool cx = (ix / checker_size) % 2 == 0;
-            if (cy)
-                *data++ = cx ? white : black;
-            else
-                *data++ = cx ? black : white;
-        }
-    }
-}
-
-template<class color_t>
-ms::TexturePtr CreateCheckerImageTexture(color_t black, color_t white, int width, int height, int id, const char *name)
-{
-    auto tex = ms::Texture::create();
-    tex->id = id;
-    tex->name = name;
-    tex->format = ms::GetTextureFormat<color_t>::result;
-    tex->width = width;
-    tex->height = height;
-    CreateCheckerImage(tex->data, black, white, width, height);
-    return tex;
-}
-
-TestCase(Test_SendTexture)
-{
+TestCase(Test_SendTexture) {
     auto gen_id = []() {
         static int id_seed = 0;
         return ++id_seed;
     };
 
     // raw file textures
-    {
-        const char *raw_files[] = {
-            "Texture_RGBA_u8.png",
-            "Texture_RGBA_f16.exr",
-        };
+    const char* testTextures[] = {
+        "Texture_RGBA_u8.png",
+        "Texture_RGBA_f16.exr",
+    };
 
-        auto scene = ms::Scene::create();
-        for (auto filename : raw_files) {
-            auto tex = ms::Texture::create();
-            if (tex->readFromFile(filename)) {
-                scene->assets.push_back(tex);
-                tex->id = gen_id();
-            }
-        }
-        if (!scene->assets.empty())
-            Send(scene);
+    const uint32_t numTestTextures = sizeof(testTextures) / sizeof(testTextures[0]);
+    int testTexturesID[numTestTextures];
+
+    std::shared_ptr<ms::Scene> scene = ms::Scene::create();
+    for (uint32_t i =0;i<numTestTextures;++i) {
+
+        std::shared_ptr<ms::Texture> tex = ms::Texture::create();
+        const bool canReadTex = tex->readFromFile(testTextures[i]);
+        assert( canReadTex && "Test_SendTexture() failed in loading textures");
+        scene->assets.push_back(tex);
+        testTexturesID[i] = gen_id();
+        tex->id = testTexturesID[i];
     }
 
+    if (!scene->assets.empty())
+        TestUtility::Send(scene);
+
+
     {
-        auto scene = ms::Scene::create();
+        std::shared_ptr<ms::Scene> scene = ms::Scene::create();
 
         const int width = 512;
         const int height = 512;
         {
             // Ru8
-            unorm8 black{ 0.0f };
-            unorm8 white{ 1.0f };
-            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "Ru8"));
+            const unorm8 black{ 0.0f };
+            const unorm8 white{ 1.0f };
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<unorm8>(black, white, width, height, gen_id(), "Ru8"));
         }
+        const int emissionTexID = gen_id();
         {
             // RGu8
-            unorm8x2 black{ 0.0f, 0.0f };
-            unorm8x2 white{ 1.0f, 1.0f };
-            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGu8"));
+            const unorm8x2 black{ 0.0f, 0.0f };
+            const unorm8x2 white{ 1.0f, 1.0f };
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<unorm8x2>(black, white, width, height, emissionTexID, "RGu8"));
+        }
+        const int metallicTexID = gen_id();
+        {
+            // RGBu8
+            const unorm8x3 black{ 0.0f, 0.0f, 0.0f };
+            const unorm8x3 white{ 1.0f, 1.0f, 1.0f };
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<unorm8x3>(black, white, width, height, metallicTexID, "RGBu8"));
         }
         {
             // RGBAu8
-            unorm8x3 black{ 0.0f, 0.0f, 0.0f };
-            unorm8x3 white{ 1.0f, 1.0f, 1.0f };
-            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBu8"));
-        }
-        {
-            // RGBAu8
-            unorm8x4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
-            unorm8x4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAu8"));
+            const unorm8x4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
+            const unorm8x4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<unorm8x4>(black, white, width, height, gen_id(), "RGBAu8"));
         }
         {
             // RGBAf16
-            half4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
-            half4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf16"));
+            const half4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
+            const half4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<half4>(black, white, width, height, gen_id(), "RGBAf16"));
         }
         {
             // RGBAf32
-            float4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
-            float4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
-            scene->assets.push_back(CreateCheckerImageTexture(black, white, width, height, gen_id(), "RGBAf32"));
+            const float4 black{ 0.0f, 0.0f, 0.0f, 1.0f };
+            const float4 white{ 1.0f, 1.0f, 1.0f, 1.0f };
+            scene->assets.push_back(TestUtility::CreateCheckerImageTexture<float4>(black, white, width, height, gen_id(), "RGBAf32"));
         }
 
         // material
         {
-            auto mat = ms::Material::create();
+            std::shared_ptr<ms::Material> mat = ms::Material::create();
             scene->assets.push_back(mat);
             mat->name = "TestMaterial1";
             mat->id = 0;
-            auto& stdmat = ms::AsStandardMaterial(*mat);
-            stdmat.setColor({ 0.3f, 0.3f, 0.5f, 1.0f });
-            stdmat.setEmissionColor({ 0.7f, 0.1f, 0.2f, 1.0f });
-            stdmat.setMetallic(0.2f);
-            stdmat.setSmoothness(0.8f);
-            stdmat.setColorMap(1);
-            stdmat.setMetallicMap(5);
-            stdmat.setEmissionMap(4);
+            ms::StandardMaterial& standardMaterial = ms::AsStandardMaterial(*mat);
+            standardMaterial.setColor({ 0.3f, 0.3f, 0.5f, 1.0f });
+            standardMaterial.setEmissionColor({ 0.7f, 0.1f, 0.2f, 1.0f });
+            standardMaterial.setMetallic(0.2f);
+            standardMaterial.setSmoothness(0.8f);
+            standardMaterial.setColorMap(testTexturesID[0]);
+            standardMaterial.setMetallicMap(metallicTexID);
+            standardMaterial.setEmissionMap(emissionTexID);
 
-            stdmat.addKeyword({ "_EMISSION", true });
-            stdmat.addKeyword({ "_INVALIDKEYWORD", true });
+            standardMaterial.addKeyword({ "_EMISSION", true });
+            standardMaterial.addKeyword({ "_INVALIDKEYWORD", true });
         }
-        Send(scene);
+        TestUtility::Send(scene);
     }
-}
-
-
-
-static const int Frequency = 48000;
-static const int Channels = 1;
-
-template<class T >
-static void GenerateAudioSample(T *dst, int n)
-{
-    for (int i = 0; i < n; ++i) {
-        float s = std::pow(float(n - i) / n, 0.5f);
-        dst[i] = std::sin((float(i) * 1.5f * ms::DegToRad)) * s;
-    }
-}
-
-static ms::AudioPtr CreateAudioAsset(const char *name, ms::AudioFormat fmt, int id)
-{
-    auto a = ms::Audio::create();
-    a->id = id;
-    a->name = name;
-    a->format = fmt;
-    a->frequency = Frequency;
-    a->channels = Channels;
-
-    auto samples = a->allocate(Frequency / 2); // 0.5 sec
-    switch (fmt) {
-    case ms::AudioFormat::U8:
-        GenerateAudioSample((unorm8n*)samples, a->getSampleLength() * Channels);
-        break;
-    case ms::AudioFormat::S16:
-        GenerateAudioSample((snorm16*)samples, a->getSampleLength() * Channels);
-        break;
-    case ms::AudioFormat::S24:
-        GenerateAudioSample((snorm24*)samples, a->getSampleLength() * Channels);
-        break;
-    case ms::AudioFormat::S32:
-        GenerateAudioSample((snorm32*)samples, a->getSampleLength() * Channels);
-        break;
-    case ms::AudioFormat::F32:
-        GenerateAudioSample((float*)samples, a->getSampleLength() * Channels);
-        break;
-    default:
-        break;
-    }
-
-    std::string filename = name;
-    filename += ".wav";
-    a->exportAsWave(filename.c_str());
-    return a;
-}
-
-static ms::AudioPtr CreateAudioFileAsset(const char *path, const int id)
-{
-    auto a = ms::Audio::create();
-    a->id = id;
-    if (a->readFromFile(path))
-        return a;
-    return nullptr;
-}
-
-TestCase(Test_Audio)
-{
-    int ids = 0;
-    auto scene = ms::Scene::create();
-    scene->assets.push_back(CreateAudioAsset("audio_u8", ms::AudioFormat::U8, ids++));
-    scene->assets.push_back(CreateAudioAsset("audio_s16", ms::AudioFormat::S16, ids++));
-    scene->assets.push_back(CreateAudioAsset("audio_s24", ms::AudioFormat::S24, ids++));
-    scene->assets.push_back(CreateAudioAsset("audio_s32", ms::AudioFormat::S32, ids++));
-    scene->assets.push_back(CreateAudioAsset("audio_f32", ms::AudioFormat::F32, ids++));
-    if (ms::AudioPtr afa = CreateAudioFileAsset("explosion1.wav", ids++))
-        scene->assets.push_back(afa);
-    Send(scene);
 }
 
 TestCase(Test_FileAsset)
 {
-    auto scene = ms::Scene::create();
+    std::shared_ptr<ms::Scene> scene = ms::Scene::create();
 
     // file asset
     {
-        auto as = ms::FileAsset::create();
+        std::shared_ptr<ms::FileAsset> as = ms::FileAsset::create();
         if (as->readFromFile("pch.h"))
             scene->assets.push_back(as);
     }
-    Send(scene);
+    TestUtility::Send(scene);
 }
 
 
 TestCase(Test_Query)
 {
-    ms::Client client(GetClientSettings());
+    ms::Client client(TestUtility::GetClientSettings());
     if (!client.isServerAvailable()) {
-        auto& log = client.getErrorMessage();
+        const std::string& log = client.getErrorMessage();
         Print("Server not available. error log: %s\n", log.c_str());
         return;
     }
@@ -496,7 +374,7 @@ TestCase(Test_Query)
     auto send_query_impl = [&](ms::QueryMessage::QueryType qt, const char *query_name) {
         ms::QueryMessage query;
         query.query_type = qt;
-        auto response = client.send(query);
+        ms::ResponseMessagePtr response = client.send(query);
 
         Print("query: %s\n", query_name);
         Print("response:\n");
