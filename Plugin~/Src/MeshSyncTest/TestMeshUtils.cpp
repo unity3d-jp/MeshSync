@@ -114,7 +114,7 @@ TestCase(TestNormalsAndTangents)
     RawVector<int> indices, counts;
     RawVector<float3> points;
     SharedVector<float2> uv[ms::msConstants::MAX_UV];
-    GenerateWaveMesh(counts, indices, points, uv, 10.0f, 0.25f, 250, 0.0f, true);
+    MeshGenerator::GenerateWaveMesh(counts, indices, points, uv, 10.0f, 0.25f, 250, 0.0f, true);
 
     const int num_try = 10;
     int num_points = static_cast<int>(points.size());

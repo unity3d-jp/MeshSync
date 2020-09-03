@@ -45,7 +45,7 @@ TestCase(Test_SendMesh) {
         SharedVector<int>& indices = mesh->indices;
         SharedVector<int>& materialIDs = mesh->material_ids;
 
-        GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 30.0f * mu::DegToRad * i);
+        MeshGenerator::GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 30.0f * mu::DegToRad * i);
         materialIDs.resize(counts.size(), 0);
         mesh->setupDataFlags();
 
@@ -98,7 +98,7 @@ TestCase(Test_Animation)
         node->position = { 0.0f, 0.0f, 0.0f };
         node->rotation = quatf::identity();
         node->scale = { 1.0f, 1.0f, 1.0f };
-        GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->m_uv[0], 0.5f, 1);
+        MeshGenerator::GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->m_uv[0], 0.5f, 1);
 
         node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
         node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
@@ -141,7 +141,7 @@ TestCase(Test_MeshMerge)
         mesh->rotation = quatf::identity();
         mesh->scale = { 1.0f, 1.0f, 1.0f };
 
-        GenerateWaveMesh(mesh->counts, mesh->indices, mesh->points, mesh->m_uv, 2.0f, 1.0f, 16, 90.0f * mu::DegToRad);
+        MeshGenerator::GenerateWaveMesh(mesh->counts, mesh->indices, mesh->points, mesh->m_uv, 2.0f, 1.0f, 16, 90.0f * mu::DegToRad);
         mesh->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
         mesh->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
         mesh->material_ids.resize(mesh->counts.size(), 0);
@@ -149,7 +149,7 @@ TestCase(Test_MeshMerge)
 
     {
         std::shared_ptr<ms::Mesh> sphere = ms::Mesh::create();
-        GenerateIcoSphereMesh(sphere->counts, sphere->indices, sphere->points, sphere->m_uv[0], 0.5f, 1);
+        MeshGenerator::GenerateIcoSphereMesh(sphere->counts, sphere->indices, sphere->points, sphere->m_uv[0], 0.5f, 1);
         sphere->material_ids.resize(sphere->counts.size(), 1);
         sphere->transformMesh(mu::translate(float3{ 0.0f, 1.5f, 0.0f }));
 
@@ -172,7 +172,7 @@ TestCase(Test_Points)
         node->rotation = quatf::identity();
         node->scale = { 1.0f, 1.0f, 1.0f };
         node->visibility = { false, true, true };
-        GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->m_uv[0], 0.1f, 1);
+        MeshGenerator::GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->m_uv[0], 0.1f, 1);
         node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
         node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
         {

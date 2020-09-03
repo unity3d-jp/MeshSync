@@ -1,25 +1,25 @@
 #include "pch.h"
 #include "MeshGenerator.h"
 
-static inline int GetMiddlePoint(int p1, int p2, RawVector<float3>& vertices, std::map<int64_t, int>& cache, float radius)
+static inline int GetMiddlePoint(int p1, int p2, RawVector<mu::float3>& vertices, std::map<int64_t, int>& cache, float radius)
 {
     // first check if we have it already
-    bool firstIsSmaller = p1 < p2;
-    int64_t smallerIndex = firstIsSmaller ? p1 : p2;
-    int64_t greaterIndex = firstIsSmaller ? p2 : p1;
-    int64_t key = (smallerIndex << 32) + greaterIndex;
+    const bool firstIsSmaller = p1 < p2;
+    const int64_t smallerIndex = firstIsSmaller ? p1 : p2;
+    const int64_t greaterIndex = firstIsSmaller ? p2 : p1;
+    const int64_t key = (smallerIndex << 32) + greaterIndex;
 
     {
-        auto it = cache.find(key);
+        const auto it = cache.find(key);
         if (it != cache.end()) {
             return it->second;
         }
     }
 
     // not in cache, calculate it
-    const auto& point1 = vertices[p1];
-    const auto& point2 = vertices[p2];
-    float3 middle{
+    const mu::tvec3<float>& point1 = vertices[p1];
+    const mu::tvec3<float>& point2 = vertices[p2];
+    const mu::float3 middle{
         (point1.x + point2.x) * 0.5f,
         (point1.y + point2.y) * 0.5f,
         (point1.z + point2.z) * 0.5f
@@ -34,29 +34,31 @@ static inline int GetMiddlePoint(int p1, int p2, RawVector<float3>& vertices, st
     return cache[key];
 }
 
-void GenerateIcoSphereMesh(
+//----------------------------------------------------------------------------------------------------------------------
+
+void MeshGenerator::GenerateIcoSphereMesh(
     RawVector<int>& counts,
     RawVector<int>& indices,
-    RawVector<float3>& points,
-    RawVector<float2>& uv,
+    RawVector<mu::float3>& points,
+    RawVector<mu::float2>& uv,
     float radius,
     int iteration)
 {
-    float t = (1.0f + std::sqrt(5.0f)) * 0.5f;
+    const float t = (1.0f + std::sqrt(5.0f)) * 0.5f;
 
     points = {
-        normalize(float3{-1.0f,    t, 0.0f }) * radius,
-        normalize(float3{ 1.0f,    t, 0.0f }) * radius,
-        normalize(float3{-1.0f,   -t, 0.0f }) * radius,
-        normalize(float3{ 1.0f,   -t, 0.0f }) * radius,
-        normalize(float3{ 0.0f,-1.0f,    t }) * radius,
-        normalize(float3{ 0.0f, 1.0f,    t }) * radius,
-        normalize(float3{ 0.0f,-1.0f,   -t }) * radius,
-        normalize(float3{ 0.0f, 1.0f,   -t }) * radius,
-        normalize(float3{    t, 0.0f,-1.0f }) * radius,
-        normalize(float3{    t, 0.0f, 1.0f }) * radius,
-        normalize(float3{   -t, 0.0f,-1.0f }) * radius,
-        normalize(float3{   -t, 0.0f, 1.0f }) * radius,
+        normalize(mu::float3{-1.0f,    t, 0.0f }) * radius,
+        normalize(mu::float3{ 1.0f,    t, 0.0f }) * radius,
+        normalize(mu::float3{-1.0f,   -t, 0.0f }) * radius,
+        normalize(mu::float3{ 1.0f,   -t, 0.0f }) * radius,
+        normalize(mu::float3{ 0.0f,-1.0f,    t }) * radius,
+        normalize(mu::float3{ 0.0f, 1.0f,    t }) * radius,
+        normalize(mu::float3{ 0.0f,-1.0f,   -t }) * radius,
+        normalize(mu::float3{ 0.0f, 1.0f,   -t }) * radius,
+        normalize(mu::float3{    t, 0.0f,-1.0f }) * radius,
+        normalize(mu::float3{    t, 0.0f, 1.0f }) * radius,
+        normalize(mu::float3{   -t, 0.0f,-1.0f }) * radius,
+        normalize(mu::float3{   -t, 0.0f, 1.0f }) * radius,
     };
 
     indices = {
@@ -86,18 +88,16 @@ void GenerateIcoSphereMesh(
     };
 
     std::map<int64_t, int> cache;
-    for (int it = 0; it < iteration; it++)
-    {
+    for (int it = 0; it < iteration; it++) {
         RawVector<int> indices2;
         size_t n = indices.size();
-        for (size_t fi = 0; fi < n; fi += 3)
-        {
-            int i1 = indices[fi + 0];
-            int i2 = indices[fi + 1];
-            int i3 = indices[fi + 2];
-            int a = GetMiddlePoint(i1, i2, points, cache, radius);
-            int b = GetMiddlePoint(i2, i3, points, cache, radius);
-            int c = GetMiddlePoint(i3, i1, points, cache, radius);
+        for (size_t fi = 0; fi < n; fi += 3) {
+            const int i1 = indices[fi + 0];
+            const int i2 = indices[fi + 1];
+            const int i3 = indices[fi + 2];
+            const int a = GetMiddlePoint(i1, i2, points, cache, radius);
+            const int b = GetMiddlePoint(i2, i3, points, cache, radius);
+            const int c = GetMiddlePoint(i3, i1, points, cache, radius);
 
             int addition[]{
                 i1, a, c,
@@ -114,11 +114,11 @@ void GenerateIcoSphereMesh(
     for (int& c : counts) { c = 3; }
 }
 
-void GenerateIcoSphereMesh(
+void MeshGenerator::GenerateIcoSphereMesh(
     SharedVector<int>& counts,
     SharedVector<int>& indices,
-    SharedVector<float3>& points,
-    SharedVector<float2>& uv,
+    SharedVector<mu::float3>& points,
+    SharedVector<mu::float2>& uv,
     float radius,
     int iteration)
 {
@@ -127,11 +127,11 @@ void GenerateIcoSphereMesh(
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void GenerateWaveMesh(
+void MeshGenerator::GenerateWaveMesh(
     RawVector<int>& counts,
     RawVector<int>& indices,
-    RawVector<float3> &points,
-    SharedVector<float2> uv[ms::msConstants::MAX_UV],
+    RawVector<mu::float3> &points,
+    SharedVector<mu::float2> uv[ms::msConstants::MAX_UV],
     float size, float height,
     int resolution,
     float angle,
@@ -148,13 +148,13 @@ void GenerateWaveMesh(
     for (int iy = 0; iy < resolution; ++iy) {
         for (int ix = 0; ix < resolution; ++ix) {
             const int vertexIndex = resolution*iy + ix;
-            const float2 pos = {
+            const mu::float2 pos = {
                 static_cast<float>(ix) / static_cast<float>(resolution - 1) - 0.5f,
                 static_cast<float>(iy) / static_cast<float>(resolution - 1) - 0.5f
             };
             const float d = std::sqrt(pos.x*pos.x + pos.y*pos.y);
 
-            float3& v = points[vertexIndex];
+            mu::float3& v = points[vertexIndex];
             v.x = pos.x * size;
             v.y = std::sin(d * 10.0f + angle) * std::max<float>(1.0f - d, 0.0f) * height;
             v.z = pos.y * size;
@@ -164,7 +164,7 @@ void GenerateWaveMesh(
                 const float offset = (uvIndex % 2 * -1.0f) + (uvIndex * 0.25f);
 
                 //[-0.5f .. 0.5f] to [0..1]
-                float2& t = uv[uvIndex][vertexIndex];
+                mu::float2& t = uv[uvIndex][vertexIndex];
                 t.x = pos.x + 0.5f + offset;
                 t.y = pos.y + 0.5f + offset;
             }
@@ -181,7 +181,7 @@ void GenerateWaveMesh(
         indices.resize(num_indices);
         for (int iy = 0; iy < resolution - 1; ++iy) {
             for (int ix = 0; ix < resolution - 1; ++ix) {
-                int i = (resolution - 1)*iy + ix;
+                const int i = (resolution - 1)*iy + ix;
                 counts[i * 2 + 0] = 3;
                 counts[i * 2 + 1] = 3;
                 indices[i * 6 + 0] = resolution*iy + ix;
@@ -211,11 +211,11 @@ void GenerateWaveMesh(
     }
 }
 
-void GenerateWaveMesh(
+void MeshGenerator::GenerateWaveMesh(
     SharedVector<int>& counts,
     SharedVector<int>& indices,
-    SharedVector<float3>& points,
-    SharedVector<float2> uv[ms::msConstants::MAX_UV],
+    SharedVector<mu::float3>& points,
+    SharedVector<mu::float2> uv[ms::msConstants::MAX_UV],
     float size,
     float height,
     int resolution,
