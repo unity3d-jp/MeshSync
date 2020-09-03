@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "Test.h"
-#include "MeshGenerator.h"
 #include "../MeshSync/MeshSync.h"
-#include "../MeshSync/MeshSyncUtils.h"
 #include "Utility/TestUtility.h"
 using namespace mu;
 

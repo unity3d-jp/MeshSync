@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "Test.h"
-#include "MeshGenerator.h"
 #include "Common.h"
+#include "Utility/MeshGenerator.h"
+
 using namespace mu;
 
 #ifdef EnableFbxExport

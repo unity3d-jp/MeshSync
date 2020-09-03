@@ -1,10 +1,11 @@
 #include "pch.h"
 #include "Test.h"
 #include "Common.h"
-#include "MeshGenerator.h"
 #include "../MeshSync/MeshSync.h"
 #include "../MeshSync/MeshSyncUtils.h"
 #include "Utility/TestUtility.h"
+#include "Utility/MeshGenerator.h"
+
 using namespace mu;
 
 #ifdef msEnableNetwork
