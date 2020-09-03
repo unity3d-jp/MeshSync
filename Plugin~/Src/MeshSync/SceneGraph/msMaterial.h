@@ -46,8 +46,8 @@ public:
 
     // T accepts int, float, float{2,3,4, 2x2, 3x3, 4x4} and TexturePtr/TextureRecord
     // note: float{2,3} are converted to float4 and float{2x2,3x3} are converted to float4x4 internally
-    template<class T> MaterialProperty(const char *n, const T& v) : name(n) { set<T>(v); }
-    template<class T> MaterialProperty(const char *n, const T *v, size_t c) : name(n) { set<T>(v, c); }
+    template<class T> explicit MaterialProperty(const char *n, const T& v) : name(n) { set<T>(v); }
+    template<class T> explicit MaterialProperty(const char *n, const T *v, size_t c) : name(n) { set<T>(v, c); }
     template<class T> void set(const T& v);
     template<class T> void set(const T *v, size_t n);
 

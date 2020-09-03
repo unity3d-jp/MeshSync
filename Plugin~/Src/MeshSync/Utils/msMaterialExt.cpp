@@ -13,12 +13,14 @@ static const char _EmissionMap[] = "_EmissionMap";
 static const char _MetallicGlossMap[] = "_MetallicGlossMap";
 static const char _BumpScale[] = "_BumpScale";
 static const char _BumpMap[] = "_BumpMap";
+static const char DETAIL_ALBEDO_MAP_SHADER_VAR[] = "_DetailAlbedoMap";
+static const char UV_SEC_SHADER_VAR[] = "_UVSec";
 
 using TextureRecord = MaterialProperty::TextureRecord;
 
 void StandardMaterial::setColor(float4 v)
 {
-    addProperty({ _Color, v });
+    addProperty( MaterialProperty( _Color, v ));
 }
 float4 StandardMaterial::getColor() const
 {
@@ -27,36 +29,63 @@ float4 StandardMaterial::getColor() const
 }
 void StandardMaterial::setColorMap(const TextureRecord& v)
 {
-    addProperty({ _MainTex,v });
+    addProperty( MaterialProperty(_MainTex,v));
 }
-void StandardMaterial::setColorMap(TexturePtr v)
+void StandardMaterial::setColorMap(const TexturePtr v)
 {
     if (v)
-        addProperty({ _MainTex, v });
+        addProperty(MaterialProperty(_MainTex, v ));
 }
-Material::TextureRecord* StandardMaterial::getColorMap() const
-{
-    const MaterialProperty* p = findProperty("_MainTex");
+
+Material::TextureRecord* StandardMaterial::getColorMap() const {
+    const MaterialProperty* p = findProperty(_MainTex);
     return p ? &p->get<TextureRecord>() : nullptr;
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+void StandardMaterial::SetDetailAlbedoMap(const TextureRecord& v) {
+    addProperty( MaterialProperty(DETAIL_ALBEDO_MAP_SHADER_VAR,v));
+}
+
+void StandardMaterial::SetDetailAlbedoMap(TexturePtr v) {
+    assert(v);
+    addProperty( MaterialProperty(DETAIL_ALBEDO_MAP_SHADER_VAR,v));
+
+}
+TextureRecord* StandardMaterial::GetDetailAlbedoMap() const {
+    const MaterialProperty* p = findProperty(DETAIL_ALBEDO_MAP_SHADER_VAR);
+    return p ? &p->get<TextureRecord>() : nullptr;
+
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void  StandardMaterial::SetUVForSecondaryMap(float v) {
+    addProperty(MaterialProperty( UV_SEC_SHADER_VAR, v ));
+}
+float StandardMaterial::GetUVForSecondaryMap() const {
+    const MaterialProperty* p = findProperty(UV_SEC_SHADER_VAR);
+    return p ? p->get<float>() : 0.0f;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 void StandardMaterial::setEmissionColor(float4 v)
 {
-    addProperty({ _EmissionColor, v });
+    addProperty(MaterialProperty( _EmissionColor, v ));
 }
 float4 StandardMaterial::getEmissionColor() const
 {
     const MaterialProperty* p = findProperty(_EmissionColor);
     return p ? p->get<float4>() : float4::zero();
 }
-void StandardMaterial::setEmissionMap(const TextureRecord& v)
-{
-    addProperty({ _EmissionMap, v });
+void StandardMaterial::setEmissionMap(const TextureRecord& v){
+    addProperty(MaterialProperty(_EmissionMap, v ));
 }
-void StandardMaterial::setEmissionMap(TexturePtr v)
-{
+
+void StandardMaterial::setEmissionMap(TexturePtr v) {
     if (v)
-        addProperty({ _EmissionMap, v });
+        addProperty(MaterialProperty( _EmissionMap, v ));
 }
 Material::TextureRecord* StandardMaterial::getEmissionMap() const
 {
@@ -64,23 +93,20 @@ Material::TextureRecord* StandardMaterial::getEmissionMap() const
     return p ? &p->get<TextureRecord>() : nullptr;
 }
 
-void StandardMaterial::setMetallic(float v)
-{
-    addProperty({ _Metallic, v });
+void StandardMaterial::setMetallic(float v) {
+    addProperty( MaterialProperty( _Metallic, v ));
 }
 float StandardMaterial::getMetallic() const
 {
     const MaterialProperty* p = findProperty(_Metallic);
     return p ? p->get<float>() : 0.0f;
 }
-void StandardMaterial::setMetallicMap(const TextureRecord& v)
-{
-    addProperty({ _MetallicGlossMap, v });
+void StandardMaterial::setMetallicMap(const TextureRecord& v) {
+    addProperty( MaterialProperty( _MetallicGlossMap, v ));
 }
-void StandardMaterial::setMetallicMap(TexturePtr v)
-{
+void StandardMaterial::setMetallicMap(TexturePtr v) {
     if (v)
-        addProperty({ _MetallicGlossMap, v });
+        addProperty(MaterialProperty( _MetallicGlossMap, v ));
 }
 Material::TextureRecord* StandardMaterial::getMetallicMap() const
 {
@@ -89,7 +115,7 @@ Material::TextureRecord* StandardMaterial::getMetallicMap() const
 }
 void StandardMaterial::setSmoothness(float v)
 {
-    addProperty({ _Glossiness, v });
+    addProperty(MaterialProperty( _Glossiness, v ));
 }
 float StandardMaterial::getSmoothness() const
 {
@@ -99,7 +125,7 @@ float StandardMaterial::getSmoothness() const
 
 void StandardMaterial::setBumpScale(float v)
 {
-    addProperty({ _BumpScale, v });
+    addProperty(MaterialProperty( _BumpScale, v ));
 }
 float StandardMaterial::getBumpScale() const
 {
@@ -107,11 +133,11 @@ float StandardMaterial::getBumpScale() const
     return p ? p->get<float>() : 0.0f;
 }
 void StandardMaterial::setBumpMap(const TextureRecord& v) {
-    addProperty({ _BumpMap, v });
+    addProperty(MaterialProperty( _BumpMap, v ));
 }
 void StandardMaterial::setBumpMap(const TexturePtr v) {
     if (v)
-        addProperty({ _BumpMap, v });
+        addProperty(MaterialProperty( _BumpMap, v ));
 }
 Material::TextureRecord* StandardMaterial::getBumpMap() const
 {
@@ -133,7 +159,7 @@ void StandardSpecMaterial::setupShader() {
 
 void StandardSpecMaterial::setSpecularColor(float4 v) {
     setupShader();
-    addProperty({ _SpecColor, v });
+    addProperty(MaterialProperty( _SpecColor, v ));
 }
 
 float4 StandardSpecMaterial::getSpecularColor() {
@@ -143,13 +169,13 @@ float4 StandardSpecMaterial::getSpecularColor() {
 
 void StandardSpecMaterial::setSpecularGlossMap(const TextureRecord& v) {
     setupShader();
-    addProperty({ _SpecGlossMap, v });
+    addProperty(MaterialProperty( _SpecGlossMap, v ));
 }
 
 void StandardSpecMaterial::setSpecularGlossMap(TexturePtr v) {
     setupShader();
     if (v)
-        addProperty({ _SpecGlossMap, v });
+        addProperty(MaterialProperty( _SpecGlossMap, v ));
 }
 
 Material::TextureRecord* StandardSpecMaterial::getSpecularGlossMap()

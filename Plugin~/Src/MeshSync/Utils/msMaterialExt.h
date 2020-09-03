@@ -11,8 +11,15 @@ public:
     void    setColor(float4 v);
     float4  getColor() const;
     void    setColorMap(const TextureRecord& v);
-    void    setColorMap(TexturePtr v);
+    void    setColorMap(const TexturePtr v);
     TextureRecord* getColorMap() const;
+
+    void    SetDetailAlbedoMap(const TextureRecord& v);
+    void    SetDetailAlbedoMap(const TexturePtr v);
+    TextureRecord* GetDetailAlbedoMap() const;
+
+    void    SetUVForSecondaryMap(float v);
+    float   GetUVForSecondaryMap() const;
 
     void    setEmissionColor(float4 v);
     float4  getEmissionColor() const;

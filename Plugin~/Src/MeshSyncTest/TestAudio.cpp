@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "Test.h"
-#include "MeshGenerator.h"
 #include "../MeshSync/MeshSync.h"
-#include "../MeshSync/MeshSyncUtils.h"
 #include "Utility/TestUtility.h"
 using namespace mu;
 
@@ -14,9 +12,9 @@ static const int Frequency = 48000;
 static const int Channels = 1;
 
 template<class T >
-static void GenerateAudioSample(T *dst, int n) {
+static void GenerateAudioSample(T *dst, const int n) {
     for (int i = 0; i < n; ++i) {
-        float s = std::pow(static_cast<float>(n - i) / n, 0.5f);
+        const float s = std::pow(static_cast<float>(n - i) / n, 0.5f);
         dst[i] = std::sin((static_cast<float>(i) * 1.5f * ms::DegToRad)) * s;
     }
 }
@@ -30,21 +28,22 @@ static ms::AudioPtr CreateAudioAsset(const char *name, ms::AudioFormat fmt, int 
     a->channels = Channels;
 
     void* samples = a->allocate(Frequency / 2); // 0.5 sec
+    const int numSampleChannels = static_cast<int>(a->getSampleLength() * Channels);
     switch (fmt) {
     case ms::AudioFormat::U8:
-        GenerateAudioSample(static_cast<unorm8n*>(samples), a->getSampleLength() * Channels);
+        GenerateAudioSample(static_cast<unorm8n*>(samples), numSampleChannels);
         break;
     case ms::AudioFormat::S16:
-        GenerateAudioSample(static_cast<snorm16*>(samples), a->getSampleLength() * Channels);
+        GenerateAudioSample(static_cast<snorm16*>(samples), numSampleChannels);
         break;
     case ms::AudioFormat::S24:
-        GenerateAudioSample(static_cast<snorm24*>(samples), a->getSampleLength() * Channels);
+        GenerateAudioSample(static_cast<snorm24*>(samples), numSampleChannels);
         break;
     case ms::AudioFormat::S32:
-        GenerateAudioSample(static_cast<snorm32*>(samples), a->getSampleLength() * Channels);
+        GenerateAudioSample(static_cast<snorm32*>(samples), numSampleChannels);
         break;
     case ms::AudioFormat::F32:
-        GenerateAudioSample(static_cast<float*>(samples), a->getSampleLength() * Channels);
+        GenerateAudioSample(static_cast<float*>(samples), numSampleChannels);
         break;
     default:
         break;

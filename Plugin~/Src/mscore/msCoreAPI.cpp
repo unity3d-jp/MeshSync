@@ -96,13 +96,27 @@ msAPI const ms::MaterialProperty* msMaterialGetParam(const ms::Material *self, i
 msAPI const ms::MaterialProperty* msMaterialFindParam(const ms::Material *self, const char *n) { return self->findProperty(n); }
 msAPI int msMaterialGetNumKeywords(const ms::Material *self) { return (int)self->keywords.size(); }
 msAPI const ms::MaterialKeyword* msMaterialGetKeyword(const ms::Material *self, int i) { return &self->keywords[i]; }
-msAPI void msMaterialSetInt(ms::Material *self, const char *n, int v) { self->addProperty({ n, v }); }
-msAPI void msMaterialSetFloat(ms::Material *self, const char *n, float v) { self->addProperty({ n, v }); }
-msAPI void msMaterialSetVector(ms::Material *self, const char *n, const float4 v) { self->addProperty({ n, v }); }
-msAPI void msMaterialSetMatrix(ms::Material *self, const char *n, const float4x4 v) { self->addProperty({ n, v }); }
-msAPI void msMaterialSetFloatArray(ms::Material *self, const char *n, const float *v, int c) { self->addProperty({ n, v, (size_t)c }); }
-msAPI void msMaterialSetVectorArray(ms::Material *self, const char *n, const float4 *v, int c) { self->addProperty({ n, v, (size_t)c }); }
-msAPI void msMaterialSetMatrixArray(ms::Material *self, const char *n, const float4x4 *v, int c) { self->addProperty({ n, v, (size_t)c }); }
+msAPI void msMaterialSetInt(ms::Material *self, const char *n, int v) {
+    self->addProperty(ms::MaterialProperty( n, v ));
+}
+msAPI void msMaterialSetFloat(ms::Material *self, const char *n, float v) {
+    self->addProperty(ms::MaterialProperty( n, v));
+}
+msAPI void msMaterialSetVector(ms::Material *self, const char *n, const float4 v) {
+    self->addProperty(ms::MaterialProperty( n, v ));
+}
+msAPI void msMaterialSetMatrix(ms::Material *self, const char *n, const float4x4 v) {
+    self->addProperty(ms::MaterialProperty( n, v));
+}
+msAPI void msMaterialSetFloatArray(ms::Material *self, const char *n, const float *v, int c) {
+    self->addProperty(ms::MaterialProperty( n, v, static_cast<size_t>(c) ));
+}
+msAPI void msMaterialSetVectorArray(ms::Material *self, const char *n, const float4 *v, int c) {
+    self->addProperty(ms::MaterialProperty( n, v, static_cast<size_t>(c) ));
+}
+msAPI void msMaterialSetMatrixArray(ms::Material *self, const char *n, const float4x4 *v, int c) {
+    self->addProperty(ms::MaterialProperty( n, v, static_cast<size_t>(c) ));
+}
 msAPI void msMaterialAddKeyword(ms::Material *self, const char *name, bool v) { self->keywords.push_back({name, v}); }
 #pragma endregion
 

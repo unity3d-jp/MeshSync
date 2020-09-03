@@ -1,10 +1,11 @@
 #include "pch.h"
 #include "Test.h"
 #include "Common.h"
-#include "MeshGenerator.h"
 #include "../MeshSync/MeshSync.h"
 #include "../MeshSync/MeshSyncUtils.h"
 #include "Utility/TestUtility.h"
+#include "Utility/MeshGenerator.h"
+
 using namespace mu;
 
 #ifdef msEnableNetwork
@@ -39,12 +40,12 @@ TestCase(Test_SendMesh) {
 
 
         SharedVector<float3>& points = mesh->points;
-        SharedVector<tvec2<float>>& uv = mesh->m_uv[0];
+        SharedVector<tvec2<float>>* uv = mesh->m_uv;
         SharedVector<int>& counts = mesh->counts;
         SharedVector<int>& indices = mesh->indices;
         SharedVector<int>& materialIDs = mesh->material_ids;
 
-        GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 30.0f * mu::DegToRad * i);
+        MeshGenerator::GenerateWaveMesh(counts, indices, points, uv, 2.0f, 1.0f, 32, 30.0f * mu::DegToRad * i);
         materialIDs.resize(counts.size(), 0);
         mesh->setupDataFlags();
 
@@ -97,7 +98,7 @@ TestCase(Test_Animation)
         node->position = { 0.0f, 0.0f, 0.0f };
         node->rotation = quatf::identity();
         node->scale = { 1.0f, 1.0f, 1.0f };
-        GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->m_uv[0], 0.5f, 1);
+        MeshGenerator::GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->m_uv[0], 0.5f, 1);
 
         node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
         node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
@@ -140,7 +141,7 @@ TestCase(Test_MeshMerge)
         mesh->rotation = quatf::identity();
         mesh->scale = { 1.0f, 1.0f, 1.0f };
 
-        GenerateWaveMesh(mesh->counts, mesh->indices, mesh->points, mesh->m_uv[0], 2.0f, 1.0f, 16, 90.0f * mu::DegToRad);
+        MeshGenerator::GenerateWaveMesh(mesh->counts, mesh->indices, mesh->points, mesh->m_uv, 2.0f, 1.0f, 16, 90.0f * mu::DegToRad);
         mesh->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
         mesh->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
         mesh->material_ids.resize(mesh->counts.size(), 0);
@@ -148,7 +149,7 @@ TestCase(Test_MeshMerge)
 
     {
         std::shared_ptr<ms::Mesh> sphere = ms::Mesh::create();
-        GenerateIcoSphereMesh(sphere->counts, sphere->indices, sphere->points, sphere->m_uv[0], 0.5f, 1);
+        MeshGenerator::GenerateIcoSphereMesh(sphere->counts, sphere->indices, sphere->points, sphere->m_uv[0], 0.5f, 1);
         sphere->material_ids.resize(sphere->counts.size(), 1);
         sphere->transformMesh(mu::translate(float3{ 0.0f, 1.5f, 0.0f }));
 
@@ -171,7 +172,7 @@ TestCase(Test_Points)
         node->rotation = quatf::identity();
         node->scale = { 1.0f, 1.0f, 1.0f };
         node->visibility = { false, true, true };
-        GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->m_uv[0], 0.1f, 1);
+        MeshGenerator::GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->m_uv[0], 0.1f, 1);
         node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
         node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
         {
@@ -330,7 +331,7 @@ TestCase(Test_SendTexture) {
         {
             std::shared_ptr<ms::Material> mat = ms::Material::create();
             scene->assets.push_back(mat);
-            mat->name = "TestMaterial1";
+            mat->name = "MeshSyncTest Material";
             mat->id = 0;
             ms::StandardMaterial& standardMaterial = ms::AsStandardMaterial(*mat);
             standardMaterial.setColor({ 0.3f, 0.3f, 0.5f, 1.0f });
@@ -340,6 +341,9 @@ TestCase(Test_SendTexture) {
             standardMaterial.setColorMap(testTexturesID[0]);
             standardMaterial.setMetallicMap(metallicTexID);
             standardMaterial.setEmissionMap(emissionTexID);
+
+            standardMaterial.SetDetailAlbedoMap(testTexturesID[1]);
+            standardMaterial.SetUVForSecondaryMap(1);
 
             standardMaterial.addKeyword({ "_EMISSION", true });
             standardMaterial.addKeyword({ "_INVALIDKEYWORD", true });
