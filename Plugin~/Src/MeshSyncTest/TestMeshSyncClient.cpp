@@ -342,7 +342,7 @@ TestCase(Test_SendTexture) {
             standardMaterial.setEmissionMap(emissionTexID);
 
             standardMaterial.SetDetailAlbedoMap(testTexturesID[1]);
-            standardMaterial.SetSecondaryUV(1);
+            standardMaterial.SetUVForSecondaryMap(1);
 
             standardMaterial.addKeyword({ "_EMISSION", true });
             standardMaterial.addKeyword({ "_INVALIDKEYWORD", true });

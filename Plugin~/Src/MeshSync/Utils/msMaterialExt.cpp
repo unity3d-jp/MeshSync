@@ -60,10 +60,10 @@ TextureRecord* StandardMaterial::GetDetailAlbedoMap() const {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void  StandardMaterial::SetSecondaryUV(float v) {
+void  StandardMaterial::SetUVForSecondaryMap(float v) {
     addProperty(MaterialProperty( UV_SEC_SHADER_VAR, v ));
 }
-float StandardMaterial::GetSecondaryUV() const {
+float StandardMaterial::GetUVForSecondaryMap() const {
     const MaterialProperty* p = findProperty(UV_SEC_SHADER_VAR);
     return p ? p->get<float>() : 0.0f;
 }
