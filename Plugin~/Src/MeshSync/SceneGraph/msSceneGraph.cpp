@@ -54,7 +54,7 @@ void Scene::serialize(std::ostream& os) const
     data_flags.has_entities = !entities.empty();
     data_flags.has_constraints = !constraints.empty();
 
-    uint64_t validation_hash = hash();
+    const uint64_t validation_hash = hash();
     write(os, validation_hash);
 
     write(os, data_flags);
@@ -72,8 +72,9 @@ void Scene::deserialize(std::istream& is)
     EachMember(Body);
 #undef Body
 
-    if (validation_hash != hash()) {
-        throw std::runtime_error("scene hash doesn't match");
+    const uint64_t sceneHash = hash();
+    if (validation_hash != sceneHash) {
+        throw std::runtime_error("[MeshSync] scene hash doesn't match");
     }
 }
 

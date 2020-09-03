@@ -246,8 +246,8 @@ void BoneData::clear()
     if (flags.Get(MESH_DATA_FLAG_HAS_SUBMESHES))        { op(stream, submeshes); } \
     if (flags.Get(MESH_DATA_FLAG_HAS_BOUNDS))           { op(stream, bounds); } \
     for (uint32_t i=0;i<msConstants::MAX_UV;++i) { \
-        if ((flags).GetUV(index)) { \
-            op(stream, m_uv[index]); \
+        if ((flags).GetUV(i)) { \
+            op(stream, m_uv[i]); \
         } \
     } \
 }
