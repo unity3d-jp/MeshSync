@@ -30,8 +30,8 @@ static inline int GetMiddlePoint(int p1, int p2, RawVector<float3>& vertices, st
     vertices.push_back(normalize(middle) * radius);
 
     // store it, return index
-    cache[key] = i;
-    return i;
+    cache[key] = static_cast<int>(i);
+    return cache[key];
 }
 
 void GenerateIcoSphereMesh(
@@ -156,7 +156,7 @@ void GenerateWaveMesh(
 
             float3& v = points[vertexIndex];
             v.x = pos.x * size;
-            v.y = std::sin(d * 10.0f + angle) * std::max<float>(1.0 - d, 0.0f) * height;
+            v.y = std::sin(d * 10.0f + angle) * std::max<float>(1.0f - d, 0.0f) * height;
             v.z = pos.y * size;
 
             for (uint32_t uvIndex=0;uvIndex< ms::msConstants::MAX_UV;++uvIndex) {
