@@ -165,11 +165,11 @@ void AsyncSceneSender::send()
 
     // textures
     if (!textures.empty()) {
-        for (auto& tex : textures) {
+        for (std::vector<std::shared_ptr<Texture>>::value_type& tex : textures) {
             ms::SetMessage mes;
             setup_message(mes);
             mes.scene->settings = scene_settings;
-            mes.scene->assets = { tex };
+            mes.scene->assets = std::vector<AssetPtr> {tex};
             succeeded = succeeded && client.send(mes);
             if (!succeeded)
                 goto cleanup;
