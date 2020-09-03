@@ -140,7 +140,7 @@ TestCase(Test_MeshMerge)
         mesh->rotation = quatf::identity();
         mesh->scale = { 1.0f, 1.0f, 1.0f };
 
-        GenerateWaveMesh(mesh->counts, mesh->indices, mesh->points, mesh->m_uv[0], 2.0f, 1.0f, 16, 90.0f * mu::DegToRad);
+        GenerateWaveMesh(mesh->counts, mesh->indices, mesh->points, mesh->m_uv, 2.0f, 1.0f, 16, 90.0f * mu::DegToRad);
         mesh->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
         mesh->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
         mesh->material_ids.resize(mesh->counts.size(), 0);

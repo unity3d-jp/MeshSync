@@ -112,12 +112,13 @@ TestCase(TestNormalsAndTangents)
 {
     RawVector<int> indices, counts;
     RawVector<float3> points;
-    RawVector<float2> uv;
+    SharedVector<float2> uv[ms::msConstants::MAX_UV];
     GenerateWaveMesh(counts, indices, points, uv, 10.0f, 0.25f, 250, 0.0f, true);
 
-    int num_try = 10;
-    int num_points = (int)points.size();
-    int num_triangles = (int)indices.size() / 3;
+    const int num_try = 10;
+    int num_points = static_cast<int>(points.size());
+    int num_triangles = static_cast<int>(indices.size()) / 3;
+    const uint32_t uvIndex = 0;
     RawVector<float3> points_f;
     RawVector<float2> uv_f;
     RawVector<float3> normals[6];
@@ -130,7 +131,7 @@ TestCase(TestNormalsAndTangents)
     uv_f.resize(indices.size());
     for (size_t i = 0; i < indices.size(); ++i) {
         points_f[i] = points[indices[i]];
-        uv_f[i] = uv[indices[i]];
+        uv_f[i] = uv[uvIndex][indices[i]];
     }
 
     // generate soa data
@@ -145,16 +146,16 @@ TestCase(TestNormalsAndTangents)
             points[indices[ti * 3 + 2]],
         };
         float2 u[3] = {
-            uv[indices[ti * 3 + 0]],
-            uv[indices[ti * 3 + 1]],
-            uv[indices[ti * 3 + 2]],
+            uv[uvIndex][indices[ti * 3 + 0]],
+            uv[uvIndex][indices[ti * 3 + 1]],
+            uv[uvIndex][indices[ti * 3 + 2]],
         };
 
         for (int i = 0; i < 9; ++i) {
-            psoa[i][ti] = ((float*)p)[i];
+            psoa[i][ti] = reinterpret_cast<float*>(p)[i];
         }
         for (int i = 0; i < 6; ++i) {
-            usoa[i][ti] = ((float*)u)[i];
+            usoa[i][ti] = reinterpret_cast<float*>(u)[i];
         }
     }
 
@@ -173,8 +174,8 @@ TestCase(TestNormalsAndTangents)
         "    num_vertices: %d\n"
         "    num_triangles: %d\n"
         ,
-        (int)points.size(),
-        (int)indices.size() / 3);
+        static_cast<int>(points.size()),
+        static_cast<int>(indices.size()) / 3);
 
 #define SoAPointsArgs\
     psoa[0].data(), psoa[1].data(), psoa[2].data(),\
@@ -228,13 +229,13 @@ TestCase(TestNormalsAndTangents)
 
     TestScope("GenerateTangents indexed C++", [&]() {
         GenerateTangentsTriangleIndexed_Generic(tangents[0].data(),
-            points.data(), uv.data(), normals[0].data(), indices.data(), num_triangles, num_points);
+            points.data(), uv[uvIndex].data(), normals[0].data(), indices.data(), num_triangles, num_points);
     }, num_try);
 
 #ifdef muSIMD_GenerateTangentsTriangleIndexed
     TestScope("GenerateTangents indexed ISPC", [&]() {
         GenerateTangentsTriangleIndexed_ISPC(tangents[1].data(),
-            points.data(), uv.data(), normals[1].data(), indices.data(), num_triangles, num_points);
+            points.data(), uv[uvIndex].data(), normals[1].data(), indices.data(), num_triangles, num_points);
     }, num_try);
     ValidateTangents(tangents[1]);
 #endif
@@ -269,7 +270,7 @@ TestCase(TestNormalsAndTangents)
 
     // try to call CalculateTangents() in Unity.exe
     {
-        auto unity_exe = GetModule("Unity.exe");
+        void* unity_exe = GetModule("Unity.exe");
         if (unity_exe) {
             InitializeSymbols();
 
@@ -281,7 +282,7 @@ TestCase(TestNormalsAndTangents)
             if (CalculateTangents) {
                 StrideIterator<float3> viter = { points.data(), sizeof(float3) };
                 StrideIterator<float3> niter = { normals[0].data(), sizeof(float3) };
-                StrideIterator<float2> uiter = { uv.data(), sizeof(float2) };
+                StrideIterator<float2> uiter = { uv[uvIndex].data(), sizeof(float2) };
                 StrideIterator<float4> titer = { tangents[6].data(), sizeof(float4) };
 
                 TestScope("CalculateTangents (Unity.exe)", [&]() {
@@ -472,7 +473,7 @@ TestCase(TestRayTrianglesIntersection)
         }
     }
 
-    int num_triangles = indices.size() / 3;
+    int num_triangles = static_cast<int>(indices.size() / 3);
     vertices_flattened.resize(indices.size());
     v1x.resize(num_triangles); v1y.resize(num_triangles); v1z.resize(num_triangles);
     v2x.resize(num_triangles); v2y.resize(num_triangles); v2z.resize(num_triangles);
@@ -1060,7 +1061,7 @@ TestCase(Test_BoundedArray)
     RawVector<float3> data_normals(N), tmp_normals(N);
     RawVector<float4> data_tangents(N), tmp_tangents(N);
     for (int i = 0; i < N; ++i) {
-        data1i[i] = (rnd.f01() * 60000.0f) + 10000;
+        data1i[i] = static_cast<int>((rnd.f01() * 60000.0f) + 10000.f);
 
         data1[i] = rnd.f11() * 1.0f;
         data2[i] = { rnd.f01()*2.0f, rnd.f01()*2.0f - 2.0f };
@@ -1135,12 +1136,12 @@ TestCase(Test_UniqueUnsorted)
 {
     int input[] = { 5,1,3,6,2,4,3,4,5,4,6,7,6 };
     // std::size() require C++17
-    size_t len = std::distance(std::begin(input), std::end(input));
-    auto pos = unique_unsorted(input, input + len);
-    auto n = std::distance(input, pos);
+    const size_t len = std::distance(std::begin(input), std::end(input));
+    int* pos = unique_unsorted(input, input + len);
+    std::_Iterator_traits_pointer_base<int, true>::difference_type n = std::distance(input, pos);
     Expect(n == 7);
 
-    for (size_t i = 0; i < n; ++i)
+    for (int64_t i = 0; i < n; ++i)
         Print("%d ", input[i]);
     Print("\n");
 }
