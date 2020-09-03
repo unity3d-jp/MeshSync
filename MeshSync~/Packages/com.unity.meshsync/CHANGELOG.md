@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.3.0-preview] - 2020-09-05
+* feat: core multiple UV support
+* feat: Set DetailMap Albedo and Secondary UV properties of StandardMaterial 
+* refactor: use bit shifting and masking for flag structures instead of using bitfields
+* chore: organize the source code of cmake-built project by folder 
+* chore: configure Yamato setting to target 2019.4, and add a job to build docs 
+* doc: update package installation steps, esp. for 2020.1 
+
 ## [0.2.5-preview] - 2020-08-31
 * fix: compile error when targeting Android platform
 
