@@ -1,4 +1,4 @@
-﻿Shader "Custom/VertexColor" {
+﻿Shader "VertexColorToUVTest/UV_2_3" {
 	SubShader{
 		Tags { "RenderType" = "Opaque" }
 		LOD 200

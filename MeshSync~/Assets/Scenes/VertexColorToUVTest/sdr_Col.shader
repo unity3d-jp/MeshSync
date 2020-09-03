@@ -1,4 +1,4 @@
-﻿Shader "Custom/VertexColor" {
+﻿Shader "VertexColorToUVTest/VertexColor" {
 	SubShader{
 		Tags { "RenderType" = "Opaque" }
 		LOD 200
@@ -30,8 +30,7 @@
 
 		void vert(inout appdata v, out Input o) {
 			UNITY_INITIALIZE_OUTPUT(Input, o);
-			//o.vertColor = v.color;
-			o.vertColor = float4(v.texcoord.xy, 0,1);
+			o.vertColor = v.color;
 		}
 
 		void surf(Input IN, inout SurfaceOutput o) {
