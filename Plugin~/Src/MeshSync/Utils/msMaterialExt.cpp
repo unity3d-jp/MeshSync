@@ -14,6 +14,7 @@ static const char _MetallicGlossMap[] = "_MetallicGlossMap";
 static const char _BumpScale[] = "_BumpScale";
 static const char _BumpMap[] = "_BumpMap";
 static const char DETAIL_ALBEDO_MAP_SHADER_VAR[] = "_DetailAlbedoMap";
+static const char UV_SEC_SHADER_VAR[] = "_UVSec";
 
 using TextureRecord = MaterialProperty::TextureRecord;
 
@@ -55,6 +56,16 @@ TextureRecord* StandardMaterial::GetDetailAlbedoMap() const {
     const MaterialProperty* p = findProperty(DETAIL_ALBEDO_MAP_SHADER_VAR);
     return p ? &p->get<TextureRecord>() : nullptr;
 
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void  StandardMaterial::SetSecondaryUV(float v) {
+    addProperty(MaterialProperty( UV_SEC_SHADER_VAR, v ));
+}
+float StandardMaterial::GetSecondaryUV() const {
+    const MaterialProperty* p = findProperty(UV_SEC_SHADER_VAR);
+    return p ? p->get<float>() : 0.0f;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

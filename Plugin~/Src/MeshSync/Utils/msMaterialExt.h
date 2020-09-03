@@ -18,6 +18,9 @@ public:
     void    SetDetailAlbedoMap(const TexturePtr v);
     TextureRecord* GetDetailAlbedoMap() const;
 
+    void    SetSecondaryUV(float v);
+    float   GetSecondaryUV() const;
+
     void    setEmissionColor(float4 v);
     float4  getEmissionColor() const;
     void    setEmissionMap(const TextureRecord& v);
