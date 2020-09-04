@@ -77,13 +77,13 @@ static inline void set_impl(SharedVector<char>& dst, const T *v, size_t n)
 #define EachType(Body)\
 Body(int, Int)\
 Body(float, Float)\
-Body(float2, Float2)\
-Body(float3, Float3)\
-Body(float4, Float4)\
-Body(quatf, Quat)\
-Body(float2x2, Float2x2)\
-Body(float3x3, Float3x3)\
-Body(float4x4, Float4x4)
+Body(mu::float2, Float2)\
+Body(mu::float3, Float3)\
+Body(mu::float4, Float4)\
+Body(mu::quatf, Quat)\
+Body(mu::float2x2, Float2x2)\
+Body(mu::float3x3, Float3x3)\
+Body(mu::float4x4, Float4x4)
 
 
 #define Body(A, B)\

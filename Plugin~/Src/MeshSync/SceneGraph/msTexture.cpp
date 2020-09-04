@@ -101,7 +101,7 @@ bool Texture::readFromFile(const char *path)
     if (!path)
         return false;
     if (FileToByteArray(path, data)) {
-        name = GetFilename(path);
+        name = mu::GetFilename(path);
         format = TextureFormat::RawFile;
         return true;
     }
