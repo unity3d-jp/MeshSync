@@ -8,7 +8,6 @@
 #include "MeshSync/msProtocol.h"
 #include "MeshSync/SceneGraph/msSceneImportSettings.h"
 
-#ifdef msEnableNetwork
 namespace Poco {
     namespace Net {
         class HTTPServer;
@@ -135,4 +134,4 @@ inline void Server::AllowPublicAccess(const bool access) { m_allowPublicAccess =
 
 
 } // namespace ms
-#endif // msEnableNetwork
+

@@ -3,7 +3,6 @@
 #include "Poco/Net/HTTPRequestHandlerFactory.h" //HTTPRequestHandlerFactory
 #include "MeshSync/msProtocol.h"
 
-#ifdef msEnableNetwork
 namespace Poco {
     namespace Net {
         class HTTPServerRequest;
@@ -26,4 +25,4 @@ namespace ms {
     };
 
 } // namespace ms
-#endif // msEnableNetwork
+

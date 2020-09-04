@@ -7,7 +7,6 @@
 #define msProtocolVersion 123
 
 //#define msEnableProfiling
-#define msEnableNetwork
 #define msEnableSceneCache
 //#define msRuntime
 

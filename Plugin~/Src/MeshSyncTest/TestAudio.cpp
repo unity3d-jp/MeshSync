@@ -6,10 +6,6 @@
 
 using namespace mu;
 
-
-#ifdef msEnableNetwork
-
-
 static const int Frequency = 48000;
 static const int Channels = 1;
 
@@ -79,4 +75,4 @@ TestCase(Test_Audio)
         scene->assets.push_back(afa);
     TestUtility::Send(scene);
 }
-#endif // msEnableNetwork
+

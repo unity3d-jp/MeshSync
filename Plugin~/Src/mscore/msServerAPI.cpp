@@ -10,7 +10,6 @@
 
 #include "msCoreAPI.h"
 
-#ifdef msEnableNetwork
 using namespace mu;
 
 using ms::ServerPtr;
@@ -244,4 +243,4 @@ msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *self)
     return self->scene.get();
 }
 #pragma endregion
-#endif // msEnableNetwork
+

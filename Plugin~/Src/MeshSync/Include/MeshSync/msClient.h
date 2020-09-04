@@ -2,7 +2,6 @@
 
 #include "msProtocol.h"
 
-#ifdef msEnableNetwork
 namespace ms {
 
 struct ClientSettings
@@ -36,4 +35,3 @@ private:
 };
 
 } // namespace ms
-#endif // msEnableNetwork

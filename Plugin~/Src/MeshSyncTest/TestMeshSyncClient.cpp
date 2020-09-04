@@ -18,8 +18,6 @@
 
 using namespace mu;
 
-#ifdef msEnableNetwork
-
 TestCase(Test_SendMesh) {
     ms::OSceneCacheSettings c0;
     c0.strip_unchanged = 0;
@@ -409,4 +407,4 @@ TestCase(Test_Query)
     SendQuery(AllNodes);
 #undef SendQuery
 }
-#endif // msEnableNetwork
+

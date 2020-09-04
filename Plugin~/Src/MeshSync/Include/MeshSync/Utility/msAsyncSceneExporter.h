@@ -48,7 +48,6 @@ public:
 };
 
 
-#ifdef msEnableNetwork
 class AsyncSceneSender : public AsyncSceneExporter
 {
 public:
@@ -74,7 +73,7 @@ private:
     std::future<void> m_future;
     std::string m_error_message;
 };
-#endif // msEnableNetwork
+#endif // msRuntime
 
 
 #ifdef msEnableSceneCache
@@ -104,4 +103,3 @@ private:
 #endif // msEnableSceneCache
 
 } // namespace ms
-#endif // msRuntime

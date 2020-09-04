@@ -2,7 +2,6 @@
 #include "MeshSync/msClient.h"
 #include "MeshSync/SceneGraph/msScene.h" //Scene
 
-#ifdef msEnableNetwork
 namespace ms {
 
 using namespace Poco;
@@ -214,4 +213,3 @@ ResponseMessagePtr Client::send(const QueryMessage& mes)
 }
 
 } // namespace ms
-#endif // msEnableNetwork
