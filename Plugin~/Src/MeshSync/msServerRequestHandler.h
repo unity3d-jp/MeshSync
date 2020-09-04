@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Poco/Net/HTTPRequestHandlerFactory.h" //HTTPRequestHandlerFactory
-#include "msProtocol.h"
+#include "MeshSync/msProtocol.h"
 
 #ifdef msEnableNetwork
 namespace Poco {

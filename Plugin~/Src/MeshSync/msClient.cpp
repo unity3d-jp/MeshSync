@@ -1,5 +1,6 @@
 #include "pch.h"
-#include "msClient.h"
+#include "MeshSync/msClient.h"
+#include "MeshSync/SceneGraph/msScene.h" //Scene
 
 #ifdef msEnableNetwork
 namespace ms {

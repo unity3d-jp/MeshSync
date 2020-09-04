@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "msSceneGraph.h"
-#include "msLight.h"
+#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msLight.h"
 
 namespace ms {
 

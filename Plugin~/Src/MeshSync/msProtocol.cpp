@@ -1,6 +1,7 @@
 #include "pch.h"
-#include "msProtocol.h"
-#include "msFoundation.h"
+#include "MeshSync/msProtocol.h"
+
+#include "MeshSync/SceneGraph/msScene.h" //Scene
 
 namespace ms {
 

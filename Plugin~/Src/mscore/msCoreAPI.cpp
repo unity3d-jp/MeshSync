@@ -7,10 +7,17 @@
 #include "MeshSync/SceneGraph/msConstraints.h"
 #include "MeshSync/SceneGraph/msLight.h"
 #include "MeshSync/SceneGraph/msMaterial.h"
+#include "MeshSync/SceneGraph/msMesh.h"
+#include "MeshSync/SceneGraph/msPoints.h"
+#include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msTexture.h"
 
 
 #include "msCoreAPI.h"
+
+
+#include "MeshSync/msLog.h"
+#include "MeshSync/msMisc.h" //StartsWith
 
 using namespace mu;
 

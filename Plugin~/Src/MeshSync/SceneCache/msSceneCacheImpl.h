@@ -1,6 +1,7 @@
 #pragma once
-#include "msSceneCache.h"
 #include "msEncoder.h"
+
+#include "MeshSync/SceneCache/msSceneCacheSettings.h"
 
 #ifdef msEnableSceneCache
 namespace ms {

@@ -1,10 +1,20 @@
 #include "pch.h"
 #include "Test.h"
 #include "Common.h"
-#include "../MeshSync/MeshSync.h"
-#include "../MeshSync/MeshSyncUtils.h"
 #include "Utility/TestUtility.h"
 #include "Utility/MeshGenerator.h"
+
+#include "MeshSync/SceneGraph/msAnimation.h"
+#include "MeshSync/SceneGraph/msMaterial.h"
+#include "MeshSync/SceneGraph/msMesh.h"
+#include "MeshSync/SceneGraph/msPoints.h"
+#include "MeshSync/SceneGraph/msScene.h"
+
+#include "MeshSync/SceneCache/msSceneCache.h"
+#include "MeshSync/SceneCache/msSceneCacheSettings.h"
+#include "MeshSync/Utility/msAsyncSceneExporter.h" //AsyncSceneCacheWriter
+
+#include "MeshSync/Utility/msMaterialExt.h"     //standardMaterial
 
 using namespace mu;
 

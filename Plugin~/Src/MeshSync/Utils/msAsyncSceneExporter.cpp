@@ -1,9 +1,14 @@
 #include "pch.h"
-#include "msAsyncSceneExporter.h"
-#include "../MeshSync.h"
+#include "MeshSync/Utility/msAsyncSceneExporter.h"
 
-#include "SceneGraph/msMaterial.h"
-#include "SceneGraph/msTexture.h"
+
+#include "SceneCache/msOSceneCacheImpl.h"
+
+#include "MeshSync/msClient.h"
+#include "MeshSync/SceneGraph/msMaterial.h"
+#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msTexture.h"
+#include "MeshSync/SceneGraph/msTransform.h"
 
 #ifndef msRuntime
 namespace ms {

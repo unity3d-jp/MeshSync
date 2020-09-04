@@ -1,9 +1,10 @@
 #include "pch.h"
 #include "msServerRequestHandler.h"
-#include "msServer.h"
 
 #include "msMisc.h" //StartsWith()
-#include "Utils/msNetworkUtils.h" //IsInLocalNetwork()
+
+#include "MeshSync/msServer.h"
+#include "MeshSync/Utility/msNetworkUtility.h" //IsInLocalNetwork()
 
 #ifdef msEnableNetwork
 namespace ms {

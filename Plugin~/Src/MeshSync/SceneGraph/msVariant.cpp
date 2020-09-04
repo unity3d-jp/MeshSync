@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "msVariant.h"
+#include "MeshSync/SceneGraph/msVariant.h"
 
 namespace ms {
 

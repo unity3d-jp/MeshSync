@@ -17,6 +17,7 @@ target_precompile_headers(MeshSync PRIVATE "${MeshSync_dir}/pch.h")
 target_include_directories(MeshSync PRIVATE
     ${SRC_ROOT}
     ${MeshSync_dir}    
+    ${MeshSync_dir}/Include
     ${Poco_INCLUDE_DIRS}
 )
 

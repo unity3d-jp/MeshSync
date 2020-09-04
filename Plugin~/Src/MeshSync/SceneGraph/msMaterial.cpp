@@ -1,11 +1,10 @@
 #include "pch.h"
-#include "msMaterial.h"
 
-#include "MeshSync.h"
-
+#include "MeshSync/MeshSync.h" //msTexturePtr
+#include "MeshSync/SceneGraph/msMaterial.h"
+#include "MeshSync/SceneGraph/msTexture.h"
 
 namespace ms {
-
 
 #define EachMember(F) F(name) F(type) F(data)
 

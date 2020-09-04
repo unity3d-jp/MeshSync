@@ -1,6 +1,8 @@
 #include "pch.h"
-#include "msSceneGraph.h"
-#include "msEntity.h"
+
+#include "MeshSync/NetworkData/msTransformDataFlags.h"
+#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msTransform.h"
 
 namespace ms {
 

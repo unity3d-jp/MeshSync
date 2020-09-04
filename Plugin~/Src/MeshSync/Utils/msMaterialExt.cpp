@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "msMaterialExt.h"
+#include "MeshSync/Utility/msMaterialExt.h"
 
 namespace ms {
 

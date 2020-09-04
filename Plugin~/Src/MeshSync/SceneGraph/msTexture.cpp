@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "msTexture.h"
+#include "MeshSync/SceneGraph/msTexture.h"
 #include "msMisc.h"
 
 namespace ms {

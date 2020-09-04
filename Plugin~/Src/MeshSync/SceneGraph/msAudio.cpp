@@ -1,7 +1,6 @@
 #include "pch.h"
-#include "msAsset.h"
-#include "msAudio.h"
-#include "msMisc.h"
+#include "MeshSync/SceneGraph/msAudio.h"
+#include "msMisc.h" //FileToByteArray
 
 namespace ms {
 
@@ -94,13 +93,13 @@ bool Audio::convertSamplesToFloat(float *dst) const
         return false; // invalid format
 
     if (format == AudioFormat::U8)
-        U8NToF32(dst, (unorm8n*)data.cdata(), n);
+        U8NToF32(dst, (mu::unorm8n*)data.cdata(), n);
     else if (format == AudioFormat::S16)
-        S16ToF32(dst, (snorm16*)data.cdata(), n);
+        S16ToF32(dst, (mu::snorm16*)data.cdata(), n);
     else if (format == AudioFormat::S24)
-        S24ToF32(dst, (snorm24*)data.cdata(), n);
+        S24ToF32(dst, (mu::snorm24*)data.cdata(), n);
     else if (format == AudioFormat::S32)
-        S32ToF32(dst, (snorm32*)data.cdata(), n);
+        S32ToF32(dst, (mu::snorm32*)data.cdata(), n);
     else if (format == AudioFormat::F32)
         data.copy_to((char*)dst);
     else
@@ -114,7 +113,7 @@ bool Audio::readFromFile(const char *path)
     if (!path)
         return false;
     if (FileToByteArray(path, data)) {
-        name = GetFilename(path);
+        name = mu::GetFilename(path);
         format = AudioFormat::RawFile;
         return true;
     }
@@ -161,8 +160,8 @@ bool Audio::exportAsWave(const char *path) const
     // if format is f32, convert to s16
     if (format == AudioFormat::F32) {
         wfmt = AudioFormat::S16;
-        tmp_data.resize(getSampleLength() * sizeof(snorm16));
-        F32ToS16((snorm16*)tmp_data.data(), (const float*)data.cdata(), getSampleLength());
+        tmp_data.resize(getSampleLength() * sizeof(mu::snorm16));
+        F32ToS16((mu::snorm16*)tmp_data.data(), (const float*)data.cdata(), getSampleLength());
         wdata = &tmp_data;
     }
 

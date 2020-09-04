@@ -4,6 +4,9 @@
 #include "MeshSync/SceneGraph/msIdentifier.h"
 
 #ifndef msRuntime
+
+msDeclClassPtr(Material)
+
 namespace ms {
 
 class MaterialManager

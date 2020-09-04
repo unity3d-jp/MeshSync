@@ -1,10 +1,11 @@
 #include "pch.h"
-#include "msSceneGraph.h"
-#include "msEntity.h"
-#include "msMesh.h"
-#include "msPointCache.h"
-#include "msCamera.h"
-#include "msLight.h"
+
+#include "MeshSync/SceneGraph/msCamera.h"
+#include "MeshSync/SceneGraph/msEntity.h"
+#include "MeshSync/SceneGraph/msLight.h"
+#include "MeshSync/SceneGraph/msMesh.h"
+#include "MeshSync/SceneGraph/msPoints.h"
+#include "MeshSync/SceneGraph/msScene.h"
 
 namespace ms {
 

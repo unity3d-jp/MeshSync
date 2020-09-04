@@ -1,12 +1,11 @@
 #include "pch.h"
 #include "msServer.h"
 #include "msServerRequestHandler.h"
-#include "SceneGraph/msMaterial.h"
-#include "SceneGraph/msAnimation.h"
-#include "SceneGraph/msEntityConverter.h"
-#include "MeshSync/MeshSync.h"
-#include "msProtocol.h" //GetMessagePtr
-
+#include "msLog.h"
+#include "msMisc.h" //StartsWith()
+#include "MeshSync/msProtocol.h" //GetMessagePtr
+#include "MeshSync/MeshSync.h" //TestMessagePtr
+#include "MeshSync/SceneGraph/msAnimation.h"
 
 #ifdef msEnableNetwork
 namespace ms {
@@ -174,7 +173,7 @@ void Server::serveBinary(Poco::Net::HTTPServerResponse & response, const void *d
     response.setContentType("application/octet-stream");
     response.setContentLength(size);
 
-    auto& os = response.send();
+    std::ostream& os = response.send();
     os.write((const char*)data, size);
     os.flush();
 }
@@ -182,7 +181,7 @@ void Server::serveBinary(Poco::Net::HTTPServerResponse & response, const void *d
 //----------------------------------------------------------------------------------------------------------------------
 void Server::serveFiles(Poco::Net::HTTPServerResponse& response, const std::string& uri) {
     // filename start with '.' is treated as hidden file. just return 404
-    auto filename = GetFilename(uri.c_str());
+    std::string filename = mu::GetFilename(uri.c_str());
     if (filename[0] == '.') {
         serveText(response, "", HTTPResponse::HTTP_NOT_FOUND);
         return;
@@ -257,7 +256,7 @@ void Server::endServeScene()
     }
 
     auto& request = *m_current_get_request;
-    parallel_for_each(m_host_scene->entities.begin(), m_host_scene->entities.end(), [&request, this](TransformPtr& p) {
+    mu::parallel_for_each(m_host_scene->entities.begin(), m_host_scene->entities.end(), [&request, this](TransformPtr& p) {
         auto pmesh = dynamic_cast<Mesh*>(p.get());
         if (!pmesh)
             return;

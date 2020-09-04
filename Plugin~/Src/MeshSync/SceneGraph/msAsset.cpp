@@ -1,10 +1,11 @@
 #include "pch.h"
-#include "msAsset.h"
+#include "MeshSync/SceneGraph/msAsset.h"
 #include "msMisc.h"
-#include "msAnimation.h"
-#include "msTexture.h"
-#include "msMaterial.h"
-#include "msAudio.h"
+
+#include "MeshSync/SceneGraph/msAnimation.h"
+#include "MeshSync/SceneGraph/msAudio.h"
+#include "MeshSync/SceneGraph/msMaterial.h"
+#include "MeshSync/SceneGraph/msTexture.h"
 
 namespace ms {
 
@@ -129,7 +130,7 @@ bool FileAsset::readFromFile(const char *path)
     if (!path)
         return false;
     if (FileToByteArray(path, data)) {
-        name = GetFilename(path);
+        name = mu::GetFilename(path);
         return true;
     }
     return false;

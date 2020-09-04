@@ -34,7 +34,7 @@
 #include <random>
 #include <cassert>
 
-#ifndef msRuntime
+//Poco
 #include "Poco/Path.h"
 #include "Poco/File.h"
 #include "Poco/FileStream.h"
@@ -61,4 +61,6 @@
 #include "Poco/Net/StreamSocket.h"
 #include "Poco/Net/SocketStream.h"
 #include "Poco/Net/SocketAddress.h"
-#endif
+
+//Internal Dependencies
+#include "MeshUtils/MeshUtils.h"

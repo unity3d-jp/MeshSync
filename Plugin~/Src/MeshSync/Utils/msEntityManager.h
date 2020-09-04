@@ -2,6 +2,8 @@
 
 #include "../SceneGraph/msSceneGraph.h"
 
+msDeclStructPtr(Identifier)
+
 #ifndef msRuntime
 namespace ms {
 

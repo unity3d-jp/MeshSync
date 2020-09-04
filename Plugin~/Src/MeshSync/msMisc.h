@@ -1,6 +1,5 @@
 #pragma once
 #include "MeshUtils/MeshUtils.h"
-#include "msConfig.h"
 
 namespace ms {
 

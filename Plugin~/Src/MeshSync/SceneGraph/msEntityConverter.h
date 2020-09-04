@@ -1,5 +1,9 @@
 #pragma once
 
+#include "MeshSync/MeshSync.h"
+
+msDeclClassPtr(AnimationClip)
+
 namespace ms {
 
 class Entity;

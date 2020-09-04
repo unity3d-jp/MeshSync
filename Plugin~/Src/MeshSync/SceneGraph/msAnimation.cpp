@@ -1,6 +1,7 @@
 #include "pch.h"
-#include "msSceneGraph.h"
-#include "msAnimation.h"
+
+#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msAnimation.h"
 
 
 namespace ms {
@@ -80,7 +81,7 @@ struct AnimationCurveFunctionSet
 };
 
 #define EachDataTypes(Body)\
-    Body(void) Body(int) Body(float) Body(float2) Body(float3) Body(float4) Body(quatf)
+    Body(void) Body(int) Body(float) Body(mu::float2) Body(mu::float3) Body(mu::float4) Body(mu::quatf)
 
 #define DefFunctionSet(T) {&GetSize<T>, &At<T>, &ReserveKeyframes<T>, &ReduceKeyframes<T>},
 
@@ -485,9 +486,9 @@ void TransformAnimation::validate()
         if (curve && curve.equal_all(v))
             host->eraseCurve(curve.curve);
     };
-    check_and_erase(translation, inf<float3>());
-    check_and_erase(rotation, inf<quatf>());
-    check_and_erase(scale, inf<float3>());
+    check_and_erase(translation, mu::inf<mu::float3>());
+    check_and_erase(rotation, mu::inf<mu::quatf>());
+    check_and_erase(scale, mu::inf<mu::float3>());
     if(visible && !visible.empty())
         check_and_erase(visible, visible.front().value);
 }
@@ -533,8 +534,8 @@ void CameraAnimation::validate()
     check_and_erase(near_plane, 0.0f);
     check_and_erase(far_plane, 0.0f);
     check_and_erase(focal_length, 0.0f);
-    check_and_erase(sensor_size, float2::zero());
-    check_and_erase(lens_shift, float2::zero());
+    check_and_erase(sensor_size, mu::float2::zero());
+    check_and_erase(lens_shift, mu::float2::zero());
 }
 
 
@@ -571,10 +572,10 @@ void LightAnimation::validate()
         if (curve.equal_all(v))
             host->eraseCurve(curve.curve);
     };
-    check_and_erase(color, inf<float4>());
-    check_and_erase(intensity, inf<float>());
-    check_and_erase(range, inf<float>());
-    check_and_erase(spot_angle, inf<float>());
+    check_and_erase(color, mu::inf<mu::float4>());
+    check_and_erase(intensity, mu::inf<float>());
+    check_and_erase(range, mu::inf<float>());
+    check_and_erase(spot_angle, mu::inf<float>());
 }
 
 

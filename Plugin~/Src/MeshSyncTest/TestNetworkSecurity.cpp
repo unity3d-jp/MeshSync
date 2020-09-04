@@ -1,10 +1,8 @@
 #include "pch.h"
 #include "Test.h"
-#include "MeshSync/Utils/msNetworkUtils.h" //ms::NetworkUtils::IsInLocalNetwork
+#include "MeshSync/Utility/msNetworkUtility.h" //ms::NetworkUtils::IsInLocalNetwork
 
 using namespace mu;
-
-#ifdef msEnableNetwork
 
 TestCase(Test_CheckLocalNetworkAccess)
 {
@@ -38,4 +36,4 @@ TestCase(Test_CheckPublicNetworkAccess)
     }
 }
 
-#endif // msEnableNetwork
+
