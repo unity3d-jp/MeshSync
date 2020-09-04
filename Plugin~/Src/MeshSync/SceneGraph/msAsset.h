@@ -37,7 +37,6 @@ public:
 
 };
 msSerializable(Asset);
-msDeclPtr(Asset);
 
 
 
@@ -67,19 +66,6 @@ public:
 #endif
 };
 msSerializable(FileAsset);
-msDeclPtr(FileAsset);
 
-
-class AnimationClip;
-msDeclPtr(AnimationClip);
-
-class Texture;
-msDeclPtr(Texture);
-
-class Material;
-msDeclPtr(Material);
-
-class Audio;
-msDeclPtr(Audio);
 
 } // namespace ms

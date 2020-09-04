@@ -4,6 +4,9 @@
 #include "SceneGraph/msMaterial.h"
 #include "SceneGraph/msAnimation.h"
 #include "SceneGraph/msEntityConverter.h"
+#include "MeshSync/MeshSync.h"
+#include "msProtocol.h" //GetMessagePtr
+
 
 #ifdef msEnableNetwork
 namespace ms {

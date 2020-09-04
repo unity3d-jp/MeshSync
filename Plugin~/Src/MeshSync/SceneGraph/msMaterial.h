@@ -128,6 +128,5 @@ public:
     void eraseKeyword(const char *name);
 };
 msSerializable(Material);
-msDeclPtr(Material);
 
 } // namespace ms

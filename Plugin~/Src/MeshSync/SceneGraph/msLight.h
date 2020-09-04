@@ -63,7 +63,6 @@ public:
     EntityPtr clone(bool detach = false) override;
 };
 msSerializable(Light);
-msDeclPtr(Light);
 
 
 } // namespace ms

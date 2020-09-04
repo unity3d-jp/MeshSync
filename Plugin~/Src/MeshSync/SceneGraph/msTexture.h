@@ -97,6 +97,5 @@ public:
 #endif // msRuntime
 };
 msSerializable(Texture);
-msDeclPtr(Texture);
 
 } // namespace ms

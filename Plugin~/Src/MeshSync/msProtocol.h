@@ -34,7 +34,6 @@ public:
     virtual void deserialize(std::istream& is); // throw
 };
 msSerializable(Message);
-msDeclPtr(Message);
 
 class GetMessage : public Message
 {
@@ -53,7 +52,6 @@ public:
     void deserialize(std::istream& is) override;
 };
 msSerializable(GetMessage);
-msDeclPtr(GetMessage);
 
 
 class SetMessage : public Message
@@ -69,7 +67,6 @@ public:
     void deserialize(std::istream& is) override;
 };
 msSerializable(SetMessage);
-msDeclPtr(SetMessage);
 
 
 class DeleteMessage : public Message
@@ -84,7 +81,6 @@ public:
     void deserialize(std::istream& is) override;
 };
 msSerializable(DeleteMessage);
-msDeclPtr(DeleteMessage);
 
 
 class FenceMessage : public Message
@@ -105,7 +101,6 @@ public:
     void deserialize(std::istream& is) override;
 };
 msSerializable(FenceMessage);
-msDeclPtr(FenceMessage);
 
 
 class TextMessage : public Message
@@ -128,7 +123,6 @@ public:
     Type type = Type::Normal;
 };
 msSerializable(TextMessage);
-msDeclPtr(TextMessage);
 
 
 class ScreenshotMessage : public Message
@@ -145,7 +139,6 @@ public:
     void deserialize(std::istream& is) override;
 };
 msSerializable(ScreenshotMessage);
-msDeclPtr(ScreenshotMessage);
 
 
 class ResponseMessage : public Message
@@ -159,7 +152,6 @@ public:
     void deserialize(std::istream& is) override;
 };
 msSerializable(ResponseMessage);
-msDeclPtr(ResponseMessage);
 
 
 class QueryMessage : public Message
@@ -188,7 +180,6 @@ public:
     void deserialize(std::istream& is) override;
 };
 msSerializable(QueryMessage);
-msDeclPtr(QueryMessage);
 
 
 class PollMessage : public Message
@@ -210,6 +201,5 @@ public:
     void deserialize(std::istream& is) override;
 };
 msSerializable(PollMessage);
-msDeclPtr(PollMessage);
 
 } // namespace ms

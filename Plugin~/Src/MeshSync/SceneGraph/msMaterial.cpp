@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "msMaterial.h"
 
+#include "MeshSync.h"
+
 
 namespace ms {
 

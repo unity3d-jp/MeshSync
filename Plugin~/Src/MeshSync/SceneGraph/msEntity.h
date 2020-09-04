@@ -30,8 +30,6 @@ template<> struct GetEntityType<Light>      { static const EntityType type = Ent
 template<> struct GetEntityType<Mesh>       { static const EntityType type = EntityType::Mesh; };
 template<> struct GetEntityType<Points>     { static const EntityType type = EntityType::Points; };
 
-class EntityConverter;
-msDeclPtr(EntityConverter);
 
 class Entity
 {
@@ -86,7 +84,6 @@ public:
     void getName(std::string& dst) const;
 };
 msSerializable(Entity);
-msDeclPtr(Entity);
 
 struct VisibilityFlags
 {
@@ -121,11 +118,5 @@ struct CameraDataFlags
 
     CameraDataFlags();
 };
-
-class Mesh;
-msDeclPtr(Mesh);
-
-class Points;
-msDeclPtr(Points);
 
 } // namespace ms

@@ -55,6 +55,5 @@ public:
 #endif
 };
 msSerializable(Audio);
-msDeclPtr(Audio);
 
 } // namespace ms

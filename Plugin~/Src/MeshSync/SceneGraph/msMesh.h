@@ -68,7 +68,6 @@ public:
 };
 msSerializable(BlendShapeFrameData);
 msDetachable(BlendShapeFrameData);
-msDeclPtr(BlendShapeFrameData);
 
 struct BlendShapeData
 {
@@ -93,7 +92,6 @@ public:
 };
 msSerializable(BlendShapeData);
 msDetachable(BlendShapeData);
-msDeclPtr(BlendShapeData);
 
 struct BoneData 
 {
@@ -116,7 +114,6 @@ public:
 };
 msSerializable(BoneData);
 msDetachable(BoneData);
-msDeclPtr(BoneData);
 
 class Mesh : public Transform
 {
@@ -192,6 +189,5 @@ public:
     BlendShapeDataPtr addBlendShape(const std::string& name);
 };
 msSerializable(Mesh);
-msDeclPtr(Mesh);
 
 } // namespace ms

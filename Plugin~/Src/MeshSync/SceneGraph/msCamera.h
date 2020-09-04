@@ -43,6 +43,5 @@ public:
     EntityPtr clone(bool detach = false) override;
 };
 msSerializable(Camera);
-msDeclPtr(Camera);
 
 } // namespace ms

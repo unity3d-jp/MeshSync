@@ -79,7 +79,6 @@ public:
     void reserve(size_t size);
 };
 msSerializable(AnimationCurve);
-msDeclPtr(AnimationCurve);
 
 #define DefType(T, E) template<> struct AnimationCurve::GetDataType<T> { static const AnimationCurve::DataType type = AnimationCurve::DataType::E; };
 DefType(int, Int)
@@ -133,7 +132,6 @@ public:
     static void validate(std::shared_ptr<Animation>& anim);
 };
 msSerializable(Animation);
-msDeclPtr(Animation);
 
 
 
@@ -220,7 +218,6 @@ public:
     TAnimationCurve<float3> scale;
     TAnimationCurve<int>    visible;
 };
-msDeclPtr(TransformAnimation);
 
 
 #define mskCameraFieldOfView    "Camera.fieldOfView"
@@ -332,6 +329,5 @@ public:
     void clearEmptyAnimations();
 };
 msSerializable(AnimationClip);
-msDeclPtr(AnimationClip);
 
 } // namespace ms

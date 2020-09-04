@@ -6,6 +6,8 @@
 #include "msEntityConverter.h"
 #include "msCamera.h"
 #include "msLight.h"
+#include "SceneGraph/msTransform.h"
+#include "MeshUtils/MeshUtils.h"
 
 namespace ms {
 

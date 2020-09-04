@@ -1,6 +1,7 @@
 #pragma once
 
-#include "MeshSync/SceneGraph/msMaterial.h"
+#include "MeshSync/MeshSync.h"
+#include "MeshSync/SceneGraph/msIdentifier.h"
 
 #ifndef msRuntime
 namespace ms {

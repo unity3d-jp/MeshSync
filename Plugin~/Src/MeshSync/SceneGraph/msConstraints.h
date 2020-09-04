@@ -32,8 +32,6 @@ public:
     virtual void clear();
 };
 msSerializable(Constraint);
-msDeclPtr(Constraint);
-
 
 
 class AimConstraint : public Constraint

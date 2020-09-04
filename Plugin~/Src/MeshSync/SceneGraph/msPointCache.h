@@ -51,6 +51,5 @@ public:
     void setupPointsDataFlags();
 };
 msSerializable(Points);
-msDeclPtr(Points);
 
 } // namespace ms

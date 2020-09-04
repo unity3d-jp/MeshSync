@@ -3,6 +3,7 @@
 #include "msVariant.h"
 #include "msEntity.h"
 #include "MeshSync/CoreAPI/msTransformDataFlags.h"
+#include "MeshSync/MeshSync.h"
 
 namespace ms {
 

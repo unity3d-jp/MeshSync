@@ -11,14 +11,7 @@
 #include "msMesh.h"
 #include "msPointCache.h"
 
-#ifdef GetMessage
-    #undef GetMessage
-#endif
-
 namespace ms {
-
-class Constraint;
-msDeclPtr(Constraint);
 
 enum class Handedness
 {
@@ -135,6 +128,5 @@ public:
     void dbgDump() const;
 };
 msSerializable(Scene);
-msDeclPtr(Scene);
 
 } // namespace ms
