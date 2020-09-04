@@ -9,11 +9,13 @@
 #include "MeshSync/msFoundation.h" //msDefinePool
 #include "MeshSync/SceneGraph/msSceneSettings.h"
 
+//Used in template
+#include "MeshSync/SceneGraph/msTransform.h"
+
 //Forward declarations
 msDeclClassPtr(Asset);
 msDeclClassPtr(Constraint);
 msDeclClassPtr(Scene);
-msDeclClassPtr(Transform);
 
 msDeclStructPtr(SceneImportSettings);
 
