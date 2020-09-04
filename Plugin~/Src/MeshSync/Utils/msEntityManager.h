@@ -1,8 +1,8 @@
 #pragma once
-
-#include "../SceneGraph/msSceneGraph.h"
+#include "MeshSync/MeshSync.h" //msDeclClassPtr
 
 msDeclStructPtr(Identifier)
+msDeclClassPtr(Transform)
 
 #ifndef msRuntime
 namespace ms {
