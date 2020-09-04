@@ -1,13 +1,14 @@
 #include "pch.h"
-#include "msServer.h"
+
 #include "msServerRequestHandler.h"
 #include "msLog.h"
 #include "msMisc.h" //StartsWith()
 #include "MeshSync/msProtocol.h" //GetMessagePtr
+#include "MeshSync/msServer.h"
 #include "MeshSync/MeshSync.h" //TestMessagePtr
-#include "MeshSync/SceneGraph/msAnimation.h"
+#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msMesh.h"
 
-#ifdef msEnableNetwork
 namespace ms {
 
 using namespace Poco::Net;
@@ -629,4 +630,3 @@ Server::MessageHolder::MessageHolder(MessageHolder && v)
 }
 
 } // namespace ms
-#endif // msEnableNetwork
