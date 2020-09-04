@@ -5,17 +5,29 @@
 //Forward declarations
 #define msDeclClassPtr(T) \
 namespace ms { \
-    class T##; \
+    class T; \
     typedef std::shared_ptr<T> T##Ptr; \
 } 
 
 #define msDeclStructPtr(T) \
 namespace ms { \
-    struct T##; \
+    struct T; \
     typedef std::shared_ptr<T> T##Ptr; \
 } 
 
+//Entity
+msDeclClassPtr(Transform)
+
+//Assets
+msDeclClassPtr(Audio)
+msDeclClassPtr(Texture)
+
+//Protocol/Messages
+msDeclClassPtr(TextMessage)
+
+//Network
 msDeclClassPtr(Server)
+
 
 //
 //class Entity;
@@ -77,7 +89,6 @@ msDeclClassPtr(Server)
 //msDeclPtr(FenceMessage);
 //
 //
-msDeclClassPtr(TextMessage)
 
 //
 //class Message;
@@ -96,12 +107,6 @@ msDeclClassPtr(TextMessage)
 //
 //
 
-//Entity
-msDeclClassPtr(Transform)
-
-//Assets
-msDeclClassPtr(Audio)
-msDeclClassPtr(Texture)
 
 //
 //class AnimationClip;
@@ -134,11 +139,3 @@ msDeclClassPtr(Texture)
 //
 //class RotateX_ZUpCorrector;
 //msDeclPtr(RotateX_ZUpCorrector);
-
-//#ifdef mscDebug
-//    #define mscTrace(...) ::mu::Print("MeshSync trace: " __VA_ARGS__)
-//    #define mscTraceW(...) ::mu::Print(L"MeshSync trace: " __VA_ARGS__)
-//#else
-//    #define mscTrace(...)
-//    #define mscTraceW(...)
-//#endif
