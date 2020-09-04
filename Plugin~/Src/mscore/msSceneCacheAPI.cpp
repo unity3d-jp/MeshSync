@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "MeshUtils/MeshUtils.h"
-#include "MeshSync/MeshSync.h"
 #include "msCoreAPI.h"
+
+#include "MeshSync/SceneCache/msSceneCache.h"
 
 #ifdef msEnableSceneCache
 using namespace mu;

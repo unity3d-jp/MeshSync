@@ -82,10 +82,10 @@ void RegisterTestEntryImpl(const char *name, const std::function<void()>& body)
 static void RunTestImpl(const TestEntry& v)
 {
     Print("%s begin\n", v.name.c_str());
-    auto begin = Now();
+    const mu::nanosec begin = mu::Now();
     v.body();
-    auto end = Now();
-    Print("%s end (%.2fms)\n\n", v.name.c_str(), NS2MS(end-begin));
+    const mu::nanosec end = mu::Now();
+    Print("%s end (%.2fms)\n\n", v.name.c_str(), mu::NS2MS(end-begin));
 }
 
 testExport const char* GetLogMessage()
@@ -128,3 +128,4 @@ int main(int argc, char *argv[])
         RunAllTests();
     }
 }
+

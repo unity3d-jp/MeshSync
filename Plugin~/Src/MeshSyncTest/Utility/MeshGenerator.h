@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MeshUtils/MeshUtils.h"
+#include "MeshUtils.h"
 #include "MeshSync/msConstants.h"
 
 

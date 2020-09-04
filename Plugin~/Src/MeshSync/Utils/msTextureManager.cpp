@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "msTextureManager.h"
-#include "msMisc.h"
+#include "MeshSync/msMisc.h" //FileToByteArray, FileExists
 
 #ifndef msRuntime
 namespace ms {
@@ -51,7 +51,7 @@ int TextureManager::addImage(const std::string& name, int width, int height, con
         (data && size ? genID() : -1);
 
     // not worth to make tasks
-    auto checksum = SumInt32(data, size);
+    const uint64_t checksum = mu::SumInt32(data, size);
     if (!rec.texture || rec.checksum != checksum) {
         rec.checksum = checksum;
         rec.texture = Texture::create();
@@ -112,8 +112,8 @@ int TextureManager::add(TexturePtr tex)
     if (!tex)
         return InvalidID;
 
-    auto& rec = lockAndGet(tex->name);
-    auto checksum = SumInt32(tex->data.data(), tex->data.size());
+    TextureManager::Record& rec = lockAndGet(tex->name);
+    const uint64_t checksum = mu::SumInt32(tex->data.data(), tex->data.size());
     if (!rec.texture || rec.checksum != checksum) {
         rec.checksum = checksum;
         rec.texture = tex;

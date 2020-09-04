@@ -1,14 +1,22 @@
 #include "pch.h"
 #include "Test.h"
 #include "Common.h"
-#include "../MeshSync/MeshSync.h"
-#include "../MeshSync/MeshSyncUtils.h"
 #include "Utility/TestUtility.h"
 #include "Utility/MeshGenerator.h"
 
-using namespace mu;
+#include "MeshSync/SceneGraph/msAnimation.h"
+#include "MeshSync/SceneGraph/msMaterial.h"
+#include "MeshSync/SceneGraph/msMesh.h"
+#include "MeshSync/SceneGraph/msPoints.h"
+#include "MeshSync/SceneGraph/msScene.h"
 
-#ifdef msEnableNetwork
+#include "MeshSync/SceneCache/msSceneCache.h"
+#include "MeshSync/SceneCache/msSceneCacheSettings.h"
+#include "MeshSync/Utility/msAsyncSceneExporter.h" //AsyncSceneCacheWriter
+
+#include "MeshSync/Utility/msMaterialExt.h"     //standardMaterial
+
+using namespace mu;
 
 TestCase(Test_SendMesh) {
     ms::OSceneCacheSettings c0;
@@ -116,10 +124,10 @@ TestCase(Test_Animation)
         anim->translation.push_back({ 2.0f, {1.0f, 1.0f, 0.0f} });
         anim->translation.push_back({ 3.0f, {1.0f, 1.0f, 1.0f} });
 
-        anim->rotation.push_back({ 0.0f, ms::rotate_x(0.0f * mu::DegToRad) });
-        anim->rotation.push_back({ 1.0f, ms::rotate_x(90.0f * mu::DegToRad) });
-        anim->rotation.push_back({ 2.0f, ms::rotate_x(180.0f * mu::DegToRad) });
-        anim->rotation.push_back({ 3.0f, ms::rotate_x(270.0f * mu::DegToRad) });
+        anim->rotation.push_back({ 0.0f, mu::rotate_x(0.0f * mu::DegToRad) });
+        anim->rotation.push_back({ 1.0f, mu::rotate_x(90.0f * mu::DegToRad) });
+        anim->rotation.push_back({ 2.0f, mu::rotate_x(180.0f * mu::DegToRad) });
+        anim->rotation.push_back({ 3.0f, mu::rotate_x(270.0f * mu::DegToRad) });
 
         anim->scale.push_back({ 0.0f, {1.0f, 1.0f, 1.0f} });
         anim->scale.push_back({ 1.0f, {2.0f, 2.0f, 2.0f} });
@@ -176,7 +184,7 @@ TestCase(Test_Points)
         node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
         node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
         {
-            ms::Variant test("test", ms::float4::one());
+            ms::Variant test("test", mu::float4::one());
             node->addUserProperty(std::move(test));
         }
     }
@@ -399,4 +407,4 @@ TestCase(Test_Query)
     SendQuery(AllNodes);
 #undef SendQuery
 }
-#endif // msEnableNetwork
+

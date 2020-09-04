@@ -1,6 +1,14 @@
 #include "pch.h"
-#include "msAsyncSceneExporter.h"
-#include "../MeshSync.h"
+#include "MeshSync/Utility/msAsyncSceneExporter.h"
+
+
+#include "SceneCache/msOSceneCacheImpl.h"
+
+#include "MeshSync/msClient.h"
+#include "MeshSync/SceneGraph/msMaterial.h"
+#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msTexture.h"
+#include "MeshSync/SceneGraph/msTransform.h"
 
 #ifndef msRuntime
 namespace ms {
@@ -59,7 +67,6 @@ void AsyncSceneExporter::add(ScenePtr scene)
 }
 
 
-#ifdef msEnableNetwork
 AsyncSceneSender::AsyncSceneSender(int sid)
 {
     if (sid == InvalidID) {
@@ -165,11 +172,11 @@ void AsyncSceneSender::send()
 
     // textures
     if (!textures.empty()) {
-        for (auto& tex : textures) {
+        for (std::vector<std::shared_ptr<Texture>>::value_type& tex : textures) {
             ms::SetMessage mes;
             setup_message(mes);
             mes.scene->settings = scene_settings;
-            mes.scene->assets = { tex };
+            mes.scene->assets = std::vector<AssetPtr> {tex};
             succeeded = succeeded && client.send(mes);
             if (!succeeded)
                 goto cleanup;
@@ -245,7 +252,6 @@ cleanup:
 
     clear();
 }
-#endif // msEnableNetwork
 
 
 #ifdef msEnableSceneCache

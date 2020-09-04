@@ -5,8 +5,6 @@
     #include <windows.h>
 #endif
 
-#include "MeshSync/msConfig.h"
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -30,3 +28,6 @@
 #include <regex>
 #include <iterator>
 
+
+#include "MeshSync/MeshSync.h"
+#include "MeshUtils.h"

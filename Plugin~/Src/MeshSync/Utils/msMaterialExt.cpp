@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "msMaterialExt.h"
+#include "MeshSync/Utility/msMaterialExt.h"
 
 namespace ms {
 
@@ -18,14 +18,14 @@ static const char UV_SEC_SHADER_VAR[] = "_UVSec";
 
 using TextureRecord = MaterialProperty::TextureRecord;
 
-void StandardMaterial::setColor(float4 v)
+void StandardMaterial::setColor(mu::float4 v)
 {
     addProperty( MaterialProperty( _Color, v ));
 }
-float4 StandardMaterial::getColor() const
+mu::float4 StandardMaterial::getColor() const
 {
     const MaterialProperty* p = findProperty(_Color);
-    return p ? p->get<float4>() : float4::zero();
+    return p ? p->get<mu::float4>() : mu::float4::zero();
 }
 void StandardMaterial::setColorMap(const TextureRecord& v)
 {
@@ -70,14 +70,14 @@ float StandardMaterial::GetUVForSecondaryMap() const {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void StandardMaterial::setEmissionColor(float4 v)
+void StandardMaterial::setEmissionColor(mu::float4 v)
 {
     addProperty(MaterialProperty( _EmissionColor, v ));
 }
-float4 StandardMaterial::getEmissionColor() const
+mu::float4 StandardMaterial::getEmissionColor() const
 {
     const MaterialProperty* p = findProperty(_EmissionColor);
-    return p ? p->get<float4>() : float4::zero();
+    return p ? p->get<mu::float4>() : mu::float4::zero();
 }
 void StandardMaterial::setEmissionMap(const TextureRecord& v){
     addProperty(MaterialProperty(_EmissionMap, v ));
@@ -157,14 +157,14 @@ void StandardSpecMaterial::setupShader() {
         shader = "Standard (Specular setup)";
 }
 
-void StandardSpecMaterial::setSpecularColor(float4 v) {
+void StandardSpecMaterial::setSpecularColor(mu::float4 v) {
     setupShader();
     addProperty(MaterialProperty( _SpecColor, v ));
 }
 
-float4 StandardSpecMaterial::getSpecularColor() {
+mu::float4 StandardSpecMaterial::getSpecularColor() {
     MaterialProperty* p = findProperty(_SpecColor);
-    return p ? p->get<float4>() : float4::zero();
+    return p ? p->get<mu::float4>() : mu::float4::zero();
 }
 
 void StandardSpecMaterial::setSpecularGlossMap(const TextureRecord& v) {

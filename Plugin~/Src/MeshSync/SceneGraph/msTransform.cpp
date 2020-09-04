@@ -1,6 +1,8 @@
 #include "pch.h"
-#include "msSceneGraph.h"
-#include "msEntity.h"
+
+#include "MeshSync/NetworkData/msTransformDataFlags.h"
+#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msTransform.h"
 
 namespace ms {
 
@@ -132,9 +134,9 @@ void Transform::clear() {
     super::clear();
 
     td_flags = {};
-    position = inf<float3>();
-    rotation = inf<quatf>();
-    scale = inf<float3>();
+    position = mu::inf<mu::float3>();
+    rotation = mu::inf<mu::quatf>();
+    scale = mu::inf<mu::float3>();
     visibility = VisibilityFlags::uninitialized();
     layer = 0;
     index = 0;
@@ -143,8 +145,8 @@ void Transform::clear() {
 
     order = 0;
     parent = nullptr;
-    local_matrix = float4x4::identity();
-    world_matrix = float4x4::identity();
+    local_matrix = mu::float4x4::identity();
+    world_matrix = mu::float4x4::identity();
 }
 
 uint64_t Transform::checksumTrans() const {
@@ -165,21 +167,21 @@ EntityPtr Transform::clone(bool /*detach*/) {
     return ret;
 }
 
-float4x4 Transform::toMatrix() const {
-    return ms::transform(position, rotation, scale);
+mu::float4x4 Transform::toMatrix() const {
+    return mu::transform(position, rotation, scale);
 }
 
 
-void Transform::assignMatrix(const float4x4& v) {
+void Transform::assignMatrix(const mu::float4x4& v) {
     position = extract_position(v);
     rotation = extract_rotation(v);
     scale = extract_scale(v);
-    if (near_equal(scale, float3::one()))
-        scale = float3::one();
+    if (mu::near_equal(scale, mu::float3::one()))
+        scale = mu::float3::one();
 }
 
-void Transform::applyMatrix(const float4x4& v) {
-    if (!near_equal(v, float4x4::identity()))
+void Transform::applyMatrix(const mu::float4x4& v) {
+    if (!mu::near_equal(v, mu::float4x4::identity()))
         assignMatrix(v * toMatrix());
 }
 

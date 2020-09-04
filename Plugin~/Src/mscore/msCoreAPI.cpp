@@ -1,9 +1,23 @@
 #include "pch.h"
 #include "MeshUtils/MeshUtils.h"
-#include "MeshSync/MeshSync.h"
+
+#include "MeshSync/SceneGraph/msAnimation.h"
+#include "MeshSync/SceneGraph/msAudio.h"
 #include "MeshSync/SceneGraph/msCamera.h"
+#include "MeshSync/SceneGraph/msConstraints.h"
 #include "MeshSync/SceneGraph/msLight.h"
+#include "MeshSync/SceneGraph/msMaterial.h"
+#include "MeshSync/SceneGraph/msMesh.h"
+#include "MeshSync/SceneGraph/msPoints.h"
+#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msTexture.h"
+
+
 #include "msCoreAPI.h"
+
+
+#include "MeshSync/msLog.h"
+#include "MeshSync/msMisc.h" //StartsWith
 
 using namespace mu;
 
@@ -270,26 +284,26 @@ msAPI void msMeshReadColors(const ms::Mesh *self, float4 *dst) { self->colors.co
 msAPI void msMeshReadVelocities(const ms::Mesh *self, float3 *dst) { self->velocities.copy_to(dst); }
 msAPI void msMeshReadIndices(const ms::Mesh *self, int *dst) { self->indices.copy_to(dst); }
 msAPI void msMeshReadCounts(const ms::Mesh *self, int *dst) { self->counts.copy_to(dst); }
-msAPI const ms::float3* msMeshGetPointsPtr(const ms::Mesh *self) { return self->points.cdata(); }
-msAPI const ms::float3* msMeshGetNormalsPtr(const ms::Mesh *self) { return self->normals.cdata(); }
-msAPI const ms::float4* msMeshGetTangentsPtr(const ms::Mesh *self) { return self->tangents.cdata(); }
-msAPI const ms::float2* msMeshGetUVPtr(const ms::Mesh *self, int index) {
+msAPI const mu::float3* msMeshGetPointsPtr(const ms::Mesh *self) { return self->points.cdata(); }
+msAPI const mu::float3* msMeshGetNormalsPtr(const ms::Mesh *self) { return self->normals.cdata(); }
+msAPI const mu::float4* msMeshGetTangentsPtr(const ms::Mesh *self) { return self->tangents.cdata(); }
+msAPI const mu::float2* msMeshGetUVPtr(const ms::Mesh *self, int index) {
     assert(index >= 0 && index < ms::msConstants::MAX_UV && "msMeshGetUVPtr() invalid index");
     return self->m_uv[index].cdata();
 }
-msAPI const ms::float4* msMeshGetColorsPtr(const ms::Mesh *self) { return self->colors.cdata(); }
-msAPI const ms::float3* msMeshGetVelocitiesPtr(const ms::Mesh *self) { return self->velocities.cdata(); }
+msAPI const mu::float4* msMeshGetColorsPtr(const ms::Mesh *self) { return self->colors.cdata(); }
+msAPI const mu::float3* msMeshGetVelocitiesPtr(const ms::Mesh *self) { return self->velocities.cdata(); }
 msAPI const int* msMeshGetIndicesPtr(const ms::Mesh *self) { return self->indices.cdata(); }
 msAPI const int* msMeshGetCountsPtr(const ms::Mesh *self) { return self->counts.cdata(); }
 msAPI int msMeshGetNumSubmeshes(const ms::Mesh *self) { return (int)self->submeshes.size(); }
 msAPI const ms::SubmeshData* msMeshGetSubmesh(const ms::Mesh *self, int i) { return &self->submeshes[i]; }
 msAPI ms::Bounds msMeshGetBounds(const ms::Mesh *self) { return self->bounds; }
 
-msAPI void msMeshReadBoneWeights4(const ms::Mesh *self, ms::Weights4 *dst) { self->weights4.copy_to(dst); }
+msAPI void msMeshReadBoneWeights4(const ms::Mesh *self, mu::Weights4 *dst) { self->weights4.copy_to(dst); }
 msAPI void msMeshReadBoneCounts(const ms::Mesh *self, uint8_t *dst) { self->bone_counts.copy_to(dst); }
-msAPI void msMeshReadBoneWeightsV(const ms::Mesh *self, ms::Weights1 *dst) { self->weights1.copy_to(dst); }
+msAPI void msMeshReadBoneWeightsV(const ms::Mesh *self, mu::Weights1 *dst) { self->weights1.copy_to(dst); }
 msAPI const uint8_t* msMeshGetBoneCountsPtr(const ms::Mesh *self) { return self->bone_counts.cdata(); }
-msAPI const ms::Weights1* msMeshGetBoneWeightsVPtr(const ms::Mesh *self) { return self->weights1.cdata(); }
+msAPI const mu::Weights1* msMeshGetBoneWeightsVPtr(const ms::Mesh *self) { return self->weights1.cdata(); }
 msAPI int msMeshGetNumBones(const ms::Mesh *self) { return (int)self->bones.size(); }
 msAPI int msMeshGetNumBoneWeights(const ms::Mesh *self) { return self->bone_weight_count; }
 msAPI const char* msMeshGetRootBonePath(const ms::Mesh *self) { return self->root_bone.c_str(); }
@@ -372,7 +386,7 @@ msAPI void msMeshWriteSubmeshTriangles(ms::Mesh *self, const int *v, int size, i
         self->md_flags.Set(ms::MESH_DATA_FLAG_HAS_MATERIAL_IDS, true);
     }
 }
-msAPI void msMeshWriteBoneWeights4(ms::Mesh *self, const ms::Weights4 *data, int size)
+msAPI void msMeshWriteBoneWeights4(ms::Mesh *self, const mu::Weights4 *data, int size)
 {
     auto& bones = self->bones;
     if (bones.empty()) {
@@ -394,7 +408,7 @@ msAPI void msMeshWriteBoneCounts(ms::Mesh *self, uint8_t *data, int size)
 {
     self->bone_counts.assign(data, data + size);
 }
-msAPI void msMeshWriteBoneWeightsV(ms::Mesh *self, uint8_t *counts, int counts_size, const ms::Weights1 *weights, int weights_size)
+msAPI void msMeshWriteBoneWeightsV(ms::Mesh *self, uint8_t *counts, int counts_size, const mu::Weights1 *weights, int weights_size)
 {
     auto& bones = self->bones;
     if (bones.empty()) {
@@ -539,7 +553,7 @@ msAPI ms::SceneProfileData msSceneGetProfileData(const ms::Scene *self) { return
 
 
 #pragma region Misc
-msAPI uint64_t msGetTime() { return ms::Now(); }
+msAPI uint64_t msGetTime() { return mu::Now(); }
 #ifndef msRuntime
 msAPI bool msWriteToFile(const char *path, const char *data, int size) { return ms::ByteArrayToFile(path, data, size); }
 #endif // msRuntime

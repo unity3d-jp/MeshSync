@@ -23,17 +23,17 @@ struct Random
     }
 
     // normalized vector
-    float3 v3n()
+    mu::float3 v3n()
     {
-        return normalize(float3{ f11(), f11(), f11() });
+        return normalize(mu::float3{ f11(), f11(), f11() });
     }
 
     // tangent
-    float4 v4t()
+    mu::float4 v4t()
     {
-        float4 r;
-        (float3&)r = normalize(float3{ f11(), f11(), f11() });
-        r.w = sign(f11());
+        mu::float4 r;
+        (mu::float3&)r = normalize(mu::float3{ f11(), f11(), f11() });
+        r.w = mu::sign(f11());
         return r;
     }
 };

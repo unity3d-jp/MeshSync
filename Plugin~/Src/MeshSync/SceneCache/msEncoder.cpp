@@ -5,7 +5,7 @@
 #ifdef msEnableZSTD
 #define ZSTD_STATIC_LINKING_ONLY
 #include <zstd.h>
-#include "msSceneCache.h"
+#include "MeshSync/SceneCache/msSceneCache.h"
 #pragma comment(lib, "libzstd_static.lib")
 #endif
 
@@ -45,7 +45,7 @@ std::tuple<int, int> GetZSTDCompressionLevelRange()
 
 int ClampZSTDCompressionLevel(int v)
 {
-    return clamp(v, 0, ZSTD_maxCLevel());
+    return mu::clamp(v, 0, ZSTD_maxCLevel());
 }
 
 int GetZSTDDefaultCompressionLevel()
@@ -66,7 +66,7 @@ private:
 
 ZSTDBufferEncoder::ZSTDBufferEncoder(int cl)
 {
-    m_compression_level = clamp(cl, ZSTD_minCLevel(), ZSTD_maxCLevel());
+    m_compression_level = mu::clamp(cl, ZSTD_minCLevel(), ZSTD_maxCLevel());
 }
 
 void ZSTDBufferEncoder::encode(RawVector<char>& dst, const RawVector<char>& src)

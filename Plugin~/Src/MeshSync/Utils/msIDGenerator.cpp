@@ -1,6 +1,9 @@
 #include "pch.h"
-#include "SceneGraph/msSceneGraph.h"
-#include "msIDGenerator.h"
+#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msTransform.h"
+
+#include "MeshSync/Utility/msIDGenerator.h"
+
 
 namespace ms {
 

@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "msSceneGraph.h"
-#include "msLight.h"
+#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msLight.h"
 
 namespace ms {
 
@@ -52,10 +52,10 @@ void Light::setupDataFlags()
     super::setupDataFlags();
     ld_flags.Set(LIGHT_DATA_FLAG_HAS_LIGHT_TYPE, light_type != LightType::Unknown);
     ld_flags.Set(LIGHT_DATA_FLAG_HAS_SHADOW_TYPE,  shadow_type != ShadowType::Unknown);
-    ld_flags.Set(LIGHT_DATA_FLAG_HAS_COLOR, !is_inf(color));
-    ld_flags.Set(LIGHT_DATA_FLAG_HAS_INTENSITY, !is_inf(intensity));
-    ld_flags.Set(LIGHT_DATA_FLAG_HAS_RANGE, !is_inf(range));
-    ld_flags.Set(LIGHT_DATA_FLAG_HAS_SPOT_ANGLE, !is_inf(spot_angle));
+    ld_flags.Set(LIGHT_DATA_FLAG_HAS_COLOR, !mu::is_inf(color));
+    ld_flags.Set(LIGHT_DATA_FLAG_HAS_INTENSITY, !mu::is_inf(intensity));
+    ld_flags.Set(LIGHT_DATA_FLAG_HAS_RANGE, !mu::is_inf(range));
+    ld_flags.Set(LIGHT_DATA_FLAG_HAS_SPOT_ANGLE, !mu::is_inf(spot_angle));
 }
 
 bool Light::isUnchanged() const
@@ -68,10 +68,10 @@ static bool NearEqual(const Light& a, const Light& b)
     return
         a.light_type == b.light_type &&
         a.shadow_type == b.shadow_type &&
-        near_equal(a.color, b.color) &&
-        near_equal(a.intensity, b.intensity) &&
-        near_equal(a.range, b.range) &&
-        near_equal(a.spot_angle, b.spot_angle) &&
+        mu::near_equal(a.color, b.color) &&
+        mu::near_equal(a.intensity, b.intensity) &&
+        mu::near_equal(a.range, b.range) &&
+        mu::near_equal(a.spot_angle, b.spot_angle) &&
         a.layer_mask == b.layer_mask;
 }
 
@@ -127,10 +127,10 @@ void Light::clear()
     ld_flags = {};
     light_type = LightType::Unknown;
     shadow_type = ShadowType::Unknown;
-    color = inf<float4>();
-    intensity = inf<float>();
-    range = inf<float>();
-    spot_angle = inf<float>();
+    color = mu::inf<mu::float4>();
+    intensity = mu::inf<float>();
+    range = mu::inf<float>();
+    spot_angle = mu::inf<float>();
     layer_mask = ~0;
 }
 

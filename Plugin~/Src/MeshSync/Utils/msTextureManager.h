@@ -1,6 +1,9 @@
 #pragma once
 
 #include "MeshSync/SceneGraph/msMaterial.h"
+#include "MeshSync/MeshSync.h"
+
+#include "MeshSync/SceneGraph/msTexture.h" //TextureFormat, TextureType
 
 #ifndef msRuntime
 namespace ms {

@@ -1,11 +1,11 @@
 #include "pch.h"
-#include "msEntity.h"
-#include "msMesh.h"
-#include "msPointCache.h"
-#include "msAnimation.h"
 #include "msEntityConverter.h"
-#include "msCamera.h"
-#include "msLight.h"
+
+#include "MeshSync/SceneGraph/msAnimation.h"
+#include "MeshSync/SceneGraph/msCamera.h"
+#include "MeshSync/SceneGraph/msLight.h"
+#include "MeshSync/SceneGraph/msMesh.h"
+#include "MeshSync/SceneGraph/msPoints.h"
 
 namespace ms {
 
@@ -70,8 +70,8 @@ void ScaleConverter::convertCamera(Camera &e)
     convertTransform(e);
     e.near_plane *= m_scale;
     e.far_plane *= m_scale;
-    (float3&)e.view_matrix[3] *= m_scale;
-    (float3&)e.proj_matrix[3] *= m_scale;
+    (mu::float3&)e.view_matrix[3] *= m_scale;
+    (mu::float3&)e.proj_matrix[3] *= m_scale;
 }
 
 void ScaleConverter::convertLight(Light &e)
@@ -85,7 +85,7 @@ void ScaleConverter::convertMesh(Mesh &e)
     convertTransform(e);
     mu::Scale(e.points.data(), m_scale, e.points.size());
     for (auto& bone : e.bones) {
-        (float3&)bone->bindpose[3] *= m_scale;
+        (mu::float3&)bone->bindpose[3] *= m_scale;
     }
     for (auto& bs : e.blendshapes) {
         for (auto& frame : bs->frames) {
@@ -110,13 +110,13 @@ void ScaleConverter::convertAnimationCurve(AnimationCurve &c)
         c.each<float>([this](auto& v) { v.value *= m_scale; });
         break;
     case Animation::DataType::Float2:
-        c.each<float2>([this](auto& v) { v.value *= m_scale; });
+        c.each<mu::float2>([this](auto& v) { v.value *= m_scale; });
         break;
     case Animation::DataType::Float3:
-        c.each<float3>([this](auto& v) { v.value *= m_scale; });
+        c.each<mu::float3>([this](auto& v) { v.value *= m_scale; });
         break;
     case Animation::DataType::Float4:
-        c.each<float4>([this](auto& v) { v.value *= m_scale; });
+        c.each<mu::float4>([this](auto& v) { v.value *= m_scale; });
         break;
     default:
         break;
@@ -185,13 +185,13 @@ void FlipX_HandednessCorrector::convertAnimationCurve(AnimationCurve &c)
 
     switch (c.data_type) {
     case Animation::DataType::Float3:
-        c.each<float3>([this](auto& v) { v.value = flip_x(v.value); });
+        c.each<mu::float3>([this](auto& v) { v.value = flip_x(v.value); });
         break;
     case Animation::DataType::Float4:
-        c.each<float4>([this](auto& v) { v.value = flip_x(v.value); });
+        c.each<mu::float4>([this](auto& v) { v.value = flip_x(v.value); });
         break;
     case Animation::DataType::Quaternion:
-        c.each<quatf>([this](auto& v) { v.value = flip_x(v.value); });
+        c.each<mu::quatf>([this](auto& v) { v.value = flip_x(v.value); });
         break;
     default:
         break;
@@ -213,7 +213,7 @@ void FlipYZ_ZUpCorrector::convertTransform(Transform &e)
 
     auto t = e.getType();
     if (t == EntityType::Camera || t == EntityType::Light) {
-        const quatf cr = rotate_x(-90.0f * DegToRad);
+        const mu::quatf cr = mu::rotate_x(-90.0f * mu::DegToRad);
         e.rotation *= cr;
     }
 }
@@ -278,21 +278,21 @@ void FlipYZ_ZUpCorrector::convert(Animation &anim)
         switch (c.data_type) {
         case Animation::DataType::Float3:
             if (!c.data_flags.ignore_negate)
-                c.each<float3>([&](auto& v) { v.value = flip_z(swap_yz(v.value)); });
+                c.each<mu::float3>([&](auto& v) { v.value = flip_z(swap_yz(v.value)); });
             else
-                c.each<float3>([&](auto& v) { v.value = swap_yz(v.value); });
+                c.each<mu::float3>([&](auto& v) { v.value = swap_yz(v.value); });
             break;
         case Animation::DataType::Float4:
             if (!c.data_flags.ignore_negate)
-                c.each<float4>([&](auto& v) { v.value = flip_z(swap_yz(v.value)); });
+                c.each<mu::float4>([&](auto& v) { v.value = flip_z(swap_yz(v.value)); });
             else
-                c.each<float4>([&](auto& v) { v.value = swap_yz(v.value); });
+                c.each<mu::float4>([&](auto& v) { v.value = swap_yz(v.value); });
             break;
         case Animation::DataType::Quaternion:
-            c.each<quatf>([&](auto& v) { v.value = flip_z(swap_yz(v.value)); });
+            c.each<mu::quatf>([&](auto& v) { v.value = flip_z(swap_yz(v.value)); });
             if ((anim.entity_type == EntityType::Camera || anim.entity_type == EntityType::Light) && c.name == mskTransformRotation) {
-                const quatf cr = rotate_x(-90.0f * DegToRad);
-                c.each<quatf>([&](auto& v) {
+                const mu::quatf cr = mu::rotate_x(-90.0f * mu::DegToRad);
+                c.each<mu::quatf>([&](auto& v) {
                     v.value *= cr;
                 });
             }
@@ -317,7 +317,7 @@ void RotateX_ZUpCorrector::convertTransform(Transform &e)
 {
     if (e.isRoot()) {
         e.position = flip_z(swap_yz(e.position));
-        e.rotation = flip_z(swap_yz(e.rotation)) * rotate_x(-90.0f * DegToRad);
+        e.rotation = flip_z(swap_yz(e.rotation)) * mu::rotate_x(-90.0f * mu::DegToRad);
         e.scale = swap_yz(e.scale);
     }
 }
@@ -357,18 +357,18 @@ void RotateX_ZUpCorrector::convertAnimationCurve(AnimationCurve &c)
     switch (c.data_type) {
     case Animation::DataType::Float3:
         if (!c.data_flags.ignore_negate)
-            c.each<float3>([this](auto& v) { v.value = flip_z(swap_yz(v.value)); });
+            c.each<mu::float3>([this](auto& v) { v.value = flip_z(swap_yz(v.value)); });
         else
-            c.each<float3>([this](auto& v) { v.value = swap_yz(v.value); });
+            c.each<mu::float3>([this](auto& v) { v.value = swap_yz(v.value); });
         break;
     case Animation::DataType::Float4:
         if (!c.data_flags.ignore_negate)
-            c.each<float4>([this](auto& v) { v.value = flip_z(swap_yz(v.value)); });
+            c.each<mu::float4>([this](auto& v) { v.value = flip_z(swap_yz(v.value)); });
         else
-            c.each<float4>([this](auto& v) { v.value = swap_yz(v.value); });
+            c.each<mu::float4>([this](auto& v) { v.value = swap_yz(v.value); });
         break;
     case Animation::DataType::Quaternion:
-        c.each<quatf>([this](auto& v) { v.value = flip_z(swap_yz(v.value)) * rotate_x(-90.0f * DegToRad); });
+        c.each<mu::quatf>([this](auto& v) { v.value = flip_z(swap_yz(v.value)) * mu::rotate_x(-90.0f * mu::DegToRad); });
         break;
     default:
         break;

@@ -1,5 +1,9 @@
 #pragma once
 
+#include "MeshSync/MeshSync.h"
+
+msDeclClassPtr(AnimationClip)
+
 namespace ms {
 
 class Entity;
@@ -26,7 +30,6 @@ public:
     virtual void convert(Animation& v);
     virtual void convertAnimationCurve(AnimationCurve& v);
 };
-msDeclPtr(EntityConverter);
 
 
 class ScaleConverter : public EntityConverter
@@ -48,7 +51,6 @@ public:
 private:
     float m_scale;
 };
-msDeclPtr(ScaleConverter);
 
 
 class FlipX_HandednessCorrector : public EntityConverter
@@ -65,7 +67,6 @@ public:
 
     void convertAnimationCurve(AnimationCurve& v) override;
 };
-msDeclPtr(FlipX_HandednessCorrector);
 
 
 class FlipYZ_ZUpCorrector : public EntityConverter
@@ -82,7 +83,6 @@ public:
 
     void convert(Animation &anim) override;
 };
-msDeclPtr(FlipYZ_ZUpCorrector);
 
 
 // fbx-conpatible Z-up to Y-up
@@ -102,6 +102,6 @@ public:
     void convert(Animation& v)override;
     void convertAnimationCurve(AnimationCurve& v) override;
 };
-msDeclPtr(RotateX_ZUpCorrector);
+
 
 } // namespace ms

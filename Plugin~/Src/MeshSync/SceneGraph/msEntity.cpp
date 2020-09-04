@@ -1,10 +1,12 @@
 #include "pch.h"
-#include "msSceneGraph.h"
-#include "msEntity.h"
-#include "msMesh.h"
-#include "msPointCache.h"
-#include "msCamera.h"
-#include "msLight.h"
+
+#include "MeshSync/SceneGraph/msCamera.h"
+#include "MeshSync/SceneGraph/msEntity.h"
+#include "MeshSync/SceneGraph/msLight.h"
+#include "MeshSync/SceneGraph/msMesh.h"
+#include "MeshSync/SceneGraph/msPoints.h"
+#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msTransform.h"
 
 namespace ms {
 
@@ -295,10 +297,10 @@ void Camera::setupDataFlags()
     cd_flags.has_near_plane = near_plane > 0.0f;
     cd_flags.has_far_plane = far_plane > 0.0f;
     cd_flags.has_focal_length = focal_length > 0.0f;
-    cd_flags.has_sensor_size = sensor_size != float2::zero();
-    cd_flags.has_lens_shift = lens_shift != float2::zero();
-    cd_flags.has_view_matrix = view_matrix != float4x4::zero();
-    cd_flags.has_proj_matrix = proj_matrix != float4x4::zero();
+    cd_flags.has_sensor_size = sensor_size != mu::float2::zero();
+    cd_flags.has_lens_shift = lens_shift != mu::float2::zero();
+    cd_flags.has_view_matrix = view_matrix != mu::float4x4::zero();
+    cd_flags.has_proj_matrix = proj_matrix != mu::float4x4::zero();
 }
 
 bool Camera::isUnchanged() const
@@ -310,14 +312,14 @@ static bool NearEqual(const Camera& a, const Camera& b)
 {
     return
         a.is_ortho == b.is_ortho &&
-        near_equal(a.fov, b.fov) &&
-        near_equal(a.near_plane, b.near_plane) &&
-        near_equal(a.far_plane, b.far_plane) &&
-        near_equal(a.focal_length, b.focal_length) &&
-        near_equal(a.sensor_size, b.sensor_size) &&
-        near_equal(a.lens_shift, b.lens_shift) &&
-        near_equal(a.view_matrix, b.view_matrix) &&
-        near_equal(a.proj_matrix, b.proj_matrix) &&
+        mu::near_equal(a.fov, b.fov) &&
+        mu::near_equal(a.near_plane, b.near_plane) &&
+        mu::near_equal(a.far_plane, b.far_plane) &&
+        mu::near_equal(a.focal_length, b.focal_length) &&
+        mu::near_equal(a.sensor_size, b.sensor_size) &&
+        mu::near_equal(a.lens_shift, b.lens_shift) &&
+        mu::near_equal(a.view_matrix, b.view_matrix) &&
+        mu::near_equal(a.proj_matrix, b.proj_matrix) &&
         a.layer_mask == b.layer_mask;
 }
 
@@ -380,10 +382,10 @@ void Camera::clear()
     near_plane = 0.0f;
     far_plane = 0.0f;
     focal_length = 0.0f;
-    sensor_size = float2::zero();
-    lens_shift = float2::zero();
-    view_matrix = float4x4::zero();
-    proj_matrix = float4x4::zero();
+    sensor_size = mu::float2::zero();
+    lens_shift = mu::float2::zero();
+    view_matrix = mu::float4x4::zero();
+    proj_matrix = mu::float4x4::zero();
     layer_mask = ~0;
 }
 

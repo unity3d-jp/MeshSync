@@ -2,6 +2,8 @@
 #include "MeshSync/msClient.h"  //ms::ClientSettings
 #include "MeshSync/SceneGraph/msAsset.h" //ms::TexturePtr
 
+#include "MeshSync/SceneGraph/msTexture.h"
+
 class TestUtility {
 public:
 

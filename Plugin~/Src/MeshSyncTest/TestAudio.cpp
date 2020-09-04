@@ -1,12 +1,10 @@
 #include "pch.h"
 #include "Test.h"
-#include "../MeshSync/MeshSync.h"
+#include "MeshSync/SceneGraph/msAudio.h"
+#include "MeshSync/SceneGraph/msScene.h"
 #include "Utility/TestUtility.h"
+
 using namespace mu;
-
-
-#ifdef msEnableNetwork
-
 
 static const int Frequency = 48000;
 static const int Channels = 1;
@@ -15,7 +13,7 @@ template<class T >
 static void GenerateAudioSample(T *dst, const int n) {
     for (int i = 0; i < n; ++i) {
         const float s = std::pow(static_cast<float>(n - i) / n, 0.5f);
-        dst[i] = std::sin((static_cast<float>(i) * 1.5f * ms::DegToRad)) * s;
+        dst[i] = std::sin((static_cast<float>(i) * 1.5f * mu::DegToRad)) * s;
     }
 }
 
@@ -77,4 +75,4 @@ TestCase(Test_Audio)
         scene->assets.push_back(afa);
     TestUtility::Send(scene);
 }
-#endif // msEnableNetwork
+

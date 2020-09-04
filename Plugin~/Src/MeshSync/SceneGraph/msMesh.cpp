@@ -1,6 +1,8 @@
 #include "pch.h"
-#include "msSceneGraph.h"
-#include "msMesh.h"
+#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msMesh.h"
+
+#include "msLog.h"
 
 namespace ms {
 
@@ -207,7 +209,7 @@ void BoneData::detach()
 void BoneData::clear()
 {
     path.clear();
-    bindpose = float4x4::identity();
+    bindpose = mu::float4x4::identity();
     weights.clear();
 }
 
@@ -337,7 +339,7 @@ bool Mesh::strip(const Entity& base_)
 
     bool unchanged = true;
     auto clear_if_identical = [&](auto& a1, const auto& a2) {
-        if (near_equal(a1, a2))
+        if (mu::near_equal(a1, a2))
             a1.clear();
         else
             unchanged = false;
@@ -393,7 +395,7 @@ bool Mesh::diff(const Entity& e1_, const Entity& e2_)
 
     bool unchanged = true;
     auto compare_attribute = [&](const auto& a1, const auto& a2) {
-        if (!near_equal(a1, a2))
+        if (!mu::near_equal(a1, a2))
             unchanged = false;
     };
 
@@ -437,10 +439,9 @@ bool Mesh::lerp(const Entity& e1_, const Entity& e2_, float t)
     return true;
 }
 
-void Mesh::updateBounds()
-{
-    float3 bmin, bmax;
-    bmin = bmax = float3::zero();
+void Mesh::updateBounds() {
+    mu::float3 bmin, bmax;
+    bmin = bmax = mu::float3::zero();
     MinMax(points.cdata(), points.size(), bmin, bmax);
     bounds.center = (bmax + bmin) * 0.5f;
     bounds.extents = abs(bmax - bmin) * 0.5f;
@@ -550,7 +551,7 @@ static inline void Remap(C1& dst, const C2& src, const C3& indices)
     }
     else {
         dst.resize_discard(indices.size());
-        CopyWithIndices(dst.data(), src.data(), indices);
+        mu::CopyWithIndices(dst.data(), src.data(), indices);
     }
 }
 
@@ -659,10 +660,10 @@ void Mesh::refine()
         size_t num_indices_old = indices.size();
         size_t num_points_old = points.size();
 
-        RawVector<float3> tmp_normals;
-        RawVector<float2> tmp_uv[msConstants::MAX_UV];
+        RawVector<mu::float3> tmp_normals;
+        RawVector<mu::float2> tmp_uv[msConstants::MAX_UV];
         RawVector<int> remap_uv[msConstants::MAX_UV];
-        RawVector<float4> tmp_colors;
+        RawVector<mu::float4> tmp_colors;
         RawVector<int> remap_normals, remap_colors;
 
         mu::MeshRefiner refiner;
@@ -675,17 +676,17 @@ void Mesh::refine()
         const size_t numIndices = indices.size();
 
         if (normals.size() == numIndices)
-            refiner.addExpandedAttribute<float3>(normals, tmp_normals, remap_normals);
+            refiner.addExpandedAttribute<mu::float3>(normals, tmp_normals, remap_normals);
         for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
             if (m_uv[i].size() != numIndices) {
                 continue;
             }
 
-            refiner.addExpandedAttribute<float2>(m_uv[i], tmp_uv[i], remap_uv[i]);
+            refiner.addExpandedAttribute<mu::float2>(m_uv[i], tmp_uv[i], remap_uv[i]);
         }
 
         if (colors.size() == indices.size())
-            refiner.addExpandedAttribute<float4>(colors, tmp_colors, remap_colors);
+            refiner.addExpandedAttribute<mu::float4>(colors, tmp_colors, remap_colors);
 
         // refine
         refiner.refine();
@@ -734,21 +735,21 @@ void Mesh::refine()
 
         // velocities
         if (velocities.size() == num_points_old) {
-            RawVector<float3> tmp_velocities;
+            RawVector<mu::float3> tmp_velocities;
             Remap(tmp_velocities, velocities, refiner.new2old_points);
             tmp_velocities.swap(velocities);
         }
 
         // bone weights
         if (weights4.size() == num_points_old) {
-            RawVector<Weights4> tmp_weights;
+            RawVector<mu::Weights4> tmp_weights;
             Remap(tmp_weights, weights4, refiner.new2old_points);
             weights4.swap(tmp_weights);
         }
         if (!weights1.empty() && bone_counts.size() == num_points_old && bone_offsets.size() == num_points_old) {
             RawVector<uint8_t> tmp_bone_counts;
             RawVector<int> tmp_bone_offsets;
-            RawVector<Weights1> tmp_weights;
+            RawVector<mu::Weights1> tmp_weights;
 
             Remap(tmp_bone_counts, bone_counts, refiner.new2old_points);
 
@@ -782,7 +783,7 @@ void Mesh::refine()
 
         // remap blendshape delta
         if (!blendshapes.empty()) {
-            RawVector<float3> tmp;
+            RawVector<mu::float3> tmp;
             for (auto& bs : blendshapes) {
                 bs->sort();
                 for (auto& fp : bs->frames) {
@@ -911,16 +912,16 @@ void Mesh::makeDoubleSided()
 
     expand(normals);
     if (copy_index_elements(normals)) {
-        float3 *n = &normals[num_indices];
+        mu::float3 *n = &normals[num_indices];
         for (size_t ii = 0; ii < num_back_indices; ++ii)
             n[ii] *= -1.0f;
     }
 
     expand(tangents);
     if (copy_index_elements(tangents)) {
-        float4 *n = &tangents[num_indices];
+        mu::float4 *n = &tangents[num_indices];
         for (size_t ii = 0; ii < num_back_indices; ++ii)
-            (float3&)n[ii] *= -1.0f;
+            (mu::float3&)n[ii] *= -1.0f;
     }
 
     for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
@@ -930,7 +931,7 @@ void Mesh::makeDoubleSided()
     copy_index_elements(colors);
 }
 
-void Mesh::mirrorMesh(const float3 & plane_n, float plane_d, bool /*welding*/)
+void Mesh::mirrorMesh(const mu::float3 & plane_n, float plane_d, bool /*welding*/)
 {
     size_t num_points_old = points.size();
     size_t num_faces_old = counts.size();
@@ -944,7 +945,7 @@ void Mesh::mirrorMesh(const float3 & plane_n, float plane_d, bool /*welding*/)
         int idx = 0;
         for (size_t pi = 0; pi < num_points_old; ++pi) {
             float d = plane_distance(points[pi], plane_n, plane_d);
-            if (near_equal(d, 0.0f)) {
+            if (mu::near_equal(d, 0.0f)) {
                 indirect[pi] = (int)pi;
             }
             else {
@@ -1007,7 +1008,7 @@ void Mesh::mirrorMesh(const float3 & plane_n, float plane_d, bool /*welding*/)
     }
 
     for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
-        SharedVector<float2>& curUV = m_uv[i];
+        SharedVector<mu::float2>& curUV = m_uv[i];
         if (curUV.empty())
             continue;
 
@@ -1019,7 +1020,7 @@ void Mesh::mirrorMesh(const float3 & plane_n, float plane_d, bool /*welding*/)
         }
         else if (curUV.size() == num_indices_old) {
             curUV.resize(indices.size());
-            tvec2<float>* dst = &curUV[num_indices_old];
+            mu::tvec2<float>* dst = &curUV[num_indices_old];
             mu::EnumerateReverseFaceIndices(IArray<int>{counts.cdata(), num_faces_old}, [dst, this,curUV](int, int idx, int ridx) {
                 dst[idx] = curUV[ridx];
             });
@@ -1106,9 +1107,9 @@ void Mesh::mirrorMesh(const float3 & plane_n, float plane_d, bool /*welding*/)
     }
 }
 
-void Mesh::transformMesh(const float4x4& m)
+void Mesh::transformMesh(const mu::float4x4& m)
 {
-    if (mu::near_equal(m, float4x4::identity()))
+    if (mu::near_equal(m, mu::float4x4::identity()))
         return;
     mu::MulPoints(m, points.cdata(), points.data(), points.size());
     mu::MulVectors(m, normals.cdata(), normals.data(), normals.size());
@@ -1211,7 +1212,7 @@ void Mesh::setupBoneWeights4()
     int num_vertices = (int)points.size();
     weights4.resize_zeroclear(num_vertices);
 
-    RawVector<Weights1> tmp(num_bones);
+    RawVector<mu::Weights1> tmp(num_bones);
     for (int vi = 0; vi < num_vertices; ++vi) {
         int num_influence = 0;
         for (int bi = 0; bi < num_bones; ++bi) {

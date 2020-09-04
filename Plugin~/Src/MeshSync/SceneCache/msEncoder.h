@@ -1,6 +1,9 @@
 #pragma once
 
-#include "SceneGraph/msSceneGraph.h"
+#include "MeshSync/SceneGraph/msScene.h"
+
+msDeclClassPtr(BufferEncoder);
+msDeclClassPtr(Mesh);
 
 namespace ms {
 
@@ -11,7 +14,6 @@ public:
     virtual void encode(RawVector<char>& dst, const RawVector<char>& src) = 0;
     virtual void decode(RawVector<char>& dst, const RawVector<char>& src) = 0;
 };
-msDeclPtr(BufferEncoder);
 
 BufferEncoderPtr CreatePlainEncoder();
 BufferEncoderPtr CreateZSTDEncoder(int compression_level);

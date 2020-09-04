@@ -2,13 +2,7 @@
 
 #ifdef _WIN32
     #pragma warning(disable:4996)
-    #define NOMINMAX
-    #include <winsock2.h>
-    #include <windows.h>
-    #include <amp.h>
-    #include <amp_graphics.h>
-    #include <amp_math.h>
-    #include <ppl.h>
+    #define NOMINMAX //for using std::min/max
 #else 
     #include <dlfcn.h>
     #ifdef __APPLE__
@@ -40,7 +34,7 @@
 #include <random>
 #include <cassert>
 
-#ifndef msRuntime
+//Poco
 #include "Poco/Path.h"
 #include "Poco/File.h"
 #include "Poco/FileStream.h"
@@ -67,4 +61,6 @@
 #include "Poco/Net/StreamSocket.h"
 #include "Poco/Net/SocketStream.h"
 #include "Poco/Net/SocketAddress.h"
-#endif
+
+//Internal Dependencies
+#include "MeshUtils/MeshUtils.h"

@@ -1,6 +1,5 @@
 #include "pch.h"
-#include "msSceneGraph.h"
-#include "msConstraints.h"
+#include "MeshSync/SceneGraph/msConstraints.h"
 
 namespace ms
 {

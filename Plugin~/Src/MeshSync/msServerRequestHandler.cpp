@@ -1,11 +1,11 @@
 #include "pch.h"
 #include "msServerRequestHandler.h"
-#include "msServer.h"
 
-#include "msMisc.h" //StartsWith()
-#include "Utils/msNetworkUtils.h" //IsInLocalNetwork()
+#include "MeshSync/msMisc.h" //StartsWith()
 
-#ifdef msEnableNetwork
+#include "MeshSync/msServer.h"
+#include "MeshSync/Utility/msNetworkUtility.h" //IsInLocalNetwork()
+
 namespace ms {
 
 using namespace Poco::Net;
@@ -100,4 +100,4 @@ HTTPRequestHandler* ServerRequestHandlerFactory::createRequestHandler(const HTTP
 
 
 } // namespace ms
-#endif // msEnableNetwork
+

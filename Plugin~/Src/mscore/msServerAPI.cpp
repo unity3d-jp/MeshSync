@@ -1,11 +1,15 @@
 #include "pch.h"
 #include "MeshUtils/MeshUtils.h"
-#include "MeshSync/MeshSync.h"
+#include "MeshSync/msServer.h"
 #include "MeshSync/SceneGraph/msCamera.h"
 #include "MeshSync/SceneGraph/msLight.h"
+#include "MeshSync/SceneGraph/msMaterial.h"
+#include "MeshSync/SceneGraph/msMesh.h"
+#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msTexture.h"
+
 #include "msCoreAPI.h"
 
-#ifdef msEnableNetwork
 using namespace mu;
 
 using ms::ServerPtr;
@@ -239,4 +243,4 @@ msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *self)
     return self->scene.get();
 }
 #pragma endregion
-#endif // msEnableNetwork
+

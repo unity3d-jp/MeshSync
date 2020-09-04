@@ -1,7 +1,5 @@
 #pragma once
 
-#include "MeshUtils/MeshUtils.h"
-using namespace mu;
 
 #ifdef _WIN32
     #define testExport extern "C" __declspec(dllexport)
