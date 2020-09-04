@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MeshSync/MeshSync.h" //msDeclClassPtr
+#include "MeshSync/msMisc.h" //StartsWith()
 
 #include "MeshSync/SceneGraph/msAsset.h"
 #include "MeshSync/SceneGraph/msEntityType.h"
