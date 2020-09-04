@@ -6,6 +6,7 @@
 #include "MeshSync/SceneGraph/msMesh.h"
 #include "MeshSync/SceneGraph/msPoints.h"
 #include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msTransform.h"
 
 namespace ms {
 

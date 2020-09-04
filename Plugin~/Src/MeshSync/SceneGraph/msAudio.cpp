@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "MeshSync/SceneGraph/msAudio.h"
-#include "msMisc.h" //FileToByteArray
+#include "MeshSync/msMisc.h" //FileToByteArray
 
 namespace ms {
 

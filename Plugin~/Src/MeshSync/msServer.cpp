@@ -2,7 +2,7 @@
 
 #include "msServerRequestHandler.h"
 #include "msLog.h"
-#include "msMisc.h" //StartsWith()
+#include "MeshSync/msMisc.h" //StartsWith()
 #include "MeshSync/msProtocol.h" //GetMessagePtr
 #include "MeshSync/msServer.h"
 #include "MeshSync/MeshSync.h" //TestMessagePtr

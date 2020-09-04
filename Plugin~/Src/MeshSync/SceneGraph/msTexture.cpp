@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "MeshSync/SceneGraph/msTexture.h"
-#include "msMisc.h"
+#include "MeshSync/msMisc.h" //FileToByteArray
 
 namespace ms {
 

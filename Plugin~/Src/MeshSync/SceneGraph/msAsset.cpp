@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "MeshSync/SceneGraph/msAsset.h"
-#include "msMisc.h"
 
+#include "MeshSync/msMisc.h"
 #include "MeshSync/SceneGraph/msAnimation.h"
 #include "MeshSync/SceneGraph/msAudio.h"
 #include "MeshSync/SceneGraph/msMaterial.h"

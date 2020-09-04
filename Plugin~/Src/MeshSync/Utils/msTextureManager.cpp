@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "msTextureManager.h"
-#include "msMisc.h"
+#include "MeshSync/msMisc.h" //FileToByteArray, FileExists
 
 #ifndef msRuntime
 namespace ms {
