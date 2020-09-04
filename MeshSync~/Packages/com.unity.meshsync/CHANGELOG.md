@@ -1,7 +1,10 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
-## [0.3.0-preview] - 2020-09-05
+## [0.3.1-preview] - 2020-09-04
+* refactor: major plugin code refactoring to reduce dependencies and make used types more explicit 
+
+## [0.3.0-preview] - 2020-09-03
 * feat: core multiple UV support
 * feat: Set DetailMap Albedo and Secondary UV properties of StandardMaterial 
 * refactor: use bit shifting and masking for flag structures instead of using bitfields
