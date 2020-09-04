@@ -84,7 +84,6 @@ const char *g_ignore_list[] = {
 #pragma comment(lib, "dbghelp.lib")
 #pragma comment(lib, "psapi.lib")
 
-#include <windows.h>
 #include <dbghelp.h>
 #include <psapi.h>
 #include <tlhelp32.h>
