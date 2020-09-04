@@ -17,6 +17,7 @@ target_include_directories(MeshSyncTest PUBLIC
     ${MeshSyncTest_dir}    
     ${src_root}/MeshSync/Include
     ${src_root}/MeshUtils
+    ${src_root}
     ${Poco_INCLUDE_DIRS}
 )
 
