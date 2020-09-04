@@ -63,12 +63,12 @@ static inline void set_impl(SharedVector<char>& dst, const T *v, size_t n)
 
 template<> void MaterialProperty::set(const int& v) { type = Type::Int; set_impl(data, v); }
 template<> void MaterialProperty::set(const float& v) { type = Type::Float; set_impl(data, v); }
-template<> void MaterialProperty::set(const float2& v) { type = Type::Vector; set_impl(data, to_vec4(v)); }
-template<> void MaterialProperty::set(const float3& v) { type = Type::Vector; set_impl(data, to_vec4(v)); }
-template<> void MaterialProperty::set(const float4& v) { type = Type::Vector; set_impl(data, v); }
-template<> void MaterialProperty::set(const float2x2& v) { type = Type::Matrix; set_impl(data, to_mat4x4(v)); }
-template<> void MaterialProperty::set(const float3x3& v) { type = Type::Matrix; set_impl(data, to_mat4x4(v)); }
-template<> void MaterialProperty::set(const float4x4& v) { type = Type::Matrix; set_impl(data, v); }
+template<> void MaterialProperty::set(const mu::float2& v) { type = Type::Vector; set_impl(data, to_vec4(v)); }
+template<> void MaterialProperty::set(const mu::float3& v) { type = Type::Vector; set_impl(data, to_vec4(v)); }
+template<> void MaterialProperty::set(const mu::float4& v) { type = Type::Vector; set_impl(data, v); }
+template<> void MaterialProperty::set(const mu::float2x2& v) { type = Type::Matrix; set_impl(data, to_mat4x4(v)); }
+template<> void MaterialProperty::set(const mu::float3x3& v) { type = Type::Matrix; set_impl(data, to_mat4x4(v)); }
+template<> void MaterialProperty::set(const mu::float4x4& v) { type = Type::Matrix; set_impl(data, v); }
 template<> void MaterialProperty::set(const TexturePtr& v)
 {
     type = Type::Texture;
@@ -86,44 +86,44 @@ template<> void MaterialProperty::set(const float *v, size_t n)
     type = Type::Float;
     set_impl(data, v, n);
 }
-template<> void MaterialProperty::set(const float2 *v, size_t n)
+template<> void MaterialProperty::set(const mu::float2 *v, size_t n)
 {
     type = Type::Vector;
-    data.resize_discard(sizeof(float4) * n);
-    auto *dst = (float4*)data.data();
+    data.resize_discard(sizeof(mu::float4) * n);
+    auto *dst = (mu::float4*)data.data();
     for (size_t i = 0; i < n; ++i)
         dst[i] = to_vec4(v[i]);
 }
-template<> void MaterialProperty::set(const float3 *v, size_t n)
+template<> void MaterialProperty::set(const mu::float3 *v, size_t n)
 {
     type = Type::Vector;
-    data.resize_discard(sizeof(float4) * n);
-    auto *dst = (float4*)data.data();
+    data.resize_discard(sizeof(mu::float4) * n);
+    auto *dst = (mu::float4*)data.data();
     for (size_t i = 0; i < n; ++i)
         dst[i] = to_vec4(v[i]);
 }
-template<> void MaterialProperty::set(const float4 *v, size_t n)
+template<> void MaterialProperty::set(const mu::float4 *v, size_t n)
 {
     type = Type::Vector;
     set_impl(data, v, n);
 }
-template<> void MaterialProperty::set(const float2x2 *v, size_t n)
+template<> void MaterialProperty::set(const mu::float2x2 *v, size_t n)
 {
     type = Type::Matrix;
-    data.resize_discard(sizeof(float4x4) * n);
-    auto *dst = (float4x4*)data.data();
+    data.resize_discard(sizeof(mu::float4x4) * n);
+    auto *dst = (mu::float4x4*)data.data();
+    for (size_t i = 0; i < n; ++i)
+        dst[i] = mu::to_mat4x4(v[i]);
+}
+template<> void MaterialProperty::set(const mu::float3x3 *v, size_t n)
+{
+    type = Type::Matrix;
+    data.resize_discard(sizeof(mu::float4x4) * n);
+    auto *dst = (mu::float4x4*)data.data();
     for (size_t i = 0; i < n; ++i)
         dst[i] = to_mat4x4(v[i]);
 }
-template<> void MaterialProperty::set(const float3x3 *v, size_t n)
-{
-    type = Type::Matrix;
-    data.resize_discard(sizeof(float4x4) * n);
-    auto *dst = (float4x4*)data.data();
-    for (size_t i = 0; i < n; ++i)
-        dst[i] = to_mat4x4(v[i]);
-}
-template<> void MaterialProperty::set(const float4x4 *v, size_t n)
+template<> void MaterialProperty::set(const mu::float4x4 *v, size_t n)
 {
     type = Type::Matrix;
     set_impl(data, v, n);
@@ -135,8 +135,8 @@ size_t MaterialProperty::getArrayLength() const
     case Type::Unknown: return 0;
     case Type::Int:
     case Type::Float: return (int)data.size() / sizeof(int);
-    case Type::Vector: return (int)data.size() / sizeof(float4);
-    case Type::Matrix: return (int)data.size() / sizeof(float4x4);
+    case Type::Vector: return (int)data.size() / sizeof(mu::float4);
+    case Type::Matrix: return (int)data.size() / sizeof(mu::float4x4);
     case Type::Texture: return (int)data.size() / sizeof(TextureRecord);
     default: return 1;
     }
@@ -144,12 +144,12 @@ size_t MaterialProperty::getArrayLength() const
 
 template<> int& MaterialProperty::get() const { return (int&)data[0]; }
 template<> float& MaterialProperty::get() const { return (float&)data[0]; }
-template<> float4& MaterialProperty::get() const { return (float4&)data[0]; }
-template<> float4x4& MaterialProperty::get() const { return (float4x4&)data[0]; }
+template<> mu::float4& MaterialProperty::get() const { return (mu::float4&)data[0]; }
+template<> mu::float4x4& MaterialProperty::get() const { return (mu::float4x4&)data[0]; }
 template<> MaterialProperty::TextureRecord& MaterialProperty::get() const { return (TextureRecord&)data[0]; }
 template<> const float* MaterialProperty::getArray() const { return (float*)&data[0]; }
-template<> const float4* MaterialProperty::getArray() const { return (float4*)&data[0]; }
-template<> const float4x4* MaterialProperty::getArray() const { return (float4x4*)&data[0]; }
+template<> const mu::float4* MaterialProperty::getArray() const { return (mu::float4*)&data[0]; }
+template<> const mu::float4x4* MaterialProperty::getArray() const { return (mu::float4x4*)&data[0]; }
 
 void MaterialProperty::copy(void* dst) const
 {
