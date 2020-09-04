@@ -2,13 +2,7 @@
 
 #ifdef _WIN32
     #pragma warning(disable:4996)
-    #define NOMINMAX
-    #include <winsock2.h>
-    #include <windows.h>
-    #include <amp.h>
-    #include <amp_graphics.h>
-    #include <amp_math.h>
-    #include <ppl.h>
+    #define NOMINMAX //for using std::min/max
 #else 
     #include <dlfcn.h>
     #ifdef __APPLE__

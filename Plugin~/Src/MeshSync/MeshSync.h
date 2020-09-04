@@ -71,9 +71,10 @@ msDeclPtr(TextMessage);
 class Message;
 msDeclPtr(Message);
 
-#ifdef GetMessage
-#undef GetMessage
-#endif
+//[Note-sin: 2020-9-4] Might be defined in Windows by Winsock
+//#ifdef GetMessage 
+//#undef GetMessage
+//#endif
 
 class GetMessage;
 msDeclPtr(GetMessage);
