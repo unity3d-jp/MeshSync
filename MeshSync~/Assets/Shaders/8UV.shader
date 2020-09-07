@@ -1,7 +1,22 @@
 ﻿
 Shader "MultiUVTest/8UV" {
 Properties 	{
-	_Color ( "Color", Color) = (1, 1, 1, 1)
+	_Albedo0 ( "Color 0", Color) = (1, 1, 1, 1)
+	_TexUV0 ("Texture using UV0", 2D) = "black" {}
+	_Albedo1 ( "Color 1", Color) = (1, 1, 1, 1)
+	_TexUV1 ("Texture using UV1", 2D) = "black" {}
+	_Albedo2 ( "Color 2", Color) = (1, 1, 1, 1)
+	_TexUV2 ("Texture using UV2", 2D) = "black" {}
+	_Albedo3 ( "Color 3", Color) = (1, 1, 1, 1)
+	_TexUV3 ("Texture using UV3", 2D) = "black" {}
+	_Albedo4 ( "Color 4", Color) = (1, 1, 1, 1)
+	_TexUV4 ("Texture using UV4", 2D) = "black" {}
+	_Albedo5 ( "Color 5", Color) = (1, 1, 1, 1)
+	_TexUV5 ("Texture using UV5", 2D) = "black" {}
+	_Albedo6 ( "Color 6", Color) = (1, 1, 1, 1)
+	_TexUV6 ("Texture using UV6", 2D) = "black" {}
+	_Albedo7 ( "Color 7", Color) = (1, 1, 1, 1)
+	_TexUV7 ("Texture using UV7", 2D) = "black" {}
 }
 
 SubShader {
@@ -20,7 +35,22 @@ SubShader {
 
         #include "UnityCG.cginc"
 
-        float4 _Color;
+        float4 _Albedo0;
+        float4 _Albedo1;
+        float4 _Albedo2;
+        float4 _Albedo3;
+        float4 _Albedo4;
+        float4 _Albedo5;
+        float4 _Albedo6;
+        float4 _Albedo7;
+		sampler2D _TexUV0;
+		sampler2D _TexUV1;
+		sampler2D _TexUV2;
+		sampler2D _TexUV3;
+		sampler2D _TexUV4;
+		sampler2D _TexUV5;
+		sampler2D _TexUV6;
+		sampler2D _TexUV7;
 
 		struct VS_IN {
 		    float4 vertex : POSITION;
@@ -39,18 +69,52 @@ SubShader {
 		
         struct PS_IN  {
             float4 pos : SV_POSITION;
+		    float4 uv0 : TEXCOORD0;
+		    float4 uv1 : TEXCOORD1;
+		    float4 uv2 : TEXCOORD2;
+		    float4 uv3 : TEXCOORD3;
+		    float4 uv4 : TEXCOORD4;
+		    float4 uv5 : TEXCOORD5;
+		    float4 uv6 : TEXCOORD6;
+		    float4 uv7 : TEXCOORD7;
         };
 
 //----------------------------------------------------------------------------------------------------------------------
         PS_IN EightUV_VS(VS_IN v) {
             PS_IN o;
             o.pos = UnityObjectToClipPos(v.vertex);
+        	o.uv0 = v.texcoord0;
+        	o.uv1 = v.texcoord1;
+        	o.uv2 = v.texcoord2;
+        	o.uv3 = v.texcoord3;
+        	o.uv4 = v.texcoord4;
+        	o.uv5 = v.texcoord5;
+        	o.uv6 = v.texcoord6;
+        	o.uv7 = v.texcoord7;
             return o;
         }
 
 
         float4 EightUV_PS(PS_IN input) : COLOR {
-            return float4(_Color);
+
+        	const float4 tex0 = float4(tex2D(_TexUV0, input.uv0).rgb,1.0);
+        	const float4 tex1 = float4(tex2D(_TexUV0, input.uv1).rgb,1.0);
+        	const float4 tex2 = float4(tex2D(_TexUV0, input.uv2).rgb,1.0);
+        	const float4 tex3 = float4(tex2D(_TexUV0, input.uv3).rgb,1.0);
+        	const float4 tex4 = float4(tex2D(_TexUV0, input.uv4).rgb,1.0);
+        	const float4 tex5 = float4(tex2D(_TexUV0, input.uv5).rgb,1.0);
+        	const float4 tex6 = float4(tex2D(_TexUV0, input.uv6).rgb,1.0);
+        	const float4 tex7 = float4(tex2D(_TexUV0, input.uv7).rgb,1.0);
+        	
+            return (tex0 * _Albedo0)
+        		+ (tex1 * _Albedo1)
+        		+ (tex2 * _Albedo2)
+        		+ (tex3 * _Albedo3)
+        		+ (tex4 * _Albedo4)
+        		+ (tex5 * _Albedo5)
+        		+ (tex6 * _Albedo6)
+        		+ (tex7 * _Albedo7)
+        	;
         }
 
 		ENDCG
