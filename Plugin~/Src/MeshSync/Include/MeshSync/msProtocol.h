@@ -2,12 +2,15 @@
 
 #include <atomic>
 
+#include "MeshUtils/muMisc.h" //mu::nanosec
+
 #include "MeshSync/MeshSync.h"
 #include "MeshSync/msConfig.h" //msProtocolVersion
 #include "MeshSync/NetworkData/msGetFlags.h"
 #include "MeshSync/SceneGraph/msIdentifier.h" //InvalidID
 #include "MeshSync/SceneGraph/msMeshRefineSettings.h"
 #include "MeshSync/SceneGraph/msSceneSettings.h"
+
 
 msDeclClassPtr(ResponseMessage)
 msDeclClassPtr(Scene)

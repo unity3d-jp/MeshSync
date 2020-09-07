@@ -2,6 +2,8 @@
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msLight.h"
 
+#include "MeshUtils/muLimits.h" //mu::is_inf()
+
 namespace ms {
 
 static_assert(sizeof(LightDataFlags) == sizeof(uint32_t), "");

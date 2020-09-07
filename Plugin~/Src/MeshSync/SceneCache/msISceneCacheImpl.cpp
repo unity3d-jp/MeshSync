@@ -1,9 +1,11 @@
 #include "pch.h"
 #include "msISceneCacheImpl.h"
 #include "Utils/msDebug.h"
-#include "msLog.h"
+
+#include "MeshUtils/muLog.h"
 
 #include "MeshSync/SceneGraph/msTransform.h"
+
 
 #ifdef msEnableSceneCache
 namespace ms {
@@ -215,7 +217,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t scene_index, bool wait_preload)
                         seg.vertex_count += e->vertexCount();
                 }
                 catch (std::runtime_error& e) {
-                    msLogError("exception: %s\n", e.what());
+                    muLogError("exception: %s\n", e.what());
                     ret = nullptr;
                     seg.error = true;
                 }

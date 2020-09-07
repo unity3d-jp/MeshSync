@@ -2,7 +2,10 @@
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msMesh.h"
 
-#include "msLog.h"
+
+
+#include "MeshUtils/MeshUtils.h" //EnumerateReverseFaceIndices
+#include "MeshUtils/muLog.h"
 
 namespace ms {
 
@@ -586,7 +589,7 @@ void Mesh::refine()
             setupBoneWeightsVariable();
         else {
             // should not be here
-            msLogWarning("Mesh::refine(): max_bone_influence is %d\n", mrs.max_bone_influence);
+            muLogWarning("Mesh::refine(): max_bone_influence is %d\n", mrs.max_bone_influence);
             bones.clear();
             root_bone.clear();
         }
@@ -633,7 +636,7 @@ void Mesh::refine()
         size_t num_points = points.size();
 #define CheckAttr(A)\
         if (!A.empty() && A.size() != num_points) {\
-            msLogWarning("Mesh::refine(): invalid attribute (" #A ")\n");\
+            muLogWarning("Mesh::refine(): invalid attribute (" #A ")\n");\
             A.clear();\
         }
 

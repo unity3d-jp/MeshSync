@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "MeshSync/SceneGraph/msScene.h"
 #include "msEntityConverter.h"
-#include "msLog.h"
+
+#include "MeshUtils/muLog.h"
 
 #include "MeshSync/SceneGraph/msAnimation.h"
 #include "MeshSync/SceneGraph/msAudio.h"
@@ -149,7 +150,7 @@ void Scene::diff(const Scene& s1, const Scene& s2)
             }
         });
         if (error) {
-            msLogError("Scene::diff(): should not be here\n");
+            muLogError("Scene::diff(): should not be here\n");
             s1.dbgDump();
             s2.dbgDump();
         }
@@ -385,17 +386,17 @@ bool Scene::submeshesHaveUniqueMaterial() const
 
 void Scene::dbgDump() const
 {
-    for (auto& e : entities) {
-        msLogInfo("  id:%d order:%d %s\n", e->id, e->order, e->path.c_str());
+    for (const std::vector<std::shared_ptr<Transform>>::value_type& e : entities) {
+        muLogInfo("  id:%d order:%d %s\n", e->id, e->order, e->path.c_str());
     }
-    msLogInfo("\n");
+    muLogInfo("\n");
 }
 
 template<class AssetType>
 std::vector<std::shared_ptr<AssetType>> Scene::getAssets() const
 {
     std::vector<std::shared_ptr<AssetType>> ret;
-    for (auto& asset : assets) {
+    for (const std::vector<std::shared_ptr<Asset>>::value_type& asset : assets) {
         if (auto p = std::dynamic_pointer_cast<AssetType>(asset))
             ret.push_back(p);
     }
