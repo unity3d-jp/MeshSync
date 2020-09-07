@@ -1,21 +1,21 @@
 ﻿
 Shader "MultiUVTest/8UV" {
 Properties 	{
-	_Albedo0 ( "Color 0", Color) = (1, 1, 1, 1)
+	_Color0 ( "Color 0", Color) = (1, 1, 1, 1)
 	_TexUV0 ("Texture using UV0", 2D) = "black" {}
-	_Albedo1 ( "Color 1", Color) = (1, 1, 1, 1)
+	_Color1 ( "Color 1", Color) = (1, 1, 1, 1)
 	_TexUV1 ("Texture using UV1", 2D) = "black" {}
-	_Albedo2 ( "Color 2", Color) = (1, 1, 1, 1)
+	_Color2 ( "Color 2", Color) = (1, 1, 1, 1)
 	_TexUV2 ("Texture using UV2", 2D) = "black" {}
-	_Albedo3 ( "Color 3", Color) = (1, 1, 1, 1)
+	_Color3 ( "Color 3", Color) = (1, 1, 1, 1)
 	_TexUV3 ("Texture using UV3", 2D) = "black" {}
-	_Albedo4 ( "Color 4", Color) = (1, 1, 1, 1)
+	_Color4 ( "Color 4", Color) = (1, 1, 1, 1)
 	_TexUV4 ("Texture using UV4", 2D) = "black" {}
-	_Albedo5 ( "Color 5", Color) = (1, 1, 1, 1)
+	_Color5 ( "Color 5", Color) = (1, 1, 1, 1)
 	_TexUV5 ("Texture using UV5", 2D) = "black" {}
-	_Albedo6 ( "Color 6", Color) = (1, 1, 1, 1)
+	_Color6 ( "Color 6", Color) = (1, 1, 1, 1)
 	_TexUV6 ("Texture using UV6", 2D) = "black" {}
-	_Albedo7 ( "Color 7", Color) = (1, 1, 1, 1)
+	_Color7 ( "Color 7", Color) = (1, 1, 1, 1)
 	_TexUV7 ("Texture using UV7", 2D) = "black" {}
 }
 
@@ -35,14 +35,14 @@ SubShader {
 
         #include "UnityCG.cginc"
 
-        float4 _Albedo0;
-        float4 _Albedo1;
-        float4 _Albedo2;
-        float4 _Albedo3;
-        float4 _Albedo4;
-        float4 _Albedo5;
-        float4 _Albedo6;
-        float4 _Albedo7;
+        float4 _Color0;
+        float4 _Color1;
+        float4 _Color2;
+        float4 _Color3;
+        float4 _Color4;
+        float4 _Color5;
+        float4 _Color6;
+        float4 _Color7;
 		sampler2D _TexUV0;
 		sampler2D _TexUV1;
 		sampler2D _TexUV2;
@@ -97,23 +97,25 @@ SubShader {
 
         float4 EightUV_PS(PS_IN input) : COLOR {
 
-        	const float4 tex0 = float4(tex2D(_TexUV0, input.uv0).rgb,1.0);
-        	const float4 tex1 = float4(tex2D(_TexUV0, input.uv1).rgb,1.0);
-        	const float4 tex2 = float4(tex2D(_TexUV0, input.uv2).rgb,1.0);
-        	const float4 tex3 = float4(tex2D(_TexUV0, input.uv3).rgb,1.0);
-        	const float4 tex4 = float4(tex2D(_TexUV0, input.uv4).rgb,1.0);
-        	const float4 tex5 = float4(tex2D(_TexUV0, input.uv5).rgb,1.0);
-        	const float4 tex6 = float4(tex2D(_TexUV0, input.uv6).rgb,1.0);
-        	const float4 tex7 = float4(tex2D(_TexUV0, input.uv7).rgb,1.0);
-        	
-            return (tex0 * _Albedo0)
-        		+ (tex1 * _Albedo1)
-        		+ (tex2 * _Albedo2)
-        		+ (tex3 * _Albedo3)
-        		+ (tex4 * _Albedo4)
-        		+ (tex5 * _Albedo5)
-        		+ (tex6 * _Albedo6)
-        		+ (tex7 * _Albedo7)
+        	const float4 tex0 = tex2D(_TexUV0, input.uv0).rgba;
+        	const float4 tex1 = tex2D(_TexUV1, input.uv1).rgba;
+        	const float4 tex2 = tex2D(_TexUV2, input.uv2).rgba;
+        	const float4 tex3 = tex2D(_TexUV3, input.uv3).rgba;
+        	const float4 tex4 = tex2D(_TexUV4, input.uv4).rgba;
+        	const float4 tex5 = tex2D(_TexUV5, input.uv5).rgba;
+        	const float4 tex6 = tex2D(_TexUV6, input.uv6).rgba;
+        	const float4 tex7 = tex2D(_TexUV7, input.uv7).rgba;
+
+       	
+            return
+        	      (tex0 * _Color0)
+        	    + (tex1 * _Color1)        		
+        		+ (tex2 * _Color2)
+        		+ (tex3 * _Color3)
+        		+ (tex4 * _Color4)
+        		+ (tex5 * _Color5)
+        		+ (tex6 * _Color6)
+        		+ (tex7 * _Color7)
         	;
         }
 
