@@ -1,5 +1,6 @@
 #include "pch.h"
-#include "msEntityManager.h"
+
+#include "MeshSync/Utility/msEntityManager.h"
 
 #include "MeshSync/SceneGraph/msIdentifier.h"
 #include "MeshSync/SceneGraph/msTransform.h"

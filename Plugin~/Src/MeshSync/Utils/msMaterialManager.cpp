@@ -1,5 +1,6 @@
 #include "pch.h"
-#include "msMaterialManager.h"
+
+#include "MeshSync/Utility/msMaterialManager.h"
 #include "MeshSync/SceneGraph/msMaterial.h"
 
 #ifndef msRuntime
