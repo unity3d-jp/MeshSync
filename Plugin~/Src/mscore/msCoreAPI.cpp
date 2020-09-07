@@ -1,5 +1,7 @@
 #include "pch.h"
+
 #include "MeshUtils/MeshUtils.h"
+#include "MeshUtils/muLog.h"
 
 #include "MeshSync/SceneGraph/msAnimation.h"
 #include "MeshSync/SceneGraph/msAudio.h"
@@ -12,11 +14,8 @@
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msTexture.h"
 
-
 #include "msCoreAPI.h"
 
-
-#include "MeshSync/msLog.h"
 #include "MeshSync/msMisc.h" //StartsWith
 
 using namespace mu;
@@ -390,7 +389,7 @@ msAPI void msMeshWriteBoneWeights4(ms::Mesh *self, const mu::Weights4 *data, int
 {
     auto& bones = self->bones;
     if (bones.empty()) {
-        msLogWarning("bones are empty!");
+        muLogWarning("bones are empty!");
         return;
     }
 
@@ -412,7 +411,7 @@ msAPI void msMeshWriteBoneWeightsV(ms::Mesh *self, uint8_t *counts, int counts_s
 {
     auto& bones = self->bones;
     if (bones.empty()) {
-        msLogWarning("bones are empty!");
+        muLogWarning("bones are empty!");
         return;
     }
 

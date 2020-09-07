@@ -2,6 +2,8 @@
 #include "pch.h"
 #include "muDebugTimer.h"
 
+#include "muLog.h"
+
 namespace mu {
 
 ScopedTimer::ScopedTimer()

@@ -1,9 +1,15 @@
 #pragma once
 
 #include <iostream>
-#include <memory>
+#include <memory> //std::shared_ptr
 #include <vector>
 #include <mutex>
+
+//Dependency to MeshUtils
+#include "MeshUtils/muRawVector.h" //SharedVector
+#include "MeshUtils/muMath.h" //mu::float4x4
+#include "MeshUtils/muSIMD.h" //SumInt32
+#include "MeshUtils/muStream.h" //MemoryStream
 
 #if defined(_MSC_VER)
     #define msPacked 

@@ -4,6 +4,8 @@
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msTransform.h"
 
+#include "MeshUtils/muLimits.h" //is_inf
+
 namespace ms {
 
 static_assert(sizeof(TransformDataFlags) == sizeof(uint32_t), "");

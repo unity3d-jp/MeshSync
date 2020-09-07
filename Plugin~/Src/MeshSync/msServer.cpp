@@ -1,7 +1,9 @@
 #include "pch.h"
 
 #include "msServerRequestHandler.h"
-#include "msLog.h"
+
+#include "MeshUtils/muLog.h"
+
 #include "MeshSync/msMisc.h" //StartsWith()
 #include "MeshSync/msProtocol.h" //GetMessagePtr
 #include "MeshSync/msServer.h"
@@ -229,7 +231,7 @@ bool Server::isServing() const
 void Server::beginServeScene()
 {
     if (!m_current_get_request) {
-        msLogError("m_current_get_request is null\n");
+        muLogError("m_current_get_request is null\n");
         return;
     }
     m_host_scene = Scene::create();
@@ -248,11 +250,11 @@ void Server::beginServeScene()
 void Server::endServeScene()
 {
     if (!m_current_get_request) {
-        msLogError("m_current_get_request is null\n");
+        muLogError("m_current_get_request is null\n");
         return;
     }
     if (!m_host_scene) {
-        msLogError("m_host_scene is null\n");
+        muLogError("m_host_scene is null\n");
         return;
     }
 

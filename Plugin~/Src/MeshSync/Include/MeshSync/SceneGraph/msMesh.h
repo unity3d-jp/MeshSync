@@ -7,6 +7,8 @@
 #include "MeshSync/SceneGraph/msMeshRefineSettings.h"
 #include "MeshSync/SceneGraph/msTransform.h"
 
+#include "MeshUtils/muVertex.h" //mu::Weights4
+
 //Forward declarations
 msDeclStructPtr(BlendShapeFrameData);
 msDeclStructPtr(BoneData);
