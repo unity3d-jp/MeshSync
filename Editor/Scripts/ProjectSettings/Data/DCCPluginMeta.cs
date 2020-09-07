@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Unity.MeshSync.Editor {
@@ -10,6 +11,7 @@ internal class DCCPluginMeta : ISerializationCallbackReceiver {
 //----------------------------------------------------------------------------------------------------------------------    
 
     //May return null
+    [CanBeNull]
     internal DCCPluginSignature GetSignature(string dccPluginFileName) {
         if (m_dictionary.ContainsKey(dccPluginFileName)) {
             return m_dictionary[dccPluginFileName];
