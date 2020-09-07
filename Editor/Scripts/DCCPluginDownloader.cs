@@ -157,7 +157,7 @@ internal class DCCPluginDownloader  {
                 //Check MD5
                 string md5 = FileUtility.ComputeFileMD5(downloadInfo.LocalFilePath);
                 DCCPluginSignature signature = meta.GetSignature(Path.GetFileName(downloadInfo.LocalFilePath));
-                if (signature.MD5 != md5) {
+                if (null == signature || signature.MD5 != md5) {
                     ret = downloadInfo;
                 } else {
                     //The same file has been downloaded. Skip.
