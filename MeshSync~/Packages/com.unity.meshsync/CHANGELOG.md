@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.3.3-preview] - 2020-09-08
+* fix: insufficient number of mesh refiner attributes (causing crash when an object has 8 UV sets)
+
 ## [0.3.2-preview] - 2020-09-07
 * chore: cleanup the dependencies of MeshSync plugin library code  
 * fix: update the version of the required MeshSyncDCCPlugins 
