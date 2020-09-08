@@ -250,7 +250,7 @@ void BoneData::clear()
     if (flags.Get(MESH_DATA_FLAG_HAS_BLENDSHAPE_WEIGHTS)) { op(stream, refine_settings); } \
     if (flags.Get(MESH_DATA_FLAG_HAS_SUBMESHES))        { op(stream, submeshes); } \
     if (flags.Get(MESH_DATA_FLAG_HAS_BOUNDS))           { op(stream, bounds); } \
-    for (uint32_t i=0;i<msConstants::MAX_UV;++i) { \
+    for (uint32_t i=0;i<MeshSyncConstants::MAX_UV;++i) { \
         if ((flags).GetUV(i)) { \
             op(stream, m_uv[i]); \
         } \
@@ -303,7 +303,7 @@ void Mesh::setupDataFlags()
     md_flags.Set(MESH_DATA_FLAG_HAS_NORMALS, !normals.empty());
     md_flags.Set(MESH_DATA_FLAG_HAS_TANGENTS, !tangents.empty());
 
-    for (uint32_t i = 0; i < msConstants::MAX_UV;++i) {
+    for (uint32_t i = 0; i < MeshSyncConstants::MAX_UV;++i) {
         md_flags.SetUV(i, !m_uv[i].empty());
     }
 
@@ -424,7 +424,7 @@ bool Mesh::lerp(const Entity& e1_, const Entity& e2_, float t)
         return false;
 #define DoLerp(N) N.resize_discard(e1.N.size()); Lerp(N.data(), e1.N.data(), e2.N.data(), N.size(), t)
     DoLerp(points);
-    for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
+    for (uint32_t i=0;i<MeshSyncConstants::MAX_UV;++i) {
         DoLerp(m_uv[i]);
 
     }
@@ -643,7 +643,7 @@ void Mesh::refine()
         // when re-indexing is disabled, all vertex attributes length must be the same as points. check it.
         CheckAttr(normals);
         CheckAttr(tangents);
-        for(uint32_t i=0;i<msConstants::MAX_UV;++i) {
+        for(uint32_t i=0;i<MeshSyncConstants::MAX_UV;++i) {
             CheckAttr(m_uv[i]);
         }
         CheckAttr(colors);
@@ -664,8 +664,8 @@ void Mesh::refine()
         size_t num_points_old = points.size();
 
         RawVector<mu::float3> tmp_normals;
-        RawVector<mu::float2> tmp_uv[msConstants::MAX_UV];
-        RawVector<int> remap_uv[msConstants::MAX_UV];
+        RawVector<mu::float2> tmp_uv[MeshSyncConstants::MAX_UV];
+        RawVector<int> remap_uv[MeshSyncConstants::MAX_UV];
         RawVector<mu::float4> tmp_colors;
         RawVector<int> remap_normals, remap_colors;
 
@@ -680,7 +680,7 @@ void Mesh::refine()
 
         if (normals.size() == numIndices)
             refiner.addExpandedAttribute<mu::float3>(normals, tmp_normals, remap_normals);
-        for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
+        for (uint32_t i=0;i<MeshSyncConstants::MAX_UV;++i) {
             if (m_uv[i].size() != numIndices) {
                 continue;
             }
@@ -718,7 +718,7 @@ void Mesh::refine()
             tmp_normals.swap(normals);
         }
 
-        for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
+        for (uint32_t i=0;i<MeshSyncConstants::MAX_UV;++i) {
 
             if (m_uv[i].empty())
                 continue;
@@ -927,7 +927,7 @@ void Mesh::makeDoubleSided()
             (mu::float3&)n[ii] *= -1.0f;
     }
 
-    for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
+    for (uint32_t i=0;i<MeshSyncConstants::MAX_UV;++i) {
         copy_index_elements(m_uv[i]);
 
     }
@@ -1010,7 +1010,7 @@ void Mesh::mirrorMesh(const mu::float3 & plane_n, float plane_d, bool /*welding*
         }
     }
 
-    for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
+    for (uint32_t i=0;i<MeshSyncConstants::MAX_UV;++i) {
         SharedVector<mu::float2>& curUV = m_uv[i];
         if (curUV.empty())
             continue;
@@ -1190,7 +1190,7 @@ void Mesh::mergeMesh(const Mesh& v)
     expand_face_attribute(material_ids, v.material_ids);
     expand_vertex_attribute(normals, v.normals);
     expand_vertex_attribute(tangents, v.tangents);
-    for (uint32_t i=0;i<msConstants::MAX_UV;++i) {
+    for (uint32_t i=0;i<MeshSyncConstants::MAX_UV;++i) {
         expand_vertex_attribute(m_uv[i], v.m_uv[i]);
     }
     expand_vertex_attribute(colors, v.colors);

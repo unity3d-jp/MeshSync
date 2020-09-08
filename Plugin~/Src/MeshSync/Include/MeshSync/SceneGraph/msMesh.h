@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MeshSync/msConstants.h"
+#include "MeshSync/MeshSyncConstants.h"
 #include "MeshSync/NetworkData/msMeshDataFlags.h"
 
 #include "MeshSync/SceneGraph/msIdentifier.h"
@@ -118,7 +118,7 @@ public:
     SharedVector<int>    counts;
     SharedVector<int>    indices;
     SharedVector<int>    material_ids; // can be empty or per-face data
-    SharedVector<mu::float2> m_uv[msConstants::MAX_UV];
+    SharedVector<mu::float2> m_uv[MeshSyncConstants::MAX_UV];
 
     std::string root_bone;
     std::vector<BoneDataPtr> bones;

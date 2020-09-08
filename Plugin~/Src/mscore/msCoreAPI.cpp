@@ -276,7 +276,7 @@ msAPI void msMeshReadPoints(const ms::Mesh *self, float3 *dst) { self->points.co
 msAPI void msMeshReadNormals(const ms::Mesh *self, float3 *dst) { self->normals.copy_to(dst); }
 msAPI void msMeshReadTangents(const ms::Mesh *self, float4 *dst) { self->tangents.copy_to(dst); }
 msAPI void msMeshReadUV(const ms::Mesh *self, float2 *dst, int index) {
-    assert(index >= 0 && index < ms::msConstants::MAX_UV && "msMeshReadUV() invalid index");
+    assert(index >= 0 && index < ms::MeshSyncConstants::MAX_UV && "msMeshReadUV() invalid index");
     self->m_uv[index].copy_to(dst);
 }
 msAPI void msMeshReadColors(const ms::Mesh *self, float4 *dst) { self->colors.copy_to(dst); }
@@ -287,7 +287,7 @@ msAPI const mu::float3* msMeshGetPointsPtr(const ms::Mesh *self) { return self->
 msAPI const mu::float3* msMeshGetNormalsPtr(const ms::Mesh *self) { return self->normals.cdata(); }
 msAPI const mu::float4* msMeshGetTangentsPtr(const ms::Mesh *self) { return self->tangents.cdata(); }
 msAPI const mu::float2* msMeshGetUVPtr(const ms::Mesh *self, int index) {
-    assert(index >= 0 && index < ms::msConstants::MAX_UV && "msMeshGetUVPtr() invalid index");
+    assert(index >= 0 && index < ms::MeshSyncConstants::MAX_UV && "msMeshGetUVPtr() invalid index");
     return self->m_uv[index].cdata();
 }
 msAPI const mu::float4* msMeshGetColorsPtr(const ms::Mesh *self) { return self->colors.cdata(); }
@@ -344,7 +344,7 @@ msAPI void msMeshWriteUV(ms::Mesh *self, int index, const float2 *v, int size)
     if (size <= 0)
         return;
 
-    assert(index >= 0 && index < ms::msConstants::MAX_UV && "msMeshWriteUV() invalid index");
+    assert(index >= 0 && index < ms::MeshSyncConstants::MAX_UV && "msMeshWriteUV() invalid index");
 
     self->m_uv[index].assign(v, v + size);
     self->md_flags.SetUV(index, true);
