@@ -117,11 +117,12 @@ struct MeshRefiner
     RawVector<Submesh> submeshes;
     MeshConnectionInfo connection;
 
+//----------------------------------------------------------------------------------------------------------------------
     // attributes
     template<class T>
     void addIndexedAttribute(const IArray<T>& values, const IArray<int>& indices, RawVector<T>& new_values, RawVector<int>& new2old)
     {
-        auto attr = newAttribute<IndexedAttribute<T>>();
+        IndexedAttribute<T>* attr = newAttribute<IndexedAttribute<T>>();
         attr->values = values;
         attr->indices = indices;
         attr->new_values = &new_values;
@@ -129,13 +130,14 @@ struct MeshRefiner
     }
 
     template<class T>
-    void addExpandedAttribute(const IArray<T>& values, RawVector<T>& new_values, RawVector<int>& new2old)
-    {
-        auto attr = newAttribute<ExpandedAttribute<T>>();
+    void addExpandedAttribute(const IArray<T>& values, RawVector<T>& new_values, RawVector<int>& new2old) {
+        ExpandedAttribute<T>* attr = newAttribute<ExpandedAttribute<T>>();
         attr->values = values;
         attr->new_values = &new_values;
         attr->new2old = &new2old;
     }
+
+//----------------------------------------------------------------------------------------------------------------------
 
     void refine();
     void buildConnection();
