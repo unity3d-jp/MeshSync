@@ -16,6 +16,7 @@ target_include_directories(MeshSyncTest PUBLIC
     "${CMAKE_SOURCE_DIR}"
     ${MeshSyncTest_dir}    
     ${src_root}/MeshSync/Include
+    ${src_root}/MeshUtils/Include
     ${src_root}/MeshUtils
     ${src_root}
     ${Poco_INCLUDE_DIRS}
