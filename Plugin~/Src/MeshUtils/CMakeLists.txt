@@ -15,7 +15,7 @@ if(ENABLE_ISPC)
     set(MUISPC_OUTPUTS ${_ispc_outputs})
 endif()
 
-file(GLOB sources *.cpp *.c *.h)
+file(GLOB_RECURSE sources *.cpp *.c *.h)
 add_library(MeshUtils STATIC ${sources} ${MUISPC_OUTPUTS})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${sources})
 
