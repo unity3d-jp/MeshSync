@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cassert>
+
+#include "MeshUtils/MeshUtilsConstants.h"
 #include "muMath.h"
 #include "muRawVector.h"
 #include "muIntrusiveArray.h"
@@ -231,20 +234,22 @@ private:
     AttrType* newAttribute()
     {
         const int size_attr = sizeof(IndexedAttribute<char>);
-        if (buf_attributes.empty())
-            buf_attributes.resize(size_attr * max_attributes);
+        const uint32_t maxMeshRefinerAttributes = mu::MeshUtilsConstants::MAX_MESH_REFINER_ATTRIBUTES;
+        if (buf_attributes.empty()) {
+            buf_attributes.resize(size_attr * maxMeshRefinerAttributes);
+        }
 
-        size_t i = attributes.size();
-        if (i >= max_attributes)
+        const size_t i = attributes.size();
+        assert(i < maxMeshRefinerAttributes && "Need to increase MAX_MESH_REFINER_ATTRIBUTES");
+        if (i >= maxMeshRefinerAttributes)
             return nullptr;
-        auto *ret = new (&buf_attributes[size_attr * i]) AttrType();
+        AttrType *ret = new (&buf_attributes[size_attr * i]) AttrType();
         attributes.push_back(ret);
         return ret;
     }
 
     RawVector<IAttribute*> attributes;
     RawVector<char> buf_attributes;
-    static const int max_attributes = 8; // you can increase this if needed
 };
 
 } // namespace mu
