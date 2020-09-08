@@ -15,17 +15,23 @@ if(ENABLE_ISPC)
     set(MUISPC_OUTPUTS ${_ispc_outputs})
 endif()
 
-file(GLOB sources *.cpp *.c *.h)
+file(GLOB_RECURSE sources *.cpp *.c *.h)
 add_library(MeshUtils STATIC ${sources} ${MUISPC_OUTPUTS})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${sources})
 
 #pch
 target_precompile_headers(MeshUtils PRIVATE "${MeshUtils_dir}/pch.h")
 
+list(APPEND MeshUtils_include 
+    "${CMAKE_CURRENT_SOURCE_DIR}/Include"
+)
+
 if(ENABLE_ISPC)
     add_definitions(-DmuEnableISPC)
-    target_include_directories(MeshUtils PUBLIC ${MUISPC_OUTDIR})
+    list(APPEND MeshUtils_include ${MUISPC_OUTDIR})
 endif()
+
+target_include_directories(MeshUtils PRIVATE ${MeshUtils_include})
 
 if(ENABLE_TBB)
     find_package(TBB QUIET)

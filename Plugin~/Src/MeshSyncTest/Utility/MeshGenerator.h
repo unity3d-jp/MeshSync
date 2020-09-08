@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MeshUtils.h"
-#include "MeshSync/msConstants.h"
+#include "MeshSync/MeshSyncConstants.h"
 
 
 class MeshGenerator {
@@ -27,7 +27,7 @@ public:
         RawVector<int>& counts,
         RawVector<int>& indices,
         RawVector<mu::float3> &points,
-        SharedVector<mu::float2> uv[ms::msConstants::MAX_UV],
+        SharedVector<mu::float2> uv[ms::MeshSyncConstants::MAX_UV],
         float size, float height,
         int resolution,
         float angle,
@@ -37,7 +37,7 @@ public:
         SharedVector<int>& counts,
         SharedVector<int>& indices,
         SharedVector<mu::float3> &points,
-        SharedVector<mu::float2> uv[ms::msConstants::MAX_UV],
+        SharedVector<mu::float2> uv[ms::MeshSyncConstants::MAX_UV],
         float size, float height,
         int resolution,
         float angle,

@@ -131,7 +131,7 @@ void MeshGenerator::GenerateWaveMesh(
     RawVector<int>& counts,
     RawVector<int>& indices,
     RawVector<mu::float3> &points,
-    SharedVector<mu::float2> uv[ms::msConstants::MAX_UV],
+    SharedVector<mu::float2> uv[ms::MeshSyncConstants::MAX_UV],
     float size, float height,
     int resolution,
     float angle,
@@ -141,7 +141,7 @@ void MeshGenerator::GenerateWaveMesh(
 
     // vertices
     points.resize(num_vertices);
-    for (uint32_t i=0;i< ms::msConstants::MAX_UV;++i) {
+    for (uint32_t i=0;i< ms::MeshSyncConstants::MAX_UV;++i) {
         uv[i].resize(num_vertices);
     }
 
@@ -159,7 +159,7 @@ void MeshGenerator::GenerateWaveMesh(
             v.y = std::sin(d * 10.0f + angle) * std::max<float>(1.0f - d, 0.0f) * height;
             v.z = pos.y * size;
 
-            for (uint32_t uvIndex=0;uvIndex< ms::msConstants::MAX_UV;++uvIndex) {
+            for (uint32_t uvIndex=0;uvIndex< ms::MeshSyncConstants::MAX_UV;++uvIndex) {
 
                 const float offset = (uvIndex % 2 * -1.0f) + (uvIndex * 0.25f);
 
@@ -215,7 +215,7 @@ void MeshGenerator::GenerateWaveMesh(
     SharedVector<int>& counts,
     SharedVector<int>& indices,
     SharedVector<mu::float3>& points,
-    SharedVector<mu::float2> uv[ms::msConstants::MAX_UV],
+    SharedVector<mu::float2> uv[ms::MeshSyncConstants::MAX_UV],
     float size,
     float height,
     int resolution,

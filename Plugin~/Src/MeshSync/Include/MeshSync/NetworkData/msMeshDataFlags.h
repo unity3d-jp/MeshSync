@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MeshSync/msConstants.h"
+#include "MeshSync/MeshSyncConstants.h"
 #include "MeshSync/Utility/msBitUtility.h"
 
 namespace ms {
@@ -64,12 +64,12 @@ bool MeshDataFlags::Get(uint32_t index) const {
 }
 
 void MeshDataFlags::SetUV(uint32_t index, const bool val) {
-    assert(index < msConstants::MAX_UV && "MeshDataFlags::Get() invalid index");
+    assert(index < MeshSyncConstants::MAX_UV && "MeshDataFlags::Get() invalid index");
     Set(UV_START_BIT_POS + index, val);
 }
 
 bool MeshDataFlags::GetUV(uint32_t index) const {
-    assert(index < msConstants::MAX_UV && "MeshDataFlags::Get() invalid index");
+    assert(index < MeshSyncConstants::MAX_UV && "MeshDataFlags::Get() invalid index");
     return Get(UV_START_BIT_POS + index);
 }
 
