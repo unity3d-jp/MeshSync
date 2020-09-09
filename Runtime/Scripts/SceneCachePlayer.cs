@@ -319,7 +319,6 @@ namespace Unity.MeshSync
             m_cacheFilePath.readOnly = true;
             m_cacheFilePath.showRootSelector = true;
 
-            m_config.Logging = false;
             m_config = MeshSyncRuntimeSettings.CreatePlayerConfig(MeshSyncPlayerType.CACHE_PLAYER);            
         }
 
