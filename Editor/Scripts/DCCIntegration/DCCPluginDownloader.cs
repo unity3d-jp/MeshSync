@@ -255,7 +255,7 @@ internal class DCCPluginDownloader  {
     private readonly List<string> m_finishedDCCPluginLocalPaths;
     
     
-    const string LATEST_KNOWN_VERSION = "0.3.3-preview.1";
+    const string LATEST_KNOWN_VERSION = "0.4.0-preview";
     private const string MESHSYNC_PACKAGE = "com.unity.meshsync";
     private const string MESHSYNC_DCC_PLUGIN_PACKAGE = "com.unity.meshsync-dcc-plugins";
 }
