@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.3.4-preview] - 2020-09-09
+* fix: error when creating SceneCachePlayer 
+
 ## [0.3.3-preview] - 2020-09-08
 * fix: insufficient number of mesh refiner attributes (causing crash when an object has 8 UV sets)
 
