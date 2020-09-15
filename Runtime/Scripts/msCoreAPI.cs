@@ -21,8 +21,6 @@ namespace Unity.MeshSync
 #endif
 
 
-        [ObsoleteAttribute("Replaced with msGetPluginVersionStr")]
-        [DllImport(name)] static extern int msGetPluginVersion();
         [DllImport(name)] static extern IntPtr msGetPluginVersionStr();
         [DllImport(name)] static extern int msGetProtocolVersion();
         #endregion

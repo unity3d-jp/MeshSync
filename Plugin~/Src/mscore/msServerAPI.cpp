@@ -82,10 +82,6 @@ msAPI void msQueryAddResponseText(ms::QueryMessage *self, const char *text)
 
 
 #pragma region Server
-msAPI msDEPRECATED int msGetPluginVersion() {
-    return msPluginVersion;
-}
-
 msAPI const char* msGetPluginVersionStr() {
     return msPluginVersionStr;
 }

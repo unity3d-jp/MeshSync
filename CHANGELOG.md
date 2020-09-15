@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.4.0-preview] - 2020-09-15
+* TODO
+
 ## [0.3.4-preview] - 2020-09-09
 * fix: error when creating SceneCachePlayer 
 
