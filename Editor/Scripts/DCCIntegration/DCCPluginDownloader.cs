@@ -5,6 +5,7 @@ using UnityEngine;
 using System.Net;
 using Unity.AnimeToolbox;
 using System.IO;
+using JetBrains.Annotations;
 using Unity.AnimeToolbox.Editor;
 using UnityEditor;
 using PackageInfo = UnityEditor.PackageManager.PackageInfo;
@@ -177,6 +178,7 @@ internal class DCCPluginDownloader  {
 //----------------------------------------------------------------------------------------------------------------------        
 
     //Download meta file synchronously
+    [CanBeNull]
     DCCPluginMeta GetOrDownloadDCCPluginMeta(string version) {
         
         DCCPluginMeta ret = null;
@@ -253,7 +255,7 @@ internal class DCCPluginDownloader  {
     private readonly List<string> m_finishedDCCPluginLocalPaths;
     
     
-    const string LATEST_KNOWN_VERSION = "0.3.3-preview";
+    const string LATEST_KNOWN_VERSION = "0.4.0-preview";
     private const string MESHSYNC_PACKAGE = "com.unity.meshsync";
     private const string MESHSYNC_DCC_PLUGIN_PACKAGE = "com.unity.meshsync-dcc-plugins";
 }

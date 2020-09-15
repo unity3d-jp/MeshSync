@@ -1,6 +1,6 @@
 ﻿namespace Unity.MeshSync {
 
-internal class MeshSyncConstants {
+internal static class MeshSyncConstants {
 
     internal const int DEFAULT_SERVER_PORT = 8080;
     
