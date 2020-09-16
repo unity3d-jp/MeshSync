@@ -1,0 +1,96 @@
+
+.header {
+    margin-left:       10px;      
+    font-size:         20px;
+    -unity-font-style: bold;
+}
+
+
+/*----------------------------------------------- DCC Tool Info ----------------------------------------------------- */
+
+.dcc-tool-info-container {
+    -unity-text-align: middle-center;
+    justify-content: center;
+    flex-direction: row;
+    width: auto;
+    background-color: #505050;
+    margin: 10px 30px;
+    height: 100px;
+}
+
+.dcc-tool-info-container .image-container {
+    background-color: #808080;
+    width:  100px;
+    height: 100px;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size:  64px;
+}
+
+.dcc-tool-info-container .text-container {
+    width: auto;
+    -unity-text-align: middle-left;
+    justify-content: center;
+    padding: 10px 10px;
+
+    flex-direction: column;
+    flex-grow:1;
+    flex-wrap: nowrap;
+}
+
+.dcc-tool-info-container .text-container > Label {
+    font-size:  14px;
+    padding: 3px 0;
+}
+
+.dcc-tool-info-container .text-container .dcc-tool-name {
+    -unity-font-style:bold;
+}
+
+.plugin-not-found {
+    color: #FF3333;
+    -unity-font-style:bold;
+}
+
+.plugin-installed {
+    color: #00FF00;
+    -unity-font-style:bold;
+}
+
+.dcc-tool-info-container .buttons-container {
+    width: 100px;
+
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    flex-grow:0;
+    flex-shrink: 0;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    margin-right: 10px;
+    
+}
+
+.dcc-tool-info-container .buttons-container > Button {
+}
+
+
+/*---------------------------------------------- DCC Tools Footer ----------------------------------------------------- */
+
+.dcc-tool-footer-container  {
+    height: 30px;
+    justify-content: space-between;
+    flex-direction: row;
+    margin-top: 10px;
+    margin-left: 30px;
+    margin-right: 45px;
+    flex-shrink: 0;
+}
+
+.add-dcc-tool-button {
+    width: 100px;
+}
+
+.auto-detect-button {
+    width: 100px;
+}
+

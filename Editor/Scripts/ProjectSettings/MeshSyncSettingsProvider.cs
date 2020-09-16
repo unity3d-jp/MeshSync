@@ -13,7 +13,6 @@ class MeshSyncSettingsProvider : SettingsProvider {
 	
 	private class Contents {
 		public static readonly GUIContent GeneralSettings = EditorGUIUtility.TrTextContent("General Settings");
-		public static readonly GUIContent DCCTools = EditorGUIUtility.TrTextContent("DCC Tools");
 	}
 	
 //----------------------------------------------------------------------------------------------------------------------	
@@ -22,7 +21,6 @@ class MeshSyncSettingsProvider : SettingsProvider {
 		m_tabs = new IMeshSyncSettingsTab[MeshSyncEditorConstants.MAX_SETTINGS_TAB];
 		Button[] tabButtons = new Button[MeshSyncEditorConstants.MAX_SETTINGS_TAB];		
 		m_tabs[MeshSyncEditorConstants.GENERAL_SETTINGS_TAB] = new GeneralSettingsTab();
-		m_tabs[MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_TAB] = new DCCToolsSettingsTab();
 		
 		//activateHandler is called when the user clicks on the Settings item in the Settings window.
 		activateHandler = (string searchContext, VisualElement root) => {
@@ -42,7 +40,6 @@ class MeshSyncSettingsProvider : SettingsProvider {
 			);
 
 			tabButtons[0] = CreateButton(tabButtonTemplate, Contents.GeneralSettings, OnGeneralSettingsTabClicked);
-			tabButtons[1] = CreateButton(tabButtonTemplate, Contents.DCCTools, OnDCCToolsTabClicked);
 
 			foreach (Button tabButton in tabButtons) {
 				tabsContainer.Add(tabButton);
@@ -101,12 +98,6 @@ class MeshSyncSettingsProvider : SettingsProvider {
 		
 	}
 
-	static void OnDCCToolsTabClicked(EventBase evt) {
-		if (!UpdateSelectedTabButton(evt.target as Button))
-			return;
-
-		m_settingsProvider.SetupTab(MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_TAB);
-	}
 	#endregion	
 
 //----------------------------------------------------------------------------------------------------------------------
