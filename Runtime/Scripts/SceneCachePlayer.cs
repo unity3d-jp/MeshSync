@@ -22,28 +22,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
     #endregion
 
-    #region Fields
-    [SerializeField] DataPath m_cacheFilePath = new DataPath();
-    [SerializeField] TimeUnit m_timeUnit = TimeUnit.Seconds;
-    [SerializeField] float m_time;
-    [SerializeField] bool m_interpolation = false;
-    [SerializeField] BaseFrame m_baseFrame = BaseFrame.One;
-    [SerializeField] int m_frame = 1;
-    [SerializeField] int m_preloadLength = 1;
-
-    SceneCacheData m_sceneCache;
-    TimeRange m_timeRange;
-    string m_pathPrev = "";
-    float m_timePrev = -1;
-    bool m_openRequested = false;
-
-#if UNITY_EDITOR
-    [SerializeField] bool m_foldCacheSettings = true;
-    float m_dbgSceneGetTime;
-    float m_dbgSceneUpdateTime;
-    string m_dbgProfileReport;
-#endif
-    #endregion
 
     #region Properties
     internal DataPath cacheFilePath {
@@ -308,6 +286,31 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         UpdatePlayer();
     }
     #endregion
+
+//----------------------------------------------------------------------------------------------------------------------    
+    #region Fields
+    [SerializeField] DataPath  m_cacheFilePath = new DataPath();
+    [SerializeField] TimeUnit  m_timeUnit      = TimeUnit.Seconds;
+    [SerializeField] float     m_time;
+    [SerializeField] bool      m_interpolation = false;
+    [SerializeField] BaseFrame m_baseFrame     = BaseFrame.One;
+    [SerializeField] int       m_frame         = 1;
+    [SerializeField] int       m_preloadLength = 1;
+
+    SceneCacheData m_sceneCache;
+    TimeRange      m_timeRange;
+    string         m_pathPrev      = "";
+    float          m_timePrev      = -1;
+    bool           m_openRequested = false;
+
+#if UNITY_EDITOR
+    [SerializeField] bool m_foldCacheSettings = true;
+    float                 m_dbgSceneGetTime;
+    float                 m_dbgSceneUpdateTime;
+    string                m_dbgProfileReport;
+#endif
+    #endregion
+    
 }
 
 } //end namespace
