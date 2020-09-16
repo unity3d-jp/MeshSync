@@ -2,11 +2,9 @@ using System;
 using UnityEngine;
 
 
-namespace Unity.MeshSync
-{
+namespace Unity.MeshSync  {
 [Serializable]
-internal class DataPath
-{
+internal class DataPath {
     public enum Root {
         Current,
         PersistentData,
@@ -15,17 +13,8 @@ internal class DataPath
         DataPath,
     }
 
-    [SerializeField] Root m_root;
-    [SerializeField] string m_leaf;
-    bool m_dirty = true;
-    string m_fullpath;
-#if UNITY_EDITOR
-    // just for inspector
-    [SerializeField] bool m_readOnly = false;
-    [SerializeField] bool m_showRootSelector = false;
-    [SerializeField] bool m_isDirectory = true;
-#endif
-
+//----------------------------------------------------------------------------------------------------------------------
+    
     public Root root {
         get { return m_root; }
         set { m_root = value; m_dirty = true; }
@@ -67,6 +56,7 @@ internal class DataPath
         }
     }
 
+//----------------------------------------------------------------------------------------------------------------------    
 
 #if UNITY_EDITOR
     public bool readOnly {
@@ -142,6 +132,20 @@ internal class DataPath
             m_fullpath = tmp;
         }
     }
+
+//----------------------------------------------------------------------------------------------------------------------        
+
+    [SerializeField] Root   m_root;
+    [SerializeField] string m_leaf;
+    bool                    m_dirty = true;
+    string                  m_fullpath;
+#if UNITY_EDITOR
+    // just for inspector
+    [SerializeField] bool m_readOnly         = false;
+    [SerializeField] bool m_showRootSelector = false;
+    [SerializeField] bool m_isDirectory      = true;
+#endif
+    
 }
 
 } //end namespace
