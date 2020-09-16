@@ -13,7 +13,6 @@ class MeshSyncSettingsProvider : SettingsProvider {
 	
 	private class Contents {
 		public static readonly GUIContent GeneralSettings = EditorGUIUtility.TrTextContent("General Settings");
-		public static readonly GUIContent DCCTools = EditorGUIUtility.TrTextContent("DCC Tools");
 	}
 	
 //----------------------------------------------------------------------------------------------------------------------	
