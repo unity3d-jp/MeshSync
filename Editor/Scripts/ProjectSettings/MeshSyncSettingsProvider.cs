@@ -6,6 +6,7 @@ using Unity.AnimeToolbox.Editor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Constants = Unity.MeshSync.Editor.MeshSyncEditorConstants;
 
 namespace Unity.MeshSync.Editor {
 	
@@ -26,12 +27,9 @@ class MeshSyncSettingsProvider : SettingsProvider {
 		
 		//activateHandler is called when the user clicks on the Settings item in the Settings window.
 		activateHandler = (string searchContext, VisualElement root) => {
-
 			
 			//Main Tree
-			VisualTreeAsset main = UIElementsEditorUtility.LoadVisualTreeAsset(
-				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "ProjectSettings_Main")
-			);
+			VisualTreeAsset main = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MAIN_PROJECT_SETTINGS_PATH);
 			main.CloneTree(root);
 
 			//Tab Buttons
