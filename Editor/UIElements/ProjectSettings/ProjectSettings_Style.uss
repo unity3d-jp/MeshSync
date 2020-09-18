@@ -78,11 +78,18 @@
 
 /*----------------------------------------------- Project settings--------------------------------------------------- */
 
-.project-settings-foldout {
+
+.project-settings-content {
     width: 500px;
     -unity-font-style:bold;
     font-size:  14px;
     margin: 1px 15px;
+}
+
+.project-settings-foldout {
+    width: 500px;
+    -unity-font-style:bold;
+    font-size:  14px;
 }
 
 .project-settings-field-container {
