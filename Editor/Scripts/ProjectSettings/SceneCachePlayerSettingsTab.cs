@@ -22,7 +22,7 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
         m_prefabPathTextField	 = tabInstance.Query<TextField>("PrefabPathText").First();
         m_prefabPathTextField.RegisterValueChangedCallback((ChangeEvent<string> changeEvent) => {
             MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-            settings.SetOutputSceneCachePrefabPath(changeEvent.newValue);
+            settings.SetSceneCacheOutputPath(changeEvent.newValue);
             settings.SaveSettings();
         });        
         
@@ -49,7 +49,7 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
         MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         
         path = AssetUtility.NormalizeAssetPath(path);		
-        settings.SetOutputSceneCachePrefabPath(path);
+        settings.SetSceneCacheOutputPath(path);
         settings.SaveSettings();
 
         RefreshSettings();
@@ -58,7 +58,7 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
 
     void RefreshSettings() {
         MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        m_prefabPathTextField.value = settings.GetOutputSceneCachePrefabPath();		
+        m_prefabPathTextField.value = settings.GetSceneCacheOutputPath();		
     }
 
     

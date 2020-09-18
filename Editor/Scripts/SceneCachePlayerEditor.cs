@@ -30,7 +30,7 @@ internal class SceneCachePlayerEditor : MeshSyncPlayerEditor {
         go.name = System.IO.Path.GetFileNameWithoutExtension(path);
 
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        string                  scOutputPath    = runtimeSettings.GetOutputSceneCachePrefabPath();
+        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
         string                  assetDir       = $"{scOutputPath}/{go.name}";
         
         SceneCachePlayer        player          = go.AddComponent<SceneCachePlayer>();
@@ -73,7 +73,7 @@ internal class SceneCachePlayerEditor : MeshSyncPlayerEditor {
 
        
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        string                  scOutputPath    = runtimeSettings.GetOutputSceneCachePrefabPath();
+        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
         
         string prefabPath = $"{scOutputPath}/{go.name}.prefab";
         PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabPath, InteractionMode.AutomatedAction);
@@ -174,7 +174,7 @@ internal class SceneCachePlayerEditor : MeshSyncPlayerEditor {
 
     static bool ValidateOutputPath() {
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        string                  scOutputPath    = runtimeSettings.GetOutputSceneCachePrefabPath();
+        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
         try {
             Directory.CreateDirectory(scOutputPath);
         } catch {
