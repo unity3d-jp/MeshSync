@@ -1,0 +1,8 @@
+<UXML xmlns="UnityEngine.UIElements">
+    
+    <Foldout name="SyncSettingsFoldout" text="Sync" class="general-settings-foldout"/>
+    <Foldout name="ImportSettingsFoldout" text="Import" class="general-settings-foldout"/>
+    <Foldout name="MiscSettingsFoldout" text="Misc" class="general-settings-foldout"/>
+    <Foldout name="AnimationTweakSettingsFoldout" text="Animation Tweak" class="general-settings-foldout"/>
+        
+</UXML>

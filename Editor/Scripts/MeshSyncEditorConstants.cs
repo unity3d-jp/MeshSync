@@ -1,4 +1,6 @@
-﻿namespace Unity.MeshSync.Editor {
+﻿using System.IO;
+
+namespace Unity.MeshSync.Editor {
 
 internal class MeshSyncEditorConstants {
 
@@ -11,6 +13,10 @@ internal class MeshSyncEditorConstants {
     //
     internal const string DCC_INSTALL_SCRIPTS_PATH = "Packages/com.unity.meshsync/Editor/DCCInstallScripts";
     internal const string PROJECT_SETTINGS_UIELEMENTS_PATH = "Packages/com.unity.meshsync/Editor/UIElements/ProjectSettings";
+
+    internal static readonly string MESHSYNC_PLAYER_CONFIG_CONTAINER =
+        Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "MeshSyncPlayerConfig_Container");
+    
 
     internal const string MAIN_USER_SETTINGS_PATH = "Packages/com.unity.meshsync/Editor/UIElements/UserSettings/UserSettings_Main";
     internal const string USER_SETTINGS_STYLE_PATH = "Packages/com.unity.meshsync/Editor/UIElements/UserSettings/UserSettings_Style";
