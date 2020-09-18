@@ -5,9 +5,9 @@
         <VisualElement name="HeaderContainer" class="general-header-container">
         </VisualElement>
 
-        <VisualElement name="Content">
+        <VisualElement name="Content" class="project-settings-content">
         </VisualElement>
-        
+                
     </ScrollView>
 
         
