@@ -1,9 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
+using Unity.AnimeToolbox.Editor;
 using Unity.MeshSync;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.UIElements;
+using Constants = Unity.MeshSync.Editor.MeshSyncEditorConstants;
 
 namespace Unity.MeshSync.Editor.Tests {
 internal class ProjectSettingsTest {
@@ -78,6 +82,26 @@ internal class ProjectSettingsTest {
         Assert.AreNotEqual(mayaInfoPath,_3dsMaxInfoPath);
         
     }    
+
+//----------------------------------------------------------------------------------------------------------------------
+    [Test]
+    public void CheckProjectSettingUIElements() {
+
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MESHSYNC_PLAYER_CONFIG_CONTAINER));
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MAIN_USER_SETTINGS_PATH));
+      
+        Assert.IsNotNull(LoadStyleSheet(Constants.USER_SETTINGS_STYLE_PATH));       
+        
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
+    
+    StyleSheet LoadStyleSheet( string path) {
+        const string STYLE_EXT = ".uss";
+        return AssetDatabase.LoadAssetAtPath<StyleSheet>(path + STYLE_EXT);
+    }
+    
+    
     
 }
 
