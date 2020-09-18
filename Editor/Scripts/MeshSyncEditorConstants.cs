@@ -21,7 +21,10 @@ internal class MeshSyncEditorConstants {
         Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "SceneCachePlayerSettings_Tab");
     internal static readonly string MESHSYNC_PLAYER_CONFIG_CONTAINER_PATH =
         Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "MeshSyncPlayerConfig_Container");
+    internal static readonly string PROJECT_SETTINGS_FIELD_TEMPLATE_PATH =
+        Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "ProjectSettingsFieldTemplate");
 
+    
     internal const string MAIN_USER_SETTINGS_PATH = "Packages/com.unity.meshsync/Editor/UIElements/UserSettings/UserSettings_Main";
     
     //UIElement Styles

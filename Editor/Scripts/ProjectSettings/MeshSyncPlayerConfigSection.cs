@@ -7,6 +7,7 @@ using UnityEngine.UIElements;
 using Unity.MeshSync;
 using UnityEditor;
 using UnityEditor.UIElements;
+using Constants = Unity.MeshSync.Editor.MeshSyncEditorConstants;
 
 namespace Unity.MeshSync.Editor {
 
@@ -52,17 +53,11 @@ internal class MeshSyncPlayerConfigSection {
 //----------------------------------------------------------------------------------------------------------------------        
     internal void Setup(VisualElement parent) {
 	    m_playerConfigUIElements = new List<VisualElement>();
-	    VisualTreeAsset container =
-		    UIElementsEditorUtility.LoadVisualTreeAsset(MeshSyncEditorConstants.MESHSYNC_PLAYER_CONFIG_CONTAINER_PATH);
-	    
+	    VisualTreeAsset container = LoadVisualTreeAsset(Constants.MESHSYNC_PLAYER_CONFIG_CONTAINER_PATH);	    
         TemplateContainer containerInstance = container.CloneTree();
         
-       
-        
 	    //Templates
-	    VisualTreeAsset fieldTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
-		    Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "GeneralSettingsFieldTemplate")
-	    );
+	    VisualTreeAsset fieldTemplate = LoadVisualTreeAsset(Constants.PROJECT_SETTINGS_FIELD_TEMPLATE_PATH);
     
 	    //Add server port	            	          
 	    Foldout syncSettingsFoldout = containerInstance.Query<Foldout>("SyncSettingsFoldout").First();
@@ -288,6 +283,12 @@ internal class MeshSyncPlayerConfigSection {
 	
 	}
 
+//----------------------------------------------------------------------------------------------------------------------
+	private VisualTreeAsset LoadVisualTreeAsset(string path) {
+		return UIElementsEditorUtility.LoadVisualTreeAsset(path); 
+	} 
+	
+	
 
 //----------------------------------------------------------------------------------------------------------------------
 	
