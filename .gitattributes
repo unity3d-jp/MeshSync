@@ -8,6 +8,7 @@
 *.py text
 *.txt text
 *.md text
+*.sc binary
 
 *.meta text eol=lf
 *.bat text eol=crlf
