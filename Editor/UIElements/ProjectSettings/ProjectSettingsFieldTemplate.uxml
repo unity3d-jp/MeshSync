@@ -1,0 +1,7 @@
+<UXML xmlns="UnityEngine.UIElements">
+
+    <VisualElement name="FieldContainer" class="project-settings-field-container">
+        <Label text="label"/>        
+    </VisualElement>
+
+</UXML>
