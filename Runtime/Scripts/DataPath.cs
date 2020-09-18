@@ -14,63 +14,48 @@ internal class DataPath {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    
-    public Root root {
-        get { return m_root; }
-        set { m_root = value; m_dirty = true; }
-    }
-    public string leaf {
-        get { return m_leaf; }
-        set { m_leaf = value; m_dirty = true; }
-    }
-    public string fullPath {
-        get {
-            UpdateFullPath();
-            return m_fullpath;
-        }
 
-        set {
-            if (value.Contains(Application.streamingAssetsPath)) {
-                m_root = Root.StreamingAssets;
-                m_leaf = value.Replace(Application.streamingAssetsPath + "/", "");
-            } else if (value.Contains(Application.dataPath)) {
-                m_root = Root.DataPath;
-                m_leaf = value.Replace(Application.dataPath + "/", "");
-            } else if (value.Contains(Application.persistentDataPath)) {
-                m_root = Root.PersistentData;
-                m_leaf = value.Replace(Application.persistentDataPath + "/", "");
-            } else if (value.Contains(Application.temporaryCachePath)) {
-                m_root = Root.TemporaryCache;
-                m_leaf = value.Replace(Application.temporaryCachePath + "/", "");
-            } else {
-                m_root = Root.Current;
-                m_leaf = value;
-            }
-            m_dirty = true;
-        }
+    internal Root GetRoot() { return m_root; }
+
+    internal string GetLeaf() {  return m_leaf;}
+
+    internal string GetFullPath() {
+        UpdateFullPath();
+        return m_fullpath;       
     }
-    
-    public bool exists {
-        get {
-            return System.IO.Directory.Exists(fullPath);
+
+    internal void SetFullPath(string fullPath) {
+        if (fullPath.Contains(Application.streamingAssetsPath)) {
+            m_root = Root.StreamingAssets;
+            m_leaf = fullPath.Replace(Application.streamingAssetsPath + "/", "");
+        } else if (fullPath.Contains(Application.dataPath)) {
+            m_root = Root.DataPath;
+            m_leaf = fullPath.Replace(Application.dataPath + "/", "");
+        } else if (fullPath.Contains(Application.persistentDataPath)) {
+            m_root = Root.PersistentData;
+            m_leaf = fullPath.Replace(Application.persistentDataPath + "/", "");
+        } else if (fullPath.Contains(Application.temporaryCachePath)) {
+            m_root = Root.TemporaryCache;
+            m_leaf = fullPath.Replace(Application.temporaryCachePath + "/", "");
+        } else {
+            m_root = Root.Current;
+            m_leaf = fullPath;
         }
+        m_dirty = true;        
     }
+
 
 //----------------------------------------------------------------------------------------------------------------------    
 
 #if UNITY_EDITOR
-    public bool readOnly {
-        get { return m_readOnly; }
-        set { m_readOnly = value; }
-    }
-    public bool showRootSelector {
-        get { return m_showRootSelector; }
-        set { m_showRootSelector = value; }
-    }
-    public bool isDirectory {
-        get { return m_isDirectory; }
-        set { m_isDirectory = value; }
-    }
+
+    internal void SetReadOnly(bool readOnly) { m_readOnly = readOnly; }
+
+    internal void ShowRootSelector(bool show) { m_showRootSelector = show; }
+
+    internal void SetIsDirectory(bool isDirectory) { m_isDirectory = isDirectory;}
+
+
 #endif
 
 //----------------------------------------------------------------------------------------------------------------------    
@@ -81,14 +66,13 @@ internal class DataPath {
     }
 
     public DataPath(string path) {
-        fullPath = path;
+        SetFullPath(path);
     }
 //----------------------------------------------------------------------------------------------------------------------    
 
     public bool CreateDirectory() {
-        try
-        {
-            string path = fullPath;
+        try {
+            string path = GetFullPath();
             if (!System.IO.Directory.Exists(path))
                 System.IO.Directory.CreateDirectory(path);
             // note: Directory.CreateDirectory() throw exception if the path is a file
@@ -101,7 +85,7 @@ internal class DataPath {
 //----------------------------------------------------------------------------------------------------------------------
     
     public override string ToString() {
-        return fullPath;
+        return GetFullPath();
     }
 
 //----------------------------------------------------------------------------------------------------------------------    

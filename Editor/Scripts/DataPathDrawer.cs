@@ -37,12 +37,12 @@ class DataPathDrawer : PropertyDrawer {
         if (GUI.Button(buttonRect, "...")) {
             DataPath tmp = new DataPath((DataPath.Root)pRoot.intValue, pLeaf.stringValue);
             string path = isDirectory ?
-                EditorUtility.OpenFolderPanel("Select Directory", tmp.fullPath, "") :
-                EditorUtility.OpenFilePanel("Select File", tmp.fullPath, "");
+                EditorUtility.OpenFolderPanel("Select Directory", tmp.GetFullPath(), "") :
+                EditorUtility.OpenFilePanel("Select File", tmp.GetFullPath(), "");
             if (path.Length > 0) {
                 DataPath newPath = new DataPath(path);
-                pRoot.intValue = (int)newPath.root;
-                pLeaf.stringValue = newPath.leaf;
+                pRoot.intValue = (int)newPath.GetRoot();
+                pLeaf.stringValue = newPath.GetLeaf();
             }
         }
 
