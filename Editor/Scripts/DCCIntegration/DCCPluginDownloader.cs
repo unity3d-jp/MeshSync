@@ -65,7 +65,7 @@ internal class DCCPluginDownloader  {
                 CopyDCCPluginsFromPackage();
                 onSuccess(packageInfo.version);
             }, (req) => {
-                PackageInfo meshSyncInfo = listReq.FindPackage(MESHSYNC_PACKAGE);
+                PackageInfo meshSyncInfo = listReq.FindPackage(MeshSyncConstants.PACKAGE_NAME);
                 onFail?.Invoke(meshSyncInfo.version);
             });
         }, null);
@@ -256,7 +256,6 @@ internal class DCCPluginDownloader  {
     
     
     const string LATEST_KNOWN_VERSION = "0.4.0-preview";
-    private const string MESHSYNC_PACKAGE = "com.unity.meshsync";
     private const string MESHSYNC_DCC_PLUGIN_PACKAGE = "com.unity.meshsync-dcc-plugins";
 }
 

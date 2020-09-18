@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using NUnit.Framework;
-using Unity.MeshSync;
 using UnityEngine.TestTools;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
@@ -16,7 +15,7 @@ public class PluginTest {
             yield return null;
 
         foreach (PackageInfo packageInfo in list.Result) {
-            if (packageInfo.name != "com.unity.meshsync")
+            if (packageInfo.name != MeshSyncConstants.PACKAGE_NAME)
                 continue;
             
             
