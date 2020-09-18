@@ -22,7 +22,7 @@ class MeshSyncProjectSettingsProvider : SettingsProvider {
 	MeshSyncProjectSettingsProvider() : base(PROJECT_SETTINGS_MENU_PATH,SettingsScope.Project) {
 		m_tabs = new IMeshSyncSettingsTab[MeshSyncEditorConstants.MAX_SETTINGS_TAB];
 		Button[] tabButtons = new Button[MeshSyncEditorConstants.MAX_SETTINGS_TAB];		
-		m_tabs[MeshSyncEditorConstants.GENERAL_SETTINGS_TAB] = new ServerSettingsTab();
+		m_tabs[MeshSyncEditorConstants.SERVER_SETTINGS_TAB] = new ServerSettingsTab();
 		m_tabs[MeshSyncEditorConstants.SCENE_CACHE_PLAYER_SETTINGS_TAB] = new SceneCachePlayerSettingsTab();
 		
 		//activateHandler is called when the user clicks on the Settings item in the Settings window.
@@ -54,7 +54,7 @@ class MeshSyncProjectSettingsProvider : SettingsProvider {
 			
 			m_content = root.Query<VisualElement>("Content");
 			UpdateSelectedTabButton(tabButtons[0]);
-			SetupTab(MeshSyncEditorConstants.GENERAL_SETTINGS_TAB);
+			SetupTab(MeshSyncEditorConstants.SERVER_SETTINGS_TAB);
 			
 		};
 		
@@ -96,7 +96,7 @@ class MeshSyncProjectSettingsProvider : SettingsProvider {
 		if (!UpdateSelectedTabButton(evt.target as Button))
 			return;
 
-		m_projectSettingsProvider.SetupTab(MeshSyncEditorConstants.GENERAL_SETTINGS_TAB);
+		m_projectSettingsProvider.SetupTab(MeshSyncEditorConstants.SERVER_SETTINGS_TAB);
 		
 	}
 	
