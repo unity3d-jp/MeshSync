@@ -1,16 +1,13 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using Unity.AnimeToolbox.Editor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Unity.MeshSync;
 using UnityEditor;
 using UnityEditor.UIElements;
 using Constants = Unity.MeshSync.Editor.MeshSyncEditorConstants;
 
 namespace Unity.MeshSync.Editor {
-internal class GeneralSettingsTab : IMeshSyncSettingsTab {
+internal class ServerSettingsTab : IMeshSyncSettingsTab {
 
 	internal class Contents {
 
@@ -23,8 +20,8 @@ internal class GeneralSettingsTab : IMeshSyncSettingsTab {
 //----------------------------------------------------------------------------------------------------------------------        
     public void Setup(VisualElement root) {
 	    
-	    VisualTreeAsset tab = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SERVER_SETTINGS_TAB_PATH);	    
-        TemplateContainer tabInstance = tab.CloneTree();
+		VisualTreeAsset tab = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SERVER_SETTINGS_TAB_PATH);	    
+		TemplateContainer tabInstance = tab.CloneTree();
       
 	    VisualElement content = tabInstance.Query<VisualElement>("Content").First();
 	    
