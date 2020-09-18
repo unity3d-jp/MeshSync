@@ -9,7 +9,7 @@ namespace Unity.MeshSync.Editor {
 internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
 
     internal class Contents {
-        public static readonly GUIContent OutputPrefabPath = EditorGUIUtility.TrTextContent("Output prefab path");
+        public static readonly GUIContent OutputPrefabPath = EditorGUIUtility.TrTextContent("Scene Cache Output Path");
     }
 
 //----------------------------------------------------------------------------------------------------------------------        
@@ -19,15 +19,15 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
         
         VisualElement content = tabInstance.Query<VisualElement>("Content").First();
         
-        m_prefabPathTextField	 = tabInstance.Query<TextField>("PrefabPathText").First();
-        m_prefabPathTextField.RegisterValueChangedCallback((ChangeEvent<string> changeEvent) => {
+        m_outputPathTextField	 = tabInstance.Query<TextField>("OutputPathText").First();
+        m_outputPathTextField.RegisterValueChangedCallback((ChangeEvent<string> changeEvent) => {
             MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
             settings.SetSceneCacheOutputPath(changeEvent.newValue);
             settings.SaveSettings();
         });        
         
-        m_prefabPathSelectButton = tabInstance.Query<Button>("PrefabPathSelectButton").First();
-        m_prefabPathSelectButton.clicked += OnPrefabPathSelectButtonClicked;
+        m_outputPathSelectButton = tabInstance.Query<Button>("OutputPathSelectButton").First();
+        m_outputPathSelectButton.clicked += OnOutputPathSelectButtonClicked;
         RefreshSettings();    
         
         //MeshSyncPlayerConfig
@@ -38,13 +38,21 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
     }
     
 //----------------------------------------------------------------------------------------------------------------------
-    void OnPrefabPathSelectButtonClicked() {
-        string path = EditorUtility.OpenFolderPanel("Select Output SceneCache Prefab Path",
-                                                    m_prefabPathTextField.value,
+    void OnOutputPathSelectButtonClicked() {
+        string path = EditorUtility.OpenFolderPanel("Select Scene Cache Output Path",
+                                                    m_outputPathTextField.value,
                                                     "");
 
         if (string.IsNullOrEmpty(path))
             return;
+
+        if (!path.StartsWith(Application.dataPath)) {
+            EditorUtility.DisplayDialog("MeshSync",
+                $"Invalid path: {path}. " + 
+                "Path has to be under the Assets folder.", 
+                "Ok");
+            return;            
+        }        
 
         MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         
@@ -58,14 +66,14 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
 
     void RefreshSettings() {
         MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        m_prefabPathTextField.value = settings.GetSceneCacheOutputPath();		
+        m_outputPathTextField.value = settings.GetSceneCacheOutputPath();		
     }
 
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    private TextField m_prefabPathTextField  	= null;
-    private Button    m_prefabPathSelectButton 	= null;
+    private TextField m_outputPathTextField  	= null;
+    private Button    m_outputPathSelectButton 	= null;
 
 }
 
