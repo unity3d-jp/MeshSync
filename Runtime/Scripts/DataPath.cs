@@ -15,17 +15,7 @@ internal class DataPath {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    internal void SetRoot(Root root) { 
-        m_root = root; 
-        m_dirty = true;
-    }
-
     internal Root GetRoot() { return m_root; }
-
-    internal void SetLeaf(string leaf) {
-        m_leaf  = leaf;
-        m_dirty = true;
-    }
 
     internal string GetLeaf() {  return m_leaf;}
 
@@ -54,9 +44,6 @@ internal class DataPath {
         m_dirty = true;        
     }
 
-    internal bool Exists() {
-        return System.IO.Directory.Exists(GetFullPath());
-    }
 
 //----------------------------------------------------------------------------------------------------------------------    
 
@@ -64,15 +51,10 @@ internal class DataPath {
 
     internal void SetReadOnly(bool readOnly) { m_readOnly = readOnly; }
 
-    internal bool IsReadOnly()              { return m_readOnly;}
-
     internal void ShowRootSelector(bool show) { m_showRootSelector = show; }
-
-    internal bool IsRootSelectorShown() { return m_showRootSelector;}
 
     internal void SetIsDirectory(bool isDirectory) { m_isDirectory = isDirectory;}
 
-    internal bool IsDirectory() { return m_isDirectory;}
 
 #endif
 
