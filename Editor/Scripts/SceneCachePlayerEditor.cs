@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
@@ -31,7 +32,11 @@ internal class SceneCachePlayerEditor : MeshSyncPlayerEditor {
 
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
-        string                  assetDir       = $"{scOutputPath}/{go.name}";
+
+        int numAssetsChars = "Assets".Length;
+        Assert.IsTrue(scOutputPath.Length >= numAssetsChars);
+        
+        string                  assetDir       =  Path.Combine(scOutputPath.Substring(numAssetsChars), go.name);
         
         SceneCachePlayer        player          = go.AddComponent<SceneCachePlayer>();
         player.rootObject = go.GetComponent<Transform>();
