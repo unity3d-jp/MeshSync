@@ -53,7 +53,7 @@ internal class MeshSyncPlayerConfigSection {
     internal void Setup(VisualElement parent) {
 	    m_playerConfigUIElements = new List<VisualElement>();
 	    VisualTreeAsset container =
-		    UIElementsEditorUtility.LoadVisualTreeAsset(MeshSyncEditorConstants.MESHSYNC_PLAYER_CONFIG_CONTAINER);
+		    UIElementsEditorUtility.LoadVisualTreeAsset(MeshSyncEditorConstants.MESHSYNC_PLAYER_CONFIG_CONTAINER_PATH);
 	    
         TemplateContainer containerInstance = container.CloneTree();
         

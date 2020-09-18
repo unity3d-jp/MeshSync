@@ -86,7 +86,7 @@ internal class ProjectSettingsTest {
     [Test]
     public void CheckProjectSettingUIElements() {
 
-        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MESHSYNC_PLAYER_CONFIG_CONTAINER));
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MESHSYNC_PLAYER_CONFIG_CONTAINER_PATH));
         Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MAIN_USER_SETTINGS_PATH));
       
         Assert.IsNotNull(LoadStyleSheet(Constants.USER_SETTINGS_STYLE_PATH));       
