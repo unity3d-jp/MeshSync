@@ -76,6 +76,26 @@
     width: 100px;
 }
 
+/*----------------------------------------------- Project settings--------------------------------------------------- */
+
+.project-settings-foldout {
+    width: 500px;
+    -unity-font-style:bold;
+    font-size:  14px;
+    margin: 1px 15px;
+}
+
+.project-settings-field-container {
+    flex-direction: row;
+    -unity-font-style: normal;
+    font-size:  12px;
+
+}
+
+.project-settings-field-container > Label {
+    width: 250px;
+}
+
 /*----------------------------------------------- DCC Tool Info ----------------------------------------------------- */
 
 .dcc-tool-info-container {
