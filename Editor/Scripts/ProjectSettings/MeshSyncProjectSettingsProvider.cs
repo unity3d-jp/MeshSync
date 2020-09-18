@@ -10,7 +10,7 @@ using Constants = Unity.MeshSync.Editor.MeshSyncEditorConstants;
 
 namespace Unity.MeshSync.Editor {
 	
-class MeshSyncSettingsProvider : SettingsProvider {
+class MeshSyncProjectSettingsProvider : SettingsProvider {
 	
 	private class Contents {
 		public static readonly GUIContent GeneralSettings = EditorGUIUtility.TrTextContent("Server");		
@@ -19,7 +19,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 	
 //----------------------------------------------------------------------------------------------------------------------	
 	
-	MeshSyncSettingsProvider() : base(PROJECT_SETTINGS_MENU_PATH,SettingsScope.Project) {
+	MeshSyncProjectSettingsProvider() : base(PROJECT_SETTINGS_MENU_PATH,SettingsScope.Project) {
 		m_tabs = new IMeshSyncSettingsTab[MeshSyncEditorConstants.MAX_SETTINGS_TAB];
 		Button[] tabButtons = new Button[MeshSyncEditorConstants.MAX_SETTINGS_TAB];		
 		m_tabs[MeshSyncEditorConstants.GENERAL_SETTINGS_TAB] = new GeneralSettingsTab();
@@ -65,7 +65,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 
 		//keywords
 		HashSet<string> meshSyncKeywords = new HashSet<string>(new[] { "MeshSync",});
-		meshSyncKeywords.UnionWith(GetSearchKeywordsFromGUIContentProperties<MeshSyncSettingsProvider.Contents>());
+		meshSyncKeywords.UnionWith(GetSearchKeywordsFromGUIContentProperties<MeshSyncProjectSettingsProvider.Contents>());
 		meshSyncKeywords.UnionWith(GetSearchKeywordsFromGUIContentProperties<GeneralSettingsTab.Contents>());
 		meshSyncKeywords.UnionWith(GetSearchKeywordsFromGUIContentProperties<SceneCachePlayerSettingsTab.Contents>());
 		meshSyncKeywords.UnionWith(GetSearchKeywordsFromGUIContentProperties<MeshSyncPlayerConfigSection.Contents>());
@@ -96,7 +96,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 		if (!UpdateSelectedTabButton(evt.target as Button))
 			return;
 
-		m_settingsProvider.SetupTab(MeshSyncEditorConstants.GENERAL_SETTINGS_TAB);
+		m_projectSettingsProvider.SetupTab(MeshSyncEditorConstants.GENERAL_SETTINGS_TAB);
 		
 	}
 	
@@ -104,7 +104,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 		if (!UpdateSelectedTabButton(evt.target as Button))
 			return;
 
-		m_settingsProvider.SetupTab(MeshSyncEditorConstants.SCENE_CACHE_PLAYER_SETTINGS_TAB);
+		m_projectSettingsProvider.SetupTab(MeshSyncEditorConstants.SCENE_CACHE_PLAYER_SETTINGS_TAB);
 	}	
 
 	#endregion	
@@ -143,8 +143,8 @@ class MeshSyncSettingsProvider : SettingsProvider {
 
     [SettingsProvider]
     internal static SettingsProvider CreateMeshSyncSettingsProvider() {
-	    m_settingsProvider = new MeshSyncSettingsProvider();
-	    return m_settingsProvider;
+	    m_projectSettingsProvider = new MeshSyncProjectSettingsProvider();
+	    return m_projectSettingsProvider;
     }
     
 	
@@ -155,7 +155,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 
 	private VisualElement m_content = null;
 
-	private static MeshSyncSettingsProvider m_settingsProvider = null;
+	private static MeshSyncProjectSettingsProvider m_projectSettingsProvider = null;
 
 	private const string PROJECT_SETTINGS_MENU_PATH = "Project/MeshSync";
 
