@@ -12,7 +12,7 @@ namespace Unity.MeshSync.Editor {
 class MeshSyncSettingsProvider : SettingsProvider {
 	
 	private class Contents {
-		public static readonly GUIContent GeneralSettings = EditorGUIUtility.TrTextContent("General Settings");		
+		public static readonly GUIContent GeneralSettings = EditorGUIUtility.TrTextContent("Server");		
 		public static readonly GUIContent SceneCachePlayer = EditorGUIUtility.TrTextContent("Scene Cache Player");		
 	}
 	
@@ -33,7 +33,6 @@ class MeshSyncSettingsProvider : SettingsProvider {
 				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "ProjectSettings_Main")
 			);
 			main.CloneTree(root);
-
 
 			//Tab Buttons
 			VisualElement tabsContainer = root.Query<VisualElement>("TabsContainer");
