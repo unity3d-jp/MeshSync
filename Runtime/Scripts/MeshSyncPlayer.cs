@@ -53,7 +53,7 @@ namespace Unity.MeshSync
     /// MeshSyncPlayer
     /// </summary>
     [ExecuteInEditMode]
-    internal class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver
+    internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver
     {
 
         
@@ -350,25 +350,34 @@ namespace Unity.MeshSync
             values = null;
         }
 
+//----------------------------------------------------------------------------------------------------------------------
+        
         /// <summary>
         /// Called during serialization as an implementation of ISerializationCallbackReceiver
         /// </summary>
-        public void OnBeforeSerialize()
-        {
+        public void OnBeforeSerialize() {
+            OnBeforeSerializeMeshSyncPlayerV();
             SerializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
             SerializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
             SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
+            
         }
+
 
         /// <summary>
         /// Called during serialization as an implementation of ISerializationCallbackReceiver
         /// </summary>
-        public void OnAfterDeserialize()
-        {
+        public void OnAfterDeserialize() {
             DeserializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
             DeserializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
-            DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
+            DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);            
+            OnAfterDeserializeMeshSyncPlayerV();
         }
+        
+        protected abstract void OnBeforeSerializeMeshSyncPlayerV();
+        protected abstract void OnAfterDeserializeMeshSyncPlayerV();
+        
+//----------------------------------------------------------------------------------------------------------------------
         #endregion
 
         #region Misc

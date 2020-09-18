@@ -208,7 +208,19 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         return default(SceneData);
     }
     #endregion
+   
+//----------------------------------------------------------------------------------------------------------------------
 
+    protected override void OnBeforeSerializeMeshSyncPlayerV() {
+        
+    }
+
+    protected override void OnAfterDeserializeMeshSyncPlayerV() {
+        m_version = CUR_SCENE_CACHE_PLAYER_VERSION;
+    }   
+    
+//----------------------------------------------------------------------------------------------------------------------
+    
     #region Impl
     void CheckParamsUpdated() {
         string path = m_cacheFilePath.GetFullPath();
@@ -268,6 +280,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
 #endif
 
+//----------------------------------------------------------------------------------------------------------------------    
     protected override void OnEnable() {
         base.OnEnable();
         CheckParamsUpdated();
@@ -297,6 +310,14 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     [SerializeField] int       m_frame         = 1;
     [SerializeField] int       m_preloadLength = 1;
 
+    [SerializeField] private string m_sceneCacheFilePath = null;
+
+#pragma warning disable 414
+    [HideInInspector][SerializeField] private int m_version = CUR_SCENE_CACHE_PLAYER_VERSION;
+#pragma warning restore 414
+    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.INITIAL_0_4_0;
+    
+    
     SceneCacheData m_sceneCache;
     TimeRange      m_timeRange;
     string         m_pathPrev      = "";
@@ -310,6 +331,13 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     string                m_dbgProfileReport;
 #endif
     #endregion
+
+//----------------------------------------------------------------------------------------------------------------------    
+    
+    enum SceneCachePlayerVersion {
+        INITIAL_0_4_0 = 1, //initial for version 0.4.0-preview 
+    
+    }
     
 }
 

@@ -106,8 +106,19 @@ internal class MeshSyncServer : MeshSyncPlayer
         Debug.LogWarning("[MeshSync] Server functions are not supported in non-Standalone platform");
 #endif //UNITY_STANDALONE
     }
+
+//----------------------------------------------------------------------------------------------------------------------
+
+    protected override void OnBeforeSerializeMeshSyncPlayerV() {
+        
+    }
+
+    protected override void OnAfterDeserializeMeshSyncPlayerV() {
+        m_version = CUR_SERVER_VERSION;
+    }   
     
-//----------------------------------------------------------------------------------------------------------------------        
+//----------------------------------------------------------------------------------------------------------------------
+    
 
 #if UNITY_STANDALONE
     #region Impl
@@ -446,7 +457,21 @@ internal class MeshSyncServer : MeshSyncPlayer
 #if UNITY_EDITOR
     [SerializeField] bool m_foldServerSettings = true;
 #endif
+
+#pragma warning disable 414
+    [HideInInspector][SerializeField] private int m_version = CUR_SERVER_VERSION;
+#pragma warning restore 414
+    private const int CUR_SERVER_VERSION = (int) ServerVersion.INITIAL_0_4_0;
+    
+    
     private bool m_serverStarted = false;
+
+//----------------------------------------------------------------------------------------------------------------------    
+    
+    enum ServerVersion {
+        INITIAL_0_4_0 = 1, //initial for version 0.4.0-preview 
+    
+    }
     
 }
 
