@@ -1,5 +1,4 @@
 using Unity.AnimeToolbox.Editor;
-using UnityEngine;
 using UnityEngine.UIElements;
 using Constants = Unity.MeshSync.Editor.MeshSyncEditorConstants;
 
