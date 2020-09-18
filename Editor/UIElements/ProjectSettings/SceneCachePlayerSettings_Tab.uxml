@@ -9,8 +9,8 @@
 
             <VisualElement name="FieldContainer" class="project-settings-field-container">
                 <Label text="Output prefab path"/>
-                <TextField readonly="true" class="project-settings-field"/>
-                <Button text="..."/>
+                <TextField class="project-settings-path-field" name="PrefabPathText"/>
+                <Button text="..." name="PrefabPathSelectButton"/>
             </VisualElement>
             
         </VisualElement>
