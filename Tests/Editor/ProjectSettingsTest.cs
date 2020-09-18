@@ -2,7 +2,6 @@
 using System.IO;
 using NUnit.Framework;
 using Unity.AnimeToolbox.Editor;
-using Unity.MeshSync;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
