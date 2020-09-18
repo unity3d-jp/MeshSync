@@ -1,0 +1,14 @@
+<UXML xmlns="UnityEngine.UIElements">
+    
+    <ScrollView name="SceneCachePlayerSettingsScrollView" show-vertical-scroller="true">
+
+        <VisualElement name="HeaderContainer" class="general-header-container">
+        </VisualElement>
+
+        <VisualElement name="Content">
+        </VisualElement>
+        
+    </ScrollView>
+
+        
+</UXML>

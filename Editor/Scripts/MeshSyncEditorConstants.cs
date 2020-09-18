@@ -5,9 +5,10 @@ namespace Unity.MeshSync.Editor {
 internal class MeshSyncEditorConstants {
 
     //Project settings
-    internal const int UNINITIALIZED_TAB        = -1;
-    internal const int GENERAL_SETTINGS_TAB     = 0;
-    internal const int MAX_SETTINGS_TAB         = 1;
+    internal const int UNINITIALIZED_TAB    = -1;
+    internal const int GENERAL_SETTINGS_TAB             = 0;
+    internal const int SCENE_CACHE_PLAYER_SETTINGS_TAB  = 1;
+    internal const int MAX_SETTINGS_TAB                 = 2;
     
 
     //
