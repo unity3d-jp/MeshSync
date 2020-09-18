@@ -6,6 +6,13 @@
         </VisualElement>
 
         <VisualElement name="Content" class="project-settings-content">
+
+            <VisualElement name="FieldContainer" class="project-settings-field-container">
+                <Label text="Output prefab path"/>
+                <TextField readonly="true" class="project-settings-field"/>
+                <Button text="..."/>
+            </VisualElement>
+            
         </VisualElement>
                 
     </ScrollView>
