@@ -34,12 +34,10 @@ class MeshSyncProjectSettingsProvider : SettingsProvider {
 
 			//Tab Buttons
 			VisualElement tabsContainer = root.Query<VisualElement>("TabsContainer");
-			VisualTreeAsset tabButtonTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
-				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "TabButtonTemplate")
-			);
+			VisualTreeAsset btnTemplate=UIElementsEditorUtility.LoadVisualTreeAsset(Constants.TAB_BUTTON_TEMPLATE_PATH);
 
-			tabButtons[0] = CreateButton(tabButtonTemplate, Contents.Server, OnServerSettingsTabClicked);
-			tabButtons[1] = CreateButton(tabButtonTemplate, Contents.SceneCachePlayer, OnSceneCachePlayerTabClicked);			
+			tabButtons[0] = CreateButton(btnTemplate, Contents.Server, OnServerSettingsTabClicked);
+			tabButtons[1] = CreateButton(btnTemplate, Contents.SceneCachePlayer, OnSceneCachePlayerTabClicked);			
 
 			foreach (Button tabButton in tabButtons) {
 				tabsContainer.Add(tabButton);

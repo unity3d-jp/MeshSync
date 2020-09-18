@@ -24,6 +24,8 @@ internal class MeshSyncEditorConstants {
         Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "ServerSettings_Tab");
     internal static readonly string SCENE_CACHE_PLAYER_SETTINGS_TAB_PATH =
         Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "SceneCachePlayerSettings_Tab");
+    internal static readonly string TAB_BUTTON_TEMPLATE_PATH =
+        Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "TabButtonTemplate");
     
     
     internal static readonly string MESHSYNC_PLAYER_CONFIG_CONTAINER_PATH =
