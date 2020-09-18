@@ -6,13 +6,15 @@ using Unity.AnimeToolbox.Editor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Constants = Unity.MeshSync.Editor.MeshSyncEditorConstants;
 
 namespace Unity.MeshSync.Editor {
 	
 class MeshSyncSettingsProvider : SettingsProvider {
 	
 	private class Contents {
-		public static readonly GUIContent GeneralSettings = EditorGUIUtility.TrTextContent("General Settings");
+		public static readonly GUIContent GeneralSettings = EditorGUIUtility.TrTextContent("Server");		
+		public static readonly GUIContent SceneCachePlayer = EditorGUIUtility.TrTextContent("Scene Cache Player");		
 	}
 	
 //----------------------------------------------------------------------------------------------------------------------	
@@ -21,17 +23,14 @@ class MeshSyncSettingsProvider : SettingsProvider {
 		m_tabs = new IMeshSyncSettingsTab[MeshSyncEditorConstants.MAX_SETTINGS_TAB];
 		Button[] tabButtons = new Button[MeshSyncEditorConstants.MAX_SETTINGS_TAB];		
 		m_tabs[MeshSyncEditorConstants.GENERAL_SETTINGS_TAB] = new GeneralSettingsTab();
+		m_tabs[MeshSyncEditorConstants.SCENE_CACHE_PLAYER_SETTINGS_TAB] = new SceneCachePlayerSettingsTab();
 		
 		//activateHandler is called when the user clicks on the Settings item in the Settings window.
 		activateHandler = (string searchContext, VisualElement root) => {
-
 			
 			//Main Tree
-			VisualTreeAsset main = UIElementsEditorUtility.LoadVisualTreeAsset(
-				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "ProjectSettings_Main")
-			);
+			VisualTreeAsset main = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MAIN_PROJECT_SETTINGS_PATH);
 			main.CloneTree(root);
-
 
 			//Tab Buttons
 			VisualElement tabsContainer = root.Query<VisualElement>("TabsContainer");
@@ -40,6 +39,7 @@ class MeshSyncSettingsProvider : SettingsProvider {
 			);
 
 			tabButtons[0] = CreateButton(tabButtonTemplate, Contents.GeneralSettings, OnGeneralSettingsTabClicked);
+			tabButtons[1] = CreateButton(tabButtonTemplate, Contents.SceneCachePlayer, OnSceneCachePlayerTabClicked);			
 
 			foreach (Button tabButton in tabButtons) {
 				tabsContainer.Add(tabButton);
@@ -67,6 +67,8 @@ class MeshSyncSettingsProvider : SettingsProvider {
 		HashSet<string> meshSyncKeywords = new HashSet<string>(new[] { "MeshSync",});
 		meshSyncKeywords.UnionWith(GetSearchKeywordsFromGUIContentProperties<MeshSyncSettingsProvider.Contents>());
 		meshSyncKeywords.UnionWith(GetSearchKeywordsFromGUIContentProperties<GeneralSettingsTab.Contents>());
+		meshSyncKeywords.UnionWith(GetSearchKeywordsFromGUIContentProperties<SceneCachePlayerSettingsTab.Contents>());
+		meshSyncKeywords.UnionWith(GetSearchKeywordsFromGUIContentProperties<MeshSyncPlayerConfigSection.Contents>());
 
 		keywords = meshSyncKeywords;
 		
@@ -97,6 +99,13 @@ class MeshSyncSettingsProvider : SettingsProvider {
 		m_settingsProvider.SetupTab(MeshSyncEditorConstants.GENERAL_SETTINGS_TAB);
 		
 	}
+	
+	static void OnSceneCachePlayerTabClicked(EventBase evt) {
+		if (!UpdateSelectedTabButton(evt.target as Button))
+			return;
+
+		m_settingsProvider.SetupTab(MeshSyncEditorConstants.SCENE_CACHE_PLAYER_SETTINGS_TAB);
+	}	
 
 	#endregion	
 

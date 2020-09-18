@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
-using Unity.MeshSync;
+using Unity.AnimeToolbox.Editor;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.UIElements;
+using Constants = Unity.MeshSync.Editor.MeshSyncEditorConstants;
 
 namespace Unity.MeshSync.Editor.Tests {
 internal class ProjectSettingsTest {
@@ -78,6 +81,37 @@ internal class ProjectSettingsTest {
         Assert.AreNotEqual(mayaInfoPath,_3dsMaxInfoPath);
         
     }    
+
+//----------------------------------------------------------------------------------------------------------------------
+    [Test]
+    public void CheckProjectSettingUIElements() {
+
+        //Main
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MAIN_PROJECT_SETTINGS_PATH));
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MAIN_USER_SETTINGS_PATH));
+
+        //Tabs
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SERVER_SETTINGS_TAB_PATH));
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SCENE_CACHE_PLAYER_SETTINGS_TAB_PATH));
+        
+        
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MESHSYNC_PLAYER_CONFIG_CONTAINER_PATH));
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.PROJECT_SETTINGS_FIELD_TEMPLATE_PATH));
+        
+      
+        //Styles
+        Assert.IsNotNull(LoadStyleSheet(Constants.USER_SETTINGS_STYLE_PATH));       
+        
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
+    
+    StyleSheet LoadStyleSheet( string path) {
+        const string STYLE_EXT = ".uss";
+        return AssetDatabase.LoadAssetAtPath<StyleSheet>(path + STYLE_EXT);
+    }
+    
+    
     
 }
 

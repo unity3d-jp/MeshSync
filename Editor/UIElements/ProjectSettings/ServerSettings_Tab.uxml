@@ -1,0 +1,18 @@
+<UXML xmlns="UnityEngine.UIElements">
+    
+    <ScrollView name="ServerSettingsScrollView" show-vertical-scroller="true">
+
+        <VisualElement name="HeaderContainer" class="general-header-container">
+        </VisualElement>
+        
+        
+
+        <VisualElement name="Content" class="project-settings-content">
+            
+            
+        </VisualElement>
+        
+    </ScrollView>
+
+        
+</UXML>
