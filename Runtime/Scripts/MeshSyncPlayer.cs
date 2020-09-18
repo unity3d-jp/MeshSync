@@ -241,7 +241,7 @@ namespace Unity.MeshSync
         }
         internal string assetPath
         {
-            get { return m_assetDir.leaf.Length != 0 ? "Assets/" + m_assetDir.leaf : "Assets"; }
+            get { return m_assetDir.GetLeaf().Length != 0 ? "Assets/" + m_assetDir.GetLeaf() : "Assets"; }
         }
         protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
         
