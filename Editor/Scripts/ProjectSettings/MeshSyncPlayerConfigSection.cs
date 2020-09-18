@@ -45,7 +45,7 @@ internal class MeshSyncPlayerConfigSection {
 
 //----------------------------------------------------------------------------------------------------------------------
 	
-	MeshSyncPlayerConfigSection(MeshSyncPlayerType playerType) {
+	internal MeshSyncPlayerConfigSection(MeshSyncPlayerType playerType) {
 		m_playerType = playerType;
 	}
 
