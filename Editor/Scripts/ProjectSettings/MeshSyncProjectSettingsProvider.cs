@@ -13,7 +13,7 @@ namespace Unity.MeshSync.Editor {
 class MeshSyncProjectSettingsProvider : SettingsProvider {
 	
 	private class Contents {
-		public static readonly GUIContent GeneralSettings = EditorGUIUtility.TrTextContent("Server");		
+		public static readonly GUIContent Server = EditorGUIUtility.TrTextContent("Server");		
 		public static readonly GUIContent SceneCachePlayer = EditorGUIUtility.TrTextContent("Scene Cache Player");		
 	}
 	
@@ -38,7 +38,7 @@ class MeshSyncProjectSettingsProvider : SettingsProvider {
 				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "TabButtonTemplate")
 			);
 
-			tabButtons[0] = CreateButton(tabButtonTemplate, Contents.GeneralSettings, OnGeneralSettingsTabClicked);
+			tabButtons[0] = CreateButton(tabButtonTemplate, Contents.Server, OnServerSettingsTabClicked);
 			tabButtons[1] = CreateButton(tabButtonTemplate, Contents.SceneCachePlayer, OnSceneCachePlayerTabClicked);			
 
 			foreach (Button tabButton in tabButtons) {
@@ -92,7 +92,7 @@ class MeshSyncProjectSettingsProvider : SettingsProvider {
 
 	#region Button Events
 	
-	static void OnGeneralSettingsTabClicked(EventBase evt) {
+	static void OnServerSettingsTabClicked(EventBase evt) {
 		if (!UpdateSelectedTabButton(evt.target as Button))
 			return;
 
