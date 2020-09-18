@@ -17,11 +17,9 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
 	    
 	    VisualElement content = tabInstance.Query<VisualElement>("Content").First();
 	    
-	    MeshSyncPlayerConfigSection section = new MeshSyncPlayerConfigSection(MeshSyncPlayerType.CACHE_PLAYER);
-	    
+	    MeshSyncPlayerConfigSection section = new MeshSyncPlayerConfigSection(MeshSyncPlayerType.CACHE_PLAYER);	    
 	    section.Setup(content);
-	    
-	    
+	    	    
 	    root.Add(tabInstance);	    
     }
 
