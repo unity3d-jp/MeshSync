@@ -310,10 +310,8 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     [SerializeField] int       m_frame         = 1;
     [SerializeField] int       m_preloadLength = 1;
 
-    [SerializeField] private string m_sceneCacheFilePath = null;
-
 #pragma warning disable 414
-    [HideInInspector][SerializeField] private int m_version = CUR_SCENE_CACHE_PLAYER_VERSION;
+    [HideInInspector][SerializeField] private int m_version = (int) SceneCachePlayerVersion.NO_VERSIONING;
 #pragma warning restore 414
     private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.INITIAL_0_4_0;
     
@@ -335,6 +333,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 //----------------------------------------------------------------------------------------------------------------------    
     
     enum SceneCachePlayerVersion {
+        NO_VERSIONING = 0, //Didn't have versioning in earlier versions
         INITIAL_0_4_0 = 1, //initial for version 0.4.0-preview 
     
     }
