@@ -96,6 +96,10 @@
     width: 250px;
 }
 
+.project-settings-field {
+    width: 100px;
+}
+
 /*----------------------------------------------- DCC Tool Info ----------------------------------------------------- */
 
 .dcc-tool-info-container {
