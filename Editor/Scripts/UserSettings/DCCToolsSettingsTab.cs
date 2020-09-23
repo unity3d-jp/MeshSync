@@ -20,13 +20,13 @@ namespace Unity.MeshSync.Editor {
             
             m_root = root;
             m_root.Clear();
-            
+
             VisualTreeAsset container = UIElementsEditorUtility.LoadVisualTreeAsset(
-                Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "DCCToolsSettings_Container")
+                MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_CONTAINER_PATH
             );
             
             VisualTreeAsset dccToolInfoTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
-                Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, "DCCToolInfoTemplate")
+                MeshSyncEditorConstants.DCC_TOOL_INFO_TEMPLATE_PATH
             );
 
             TemplateContainer containerInstance = container.CloneTree();

@@ -44,10 +44,7 @@ class MeshSyncProjectSettingsProvider : SettingsProvider {
 			}
 			
 			//Style
-			UIElementsEditorUtility.LoadAndAddStyle(
-				root.styleSheets,
-				Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH,"ProjectSettings_Style")
-			);
+			UIElementsEditorUtility.LoadAndAddStyle(root.styleSheets, Constants.PROJECT_SETTINGS_STYLE_PATH);
 
 			
 			m_content = root.Query<VisualElement>("Content");
