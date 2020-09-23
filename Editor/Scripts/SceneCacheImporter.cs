@@ -15,7 +15,7 @@ namespace Unity.MeshSync.Editor
             if (!path.StartsWith(Application.dataPath))
                 return;
             
-            GameObject go = SceneCachePlayerEditor.CreateSceneCachePlayer(path);
+            GameObject go = MeshSyncMenu.CreateSceneCachePlayer(path);
             if (go == null)
                 return;
 
