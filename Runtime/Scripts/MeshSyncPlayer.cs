@@ -49,6 +49,8 @@ internal delegate void UpdateAnimationHandler(AnimationClip anim, AnimationClipD
 /// </summary>
 internal delegate void DeleteEntityHandler(GameObject obj);
 
+//----------------------------------------------------------------------------------------------------------------------
+
 /// <summary>
 /// MeshSyncPlayer
 /// </summary>
@@ -99,86 +101,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     /// </summary>
     internal event SceneHandler onSceneUpdateEnd;
     
-    #endregion
-
-
-    #region Types
-    [Serializable]
-    internal class EntityRecord
-    {
-        public EntityType dataType;
-        public int index;
-        public GameObject go;
-        public Transform trans;
-        public Camera camera;
-        public Light light;
-        public MeshFilter meshFilter;
-        public MeshRenderer meshRenderer;
-        public SkinnedMeshRenderer skinnedMeshRenderer;
-        public PointCache pointCache;
-        public PointCacheRenderer pointCacheRenderer;
-        public Mesh origMesh;
-        public Mesh mesh;
-
-        public int[] materialIDs;
-        public string reference;
-        public string rootBonePath;
-        public string[] bonePaths;
-        public bool smrUpdated = false;
-        public bool smrEnabled = false;
-        public bool hasVisibility = false;
-        public VisibilityFlags visibility; // for reference
-        public bool recved = false;
-
-        // return true if modified
-        public bool BuildMaterialData(MeshData md)
-        {
-            int numSubmeshes = md.numSubmeshes;
-
-            bool updated = false;
-            if (materialIDs == null || materialIDs.Length != numSubmeshes)
-            {
-                materialIDs = new int[numSubmeshes];
-                updated = true;
-            }
-            for (int i = 0; i < numSubmeshes; ++i)
-            {
-                int mid = md.GetSubmesh(i).materialID;
-                if (!updated)
-                    updated = materialIDs[i] != mid;
-                materialIDs[i] = mid;
-            }
-            return updated;
-        }
-    }
-
-    [Serializable]
-    internal class MaterialHolder
-    {
-        public int id;
-        public string name;
-        public int index;
-        public string shader;
-        public Color color = Color.white;
-        public Material material;
-        public int materialIID;
-    }
-
-    [Serializable]
-    internal class TextureHolder
-    {
-        public int id;
-        public string name;
-        public Texture2D texture;
-    }
-
-    [Serializable]
-    internal class AudioHolder
-    {
-        public int id;
-        public string name;
-        public AudioClip audio;
-    }
     #endregion
 
 
