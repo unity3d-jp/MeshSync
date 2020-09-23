@@ -317,7 +317,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     [SerializeField] int       m_frame         = 1;
     [SerializeField] int       m_preloadLength = 1;
 
-    [HideInInspector][SerializeField] private int m_version = (int) SceneCachePlayerVersion.NO_VERSIONING;
+    [HideInInspector][SerializeField] private int m_version = (int) CUR_SCENE_CACHE_PLAYER_VERSION;
     private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.STRING_PATH_0_4_0;
     
     
