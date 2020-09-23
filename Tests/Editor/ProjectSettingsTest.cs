@@ -86,23 +86,19 @@ internal class ProjectSettingsTest {
     [Test]
     public void CheckProjectSettingUIElements() {
 
-        //Main
         Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MAIN_PROJECT_SETTINGS_PATH));
-        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MAIN_USER_SETTINGS_PATH));
-
-        //Tabs
         Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SERVER_SETTINGS_TAB_PATH));
         Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SCENE_CACHE_PLAYER_SETTINGS_TAB_PATH));
         Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.TAB_BUTTON_TEMPLATE_PATH));
-        
-        
-        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MESHSYNC_PLAYER_CONFIG_CONTAINER_PATH));
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.PROJECT_SETTINGS_STYLE_PATH));
         Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.PROJECT_SETTINGS_FIELD_TEMPLATE_PATH));
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MESHSYNC_PLAYER_CONFIG_CONTAINER_PATH));
         
-      
-        //Styles
-        Assert.IsNotNull(LoadStyleSheet(Constants.USER_SETTINGS_STYLE_PATH));       
-        
+    }
+
+    [Test]
+    public void CheckUserSettingUIElements() {
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MAIN_USER_SETTINGS_PATH));
     }
 
 //----------------------------------------------------------------------------------------------------------------------
