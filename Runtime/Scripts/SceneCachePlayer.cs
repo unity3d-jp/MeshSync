@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Assertions;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -22,11 +23,12 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
     #endregion
 
+//----------------------------------------------------------------------------------------------------------------------
 
+    internal string GetSceneCacheFilePath() { return m_sceneCacheFilePath; }
+    
+//----------------------------------------------------------------------------------------------------------------------
     #region Properties
-    internal DataPath cacheFilePath {
-        get { return m_cacheFilePath; }
-    }
     public int frameCount {
         get { return m_sceneCache.sceneCount; }
     }
@@ -82,7 +84,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 #if UNITY_EDITOR
             this.sortEntities = true;
 #endif
-            m_cacheFilePath.SetFullPath(path);
+            m_sceneCacheFilePath = path;
             m_pathPrev = path;
             m_timeRange = m_sceneCache.timeRange;
             if (m_config.Logging)
@@ -99,7 +101,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         if (m_sceneCache) {
             m_sceneCache.Close();
             if (m_config.Logging)
-                Debug.Log(string.Format("SceneCachePlayer: cache closed ({0})", m_cacheFilePath));
+                Debug.Log($"SceneCachePlayer: cache closed ({m_sceneCacheFilePath})");
         }
         m_timePrev = -1;
     }
@@ -156,7 +158,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
     public void UpdatePlayer() {
         if (m_openRequested) {
-            OpenCache(m_cacheFilePath.GetFullPath());
+            OpenCache(m_sceneCacheFilePath);
         }
 
         if (m_timeUnit == TimeUnit.Frames) {
@@ -216,7 +218,10 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
 
     protected override void OnAfterDeserializeMeshSyncPlayerV() {
+        
+        
         if (m_version < (int) SceneCachePlayerVersion.STRING_PATH_0_4_0) {
+            Assert.IsNotNull(m_cacheFilePath);           
             m_sceneCacheFilePath = m_cacheFilePath.GetFullPath();
         } 
         
@@ -227,9 +232,8 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     
     #region Impl
     void CheckParamsUpdated() {
-        string path = m_cacheFilePath.GetFullPath();
-        if (path != m_pathPrev)
-        {
+        string path = m_sceneCacheFilePath;
+        if (path != m_pathPrev) {
             m_pathPrev = path;
             m_openRequested = true;
         }
@@ -272,9 +276,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     #region Events
 #if UNITY_EDITOR
     void Reset() {
-        m_cacheFilePath.SetIsDirectory(false);
-        m_cacheFilePath.SetReadOnly(true);
-        m_cacheFilePath.ShowRootSelector(true);
 
         m_config = MeshSyncRuntimeSettings.CreatePlayerConfig(MeshSyncPlayerType.CACHE_PLAYER);            
     }
@@ -307,7 +308,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 //----------------------------------------------------------------------------------------------------------------------    
     #region Fields
     [SerializeField] string    m_sceneCacheFilePath = null;
-    [SerializeField] DataPath  m_cacheFilePath = new DataPath();
+    [SerializeField] DataPath  m_cacheFilePath = null;
     [SerializeField] TimeUnit  m_timeUnit      = TimeUnit.Seconds;
     [SerializeField] float     m_time;
     [SerializeField] bool      m_interpolation = false;
