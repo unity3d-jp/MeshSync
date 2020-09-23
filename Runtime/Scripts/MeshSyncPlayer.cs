@@ -194,7 +194,6 @@ namespace Unity.MeshSync
         [SerializeField] private bool m_useCustomCameraMatrices = true;
                 
         [SerializeField] private bool m_markMeshesDynamic = false;
-        [SerializeField] private bool m_dontSaveAssetsInScene = false;
 
         [SerializeField] private Material m_dummyMaterial;
         [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
@@ -245,8 +244,8 @@ namespace Unity.MeshSync
         }
         protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
 
-        protected void SetDontSaveAssetsInScene(bool dontSaveAssetsInScene) {
-            m_dontSaveAssetsInScene = dontSaveAssetsInScene;
+        protected void SetSaveAssetsInScene(bool saveAssetsInScene) {
+            m_saveAssetsInScene = saveAssetsInScene;
         }
         
         internal Transform rootObject
@@ -1226,7 +1225,7 @@ namespace Unity.MeshSync
                         rec.mesh.name = trans.name;
                         if (m_markMeshesDynamic)
                             rec.mesh.MarkDynamic();
-                        if (m_dontSaveAssetsInScene)
+                        if (!m_saveAssetsInScene)
                             rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
 #if UNITY_2017_3_OR_NEWER
                         rec.mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
@@ -2434,5 +2433,10 @@ namespace Unity.MeshSync
 #endif
         }
         #endregion
+
+//----------------------------------------------------------------------------------------------------------------------
+        
+        private bool m_saveAssetsInScene = true;
+        
     }
 }
