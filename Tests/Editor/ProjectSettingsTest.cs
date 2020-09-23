@@ -99,6 +99,9 @@ internal class ProjectSettingsTest {
     [Test]
     public void CheckUserSettingUIElements() {
         Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MAIN_USER_SETTINGS_PATH));
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.USER_SETTINGS_STYLE_PATH));
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.DCC_TOOLS_SETTINGS_CONTAINER_PATH));
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.DCC_TOOL_INFO_TEMPLATE_PATH));        
     }
 
 //----------------------------------------------------------------------------------------------------------------------
