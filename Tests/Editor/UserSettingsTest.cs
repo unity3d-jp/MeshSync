@@ -2,8 +2,10 @@
 using System.IO;
 using NUnit.Framework;
 using Unity.AnimeToolbox.Editor;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.UIElements;
 using Constants = Unity.MeshSync.Editor.MeshSyncEditorConstants;
 
 namespace Unity.MeshSync.Editor.Tests {
@@ -80,12 +82,19 @@ internal class UserSettingsTest {
     [Test]
     public void CheckUserSettingUIElements() {
         Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.MAIN_USER_SETTINGS_PATH));
-        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.USER_SETTINGS_STYLE_PATH));
         Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.DCC_TOOLS_SETTINGS_CONTAINER_PATH));
-        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.DCC_TOOL_INFO_TEMPLATE_PATH));        
+        Assert.IsNotNull(UIElementsEditorUtility.LoadVisualTreeAsset(Constants.DCC_TOOL_INFO_TEMPLATE_PATH));
+        
+        Assert.IsNotNull(LoadStyleSheet(Constants.USER_SETTINGS_STYLE_PATH));
     }
 
-    
+//----------------------------------------------------------------------------------------------------------------------
+ 
+    StyleSheet LoadStyleSheet( string path) {
+        const string STYLE_EXT = ".uss";
+        return AssetDatabase.LoadAssetAtPath<StyleSheet>(path + STYLE_EXT);
+    }    
+        
 }
 
 } //end namespace
