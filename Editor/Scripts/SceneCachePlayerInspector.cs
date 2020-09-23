@@ -50,9 +50,14 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
         m_sceneCachePlayer.foldCacheSettings = EditorGUILayout.Foldout(m_sceneCachePlayer.foldCacheSettings, "Player", true, styleFold);
         if (m_sceneCachePlayer.foldCacheSettings) {
             // cache file path
-            string fullPath = m_sceneCachePlayer.GetFilePath();
-            using (new EditorGUI.DisabledScope(true)) {               
-                EditorGUILayout.TextField("Cache File Path", AssetUtility.NormalizeAssetPath(fullPath));
+            string fullPath           = m_sceneCachePlayer.GetFilePath();
+            string prevNormalizedPath = AssetUtility.NormalizeAssetPath(fullPath);
+
+            string newNormalizedPath = InspectorUtility.ShowFileSelectorGUI("Cache File Path", "MeshSync", 
+                prevNormalizedPath, AssetUtility.NormalizeAssetPath);
+
+            if (newNormalizedPath != prevNormalizedPath) {
+
             }
             if (!string.IsNullOrEmpty(fullPath) && !fullPath.StartsWith(Application.streamingAssetsPath)) {
                 GUILayout.BeginHorizontal();
