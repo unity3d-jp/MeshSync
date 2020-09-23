@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
@@ -40,8 +43,128 @@ internal static class MeshSyncMenu  {
         });
         
     }
-    
 
+//----------------------------------------------------------------------------------------------------------------------    
+    #region Server
+    [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
+    internal static void CreateMeshSyncServerMenu(MenuCommand menuCommand) {
+        MeshSyncServer mss = CreateMeshSyncServer(true);
+        if (mss != null)
+            Undo.RegisterCreatedObjectUndo(mss.gameObject, "MeshSyncServer");
+        Selection.activeTransform = mss.transform;
+    }
+
+    internal static MeshSyncServer CreateMeshSyncServer(bool autoStart) {
+        GameObject     go  = new GameObject("MeshSyncServer");
+        MeshSyncServer mss = go.AddComponent<MeshSyncServer>();
+        Transform      t   = go.GetComponent<Transform>();
+        mss.SetAutoStartServer(autoStart);
+        mss.rootObject = t;
+        return mss;
+    }
+    #endregion
+    
+//----------------------------------------------------------------------------------------------------------------------
+    
+    #region SceneCache
+
+    [MenuItem("GameObject/MeshSync/Create Cache Player", false, 10)]
+    static void CreateSceneCachePlayerMenu(MenuCommand menuCommand) {
+        string path = EditorUtility.OpenFilePanelWithFilters("Select Cache File", "",
+            new string[]{ "All supported files", "sc", "All files", "*" });
+        if (path.Length > 0) {
+            GameObject go = CreateSceneCachePlayerPrefab(path);
+            if (go != null)
+                Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
+        }
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------    
+
+    internal static GameObject CreateSceneCachePlayer(string path) {
+        if (!ValidateSceneCacheOutputPath()) {
+            return null;
+        }
+        
+        // create temporary GO to make prefab
+        GameObject go = new GameObject();
+        go.name = System.IO.Path.GetFileNameWithoutExtension(path);
+
+        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
+
+        int numAssetsChars = "Assets".Length;
+        Assert.IsTrue(scOutputPath.Length >= numAssetsChars);
+        
+        string assetDir =  Path.Combine(scOutputPath.Substring(numAssetsChars), go.name);
+        
+        SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
+        player.rootObject            = go.GetComponent<Transform>();
+        player.assetDir              = new DataPath(DataPath.Root.DataPath, assetDir);
+        player.markMeshesDynamic     = true;
+        player.dontSaveAssetsInScene = true;
+
+        if (!player.OpenCache(path)) {
+            Debug.LogError("Failed to open " + path + ". Possible reasons: file format version does not match, or the file is not scene cache.");
+            UnityEngine.Object.DestroyImmediate(go);
+            return null;
+        }
+        return go;
+    }
+
+//----------------------------------------------------------------------------------------------------------------------    
+
+    internal static GameObject CreateSceneCachePlayerPrefab(string path) {
+        
+        if (!ValidateSceneCacheOutputPath()) {
+            return null;
+        }
+        
+        GameObject go = CreateSceneCachePlayer(path);
+        if (go == null)
+            return null;
+
+        // export materials & animation and generate prefab
+        SceneCachePlayer player = go.GetComponent<SceneCachePlayer>();
+        player.UpdatePlayer();
+        player.ExportMaterials(false, true);
+        player.ResetTimeAnimation();
+        player.handleAssets = false;
+        SceneData scene = player.GetLastScene();
+        if (!scene.submeshesHaveUniqueMaterial) {
+            MeshSyncPlayerConfig config = player.GetConfig();
+            config.SyncMaterialList = false;
+        }
+
+
+       
+        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
+        
+        string prefabPath = $"{scOutputPath}/{go.name}.prefab";
+        PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabPath, InteractionMode.AutomatedAction);
+        return go;
+    }
+
+//----------------------------------------------------------------------------------------------------------------------    
+
+    static bool ValidateSceneCacheOutputPath() {
+        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
+        try {
+            Directory.CreateDirectory(scOutputPath);
+        } catch {
+            EditorUtility.DisplayDialog("MeshSync",
+                $"Invalid SceneCache output path: {scOutputPath}. " + Environment.NewLine + 
+                "Please configure in ProjectSettings", 
+                "Ok");
+            return false;
+        }
+
+        return true;
+    }
+    
+    #endregion
 }
 
 } //end namespace

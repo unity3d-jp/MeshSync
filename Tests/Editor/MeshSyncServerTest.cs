@@ -18,7 +18,7 @@ internal class MeshSyncServerTest  {
             Directory.Delete(serverRootPath,true);
         Assert.IsFalse(Directory.Exists(serverRootPath));
         
-        MeshSyncServer mss = MeshSyncServerEditor.CreateMeshSyncServer(true);
+        MeshSyncServer mss = MeshSyncMenu.CreateMeshSyncServer(true);
         Assert.IsTrue(mss.IsServerStarted());
         yield return null;
 
@@ -31,7 +31,7 @@ internal class MeshSyncServerTest  {
     [UnityTest]
     public IEnumerator CreateManualServer()  {
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
-        MeshSyncServer mss = MeshSyncServerEditor.CreateMeshSyncServer(false);
+        MeshSyncServer mss = MeshSyncMenu.CreateMeshSyncServer(false);
         Assert.IsFalse(mss.IsServerStarted());
 
         yield return null;
@@ -45,7 +45,7 @@ internal class MeshSyncServerTest  {
 //----------------------------------------------------------------------------------------------------------------------    
     [UnityTest]
     public IEnumerator CheckServerSettings() {
-        MeshSyncServer mss = MeshSyncServerEditor.CreateMeshSyncServer(true);
+        MeshSyncServer          mss             = MeshSyncMenu.CreateMeshSyncServer(true);
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         Assert.AreEqual(runtimeSettings.GetDefaultServerPort(), mss.GetServerPort());
         yield return null;

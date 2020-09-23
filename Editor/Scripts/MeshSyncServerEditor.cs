@@ -4,23 +4,8 @@ using UnityEngine;
 namespace Unity.MeshSync.Editor  {
     [CustomEditor(typeof(MeshSyncServer))]
     internal class MeshSyncServerEditor : MeshSyncPlayerEditor   {
-        [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
-        internal static void CreateMeshSyncServerMenu(MenuCommand menuCommand) {
-            MeshSyncServer mss = CreateMeshSyncServer(true);
-            if (mss != null)
-                Undo.RegisterCreatedObjectUndo(mss.gameObject, "MeshSyncServer");
-            Selection.activeTransform = mss.transform;
-        }
         
 //----------------------------------------------------------------------------------------------------------------------
-        internal static MeshSyncServer CreateMeshSyncServer(bool autoStart) {
-            GameObject go = new GameObject("MeshSyncServer");
-            MeshSyncServer mss = go.AddComponent<MeshSyncServer>();
-            Transform t = go.GetComponent<Transform>();
-            mss.SetAutoStartServer(autoStart);
-            mss.rootObject = t;
-            return mss;
-        }
 
 //----------------------------------------------------------------------------------------------------------------------
 

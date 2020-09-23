@@ -10,7 +10,7 @@ internal class SecurityTest  {
     public IEnumerator BlockServerRootTraversal()  {
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
 
-        MeshSyncServer mss = MeshSyncServerEditor.CreateMeshSyncServer(true);
+        MeshSyncServer mss = MeshSyncMenu.CreateMeshSyncServer(true);
         Assert.IsTrue(mss.IsServerStarted());
         
         yield return null;
@@ -24,7 +24,7 @@ internal class SecurityTest  {
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
 
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        MeshSyncServer mss = MeshSyncServerEditor.CreateMeshSyncServer(true);
+        MeshSyncServer mss = MeshSyncMenu.CreateMeshSyncServer(true);
         Assert.IsTrue(mss.IsServerStarted());       
         yield return null;
 
