@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using UnityEngine;
 using UnityEditor;
 
@@ -15,7 +16,7 @@ internal static class InspectorUtility {
         Func<string, string> onValidFolderSelected)
     {
 
-        string newDirPath = null;
+        string newFilePath = null;
         using(new EditorGUILayout.HorizontalScope()) {
             if (!string.IsNullOrEmpty (label)) {
                 EditorGUILayout.PrefixLabel(label);
@@ -51,24 +52,25 @@ internal static class InspectorUtility {
             }
                 
             
-            newDirPath = InspectorUtility.ShowSelectFileButton(dialogTitle, fieldValue, onValidFolderSelected);
+            newFilePath = InspectorUtility.ShowSelectFileButton(dialogTitle, fieldValue, onValidFolderSelected);
 
             if (GUILayout.Button("Show", GUILayout.Width(50f),GUILayout.Height(EditorGUIUtility.singleLineHeight))) {
-                EditorUtility.RevealInFinder(newDirPath);
+                EditorUtility.RevealInFinder(newFilePath);
             }
             
         }
         
         using (new EditorGUILayout.HorizontalScope()) {
             GUILayout.FlexibleSpace();
-            EditorGUI.BeginDisabledGroup(!AssetDatabase.IsValidFolder(newDirPath));        
+            bool isValidFile = File.Exists(newFilePath) && newFilePath.StartsWith("Assets/");
+            EditorGUI.BeginDisabledGroup(!isValidFile);        
             if(GUILayout.Button("Highlight in Project Window", GUILayout.Width(180f))) {
-                AssetEditorUtility.PingAssetByPath(newDirPath);
+                AssetEditorUtility.PingAssetByPath(newFilePath);
             }                
             EditorGUI.EndDisabledGroup();
         }
         
-        return newDirPath;
+        return newFilePath;
     }
     
     
