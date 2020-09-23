@@ -60,7 +60,7 @@ internal static class MeshSyncMenu  {
 //----------------------------------------------------------------------------------------------------------------------    
 
     internal static GameObject CreateSceneCachePlayer(string path) {
-        if (!ValidateOutputPath()) {
+        if (!ValidateSceneCacheOutputPath()) {
             return null;
         }
         
@@ -94,7 +94,7 @@ internal static class MeshSyncMenu  {
 
     internal static GameObject CreateSceneCachePlayerPrefab(string path) {
         
-        if (!ValidateOutputPath()) {
+        if (!ValidateSceneCacheOutputPath()) {
             return null;
         }
         
@@ -126,7 +126,7 @@ internal static class MeshSyncMenu  {
 
 //----------------------------------------------------------------------------------------------------------------------    
 
-    static bool ValidateOutputPath() {
+    static bool ValidateSceneCacheOutputPath() {
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
         try {
