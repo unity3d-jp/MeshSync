@@ -183,7 +183,7 @@ namespace Unity.MeshSync
 
 
         #region Fields
-        [SerializeField] private DataPath m_assetDir = new DataPath(DataPath.Root.DataPath, "MeshSyncAssets");
+        [SerializeField] private DataPath m_assetDir = null;
         [SerializeField] private Transform m_rootObject;
 
         [SerializeField] protected MeshSyncPlayerConfig m_config;
@@ -231,15 +231,15 @@ namespace Unity.MeshSync
         }
 
         internal static int protocolVersion { get { return Lib.protocolVersion; } }
-        internal DataPath assetDir {
-            set { m_assetDir = value; }
-        }
-        internal string assetPath
+        protected string assetPath
         {
             get { return m_assetDir.GetLeaf().Length != 0 ? "Assets/" + m_assetDir.GetLeaf() : "Assets"; }
         }
-       
-        internal void Init() {
+
+        
+        //assetDir currently excludes the word "Assets"
+        internal void Init(string assetDir) {
+            m_assetDir   = new DataPath(DataPath.Root.DataPath, assetDir);
             m_rootObject = gameObject.transform;
         }
         

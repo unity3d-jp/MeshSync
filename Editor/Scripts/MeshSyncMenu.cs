@@ -57,7 +57,7 @@ internal static class MeshSyncMenu  {
     internal static MeshSyncServer CreateMeshSyncServer(bool autoStart) {
         GameObject     go  = new GameObject("MeshSyncServer");
         MeshSyncServer mss = go.AddComponent<MeshSyncServer>();
-        mss.Init();
+        mss.Init("MeshSyncAssets");
         mss.SetAutoStartServer(autoStart);
         return mss;
     }
@@ -98,8 +98,7 @@ internal static class MeshSyncMenu  {
         string assetDir =  Path.Combine(scOutputPath.Substring(numAssetsChars), go.name);
         
         SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
-        player.Init();
-        player.assetDir              = new DataPath(DataPath.Root.DataPath, assetDir);
+        player.Init(assetDir);
 
         if (!player.OpenCache(path)) {
             Debug.LogError("Failed to open " + path + ". Possible reasons: file format version does not match, or the file is not scene cache.");
