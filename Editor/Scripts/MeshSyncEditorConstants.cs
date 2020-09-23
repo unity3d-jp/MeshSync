@@ -4,6 +4,9 @@ namespace Unity.MeshSync.Editor {
 
 internal class MeshSyncEditorConstants {
 
+    internal const string PACKAGE_NAME = MeshSyncConstants.PACKAGE_NAME;
+    
+
     //Project settings
     internal const int UNINITIALIZED_TAB    = -1;
     internal const int SERVER_SETTINGS_TAB              = 0;
@@ -15,29 +18,20 @@ internal class MeshSyncEditorConstants {
     internal const string DCC_INSTALL_SCRIPTS_PATH = "Packages/com.unity.meshsync/Editor/DCCInstallScripts";
 
     //UIElements Main
-    internal const string MAIN_PROJECT_SETTINGS_PATH = "Packages/com.unity.meshsync/Editor/UIElements/ProjectSettings/ProjectSettings_Main";
-    internal const string MAIN_USER_SETTINGS_PATH = "Packages/com.unity.meshsync/Editor/UIElements/UserSettings/UserSettings_Main";
     
     //Project Settings UIElements
-    internal static readonly string SERVER_SETTINGS_TAB_PATH =
-        Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "ServerSettings_Tab");
-    internal static readonly string SCENE_CACHE_PLAYER_SETTINGS_TAB_PATH =
-        Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "SceneCachePlayerSettings_Tab");
-
-    internal static readonly string TAB_BUTTON_TEMPLATE_PATH = ProjectSettingsUIPath("TabButtonTemplate");
-    internal static readonly string PROJECT_SETTINGS_STYLE_PATH = ProjectSettingsUIPath("ProjectSettings_Style");
-    
-    
-    
-    internal static readonly string MESHSYNC_PLAYER_CONFIG_CONTAINER_PATH =
-        Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "MeshSyncPlayerConfig_Container");
-    internal static readonly string PROJECT_SETTINGS_FIELD_TEMPLATE_PATH =
-        Path.Combine(PROJECT_SETTINGS_UIELEMENTS_PATH, "ProjectSettingsFieldTemplate");
+    internal static readonly string MAIN_PROJECT_SETTINGS_PATH            = ProjSettingsUIPath("ProjectSettings_Main");
+    internal static readonly string SERVER_SETTINGS_TAB_PATH              = ProjSettingsUIPath("ServerSettings_Tab");
+    internal static readonly string SCENE_CACHE_PLAYER_SETTINGS_TAB_PATH  = ProjSettingsUIPath("SceneCachePlayerSettings_Tab");
+    internal static readonly string TAB_BUTTON_TEMPLATE_PATH              = ProjSettingsUIPath("TabButtonTemplate");
+    internal static readonly string PROJECT_SETTINGS_STYLE_PATH           = ProjSettingsUIPath("ProjectSettings_Style");
+    internal static readonly string MESHSYNC_PLAYER_CONFIG_CONTAINER_PATH = ProjSettingsUIPath("MeshSyncPlayerConfig_Container");
+    internal static readonly string PROJECT_SETTINGS_FIELD_TEMPLATE_PATH  = ProjSettingsUIPath("ProjectSettingsFieldTemplate");
     
     
     //User Settings UIElements
-    internal const string USER_SETTINGS_STYLE_PATH = "Packages/com.unity.meshsync/Editor/UIElements/UserSettings/UserSettings_Style";
-
+    internal static readonly string MAIN_USER_SETTINGS_PATH           = UserSettingsUIPath("UserSettings_Main");
+    internal static readonly string USER_SETTINGS_STYLE_PATH          = UserSettingsUIPath("UserSettings_Style");
     internal static readonly string DCC_TOOLS_SETTINGS_CONTAINER_PATH = UserSettingsUIPath("DCCToolsSettings_Container");
     internal static readonly string DCC_TOOL_INFO_TEMPLATE_PATH       = UserSettingsUIPath("DCCToolInfoTemplate");
     
@@ -53,7 +47,7 @@ internal class MeshSyncEditorConstants {
     
     
 //----------------------------------------------------------------------------------------------------------------------
-    private static string ProjectSettingsUIPath(string uiElementRelativePath) {
+    private static string ProjSettingsUIPath(string uiElementRelativePath) {
         return Path.Combine(MeshSyncEditorConstants.PROJECT_SETTINGS_UIELEMENTS_PATH, uiElementRelativePath);
     }
 
