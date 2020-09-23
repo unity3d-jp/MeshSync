@@ -244,6 +244,10 @@ namespace Unity.MeshSync
             get { return m_assetDir.GetLeaf().Length != 0 ? "Assets/" + m_assetDir.GetLeaf() : "Assets"; }
         }
         protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
+
+        protected void SetDontSaveAssetsInScene(bool dontSaveAssetsInScene) {
+            m_dontSaveAssetsInScene = dontSaveAssetsInScene;
+        }
         
         internal Transform rootObject
         {
@@ -277,11 +281,6 @@ namespace Unity.MeshSync
         {
             get { return m_markMeshesDynamic; }
             set { m_markMeshesDynamic = value; }
-        }
-        internal bool dontSaveAssetsInScene
-        {
-            get { return m_dontSaveAssetsInScene; }
-            set { m_dontSaveAssetsInScene = value; }
         }
 
         internal List<MaterialHolder> materialList { get { return m_materialList; } }

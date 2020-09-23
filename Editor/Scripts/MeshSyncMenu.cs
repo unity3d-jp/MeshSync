@@ -102,7 +102,6 @@ internal static class MeshSyncMenu  {
         player.rootObject            = go.GetComponent<Transform>();
         player.assetDir              = new DataPath(DataPath.Root.DataPath, assetDir);
         player.markMeshesDynamic     = true;
-        player.dontSaveAssetsInScene = true;
 
         if (!player.OpenCache(path)) {
             Debug.LogError("Failed to open " + path + ". Possible reasons: file format version does not match, or the file is not scene cache.");

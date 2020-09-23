@@ -23,6 +23,10 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
     #endregion
 
+
+    SceneCachePlayer() : base() {
+        SetDontSaveAssetsInScene(true);
+    }
 //----------------------------------------------------------------------------------------------------------------------
 
     internal string GetFilePath() { return m_filePath; }
