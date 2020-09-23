@@ -26,6 +26,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
     SceneCachePlayer() : base() {
         SetSaveAssetsInScene(false);
+        MarkMeshesDynamic(true);
     }
 //----------------------------------------------------------------------------------------------------------------------
 

@@ -193,8 +193,6 @@ namespace Unity.MeshSync
         [SerializeField] private bool m_usePhysicalCameraParams = true;
         [SerializeField] private bool m_useCustomCameraMatrices = true;
                 
-        [SerializeField] private bool m_markMeshesDynamic = false;
-
         [SerializeField] private Material m_dummyMaterial;
         [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] protected List<TextureHolder> m_textureList = new List<TextureHolder>();
@@ -244,9 +242,9 @@ namespace Unity.MeshSync
         }
         protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
 
-        protected void SetSaveAssetsInScene(bool saveAssetsInScene) {
-            m_saveAssetsInScene = saveAssetsInScene;
-        }
+        protected void SetSaveAssetsInScene(bool saveAssetsInScene) { m_saveAssetsInScene = saveAssetsInScene; }
+
+        protected void MarkMeshesDynamic(bool markMeshesDynamic) { m_markMeshesDynamic = markMeshesDynamic; }
         
         internal Transform rootObject
         {
@@ -273,13 +271,6 @@ namespace Unity.MeshSync
         {
             get { return m_useCustomCameraMatrices; }
             set { m_useCustomCameraMatrices = value; }
-        }
-
-
-        internal bool markMeshesDynamic
-        {
-            get { return m_markMeshesDynamic; }
-            set { m_markMeshesDynamic = value; }
         }
 
         internal List<MaterialHolder> materialList { get { return m_materialList; } }
@@ -2437,6 +2428,7 @@ namespace Unity.MeshSync
 //----------------------------------------------------------------------------------------------------------------------
         
         private bool m_saveAssetsInScene = true;
+        private bool m_markMeshesDynamic = false;
         
     }
 }
