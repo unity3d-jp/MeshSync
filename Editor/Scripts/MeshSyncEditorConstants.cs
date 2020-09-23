@@ -24,17 +24,18 @@ internal class MeshSyncEditorConstants {
     internal static readonly string SERVER_SETTINGS_TAB_PATH              = ProjSettingsUIPath("ServerSettings_Tab");
     internal static readonly string SCENE_CACHE_PLAYER_SETTINGS_TAB_PATH  = ProjSettingsUIPath("SceneCachePlayerSettings_Tab");
     internal static readonly string TAB_BUTTON_TEMPLATE_PATH              = ProjSettingsUIPath("TabButtonTemplate");
-    internal static readonly string PROJECT_SETTINGS_STYLE_PATH           = ProjSettingsUIPath("ProjectSettings_Style");
     internal static readonly string PROJECT_SETTINGS_FIELD_TEMPLATE_PATH  = ProjSettingsUIPath("ProjectSettingsFieldTemplate");
     internal static readonly string MESHSYNC_PLAYER_CONFIG_CONTAINER_PATH = ProjSettingsUIPath("MeshSyncPlayerConfig_Container");
+
+    internal static readonly string PROJECT_SETTINGS_STYLE_PATH           = ProjSettingsUIPath("ProjectSettings_Style");
     
     
     //User Settings UIElements
     internal static readonly string MAIN_USER_SETTINGS_PATH           = UserSettingsUIPath("UserSettings_Main");
-    internal static readonly string USER_SETTINGS_STYLE_PATH          = UserSettingsUIPath("UserSettings_Style");
     internal static readonly string DCC_TOOLS_SETTINGS_CONTAINER_PATH = UserSettingsUIPath("DCCToolsSettings_Container");
     internal static readonly string DCC_TOOL_INFO_TEMPLATE_PATH       = UserSettingsUIPath("DCCToolInfoTemplate");
     
+    internal static readonly string USER_SETTINGS_STYLE_PATH = UserSettingsUIPath("UserSettings_Style");
     
     //
     internal const string DCC_PLUGINS_GITHUB_RELEASE_URL = "https://github.com/Unity-Technologies/MeshSyncDCCPlugins/releases/download/";
