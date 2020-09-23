@@ -240,17 +240,17 @@ namespace Unity.MeshSync
         {
             get { return m_assetDir.GetLeaf().Length != 0 ? "Assets/" + m_assetDir.GetLeaf() : "Assets"; }
         }
+
+        internal void Init() {
+            m_rootObject = gameObject.transform;
+        }
+        
         protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
 
         protected void SetSaveAssetsInScene(bool saveAssetsInScene) { m_saveAssetsInScene = saveAssetsInScene; }
 
         protected void MarkMeshesDynamic(bool markMeshesDynamic) { m_markMeshesDynamic = markMeshesDynamic; }
-        
-        internal Transform rootObject
-        {
-            get { return m_rootObject; }
-            set { m_rootObject = value; }
-        }
+       
 
         internal MeshSyncPlayerConfig GetConfig() { return m_config; }
 
@@ -2371,6 +2371,7 @@ namespace Unity.MeshSync
 #endif //UNITY_EDITOR
         #endregion
 
+//----------------------------------------------------------------------------------------------------------------------        
         #region Events
 #if UNITY_EDITOR
         void Reset()

@@ -57,9 +57,8 @@ internal static class MeshSyncMenu  {
     internal static MeshSyncServer CreateMeshSyncServer(bool autoStart) {
         GameObject     go  = new GameObject("MeshSyncServer");
         MeshSyncServer mss = go.AddComponent<MeshSyncServer>();
-        Transform      t   = go.GetComponent<Transform>();
+        mss.Init();
         mss.SetAutoStartServer(autoStart);
-        mss.rootObject = t;
         return mss;
     }
     #endregion
@@ -99,7 +98,7 @@ internal static class MeshSyncMenu  {
         string assetDir =  Path.Combine(scOutputPath.Substring(numAssetsChars), go.name);
         
         SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
-        player.rootObject            = go.GetComponent<Transform>();
+        player.Init();
         player.assetDir              = new DataPath(DataPath.Root.DataPath, assetDir);
 
         if (!player.OpenCache(path)) {
