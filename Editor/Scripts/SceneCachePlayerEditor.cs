@@ -124,25 +124,21 @@ internal class SceneCachePlayerEditor : MeshSyncPlayerEditor {
             if (!fullPath.StartsWith(Application.streamingAssetsPath)) {
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Copy to StreamingAssets", GUILayout.Width(160.0f))) {
+                const float BUTTON_WIDTH = 50.0f;
+                if (GUILayout.Button("Copy", GUILayout.Width(BUTTON_WIDTH))) {
                     string dstPath = Misc.CopyFileToStreamingAssets(fullPath);
-                    t.SetFilePath(dstPath);
-                    Undo.RecordObject(t, "SceneCachePlayer");
-                    t.OpenCache(dstPath);
-                    Repaint();
+                    OnFilePathChanged(t, dstPath);
                 }
-                if (GUILayout.Button("Move to StreamingAssets", GUILayout.Width(160.0f))) {
+                GUILayout.Label("or");
+                if (GUILayout.Button("Move", GUILayout.Width(BUTTON_WIDTH))) {
                     t.CloseCache();
                     string dstPath = Misc.MoveFileToStreamingAssets(fullPath);
-                    t.SetFilePath(dstPath);
-                    Undo.RecordObject(t, "SceneCachePlayer");
-                    t.OpenCache(dstPath);
-                    Repaint();
+                    OnFilePathChanged(t, dstPath);
                 }
+                GUILayout.Label("to StreamingAssets");
                 GUILayout.EndHorizontal();
             }
             EditorGUILayout.Space();
-
 
             // time / frame
             System.Action resetTimeAnimation = () => {
@@ -176,6 +172,16 @@ internal class SceneCachePlayerEditor : MeshSyncPlayerEditor {
             EditorGUILayout.Space();
         }
     }
+
+//----------------------------------------------------------------------------------------------------------------------
+
+    void OnFilePathChanged(SceneCachePlayer cachePlayer, string path) {
+        cachePlayer.SetFilePath(path);
+        Undo.RecordObject(cachePlayer, "SceneCachePlayer");
+        cachePlayer.OpenCache(path);
+        Repaint();        
+    }
+    
     
 //----------------------------------------------------------------------------------------------------------------------    
 
