@@ -2,10 +2,8 @@
 using System.IO;
 using NUnit.Framework;
 using Unity.AnimeToolbox.Editor;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
-using UnityEngine.UIElements;
 using Constants = Unity.MeshSync.Editor.MeshSyncEditorConstants;
 
 namespace Unity.MeshSync.Editor.Tests {
