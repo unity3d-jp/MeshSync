@@ -13,7 +13,7 @@ namespace Unity.MeshSync
             public Material[] materials;
         }
 
-        [SerializeField] public List<MeshSyncPlayer.MaterialHolder> materials = new List<MeshSyncPlayer.MaterialHolder>();
+        [SerializeField] public List<MaterialHolder> materials = new List<MaterialHolder>();
         [SerializeField] public List<Node> nodes = new List<Node>();
     }
 }
