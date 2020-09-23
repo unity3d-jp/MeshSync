@@ -231,16 +231,14 @@ namespace Unity.MeshSync
         }
 
         internal static int protocolVersion { get { return Lib.protocolVersion; } }
-        internal DataPath assetDir
-        {
-            get { return m_assetDir; }
+        internal DataPath assetDir {
             set { m_assetDir = value; }
         }
         internal string assetPath
         {
             get { return m_assetDir.GetLeaf().Length != 0 ? "Assets/" + m_assetDir.GetLeaf() : "Assets"; }
         }
-
+       
         internal void Init() {
             m_rootObject = gameObject.transform;
         }
