@@ -23,6 +23,11 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
     #endregion
 
+
+    SceneCachePlayer() : base() {
+        SetSaveAssetsInScene(false);
+        MarkMeshesDynamic(true);
+    }
 //----------------------------------------------------------------------------------------------------------------------
 
     internal string GetFilePath() { return m_filePath; }

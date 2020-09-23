@@ -183,7 +183,7 @@ namespace Unity.MeshSync
 
 
         #region Fields
-        [SerializeField] private DataPath m_assetDir = new DataPath(DataPath.Root.DataPath, "MeshSyncAssets");
+        [SerializeField] private DataPath m_assetDir = null;
         [SerializeField] private Transform m_rootObject;
 
         [SerializeField] protected MeshSyncPlayerConfig m_config;
@@ -193,9 +193,6 @@ namespace Unity.MeshSync
         [SerializeField] private bool m_usePhysicalCameraParams = true;
         [SerializeField] private bool m_useCustomCameraMatrices = true;
                 
-        [SerializeField] private bool m_markMeshesDynamic = false;
-        [SerializeField] private bool m_dontSaveAssetsInScene = false;
-
         [SerializeField] private Material m_dummyMaterial;
         [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
         [SerializeField] protected List<TextureHolder> m_textureList = new List<TextureHolder>();
@@ -234,22 +231,24 @@ namespace Unity.MeshSync
         }
 
         internal static int protocolVersion { get { return Lib.protocolVersion; } }
-        internal DataPath assetDir
-        {
-            get { return m_assetDir; }
-            set { m_assetDir = value; }
-        }
-        internal string assetPath
+        protected string assetPath
         {
             get { return m_assetDir.GetLeaf().Length != 0 ? "Assets/" + m_assetDir.GetLeaf() : "Assets"; }
         }
-        protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
+
         
-        internal Transform rootObject
-        {
-            get { return m_rootObject; }
-            set { m_rootObject = value; }
+        //assetDir currently excludes the word "Assets"
+        internal void Init(string assetDir) {
+            m_assetDir   = new DataPath(DataPath.Root.DataPath, assetDir);
+            m_rootObject = gameObject.transform;
         }
+        
+        protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
+
+        protected void SetSaveAssetsInScene(bool saveAssetsInScene) { m_saveAssetsInScene = saveAssetsInScene; }
+
+        protected void MarkMeshesDynamic(bool markMeshesDynamic) { m_markMeshesDynamic = markMeshesDynamic; }
+       
 
         internal MeshSyncPlayerConfig GetConfig() { return m_config; }
 
@@ -270,18 +269,6 @@ namespace Unity.MeshSync
         {
             get { return m_useCustomCameraMatrices; }
             set { m_useCustomCameraMatrices = value; }
-        }
-
-
-        internal bool markMeshesDynamic
-        {
-            get { return m_markMeshesDynamic; }
-            set { m_markMeshesDynamic = value; }
-        }
-        internal bool dontSaveAssetsInScene
-        {
-            get { return m_dontSaveAssetsInScene; }
-            set { m_dontSaveAssetsInScene = value; }
         }
 
         internal List<MaterialHolder> materialList { get { return m_materialList; } }
@@ -1227,7 +1214,7 @@ namespace Unity.MeshSync
                         rec.mesh.name = trans.name;
                         if (m_markMeshesDynamic)
                             rec.mesh.MarkDynamic();
-                        if (m_dontSaveAssetsInScene)
+                        if (!m_saveAssetsInScene)
                             rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
 #if UNITY_2017_3_OR_NEWER
                         rec.mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
@@ -2382,6 +2369,7 @@ namespace Unity.MeshSync
 #endif //UNITY_EDITOR
         #endregion
 
+//----------------------------------------------------------------------------------------------------------------------        
         #region Events
 #if UNITY_EDITOR
         void Reset()
@@ -2435,5 +2423,11 @@ namespace Unity.MeshSync
 #endif
         }
         #endregion
+
+//----------------------------------------------------------------------------------------------------------------------
+        
+        private bool m_saveAssetsInScene = true;
+        private bool m_markMeshesDynamic = false;
+        
     }
 }
