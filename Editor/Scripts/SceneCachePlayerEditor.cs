@@ -1,4 +1,6 @@
-using Unity.MeshSync;
+using System;
+using System.IO;
+using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
@@ -20,13 +22,25 @@ internal class SceneCachePlayerEditor : MeshSyncPlayerEditor {
 //----------------------------------------------------------------------------------------------------------------------    
 
     public static GameObject CreateSceneCachePlayer(string path) {
+        if (!ValidateOutputPath()) {
+            return null;
+        }
+        
         // create temporary GO to make prefab
         GameObject go = new GameObject();
         go.name = System.IO.Path.GetFileNameWithoutExtension(path);
 
-        SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
+        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
+
+        int numAssetsChars = "Assets".Length;
+        Assert.IsTrue(scOutputPath.Length >= numAssetsChars);
+        
+        string                  assetDir       =  Path.Combine(scOutputPath.Substring(numAssetsChars), go.name);
+        
+        SceneCachePlayer        player          = go.AddComponent<SceneCachePlayer>();
         player.rootObject = go.GetComponent<Transform>();
-        player.assetDir = new DataPath(DataPath.Root.DataPath, string.Format("SceneCache/{0}", go.name));
+        player.assetDir = new DataPath(DataPath.Root.DataPath, assetDir);
         player.markMeshesDynamic = true;
         player.dontSaveAssetsInScene = true;
 
@@ -40,6 +54,11 @@ internal class SceneCachePlayerEditor : MeshSyncPlayerEditor {
 
 //----------------------------------------------------------------------------------------------------------------------    
     public static GameObject CreateSceneCachePlayerPrefab(string path) {
+        
+        if (!ValidateOutputPath()) {
+            return null;
+        }
+        
         GameObject go = CreateSceneCachePlayer(path);
         if (go == null)
             return null;
@@ -56,7 +75,12 @@ internal class SceneCachePlayerEditor : MeshSyncPlayerEditor {
             config.SyncMaterialList = false;
         }
 
-        string prefabPath = string.Format("Assets/SceneCache/{0}.prefab", go.name);
+
+       
+        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
+        
+        string prefabPath = $"{scOutputPath}/{go.name}.prefab";
         PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabPath, InteractionMode.AutomatedAction);
         return go;
     }
@@ -150,6 +174,26 @@ internal class SceneCachePlayerEditor : MeshSyncPlayerEditor {
             EditorGUILayout.Space();
         }
     }
+    
+//----------------------------------------------------------------------------------------------------------------------    
+
+    static bool ValidateOutputPath() {
+        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
+        try {
+            Directory.CreateDirectory(scOutputPath);
+        } catch {
+            EditorUtility.DisplayDialog("MeshSync",
+                $"Invalid SceneCache output path: {scOutputPath}. " + Environment.NewLine + 
+                "Please configure in ProjectSettings", 
+                "Ok");
+            return false;
+        }
+
+        return true;
+    }
+
+
 }
 
 } //end namespace

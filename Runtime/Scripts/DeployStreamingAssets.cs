@@ -44,7 +44,7 @@ namespace Unity.MeshSync {
                 file.CopyTo(destPath, overwrite);
 
                 // ImportAsset() require relative path from Assets/
-                string importPath = NormalizeAssetPath(destPath);
+                string importPath = AssetUtility.NormalizeAssetPath(destPath);
                 AssetDatabase.ImportAsset(importPath);
             }
 
@@ -55,18 +55,6 @@ namespace Unity.MeshSync {
             return true;
         }
         
-//----------------------------------------------------------------------------------------------------------------------
-
-        //Normalize so that the path is relative to the Unity root project
-        static string NormalizeAssetPath(string path) {
-            if (string.IsNullOrEmpty(path))
-                return null;
-
-            if (path.StartsWith(Application.dataPath)) {
-                return path.Substring(Application.dataPath.Length - "Assets".Length);
-            }
-            return path;
-        }        
 
     }
 }

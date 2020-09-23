@@ -107,6 +107,10 @@
     width: 100px;
 }
 
+.project-settings-path-field {
+    width: 300px;
+}
+
 /*----------------------------------------------- DCC Tool Info ----------------------------------------------------- */
 
 .dcc-tool-info-container {
