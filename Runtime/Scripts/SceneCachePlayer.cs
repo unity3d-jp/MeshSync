@@ -309,7 +309,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 //----------------------------------------------------------------------------------------------------------------------    
     #region Fields
     [SerializeField] string    m_filePath = null;
-    [SerializeField] DataPath  m_cacheFilePath = null;
+    [SerializeField] DataPath  m_cacheFilePath = null; //OBSOLETE
     [SerializeField] TimeUnit  m_timeUnit      = TimeUnit.Seconds;
     [SerializeField] float     m_time;
     [SerializeField] bool      m_interpolation = false;
