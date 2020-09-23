@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Assertions;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -22,11 +23,13 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
     #endregion
 
+//----------------------------------------------------------------------------------------------------------------------
 
+    internal string GetFilePath() { return m_filePath; }
+    internal void SetFilePath(string filePath) {  m_filePath = filePath; }
+    
+//----------------------------------------------------------------------------------------------------------------------
     #region Properties
-    internal DataPath cacheFilePath {
-        get { return m_cacheFilePath; }
-    }
     public int frameCount {
         get { return m_sceneCache.sceneCount; }
     }
@@ -82,7 +85,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 #if UNITY_EDITOR
             this.sortEntities = true;
 #endif
-            m_cacheFilePath.SetFullPath(path);
+            m_filePath = path;
             m_pathPrev = path;
             m_timeRange = m_sceneCache.timeRange;
             if (m_config.Logging)
@@ -99,7 +102,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         if (m_sceneCache) {
             m_sceneCache.Close();
             if (m_config.Logging)
-                Debug.Log(string.Format("SceneCachePlayer: cache closed ({0})", m_cacheFilePath));
+                Debug.Log($"SceneCachePlayer: cache closed ({m_filePath})");
         }
         m_timePrev = -1;
     }
@@ -156,7 +159,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
     public void UpdatePlayer() {
         if (m_openRequested) {
-            OpenCache(m_cacheFilePath.GetFullPath());
+            OpenCache(m_filePath);
         }
 
         if (m_timeUnit == TimeUnit.Frames) {
@@ -216,6 +219,13 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
 
     protected override void OnAfterDeserializeMeshSyncPlayerV() {
+        
+        
+        if (m_version < (int) SceneCachePlayerVersion.STRING_PATH_0_4_0) {
+            Assert.IsNotNull(m_cacheFilePath);           
+            m_filePath = m_cacheFilePath.GetFullPath();
+        } 
+        
         m_version = CUR_SCENE_CACHE_PLAYER_VERSION;
     }   
     
@@ -223,9 +233,8 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     
     #region Impl
     void CheckParamsUpdated() {
-        string path = m_cacheFilePath.GetFullPath();
-        if (path != m_pathPrev)
-        {
+        string path = m_filePath;
+        if (path != m_pathPrev) {
             m_pathPrev = path;
             m_openRequested = true;
         }
@@ -268,9 +277,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     #region Events
 #if UNITY_EDITOR
     void Reset() {
-        m_cacheFilePath.SetIsDirectory(false);
-        m_cacheFilePath.SetReadOnly(true);
-        m_cacheFilePath.ShowRootSelector(true);
 
         m_config = MeshSyncRuntimeSettings.CreatePlayerConfig(MeshSyncPlayerType.CACHE_PLAYER);            
     }
@@ -302,7 +308,8 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
 //----------------------------------------------------------------------------------------------------------------------    
     #region Fields
-    [SerializeField] DataPath  m_cacheFilePath = new DataPath();
+    [SerializeField] string    m_filePath = null;
+    [SerializeField] DataPath  m_cacheFilePath = null; //OBSOLETE
     [SerializeField] TimeUnit  m_timeUnit      = TimeUnit.Seconds;
     [SerializeField] float     m_time;
     [SerializeField] bool      m_interpolation = false;
@@ -310,10 +317,8 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     [SerializeField] int       m_frame         = 1;
     [SerializeField] int       m_preloadLength = 1;
 
-#pragma warning disable 414
-    [HideInInspector][SerializeField] private int m_version = (int) SceneCachePlayerVersion.NO_VERSIONING;
-#pragma warning restore 414
-    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.INITIAL_0_4_0;
+    [HideInInspector][SerializeField] private int m_version = (int) CUR_SCENE_CACHE_PLAYER_VERSION;
+    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.STRING_PATH_0_4_0;
     
     
     SceneCacheData m_sceneCache;
@@ -334,7 +339,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     
     enum SceneCachePlayerVersion {
         NO_VERSIONING = 0, //Didn't have versioning in earlier versions
-        INITIAL_0_4_0 = 1, //initial for version 0.4.0-preview 
+        STRING_PATH_0_4_0 = 2, //0.4.0-preview: the path is declared as a string 
     
     }
     
