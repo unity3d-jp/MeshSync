@@ -119,20 +119,20 @@ internal class SceneCachePlayerEditor : MeshSyncPlayerEditor {
         t.foldCacheSettings = EditorGUILayout.Foldout(t.foldCacheSettings, "Player", true, styleFold);
         if (t.foldCacheSettings) {
             // cache file path
-            string cacheFilePath = t.GetSceneCacheFilePath();
-            EditorGUILayout.TextField("Cache File Path", cacheFilePath);
-            if (!cacheFilePath.StartsWith(Application.streamingAssetsPath)) {
+            string fullPath = t.GetSceneCacheFilePath();
+            EditorGUILayout.TextField("Cache File Path", AssetUtility.NormalizeAssetPath(fullPath));
+            if (!fullPath.StartsWith(Application.streamingAssetsPath)) {
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Copy to StreamingAssets", GUILayout.Width(160.0f))) {
-                    string dstPath = Misc.CopyFileToStreamingAssets(cacheFilePath);
+                    string dstPath = Misc.CopyFileToStreamingAssets(fullPath);
                     Undo.RecordObject(t, "SceneCachePlayer");
                     t.OpenCache(dstPath);
                     Repaint();
                 }
                 if (GUILayout.Button("Move to StreamingAssets", GUILayout.Width(160.0f))) {
                     t.CloseCache();
-                    string dstPath = Misc.MoveFileToStreamingAssets(cacheFilePath);
+                    string dstPath = Misc.MoveFileToStreamingAssets(fullPath);
                     Undo.RecordObject(t, "SceneCachePlayer");
                     t.OpenCache(dstPath);
                     Repaint();
