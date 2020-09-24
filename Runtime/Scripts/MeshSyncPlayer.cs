@@ -559,7 +559,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         List<string> deadKeys = null;
 
         // resolve bones
-        foreach (var kvp in m_clientObjects)
+        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
         {
             EntityRecord rec = kvp.Value;
             if (rec.go == null)
@@ -593,7 +593,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                         root = bones[0];
                         for (; ; )
                         {
-                            var parent = root.parent;
+                            Transform parent = root.parent;
                             if (parent == null || parent == m_rootObject)
                                 break;
                             root = parent;
@@ -1273,27 +1273,23 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         GameObject go = rec.go;
 
         PointCache dst = rec.pointCache;
-        if (dst == null)
-        {
+        if (dst == null) {
             rec.pointCacheRenderer = Misc.GetOrAddComponent<PointCacheRenderer>(go);
             dst = rec.pointCache = Misc.GetOrAddComponent<PointCache>(go);
         }
         dst.Clear();
 
-        var num = data.numPoints;
+        int num = data.numPoints;
         dst.bounds = data.bounds;
-        if (dflags.hasPoints)
-        {
+        if (dflags.hasPoints) {
             dst.points = new Vector3[num];
             data.ReadPoints(dst.points);
         }
-        if (dflags.hasRotations)
-        {
+        if (dflags.hasRotations) {
             dst.rotations = new Quaternion[num];
             data.ReadRotations(dst.rotations);
         }
-        if (dflags.hasScales)
-        {
+        if (dflags.hasScales) {
             dst.scales = new Vector3[num];
             data.ReadScales(dst.scales);
         }
@@ -1475,12 +1471,10 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
         GameObject dstgo = dst.go;
         GameObject srcgo = src.go;
-        if (src.dataType == EntityType.Camera)
-        {
+        if (src.dataType == EntityType.Camera) {
             Camera srccam = src.camera;
-            if (srccam != null)
-            {
-                var dstcam = dst.camera;
+            if (srccam != null) {
+                Camera dstcam = dst.camera;
                 if (dstcam == null)
                     dstcam = dst.camera = Misc.GetOrAddComponent<Camera>(dstgo);
                 if (m_config.SyncVisibility && dst.hasVisibility)
@@ -1491,13 +1485,10 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 dstcam.nearClipPlane = srccam.nearClipPlane;
                 dstcam.farClipPlane = srccam.farClipPlane;
             }
-        }
-        else if (src.dataType == EntityType.Light)
-        {
+        } else if (src.dataType == EntityType.Light) {
             Light srclt = src.light;
-            if (srclt != null)
-            {
-                var dstlt = dst.light;
+            if (srclt != null) {
+                Light dstlt = dst.light;
                 if (dstlt == null)
                     dstlt = dst.light = Misc.GetOrAddComponent<Light>(dstgo);
                 if (m_config.SyncVisibility && dst.hasVisibility)
@@ -1531,7 +1522,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                             materials = srcsmr.sharedMaterials;
 
                         if (materials != null) {
-                            foreach (var m in materials)
+                            foreach (Material m in materials)
                                 m.enableInstancing = true;
                             dstpcr.sharedMaterials = materials;
                         }
@@ -1604,18 +1595,16 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     void UpdateConstraint(ConstraintData data)
     {
         bool dummy = false;
-        var trans = FindOrCreateObjectByPath(data.path, true, ref dummy);
+        Transform trans = FindOrCreateObjectByPath(data.path, true, ref dummy);
         if (trans == null)
             return;
 
-        Action<IConstraint> basicSetup = (c) =>
-        {
+        Action<IConstraint> basicSetup = (c) => {
             int ns = data.numSources;
             while(c.sourceCount < ns)
                 c.AddSource(new ConstraintSource());
-            for (int si = 0; si < ns; ++si)
-            {
-                var s = c.GetSource(si);
+            for (int si = 0; si < ns; ++si) {
+                ConstraintSource s = c.GetSource(si);
                 s.sourceTransform = FindOrCreateObjectByPath(data.GetSourcePath(si), true, ref dummy);
             }
         };
@@ -1624,31 +1613,31 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         {
             case ConstraintData.ConstraintType.Aim:
                 {
-                    var c = Misc.GetOrAddComponent<AimConstraint>(trans.gameObject);
+                    AimConstraint c = Misc.GetOrAddComponent<AimConstraint>(trans.gameObject);
                     basicSetup(c);
                     break;
                 }
             case ConstraintData.ConstraintType.Parent:
                 {
-                    var c = Misc.GetOrAddComponent<ParentConstraint>(trans.gameObject);
+                    ParentConstraint c = Misc.GetOrAddComponent<ParentConstraint>(trans.gameObject);
                     basicSetup(c);
                     break;
                 }
             case ConstraintData.ConstraintType.Position:
                 {
-                    var c = Misc.GetOrAddComponent<PositionConstraint>(trans.gameObject);
+                    PositionConstraint c = Misc.GetOrAddComponent<PositionConstraint>(trans.gameObject);
                     basicSetup(c);
                     break;
                 }
             case ConstraintData.ConstraintType.Rotation:
                 {
-                    var c = Misc.GetOrAddComponent<RotationConstraint>(trans.gameObject);
+                    RotationConstraint c = Misc.GetOrAddComponent<RotationConstraint>(trans.gameObject);
                     basicSetup(c);
                     break;
                 }
             case ConstraintData.ConstraintType.Scale:
                 {
-                    var c = Misc.GetOrAddComponent<ScaleConstraint>(trans.gameObject);
+                    ScaleConstraint c = Misc.GetOrAddComponent<ScaleConstraint>(trans.gameObject);
                     basicSetup(c);
                     break;
                 }
@@ -1669,14 +1658,14 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
         //float start = Time.realtimeSinceStartup;
 
-        var animClipCache = new Dictionary<GameObject, AnimationClip>();
+        Dictionary<GameObject, AnimationClip> animClipCache = new Dictionary<GameObject, AnimationClip>();
 
         int numAnimations = clipData.numAnimations;
         for (int ai = 0; ai < numAnimations; ++ai)
         {
             AnimationData data = clipData.GetAnimation(ai);
 
-            var path = data.path;
+            string path = data.path;
             EntityRecord rec = null;
             m_clientObjects.TryGetValue(path, out rec);
 
@@ -1699,15 +1688,12 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
             // get or create animation clip
             AnimationClip clip = null;
-            if (!animClipCache.TryGetValue(root.gameObject, out clip))
-            {
-                if (animator.runtimeAnimatorController != null)
-                {
-                    var clips = animator.runtimeAnimatorController.animationClips;
-                    if (clips != null && clips.Length > 0)
-                    {
+            if (!animClipCache.TryGetValue(root.gameObject, out clip)) {
+                if (animator.runtimeAnimatorController != null) {
+                    AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
+                    if (clips != null && clips.Length > 0) {
                         // note: this is extremely slow. animClipCache exists to cache the result and avoid frequent call.
-                        var tmp = animator.runtimeAnimatorController.animationClips[0];
+                        AnimationClip tmp = animator.runtimeAnimatorController.animationClips[0];
                         if (tmp != null)
                         {
                             clip = tmp;
@@ -1717,7 +1703,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 }
                 if (clip == null) {
                     clip = new AnimationClip();
-                    var clipName = clipData.name;
+                    string clipName = clipData.name;
                     if (clipName.Length > 0)
                         clipName = root.name + "_" + clipName;
                     else
@@ -1731,13 +1717,12 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 clip.frameRate = clipData.frameRate;
             }
 
-            var animPath = path.Replace("/" + root.name, "");
+            string animPath = path.Replace("/" + root.name, "");
             if (animPath.Length > 0 && animPath[0] == '/')
                 animPath = animPath.Remove(0, 1);
 
             // get animation curves
-            var ctx = new AnimationImportContext()
-            {
+            AnimationImportContext ctx = new AnimationImportContext() {
                 clip = clip,
                 root = root.gameObject,
                 target = target.gameObject,
@@ -1757,16 +1742,16 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
         // fire event
         if (onUpdateAnimation != null)
-            foreach (var kvp in animClipCache)
+            foreach (KeyValuePair<GameObject, AnimationClip> kvp in animClipCache)
                 onUpdateAnimation.Invoke(kvp.Value, clipData);
 #endif
     }
 
     internal void ReassignMaterials()
     {
-        foreach (var rec in m_clientObjects)
+        foreach (KeyValuePair<string, EntityRecord> rec in m_clientObjects)
             AssignMaterials(rec.Value);
-        foreach (var rec in m_hostObjects)
+        foreach (KeyValuePair<int, EntityRecord> rec in m_hostObjects)
             AssignMaterials(rec.Value);
     }
 
@@ -1876,7 +1861,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
         if (ml.nodes != null)
         {
-            foreach (var node in ml.nodes)
+            foreach (MaterialList.Node node in ml.nodes)
             {
                 bool dummy = false;
                 Transform trans = FindOrCreateObjectByPath(node.path, false, ref dummy);
@@ -2031,7 +2016,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
         // extract per-node materials
         Action<Transform> exportNode = (n) => {
-            foreach (var r in n.GetComponentsInChildren<Renderer>())
+            foreach (Renderer r in n.GetComponentsInChildren<Renderer>())
             {
                 ml.nodes.Add(new MaterialList.Node
                 {
@@ -2043,7 +2028,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         if (m_rootObject != null)
             exportNode(m_rootObject);
         else
-            foreach (var root in SceneManager.GetActiveScene().GetRootGameObjects())
+            foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
                 exportNode(root.transform);
 
         AssetDatabase.CreateAsset(ml, path);
