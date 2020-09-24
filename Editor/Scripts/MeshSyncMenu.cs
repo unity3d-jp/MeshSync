@@ -79,7 +79,7 @@ internal static class MeshSyncMenu  {
     
 //----------------------------------------------------------------------------------------------------------------------    
 
-    internal static GameObject CreateSceneCachePlayer(string path) {
+    private static GameObject CreateSceneCachePlayer(string path) {
         if (!ValidateSceneCacheOutputPath()) {
             return null;
         }
@@ -139,7 +139,7 @@ internal static class MeshSyncMenu  {
 
 //----------------------------------------------------------------------------------------------------------------------    
 
-    static bool ValidateSceneCacheOutputPath() {
+    private static bool ValidateSceneCacheOutputPath() {
         
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
@@ -158,7 +158,7 @@ internal static class MeshSyncMenu  {
         return true;
     }
 
-    static void DisplaySceneCacheOutputPathErrorDialog(string path) {
+    private static void DisplaySceneCacheOutputPathErrorDialog(string path) {
         EditorUtility.DisplayDialog("MeshSync",
             $"Invalid SceneCache output path: {path}. " + Environment.NewLine + 
             "Please configure in ProjectSettings", 
