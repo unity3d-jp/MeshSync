@@ -25,7 +25,8 @@ public class SceneCachePlayerTest  {
         Assert.IsTrue(File.Exists(sceneCachePath));
         
         
-        GameObject go = MeshSyncMenu.CreateSceneCachePlayerPrefab(Path.GetFullPath(sceneCachePath));
+        GameObject go = new GameObject();
+        go = MeshSyncMenu.CreateSceneCachePlayerPrefab(go, Path.GetFullPath(sceneCachePath));
         Assert.IsNotNull(go);
         GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(go);
         Assert.IsNotNull(prefab);

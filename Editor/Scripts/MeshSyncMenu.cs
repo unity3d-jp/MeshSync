@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assertions;
+using Object = UnityEngine.Object;
 
 namespace Unity.MeshSync.Editor {
 
@@ -68,36 +70,45 @@ internal static class MeshSyncMenu  {
 
     [MenuItem("GameObject/MeshSync/Create Cache Player", false, 10)]
     static void CreateSceneCachePlayerMenu(MenuCommand menuCommand) {
-        string path = EditorUtility.OpenFilePanelWithFilters("Select Cache File", "",
+        string sceneCacheFilePath = EditorUtility.OpenFilePanelWithFilters("Select Cache File", "",
             new string[]{ "All supported files", "sc", "All files", "*" });
-        if (path.Length > 0) {
-            GameObject go = CreateSceneCachePlayerPrefab(path);
-            if (go != null)
-                Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
+
+        if (string.IsNullOrEmpty(sceneCacheFilePath)) {
+            return;
+        }
+        
+        GameObject go = new GameObject();        
+        GameObject nullCheckGameObject = CreateSceneCachePlayerPrefab(go, sceneCacheFilePath);
+        if (null == nullCheckGameObject) {
+            EditorUtility.DisplayDialog("MeshSync"
+                ,"Failed to open " + sceneCacheFilePath 
+                    + ". Possible reasons: file format version does not match, or the file is not scene cache."
+                ,"Ok"                
+            );
+            Object.DestroyImmediate(go);            
+        } else {           
+            Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");            
         }
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
 
-    private static SceneCachePlayer  CreateSceneCachePlayer(string path) {
+    private static SceneCachePlayer  CreateSceneCachePlayer(GameObject go, string sceneCacheFilePath) {
         if (!ValidateSceneCacheOutputPath()) {
             return null;
         }
         
         // create temporary GO to make prefab
-        GameObject go = new GameObject();
-        go.name = System.IO.Path.GetFileNameWithoutExtension(path);
+        go.name = System.IO.Path.GetFileNameWithoutExtension(sceneCacheFilePath);
 
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
        
         string assetsFolder = Path.Combine(scOutputPath, go.name);        
-        SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
+        SceneCachePlayer player = go.GetOrAddComponent<SceneCachePlayer>();
         player.Init(assetsFolder);
 
-        if (!player.OpenCache(path)) {
-            Debug.LogError("Failed to open " + path + ". Possible reasons: file format version does not match, or the file is not scene cache.");
-            UnityEngine.Object.DestroyImmediate(go);
+        if (!player.OpenCache(sceneCacheFilePath)) {
             return null;
         }
         
@@ -118,23 +129,21 @@ internal static class MeshSyncMenu  {
 
 //----------------------------------------------------------------------------------------------------------------------    
 
-    internal static GameObject CreateSceneCachePlayerPrefab(string path) {
+    internal static GameObject CreateSceneCachePlayerPrefab(GameObject go, string sceneCacheFilePath) {
+        Assert.IsNotNull(go);
+        go.DestroyChildrenImmediate();
         
         if (!ValidateSceneCacheOutputPath()) {
             return null;
         }
         
-        SceneCachePlayer player = CreateSceneCachePlayer(path);
+        SceneCachePlayer player = CreateSceneCachePlayer(go, sceneCacheFilePath);
         if (null==player)
             return null;
 
-
-
-       
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
 
-        GameObject go         = player.gameObject;
         string     prefabPath = $"{scOutputPath}/{go.name}.prefab";
         PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabPath, InteractionMode.AutomatedAction);
         return go;
