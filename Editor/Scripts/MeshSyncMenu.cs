@@ -79,7 +79,7 @@ internal static class MeshSyncMenu  {
     
 //----------------------------------------------------------------------------------------------------------------------    
 
-    private static GameObject CreateSceneCachePlayer(string path) {
+    private static SceneCachePlayer  CreateSceneCachePlayer(string path) {
         if (!ValidateSceneCacheOutputPath()) {
             return null;
         }
@@ -100,7 +100,7 @@ internal static class MeshSyncMenu  {
             UnityEngine.Object.DestroyImmediate(go);
             return null;
         }
-        return go;
+        return player;
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
@@ -111,12 +111,11 @@ internal static class MeshSyncMenu  {
             return null;
         }
         
-        GameObject go = CreateSceneCachePlayer(path);
-        if (go == null)
+        SceneCachePlayer player = CreateSceneCachePlayer(path);
+        if (null==player)
             return null;
 
         // export materials & animation and generate prefab
-        SceneCachePlayer player = go.GetComponent<SceneCachePlayer>();
         player.UpdatePlayer();
         player.ExportMaterials(false, true);
         player.ResetTimeAnimation();
@@ -131,8 +130,9 @@ internal static class MeshSyncMenu  {
        
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
-        
-        string prefabPath = $"{scOutputPath}/{go.name}.prefab";
+
+        GameObject go         = player.gameObject;
+        string     prefabPath = $"{scOutputPath}/{go.name}.prefab";
         PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabPath, InteractionMode.AutomatedAction);
         return go;
     }
