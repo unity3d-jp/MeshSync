@@ -28,7 +28,7 @@ namespace Unity.MeshSync.Editor
 
             var pos = position;
             m_scrollPos = EditorGUILayout.BeginScrollView(m_scrollPos, GUILayout.Width(pos.width), GUILayout.Height(pos.height));
-            MeshSyncServerEditor.DrawMaterialList(m_server, false);
+            MeshSyncServerInspector.DrawMaterialList(m_server, false);
             EditorGUILayout.EndScrollView();
         }
     }

@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Unity.MeshSync.Editor
 {
     [CustomEditor(typeof(MeshSyncPlayer))]
-    internal class MeshSyncPlayerEditor : UnityEditor.Editor {
+    internal class MeshSyncPlayerInspector : UnityEditor.Editor {
                 
         private float m_animationFrameRate = 30.0f;
        
