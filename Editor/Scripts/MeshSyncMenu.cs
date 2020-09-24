@@ -104,6 +104,8 @@ internal static class MeshSyncMenu  {
             return null;
         }
         
+        go.DestroyChildrenImmediate();
+        
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
        
@@ -134,7 +136,6 @@ internal static class MeshSyncMenu  {
 
     internal static bool CreateSceneCachePlayerPrefab(GameObject go, string sceneCacheFilePath, string prefabPath) {
         Assert.IsNotNull(go);
-        go.DestroyChildrenImmediate();
         
         if (!ValidateSceneCacheOutputPath()) {
             return false;
