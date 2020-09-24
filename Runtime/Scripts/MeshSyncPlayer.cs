@@ -849,19 +849,11 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     }
     byte[] EncodeToPNG(Texture2D tex)
     {
-#if UNITY_2017_3_OR_NEWER
         return ImageConversion.EncodeToPNG(tex);
-#else
-        return tex.EncodeToPNG();
-#endif
     }
     byte[] EncodeToEXR(Texture2D tex, Texture2D.EXRFlags flags)
     {
-#if UNITY_2017_3_OR_NEWER
         return ImageConversion.EncodeToEXR(tex, flags);
-#else
-        return tex.EncodeToEXR(flags);
-#endif
     }
 
 
