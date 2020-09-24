@@ -288,7 +288,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     private bool SaveAsset<T>(ref T obj, string assetPath) where T : UnityEngine.Object
     {
 #if UNITY_EDITOR
-        var ret = Misc.SaveAsset(obj, assetPath);
+        T ret = Misc.SaveAsset(obj, assetPath);
         if (ret != null)
         {
             obj = ret;
@@ -319,7 +319,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     internal string BuildPath(Transform t)
     {
-        var parent = t.parent;
+        Transform parent = t.parent;
         if (parent != null && parent != m_rootObject)
             return BuildPath(parent) + "/" + t.name;
         else
@@ -330,7 +330,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     {
         if (id == Lib.invalidID)
             return null;
-        var rec = m_textureList.Find(a => a.id == id);
+        TextureHolder rec = m_textureList.Find(a => a.id == id);
         return rec != null ? rec.texture : null;
     }
 
@@ -338,7 +338,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     {
         if (id == Lib.invalidID)
             return null;
-        var rec = m_materialList.Find(a => a.id == id);
+        MaterialHolder rec = m_materialList.Find(a => a.id == id);
         return rec != null ? rec.material : null;
     }
 
@@ -359,7 +359,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
 
         int ret = m_materialList.Count;
-        var tmp = new MaterialHolder();
+        MaterialHolder tmp = new MaterialHolder();
         tmp.name = mat.name;
         tmp.material = mat;
         tmp.id = ret + 1;
@@ -1812,30 +1812,26 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         if (rec.go == null || rec.mesh == null || rec.materialIDs == null)
             return;
 
-        var r = rec.meshRenderer != null ? (Renderer)rec.meshRenderer : (Renderer)rec.skinnedMeshRenderer;
+        Renderer r = rec.meshRenderer != null ? (Renderer)rec.meshRenderer : (Renderer)rec.skinnedMeshRenderer;
         if (r == null)
             return;
 
-        bool changed = false;
-        int materialCount = rec.materialIDs.Length;
-        var materials = new Material[materialCount];
-        var prevMaterials = r.sharedMaterials;
+        bool       changed       = false;
+        int        materialCount = rec.materialIDs.Length;
+        Material[] materials     = new Material[materialCount];
+        Material[] prevMaterials = r.sharedMaterials;
         Array.Copy(prevMaterials, materials, Math.Min(prevMaterials.Length, materials.Length));
 
         for (int si = 0; si < materialCount; ++si)
         {
-            var mid = rec.materialIDs[si];
-            var material = FindMaterial(mid);
-            if (material != null)
-            {
-                if (materials[si] != material)
-                {
+            int mid = rec.materialIDs[si];
+            Material material = FindMaterial(mid);
+            if (material != null) {
+                if (materials[si] != material) {
                     materials[si] = material;
                     changed = true;
                 }
-            }
-            else if (materials[si] == null)
-            {
+            } else if (materials[si] == null) {
                 // assign dummy material to prevent to go pink
                 if (m_dummyMaterial == null)
                 {
@@ -1859,8 +1855,8 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     internal bool EraseEntityRecord(Identifier identifier)
     {
-        var id = identifier.id;
-        var path = identifier.name;
+        int id = identifier.id;
+        string path = identifier.name;
 
         GameObject target = null;
         EntityRecord rec = null;
@@ -1900,10 +1896,10 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             int materialCount = Mathf.Min(m_materialList.Count, ml.materials.Count);
             for (int mi = 0; mi < materialCount; ++mi)
             {
-                var src = ml.materials[mi];
+                MaterialHolder src = ml.materials[mi];
                 if (src.material != null)
                 {
-                    var dst = m_materialList.Find(a => a.id == src.id);
+                    MaterialHolder dst = m_materialList.Find(a => a.id == src.id);
                     if (dst != null)
                     {
                         dst.material = src.material;
@@ -1920,10 +1916,10 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             foreach (var node in ml.nodes)
             {
                 bool dummy = false;
-                var trans = FindOrCreateObjectByPath(node.path, false, ref dummy);
+                Transform trans = FindOrCreateObjectByPath(node.path, false, ref dummy);
                 if (trans != null)
                 {
-                    var renderer = trans.GetComponent<Renderer>();
+                    Renderer renderer = trans.GetComponent<Renderer>();
                     if (renderer != null)
                         renderer.sharedMaterials = node.materials;
                 }
@@ -1940,13 +1936,13 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         if (go == null)
             return;
 
-        var smr = go.GetComponent<SkinnedMeshRenderer>();
+        SkinnedMeshRenderer smr = go.GetComponent<SkinnedMeshRenderer>();
         if (smr != null)
         {
-            var mesh = smr.sharedMesh;
+            Mesh mesh = smr.sharedMesh;
             if (mesh != null)
             {
-                var uv = new List<Vector2>();
+                List<Vector2> uv = new List<Vector2>();
                 mesh.GetUVs(0, uv);
                 if (uv.Count == 0)
                 {
@@ -1958,9 +1954,9 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     }
     public void GenerateLightmapUV()
     {
-        foreach (var kvp in m_clientObjects)
+        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
             GenerateLightmapUV(kvp.Value.go);
-        foreach (var kvp in m_hostObjects)
+        foreach (KeyValuePair<int, EntityRecord> kvp in m_hostObjects)
         {
             if (kvp.Value.mesh != null)
                 GenerateLightmapUV(kvp.Value.go);
@@ -1980,8 +1976,8 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             if (mat == null || IsAsset(mat))
                 return mat;
 
-            var dstPath = string.Format("{0}/{1}.mat", basePath, nameGenerator.Gen(mat.name));
-            var existing = AssetDatabase.LoadAssetAtPath<Material>(dstPath);
+            string dstPath = string.Format("{0}/{1}.mat", basePath, nameGenerator.Gen(mat.name));
+            Material existing = AssetDatabase.LoadAssetAtPath<Material>(dstPath);
             if (overwrite || existing == null)
             {
                 SaveAsset(ref mat, dstPath);
@@ -1993,7 +1989,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             return mat;
         };
 
-        foreach (var m in m_materialList)
+        foreach (MaterialHolder m in m_materialList)
             m.material = doExport(m.material); // material maybe updated by SaveAsset()
         m_dummyMaterial = doExport(m_dummyMaterial);
 
@@ -2010,14 +2006,14 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         string basePath = m_assetsFolder;
 
         // export client meshes
-        foreach (var kvp in m_clientObjects)
+        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
         {
-            var mesh = kvp.Value.mesh;
+            Mesh mesh = kvp.Value.mesh;
             if (mesh == null || IsAsset(mesh))
                 continue;
 
-            var dstPath = string.Format("{0}/{1}.asset", basePath, nameGenerator.Gen(mesh.name));
-            var existing = AssetDatabase.LoadAssetAtPath<Mesh>(dstPath);
+            string dstPath = string.Format("{0}/{1}.asset", basePath, nameGenerator.Gen(mesh.name));
+            Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(dstPath);
             if (overwrite || existing == null)
             {
                 SaveAsset(ref mesh, dstPath);
@@ -2031,9 +2027,9 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
         // replace existing meshes
         int n = 0;
-        foreach (var kvp in m_hostObjects)
+        foreach (KeyValuePair<int, EntityRecord> kvp in m_hostObjects)
         {
-            var rec = kvp.Value;
+            EntityRecord rec = kvp.Value;
             if (rec.go == null || rec.mesh == null)
                 continue;
 
