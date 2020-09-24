@@ -1462,7 +1462,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
         cam.orthographic = data.orthographic;
 
-#if UNITY_2018_1_OR_NEWER
         // use physical camera params if available
         if (m_usePhysicalCameraParams && dflags.hasFocalLength && dflags.hasSensorSize)
         {
@@ -1470,19 +1469,15 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             cam.focalLength = data.focalLength;
             cam.sensorSize = data.sensorSize;
             cam.lensShift = data.lensShift;
-#if UNITY_2018_3_OR_NEWER
             //todo: gate fit support
-#endif
         }
         else
-#endif
         {
             if (dflags.hasFov)
                 cam.fieldOfView = data.fov;
         }
 
-        if (dflags.hasNearPlane && dflags.hasFarPlane)
-        {
+        if (dflags.hasNearPlane && dflags.hasFarPlane) {
             cam.nearClipPlane = data.nearPlane;
             cam.farClipPlane = data.farPlane;
         }
