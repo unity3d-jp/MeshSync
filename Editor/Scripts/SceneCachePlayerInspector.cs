@@ -65,12 +65,12 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
                 const float BUTTON_WIDTH = 50.0f;
                 if (GUILayout.Button("Copy", GUILayout.Width(BUTTON_WIDTH))) {
                     string dstPath = Misc.CopyFileToStreamingAssets(fullPath);
-                    OnFilePathChanged(m_sceneCachePlayer, dstPath);
+                    OnSceneCacheFileChanged(m_sceneCachePlayer, dstPath);
                 }
                 GUILayout.Label("or");
                 if (GUILayout.Button("Move", GUILayout.Width(BUTTON_WIDTH))) {
                     string dstPath = Misc.MoveFileToStreamingAssets(fullPath);
-                    OnFilePathChanged(m_sceneCachePlayer, dstPath);
+                    OnSceneCacheFileChanged(m_sceneCachePlayer, dstPath);
                 }
                 GUILayout.Label("to StreamingAssets");
                 GUILayout.EndHorizontal();
@@ -112,14 +112,14 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    static void OnFilePathChanged(SceneCachePlayer cachePlayer, string path) {
+    static void OnSceneCacheFileChanged(SceneCachePlayer cachePlayer, string path) {
         
+       
         string prefabPath = null;
         if (cachePlayer.gameObject.IsPrefabInstance()) {
             GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(cachePlayer.gameObject);
             prefabPath = AssetDatabase.GetAssetPath(prefab);
         }
-
         
         cachePlayer.CloseCache();
         cachePlayer.SetFilePath(path);
