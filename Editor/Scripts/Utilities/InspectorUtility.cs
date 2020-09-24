@@ -54,14 +54,14 @@ internal static class InspectorUtility {
             
             newFilePath = InspectorUtility.ShowSelectFileButton(dialogTitle, fieldValue, onValidFolderSelected);
 
-            if (GUILayout.Button("Show", GUILayout.Width(50f),GUILayout.Height(EditorGUIUtility.singleLineHeight))) {
-                EditorUtility.RevealInFinder(newFilePath);
-            }
             
         }
         
         using (new EditorGUILayout.HorizontalScope()) {
             GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Show", GUILayout.Width(50f),GUILayout.Height(EditorGUIUtility.singleLineHeight))) {
+                EditorUtility.RevealInFinder(newFilePath);
+            }
             bool isValidFile = File.Exists(newFilePath) && newFilePath.StartsWith("Assets/");
             EditorGUI.BeginDisabledGroup(!isValidFile);        
             if(GUILayout.Button("Highlight in Project Window", GUILayout.Width(180f))) {
