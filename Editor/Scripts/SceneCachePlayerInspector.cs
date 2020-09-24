@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Unity.MeshSync.Editor  {
 
 [CustomEditor(typeof(SceneCachePlayer))]
-internal class SceneCachePlayerEditor : MeshSyncPlayerEditor {
+internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
     
 
 //----------------------------------------------------------------------------------------------------------------------
