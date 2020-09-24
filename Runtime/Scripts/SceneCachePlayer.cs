@@ -133,8 +133,10 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         if (clip == null) {
             clip = new AnimationClip();
 
-            string animPath = string.Format("{0}/{1}.anim", assetPath, gameObject.name);
-            string controllerPath = string.Format("{0}/{1}.controller", assetPath, gameObject.name);
+            string assetsFolder = GetAssetsFolder();
+
+            string animPath       = string.Format("{0}/{1}.anim", assetsFolder, gameObject.name);
+            string controllerPath = string.Format("{0}/{1}.controller", assetsFolder, gameObject.name);
             clip = Misc.SaveAsset(clip, animPath);
             if (clip == null)
                 return false;

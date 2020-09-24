@@ -6,6 +6,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Animations;
 using Unity.Collections;
+using UnityEngine.Assertions;
+using System.IO;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -111,15 +113,13 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     }
 
     internal static int protocolVersion { get { return Lib.protocolVersion; } }
-    protected string assetPath
-    {
-        get { return m_assetDir.GetLeaf().Length != 0 ? "Assets/" + m_assetDir.GetLeaf() : "Assets"; }
-    }
+
+    protected string GetAssetsFolder() { return m_assetsFolder;}   
 
     
-    //assetDir currently excludes the word "Assets"
-    internal void Init(string assetDir) {
-        m_assetDir   = new DataPath(DataPath.Root.DataPath, assetDir);
+    internal void Init(string assetsFolder) {
+        Assert.IsTrue(assetsFolder.StartsWith("Assets"));
+        m_assetsFolder = assetsFolder;
         m_rootObject = gameObject.transform;
     }
     
@@ -238,7 +238,17 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     public void OnAfterDeserialize() {
         DeserializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
         DeserializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
-        DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);            
+        DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
+        
+        //[TODO-sin: 2020-9-24] Remove in MeshSync 2.0.0
+        //Convert old assets which are using DataPath to hold assetFolder.
+        if (string.IsNullOrEmpty(m_assetsFolder)) {
+            string leaf = m_assetDir.GetLeaf();
+            m_assetsFolder = string.IsNullOrEmpty(leaf) ? "Assets" : $"Assets/{leaf}";
+        } 
+        
+        
+        
         OnAfterDeserializeMeshSyncPlayerV();
     }
     
@@ -265,10 +275,10 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
     }
 
-    private void MakeSureAssetDirectoryExists()
-    {
+    private void MakeSureAssetDirectoryExists() {
+        
 #if UNITY_EDITOR
-        m_assetDir.CreateDirectory();
+        Directory.CreateDirectory(m_assetsFolder);
 #endif
     }
 
@@ -680,7 +690,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         if (!m_handleAssets)
             return;
 
-        src.WriteToFile(assetPath + "/" + src.name);
+        src.WriteToFile(m_assetsFolder + "/" + src.name);
 #endif
     }
 
@@ -696,15 +706,13 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         {
 #if UNITY_EDITOR
             // create file and import it
-            var dstPath = assetPath + "/" + src.name;
+            string dstPath = m_assetsFolder + "/" + src.name;
             src.WriteToFile(dstPath);
             AssetDatabase.ImportAsset(dstPath);
             ac = AssetDatabase.LoadAssetAtPath<AudioClip>(dstPath);
-            if (ac != null)
-            {
+            if (ac != null) {
                 var importer = (AudioImporter)AssetImporter.GetAtPath(dstPath);
-                if (importer != null)
-                {
+                if (importer != null) {
                     // nothing todo for now
                 }
             }
@@ -714,23 +722,19 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         {
 #if UNITY_EDITOR
             // export as .wav and import it
-            var dstPath = assetPath + "/" + src.name + ".wav";
-            if(src.ExportAsWave(dstPath))
-            {
+            string dstPath = m_assetsFolder + "/" + src.name + ".wav";
+            if(src.ExportAsWave(dstPath)) {
                 AssetDatabase.ImportAsset(dstPath);
                 ac = AssetDatabase.LoadAssetAtPath<AudioClip>(dstPath);
-                if (ac != null)
-                {
-                    var importer = (AudioImporter)AssetImporter.GetAtPath(dstPath);
-                    if (importer != null)
-                    {
+                if (ac != null) {
+                    AudioImporter importer = (AudioImporter)AssetImporter.GetAtPath(dstPath);
+                    if (importer != null) {
                         // nothing todo for now
                     }
                 }
             }
 #endif
-            if (ac == null)
-            {
+            if (ac == null) {
                 ac = AudioClip.Create(src.name, src.sampleLength, src.channels, src.frequency, false);
                 ac.SetData(src.samples, 0);
             }
@@ -780,7 +784,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         {
 #if UNITY_EDITOR
             // write data to file and import
-            string path = assetPath + "/" + src.name;
+            string path = m_assetsFolder + "/" + src.name;
             if (src.WriteToFile(path))
                 doImport(path);
 #endif
@@ -803,7 +807,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 case TextureFormat.RGBu8:
                 case TextureFormat.RGBAu8:
                     {
-                        path = assetPath + "/" + src.name + ".png";
+                        path = m_assetsFolder + "/" + src.name + ".png";
                         exported = TextureData.WriteToFile(path, EncodeToPNG(texture));
                         break;
                     }
@@ -812,7 +816,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 case TextureFormat.RGBf16:
                 case TextureFormat.RGBAf16:
                     {
-                        path = assetPath + "/" + src.name + ".exr";
+                        path     = m_assetsFolder + "/" + src.name + ".exr";
                         exported = TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.CompressZIP));
                         break;
                     }
@@ -821,7 +825,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 case TextureFormat.RGBf32:
                 case TextureFormat.RGBAf32:
                     {
-                        path = assetPath + "/" + src.name + ".exr";
+                        path = m_assetsFolder + "/" + src.name + ".exr";
                         exported = TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP));
                         break;
                     }
@@ -1748,8 +1752,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                         }
                     }
                 }
-                if (clip == null)
-                {
+                if (clip == null) {
                     clip = new AnimationClip();
                     var clipName = clipData.name;
                     if (clipName.Length > 0)
@@ -1757,7 +1760,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                     else
                         clipName = root.name;
 
-                    var dstPath = assetPath + "/" + Misc.SanitizeFileName(clipName) + ".anim";
+                    string dstPath = m_assetsFolder + "/" + Misc.SanitizeFileName(clipName) + ".anim";
                     SaveAsset(ref clip, dstPath);
                     animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(dstPath + ".controller", clip);
                     animClipCache[root.gameObject] = clip;
@@ -1930,6 +1933,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return true;
     }
 
+//----------------------------------------------------------------------------------------------------------------------    
 #if UNITY_EDITOR
     public void GenerateLightmapUV(GameObject go)
     {
@@ -1969,8 +1973,8 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         MakeSureAssetDirectoryExists();
 
         // need to avoid filename collision
-        var nameGenerator = new Misc.UniqueNameGenerator();
-        var basePath = assetPath;
+        Misc.UniqueNameGenerator nameGenerator = new Misc.UniqueNameGenerator();
+        string basePath = m_assetsFolder;
 
         Func<Material, Material> doExport = (Material mat) => {
             if (mat == null || IsAsset(mat))
@@ -2002,8 +2006,8 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         MakeSureAssetDirectoryExists();
 
         // need to avoid filename collision
-        var nameGenerator = new Misc.UniqueNameGenerator();
-        var basePath = assetPath;
+        Misc.UniqueNameGenerator nameGenerator = new Misc.UniqueNameGenerator();
+        string basePath = m_assetsFolder;
 
         // export client meshes
         foreach (var kvp in m_clientObjects)
@@ -2246,6 +2250,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 //----------------------------------------------------------------------------------------------------------------------
     
     [SerializeField] private DataPath  m_assetDir = null;
+    [SerializeField] private string  m_assetsFolder = null; //Always starts with "Assets"
     [SerializeField] private Transform m_rootObject;
 
     [SerializeField] protected MeshSyncPlayerConfig m_config;
