@@ -107,7 +107,6 @@ internal static class MeshSyncMenu  {
         player.ResetTimeAnimation();
         player.handleAssets = false;
         
-        //[TODO-sin: 2020-9-24] This part looks like a hack.
         SceneData scene = player.GetLastScene();
         if (!scene.submeshesHaveUniqueMaterial) {
             MeshSyncPlayerConfig config = player.GetConfig();
