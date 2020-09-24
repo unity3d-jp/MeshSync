@@ -1640,7 +1640,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     void UpdateConstraint(ConstraintData data)
     {
-#if UNITY_2018_1_OR_NEWER
         bool dummy = false;
         var trans = FindOrCreateObjectByPath(data.path, true, ref dummy);
         if (trans == null)
@@ -1693,7 +1692,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             default:
                 break;
         }
-#endif
     }
 
     void UpdateAnimation(AnimationClipData clipData)
