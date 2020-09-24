@@ -1826,9 +1826,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 target = target.gameObject,
                 path = animPath,
                 enableVisibility = m_config.SyncVisibility,
-#if UNITY_2018_1_OR_NEWER
                 usePhysicalCameraParams = m_usePhysicalCameraParams,
-#endif
             };
             if (rec != null)
             {
