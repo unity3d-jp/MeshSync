@@ -102,6 +102,8 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     
     #endregion
 
+
+//----------------------------------------------------------------------------------------------------------------------
     
     #region Properties
     internal static string GetPluginVersion() {
@@ -192,7 +194,8 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 #endif
     #endregion
 
-
+//----------------------------------------------------------------------------------------------------------------------
+    
     #region Impl
     void SerializeDictionary<K,V>(Dictionary<K,V> dic, ref K[] keys, ref V[] values)
     {
