@@ -699,7 +699,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             AssetDatabase.ImportAsset(dstPath);
             ac = AssetDatabase.LoadAssetAtPath<AudioClip>(dstPath);
             if (ac != null) {
-                var importer = (AudioImporter)AssetImporter.GetAtPath(dstPath);
+                AudioImporter importer = (AudioImporter)AssetImporter.GetAtPath(dstPath);
                 if (importer != null) {
                     // nothing todo for now
                 }
@@ -728,12 +728,10 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             }
         }
 
-        if (ac != null)
-        {
+        if (ac != null) {
             int id = src.id;
-            var dst = m_audioList.Find(a => a.id == id);
-            if (dst == null)
-            {
+            AudioHolder dst = m_audioList.Find(a => a.id == id);
+            if (dst == null) {
                 dst = new AudioHolder();
                 dst.id = id;
                 m_audioList.Add(dst);
@@ -755,11 +753,9 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         {
             AssetDatabase.ImportAsset(path);
             texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            if (texture != null)
-            {
-                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-                if (importer != null)
-                {
+            if (texture != null) {
+                TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                if (importer != null) {
                     if (src.type == TextureType.NormalMap)
                         importer.textureType = TextureImporterType.NormalMap;
                 }
@@ -767,7 +763,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         };
 #endif
 
-        var format = src.format;
+        TextureFormat format = src.format;
         if (format == TextureFormat.RawFile)
         {
 #if UNITY_EDITOR
@@ -830,7 +826,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         if (texture != null)
         {
             int id = src.id;
-            var dst = m_textureList.Find(a => a.id == id);
+            TextureHolder dst = m_textureList.Find(a => a.id == id);
             if (dst == null)
             {
                 dst = new TextureHolder();
@@ -853,12 +849,11 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     void UpdateMaterial(MaterialData src)
     {
-        var materialID = src.id;
-        var materialName = src.name;
+        int materialID = src.id;
+        string materialName = src.name;
 
-        var dst = m_materialList.Find(a => a.id == materialID);
-        if (dst == null)
-        {
+        MaterialHolder dst = m_materialList.Find(a => a.id == materialID);
+        if (dst == null) {
             dst = new MaterialHolder();
             dst.id = materialID;
             m_materialList.Add(dst);
@@ -895,10 +890,10 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         if (dst.material == null)
         {
             // prefer non Standard shader because it will be pink in HDRP
-            var shaderName = src.shader;
+            string shaderName = src.shader;
             if (shaderName != "Standard")
             {
-                var shader = Shader.Find(src.shader);
+                Shader shader = Shader.Find(src.shader);
                 if (shader != null)
                     dst.material = new Material(shader);
             }
@@ -920,7 +915,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             int numKeywords = src.numKeywords;
             for (int ki = 0; ki < numKeywords; ++ki)
             {
-                var kw = src.GetKeyword(ki);
+                MaterialKeywordData kw = src.GetKeyword(ki);
                 if (kw.value)
                     dstmat.EnableKeyword(kw.name);
                 else
@@ -930,9 +925,9 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             int numProps = src.numProperties;
             for (int pi = 0; pi < numProps; ++pi)
             {
-                var prop = src.GetProperty(pi);
-                var propName = prop.name;
-                var propType = prop.type;
+                MaterialPropertyData      prop     = src.GetProperty(pi);
+                string                    propName = prop.name;
+                MaterialPropertyData.Type propType = prop.type;
                 if (!dstmat.HasProperty(propName))
                     continue;
 
@@ -995,13 +990,11 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                         break;
                     case MaterialPropertyData.Type.Texture:
                         {
-                            var rec = prop.textureValue;
-                            var tex = FindTexture(rec.id);
-                            if (tex != null)
-                            {
+                            MaterialPropertyData.TextureRecord rec = prop.textureValue;
+                            Texture2D tex = FindTexture(rec.id);
+                            if (tex != null) {
                                 dstmat.SetTexture(propName, tex);
-                                if (rec.hasScaleOffset)
-                                {
+                                if (rec.hasScaleOffset) {
                                     dstmat.SetTextureScale(propName, rec.scale);
                                     dstmat.SetTextureOffset(propName, rec.offset);
                                 }
@@ -1071,7 +1064,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
 
         if (dflags.hasBones || dflags.hasBlendshapes) {
-            var smr = rec.skinnedMeshRenderer;
+            SkinnedMeshRenderer smr = rec.skinnedMeshRenderer;
             if (smr == null) {
                 materialsUpdated = true;
                 smr = rec.skinnedMeshRenderer = Misc.GetOrAddComponent<SkinnedMeshRenderer>(trans.gameObject);
@@ -1109,7 +1102,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             if (dflags.hasBlendshapes) {
                 int numBlendShapes = Math.Min(data.numBlendShapes, rec.mesh.blendShapeCount);
                 for (int bi = 0; bi < numBlendShapes; ++bi) {
-                    var bsd = data.GetBlendShapeData(bi);
+                    BlendShapeData bsd = data.GetBlendShapeData(bi);
                     smr.SetBlendShapeWeight(bi, bsd.weight);
                 }
             }
