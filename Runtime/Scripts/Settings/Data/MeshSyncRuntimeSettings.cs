@@ -84,8 +84,10 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 //----------------------------------------------------------------------------------------------------------------------
     
     [SerializeField] private ushort m_defaultServerPort  = MeshSyncConstants.DEFAULT_SERVER_PORT;
-    [SerializeField] private string m_sceneCacheOutputPath = MeshSyncConstants.DEFAULT_SCENE_CACHE_OUTPUT_PATH;
     [SerializeField] private bool   m_serverPublicAccess = false;
+    
+    //Ex: "Assets/Foo"
+    [SerializeField] private string m_sceneCacheOutputPath = MeshSyncConstants.DEFAULT_SCENE_CACHE_OUTPUT_PATH;
     
     [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
 

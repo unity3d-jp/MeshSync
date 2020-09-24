@@ -145,22 +145,33 @@ internal static class MeshSyncMenu  {
 //----------------------------------------------------------------------------------------------------------------------    
 
     static bool ValidateSceneCacheOutputPath() {
+        
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
+        if (!scOutputPath.StartsWith("Assets")) {
+            DisplaySceneCacheOutputPathErrorDialog(scOutputPath);
+            return false;            
+        }        
+        
         try {
             Directory.CreateDirectory(scOutputPath);
         } catch {
-            EditorUtility.DisplayDialog("MeshSync",
-                $"Invalid SceneCache output path: {scOutputPath}. " + Environment.NewLine + 
-                "Please configure in ProjectSettings", 
-                "Ok");
+            DisplaySceneCacheOutputPathErrorDialog(scOutputPath);
             return false;
         }
 
         return true;
     }
+
+    static void DisplaySceneCacheOutputPathErrorDialog(string path) {
+        EditorUtility.DisplayDialog("MeshSync",
+            $"Invalid SceneCache output path: {path}. " + Environment.NewLine + 
+            "Please configure in ProjectSettings", 
+            "Ok");
+        
+    }
     
-    #endregion
+    #endregion //SceneCache
 }
 
 } //end namespace
