@@ -55,8 +55,7 @@ internal delegate void DeleteEntityHandler(GameObject obj);
 /// MeshSyncPlayer
 /// </summary>
 [ExecuteInEditMode]
-internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver
-{
+internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver {
 
     
     #region Events
@@ -104,48 +103,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     #endregion
 
 
-    #region Fields
-    [SerializeField] private DataPath m_assetDir = null;
-    [SerializeField] private Transform m_rootObject;
-
-    [SerializeField] protected MeshSyncPlayerConfig m_config;
-    
-    [SerializeField] private bool m_handleAssets = true;
-
-    [SerializeField] private bool m_usePhysicalCameraParams = true;
-    [SerializeField] private bool m_useCustomCameraMatrices = true;
-            
-    [SerializeField] private Material m_dummyMaterial;
-    [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
-    [SerializeField] protected List<TextureHolder> m_textureList = new List<TextureHolder>();
-    [SerializeField] protected List<AudioHolder> m_audioList = new List<AudioHolder>();
-
-    [SerializeField] string[] m_clientObjects_keys;
-    [SerializeField] EntityRecord[] m_clientObjects_values;
-    [SerializeField] int[] m_hostObjects_keys;
-    [SerializeField] EntityRecord[] m_hostObjects_values;
-    [SerializeField] GameObject[] m_objIDTable_keys;
-    [SerializeField] int[] m_objIDTable_values;
-    [SerializeField] int m_objIDSeed = 0;
-
-#if UNITY_EDITOR
-    [SerializeField] bool m_sortEntities = true;
-    [SerializeField] bool m_foldSyncSettings = true;
-    [SerializeField] bool m_foldImportSettings = true;
-    [SerializeField] bool m_foldMisc = true;
-    [SerializeField] bool m_foldMaterialList = true;
-    [SerializeField] bool m_foldAnimationTweak = true;
-    [SerializeField] bool m_foldExportAssets = true;
-    bool m_recordAssignMaterials = false;
-#endif
-
-    private bool m_needReassignMaterials = false;
-
-    private Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
-    protected Dictionary<int, EntityRecord> m_hostObjects = new Dictionary<int, EntityRecord>();
-    private Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
-    #endregion
-
+//----------------------------------------------------------------------------------------------------------------------
     
     #region Properties
     internal static string GetPluginVersion() {
@@ -236,7 +194,8 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 #endif
     #endregion
 
-
+//----------------------------------------------------------------------------------------------------------------------
+    
     #region Impl
     void SerializeDictionary<K,V>(Dictionary<K,V> dic, ref K[] keys, ref V[] values)
     {
@@ -579,7 +538,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             }
         });
 
-#if UNITY_2018_1_OR_NEWER
         // handle constraints
         Try(() =>
         {
@@ -587,7 +545,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             for (int i = 0; i < numConstraints; ++i)
                 UpdateConstraint(scene.GetConstraint(i));
         });
-#endif
+        
 #if UNITY_EDITOR
         if (m_config.ProgressiveDisplay)
             ForceRepaint();
@@ -894,37 +852,12 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     }
     byte[] EncodeToPNG(Texture2D tex)
     {
-#if UNITY_2017_3_OR_NEWER
         return ImageConversion.EncodeToPNG(tex);
-#else
-        return tex.EncodeToPNG();
-#endif
     }
     byte[] EncodeToEXR(Texture2D tex, Texture2D.EXRFlags flags)
     {
-#if UNITY_2017_3_OR_NEWER
         return ImageConversion.EncodeToEXR(tex, flags);
-#else
-        return tex.EncodeToEXR(flags);
-#endif
     }
-
-
-    // keyword strings
-    const string _Color = "_Color";
-    const string _MainTex = "_MainTex";
-
-    const string _EmissionColor = "_EmissionColor";
-    const string _EmissionMap = "_EmissionMap";
-    const string _EMISSION = "_EMISSION";
-
-    const string _Metallic = "_Metallic";
-    const string _Glossiness = "_Glossiness";
-    const string _MetallicGlossMap = "_MetallicGlossMap";
-    const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
-
-    const string _BumpMap = "_BumpMap";
-    const string _NORMALMAP = "_NORMALMAP";
 
     void UpdateMaterial(MaterialData src)
     {
@@ -1138,9 +1071,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                         rec.mesh.MarkDynamic();
                     if (!m_saveAssetsInScene)
                         rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
-#if UNITY_2017_3_OR_NEWER
                     rec.mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-#endif
                 }
                 UpdateMesh(ref rec.mesh, data);
             }
@@ -1226,14 +1157,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return rec;
     }
     
-//----------------------------------------------------------------------------------------------------------------------
-
-    PinnedList<int> m_tmpI = new PinnedList<int>();
-    PinnedList<Vector2> m_tmpV2 = new PinnedList<Vector2>();
-    PinnedList<Vector3> m_tmpV3 = new PinnedList<Vector3>();
-    PinnedList<Vector4> m_tmpV4 = new PinnedList<Vector4>();
-    PinnedList<Color> m_tmpC = new PinnedList<Color>();
-    
+   
 //----------------------------------------------------------------------------------------------------------------------
 
     void UpdateMesh(ref Mesh mesh, MeshData data)
@@ -1283,7 +1207,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
         if (dataFlags.hasBones) {
             mesh.bindposes = data.bindposes;
-#if UNITY_2019_1_OR_NEWER
+
             {
                 // bonesPerVertex + weights1
                 var bonesPerVertex = new NativeArray<byte>(numPoints, Allocator.Temp);
@@ -1294,16 +1218,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 bonesPerVertex.Dispose();
                 weights1.Dispose();
             }
-#else
-            {
-                // weights4
-                var tmpWeights4 = new PinnedList<BoneWeight>();
-                tmpWeights4.Resize(numPoints);
-                data.ReadBoneWeights4(tmpWeights4);
-                mesh.boneWeights = tmpWeights4.Array;
-                tmpWeights4.Dispose();
-            }
-#endif
         }
         if (dataFlags.hasIndices && !keepIndices) {
             int subMeshCount = data.numSubmeshes;
@@ -1506,7 +1420,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
         cam.orthographic = data.orthographic;
 
-#if UNITY_2018_1_OR_NEWER
         // use physical camera params if available
         if (m_usePhysicalCameraParams && dflags.hasFocalLength && dflags.hasSensorSize)
         {
@@ -1514,19 +1427,15 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             cam.focalLength = data.focalLength;
             cam.sensorSize = data.sensorSize;
             cam.lensShift = data.lensShift;
-#if UNITY_2018_3_OR_NEWER
             //todo: gate fit support
-#endif
         }
         else
-#endif
         {
             if (dflags.hasFov)
                 cam.fieldOfView = data.fov;
         }
 
-        if (dflags.hasNearPlane && dflags.hasFarPlane)
-        {
+        if (dflags.hasNearPlane && dflags.hasFarPlane) {
             cam.nearClipPlane = data.nearPlane;
             cam.farClipPlane = data.farPlane;
         }
@@ -1727,7 +1636,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     void UpdateConstraint(ConstraintData data)
     {
-#if UNITY_2018_1_OR_NEWER
         bool dummy = false;
         var trans = FindOrCreateObjectByPath(data.path, true, ref dummy);
         if (trans == null)
@@ -1780,7 +1688,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             default:
                 break;
         }
-#endif
     }
 
     void UpdateAnimation(AnimationClipData clipData)
@@ -1870,9 +1777,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 target = target.gameObject,
                 path = animPath,
                 enableVisibility = m_config.SyncVisibility,
-#if UNITY_2018_1_OR_NEWER
                 usePhysicalCameraParams = m_usePhysicalCameraParams,
-#endif
             };
             if (rec != null)
             {
@@ -2317,17 +2222,13 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         m_tmpC.Dispose();
     }
 
+//----------------------------------------------------------------------------------------------------------------------
     /// <summary>
     /// Monobehaviour's OnEnable(). Can be overridden
     /// </summary>
-    protected virtual void OnEnable()
-    {
+    protected virtual void OnEnable() {
 #if UNITY_EDITOR
-#if UNITY_2019_1_OR_NEWER
         SceneView.duringSceneGui += OnSceneViewGUI;
-#else
-        SceneView.onSceneGUIDelegate += OnSceneViewGUI;
-#endif
 #endif
     }
 
@@ -2337,19 +2238,81 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     protected virtual void OnDisable()
     {
 #if UNITY_EDITOR
-#if UNITY_2019_1_OR_NEWER
         SceneView.duringSceneGui -= OnSceneViewGUI;
-#else
-        SceneView.onSceneGUIDelegate -= OnSceneViewGUI;
-#endif
 #endif
     }
     #endregion
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    private bool m_saveAssetsInScene = true;
-    private bool m_markMeshesDynamic = false;
+    [SerializeField] private DataPath  m_assetDir = null;
+    [SerializeField] private Transform m_rootObject;
+
+    [SerializeField] protected MeshSyncPlayerConfig m_config;
+    
+    [SerializeField] private bool m_handleAssets = true;
+
+    [SerializeField] private bool m_usePhysicalCameraParams = true;
+    [SerializeField] private bool m_useCustomCameraMatrices = true;
+            
+    [SerializeField] private   Material             m_dummyMaterial;
+    [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
+    [SerializeField] protected List<TextureHolder>  m_textureList  = new List<TextureHolder>();
+    [SerializeField] protected List<AudioHolder>    m_audioList    = new List<AudioHolder>();
+
+    [SerializeField] string[]       m_clientObjects_keys;
+    [SerializeField] EntityRecord[] m_clientObjects_values;
+    [SerializeField] int[]          m_hostObjects_keys;
+    [SerializeField] EntityRecord[] m_hostObjects_values;
+    [SerializeField] GameObject[]   m_objIDTable_keys;
+    [SerializeField] int[]          m_objIDTable_values;
+    [SerializeField] int            m_objIDSeed = 0;
+
+#if UNITY_EDITOR
+    [SerializeField] bool m_sortEntities          = true;
+    [SerializeField] bool m_foldSyncSettings      = true;
+    [SerializeField] bool m_foldImportSettings    = true;
+    [SerializeField] bool m_foldMisc              = true;
+    [SerializeField] bool m_foldMaterialList      = true;
+    [SerializeField] bool m_foldAnimationTweak    = true;
+    [SerializeField] bool m_foldExportAssets      = true;
+    bool                  m_recordAssignMaterials = false;
+#endif
+
+    private bool m_saveAssetsInScene     = true;
+    private bool m_markMeshesDynamic     = false;
+    private bool m_needReassignMaterials = false;
+
+    private   Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
+    protected Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
+    private   Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
+
+    
+//----------------------------------------------------------------------------------------------------------------------
+
+    PinnedList<int>     m_tmpI  = new PinnedList<int>();
+    PinnedList<Vector2> m_tmpV2 = new PinnedList<Vector2>();
+    PinnedList<Vector3> m_tmpV3 = new PinnedList<Vector3>();
+    PinnedList<Vector4> m_tmpV4 = new PinnedList<Vector4>();
+    PinnedList<Color>   m_tmpC  = new PinnedList<Color>();
+    
+//----------------------------------------------------------------------------------------------------------------------
+    
+    // keyword strings
+    const string _Color   = "_Color";
+    const string _MainTex = "_MainTex";
+
+    const string _EmissionColor = "_EmissionColor";
+    const string _EmissionMap   = "_EmissionMap";
+    const string _EMISSION      = "_EMISSION";
+
+    const string _Metallic         = "_Metallic";
+    const string _Glossiness       = "_Glossiness";
+    const string _MetallicGlossMap = "_MetallicGlossMap";
+    const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
+
+    const string _BumpMap   = "_BumpMap";
+    const string _NORMALMAP = "_NORMALMAP";
     
 }
 
