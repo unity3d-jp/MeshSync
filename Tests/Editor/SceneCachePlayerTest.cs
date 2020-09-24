@@ -24,37 +24,32 @@ public class SceneCachePlayerTest  {
     private void CreateAndDeleteSceneCachePlayerPrefab(string sceneCachePath) {
         Assert.IsTrue(File.Exists(sceneCachePath));
 
-        string destPrefabPath     = "Assets/TestSceneCache.prefab";
-        GameObject go             = new GameObject();
-        bool       prefabCreated  = MeshSyncMenu.CreateSceneCachePlayerAndPrefab(Path.GetFullPath(sceneCachePath), destPrefabPath, 
-            out SceneCachePlayer player, out GameObject prefab);
+        const string DEST_PREFAB_PATH  = "Assets/TestSceneCache.prefab";
+        const string ASSETS_FOLDER     = "Assets/TestSceneCacheAssets";
+            
+        bool  prefabCreated  = MeshSyncMenu.CreateSceneCachePlayerAndPrefab(
+            Path.GetFullPath(sceneCachePath), DEST_PREFAB_PATH,ASSETS_FOLDER, 
+            out SceneCachePlayer player, out GameObject prefab
+        );
         Assert.IsTrue(prefabCreated);
         Assert.IsNotNull(prefab);
         Assert.IsNotNull(player);
         
+        //Check the prefab
         string prefabPath = AssetDatabase.GetAssetPath(prefab);
         Assert.IsFalse(string.IsNullOrEmpty(prefabPath));
-        Assert.AreEqual(destPrefabPath, prefabPath);
+        Assert.AreEqual(DEST_PREFAB_PATH, prefabPath);
 
-        string prefabDir = Path.GetDirectoryName(prefabPath);
-        Assert.IsNotNull(prefabDir);
-
-        string prefabAssetsFolder = Path.Combine(
-            prefabDir,
-            Path.GetFileNameWithoutExtension(prefabPath)
-        );
-        
-        Assert.IsFalse(string.IsNullOrEmpty(prefabAssetsFolder));       
-        
-        string[] prefabAssetGUIDs = AssetDatabase.FindAssets("", new[] {prefabAssetsFolder});
+        //Check assets folder
+        Assert.IsTrue(Directory.Exists(ASSETS_FOLDER));
+        string[] prefabAssetGUIDs = AssetDatabase.FindAssets("", new[] {ASSETS_FOLDER});
         foreach (string guid in prefabAssetGUIDs) {
             AssetDatabase.DeleteAsset(AssetDatabase.GUIDToAssetPath(guid));
         }
 
-        FileUtil.DeleteFileOrDirectory(prefabAssetsFolder);
+        FileUtil.DeleteFileOrDirectory(ASSETS_FOLDER);
         
         //Cleanup
-        Object.DestroyImmediate(go);
         AssetDatabase.DeleteAsset(prefabPath);
 
         AssetDatabase.Refresh();

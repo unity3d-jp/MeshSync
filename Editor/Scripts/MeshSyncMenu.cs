@@ -77,14 +77,15 @@ internal static class MeshSyncMenu  {
             return;
         }
 
-        //Prefab path
+        //Prefab and assets path
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
+        
+        string scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
         string prefabFileName = Path.GetFileNameWithoutExtension(sceneCacheFilePath);
         string prefabPath = $"{scOutputPath}/{prefabFileName}.prefab";
+        string assetsFolder = Path.Combine(scOutputPath, prefabFileName);
 
-
-        bool created = CreateSceneCachePlayerAndPrefab(sceneCacheFilePath, prefabPath,
+        bool created = CreateSceneCachePlayerAndPrefab(sceneCacheFilePath, prefabPath, assetsFolder,
             out SceneCachePlayer player, out GameObject prefab);        
        
         
@@ -99,17 +100,16 @@ internal static class MeshSyncMenu  {
     
 //----------------------------------------------------------------------------------------------------------------------    
     
-    private static SceneCachePlayer  CreateSceneCachePlayer(GameObject go, string sceneCacheFilePath) {
+    private static SceneCachePlayer  CreateSceneCachePlayer(GameObject go, 
+                                                            string sceneCacheFilePath, 
+                                                            string assetsFolder) 
+    {
         if (!ValidateSceneCacheOutputPath()) {
             return null;
         }
         
         go.DestroyChildrenImmediate();
-        
-        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
-       
-        string assetsFolder = Path.Combine(scOutputPath, go.name);        
+              
         SceneCachePlayer player = go.GetOrAddComponent<SceneCachePlayer>();
         player.Init(assetsFolder);
 
@@ -134,16 +134,17 @@ internal static class MeshSyncMenu  {
 
 //----------------------------------------------------------------------------------------------------------------------    
 
-    internal static bool CreateSceneCachePlayerAndPrefab(string sceneCacheFilePath, string prefabPath, 
-        out SceneCachePlayer player, out GameObject prefab) 
+    internal static bool CreateSceneCachePlayerAndPrefab(string sceneCacheFilePath, 
+                                                         string prefabPath, string assetsFolder, 
+                                                         out SceneCachePlayer player, out GameObject prefab) 
     {
         player = null;
         prefab = null;
         
         GameObject go = new GameObject();        
-        go.name = System.IO.Path.GetFileNameWithoutExtension(sceneCacheFilePath);
+        go.name = Path.GetFileNameWithoutExtension(sceneCacheFilePath);
 
-        player = CreateSceneCachePlayer(go, sceneCacheFilePath);
+        player = CreateSceneCachePlayer(go, sceneCacheFilePath, assetsFolder);
         if (null == player) {
             Object.DestroyImmediate(go);            
             return false;
