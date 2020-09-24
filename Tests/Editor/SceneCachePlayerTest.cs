@@ -23,15 +23,16 @@ public class SceneCachePlayerTest  {
 
     private void CreateAndDeleteSceneCachePlayerPrefab(string sceneCachePath) {
         Assert.IsTrue(File.Exists(sceneCachePath));
-        
-        
-        GameObject go = new GameObject();
-        bool prefabCreated = MeshSyncMenu.CreateSceneCachePlayerPrefab(go, Path.GetFullPath(sceneCachePath));
+
+        string destPrefabPath     = "Assets/TestSceneCache.prefab";
+        GameObject go             = new GameObject();
+        bool       prefabCreated  = MeshSyncMenu.CreateSceneCachePlayerPrefab(go, Path.GetFullPath(sceneCachePath), destPrefabPath);
         Assert.IsTrue(prefabCreated);
         GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(go);
         Assert.IsNotNull(prefab);
         string prefabPath = AssetDatabase.GetAssetPath(prefab);
         Assert.IsFalse(string.IsNullOrEmpty(prefabPath));
+        Assert.AreEqual(destPrefabPath, prefabPath);
 
         string prefabDir = Path.GetDirectoryName(prefabPath);
         Assert.IsNotNull(prefabDir);

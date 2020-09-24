@@ -77,8 +77,14 @@ internal static class MeshSyncMenu  {
             return;
         }
         
+        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
+
         GameObject go = new GameObject();        
-        bool prefabCreated = CreateSceneCachePlayerPrefab(go, sceneCacheFilePath);
+        go.name = System.IO.Path.GetFileNameWithoutExtension(sceneCacheFilePath);
+
+        string prefabPath = $"{scOutputPath}/{go.name}.prefab";
+        bool prefabCreated = CreateSceneCachePlayerPrefab(go, sceneCacheFilePath, prefabPath);
         if (!prefabCreated) {
             EditorUtility.DisplayDialog("MeshSync"
                 ,"Failed to open " + sceneCacheFilePath 
@@ -98,9 +104,6 @@ internal static class MeshSyncMenu  {
             return null;
         }
         
-        // create temporary GO to make prefab
-        go.name = System.IO.Path.GetFileNameWithoutExtension(sceneCacheFilePath);
-
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
        
@@ -129,7 +132,7 @@ internal static class MeshSyncMenu  {
 
 //----------------------------------------------------------------------------------------------------------------------    
 
-    internal static bool CreateSceneCachePlayerPrefab(GameObject go, string sceneCacheFilePath) {
+    internal static bool CreateSceneCachePlayerPrefab(GameObject go, string sceneCacheFilePath, string prefabPath) {
         Assert.IsNotNull(go);
         go.DestroyChildrenImmediate();
         
@@ -141,10 +144,6 @@ internal static class MeshSyncMenu  {
         if (null==player)
             return false;
 
-        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
-
-        string     prefabPath = $"{scOutputPath}/{go.name}.prefab";
         PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabPath, InteractionMode.AutomatedAction);
         return true;
     }
