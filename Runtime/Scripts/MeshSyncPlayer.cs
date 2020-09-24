@@ -856,23 +856,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return ImageConversion.EncodeToEXR(tex, flags);
     }
 
-
-    // keyword strings
-    const string _Color = "_Color";
-    const string _MainTex = "_MainTex";
-
-    const string _EmissionColor = "_EmissionColor";
-    const string _EmissionMap = "_EmissionMap";
-    const string _EMISSION = "_EMISSION";
-
-    const string _Metallic = "_Metallic";
-    const string _Glossiness = "_Glossiness";
-    const string _MetallicGlossMap = "_MetallicGlossMap";
-    const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
-
-    const string _BumpMap = "_BumpMap";
-    const string _NORMALMAP = "_NORMALMAP";
-
     void UpdateMaterial(MaterialData src)
     {
         var materialID = src.id;
@@ -2310,6 +2293,24 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     protected Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
     private   Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
 
+    
+//----------------------------------------------------------------------------------------------------------------------
+    
+    // keyword strings
+    const string _Color   = "_Color";
+    const string _MainTex = "_MainTex";
+
+    const string _EmissionColor = "_EmissionColor";
+    const string _EmissionMap   = "_EmissionMap";
+    const string _EMISSION      = "_EMISSION";
+
+    const string _Metallic         = "_Metallic";
+    const string _Glossiness       = "_Glossiness";
+    const string _MetallicGlossMap = "_MetallicGlossMap";
+    const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
+
+    const string _BumpMap   = "_BumpMap";
+    const string _NORMALMAP = "_NORMALMAP";
     
 }
 
