@@ -535,7 +535,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             }
         });
 
-#if UNITY_2018_1_OR_NEWER
         // handle constraints
         Try(() =>
         {
@@ -543,7 +542,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             for (int i = 0; i < numConstraints; ++i)
                 UpdateConstraint(scene.GetConstraint(i));
         });
-#endif
+        
 #if UNITY_EDITOR
         if (m_config.ProgressiveDisplay)
             ForceRepaint();
