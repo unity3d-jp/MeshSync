@@ -55,8 +55,7 @@ internal delegate void DeleteEntityHandler(GameObject obj);
 /// MeshSyncPlayer
 /// </summary>
 [ExecuteInEditMode]
-internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver
-{
+internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver {
 
     
     #region Events
@@ -101,49 +100,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     /// </summary>
     internal event SceneHandler onSceneUpdateEnd;
     
-    #endregion
-
-
-    #region Fields
-    [SerializeField] private DataPath m_assetDir = null;
-    [SerializeField] private Transform m_rootObject;
-
-    [SerializeField] protected MeshSyncPlayerConfig m_config;
-    
-    [SerializeField] private bool m_handleAssets = true;
-
-    [SerializeField] private bool m_usePhysicalCameraParams = true;
-    [SerializeField] private bool m_useCustomCameraMatrices = true;
-            
-    [SerializeField] private Material m_dummyMaterial;
-    [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
-    [SerializeField] protected List<TextureHolder> m_textureList = new List<TextureHolder>();
-    [SerializeField] protected List<AudioHolder> m_audioList = new List<AudioHolder>();
-
-    [SerializeField] string[] m_clientObjects_keys;
-    [SerializeField] EntityRecord[] m_clientObjects_values;
-    [SerializeField] int[] m_hostObjects_keys;
-    [SerializeField] EntityRecord[] m_hostObjects_values;
-    [SerializeField] GameObject[] m_objIDTable_keys;
-    [SerializeField] int[] m_objIDTable_values;
-    [SerializeField] int m_objIDSeed = 0;
-
-#if UNITY_EDITOR
-    [SerializeField] bool m_sortEntities = true;
-    [SerializeField] bool m_foldSyncSettings = true;
-    [SerializeField] bool m_foldImportSettings = true;
-    [SerializeField] bool m_foldMisc = true;
-    [SerializeField] bool m_foldMaterialList = true;
-    [SerializeField] bool m_foldAnimationTweak = true;
-    [SerializeField] bool m_foldExportAssets = true;
-    bool m_recordAssignMaterials = false;
-#endif
-
-    private bool m_needReassignMaterials = false;
-
-    private Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
-    protected Dictionary<int, EntityRecord> m_hostObjects = new Dictionary<int, EntityRecord>();
-    private Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
     #endregion
 
     
@@ -2348,8 +2304,48 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    private bool m_saveAssetsInScene = true;
-    private bool m_markMeshesDynamic = false;
+    [SerializeField] private DataPath  m_assetDir = null;
+    [SerializeField] private Transform m_rootObject;
+
+    [SerializeField] protected MeshSyncPlayerConfig m_config;
+    
+    [SerializeField] private bool m_handleAssets = true;
+
+    [SerializeField] private bool m_usePhysicalCameraParams = true;
+    [SerializeField] private bool m_useCustomCameraMatrices = true;
+            
+    [SerializeField] private   Material             m_dummyMaterial;
+    [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
+    [SerializeField] protected List<TextureHolder>  m_textureList  = new List<TextureHolder>();
+    [SerializeField] protected List<AudioHolder>    m_audioList    = new List<AudioHolder>();
+
+    [SerializeField] string[]       m_clientObjects_keys;
+    [SerializeField] EntityRecord[] m_clientObjects_values;
+    [SerializeField] int[]          m_hostObjects_keys;
+    [SerializeField] EntityRecord[] m_hostObjects_values;
+    [SerializeField] GameObject[]   m_objIDTable_keys;
+    [SerializeField] int[]          m_objIDTable_values;
+    [SerializeField] int            m_objIDSeed = 0;
+
+#if UNITY_EDITOR
+    [SerializeField] bool m_sortEntities          = true;
+    [SerializeField] bool m_foldSyncSettings      = true;
+    [SerializeField] bool m_foldImportSettings    = true;
+    [SerializeField] bool m_foldMisc              = true;
+    [SerializeField] bool m_foldMaterialList      = true;
+    [SerializeField] bool m_foldAnimationTweak    = true;
+    [SerializeField] bool m_foldExportAssets      = true;
+    bool                  m_recordAssignMaterials = false;
+#endif
+
+    private bool m_saveAssetsInScene     = true;
+    private bool m_markMeshesDynamic     = false;
+    private bool m_needReassignMaterials = false;
+
+    private   Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
+    protected Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
+    private   Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
+
     
 }
 
