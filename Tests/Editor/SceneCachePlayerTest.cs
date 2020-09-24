@@ -26,15 +26,18 @@ public class SceneCachePlayerTest  {
         
         
         GameObject go = new GameObject();
-        go = MeshSyncMenu.CreateSceneCachePlayerPrefab(go, Path.GetFullPath(sceneCachePath));
-        Assert.IsNotNull(go);
+        bool prefabCreated = MeshSyncMenu.CreateSceneCachePlayerPrefab(go, Path.GetFullPath(sceneCachePath));
+        Assert.IsTrue(prefabCreated);
         GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(go);
         Assert.IsNotNull(prefab);
         string prefabPath = AssetDatabase.GetAssetPath(prefab);
         Assert.IsFalse(string.IsNullOrEmpty(prefabPath));
 
+        string prefabDir = Path.GetDirectoryName(prefabPath);
+        Assert.IsNotNull(prefabDir);
+
         string prefabAssetsFolder = Path.Combine(
-            Path.GetDirectoryName(prefabPath),
+            prefabDir,
             Path.GetFileNameWithoutExtension(prefabPath)
         );
         

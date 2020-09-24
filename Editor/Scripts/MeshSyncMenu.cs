@@ -78,8 +78,8 @@ internal static class MeshSyncMenu  {
         }
         
         GameObject go = new GameObject();        
-        GameObject nullCheckGameObject = CreateSceneCachePlayerPrefab(go, sceneCacheFilePath);
-        if (null == nullCheckGameObject) {
+        bool prefabCreated = CreateSceneCachePlayerPrefab(go, sceneCacheFilePath);
+        if (!prefabCreated) {
             EditorUtility.DisplayDialog("MeshSync"
                 ,"Failed to open " + sceneCacheFilePath 
                     + ". Possible reasons: file format version does not match, or the file is not scene cache."
@@ -129,24 +129,24 @@ internal static class MeshSyncMenu  {
 
 //----------------------------------------------------------------------------------------------------------------------    
 
-    internal static GameObject CreateSceneCachePlayerPrefab(GameObject go, string sceneCacheFilePath) {
+    internal static bool CreateSceneCachePlayerPrefab(GameObject go, string sceneCacheFilePath) {
         Assert.IsNotNull(go);
         go.DestroyChildrenImmediate();
         
         if (!ValidateSceneCacheOutputPath()) {
-            return null;
+            return false;
         }
         
         SceneCachePlayer player = CreateSceneCachePlayer(go, sceneCacheFilePath);
         if (null==player)
-            return null;
+            return false;
 
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
 
         string     prefabPath = $"{scOutputPath}/{go.name}.prefab";
         PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabPath, InteractionMode.AutomatedAction);
-        return go;
+        return true;
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
