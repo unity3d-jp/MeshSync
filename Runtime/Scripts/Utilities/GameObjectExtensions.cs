@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using UnityEditor;
+using UnityEngine;
 
 namespace Unity.MeshSync {
 
@@ -17,6 +18,8 @@ internal static class GameObjectExtensions {
         }        
     }
     
+//----------------------------------------------------------------------------------------------------------------------
+    
     /// <summary>
     /// Returns the component of Type type. If one doesn't already exist on the GameObject it will be added.
     /// </summary>
@@ -25,7 +28,15 @@ internal static class GameObjectExtensions {
     /// <returns>Component</returns>
     public static T GetOrAddComponent<T>(this GameObject gameObject) where T : Component {
         return gameObject.GetComponent<T>() ?? gameObject.AddComponent<T>();
-    }    
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
+    
+    public static GameObject SaveAsPrefab(this GameObject go, string prefabPath, 
+        InteractionMode mode = InteractionMode.AutomatedAction) 
+    {
+        return PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabPath, mode);        
+    }
     
 }
 
