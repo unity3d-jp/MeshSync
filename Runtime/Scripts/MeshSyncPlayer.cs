@@ -1239,7 +1239,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
         if (dataFlags.hasBones) {
             mesh.bindposes = data.bindposes;
-#if UNITY_2019_1_OR_NEWER
+
             {
                 // bonesPerVertex + weights1
                 var bonesPerVertex = new NativeArray<byte>(numPoints, Allocator.Temp);
@@ -1250,16 +1250,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 bonesPerVertex.Dispose();
                 weights1.Dispose();
             }
-#else
-            {
-                // weights4
-                var tmpWeights4 = new PinnedList<BoneWeight>();
-                tmpWeights4.Resize(numPoints);
-                data.ReadBoneWeights4(tmpWeights4);
-                mesh.boneWeights = tmpWeights4.Array;
-                tmpWeights4.Dispose();
-            }
-#endif
         }
         if (dataFlags.hasIndices && !keepIndices) {
             int subMeshCount = data.numSubmeshes;
