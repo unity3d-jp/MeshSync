@@ -1154,14 +1154,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return rec;
     }
     
-//----------------------------------------------------------------------------------------------------------------------
-
-    PinnedList<int> m_tmpI = new PinnedList<int>();
-    PinnedList<Vector2> m_tmpV2 = new PinnedList<Vector2>();
-    PinnedList<Vector3> m_tmpV3 = new PinnedList<Vector3>();
-    PinnedList<Vector4> m_tmpV4 = new PinnedList<Vector4>();
-    PinnedList<Color> m_tmpC = new PinnedList<Color>();
-    
+   
 //----------------------------------------------------------------------------------------------------------------------
 
     void UpdateMesh(ref Mesh mesh, MeshData data)
@@ -2291,6 +2284,14 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     protected Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
     private   Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
 
+    
+//----------------------------------------------------------------------------------------------------------------------
+
+    PinnedList<int>     m_tmpI  = new PinnedList<int>();
+    PinnedList<Vector2> m_tmpV2 = new PinnedList<Vector2>();
+    PinnedList<Vector3> m_tmpV3 = new PinnedList<Vector3>();
+    PinnedList<Vector4> m_tmpV4 = new PinnedList<Vector4>();
+    PinnedList<Color>   m_tmpC  = new PinnedList<Color>();
     
 //----------------------------------------------------------------------------------------------------------------------
     
