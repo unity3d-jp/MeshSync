@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
@@ -57,7 +56,7 @@ internal static class MeshSyncMenu  {
     internal static MeshSyncServer CreateMeshSyncServer(bool autoStart) {
         GameObject     go  = new GameObject("MeshSyncServer");
         MeshSyncServer mss = go.AddComponent<MeshSyncServer>();
-        mss.Init("MeshSyncAssets");
+        mss.Init("Assets/MeshSyncAssets");
         mss.SetAutoStartServer(autoStart);
         return mss;
     }
@@ -91,14 +90,10 @@ internal static class MeshSyncMenu  {
 
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
-
-        int numAssetsChars = "Assets".Length;
-        Assert.IsTrue(scOutputPath.Length >= numAssetsChars);
-        
-        string assetDir =  Path.Combine(scOutputPath.Substring(numAssetsChars), go.name);
-        
+       
+        string assetsFolder = Path.Combine(scOutputPath, go.name);        
         SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
-        player.Init(assetDir);
+        player.Init(assetsFolder);
 
         if (!player.OpenCache(path)) {
             Debug.LogError("Failed to open " + path + ". Possible reasons: file format version does not match, or the file is not scene cache.");
