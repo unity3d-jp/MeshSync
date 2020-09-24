@@ -100,6 +100,20 @@ internal static class MeshSyncMenu  {
             UnityEngine.Object.DestroyImmediate(go);
             return null;
         }
+        
+        // Further initialization after opening cache
+        player.UpdatePlayer();
+        player.ExportMaterials(false, true);
+        player.ResetTimeAnimation();
+        player.handleAssets = false;
+        
+        //[TODO-sin: 2020-9-24] This part looks like a hack.
+        SceneData scene = player.GetLastScene();
+        if (!scene.submeshesHaveUniqueMaterial) {
+            MeshSyncPlayerConfig config = player.GetConfig();
+            config.SyncMaterialList = false;
+        }
+        
         return player;
     }
 
@@ -115,16 +129,6 @@ internal static class MeshSyncMenu  {
         if (null==player)
             return null;
 
-        // export materials & animation and generate prefab
-        player.UpdatePlayer();
-        player.ExportMaterials(false, true);
-        player.ResetTimeAnimation();
-        player.handleAssets = false;
-        SceneData scene = player.GetLastScene();
-        if (!scene.submeshesHaveUniqueMaterial) {
-            MeshSyncPlayerConfig config = player.GetConfig();
-            config.SyncMaterialList = false;
-        }
 
 
        
