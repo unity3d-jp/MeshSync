@@ -2273,17 +2273,13 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         m_tmpC.Dispose();
     }
 
+//----------------------------------------------------------------------------------------------------------------------
     /// <summary>
     /// Monobehaviour's OnEnable(). Can be overridden
     /// </summary>
-    protected virtual void OnEnable()
-    {
+    protected virtual void OnEnable() {
 #if UNITY_EDITOR
-#if UNITY_2019_1_OR_NEWER
         SceneView.duringSceneGui += OnSceneViewGUI;
-#else
-        SceneView.onSceneGUIDelegate += OnSceneViewGUI;
-#endif
 #endif
     }
 
@@ -2293,11 +2289,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     protected virtual void OnDisable()
     {
 #if UNITY_EDITOR
-#if UNITY_2019_1_OR_NEWER
         SceneView.duringSceneGui -= OnSceneViewGUI;
-#else
-        SceneView.onSceneGUIDelegate -= OnSceneViewGUI;
-#endif
 #endif
     }
     #endregion
