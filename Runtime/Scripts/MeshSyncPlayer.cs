@@ -371,22 +371,18 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     {
         if (id == Lib.invalidID)
             return null;
-        var rec = m_audioList.Find(a => a.id == id);
+        AudioHolder rec = m_audioList.Find(a => a.id == id);
         return rec != null ? rec.audio : null;
     }
 
-    internal int GetObjectlID(GameObject go)
-    {
+    internal int GetObjectlID(GameObject go) {
         if (go == null)
             return Lib.invalidID;
 
         int ret;
-        if (m_objIDTable.ContainsKey(go))
-        {
+        if (m_objIDTable.ContainsKey(go)) {
             ret = m_objIDTable[go];
-        }
-        else
-        {
+        } else {
             ret = ++m_objIDSeed;
             m_objIDTable[go] = ret;
         }
@@ -395,9 +391,9 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     internal Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created)
     {
-        var names = path.Split('/');
+        string[] names = path.Split('/');
         Transform t = m_rootObject;
-        foreach (var name in names)
+        foreach (string name in names)
         {
             if (name.Length == 0)
                 continue;
@@ -413,8 +409,8 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         Transform ret = null;
         if (parent == null)
         {
-            var roots = SceneManager.GetActiveScene().GetRootGameObjects();
-            foreach (var go in roots)
+            GameObject[] roots = SceneManager.GetActiveScene().GetRootGameObjects();
+            foreach (GameObject go in roots)
             {
                 if (go.name == name)
                 {
@@ -422,15 +418,12 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                     break;
                 }
             }
-        }
-        else
-        {
+        } else {
             ret = parent.Find(name);
         }
 
-        if (createIfNotExist && ret == null)
-        {
-            var go = new GameObject();
+        if (createIfNotExist && ret == null) {
+            GameObject go = new GameObject();
             go.name = name;
             ret = go.GetComponent<Transform>();
             if (parent != null)
@@ -443,17 +436,16 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     internal static Material CreateDefaultMaterial()
     {
         // prefer non Standard shader because it will be pink in HDRP
-        var shader = Shader.Find("HDRP/Lit");
+        Shader shader = Shader.Find("HDRP/Lit");
         if (shader == null)
             shader = Shader.Find("LWRP/Lit");
         if (shader == null)
             shader = Shader.Find("Standard");
-        var ret = new Material(shader);
+        Material ret = new Material(shader);
         return ret;
     }
 
-    internal void ForceRepaint()
-    {
+    internal void ForceRepaint() {
 #if UNITY_EDITOR
         if (!EditorApplication.isPlaying && !EditorApplication.isPaused)
         {
@@ -484,7 +476,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 bool save = false;
                 for (int i = 0; i < numAssets; ++i)
                 {
-                    var asset = scene.GetAsset(i);
+                    AssetData asset = scene.GetAsset(i);
                     switch (asset.type)
                     {
                         case AssetType.File:
@@ -523,7 +515,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             for (int i = 0; i < numObjects; ++i)
             {
                 EntityRecord dst = null;
-                var src = scene.GetEntity(i);
+                TransformData src = scene.GetEntity(i);
                 switch (src.entityType)
                 {
                     case EntityType.Transform:
@@ -569,7 +561,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         // resolve bones
         foreach (var kvp in m_clientObjects)
         {
-            var rec = kvp.Value;
+            EntityRecord rec = kvp.Value;
             if (rec.go == null)
             {
                 if (deadKeys == null)
@@ -582,13 +574,13 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             {
                 rec.smrUpdated = false;
 
-                var smr = rec.skinnedMeshRenderer;
+                SkinnedMeshRenderer smr = rec.skinnedMeshRenderer;
                 if (rec.bonePaths != null && rec.bonePaths.Length > 0)
                 {
-                    var boneCount = rec.bonePaths.Length;
+                    int boneCount = rec.bonePaths.Length;
                     bool dummy = false;
 
-                    var bones = new Transform[boneCount];
+                    Transform[] bones = new Transform[boneCount];
                     for (int bi = 0; bi < boneCount; ++bi)
                         bones[bi] = FindOrCreateObjectByPath(rec.bonePaths[bi], false, ref dummy);
 
@@ -619,14 +611,14 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             }
         }
         if (deadKeys != null)
-            foreach (var key in deadKeys)
+            foreach (string key in deadKeys)
                 m_clientObjects.Remove(key);
 
         // resolve references
         // this must be another pass because resolving bones can affect references
-        foreach (var kvp in m_clientObjects)
+        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
         {
-            var rec = kvp.Value;
+            EntityRecord rec = kvp.Value;
             if (!string.IsNullOrEmpty(rec.reference))
             {
                 EntityRecord srcrec = null;
@@ -648,25 +640,21 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
 #if UNITY_EDITOR
         // sort objects by index
-        if (m_sortEntities)
-        {
-            var rec = m_clientObjects.Values.OrderBy(v => v.index);
-            foreach (var r in rec)
-            {
+        if (m_sortEntities) {
+            IOrderedEnumerable<EntityRecord> rec = m_clientObjects.Values.OrderBy(v => v.index);
+            foreach (EntityRecord r in rec) {
                 if (r.go != null)
                     r.go.GetComponent<Transform>().SetSiblingIndex(r.index + 1000);
             }
         }
 
-        if (!EditorApplication.isPlaying || !EditorApplication.isPaused)
-        {
+        if (!EditorApplication.isPlaying || !EditorApplication.isPaused) {
             // force recalculate skinning
-            foreach (var kvp in m_clientObjects)
+            foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
             {
-                var rec = kvp.Value;
-                var smr = rec.skinnedMeshRenderer;
-                if (smr != null && rec.smrEnabled && rec.go.activeInHierarchy)
-                {
+                EntityRecord rec = kvp.Value;
+                SkinnedMeshRenderer smr = rec.skinnedMeshRenderer;
+                if (smr != null && rec.smrEnabled && rec.go.activeInHierarchy) {
                     smr.enabled = false; // 
                     smr.enabled = true;  // force recalculate skinned mesh on editor. I couldn't find better way...
                 }
@@ -701,7 +689,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
         AudioClip ac = null;
 
-        var format = src.format;
+        AudioFormat format = src.format;
         if (format == AudioFormat.RawFile)
         {
 #if UNITY_EDITOR
@@ -2037,11 +2025,11 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             EditorUtility.CopySerialized(rec.mesh, rec.origMesh);
             rec.mesh = null;
 
-            var mf = rec.go.GetComponent<MeshFilter>();
+            MeshFilter mf = rec.go.GetComponent<MeshFilter>();
             if (mf != null)
                 mf.sharedMesh = rec.origMesh;
 
-            var smr = rec.go.GetComponent<SkinnedMeshRenderer>();
+            SkinnedMeshRenderer smr = rec.go.GetComponent<SkinnedMeshRenderer>();
             if (smr != null)
                 smr.sharedMesh = rec.origMesh;
 
@@ -2055,14 +2043,14 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     public bool ExportMaterialList(string path)
     {
-        if (path == null || path.Length == 0)
+        if (string.IsNullOrEmpty(path))
             return false;
 
         path = path.Replace(Application.dataPath, "Assets/");
         if (!path.EndsWith(".asset"))
             path = path + ".asset";
 
-        var ml = ScriptableObject.CreateInstance<MaterialList>();
+        MaterialList ml = ScriptableObject.CreateInstance<MaterialList>();
         // material list
         ml.materials = m_materialList;
 
@@ -2094,28 +2082,28 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
         path = path.Replace(Application.dataPath, "Assets/");
 
-        var ml = AssetDatabase.LoadAssetAtPath<MaterialList>(path);
+        MaterialList ml = AssetDatabase.LoadAssetAtPath<MaterialList>(path);
         return ApplyMaterialList(ml);
     }
 
     public void CheckMaterialAssigned(bool recordUndo = true)
     {
         bool changed = false;
-        foreach (var kvp in m_clientObjects)
+        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
         {
-            var rec = kvp.Value;
+            EntityRecord rec = kvp.Value;
             if (rec.go != null && rec.go.activeInHierarchy)
             {
-                var mr = rec.go.GetComponent<Renderer>();
+                Renderer mr = rec.go.GetComponent<Renderer>();
                 if (mr == null || rec.mesh == null)
                     continue;
 
-                var materials = mr.sharedMaterials;
+                Material[] materials = mr.sharedMaterials;
                 int n = Math.Min(materials.Length, rec.materialIDs.Length);
                 for (int si = 0; si < n; ++si)
                 {
                     int mid = rec.materialIDs[si];
-                    var mrec = m_materialList.Find(a => a.id == mid);
+                    MaterialHolder mrec = m_materialList.Find(a => a.id == mid);
                     if (mrec != null && materials[si] != mrec.material)
                     {
                         mrec.material = materials[si];
@@ -2128,19 +2116,16 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 break;
         }
 
-        if (changed)
-        {
+        if (changed) {
             int group = 0;
-            if (recordUndo)
-            {
+            if (recordUndo) {
                 // assume last undo group is "Assign Material" performed by mouse drag & drop.
                 // collapse reassigning materials into it.
                 group = Undo.GetCurrentGroup() - 1;
                 m_recordAssignMaterials = true;
             }
             ReassignMaterials();
-            if (recordUndo)
-            {
+            if (recordUndo) {
                 m_recordAssignMaterials = false;
                 Undo.CollapseUndoOperations(group);
                 Undo.FlushUndoRecordObjects();
@@ -2151,15 +2136,13 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     internal void AssignMaterial(MaterialHolder holder, Material mat, bool recordUndo = true)
     {
-        if (recordUndo)
-        {
+        if (recordUndo) {
             Undo.RegisterCompleteObjectUndo(this, "Assign Material");
             m_recordAssignMaterials = true;
         }
         holder.material = mat;
         ReassignMaterials();
-        if (recordUndo)
-        {
+        if (recordUndo) {
             m_recordAssignMaterials = false;
             Undo.FlushUndoRecordObjects();
         }
@@ -2168,7 +2151,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     public List<AnimationClip> GetAnimationClips()
     {
-        var ret = new List<AnimationClip>();
+        List<AnimationClip> ret = new List<AnimationClip>();
 
         Action<GameObject> gatherClips = (go) => {
             AnimationClip[] clips = null;
@@ -2179,7 +2162,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
         gatherClips(gameObject);
         // process children. root children should be enough.
-        var trans = transform;
+        Transform trans = transform;
         int childCount = trans.childCount;
         for (int ci = 0; ci < childCount; ++ci)
             gatherClips(transform.GetChild(ci).gameObject);
@@ -2199,12 +2182,11 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 //----------------------------------------------------------------------------------------------------------------------        
     #region Events
 #if UNITY_EDITOR
-    void Reset()
-    {
+    void Reset() {
         // force disable batching for export
-        var method = typeof(UnityEditor.PlayerSettings).GetMethod("SetBatchingForPlatform", BindingFlags.NonPublic | BindingFlags.Static);
-        if (method != null)
-        {
+        MethodInfo method = typeof(UnityEditor.PlayerSettings).GetMethod("SetBatchingForPlatform", 
+            BindingFlags.NonPublic | BindingFlags.Static);
+        if (method != null) {
             method.Invoke(null, new object[] { BuildTarget.StandaloneWindows, 0, 0 });
             method.Invoke(null, new object[] { BuildTarget.StandaloneWindows64, 0, 0 });
         }
