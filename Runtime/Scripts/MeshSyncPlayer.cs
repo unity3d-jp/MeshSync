@@ -1195,8 +1195,8 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
             {
                 // bonesPerVertex + weights1
-                var bonesPerVertex = new NativeArray<byte>(numPoints, Allocator.Temp);
-                var weights1 = new NativeArray<BoneWeight1>(data.numBoneWeights, Allocator.Temp);
+                NativeArray<byte>        bonesPerVertex = new NativeArray<byte>(numPoints, Allocator.Temp);
+                NativeArray<BoneWeight1> weights1       = new NativeArray<BoneWeight1>(data.numBoneWeights, Allocator.Temp);
                 data.ReadBoneCounts(Misc.ForceGetPointer(ref bonesPerVertex));
                 data.ReadBoneWeightsV(Misc.ForceGetPointer(ref weights1));
                 mesh.SetBoneWeights(bonesPerVertex, weights1);
@@ -1217,7 +1217,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 if (topology == SubmeshData.Topology.Triangles) {
                     mesh.SetTriangles(m_tmpI.List, smi, false);
                 } else {
-                    var mt = MeshTopology.Points;
+                    MeshTopology mt = MeshTopology.Points;
                     switch (topology)
                     {
                         case SubmeshData.Topology.Lines: mt = MeshTopology.Lines; break;
@@ -1261,18 +1261,18 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     EntityRecord UpdatePoints(PointsData data)
     {
 
-        var dtrans = data.transform;
-        var dflags = data.dataFlags;
-        var rec = UpdateTransform(dtrans);
+        TransformData dtrans = data.transform;
+        PointsDataFlags dflags = data.dataFlags;
+        EntityRecord rec = UpdateTransform(dtrans);
         if (rec == null || dflags.unchanged)
             return null;
 
         // reference (source mesh) will be resolved in UpdateReference()
 
-        var path = dtrans.path;
-        var go = rec.go;
+        string path = dtrans.path;
+        GameObject go = rec.go;
 
-        var dst = rec.pointCache;
+        PointCache dst = rec.pointCache;
         if (dst == null)
         {
             rec.pointCacheRenderer = Misc.GetOrAddComponent<PointCacheRenderer>(go);
@@ -1302,42 +1302,35 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     EntityRecord UpdateTransform(TransformData data)
     {
-        var path = data.path;
+        string path = data.path;
         int hostID = data.hostID;
         if (path.Length == 0)
             return null;
 
         Transform trans = null;
         EntityRecord rec = null;
-        if (hostID != Lib.invalidID)
-        {
-            if (m_hostObjects.TryGetValue(hostID, out rec))
-            {
-                if (rec.go == null)
-                {
+        if (hostID != Lib.invalidID) {
+            if (m_hostObjects.TryGetValue(hostID, out rec)) {
+                if (rec.go == null) {
                     m_hostObjects.Remove(hostID);
                     rec = null;
                 }
             }
             if (rec == null)
                 return null;
-        }
-        else
-        {
-            if (m_clientObjects.TryGetValue(path, out rec))
-            {
+        } else  {
+            if (m_clientObjects.TryGetValue(path, out rec)) {
                 if (rec.go == null)
                 {
                     m_clientObjects.Remove(path);
                     rec = null;
                 }
             }
-            if (rec == null)
-            {
+            
+            if (rec == null) {
                 bool created = false;
                 trans = FindOrCreateObjectByPath(path, true, ref created);
-                rec = new EntityRecord
-                {
+                rec = new EntityRecord {
                     go = trans.gameObject,
                     trans = trans,
                     recved = true,
@@ -1350,10 +1343,10 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         if (trans == null)
             trans = rec.trans = rec.go.transform;
 
-        var dflags = data.dataFlags;
+        TransformDataFlags dflags = data.dataFlags;
         if (!dflags.unchanged)
         {
-            var visibility = data.visibility;
+            VisibilityFlags visibility = data.visibility;
             rec.index = data.index;
             rec.dataType = data.entityType;
 
@@ -1391,13 +1384,13 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         if (!m_config.SyncCameras)
             return null;
 
-        var dtrans = data.transform;
-        var dflags = data.dataFlags;
-        var rec = UpdateTransform(dtrans);
+        TransformData dtrans = data.transform;
+        CameraDataFlags dflags = data.dataFlags;
+        EntityRecord rec = UpdateTransform(dtrans);
         if (rec == null || dflags.unchanged)
             return null;
 
-        var cam = rec.camera;
+        Camera cam = rec.camera;
         if (cam == null)
             cam = rec.camera = Misc.GetOrAddComponent<Camera>(rec.go);
         if (m_config.SyncVisibility && dtrans.dataFlags.hasVisibility)
@@ -1442,20 +1435,20 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         if (!m_config.SyncLights)
             return null;
 
-        var dtrans = data.transform;
-        var dflags = data.dataFlags;
-        var rec = UpdateTransform(dtrans);
+        TransformData dtrans = data.transform;
+        LightDataFlags dflags = data.dataFlags;
+        EntityRecord rec = UpdateTransform(dtrans);
         if (rec == null || dflags.unchanged)
             return null;
 
-        var lt = rec.light;
+        Light lt = rec.light;
         if (lt == null)
             lt = rec.light = Misc.GetOrAddComponent<Light>(rec.go);
 
         if (m_config.SyncVisibility && dtrans.dataFlags.hasVisibility)
             lt.enabled = dtrans.visibility.visibleInRender;
 
-        var lightType = data.lightType;
+        LightType lightType = data.lightType;
         if ((int)lightType != -1)
             lt.type = data.lightType;
         if (dflags.hasShadowType)
@@ -1480,11 +1473,11 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             return;
         }
 
-        var dstgo = dst.go;
-        var srcgo = src.go;
+        GameObject dstgo = dst.go;
+        GameObject srcgo = src.go;
         if (src.dataType == EntityType.Camera)
         {
-            var srccam = src.camera;
+            Camera srccam = src.camera;
             if (srccam != null)
             {
                 var dstcam = dst.camera;
@@ -1501,7 +1494,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
         else if (src.dataType == EntityType.Light)
         {
-            var srclt = src.light;
+            Light srclt = src.light;
             if (srclt != null)
             {
                 var dstlt = dst.light;
@@ -1518,29 +1511,26 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
         else if (src.dataType == EntityType.Mesh)
         {
-            var mesh = src.mesh;
-            var srcmr = src.meshRenderer;
-            var srcsmr = src.skinnedMeshRenderer;
+            Mesh mesh = src.mesh;
+            MeshRenderer srcmr = src.meshRenderer;
+            SkinnedMeshRenderer srcsmr = src.skinnedMeshRenderer;
 
             if (mesh != null)
             {
-                var dstpcr = dst.pointCacheRenderer;
-                if (dstpcr != null)
-                {
+                PointCacheRenderer dstpcr = dst.pointCacheRenderer;
+                if (dstpcr != null) {
                     if (m_config.SyncVisibility && dst.hasVisibility)
                         dstpcr.enabled = dst.visibility.visibleInRender;
                     dstpcr.sharedMesh = mesh;
 
-                    if (dstpcr.sharedMaterials == null || dstpcr.sharedMaterials.Length == 0)
-                    {
+                    if (dstpcr.sharedMaterials == null || dstpcr.sharedMaterials.Length == 0) {
                         Material[] materials = null;
                         if (srcmr != null)
                             materials = srcmr.sharedMaterials;
                         else if (srcsmr != null)
                             materials = srcsmr.sharedMaterials;
 
-                        if (materials != null)
-                        {
+                        if (materials != null) {
                             foreach (var m in materials)
                                 m.enableInstancing = true;
                             dstpcr.sharedMaterials = materials;
@@ -1549,10 +1539,9 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 }
                 else if (srcmr != null)
                 {
-                    var dstmr = dst.meshRenderer;
-                    var dstmf = dst.meshFilter;
-                    if (dstmr == null)
-                    {
+                    MeshRenderer dstmr = dst.meshRenderer;
+                    MeshFilter dstmf = dst.meshFilter;
+                    if (dstmr == null) {
                         dstmr = dst.meshRenderer = Misc.GetOrAddComponent<MeshRenderer>(dstgo);
                         dstmf = dst.meshFilter = Misc.GetOrAddComponent<MeshFilter>(dstgo);
                     }
@@ -1561,10 +1550,8 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                         dstmr.enabled = dst.visibility.visibleInRender;
                     dstmf.sharedMesh = mesh;
                     dstmr.sharedMaterials = srcmr.sharedMaterials;
-                }
-                else if (srcsmr != null)
-                {
-                    var dstsmr = dst.skinnedMeshRenderer;
+                } else if (srcsmr != null) {
+                    SkinnedMeshRenderer dstsmr = dst.skinnedMeshRenderer;
                     if (dstsmr == null)
                         dstsmr = dst.skinnedMeshRenderer = Misc.GetOrAddComponent<SkinnedMeshRenderer>(dstgo);
 
@@ -1587,11 +1574,9 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 }
 
                 // handle mesh collider
-                if (m_config.UpdateMeshColliders)
-                {
+                if (m_config.UpdateMeshColliders) {
                     MeshCollider srcmc = srcgo.GetComponent<MeshCollider>();
-                    if (srcmc != null && srcmc.sharedMesh == mesh)
-                    {
+                    if (srcmc != null && srcmc.sharedMesh == mesh) {
                         MeshCollider dstmc = Misc.GetOrAddComponent<MeshCollider>(dstgo);
                         dstmc.enabled = srcmc.enabled;
                         dstmc.isTrigger = srcmc.isTrigger;
@@ -1602,16 +1587,13 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                     }
                 }
             }
-        }
-        else if (src.dataType == EntityType.Points)
-        {
-            var srcpcr = src.pointCacheRenderer;
-            if (srcpcr != null)
-            {
-                var dstpcr = dst.pointCacheRenderer;
+        } else if (src.dataType == EntityType.Points) {
+            PointCacheRenderer srcpcr = src.pointCacheRenderer;
+            if (srcpcr != null) {
+                PointCacheRenderer dstpcr = dst.pointCacheRenderer;
                 dstpcr.sharedMesh = srcpcr.sharedMesh;
 
-                var materials = srcpcr.sharedMaterials;
+                Material[] materials = srcpcr.sharedMaterials;
                 for (int i = 0; i < materials.Length; ++i)
                     materials[i].enableInstancing = true;
                 dstpcr.sharedMaterials = materials;
