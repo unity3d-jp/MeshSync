@@ -1094,9 +1094,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                         rec.mesh.MarkDynamic();
                     if (!m_saveAssetsInScene)
                         rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
-#if UNITY_2017_3_OR_NEWER
                     rec.mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-#endif
                 }
                 UpdateMesh(ref rec.mesh, data);
             }
