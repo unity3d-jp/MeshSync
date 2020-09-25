@@ -131,7 +131,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     internal static int protocolVersion { get { return Lib.protocolVersion; } }
 
-    protected string GetAssetsFolder() { return m_assetsFolder;}   
+    internal string GetAssetsFolder() { return m_assetsFolder;}   
 
     #endregion Simple Getter/Setter
     
