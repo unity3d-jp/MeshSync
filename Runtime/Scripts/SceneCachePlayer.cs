@@ -95,6 +95,13 @@ internal class SceneCachePlayer : MeshSyncPlayer {
             return false;
         }
 
+        //Delete all children
+        PrefabInstanceStatus prefabInstanceStatus = PrefabUtility.GetPrefabInstanceStatus(gameObject);
+        if (PrefabInstanceStatus.NotAPrefab != prefabInstanceStatus) {
+            PrefabUtility.UnpackPrefabInstance(gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);            
+        } 
+        gameObject.DestroyChildrenImmediate();
+
         //Initialization after opening a cache file
         m_filePath = path;
         m_timeRange = m_sceneCache.timeRange;
