@@ -149,7 +149,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
 
 #if UNITY_EDITOR
-    public bool ResetTimeAnimation() {
+    internal bool ResetTimeAnimation() {
         if (m_sceneCache.sceneCount < 2)
             return false;
 
@@ -200,7 +200,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
 #endif
 
-    public void UpdatePlayer() {
+    private void UpdatePlayer() {
 
         if (m_timeUnit == TimeUnit.Frames) {
             int offset = (int)m_baseFrame;
