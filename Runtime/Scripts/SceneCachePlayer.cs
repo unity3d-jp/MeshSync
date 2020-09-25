@@ -98,8 +98,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         }
 
         //Delete all children
-        PrefabInstanceStatus prefabInstanceStatus = PrefabUtility.GetPrefabInstanceStatus(gameObject);
-        if (PrefabInstanceStatus.NotAPrefab != prefabInstanceStatus) {
+        if (gameObject.IsPrefabInstance()) {
             PrefabUtility.UnpackPrefabInstance(gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);            
         } 
         gameObject.DestroyChildrenImmediate();

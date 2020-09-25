@@ -108,10 +108,24 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
 //----------------------------------------------------------------------------------------------------------------------
 
     static void OnFilePathChanged(SceneCachePlayer cachePlayer, string path) {
+        
+        string prefabPath = null;
+        if (cachePlayer.gameObject.IsPrefabInstance()) {
+            GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(cachePlayer.gameObject);
+            prefabPath = AssetDatabase.GetAssetPath(prefab);
+        }
+
+        
         cachePlayer.CloseCache();
         cachePlayer.SetFilePath(path);
         Undo.RecordObject(cachePlayer, "SceneCachePlayer");
         cachePlayer.OpenCacheInEditor(path);
+
+        //Save as prefab again
+        if (string.IsNullOrEmpty(prefabPath)) {
+            cachePlayer.gameObject.SaveAsPrefab(prefabPath);
+        }
+        
         GUIUtility.ExitGUI();
     }
     
