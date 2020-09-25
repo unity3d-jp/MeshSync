@@ -115,10 +115,9 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         m_filePath = path;
         m_timeRange = m_sceneCache.timeRange;
         
-        UpdatePlayer();
+        UpdatePlayer(/* updateNonMaterialAssets = */ true);
         ExportMaterials(false, true);
         ResetTimeAnimation();
-        handleAssets = false;
         
         SceneData scene = GetLastScene();
         if (!scene.submeshesHaveUniqueMaterial) {
@@ -210,7 +209,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
 #endif
 
-    private void UpdatePlayer() {
+    private void UpdatePlayer(bool updateNonMaterialAssets) {
 
         if (m_timeUnit == TimeUnit.Frames) {
             int offset = (int)m_baseFrame;
@@ -237,7 +236,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 #endif
                     // update scene
                     this.BeforeUpdateScene();
-                    this.UpdateScene(scene);
+                    this.UpdateScene(scene, updateNonMaterialAssets);
                     this.AfterUpdateScene();
 #if UNITY_EDITOR
                     SetSortEntities(false);
@@ -253,6 +252,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
                 m_sceneCache.Preload(m_sceneCache.GetFrame(m_time));
             }
         }
+
     }
 
     public SceneData GetLastScene() {
@@ -369,7 +369,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     // Update() is called *before* animation update.
     // in many cases m_time is controlled by animation system. so scene update must be handled in LateUpdate()
     void LateUpdate() {
-        UpdatePlayer();
+        UpdatePlayer(false);
     }
     #endregion
 
@@ -384,6 +384,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     [SerializeField] int       m_frame         = 1;
     [SerializeField] int       m_preloadLength = 1;
 
+    
     [HideInInspector][SerializeField] private int m_version = (int) CUR_SCENE_CACHE_PLAYER_VERSION;
     private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.STRING_PATH_0_4_0;
     

@@ -141,12 +141,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     internal MeshSyncPlayerConfig GetConfig() { return m_config; }
 
-    internal bool handleAssets
-    {
-        get { return m_handleAssets; }
-        set { m_handleAssets = value; }
-    }
-
 
     internal bool usePhysicalCameraParams
     {
@@ -471,20 +465,20 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             onSceneUpdateBegin.Invoke();
     }
 
-    internal void UpdateScene(SceneData scene)
-    {
+    protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets) {
         // handle assets
-        Try(() =>
-        {
+        Try(() => {
             int numAssets = scene.numAssets;
-            if (numAssets > 0)
-            {
+            if (numAssets > 0) {
                 bool save = false;
-                for (int i = 0; i < numAssets; ++i)
-                {
+                for (int i = 0; i < numAssets; ++i) {
                     AssetData asset = scene.GetAsset(i);
-                    switch (asset.type)
-                    {
+
+                    //Only update MaterialAsset if specified
+                    if (!updateNonMaterialAssets && asset.type != AssetType.Material)
+                        continue;
+                    
+                    switch (asset.type) {
                         case AssetType.File:
                             UpdateFileAsset((FileAssetData)asset);
                             break;
@@ -678,20 +672,15 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             onSceneUpdateEnd.Invoke();
     }
 
-    void UpdateFileAsset(FileAssetData src)
-    {
+//----------------------------------------------------------------------------------------------------------------------
+    
+    void UpdateFileAsset(FileAssetData src) {
 #if UNITY_EDITOR
-        if (!m_handleAssets)
-            return;
-
         src.WriteToFile(m_assetsFolder + "/" + src.name);
 #endif
     }
 
-    void UpdateAudio(AudioData src)
-    {
-        if (!m_handleAssets)
-            return;
+    void UpdateAudio(AudioData src) {
 
         AudioClip ac = null;
 
@@ -748,10 +737,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
     }
 
-    void UpdateTexture(TextureData src)
-    {
-        if (!m_handleAssets)
-            return;
+    void UpdateTexture(TextureData src) {
 
         Texture2D texture = null;
 #if UNITY_EDITOR
@@ -1652,11 +1638,8 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
     }
 
-    void UpdateAnimation(AnimationClipData clipData)
-    {
+    void UpdateAnimation(AnimationClipData clipData) {
 #if UNITY_EDITOR
-        if (!m_handleAssets)
-            return;
 
         clipData.Convert((InterpolationMode) m_config.AnimationInterpolation);
         if (m_config.KeyframeReduction)
@@ -2199,8 +2182,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     [SerializeField] protected MeshSyncPlayerConfig m_config;
     
-    [SerializeField] private bool m_handleAssets = true;
-
     [SerializeField] private bool m_usePhysicalCameraParams = true;
     [SerializeField] private bool m_useCustomCameraMatrices = true;
             
