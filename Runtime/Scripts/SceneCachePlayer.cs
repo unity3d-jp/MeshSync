@@ -89,6 +89,8 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     #endregion
 
     #region Internal Methods
+
+#if UNITY_EDITOR    
     internal bool OpenCache(string path) {
 
         if (!OpenCacheInternal(path)) {
@@ -118,6 +120,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         
         return true;
     }
+#endif //UNITY_EDITOR    
 
     private bool ReopenCache() {
         Assert.IsFalse(string.IsNullOrEmpty(m_filePath));
@@ -301,6 +304,11 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         m_dbgProfileReport = sb.ToString();
     }
 
+    
+#endif
+    
+//----------------------------------------------------------------------------------------------------------------------
+
     void Log(string logMessage, LogType logType = LogType.DEBUG) {
         if (!m_config.Logging)
             return;
@@ -314,8 +322,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         }        
     }
     
-#endif
-
 //----------------------------------------------------------------------------------------------------------------------
     
     void ClampTime() {
