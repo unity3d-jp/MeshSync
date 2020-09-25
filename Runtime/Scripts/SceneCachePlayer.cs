@@ -83,7 +83,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     #region Public Methods
     public bool OpenCache(string path) {
         CloseCache();
-        m_openRequested = false;
 
         m_sceneCache = SceneCacheData.Open(path);
         if (m_sceneCache) {
@@ -91,7 +90,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
             this.sortEntities = true;
 #endif
             m_filePath = path;
-            m_pathPrev = path;
             m_timeRange = m_sceneCache.timeRange;
             if (m_config.Logging)
                 Debug.Log(string.Format("SceneCachePlayer: cache opened ({0})", path));
@@ -165,9 +163,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 #endif
 
     public void UpdatePlayer() {
-        if (m_openRequested) {
-            OpenCache(m_filePath);
-        }
 
         if (m_timeUnit == TimeUnit.Frames) {
             int offset = (int)m_baseFrame;
@@ -240,12 +235,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     
     #region Impl
     void CheckParamsUpdated() {
-        string path = m_filePath;
-        if (path != m_pathPrev) {
-            m_pathPrev = path;
-            m_openRequested = true;
-        }
-
         if (m_sceneCache)
             m_time = Mathf.Clamp(m_time, m_timeRange.start, m_timeRange.end);
     }
@@ -296,13 +285,16 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 //----------------------------------------------------------------------------------------------------------------------    
     protected override void OnEnable() {
         base.OnEnable();
+        if (!string.IsNullOrEmpty(m_filePath)) {
+            OpenCache(m_filePath);
+        }
+        
         CheckParamsUpdated();
     }
 
     protected override void OnDisable() {
         base.OnDisable();
         CloseCache();
-        m_pathPrev = "";
     }
 
     // note:
@@ -313,8 +305,8 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
     #endregion
 
-//----------------------------------------------------------------------------------------------------------------------    
-    #region Fields
+//----------------------------------------------------------------------------------------------------------------------
+    
     [SerializeField] string    m_filePath = null;
     [SerializeField] DataPath  m_cacheFilePath = null; //OBSOLETE
     [SerializeField] TimeUnit  m_timeUnit      = TimeUnit.Seconds;
@@ -330,9 +322,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     
     SceneCacheData m_sceneCache;
     TimeRange      m_timeRange;
-    string         m_pathPrev      = "";
     float          m_timePrev      = -1;
-    bool           m_openRequested = false;
 
 #if UNITY_EDITOR
     [SerializeField] bool m_foldCacheSettings = true;
@@ -340,7 +330,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     float                 m_dbgSceneUpdateTime;
     string                m_dbgProfileReport;
 #endif
-    #endregion
 
 //----------------------------------------------------------------------------------------------------------------------    
     
