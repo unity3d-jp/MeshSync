@@ -1907,7 +1907,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     }
 
 
-    public void ExportMaterials(bool overwrite = true, bool useExistingOnes = false)
+    internal void ExportMaterials(bool overwrite = true, bool useExistingOnes = false)
     {
         MakeSureAssetDirectoryExists();
 

@@ -117,17 +117,6 @@ internal static class MeshSyncMenu  {
             return null;
         }
         
-        // Further initialization after opening cache
-        player.UpdatePlayer();
-        player.ExportMaterials(false, true);
-        player.ResetTimeAnimation();
-        player.handleAssets = false;
-        
-        SceneData scene = player.GetLastScene();
-        if (!scene.submeshesHaveUniqueMaterial) {
-            MeshSyncPlayerConfig config = player.GetConfig();
-            config.SyncMaterialList = false;
-        }
         
         return player;
     }
