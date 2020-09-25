@@ -111,6 +111,14 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         m_assetsFolder = assetsFolder;
         m_rootObject   = gameObject.transform;
         
+        m_materialList.Clear();
+        m_textureList.Clear();
+        m_audioList.Clear();
+        
+        m_clientObjects.Clear();
+        m_hostObjects.Clear();
+        m_objIDTable.Clear();
+        
         InitInternalV();
     }
 
