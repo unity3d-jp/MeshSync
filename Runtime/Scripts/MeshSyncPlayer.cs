@@ -483,16 +483,16 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                             UpdateFileAsset((FileAssetData)asset);
                             break;
                         case AssetType.Audio:
-                            UpdateAudio((AudioData)asset);
+                            UpdateAudioAsset((AudioData)asset);
                             break;
                         case AssetType.Texture:
-                            UpdateTexture((TextureData)asset);
+                            UpdateTextureAsset((TextureData)asset);
                             break;
                         case AssetType.Material:
-                            UpdateMaterial((MaterialData)asset);
+                            UpdateMaterialAsset((MaterialData)asset);
                             break;
                         case AssetType.Animation:
-                            UpdateAnimation((AnimationClipData)asset);
+                            UpdateAnimationAsset((AnimationClipData)asset);
                             save = true;
                             break;
                         default:
@@ -680,7 +680,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 #endif
     }
 
-    void UpdateAudio(AudioData src) {
+    void UpdateAudioAsset(AudioData src) {
 
         AudioClip ac = null;
 
@@ -737,7 +737,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
     }
 
-    void UpdateTexture(TextureData src) {
+    void UpdateTextureAsset(TextureData src) {
 
         Texture2D texture = null;
 #if UNITY_EDITOR
@@ -839,7 +839,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return ImageConversion.EncodeToEXR(tex, flags);
     }
 
-    void UpdateMaterial(MaterialData src)
+    void UpdateMaterialAsset(MaterialData src)
     {
         int materialID = src.id;
         string materialName = src.name;
@@ -1638,7 +1638,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
     }
 
-    void UpdateAnimation(AnimationClipData clipData) {
+    void UpdateAnimationAsset(AnimationClipData clipData) {
 #if UNITY_EDITOR
 
         clipData.Convert((InterpolationMode) m_config.AnimationInterpolation);
@@ -1727,7 +1727,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             data.ExportToClip(ctx);
         }
 
-        //Debug.Log("UpdateAnimation() " + (Time.realtimeSinceStartup - start) + " sec");
+        //Debug.Log("UpdateAnimationAsset() " + (Time.realtimeSinceStartup - start) + " sec");
 
         // fire event
         if (onUpdateAnimation != null)
