@@ -2180,7 +2180,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    [SerializeField] private DataPath  m_assetDir = null;
+    [SerializeField] private DataPath  m_assetDir = null;   //OBSOLETE
     [SerializeField] private string  m_assetsFolder = null; //Always starts with "Assets"
     [SerializeField] private Transform m_rootObject;
 
