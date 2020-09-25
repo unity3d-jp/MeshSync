@@ -93,18 +93,18 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         CloseCache();
 
         m_sceneCache = SceneCacheData.Open(path);
-        if (m_sceneCache) {
-#if UNITY_EDITOR
-            this.sortEntities = true;
-#endif
-            m_filePath = path;
-            m_timeRange = m_sceneCache.timeRange;
-            Log($"SceneCachePlayer: cache opened ({path})", LogType.DEBUG);
-            return true;
-        } else {
+        if (!m_sceneCache) {
             Log($"SceneCachePlayer: cache open failed ({path})", LogType.ERROR);
-            return false;
+            return false;            
         }
+        
+#if UNITY_EDITOR
+        this.sortEntities = true;
+#endif
+        m_filePath = path;
+        m_timeRange = m_sceneCache.timeRange;
+        Log($"SceneCachePlayer: cache opened ({path})", LogType.DEBUG);
+        return true;
     }
 
     public void CloseCache() {
