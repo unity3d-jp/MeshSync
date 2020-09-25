@@ -90,6 +90,22 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
     #region Public Methods
     public bool OpenCache(string path) {
+
+        if (!OpenCacheInternal(path)) {
+            return false;
+        }
+        
+        m_filePath = path;
+        m_timeRange = m_sceneCache.timeRange;
+        return true;
+    }
+
+    private bool ReopenCache() {
+        Assert.IsFalse(string.IsNullOrEmpty(m_filePath));
+        return OpenCacheInternal(m_filePath);
+    }
+
+    private bool OpenCacheInternal(string path) {
         CloseCache();
 
         m_sceneCache = SceneCacheData.Open(path);
@@ -101,29 +117,10 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 #if UNITY_EDITOR
         SetSortEntities(true);
 #endif
-        m_filePath = path;
-        m_timeRange = m_sceneCache.timeRange;
         Log($"SceneCachePlayer: cache opened ({path})", LogType.DEBUG);
         return true;
     }
-
-    private bool ReopenCache() {
-        Assert.IsFalse(string.IsNullOrEmpty(m_filePath));
-        CloseCache();
-
-        m_sceneCache = SceneCacheData.Open(m_filePath);
-        if (!m_sceneCache) {
-            Log($"SceneCachePlayer: cache open failed ({m_filePath})", LogType.ERROR);
-            return false;            
-        }
-        
-#if UNITY_EDITOR
-        SetSortEntities(true);
-#endif
-        Log($"SceneCachePlayer: cache opened ({m_filePath})", LogType.DEBUG);
-        return true;
-
-    }
+    
 
     public void CloseCache() {
         if (m_sceneCache) {
