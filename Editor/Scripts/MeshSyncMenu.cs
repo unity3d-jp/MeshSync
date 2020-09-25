@@ -100,7 +100,7 @@ internal static class MeshSyncMenu  {
     
 //----------------------------------------------------------------------------------------------------------------------    
     
-    private static SceneCachePlayer  CreateSceneCachePlayer(GameObject go, 
+    private static SceneCachePlayer  AddSceneCachePlayer(GameObject go, 
                                                             string sceneCacheFilePath, 
                                                             string assetsFolder) 
     {
@@ -144,7 +144,7 @@ internal static class MeshSyncMenu  {
         GameObject go = new GameObject();        
         go.name = Path.GetFileNameWithoutExtension(sceneCacheFilePath);
 
-        player = CreateSceneCachePlayer(go, sceneCacheFilePath, assetsFolder);
+        player = AddSceneCachePlayer(go, sceneCacheFilePath, assetsFolder);
         if (null == player) {
             Object.DestroyImmediate(go);            
             return false;
