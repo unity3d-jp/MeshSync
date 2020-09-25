@@ -64,7 +64,6 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
                 }
                 GUILayout.Label("or");
                 if (GUILayout.Button("Move", GUILayout.Width(BUTTON_WIDTH))) {
-                    m_sceneCachePlayer.CloseCache();
                     string dstPath = Misc.MoveFileToStreamingAssets(fullPath);
                     OnFilePathChanged(m_sceneCachePlayer, dstPath);
                 }
@@ -108,7 +107,8 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    void OnFilePathChanged(SceneCachePlayer cachePlayer, string path) {
+    static void OnFilePathChanged(SceneCachePlayer cachePlayer, string path) {
+        cachePlayer.CloseCache();
         cachePlayer.SetFilePath(path);
         Undo.RecordObject(cachePlayer, "SceneCachePlayer");
         cachePlayer.OpenCacheInEditor(path);
