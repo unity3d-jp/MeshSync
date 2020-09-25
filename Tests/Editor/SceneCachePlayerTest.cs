@@ -10,21 +10,13 @@ public class SceneCachePlayerTest  {
 
     [Test]
     public void CreateSceneCache() {
-
-        string cubeTestDataPath = Path.Combine(TEST_DATA_PATH, "Cube.sc");
-        string sphereTestDataPath = Path.Combine(TEST_DATA_PATH, "Sphere.sc");
-
-        CreateAndDeleteSceneCachePlayerPrefab(cubeTestDataPath);
-        CreateAndDeleteSceneCachePlayerPrefab(sphereTestDataPath);
-        
+        CreateAndDeleteSceneCachePlayerPrefab(CUBE_TEST_DATA_PATH);
+        CreateAndDeleteSceneCachePlayerPrefab(SPHERE_TEST_DATA_PATH);        
     }
 
 //----------------------------------------------------------------------------------------------------------------------       
     [Test]
     public void ChangeSceneCache() {
-
-        string cubeTestDataPath   = Path.Combine(TEST_DATA_PATH, "Cube.sc");
-        string sphereTestDataPath = Path.Combine(TEST_DATA_PATH, "Sphere.sc");
         
         //Initial setup            
         GameObject       go     = new GameObject();
@@ -32,9 +24,9 @@ public class SceneCachePlayerTest  {
         Assert.IsFalse(player.IsSceneCacheOpened());
         
         //Change
-        SceneCachePlayerInspector.ChangeSceneCacheFile(player, cubeTestDataPath);
+        SceneCachePlayerInspector.ChangeSceneCacheFile(player, CUBE_TEST_DATA_PATH);
         Assert.IsTrue(player.IsSceneCacheOpened());       
-        SceneCachePlayerInspector.ChangeSceneCacheFile(player, sphereTestDataPath);
+        SceneCachePlayerInspector.ChangeSceneCacheFile(player, SPHERE_TEST_DATA_PATH);
         Assert.IsTrue(player.IsSceneCacheOpened());
 
         //Cleanup
@@ -83,8 +75,10 @@ public class SceneCachePlayerTest  {
 
 //----------------------------------------------------------------------------------------------------------------------    
     
-    private readonly string TEST_DATA_PATH = Path.Combine("Packages", MeshSyncConstants.PACKAGE_NAME, "Tests", "Data");
-
+    private static readonly string TEST_DATA_PATH = Path.Combine("Packages", MeshSyncConstants.PACKAGE_NAME, "Tests", "Data");
+    private static readonly string CUBE_TEST_DATA_PATH   = Path.Combine(TEST_DATA_PATH, "Cube.sc");
+    private static readonly string SPHERE_TEST_DATA_PATH = Path.Combine(TEST_DATA_PATH, "Sphere.sc");
+    
 }
 
 }
