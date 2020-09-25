@@ -233,11 +233,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    #region Impl
-    void CheckParamsUpdated() {
-        if (m_sceneCache)
-            m_time = Mathf.Clamp(m_time, m_timeRange.start, m_timeRange.end);
-    }
 
 #if UNITY_EDITOR
     void UpdateProfileReport(SceneData data) {
@@ -268,17 +263,25 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         m_dbgProfileReport = sb.ToString();
     }
 #endif
-    #endregion
 
+//----------------------------------------------------------------------------------------------------------------------
+    
+    void ClampTime() {
+        if (m_sceneCache) {
+            m_time = Mathf.Clamp(m_time, m_timeRange.start, m_timeRange.end);
+        }
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
+    
     #region Events
 #if UNITY_EDITOR
     void Reset() {
-
         m_config = MeshSyncRuntimeSettings.CreatePlayerConfig(MeshSyncPlayerType.CACHE_PLAYER);            
     }
 
     void OnValidate() {
-        CheckParamsUpdated();
+        ClampTime();
     }
 #endif
 
@@ -289,7 +292,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
             OpenCache(m_filePath);
         }
         
-        CheckParamsUpdated();
+        ClampTime();
     }
 
     protected override void OnDisable() {
