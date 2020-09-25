@@ -122,7 +122,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
         cachePlayer.OpenCacheInEditor(path);
 
         //Save as prefab again
-        if (string.IsNullOrEmpty(prefabPath)) {
+        if (!string.IsNullOrEmpty(prefabPath)) {
             cachePlayer.gameObject.SaveAsPrefab(prefabPath);
         }
         
