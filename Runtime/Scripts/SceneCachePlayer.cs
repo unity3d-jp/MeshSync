@@ -21,6 +21,14 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         Zero = 0,
         One = 1,
     }
+    
+    //[TODO-sin: 2020-9-25] Move to another package?
+    private enum LogType {
+        DEBUG,
+        WARNING,
+        ERROR,
+    }
+    
     #endregion
 
 
@@ -91,12 +99,10 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 #endif
             m_filePath = path;
             m_timeRange = m_sceneCache.timeRange;
-            if (m_config.Logging)
-                Debug.Log(string.Format("SceneCachePlayer: cache opened ({0})", path));
+            Log($"SceneCachePlayer: cache opened ({path})", LogType.DEBUG);
             return true;
         } else {
-            if (m_config.Logging)
-                Debug.Log(string.Format("SceneCachePlayer: cache open failed ({0})", path));
+            Log($"SceneCachePlayer: cache open failed ({path})", LogType.ERROR);
             return false;
         }
     }
@@ -104,8 +110,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     public void CloseCache() {
         if (m_sceneCache) {
             m_sceneCache.Close();
-            if (m_config.Logging)
-                Debug.Log($"SceneCachePlayer: cache closed ({m_filePath})");
+            Log($"SceneCachePlayer: cache closed ({m_filePath})");
         }
         m_timePrev = -1;
     }
@@ -262,6 +267,20 @@ internal class SceneCachePlayer : MeshSyncPlayer {
             sb.AppendFormat("Interpolate Scene: {0:#.##}ms\n", prof.lerpTime);
         m_dbgProfileReport = sb.ToString();
     }
+
+    void Log(string logMessage, LogType logType = LogType.DEBUG) {
+        if (!m_config.Logging)
+            return;
+
+        switch (logType) {
+            case LogType.DEBUG: Debug.Log(logMessage); break; 
+            case LogType.WARNING: Debug.LogWarning(logMessage); break; 
+            case LogType.ERROR: Debug.LogError(logMessage); break;
+            default: break;
+                
+        }        
+    }
+    
 #endif
 
 //----------------------------------------------------------------------------------------------------------------------
