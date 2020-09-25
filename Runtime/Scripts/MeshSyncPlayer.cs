@@ -110,7 +110,11 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         Assert.IsTrue(assetsFolder.StartsWith("Assets"));
         m_assetsFolder = assetsFolder;
         m_rootObject   = gameObject.transform;
+        
+        InitInternalV();
     }
+
+    protected abstract void InitInternalV();
     
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -120,6 +124,13 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     internal static int protocolVersion { get { return Lib.protocolVersion; } }
 
     protected string GetAssetsFolder() { return m_assetsFolder;}   
+
+    #endregion Simple Getter/Setter
+    
+
+    
+    #region Properties
+    
     
     protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
 
