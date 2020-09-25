@@ -54,7 +54,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
             using (new EditorGUI.DisabledScope(true)) {               
                 EditorGUILayout.TextField("Cache File Path", AssetUtility.NormalizeAssetPath(fullPath));
             }
-            if (!fullPath.StartsWith(Application.streamingAssetsPath)) {
+            if (!string.IsNullOrEmpty(fullPath) && !fullPath.StartsWith(Application.streamingAssetsPath)) {
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
                 const float BUTTON_WIDTH = 50.0f;
