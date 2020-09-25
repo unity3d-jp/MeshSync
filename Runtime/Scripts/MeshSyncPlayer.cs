@@ -60,7 +60,7 @@ internal delegate void DeleteEntityHandler(GameObject obj);
 internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver {
 
     
-    #region Events
+    #region EventHandler Declarations
     
     /// <summary>
     /// An event that is executed when the scene update is started
@@ -102,33 +102,31 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     /// </summary>
     internal event SceneHandler onSceneUpdateEnd;
     
-    #endregion
-
+    #endregion EventHandler Declarations
 
 //----------------------------------------------------------------------------------------------------------------------
-    
-    #region Properties
-    internal static string GetPluginVersion() {
-        return Lib.GetPluginVersion();
+
+    internal void Init(string assetsFolder) {
+        Assert.IsTrue(assetsFolder.StartsWith("Assets"));
+        m_assetsFolder = assetsFolder;
+        m_rootObject   = gameObject.transform;
     }
+    
+//----------------------------------------------------------------------------------------------------------------------
+    
+    #region Getter/Setter
+    internal static string GetPluginVersion() { return Lib.GetPluginVersion(); }
 
     internal static int protocolVersion { get { return Lib.protocolVersion; } }
 
     protected string GetAssetsFolder() { return m_assetsFolder;}   
-
-    
-    internal void Init(string assetsFolder) {
-        Assert.IsTrue(assetsFolder.StartsWith("Assets"));
-        m_assetsFolder = assetsFolder;
-        m_rootObject = gameObject.transform;
-    }
     
     protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
 
     protected void SetSaveAssetsInScene(bool saveAssetsInScene) { m_saveAssetsInScene = saveAssetsInScene; }
 
     protected void MarkMeshesDynamic(bool markMeshesDynamic) { m_markMeshesDynamic = markMeshesDynamic; }
-   
+  
 
     internal MeshSyncPlayerConfig GetConfig() { return m_config; }
 
