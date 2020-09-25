@@ -57,7 +57,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
                 prevNormalizedPath, AssetUtility.NormalizeAssetPath);
 
             if (newNormalizedPath != prevNormalizedPath) {
-                OnSceneCacheFileChanged(m_sceneCachePlayer, newNormalizedPath);
+                ChangeSceneCacheFile(m_sceneCachePlayer, newNormalizedPath);
             }
             
             if (!string.IsNullOrEmpty(fullPath) && !fullPath.StartsWith(Application.streamingAssetsPath)) {
@@ -66,12 +66,12 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
                 const float BUTTON_WIDTH = 50.0f;
                 if (GUILayout.Button("Copy", GUILayout.Width(BUTTON_WIDTH))) {
                     string dstPath = Misc.CopyFileToStreamingAssets(fullPath);
-                    OnSceneCacheFileChanged(m_sceneCachePlayer, dstPath);
+                    ChangeSceneCacheFile(m_sceneCachePlayer, dstPath);
                 }
                 GUILayout.Label("or");
                 if (GUILayout.Button("Move", GUILayout.Width(BUTTON_WIDTH))) {
                     string dstPath = Misc.MoveFileToStreamingAssets(fullPath);
-                    OnSceneCacheFileChanged(m_sceneCachePlayer, dstPath);
+                    ChangeSceneCacheFile(m_sceneCachePlayer, dstPath);
                 }
                 GUILayout.Label("to StreamingAssets");
                 GUILayout.EndHorizontal();
@@ -113,7 +113,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    static void OnSceneCacheFileChanged(SceneCachePlayer cachePlayer, string path) {
+    static void ChangeSceneCacheFile(SceneCachePlayer cachePlayer, string path) {
         
        
         string prefabPath = null;
