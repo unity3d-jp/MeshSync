@@ -32,10 +32,18 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     #endregion
 
 
+//----------------------------------------------------------------------------------------------------------------------
+    
     SceneCachePlayer() : base() {
         SetSaveAssetsInScene(false);
         MarkMeshesDynamic(true);
     }
+
+    protected override void InitInternalV() {
+        
+    }
+    
+    
 //----------------------------------------------------------------------------------------------------------------------
 
     internal string GetFilePath() { return m_filePath; }

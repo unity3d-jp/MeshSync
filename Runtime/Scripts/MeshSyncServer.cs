@@ -10,8 +10,13 @@ using UnityEditor;
 
 namespace Unity.MeshSync {
 [ExecuteInEditMode]
-internal class MeshSyncServer : MeshSyncPlayer
-{
+internal class MeshSyncServer : MeshSyncPlayer {
+    
+    protected override void InitInternalV() {
+        
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------        
     
 #region Getter/Setter
     internal bool IsServerStarted()             { return m_serverStarted;}
