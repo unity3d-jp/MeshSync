@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assertions;
+using Object = UnityEngine.Object;
 
 namespace Unity.MeshSync.Editor {
 
@@ -68,73 +70,93 @@ internal static class MeshSyncMenu  {
 
     [MenuItem("GameObject/MeshSync/Create Cache Player", false, 10)]
     static void CreateSceneCachePlayerMenu(MenuCommand menuCommand) {
-        string path = EditorUtility.OpenFilePanelWithFilters("Select Cache File", "",
+        string sceneCacheFilePath = EditorUtility.OpenFilePanelWithFilters("Select Cache File", "",
             new string[]{ "All supported files", "sc", "All files", "*" });
-        if (path.Length > 0) {
-            GameObject go = CreateSceneCachePlayerPrefab(path);
-            if (go != null)
-                Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
+
+        if (string.IsNullOrEmpty(sceneCacheFilePath)) {
+            return;
         }
+
+        //Prefab and assets path
+        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        
+        string scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
+        string prefabFileName = Path.GetFileNameWithoutExtension(sceneCacheFilePath);
+        string prefabPath = $"{scOutputPath}/{prefabFileName}.prefab";
+        string assetsFolder = Path.Combine(scOutputPath, prefabFileName);
+
+        bool created = CreateSceneCachePlayerAndPrefab(sceneCacheFilePath, prefabPath, assetsFolder,
+            out SceneCachePlayer player, out GameObject prefab);        
+       
+        
+        if (!created) {
+            EditorUtility.DisplayDialog("MeshSync"
+                ,"Failed to open " + sceneCacheFilePath 
+                    + ". Possible reasons: file format version does not match, or the file is not scene cache."
+                ,"Ok"                
+            );
+        } 
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
-
-    private static GameObject CreateSceneCachePlayer(string path) {
+    
+    private static SceneCachePlayer  AddSceneCachePlayer(GameObject go, 
+                                                            string sceneCacheFilePath, 
+                                                            string assetsFolder) 
+    {
         if (!ValidateSceneCacheOutputPath()) {
             return null;
         }
         
-        // create temporary GO to make prefab
-        GameObject go = new GameObject();
-        go.name = System.IO.Path.GetFileNameWithoutExtension(path);
-
-        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
-       
-        string assetsFolder = Path.Combine(scOutputPath, go.name);        
-        SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
+        go.DestroyChildrenImmediate();
+              
+        SceneCachePlayer player = go.GetOrAddComponent<SceneCachePlayer>();
         player.Init(assetsFolder);
 
-        if (!player.OpenCache(path)) {
-            Debug.LogError("Failed to open " + path + ". Possible reasons: file format version does not match, or the file is not scene cache.");
-            UnityEngine.Object.DestroyImmediate(go);
-            return null;
-        }
-        return go;
-    }
-
-//----------------------------------------------------------------------------------------------------------------------    
-
-    internal static GameObject CreateSceneCachePlayerPrefab(string path) {
-        
-        if (!ValidateSceneCacheOutputPath()) {
+        if (!player.OpenCache(sceneCacheFilePath)) {
             return null;
         }
         
-        GameObject go = CreateSceneCachePlayer(path);
-        if (go == null)
-            return null;
-
-        // export materials & animation and generate prefab
-        SceneCachePlayer player = go.GetComponent<SceneCachePlayer>();
+        // Further initialization after opening cache
         player.UpdatePlayer();
         player.ExportMaterials(false, true);
         player.ResetTimeAnimation();
         player.handleAssets = false;
+        
         SceneData scene = player.GetLastScene();
         if (!scene.submeshesHaveUniqueMaterial) {
             MeshSyncPlayerConfig config = player.GetConfig();
             config.SyncMaterialList = false;
         }
-
-
-       
-        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
         
-        string prefabPath = $"{scOutputPath}/{go.name}.prefab";
-        PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabPath, InteractionMode.AutomatedAction);
-        return go;
+        return player;
+    }
+
+//----------------------------------------------------------------------------------------------------------------------    
+
+    internal static bool CreateSceneCachePlayerAndPrefab(string sceneCacheFilePath, 
+                                                         string prefabPath, string assetsFolder, 
+                                                         out SceneCachePlayer player, out GameObject prefab) 
+    {
+        player = null;
+        prefab = null;
+        
+        GameObject go = new GameObject();        
+        go.name = Path.GetFileNameWithoutExtension(sceneCacheFilePath);
+
+        player = AddSceneCachePlayer(go, sceneCacheFilePath, assetsFolder);
+        if (null == player) {
+            Object.DestroyImmediate(go);            
+            return false;
+        }
+        prefab = player.gameObject.SaveAsPrefab(prefabPath);
+        if (null == prefab) {
+            Object.DestroyImmediate(go);            
+            return false;
+        }
+        
+        Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
+        return true;
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
