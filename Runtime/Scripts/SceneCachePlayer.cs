@@ -88,15 +88,27 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 #endif
     #endregion
 
-    #region Public Methods
-    public bool OpenCache(string path) {
+    #region Internal Methods
+    internal bool OpenCache(string path) {
 
         if (!OpenCacheInternal(path)) {
             return false;
         }
-        
+
+        //Initialization after opening a cache file
         m_filePath = path;
         m_timeRange = m_sceneCache.timeRange;
+        
+        UpdatePlayer();
+        ExportMaterials(false, true);
+        ResetTimeAnimation();
+        handleAssets = false;
+        
+        SceneData scene = GetLastScene();
+        if (!scene.submeshesHaveUniqueMaterial) {
+            m_config.SyncMaterialList = false;
+        }
+        
         return true;
     }
 
@@ -121,8 +133,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         return true;
     }
     
-
-    public void CloseCache() {
+    internal void CloseCache() {
         if (m_sceneCache) {
             m_sceneCache.Close();
             Log($"SceneCachePlayer: cache closed ({m_filePath})");
