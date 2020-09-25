@@ -10,15 +10,15 @@ namespace Unity.MeshSync {
 //[TODO-sin: 2020-9-24: Move to AnimeToolbox
 internal static class GameObjectExtensions {
 
-    public static void DestroyChildrenImmediate(this GameObject go) {        
-        foreach (Transform child in go.transform) {
-            Object.DestroyImmediate(child.gameObject);
-        }        
+    public static void DestroyChildrenImmediate(this GameObject go) {
+        Transform t = go.transform;
+        DestroyChildrenImmediate(t);
     }
 
-    public static void DestroyChildrenImmediate(this Transform t) {        
-        foreach (Transform child in t) {
-            Object.DestroyImmediate(child.gameObject);
+    public static void DestroyChildrenImmediate(this Transform t) {                
+        int childCount = t.childCount;        
+        for (int i = childCount - 1; i >= 0; --i) {
+            Object.DestroyImmediate(t.GetChild(i).gameObject);
         }        
     }
     
