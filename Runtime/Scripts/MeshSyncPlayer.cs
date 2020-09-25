@@ -538,8 +538,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         });
 
         // handle constraints
-        Try(() =>
-        {
+        Try(() => {
             int numConstraints = scene.numConstraints;
             for (int i = 0; i < numConstraints; ++i)
                 UpdateConstraint(scene.GetConstraint(i));
