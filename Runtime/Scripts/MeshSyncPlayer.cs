@@ -153,12 +153,9 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     internal List<TextureHolder> textureList { get { return m_textureList; } }
 
 #if UNITY_EDITOR
-    internal bool sortEntities
-    {
-        get { return m_sortEntities; }
-        set { m_sortEntities = value; }
-    }
 
+    protected void SetSortEntities(bool sortEntities) { m_sortEntities = sortEntities;}
+    
     internal bool foldSyncSettings
     {
         get { return m_foldSyncSettings; }

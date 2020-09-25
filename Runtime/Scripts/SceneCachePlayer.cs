@@ -99,7 +99,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         }
         
 #if UNITY_EDITOR
-        this.sortEntities = true;
+        SetSortEntities(true);
 #endif
         m_filePath = path;
         m_timeRange = m_sceneCache.timeRange;
@@ -197,7 +197,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
                     this.UpdateScene(scene);
                     this.AfterUpdateScene();
 #if UNITY_EDITOR
-                    this.sortEntities = false;
+                    SetSortEntities(false);
 
                     if (m_config.Profiling) {
                         m_dbgSceneUpdateTime = Misc.NS2MS(Misc.GetTimeNS() - sceneUpdateBegin);
