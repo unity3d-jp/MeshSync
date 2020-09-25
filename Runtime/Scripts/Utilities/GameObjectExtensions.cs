@@ -1,5 +1,4 @@
-﻿using UnityEditor;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Unity.MeshSync {
 
@@ -30,13 +29,7 @@ internal static class GameObjectExtensions {
         return gameObject.GetComponent<T>() ?? gameObject.AddComponent<T>();
     }
 
-//----------------------------------------------------------------------------------------------------------------------
-    
-    public static GameObject SaveAsPrefab(this GameObject go, string prefabPath, 
-        InteractionMode mode = InteractionMode.AutomatedAction) 
-    {
-        return PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabPath, mode);        
-    }
+   
     
 }
 
