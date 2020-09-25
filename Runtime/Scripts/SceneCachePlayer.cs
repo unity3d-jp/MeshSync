@@ -21,6 +21,14 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         Zero = 0,
         One = 1,
     }
+    
+    //[TODO-sin: 2020-9-25] Move to another package?
+    private enum LogType {
+        DEBUG,
+        WARNING,
+        ERROR,
+    }
+    
     #endregion
 
 
@@ -80,38 +88,70 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 #endif
     #endregion
 
-    #region Public Methods
-    public bool OpenCache(string path) {
+    #region Internal Methods
+
+#if UNITY_EDITOR    
+    internal bool OpenCacheInEditor(string path) {
+
+        if (!OpenCacheInternal(path)) {
+            return false;
+        }
+
+        //Delete all children
+        if (gameObject.IsPrefabInstance()) {
+            PrefabUtility.UnpackPrefabInstance(gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);            
+        } 
+        gameObject.DestroyChildrenImmediate();
+
+        //Initialization after opening a cache file
+        m_filePath = path;
+        m_timeRange = m_sceneCache.timeRange;
+        
+        UpdatePlayer();
+        ExportMaterials(false, true);
+        ResetTimeAnimation();
+        handleAssets = false;
+        
+        SceneData scene = GetLastScene();
+        if (!scene.submeshesHaveUniqueMaterial) {
+            m_config.SyncMaterialList = false;
+        }
+        
+        return true;
+    }
+#endif //UNITY_EDITOR    
+
+    private bool ReopenCache() {
+        Assert.IsFalse(string.IsNullOrEmpty(m_filePath));
+        return OpenCacheInternal(m_filePath);
+    }
+
+    private bool OpenCacheInternal(string path) {
         CloseCache();
 
         m_sceneCache = SceneCacheData.Open(path);
-        if (m_sceneCache) {
-#if UNITY_EDITOR
-            this.sortEntities = true;
-#endif
-            m_filePath = path;
-            m_timeRange = m_sceneCache.timeRange;
-            if (m_config.Logging)
-                Debug.Log(string.Format("SceneCachePlayer: cache opened ({0})", path));
-            return true;
-        } else {
-            if (m_config.Logging)
-                Debug.Log(string.Format("SceneCachePlayer: cache open failed ({0})", path));
-            return false;
+        if (!m_sceneCache) {
+            Log($"SceneCachePlayer: cache open failed ({path})", LogType.ERROR);
+            return false;            
         }
+        
+#if UNITY_EDITOR
+        SetSortEntities(true);
+#endif
+        Log($"SceneCachePlayer: cache opened ({path})", LogType.DEBUG);
+        return true;
     }
-
-    public void CloseCache() {
+    
+    internal void CloseCache() {
         if (m_sceneCache) {
             m_sceneCache.Close();
-            if (m_config.Logging)
-                Debug.Log($"SceneCachePlayer: cache closed ({m_filePath})");
+            Log($"SceneCachePlayer: cache closed ({m_filePath})");
         }
         m_timePrev = -1;
     }
 
 #if UNITY_EDITOR
-    public bool ResetTimeAnimation() {
+    internal bool ResetTimeAnimation() {
         if (m_sceneCache.sceneCount < 2)
             return false;
 
@@ -162,7 +202,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
 #endif
 
-    public void UpdatePlayer() {
+    private void UpdatePlayer() {
 
         if (m_timeUnit == TimeUnit.Frames) {
             int offset = (int)m_baseFrame;
@@ -192,7 +232,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
                     this.UpdateScene(scene);
                     this.AfterUpdateScene();
 #if UNITY_EDITOR
-                    this.sortEntities = false;
+                    SetSortEntities(false);
 
                     if (m_config.Profiling) {
                         m_dbgSceneUpdateTime = Misc.NS2MS(Misc.GetTimeNS() - sceneUpdateBegin);
@@ -262,8 +302,25 @@ internal class SceneCachePlayer : MeshSyncPlayer {
             sb.AppendFormat("Interpolate Scene: {0:#.##}ms\n", prof.lerpTime);
         m_dbgProfileReport = sb.ToString();
     }
-#endif
 
+    
+#endif
+    
+//----------------------------------------------------------------------------------------------------------------------
+
+    void Log(string logMessage, LogType logType = LogType.DEBUG) {
+        if (!m_config.Logging)
+            return;
+
+        switch (logType) {
+            case LogType.DEBUG: Debug.Log(logMessage); break; 
+            case LogType.WARNING: Debug.LogWarning(logMessage); break; 
+            case LogType.ERROR: Debug.LogError(logMessage); break;
+            default: break;
+                
+        }        
+    }
+    
 //----------------------------------------------------------------------------------------------------------------------
     
     void ClampTime() {
@@ -289,7 +346,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     protected override void OnEnable() {
         base.OnEnable();
         if (!string.IsNullOrEmpty(m_filePath)) {
-            OpenCache(m_filePath);
+            ReopenCache();
         }
         
         ClampTime();
