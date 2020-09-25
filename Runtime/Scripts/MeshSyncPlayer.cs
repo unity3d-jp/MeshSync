@@ -141,12 +141,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     internal MeshSyncPlayerConfig GetConfig() { return m_config; }
 
-    internal bool handleAssets
-    {
-        get { return m_handleAssets; }
-        set { m_handleAssets = value; }
-    }
-
 
     internal bool usePhysicalCameraParams
     {
@@ -471,34 +465,34 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             onSceneUpdateBegin.Invoke();
     }
 
-    internal void UpdateScene(SceneData scene)
-    {
+    protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets) {
         // handle assets
-        Try(() =>
-        {
+        Try(() => {
             int numAssets = scene.numAssets;
-            if (numAssets > 0)
-            {
+            if (numAssets > 0) {
                 bool save = false;
-                for (int i = 0; i < numAssets; ++i)
-                {
+                for (int i = 0; i < numAssets; ++i) {
                     AssetData asset = scene.GetAsset(i);
-                    switch (asset.type)
-                    {
+
+                    //Only update MaterialAsset if specified
+                    if (!updateNonMaterialAssets && asset.type != AssetType.Material)
+                        continue;
+                    
+                    switch (asset.type) {
                         case AssetType.File:
                             UpdateFileAsset((FileAssetData)asset);
                             break;
                         case AssetType.Audio:
-                            UpdateAudio((AudioData)asset);
+                            UpdateAudioAsset((AudioData)asset);
                             break;
                         case AssetType.Texture:
-                            UpdateTexture((TextureData)asset);
+                            UpdateTextureAsset((TextureData)asset);
                             break;
                         case AssetType.Material:
-                            UpdateMaterial((MaterialData)asset);
+                            UpdateMaterialAsset((MaterialData)asset);
                             break;
                         case AssetType.Animation:
-                            UpdateAnimation((AnimationClipData)asset);
+                            UpdateAnimationAsset((AnimationClipData)asset);
                             save = true;
                             break;
                         default:
@@ -515,29 +509,26 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         });
 
         // handle entities
-        Try(() =>
-        {
+        Try(() => {
             int numObjects = scene.numEntities;
-            for (int i = 0; i < numObjects; ++i)
-            {
+            for (int i = 0; i < numObjects; ++i) {
                 EntityRecord dst = null;
                 TransformData src = scene.GetEntity(i);
-                switch (src.entityType)
-                {
+                switch (src.entityType) {
                     case EntityType.Transform:
-                        dst = UpdateTransform(src);
+                        dst = UpdateTransformEntity(src);
                         break;
                     case EntityType.Camera:
-                        dst = UpdateCamera((CameraData)src);
+                        dst = UpdateCameraEntity((CameraData)src);
                         break;
                     case EntityType.Light:
-                        dst = UpdateLight((LightData)src);
+                        dst = UpdateLightEntity((LightData)src);
                         break;
                     case EntityType.Mesh:
-                        dst = UpdateMesh((MeshData)src);
+                        dst = UpdateMeshEntity((MeshData)src);
                         break;
                     case EntityType.Points:
-                        dst = UpdatePoints((PointsData)src);
+                        dst = UpdatePointsEntity((PointsData)src);
                         break;
                 }
 
@@ -547,8 +538,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         });
 
         // handle constraints
-        Try(() =>
-        {
+        Try(() => {
             int numConstraints = scene.numConstraints;
             for (int i = 0; i < numConstraints; ++i)
                 UpdateConstraint(scene.GetConstraint(i));
@@ -678,20 +668,15 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             onSceneUpdateEnd.Invoke();
     }
 
-    void UpdateFileAsset(FileAssetData src)
-    {
+//----------------------------------------------------------------------------------------------------------------------
+    
+    void UpdateFileAsset(FileAssetData src) {
 #if UNITY_EDITOR
-        if (!m_handleAssets)
-            return;
-
         src.WriteToFile(m_assetsFolder + "/" + src.name);
 #endif
     }
 
-    void UpdateAudio(AudioData src)
-    {
-        if (!m_handleAssets)
-            return;
+    void UpdateAudioAsset(AudioData src) {
 
         AudioClip ac = null;
 
@@ -748,10 +733,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
     }
 
-    void UpdateTexture(TextureData src)
-    {
-        if (!m_handleAssets)
-            return;
+    void UpdateTextureAsset(TextureData src) {
 
         Texture2D texture = null;
 #if UNITY_EDITOR
@@ -853,7 +835,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return ImageConversion.EncodeToEXR(tex, flags);
     }
 
-    void UpdateMaterial(MaterialData src)
+    void UpdateMaterialAsset(MaterialData src)
     {
         int materialID = src.id;
         string materialName = src.name;
@@ -1018,13 +1000,13 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    EntityRecord UpdateMesh(MeshData data) {
+    EntityRecord UpdateMeshEntity(MeshData data) {
         if (!m_config.SyncMeshes)
             return null;
 
         TransformData dtrans = data.transform;
         MeshDataFlags dflags = data.dataFlags;
-        EntityRecord rec = UpdateTransform(dtrans);
+        EntityRecord rec = UpdateTransformEntity(dtrans);
         if (rec == null || dflags.unchanged)
             return null;
 
@@ -1064,7 +1046,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                         rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
                     rec.mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
                 }
-                UpdateMesh(ref rec.mesh, data);
+                UpdateMeshEntity(ref rec.mesh, data);
             }
             meshUpdated = true;
         }
@@ -1151,7 +1133,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
    
 //----------------------------------------------------------------------------------------------------------------------
 
-    void UpdateMesh(ref Mesh mesh, MeshData data)
+    void UpdateMeshEntity(ref Mesh mesh, MeshData data)
     {
         bool keepIndices = false;
         if (mesh.vertexCount != 0)
@@ -1264,12 +1246,12 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     }
 
 //----------------------------------------------------------------------------------------------------------------------        
-    EntityRecord UpdatePoints(PointsData data)
+    EntityRecord UpdatePointsEntity(PointsData data)
     {
 
         TransformData dtrans = data.transform;
         PointsDataFlags dflags = data.dataFlags;
-        EntityRecord rec = UpdateTransform(dtrans);
+        EntityRecord rec = UpdateTransformEntity(dtrans);
         if (rec == null || dflags.unchanged)
             return null;
 
@@ -1302,7 +1284,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return rec;
     }
 
-    EntityRecord UpdateTransform(TransformData data)
+    EntityRecord UpdateTransformEntity(TransformData data)
     {
         string path = data.path;
         int hostID = data.hostID;
@@ -1381,14 +1363,14 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return rec;
     }
 
-    EntityRecord UpdateCamera(CameraData data)
+    EntityRecord UpdateCameraEntity(CameraData data)
     {
         if (!m_config.SyncCameras)
             return null;
 
         TransformData dtrans = data.transform;
         CameraDataFlags dflags = data.dataFlags;
-        EntityRecord rec = UpdateTransform(dtrans);
+        EntityRecord rec = UpdateTransformEntity(dtrans);
         if (rec == null || dflags.unchanged)
             return null;
 
@@ -1432,14 +1414,14 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return rec;
     }
 
-    EntityRecord UpdateLight(LightData data)
+    EntityRecord UpdateLightEntity(LightData data)
     {
         if (!m_config.SyncLights)
             return null;
 
         TransformData dtrans = data.transform;
         LightDataFlags dflags = data.dataFlags;
-        EntityRecord rec = UpdateTransform(dtrans);
+        EntityRecord rec = UpdateTransformEntity(dtrans);
         if (rec == null || dflags.unchanged)
             return null;
 
@@ -1652,11 +1634,8 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
     }
 
-    void UpdateAnimation(AnimationClipData clipData)
-    {
+    void UpdateAnimationAsset(AnimationClipData clipData) {
 #if UNITY_EDITOR
-        if (!m_handleAssets)
-            return;
 
         clipData.Convert((InterpolationMode) m_config.AnimationInterpolation);
         if (m_config.KeyframeReduction)
@@ -1744,7 +1723,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             data.ExportToClip(ctx);
         }
 
-        //Debug.Log("UpdateAnimation() " + (Time.realtimeSinceStartup - start) + " sec");
+        //Debug.Log("UpdateAnimationAsset() " + (Time.realtimeSinceStartup - start) + " sec");
 
         // fire event
         if (onUpdateAnimation != null)
@@ -2199,8 +2178,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     [SerializeField] protected MeshSyncPlayerConfig m_config;
     
-    [SerializeField] private bool m_handleAssets = true;
-
     [SerializeField] private bool m_usePhysicalCameraParams = true;
     [SerializeField] private bool m_useCustomCameraMatrices = true;
             

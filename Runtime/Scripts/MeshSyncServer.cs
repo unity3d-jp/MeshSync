@@ -217,7 +217,7 @@ internal class MeshSyncServer : MeshSyncPlayer {
     }
 
     void OnRecvSet(SetMessage mes) {
-        UpdateScene(mes.scene);
+        UpdateScene(mes.scene, true);
     }
 
     void OnRecvScreenshot(IntPtr data) {
