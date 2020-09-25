@@ -123,7 +123,6 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
         }
         
         cachePlayer.CloseCache();
-        cachePlayer.SetFilePath(path);
         Undo.RecordObject(cachePlayer, "SceneCachePlayer");
         cachePlayer.OpenCacheInEditor(path);
 

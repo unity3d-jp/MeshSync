@@ -47,7 +47,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 //----------------------------------------------------------------------------------------------------------------------
 
     internal string GetFilePath() { return m_filePath; }
-    internal void SetFilePath(string filePath) {  m_filePath = filePath; }
     
 //----------------------------------------------------------------------------------------------------------------------
     #region Properties
