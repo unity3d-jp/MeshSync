@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -49,7 +50,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
 
         m_sceneCachePlayer.foldCacheSettings = EditorGUILayout.Foldout(m_sceneCachePlayer.foldCacheSettings, "Player", true, styleFold);
         if (m_sceneCachePlayer.foldCacheSettings) {
-            // cache file path
+            //Show Selector GUI. Check if we should reopen
             string fullPath           = m_sceneCachePlayer.GetFilePath();
             string prevNormalizedPath = AssetUtility.NormalizeAssetPath(fullPath);
 
@@ -57,7 +58,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
                 prevNormalizedPath, AssetUtility.NormalizeAssetPath);
 
             if (newNormalizedPath != prevNormalizedPath) {
-                ChangeSceneCacheFile(m_sceneCachePlayer, newNormalizedPath);
+                ChangeSceneCacheFileInInspector(m_sceneCachePlayer, newNormalizedPath);
             }
             
             if (!string.IsNullOrEmpty(fullPath) && !fullPath.StartsWith(Application.streamingAssetsPath)) {
@@ -66,12 +67,12 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
                 const float BUTTON_WIDTH = 50.0f;
                 if (GUILayout.Button("Copy", GUILayout.Width(BUTTON_WIDTH))) {
                     string dstPath = Misc.CopyFileToStreamingAssets(fullPath);
-                    ChangeSceneCacheFile(m_sceneCachePlayer, dstPath);
+                    ChangeSceneCacheFileInInspector(m_sceneCachePlayer, dstPath);
                 }
                 GUILayout.Label("or");
                 if (GUILayout.Button("Move", GUILayout.Width(BUTTON_WIDTH))) {
                     string dstPath = Misc.MoveFileToStreamingAssets(fullPath);
-                    ChangeSceneCacheFile(m_sceneCachePlayer, dstPath);
+                    ChangeSceneCacheFileInInspector(m_sceneCachePlayer, dstPath);
                 }
                 GUILayout.Label("to StreamingAssets");
                 GUILayout.EndHorizontal();
@@ -112,10 +113,14 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
+    private static void ChangeSceneCacheFileInInspector(SceneCachePlayer cachePlayer, string sceneCacheFilePath) {
+        ChangeSceneCacheFile(cachePlayer, sceneCacheFilePath);
+        GUIUtility.ExitGUI();
+    }
 
-    static void ChangeSceneCacheFile(SceneCachePlayer cachePlayer, string path) {
-        
-       
+//----------------------------------------------------------------------------------------------------------------------
+    
+    internal static void ChangeSceneCacheFile(SceneCachePlayer cachePlayer, string sceneCacheFilePath) {
         string prefabPath = null;
         if (cachePlayer.gameObject.IsPrefabInstance()) {
             GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(cachePlayer.gameObject);
@@ -125,16 +130,22 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
         cachePlayer.CloseCache();
         Undo.RecordObject(cachePlayer, "SceneCachePlayer");
 
+        //Check if it's possible to reuse the old assetsFolder
         string assetsFolder = cachePlayer.GetAssetsFolder();
+        if (string.IsNullOrEmpty(assetsFolder)) {
+            MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();        
+            string scOutputPath = runtimeSettings.GetSceneCacheOutputPath();            
+            assetsFolder = Path.Combine(scOutputPath, Path.GetFileNameWithoutExtension(sceneCacheFilePath));
+        }
+        
         cachePlayer.Init(assetsFolder);
-        cachePlayer.OpenCacheInEditor(path);
+        cachePlayer.OpenCacheInEditor(sceneCacheFilePath);
 
         //Save as prefab again
         if (!string.IsNullOrEmpty(prefabPath)) {
             cachePlayer.gameObject.SaveAsPrefab(prefabPath);
         }
         
-        GUIUtility.ExitGUI();
     }
     
 
