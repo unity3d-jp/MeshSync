@@ -57,8 +57,9 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
                 prevNormalizedPath, AssetUtility.NormalizeAssetPath);
 
             if (newNormalizedPath != prevNormalizedPath) {
-
+                OnSceneCacheFileChanged(m_sceneCachePlayer, newNormalizedPath);
             }
+            
             if (!string.IsNullOrEmpty(fullPath) && !fullPath.StartsWith(Application.streamingAssetsPath)) {
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
