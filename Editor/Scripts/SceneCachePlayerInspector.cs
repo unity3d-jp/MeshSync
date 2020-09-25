@@ -111,7 +111,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
     void OnFilePathChanged(SceneCachePlayer cachePlayer, string path) {
         cachePlayer.SetFilePath(path);
         Undo.RecordObject(cachePlayer, "SceneCachePlayer");
-        cachePlayer.OpenCache(path);
+        cachePlayer.OpenCacheInEditor(path);
         Repaint();        
     }
     

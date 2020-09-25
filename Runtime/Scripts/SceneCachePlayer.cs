@@ -91,7 +91,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     #region Internal Methods
 
 #if UNITY_EDITOR    
-    internal bool OpenCache(string path) {
+    internal bool OpenCacheInEditor(string path) {
 
         if (!OpenCacheInternal(path)) {
             return false;

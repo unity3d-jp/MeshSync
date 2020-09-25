@@ -112,7 +112,7 @@ internal static class MeshSyncMenu  {
         SceneCachePlayer player = go.GetOrAddComponent<SceneCachePlayer>();
         player.Init(assetsFolder);
 
-        if (!player.OpenCache(sceneCacheFilePath)) {
+        if (!player.OpenCacheInEditor(sceneCacheFilePath)) {
             return null;
         }       
         
