@@ -43,13 +43,14 @@ public class SceneCachePlayerTest  {
         //Check assets folder
         Assert.IsTrue(Directory.Exists(ASSETS_FOLDER));
         string[] prefabAssetGUIDs = AssetDatabase.FindAssets("", new[] {ASSETS_FOLDER});
+        Assert.Greater(prefabAssetGUIDs.Length, 0);
+ 
+        
+        //Cleanup
         foreach (string guid in prefabAssetGUIDs) {
             AssetDatabase.DeleteAsset(AssetDatabase.GUIDToAssetPath(guid));
         }
-
         FileUtil.DeleteFileOrDirectory(ASSETS_FOLDER);
-        
-        //Cleanup
         AssetDatabase.DeleteAsset(prefabPath);
 
         AssetDatabase.Refresh();
