@@ -124,6 +124,9 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
         
         cachePlayer.CloseCache();
         Undo.RecordObject(cachePlayer, "SceneCachePlayer");
+
+        string assetsFolder = cachePlayer.GetAssetsFolder();
+        cachePlayer.Init(assetsFolder);
         cachePlayer.OpenCacheInEditor(path);
 
         //Save as prefab again
