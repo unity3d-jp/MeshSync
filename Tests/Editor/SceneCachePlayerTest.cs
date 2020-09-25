@@ -19,7 +19,30 @@ public class SceneCachePlayerTest  {
         
     }
 
-//----------------------------------------------------------------------------------------------------------------------    
+//----------------------------------------------------------------------------------------------------------------------       
+    [Test]
+    public void ChangeSceneCache() {
+
+        string cubeTestDataPath   = Path.Combine(TEST_DATA_PATH, "Cube.sc");
+        string sphereTestDataPath = Path.Combine(TEST_DATA_PATH, "Sphere.sc");
+        
+        //Initial setup            
+        GameObject       go     = new GameObject();
+        SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
+        Assert.IsFalse(player.IsSceneCacheOpened());
+        
+        //Change
+        SceneCachePlayerInspector.ChangeSceneCacheFile(player, cubeTestDataPath);
+        Assert.IsTrue(player.IsSceneCacheOpened());       
+        SceneCachePlayerInspector.ChangeSceneCacheFile(player, sphereTestDataPath);
+        Assert.IsTrue(player.IsSceneCacheOpened());
+
+        //Cleanup
+        Object.DestroyImmediate(go);
+        
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------       
 
     private void CreateAndDeleteSceneCachePlayerPrefab(string sceneCachePath) {
         Assert.IsTrue(File.Exists(sceneCachePath));
@@ -31,6 +54,7 @@ public class SceneCachePlayerTest  {
             Path.GetFullPath(sceneCachePath), DEST_PREFAB_PATH,ASSETS_FOLDER, 
             out SceneCachePlayer player, out GameObject prefab
         );
+        Assert.IsTrue(player.IsSceneCacheOpened());       
         Assert.IsTrue(prefabCreated);
         Assert.IsNotNull(prefab);
         Assert.IsNotNull(player);
@@ -44,7 +68,7 @@ public class SceneCachePlayerTest  {
         Assert.IsTrue(Directory.Exists(ASSETS_FOLDER));
         string[] prefabAssetGUIDs = AssetDatabase.FindAssets("", new[] {ASSETS_FOLDER});
         Assert.Greater(prefabAssetGUIDs.Length, 0);
- 
+        
         
         //Cleanup
         foreach (string guid in prefabAssetGUIDs) {
