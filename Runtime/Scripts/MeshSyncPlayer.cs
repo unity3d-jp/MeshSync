@@ -509,29 +509,26 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         });
 
         // handle entities
-        Try(() =>
-        {
+        Try(() => {
             int numObjects = scene.numEntities;
-            for (int i = 0; i < numObjects; ++i)
-            {
+            for (int i = 0; i < numObjects; ++i) {
                 EntityRecord dst = null;
                 TransformData src = scene.GetEntity(i);
-                switch (src.entityType)
-                {
+                switch (src.entityType) {
                     case EntityType.Transform:
-                        dst = UpdateTransform(src);
+                        dst = UpdateTransformEntity(src);
                         break;
                     case EntityType.Camera:
-                        dst = UpdateCamera((CameraData)src);
+                        dst = UpdateCameraEntity((CameraData)src);
                         break;
                     case EntityType.Light:
-                        dst = UpdateLight((LightData)src);
+                        dst = UpdateLightEntity((LightData)src);
                         break;
                     case EntityType.Mesh:
-                        dst = UpdateMesh((MeshData)src);
+                        dst = UpdateMeshEntity((MeshData)src);
                         break;
                     case EntityType.Points:
-                        dst = UpdatePoints((PointsData)src);
+                        dst = UpdatePointsEntity((PointsData)src);
                         break;
                 }
 
@@ -1004,13 +1001,13 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    EntityRecord UpdateMesh(MeshData data) {
+    EntityRecord UpdateMeshEntity(MeshData data) {
         if (!m_config.SyncMeshes)
             return null;
 
         TransformData dtrans = data.transform;
         MeshDataFlags dflags = data.dataFlags;
-        EntityRecord rec = UpdateTransform(dtrans);
+        EntityRecord rec = UpdateTransformEntity(dtrans);
         if (rec == null || dflags.unchanged)
             return null;
 
@@ -1050,7 +1047,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                         rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
                     rec.mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
                 }
-                UpdateMesh(ref rec.mesh, data);
+                UpdateMeshEntity(ref rec.mesh, data);
             }
             meshUpdated = true;
         }
@@ -1137,7 +1134,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
    
 //----------------------------------------------------------------------------------------------------------------------
 
-    void UpdateMesh(ref Mesh mesh, MeshData data)
+    void UpdateMeshEntity(ref Mesh mesh, MeshData data)
     {
         bool keepIndices = false;
         if (mesh.vertexCount != 0)
@@ -1250,12 +1247,12 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     }
 
 //----------------------------------------------------------------------------------------------------------------------        
-    EntityRecord UpdatePoints(PointsData data)
+    EntityRecord UpdatePointsEntity(PointsData data)
     {
 
         TransformData dtrans = data.transform;
         PointsDataFlags dflags = data.dataFlags;
-        EntityRecord rec = UpdateTransform(dtrans);
+        EntityRecord rec = UpdateTransformEntity(dtrans);
         if (rec == null || dflags.unchanged)
             return null;
 
@@ -1288,7 +1285,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return rec;
     }
 
-    EntityRecord UpdateTransform(TransformData data)
+    EntityRecord UpdateTransformEntity(TransformData data)
     {
         string path = data.path;
         int hostID = data.hostID;
@@ -1367,14 +1364,14 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return rec;
     }
 
-    EntityRecord UpdateCamera(CameraData data)
+    EntityRecord UpdateCameraEntity(CameraData data)
     {
         if (!m_config.SyncCameras)
             return null;
 
         TransformData dtrans = data.transform;
         CameraDataFlags dflags = data.dataFlags;
-        EntityRecord rec = UpdateTransform(dtrans);
+        EntityRecord rec = UpdateTransformEntity(dtrans);
         if (rec == null || dflags.unchanged)
             return null;
 
@@ -1418,14 +1415,14 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return rec;
     }
 
-    EntityRecord UpdateLight(LightData data)
+    EntityRecord UpdateLightEntity(LightData data)
     {
         if (!m_config.SyncLights)
             return null;
 
         TransformData dtrans = data.transform;
         LightDataFlags dflags = data.dataFlags;
-        EntityRecord rec = UpdateTransform(dtrans);
+        EntityRecord rec = UpdateTransformEntity(dtrans);
         if (rec == null || dflags.unchanged)
             return null;
 
