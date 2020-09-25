@@ -97,23 +97,12 @@ internal class SceneCachePlayer : MeshSyncPlayer {
             Log($"SceneCachePlayer: cache open failed ({path})", LogType.ERROR);
             return false;            
         }
-         
+        
 #if UNITY_EDITOR
         SetSortEntities(true);
 #endif
         m_filePath = path;
         m_timeRange = m_sceneCache.timeRange;
-                
-        UpdatePlayer();
-        ExportMaterials(false, true);
-        ResetTimeAnimation();
-        handleAssets = false;
-        
-        SceneData scene = GetLastScene();
-        if (!scene.submeshesHaveUniqueMaterial) {
-            m_config.SyncMaterialList = false;
-        }
-        
         Log($"SceneCachePlayer: cache opened ({path})", LogType.DEBUG);
         return true;
     }
