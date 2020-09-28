@@ -154,6 +154,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
         }
         EditorGUILayout.EndHorizontal();
         
+        //[TODO-sin: 2020-9-28] use ScrollView
         foreach (SceneCachePlayer player in m_targets) {
             EditorGUILayout.BeginHorizontal(GUILayout.Height(itemHeight));            
             GUILayout.Space(30);            
