@@ -46,19 +46,37 @@ public class SceneCachePlayerTest  {
             Path.GetFullPath(sceneCachePath), DEST_PREFAB_PATH,ASSETS_FOLDER, 
             out SceneCachePlayer player, out GameObject prefab
         );
-        Assert.IsTrue(player.IsSceneCacheOpened());       
         Assert.IsTrue(prefabCreated);
-        Assert.IsNotNull(prefab);
+
+        //Check player
         Assert.IsNotNull(player);
+        Assert.IsTrue(player.IsSceneCacheOpened());       
+        Assert.IsTrue(player.gameObject.IsPrefabInstance());
         
         //Check the prefab
+        Assert.IsNotNull(prefab);
         string prefabPath = AssetDatabase.GetAssetPath(prefab);
         Assert.IsFalse(string.IsNullOrEmpty(prefabPath));
         Assert.AreEqual(DEST_PREFAB_PATH, prefabPath);
 
+        
+        DeleteSceneCachePlayerPrefab(prefab);
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
+
+    void DeleteSceneCachePlayerPrefab(GameObject prefab) {
+        Assert.IsTrue(prefab.IsPrefab());
+        
+        
+        SceneCachePlayer prefabPlayer = prefab.GetComponent<SceneCachePlayer>();
+        Assert.IsNotNull(prefabPlayer);
+
+        string assetsFolder = prefabPlayer.GetAssetsFolder();
+        
         //Check assets folder
-        Assert.IsTrue(Directory.Exists(ASSETS_FOLDER));
-        string[] prefabAssetGUIDs = AssetDatabase.FindAssets("", new[] {ASSETS_FOLDER});
+        Assert.IsTrue(Directory.Exists(assetsFolder));
+        string[] prefabAssetGUIDs = AssetDatabase.FindAssets("", new[] {assetsFolder});
         Assert.Greater(prefabAssetGUIDs.Length, 0);
         
         
@@ -66,12 +84,15 @@ public class SceneCachePlayerTest  {
         foreach (string guid in prefabAssetGUIDs) {
             AssetDatabase.DeleteAsset(AssetDatabase.GUIDToAssetPath(guid));
         }
-        FileUtil.DeleteFileOrDirectory(ASSETS_FOLDER);
+        FileUtil.DeleteFileOrDirectory(assetsFolder);
+
+        string prefabPath = AssetDatabase.GetAssetPath(prefab);
+        Assert.IsFalse(string.IsNullOrEmpty(prefabPath));
         AssetDatabase.DeleteAsset(prefabPath);
 
-        AssetDatabase.Refresh();
-        
+        AssetDatabase.Refresh();                
     }
+    
 
 //----------------------------------------------------------------------------------------------------------------------    
     
