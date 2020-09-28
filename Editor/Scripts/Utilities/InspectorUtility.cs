@@ -13,7 +13,7 @@ internal static class InspectorUtility {
     internal static string ShowFileSelectorGUI(string label, 
         string dialogTitle, 
         string fieldValue, 
-        Func<string, string> onValidFolderSelected)
+        Func<string, string> onValidFileSelected)
     {
 
         string newFilePath = null;
@@ -57,7 +57,7 @@ internal static class InspectorUtility {
                 Debug.Log("Reload");            
             }
            
-            newFilePath = InspectorUtility.ShowSelectFileButton(dialogTitle, fieldValue, onValidFolderSelected);
+            newFilePath = InspectorUtility.ShowSelectFileButton(dialogTitle, fieldValue, onValidFileSelected);
         }
         
         using (new EditorGUILayout.HorizontalScope()) {
