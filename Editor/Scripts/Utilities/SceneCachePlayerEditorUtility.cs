@@ -63,7 +63,7 @@ internal static class SceneCachePlayerEditorUtility {
         } 
         
         cachePlayer.CloseCache();
-        Undo.RecordObject(cachePlayer, "SceneCachePlayer");
+        Undo.RegisterFullObjectHierarchyUndo(cachePlayer.gameObject, "SceneCachePlayer");
 
         
         cachePlayer.Init(assetsFolder);
