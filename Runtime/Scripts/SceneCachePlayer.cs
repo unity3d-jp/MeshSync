@@ -46,7 +46,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    internal string GetFilePath() { return m_filePath; }
+    internal string GetSceneCacheFilePath() { return m_sceneCacheFilePath; }
     internal bool IsSceneCacheOpened() { return m_sceneCache;}
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         gameObject.DestroyChildrenImmediate();
 
         //Initialization after opening a cache file
-        m_filePath = path;
+        m_sceneCacheFilePath = path;
         m_timeRange = m_sceneCache.timeRange;
         
         UpdatePlayer(/* updateNonMaterialAssets = */ true);
@@ -129,8 +129,8 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 #endif //UNITY_EDITOR    
 
     private bool ReopenCache() {
-        Assert.IsFalse(string.IsNullOrEmpty(m_filePath));
-        return OpenCacheInternal(m_filePath);
+        Assert.IsFalse(string.IsNullOrEmpty(m_sceneCacheFilePath));
+        return OpenCacheInternal(m_sceneCacheFilePath);
     }
 
     private bool OpenCacheInternal(string path) {
@@ -152,7 +152,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     internal void CloseCache() {
         if (m_sceneCache) {
             m_sceneCache.Close();
-            Log($"SceneCachePlayer: cache closed ({m_filePath})");
+            Log($"SceneCachePlayer: cache closed ({m_sceneCacheFilePath})");
         }
         m_timePrev = -1;
     }
@@ -273,7 +273,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         
         if (m_version < (int) SceneCachePlayerVersion.STRING_PATH_0_4_0) {
             Assert.IsNotNull(m_cacheFilePath);           
-            m_filePath = m_cacheFilePath.GetFullPath();
+            m_sceneCacheFilePath = m_cacheFilePath.GetFullPath();
         } 
         
         m_version = CUR_SCENE_CACHE_PLAYER_VERSION;
@@ -353,7 +353,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 //----------------------------------------------------------------------------------------------------------------------    
     protected override void OnEnable() {
         base.OnEnable();
-        if (!string.IsNullOrEmpty(m_filePath)) {
+        if (!string.IsNullOrEmpty(m_sceneCacheFilePath)) {
             ReopenCache();
         }
         
@@ -375,7 +375,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    [SerializeField] string    m_filePath = null;
+    [SerializeField] string    m_sceneCacheFilePath = null;
     [SerializeField] DataPath  m_cacheFilePath = null; //OBSOLETE
     [SerializeField] TimeUnit  m_timeUnit      = TimeUnit.Seconds;
     [SerializeField] float     m_time;
