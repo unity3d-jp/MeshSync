@@ -1,10 +1,11 @@
-using System.IO;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
 namespace Unity.MeshSync.Editor  {
 
 [CustomEditor(typeof(SceneCachePlayer))]
+[CanEditMultipleObjects]
 internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
     
 
@@ -14,6 +15,10 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
         base.OnEnable();
         m_sceneCachePlayer = target as SceneCachePlayer;
         
+        m_targets.Clear();
+        foreach (Object singleTarget in targets) {
+            m_targets.Add(singleTarget as SceneCachePlayer);                
+        }        
     }
 
 
@@ -22,6 +27,14 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
     
     
     public override void OnInspectorGUI() {
+
+        int numTargets = m_targets.Count;
+        if (numTargets >= 2) {
+            ShowReloadSelectedSceneCacheFilesGUI();
+            return;
+        }
+        
+        
         SerializedObject so = serializedObject;
 
         EditorGUILayout.Space();
@@ -127,8 +140,19 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
 
 
 //----------------------------------------------------------------------------------------------------------------------
+    void ShowReloadSelectedSceneCacheFilesGUI() {
+        if (GUILayout.Button("Reload Scene Cache Files", GUILayout.Width(50f),GUILayout.Height(EditorGUIUtility.singleLineHeight))) {
+            
+            foreach (SceneCachePlayer player in m_targets) {
 
-    private SceneCachePlayer m_sceneCachePlayer = null;
+            }
+        }
+        
+    }
+//----------------------------------------------------------------------------------------------------------------------
+
+    private SceneCachePlayer       m_sceneCachePlayer = null;
+    private List<SceneCachePlayer> m_targets          = new List<SceneCachePlayer>();
 
 
 
