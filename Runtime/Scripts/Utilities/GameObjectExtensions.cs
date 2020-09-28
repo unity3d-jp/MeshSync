@@ -52,7 +52,7 @@ internal static class GameObjectExtensions {
 
 
     /// <summary>
-    /// Checks if a gameObject is directly a prefab itself (not instanced).
+    /// Checks if a gameObject is a prefab. Instanced prefabs also return true.
     /// </summary>
     /// <param name="gameObject">the gameObject to be checked</param>
     /// <returns>Returns true if the gameObject is a prefab, false otherwise.</returns>
