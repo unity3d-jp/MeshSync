@@ -67,6 +67,37 @@ public class SceneCachePlayerTest  {
     }
     
 //----------------------------------------------------------------------------------------------------------------------       
+    [Test]
+    public void ChangeSceneCacheOnInstancedPrefab() {
+        
+        //Initial setup
+        const string DEST_PREFAB_PATH = "Assets/TestSceneCache.prefab";
+        const string ASSETS_FOLDER    = "Assets/TestSceneCacheAssets";
+            
+        bool prefabCreated = SceneCachePlayerEditorUtility.CreateSceneCachePlayerAndPrefab(
+            Path.GetFullPath(CUBE_TEST_DATA_PATH), DEST_PREFAB_PATH,ASSETS_FOLDER, 
+            out SceneCachePlayer player, out GameObject prefab
+        );
+        Assert.IsTrue(prefabCreated);
+
+        //Check the instanced prefab
+        Assert.IsNotNull(player);              
+        Assert.IsTrue(player.gameObject.IsPrefabInstance());              
+        
+        
+        //Change
+        string newSceneCacheFilePath = Path.GetFullPath(SPHERE_TEST_DATA_PATH);
+        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, newSceneCacheFilePath);
+        Assert.IsTrue(player.IsSceneCacheOpened());
+        Assert.AreEqual(newSceneCacheFilePath, player.GetFilePath());
+        
+
+        //Cleanup
+        Object.DestroyImmediate(player.gameObject);
+        DeleteSceneCachePlayerPrefab(prefab);        
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------       
 
     private void CreateAndDeleteSceneCachePlayerPrefab(string sceneCachePath) {
         Assert.IsTrue(File.Exists(sceneCachePath));
