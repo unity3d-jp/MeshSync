@@ -33,6 +33,38 @@ public class SceneCachePlayerTest  {
         Object.DestroyImmediate(go);
         
     }
+
+//----------------------------------------------------------------------------------------------------------------------       
+    [Test]
+    public void ChangeSceneCacheOnDirectPrefab() {
+        
+        //Initial setup
+        const string DEST_PREFAB_PATH = "Assets/TestSceneCache.prefab";
+        const string ASSETS_FOLDER    = "Assets/TestSceneCacheAssets";
+            
+        bool prefabCreated = SceneCachePlayerEditorUtility.CreateSceneCachePlayerAndPrefab(
+            Path.GetFullPath(CUBE_TEST_DATA_PATH), DEST_PREFAB_PATH,ASSETS_FOLDER, 
+            out SceneCachePlayer player, out GameObject prefab
+        );
+        Assert.IsTrue(prefabCreated);
+
+        //Check the prefab
+        Assert.IsFalse(prefab.IsPrefabInstance());              
+        Assert.IsTrue(prefab.IsPrefab());              
+        SceneCachePlayer prefabPlayer = prefab.GetComponent<SceneCachePlayer>();
+        Assert.IsNotNull(prefabPlayer);
+        
+        
+        //Change
+        string newSceneCacheFilePath = Path.GetFullPath(SPHERE_TEST_DATA_PATH);
+        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(prefabPlayer, newSceneCacheFilePath);
+        Assert.AreEqual(newSceneCacheFilePath, prefabPlayer.GetFilePath());
+        
+
+        //Cleanup
+        Object.DestroyImmediate(player.gameObject);
+        DeleteSceneCachePlayerPrefab(prefab);        
+    }
     
 //----------------------------------------------------------------------------------------------------------------------       
 
@@ -66,8 +98,7 @@ public class SceneCachePlayerTest  {
 //----------------------------------------------------------------------------------------------------------------------
 
     void DeleteSceneCachePlayerPrefab(GameObject prefab) {
-        Assert.IsTrue(prefab.IsPrefab());
-        
+        Assert.IsTrue(prefab.IsPrefab());       
         
         SceneCachePlayer prefabPlayer = prefab.GetComponent<SceneCachePlayer>();
         Assert.IsNotNull(prefabPlayer);
