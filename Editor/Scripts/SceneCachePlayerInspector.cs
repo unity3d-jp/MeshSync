@@ -141,11 +141,24 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
 
 //----------------------------------------------------------------------------------------------------------------------
     void ShowReloadSelectedSceneCacheFilesGUI() {
-        if (GUILayout.Button("Reload Scene Cache Files", GUILayout.Width(50f),GUILayout.Height(EditorGUIUtility.singleLineHeight))) {
-            
+        float itemHeight = EditorGUIUtility.singleLineHeight;       
+       
+        //Button
+        EditorGUILayout.BeginHorizontal(GUILayout.Height(itemHeight));            
+        if (GUILayout.Button("Reload Selected Scene Cache Files", GUILayout.Width(250f),GUILayout.Height(itemHeight))) {            
             foreach (SceneCachePlayer player in m_targets) {
-
+                string sceneCacheFilePath = player.GetSceneCacheFilePath();
+                SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, sceneCacheFilePath);                
+                GUIUtility.ExitGUI();                
             }
+        }
+        EditorGUILayout.EndHorizontal();
+        
+        foreach (SceneCachePlayer player in m_targets) {
+            EditorGUILayout.BeginHorizontal(GUILayout.Height(itemHeight));            
+            GUILayout.Space(30);
+            EditorGUILayout.LabelField(player.name);
+            EditorGUILayout.EndHorizontal();            
         }
         
     }
