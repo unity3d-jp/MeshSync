@@ -51,10 +51,13 @@ internal static class InspectorUtility {
                     break;
             }
                 
-            
-            newFilePath = InspectorUtility.ShowSelectFileButton(dialogTitle, fieldValue, onValidFolderSelected);
 
-            
+            bool buttonPressed = ShowTextureButton("d_RotateTool On@2x", "Reload");
+            if (buttonPressed) {
+                Debug.Log("Reload");            
+            }
+           
+            newFilePath = InspectorUtility.ShowSelectFileButton(dialogTitle, fieldValue, onValidFolderSelected);
         }
         
         using (new EditorGUILayout.HorizontalScope()) {
@@ -74,19 +77,11 @@ internal static class InspectorUtility {
     }
     
     
+
 //----------------------------------------------------------------------------------------------------------------------
-    
     private static string ShowSelectFileButton(string title, string folderPath, Func<string, string> onValidFolderSelected) {
 
-        Texture folderTex     = EditorGUIUtility.Load("d_Project@2x") as Texture2D;;
-        bool    buttonPressed = false;
-        float   lineHeight    = EditorGUIUtility.singleLineHeight;
-
-        if (null == folderTex) {
-            buttonPressed = GUILayout.Button("Select", GUILayout.Width(32), GUILayout.Height(lineHeight));            
-        } else {
-            buttonPressed = GUILayout.Button(folderTex, GUILayout.Width(32), GUILayout.Height(lineHeight));
-        }
+        bool    buttonPressed = ShowTextureButton("d_Project@2x", "Select");
         if(buttonPressed) {
             string folderSelected = EditorUtility.OpenFilePanel(title, folderPath, "sc");
             if(!string.IsNullOrEmpty(folderSelected)) {
@@ -104,6 +99,19 @@ internal static class InspectorUtility {
         }
 
         return folderPath;
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------    
+
+    private static bool ShowTextureButton(string textureName, string textFallback, int guiWidth = 32) {
+
+        Texture2D reloadTex     = EditorGUIUtility.Load(textureName) as Texture2D;
+        float     lineHeight    = EditorGUIUtility.singleLineHeight;
+        if (null == reloadTex) {
+            return GUILayout.Button(textFallback, GUILayout.Width(guiWidth), GUILayout.Height(lineHeight));
+        }
+        
+        return GUILayout.Button(reloadTex, GUILayout.Width(guiWidth), GUILayout.Height(lineHeight));
     }
     
 }
