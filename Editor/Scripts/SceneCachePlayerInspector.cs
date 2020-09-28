@@ -67,7 +67,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
             string fullPath           = m_sceneCachePlayer.GetSceneCacheFilePath();
             string prevNormalizedPath = AssetUtility.NormalizeAssetPath(fullPath);
 
-            string newNormalizedPath = InspectorUtility.ShowFileSelectorGUI("Cache File Path", "MeshSync", 
+            string newNormalizedPath = EditorLayoutUtility.ShowFileSelectorGUI("Cache File Path", "MeshSync", 
                 prevNormalizedPath, OnSceneCacheFileReload, AssetUtility.NormalizeAssetPath);
 
             if (newNormalizedPath != prevNormalizedPath) {
