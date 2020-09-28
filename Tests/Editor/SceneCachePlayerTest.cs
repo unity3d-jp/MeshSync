@@ -16,7 +16,7 @@ public class SceneCachePlayerTest  {
 
 //----------------------------------------------------------------------------------------------------------------------       
     [Test]
-    public void ChangeSceneCache() {
+    public void ChangeSceneCacheOnGameObject() {
         
         //Initial setup            
         GameObject       go     = new GameObject();
