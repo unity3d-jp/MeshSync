@@ -24,9 +24,9 @@ public class SceneCachePlayerTest  {
         Assert.IsFalse(player.IsSceneCacheOpened());
         
         //Change
-        SceneCachePlayerInspector.ChangeSceneCacheFile(player, Path.GetFullPath(CUBE_TEST_DATA_PATH));
+        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(CUBE_TEST_DATA_PATH));
         Assert.IsTrue(player.IsSceneCacheOpened());       
-        SceneCachePlayerInspector.ChangeSceneCacheFile(player, Path.GetFullPath(SPHERE_TEST_DATA_PATH));
+        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(SPHERE_TEST_DATA_PATH));
         Assert.IsTrue(player.IsSceneCacheOpened());
 
         //Cleanup
@@ -42,7 +42,7 @@ public class SceneCachePlayerTest  {
         const string DEST_PREFAB_PATH  = "Assets/TestSceneCache.prefab";
         const string ASSETS_FOLDER     = "Assets/TestSceneCacheAssets";
             
-        bool  prefabCreated  = MeshSyncMenu.CreateSceneCachePlayerAndPrefab(
+        bool  prefabCreated  = SceneCachePlayerEditorUtility.CreateSceneCachePlayerAndPrefab(
             Path.GetFullPath(sceneCachePath), DEST_PREFAB_PATH,ASSETS_FOLDER, 
             out SceneCachePlayer player, out GameObject prefab
         );

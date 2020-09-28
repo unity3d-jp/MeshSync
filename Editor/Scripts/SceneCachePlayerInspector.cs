@@ -114,40 +114,10 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
 
 //----------------------------------------------------------------------------------------------------------------------
     private static void ChangeSceneCacheFileInInspector(SceneCachePlayer cachePlayer, string sceneCacheFilePath) {
-        ChangeSceneCacheFile(cachePlayer, sceneCacheFilePath);
+        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(cachePlayer, sceneCacheFilePath);
         GUIUtility.ExitGUI();
     }
 
-//----------------------------------------------------------------------------------------------------------------------
-    
-    internal static void ChangeSceneCacheFile(SceneCachePlayer cachePlayer, string sceneCacheFilePath) {
-        string prefabPath = null;
-        if (cachePlayer.gameObject.IsPrefabInstance()) {
-            GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(cachePlayer.gameObject);
-            prefabPath = AssetDatabase.GetAssetPath(prefab);
-        }
-        
-        cachePlayer.CloseCache();
-        Undo.RecordObject(cachePlayer, "SceneCachePlayer");
-
-        //Check if it's possible to reuse the old assetsFolder
-        string assetsFolder = cachePlayer.GetAssetsFolder();
-        if (string.IsNullOrEmpty(assetsFolder)) {
-            MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();        
-            string scOutputPath = runtimeSettings.GetSceneCacheOutputPath();            
-            assetsFolder = Path.Combine(scOutputPath, Path.GetFileNameWithoutExtension(sceneCacheFilePath));
-        }
-        
-        cachePlayer.Init(assetsFolder);
-        cachePlayer.OpenCacheInEditor(sceneCacheFilePath);
-
-        //Save as prefab again
-        if (!string.IsNullOrEmpty(prefabPath)) {
-            cachePlayer.gameObject.SaveAsPrefab(prefabPath);
-        }
-        
-    }
-    
 
 //----------------------------------------------------------------------------------------------------------------------
 
