@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -49,23 +50,29 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
 
         m_sceneCachePlayer.foldCacheSettings = EditorGUILayout.Foldout(m_sceneCachePlayer.foldCacheSettings, "Player", true, styleFold);
         if (m_sceneCachePlayer.foldCacheSettings) {
-            // cache file path
-            string fullPath = m_sceneCachePlayer.GetFilePath();
-            using (new EditorGUI.DisabledScope(true)) {               
-                EditorGUILayout.TextField("Cache File Path", AssetUtility.NormalizeAssetPath(fullPath));
+            //Show Selector GUI. Check if we should reopen
+            string fullPath           = m_sceneCachePlayer.GetFilePath();
+            string prevNormalizedPath = AssetUtility.NormalizeAssetPath(fullPath);
+
+            string newNormalizedPath = InspectorUtility.ShowFileSelectorGUI("Cache File Path", "MeshSync", 
+                prevNormalizedPath, AssetUtility.NormalizeAssetPath);
+
+            if (newNormalizedPath != prevNormalizedPath) {
+                ChangeSceneCacheFileInInspector(m_sceneCachePlayer, newNormalizedPath);
             }
+            
             if (!string.IsNullOrEmpty(fullPath) && !fullPath.StartsWith(Application.streamingAssetsPath)) {
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
                 const float BUTTON_WIDTH = 50.0f;
                 if (GUILayout.Button("Copy", GUILayout.Width(BUTTON_WIDTH))) {
                     string dstPath = Misc.CopyFileToStreamingAssets(fullPath);
-                    OnFilePathChanged(m_sceneCachePlayer, dstPath);
+                    ChangeSceneCacheFileInInspector(m_sceneCachePlayer, dstPath);
                 }
                 GUILayout.Label("or");
                 if (GUILayout.Button("Move", GUILayout.Width(BUTTON_WIDTH))) {
                     string dstPath = Misc.MoveFileToStreamingAssets(fullPath);
-                    OnFilePathChanged(m_sceneCachePlayer, dstPath);
+                    ChangeSceneCacheFileInInspector(m_sceneCachePlayer, dstPath);
                 }
                 GUILayout.Label("to StreamingAssets");
                 GUILayout.EndHorizontal();
@@ -106,27 +113,39 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
+    private static void ChangeSceneCacheFileInInspector(SceneCachePlayer cachePlayer, string sceneCacheFilePath) {
+        ChangeSceneCacheFile(cachePlayer, sceneCacheFilePath);
+        GUIUtility.ExitGUI();
+    }
 
-    static void OnFilePathChanged(SceneCachePlayer cachePlayer, string path) {
-        
+//----------------------------------------------------------------------------------------------------------------------
+    
+    internal static void ChangeSceneCacheFile(SceneCachePlayer cachePlayer, string sceneCacheFilePath) {
         string prefabPath = null;
         if (cachePlayer.gameObject.IsPrefabInstance()) {
             GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(cachePlayer.gameObject);
             prefabPath = AssetDatabase.GetAssetPath(prefab);
         }
-
         
         cachePlayer.CloseCache();
-        cachePlayer.SetFilePath(path);
         Undo.RecordObject(cachePlayer, "SceneCachePlayer");
-        cachePlayer.OpenCacheInEditor(path);
+
+        //Check if it's possible to reuse the old assetsFolder
+        string assetsFolder = cachePlayer.GetAssetsFolder();
+        if (string.IsNullOrEmpty(assetsFolder)) {
+            MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();        
+            string scOutputPath = runtimeSettings.GetSceneCacheOutputPath();            
+            assetsFolder = Path.Combine(scOutputPath, Path.GetFileNameWithoutExtension(sceneCacheFilePath));
+        }
+        
+        cachePlayer.Init(assetsFolder);
+        cachePlayer.OpenCacheInEditor(sceneCacheFilePath);
 
         //Save as prefab again
         if (!string.IsNullOrEmpty(prefabPath)) {
             cachePlayer.gameObject.SaveAsPrefab(prefabPath);
         }
         
-        GUIUtility.ExitGUI();
     }
     
 

@@ -10,16 +10,31 @@ public class SceneCachePlayerTest  {
 
     [Test]
     public void CreateSceneCache() {
-
-        string cubeTestDataPath = Path.Combine(TEST_DATA_PATH, "Cube.sc");
-        string sphereTestDataPath = Path.Combine(TEST_DATA_PATH, "Sphere.sc");
-
-        CreateAndDeleteSceneCachePlayerPrefab(cubeTestDataPath);
-        CreateAndDeleteSceneCachePlayerPrefab(sphereTestDataPath);
-        
+        CreateAndDeleteSceneCachePlayerPrefab(CUBE_TEST_DATA_PATH);
+        CreateAndDeleteSceneCachePlayerPrefab(SPHERE_TEST_DATA_PATH);        
     }
 
-//----------------------------------------------------------------------------------------------------------------------    
+//----------------------------------------------------------------------------------------------------------------------       
+    [Test]
+    public void ChangeSceneCache() {
+        
+        //Initial setup            
+        GameObject       go     = new GameObject();
+        SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
+        Assert.IsFalse(player.IsSceneCacheOpened());
+        
+        //Change
+        SceneCachePlayerInspector.ChangeSceneCacheFile(player, Path.GetFullPath(CUBE_TEST_DATA_PATH));
+        Assert.IsTrue(player.IsSceneCacheOpened());       
+        SceneCachePlayerInspector.ChangeSceneCacheFile(player, Path.GetFullPath(SPHERE_TEST_DATA_PATH));
+        Assert.IsTrue(player.IsSceneCacheOpened());
+
+        //Cleanup
+        Object.DestroyImmediate(go);
+        
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------       
 
     private void CreateAndDeleteSceneCachePlayerPrefab(string sceneCachePath) {
         Assert.IsTrue(File.Exists(sceneCachePath));
@@ -31,6 +46,7 @@ public class SceneCachePlayerTest  {
             Path.GetFullPath(sceneCachePath), DEST_PREFAB_PATH,ASSETS_FOLDER, 
             out SceneCachePlayer player, out GameObject prefab
         );
+        Assert.IsTrue(player.IsSceneCacheOpened());       
         Assert.IsTrue(prefabCreated);
         Assert.IsNotNull(prefab);
         Assert.IsNotNull(player);
@@ -44,7 +60,7 @@ public class SceneCachePlayerTest  {
         Assert.IsTrue(Directory.Exists(ASSETS_FOLDER));
         string[] prefabAssetGUIDs = AssetDatabase.FindAssets("", new[] {ASSETS_FOLDER});
         Assert.Greater(prefabAssetGUIDs.Length, 0);
- 
+        
         
         //Cleanup
         foreach (string guid in prefabAssetGUIDs) {
@@ -59,8 +75,10 @@ public class SceneCachePlayerTest  {
 
 //----------------------------------------------------------------------------------------------------------------------    
     
-    private readonly string TEST_DATA_PATH = Path.Combine("Packages", MeshSyncConstants.PACKAGE_NAME, "Tests", "Data");
-
+    private static readonly string TEST_DATA_PATH = Path.Combine("Packages", MeshSyncConstants.PACKAGE_NAME, "Tests", "Data");
+    private static readonly string CUBE_TEST_DATA_PATH   = Path.Combine(TEST_DATA_PATH, "Cube.sc");
+    private static readonly string SPHERE_TEST_DATA_PATH = Path.Combine(TEST_DATA_PATH, "Sphere.sc");
+    
 }
 
 }
