@@ -13,6 +13,7 @@ internal static class InspectorUtility {
     internal static string ShowFileSelectorGUI(string label, 
         string dialogTitle, 
         string fieldValue, 
+        Action onReload,
         Func<string, string> onValidFileSelected)
     {
 
@@ -50,12 +51,13 @@ internal static class InspectorUtility {
                 default:
                     break;
             }
-                
 
-            bool buttonPressed = ShowTextureButton("d_RotateTool On@2x", "Reload");
-            if (buttonPressed) {
-                Debug.Log("Reload");            
-            }
+            if (null != onReload) {
+                bool buttonPressed = ShowTextureButton("d_RotateTool On@2x", "Reload");
+                if (buttonPressed) {
+                    onReload();
+                }                
+            }           
            
             newFilePath = InspectorUtility.ShowSelectFileButton(dialogTitle, fieldValue, onValidFileSelected);
         }
