@@ -24,9 +24,9 @@ public class SceneCachePlayerTest  {
         Assert.IsFalse(player.IsSceneCacheOpened());
         
         //Change
-        SceneCachePlayerInspector.ChangeSceneCacheFile(player, CUBE_TEST_DATA_PATH);
+        SceneCachePlayerInspector.ChangeSceneCacheFile(player, Path.GetFullPath(CUBE_TEST_DATA_PATH));
         Assert.IsTrue(player.IsSceneCacheOpened());       
-        SceneCachePlayerInspector.ChangeSceneCacheFile(player, SPHERE_TEST_DATA_PATH);
+        SceneCachePlayerInspector.ChangeSceneCacheFile(player, Path.GetFullPath(SPHERE_TEST_DATA_PATH));
         Assert.IsTrue(player.IsSceneCacheOpened());
 
         //Cleanup
