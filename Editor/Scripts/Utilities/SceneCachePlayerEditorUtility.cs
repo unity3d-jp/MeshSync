@@ -63,6 +63,8 @@ internal static class SceneCachePlayerEditorUtility {
         } 
         
         cachePlayer.CloseCache();
+        
+        //[TODO-sin: 2020-9-28] Find out if it is possible to do undo properly
         Undo.RegisterFullObjectHierarchyUndo(cachePlayer.gameObject, "SceneCachePlayer");
 
         
