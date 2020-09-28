@@ -149,15 +149,21 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
             foreach (SceneCachePlayer player in m_targets) {
                 string sceneCacheFilePath = player.GetSceneCacheFilePath();
                 SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, sceneCacheFilePath);                
-                GUIUtility.ExitGUI();                
             }
+            GUIUtility.ExitGUI();                
         }
         EditorGUILayout.EndHorizontal();
         
         foreach (SceneCachePlayer player in m_targets) {
             EditorGUILayout.BeginHorizontal(GUILayout.Height(itemHeight));            
-            GUILayout.Space(30);
-            EditorGUILayout.LabelField(player.name);
+            GUILayout.Space(30);            
+            if (player.gameObject.IsPrefab()) {
+                GameObject prefab = PrefabUtility.GetCorrespondingObjectFromOriginalSource(player.gameObject);                
+                string prefabPath = AssetDatabase.GetAssetPath(prefab);
+                EditorGUILayout.LabelField(prefabPath);                
+            } else {
+                EditorGUILayout.LabelField(player.name);                
+            }
             EditorGUILayout.EndHorizontal();            
         }
         
