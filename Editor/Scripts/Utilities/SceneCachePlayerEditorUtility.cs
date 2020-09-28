@@ -36,15 +36,8 @@ internal static class SceneCachePlayerEditorUtility {
 //----------------------------------------------------------------------------------------------------------------------    
     
     internal static void ChangeSceneCacheFile(SceneCachePlayer cachePlayer, string sceneCacheFilePath) {
-        string prefabPath = null;
-        if (cachePlayer.gameObject.IsPrefabInstance()) {
-            GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(cachePlayer.gameObject);
-            prefabPath = AssetDatabase.GetAssetPath(prefab);
-        }
-        
-        cachePlayer.CloseCache();
-        Undo.RecordObject(cachePlayer, "SceneCachePlayer");
-
+        string     prefabPath = null;
+        GameObject go         = cachePlayer.gameObject;
         //Check if it's possible to reuse the old assetsFolder
         string assetsFolder = cachePlayer.GetAssetsFolder();
         if (string.IsNullOrEmpty(assetsFolder)) {
@@ -52,6 +45,28 @@ internal static class SceneCachePlayerEditorUtility {
             string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();            
             assetsFolder = Path.Combine(scOutputPath, Path.GetFileNameWithoutExtension(sceneCacheFilePath));
         }
+        
+        bool isPrefabInstance = cachePlayer.gameObject.IsPrefabInstance();        
+        //We are directly modifying a prefab
+        if (!isPrefabInstance && go.IsPrefab()) {
+            prefabPath = AssetDatabase.GetAssetPath(go);
+            CreateSceneCachePlayerAndPrefab(sceneCacheFilePath, prefabPath, assetsFolder, out SceneCachePlayer player,
+                out GameObject newPrefab);
+            Object.DestroyImmediate(player.gameObject);
+            return;
+
+        } 
+        
+        if (isPrefabInstance) {
+            GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(cachePlayer.gameObject);
+            prefabPath = AssetDatabase.GetAssetPath(prefab);
+        } 
+        
+        cachePlayer.CloseCache();
+        
+        //[TODO-sin: 2020-9-28] Find out if it is possible to do undo properly
+        Undo.RegisterFullObjectHierarchyUndo(cachePlayer.gameObject, "SceneCachePlayer");
+
         
         cachePlayer.Init(assetsFolder);
         cachePlayer.OpenCacheInEditor(sceneCacheFilePath);

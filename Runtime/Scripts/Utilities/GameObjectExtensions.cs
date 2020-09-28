@@ -18,7 +18,7 @@ internal static class GameObjectExtensions {
     public static void DestroyChildrenImmediate(this Transform t) {                
         int childCount = t.childCount;        
         for (int i = childCount - 1; i >= 0; --i) {
-            Object.DestroyImmediate(t.GetChild(i).gameObject);
+            Object.DestroyImmediate(t.GetChild(i).gameObject, true);
         }        
     }
     
@@ -48,6 +48,17 @@ internal static class GameObjectExtensions {
         PrefabInstanceStatus prefabInstanceStatus = PrefabUtility.GetPrefabInstanceStatus(gameObject);
         return (prefabInstanceStatus != PrefabInstanceStatus.NotAPrefab);
 
+    }
+
+
+    /// <summary>
+    /// Checks if a gameObject is a prefab. Instanced prefabs also return true.
+    /// </summary>
+    /// <param name="gameObject">the gameObject to be checked</param>
+    /// <returns>Returns true if the gameObject is a prefab, false otherwise.</returns>
+    public static bool IsPrefab(this GameObject gameObject) {
+        PrefabAssetType prefabAssetType = PrefabUtility.GetPrefabAssetType(gameObject);
+        return (prefabAssetType != PrefabAssetType.NotAPrefab);
     }
     
 #endif    
