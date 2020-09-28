@@ -49,6 +49,17 @@ internal static class GameObjectExtensions {
         return (prefabInstanceStatus != PrefabInstanceStatus.NotAPrefab);
 
     }
+
+
+    /// <summary>
+    /// Checks if a gameObject is directly a prefab itself (not instanced).
+    /// </summary>
+    /// <param name="gameObject">the gameObject to be checked</param>
+    /// <returns>Returns true if the gameObject is a prefab, false otherwise.</returns>
+    public static bool IsPrefab(this GameObject gameObject) {
+        PrefabAssetType prefabAssetType = PrefabUtility.GetPrefabAssetType(gameObject);
+        return (prefabAssetType != PrefabAssetType.NotAPrefab);
+    }
     
 #endif    
     
