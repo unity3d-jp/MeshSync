@@ -18,7 +18,7 @@ internal static class GameObjectExtensions {
     public static void DestroyChildrenImmediate(this Transform t) {                
         int childCount = t.childCount;        
         for (int i = childCount - 1; i >= 0; --i) {
-            Object.DestroyImmediate(t.GetChild(i).gameObject);
+            Object.DestroyImmediate(t.GetChild(i).gameObject, true);
         }        
     }
     
