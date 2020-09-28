@@ -1,10 +1,11 @@
-using System.IO;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
 namespace Unity.MeshSync.Editor  {
 
 [CustomEditor(typeof(SceneCachePlayer))]
+[CanEditMultipleObjects]
 internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
     
 
@@ -14,6 +15,10 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
         base.OnEnable();
         m_sceneCachePlayer = target as SceneCachePlayer;
         
+        m_targets.Clear();
+        foreach (Object singleTarget in targets) {
+            m_targets.Add(singleTarget as SceneCachePlayer);                
+        }        
     }
 
 
@@ -22,6 +27,14 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
     
     
     public override void OnInspectorGUI() {
+
+        int numTargets = m_targets.Count;
+        if (numTargets >= 2) {
+            ShowReloadSelectedSceneCacheFilesGUI();
+            return;
+        }
+        
+        
         SerializedObject so = serializedObject;
 
         EditorGUILayout.Space();
@@ -127,8 +140,39 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
 
 
 //----------------------------------------------------------------------------------------------------------------------
+    void ShowReloadSelectedSceneCacheFilesGUI() {
+        float itemHeight = EditorGUIUtility.singleLineHeight;       
+       
+        //Button
+        EditorGUILayout.BeginHorizontal(GUILayout.Height(itemHeight));            
+        if (GUILayout.Button("Reload Selected Scene Cache Files", GUILayout.Width(250f),GUILayout.Height(itemHeight))) {            
+            foreach (SceneCachePlayer player in m_targets) {
+                string sceneCacheFilePath = player.GetSceneCacheFilePath();
+                SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, sceneCacheFilePath);                
+            }
+            GUIUtility.ExitGUI();                
+        }
+        EditorGUILayout.EndHorizontal();
+        
+        //[TODO-sin: 2020-9-28] use ScrollView
+        foreach (SceneCachePlayer player in m_targets) {
+            EditorGUILayout.BeginHorizontal(GUILayout.Height(itemHeight));            
+            GUILayout.Space(30);            
+            if (player.gameObject.IsPrefab()) {
+                GameObject prefab = PrefabUtility.GetCorrespondingObjectFromOriginalSource(player.gameObject);                
+                string prefabPath = AssetDatabase.GetAssetPath(prefab);
+                EditorGUILayout.LabelField(prefabPath);                
+            } else {
+                EditorGUILayout.LabelField(player.name);                
+            }
+            EditorGUILayout.EndHorizontal();            
+        }
+        
+    }
+//----------------------------------------------------------------------------------------------------------------------
 
-    private SceneCachePlayer m_sceneCachePlayer = null;
+    private SceneCachePlayer       m_sceneCachePlayer = null;
+    private List<SceneCachePlayer> m_targets          = new List<SceneCachePlayer>();
 
 
 
