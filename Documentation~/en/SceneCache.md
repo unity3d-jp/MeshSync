@@ -29,9 +29,8 @@ We can place this clip on an AnimationTrack to play it in Timeline.
 
 - **Cache File Path**  
 Initially, the path to the *.sc* file is absolute, and therefore the animation can only be played on that PC.  
-To copy or move the cache file to StreamingAssets, click the "Copy to StreamingAssets" or "Move to StreamingAssets" button.  
+Copying the cache file to StreamingAssets is recommended, and can be done by simply clicking the "Copy" button.  
 This will allow us to play the clips on the same project copied to another PC, or in a runtime executable.
-
 
 - **Time**  
 This is the playback time. We can play the animation by moving this parameter.
