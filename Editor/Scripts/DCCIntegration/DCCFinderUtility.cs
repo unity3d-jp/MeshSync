@@ -365,7 +365,7 @@ public static class DCCFinderUtility {
         { "Blender",      new DCCToolInfo(DCCToolType.BLENDER, null ) },
         { "Blender 2.81", new DCCToolInfo(DCCToolType.BLENDER, "2.81" ) },
         { "Blender 2.82", new DCCToolInfo(DCCToolType.BLENDER, "2.82" ) },
-        { "Blender 2.83", new DCCToolInfo(DCCToolType.BLENDER, "2.83.5" ) },
+        { "Blender 2.83", new DCCToolInfo(DCCToolType.BLENDER, "2.83.6" ) },
         { "Blender 2.90", new DCCToolInfo(DCCToolType.BLENDER, "2.90.0" ) },
 #elif UNITY_EDITOR_OSX        
         { "Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
@@ -375,7 +375,13 @@ public static class DCCFinderUtility {
         { "blender-2.80rc3-linux-glibc217-x86_64", new DCCToolInfo(DCCToolType.BLENDER, "2.80" ) },
         { "blender-2.81a-linux-glibc217-x86_64", new DCCToolInfo(DCCToolType.BLENDER, "2.81" ) },
         { "blender-2.82a-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.82" ) },
-        { "blender-2.83.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
+        { "blender-2.83.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83.6" ) },        
+        { "blender-2.83.1-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83.6" ) },        
+        { "blender-2.83.2-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83.6" ) },        
+        { "blender-2.83.3-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83.6" ) },        
+        { "blender-2.83.4-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83.6" ) },        
+        { "blender-2.83.5-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83.6" ) },        
+        { "blender-2.83.6-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83.6" ) },        
 #endif        
         
     };
