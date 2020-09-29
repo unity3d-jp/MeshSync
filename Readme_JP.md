@@ -34,7 +34,7 @@ MeshSync は現在プレビューパッケージとして存在し、
 # 基本的な使い方
 
 **GameObject** メニューから **MeshSync > Create Server** でサーバーオブジェクトを作成します。
-このサーバーオブジェクトが同期処理を担当する [MeshSyncServer](Documentation~/en/MeshSyncServer.md) のコンポーネントを持っています。
+このサーバーオブジェクトが同期処理を担当する [MeshSyncServer](Documentation~/jp/MeshSyncServer.md) のコンポーネントを持っています。
 
 ![Menu](Documentation~/images/MenuCreateServer.png)
 
@@ -46,7 +46,7 @@ MeshSync のコンポネントに対するデフォルト設定は
 ![Server Settings](Documentation~/images/ProjectSettingsServer.png)
 
 同様に、DCC ツールとの統合は
-[環境設定](Documentation~/en/Preferences.md) ウィンドウで設定することができます。
+[環境設定](Documentation~/jp/Preferences.md) ウィンドウで設定することができます。
 
 ![Server Settings](Documentation~/images/Preferences.png)
 
