@@ -3,10 +3,10 @@
 Use the Preferences window to install 
 [MeshSyncDCCPlugins](https://github.com/Unity-Technologies/MeshSyncDCCPlugins) 
 in supported DCC Tools.  
-When this tab is opened for the first time, 
+When this window is opened for the first time, 
 it automatically detects DCC tools which have been 
 installed in their default locations automatically and 
-display them inside the tab.
+display them inside the window.
 
 ![Preferences](../images/Preferences.png)
 
@@ -22,7 +22,7 @@ display them inside the tab.
 
 1. Maya 2017 - 2020
 2. 3ds Max 2017 - 2020
-3. Blender 2.79, 2.80, 2.81, 2.82, 2.83
+3. Blender 2.79, 2.80, 2.81, 2.82, 2.83, 2.90
 
 ### Notes
 

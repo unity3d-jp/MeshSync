@@ -4,8 +4,8 @@
 環境設定ウィンドウで、サポートされている DCC ツールに
 [MeshSyncDCCPlugins](https://github.com/Unity-Technologies/MeshSyncDCCPlugins) 
 をインストールできます。 
-初めてこのタブが開かれた時、デフォルトパスにインストールされた DCC ツールが自動的に
-検出され、タブに表示されます。
+初めてこのウィンドウが開かれた時、デフォルトパスにインストールされた DCC ツールが自動的に
+検出され、ウィンドウに表示されます。
 
 ![Preferences](../images/Preferences.png)
 
@@ -21,7 +21,7 @@
 
 1. Maya 2017 - 2020
 2. 3ds Max 2017 - 2020
-3. Blender 2.79, 2.80, 2.81, 2.82, 2.83
+3. Blender 2.79, 2.80, 2.81, 2.82, 2.83, 2.90
 
 ### 注意
 
