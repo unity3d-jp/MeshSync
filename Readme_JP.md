@@ -40,10 +40,13 @@ MeshSync は現在プレビューパッケージとして存在し、
 
 # 設定
 
-DCC ツールの統合などといった、様々な MeshSync の設定を 
+MeshSync の GameObject に対するデフォルト設定は
 [Project Settings](Documentation~/jp/ProjectSettings.md) ウィンドウで設定することができます。
+![Server Settings](Documentation~/images/ProjectSettingsServer.png)
 
-![Settings](Documentation~/images/ProjectSettings.png)
+同様に、DCC ツールとの統合は
+[Preferences](Documentation~/en/Preferences.md) ウィンドウで設定することができます。
+![Server Settings](Documentation~/images/Preferences.png)
 
 
 # アドバンスト 機能
