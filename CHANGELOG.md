@@ -1,8 +1,17 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
-## [0.4.0-preview] - 2020-09-15
-* TODO
+## [0.4.0-preview] - 2020-09-29
+* feat: add support for Blender 2.90
+* feat: split ProjectSettings to Server tab and SceneCache tab
+* feat: enable the setting of the output path of Scene Cache assets
+* feat: select/load a new scene cache file via the inspector of ScenePlayerCache
+* feat: reload scene cache file via the inspector of ScenePlayerCache 
+* feat: reload/refresh multiple SceneCachePlayer using their original SceneCache file paths 
+* ui: change the layout of the GUI to copy scene cache to StreamingAssets for SceneCachePlayer
+* chore: move DCCTool Settings to Preferences (User Settings)
+* refactor: refactored the initialization code of SceneCachePlayer
+* doc: update doc about Project Settings, Preferences, and SceneCache 
 
 ## [0.3.4-preview] - 2020-09-09
 * fix: error when creating SceneCachePlayer 
