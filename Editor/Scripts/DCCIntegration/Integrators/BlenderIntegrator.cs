@@ -28,8 +28,13 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
 
         //Must use '/' for the pluginFile which is going to be inserted into the template
         string ver = dccToolInfo.DCCToolVersion;
-        string pluginFile = Path.Combine(extractedPath, $"blender-{ver}.zip").Replace(Path.DirectorySeparatorChar,'/');
+
+        string[] pluginFiles = Directory.GetFiles(extractedPath, $"blender-{ver}*.zip");
+        if (pluginFiles.Length <= 0) {
+            return false;            
+        }
         
+        string pluginFile = pluginFiles[0].Replace(Path.DirectorySeparatorChar,'/');        
         if (!File.Exists(pluginFile)) {
             return false;
         }
