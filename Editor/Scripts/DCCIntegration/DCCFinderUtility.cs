@@ -289,6 +289,11 @@ public static class DCCFinderUtility {
     //If version is null, then the correct version will be returned if found
     [CanBeNull]
     internal static DCCToolInfo FindDCCToolInDirectory(DCCToolType toolType, string version, string dir) {
+
+#if UNITY_EDITOR_WIN
+        dir = dir.Replace("/","\\");
+#endif             
+        
         switch (toolType) {
             case DCCToolType.AUTODESK_MAYA: {
                 return FindMayaInDirectory(dir, version);
