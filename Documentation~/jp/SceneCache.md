@@ -27,8 +27,10 @@ Timeline で再生する場合も、この clip を AnimationTrack に配置す�
 
 - **Cache File Path**  
 初期時に、 *.sc* ファイルへのパスが絶対パスになっており、その PC でしか再生できません。  
-"Copy to StreamingAssets" 、又は "Move to StreamingAssets" ボタンを押すと、キャッシュファイルを StreamingAssets にコピー、又は移動します。  
+キャッシュファイルを StreamingAssets にコピーすることを推奨しており、
+"Copy" ボタンで簡単にコピーすることができます。  
 これを行っておくと、プロジェクトを他の PC にコピーした場合や、プロジェクトをビルドして他の PC で動かした場合も再生できるようになります。
+
 
 - **Time**  
 再生の時間です。

@@ -40,10 +40,16 @@ This object has [MeshSyncServer](Documentation~/en/MeshSyncServer.md) component 
 
 # Settings
 
-Various MeshSync related settings, including DCC Tools integration, can be configured on the 
+Default settings for MeshSync components can be configured on the 
 [Project Settings](Documentation~/en/ProjectSettings.md) window.
 
-![Settings](Documentation~/images/ProjectSettings.png)
+![Server Settings](Documentation~/images/ProjectSettingsServer.png)
+
+Similarly, DCC Tools integration can be configured on the 
+[Preferences](Documentation~/en/Preferences.md) window
+
+![Server Settings](Documentation~/images/Preferences.png)
+
 
 # Advanced Features
 - [SceneCache](Documentation~/en/SceneCache.md)
