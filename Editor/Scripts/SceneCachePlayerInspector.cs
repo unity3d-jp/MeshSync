@@ -76,19 +76,16 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
             
             if (!string.IsNullOrEmpty(fullPath) && !fullPath.StartsWith(Application.streamingAssetsPath)) {
                 GUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
                 const float BUTTON_WIDTH = 50.0f;
                 if (GUILayout.Button("Copy", GUILayout.Width(BUTTON_WIDTH))) {
                     string dstPath = Misc.CopyFileToStreamingAssets(fullPath);
                     ChangeSceneCacheFileInInspector(m_sceneCachePlayer, dstPath);
                 }
-                GUILayout.Label("or");
-                if (GUILayout.Button("Move", GUILayout.Width(BUTTON_WIDTH))) {
-                    string dstPath = Misc.MoveFileToStreamingAssets(fullPath);
-                    ChangeSceneCacheFileInInspector(m_sceneCachePlayer, dstPath);
-                }
-                GUILayout.Label("to StreamingAssets");
+                GUILayout.Label("Scene Cache file to StreamingAssets");
+                EditorGUILayout.LabelField("(RECOMMENDED)", EditorStyles.boldLabel);
+                GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
+                GUILayout.Space(15);
             }
             EditorGUILayout.Space();
 
