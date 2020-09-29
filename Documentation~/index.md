@@ -19,12 +19,14 @@ This object has [MeshSyncServer](en/MeshSyncServer.md) component that handles th
 
 # Settings
 
-Default settings for MeshSync GameObjects can be configured on the 
+Default settings for MeshSync components can be configured on the 
 [Project Settings](en/ProjectSettings.md) window.
+
 ![Server Settings](images/ProjectSettingsServer.png)
 
 Similarly, DCC Tools integration can be configured on the 
 [Preferences](en/Preferences.md) window
+
 ![Server Settings](images/Preferences.png)
 
 
