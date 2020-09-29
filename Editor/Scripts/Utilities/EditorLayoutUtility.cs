@@ -5,7 +5,7 @@ using UnityEditor;
 
 namespace Unity.MeshSync.Editor  {
 
-internal static class InspectorUtility {    
+internal static class EditorLayoutUtility {    
 
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -59,7 +59,7 @@ internal static class InspectorUtility {
                 }                
             }           
            
-            newFilePath = InspectorUtility.ShowSelectFileButton(dialogTitle, fieldValue, onValidFileSelected);
+            newFilePath = EditorLayoutUtility.ShowSelectFileButton(dialogTitle, fieldValue, onValidFileSelected);
         }
         
         using (new EditorGUILayout.HorizontalScope()) {
