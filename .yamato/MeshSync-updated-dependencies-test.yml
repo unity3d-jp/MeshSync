@@ -12,7 +12,7 @@ dependency_{{ platform.name }}_{{ editor.version }}:
     flavor: {{ platform.flavor}}
   commands:
     - npm install upm-ci-utils@stable -g --registry https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-npm
-    - upm-ci package test -u {{ editor.version }} --type updated-dependencies-tests --package-path {{ package_path }}       
+    - upm-ci package test -u {{ editor.version }} --type updated-dependencies-tests 
   artifacts:
     {{ yamato_name }}_dependency_artifacts:
       paths:
