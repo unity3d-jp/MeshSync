@@ -1,11 +1,5 @@
-yamato_name: MeshSync
-test_editors:
-  - version: 2019.4
-test_platforms:
-  - name: win
-    type: Unity::VM
-    image: package-ci/win10:stable
-    flavor: b1.large
+{% metadata_file .yamato/MeshSync.metafile %}
+   
 ---
 {% for editor in test_editors %}
 {% for platform in test_platforms %}
@@ -19,13 +13,13 @@ promotion_test_{{ platform.name }}_{{ editor.version }}:
     UPMCI_PROMOTION: 1
   commands:
     - npm install upm-ci-utils@stable -g --registry https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-npm
-    - upm-ci package test --unity-version {{ editor.version }}
+    - upm-ci package test --unity-version {{ editor.version }} 
   artifacts:
-    {{ yamato_name }}_promotion_test_results:
+    {{ yamato_name }}_promotion_test_artifacts:
       paths:
         - "upm-ci~/test-results/**/*"
   dependencies:
-    - .yamato/upm-ci-{{ yamato_name }}.yml#pack
+    - .yamato/{{ yamato_name }}-pack.yml#pack
 {% endfor %}
 {% endfor %}
 
@@ -39,7 +33,7 @@ promote:
     UPMCI_PROMOTION: 1
   commands:
     - npm install upm-ci-utils@stable -g --registry https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-npm
-    - upm-ci package promote
+    - upm-ci package promote 
   triggers:
     tags:
       only:
@@ -49,9 +43,9 @@ promote:
       paths:
         - "upm-ci~/packages/*.tgz"
   dependencies:
-    - .yamato/upm-ci-{{ yamato_name }}.yml#pack
+    - .yamato/{{ yamato_name }}-pack.yml#pack
 {% for editor in test_editors %}
 {% for platform in test_platforms %}
-    - .yamato/promotion-{{ yamato_name }}.yml#promotion_test_{{ platform.name }}_{{ editor.version }}
+    - .yamato/{{ yamato_name }}-promotion.yml#promotion_test_{{ platform.name }}_{{ editor.version }}
 {% endfor %}
 {% endfor %}

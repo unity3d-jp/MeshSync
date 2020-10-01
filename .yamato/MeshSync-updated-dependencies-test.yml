@@ -1,0 +1,61 @@
+{% metadata_file .yamato/MeshSync.metafile %}
+   
+---
+
+{% for editor in test_editors %}
+{% for platform in test_platforms %}
+dependency_{{ platform.name }}_{{ editor.version }}:
+  name : Dependency Test {{ yamato_name }} using {{ editor.version }} on {{ platform.name }}
+  agent:
+    type: {{ platform.type }}
+    image: {{ platform.image }}
+    flavor: {{ platform.flavor}}
+  commands:
+    - npm install upm-ci-utils@stable -g --registry https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-npm
+    - upm-ci package test -u {{ editor.version }} --type updated-dependencies-tests --package-path {{ package_path }}       
+  artifacts:
+    {{ yamato_name }}_dependency_artifacts:
+      paths:
+        - "upm-ci~/test-results/**/*"
+  dependencies:
+    - .yamato/{{ yamato_name }}-pack.yml#pack
+{% endfor %}
+{% endfor %}
+
+dependency_test_trigger:
+  name: Dependency Tests Trigger for {{ yamato_name }}
+  agent:
+    type: Unity::VM
+    image: package-ci/ubuntu:stable
+    flavor: b1.large  
+  commands:
+    -  npm install upm-ci-utils@stable -g --registry https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-npm
+    -  upm-ci package izon -d
+  artifacts:
+    {{ yamato_name }}_dependency_test_trigger_artifacts:
+      paths:
+        - "upm-ci~/test-results/**/*"
+    {{ yamato_name }}_dependency_test_packages:
+      paths:
+        - "upm-ci~/packages/**/*"    
+  triggers:
+    branches:
+      only:
+        - "/.*/"
+      except:
+        - "dev"              
+    changes:
+      only:
+        - "Packages/com.unity.anime-toolbox/**"            
+    recurring:
+      - branch: dev
+        frequency: daily
+        rerun: on_new_revision        
+        
+  dependencies:
+    - .yamato/{{ yamato_name }}-pack.yml#pack
+    {% for editor in test_editors %}
+    {% for platform in test_platforms %}
+    - .yamato/{{ yamato_name }}-updated-dependencies-test.yml#dependency_{{platform.name}}_{{editor.version}}
+    {% endfor %}
+    {% endfor %}
