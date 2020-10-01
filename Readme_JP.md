@@ -31,6 +31,17 @@ MeshSync は現在プレビューパッケージとして存在し、
 - Mac
 - Linux
 
+## 最新の CI の状況
+
+[![](https://badge-proxy.cds.internal.unity3d.com/f4d1069b-1233-4324-ae75-2fac980576a4)](https://badges.cds.internal.unity3d.com/packages/com.unity.meshsync/build-info?branch=dev&testWorkflow=package-isolation)
+[![](https://badge-proxy.cds.internal.unity3d.com/6cfcda56-5e8d-4612-abfa-6de23df068fb)](https://badges.cds.internal.unity3d.com/packages/com.unity.meshsync/dependencies-info?branch=dev&testWorkflow=updated-dependencies)
+[![](https://badge-proxy.cds.internal.unity3d.com/45cf24da-7561-4983-9e11-fc920996015c)](https://badges.cds.internal.unity3d.com/packages/com.unity.meshsync/dependants-info)
+[![](https://badge-proxy.cds.internal.unity3d.com/0998ee7c-b3f2-4ef9-97cd-628296f29c4a)](https://badges.cds.internal.unity3d.com/packages/com.unity.meshsync/warnings-info?branch=dev)
+
+![ReleaseBadge](https://badge-proxy.cds.internal.unity3d.com/9cb90abe-572c-440c-b7f9-f212c5573261)
+![ReleaseBadge](https://badge-proxy.cds.internal.unity3d.com/4661afc4-7953-410d-a4fa-9668ed7da2b9)
+
+
 # 基本的な使い方
 
 **GameObject** メニューから **MeshSync > Create Server** でサーバーオブジェクトを作成します。
