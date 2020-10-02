@@ -37,9 +37,6 @@ test_trigger:
         - "/.*/"
       except:
         - "dev"              
-    changes:
-      only:
-        - "Packages/com.unity.anime-toolbox/**"    
     recurring:
       - branch: dev
         frequency: daily
