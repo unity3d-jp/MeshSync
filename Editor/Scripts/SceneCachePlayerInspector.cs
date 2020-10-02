@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Unity.AnimeToolbox;
+using Unity.AnimeToolbox.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -67,8 +69,8 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
             string fullPath           = m_sceneCachePlayer.GetSceneCacheFilePath();
             string prevNormalizedPath = AssetUtility.NormalizeAssetPath(fullPath);
 
-            string newNormalizedPath = EditorLayoutUtility.ShowFileSelectorGUI("Cache File Path", "MeshSync", 
-                prevNormalizedPath, OnSceneCacheFileReload, AssetUtility.NormalizeAssetPath);
+            string newNormalizedPath = EditorGUIDrawerUtility.DrawFileSelectorGUI("Cache File Path", "MeshSync", 
+                prevNormalizedPath, "sc", OnSceneCacheFileReload, AssetUtility.NormalizeAssetPath);
 
             if (newNormalizedPath != prevNormalizedPath) {
                 ChangeSceneCacheFileInInspector(m_sceneCachePlayer, newNormalizedPath);
