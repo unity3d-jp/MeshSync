@@ -1,3 +1,4 @@
+using Unity.AnimeToolbox;
 using Unity.AnimeToolbox.Editor;
 using UnityEditor;
 using UnityEngine;
