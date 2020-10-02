@@ -1,0 +1,19 @@
+yamato_name: MeshSync
+
+test_editors:
+  - version: 2019.4
+  - version: 2020.2
+  - version: trunk
+test_platforms:
+  - name: win
+    type: Unity::VM
+    image: package-ci/win10:stable
+    flavor: b1.medium
+  - name: mac
+    type: Unity::VM::osx
+    image: package-ci/mac:stable       
+    flavor: m1.mac
+  - name: linux
+    type: Unity::VM
+    image: package-ci/ubuntu:stable
+    flavor: b1.medium
