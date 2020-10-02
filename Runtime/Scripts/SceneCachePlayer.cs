@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using Unity.AnimeToolbox;
 using UnityEngine;
 using UnityEngine.Assertions;
 #if UNITY_EDITOR
