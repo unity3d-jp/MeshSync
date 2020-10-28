@@ -20,6 +20,8 @@ namespace Unity.MeshSync.Editor {
         public void Setup(VisualElement root) {
 
             m_dccStatusLabels.Clear();
+            m_dccContainers.Clear();
+            
             m_root = root;
             m_root.Clear();
 
