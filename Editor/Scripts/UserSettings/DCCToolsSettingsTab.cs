@@ -82,7 +82,9 @@ namespace Unity.MeshSync.Editor {
             }
             
             m_dccStatusLabels[dccToolInfo.AppPath] = statusLabel;
-            
+            m_dccContainers[dccToolInfo.AppPath]   = container; 
+                
+                
             //Buttons
             {
                 Button button = container.Query<Button>("RemoveDCCToolButton").First();
@@ -148,21 +150,28 @@ namespace Unity.MeshSync.Editor {
                 return;
             }
 
-            DCCToolInfo info = button.userData as DCCToolInfo;
-            if (null==info || string.IsNullOrEmpty(info.AppPath)) {
+            DCCToolInfo dccToolInfo = button.userData as DCCToolInfo;
+            if (null==dccToolInfo || string.IsNullOrEmpty(dccToolInfo.AppPath)) {
                 Debug.LogWarning("[MeshSync] Failed to Remove DCC Tool");
                 return;
             }
             
             MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
-            if (settings.RemoveDCCTool(info.AppPath)) {
+            if (settings.RemoveDCCTool(dccToolInfo.AppPath)) {
                 //Delete install info too
-                string installInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(info);
+                string installInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(dccToolInfo);
                 if (File.Exists(installInfoPath)) {
                     File.Delete(installInfoPath);
                 }
                 
-                Setup(m_root);
+                if (!m_dccContainers.ContainsKey(dccToolInfo.AppPath)) {                    
+                    Setup(m_root);
+                    return;
+                }
+
+                //Remove the VisualElement container from the UI
+                VisualElement container = m_dccContainers[dccToolInfo.AppPath];            
+                container.parent.Remove(container);
             }
             
         }
@@ -181,9 +190,11 @@ namespace Unity.MeshSync.Editor {
             }
 
             integrator.Integrate(() => {
-                DCCToolInfo dccToolInfo = integrator.GetDCCToolInfo();                              
-                if (!m_dccStatusLabels.ContainsKey(dccToolInfo.AppPath))
+                DCCToolInfo dccToolInfo = integrator.GetDCCToolInfo();
+                if (!m_dccStatusLabels.ContainsKey(dccToolInfo.AppPath)) {
                     Setup(m_root);
+                    return;
+                }
 
                 Label statusLabel = m_dccStatusLabels[dccToolInfo.AppPath];
                 statusLabel.AddToClassList("plugin-installed");
@@ -234,7 +245,9 @@ namespace Unity.MeshSync.Editor {
         }        
 //----------------------------------------------------------------------------------------------------------------------
 
-        private Dictionary<string, Label> m_dccStatusLabels  = new Dictionary<string, Label>();
+        private readonly Dictionary<string, Label>         m_dccStatusLabels = new Dictionary<string, Label>();
+        private readonly Dictionary<string, VisualElement> m_dccContainers   = new Dictionary<string, VisualElement>();
+        
         private VisualElement             m_root             = null;
         private string                    m_lastOpenedFolder = "";
 
