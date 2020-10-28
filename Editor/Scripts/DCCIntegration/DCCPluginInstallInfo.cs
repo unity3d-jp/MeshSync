@@ -44,13 +44,22 @@ internal class DCCPluginInstallInfo {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    /// <summary>
-    /// MeshSync plugin version installed for this DCC tool
-    /// </summary>
-    public string         PluginVersion;
-
-    [SerializeField] internal readonly int ClassVersion = 1;
-
+    //Obsolete
+    [SerializeField] public string PluginVersion;
+   
+#pragma warning disable 414
+    [SerializeField] private int m_version = CUR_PLUGIN_INSTALL_INFO_VERSION;
+#pragma warning restore 414
+    
+    private const            int CUR_PLUGIN_INSTALL_INFO_VERSION  = (int) DCCPluginInstallInfoVersion.APP_LIST_0_4_X;
+    
+    
+//----------------------------------------------------------------------------------------------------------------------
+    
+    enum DCCPluginInstallInfoVersion {
+        APP_LIST_0_4_X = 1, //Contains a list of app paths for version 0.4.x-preview
+    
+    }
 }
 
 } //end namespace
