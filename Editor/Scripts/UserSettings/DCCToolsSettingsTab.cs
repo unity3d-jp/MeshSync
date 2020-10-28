@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using Unity.AnimeToolbox;
 using Unity.AnimeToolbox.Editor;
@@ -17,7 +18,8 @@ namespace Unity.MeshSync.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------        
         public void Setup(VisualElement root) {
-            
+
+            m_dccStatusLabels.Clear();
             m_root = root;
             m_root.Clear();
 
@@ -67,15 +69,19 @@ namespace Unity.MeshSync.Editor {
             
             container.Query<Label>("DCCToolPath").First().text = "Path: " + dccToolInfo.AppPath;
 
+            BaseDCCIntegrator integrator = DCCIntegratorFactory.Create(dccToolInfo);
+
 
             Label  statusLabel = container.Query<Label>("DCCToolStatus").First();
-            string statusText  = GetInstalledPluginVersion(dccToolInfo, out BaseDCCIntegrator dccIntegrator);
+            string statusText  = GetInstalledPluginVersion(integrator);
             if (null == statusText) {
                 statusLabel.text = "MeshSync Plugin not installed";                
             } else {
                 statusLabel.AddToClassList("plugin-installed");
                 statusLabel.text = statusText;                
             }
+            
+            m_dccStatusLabels[dccToolInfo.AppPath] = statusLabel;
             
             //Buttons
             {
@@ -88,7 +94,7 @@ namespace Unity.MeshSync.Editor {
             {
                 Button button = container.Query<Button>("InstallPluginButton").First();
                 button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
-                button.userData = dccIntegrator;
+                button.userData                       =  integrator;
             }
             
             top.Add(container);
@@ -175,7 +181,14 @@ namespace Unity.MeshSync.Editor {
             }
 
             integrator.Integrate(() => {
-                Setup(m_root);
+                DCCToolInfo dccToolInfo = integrator.GetDCCToolInfo();                              
+                if (!m_dccStatusLabels.ContainsKey(dccToolInfo.AppPath))
+                    Setup(m_root);
+
+                Label statusLabel = m_dccStatusLabels[dccToolInfo.AppPath];
+                statusLabel.AddToClassList("plugin-installed");
+                statusLabel.text = GetInstalledPluginVersion(integrator);
+
             });
 
         }
@@ -204,14 +217,14 @@ namespace Unity.MeshSync.Editor {
 
 
 //----------------------------------------------------------------------------------------------------------------------        
-        string GetInstalledPluginVersion(DCCToolInfo dccToolInfo, out BaseDCCIntegrator dccIntegrator) {
-            dccIntegrator = DCCIntegratorFactory.Create(dccToolInfo);
+        string GetInstalledPluginVersion(BaseDCCIntegrator dccIntegrator) {
             
             DCCPluginInstallInfo installInfo = dccIntegrator.FindInstallInfo();
 
             if (null == installInfo)
                 return null;
 
+            DCCToolInfo dccToolInfo = dccIntegrator.GetDCCToolInfo();                
             string pluginVersion = installInfo.GetPluginVersion(dccToolInfo.AppPath);
             if (null == pluginVersion)
                 return null;
@@ -219,9 +232,11 @@ namespace Unity.MeshSync.Editor {
             return "MeshSync Plugin installed. Version: " + pluginVersion;
             
         }        
-//----------------------------------------------------------------------------------------------------------------------        
-        private VisualElement m_root = null;
-        private string m_lastOpenedFolder = "";
+//----------------------------------------------------------------------------------------------------------------------
+
+        private Dictionary<string, Label> m_dccStatusLabels  = new Dictionary<string, Label>();
+        private VisualElement             m_root             = null;
+        private string                    m_lastOpenedFolder = "";
 
     }
     
