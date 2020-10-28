@@ -75,7 +75,7 @@ namespace Unity.MeshSync.Editor {
 
 
             Label  statusLabel = container.Query<Label>("DCCToolStatus").First();
-            string statusText  = GetInstalledPluginVersion(integrator);
+            string statusText  = GetInstalledPluginStatus(integrator);
             if (null == statusText) {
                 statusLabel.text = "MeshSync Plugin not installed";                
             } else {
@@ -200,7 +200,7 @@ namespace Unity.MeshSync.Editor {
 
                 Label statusLabel = m_dccStatusLabels[dccToolInfo.AppPath];
                 statusLabel.AddToClassList("plugin-installed");
-                statusLabel.text = GetInstalledPluginVersion(integrator);
+                statusLabel.text = GetInstalledPluginStatus(integrator);
 
             });
 
@@ -230,7 +230,7 @@ namespace Unity.MeshSync.Editor {
 
 
 //----------------------------------------------------------------------------------------------------------------------        
-        string GetInstalledPluginVersion(BaseDCCIntegrator dccIntegrator) {
+        string GetInstalledPluginStatus(BaseDCCIntegrator dccIntegrator) {
             
             DCCPluginInstallInfo installInfo = dccIntegrator.FindInstallInfo();
 
