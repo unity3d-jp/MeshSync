@@ -52,8 +52,6 @@ internal abstract class BaseDCCIntegrator {
                 HandleFailedIntegration("Failed in configuring DCC ", dccDesc);
                 return;
             }
-            
-            DCCPluginInstallInfo installInfo = new DCCPluginInstallInfo(pluginVersion);
 
             string installInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(m_dccToolInfo);
             string installInfoFolder = Path.GetDirectoryName(installInfoPath);
@@ -63,8 +61,14 @@ internal abstract class BaseDCCIntegrator {
             }
 
             //Write DCCPluginInstallInfo for the version
-            Directory.CreateDirectory(installInfoFolder);                
+            Directory.CreateDirectory(installInfoFolder);
 
+            DCCPluginInstallInfo installInfo =  FileUtility.DeserializeFromJson<DCCPluginInstallInfo>(installInfoPath);
+            if (null == installInfo) {
+                installInfo = new DCCPluginInstallInfo();
+            }
+            installInfo.SetPluginVersion(m_dccToolInfo.AppPath, pluginVersion);
+    
             try {
                 FileUtility.SerializeToJson(installInfo, installInfoPath);
             } catch (Exception e) {

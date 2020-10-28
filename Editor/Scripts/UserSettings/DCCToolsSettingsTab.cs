@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using Unity.AnimeToolbox;
 using Unity.AnimeToolbox.Editor;
@@ -17,6 +18,9 @@ namespace Unity.MeshSync.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------        
         public void Setup(VisualElement root) {
+
+            m_dccStatusLabels.Clear();
+            m_dccContainers.Clear();
             
             m_root = root;
             m_root.Clear();
@@ -68,16 +72,15 @@ namespace Unity.MeshSync.Editor {
             container.Query<Label>("DCCToolPath").First().text = "Path: " + dccToolInfo.AppPath;
 
             BaseDCCIntegrator integrator = DCCIntegratorFactory.Create(dccToolInfo);
-            DCCPluginInstallInfo installInfo = integrator.FindInstallInfo();
 
-            Label statusLabel = container.Query<Label>("DCCToolStatus").First();
-            if (null==installInfo || string.IsNullOrEmpty(installInfo.PluginVersion)) {
-                statusLabel.text = "MeshSync Plugin not installed";
-            } else {
-                statusLabel.AddToClassList("plugin-installed");
-                statusLabel.text = "MeshSync Plugin installed. Version: " + installInfo.PluginVersion;
-            }
 
+            Label  statusLabel = container.Query<Label>("DCCToolStatus").First();
+            UpdateDCCPluginStatus(integrator, statusLabel);
+            
+            m_dccStatusLabels[dccToolInfo.AppPath] = statusLabel;
+            m_dccContainers[dccToolInfo.AppPath]   = container; 
+                
+                
             //Buttons
             {
                 Button button = container.Query<Button>("RemoveDCCToolButton").First();
@@ -89,7 +92,7 @@ namespace Unity.MeshSync.Editor {
             {
                 Button button = container.Query<Button>("InstallPluginButton").First();
                 button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
-                button.userData = integrator;
+                button.userData                       =  integrator;
             }
             
             top.Add(container);
@@ -143,21 +146,30 @@ namespace Unity.MeshSync.Editor {
                 return;
             }
 
-            DCCToolInfo info = button.userData as DCCToolInfo;
-            if (null==info || string.IsNullOrEmpty(info.AppPath)) {
+            DCCToolInfo dccToolInfo = button.userData as DCCToolInfo;
+            if (null==dccToolInfo || string.IsNullOrEmpty(dccToolInfo.AppPath)) {
                 Debug.LogWarning("[MeshSync] Failed to Remove DCC Tool");
                 return;
             }
             
             MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
-            if (settings.RemoveDCCTool(info.AppPath)) {
+            if (settings.RemoveDCCTool(dccToolInfo.AppPath)) {
                 //Delete install info too
-                string installInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(info);
+                string installInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(dccToolInfo);
                 if (File.Exists(installInfoPath)) {
-                    File.Delete(installInfoPath);
+                    DCCPluginInstallInfo installInfo =  FileUtility.DeserializeFromJson<DCCPluginInstallInfo>(installInfoPath);
+                    installInfo.RemovePluginVersion(dccToolInfo.AppPath);
+                    FileUtility.SerializeToJson(installInfo, installInfoPath);                    
                 }
                 
-                Setup(m_root);
+                if (!m_dccContainers.ContainsKey(dccToolInfo.AppPath)) {                    
+                    Setup(m_root);
+                    return;
+                }
+
+                //Remove the VisualElement container from the UI
+                VisualElement container = m_dccContainers[dccToolInfo.AppPath];            
+                container.parent.Remove(container);
             }
             
         }
@@ -176,7 +188,13 @@ namespace Unity.MeshSync.Editor {
             }
 
             integrator.Integrate(() => {
-                Setup(m_root);
+                DCCToolInfo dccToolInfo = integrator.GetDCCToolInfo();
+                if (!m_dccStatusLabels.ContainsKey(dccToolInfo.AppPath)) {
+                    Setup(m_root);
+                    return;
+                }
+
+                UpdateDCCPluginStatus(integrator, m_dccStatusLabels[dccToolInfo.AppPath]);
             });
 
         }
@@ -202,10 +220,38 @@ namespace Unity.MeshSync.Editor {
             tex.LoadImage(fileData, true);
             return tex;
         }
-        
+
+
 //----------------------------------------------------------------------------------------------------------------------        
-        private VisualElement m_root = null;
-        private string m_lastOpenedFolder = "";
+        void UpdateDCCPluginStatus(BaseDCCIntegrator dccIntegrator, Label statusLabel) {
+            
+            DCCPluginInstallInfo installInfo = dccIntegrator.FindInstallInfo();
+
+            const string NOT_INSTALLED = "MeshSync Plugin not installed";
+            if (null == installInfo) {
+                statusLabel.text = NOT_INSTALLED;                
+                return;
+                
+            }
+
+            DCCToolInfo dccToolInfo = dccIntegrator.GetDCCToolInfo();                
+            string pluginVersion = installInfo.GetPluginVersion(dccToolInfo.AppPath);
+            if (string.IsNullOrEmpty(pluginVersion)) {
+                statusLabel.text = NOT_INSTALLED;
+                return;
+            }
+
+            statusLabel.AddToClassList("plugin-installed");
+            statusLabel.text = "MeshSync Plugin installed. Version: " + pluginVersion; 
+            
+        }        
+//----------------------------------------------------------------------------------------------------------------------
+
+        private readonly Dictionary<string, Label>         m_dccStatusLabels = new Dictionary<string, Label>();
+        private readonly Dictionary<string, VisualElement> m_dccContainers   = new Dictionary<string, VisualElement>();
+        
+        private VisualElement             m_root             = null;
+        private string                    m_lastOpenedFolder = "";
 
     }
     
