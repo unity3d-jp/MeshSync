@@ -120,7 +120,7 @@ internal class DCCPluginInstallInfo : ISerializationCallbackReceiver {
 //----------------------------------------------------------------------------------------------------------------------
     
     enum DCCPluginInstallInfoVersion {
-        APP_LIST_0_5_X = 1, //Contains a list of app paths for version 0.4.x-preview
+        APP_LIST_0_5_X = 1, //Contains a list of app paths for version 0.5.x-preview
     
     }
 }
