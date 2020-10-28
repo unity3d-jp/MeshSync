@@ -93,10 +93,8 @@ internal class DCCPluginInstallInfo : ISerializationCallbackReceiver {
     
 //----------------------------------------------------------------------------------------------------------------------       
 
-#pragma warning disable 649
     //Obsolete
-    [SerializeField] private string PluginVersion;
-#pragma warning restore 649
+    [SerializeField] private string PluginVersion = null;
    
     [SerializeField] private List<string> m_appPathList;
     [SerializeField] private List<string> m_pluginVersionList;
