@@ -157,7 +157,9 @@ namespace Unity.MeshSync.Editor {
                 //Delete install info too
                 string installInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(dccToolInfo);
                 if (File.Exists(installInfoPath)) {
-                    File.Delete(installInfoPath);
+                    DCCPluginInstallInfo installInfo =  FileUtility.DeserializeFromJson<DCCPluginInstallInfo>(installInfoPath);
+                    installInfo.RemovePluginVersion(dccToolInfo.AppPath);
+                    FileUtility.SerializeToJson(installInfo, installInfoPath);                    
                 }
                 
                 if (!m_dccContainers.ContainsKey(dccToolInfo.AppPath)) {                    
