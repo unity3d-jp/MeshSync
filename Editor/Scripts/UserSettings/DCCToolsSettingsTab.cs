@@ -236,7 +236,7 @@ namespace Unity.MeshSync.Editor {
 
             DCCToolInfo dccToolInfo = dccIntegrator.GetDCCToolInfo();                
             string pluginVersion = installInfo.GetPluginVersion(dccToolInfo.AppPath);
-            if (null == pluginVersion) {
+            if (string.IsNullOrEmpty(pluginVersion)) {
                 statusLabel.text = NOT_INSTALLED;
                 return;
             }
