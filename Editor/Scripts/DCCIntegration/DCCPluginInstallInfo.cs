@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Analytics;
 
@@ -13,24 +14,31 @@ internal class DCCPluginInstallInfo : ISerializationCallbackReceiver {
         m_pluginVersions[appPath] = pluginVersion;
     }
 
+    [CanBeNull]
     internal string GetPluginVersion(string appPath) {
-        if (m_pluginVersions.ContainsKey(appPath))
-            return m_pluginVersions[appPath];
+        
+        if (m_pluginVersions.ContainsKey(appPath)) {
+            return m_pluginVersions[appPath];            
+        }
 
         //[TODO-sin: 2020-10-28] Should remove PluginVersion in 1.0.0-preview
-        return PluginVersion;
+        return PluginVersion;        
     }
     
 //----------------------------------------------------------------------------------------------------------------------
     
     public void OnAfterDeserialize() {
-        m_pluginVersions = new Dictionary<string, string>();
+        if (null == m_pluginVersions) {            
+            m_pluginVersions = new Dictionary<string, string>();
+        }
+
+        m_pluginVersions.Clear();
         
         if (null == m_appPathList || m_appPathList.Count <= 0)
             return;
 
         using (List<string>.Enumerator appPathEnumerator = m_appPathList.GetEnumerator())
-        using (List<string>.Enumerator pluginVersionEnumerator = m_appPathList.GetEnumerator()) {
+        using (List<string>.Enumerator pluginVersionEnumerator = m_pluginVersionList.GetEnumerator()) {
             while (appPathEnumerator.MoveNext() && pluginVersionEnumerator.MoveNext()) {
                 string appPath = appPathEnumerator.Current;
                 if (string.IsNullOrEmpty(appPath))
@@ -85,8 +93,10 @@ internal class DCCPluginInstallInfo : ISerializationCallbackReceiver {
     
 //----------------------------------------------------------------------------------------------------------------------       
 
+#pragma warning disable 649
     //Obsolete
     [SerializeField] private string PluginVersion;
+#pragma warning restore 649
    
     [SerializeField] private List<string> m_appPathList;
     [SerializeField] private List<string> m_pluginVersionList;
@@ -96,7 +106,7 @@ internal class DCCPluginInstallInfo : ISerializationCallbackReceiver {
 #pragma warning restore 414
 
     
-    private Dictionary<string, string> m_pluginVersions = null;
+    private Dictionary<string, string> m_pluginVersions = new Dictionary<string, string>();
     
     
 //----------------------------------------------------------------------------------------------------------------------
