@@ -202,7 +202,24 @@ namespace Unity.MeshSync.Editor {
             tex.LoadImage(fileData, true);
             return tex;
         }
-        
+
+
+//----------------------------------------------------------------------------------------------------------------------        
+        string GetInstalledPluginVersion(DCCToolInfo dccToolInfo, out BaseDCCIntegrator dccIntegrator) {
+            dccIntegrator = DCCIntegratorFactory.Create(dccToolInfo);
+            
+            DCCPluginInstallInfo installInfo = dccIntegrator.FindInstallInfo();
+
+            if (null == installInfo)
+                return null;
+
+            string pluginVersion = installInfo.GetPluginVersion(dccToolInfo.AppPath);
+            if (null == pluginVersion)
+                return null;
+
+            return "MeshSync Plugin installed. Version: " + pluginVersion;
+            
+        }        
 //----------------------------------------------------------------------------------------------------------------------        
         private VisualElement m_root = null;
         private string m_lastOpenedFolder = "";
