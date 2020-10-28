@@ -27,6 +27,7 @@ internal class DCCPluginInstallInfo : ISerializationCallbackReceiver {
     
     internal void RemovePluginVersion(string appPath) {
         m_pluginVersions.Remove(appPath);
+        PluginVersion = null;
     }
     
     
