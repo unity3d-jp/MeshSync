@@ -9,15 +9,15 @@ namespace Unity.MeshSync.Editor {
 [Serializable]
 internal class DCCPluginInstallInfo : ISerializationCallbackReceiver {
     
-    internal DCCPluginInstallInfo(string pluginVersion) {
-        PluginVersion = pluginVersion;
-    }    
-
-    internal void AddPluginVersion(string appPath, string pluginVersion) {
+    internal void SetPluginVersion(string appPath, string pluginVersion) {
         m_pluginVersions[appPath] = pluginVersion;
     }
 
     internal string GetPluginVersion(string appPath) {
+        if (m_pluginVersions.ContainsKey(appPath))
+            return m_pluginVersions[appPath];
+
+        //[TODO-sin: 2020-10-28] Should remove PluginVersion in 1.0.0-preview
         return PluginVersion;
     }
     
@@ -101,13 +101,12 @@ internal class DCCPluginInstallInfo : ISerializationCallbackReceiver {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    private const            int CUR_PLUGIN_INSTALL_INFO_VERSION  = (int) DCCPluginInstallInfoVersion.APP_LIST_0_4_X;
-    
+    private const            int CUR_PLUGIN_INSTALL_INFO_VERSION  = (int) DCCPluginInstallInfoVersion.APP_LIST_0_5_X;    
     
 //----------------------------------------------------------------------------------------------------------------------
     
     enum DCCPluginInstallInfoVersion {
-        APP_LIST_0_4_X = 1, //Contains a list of app paths for version 0.4.x-preview
+        APP_LIST_0_5_X = 1, //Contains a list of app paths for version 0.4.x-preview
     
     }
 }
