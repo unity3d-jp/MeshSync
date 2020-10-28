@@ -12,6 +12,11 @@ internal class DCCPluginInstallInfo {
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
+    internal string GetPluginVersion(string appPath) {
+        return PluginVersion;
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------    
 
     internal static string GetInstallInfoPath(DCCToolInfo info) {
         string localAppDataFolder = null;
@@ -39,13 +44,12 @@ internal class DCCPluginInstallInfo {
         string desc = info.GetDescription().Replace(' ', '_');
         string installInfoFolder = Path.Combine(localAppDataFolder, "Unity", "MeshSync");
         return Path.Combine(installInfoFolder, $"UnityMeshSyncInstallInfo_{desc}.json");
-    }    
+    }
     
-    
-//----------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------       
 
     //Obsolete
-    [SerializeField] public string PluginVersion;
+    [SerializeField] private string PluginVersion;
    
 #pragma warning disable 414
     [SerializeField] private int m_version = CUR_PLUGIN_INSTALL_INFO_VERSION;

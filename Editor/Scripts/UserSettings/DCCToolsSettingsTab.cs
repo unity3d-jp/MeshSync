@@ -71,11 +71,11 @@ namespace Unity.MeshSync.Editor {
             DCCPluginInstallInfo installInfo = integrator.FindInstallInfo();
 
             Label statusLabel = container.Query<Label>("DCCToolStatus").First();
-            if (null==installInfo || string.IsNullOrEmpty(installInfo.PluginVersion)) {
+            if (null==installInfo || string.IsNullOrEmpty(installInfo.GetPluginVersion(dccToolInfo.AppPath))) {
                 statusLabel.text = "MeshSync Plugin not installed";
             } else {
                 statusLabel.AddToClassList("plugin-installed");
-                statusLabel.text = "MeshSync Plugin installed. Version: " + installInfo.PluginVersion;
+                statusLabel.text = "MeshSync Plugin installed. Version: " + installInfo.GetPluginVersion(dccToolInfo.AppPath);
             }
 
             //Buttons
