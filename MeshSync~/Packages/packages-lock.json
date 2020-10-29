@@ -15,7 +15,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.anime-toolbox": {
-      "version": "0.2.0-preview",
+      "version": "0.3.0-preview",
       "depth": 1,
       "source": "registry",
       "dependencies": {},
@@ -67,8 +67,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.unity.anime-toolbox": "0.2.0-preview",
-        "com.unity.sharp-zip-lib": "1.2.2-preview"
+        "com.unity.anime-toolbox": "0.3.0-preview",
+        "com.unity.sharp-zip-lib": "1.2.2-preview.1"
       }
     },
     "com.unity.package-validation-suite": {
@@ -97,7 +97,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.sharp-zip-lib": {
-      "version": "1.2.2-preview",
+      "version": "1.2.2-preview.1",
       "depth": 1,
       "source": "registry",
       "dependencies": {},
