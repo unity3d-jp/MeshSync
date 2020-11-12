@@ -179,16 +179,8 @@ namespace Unity.MeshSync.Editor {
                 Debug.LogWarning("[MeshSync] Failed to launch DCC Tool");
                 return;
             }
-
-            System.Diagnostics.Process process = new System.Diagnostics.Process {
-                StartInfo = {
-                    FileName = dccToolInfo.AppPath,
-                    UseShellExecute       = true,
-                    RedirectStandardError = false,
-                },
-                EnableRaisingEvents = true
-            };            
-            process.Start();            
+            
+            DiagnosticsUtility.StartProcess(dccToolInfo.AppPath);
         }
 
         void OnInstallPluginButtonClicked(EventBase evt) {
