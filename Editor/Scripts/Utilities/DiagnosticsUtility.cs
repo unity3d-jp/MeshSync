@@ -2,19 +2,25 @@
 
 internal static class DiagnosticsUtility {
 
-    internal static void StartProcess(string appPath, bool useShellExecute = true, bool redirectStandardError = false, 
-        string arguments = "") {
+    internal static System.Diagnostics.Process StartProcess(string appPath, 
+        string arguments = "", 
+        bool useShellExecute = true, 
+        bool redirectStandardError = false,
+        bool redirectStandardOutput = false)
+    {
 
         System.Diagnostics.Process process = new System.Diagnostics.Process {
             StartInfo = {
                 FileName              = appPath,
                 UseShellExecute       = useShellExecute,
                 RedirectStandardError = redirectStandardError,
+                RedirectStandardOutput = redirectStandardOutput,
                 Arguments             = arguments,    
             },
             EnableRaisingEvents = true
         };            
-        process.Start();            
+        process.Start();
+        return process;
     }
 
 }
