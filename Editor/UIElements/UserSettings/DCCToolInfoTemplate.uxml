@@ -14,7 +14,7 @@
 
         <VisualElement class="buttons-container">
             <VisualElement class="dcc-tool-setup-buttons-container">
-                <Button name="LaunchDCCTool" text="Launch" />
+                <Button name="LaunchDCCToolButton" text="Launch" />
                 <Button name="InstallPluginButton" text="Install plugin" />
             </VisualElement>
                 
