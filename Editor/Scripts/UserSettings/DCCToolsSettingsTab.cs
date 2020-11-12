@@ -83,6 +83,11 @@ namespace Unity.MeshSync.Editor {
                 
             //Buttons
             {
+                Button button = container.Query<Button>("LaunchDCCToolButton").First();
+                button.clickable.clickedWithEventInfo += OnLaunchDCCToolButtonClicked;
+                button.userData                       =  dccToolInfo;
+            }
+            {
                 Button button = container.Query<Button>("InstallPluginButton").First();
                 button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
                 button.userData                       =  integrator;
@@ -142,7 +147,7 @@ namespace Unity.MeshSync.Editor {
         void OnRemoveDCCToolButtonClicked(EventBase evt) {
             DCCToolInfo dccToolInfo = GetEventButtonUserDataAs<DCCToolInfo>(evt.target);           
             if (null==dccToolInfo || string.IsNullOrEmpty(dccToolInfo.AppPath)) {
-                Debug.LogWarning("[MeshSync] Failed to Remove DCC Tool");
+                Debug.LogWarning("[MeshSync] Failed to remove DCC Tool");
                 return;
             }
             
@@ -167,6 +172,25 @@ namespace Unity.MeshSync.Editor {
             }
             
         }
+
+        void OnLaunchDCCToolButtonClicked(EventBase evt) {
+            DCCToolInfo dccToolInfo = GetEventButtonUserDataAs<DCCToolInfo>(evt.target);           
+            if (null==dccToolInfo || string.IsNullOrEmpty(dccToolInfo.AppPath) || !File.Exists(dccToolInfo.AppPath)) {
+                Debug.LogWarning("[MeshSync] Failed to launch DCC Tool");
+                return;
+            }
+
+            System.Diagnostics.Process process = new System.Diagnostics.Process {
+                StartInfo = {
+                    FileName = dccToolInfo.AppPath,
+                    UseShellExecute       = false,
+                    RedirectStandardError = true,
+                },
+                EnableRaisingEvents = true
+            };            
+            process.Start();            
+        }
+
         void OnInstallPluginButtonClicked(EventBase evt) {
             BaseDCCIntegrator integrator = GetEventButtonUserDataAs<BaseDCCIntegrator>(evt.target);           
             if (null==integrator) {
