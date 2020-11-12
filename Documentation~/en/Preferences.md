@@ -13,10 +13,11 @@ display them inside the window.
 | Legend  | Use                                                                                       | 
 | ------- | ----------------------------------------------------------------------------------------- | 
 | A       | Display the name of the DCC tool, its path, and its MeshSyncDCCPlugins installation status|   
-| B       | Remove the DCC tool from the window                                                       |   
+| B       | Launch the DCC tool                                                                       |   
 | C       | Install MeshSyncDCCPlugins in the DCC tool                                                |  
-| D       | Detect and add DCC tools which have been installed in their default locations             |  
-| E       | Add a DCC tool manually                                                                   | 
+| D       | Remove the DCC tool from the window                                                       |   
+| E       | Detect and add DCC tools which have been installed in their default locations             |  
+| F       | Add a DCC tool manually                                                                   | 
 
 ### Supported DCC Tools
 
