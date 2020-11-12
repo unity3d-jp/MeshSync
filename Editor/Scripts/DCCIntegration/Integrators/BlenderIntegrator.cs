@@ -110,7 +110,11 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
             string[] files = System.IO.Directory.GetFiles(installedPluginDir, "*.so");
             if (files.Length > 0) {
                 foreach (string binaryPluginFile in files) {
-                    File.Delete(binaryPluginFile);                    
+                    try {
+                        File.Delete(binaryPluginFile);
+                    } catch (Exception e) {
+                        Debug.LogError("[MeshSync] Error when deleting previous plugin: " + binaryPluginFile);
+                    }
                 }
             }
 #endif            
