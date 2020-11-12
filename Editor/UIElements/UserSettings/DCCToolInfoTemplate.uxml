@@ -13,8 +13,12 @@
         </VisualElement>
 
         <VisualElement class="buttons-container">
+            <VisualElement class="dcc-tool-setup-buttons-container">
+                <Button name="LaunchDCCTool" text="Launch" />
+                <Button name="InstallPluginButton" text="Install plugin" />
+            </VisualElement>
+                
             <Button name="RemoveDCCToolButton" text="Remove" />
-            <Button name="InstallPluginButton" text="Install plugin" />
         </VisualElement>
         
         

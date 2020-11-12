@@ -64,13 +64,14 @@
     flex-wrap: nowrap;
     flex-grow:0;
     flex-shrink: 0;
-    padding-top: 15px;
-    padding-bottom: 15px;
+    padding-top: 10px;
+    padding-bottom: 10px;
     margin-right: 10px;
     
 }
 
-.dcc-tool-info-container .buttons-container > Button {
+.dcc-tool-setup-buttons-container {
+    height: 40px;
 }
 
 
