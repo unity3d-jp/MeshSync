@@ -101,22 +101,12 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
                 return false;
             }
 
-            System.Diagnostics.Process process = new System.Diagnostics.Process {
-                StartInfo = {
-                    FileName = appPath,
-                    // WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
-                    // CreateNoWindow = true,
-                    UseShellExecute       = true,
-                    RedirectStandardError = false,
-                    Arguments             = startArgument
-                },
-                EnableRaisingEvents = true
-            };
-            
             EditorUtility.DisplayProgressBar("MeshSync","Launching app to finalize installation",0.75f);
-            
-            process.Start();
+            System.Diagnostics.Process process = DiagnosticsUtility.StartProcess(
+                appPath, startArgument            
+            );
             process.WaitForExit();
+            
             int exitCode = process.ExitCode;
             EditorUtility.ClearProgressBar();               
             
