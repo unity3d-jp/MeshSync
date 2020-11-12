@@ -60,6 +60,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
         }
       
         bool setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, 
+            dccToolInfo.DCCToolVersion,
             Path.GetFullPath(uninstallScriptPath), 
             Path.GetFullPath(installScriptPath)
         );
@@ -83,7 +84,8 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------
 
     
-    bool SetupAutoLoadPlugin(string appPath, string uninstallScriptPath, string installScriptPath) {
+    bool SetupAutoLoadPlugin(string appPath, string dccToolVersion, 
+        string uninstallScriptPath, string installScriptPath) {
 
         try {
             if (!System.IO.File.Exists(appPath)) {
@@ -104,7 +106,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
             //Delete plugin on mac to avoid errors of loading new plugin:
             //Termination Reason: Namespace CODESIGNING, Code 0x2 
             string installedPluginDir = Environment.GetFolderPath(Environment.SpecialFolder.Personal)
-                + "/Library/Application Support/Blender/2.83/scripts/addons/MeshSyncClientBlender";
+                + $"/Library/Application Support/Blender/{dccToolVersion}/scripts/addons/MeshSyncClientBlender";
             string[] files = System.IO.Directory.GetFiles(installedPluginDir, "*.so");
             if (files.Length > 0) {
                 foreach (string binaryPluginFile in files) {
