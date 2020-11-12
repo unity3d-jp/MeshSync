@@ -55,17 +55,14 @@ internal class SecurityTest  {
         try {
 
             //curl "
-            System.Diagnostics.Process process = new System.Diagnostics.Process {
-                StartInfo = {
-                    FileName = "curl",
-                    UseShellExecute       = false,
-                    RedirectStandardError = true,
-                    RedirectStandardOutput = true,
-                    Arguments             = $"--path-as-is  \"http://127.0.0.1:8080/../../../Packages/manifest.json\""         
-                },
-                EnableRaisingEvents = true
-            };            
-            process.Start();
+            System.Diagnostics.Process process = DiagnosticsUtility.StartProcess(
+                "curl",
+                $"--path-as-is  \"http://127.0.0.1:8080/../../../Packages/manifest.json\"",
+
+                /*UseShellExecute=*/ false,
+                /*RedirectStandardError=*/ true,
+                /*RedirectStandardOutput=*/ true
+            );
             process.WaitForExit();
 
             int exitCode = process.ExitCode;
