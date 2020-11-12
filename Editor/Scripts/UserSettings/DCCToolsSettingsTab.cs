@@ -83,17 +83,17 @@ namespace Unity.MeshSync.Editor {
                 
             //Buttons
             {
+                Button button = container.Query<Button>("InstallPluginButton").First();
+                button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
+                button.userData                       =  integrator;
+            }
+            {
                 Button button = container.Query<Button>("RemoveDCCToolButton").First();
                 button.clickable.clickedWithEventInfo += OnRemoveDCCToolButtonClicked;
                 button.userData = dccToolInfo;
             }
 
             
-            {
-                Button button = container.Query<Button>("InstallPluginButton").First();
-                button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
-                button.userData                       =  integrator;
-            }
             
             top.Add(container);
         }
