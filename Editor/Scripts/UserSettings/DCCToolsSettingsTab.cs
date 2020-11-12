@@ -83,17 +83,22 @@ namespace Unity.MeshSync.Editor {
                 
             //Buttons
             {
+                Button button = container.Query<Button>("LaunchDCCToolButton").First();
+                button.clickable.clickedWithEventInfo += OnLaunchDCCToolButtonClicked;
+                button.userData                       =  dccToolInfo;
+            }
+            {
+                Button button = container.Query<Button>("InstallPluginButton").First();
+                button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
+                button.userData                       =  integrator;
+            }
+            {
                 Button button = container.Query<Button>("RemoveDCCToolButton").First();
                 button.clickable.clickedWithEventInfo += OnRemoveDCCToolButtonClicked;
                 button.userData = dccToolInfo;
             }
 
             
-            {
-                Button button = container.Query<Button>("InstallPluginButton").First();
-                button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
-                button.userData                       =  integrator;
-            }
             
             top.Add(container);
         }
@@ -140,15 +145,9 @@ namespace Unity.MeshSync.Editor {
 
         
         void OnRemoveDCCToolButtonClicked(EventBase evt) {
-            Button button = evt.target as Button;
-            if (null == button) {
-                Debug.LogWarning("[MeshSync] Failed to Remove DCC Tool");
-                return;
-            }
-
-            DCCToolInfo dccToolInfo = button.userData as DCCToolInfo;
+            DCCToolInfo dccToolInfo = GetEventButtonUserDataAs<DCCToolInfo>(evt.target);           
             if (null==dccToolInfo || string.IsNullOrEmpty(dccToolInfo.AppPath)) {
-                Debug.LogWarning("[MeshSync] Failed to Remove DCC Tool");
+                Debug.LogWarning("[MeshSync] Failed to remove DCC Tool");
                 return;
             }
             
@@ -173,15 +172,19 @@ namespace Unity.MeshSync.Editor {
             }
             
         }
-        void OnInstallPluginButtonClicked(EventBase evt) {
-            
-            Button button = evt.target as Button;
-            if (null == button) {
-                Debug.LogWarning("[MeshSync] Failed to Install Plugin");
+
+        void OnLaunchDCCToolButtonClicked(EventBase evt) {
+            DCCToolInfo dccToolInfo = GetEventButtonUserDataAs<DCCToolInfo>(evt.target);           
+            if (null==dccToolInfo || string.IsNullOrEmpty(dccToolInfo.AppPath) || !File.Exists(dccToolInfo.AppPath)) {
+                Debug.LogWarning("[MeshSync] Failed to launch DCC Tool");
                 return;
             }
+            
+            DiagnosticsUtility.StartProcess(dccToolInfo.AppPath);
+        }
 
-            BaseDCCIntegrator integrator = button.userData as BaseDCCIntegrator;
+        void OnInstallPluginButtonClicked(EventBase evt) {
+            BaseDCCIntegrator integrator = GetEventButtonUserDataAs<BaseDCCIntegrator>(evt.target);           
             if (null==integrator) {
                 Debug.LogWarning("[MeshSync] Failed to Install Plugin");
                 return;
@@ -244,7 +247,20 @@ namespace Unity.MeshSync.Editor {
             statusLabel.AddToClassList("plugin-installed");
             statusLabel.text = "MeshSync Plugin installed. Version: " + pluginVersion; 
             
-        }        
+        }
+
+
+//----------------------------------------------------------------------------------------------------------------------
+        
+        static T GetEventButtonUserDataAs<T>(IEventHandler eventTarget) where T: class{
+            Button button = eventTarget as Button;
+            if (null == button) {
+                return null;
+            }
+
+            T dccToolInfo = button.userData as T;
+            return dccToolInfo;
+        }
 //----------------------------------------------------------------------------------------------------------------------
 
         private readonly Dictionary<string, Label>         m_dccStatusLabels = new Dictionary<string, Label>();
