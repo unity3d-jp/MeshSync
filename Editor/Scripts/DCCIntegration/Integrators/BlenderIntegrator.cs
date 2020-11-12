@@ -99,6 +99,20 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
             );
             process.WaitForExit();
             
+            
+#if UNITY_EDITOR_OSX
+            //Delete plugin on mac to avoid errors of loading new plugin:
+            //Termination Reason: Namespace CODESIGNING, Code 0x2 
+            string installedPluginDir = Environment.GetFolderPath(Environment.SpecialFolder.Personal)
+                + "/Library/Application Support/Blender/2.83/scripts/addons/MeshSyncClientBlender";
+            string[] files = System.IO.Directory.GetFiles(installedPluginDir, "*.so");
+            if (files.Length > 0) {
+                foreach (string binaryPluginFile in files) {
+                    File.Delete(binaryPluginFile);                    
+                }
+            }
+#endif            
+            
             //Install
             const int PYTHON_EXIT_CODE = 10;
             process.StartInfo.Arguments = $"-b -P {installScriptPath} --python-exit-code {PYTHON_EXIT_CODE}";
