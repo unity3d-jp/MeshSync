@@ -183,8 +183,8 @@ namespace Unity.MeshSync.Editor {
             System.Diagnostics.Process process = new System.Diagnostics.Process {
                 StartInfo = {
                     FileName = dccToolInfo.AppPath,
-                    UseShellExecute       = false,
-                    RedirectStandardError = true,
+                    UseShellExecute       = true,
+                    RedirectStandardError = false,
                 },
                 EnableRaisingEvents = true
             };            
