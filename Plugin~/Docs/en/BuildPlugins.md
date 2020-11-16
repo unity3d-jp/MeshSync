@@ -10,7 +10,7 @@
 
 ### Prerequisites (Win)
 
-1. Install [cmake](https://cmake.org/)  version 3.7 or later.  
+1. Install [cmake](https://cmake.org/)  version 3.18 or later.  
    Make sure to choose one of the "Add CMake to the System PATH ..." options as shown below.  
    ![CMakeInstallation](../Images/CMakeInstallation.png)
    
@@ -61,13 +61,16 @@ The build process will try to link againts Poco's release libraries in the follo
 
 ### Prerequisites (Mac)
 
-1. Install [cmake](https://cmake.org/)  version 3.5 or later, if not already installed.
 1. Install [XCode](https://developer.apple.com/xcode/).
 1. Install XCode Command Line tools.
     ``` 
     xcode-select --install
     ```  
 1. Install [Homebrew](https://brew.sh/).
+1. Install [cmake](https://cmake.org/)  version 3.18 or later.
+    ``` 
+    brew install cmake
+    ```  
 1. Install git. For example: [SourceTree](https://www.sourcetreeapp.com/)
 1. Build [Poco](https://pocoproject.org) (static libraries).  
    * Download [Poco 1.10.1](https://github.com/pocoproject/poco/archive/poco-1.10.1-release.zip) and extract the file in a folder.
@@ -117,7 +120,7 @@ $ xcodebuild -scheme mscore -configuration Release build
    export CXX=/opt/rh/devtoolset-7/root/usr/bin/g++
    ``` 
 
-1. Install [cmake](https://cmake.org/)  version 3.7 or later.  
+1. Install [cmake](https://cmake.org/)  version 3.18 or later.  
    Example:
     ``` 
     wget https://github.com/Kitware/CMake/releases/download/v3.17.0/cmake-3.17.0.tar.gz    
