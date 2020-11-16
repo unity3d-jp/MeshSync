@@ -28,6 +28,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 option(ENABLE_DEPLOY "Copy built binaries to plugins directory." ON)
 
+# ----------------------------------------------------------------------------------------------------------------------
 
 function(add_plugin name)
     cmake_parse_arguments(arg "" "PLUGINS_DIR" "SOURCES" ${ARGN})
@@ -63,7 +64,9 @@ function(add_plugin name)
             # Linux or Mac
             add_custom_command(TARGET ${name} POST_BUILD
                 COMMAND rm -rf ${arg_PLUGINS_DIR}/${target_filename}
-                COMMAND cp -r ${target_filename} ${native_plugins_dir}               
+                COMMAND ${CMAKE_COMMAND} -E copy
+                   $<TARGET_FILE:${name}>
+                   ${native_plugins_dir}              
             )
         endif()
 
