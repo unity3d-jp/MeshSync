@@ -57,22 +57,18 @@ if(ENABLE_ZSTD)
     add_definitions(-DmsEnableZSTD)
 endif()
 
-# ----------------------------------------------------------------------------------------------------------------------
-# Tests
 option(BUILD_TESTS "Tests" OFF)
-if(BUILD_TESTS)
-    add_subdirectory(${src_root}/MeshSyncTest)
-else()
-    add_definitions(-DmsRuntime)
-    
-endif()
-
 
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 #Specify available modules
 add_subdirectory(${src_root}/MeshUtils)
 add_subdirectory(${src_root}/MeshSync)
 add_subdirectory(${src_root}/mscore)
 
+# Tests
+if(BUILD_TESTS)
+    add_subdirectory(${src_root}/MeshSyncTest)
+endif()
 
