@@ -110,6 +110,7 @@ $ xcodebuild -scheme mscore -configuration Release build
 
 ## Building on Linux
 
+
 ### Prerequisites (Linux)
 
 1. Make sure C++14 development is supported, and define `CC` and `CXX` environment variables to point to C++14 dev tools.  
