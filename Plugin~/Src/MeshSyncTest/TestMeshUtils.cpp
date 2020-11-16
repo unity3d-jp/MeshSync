@@ -1139,14 +1139,13 @@ TestCase(Test_UniqueUnsorted)
     // std::size() require C++17
     const size_t len = std::distance(std::begin(input), std::end(input));
     int* pos = unique_unsorted(input, input + len);
-    std::_Iterator_traits_pointer_base<int, true>::difference_type n = std::distance(input, pos);
+    const auto n = std::distance(input, pos);
     Expect(n == 7);
 
     for (int64_t i = 0; i < n; ++i)
         Print("%d ", input[i]);
     Print("\n");
 }
-
 
 TestCase(Test_Quadify)
 {

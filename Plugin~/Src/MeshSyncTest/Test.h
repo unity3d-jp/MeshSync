@@ -24,12 +24,12 @@ void PrintImpl(const char *format, ...);
 template<class Body>
 inline void TestScope(const char *name, const Body& body, int num_try = 1)
 {
-    auto begin = Now();
+    const mu::nanosec begin = mu::Now();
     for (int i = 0; i < num_try; ++i)
         body();
-    auto end = Now();
+    const mu::nanosec end = mu::Now();
 
-    float elapsed = NS2MS(end - begin);
+    const float elapsed = mu::NS2MS(end - begin);
     Print("    %s: %.2fms", name, elapsed / num_try);
     if (num_try > 1) {
         Print(" (%.2fms in total)", elapsed);
