@@ -88,12 +88,12 @@ int TextureManager::addFile(const std::string& path, TextureType type)
 
     rec.waitTask();
     rec.task = std::async(std::launch::async, [this, path, type, &rec, id]() {
-        auto mtime = FileMTime(path.c_str());
-        if (!rec.texture || rec.mtime != mtime) {
+        const uint64_t modifiedTime = FileMTime(path.c_str());
+        if (!rec.texture || rec.mtime != modifiedTime) {
             if (!rec.texture)
                 rec.texture = Texture::create();
-            rec.mtime = mtime;
-            auto& tex = rec.texture;
+            rec.mtime = modifiedTime;
+            TexturePtr& tex = rec.texture;
             if (FileToByteArray(path.c_str(), rec.texture->data)) {
                 tex->id = id;
                 tex->name = mu::GetFilename(path.c_str());
