@@ -4,7 +4,6 @@
 
 #include "MeshSync/SceneCache/msSceneCache.h"
 
-#ifdef msEnableSceneCache
 using namespace mu;
 
 #pragma region ISceneCache
@@ -126,4 +125,3 @@ msAPI const ms::AnimationCurve* msISceneCacheGetFrameCurve(ms::ISceneCache *self
 
 #undef msDbgBreadcrumb
 #pragma endregion
-#endif // msEnableSceneCache

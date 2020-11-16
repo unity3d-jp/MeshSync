@@ -9,7 +9,6 @@ msDeclClassPtr(Scene)
 msDeclClassPtr(ISceneCache)
 msDeclClassPtr(OSceneCache)
 
-#ifdef msEnableSceneCache
 namespace ms {
 
 class OSceneCache
@@ -54,4 +53,3 @@ public:
 };
 
 } // namespace ms
-#endif // msEnableSceneCache

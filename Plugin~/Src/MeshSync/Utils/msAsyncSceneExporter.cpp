@@ -1,16 +1,15 @@
 #include "pch.h"
 #include "MeshSync/Utility/msAsyncSceneExporter.h"
 
+#ifndef msRuntime
 
 #include "SceneCache/msOSceneCacheImpl.h"
-
 #include "MeshSync/msClient.h"
 #include "MeshSync/SceneGraph/msMaterial.h"
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msTexture.h"
 #include "MeshSync/SceneGraph/msTransform.h"
 
-#ifndef msRuntime
 namespace ms {
 
 template<class Entities>
@@ -254,7 +253,6 @@ cleanup:
 }
 
 
-#ifdef msEnableSceneCache
 AsyncSceneCacheWriter::AsyncSceneCacheWriter()
 {
 }
@@ -349,7 +347,6 @@ void AsyncSceneCacheWriter::write()
 
     clear();
 }
-#endif // msEnableSceneCache
 
 } // namespace ms
 #endif // msRuntime

@@ -9,7 +9,6 @@ msDeclClassPtr(Scene)
 msDeclClassPtr(ISceneCache)
 msDeclClassPtr(OSceneCache)
 
-#ifdef msEnableSceneCache
 namespace ms {
 
 enum class SceneCacheEncoding
@@ -82,4 +81,3 @@ int ClampZSTDCompressionLevel(int v);
 int GetZSTDDefaultCompressionLevel();
 
 } // namespace ms
-#endif // msEnableSceneCache

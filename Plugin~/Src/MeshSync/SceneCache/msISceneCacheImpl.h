@@ -2,7 +2,6 @@
 #include "MeshSync/SceneCache/msSceneCache.h"
 #include "msSceneCacheImpl.h"
 
-#ifdef msEnableSceneCache
 namespace ms {
 
 class ISceneCacheImpl : public ISceneCache
@@ -93,4 +92,3 @@ public:
 };
 
 } // namespace ms
-#endif // msEnableSceneCache
