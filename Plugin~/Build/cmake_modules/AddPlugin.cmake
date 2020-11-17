@@ -19,22 +19,27 @@ function(add_plugin name)
         add_library(${name} MODULE ${arg_SOURCES})
         set_target_properties(${name} PROPERTIES BUNDLE ON)
         SET(target_filename \${TARGET_BUILD_DIR}/${name}.bundle)
+        add_custom_command(TARGET ${name} POST_BUILD
+            COMMAND rm -rf ${arg_PLUGINS_DIR}/${target_filename}
+            COMMAND cp -r ${target_filename} ${native_plugins_dir}               
+            COMMENT "Copying ${name} to ${native_plugins_dir}"
+        )
     else()
         # Linux/Windows
         add_library(${name} SHARED ${arg_SOURCES})                
         set_target_properties(${name} PROPERTIES PREFIX "" ) 
 
-        SET(target_filename $<TARGET_FILE:${name}>)    
+        SET(target_filename $<TARGET_FILE:${name}>)
+        add_custom_command(TARGET ${name} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+               $<TARGET_FILE:${name}>
+               ${native_plugins_dir}              
+            COMMENT "Copying ${name} to ${native_plugins_dir}"
+        )        
+    
     endif()
 
-    add_custom_command(TARGET ${name} POST_BUILD
-        COMMAND rm -rf ${arg_PLUGINS_DIR}/${target_filename}
-        COMMAND cp -r ${target_filename} ${native_plugins_dir}               
-        COMMENT "Copying ${name} binary to ${native_plugins_dir}"
-    )
-
 endfunction()
-
 
 
 
