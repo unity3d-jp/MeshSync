@@ -6,4 +6,4 @@
 #define msProtocolVersion 123
 
 //#define msEnableProfiling
-
+//#define msRuntime
