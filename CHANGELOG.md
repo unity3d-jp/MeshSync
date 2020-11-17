@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.5.0-preview] - 2020-11-17
+* feat: add a button to launch DCC tool in the Preferences page 
+* feat: notify users to restart Unity after upgrading MeshSync for Unity 2020.2+
+* fix: misleading plugin installation info for multiple DCC Tools which have the same major version
+* fix: Blender plugin installation on Mac OSX
+* doc: update Preferences doc 
+* chore: use com.unity.anime-toolbox@0.2.0-preview
+
 ## [0.4.0-preview] - 2020-09-29
 * feat: add support for Blender 2.90
 * feat: split ProjectSettings to Server tab and SceneCache tab
