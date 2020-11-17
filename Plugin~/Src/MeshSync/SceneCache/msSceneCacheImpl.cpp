@@ -2,7 +2,6 @@
 #include "MeshSync/SceneCache/msSceneCache.h"
 #include "msSceneCacheImpl.h"
 
-#ifdef msEnableSceneCache
 namespace ms {
 
 static_assert(sizeof(CacheFileEntityMeta) == 8, "");
@@ -45,4 +44,3 @@ BufferEncoderPtr CreateEncoder(SceneCacheEncoding encoding, const SceneCacheEnco
 }
 
 } // namespace ms
-#endif // msEnableSceneCache

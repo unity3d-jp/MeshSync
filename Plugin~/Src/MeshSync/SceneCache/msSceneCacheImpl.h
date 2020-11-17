@@ -3,7 +3,6 @@
 
 #include "MeshSync/SceneCache/msSceneCacheSettings.h"
 
-#ifdef msEnableSceneCache
 namespace ms {
 
 struct CacheFileHeader
@@ -42,4 +41,3 @@ struct CacheFileEntityMeta
 BufferEncoderPtr CreateEncoder(SceneCacheEncoding encoding, const SceneCacheEncoderSettings& settings);
 
 } // namespace ms
-#endif // msEnableSceneCache

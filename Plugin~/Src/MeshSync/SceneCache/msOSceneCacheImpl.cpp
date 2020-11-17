@@ -8,7 +8,6 @@
 #include "MeshSync/SceneGraph/msTransform.h"
 #include "MeshSync/SceneGraph/msMesh.h"
 
-#ifdef msEnableSceneCache
 namespace ms {
 
 OSceneCacheImpl::OSceneCacheImpl(StreamPtr ost, const OSceneCacheSettings& oscs)
@@ -347,4 +346,3 @@ OSceneCachePtr OpenOSceneCacheFile(const char *path, const OSceneCacheSettings& 
 }
 
 } // namespace ms
-#endif // msEnableSceneCache

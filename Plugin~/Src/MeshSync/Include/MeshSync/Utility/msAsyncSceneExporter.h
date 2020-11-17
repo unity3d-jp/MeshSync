@@ -1,13 +1,13 @@
 #pragma once
 
-#include "msIDGenerator.h"
+#ifndef msRuntime
 
+#include "msIDGenerator.h"
 #include "MeshSync/MeshSync.h"
 #include "MeshSync/msClient.h"
 #include "MeshSync/SceneCache/msSceneCacheSettings.h"
 #include "MeshSync/SceneGraph/msSceneSettings.h"
 
-#ifndef msRuntime
 
 //Forward declarations
 msDeclClassPtr(Asset)
@@ -73,10 +73,8 @@ private:
     std::future<void> m_future;
     std::string m_error_message;
 };
-#endif // msRuntime
 
 
-#ifdef msEnableSceneCache
 class AsyncSceneCacheWriter : public AsyncSceneExporter
 {
 public:
@@ -100,6 +98,7 @@ private:
     OSceneCachePtr m_osc;
     std::string m_error_message;
 };
-#endif // msEnableSceneCache
 
 } // namespace ms
+
+#endif // msRuntime
