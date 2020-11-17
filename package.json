@@ -7,5 +7,6 @@
     "dependencies": {
       "com.unity.anime-toolbox": "0.3.0-preview",
       "com.unity.sharp-zip-lib": "1.2.2-preview.1"
-    }        
+    }    
+    
 }
