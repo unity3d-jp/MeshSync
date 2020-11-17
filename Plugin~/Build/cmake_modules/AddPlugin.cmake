@@ -4,6 +4,7 @@ if(APPLE)
     set(CMAKE_SKIP_RPATH ON)
 
 elseif(LINUX)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     set(CMAKE_INSTALL_RPATH_USE_LINK_PATH ON)
 endif()
 
@@ -24,13 +25,9 @@ function(add_plugin name)
         )
     else()
         # Linux/Windows
-        add_library(${name} SHARED ${arg_SOURCES})
-                
-        set_target_properties(${name} PROPERTIES 
-            PREFIX "" 
-            POSITION_INDEPENDENT_CODE ON    # Linux Only
-        ) 
-        
+        add_library(${name} SHARED ${arg_SOURCES})                
+        set_target_properties(${name} PROPERTIES PREFIX "" ) 
+
         SET(target_filename $<TARGET_FILE:${name}>)
         add_custom_command(TARGET ${name} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy

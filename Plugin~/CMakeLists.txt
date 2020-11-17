@@ -7,9 +7,6 @@ set(src_root ${CMAKE_CURRENT_SOURCE_DIR}/Src)
 # allow CMake to organize files by folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# Custom scripts
-include(AddPlugin)
-
 # prerequisites
 find_package(Poco REQUIRED COMPONENTS Net)
 include(ISPC)
@@ -39,6 +36,9 @@ elseif(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast")
     
 endif()
+
+# Custom scripts
+include(AddPlugin)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
