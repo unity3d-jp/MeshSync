@@ -2,12 +2,10 @@
 #include "MeshUtils/MeshUtils.h"
 #include "msEncoder.h"
 
-#ifdef msEnableZSTD
 #define ZSTD_STATIC_LINKING_ONLY
 #include <zstd.h>
 #include "MeshSync/SceneCache/msSceneCache.h"
 #pragma comment(lib, "libzstd_static.lib")
-#endif
 
 namespace ms {
 
@@ -35,8 +33,7 @@ void PlainBufferEncoder::decode(RawVector<char>& dst, const RawVector<char>& src
 
 BufferEncoderPtr CreatePlainEncoder() { return std::make_shared<PlainBufferEncoder>(); }
 
-
-#ifdef msEnableZSTD
+//----------------------------------------------------------------------------------------------------------------------
 
 std::tuple<int, int> GetZSTDCompressionLevelRange()
 {
@@ -90,13 +87,5 @@ BufferEncoderPtr CreateZSTDEncoder(int compression_level)
     return std::make_shared<ZSTDBufferEncoder>(compression_level);
 }
 
-#else
-
-std::tuple<int, int> GetZSTDCompressionLevelRange() { return{ 0, 0 }; }
-int ClampZSTDCompressionLevel(int v) { return 0; }
-int GetZSTDDefaultCompressionLevel() { return 0; }
-BufferEncoderPtr CreateZSTDEncoder(int) { return nullptr; }
-
-#endif
 
 } // namespace ms
