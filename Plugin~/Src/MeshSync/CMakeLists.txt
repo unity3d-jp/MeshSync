@@ -21,11 +21,12 @@ target_include_directories(MeshSync
         "${MeshSync_dir}"
         "${MeshSync_dir}/Include"
         "${Poco_INCLUDE_DIRS}"
-        "${SRC_ROOT}/MeshUtils/Include"
         "${SRC_ROOT}"
 )
 
 target_link_libraries(MeshSync
+    PUBLIC
+        MeshUtils
     PRIVATE
         ${ZSTD_LIBRARY}    
 )
