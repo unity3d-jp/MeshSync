@@ -1,9 +1,11 @@
 #pragma once
 
+//Set by CMake:
+//   muEnableISPC
+
 // available options:
 //   muEnablePPL
 //   muEnableTBB
-//   muEnableISPC
 //   muEnableAMP
 //   muEnableSymbol
 
