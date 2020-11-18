@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include "muMisc.h"
+#include "MeshUtils/muMisc.h"
 
 namespace mu {
 
