@@ -23,6 +23,3 @@ target_link_libraries( mscore
         MeshSync 
 )
 
-if(LINUX)
-    target_link_libraries(mscore PRIVATE pthread "-Wl,--no-undefined")
-endif()

@@ -39,6 +39,11 @@ target_include_directories(MeshUtils
         ${MUISPC_OUTDIR}
 )
 
+
+if(LINUX)
+    target_link_libraries(MeshUtils INTERFACE pthread "-Wl,--no-undefined")
+endif()
+
 if(ENABLE_TBB)
     find_package(TBB QUIET)
     add_definitions(-DmuEnableTBB)

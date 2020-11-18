@@ -21,10 +21,6 @@ target_link_libraries(MeshSyncTest
     MeshSync 
 )
 
-if(LINUX)
-    target_link_libraries(MeshSyncTest pthread "-Wl,--no-undefined")
-endif()
-
 # Copy test data
 file(GLOB_RECURSE test_data ${MeshSyncTest_dir}/Data/*.* )
 file(COPY ${test_data} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
