@@ -11,7 +11,6 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${sources})
 
 #Include, pch
 target_include_directories(mscore PRIVATE 
-    ${SRC_ROOT}
     ${mscore_dir}
 )
 target_include_directories(mscore PRIVATE )

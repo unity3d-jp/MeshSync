@@ -4,7 +4,6 @@ project(MeshSync)
 
 file(GLOB_RECURSE sources *.cpp *.h )
 set(MeshSync_dir "${CMAKE_CURRENT_SOURCE_DIR}")
-set(SRC_ROOT   "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
 
 # setup as a library
@@ -21,7 +20,6 @@ target_include_directories(MeshSync
     PRIVATE
         "${MeshSync_dir}"
         "${Poco_INCLUDE_DIRS}"
-        "${SRC_ROOT}"
 )
 
 target_link_libraries(MeshSync

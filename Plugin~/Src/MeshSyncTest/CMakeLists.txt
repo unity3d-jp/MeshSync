@@ -3,7 +3,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.18)
 project(MeshSyncTest)
 
 set(MeshSyncTest_dir "${CMAKE_CURRENT_SOURCE_DIR}")
-set(src_root        "${CMAKE_CURRENT_SOURCE_DIR}/..")
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}")
 
 file(GLOB_RECURSE sources *.cpp *.h)
@@ -14,7 +13,6 @@ add_dependencies(MeshSyncTest MeshSync MeshUtils)
 #includes
 target_include_directories(MeshSyncTest PUBLIC 
     ${MeshSyncTest_dir}    
-    ${src_root}
 )
 
 target_link_libraries(MeshSyncTest 
