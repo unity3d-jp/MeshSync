@@ -19,10 +19,12 @@ target_precompile_headers(mscore PRIVATE "${mscore_dir}/pch.h")
 
 # Library dependencies
 target_link_libraries( mscore 
-    MeshSync 
-    ${Poco_LIBRARIES}
+    PUBLIC 
+        MeshSync 
+    PRIVATE
+        ${Poco_LIBRARIES}
 )
 
 if(LINUX)
-    target_link_libraries(mscore pthread "-Wl,--no-undefined")
+    target_link_libraries(mscore PRIVATE pthread "-Wl,--no-undefined")
 endif()
