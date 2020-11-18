@@ -15,17 +15,12 @@ add_dependencies(MeshSyncTest MeshSync MeshUtils)
 target_include_directories(MeshSyncTest PUBLIC 
     "${CMAKE_SOURCE_DIR}"
     ${MeshSyncTest_dir}    
-    ${src_root}/MeshSync/Include
-    ${src_root}/MeshUtils/Include
     ${src_root}/MeshUtils
     ${src_root}
-    ${Poco_INCLUDE_DIRS}
 )
 
 target_link_libraries(MeshSyncTest 
     MeshSync 
-    MeshUtils 
-    ${Poco_LIBRARIES}
 )
 
 if(LINUX)

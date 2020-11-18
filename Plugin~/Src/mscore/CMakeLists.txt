@@ -21,8 +21,6 @@ target_precompile_headers(mscore PRIVATE "${mscore_dir}/pch.h")
 target_link_libraries( mscore 
     PUBLIC 
         MeshSync 
-    PRIVATE
-        ${Poco_LIBRARIES}
 )
 
 if(LINUX)

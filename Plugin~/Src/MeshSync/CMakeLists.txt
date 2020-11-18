@@ -29,4 +29,5 @@ target_link_libraries(MeshSync
         MeshUtils
     PRIVATE
         ${ZSTD_LIBRARY}    
+        ${Poco_LIBRARIES}        
 )
