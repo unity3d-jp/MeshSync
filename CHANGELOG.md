@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.5.1-preview] - 2020-11-18
+* chore: make plugin project dependencies explicit and remove msEnableZSTD preprocessor directive
+
 ## [0.5.0-preview] - 2020-11-17
 * feat: add a button to launch DCC tool in the Preferences page 
 * feat: notify users to restart Unity after upgrading MeshSync for Unity 2020.2+
