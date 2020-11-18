@@ -9,8 +9,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # prerequisites
 find_package(Poco REQUIRED COMPONENTS Net)
-find_package(ZSTD) # Use ZSTD for scene cache compression
-include(ISPC)
+find_package(ZSTD)  # Use ZSTD for scene cache compression
+include(ISPC)       # Use Intel ISPC to generate SIMDified code
 
 # ----------------------------------------------------------------------------------------------------------------------
 
