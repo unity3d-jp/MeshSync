@@ -28,9 +28,6 @@ target_link_libraries(MeshSyncTest
     ${Poco_LIBRARIES}
 )
 
-if(ENABLE_ZSTD)
-    target_link_libraries(MeshSyncTest ${ZSTD_LIBRARY})
-endif()
 if(LINUX)
     target_link_libraries(MeshSyncTest pthread "-Wl,--no-undefined")
 endif()

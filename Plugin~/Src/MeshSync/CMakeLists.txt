@@ -14,14 +14,18 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${sources})
 
 #Include, pch
 target_precompile_headers(MeshSync PRIVATE "${MeshSync_dir}/pch.h")
-target_include_directories(MeshSync PRIVATE
-    "${MeshSync_dir}"
-    "${MeshSync_dir}/Include"
-    "${Poco_INCLUDE_DIRS}"
-    "${SRC_ROOT}/MeshUtils/Include"
-    "${SRC_ROOT}"
+target_include_directories(MeshSync 
+    PUBLIC 
+        ${ZSTD_INCLUDE_DIR}    
+    PRIVATE
+        "${MeshSync_dir}"
+        "${MeshSync_dir}/Include"
+        "${Poco_INCLUDE_DIRS}"
+        "${SRC_ROOT}/MeshUtils/Include"
+        "${SRC_ROOT}"
 )
 
-if(ENABLE_ZSTD)
-    target_include_directories(MeshSync PRIVATE ${ZSTD_INCLUDE_DIR})
-endif()
+target_link_libraries(MeshSync
+    PRIVATE
+        ${ZSTD_LIBRARY}    
+)

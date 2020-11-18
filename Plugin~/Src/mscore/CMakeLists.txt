@@ -26,10 +26,6 @@ target_link_libraries( mscore
     ${Poco_LIBRARIES}
 )
 
-if(ENABLE_ZSTD)
-    target_link_libraries(mscore ${ZSTD_LIBRARY})
-endif()
-
 if(LINUX)
     target_link_libraries(mscore pthread "-Wl,--no-undefined")
 endif()
