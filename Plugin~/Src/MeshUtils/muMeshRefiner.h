@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-#include "MeshUtils/MeshUtilsConstants.h"
+#include "MeshUtils/MeshUtilsConstants.h" //MAX_MESH_REFINER_ATTRIBUTES
 #include "muMath.h"
 #include "muRawVector.h"
 #include "muIntrusiveArray.h"

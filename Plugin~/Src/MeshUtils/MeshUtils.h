@@ -13,7 +13,7 @@
 #include "muVertex.h"
 #include "muColor.h"
 #include "muTLS.h"
-#include "muMisc.h"
+#include "MeshUtils/muMisc.h"
 #include "muConcurrency.h"
 #include "muCompression.h"
 #include "muStream.h"

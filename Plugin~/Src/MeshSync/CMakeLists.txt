@@ -4,7 +4,6 @@ project(MeshSync)
 
 file(GLOB_RECURSE sources *.cpp *.h )
 set(MeshSync_dir "${CMAKE_CURRENT_SOURCE_DIR}")
-set(SRC_ROOT   "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
 
 # setup as a library
@@ -14,14 +13,19 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${sources})
 
 #Include, pch
 target_precompile_headers(MeshSync PRIVATE "${MeshSync_dir}/pch.h")
-target_include_directories(MeshSync PRIVATE
-    "${MeshSync_dir}"
-    "${MeshSync_dir}/Include"
-    "${Poco_INCLUDE_DIRS}"
-    "${SRC_ROOT}/MeshUtils/Include"
-    "${SRC_ROOT}"
+target_include_directories(MeshSync 
+    PUBLIC 
+        ${ZSTD_INCLUDE_DIR}    
+        "${MeshSync_dir}/Include"
+    PRIVATE
+        "${MeshSync_dir}"
+        "${Poco_INCLUDE_DIRS}"
 )
 
-if(ENABLE_ZSTD)
-    target_include_directories(MeshSync PRIVATE ${ZSTD_INCLUDE_DIR})
-endif()
+target_link_libraries(MeshSync
+    PUBLIC
+        MeshUtils
+    PRIVATE
+        ${ZSTD_LIBRARY}    
+        ${Poco_LIBRARIES}        
+)

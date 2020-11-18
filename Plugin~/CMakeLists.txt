@@ -9,7 +9,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # prerequisites
 find_package(Poco REQUIRED COMPONENTS Net)
-include(ISPC)
+find_package(ZSTD)  # Use ZSTD for scene cache compression
+include(ISPC)       # Use Intel ISPC to generate SIMDified code
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -48,15 +49,12 @@ add_definitions(-DUNICODE -D_UNICODE)
 # Use Poco static lib
 add_definitions(-DPOCO_STATIC)
 
+
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Options
-option(ENABLE_ZSTD "Use ZSTD for scene cache compression" ON)
-if(ENABLE_ZSTD)
-    find_package(ZSTD)
-    add_definitions(-DmsEnableZSTD)
-endif()
-
 option(BUILD_TESTS "Tests" OFF)
 
 # ----------------------------------------------------------------------------------------------------------------------
