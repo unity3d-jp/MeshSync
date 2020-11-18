@@ -13,9 +13,7 @@ add_dependencies(MeshSyncTest MeshSync MeshUtils)
 
 #includes
 target_include_directories(MeshSyncTest PUBLIC 
-    "${CMAKE_SOURCE_DIR}"
     ${MeshSyncTest_dir}    
-    ${src_root}/MeshUtils
     ${src_root}
 )
 
