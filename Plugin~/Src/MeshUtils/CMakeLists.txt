@@ -26,12 +26,17 @@ list(APPEND MeshUtils_include
     "${CMAKE_CURRENT_SOURCE_DIR}/Include"
 )
 
-if(ENABLE_ISPC)
-    add_definitions(-DmuEnableISPC)
-    list(APPEND MeshUtils_include ${MUISPC_OUTDIR})
-endif()
+target_compile_definitions(MeshUtils
+    PRIVATE
+        muEnableISPC
+)
 
-target_include_directories(MeshUtils PRIVATE ${MeshUtils_include})
+target_include_directories(MeshUtils 
+    PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/Include"
+    PRIVATE 
+        ${MUISPC_OUTDIR}
+)
 
 if(ENABLE_TBB)
     find_package(TBB QUIET)
