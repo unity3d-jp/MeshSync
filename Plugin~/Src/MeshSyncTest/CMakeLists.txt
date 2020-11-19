@@ -17,8 +17,11 @@ target_include_directories(MeshSyncTest PUBLIC
 
 target_link_libraries(MeshSyncTest 
     MeshSync 
-    "-Wl,--no-undefined"
 )
+
+ if(LINUX)
+    target_link_libraries(MeshSyncTest "-Wl,--no-undefined")
+ endif()
 
 # Copy test data
 file(GLOB_RECURSE test_data ${MeshSyncTest_dir}/Data/*.* )
