@@ -30,3 +30,4 @@ set_target_properties(MeshSyncTest PROPERTIES
     XCODE_SCHEME_WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
+
