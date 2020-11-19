@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.5.2-preview] - 2020-11-19
+* fix: remove "-Wl,--no-undefined" linker flag from MeshUtils plugin library
+
 ## [0.5.1-preview] - 2020-11-18
 * chore: make plugin project dependencies explicit and remove msEnableZSTD preprocessor directive
 
