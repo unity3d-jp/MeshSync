@@ -17,6 +17,7 @@ target_include_directories(MeshSyncTest PUBLIC
 
 target_link_libraries(MeshSyncTest 
     MeshSync 
+    "-Wl,--no-undefined"
 )
 
 # Copy test data

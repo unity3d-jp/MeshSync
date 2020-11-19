@@ -42,7 +42,7 @@ target_include_directories(MeshUtils
 
 
 if(LINUX)
-    target_link_libraries(MeshUtils INTERFACE pthread "-Wl,--no-undefined")
+    target_link_libraries(MeshUtils INTERFACE pthread)
 endif()
 
 if(ENABLE_TBB)
