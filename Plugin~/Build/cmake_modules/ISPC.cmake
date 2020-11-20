@@ -10,13 +10,18 @@ function(setup_ispc)
     endif()
 
     set(ISPC_VERSION 1.14.1)
-    set(ispc_root "${CMAKE_BINARY_DIR}/ispc-v${ISPC_VERSION}") 
 
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        set(ispc_root "${CMAKE_BINARY_DIR}/ispc-v${ISPC_VERSION}-linux") 
+        set(ispc_extract_path "${CMAKE_BINARY_DIR}")
         set(ISPC_ARCHIVE_FILE "ispc-v${ISPC_VERSION}-linux.tar.gz")
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+        set(ispc_root "${CMAKE_BINARY_DIR}/ispc-v${ISPC_VERSION}-macOS") 
+        set(ispc_extract_path "${CMAKE_BINARY_DIR}")
         set(ISPC_ARCHIVE_FILE "ispc-v${ISPC_VERSION}-macOS.tar.gz")
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+        set(ispc_root "${CMAKE_BINARY_DIR}/ispc-v${ISPC_VERSION}-windows") 
+        set(ispc_extract_path "${ispc_root}")
         set(ISPC_ARCHIVE_FILE "ispc-v${ISPC_VERSION}-windows.zip")
     endif()
     set(ISPC "${ispc_root}/bin/ispc" CACHE PATH "" FORCE)   
@@ -28,10 +33,10 @@ function(setup_ispc)
     endif()
     
     message("   Extracting ${ISPC_ARCHIVE_FILE}")
-    file(MAKE_DIRECTORY ${ispc_root})        
+    file(MAKE_DIRECTORY ${ispc_extract_path})        
     execute_process(
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMAND tar -xf ${ISPC_ARCHIVE_PATH} -C ${ispc_root}
+        COMMAND tar -xf ${ISPC_ARCHIVE_PATH} -C ${ispc_extract_path}
     )
 endfunction()
 
