@@ -9,29 +9,37 @@ function(setup_ispc)
         return()
     endif()
 
-    set(ISPC_VERSION 1.12.0)
+    set(ISPC_VERSION 1.14.1)
+
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        set(ISPC_DIR "ispc-v${ISPC_VERSION}-linux")
+        set(ispc_root "${CMAKE_BINARY_DIR}/ispc-v${ISPC_VERSION}-linux") 
+        set(ispc_extract_path "${CMAKE_BINARY_DIR}")
         set(ISPC_ARCHIVE_FILE "ispc-v${ISPC_VERSION}-linux.tar.gz")
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-        set(ISPC_DIR "ispc-v${ISPC_VERSION}-macOS")
+        set(ispc_root "${CMAKE_BINARY_DIR}/ispc-v${ISPC_VERSION}-macOS") 
+        set(ispc_extract_path "${CMAKE_BINARY_DIR}")
         set(ISPC_ARCHIVE_FILE "ispc-v${ISPC_VERSION}-macOS.tar.gz")
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-        set(ISPC_DIR "ispc-v${ISPC_VERSION}-windows")
+        set(ispc_root "${CMAKE_BINARY_DIR}/ispc-v${ISPC_VERSION}-windows") 
+        set(ispc_extract_path "${ispc_root}")
         set(ISPC_ARCHIVE_FILE "ispc-v${ISPC_VERSION}-windows.zip")
     endif()
-    set(ISPC "${CMAKE_BINARY_DIR}/${ISPC_DIR}/bin/ispc" CACHE PATH "" FORCE)
+    set(ISPC "${ispc_root}/bin/ispc" CACHE PATH "" FORCE)   
 
-    set(ISPC_ARCHIVE_URL "http://downloads.sourceforge.net/project/ispcmirror/v${ISPC_VERSION}/${ISPC_ARCHIVE_FILE}")
+    set(ISPC_ARCHIVE_URL "https://github.com/ispc/ispc/releases/download/v${ISPC_VERSION}/${ISPC_ARCHIVE_FILE}")
     set(ISPC_ARCHIVE_PATH "${CMAKE_BINARY_DIR}/${ISPC_ARCHIVE_FILE}")
     if(NOT EXISTS ${ISPC_ARCHIVE_PATH})
         file(DOWNLOAD ${ISPC_ARCHIVE_URL} ${ISPC_ARCHIVE_PATH} SHOW_PROGRESS)
     endif()
+    
+    message("   Extracting ${ISPC_ARCHIVE_FILE}")
+    file(MAKE_DIRECTORY ${ispc_extract_path})        
     execute_process(
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMAND tar -xf ${ISPC_ARCHIVE_PATH}
+        COMMAND tar -xf ${ISPC_ARCHIVE_PATH} -C ${ispc_extract_path}
     )
 endfunction()
+
 
 # e.g:
 #add_ispc_targets(

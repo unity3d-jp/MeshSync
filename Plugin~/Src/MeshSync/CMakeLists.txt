@@ -13,6 +13,9 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${sources})
 
 #Include, pch
 target_precompile_headers(MeshSync PRIVATE "${MeshSync_dir}/pch.h")
+
+add_dependencies(MeshSync MeshUtils)
+
 target_include_directories(MeshSync 
     PUBLIC 
         ${ZSTD_INCLUDE_DIR}    
