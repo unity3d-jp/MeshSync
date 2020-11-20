@@ -40,6 +40,7 @@ function(setup_ispc)
     )
 endfunction()
 
+
 # e.g:
 #add_ispc_targets(
 #    SOURCES "src1.ispc" "src2.ispc"
