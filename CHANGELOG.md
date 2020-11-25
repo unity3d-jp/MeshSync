@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.5.4-preview] - 2020-11-25
+* fix: add MeshSyncConstants implementation to fix undefined symbol errors 
+
 ## [0.5.3-preview] - 2020-11-20
 * fix: update the source of ISPC library and update to use ISPC 1.14.1
 
