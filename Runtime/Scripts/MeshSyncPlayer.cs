@@ -250,9 +250,9 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         
         //[TODO-sin: 2020-9-24] Remove in MeshSync 2.0.0
         //Convert old assets which are using DataPath to hold assetFolder.
-        if (string.IsNullOrEmpty(m_assetsFolder)) {
-            string leaf = m_assetDir.GetLeaf();
-            m_assetsFolder = string.IsNullOrEmpty(leaf) ? "Assets" : $"Assets/{leaf}";
+        string leaf = m_assetDir.GetLeaf();
+        if (!string.IsNullOrEmpty(leaf)) {
+            m_assetsFolder = $"Assets/{leaf}";
         } 
         
         
