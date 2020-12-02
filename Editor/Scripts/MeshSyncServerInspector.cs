@@ -18,16 +18,15 @@ namespace Unity.MeshSync.Editor  {
 //----------------------------------------------------------------------------------------------------------------------
         public override void OnInspectorGUI()
         {
-            var so = serializedObject;
-            var t = target as MeshSyncServer;
+            SerializedObject so = serializedObject;
 
             EditorGUILayout.Space();
-            DrawServerSettings(t, so);
-            DrawPlayerSettings(t, so);
-            DrawMaterialList(t);
-            DrawTextureList(t);
-            DrawAnimationTweak(t);
-            DrawExportAssets(t);
+            DrawServerSettings(m_serverAsset, so);
+            DrawPlayerSettings(m_serverAsset, so);
+            DrawMaterialList(m_serverAsset);
+            DrawTextureList(m_serverAsset);
+            DrawAnimationTweak(m_serverAsset);
+            DrawExportAssets(m_serverAsset);
             DrawPluginVersion();
 
             so.ApplyModifiedProperties();
