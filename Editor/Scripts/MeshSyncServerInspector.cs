@@ -18,6 +18,7 @@ namespace Unity.MeshSync.Editor  {
 //----------------------------------------------------------------------------------------------------------------------
         public override void OnInspectorGUI()
         {
+            Undo.RecordObject(m_serverAsset, "SceneCachePlayer Update");        
             SerializedObject so = serializedObject;
 
             EditorGUILayout.Space();
