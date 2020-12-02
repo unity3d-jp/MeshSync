@@ -36,7 +36,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
             return;
         }
         
-        
+        Undo.RecordObject(target, "SceneCachePlayer Update");        
         SerializedObject so = serializedObject;
 
         EditorGUILayout.Space();
