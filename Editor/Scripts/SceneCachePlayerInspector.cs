@@ -55,6 +55,8 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
         DrawPluginVersion();
 
         so.ApplyModifiedProperties();
+        PrefabUtility.RecordPrefabInstancePropertyModifications(m_sceneCachePlayer);
+        
     }
 
 //----------------------------------------------------------------------------------------------------------------------
