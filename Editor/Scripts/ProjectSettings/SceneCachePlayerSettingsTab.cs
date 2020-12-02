@@ -20,8 +20,8 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
         
         VisualElement content = tabInstance.Query<VisualElement>("Content").First();
         
-        m_outputPathTextField	 = tabInstance.Query<TextField>("OutputPathText").First();
-        m_outputPathTextField.RegisterValueChangedCallback((ChangeEvent<string> changeEvent) => {
+        m_generatedSCResPathTextField	 = tabInstance.Query<TextField>("GeneratedSCResPathText").First();
+        m_generatedSCResPathTextField.RegisterValueChangedCallback((ChangeEvent<string> changeEvent) => {
             MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
             settings.SetSceneCacheOutputPath(changeEvent.newValue);
             settings.SaveSettings();
@@ -41,7 +41,7 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
 //----------------------------------------------------------------------------------------------------------------------
     void OnOutputPathSelectButtonClicked() {
         string path = EditorUtility.OpenFolderPanel("Select Scene Cache Output Path",
-                                                    m_outputPathTextField.value,
+                                                    m_generatedSCResPathTextField.value,
                                                     "");
 
         if (string.IsNullOrEmpty(path))
@@ -67,13 +67,13 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
 
     void RefreshSettings() {
         MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        m_outputPathTextField.value = settings.GetSceneCacheOutputPath();		
+        m_generatedSCResPathTextField.value = settings.GetSceneCacheOutputPath();		
     }
 
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    private TextField m_outputPathTextField  	= null;
+    private TextField m_generatedSCResPathTextField  	= null;
     private Button    m_outputPathSelectButton 	= null;
 
 }
