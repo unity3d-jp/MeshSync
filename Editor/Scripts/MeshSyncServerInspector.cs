@@ -18,7 +18,7 @@ namespace Unity.MeshSync.Editor  {
 //----------------------------------------------------------------------------------------------------------------------
         public override void OnInspectorGUI()
         {
-            Undo.RecordObject(m_serverAsset, "SceneCachePlayer Update");        
+            Undo.RecordObject(m_serverAsset, "MeshSyncServer Update");        
             SerializedObject so = serializedObject;
 
             EditorGUILayout.Space();
@@ -34,6 +34,7 @@ namespace Unity.MeshSync.Editor  {
             PrefabUtility.RecordPrefabInstancePropertyModifications(m_serverAsset);
             
         }
+//----------------------------------------------------------------------------------------------------------------------
 
         public void DrawServerSettings(MeshSyncServer t, SerializedObject so)
         {
