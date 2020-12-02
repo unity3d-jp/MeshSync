@@ -31,6 +31,8 @@ namespace Unity.MeshSync.Editor  {
             DrawPluginVersion();
 
             so.ApplyModifiedProperties();
+            PrefabUtility.RecordPrefabInstancePropertyModifications(m_serverAsset);
+            
         }
 
         public void DrawServerSettings(MeshSyncServer t, SerializedObject so)
