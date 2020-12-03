@@ -37,9 +37,9 @@ internal class DCCPluginDownloader  {
         }, (string version) => {
 
             //Getting files from the package has failed. Download directly
-            DownloadDCCPlugins(version, ()=> {
+            DownloadDCCPlugins(version, (string downloadedVersion)=> {
                 ClearProgressBar();
-                onSuccess(version, m_finishedDCCPluginLocalPaths);
+                onSuccess(downloadedVersion, m_finishedDCCPluginLocalPaths);
             }, ()=> {
                 ClearProgressBar();
                 onFail();
@@ -74,7 +74,7 @@ internal class DCCPluginDownloader  {
     
 //-------------------------------------------------1---------------------------------------------------------------------
 
-    void DownloadDCCPlugins(string version, Action onComplete, Action onFail) 
+    private void DownloadDCCPlugins(string version, Action<string> onComplete, Action onFail) 
     {
         Directory.CreateDirectory(m_destFolder);
         WebClient client = new WebClient();
@@ -108,7 +108,7 @@ internal class DCCPluginDownloader  {
             
             DCCPluginDownloadInfo nextInfo = FindNextPluginToDownload(meta, version);
             if (null == nextInfo) {
-                onComplete();
+                onComplete(version);
             } else {
                 
                 //Download the next one  
@@ -135,7 +135,7 @@ internal class DCCPluginDownloader  {
         DCCPluginDownloadInfo downloadInfo = FindNextPluginToDownload(meta, version);
 
         if (null == downloadInfo) {
-            onComplete();
+            onComplete(version);
             return;
         }
 
