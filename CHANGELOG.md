@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.5.5-preview] - 2020-12-03
+* fix: record property modification for SceneCachePlayer and MeshSyncServer prefabs, and support undo
+* fix: use the SceneCache path specified in ProjectSettings for the path of SceneCachePlayer resources
+* fix: store the correct version of installed MeshSyncDCCPlugin
+* chore: change the default generated resources path for SceneCache  
+* chore: disable logging by default 
+
 ## [0.5.4-preview] - 2020-11-25
 * fix: add MeshSyncConstants implementation to fix undefined symbol errors 
 
