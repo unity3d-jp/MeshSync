@@ -73,6 +73,13 @@
         "com.unity.sharp-zip-lib": "1.2.2-preview.1"
       }
     },
+    "com.unity.meshsync.dcc-plugins": {
+      "version": "0.5.4-preview",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
     "com.unity.package-validation-suite": {
       "version": "0.11.0-preview",
       "depth": 0,
