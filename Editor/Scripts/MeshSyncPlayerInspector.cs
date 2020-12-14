@@ -190,18 +190,20 @@ namespace Unity.MeshSync.Editor
                 if (clips.Count > 0) {
                     frameRate = clips[0].frameRate;                    
                 }
-                
-                // Override Frame Rate
-                GUILayout.BeginVertical("Box");
-                EditorGUILayout.LabelField("Override Frame Rate", EditorStyles.boldLabel);
-                EditorGUI.indentLevel++;
-                float prevFrameRate = frameRate;
-                frameRate = EditorGUILayout.FloatField("Frame Rate", frameRate);
-                if (!Mathf.Approximately(prevFrameRate, frameRate)) {
-                    ApplyFrameRate(t.GetAnimationClips(), frameRate);                    
+
+                {
+                    // Override Frame Rate
+                    GUILayout.BeginVertical("Box");
+                    EditorGUILayout.LabelField("Override Frame Rate", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    float prevFrameRate = frameRate;
+                    frameRate = EditorGUILayout.FloatField("Frame Rate", frameRate);
+                    if (!Mathf.Approximately(prevFrameRate, frameRate)) {
+                        ApplyFrameRate(t.GetAnimationClips(), frameRate);                    
+                    }
+                    EditorGUI.indentLevel--;
+                    GUILayout.EndVertical();                    
                 }
-                EditorGUI.indentLevel--;
-                GUILayout.EndVertical();
                 
                 
 
