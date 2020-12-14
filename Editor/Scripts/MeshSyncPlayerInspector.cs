@@ -9,18 +9,10 @@ namespace Unity.MeshSync.Editor
     [CustomEditor(typeof(MeshSyncPlayer))]
     internal class MeshSyncPlayerInspector : UnityEditor.Editor {
                 
-        private float m_animationFrameRate = 30.0f;
        
 //----------------------------------------------------------------------------------------------------------------------        
         public virtual void OnEnable() {
             m_asset = target as MeshSyncPlayer;
-            
-            if (null == m_asset)
-                return;
-           
-            List<AnimationClip> clips = m_asset.GetAnimationClips();
-            if (clips.Count > 0)
-                m_animationFrameRate = clips[0].frameRate;
         }
         
 //----------------------------------------------------------------------------------------------------------------------
@@ -179,34 +171,39 @@ namespace Unity.MeshSync.Editor
             }
         }
 
-        public static void DrawTextureList(MeshSyncPlayer t)
-        {
+        public static void DrawTextureList(MeshSyncPlayer t) {
 
         }
 
+//----------------------------------------------------------------------------------------------------------------------        
 
-        public void DrawAnimationTweak(MeshSyncPlayer t)
-        {
-            var styleFold = EditorStyles.foldout;
+        protected void DrawAnimationTweak(MeshSyncPlayer t) {
+            GUIStyle styleFold = EditorStyles.foldout;
             styleFold.fontStyle = FontStyle.Bold;
             t.foldAnimationTweak = EditorGUILayout.Foldout(t.foldAnimationTweak, "Animation Tweak", true, styleFold);
             if (t.foldAnimationTweak) {
                 MeshSyncPlayerConfig config = m_asset.GetConfig();
                 AnimationTweakSettings animationTweakSettings = config.GetAnimationTweakSettings();
-                    
+                
+                float               frameRate = 30.0f;
+                List<AnimationClip> clips     = m_asset.GetAnimationClips();
+                if (clips.Count > 0) {
+                    frameRate = clips[0].frameRate;                    
+                }
                 
                 // Override Frame Rate
                 GUILayout.BeginVertical("Box");
                 EditorGUILayout.LabelField("Override Frame Rate", EditorStyles.boldLabel);
                 EditorGUI.indentLevel++;
-                m_animationFrameRate = EditorGUILayout.FloatField("Frame Rate", m_animationFrameRate);
-                GUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Apply", GUILayout.Width(120.0f)))
-                    ApplyFrameRate(t.GetAnimationClips(), m_animationFrameRate);
-                GUILayout.EndHorizontal();
+                float prevFrameRate = frameRate;
+                frameRate = EditorGUILayout.FloatField("Frame Rate", frameRate);
+                if (!Mathf.Approximately(prevFrameRate, frameRate)) {
+                    ApplyFrameRate(t.GetAnimationClips(), frameRate);                    
+                }
                 EditorGUI.indentLevel--;
                 GUILayout.EndVertical();
+                
+                
 
                 // Time Scale
                 GUILayout.BeginVertical("Box");
