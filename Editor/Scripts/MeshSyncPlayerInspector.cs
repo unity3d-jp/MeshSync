@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NUnit.Framework;
 using Unity.MeshSync;
 using UnityEditor;
 using UnityEngine;
@@ -274,7 +275,7 @@ namespace Unity.MeshSync.Editor
                 Undo.RegisterCompleteObjectUndo(clip, "ApplyFrameRate");
                 clip.frameRate = frameRate;
 
-                Debug.Log("Applied frame rate to " + AssetDatabase.GetAssetPath(clip));
+                //Debug.Log("Applied frame rate to " + AssetDatabase.GetAssetPath(clip));
             }
             // repaint animation window
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
@@ -316,17 +317,16 @@ namespace Unity.MeshSync.Editor
                 for (int ci = 0; ci < curveCount; ++ci)
                     Misc.SetCurve(clip, bindings[ci], curves[ci]);
 
-                Debug.Log("Applied time scale to " + AssetDatabase.GetAssetPath(clip));
+                //Debug.Log("Applied time scale to " + AssetDatabase.GetAssetPath(clip));
             }
 
             // repaint animation window
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         }
 
-        private static void ApplyDropKeyframes(IEnumerable<AnimationClip> clips, int step)
-        {
-            if (step <= 1)
-                return;
+//----------------------------------------------------------------------------------------------------------------------        
+        private static void ApplyDropKeyframes(IEnumerable<AnimationClip> clips, int step) {
+            Assert.IsTrue(step > 1);
 
             foreach (AnimationClip clip in clips)
             {
@@ -357,7 +357,7 @@ namespace Unity.MeshSync.Editor
                 for (int ci = 0; ci < curveCount; ++ci)
                     Misc.SetCurve(clip, bindings[ci], curves[ci]);
 
-                Debug.Log("Applied drop keyframes to " + AssetDatabase.GetAssetPath(clip));
+                //Debug.Log("Applied drop keyframes to " + AssetDatabase.GetAssetPath(clip));
             }
 
             // repaint animation window
@@ -390,7 +390,7 @@ namespace Unity.MeshSync.Editor
                 for (int ci = 0; ci < curveCount; ++ci)
                     Misc.SetCurve(clip, bindings[ci], curves[ci]);
 
-                Debug.Log("Applied keyframe reduction to " + AssetDatabase.GetAssetPath(clip));
+                //Debug.Log("Applied keyframe reduction to " + AssetDatabase.GetAssetPath(clip));
             }
 
             // repaint animation window
