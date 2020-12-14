@@ -198,7 +198,7 @@ namespace Unity.MeshSync.Editor
                     EditorGUI.indentLevel++;
                     float prevFrameRate = frameRate;
                     frameRate = EditorGUILayout.FloatField("Frame Rate", frameRate);
-                    if (!Mathf.Approximately(prevFrameRate, frameRate)) {
+                    if (!Mathf.Approximately(prevFrameRate, frameRate) && frameRate > 0) {
                         ApplyFrameRate(t.GetAnimationClips(), frameRate);                    
                     }
                     EditorGUI.indentLevel--;
