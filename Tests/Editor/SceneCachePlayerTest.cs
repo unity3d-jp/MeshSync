@@ -59,7 +59,8 @@ public class SceneCachePlayerTest  {
         //Change
         string newSceneCacheFilePath = Path.GetFullPath(SPHERE_TEST_DATA_PATH);
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(prefabPlayer, newSceneCacheFilePath);
-        Assert.AreEqual(newSceneCacheFilePath, prefabPlayer.GetSceneCacheFilePath());
+        string convertedPath = newSceneCacheFilePath.Replace('\\','/');
+        Assert.AreEqual(convertedPath, player.GetSceneCacheFilePath());
         
 
         //Cleanup
@@ -89,9 +90,9 @@ public class SceneCachePlayerTest  {
         //Change
         string newSceneCacheFilePath = Path.GetFullPath(SPHERE_TEST_DATA_PATH);
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, newSceneCacheFilePath);
+        string convertedPath = newSceneCacheFilePath.Replace('\\','/');
         Assert.IsTrue(player.IsSceneCacheOpened());
-        Assert.AreEqual(newSceneCacheFilePath, player.GetSceneCacheFilePath());
-        
+        Assert.AreEqual(convertedPath, player.GetSceneCacheFilePath());
 
         //Cleanup
         Object.DestroyImmediate(player.gameObject);
@@ -156,6 +157,41 @@ public class SceneCachePlayerTest  {
         AssetDatabase.Refresh();                
     }
     
+//----------------------------------------------------------------------------------------------------------------------
+    
+    [Test]
+    public void CopySceneCacheToStreamingAssets() {
+        
+        //Initial setup
+        const string DEST_PREFAB_PATH    = "Assets/TestSceneCache.prefab";
+        const string ASSETS_FOLDER       = "Assets/TestSceneCacheAssets";
+        string       destFolder          = Path.Combine(Application.streamingAssetsPath,"TestRunner");
+        string       streamingAssetsPath = Path.Combine(destFolder,"Copied.sc");
+            
+        bool prefabCreated = SceneCachePlayerEditorUtility.CreateSceneCachePlayerAndPrefab(
+            Path.GetFullPath(CUBE_TEST_DATA_PATH), DEST_PREFAB_PATH,ASSETS_FOLDER, 
+            out SceneCachePlayer player, out GameObject prefab
+        );
+        Assert.IsTrue(prefabCreated);
+
+        //Copy
+        Directory.CreateDirectory(destFolder);
+        File.Copy(player.GetSceneCacheFilePath(), streamingAssetsPath);
+        Assert.IsTrue(File.Exists(streamingAssetsPath));
+        AssetDatabase.Refresh();        
+        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, streamingAssetsPath);
+        string convertedPath = streamingAssetsPath.Replace('\\','/');
+        Assert.AreEqual(convertedPath, player.GetSceneCacheFilePath());
+
+        //Cleanup        
+        Object.DestroyImmediate(player.gameObject);
+        DeleteSceneCachePlayerPrefab(prefab);
+        
+        AssetDatabase.DeleteAsset(AssetUtility.NormalizeAssetPath(streamingAssetsPath));
+        AssetDatabase.DeleteAsset(AssetUtility.NormalizeAssetPath(destFolder));
+        AssetDatabase.Refresh();                
+        
+    }
 
 //----------------------------------------------------------------------------------------------------------------------    
     
