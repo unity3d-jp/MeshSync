@@ -236,7 +236,7 @@ namespace Unity.MeshSync.Editor
                     EditorGUI.indentLevel++;
                     int prevDropStep = animationTweakSettings.DropStep;
                     EditorGUIIntField("Step", ref animationTweakSettings.DropStep);
-                    if (prevDropStep != animationTweakSettings.DropStep) {
+                    if (prevDropStep != animationTweakSettings.DropStep && animationTweakSettings.DropStep > 1) {
                         ApplyDropKeyframes(t.GetAnimationClips(), animationTweakSettings.DropStep);                                        
                     }
                     EditorGUI.indentLevel--;
