@@ -277,9 +277,9 @@ namespace Unity.MeshSync.Editor
         {
             foreach (var clip in clips)
             {
-                var curves = new List<AnimationCurve>();
-                var bindings = new List<EditorCurveBinding>();
-                var events = AnimationUtility.GetAnimationEvents(clip);
+                List<AnimationCurve>     curves   = new List<AnimationCurve>();
+                List<EditorCurveBinding> bindings = new List<EditorCurveBinding>();
+                AnimationEvent[]         events   = AnimationUtility.GetAnimationEvents(clip);
 
                 // gather curves
                 bindings.AddRange(AnimationUtility.GetCurveBindings(clip));
@@ -291,10 +291,10 @@ namespace Unity.MeshSync.Editor
                 int curveCount = curves.Count;
 
                 // transform keys/events
-                foreach (var curve in curves)
+                foreach (AnimationCurve curve in curves)
                 {
-                    var keys = curve.keys;
-                    var keyCount = keys.Length;
+                    Keyframe[] keys = curve.keys;
+                    int keyCount = keys.Length;
                     for (int ki = 0; ki < keyCount; ++ki)
                         keys[ki].time = keys[ki].time * timeScale + timeOffset;
                     curve.keys = keys;
