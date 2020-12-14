@@ -208,21 +208,26 @@ namespace Unity.MeshSync.Editor
                 
 
                 // Time Scale
-                GUILayout.BeginVertical("Box");
-                EditorGUILayout.LabelField("Time Scale", EditorStyles.boldLabel);
-                EditorGUI.indentLevel++;
-                EditorGUIFloatField("Scale", ref animationTweakSettings.TimeScale);
-                EditorGUIFloatField("Offset", ref animationTweakSettings.TimeOffset);
-                GUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Apply", GUILayout.Width(120.0f))) {
-                    ApplyTimeScale(t.GetAnimationClips(), animationTweakSettings.TimeScale, 
-                        animationTweakSettings.TimeOffset
-                    );                   
+                {
+                    GUILayout.BeginVertical("Box");
+                    EditorGUILayout.LabelField("Time Scale", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    float prevTimeScale  = animationTweakSettings.TimeScale;
+                    float prevTimeOffset = animationTweakSettings.TimeOffset;
+                    EditorGUIFloatField("Scale", ref animationTweakSettings.TimeScale);
+                    EditorGUIFloatField("Offset", ref animationTweakSettings.TimeOffset);
+                    if (!Mathf.Approximately(prevTimeScale, animationTweakSettings.TimeScale) ||
+                        !Mathf.Approximately(prevTimeOffset, animationTweakSettings.TimeOffset)
+                    ) 
+                    {                    
+                        ApplyTimeScale(t.GetAnimationClips(), animationTweakSettings.TimeScale, 
+                            animationTweakSettings.TimeOffset
+                        );                   
+                    
+                    }                    
+                    EditorGUI.indentLevel--;
+                    GUILayout.EndVertical();                    
                 }
-                GUILayout.EndHorizontal();
-                EditorGUI.indentLevel--;
-                GUILayout.EndVertical();
 
                 // Drop Keyframes
                 GUILayout.BeginVertical("Box");
