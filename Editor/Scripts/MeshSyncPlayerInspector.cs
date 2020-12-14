@@ -229,36 +229,39 @@ namespace Unity.MeshSync.Editor
                     GUILayout.EndVertical();                    
                 }
 
-                // Drop Keyframes
-                GUILayout.BeginVertical("Box");
-                EditorGUILayout.LabelField("Drop Keyframes", EditorStyles.boldLabel);
-                EditorGUI.indentLevel++;
-                EditorGUIIntField("Step", ref animationTweakSettings.DropStep);
-                GUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Apply", GUILayout.Width(120.0f))) {
-                    ApplyDropKeyframes(t.GetAnimationClips(), animationTweakSettings.DropStep);                    
+                // Drop Keyframes 
+                {
+                    GUILayout.BeginVertical("Box");
+                    EditorGUILayout.LabelField("Drop Keyframes", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    int prevDropStep = animationTweakSettings.DropStep;
+                    EditorGUIIntField("Step", ref animationTweakSettings.DropStep);
+                    if (prevDropStep != animationTweakSettings.DropStep) {
+                        ApplyDropKeyframes(t.GetAnimationClips(), animationTweakSettings.DropStep);                                        
+                    }
+                    EditorGUI.indentLevel--;
+                    GUILayout.EndVertical();                    
                 }
-                GUILayout.EndHorizontal();
-                EditorGUI.indentLevel--;
-                GUILayout.EndVertical();
 
                 // Keyframe Reduction
-                GUILayout.BeginVertical("Box");
-                EditorGUILayout.LabelField("Keyframe Reduction", EditorStyles.boldLabel);
-                EditorGUI.indentLevel++;
-                EditorGUIFloatField("Threshold", ref animationTweakSettings.ReductionThreshold);
-                EditorGUIToggle("Erase Flat Curves", ref animationTweakSettings.EraseFlatCurves);
-                GUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Apply", GUILayout.Width(120.0f))) {
-                    ApplyKeyframeReduction(t.GetAnimationClips(), animationTweakSettings.ReductionThreshold, 
-                        animationTweakSettings.EraseFlatCurves
-                    );                    
+                {
+                    GUILayout.BeginVertical("Box");
+                    EditorGUILayout.LabelField("Keyframe Reduction", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    float prevReductionThreshold = animationTweakSettings.ReductionThreshold;
+                    bool  prevEraseFlatCurves    = animationTweakSettings.EraseFlatCurves;
+                    EditorGUIFloatField("Threshold", ref animationTweakSettings.ReductionThreshold);
+                    EditorGUIToggle("Erase Flat Curves", ref animationTweakSettings.EraseFlatCurves);
+                    if (!Mathf.Approximately(prevReductionThreshold, animationTweakSettings.ReductionThreshold)
+                        || prevEraseFlatCurves!=animationTweakSettings.EraseFlatCurves) 
+                    {
+                        ApplyKeyframeReduction(t.GetAnimationClips(), animationTweakSettings.ReductionThreshold, 
+                            animationTweakSettings.EraseFlatCurves
+                        );                                        
+                    }               
+                    EditorGUI.indentLevel--;
+                    GUILayout.EndVertical();                    
                 }
-                GUILayout.EndHorizontal();
-                EditorGUI.indentLevel--;
-                GUILayout.EndVertical();
 
                 EditorGUILayout.Space();
             }
