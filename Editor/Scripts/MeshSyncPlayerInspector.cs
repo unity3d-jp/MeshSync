@@ -177,16 +177,16 @@ namespace Unity.MeshSync.Editor
 
 //----------------------------------------------------------------------------------------------------------------------        
 
-        protected void DrawAnimationTweak(MeshSyncPlayer t) {
+        protected static void DrawAnimationTweak(MeshSyncPlayer t) {
             GUIStyle styleFold = EditorStyles.foldout;
             styleFold.fontStyle = FontStyle.Bold;
             t.foldAnimationTweak = EditorGUILayout.Foldout(t.foldAnimationTweak, "Animation Tweak", true, styleFold);
             if (t.foldAnimationTweak) {
-                MeshSyncPlayerConfig config = m_asset.GetConfig();
+                MeshSyncPlayerConfig config = t.GetConfig();
                 AnimationTweakSettings animationTweakSettings = config.GetAnimationTweakSettings();
                 
                 float               frameRate = 30.0f;
-                List<AnimationClip> clips     = m_asset.GetAnimationClips();
+                List<AnimationClip> clips     = t.GetAnimationClips();
                 if (clips.Count > 0) {
                     frameRate = clips[0].frameRate;                    
                 }
@@ -267,11 +267,10 @@ namespace Unity.MeshSync.Editor
             }
         }
 
-
-        public void ApplyFrameRate(IEnumerable<AnimationClip> clips, float frameRate)
-        {
-            foreach (var clip in clips)
-            {
+//----------------------------------------------------------------------------------------------------------------------
+        
+        private static void ApplyFrameRate(IEnumerable<AnimationClip> clips, float frameRate) {
+            foreach (AnimationClip clip in clips) {
                 Undo.RegisterCompleteObjectUndo(clip, "ApplyFrameRate");
                 clip.frameRate = frameRate;
 
@@ -281,10 +280,10 @@ namespace Unity.MeshSync.Editor
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         }
 
-        public void ApplyTimeScale(IEnumerable<AnimationClip> clips, float timeScale, float timeOffset)
-        {
-            foreach (var clip in clips)
-            {
+//----------------------------------------------------------------------------------------------------------------------
+
+        private static void ApplyTimeScale(IEnumerable<AnimationClip> clips, float timeScale, float timeOffset) {
+            foreach (AnimationClip clip in clips) {
                 List<AnimationCurve>     curves   = new List<AnimationCurve>();
                 List<EditorCurveBinding> bindings = new List<EditorCurveBinding>();
                 AnimationEvent[]         events   = AnimationUtility.GetAnimationEvents(clip);
@@ -320,27 +319,24 @@ namespace Unity.MeshSync.Editor
                 Debug.Log("Applied time scale to " + AssetDatabase.GetAssetPath(clip));
             }
 
-            // reset m_animationFrameRate
-            OnEnable();
-
             // repaint animation window
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         }
 
-        public void ApplyDropKeyframes(IEnumerable<AnimationClip> clips, int step)
+        private static void ApplyDropKeyframes(IEnumerable<AnimationClip> clips, int step)
         {
             if (step <= 1)
                 return;
 
-            foreach (var clip in clips)
+            foreach (AnimationClip clip in clips)
             {
-                var curves = new List<AnimationCurve>();
-                var bindings = new List<EditorCurveBinding>();
+                List<AnimationCurve>     curves   = new List<AnimationCurve>();
+                List<EditorCurveBinding> bindings = new List<EditorCurveBinding>();
 
                 // gather curves
                 bindings.AddRange(AnimationUtility.GetCurveBindings(clip));
                 bindings.AddRange(AnimationUtility.GetObjectReferenceCurveBindings(clip));
-                foreach (var b in bindings)
+                foreach (EditorCurveBinding b in bindings)
                     curves.Add(AnimationUtility.GetEditorCurve(clip, b));
 
                 int curveCount = curves.Count;
@@ -348,9 +344,9 @@ namespace Unity.MeshSync.Editor
                 // transform keys/events
                 foreach (var curve in curves)
                 {
-                    var keys = curve.keys;
-                    var keyCount = keys.Length;
-                    var newKeys = new List<Keyframe>();
+                    Keyframe[]     keys     = curve.keys;
+                    int            keyCount = keys.Length;
+                    List<Keyframe> newKeys  = new List<Keyframe>();
                     for (int ki = 0; ki < keyCount; ki += step)
                         newKeys.Add(keys[ki]);
                     curve.keys = newKeys.ToArray();
@@ -367,13 +363,15 @@ namespace Unity.MeshSync.Editor
             // repaint animation window
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         }
+        
+//----------------------------------------------------------------------------------------------------------------------        
 
-        public void ApplyKeyframeReduction(IEnumerable<AnimationClip> clips, float threshold, bool eraseFlatCurves)
+        private static void ApplyKeyframeReduction(IEnumerable<AnimationClip> clips, float threshold, bool eraseFlatCurves)
         {
             foreach (var clip in clips)
             {
-                var curves = new List<AnimationCurve>();
-                var bindings = new List<EditorCurveBinding>();
+                List<AnimationCurve>     curves   = new List<AnimationCurve>();
+                List<EditorCurveBinding> bindings = new List<EditorCurveBinding>();
 
                 // gather curves
                 bindings.AddRange(AnimationUtility.GetCurveBindings(clip));
