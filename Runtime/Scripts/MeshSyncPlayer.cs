@@ -283,12 +283,15 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
     }
 
-    private void MakeSureAssetDirectoryExists() {
-        
+//----------------------------------------------------------------------------------------------------------------------    
+    private void MakeSureAssetDirectoryExists() {        
 #if UNITY_EDITOR
         Directory.CreateDirectory(m_assetsFolder);
+        AssetDatabase.Refresh();
 #endif
     }
+    
+//----------------------------------------------------------------------------------------------------------------------    
 
     // this function has a complex behavior to keep existing .meta:
     //  if an asset already exists in assetPath, load it and copy the content of obj to it and replace obj with it.
@@ -465,12 +468,8 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     #endregion
 
     #region ReceiveScene
-    internal void BeforeUpdateScene()
-    {
-        MakeSureAssetDirectoryExists();
-
-        if (onSceneUpdateBegin != null)
-            onSceneUpdateBegin.Invoke();
+    internal void BeforeUpdateScene() {
+        onSceneUpdateBegin?.Invoke();
     }
 
     protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets) {
@@ -679,13 +678,14 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 //----------------------------------------------------------------------------------------------------------------------
     
     void UpdateFileAsset(FileAssetData src) {
+        MakeSureAssetDirectoryExists();
 #if UNITY_EDITOR
         src.WriteToFile(m_assetsFolder + "/" + src.name);
 #endif
     }
 
     void UpdateAudioAsset(AudioData src) {
-
+        MakeSureAssetDirectoryExists();
         AudioClip ac = null;
 
         AudioFormat format = src.format;
@@ -741,8 +741,10 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
     }
 
+//----------------------------------------------------------------------------------------------------------------------
+    
     void UpdateTextureAsset(TextureData src) {
-
+        MakeSureAssetDirectoryExists();
         Texture2D texture = null;
 #if UNITY_EDITOR
         Action<string> doImport = (path) =>
@@ -1642,7 +1644,11 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
     }
 
+//----------------------------------------------------------------------------------------------------------------------   
+    
     void UpdateAnimationAsset(AnimationClipData clipData) {
+        MakeSureAssetDirectoryExists();
+        
 #if UNITY_EDITOR
 
         clipData.Convert((InterpolationMode) m_config.AnimationInterpolation);
@@ -2179,6 +2185,10 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     #endregion
 
 //----------------------------------------------------------------------------------------------------------------------
+    
+    //[TODO-sin: 2020-12-14] m_assetsFolder only makes sense for MeshSyncServer because we need to assign a folder that
+    //will keep the synced resources as edits are performed on the DCC tool side.
+    //For SceneCachePlayer, m_assetsFolder is needed only when loading the file, so it should be passed as a parameter 
     
     [SerializeField] private DataPath  m_assetDir = null;   //OBSOLETE
     [SerializeField] private string  m_assetsFolder = null; //Always starts with "Assets"
