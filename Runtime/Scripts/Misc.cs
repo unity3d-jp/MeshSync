@@ -137,6 +137,7 @@ namespace Unity.MeshSync
                     // do copy
                     System.IO.File.Copy(srcPath, dstPath);
                     Debug.Log($"CopyFileToStreamingAssets: copy {srcPath} -> {dstPath}");
+                    AssetDatabase.Refresh();
                     return dstPath;
                 }
             }
