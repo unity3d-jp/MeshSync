@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -100,51 +101,48 @@ namespace Unity.MeshSync
             clip.SetCurve(binding.path, binding.type, binding.propertyName, curve);
         }
 
+//----------------------------------------------------------------------------------------------------------------------
+        
         // copy a file to StreamingAssets.
         // if here is already a file with same name:
         // - use existing one if both are identical (identical = same file size & same mtime)
         // - otherwise copy with rename (e.g. hoge.png -> hoge2.png)
         // return destination path
-        public static string CopyFileToStreamingAssets(string srcPath)
-        {
+        public static string CopyFileToStreamingAssets(string srcPath) {
             if (!System.IO.File.Exists(srcPath))
                 return null; // srcPath doesn't exist
 
-            var streaminAssetsPath = Application.streamingAssetsPath;
-            if (srcPath.Contains(streaminAssetsPath))
+            string streamingAssetsPath = Application.streamingAssetsPath;
+            if (srcPath.Contains(streamingAssetsPath))
                 return srcPath; // srcPath is already in StreamingAssets
 
-            var filename = System.IO.Path.GetFileNameWithoutExtension(srcPath);
-            var ext = System.IO.Path.GetExtension(srcPath);
-            for (int n = 1; ; ++n)
-            {
-                var ns = n == 1 ? "" : n.ToString();
-                var dstPath = string.Format("{0}/{1}{2}{3}", streaminAssetsPath, filename, ns, ext);
-                if (System.IO.File.Exists(dstPath))
-                {
-                    var srcInfo = new System.IO.FileInfo(srcPath);
-                    var dstInfo = new System.IO.FileInfo(dstPath);
+            string filename = System.IO.Path.GetFileNameWithoutExtension(srcPath);
+            string ext = System.IO.Path.GetExtension(srcPath);
+            for (int n = 1; ; ++n) {
+                string ns = n == 1 ? "" : n.ToString();
+                string dstPath = string.Format("{0}/{1}{2}{3}", streamingAssetsPath, filename, ns, ext);
+                if (System.IO.File.Exists(dstPath)) {
+                    FileInfo srcInfo = new System.IO.FileInfo(srcPath);
+                    FileInfo dstInfo = new System.IO.FileInfo(dstPath);
                     bool identical =
                         srcInfo.Length == dstInfo.Length &&
                         srcInfo.LastWriteTime == dstInfo.LastWriteTime;
-                    if (identical)
-                    {
-                        // use existing one
-                        Debug.Log(string.Format("CopyFileToStreamingAssets: use existing file {0} -> {1}", srcPath, dstPath));
-                        return dstPath;
-                    }
-                    else
+                    if (!identical) 
                         continue;
-                }
-                else
-                {
+                    
+                    // use existing one
+                    Debug.Log($"CopyFileToStreamingAssets: use existing file {srcPath} -> {dstPath}");
+                    return dstPath;
+                } else {
                     // do copy
                     System.IO.File.Copy(srcPath, dstPath);
-                    Debug.Log(string.Format("CopyFileToStreamingAssets: copy {0} -> {1}", srcPath, dstPath));
+                    Debug.Log($"CopyFileToStreamingAssets: copy {srcPath} -> {dstPath}");
                     return dstPath;
                 }
             }
         }
+        
+//----------------------------------------------------------------------------------------------------------------------        
 
         public static string MoveFileToStreamingAssets(string srcPath)
         {
