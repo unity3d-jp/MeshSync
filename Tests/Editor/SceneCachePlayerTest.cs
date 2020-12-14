@@ -59,7 +59,8 @@ public class SceneCachePlayerTest  {
         //Change
         string newSceneCacheFilePath = Path.GetFullPath(SPHERE_TEST_DATA_PATH);
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(prefabPlayer, newSceneCacheFilePath);
-        Assert.AreEqual(newSceneCacheFilePath, prefabPlayer.GetSceneCacheFilePath());
+        string convertedPath = newSceneCacheFilePath.Replace('\\','/');
+        Assert.AreEqual(convertedPath, player.GetSceneCacheFilePath());
         
 
         //Cleanup
@@ -89,9 +90,9 @@ public class SceneCachePlayerTest  {
         //Change
         string newSceneCacheFilePath = Path.GetFullPath(SPHERE_TEST_DATA_PATH);
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, newSceneCacheFilePath);
+        string convertedPath = newSceneCacheFilePath.Replace('\\','/');
         Assert.IsTrue(player.IsSceneCacheOpened());
-        Assert.AreEqual(newSceneCacheFilePath, player.GetSceneCacheFilePath());
-        
+        Assert.AreEqual(convertedPath, player.GetSceneCacheFilePath());
 
         //Cleanup
         Object.DestroyImmediate(player.gameObject);
