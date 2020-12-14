@@ -178,16 +178,16 @@ namespace Unity.MeshSync.Editor
 
 //----------------------------------------------------------------------------------------------------------------------        
 
-        protected static void DrawAnimationTweak(MeshSyncPlayer t) {
+        protected static void DrawAnimationTweak(MeshSyncPlayer player) {
             GUIStyle styleFold = EditorStyles.foldout;
             styleFold.fontStyle = FontStyle.Bold;
-            t.foldAnimationTweak = EditorGUILayout.Foldout(t.foldAnimationTweak, "Animation Tweak", true, styleFold);
-            if (t.foldAnimationTweak) {
-                MeshSyncPlayerConfig config = t.GetConfig();
+            player.foldAnimationTweak = EditorGUILayout.Foldout(player.foldAnimationTweak, "Animation Tweak", true, styleFold);
+            if (player.foldAnimationTweak) {
+                MeshSyncPlayerConfig config = player.GetConfig();
                 AnimationTweakSettings animationTweakSettings = config.GetAnimationTweakSettings();
                 
                 float               frameRate = 30.0f;
-                List<AnimationClip> clips     = t.GetAnimationClips();
+                List<AnimationClip> clips     = player.GetAnimationClips();
                 if (clips.Count > 0) {
                     frameRate = clips[0].frameRate;                    
                 }
@@ -200,7 +200,7 @@ namespace Unity.MeshSync.Editor
                     float prevFrameRate = frameRate;
                     frameRate = EditorGUILayout.FloatField("Frame Rate", frameRate);
                     if (!Mathf.Approximately(prevFrameRate, frameRate) && frameRate > 0) {
-                        ApplyFrameRate(t.GetAnimationClips(), frameRate);                    
+                        ApplyFrameRate(clips, frameRate);                    
                     }
                     EditorGUI.indentLevel--;
                     GUILayout.EndVertical();                    
@@ -221,7 +221,7 @@ namespace Unity.MeshSync.Editor
                         !Mathf.Approximately(prevTimeOffset, animationTweakSettings.TimeOffset)
                     ) 
                     {                    
-                        ApplyTimeScale(t.GetAnimationClips(), animationTweakSettings.TimeScale, 
+                        ApplyTimeScale(clips, animationTweakSettings.TimeScale, 
                             animationTweakSettings.TimeOffset
                         );                   
                     
@@ -238,7 +238,7 @@ namespace Unity.MeshSync.Editor
                     int prevDropStep = animationTweakSettings.DropStep;
                     EditorGUIIntField("Step", ref animationTweakSettings.DropStep);
                     if (prevDropStep != animationTweakSettings.DropStep && animationTweakSettings.DropStep > 1) {
-                        ApplyDropKeyframes(t.GetAnimationClips(), animationTweakSettings.DropStep);                                        
+                        ApplyDropKeyframes(clips, animationTweakSettings.DropStep);                                        
                     }
                     EditorGUI.indentLevel--;
                     GUILayout.EndVertical();                    
@@ -256,7 +256,7 @@ namespace Unity.MeshSync.Editor
                     if (!Mathf.Approximately(prevReductionThreshold, animationTweakSettings.ReductionThreshold)
                         || prevEraseFlatCurves!=animationTweakSettings.EraseFlatCurves) 
                     {
-                        ApplyKeyframeReduction(t.GetAnimationClips(), animationTweakSettings.ReductionThreshold, 
+                        ApplyKeyframeReduction(clips, animationTweakSettings.ReductionThreshold, 
                             animationTweakSettings.EraseFlatCurves
                         );                                        
                     }               
