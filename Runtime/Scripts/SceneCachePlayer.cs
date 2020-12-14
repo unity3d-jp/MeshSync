@@ -111,9 +111,10 @@ internal class SceneCachePlayer : MeshSyncPlayer {
             PrefabUtility.UnpackPrefabInstance(gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);            
         } 
         gameObject.DestroyChildrenImmediate();
-
+         
         //Initialization after opening a cache file
-        m_sceneCacheFilePath = path;
+        m_sceneCacheFilePath = System.IO.Path.GetFullPath(path).Replace('\\','/');
+        
         m_timeRange = m_sceneCache.timeRange;
         
         UpdatePlayer(/* updateNonMaterialAssets = */ true);
@@ -376,7 +377,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    [SerializeField] string    m_sceneCacheFilePath = null;
+    [SerializeField] string    m_sceneCacheFilePath = null; //The full path of the file. Use '/'
     [SerializeField] DataPath  m_cacheFilePath = null; //OBSOLETE
     [SerializeField] TimeUnit  m_timeUnit      = TimeUnit.Seconds;
     [SerializeField] float     m_time;
