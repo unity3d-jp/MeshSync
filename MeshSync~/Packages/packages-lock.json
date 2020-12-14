@@ -15,10 +15,12 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.anime-toolbox": {
-      "version": "0.3.0-preview",
+      "version": "0.3.1-preview",
       "depth": 1,
       "source": "registry",
-      "dependencies": {},
+      "dependencies": {
+        "com.unity.modules.uielements": "1.0.0"
+      },
       "url": "https://packages.unity.com"
     },
     "com.unity.collab-proxy": {
@@ -67,7 +69,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.unity.anime-toolbox": "0.3.0-preview",
+        "com.unity.anime-toolbox": "0.3.1-preview",
         "com.unity.sharp-zip-lib": "1.2.2-preview.1"
       }
     },
