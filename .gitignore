@@ -19,6 +19,7 @@ MeshSync~/*.sln
 MeshSync~/Builds/*
 MeshSync~/Logs/*
 MeshSync~/UIElementsSchema/*
+MeshSync~/Assets/MeshSyncDCCPlugins~/*
 MeshSyncAssets/
 MeshSyncAssets.meta
 
