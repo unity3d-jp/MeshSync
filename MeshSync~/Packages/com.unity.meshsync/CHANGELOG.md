@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.6.0-preview] - 2020-12-15
+* feat: find Blender 2.91 in default locations
+* fix: create the asset folder before it's required instead of before updating the scene (#306)
+* fix: inaccurate internal path of SceneCachePlayer after copying to StreamingAssets
+* fix: include module dependencies in package dependencies 
+
 ## [0.5.5-preview] - 2020-12-03
 * fix: record property modification for SceneCachePlayer and MeshSyncServer prefabs, and support undo
 * fix: use the SceneCache path specified in ProjectSettings for the path of SceneCachePlayer resources
