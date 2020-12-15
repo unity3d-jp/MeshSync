@@ -16,11 +16,10 @@ TestLocal.meta
 # MeshSync~ test project
 MeshSync~/*.csproj
 MeshSync~/*.sln
-MeshSync~/Assets/SceneCache*
-MeshSync~/Assets/UTJ/RaytracedHardShadow*
 MeshSync~/Builds/*
 MeshSync~/Logs/*
 MeshSync~/UIElementsSchema/*
+MeshSync~/Assets/MeshSyncDCCPlugins~/*
 MeshSyncAssets/
 MeshSyncAssets.meta
 

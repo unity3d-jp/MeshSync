@@ -67,16 +67,20 @@ internal static class SceneCachePlayerEditorUtility {
         
         //[TODO-sin: 2020-9-28] Find out if it is possible to do undo properly
         Undo.RegisterFullObjectHierarchyUndo(cachePlayer.gameObject, "SceneCachePlayer");
-
         
         cachePlayer.Init(assetsFolder);
         cachePlayer.OpenCacheInEditor(sceneCacheFilePath);
 
         //Save as prefab again
-        if (!string.IsNullOrEmpty(prefabPath)) {
-            cachePlayer.gameObject.SaveAsPrefab(prefabPath);
+        if (string.IsNullOrEmpty(prefabPath)) {
+            return;
         }
         
+        //Prevent overwriting ".sc" file itself
+        bool isPrefabExt = (Path.GetExtension(prefabPath).ToLower() == ".prefab");
+        if (isPrefabExt) {
+            cachePlayer.gameObject.SaveAsPrefab(prefabPath);            
+        }        
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
