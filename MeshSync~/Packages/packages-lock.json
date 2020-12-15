@@ -15,10 +15,12 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.anime-toolbox": {
-      "version": "0.3.0-preview",
+      "version": "0.3.1-preview",
       "depth": 1,
       "source": "registry",
-      "dependencies": {},
+      "dependencies": {
+        "com.unity.modules.uielements": "1.0.0"
+      },
       "url": "https://packages.unity.com"
     },
     "com.unity.collab-proxy": {
@@ -67,9 +69,20 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.unity.anime-toolbox": "0.3.0-preview",
+        "com.unity.anime-toolbox": "0.3.1-preview",
+        "com.unity.modules.audio": "1.0.0",
+        "com.unity.modules.animation": "1.0.0",
+        "com.unity.modules.cloth": "1.0.0",
+        "com.unity.modules.screencapture": "1.0.0",
         "com.unity.sharp-zip-lib": "1.2.2-preview.1"
       }
+    },
+    "com.unity.meshsync.dcc-plugins": {
+      "version": "0.5.4-preview",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
     },
     "com.unity.package-validation-suite": {
       "version": "0.11.0-preview",
