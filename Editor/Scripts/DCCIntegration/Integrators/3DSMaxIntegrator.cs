@@ -13,6 +13,11 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         return "3DSMAX";
     }
 
+    internal static string GetInstallScriptFileName(string version) {
+        return $"Install3dsMaxPlugin{version}.ms";
+    }
+    
+
 //----------------------------------------------------------------------------------------------------------------------
     protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileNameWithoutExt, 
         string extractedTempPath) 
@@ -45,15 +50,14 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         bool setupSuccessful = false;
 
         //Check version
-        bool versionIsInt = int.TryParse(dccToolInfo.DCCToolVersion, out int versionInt);
-        string installScriptPath = null;        
+        bool   versionIsInt          = int.TryParse(dccToolInfo.DCCToolVersion, out int versionInt);
+        string installScriptFileName = GetInstallScriptFileName(dccToolInfo.DCCToolVersion);
+        string installScriptPath     = CreateInstallScript(installScriptFileName, configFolder, extractedTempPath);        
         if (versionIsInt && versionInt <= 2018) {
-            installScriptPath = CreateInstallScript("Install3dsMaxPlugin2018.ms", configFolder, extractedTempPath);
             
             //3dsmax -U MAXScript install_script.ms
             setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, $"-U MAXScript \"{installScriptPath}\"");
         } else {
-            installScriptPath = CreateInstallScript("Install3dsMaxPlugin2019.ms", configFolder, extractedTempPath);
             string dccAppDir = Path.GetDirectoryName(dccToolInfo.AppPath);
             if (string.IsNullOrEmpty(dccAppDir))
                 return false;
