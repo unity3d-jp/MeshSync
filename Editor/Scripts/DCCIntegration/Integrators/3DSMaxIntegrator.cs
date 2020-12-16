@@ -13,6 +13,17 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         return "3DSMAX";
     }
 
+    internal static string GetInstallScriptTemplatePath(string version) {
+        string installScriptFileName = $"Install3dsMaxPlugin{version}.ms";
+        string templatePath = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH,installScriptFileName );
+        if (!File.Exists(templatePath)) {
+            return null;
+        }
+
+        return templatePath;
+    }
+    
+
 //----------------------------------------------------------------------------------------------------------------------
     protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileNameWithoutExt, 
         string extractedTempPath) 
@@ -45,15 +56,13 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         bool setupSuccessful = false;
 
         //Check version
-        bool versionIsInt = int.TryParse(dccToolInfo.DCCToolVersion, out int versionInt);
-        string installScriptPath = null;        
+        bool   versionIsInt          = int.TryParse(dccToolInfo.DCCToolVersion, out int versionInt);
+        string installScriptPath     = CreateInstallScript(dccToolInfo.DCCToolVersion, configFolder, extractedTempPath);        
         if (versionIsInt && versionInt <= 2018) {
-            installScriptPath = CreateInstallScript("Install3dsMaxPlugin2018.ms", configFolder, extractedTempPath);
             
             //3dsmax -U MAXScript install_script.ms
             setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, $"-U MAXScript \"{installScriptPath}\"");
         } else {
-            installScriptPath = CreateInstallScript("Install3dsMaxPlugin2019.ms", configFolder, extractedTempPath);
             string dccAppDir = Path.GetDirectoryName(dccToolInfo.AppPath);
             if (string.IsNullOrEmpty(dccAppDir))
                 return false;
@@ -82,11 +91,11 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
 
 //----------------------------------------------------------------------------------------------------------------------
     //create installation script
-    private string CreateInstallScript(string installScriptFileName, string configFolder, string tempPath) {
-        string templatePath          = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH, installScriptFileName);
+    private string CreateInstallScript(string dccToolVersion, string configFolder, string tempPath) {
+        string templatePath          = GetInstallScriptTemplatePath(dccToolVersion);
         string installScriptFormat   = File.ReadAllText(templatePath);
         string installScript         = String.Format(installScriptFormat,configFolder.Replace("\\","\\\\"));
-        string installScriptPath     = Path.Combine(tempPath, installScriptFileName);
+        string installScriptPath     = Path.Combine(tempPath, $"Install3dsMaxPlugin{dccToolVersion}.ms");
         File.WriteAllText(installScriptPath, installScript);
         return Path.GetFullPath(installScriptPath);
     }

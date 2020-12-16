@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 
 namespace Unity.MeshSync.Editor {
 
@@ -16,6 +17,52 @@ internal class MeshSyncEditorConstants {
 
     //
     internal const string DCC_INSTALL_SCRIPTS_PATH = "Packages/com.unity.meshsync/Editor/DCCInstallScripts";
+    
+    //key: default folder name
+    internal static readonly Dictionary<string, DCCToolInfo> SUPPORTED_DCC_TOOLS_BY_FOLDER = new Dictionary<string, DCCToolInfo>() {
+        { "maya2017", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2017" ) },
+        { "maya2018", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2018" ) },
+        { "maya2019", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2019" ) },
+        { "maya2020", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2020" ) },
+        { "3ds Max 2017", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2017" ) },
+        { "3ds Max 2018", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2018" ) },
+        { "3ds Max 2019", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2019" ) },
+        { "3ds Max 2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020" ) },
+
+#if   UNITY_EDITOR_WIN        
+        { "Blender",      new DCCToolInfo(DCCToolType.BLENDER, null ) },
+        { "Blender 2.81", new DCCToolInfo(DCCToolType.BLENDER, "2.81" ) },
+        { "Blender 2.82", new DCCToolInfo(DCCToolType.BLENDER, "2.82" ) },
+        { "Blender 2.83", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },
+        { "Blender 2.90", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) },
+        { "Blender 2.91", new DCCToolInfo(DCCToolType.BLENDER, "2.91" ) },
+#elif UNITY_EDITOR_OSX        
+        { "Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
+        { "Blender/Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
+#elif UNITY_EDITOR_LINUX
+        { "blender-2.79b-linux-glibc219-x86_64", new DCCToolInfo(DCCToolType.BLENDER, "2.79" ) },
+        { "blender-2.80rc3-linux-glibc217-x86_64", new DCCToolInfo(DCCToolType.BLENDER, "2.80" ) },
+        { "blender-2.81a-linux-glibc217-x86_64", new DCCToolInfo(DCCToolType.BLENDER, "2.81" ) },
+        { "blender-2.82a-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.82" ) },
+        { "blender-2.83.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
+        { "blender-2.83.1-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
+        { "blender-2.83.2-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
+        { "blender-2.83.3-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
+        { "blender-2.83.4-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
+        { "blender-2.83.5-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
+        { "blender-2.83.6-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },
+        { "blender-2.83.7-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },
+        { "blender-2.83.8-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },
+        { "blender-2.83.9-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },
+        { "blender-2.83.10-linux64", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
+        { "blender-2.90.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) },
+        { "blender-2.90.1-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) },
+        { "blender-2.91.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.91" ) },
+           
+#endif        
+        
+    };
+    
 
     //UIElements Main
     
@@ -45,6 +92,8 @@ internal class MeshSyncEditorConstants {
     //Private
     private const string PROJECT_SETTINGS_UIELEMENTS_PATH = "Packages/com.unity.meshsync/Editor/UIElements/ProjectSettings";
     private const string USER_SETTINGS_UIELEMENTS_PATH    = "Packages/com.unity.meshsync/Editor/UIElements/UserSettings";
+    
+    
     
     
 //----------------------------------------------------------------------------------------------------------------------
