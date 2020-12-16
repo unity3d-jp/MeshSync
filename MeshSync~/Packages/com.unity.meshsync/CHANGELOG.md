@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.6.1-preview] - 2020-12-16
+* fix: add missing DCC install scripts
+
+
 ## [0.6.0-preview] - 2020-12-15
 * feat: find Blender 2.91 in default locations
 * fix: create the asset folder before it's required instead of before updating the scene (#306)
