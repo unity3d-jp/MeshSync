@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NUnit.Framework;
 using Unity.MeshSync;
 using UnityEditor;
 using UnityEngine;
@@ -9,18 +10,10 @@ namespace Unity.MeshSync.Editor
     [CustomEditor(typeof(MeshSyncPlayer))]
     internal class MeshSyncPlayerInspector : UnityEditor.Editor {
                 
-        private float m_animationFrameRate = 30.0f;
        
 //----------------------------------------------------------------------------------------------------------------------        
         public virtual void OnEnable() {
             m_asset = target as MeshSyncPlayer;
-            
-            if (null == m_asset)
-                return;
-           
-            List<AnimationClip> clips = m_asset.GetAnimationClips();
-            if (clips.Count > 0)
-                m_animationFrameRate = clips[0].frameRate;
         }
         
 //----------------------------------------------------------------------------------------------------------------------
@@ -179,108 +172,122 @@ namespace Unity.MeshSync.Editor
             }
         }
 
-        public static void DrawTextureList(MeshSyncPlayer t)
-        {
+        public static void DrawTextureList(MeshSyncPlayer t) {
 
         }
 
+//----------------------------------------------------------------------------------------------------------------------        
 
-        public void DrawAnimationTweak(MeshSyncPlayer t)
-        {
-            var styleFold = EditorStyles.foldout;
+        protected static void DrawAnimationTweak(MeshSyncPlayer player) {
+            GUIStyle styleFold = EditorStyles.foldout;
             styleFold.fontStyle = FontStyle.Bold;
-            t.foldAnimationTweak = EditorGUILayout.Foldout(t.foldAnimationTweak, "Animation Tweak", true, styleFold);
-            if (t.foldAnimationTweak) {
-                MeshSyncPlayerConfig config = m_asset.GetConfig();
+            player.foldAnimationTweak = EditorGUILayout.Foldout(player.foldAnimationTweak, "Animation Tweak", true, styleFold);
+            if (player.foldAnimationTweak) {
+                MeshSyncPlayerConfig config = player.GetConfig();
                 AnimationTweakSettings animationTweakSettings = config.GetAnimationTweakSettings();
-                    
                 
-                // Override Frame Rate
-                GUILayout.BeginVertical("Box");
-                EditorGUILayout.LabelField("Override Frame Rate", EditorStyles.boldLabel);
-                EditorGUI.indentLevel++;
-                m_animationFrameRate = EditorGUILayout.FloatField("Frame Rate", m_animationFrameRate);
-                GUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Apply", GUILayout.Width(120.0f)))
-                    ApplyFrameRate(t.GetAnimationClips(), m_animationFrameRate);
-                GUILayout.EndHorizontal();
-                EditorGUI.indentLevel--;
-                GUILayout.EndVertical();
+                float               frameRate = 30.0f;
+                List<AnimationClip> clips     = player.GetAnimationClips();
+                if (clips.Count > 0) {
+                    frameRate = clips[0].frameRate;                    
+                }
+
+                {
+                    // Override Frame Rate
+                    GUILayout.BeginVertical("Box");
+                    EditorGUILayout.LabelField("Override Frame Rate", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    float prevFrameRate = frameRate;
+                    frameRate = EditorGUILayout.FloatField("Frame Rate", frameRate);
+                    if (!Mathf.Approximately(prevFrameRate, frameRate) && frameRate > 0) {
+                        ApplyFrameRate(clips, frameRate);                    
+                    }
+                    EditorGUI.indentLevel--;
+                    GUILayout.EndVertical();                    
+                }
+                
+                
 
                 // Time Scale
-                GUILayout.BeginVertical("Box");
-                EditorGUILayout.LabelField("Time Scale", EditorStyles.boldLabel);
-                EditorGUI.indentLevel++;
-                EditorGUIFloatField("Scale", ref animationTweakSettings.TimeScale);
-                EditorGUIFloatField("Offset", ref animationTweakSettings.TimeOffset);
-                GUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Apply", GUILayout.Width(120.0f))) {
-                    ApplyTimeScale(t.GetAnimationClips(), animationTweakSettings.TimeScale, 
-                        animationTweakSettings.TimeOffset
-                    );                   
+                {
+                    GUILayout.BeginVertical("Box");
+                    EditorGUILayout.LabelField("Time Scale", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    float prevTimeScale  = animationTweakSettings.TimeScale;
+                    float prevTimeOffset = animationTweakSettings.TimeOffset;
+                    EditorGUIFloatField("Scale", ref animationTweakSettings.TimeScale);
+                    EditorGUIFloatField("Offset", ref animationTweakSettings.TimeOffset);
+                    if (!Mathf.Approximately(prevTimeScale, animationTweakSettings.TimeScale) ||
+                        !Mathf.Approximately(prevTimeOffset, animationTweakSettings.TimeOffset)
+                    ) 
+                    {                    
+                        ApplyTimeScale(clips, animationTweakSettings.TimeScale, 
+                            animationTweakSettings.TimeOffset
+                        );                   
+                    
+                    }                    
+                    EditorGUI.indentLevel--;
+                    GUILayout.EndVertical();                    
                 }
-                GUILayout.EndHorizontal();
-                EditorGUI.indentLevel--;
-                GUILayout.EndVertical();
 
-                // Drop Keyframes
-                GUILayout.BeginVertical("Box");
-                EditorGUILayout.LabelField("Drop Keyframes", EditorStyles.boldLabel);
-                EditorGUI.indentLevel++;
-                EditorGUIIntField("Step", ref animationTweakSettings.DropStep);
-                GUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Apply", GUILayout.Width(120.0f))) {
-                    ApplyDropKeyframes(t.GetAnimationClips(), animationTweakSettings.DropStep);                    
+                // Drop Keyframes 
+                {
+                    GUILayout.BeginVertical("Box");
+                    EditorGUILayout.LabelField("Drop Keyframes", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    int prevDropStep = animationTweakSettings.DropStep;
+                    EditorGUIIntField("Step", ref animationTweakSettings.DropStep);
+                    if (prevDropStep != animationTweakSettings.DropStep && animationTweakSettings.DropStep > 1) {
+                        ApplyDropKeyframes(clips, animationTweakSettings.DropStep);                                        
+                    }
+                    EditorGUI.indentLevel--;
+                    GUILayout.EndVertical();                    
                 }
-                GUILayout.EndHorizontal();
-                EditorGUI.indentLevel--;
-                GUILayout.EndVertical();
 
                 // Keyframe Reduction
-                GUILayout.BeginVertical("Box");
-                EditorGUILayout.LabelField("Keyframe Reduction", EditorStyles.boldLabel);
-                EditorGUI.indentLevel++;
-                EditorGUIFloatField("Threshold", ref animationTweakSettings.ReductionThreshold);
-                EditorGUIToggle("Erase Flat Curves", ref animationTweakSettings.EraseFlatCurves);
-                GUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Apply", GUILayout.Width(120.0f))) {
-                    ApplyKeyframeReduction(t.GetAnimationClips(), animationTweakSettings.ReductionThreshold, 
-                        animationTweakSettings.EraseFlatCurves
-                    );                    
+                {
+                    GUILayout.BeginVertical("Box");
+                    EditorGUILayout.LabelField("Keyframe Reduction", EditorStyles.boldLabel);
+                    EditorGUI.indentLevel++;
+                    float prevReductionThreshold = animationTweakSettings.ReductionThreshold;
+                    bool  prevEraseFlatCurves    = animationTweakSettings.EraseFlatCurves;
+                    EditorGUIFloatField("Threshold", ref animationTweakSettings.ReductionThreshold);
+                    EditorGUIToggle("Erase Flat Curves", ref animationTweakSettings.EraseFlatCurves);
+                    if (!Mathf.Approximately(prevReductionThreshold, animationTweakSettings.ReductionThreshold)
+                        || prevEraseFlatCurves!=animationTweakSettings.EraseFlatCurves) 
+                    {
+                        ApplyKeyframeReduction(clips, animationTweakSettings.ReductionThreshold, 
+                            animationTweakSettings.EraseFlatCurves
+                        );                                        
+                    }               
+                    EditorGUI.indentLevel--;
+                    GUILayout.EndVertical();                    
                 }
-                GUILayout.EndHorizontal();
-                EditorGUI.indentLevel--;
-                GUILayout.EndVertical();
 
                 EditorGUILayout.Space();
             }
         }
 
-
-        public void ApplyFrameRate(IEnumerable<AnimationClip> clips, float frameRate)
-        {
-            foreach (var clip in clips)
-            {
+//----------------------------------------------------------------------------------------------------------------------
+        
+        private static void ApplyFrameRate(IEnumerable<AnimationClip> clips, float frameRate) {
+            foreach (AnimationClip clip in clips) {
                 Undo.RegisterCompleteObjectUndo(clip, "ApplyFrameRate");
                 clip.frameRate = frameRate;
 
-                Debug.Log("Applied frame rate to " + AssetDatabase.GetAssetPath(clip));
+                //Debug.Log("Applied frame rate to " + AssetDatabase.GetAssetPath(clip));
             }
             // repaint animation window
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         }
 
-        public void ApplyTimeScale(IEnumerable<AnimationClip> clips, float timeScale, float timeOffset)
-        {
-            foreach (var clip in clips)
-            {
-                var curves = new List<AnimationCurve>();
-                var bindings = new List<EditorCurveBinding>();
-                var events = AnimationUtility.GetAnimationEvents(clip);
+//----------------------------------------------------------------------------------------------------------------------
+
+        private static void ApplyTimeScale(IEnumerable<AnimationClip> clips, float timeScale, float timeOffset) {
+            foreach (AnimationClip clip in clips) {
+                List<AnimationCurve>     curves   = new List<AnimationCurve>();
+                List<EditorCurveBinding> bindings = new List<EditorCurveBinding>();
+                AnimationEvent[]         events   = AnimationUtility.GetAnimationEvents(clip);
 
                 // gather curves
                 bindings.AddRange(AnimationUtility.GetCurveBindings(clip));
@@ -292,10 +299,10 @@ namespace Unity.MeshSync.Editor
                 int curveCount = curves.Count;
 
                 // transform keys/events
-                foreach (var curve in curves)
+                foreach (AnimationCurve curve in curves)
                 {
-                    var keys = curve.keys;
-                    var keyCount = keys.Length;
+                    Keyframe[] keys = curve.keys;
+                    int keyCount = keys.Length;
                     for (int ki = 0; ki < keyCount; ++ki)
                         keys[ki].time = keys[ki].time * timeScale + timeOffset;
                     curve.keys = keys;
@@ -310,30 +317,26 @@ namespace Unity.MeshSync.Editor
                 for (int ci = 0; ci < curveCount; ++ci)
                     Misc.SetCurve(clip, bindings[ci], curves[ci]);
 
-                Debug.Log("Applied time scale to " + AssetDatabase.GetAssetPath(clip));
+                //Debug.Log("Applied time scale to " + AssetDatabase.GetAssetPath(clip));
             }
-
-            // reset m_animationFrameRate
-            OnEnable();
 
             // repaint animation window
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         }
 
-        public void ApplyDropKeyframes(IEnumerable<AnimationClip> clips, int step)
-        {
-            if (step <= 1)
-                return;
+//----------------------------------------------------------------------------------------------------------------------        
+        private static void ApplyDropKeyframes(IEnumerable<AnimationClip> clips, int step) {
+            Assert.IsTrue(step > 1);
 
-            foreach (var clip in clips)
+            foreach (AnimationClip clip in clips)
             {
-                var curves = new List<AnimationCurve>();
-                var bindings = new List<EditorCurveBinding>();
+                List<AnimationCurve>     curves   = new List<AnimationCurve>();
+                List<EditorCurveBinding> bindings = new List<EditorCurveBinding>();
 
                 // gather curves
                 bindings.AddRange(AnimationUtility.GetCurveBindings(clip));
                 bindings.AddRange(AnimationUtility.GetObjectReferenceCurveBindings(clip));
-                foreach (var b in bindings)
+                foreach (EditorCurveBinding b in bindings)
                     curves.Add(AnimationUtility.GetEditorCurve(clip, b));
 
                 int curveCount = curves.Count;
@@ -341,9 +344,9 @@ namespace Unity.MeshSync.Editor
                 // transform keys/events
                 foreach (var curve in curves)
                 {
-                    var keys = curve.keys;
-                    var keyCount = keys.Length;
-                    var newKeys = new List<Keyframe>();
+                    Keyframe[]     keys     = curve.keys;
+                    int            keyCount = keys.Length;
+                    List<Keyframe> newKeys  = new List<Keyframe>();
                     for (int ki = 0; ki < keyCount; ki += step)
                         newKeys.Add(keys[ki]);
                     curve.keys = newKeys.ToArray();
@@ -354,19 +357,21 @@ namespace Unity.MeshSync.Editor
                 for (int ci = 0; ci < curveCount; ++ci)
                     Misc.SetCurve(clip, bindings[ci], curves[ci]);
 
-                Debug.Log("Applied drop keyframes to " + AssetDatabase.GetAssetPath(clip));
+                //Debug.Log("Applied drop keyframes to " + AssetDatabase.GetAssetPath(clip));
             }
 
             // repaint animation window
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         }
+        
+//----------------------------------------------------------------------------------------------------------------------        
 
-        public void ApplyKeyframeReduction(IEnumerable<AnimationClip> clips, float threshold, bool eraseFlatCurves)
+        private static void ApplyKeyframeReduction(IEnumerable<AnimationClip> clips, float threshold, bool eraseFlatCurves)
         {
             foreach (var clip in clips)
             {
-                var curves = new List<AnimationCurve>();
-                var bindings = new List<EditorCurveBinding>();
+                List<AnimationCurve>     curves   = new List<AnimationCurve>();
+                List<EditorCurveBinding> bindings = new List<EditorCurveBinding>();
 
                 // gather curves
                 bindings.AddRange(AnimationUtility.GetCurveBindings(clip));
@@ -385,7 +390,7 @@ namespace Unity.MeshSync.Editor
                 for (int ci = 0; ci < curveCount; ++ci)
                     Misc.SetCurve(clip, bindings[ci], curves[ci]);
 
-                Debug.Log("Applied keyframe reduction to " + AssetDatabase.GetAssetPath(clip));
+                //Debug.Log("Applied keyframe reduction to " + AssetDatabase.GetAssetPath(clip));
             }
 
             // repaint animation window
