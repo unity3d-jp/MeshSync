@@ -321,7 +321,7 @@ public static class DCCFinderUtility {
         
         //From default Folders
         foreach (string vendorDir in vendorDirs) {
-            foreach (var dcc in MeshSyncEditorConstants.DEFAULT_DCC_TOOLS_BY_FOLDER) {
+            foreach (var dcc in MeshSyncEditorConstants.SUPPORTED_DCC_TOOLS_BY_FOLDER) {
                 string dir = Path.Combine(vendorDir, dcc.Key);
                 if (!Directory.Exists(dir))
                     continue;

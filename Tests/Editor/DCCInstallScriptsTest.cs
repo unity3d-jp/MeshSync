@@ -11,7 +11,7 @@ namespace Unity.MeshSync.Editor.Tests {
 internal class DCCInstallScriptsTest {
     [Test]
     public void CheckSupportedBlenderInstallScripts() {
-        HashSet<string> versions = FindUniqueVersionsOfDefaultDCCTools(DCCToolType.BLENDER);
+        HashSet<string> versions = FindUniqueVersionsOfSupportedDCCTools(DCCToolType.BLENDER);
         
         foreach (string ver in versions) {
             string installScriptTemplatePath = BlenderIntegrator.GetInstallScriptTemplatePath(ver);
@@ -30,7 +30,7 @@ internal class DCCInstallScriptsTest {
     
     [Test]
     public void CheckSupported3DSMaxInstallScripts() {
-        HashSet<string> versions = FindUniqueVersionsOfDefaultDCCTools(DCCToolType.AUTODESK_3DSMAX);
+        HashSet<string> versions = FindUniqueVersionsOfSupportedDCCTools(DCCToolType.AUTODESK_3DSMAX);
         
         foreach (string ver in versions) {
             string installScriptTemplatePath = _3DSMaxIntegrator.GetInstallScriptTemplatePath(ver);
@@ -41,9 +41,9 @@ internal class DCCInstallScriptsTest {
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    HashSet<string> FindUniqueVersionsOfDefaultDCCTools(DCCToolType dccToolType) {
+    HashSet<string> FindUniqueVersionsOfSupportedDCCTools(DCCToolType dccToolType) {
         HashSet<string> versions = new HashSet<string>();
-        foreach (var dccToolInfo in MeshSyncEditorConstants.DEFAULT_DCC_TOOLS_BY_FOLDER) {
+        foreach (KeyValuePair<string, DCCToolInfo> dccToolInfo in MeshSyncEditorConstants.SUPPORTED_DCC_TOOLS_BY_FOLDER) {
             if (dccToolInfo.Value.Type != dccToolType)
                 continue;
 

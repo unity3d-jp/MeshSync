@@ -19,7 +19,7 @@ internal class MeshSyncEditorConstants {
     internal const string DCC_INSTALL_SCRIPTS_PATH = "Packages/com.unity.meshsync/Editor/DCCInstallScripts";
     
     //key: default folder name
-    internal static readonly Dictionary<string, DCCToolInfo> DEFAULT_DCC_TOOLS_BY_FOLDER = new Dictionary<string, DCCToolInfo>() {
+    internal static readonly Dictionary<string, DCCToolInfo> SUPPORTED_DCC_TOOLS_BY_FOLDER = new Dictionary<string, DCCToolInfo>() {
         { "maya2017", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2017" ) },
         { "maya2018", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2018" ) },
         { "maya2019", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2019" ) },
