@@ -1,11 +1,37 @@
 ﻿using System;
 using System.IO;
+using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
 
 namespace Unity.MeshSync.Editor {
 internal class BlenderIntegrator : BaseDCCIntegrator {
     internal BlenderIntegrator(DCCToolInfo dccToolInfo) : base(dccToolInfo) { }
+
+//----------------------------------------------------------------------------------------------------------------------
+    [CanBeNull]
+    internal string GetInstallScriptTemplatePath(string ver) {
+        string installScriptFileName = $"InstallBlenderPlugin_{ver}.py";
+        string templatePath = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH,installScriptFileName );
+        if (!File.Exists(templatePath)) {
+            return null;
+        }
+
+        return templatePath;
+
+    }
+
+    [CanBeNull]
+    internal string GetUninstallScriptPath(string ver) {
+        string uninstallScriptFilename = $"UninstallBlenderPlugin_{ver}.py";
+        string uninstallScriptPath = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH,uninstallScriptFilename );
+        if (!File.Exists(uninstallScriptPath)) {
+            return null;
+        }
+
+        return uninstallScriptPath;
+    }
+    
 //----------------------------------------------------------------------------------------------------------------------
 
     protected override string GetDCCToolInFileNameV() {
@@ -40,24 +66,20 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
         }
         
         //Prepare install script
-        string installScriptFileName = $"InstallBlenderPlugin_{ver}.py";
-        string templatePath = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH,installScriptFileName );
-        if (!File.Exists(templatePath)) {
+        string templatePath = GetInstallScriptTemplatePath(ver);
+        if (string.IsNullOrEmpty(templatePath))
             return false;
-        }
         
         //Replace the path in the template with actual path.
         string installScriptFormat = File.ReadAllText(templatePath);
         string installScript = String.Format(installScriptFormat,pluginFile);
-        string installScriptPath = Path.Combine(extractedTempPath, installScriptFileName);
+        string installScriptPath = Path.Combine(extractedTempPath, $"InstallBlenderPlugin_{ver}.py");
         File.WriteAllText(installScriptPath, installScript);
         
         //Prepare remove script to remove old plugin
-        string uninstallScriptFilename = $"UninstallBlenderPlugin_{ver}.py";
-        string uninstallScriptPath = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH,uninstallScriptFilename );
-        if (!File.Exists(uninstallScriptPath)) {
+        string uninstallScriptPath = GetUninstallScriptPath(ver);
+        if (string.IsNullOrEmpty(uninstallScriptPath))
             return false;
-        }
       
         bool setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, 
             dccToolInfo.DCCToolVersion,
