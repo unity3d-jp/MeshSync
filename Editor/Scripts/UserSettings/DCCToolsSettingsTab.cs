@@ -39,7 +39,7 @@ namespace Unity.MeshSync.Editor {
 
             //[TODO-sin: 2020-4-24] Auto detect installed DCC tools + check MeshSync status
             MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
-            foreach (var dccToolInfo in settings.GetDCCToolInfos()) {
+            foreach (KeyValuePair<string, DCCToolInfo> dccToolInfo in settings.GetDCCToolInfos()) {
                 AddDCCToolSettingsContainer(dccToolInfo.Value, scrollView, dccToolInfoTemplate);                
             }
             
