@@ -30,6 +30,13 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.unity.editorcoroutines": {
+      "version": "1.0.0",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
     "com.unity.ext.nunit": {
       "version": "1.0.5",
       "depth": 0,
@@ -70,6 +77,7 @@
       "source": "embedded",
       "dependencies": {
         "com.unity.anime-toolbox": "0.3.1-preview",
+        "com.unity.editorcoroutines": "1.0.0",
         "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.animation": "1.0.0",
         "com.unity.modules.cloth": "1.0.0",
