@@ -43,8 +43,8 @@ namespace Unity.MeshSync.Editor {
             }
             
             //Buttons
-            Button autoDetectButton = containerInstance.Query<Button>("AutoDetectButton").First();
-            autoDetectButton.clickable.clicked += OnAutoDetectButtonClicked;
+            Button autoDetectDCCButton = containerInstance.Query<Button>("AutoDetectButton").First();
+            autoDetectDCCButton.clickable.clicked += OnAutoDetectButtonClicked;
             Button addDCCToolButton = containerInstance.Query<Button>("AddDCCToolButton").First();
             addDCCToolButton.clickable.clicked += OnAddDCCToolButtonClicked;
 
@@ -55,7 +55,7 @@ namespace Unity.MeshSync.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------        
 
-        void AddDCCToolSettingsContainer(DCCToolInfo dccToolInfo, VisualElement top, VisualTreeAsset dccToolInfoTemplate) {
+        private void AddDCCToolSettingsContainer(DCCToolInfo dccToolInfo, VisualElement top, VisualTreeAsset dccToolInfoTemplate) {
             string desc = dccToolInfo.GetDescription();
             TemplateContainer container = dccToolInfoTemplate.CloneTree();
             Label nameLabel = container.Query<Label>("DCCToolName").First();
@@ -135,16 +135,16 @@ namespace Unity.MeshSync.Editor {
             
             
         }
-        
-        void OnAutoDetectButtonClicked() {
+
+        private void OnAutoDetectButtonClicked() {
             MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
             if (settings.AddInstalledDCCTools()) {
                 Setup(m_root);
             }
         }
 
-        
-        void OnRemoveDCCToolButtonClicked(EventBase evt) {
+
+        private void OnRemoveDCCToolButtonClicked(EventBase evt) {
             DCCToolInfo dccToolInfo = GetEventButtonUserDataAs<DCCToolInfo>(evt.target);           
             if (null==dccToolInfo || string.IsNullOrEmpty(dccToolInfo.AppPath)) {
                 Debug.LogWarning("[MeshSync] Failed to remove DCC Tool");
