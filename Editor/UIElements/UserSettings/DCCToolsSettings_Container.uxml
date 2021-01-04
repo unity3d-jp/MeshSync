@@ -5,7 +5,7 @@
 
     <VisualElement class="dcc-tool-footer-container">
         <VisualElement class="dcc-tool-footer-container-left">
-            <Button name="AutoDetectButton" text="Auto Detect DCC" />
+            <Button name="AutoDetectDCCButton" text="Auto Detect DCC" />
             <Button name="ChecksPluginUpdatesButton" text="Check for Plugin Updates"/>
         </VisualElement>
         

@@ -43,7 +43,7 @@ namespace Unity.MeshSync.Editor {
             }
             
             //Buttons
-            Button autoDetectDCCButton = containerInstance.Query<Button>("AutoDetectButton").First();
+            Button autoDetectDCCButton = containerInstance.Query<Button>("AutoDetectDCCButton").First();
             autoDetectDCCButton.clickable.clicked += OnAutoDetectButtonClicked;
             Button addDCCToolButton = containerInstance.Query<Button>("AddDCCToolButton").First();
             addDCCToolButton.clickable.clicked += OnAddDCCToolButtonClicked;
