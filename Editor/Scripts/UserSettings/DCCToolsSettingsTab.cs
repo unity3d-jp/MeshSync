@@ -26,6 +26,7 @@ namespace Unity.MeshSync.Editor {
             
             m_root = root;
             m_root.Clear();
+            m_installPluginButtons.Clear();
 
             VisualTreeAsset container = UIElementsEditorUtility.LoadVisualTreeAsset(
                 MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_CONTAINER_PATH
@@ -38,12 +39,7 @@ namespace Unity.MeshSync.Editor {
             TemplateContainer containerInstance = container.CloneTree();
             ScrollView scrollView = containerInstance.Query<ScrollView>().First();
 
-            //[TODO-sin: 2020-4-24] Auto detect installed DCC tools + check MeshSync status
-            MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
-            foreach (KeyValuePair<string, DCCToolInfo> dccToolInfo in settings.GetDCCToolInfos()) {
-                AddDCCToolSettingsContainer(dccToolInfo.Value, scrollView, dccToolInfoTemplate);                
-            }
-            
+           
             //Buttons
             Button autoDetectDCCButton = containerInstance.Query<Button>("AutoDetectDCCButton").First();
             autoDetectDCCButton.clickable.clicked += OnAutoDetectDCCButtonClicked;
@@ -56,6 +52,12 @@ namespace Unity.MeshSync.Editor {
             //Label
             m_footerStatusLabel = containerInstance.Query<Label>("FooterStatusLabel").First();
 
+            //Add detected DCCTools to ScrollView
+            MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
+            foreach (KeyValuePair<string, DCCToolInfo> dccToolInfo in settings.GetDCCToolInfos()) {
+                AddDCCToolSettingsContainer(dccToolInfo.Value, scrollView, dccToolInfoTemplate);                
+            }
+            
             
             //Add the container of this tab to root
             root.Add(containerInstance);
@@ -99,6 +101,8 @@ namespace Unity.MeshSync.Editor {
                 Button button = container.Query<Button>("InstallPluginButton").First();
                 button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
                 button.userData                       =  integrator;
+                button.SetEnabled(m_checkPluginUpdatesButton.enabledSelf);                
+                m_installPluginButtons.Add(button);
             }
             {
                 Button button = container.Query<Button>("RemoveDCCToolButton").First();
@@ -219,6 +223,11 @@ namespace Unity.MeshSync.Editor {
         private void OnCheckPluginUpdatesButtonClicked() {
             m_checkPluginUpdatesButton.SetEnabled(false);
 
+            //Disable installing plugin while we are checking for updates
+            foreach (Button installPluginButton in m_installPluginButtons) {
+                installPluginButton.SetEnabled(false);
+            }           
+            
             m_updateFooterStatusFinished = false;
             EditorCoroutineUtility.StartCoroutineOwnerless(UpdateFooterStatusLabel("Checking", FinalizeCheckPluginUpdates));
             
@@ -236,6 +245,10 @@ namespace Unity.MeshSync.Editor {
         private void FinalizeCheckPluginUpdates() {
             m_footerStatusLabel.text = "";
             m_checkPluginUpdatesButton.SetEnabled(true);            
+            foreach (Button installPluginButton in m_installPluginButtons) {
+                installPluginButton.SetEnabled(true);
+            }           
+            
         }
 
         private IEnumerator UpdateFooterStatusLabel(string reqStatusText, System.Action onFinished) {            
@@ -327,6 +340,7 @@ namespace Unity.MeshSync.Editor {
 
         private readonly Dictionary<string, Label>         m_dccStatusLabels = new Dictionary<string, Label>();
         private readonly Dictionary<string, VisualElement> m_dccContainers   = new Dictionary<string, VisualElement>();
+        private readonly List<Button>                      m_installPluginButtons = new List<Button>();
         
         private Button          m_checkPluginUpdatesButton = null;
         private Label           m_footerStatusLabel        = null;
