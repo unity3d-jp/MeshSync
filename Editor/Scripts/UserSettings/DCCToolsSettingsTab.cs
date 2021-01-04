@@ -44,7 +44,9 @@ namespace Unity.MeshSync.Editor {
             
             //Buttons
             Button autoDetectDCCButton = containerInstance.Query<Button>("AutoDetectDCCButton").First();
-            autoDetectDCCButton.clickable.clicked += OnAutoDetectButtonClicked;
+            autoDetectDCCButton.clickable.clicked += OnAutoDetectDCCButtonClicked;
+            Button checkPluginUpdatesButton = containerInstance.Query<Button>("ChecksPluginUpdatesButton").First();
+            checkPluginUpdatesButton.clickable.clicked += OnCheckPluginUpdatesButtonClicked;
             Button addDCCToolButton = containerInstance.Query<Button>("AddDCCToolButton").First();
             addDCCToolButton.clickable.clicked += OnAddDCCToolButtonClicked;
 
@@ -136,13 +138,16 @@ namespace Unity.MeshSync.Editor {
             
         }
 
-        private void OnAutoDetectButtonClicked() {
+        private void OnAutoDetectDCCButtonClicked() {
             MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
             if (settings.AddInstalledDCCTools()) {
                 Setup(m_root);
             }
         }
 
+        private void OnCheckPluginUpdatesButtonClicked() {
+            Debug.Log("Checking plugin updates");
+        }
 
         private void OnRemoveDCCToolButtonClicked(EventBase evt) {
             DCCToolInfo dccToolInfo = GetEventButtonUserDataAs<DCCToolInfo>(evt.target);           
