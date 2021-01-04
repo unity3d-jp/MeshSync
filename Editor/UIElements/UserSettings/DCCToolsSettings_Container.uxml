@@ -9,7 +9,7 @@
             <Button name="ChecksPluginUpdatesButton" text="Check for Plugin Updates"/>
         </VisualElement>
         
-        <Label name="FooterStatusText" class="dcc-tool-footer-label"/>
+        <Label name="FooterStatusLabel" class="dcc-tool-footer-label"/>
             
         <Button name="AddDCCToolButton" text="+" class="add-dcc-tool-button"/>
     </VisualElement>
