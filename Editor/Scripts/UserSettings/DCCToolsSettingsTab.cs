@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using NUnit.Framework;
 using Unity.AnimeToolbox;
 using Unity.AnimeToolbox.Editor;
 using UnityEditor;
@@ -49,7 +50,8 @@ namespace Unity.MeshSync.Editor {
             m_checkPluginUpdatesButton = containerInstance.Query<Button>("ChecksPluginUpdatesButton").First();
             m_checkPluginUpdatesButton.clickable.clicked += OnCheckPluginUpdatesButtonClicked;
             Button addDCCToolButton = containerInstance.Query<Button>("AddDCCToolButton").First();
-            addDCCToolButton.clickable.clicked += OnAddDCCToolButtonClicked;
+            addDCCToolButton.userData                       =  scrollView;
+            addDCCToolButton.clickable.clickedWithEventInfo += OnAddDCCToolButtonClicked;
             
             //Label
             m_footerStatusLabel = containerInstance.Query<Label>("FooterStatusLabel").First();
@@ -112,7 +114,7 @@ namespace Unity.MeshSync.Editor {
 //----------------------------------------------------------------------------------------------------------------------        
 
         #region Button callbacks
-        void OnAddDCCToolButtonClicked() {
+        void OnAddDCCToolButtonClicked(EventBase evt) {
             string folder = EditorUtility.OpenFolderPanel("Add DCC Tool", m_lastOpenedFolder, "");
             if (string.IsNullOrEmpty(folder)) {
                 return;
@@ -133,13 +135,16 @@ namespace Unity.MeshSync.Editor {
                 return;
             }
             
-            //Add
             MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
             if (settings.AddDCCTool(dccToolInfo)) {
-                Setup(m_root);
+                //Add to ScrollView
+                VisualTreeAsset dccToolInfoTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
+                    MeshSyncEditorConstants.DCC_TOOL_INFO_TEMPLATE_PATH
+                );
+                ScrollView scrollView = GetEventButtonUserDataAs<ScrollView>(evt.target);
+                Assert.IsNotNull(scrollView);
+                AddDCCToolSettingsContainer(dccToolInfo, scrollView, dccToolInfoTemplate);                
             }
-            
-            
         }
 
         private void OnAutoDetectDCCButtonClicked() {
