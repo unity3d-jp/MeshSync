@@ -85,7 +85,7 @@ namespace Unity.MeshSync.Editor {
 
 
             Label  statusLabel = container.Query<Label>("DCCToolStatus").First();
-            UpdateDCCPluginStatus(integrator, statusLabel);
+            UpdateDCCPluginStatusLabel(integrator, statusLabel);
             
             m_dccStatusLabels[dccToolInfo.AppPath] = statusLabel;
             m_dccContainers[dccToolInfo.AppPath]   = container; 
@@ -211,7 +211,7 @@ namespace Unity.MeshSync.Editor {
                     return;
                 }
 
-                UpdateDCCPluginStatus(integrator, m_dccStatusLabels[dccToolInfo.AppPath]);
+                UpdateDCCPluginStatusLabel(integrator, m_dccStatusLabels[dccToolInfo.AppPath]);
             });
 
         }
@@ -301,7 +301,7 @@ namespace Unity.MeshSync.Editor {
 
 
 //----------------------------------------------------------------------------------------------------------------------        
-        void UpdateDCCPluginStatus(BaseDCCIntegrator dccIntegrator, Label statusLabel) {
+        void UpdateDCCPluginStatusLabel(BaseDCCIntegrator dccIntegrator, Label statusLabel) {
             
             DCCPluginInstallInfo installInfo = dccIntegrator.FindInstallInfo();
 
