@@ -87,8 +87,14 @@
     flex-shrink: 0;
 }
 
-.add-dcc-tool-button {
-    width: 100px;
+.dcc-tool-footer-container-left {
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.dcc-tool-footer-label {
+    padding: 3px;
+    font-size:  14px;
 }
 
 .auto-detect-button {

@@ -1,11 +1,13 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using NUnit.Framework;
 using Unity.AnimeToolbox;
 using Unity.AnimeToolbox.Editor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-
+using Unity.EditorCoroutines.Editor;
 
 namespace Unity.MeshSync.Editor {
 	internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
@@ -24,6 +26,7 @@ namespace Unity.MeshSync.Editor {
             
             m_root = root;
             m_root.Clear();
+            m_installPluginButtons.Clear();
 
             VisualTreeAsset container = UIElementsEditorUtility.LoadVisualTreeAsset(
                 MeshSyncEditorConstants.DCC_TOOLS_SETTINGS_CONTAINER_PATH
@@ -36,18 +39,25 @@ namespace Unity.MeshSync.Editor {
             TemplateContainer containerInstance = container.CloneTree();
             ScrollView scrollView = containerInstance.Query<ScrollView>().First();
 
-            //[TODO-sin: 2020-4-24] Auto detect installed DCC tools + check MeshSync status
+           
+            //Buttons
+            Button autoDetectDCCButton = containerInstance.Query<Button>("AutoDetectDCCButton").First();
+            autoDetectDCCButton.clickable.clicked += OnAutoDetectDCCButtonClicked;
+            m_checkPluginUpdatesButton = containerInstance.Query<Button>("ChecksPluginUpdatesButton").First();
+            m_checkPluginUpdatesButton.clickable.clicked += OnCheckPluginUpdatesButtonClicked;
+            Button addDCCToolButton = containerInstance.Query<Button>("AddDCCToolButton").First();
+            addDCCToolButton.userData                       =  scrollView;
+            addDCCToolButton.clickable.clickedWithEventInfo += OnAddDCCToolButtonClicked;
+            
+            //Label
+            m_footerStatusLabel = containerInstance.Query<Label>("FooterStatusLabel").First();
+
+            //Add detected DCCTools to ScrollView
             MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
-            foreach (var dccToolInfo in settings.GetDCCToolInfos()) {
+            foreach (KeyValuePair<string, DCCToolInfo> dccToolInfo in settings.GetDCCToolInfos()) {
                 AddDCCToolSettingsContainer(dccToolInfo.Value, scrollView, dccToolInfoTemplate);                
             }
             
-            //Buttons
-            Button autoDetectButton = containerInstance.Query<Button>("AutoDetectButton").First();
-            autoDetectButton.clickable.clicked += OnAutoDetectButtonClicked;
-            Button addDCCToolButton = containerInstance.Query<Button>("AddDCCToolButton").First();
-            addDCCToolButton.clickable.clicked += OnAddDCCToolButtonClicked;
-
             
             //Add the container of this tab to root
             root.Add(containerInstance);
@@ -55,7 +65,7 @@ namespace Unity.MeshSync.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------        
 
-        void AddDCCToolSettingsContainer(DCCToolInfo dccToolInfo, VisualElement top, VisualTreeAsset dccToolInfoTemplate) {
+        private void AddDCCToolSettingsContainer(DCCToolInfo dccToolInfo, VisualElement top, VisualTreeAsset dccToolInfoTemplate) {
             string desc = dccToolInfo.GetDescription();
             TemplateContainer container = dccToolInfoTemplate.CloneTree();
             Label nameLabel = container.Query<Label>("DCCToolName").First();
@@ -91,6 +101,8 @@ namespace Unity.MeshSync.Editor {
                 Button button = container.Query<Button>("InstallPluginButton").First();
                 button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
                 button.userData                       =  integrator;
+                button.SetEnabled(m_checkPluginUpdatesButton.enabledSelf);                
+                m_installPluginButtons.Add(button);
             }
             {
                 Button button = container.Query<Button>("RemoveDCCToolButton").First();
@@ -106,7 +118,7 @@ namespace Unity.MeshSync.Editor {
 //----------------------------------------------------------------------------------------------------------------------        
 
         #region Button callbacks
-        void OnAddDCCToolButtonClicked() {
+        void OnAddDCCToolButtonClicked(EventBase evt) {
             string folder = EditorUtility.OpenFolderPanel("Add DCC Tool", m_lastOpenedFolder, "");
             if (string.IsNullOrEmpty(folder)) {
                 return;
@@ -127,24 +139,26 @@ namespace Unity.MeshSync.Editor {
                 return;
             }
             
-            //Add
             MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
             if (settings.AddDCCTool(dccToolInfo)) {
-                Setup(m_root);
+                //Add to ScrollView
+                VisualTreeAsset dccToolInfoTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(
+                    MeshSyncEditorConstants.DCC_TOOL_INFO_TEMPLATE_PATH
+                );
+                ScrollView scrollView = GetEventButtonUserDataAs<ScrollView>(evt.target);
+                Assert.IsNotNull(scrollView);
+                AddDCCToolSettingsContainer(dccToolInfo, scrollView, dccToolInfoTemplate);                
             }
-            
-            
         }
-        
-        void OnAutoDetectButtonClicked() {
+
+        private void OnAutoDetectDCCButtonClicked() {
             MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
             if (settings.AddInstalledDCCTools()) {
                 Setup(m_root);
             }
         }
-
         
-        void OnRemoveDCCToolButtonClicked(EventBase evt) {
+        private void OnRemoveDCCToolButtonClicked(EventBase evt) {
             DCCToolInfo dccToolInfo = GetEventButtonUserDataAs<DCCToolInfo>(evt.target);           
             if (null==dccToolInfo || string.IsNullOrEmpty(dccToolInfo.AppPath)) {
                 Debug.LogWarning("[MeshSync] Failed to remove DCC Tool");
@@ -202,6 +216,67 @@ namespace Unity.MeshSync.Editor {
 
         }
         #endregion
+        
+//----------------------------------------------------------------------------------------------------------------------        
+        
+        #region CheckPluginUpdates Button callback
+        private void OnCheckPluginUpdatesButtonClicked() {
+            m_checkPluginUpdatesButton.SetEnabled(false);
+
+            //Disable installing plugin while we are checking for updates
+            foreach (Button installPluginButton in m_installPluginButtons) {
+                installPluginButton.SetEnabled(false);
+            }           
+            
+            m_updateFooterStatusFinished = false;
+            EditorCoroutineUtility.StartCoroutineOwnerless(UpdateFooterStatusLabel("Checking", FinalizeCheckPluginUpdates));
+            
+            RequestJobManager.CreateSearchRequest("com.unity.meshsync.dcc-plugins", /*offline=*/ false, (packageInfo) => {
+
+                foreach (var pi in packageInfo.Result) {
+                    Debug.Log(pi.versions.latest);
+                }
+                m_updateFooterStatusFinished = true;
+            }, (req)=> {                
+                m_updateFooterStatusFinished = true;
+            });            
+        }
+
+        private void FinalizeCheckPluginUpdates() {
+            m_footerStatusLabel.text = "";
+            m_checkPluginUpdatesButton.SetEnabled(true);            
+            foreach (Button installPluginButton in m_installPluginButtons) {
+                installPluginButton.SetEnabled(true);
+            }           
+            
+        }
+
+        private IEnumerator UpdateFooterStatusLabel(string reqStatusText, System.Action onFinished) {            
+            const int MAX_PREFIX_LENGTH = 16;
+            const int MAX_STATUS_LENGTH = 32;
+            string    mainStatusText    = reqStatusText;
+
+            if (mainStatusText.Length >= MAX_PREFIX_LENGTH) {
+                mainStatusText = reqStatusText.Substring(0, MAX_PREFIX_LENGTH);
+            }
+
+            string labelText = mainStatusText;
+            while (!m_updateFooterStatusFinished) {
+                labelText += ".";
+                if (labelText.Length > MAX_STATUS_LENGTH) {
+                    labelText = mainStatusText;
+                }
+                
+                m_footerStatusLabel.text =  labelText;
+                yield return new EditorWaitForSeconds(1);
+            }
+
+            onFinished();
+            yield return null;
+        }
+        
+        #endregion
+        
 
 //----------------------------------------------------------------------------------------------------------------------        
 
@@ -265,7 +340,14 @@ namespace Unity.MeshSync.Editor {
 
         private readonly Dictionary<string, Label>         m_dccStatusLabels = new Dictionary<string, Label>();
         private readonly Dictionary<string, VisualElement> m_dccContainers   = new Dictionary<string, VisualElement>();
+        private readonly List<Button>                      m_installPluginButtons = new List<Button>();
         
+        private Button          m_checkPluginUpdatesButton = null;
+        private Label           m_footerStatusLabel        = null;
+
+        private bool m_updateFooterStatusFinished = false;
+        
+       
         private VisualElement             m_root             = null;
         private string                    m_lastOpenedFolder = "";
 
