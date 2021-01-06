@@ -26,7 +26,7 @@ internal class PackageVersion {
             ret += "-" + Lifecycle.ToString().ToLower();
         }
         
-        if (string.IsNullOrEmpty(AdditionalMetadata)) {
+        if (!string.IsNullOrEmpty(AdditionalMetadata)) {
             ret += "." + AdditionalMetadata;
         }
 
