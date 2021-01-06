@@ -21,6 +21,12 @@ namespace Unity.MeshSync.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------        
         public void Setup(VisualElement root) {
+            SetupInternal(root);
+            OnCheckPluginUpdatesButtonClicked();
+        }
+
+//----------------------------------------------------------------------------------------------------------------------        
+        private void SetupInternal(VisualElement root) {
 
             m_dccStatusLabels.Clear();
             m_dccContainers.Clear();
@@ -57,11 +63,11 @@ namespace Unity.MeshSync.Editor {
             MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
             foreach (KeyValuePair<string, DCCToolInfo> dccToolInfo in settings.GetDCCToolInfos()) {
                 AddDCCToolSettingsContainer(dccToolInfo.Value, scrollView, dccToolInfoTemplate);                
-            }
-            
+            }            
             
             //Add the container of this tab to root
             root.Add(containerInstance);
+
         }
 
 //----------------------------------------------------------------------------------------------------------------------        
@@ -154,7 +160,7 @@ namespace Unity.MeshSync.Editor {
         private void OnAutoDetectDCCButtonClicked() {
             MeshSyncEditorSettings settings = MeshSyncEditorSettings.GetOrCreateSettings();
             if (settings.AddInstalledDCCTools()) {
-                Setup(m_root);
+                SetupInternal(m_root);
             }
         }
         
@@ -176,7 +182,7 @@ namespace Unity.MeshSync.Editor {
                 }
                 
                 if (!m_dccContainers.ContainsKey(dccToolInfo.AppPath)) {                    
-                    Setup(m_root);
+                    SetupInternal(m_root);
                     return;
                 }
 
@@ -208,7 +214,7 @@ namespace Unity.MeshSync.Editor {
             integrator.Integrate(() => {
                 DCCToolInfo dccToolInfo = integrator.GetDCCToolInfo();                
                 if (!m_dccStatusLabels.ContainsKey(dccToolInfo.AppPath)) {
-                    Setup(m_root);
+                    SetupInternal(m_root);
                     return;
                 }
 
