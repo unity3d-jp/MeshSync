@@ -1,26 +1,31 @@
 ﻿using JetBrains.Annotations;
-using JetBrains.Annotations;
 
 namespace Unity.AnimeToolbox.Editor {
 
 internal static class PackageUtility {
 
-    [CanBeNull]
-    internal static PackageVersion ParseVersion(string ver) {
-        string[] tokens = ver.Split('.');
+    /// <summary>
+    /// Parse a semantic versioned string to a PackageVersion class
+    /// </summary>
+    /// <param name="semanticVer">Semantic versioned input string</param>
+    /// <param name="packageVersion">The detected PackageVersion. Set to null when the parsing fails</param>
+    /// <returns>true if successful, false otherwise</returns>
+    internal static bool TryParseVersion(string semanticVer, out PackageVersion packageVersion) {
+        packageVersion = null;
+        string[] tokens = semanticVer.Split('.');
         if (tokens.Length <= 2)
-            return null;
+            return false;
 
         if (!int.TryParse(tokens[0], out int major))
-            return null;
+            return false;
 
         if (!int.TryParse(tokens[1], out int minor))
-            return null;
+            return false;
 
         //Find patch and lifecyle
         string[] patches = tokens[2].Split('-');
         if (!int.TryParse(patches[0], out int patch))
-            return null;
+            return false;
         
         PackageLifecycle lifecycle = PackageLifecycle.INVALID;
         if (patches.Length > 1) {
@@ -36,9 +41,8 @@ internal static class PackageUtility {
             lifecycle = PackageLifecycle.RELEASED; 
             
         }
-            
 
-        PackageVersion packageVersion = new PackageVersion() {
+        packageVersion = new PackageVersion() {
             Major = major,
             Minor = minor,
             Patch = patch,
@@ -48,9 +52,13 @@ internal static class PackageUtility {
             packageVersion.AdditionalMetadata = tokens[3];
         }
 
-        return packageVersion;
+        return true;
 
     } 
+
+//----------------------------------------------------------------------------------------------------------------------
+
+
 
 }
 
