@@ -311,19 +311,37 @@ namespace Unity.MeshSync.Editor {
             const string NOT_INSTALLED = "MeshSync Plugin not installed";
             if (null == installInfo) {
                 statusLabel.text = NOT_INSTALLED;                
-                return;
-                
+                return;                
             }
 
             DCCToolInfo dccToolInfo = dccIntegrator.GetDCCToolInfo();            
-            string pluginVersion = installInfo.GetPluginVersion(dccToolInfo.AppPath);
-            if (string.IsNullOrEmpty(pluginVersion)) {
+            string installedPluginVersionStr = installInfo.GetPluginVersion(dccToolInfo.AppPath);
+            if (string.IsNullOrEmpty(installedPluginVersionStr)) {
                 statusLabel.text = NOT_INSTALLED;
                 return;
             }
+            
+            //The DCC Plugin is installed, and we need to check if it's compatible with this version of MeshSync
+            PackageUtility.TryParseVersion(installedPluginVersionStr, out PackageVersion installedPluginVersion);
+            if (installedPluginVersion.Major != MeshSyncEditorConstants.PACKAGE_VERSION.Major ||
+                installedPluginVersion.Minor != MeshSyncEditorConstants.PACKAGE_VERSION.Minor) 
+            {                
+                statusLabel.AddToClassList("plugin-incompatible");
+                statusLabel.text = "Installed MeshSync Plugin is incompatible. Version: " + installedPluginVersionStr; 
+                return;
+            }
+            
+            //Check if we have newer compatible DCCPlugin
+            if (null!= m_latestCompatibleDCCPluginVersion 
+                && installedPluginVersion.Patch < m_latestCompatibleDCCPluginVersion.Patch) 
+            {                
+                statusLabel.AddToClassList("plugin-installed-old");
+                statusLabel.text = $"MeshSync Plugin {installedPluginVersionStr} installed. {m_latestCompatibleDCCPluginVersion} is available";
+                return;
+            } 
 
             statusLabel.AddToClassList("plugin-installed");
-            statusLabel.text = "MeshSync Plugin installed. Version: " + pluginVersion; 
+            statusLabel.text = $"MeshSync Plugin {installedPluginVersionStr} installed"; 
             
         }
 
@@ -344,9 +362,10 @@ namespace Unity.MeshSync.Editor {
         private readonly Dictionary<string, Label>         m_dccStatusLabels = new Dictionary<string, Label>();
         private readonly Dictionary<string, VisualElement> m_dccContainers   = new Dictionary<string, VisualElement>();
         private readonly List<Button>                      m_installPluginButtons = new List<Button>();
-        
-        private Button          m_checkPluginUpdatesButton = null;
-        private Label           m_footerStatusLabel        = null;
+
+        private PackageVersion m_latestCompatibleDCCPluginVersion = null;
+        private Button         m_checkPluginUpdatesButton = null;
+        private Label          m_footerStatusLabel        = null;
 
         private bool m_updateFooterStatusFinished = false;
         
