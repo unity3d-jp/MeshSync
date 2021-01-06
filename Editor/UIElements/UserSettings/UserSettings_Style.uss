@@ -52,6 +52,16 @@
     -unity-font-style:bold;
 }
 
+.plugin-incompatible {
+    color: #FF3333;
+    -unity-font-style:bold;
+}
+
+.plugin-installed-old {
+    color: #FFFF00;
+    -unity-font-style:bold;
+}
+
 .plugin-installed {
     color: #00FF00;
     -unity-font-style:bold;
