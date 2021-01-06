@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using Unity.AnimeToolbox.Editor;
 
 namespace Unity.MeshSync.Editor {
 
 internal class MeshSyncEditorConstants {
 
-    internal const string PACKAGE_NAME = MeshSyncConstants.PACKAGE_NAME;
+    internal const string   PACKAGE_NAME             = MeshSyncConstants.PACKAGE_NAME;
+    internal static readonly PackageVersion PACKAGE_VERSION = new PackageVersion(Lib.GetPluginVersion());
     
 
     //Project settings
