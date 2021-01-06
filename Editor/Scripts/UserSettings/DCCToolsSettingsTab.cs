@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.EditorCoroutines.Editor;
+using UnityEditor.PackageManager;
 
 namespace Unity.MeshSync.Editor {
 	internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
@@ -232,15 +233,46 @@ namespace Unity.MeshSync.Editor {
             EditorCoroutineUtility.StartCoroutineOwnerless(UpdateFooterStatusLabel("Checking", FinalizeCheckPluginUpdates));
             
             RequestJobManager.CreateSearchRequest("com.unity.meshsync.dcc-plugins", /*offline=*/ false, (packageInfo) => {
-
-                foreach (var pi in packageInfo.Result) {
-                    Debug.Log(pi.versions.latest);
+                //just in case
+                if (packageInfo.Result.Length <= 0) {
+                    Debug.LogError("[MeshSync] Failed to check DCC Plugin updates");
+                    m_updateFooterStatusFinished = true;
+                    return;
                 }
+
+                //Update status labels
+                UpdateLatestCompatibleDCCPlugin(packageInfo.Result[0].versions);
+                foreach (KeyValuePair<string, Label> kv in m_dccStatusLabels) {
+                    UpdateDCCPluginStatusLabel(kv.Value);
+                }
+                
                 m_updateFooterStatusFinished = true;
             }, (req)=> {                
                 m_updateFooterStatusFinished = true;
             });            
         }
+
+        void UpdateLatestCompatibleDCCPlugin(VersionsInfo versionsInfo) {
+            
+            foreach (string dccPluginVer in versionsInfo.all) {
+                bool parsed = PackageUtility.TryParseVersion(dccPluginVer, out PackageVersion dccPluginPackageVersion);
+                Assert.IsTrue(parsed);
+
+                //Skip incompatible versions
+                if (dccPluginPackageVersion.Major != MeshSyncEditorConstants.PACKAGE_VERSION.Major
+                    || dccPluginPackageVersion.Minor != MeshSyncEditorConstants.PACKAGE_VERSION.Minor) 
+                {
+                    continue;
+                }
+
+                if (null == m_latestCompatibleDCCPluginVersion 
+                    || dccPluginPackageVersion.Patch > m_latestCompatibleDCCPluginVersion.Patch) 
+                {
+                    m_latestCompatibleDCCPluginVersion = dccPluginPackageVersion;
+                }
+            }
+        }
+        
 
         private void FinalizeCheckPluginUpdates() {
             m_footerStatusLabel.text = "";
@@ -302,7 +334,6 @@ namespace Unity.MeshSync.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------        
         void UpdateDCCPluginStatusLabel(Label statusLabel) {
-
             
             BaseDCCIntegrator dccIntegrator = statusLabel.userData as BaseDCCIntegrator;
             Assert.IsNotNull(dccIntegrator);
@@ -321,12 +352,20 @@ namespace Unity.MeshSync.Editor {
                 return;
             }
             
+            //Remove all known classes
+            const string PLUGIN_INCOMPATIBLE_CLASS  = "plugin-incompatible";
+            const string PLUGIN_INSTALLED_OLD_CLASS = "plugin-installed-old";
+            const string PLUGIN_INSTALLED_CLASS     = "plugin-installed";
+            statusLabel.RemoveFromClassList(PLUGIN_INCOMPATIBLE_CLASS);
+            statusLabel.RemoveFromClassList(PLUGIN_INSTALLED_CLASS);
+            statusLabel.RemoveFromClassList(PLUGIN_INSTALLED_OLD_CLASS);
+            
             //The DCC Plugin is installed, and we need to check if it's compatible with this version of MeshSync
             PackageUtility.TryParseVersion(installedPluginVersionStr, out PackageVersion installedPluginVersion);
             if (installedPluginVersion.Major != MeshSyncEditorConstants.PACKAGE_VERSION.Major ||
                 installedPluginVersion.Minor != MeshSyncEditorConstants.PACKAGE_VERSION.Minor) 
             {                
-                statusLabel.AddToClassList("plugin-incompatible");
+                statusLabel.AddToClassList(PLUGIN_INCOMPATIBLE_CLASS);
                 statusLabel.text = "Installed MeshSync Plugin is incompatible. Version: " + installedPluginVersionStr; 
                 return;
             }
@@ -335,13 +374,14 @@ namespace Unity.MeshSync.Editor {
             if (null!= m_latestCompatibleDCCPluginVersion 
                 && installedPluginVersion.Patch < m_latestCompatibleDCCPluginVersion.Patch) 
             {                
-                statusLabel.AddToClassList("plugin-installed-old");
-                statusLabel.text = $"MeshSync Plugin {installedPluginVersionStr} installed. {m_latestCompatibleDCCPluginVersion} is available";
+                statusLabel.AddToClassList(PLUGIN_INSTALLED_OLD_CLASS);
+                statusLabel.text = $"Plugin {installedPluginVersionStr} installed. " +
+                    $"({m_latestCompatibleDCCPluginVersion} is available)";
                 return;
             } 
 
-            statusLabel.AddToClassList("plugin-installed");
-            statusLabel.text = $"MeshSync Plugin {installedPluginVersionStr} installed"; 
+            statusLabel.AddToClassList(PLUGIN_INSTALLED_CLASS);
+            statusLabel.text = $"Plugin {installedPluginVersionStr} installed"; 
             
         }
 
