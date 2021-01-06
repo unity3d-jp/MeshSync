@@ -3,6 +3,7 @@
 enum PackageLifecycle {
     INVALID,
     EXPERIMENTAL,
+    PREVIEW,
     PRERELEASE,
     RELEASED,
 }

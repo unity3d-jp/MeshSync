@@ -16,6 +16,23 @@ internal class PackageVersion {
         this.Lifecycle = temp.Lifecycle;
         this.AdditionalMetadata = temp.AdditionalMetadata;
     }
+
+//----------------------------------------------------------------------------------------------------------------------
+    
+    public override string ToString() {
+        string ret = $"{Major}.{Minor}.{Patch}";
+
+        if (Lifecycle != PackageLifecycle.RELEASED) {
+            ret += "-" + Lifecycle.ToString().ToLower();
+        }
+        
+        if (string.IsNullOrEmpty(AdditionalMetadata)) {
+            ret += "." + AdditionalMetadata;
+        }
+
+        return ret;
+
+    } 
     
 //----------------------------------------------------------------------------------------------------------------------
     public int              Major;

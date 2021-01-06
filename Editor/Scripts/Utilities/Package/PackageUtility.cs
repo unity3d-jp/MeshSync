@@ -32,7 +32,7 @@ internal static class PackageUtility {
             string           lifecycleStr = patches[1].ToLower();                    
             switch (lifecycleStr) {
                 case "experimental": lifecycle = PackageLifecycle.EXPERIMENTAL; break;
-                case "preview"   : lifecycle   = PackageLifecycle.EXPERIMENTAL; break;
+                case "preview"   : lifecycle   = PackageLifecycle.PREVIEW; break;
                 case "prerelease": lifecycle   = PackageLifecycle.PRERELEASE; break;
                 default: lifecycle             = PackageLifecycle.INVALID; break;
             }
