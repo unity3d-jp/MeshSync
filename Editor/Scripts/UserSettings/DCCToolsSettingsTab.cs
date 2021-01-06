@@ -409,7 +409,7 @@ namespace Unity.MeshSync.Editor {
         private readonly Dictionary<string, VisualElement> m_dccContainers   = new Dictionary<string, VisualElement>();
         private readonly List<Button>                      m_installPluginButtons = new List<Button>();
 
-        private PackageVersion m_latestCompatibleDCCPluginVersion = null;
+        private static PackageVersion m_latestCompatibleDCCPluginVersion = null;
         private Button         m_checkPluginUpdatesButton = null;
         private Label          m_footerStatusLabel        = null;
 
