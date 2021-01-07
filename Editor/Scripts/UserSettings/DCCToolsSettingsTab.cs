@@ -204,6 +204,14 @@ namespace Unity.MeshSync.Editor {
         }
 
         void OnInstallPluginButtonClicked(EventBase evt) {
+
+            if (null == m_latestCompatibleDCCPluginVersion) {
+                EditorUtility.DisplayDialog("MeshSync",
+                    $"DCC Plugin compatible with MeshSync@{MeshSyncEditorConstants.PACKAGE_VERSION} is not found", 
+                    "Ok"
+                );
+                return;
+            }            
             
             BaseDCCIntegrator integrator = GetEventButtonUserDataAs<BaseDCCIntegrator>(evt.target);           
             if (null==integrator) {
