@@ -67,14 +67,16 @@ internal class DCCPluginDownloader  {
                 }
 
                 string packageNameAndVer = $"{MESHSYNC_DCC_PLUGIN_PACKAGE}@{dccPluginVersion}";
-                RequestJobManager.CreateAddRequest(packageNameAndVer, (addReq) => {
-                    //Package was successfully added
-                    CopyDCCPluginsFromPackage(dccPluginVersion);                   
-                    onSuccess(dccPluginVersion);
-                }, (req) => {
-                    PackageInfo meshSyncInfo = listReq.FindPackage(MeshSyncConstants.PACKAGE_NAME);
-                    onFail?.Invoke(meshSyncInfo.version);
-                });
+                RequestJobManager.CreateAddRequest(packageNameAndVer, 
+                    /*onSuccess=*/ (addReq) => {
+                        //Package was successfully added
+                        CopyDCCPluginsFromPackage(dccPluginVersion);                   
+                        onSuccess(dccPluginVersion);
+                    }, 
+                    /*onFail=*/ (req) => {
+                        PackageInfo meshSyncInfo = listReq.FindPackage(MeshSyncConstants.PACKAGE_NAME);
+                        onFail?.Invoke(meshSyncInfo.version);
+                    });
             }, 
             /*OnFail=*/ null
         );
