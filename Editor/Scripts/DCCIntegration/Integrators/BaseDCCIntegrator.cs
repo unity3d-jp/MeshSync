@@ -15,7 +15,7 @@ internal abstract class BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
-    internal void Integrate(Action onComplete) {
+    internal void Integrate(string requestedPluginVersion, Action onComplete) {
 
         string dccToolName = GetDCCToolInFileNameV();
         string dccPluginFileName = dccToolName + "_" + GetCurrentDCCPluginPlatform() + ".zip";
@@ -29,61 +29,63 @@ internal abstract class BaseDCCIntegrator {
 
         string progressBarInfo = "Installing plugin for " + dccDesc;
         EditorUtility.DisplayProgressBar("MeshSync", progressBarInfo,0);
-        downloader.Execute((string pluginVersion, List<string> dccPluginLocalPaths) => {
-
-            EditorUtility.DisplayProgressBar("MeshSync", progressBarInfo, 0.5f);
-            bool dccConfigured = false;
-            if (dccPluginLocalPaths.Count >0 && File.Exists(dccPluginLocalPaths[0])) {
+        downloader.Execute( requestedPluginVersion, 
+            /*onSuccess=*/ (string pluginVersion, List<string> dccPluginLocalPaths) => {
+                EditorUtility.DisplayProgressBar("MeshSync", progressBarInfo, 0.5f);
+                bool dccConfigured = false;
+                if (dccPluginLocalPaths.Count >0 && File.Exists(dccPluginLocalPaths[0])) {
+                    
+                    //Extract
+                    string localPluginPath = dccPluginLocalPaths[0];
+                    string tempPath = FileUtil.GetUniqueTempPathInProject();        
+                    Directory.CreateDirectory(tempPath);
+                    ZipUtility.UncompressFromZip(localPluginPath, null, tempPath);
+                    
+                    dccConfigured = ConfigureDCCToolV(m_dccToolInfo, Path.GetFileNameWithoutExtension(localPluginPath),tempPath);
+                    
+                    //Cleanup
+                    FileUtility.DeleteFilesAndFolders(tempPath);
+                    
+                }
                 
-                //Extract
-                string localPluginPath = dccPluginLocalPaths[0];
-                string tempPath = FileUtil.GetUniqueTempPathInProject();        
-                Directory.CreateDirectory(tempPath);
-                ZipUtility.UncompressFromZip(localPluginPath, null, tempPath);
-                
-                dccConfigured = ConfigureDCCToolV(m_dccToolInfo, Path.GetFileNameWithoutExtension(localPluginPath),tempPath);
-                
-                //Cleanup
-                FileUtility.DeleteFilesAndFolders(tempPath);
-                
-            }
-            
-            if (!dccConfigured) {
-                HandleFailedIntegration("Failed in configuring DCC ", dccDesc);
-                return;
-            }
+                if (!dccConfigured) {
+                    HandleFailedIntegration("Failed in configuring DCC ", dccDesc);
+                    return;
+                }
 
-            string installInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(m_dccToolInfo);
-            string installInfoFolder = Path.GetDirectoryName(installInfoPath);
-            if (null == installInfoPath || null == installInfoFolder) {
-                HandleFailedIntegration($"Invalid path: {installInfoPath}",dccDesc);
-                return;
-            }
+                string installInfoPath = DCCPluginInstallInfo.GetInstallInfoPath(m_dccToolInfo);
+                string installInfoFolder = Path.GetDirectoryName(installInfoPath);
+                if (null == installInfoPath || null == installInfoFolder) {
+                    HandleFailedIntegration($"Invalid path: {installInfoPath}",dccDesc);
+                    return;
+                }
 
-            //Write DCCPluginInstallInfo for the version
-            Directory.CreateDirectory(installInfoFolder);
+                //Write DCCPluginInstallInfo for the version
+                Directory.CreateDirectory(installInfoFolder);
 
-            DCCPluginInstallInfo installInfo =  FileUtility.DeserializeFromJson<DCCPluginInstallInfo>(installInfoPath);
-            if (null == installInfo) {
-                installInfo = new DCCPluginInstallInfo();
+                DCCPluginInstallInfo installInfo =  FileUtility.DeserializeFromJson<DCCPluginInstallInfo>(installInfoPath);
+                if (null == installInfo) {
+                    installInfo = new DCCPluginInstallInfo();
+                }
+                installInfo.SetPluginVersion(m_dccToolInfo.AppPath, pluginVersion);
+        
+                try {
+                    FileUtility.SerializeToJson(installInfo, installInfoPath);
+                } catch (Exception e) {
+                    HandleFailedIntegration(e.ToString(), dccDesc);
+                    return;
+                }
+                
+                EditorUtility.ClearProgressBar();
+                FinalizeDCCConfigurationV();
+                
+                onComplete();
+            }, 
+            /*onFail=*/ () => {
+                Debug.LogError("[MeshSync] Failed to download DCC Plugin for " + dccDesc);
+                EditorUtility.ClearProgressBar();
             }
-            installInfo.SetPluginVersion(m_dccToolInfo.AppPath, pluginVersion);
-    
-            try {
-                FileUtility.SerializeToJson(installInfo, installInfoPath);
-            } catch (Exception e) {
-                HandleFailedIntegration(e.ToString(), dccDesc);
-                return;
-            }
-            
-            EditorUtility.ClearProgressBar();
-            FinalizeDCCConfigurationV();
-            
-            onComplete();
-        }, () => {
-            Debug.LogError("[MeshSync] Failed to download DCC Plugin for " + dccDesc);
-            EditorUtility.ClearProgressBar();
-        });
+        );
     }
 
 //----------------------------------------------------------------------------------------------------------------------    

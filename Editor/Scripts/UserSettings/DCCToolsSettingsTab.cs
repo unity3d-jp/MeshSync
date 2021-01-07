@@ -211,7 +211,7 @@ namespace Unity.MeshSync.Editor {
                 return;
             }
 
-            integrator.Integrate(() => {
+            integrator.Integrate(m_latestCompatibleDCCPluginVersion.ToString(), () => {
                 DCCToolInfo dccToolInfo = integrator.GetDCCToolInfo();                
                 if (!m_dccStatusLabels.ContainsKey(dccToolInfo.AppPath)) {
                     SetupInternal(m_root);
