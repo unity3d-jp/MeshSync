@@ -30,21 +30,25 @@ internal class DCCPluginDownloader  {
         
         //Try to get the files from package first. If failed, then try downloading directly
         DisplayProgressBar("Copying MeshSync DCC Plugins","",0);
-        CopyDCCPluginsFromPackage(requestedVersion, (string installedVersion) => {
-            ClearProgressBar();
-            onSuccess(installedVersion, m_finishedDCCPluginLocalPaths);
+        CopyDCCPluginsFromPackage(requestedVersion, 
             
-        }, (string version) => {
+            /*onSuccess=*/ (string installedVersion) => {
+                ClearProgressBar();
+                onSuccess(installedVersion, m_finishedDCCPluginLocalPaths);
+            
+            }, 
+            /*onFail=*/ (string version) => {
 
-            //Getting files from the package has failed. Download directly
-            DownloadDCCPlugins(version, (string downloadedVersion)=> {
-                ClearProgressBar();
-                onSuccess(downloadedVersion, m_finishedDCCPluginLocalPaths);
-            }, ()=> {
-                ClearProgressBar();
-                onFail();
-            });
-        });
+                //Getting files from the package has failed. Download directly
+                DownloadDCCPlugins(version, (string downloadedVersion)=> {
+                    ClearProgressBar();
+                    onSuccess(downloadedVersion, m_finishedDCCPluginLocalPaths);
+                }, ()=> {
+                    ClearProgressBar();
+                    onFail();
+                });
+            }
+        );
      }
      
      
