@@ -27,6 +27,7 @@ internal class DCCPluginDownloader  {
     
     internal void Execute(string requestedVersion, Action<string, List<string>> onSuccess, Action onFail) {
         
+        m_finishedDCCPluginLocalPaths.Clear();
         
         //Try to get the files from package first. If failed, then try downloading directly
         DisplayProgressBar("Copying MeshSync DCC Plugins","",0);
@@ -60,7 +61,7 @@ internal class DCCPluginDownloader  {
                 PackageInfo packageInfo       = listReq.FindPackage(MESHSYNC_DCC_PLUGIN_PACKAGE);
                 if (null != packageInfo && packageInfo.version==dccPluginVersion) {
                     //Package is already installed.
-                    CopyDCCPluginsFromPackage();
+                    CopyDCCPluginsFromPackage(dccPluginVersion);
                     onSuccess(packageInfo.version);
                     return;
                 }
@@ -68,7 +69,7 @@ internal class DCCPluginDownloader  {
                 string packageNameAndVer = $"{MESHSYNC_DCC_PLUGIN_PACKAGE}@{dccPluginVersion}";
                 RequestJobManager.CreateAddRequest(packageNameAndVer, (addReq) => {
                     //Package was successfully added
-                    CopyDCCPluginsFromPackage();                   
+                    CopyDCCPluginsFromPackage(dccPluginVersion);                   
                     onSuccess(dccPluginVersion);
                 }, (req) => {
                     PackageInfo meshSyncInfo = listReq.FindPackage(MeshSyncConstants.PACKAGE_NAME);
@@ -218,10 +219,38 @@ internal class DCCPluginDownloader  {
     }
     
 //----------------------------------------------------------------------------------------------------------------------        
-    static void CopyDCCPluginsFromPackage() {
-        //[TODO-sin: 2020-4-8] Assume that package was successfully installed. Copy the plugins to m_destFolder
-        //And add to m_finishedDCCPluginLocalPaths
-        //Assert.IsTrue(false);
+    void CopyDCCPluginsFromPackage(string version) {
+
+        foreach (string dccPlatformName in m_dccPlatformNames) {
+            const string DCC_PLUGIN_SRC_FOLDER = "Packages/" + MESHSYNC_DCC_PLUGIN_PACKAGE + "/Editor/Plugins~";
+
+            string[] zipFileNames = {
+                "UnityMeshSync_" + version + "_" + dccPlatformName,
+                "UnityMeshSync_" + dccPlatformName,
+            };
+
+            string srcZipFilePath = null;
+            foreach (string zipFileName in zipFileNames) {
+                string path = Path.GetFullPath(Path.Combine(DCC_PLUGIN_SRC_FOLDER, zipFileName));
+                if (!File.Exists(path)) {
+                    continue;
+                }
+
+                srcZipFilePath = path;
+                break;
+            }
+
+            if (string.IsNullOrEmpty(srcZipFilePath)) {
+                continue;
+            }
+
+            
+            DCCPluginDownloadInfo downloadInfo = new DCCPluginDownloadInfo(version, dccPlatformName, m_destFolder);
+            File.Copy(srcZipFilePath, downloadInfo.LocalFilePath, /*overwrite=*/true);
+            m_finishedDCCPluginLocalPaths.Add(downloadInfo.LocalFilePath);
+        }
+        
+        
     }
 
 
