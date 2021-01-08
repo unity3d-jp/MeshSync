@@ -269,7 +269,7 @@ namespace Unity.MeshSync.Editor {
         void UpdateLatestCompatibleDCCPlugin(VersionsInfo versionsInfo) {
             
             foreach (string dccPluginVer in versionsInfo.all) {
-                bool parsed = PackageUtility.TryParseVersion(dccPluginVer, out PackageVersion dccPluginPackageVersion);
+                bool parsed = PackageVersion.TryParse(dccPluginVer, out PackageVersion dccPluginPackageVersion);
                 Assert.IsTrue(parsed);
 
                 //Skip incompatible versions
@@ -375,8 +375,9 @@ namespace Unity.MeshSync.Editor {
             statusLabel.RemoveFromClassList(PLUGIN_INSTALLED_OLD_CLASS);
             
             //The DCC Plugin is installed, and we need to check if it's compatible with this version of MeshSync
-            PackageUtility.TryParseVersion(installedPluginVersionStr, out PackageVersion installedPluginVersion);
-            if (installedPluginVersion.Major != MeshSyncEditorConstants.PACKAGE_VERSION.Major ||
+            bool parsed = PackageVersion.TryParse(installedPluginVersionStr, out PackageVersion installedPluginVersion);
+            if (!parsed ||
+                installedPluginVersion.Major != MeshSyncEditorConstants.PACKAGE_VERSION.Major ||
                 installedPluginVersion.Minor != MeshSyncEditorConstants.PACKAGE_VERSION.Minor) 
             {                
                 statusLabel.AddToClassList(PLUGIN_INCOMPATIBLE_CLASS);
