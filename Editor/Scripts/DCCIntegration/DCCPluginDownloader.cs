@@ -49,7 +49,7 @@ internal class DCCPluginDownloader  {
 //----------------------------------------------------------------------------------------------------------------------        
     void CopyDCCPluginsFromPackage(string dccPluginVersion, Action<string> onSuccess, Action<string> onFail) 
     {
-        RequestJobManager.CreateListRequest(/*offlineMode=*/true, /*includeIndirectIndependencies=*/ true, 
+        PackageRequestJobManager.CreateListRequest(/*offlineMode=*/true, /*includeIndirectIndependencies=*/ true, 
             /*onSuccess=*/ (listReq) =>{
                 PackageInfo packageInfo       = listReq.FindPackage(MESHSYNC_DCC_PLUGIN_PACKAGE);
                 if (null != packageInfo && packageInfo.version==dccPluginVersion) {
@@ -60,7 +60,7 @@ internal class DCCPluginDownloader  {
                 }
 
                 string packageNameAndVer = $"{MESHSYNC_DCC_PLUGIN_PACKAGE}@{dccPluginVersion}";
-                RequestJobManager.CreateAddRequest(packageNameAndVer, 
+                PackageRequestJobManager.CreateAddRequest(packageNameAndVer, 
                     /*onSuccess=*/ (addReq) => {
                         //Package was successfully added
                         CopyDCCPluginsFromPackage(dccPluginVersion);                   

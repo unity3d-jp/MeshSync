@@ -246,7 +246,7 @@ namespace Unity.MeshSync.Editor {
             m_updateFooterStatusFinished = false;
             EditorCoroutineUtility.StartCoroutineOwnerless(UpdateFooterStatusLabel("Checking", FinalizeCheckPluginUpdates));
             
-            RequestJobManager.CreateSearchRequest("com.unity.meshsync.dcc-plugins", /*offline=*/ false, (packageInfo) => {
+            PackageRequestJobManager.CreateSearchRequest("com.unity.meshsync.dcc-plugins", /*offline=*/ false, (packageInfo) => {
                 //just in case
                 if (packageInfo.Result.Length <= 0) {
                     Debug.LogError("[MeshSync] Failed to check DCC Plugin updates");
