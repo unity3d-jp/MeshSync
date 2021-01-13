@@ -23,15 +23,6 @@ internal class SceneCacheTrack : TrackAsset {
         
         return mixerScriptPlayable;
     }
-
-    public override void GatherProperties(PlayableDirector director, IPropertyCollector driver) {
-        Image ps = director.GetGenericBinding(this) as Image;
-        if (ps == null) return;
-
-        GameObject go = ps.gameObject;
-        driver.AddFromName<Image>(go, "m_Color");
-
-    }
 }
 
 }
