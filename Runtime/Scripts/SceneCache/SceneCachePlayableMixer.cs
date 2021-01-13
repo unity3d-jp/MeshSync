@@ -6,7 +6,7 @@ using UnityEngine.Playables;
 namespace Unity.StreamingImageSequence {
 
 // A behaviour that is attached to a playable
-internal class FaderPlayableMixer : BasePlayableMixer<FaderPlayableAsset> {
+internal class SceneCachePlayableMixer : BasePlayableMixer<SceneCachePlayableAsset> {
 
 #if false //PlayableBehaviour's functions that can be overridden
 
@@ -40,7 +40,7 @@ internal class FaderPlayableMixer : BasePlayableMixer<FaderPlayableAsset> {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override void ProcessActiveClipV(FaderPlayableAsset asset, 
+    protected override void ProcessActiveClipV(SceneCachePlayableAsset asset, 
         double directorTime, TimelineClip activeClip) 
     {
 

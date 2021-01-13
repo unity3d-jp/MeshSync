@@ -5,7 +5,7 @@ using UnityEngine.Timeline;
 namespace Unity.StreamingImageSequence {
 
 [System.Serializable] 
-internal class FaderPlayableAsset : PlayableAsset, ITimelineClipAsset {
+internal class SceneCachePlayableAsset : PlayableAsset, ITimelineClipAsset {
     public ClipCaps clipCaps {
         get {
             return ClipCaps.None;
