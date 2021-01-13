@@ -3,7 +3,7 @@
 namespace Unity.MeshSync {
 
 [TrackClipType(typeof(SceneCachePlayableAsset))]
-[TrackColor(0.263f, 0.09f, 0.263f)]
+[TrackColor(0.196f, 0.804f, 0.196f)] //limegreen
 [NotKeyable]
 internal class SceneCacheTrack : TrackAsset {
 
