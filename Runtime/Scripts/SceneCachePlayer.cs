@@ -10,6 +10,7 @@ using UnityEditor;
 namespace Unity.MeshSync
 {
 
+[RequireComponent(typeof(Animator))]
 [ExecuteInEditMode]
 internal class SceneCachePlayer : MeshSyncPlayer {
     #region Types
@@ -157,12 +158,11 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         if (m_sceneCache.sceneCount < 2)
             return false;
 
-        Animator animator = Misc.GetOrAddComponent<Animator>(gameObject);
         AnimationClip clip = null;
-        if (animator.runtimeAnimatorController != null) {
-            AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
+        if (m_animator.runtimeAnimatorController != null) {
+            AnimationClip[] clips = m_animator.runtimeAnimatorController.animationClips;
             if (clips != null && clips.Length > 0) {
-                AnimationClip tmp = animator.runtimeAnimatorController.animationClips[0];
+                AnimationClip tmp = m_animator.runtimeAnimatorController.animationClips[0];
                 if (tmp != null) {
                     clip = tmp;
                     Undo.RegisterCompleteObjectUndo(clip, "SceneCachePlayer");
@@ -170,7 +170,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
             }
         }
 
-        if (clip == null) {
+        if (null == clip) {
             clip = new AnimationClip();
 
             string assetsFolder = GetAssetsFolder();
@@ -178,10 +178,13 @@ internal class SceneCachePlayer : MeshSyncPlayer {
             string animPath       = string.Format("{0}/{1}.anim", assetsFolder, gameObject.name);
             string controllerPath = string.Format("{0}/{1}.controller", assetsFolder, gameObject.name);
             clip = Misc.SaveAsset(clip, animPath);
-            if (clip == null)
+            if (clip.IsNullRef()) {
+                Debug.LogError("[MeshSync] Internal error in initializing clip for SceneCache");
                 return false;
+                
+            }
 
-            animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(controllerPath, clip);
+            m_animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(controllerPath, clip);
         }
         float sampleRate = m_sceneCache.sampleRate;
         if (sampleRate > 0.0f)
@@ -348,11 +351,13 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 //----------------------------------------------------------------------------------------------------------------------    
     protected override void OnEnable() {
         base.OnEnable();
+        m_animator = GetComponent<Animator>();
         if (!string.IsNullOrEmpty(m_sceneCacheFilePath)) {
             ReopenCache();
         }
         
         ClampTime();
+        
     }
 
     protected override void OnDisable() {
@@ -378,15 +383,15 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     [SerializeField] BaseFrame m_baseFrame     = BaseFrame.One;
     [SerializeField] int       m_frame         = 1;
     [SerializeField] int       m_preloadLength = 1;
-
-    
+   
     [HideInInspector][SerializeField] private int m_version = (int) CUR_SCENE_CACHE_PLAYER_VERSION;
     private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.STRING_PATH_0_4_0;
     
     
     SceneCacheData m_sceneCache;
     TimeRange      m_timeRange;
-    float          m_timePrev      = -1;
+    float          m_timePrev = -1;
+    Animator       m_animator = null;
 
 #if UNITY_EDITOR
     [SerializeField] bool m_foldCacheSettings = true;
