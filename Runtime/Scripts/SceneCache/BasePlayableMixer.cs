@@ -3,6 +3,11 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Assertions;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
 
 namespace Unity.StreamingImageSequence {
 
@@ -29,12 +34,7 @@ internal abstract class BasePlayableMixer<T> : PlayableBehaviour where T: Playab
         if (inputCount == 0 ) {
             return; // it doesn't work as mixer.
         }
-
-        
-        if (m_boundGameObject== null ) {
-            return;
-        }
-
+       
         GetActiveTimelineClipInto(m_clips, m_playableDirector.time, out TimelineClip clip, out T activePlayableAsset);        
         if (null == clip)
             return;
@@ -102,8 +102,7 @@ internal abstract class BasePlayableMixer<T> : PlayableBehaviour where T: Playab
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    internal void Init(GameObject go, PlayableDirector director, IEnumerable<TimelineClip> clips) {
-        m_boundGameObject = go;
+    internal void Init(PlayableDirector director, IEnumerable<TimelineClip> clips) {
         m_playableDirector = director;
         
         m_clips = new List<TimelineClip>(clips);
@@ -115,7 +114,7 @@ internal abstract class BasePlayableMixer<T> : PlayableBehaviour where T: Playab
         }
         
 
-        InitInternalV(go);
+        InitInternalV();
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -130,7 +129,7 @@ internal abstract class BasePlayableMixer<T> : PlayableBehaviour where T: Playab
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    protected abstract void InitInternalV(GameObject go);
+    protected abstract void InitInternalV();
     protected abstract void ProcessActiveClipV(T asset, double directorTime, TimelineClip activeClip);
     
     protected abstract void ShowObjectV(bool show);
@@ -143,7 +142,6 @@ internal abstract class BasePlayableMixer<T> : PlayableBehaviour where T: Playab
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    private GameObject m_boundGameObject;
     private PlayableDirector m_playableDirector;
     private List<TimelineClip> m_clips;
     private Dictionary<TimelineClip, T> m_clipAssets;

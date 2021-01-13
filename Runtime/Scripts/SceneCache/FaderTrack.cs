@@ -7,7 +7,6 @@ using UnityEngine.UI;
 namespace Unity.StreamingImageSequence {
 
 [TrackClipType(typeof(FaderPlayableAsset))]
-[TrackBindingType(typeof(Image))]
 [TrackColor(0.263f, 0.09f, 0.263f)]
 [NotKeyable]
 internal class FaderTrack : TrackAsset {
@@ -18,9 +17,8 @@ internal class FaderTrack : TrackAsset {
         Assert.IsNotNull(director);
         
         //Initialize mixer
-        Image image = director.GetGenericBinding(this) as Image;           
         FaderPlayableMixer mixer = mixerScriptPlayable.GetBehaviour();
-        mixer.Init(null==image ? null : image.gameObject, director, GetClips());
+        mixer.Init(director, GetClips());
         
         
         return mixerScriptPlayable;

@@ -34,19 +34,15 @@ internal class FaderPlayableMixer : BasePlayableMixer<FaderPlayableAsset> {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    protected override void InitInternalV(GameObject gameObject) {
-        if (null == gameObject)
-            return;
-        
-        m_image = gameObject.GetComponent<Image>();
+    protected override void InitInternalV() {       
+
+        //m_image = gameObject.GetComponent<Image>();
     }
 
 //----------------------------------------------------------------------------------------------------------------------
     protected override void ProcessActiveClipV(FaderPlayableAsset asset, 
         double directorTime, TimelineClip activeClip) 
     {
-        if (null == m_image)
-            return;
 
         Color color = asset.GetColor();
         float maxFade = color.a;
@@ -57,19 +53,17 @@ internal class FaderPlayableMixer : BasePlayableMixer<FaderPlayableAsset> {
         }
 
         color.a = fade;
-        m_image.color = color;
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
     protected override void ShowObjectV(bool show) {
-        if (null!=m_image) {
-            m_image.enabled = show;
-        } 
+        // if (null!=m_image) {
+        //     m_image.enabled = show;
+        // } 
     }
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    private Image m_image = null;
 
 }
 
