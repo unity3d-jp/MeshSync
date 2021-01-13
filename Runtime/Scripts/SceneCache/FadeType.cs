@@ -1,4 +1,4 @@
-﻿namespace Unity.StreamingImageSequence {
+﻿namespace Unity.MeshSync {
 
 internal enum FadeType {
     FADE_IN,

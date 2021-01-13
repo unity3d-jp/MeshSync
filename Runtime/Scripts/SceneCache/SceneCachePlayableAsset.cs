@@ -2,7 +2,7 @@
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
-namespace Unity.StreamingImageSequence {
+namespace Unity.MeshSync {
 
 [System.Serializable] 
 internal class SceneCachePlayableAsset : PlayableAsset, ITimelineClipAsset {

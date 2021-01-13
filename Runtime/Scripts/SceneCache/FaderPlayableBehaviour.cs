@@ -6,7 +6,7 @@ using UnityEngine.Assertions;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
-namespace Unity.StreamingImageSequence
+namespace Unity.MeshSync
 {
     // A behaviour that is attached to a playable
     internal class FaderPlayableBehaviour : PlayableBehaviour

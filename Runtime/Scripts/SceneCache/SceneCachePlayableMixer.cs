@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.Timeline;
 using UnityEngine.Playables;
 
-namespace Unity.StreamingImageSequence {
+namespace Unity.MeshSync {
 
 // A behaviour that is attached to a playable
 internal class SceneCachePlayableMixer : BasePlayableMixer<SceneCachePlayableAsset> {

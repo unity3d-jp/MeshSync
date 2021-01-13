@@ -4,7 +4,7 @@ using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using UnityEngine.UI;
 
-namespace Unity.StreamingImageSequence {
+namespace Unity.MeshSync {
 
 [TrackClipType(typeof(SceneCachePlayableAsset))]
 [TrackColor(0.263f, 0.09f, 0.263f)]

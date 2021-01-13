@@ -3,7 +3,7 @@ using UnityEngine.Assertions;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
-namespace Unity.StreamingImageSequence {
+namespace Unity.MeshSync {
 
 // A PlayableBehaviour that is attached to a Track via CreateTrackMixer() 
 internal abstract class BasePlayableMixer<T> : PlayableBehaviour where T: PlayableAsset {
