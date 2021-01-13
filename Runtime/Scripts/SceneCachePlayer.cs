@@ -198,15 +198,17 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         clip.SetCurve("", tPlayer, "m_time", null);
         clip.SetCurve("", tPlayer, "m_frame", null);
         if (m_timeUnit == TimeUnit.Seconds) {
-            AnimationCurve curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
-            clip.SetCurve("", tPlayer, "m_time", curve);
+            m_animationCurve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
+            clip.SetCurve("", tPlayer, "m_time", m_animationCurve);
         } else if (m_timeUnit == TimeUnit.Frames) {
-            AnimationCurve curve = m_sceneCache.GetFrameCurve((int)m_baseFrame);
-            clip.SetCurve("", tPlayer, "m_frame", curve);
+            m_animationCurve = m_sceneCache.GetFrameCurve((int)m_baseFrame);
+            clip.SetCurve("", tPlayer, "m_frame", m_animationCurve);
         }
 
         AssetDatabase.SaveAssets();
         UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+        
+        
         return true;
     }
 #endif
@@ -394,6 +396,8 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     SceneCacheData m_sceneCache;
     TimeRange      m_timeRange;
     float          m_timePrev      = -1;
+
+    [SerializeField] private AnimationCurve m_animationCurve; //Can be from time/frame depending on m_timeUnit
 
 #if UNITY_EDITOR
     [SerializeField] bool m_foldCacheSettings = true;
