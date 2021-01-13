@@ -6,6 +6,7 @@ namespace Unity.MeshSync {
 
 [System.Serializable] 
 internal class SceneCachePlayableAsset : PlayableAsset, ITimelineClipAsset {
+    
 //----------------------------------------------------------------------------------------------------------------------
     public ClipCaps clipCaps {
         get {
@@ -14,15 +15,15 @@ internal class SceneCachePlayableAsset : PlayableAsset, ITimelineClipAsset {
     }
 
     public override Playable CreatePlayable(PlayableGraph graph, GameObject go) {
-        return Playable.Create(graph);
+        
+        FaderPlayableBehaviour bh = new FaderPlayableBehaviour();
+        bh.SetSceneCachePlayer(m_sceneCachePlayerRef.Resolve(graph.GetResolver()));
+        return ScriptPlayable<FaderPlayableBehaviour>.Create(graph, bh);
     }
-
-//----------------------------------------------------------------------------------------------------------------------
    
-    
-    [SerializeField] private ExposedReference<SceneCachePlayer>  m_sceneCachePlayer = new ExposedReference<SceneCachePlayer>();
-
 //----------------------------------------------------------------------------------------------------------------------
+    
+    [SerializeField] private ExposedReference<SceneCachePlayer>  m_sceneCachePlayerRef = new ExposedReference<SceneCachePlayer>();
 
 }
 
