@@ -36,7 +36,6 @@ internal class SceneCachePlayableMixer : BasePlayableMixer<SceneCachePlayableAss
 
     protected override void InitInternalV() {       
 
-        //m_image = gameObject.GetComponent<Image>();
     }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -44,22 +43,10 @@ internal class SceneCachePlayableMixer : BasePlayableMixer<SceneCachePlayableAss
         double directorTime, TimelineClip activeClip) 
     {
 
-        // Color color = asset.GetColor();
-        // float maxFade = color.a;
-        //
-        // float fade = (float)( ((directorTime - activeClip.start) / activeClip.duration ) * maxFade);
-        // if ( asset.GetFadeType() == FadeType.FADE_OUT) {
-        //     fade = maxFade - fade;
-        // }
-        //
-        // color.a = fade;
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
     protected override void ShowObjectV(bool show) {
-        // if (null!=m_image) {
-        //     m_image.enabled = show;
-        // } 
     }
     
 //----------------------------------------------------------------------------------------------------------------------
