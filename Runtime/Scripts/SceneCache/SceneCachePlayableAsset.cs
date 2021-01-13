@@ -16,9 +16,9 @@ internal class SceneCachePlayableAsset : PlayableAsset, ITimelineClipAsset {
 
     public override Playable CreatePlayable(PlayableGraph graph, GameObject go) {
         
-        FaderPlayableBehaviour bh = new FaderPlayableBehaviour();
+        SceneCachePlayableBehaviour bh = new SceneCachePlayableBehaviour();
         bh.SetSceneCachePlayer(m_sceneCachePlayerRef.Resolve(graph.GetResolver()));
-        return ScriptPlayable<FaderPlayableBehaviour>.Create(graph, bh);
+        return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, bh);
     }
    
 //----------------------------------------------------------------------------------------------------------------------
