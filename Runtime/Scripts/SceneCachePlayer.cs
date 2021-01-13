@@ -108,9 +108,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
          
         //Initialization after opening a cache file
         m_sceneCacheFilePath = System.IO.Path.GetFullPath(path).Replace('\\','/');
-        
-        m_timeRange = m_sceneCache.timeRange;
-        
+               
         UpdatePlayer(/* updateNonMaterialAssets = */ true);
         ExportMaterials(false, true);
         ResetTimeAnimation();
@@ -137,6 +135,8 @@ internal class SceneCachePlayer : MeshSyncPlayer {
             Log($"SceneCachePlayer: cache open failed ({path})", LogType.ERROR);
             return false;            
         }
+        
+        m_timeRange = m_sceneCache.timeRange;
         
 #if UNITY_EDITOR
         SetSortEntities(true);
