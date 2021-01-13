@@ -69,22 +69,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         get { return m_time; }
         set { m_time = value; }
     }
-    public bool interpolation {
-        get { return m_interpolation; }
-        set { m_interpolation = value; }
-    }
-    public BaseFrame baseFrame {
-        get { return m_baseFrame; }
-        set { m_baseFrame = value; }
-    }
-    public int frame {
-        get { return m_frame; }
-        set { m_frame = value; }
-    }
-    public int preloadLength {
-        get { return m_preloadLength; }
-        set { m_preloadLength = value; }
-    }
+
 
 #if UNITY_EDITOR
     public bool foldCacheSettings {
