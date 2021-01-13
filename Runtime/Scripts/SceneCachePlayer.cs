@@ -50,6 +50,18 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     internal string GetSceneCacheFilePath() { return m_sceneCacheFilePath; }
     internal bool IsSceneCacheOpened() { return m_sceneCache;}
     
+    internal void SetNormalizedTime(float normalizedTime) {
+        NUnit.Framework.Assert.GreaterOrEqual(0.0, normalizedTime);        
+        NUnit.Framework.Assert.LessOrEqual(1.0, normalizedTime);
+
+        //Disable automatic animator
+        m_animator.enabled = false;
+
+        float length = m_timeRange.end - m_timeRange.start;
+        m_time = m_timeRange.start + (normalizedTime) * length;
+        
+    }    
+    
 //----------------------------------------------------------------------------------------------------------------------
     #region Properties
     public int frameCount {
@@ -64,10 +76,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
             if (m_timeUnit == TimeUnit.Frames)
                 m_interpolation = false;
         }
-    }
-    public float time {
-        get { return m_time; }
-        set { m_time = value; }
     }
 
 
