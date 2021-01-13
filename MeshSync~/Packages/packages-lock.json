@@ -86,7 +86,7 @@
       }
     },
     "com.unity.meshsync.dcc-plugins": {
-      "version": "0.5.4-preview",
+      "version": "0.6.0-preview",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
