@@ -125,20 +125,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
             
             
 #if UNITY_EDITOR_OSX
-            //Delete plugin on mac to avoid errors of loading new plugin:
-            //Termination Reason: Namespace CODESIGNING, Code 0x2 
-            string installedPluginDir = Environment.GetFolderPath(Environment.SpecialFolder.Personal)
-                + $"/Library/Application Support/Blender/{dccToolVersion}/scripts/addons/MeshSyncClientBlender";
-            string[] files = System.IO.Directory.GetFiles(installedPluginDir, "*.so");
-            if (files.Length > 0) {
-                foreach (string binaryPluginFile in files) {
-                    try {
-                        File.Delete(binaryPluginFile);
-                    } catch (Exception e) {
-                        Debug.LogError("[MeshSync] Error when deleting previous plugin: " + binaryPluginFile);
-                    }
-                }
-            }
+            DeleteInstalledPluginOnMac(dccToolVersion);
 #endif            
             
             //Install
@@ -153,8 +140,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
                 Debug.LogError($"[MeshSync] Installation error. ExitCode: {exitCode}. {stderr}");
                 return false;
             }
-            
-            
+                        
         } catch (Exception e) {
             Debug.LogError("[MeshSync] Failed to install plugin. Exception: " + e.Message);
             return false;
@@ -162,7 +148,30 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
 
         return true;
     }
-    
+
+//----------------------------------------------------------------------------------------------------------------------        
+
+    void DeleteInstalledPluginOnMac(string blenderVersion) {
+        //Delete plugin on mac to avoid errors of loading new plugin:
+        //Termination Reason: Namespace CODESIGNING, Code 0x2 
+        string installedPluginDir = Environment.GetFolderPath(Environment.SpecialFolder.Personal)
+            + $"/Library/Application Support/Blender/{blenderVersion}/scripts/addons/MeshSyncClientBlender";
+        if (!Directory.Exists(installedPluginDir)) 
+            return;
+
+        string[] files = System.IO.Directory.GetFiles(installedPluginDir, "*.so");            
+        if (files.Length <=0)
+            return;
+
+        foreach (string binaryPluginFile in files) {
+            try {
+                File.Delete(binaryPluginFile);
+            } catch (Exception e) {
+                Debug.LogError($"[MeshSync] Error when overwriting plugin: {binaryPluginFile}. Error: {e}");
+            }
+        }
+
+    }
 
     
 }
