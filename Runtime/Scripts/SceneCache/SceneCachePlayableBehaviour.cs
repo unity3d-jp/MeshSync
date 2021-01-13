@@ -1,4 +1,5 @@
-﻿using UnityEngine.Playables;
+﻿using Unity.AnimeToolbox;
+using UnityEngine.Playables;
 
 namespace Unity.MeshSync
 {
@@ -20,13 +21,17 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
     
 
     public override void ProcessFrame(Playable playable, FrameData info, object playerData) {
+        if (m_sceneCachePlayer.IsNullRef()) {
+            return;
+        }
+        
         float normalizedTime = (float)( playable.GetTime() / playable.GetDuration());        
         m_sceneCachePlayer.SetNormalizedTime(normalizedTime);        
     }
 
     
 //----------------------------------------------------------------------------------------------------------------------        
-    private SceneCachePlayer m_sceneCachePlayer;
+    private SceneCachePlayer m_sceneCachePlayer = null;
 }
 
 } //end namespace
