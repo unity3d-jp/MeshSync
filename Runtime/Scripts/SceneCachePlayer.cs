@@ -1,8 +1,8 @@
 using System;
 using System.Text;
+using NUnit.Framework;
 using Unity.AnimeToolbox;
 using UnityEngine;
-using UnityEngine.Assertions;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -52,8 +52,8 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     internal bool IsSceneCacheOpened() { return m_sceneCache;}
     
     internal void SetNormalizedTime(float normalizedTime) {
-        NUnit.Framework.Assert.GreaterOrEqual(normalizedTime, 0.0f);        
-        NUnit.Framework.Assert.LessOrEqual(normalizedTime, 1.0f);
+        Assert.GreaterOrEqual(normalizedTime, 0.0f);        
+        Assert.LessOrEqual(normalizedTime, 1.0f);
 
         //Disable automatic animator
         m_animator.enabled = false;
