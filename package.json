@@ -7,7 +7,6 @@
     "dependencies": {
       "com.unity.anime-toolbox": "0.4.0-preview",
       "com.unity.editorcoroutines": "1.0.0",      
-      "com.unity.ext.nunit": "1.0.0",        
       "com.unity.modules.audio": "1.0.0",
       "com.unity.modules.animation": "1.0.0",      
       "com.unity.modules.cloth": "1.0.0",      
