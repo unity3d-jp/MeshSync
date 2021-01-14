@@ -141,6 +141,8 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         }
         
         m_timeRange = m_sceneCache.timeRange;
+
+        CheckAnimationCurveForOldVersion(); 
         
 #if UNITY_EDITOR
         SetSortEntities(true);
@@ -156,7 +158,24 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         }
         m_timePrev = -1;
     }
+//----------------------------------------------------------------------------------------------------------------------
 
+    //[TODO-sin: 2021-1-14]. This is required at the moment to handle old versions. Should be removed in ver 1.0
+    private void CheckAnimationCurveForOldVersion() {        
+        if (null != m_animationCurve) 
+            return;
+        
+        NUnit.Framework.Assert.IsNotNull(m_animationCurve);
+        
+        if (m_timeUnit == TimeUnit.Seconds) {
+            m_animationCurve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
+        } else if (m_timeUnit == TimeUnit.Frames) {
+            m_animationCurve = m_sceneCache.GetFrameCurve((int)m_baseFrame);
+        }            
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
+    
 #if UNITY_EDITOR
     internal bool ResetTimeAnimation() {
         if (m_sceneCache.sceneCount < 2)
@@ -198,12 +217,13 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         clip.SetCurve("", tPlayer, "m_time", null);
         clip.SetCurve("", tPlayer, "m_frame", null);
         if (m_timeUnit == TimeUnit.Seconds) {
-            AnimationCurve curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
-            clip.SetCurve("", tPlayer, "m_time", curve);
+            m_animationCurve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
+            clip.SetCurve("", tPlayer, "m_time", m_animationCurve);
         } else if (m_timeUnit == TimeUnit.Frames) {
-            AnimationCurve curve = m_sceneCache.GetFrameCurve((int)m_baseFrame);
-            clip.SetCurve("", tPlayer, "m_frame", curve);
+            m_animationCurve = m_sceneCache.GetFrameCurve((int)m_baseFrame);
+            clip.SetCurve("", tPlayer, "m_frame", m_animationCurve);
         }
+        
 
         AssetDatabase.SaveAssets();
         UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
@@ -387,7 +407,9 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     [SerializeField] BaseFrame m_baseFrame     = BaseFrame.One;
     [SerializeField] int       m_frame         = 1;
     [SerializeField] int       m_preloadLength = 1;
-   
+
+    [SerializeField] private AnimationCurve m_animationCurve = null; //Can be from time/frame depending on m_timeUnit
+    
     [HideInInspector][SerializeField] private int m_version = (int) CUR_SCENE_CACHE_PLAYER_VERSION;
     private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.STRING_PATH_0_4_0;
     
