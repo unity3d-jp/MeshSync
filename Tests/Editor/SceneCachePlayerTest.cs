@@ -11,8 +11,8 @@ public class SceneCachePlayerTest  {
 
     [Test]
     public void CreateSceneCache() {
-        CreateAndDeleteSceneCachePlayerPrefab(CUBE_TEST_DATA_PATH);
-        CreateAndDeleteSceneCachePlayerPrefab(SPHERE_TEST_DATA_PATH);        
+        CreateAndDeleteSceneCachePlayerPrefab(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH);
+        CreateAndDeleteSceneCachePlayerPrefab(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH);        
     }
 
 //----------------------------------------------------------------------------------------------------------------------       
@@ -25,9 +25,9 @@ public class SceneCachePlayerTest  {
         Assert.IsFalse(player.IsSceneCacheOpened());
         
         //Change
-        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(CUBE_TEST_DATA_PATH));
+        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH));
         Assert.IsTrue(player.IsSceneCacheOpened());       
-        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(SPHERE_TEST_DATA_PATH));
+        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH));
         Assert.IsTrue(player.IsSceneCacheOpened());
 
         //Cleanup
@@ -44,7 +44,7 @@ public class SceneCachePlayerTest  {
         const string ASSETS_FOLDER    = "Assets/TestSceneCacheAssets";
             
         bool prefabCreated = SceneCachePlayerEditorUtility.CreateSceneCachePlayerAndPrefab(
-            Path.GetFullPath(CUBE_TEST_DATA_PATH), DEST_PREFAB_PATH,ASSETS_FOLDER, 
+            Path.GetFullPath(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH), DEST_PREFAB_PATH,ASSETS_FOLDER, 
             out SceneCachePlayer player, out GameObject prefab
         );
         Assert.IsTrue(prefabCreated);
@@ -57,7 +57,7 @@ public class SceneCachePlayerTest  {
         
         
         //Change
-        string newSceneCacheFilePath = Path.GetFullPath(SPHERE_TEST_DATA_PATH);
+        string newSceneCacheFilePath = Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH);
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(prefabPlayer, newSceneCacheFilePath);
         string convertedPath = newSceneCacheFilePath.Replace('\\','/');
         Assert.AreEqual(convertedPath, player.GetSceneCacheFilePath());
@@ -77,7 +77,7 @@ public class SceneCachePlayerTest  {
         const string ASSETS_FOLDER    = "Assets/TestSceneCacheAssets";
             
         bool prefabCreated = SceneCachePlayerEditorUtility.CreateSceneCachePlayerAndPrefab(
-            Path.GetFullPath(CUBE_TEST_DATA_PATH), DEST_PREFAB_PATH,ASSETS_FOLDER, 
+            Path.GetFullPath(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH), DEST_PREFAB_PATH,ASSETS_FOLDER, 
             out SceneCachePlayer player, out GameObject prefab
         );
         Assert.IsTrue(prefabCreated);
@@ -88,7 +88,7 @@ public class SceneCachePlayerTest  {
         
         
         //Change
-        string newSceneCacheFilePath = Path.GetFullPath(SPHERE_TEST_DATA_PATH);
+        string newSceneCacheFilePath = Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH);
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, newSceneCacheFilePath);
         string convertedPath = newSceneCacheFilePath.Replace('\\','/');
         Assert.IsTrue(player.IsSceneCacheOpened());
@@ -169,7 +169,7 @@ public class SceneCachePlayerTest  {
         string       streamingAssetsPath = Path.Combine(destFolder,"Copied.sc");
             
         bool prefabCreated = SceneCachePlayerEditorUtility.CreateSceneCachePlayerAndPrefab(
-            Path.GetFullPath(CUBE_TEST_DATA_PATH), DEST_PREFAB_PATH,ASSETS_FOLDER, 
+            Path.GetFullPath(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH), DEST_PREFAB_PATH,ASSETS_FOLDER, 
             out SceneCachePlayer player, out GameObject prefab
         );
         Assert.IsTrue(prefabCreated);
@@ -195,9 +195,6 @@ public class SceneCachePlayerTest  {
 
 //----------------------------------------------------------------------------------------------------------------------    
     
-    private static readonly string TEST_DATA_PATH = Path.Combine("Packages", MeshSyncConstants.PACKAGE_NAME, "Tests", "Data");
-    private static readonly string CUBE_TEST_DATA_PATH   = Path.Combine(TEST_DATA_PATH, "Cube.sc");
-    private static readonly string SPHERE_TEST_DATA_PATH = Path.Combine(TEST_DATA_PATH, "Sphere.sc");
     
 }
 
