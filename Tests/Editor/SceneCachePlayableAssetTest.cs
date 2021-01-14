@@ -49,13 +49,20 @@ internal class SceneCachePlayableAssetTest {
         yield return null;
         
         Assert.AreEqual(0, playableAsset.GetNormalizedTime());
-        director.time = clip.duration-0.0001f;
-        TimelineEditor.Refresh(RefreshReason.SceneNeedsUpdate);         
+        double timePerFrame = 1.0f / sceneCacheTrack.timelineAsset.editorSettings.fps;
+        
+        SetDirectorTime(director, clip.duration - timePerFrame);
         yield return null;
         
-        Assert.AreEqual(1, playableAsset.GetNormalizedTime());
+        Assert.AreEqual((float)((clip.duration - timePerFrame) / clip.duration), playableAsset.GetNormalizedTime());
     }
    
+    
+//----------------------------------------------------------------------------------------------------------------------
+    private static void SetDirectorTime(PlayableDirector director, double time) {
+        director.time = time;
+        TimelineEditor.Refresh(RefreshReason.SceneNeedsUpdate); 
+    }        
     
 }
 
