@@ -61,8 +61,12 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         float length = m_timeRange.end - m_timeRange.start;
         m_time = m_timeRange.start + (normalizedTime) * length;
         
-    }    
-    
+        m_normalizedTime = normalizedTime;
+    }
+
+    internal float GetNormalizedTime() { return m_normalizedTime; }
+
+
 //----------------------------------------------------------------------------------------------------------------------
     #region Properties
     public int frameCount {
@@ -392,6 +396,8 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     TimeRange      m_timeRange;
     float          m_timePrev = -1;
     Animator       m_animator = null;
+
+    private float m_normalizedTime = 0;
 
 #if UNITY_EDITOR
     [SerializeField] bool m_foldCacheSettings = true;
