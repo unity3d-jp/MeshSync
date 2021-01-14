@@ -58,8 +58,24 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         //Disable automatic animator
         m_animator.enabled = false;
 
-        float length = m_timeRange.end - m_timeRange.start;
-        m_time = m_timeRange.start + (normalizedTime) * length;
+        //Get the value from the curve
+        float endKeyTime   = m_animationCurve.keys[m_animationCurve.length - 1].time;
+        float startKeyTime = m_animationCurve.keys[0].time;
+        float length       = endKeyTime - startKeyTime;
+        float t            = startKeyTime + (normalizedTime) * length;
+
+        switch (m_timeUnit) {
+            case TimeUnit.Seconds: {
+                m_time = m_animationCurve.Evaluate(t);
+                break;
+            }
+            case TimeUnit.Frames: {
+                m_frame = (int) m_animationCurve.Evaluate(t);
+                break;
+            }
+            default: break;
+        }
+
         
         m_normalizedTime = normalizedTime;
     }
@@ -165,7 +181,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         if (null != m_animationCurve) 
             return;
         
-        NUnit.Framework.Assert.IsNotNull(m_animationCurve);
+        NUnit.Framework.Assert.IsNotNull(m_sceneCache);
         
         if (m_timeUnit == TimeUnit.Seconds) {
             m_animationCurve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
