@@ -58,6 +58,12 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         //Disable automatic animator
         m_animator.enabled = false;
 
+        if (m_animationCurve.length <= 0) {
+            Debug.LogWarning($"[MeshSync] The SceneCache of {gameObject.name} has no animation keys");
+            return;
+        }
+        
+
         //Get the value from the curve
         float endKeyTime   = m_animationCurve.keys[m_animationCurve.length - 1].time;
         float startKeyTime = m_animationCurve.keys[0].time;
