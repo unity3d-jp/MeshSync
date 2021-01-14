@@ -41,7 +41,7 @@ internal class SceneCachePlayableAsset : PlayableAsset, ITimelineClipAsset {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    private ExposedReference<SceneCachePlayer>  m_sceneCachePlayerRef;
+    [SerializeField] private ExposedReference<SceneCachePlayer>  m_sceneCachePlayerRef;
 
     
     SceneCachePlayableBehaviour m_sceneCachePlayableBehaviour = null;
