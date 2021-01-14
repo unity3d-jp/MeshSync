@@ -178,7 +178,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
     //[TODO-sin: 2021-1-14]. This is required at the moment to handle old versions. Should be removed in ver 1.0
     private void CheckAnimationCurveForOldVersion() {        
-        if (null != m_animationCurve) 
+        if (null != m_animationCurve && m_animationCurve.length > 0) 
             return;
         
         NUnit.Framework.Assert.IsNotNull(m_sceneCache);
