@@ -186,7 +186,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         if (null != m_animationCurve && m_animationCurve.length > 0) 
             return;
         
-        NUnit.Framework.Assert.IsNotNull(m_sceneCache);
+        Assert.IsTrue(m_sceneCache);
         
         if (m_timeUnit == TimeUnit.Seconds) {
             m_animationCurve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
