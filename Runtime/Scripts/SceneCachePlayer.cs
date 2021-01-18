@@ -51,7 +51,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     internal string GetSceneCacheFilePath() { return m_sceneCacheFilePath; }
     internal bool IsSceneCacheOpened() { return m_sceneCache;}
     
-    internal void SetNormalizedTime(float normalizedTime) {
+    internal void RequestNormalizedTime(float normalizedTime) {
         Assert.IsTrue(normalizedTime >= 0.0f && normalizedTime <= 1.0f);        
 
         //Disable automatic animator
@@ -82,10 +82,10 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         }
 
         
-        m_normalizedTime = normalizedTime;
+        m_requestedNormalizedTime = normalizedTime;
     }
 
-    internal float GetNormalizedTime() { return m_normalizedTime; }
+    internal float GetRequestedNormalizedTime() { return m_requestedNormalizedTime; }
 
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -440,7 +440,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     float          m_timePrev = -1;
     Animator       m_animator = null;
 
-    private float m_normalizedTime = 0;
+    private float m_requestedNormalizedTime = 0;
 
 #if UNITY_EDITOR
     [SerializeField] bool m_foldCacheSettings = true;
