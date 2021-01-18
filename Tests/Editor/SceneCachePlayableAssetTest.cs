@@ -34,7 +34,7 @@ internal class SceneCachePlayableAssetTest {
 
         //Create PlayableAsset/Track/ etc
         SceneCachePlayableAsset playableAsset   = ScriptableObject.CreateInstance<SceneCachePlayableAsset>();
-        SceneCacheTrack         sceneCacheTrack = asset.CreateTrack<SceneCacheTrack>(null, "Footage");
+        SceneCacheTrack         sceneCacheTrack = asset.CreateTrack<SceneCacheTrack>(null, "TestSceneCacheTrack");
         TimelineClip            clip       = sceneCacheTrack.CreateDefaultClip();
         clip.asset = playableAsset;        
         director.SetReferenceValue(playableAsset.GetSceneCachePlayerRef().exposedName, sceneCachePlayer );
