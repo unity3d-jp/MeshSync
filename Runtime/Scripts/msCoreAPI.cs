@@ -2202,31 +2202,34 @@ namespace Unity.MeshSync
             msISceneCachePreload(self, frame);
         }
 
-        internal AnimationCurve GetTimeCurve(InterpolationMode im)
-        {
-            var data = msISceneCacheGetTimeCurve(self);
+//----------------------------------------------------------------------------------------------------------------------        
+        internal AnimationCurve GetTimeCurve(InterpolationMode im) {
+            AnimationCurveData data = msISceneCacheGetTimeCurve(self);
             if (!data)
                 return null;
 
-            AnimationClipData.Prepare();
-            data.Convert(im);
-            var keys = new Keyframe[data.GetKeyCount(0)];
-            data.Copy(0, keys);
-            return new AnimationCurve(keys);
+            return CreateAnimationCurveFromData(data, im);            
         }
 
-        public AnimationCurve GetFrameCurve(int baseFrame)
-        {
-            var data = msISceneCacheGetFrameCurve(self, baseFrame);
+        public AnimationCurve GetFrameCurve(int baseFrame) {
+            AnimationCurveData data = msISceneCacheGetFrameCurve(self, baseFrame);
             if (!data)
                 return null;
 
+            return CreateAnimationCurveFromData(data, InterpolationMode.Constant);            
+        }
+
+//----------------------------------------------------------------------------------------------------------------------        
+        static AnimationCurve CreateAnimationCurveFromData(AnimationCurveData curveData,
+            InterpolationMode interpolationMode) 
+        {
             AnimationClipData.Prepare();
-            data.Convert(InterpolationMode.Constant);
-            var keys = new Keyframe[data.GetKeyCount(0)];
-            data.Copy(0, keys);
+            curveData.Convert(interpolationMode);
+            Keyframe[] keys = new Keyframe[curveData.GetKeyCount(0)];
+            curveData.Copy(0, keys);
             return new AnimationCurve(keys);
         }
+        
     }
     #endregion
 }
