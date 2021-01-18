@@ -82,10 +82,10 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         }
 
         
-        m_requestedNormalizedTime = normalizedTime;
+        m_reqNormalizedTime = normalizedTime;
     }
 
-    internal float GetRequestedNormalizedTime() { return m_requestedNormalizedTime; }
+    internal float GetRequestedNormalizedTime() { return m_reqNormalizedTime; }
 
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -440,7 +440,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     float          m_timePrev = -1;
     Animator       m_animator = null;
 
-    private float m_requestedNormalizedTime = 0;
+    private float m_reqNormalizedTime = 0;
 
 #if UNITY_EDITOR
     [SerializeField] bool m_foldCacheSettings = true;
