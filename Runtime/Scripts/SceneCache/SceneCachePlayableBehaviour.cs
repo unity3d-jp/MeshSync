@@ -26,7 +26,7 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
         }
         
         float normalizedTime = (float)( playable.GetTime() / playable.GetDuration());        
-        m_sceneCachePlayer.SetNormalizedTime(normalizedTime);        
+        m_sceneCachePlayer.RequestNormalizedTime(normalizedTime);        
     }
 
     

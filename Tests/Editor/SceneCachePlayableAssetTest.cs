@@ -34,7 +34,7 @@ internal class SceneCachePlayableAssetTest {
 
         //Create PlayableAsset/Track/ etc
         SceneCachePlayableAsset playableAsset   = ScriptableObject.CreateInstance<SceneCachePlayableAsset>();
-        SceneCacheTrack         sceneCacheTrack = asset.CreateTrack<SceneCacheTrack>(null, "Footage");
+        SceneCacheTrack         sceneCacheTrack = asset.CreateTrack<SceneCacheTrack>(null, "TestSceneCacheTrack");
         TimelineClip            clip       = sceneCacheTrack.CreateDefaultClip();
         clip.asset = playableAsset;        
         director.SetReferenceValue(playableAsset.GetSceneCachePlayerRef().exposedName, sceneCachePlayer );
@@ -51,7 +51,7 @@ internal class SceneCachePlayableAssetTest {
         Assert.AreEqual(0, playableAsset.GetNormalizedTime());
         double timePerFrame = 1.0f / sceneCacheTrack.timelineAsset.editorSettings.fps;
         
-        SetDirectorTime(director, clip.duration - timePerFrame);
+        SetDirectorTime(director, clip.start + clip.duration - timePerFrame);
         yield return null;
         
         Assert.AreEqual((float)((clip.duration - timePerFrame) / clip.duration), playableAsset.GetNormalizedTime());

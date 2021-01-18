@@ -32,7 +32,7 @@ internal class SceneCachePlayableAsset : PlayableAsset, ITimelineClipAsset {
         if (null == sc)
             return 0;
         
-        return sc.GetNormalizedTime();
+        return sc.GetRequestedNormalizedTime();
     }
 
 //----------------------------------------------------------------------------------------------------------------------
