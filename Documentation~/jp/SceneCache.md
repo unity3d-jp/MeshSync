@@ -1,13 +1,13 @@
 # Scene Cache
 
-シーンキャッシュは、DCC ツールにインストールされた
+Scene Cache は、DCC ツールにインストールされた
 [MeshSyncDCCPlugins](https://github.com/Unity-Technologies/MeshSyncDCCPlugins)
 を使ってエクスポートされた *.sc* ファイルの全フレームを再生するための機能です。  
 この機能は [AlembicForUnity](https://docs.unity3d.com/Packages/com.unity.formats.alembic@latest/index.html)
-と非常によく似ていますが、次の違いがあります：
+と非常によく似ていますが、下記の違いがあります：
 
-1. シーンキャッシュは、全フレームを正確にかつ、かつ高速に再生するように設計されています。
-1. シーンキャッシュはマテリアルのエクスポート・インポートをサポートします。
+1. Scene Cache は、全フレームを正確にかつ高速に再生するように設計されています。
+1. Scene Cache はマテリアルのエクスポート・インポートをサポートします。
 1. Alembic とは異なり、*.sc* ファイルは Unity でのみ再生できます。
 
 # 使い方
@@ -15,7 +15,7 @@
 **Game Object > MeshSync > Create Cache Player** メニューを選択し、
 DCC 側でエクスポートした *.sc* ファイルを選択します。
 これによって、[SceneCachePlayer](#scene-cache-player)
-コンポネントが入っているいる GameObject が生成され、PlayMode の時に自動的に再生されます。
+コンポネントが入っている GameObject が生成され、PlayMode の時に自動的に再生されます。
 
 ![Menu](../images/MenuCreateCachePlayer.png)
 
@@ -23,15 +23,15 @@ DCC 側でエクスポートした *.sc* ファイルを選択します。
 
 ![Menu](../images/SceneCacheInTimeline.png)
 
-下記の手順を行くことで、
+下記の手順を行うことで、
 [Timeline](https://docs.unity3d.com/ja/Packages/com.unity.timeline@1.5/manual/index.html) 
-経由で Scene Cache の再生を制御することもできます。
+経由で Scene Cache の再生を制御することができます。
 
-1. TImeline ウィンドウを開きます。
+1. Timeline ウィンドウを開きます。
 1. Timeline ウィンドウで **Unity.MeshSync > Scene Cache Track** をクリックし、
    **SceneCacheTrack** を追加します。
 1. 新しく追加されたトラックを右クリックし、**Add Scene Cache Playable Asset** をクリックします。
-1. SceneCachePlayer の GameObjectを **SceneCachePlayableAsset** の *Scene Cache Playable Ref* 
+1. SceneCachePlayer の GameObject を **SceneCachePlayableAsset** の *Scene Cache Playable Ref* 
    プロパティにドラッグアンドドロップします。
 
 ## Scene Cache Player
