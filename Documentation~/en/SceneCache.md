@@ -21,6 +21,19 @@ which will be played automatically in playmode.
 
 ### Timeline
 
+![Menu](../images/SceneCacheInTimeline.png)
+
+We can also control the playback of Scene Cache via 
+[Timeline](https://docs.unity3d.com/Packages/com.unity.timeline@latest) 
+by performing the following steps:
+
+
+1. Open the Timeline window.
+1. Add a **SceneCacheTrack** in the Timeline Window.
+1. Right click in the newly added track, and click **Add Scene Cache Playable Asset**.
+1. Drag and drop the GameObject with SceneCachePlayer component to the *Scene Cache Playable Ref* 
+   property of **SceneCachePlayableAsset**
+
 
 ## Scene Cache Player
 
