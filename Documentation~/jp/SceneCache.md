@@ -30,9 +30,7 @@ DCC 側でエクスポートした *.sc* ファイルを選択します。
 1. Timeline ウィンドウを開きます。
 1. Timeline ウィンドウで **Unity.MeshSync > Scene Cache Track** をクリックし、
    **SceneCacheTrack** を追加します。
-1. 新しく追加されたトラックを右クリックし、**Add Scene Cache Playable Asset** をクリックします。
-1. SceneCachePlayer の GameObject を **SceneCachePlayableAsset** の *Scene Cache Playable Ref* 
-   プロパティにドラッグアンドドロップします。
+1. SceneCachePlayer の GameObject を新しく追加されたトラックにドラッグアンドドロップします。
 
 ## Scene Cache Player
 

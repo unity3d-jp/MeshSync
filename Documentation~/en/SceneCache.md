@@ -32,9 +32,7 @@ by performing the following steps:
 1. Open the Timeline window.
 1. In the Timeline Window, click **Unity.MeshSync > Scene Cache Track** 
    to add a **SceneCacheTrack**.
-1. Right click in the newly added track, and click **Add Scene Cache Playable Asset**.
-1. Drag and drop the SceneCachePlayer GameObject to the *Scene Cache Playable Ref* 
-   property of **SceneCachePlayableAsset**
+1. Drag and drop the SceneCachePlayer GameObject to the newly added track.
 
 
 ## Scene Cache Player
