@@ -2,7 +2,7 @@
 
 Scene Cache is a feature to playback all frames of an *.sc* file that 
 was exported using [MeshSyncDCCPlugins](https://github.com/Unity-Technologies/MeshSyncDCCPlugins)
-installed in a DCC Tool. 
+installed in a DCC Tool.   
 This functionality is very similar to [AlembicForUnity](https://docs.unity3d.com/Packages/com.unity.formats.alembic@latest/index.html),
 but it has the following differences:
 
@@ -14,8 +14,9 @@ but it has the following differences:
 
 From the menu, select **Game Object > MeshSync > Create Cache Player**, 
 and then select the *.sc* file exported by the DCC tool.  
-This will automatically create a GameObject with SceneCachePlayer component, 
-which will be played automatically in playmode.
+This will automatically create a GameObject with 
+[SceneCachePlayer](#scene-cache-player) component, 
+which will be played automatically in PlayMode.
 
 ![Menu](../images/MenuCreateCachePlayer.png)
 
@@ -29,9 +30,10 @@ by performing the following steps:
 
 
 1. Open the Timeline window.
-1. Add a **SceneCacheTrack** in the Timeline Window.
+1. In the Timeline Window, click **Unity.MeshSync > Scene Cache Track** 
+   to add a **SceneCacheTrack**.
 1. Right click in the newly added track, and click **Add Scene Cache Playable Asset**.
-1. Drag and drop the GameObject with SceneCachePlayer component to the *Scene Cache Playable Ref* 
+1. Drag and drop the SceneCachePlayer GameObject to the *Scene Cache Playable Ref* 
    property of **SceneCachePlayableAsset**
 
 
