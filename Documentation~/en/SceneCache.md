@@ -19,7 +19,7 @@ which will be played automatically in playmode.
 
 ![Menu](../images/MenuCreateCachePlayer.png)
 
-### Timeline
+### Playback via Timeline
 
 ![Menu](../images/SceneCacheInTimeline.png)
 
