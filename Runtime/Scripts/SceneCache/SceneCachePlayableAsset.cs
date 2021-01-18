@@ -17,7 +17,11 @@ internal class SceneCachePlayableAsset : PlayableAsset, ITimelineClipAsset {
     public override Playable CreatePlayable(PlayableGraph graph, GameObject go) {
         
         m_sceneCachePlayableBehaviour = new SceneCachePlayableBehaviour();
-        m_sceneCachePlayableBehaviour.SetSceneCachePlayer(m_sceneCachePlayerRef.Resolve(graph.GetResolver()));
+        SceneCachePlayer scPlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
+        if (scPlayer) {
+            scPlayer.SetAutoplay(false);   
+        }        
+        m_sceneCachePlayableBehaviour.SetSceneCachePlayer(scPlayer);
         return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, m_sceneCachePlayableBehaviour);
     }
 

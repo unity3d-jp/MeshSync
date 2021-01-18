@@ -50,7 +50,18 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
     internal string GetSceneCacheFilePath() { return m_sceneCacheFilePath; }
     internal bool IsSceneCacheOpened() { return m_sceneCache;}
+
+    internal void SetAutoplay(bool autoPlay) {
+        //[Note-sin: 2021-1-18] May be called before m_animator is initialized in Playmode.
+        //It is expected that the animator was already disabled previously in EditMode though.
+        if (null == m_animator)
+            return;
+        
+        m_animator.enabled = autoPlay;
+    }
     
+    
+//----------------------------------------------------------------------------------------------------------------------
     internal void RequestNormalizedTime(float normalizedTime) {
         Assert.IsTrue(normalizedTime >= 0.0f && normalizedTime <= 1.0f);        
 
