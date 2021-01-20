@@ -6,8 +6,15 @@ using UnityEngine.Timeline;
 
 namespace Unity.MeshSync {
 
+/// <summary>
+/// The PlayableAsset of the TimelineClip to be used inside the Timeline Window.
+/// Implements the following interfaces:
+/// - ITimelineClipAsset: for defining clip capabilities (ClipCaps) 
+/// - IPlayableBehaviour: for displaying the curves in the timeline window
+/// </summary>
+
 [System.Serializable] 
-internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCacheClipData>, ITimelineClipAsset {
+internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCacheClipData>, ITimelineClipAsset, IPlayableBehaviour {
     
 //----------------------------------------------------------------------------------------------------------------------
     public ClipCaps clipCaps {
@@ -37,7 +44,49 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         
         return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, m_sceneCachePlayableBehaviour);
     }
+   
+//----------------------------------------------------------------------------------------------------------------------
+    
+    #region IPlayableBehaviour interfaces
+    /// <inheritdoc/>
+    public void OnBehaviourPause(Playable playable, FrameData info) {
 
+    }
+    
+    /// <inheritdoc/>
+    public void OnBehaviourPlay(Playable playable, FrameData info) {
+
+    }
+    
+    
+    /// <inheritdoc/>
+    public void OnGraphStart(Playable playable) {       
+    }
+    
+    
+    /// <inheritdoc/>
+    public void OnGraphStop(Playable playable) {
+    }
+    
+    /// <inheritdoc/>
+    public void OnPlayableCreate(Playable playable) {
+
+    }
+    /// <inheritdoc/>
+    public void OnPlayableDestroy(Playable playable) {
+    }
+    
+    /// <inheritdoc/>
+    public void PrepareFrame(Playable playable, FrameData info) {
+
+    }
+
+    /// <inheritdoc/>
+    public void ProcessFrame(Playable playable, FrameData info, object playerData) {
+    }
+
+    #endregion
+    
 //----------------------------------------------------------------------------------------------------------------------
 
     internal float GetNormalizedTime() {
@@ -51,18 +100,19 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         
         return sc.GetRequestedNormalizedTime();
     }
-
+    
 //----------------------------------------------------------------------------------------------------------------------
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    [SerializeField] private ExposedReference<SceneCachePlayer>  m_sceneCachePlayerRef;
+    [SerializeField] private ExposedReference<SceneCachePlayer> m_sceneCachePlayerRef;
+    [SerializeField]         double                             m_time;
 
     
     SceneCachePlayableBehaviour m_sceneCachePlayableBehaviour = null;
-    
+   
 }
 
 
