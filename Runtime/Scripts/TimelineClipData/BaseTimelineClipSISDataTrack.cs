@@ -8,7 +8,10 @@ namespace Unity.StreamingImageSequence {
 /// <summary>
 /// A track which requires its TimelineClip to store BaseTimelineClipData as an extension
 /// </summary>
-internal abstract class BaseTimelineClipSISDataTrack<T> : BaseSISTrack where T: BaseTimelineClipDataPlayableAsset {
+internal abstract class BaseTimelineClipSISDataTrack<P,D> : BaseSISTrack 
+    where P: BaseTimelineClipDataPlayableAsset
+    where D: BaseTimelineClipData
+{
    
     
     
@@ -24,7 +27,7 @@ internal abstract class BaseTimelineClipSISDataTrack<T> : BaseSISTrack where T: 
             if (null != m_sisDataCollection && m_sisDataCollection.ContainsKey(clip)) {                
                 data =   m_sisDataCollection[clip];
             } else {                
-                T sisPlayableAsset = clip.asset as T;
+                P sisPlayableAsset = clip.asset as P;
                 Assert.IsNotNull(sisPlayableAsset);                 
                 data = sisPlayableAsset.GetBoundTimelineClipData();
             }
@@ -100,7 +103,7 @@ internal abstract class BaseTimelineClipSISDataTrack<T> : BaseSISTrack where T: 
     private void InitTimelineClipSISData() {
         //Initialize PlayableAssets and BaseTimelineClipData       
         foreach (TimelineClip clip in GetClips()) {
-            T sisPlayableAsset = clip.asset as T;
+            P sisPlayableAsset = clip.asset as P;
             Assert.IsNotNull(sisPlayableAsset);               
             
             BaseTimelineClipData sceneCacheClipData = sisPlayableAsset.GetBoundTimelineClipData();
