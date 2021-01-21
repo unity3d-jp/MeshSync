@@ -8,18 +8,18 @@ namespace Unity.StreamingImageSequence {
 internal abstract class BaseTimelineClipDataPlayableAsset : PlayableAsset{
 
     protected virtual void OnDestroy() {          
-        m_sceneCacheClipData?.Destroy();           
+        m_clipData?.Destroy();           
     }
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    internal void BindTimelineClipSISData(SceneCacheClipData data) { m_sceneCacheClipData = data;}         
-    internal SceneCacheClipData GetBoundTimelineClipSISData() { return m_sceneCacheClipData; }    
+    internal void BindTimelineClipData(BaseTimelineClipData data) { m_clipData = data;}         
+    internal BaseTimelineClipData GetBoundTimelineClipData() { return m_clipData; }    
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    //[Note-sin: 2020-6-30] SceneCacheClipData stores extra data of TimelineClip
-    [NonSerialized] private SceneCacheClipData m_sceneCacheClipData = null;
+    //[Note-sin: 2020-6-30] BaseTimelineClipData stores extra data for TimelineClip
+    [NonSerialized] private BaseTimelineClipData m_clipData = null;
     
 }
 

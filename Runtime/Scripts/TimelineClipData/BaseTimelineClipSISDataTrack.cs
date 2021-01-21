@@ -6,7 +6,7 @@ using UnityEngine.Assertions;
 
 namespace Unity.StreamingImageSequence { 
 /// <summary>
-/// A track which requires its TimelineClip to store SceneCacheClipData as an extension
+/// A track which requires its TimelineClip to store BaseTimelineClipData as an extension
 /// </summary>
 internal abstract class BaseTimelineClipSISDataTrack<T> : BaseSISTrack where T: BaseTimelineClipDataPlayableAsset {
    
@@ -16,21 +16,21 @@ internal abstract class BaseTimelineClipSISDataTrack<T> : BaseSISTrack where T: 
     /// <inheritdoc/>
     protected override void OnBeforeTrackSerialize() {
         base.OnBeforeTrackSerialize();
-        m_serializedSISDataCollection = new List<SceneCacheClipData>();
+        m_serializedSISDataCollection = new List<BaseTimelineClipData>();
         
         foreach (TimelineClip clip in GetClips()) {
-            SceneCacheClipData data = null;
+            BaseTimelineClipData data = null;
 
             if (null != m_sisDataCollection && m_sisDataCollection.ContainsKey(clip)) {                
                 data =   m_sisDataCollection[clip];
             } else {                
                 T sisPlayableAsset = clip.asset as T;
                 Assert.IsNotNull(sisPlayableAsset);                 
-                data = sisPlayableAsset.GetBoundTimelineClipSISData();
+                data = sisPlayableAsset.GetBoundTimelineClipData();
             }
 
             if (null == data) {
-                data = new SceneCacheClipData(clip);
+                data = new BaseTimelineClipData(clip);
             }
             
                        
@@ -41,16 +41,16 @@ internal abstract class BaseTimelineClipSISDataTrack<T> : BaseSISTrack where T: 
     /// <inheritdoc/>
     protected override  void OnAfterTrackDeserialize() {
         base.OnAfterTrackDeserialize();
-        m_sisDataCollection = new Dictionary<TimelineClip, SceneCacheClipData>();
+        m_sisDataCollection = new Dictionary<TimelineClip, BaseTimelineClipData>();
         
         
         IEnumerator<TimelineClip> clipEnumerator = GetClips().GetEnumerator();
-        List<SceneCacheClipData>.Enumerator sisEnumerator = m_serializedSISDataCollection.GetEnumerator();
+        List<BaseTimelineClipData>.Enumerator sisEnumerator = m_serializedSISDataCollection.GetEnumerator();
         while (clipEnumerator.MoveNext() && sisEnumerator.MoveNext()) {
             TimelineClip clip = clipEnumerator.Current;
             Assert.IsNotNull(clip);
 
-            SceneCacheClipData sceneCacheClipData = sisEnumerator.Current;
+            BaseTimelineClipData sceneCacheClipData = sisEnumerator.Current;
             Assert.IsNotNull(sceneCacheClipData);           
             
             m_sisDataCollection[clip] = sceneCacheClipData;
@@ -66,7 +66,7 @@ internal abstract class BaseTimelineClipSISDataTrack<T> : BaseSISTrack where T: 
     public sealed override Playable CreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount) {
                
         if (null == m_sisDataCollection) {
-            m_sisDataCollection = new Dictionary<TimelineClip, SceneCacheClipData>();
+            m_sisDataCollection = new Dictionary<TimelineClip, BaseTimelineClipData>();
         }
         InitTimelineClipSISData();
         Playable mixer = CreateTrackMixerInternal(graph, go, inputCount);
@@ -84,26 +84,26 @@ internal abstract class BaseTimelineClipSISDataTrack<T> : BaseSISTrack where T: 
     
 
 //----------------------------------------------------------------------------------------------------------------------
-    private SceneCacheClipData GetOrCreateTimelineClipSISData(TimelineClip clip) {
+    private BaseTimelineClipData GetOrCreateTimelineClipSISData(TimelineClip clip) {
         Assert.IsNotNull(m_sisDataCollection);
         
         if (m_sisDataCollection.ContainsKey(clip)) {
             return m_sisDataCollection[clip];            
         }
 
-        SceneCacheClipData data = new SceneCacheClipData(clip);
+        BaseTimelineClipData data = new BaseTimelineClipData(clip);
         m_sisDataCollection[clip] = data;
         return data;
     }
         
 //----------------------------------------------------------------------------------------------------------------------
     private void InitTimelineClipSISData() {
-        //Initialize PlayableAssets and SceneCacheClipData       
+        //Initialize PlayableAssets and BaseTimelineClipData       
         foreach (TimelineClip clip in GetClips()) {
             T sisPlayableAsset = clip.asset as T;
             Assert.IsNotNull(sisPlayableAsset);               
             
-            SceneCacheClipData sceneCacheClipData = sisPlayableAsset.GetBoundTimelineClipSISData();
+            BaseTimelineClipData sceneCacheClipData = sisPlayableAsset.GetBoundTimelineClipData();
             if (null == sceneCacheClipData) {
                 sceneCacheClipData = GetOrCreateTimelineClipSISData(clip);                
             } else {
@@ -114,7 +114,7 @@ internal abstract class BaseTimelineClipSISDataTrack<T> : BaseSISTrack where T: 
             
             //Make sure that the clip is the owner
             sceneCacheClipData.SetOwner(clip);
-            sisPlayableAsset.BindTimelineClipSISData(sceneCacheClipData);            
+            sisPlayableAsset.BindTimelineClipData(sceneCacheClipData);            
         }
         
     }
@@ -123,9 +123,9 @@ internal abstract class BaseTimelineClipSISDataTrack<T> : BaseSISTrack where T: 
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    [HideInInspector][SerializeField] List<SceneCacheClipData> m_serializedSISDataCollection = null;
+    [HideInInspector][SerializeField] List<BaseTimelineClipData> m_serializedSISDataCollection = null;
 
-    private Dictionary<TimelineClip, SceneCacheClipData> m_sisDataCollection = null;
+    private Dictionary<TimelineClip, BaseTimelineClipData> m_sisDataCollection = null;
     
 }
 
