@@ -13,8 +13,8 @@ internal abstract class BaseTimelineClipDataPlayableAsset : PlayableAsset{
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    internal void BindTimelineClipData(BaseClipData data) { m_clipData = data;}         
-    internal BaseClipData GetBoundTimelineClipData() { return m_clipData; }    
+    internal void BindClipData(BaseClipData data) { m_clipData = data;}         
+    internal BaseClipData GetBoundClipData() { return m_clipData; }    
     
 //----------------------------------------------------------------------------------------------------------------------
     

@@ -29,7 +29,7 @@ internal abstract class BaseTimelineClipDataTrack<P,D> : BaseFilmTrack
             } else {                
                 P sisPlayableAsset = clip.asset as P;
                 Assert.IsNotNull(sisPlayableAsset);                 
-                data = sisPlayableAsset.GetBoundTimelineClipData();
+                data = sisPlayableAsset.GetBoundClipData();
             }
 
             if (null == data) {
@@ -108,7 +108,7 @@ internal abstract class BaseTimelineClipDataTrack<P,D> : BaseFilmTrack
             P sisPlayableAsset = clip.asset as P;
             Assert.IsNotNull(sisPlayableAsset);               
             
-            BaseClipData sceneCacheClipData = sisPlayableAsset.GetBoundTimelineClipData();
+            BaseClipData sceneCacheClipData = sisPlayableAsset.GetBoundClipData();
             if (null == sceneCacheClipData) {
                 sceneCacheClipData = GetOrCreateTimelineClipSISData(clip);                
             } else {
@@ -119,7 +119,7 @@ internal abstract class BaseTimelineClipDataTrack<P,D> : BaseFilmTrack
             
             //Make sure that the clip is the owner
             sceneCacheClipData.SetOwner(clip);
-            sisPlayableAsset.BindTimelineClipData(sceneCacheClipData);            
+            sisPlayableAsset.BindClipData(sceneCacheClipData);            
         }
         
     }
