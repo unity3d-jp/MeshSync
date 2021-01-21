@@ -87,42 +87,32 @@ internal abstract class BaseExtendedClipTrack<P,D> : BaseTrack
 //----------------------------------------------------------------------------------------------------------------------
 
     /// <inheritdoc/>
-    public override string ToString() { return name; }
-    
+    public override string ToString() { return name; }   
 
-//----------------------------------------------------------------------------------------------------------------------
-    private BaseClipData GetOrCreateClipData(TimelineClip clip) {
-        Assert.IsNotNull(m_dataCollection);
-        
-        if (m_dataCollection.ContainsKey(clip)) {
-            return m_dataCollection[clip];            
-        }
-
-        BaseClipData data = new D();
-        data.SetOwner(clip);
-        m_dataCollection[clip] = data;
-        return data;
-    }
         
 //----------------------------------------------------------------------------------------------------------------------
     private void InitClipData() {
         //Initialize PlayableAssets and BaseClipData       
         foreach (TimelineClip clip in GetClips()) {
             P sisPlayableAsset = clip.asset as P;
-            Assert.IsNotNull(sisPlayableAsset);               
-            
-            BaseClipData sceneCacheClipData = sisPlayableAsset.GetBoundClipData();
-            if (null == sceneCacheClipData) {
-                sceneCacheClipData = GetOrCreateClipData(clip);                
+            Assert.IsNotNull(sisPlayableAsset);
+
+            //Try to get existing one, either from the collection, or the clip
+            BaseClipData clipData = null;
+            if (m_dataCollection.ContainsKey(clip)) {
+                clipData = m_dataCollection[clip];            
             } else {
-                if (!m_dataCollection.ContainsKey(clip)) {
-                    m_dataCollection.Add(clip, sceneCacheClipData);;            
-                }                
+                clipData = sisPlayableAsset.GetBoundClipData();
+            }
+
+            if (null == clipData) {
+                clipData = new D();                
             }
             
-            //Make sure that the clip is the owner
-            sceneCacheClipData.SetOwner(clip);
-            sisPlayableAsset.BindClipData(sceneCacheClipData);            
+            //Fix the required data structure
+            m_dataCollection[clip] = clipData;
+            clipData.SetOwner(clip);
+            sisPlayableAsset.BindClipData(clipData);                        
         }
         
     }
