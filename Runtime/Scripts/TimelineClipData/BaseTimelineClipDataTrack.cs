@@ -41,12 +41,15 @@ internal abstract class BaseTimelineClipDataTrack<P,D> : BaseFilmTrack
             m_serializedDataCollection.Add(data);
         }
     }
-
+    
     /// <inheritdoc/>
     protected override  void OnAfterTrackDeserialize() {
         base.OnAfterTrackDeserialize();
         m_dataCollection = new Dictionary<TimelineClip, BaseClipData>();
-        
+
+        if (null == m_serializedDataCollection) {
+            m_serializedDataCollection = new List<BaseClipData>();
+        }         
         
         IEnumerator<TimelineClip> clipEnumerator = GetClips().GetEnumerator();
         List<BaseClipData>.Enumerator sisEnumerator = m_serializedDataCollection.GetEnumerator();
