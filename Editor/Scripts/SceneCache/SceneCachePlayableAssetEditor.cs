@@ -1,4 +1,5 @@
 ﻿using JetBrains.Annotations;
+using UnityEditor;
 using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.Timeline;
@@ -28,6 +29,18 @@ internal class FaderPlayableAssetEditor : ClipEditor {
         TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved );
         
     }
+
+//----------------------------------------------------------------------------------------------------------------------    
+    //Called when a clip is changed by the Editor. (TrimStart, TrimEnd, etc)    
+    public override void OnClipChanged(TimelineClip clip) {       
+        base.OnClipChanged(clip);
+
+        //This has to be stored somewhere
+        //AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
+        
+        
+        Debug.Log("OnClipChanged");
+    }    
 
 
 }
