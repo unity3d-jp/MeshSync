@@ -1,11 +1,12 @@
-﻿using UnityEngine;
+﻿using Unity.FilmInternalUtilities;
+using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
 namespace Unity.MeshSync {
 
 [System.Serializable] 
-internal class SceneCachePlayableAsset : PlayableAsset, ITimelineClipAsset {
+internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset, ITimelineClipAsset {
     
 //----------------------------------------------------------------------------------------------------------------------
     public ClipCaps clipCaps {
