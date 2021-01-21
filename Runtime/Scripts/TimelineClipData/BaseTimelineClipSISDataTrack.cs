@@ -10,7 +10,7 @@ namespace Unity.StreamingImageSequence {
 /// </summary>
 internal abstract class BaseTimelineClipSISDataTrack<P,D> : BaseSISTrack 
     where P: BaseTimelineClipDataPlayableAsset
-    where D: BaseTimelineClipData
+    where D: BaseTimelineClipData, new()
 {
    
     
@@ -33,7 +33,8 @@ internal abstract class BaseTimelineClipSISDataTrack<P,D> : BaseSISTrack
             }
 
             if (null == data) {
-                data = new BaseTimelineClipData(clip);
+                data = new D();
+                data.SetOwner(clip);
             }
             
                        
@@ -94,7 +95,8 @@ internal abstract class BaseTimelineClipSISDataTrack<P,D> : BaseSISTrack
             return m_sisDataCollection[clip];            
         }
 
-        BaseTimelineClipData data = new BaseTimelineClipData(clip);
+        BaseTimelineClipData data = new D();
+        data.SetOwner(clip);
         m_sisDataCollection[clip] = data;
         return data;
     }

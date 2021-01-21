@@ -5,9 +5,6 @@ namespace Unity.StreamingImageSequence {
 
 [Serializable]
 internal class SceneCacheClipData : BaseTimelineClipData {
-
-    internal SceneCacheClipData(TimelineClip owner) : base(owner) {
-    }
     
 //----------------------------------------------------------------------------------------------------------------------
     

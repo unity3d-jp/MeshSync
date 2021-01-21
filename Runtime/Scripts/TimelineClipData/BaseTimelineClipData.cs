@@ -5,13 +5,8 @@ using UnityEngine.Timeline;
 namespace Unity.StreamingImageSequence {
 
 [Serializable]
-internal class BaseTimelineClipData : ISerializationCallbackReceiver {
+internal abstract class BaseTimelineClipData : ISerializationCallbackReceiver {
 
-    internal BaseTimelineClipData(TimelineClip owner) {
-        m_clipOwner = owner;
-    }
-
-    
 //----------------------------------------------------------------------------------------------------------------------
     #region ISerializationCallbackReceiver
     public void OnBeforeSerialize() {
@@ -23,7 +18,6 @@ internal class BaseTimelineClipData : ISerializationCallbackReceiver {
 //----------------------------------------------------------------------------------------------------------------------
     internal void Destroy() {
 
-
     }
     
 
@@ -34,16 +28,13 @@ internal class BaseTimelineClipData : ISerializationCallbackReceiver {
 
 //----------------------------------------------------------------------------------------------------------------------    
     
-    //The ground truth for using/dropping an image in a particular frame. See the notes below
+    //The owner of this ClipData
     [NonSerialized] private TimelineClip  m_clipOwner = null;
 
 #pragma warning disable 414    
     [HideInInspector][SerializeField] private int m_version = CUR_TIMELINE_CLIP_DATA_VERSION;        
 #pragma warning restore 414    
-    
 
-    private       bool   m_frameMarkersVisibility           = false;
-    
     private const int    CUR_TIMELINE_CLIP_DATA_VERSION = 1;
     
 }
