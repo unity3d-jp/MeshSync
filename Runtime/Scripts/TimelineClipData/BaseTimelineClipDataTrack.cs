@@ -75,7 +75,7 @@ internal abstract class BaseTimelineClipDataTrack<P,D> : BaseFilmTrack
         if (null == m_dataCollection) {
             m_dataCollection = new Dictionary<TimelineClip, BaseClipData>();
         }
-        InitTimelineClipSISData();
+        InitClipData();
         Playable mixer = CreateTrackMixerInternal(graph, go, inputCount);
         
         return mixer;
@@ -91,7 +91,7 @@ internal abstract class BaseTimelineClipDataTrack<P,D> : BaseFilmTrack
     
 
 //----------------------------------------------------------------------------------------------------------------------
-    private BaseClipData GetOrCreateTimelineClipSISData(TimelineClip clip) {
+    private BaseClipData GetOrCreateClipData(TimelineClip clip) {
         Assert.IsNotNull(m_dataCollection);
         
         if (m_dataCollection.ContainsKey(clip)) {
@@ -105,7 +105,7 @@ internal abstract class BaseTimelineClipDataTrack<P,D> : BaseFilmTrack
     }
         
 //----------------------------------------------------------------------------------------------------------------------
-    private void InitTimelineClipSISData() {
+    private void InitClipData() {
         //Initialize PlayableAssets and BaseClipData       
         foreach (TimelineClip clip in GetClips()) {
             P sisPlayableAsset = clip.asset as P;
@@ -113,7 +113,7 @@ internal abstract class BaseTimelineClipDataTrack<P,D> : BaseFilmTrack
             
             BaseClipData sceneCacheClipData = sisPlayableAsset.GetBoundClipData();
             if (null == sceneCacheClipData) {
-                sceneCacheClipData = GetOrCreateTimelineClipSISData(clip);                
+                sceneCacheClipData = GetOrCreateClipData(clip);                
             } else {
                 if (!m_dataCollection.ContainsKey(clip)) {
                     m_dataCollection.Add(clip, sceneCacheClipData);;            
