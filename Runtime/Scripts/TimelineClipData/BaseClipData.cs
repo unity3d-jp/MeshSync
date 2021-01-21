@@ -5,7 +5,7 @@ using UnityEngine.Timeline;
 namespace Unity.FilmInternalUtilities {
 
 [Serializable]
-internal abstract class BaseTimelineClipData : ISerializationCallbackReceiver {
+internal abstract class BaseClipData : ISerializationCallbackReceiver {
 
 //----------------------------------------------------------------------------------------------------------------------
     #region ISerializationCallbackReceiver
@@ -32,10 +32,10 @@ internal abstract class BaseTimelineClipData : ISerializationCallbackReceiver {
     [NonSerialized] private TimelineClip  m_clipOwner = null;
 
 #pragma warning disable 414    
-    [HideInInspector][SerializeField] private int m_version = CUR_TIMELINE_CLIP_DATA_VERSION;        
+    [HideInInspector][SerializeField] private int m_version = CUR_CLIP_DATA_VERSION;        
 #pragma warning restore 414    
 
-    private const int    CUR_TIMELINE_CLIP_DATA_VERSION = 1;
+    private const int    CUR_CLIP_DATA_VERSION = 1;
     
 }
 

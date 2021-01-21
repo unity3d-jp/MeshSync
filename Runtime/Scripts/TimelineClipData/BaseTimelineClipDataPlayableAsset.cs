@@ -13,13 +13,13 @@ internal abstract class BaseTimelineClipDataPlayableAsset : PlayableAsset{
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    internal void BindTimelineClipData(BaseTimelineClipData data) { m_clipData = data;}         
-    internal BaseTimelineClipData GetBoundTimelineClipData() { return m_clipData; }    
+    internal void BindTimelineClipData(BaseClipData data) { m_clipData = data;}         
+    internal BaseClipData GetBoundTimelineClipData() { return m_clipData; }    
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    //[Note-sin: 2021-1-21] BaseTimelineClipData stores extra data for TimelineClip
-    [NonSerialized] private BaseTimelineClipData m_clipData = null;
+    //[Note-sin: 2021-1-21] BaseClipData stores extra data for TimelineClip
+    [NonSerialized] private BaseClipData m_clipData = null;
     
 }
 

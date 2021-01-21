@@ -4,7 +4,7 @@ using UnityEngine.Timeline;
 namespace Unity.FilmInternalUtilities {
 
 [Serializable]
-internal class SceneCacheClipData : BaseTimelineClipData {
+internal class SceneCacheClipData : BaseClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
     
