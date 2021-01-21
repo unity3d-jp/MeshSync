@@ -5,7 +5,7 @@ using UnityEngine.Playables;
 
 namespace Unity.FilmInternalUtilities {
 
-internal abstract class BaseTimelineClipDataPlayableAsset : PlayableAsset{
+internal abstract class BaseExtendedClipPlayableAsset : PlayableAsset{
 
     protected virtual void OnDestroy() {          
         m_clipData?.Destroy();           
