@@ -7,8 +7,7 @@ namespace Unity.FilmInternalUtilities {
 internal class SceneCacheClipData : BaseClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
-    
-    private       bool   m_frameMarkersVisibility           = false;
+   
     
 }
 
