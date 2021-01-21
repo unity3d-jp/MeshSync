@@ -1,7 +1,6 @@
 ﻿using System;
 using Unity.FilmInternalUtilities;
 using UnityEngine;
-using UnityEngine.Timeline;
 
 namespace Unity.MeshSync {
 
@@ -26,9 +25,20 @@ internal class SceneCacheClipData : BaseClipData {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
+    internal void SetAnimationCurve(AnimationCurve curve) {
+        m_animationCurve = curve;
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
    
     [SerializeField] private SceneCachePlayer m_scPlayer;
+   
     
+//----------------------------------------------------------------------------------------------------------------------
+
+    [SerializeField] private AnimationCurve m_animationCurve;
+
+
 }
 
 
