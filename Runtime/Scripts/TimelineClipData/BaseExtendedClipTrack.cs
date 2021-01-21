@@ -8,7 +8,7 @@ namespace Unity.FilmInternalUtilities {
 /// <summary>
 /// A track which requires its TimelineClip to store BaseClipData as an extension
 /// </summary>
-internal abstract class BaseExtendedClipTrack<P,D> : BaseFilmTrack 
+internal abstract class BaseExtendedClipTrack<P,D> : BaseTrack 
     where P: BaseTimelineClipDataPlayableAsset
     where D: BaseClipData, new()
 {
