@@ -1,5 +1,5 @@
 ﻿
-namespace Unity.StreamingImageSequence
+namespace Unity.FilmInternalUtilities
 {
 internal enum SISTrackCaps {
     NONE            = 0,

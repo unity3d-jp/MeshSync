@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace Unity.StreamingImageSequence { 
+namespace Unity.FilmInternalUtilities { 
 /// <summary>
 /// A track which requires its TimelineClip to store BaseTimelineClipData as an extension
 /// </summary>

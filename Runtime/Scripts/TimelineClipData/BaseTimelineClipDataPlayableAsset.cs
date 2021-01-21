@@ -3,7 +3,7 @@
 using UnityEngine.Playables;
 
 
-namespace Unity.StreamingImageSequence {
+namespace Unity.FilmInternalUtilities {
 
 internal abstract class BaseTimelineClipDataPlayableAsset : PlayableAsset{
 
@@ -18,7 +18,7 @@ internal abstract class BaseTimelineClipDataPlayableAsset : PlayableAsset{
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    //[Note-sin: 2020-6-30] BaseTimelineClipData stores extra data for TimelineClip
+    //[Note-sin: 2021-1-21] BaseTimelineClipData stores extra data for TimelineClip
     [NonSerialized] private BaseTimelineClipData m_clipData = null;
     
 }

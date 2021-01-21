@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine.Timeline;
 
-namespace Unity.StreamingImageSequence {
+namespace Unity.FilmInternalUtilities {
 
 [Serializable]
 internal class SceneCacheClipData : BaseTimelineClipData {

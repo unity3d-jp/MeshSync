@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.Timeline;
 
-namespace Unity.StreamingImageSequence {
+namespace Unity.FilmInternalUtilities {
 
 [Serializable]
 internal abstract class BaseTimelineClipData : ISerializationCallbackReceiver {

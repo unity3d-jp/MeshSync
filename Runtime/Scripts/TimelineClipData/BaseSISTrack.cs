@@ -1,6 +1,6 @@
 ﻿using UnityEngine.Timeline;
 
-namespace Unity.StreamingImageSequence
+namespace Unity.FilmInternalUtilities
 {
     
 internal abstract class BaseSISTrack : TrackAsset {
