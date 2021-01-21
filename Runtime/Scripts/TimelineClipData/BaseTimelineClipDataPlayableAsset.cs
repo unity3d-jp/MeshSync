@@ -8,20 +8,18 @@ namespace Unity.StreamingImageSequence {
 internal abstract class BaseTimelineClipDataPlayableAsset : PlayableAsset{
 
     protected virtual void OnDestroy() {          
-        m_timelineClipData?.Destroy();           
+        m_sceneCacheClipData?.Destroy();           
     }
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    //These methods are necessary "hacks" for knowing the PlayableFrames/FrameMarkers that belong to this
-    //this StreamingImageSequencePlayableAssets        
-    internal void BindTimelineClipSISData(TimelineClipData data) { m_timelineClipData = data;}         
-    internal TimelineClipData GetBoundTimelineClipSISData() { return m_timelineClipData; }    
+    internal void BindTimelineClipSISData(SceneCacheClipData data) { m_sceneCacheClipData = data;}         
+    internal SceneCacheClipData GetBoundTimelineClipSISData() { return m_sceneCacheClipData; }    
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    //[Note-sin: 2020-6-30] TimelineClipData stores extra data of TimelineClip
-    [NonSerialized] private TimelineClipData m_timelineClipData = null;
+    //[Note-sin: 2020-6-30] SceneCacheClipData stores extra data of TimelineClip
+    [NonSerialized] private SceneCacheClipData m_sceneCacheClipData = null;
     
 }
 

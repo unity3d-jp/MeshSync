@@ -5,14 +5,12 @@ using UnityEngine.Timeline;
 namespace Unity.StreamingImageSequence {
 
 [Serializable]
-internal class TimelineClipData : ISerializationCallbackReceiver {
+internal class BaseTimelineClipData : ISerializationCallbackReceiver {
 
-    internal TimelineClipData(TimelineClip owner) {
+    internal BaseTimelineClipData(TimelineClip owner) {
         m_clipOwner = owner;
     }
 
-    internal TimelineClipData(TimelineClip owner, TimelineClipData other) : this(owner){        
-    }
     
 //----------------------------------------------------------------------------------------------------------------------
     #region ISerializationCallbackReceiver
