@@ -99,6 +99,9 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
     internal float GetRequestedNormalizedTime() { return m_reqNormalizedTime; }
 
+    internal AnimationCurve GetOrigAnimationCurve() { return m_origAnimationCurve;}
+    
+
 
 //----------------------------------------------------------------------------------------------------------------------
     #region Properties
