@@ -11,8 +11,10 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
     }
 
     internal SceneCachePlayer GetSceneCachePlayer() {
-        return m_sceneCachePlayer;
+        return m_sceneCachePlayer;        
     }
+
+    internal void SetClipData(SceneCacheClipData clipData) { m_clipData = clipData; } 
     
 //----------------------------------------------------------------------------------------------------------------------        
     public override void PrepareFrame(Playable playable, FrameData info) {
@@ -32,6 +34,9 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
     
 //----------------------------------------------------------------------------------------------------------------------        
     private SceneCachePlayer m_sceneCachePlayer = null;
+    
+    private SceneCacheClipData m_clipData = null;
+    
 }
 
 } //end namespace
