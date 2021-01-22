@@ -21,7 +21,7 @@ internal class FaderPlayableAssetEditor : ClipEditor {
                        
         //If the clip already has curves (because of cloning, etc), then we don't set anything
         if (null == clip.curves) {
-            InitCurve(clip);
+            CreateClipCurve(clip);
         }
         TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved );
         
@@ -32,6 +32,7 @@ internal class FaderPlayableAssetEditor : ClipEditor {
     public override void OnClipChanged(TimelineClip clip) {       
         base.OnClipChanged(clip);
 
+        //Debug.Log("OnClipChanged");
        
         SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
         if (null == playableAsset) {
@@ -45,20 +46,19 @@ internal class FaderPlayableAssetEditor : ClipEditor {
         }
 
         if (null == clip.curves) {
-            InitCurve(clip);
+            CreateClipCurve(clip);
         }
-        
-        
-        AnimationCurve curve = AnimationUtility.GetEditorCurve(clip.curves, m_timeCurveBinding);
+               
+        //Always apply clipCurves to clipData
+        AnimationCurve curve = AnimationUtility.GetEditorCurve(clip.curves, m_timeCurveBinding);        
         clipData.SetAnimationCurve(curve);
+        
     }    
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    private void InitCurve(TimelineClip clip) {
+    private void CreateClipCurve(TimelineClip clip) {
         clip.CreateCurves("Curves: " + clip.displayName);
-        AnimationCurve animationCurve = AnimationCurve.Linear(0, 0,3,1 ); 
-        clip.curves.SetCurve("", typeof(SceneCachePlayableAsset), "m_time", animationCurve);            
         
     }
 
