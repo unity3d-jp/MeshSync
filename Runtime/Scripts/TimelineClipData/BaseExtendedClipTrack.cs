@@ -9,7 +9,7 @@ namespace Unity.FilmInternalUtilities {
 /// A track which requires its TimelineClip to store BaseClipData as an extension
 /// </summary>
 internal abstract class BaseExtendedClipTrack<P,D> : BaseTrack 
-    where P: BaseExtendedClipPlayableAsset
+    where P: BaseExtendedClipPlayableAsset<D>
     where D: BaseClipData, new()
 {
    
@@ -19,10 +19,10 @@ internal abstract class BaseExtendedClipTrack<P,D> : BaseTrack
     /// <inheritdoc/>
     protected override void OnBeforeTrackSerialize() {
         base.OnBeforeTrackSerialize();
-        m_serializedDataCollection = new List<BaseClipData>();
+        m_serializedDataCollection = new List<D>();
         
         foreach (TimelineClip clip in GetClips()) {
-            BaseClipData data = null;
+            D data = null;
 
             if (null != m_dataCollection && m_dataCollection.ContainsKey(clip)) {                
                 data =   m_dataCollection[clip];
@@ -45,19 +45,19 @@ internal abstract class BaseExtendedClipTrack<P,D> : BaseTrack
     /// <inheritdoc/>
     protected override  void OnAfterTrackDeserialize() {
         base.OnAfterTrackDeserialize();
-        m_dataCollection = new Dictionary<TimelineClip, BaseClipData>();
+        m_dataCollection = new Dictionary<TimelineClip, D>();
 
         if (null == m_serializedDataCollection) {
-            m_serializedDataCollection = new List<BaseClipData>();
+            m_serializedDataCollection = new List<D>();
         }         
         
         IEnumerator<TimelineClip> clipEnumerator = GetClips().GetEnumerator();
-        List<BaseClipData>.Enumerator sisEnumerator = m_serializedDataCollection.GetEnumerator();
+        List<D>.Enumerator sisEnumerator = m_serializedDataCollection.GetEnumerator();
         while (clipEnumerator.MoveNext() && sisEnumerator.MoveNext()) {
             TimelineClip clip = clipEnumerator.Current;
             Assert.IsNotNull(clip);
 
-            BaseClipData sceneCacheClipData = sisEnumerator.Current;
+            D sceneCacheClipData = sisEnumerator.Current;
             Assert.IsNotNull(sceneCacheClipData);           
             
             m_dataCollection[clip] = sceneCacheClipData;
@@ -73,7 +73,7 @@ internal abstract class BaseExtendedClipTrack<P,D> : BaseTrack
     public sealed override Playable CreateTrackMixer(PlayableGraph graph, GameObject go, int inputCount) {
                
         if (null == m_dataCollection) {
-            m_dataCollection = new Dictionary<TimelineClip, BaseClipData>();
+            m_dataCollection = new Dictionary<TimelineClip, D>();
         }
         InitClipData();
         Playable mixer = CreateTrackMixerInternal(graph, go, inputCount);
@@ -98,7 +98,7 @@ internal abstract class BaseExtendedClipTrack<P,D> : BaseTrack
             Assert.IsNotNull(sisPlayableAsset);
 
             //Try to get existing one, either from the collection, or the clip
-            BaseClipData clipData = null;
+            D clipData = null;
             if (m_dataCollection.ContainsKey(clip)) {
                 clipData = m_dataCollection[clip];            
             } else {
@@ -121,10 +121,9 @@ internal abstract class BaseExtendedClipTrack<P,D> : BaseTrack
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    [HideInInspector][SerializeField] List<BaseClipData> m_serializedDataCollection = null;
+    [HideInInspector][SerializeField] List<D> m_serializedDataCollection = null;
 
-    private Dictionary<TimelineClip, BaseClipData> m_dataCollection = null;
-    
+    private Dictionary<TimelineClip, D> m_dataCollection = null;    
 }
 
 } //end namespace

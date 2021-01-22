@@ -7,7 +7,7 @@ using UnityEngine.Timeline;
 namespace Unity.MeshSync {
 
 [System.Serializable] 
-internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset, ITimelineClipAsset {
+internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCacheClipData>, ITimelineClipAsset {
     
 //----------------------------------------------------------------------------------------------------------------------
     public ClipCaps clipCaps {
