@@ -1,4 +1,6 @@
 ﻿using Unity.AnimeToolbox;
+using Unity.FilmInternalUtilities;
+using UnityEngine;
 using UnityEngine.Playables;
 
 namespace Unity.MeshSync
@@ -17,9 +19,6 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
     internal void SetClipData(SceneCacheClipData clipData) { m_clipData = clipData; } 
     
 //----------------------------------------------------------------------------------------------------------------------        
-    public override void PrepareFrame(Playable playable, FrameData info) {
-        base.PrepareFrame(playable, info);
-    }
     
 
     public override void ProcessFrame(Playable playable, FrameData info, object playerData) {
@@ -27,8 +26,13 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
             return;
         }
         
+        
+        
         float normalizedTime = (float)( playable.GetTime() / playable.GetDuration());        
-        m_sceneCachePlayer.RequestNormalizedTime(normalizedTime);        
+        m_sceneCachePlayer.RequestNormalizedTime(normalizedTime);
+        
+        Debug.Log(m_clipData.GetAnimationCurve().keys.Length);
+
     }
 
     

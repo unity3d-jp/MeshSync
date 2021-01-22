@@ -41,7 +41,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             scClipData.UnbindSceneCachePlayer();
         }
         
-        
         return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, m_sceneCachePlayableBehaviour);
     }
    
