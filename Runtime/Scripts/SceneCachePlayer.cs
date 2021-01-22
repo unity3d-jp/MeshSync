@@ -3,6 +3,7 @@ using System.Text;
 using Unity.AnimeToolbox;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Serialization;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -68,25 +69,25 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         //Disable automatic animator
         m_animator.enabled = false;
 
-        if (m_animationCurve.length <= 0) {
+        if (m_origAnimationCurve.length <= 0) {
             Debug.LogWarning($"[MeshSync] The SceneCache of {gameObject.name} has no animation keys");
             return;
         }
         
 
         //Get the value from the curve
-        float endKeyTime   = m_animationCurve.keys[m_animationCurve.length - 1].time;
-        float startKeyTime = m_animationCurve.keys[0].time;
+        float endKeyTime   = m_origAnimationCurve.keys[m_origAnimationCurve.length - 1].time;
+        float startKeyTime = m_origAnimationCurve.keys[0].time;
         float length       = endKeyTime - startKeyTime;
         float t            = startKeyTime + (normalizedTime) * length;
 
         switch (m_timeUnit) {
             case TimeUnit.Seconds: {
-                m_time = m_animationCurve.Evaluate(t);
+                m_time = m_origAnimationCurve.Evaluate(t);
                 break;
             }
             case TimeUnit.Frames: {
-                m_frame = (int) m_animationCurve.Evaluate(t);
+                m_frame = (int) m_origAnimationCurve.Evaluate(t);
                 break;
             }
             default: break;
@@ -194,15 +195,15 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
     //[TODO-sin: 2021-1-14]. This is required at the moment to handle old versions. Should be removed in ver 1.0
     private void CheckAnimationCurveForOldVersion() {        
-        if (null != m_animationCurve && m_animationCurve.length > 0) 
+        if (null != m_origAnimationCurve && m_origAnimationCurve.length > 0) 
             return;
         
         Assert.IsTrue(m_sceneCache);
         
         if (m_timeUnit == TimeUnit.Seconds) {
-            m_animationCurve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
+            m_origAnimationCurve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
         } else if (m_timeUnit == TimeUnit.Frames) {
-            m_animationCurve = m_sceneCache.GetFrameCurve((int)m_baseFrame);
+            m_origAnimationCurve = m_sceneCache.GetFrameCurve((int)m_baseFrame);
         }            
     }
     
@@ -249,11 +250,11 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         clip.SetCurve("", tPlayer, "m_time", null);
         clip.SetCurve("", tPlayer, "m_frame", null);
         if (m_timeUnit == TimeUnit.Seconds) {
-            m_animationCurve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
-            clip.SetCurve("", tPlayer, "m_time", m_animationCurve);
+            m_origAnimationCurve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
+            clip.SetCurve("", tPlayer, "m_time", m_origAnimationCurve);
         } else if (m_timeUnit == TimeUnit.Frames) {
-            m_animationCurve = m_sceneCache.GetFrameCurve((int)m_baseFrame);
-            clip.SetCurve("", tPlayer, "m_frame", m_animationCurve);
+            m_origAnimationCurve = m_sceneCache.GetFrameCurve((int)m_baseFrame);
+            clip.SetCurve("", tPlayer, "m_frame", m_origAnimationCurve);
         }
         
 
@@ -440,7 +441,8 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     [SerializeField] int       m_frame         = 1;
     [SerializeField] int       m_preloadLength = 1;
 
-    [SerializeField] private AnimationCurve m_animationCurve = null; //Can be from time/frame depending on m_timeUnit
+    //Can be from time/frame depending on m_timeUnit
+    [FormerlySerializedAs("m_animationCurve")] [SerializeField] private AnimationCurve m_origAnimationCurve = null; 
     
     [HideInInspector][SerializeField] private int m_version = (int) CUR_SCENE_CACHE_PLAYER_VERSION;
     private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.STRING_PATH_0_4_0;
