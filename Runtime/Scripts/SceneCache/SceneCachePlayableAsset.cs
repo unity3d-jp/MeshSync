@@ -1,12 +1,13 @@
 ﻿using Unity.FilmInternalUtilities;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
 namespace Unity.MeshSync {
 
 [System.Serializable] 
-internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset, ITimelineClipAsset {
+internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCacheClipData>, ITimelineClipAsset {
     
 //----------------------------------------------------------------------------------------------------------------------
     public ClipCaps clipCaps {
@@ -18,11 +19,22 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset, ITimelin
     public override Playable CreatePlayable(PlayableGraph graph, GameObject go) {
         
         m_sceneCachePlayableBehaviour = new SceneCachePlayableBehaviour();
+        SceneCacheClipData scClipData = GetBoundClipData() as SceneCacheClipData;        
+        Assert.IsNotNull(scClipData);        
+        
         SceneCachePlayer scPlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
-        if (scPlayer) {
-            scPlayer.SetAutoplay(false);   
-        }        
         m_sceneCachePlayableBehaviour.SetSceneCachePlayer(scPlayer);
+        m_sceneCachePlayableBehaviour.SetClipData(scClipData);
+        
+        //Initialize or clear curve
+        if (scPlayer) {
+            scPlayer.SetAutoplay(false);
+            scClipData.BindSceneCachePlayer(scPlayer);
+        } else {
+            scClipData.UnbindSceneCachePlayer();
+        }
+        
+        
         return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, m_sceneCachePlayableBehaviour);
     }
 
