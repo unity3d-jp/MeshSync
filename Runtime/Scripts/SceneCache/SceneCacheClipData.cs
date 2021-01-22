@@ -60,6 +60,7 @@ internal class SceneCacheClipData : BaseClipData {
         
     }
 
+//----------------------------------------------------------------------------------------------------------------------
     static bool CurveApproximately(AnimationCurve x, AnimationCurve y) {
         if (null == x && null == y)
             return true;
