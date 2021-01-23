@@ -57,8 +57,13 @@ internal class FaderPlayableAssetEditor : ClipEditor {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    private void CreateClipCurve(TimelineClip clip) {
+    private void CreateClipCurve(TimelineClip clip) {        
         clip.CreateCurves("Curves: " + clip.displayName);
+        
+        //Init dummy curve
+        AnimationCurve curve = AnimationCurve.Linear(0f,0f,(float)clip.duration,1f);
+        clip.curves.SetCurve("", typeof(SceneCachePlayableAsset), "m_time", curve);
+        
         
     }
 
