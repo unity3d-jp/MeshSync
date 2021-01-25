@@ -4,11 +4,13 @@ using Unity.FilmInternalUtilities;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Timeline;
+using System.Collections.Generic; //HashSet
 
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.Timeline;
 #endif
+
 
 namespace Unity.MeshSync {
 
@@ -31,7 +33,7 @@ internal class SceneCacheClipData : BaseClipData {
         if (null != m_animationCurve) {
             clip.duration = endTime;
         } else {
-            m_animationCurve = CreateInitialAnimationCurve(clip);
+            m_animationCurve = CreateLinearAnimationCurve(clip);
             
         }
         UpdateClipAnimationCurve(clip, m_animationCurve);
@@ -44,7 +46,7 @@ internal class SceneCacheClipData : BaseClipData {
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
         
-        m_animationCurve = CreateInitialAnimationCurve(clip);
+        m_animationCurve = CreateLinearAnimationCurve(clip);
         UpdateClipAnimationCurve(clip, m_animationCurve);
     }
 
@@ -60,7 +62,7 @@ internal class SceneCacheClipData : BaseClipData {
 
         TimeRange timeRange = scPlayer.GetTimeRange();
         endTime = timeRange.end;
-        if (Mathf.Approximately(0, endTime)) {
+        if (endTime <= 0f) {
             endTime = Mathf.Epsilon;
         }
 
@@ -76,7 +78,7 @@ internal class SceneCacheClipData : BaseClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    private static AnimationCurve CreateInitialAnimationCurve(TimelineClip clip) {
+    private static AnimationCurve CreateLinearAnimationCurve(TimelineClip clip) {
         return AnimationCurve.Linear(0f, 0f,(float) clip.duration, 1f );        
     }
     
@@ -103,6 +105,8 @@ internal class SceneCacheClipData : BaseClipData {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
+
+#if UNITY_EDITOR
     static bool CurveApproximately(AnimationCurve x, AnimationCurve y) {
         if (null == x && null == y)
             return true;
@@ -116,15 +120,17 @@ internal class SceneCacheClipData : BaseClipData {
         if (xKeys.Length != yKeys.Length)
             return false;
 
-        int lastIndex = xKeys.Length-1;
-        
-        //only check first and last frame
-        if ( KeyframeApproximately(xKeys[0],yKeys[0]) && KeyframeApproximately(xKeys[lastIndex],yKeys[lastIndex])) {
-            return true;
+        HashSet<int> framesToCheck = new HashSet<int>() {
+            0, 
+            xKeys.Length - 1
+        };
+
+        foreach (int frame in framesToCheck) {
+            if (!KeyframeApproximately(xKeys[frame], yKeys[frame]))
+                return false;
         }
 
-        return false;
-
+        return true;
     }
 
     static bool KeyframeApproximately(Keyframe k0, Keyframe k1) {
@@ -132,7 +138,7 @@ internal class SceneCacheClipData : BaseClipData {
         return Mathf.Approximately(k0.time, k1.time) && Mathf.Approximately(k0.value, k1.value);
     }
     
-    
+#endif //UNITY_EDITOR    
 
 //----------------------------------------------------------------------------------------------------------------------
     internal void           SetAnimationCurve(AnimationCurve curve) { m_animationCurve = curve; }
