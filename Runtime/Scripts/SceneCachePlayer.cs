@@ -64,38 +64,24 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     
     
 //----------------------------------------------------------------------------------------------------------------------
-    internal void RequestNormalizedTime(float normalizedTime) {
-        Assert.IsTrue(normalizedTime >= 0.0f && normalizedTime <= 1.0f);        
-
-        //Disable automatic animator
-        m_animator.enabled = false;
-
-        if (m_origAnimationCurve.length <= 0) {
-            Debug.LogWarning($"[MeshSync] The SceneCache of {gameObject.name} has no animation keys");
-            return;
-        }
+    
+    internal void SetNormalizedTime(float normalizedTime) {
+        float time = normalizedTime * m_timeRange.end;
         
-
-        //Get the value from the curve
-        float endKeyTime   = m_origAnimationCurve.keys[m_origAnimationCurve.length - 1].time;
-        float startKeyTime = m_origAnimationCurve.keys[0].time;
-        float length       = endKeyTime - startKeyTime;
-        float t            = startKeyTime + (normalizedTime) * length;
-
         switch (m_timeUnit) {
             case TimeUnit.Seconds: {
-                m_time = m_origAnimationCurve.Evaluate(t);
+                m_time = time;
+                ClampTime();
                 break;
             }
             case TimeUnit.Frames: {
-                m_frame = (int) m_origAnimationCurve.Evaluate(t);
+                m_frame = m_sceneCache.GetFrame(time);                
                 break;
             }
             default: break;
         }
-
+       
         
-        m_reqNormalizedTime = normalizedTime;
     }
 
     internal float GetRequestedNormalizedTime() { return m_reqNormalizedTime; }
@@ -401,9 +387,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 //----------------------------------------------------------------------------------------------------------------------
     
     void ClampTime() {
-        if (m_sceneCache) {
-            m_time = Mathf.Clamp(m_time, m_timeRange.start, m_timeRange.end);
-        }
+        m_time = Mathf.Clamp(m_time, m_timeRange.start, m_timeRange.end);
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -415,6 +399,9 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
 
     void OnValidate() {
+        if (!m_sceneCache)
+            return;
+        
         ClampTime();
     }
 #endif
@@ -426,6 +413,9 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         if (!string.IsNullOrEmpty(m_sceneCacheFilePath)) {
             ReopenCache();
         }
+        
+        if (!m_sceneCache)
+            return;
         
         ClampTime();
         

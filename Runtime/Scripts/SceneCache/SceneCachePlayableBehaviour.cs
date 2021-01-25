@@ -25,13 +25,10 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
         if (m_sceneCachePlayer.IsNullRef()) {
             return;
         }
-        
-        
-        
-        float normalizedTime = (float)( playable.GetTime() / playable.GetDuration());        
-        m_sceneCachePlayer.RequestNormalizedTime(normalizedTime);
-        
-        Debug.Log(m_clipData.GetAnimationCurve().keys.Length);
+                
+        AnimationCurve curve = m_clipData.GetAnimationCurve();
+        float normalizedTime = curve.Evaluate((float) playable.GetTime());
+        m_sceneCachePlayer.SetNormalizedTime(normalizedTime);
 
     }
 
