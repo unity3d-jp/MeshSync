@@ -4,6 +4,10 @@ using UnityEngine.Assertions;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace Unity.MeshSync {
 
 /// <summary>
@@ -92,6 +96,18 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 //----------------------------------------------------------------------------------------------------------------------
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
+ 
+    
+#if UNITY_EDITOR    
+    internal static EditorCurveBinding GetTimeCurveBinding() {return m_timeCurveBinding; }
+    
+    private static EditorCurveBinding m_timeCurveBinding =  
+        new EditorCurveBinding() {
+            path         = "",
+            type         = typeof(SceneCachePlayableAsset),
+            propertyName = "m_time"
+        };
+#endif 
     
 //----------------------------------------------------------------------------------------------------------------------
     

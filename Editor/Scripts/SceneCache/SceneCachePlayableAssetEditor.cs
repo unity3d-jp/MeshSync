@@ -46,7 +46,7 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         }
                
         //Always apply clipCurves to clipData
-        AnimationCurve curve = AnimationUtility.GetEditorCurve(clip.curves, m_timeCurveBinding);        
+        AnimationCurve curve = AnimationUtility.GetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding());        
         clipData.SetAnimationCurve(curve);
         
     }    
@@ -65,14 +65,6 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
-    
-    private static EditorCurveBinding m_timeCurveBinding =  
-        new EditorCurveBinding() {
-            path         = "",
-            type         = typeof(SceneCachePlayableAsset),
-            propertyName = "m_time"
-        };
-    
 
 }
 } //end namespace
