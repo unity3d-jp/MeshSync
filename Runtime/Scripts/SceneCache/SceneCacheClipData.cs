@@ -33,7 +33,7 @@ internal class SceneCacheClipData : BaseClipData {
         
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
-        m_animationCurve = AnimationCurve.Linear(0, 0,(float) clip.duration,0 );
+        m_animationCurve = AnimationCurve.Linear(0f, 0f,(float) clip.duration, 1f );
         UpdateClipAnimationCurve();
     }
     
