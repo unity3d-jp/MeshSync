@@ -1,6 +1,7 @@
 ﻿using System;
 
 using UnityEngine.Playables;
+using UnityEngine.Timeline;
 
 
 namespace Unity.FilmInternalUtilities {
@@ -15,7 +16,14 @@ internal abstract class BaseExtendedClipPlayableAsset<D> : PlayableAsset where D
 //----------------------------------------------------------------------------------------------------------------------
     
     internal void BindClipData(D data) { m_clipData = data;}         
-    internal D GetBoundClipData() { return m_clipData; }    
+    internal D GetBoundClipData() { return m_clipData; }
+    
+    internal T BindNewClipData<T>(TimelineClip clip) where T: D, new() {
+        T newData = new T();
+        m_clipData = newData;
+        m_clipData.SetOwner(clip);
+        return newData;
+    }    
     
 //----------------------------------------------------------------------------------------------------------------------
     

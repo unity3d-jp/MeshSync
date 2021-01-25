@@ -48,13 +48,22 @@ internal class SceneCachePlayableAssetTest {
         director.time = 0;
         yield return null;
         
-        Assert.AreEqual(0, playableAsset.GetNormalizedTime());
+        Assert.AreEqual(0, sceneCachePlayer.GetRequestedNormalizedTime());
         double timePerFrame = 1.0f / sceneCacheTrack.timelineAsset.editorSettings.fps;
-        
-        SetDirectorTime(director, clip.start + clip.duration - timePerFrame);
+
+        double directorTime = clip.start + clip.duration - timePerFrame;
+        SetDirectorTime(director, directorTime);
         yield return null;
+
+        //Check clipData and curve
+        SceneCacheClipData clipData = playableAsset.GetBoundClipData();
+        Assert.IsNotNull(clipData);        
+        AnimationCurve curve          = clipData.GetAnimationCurve();
+        Assert.IsNotNull(curve);
+        float normalizedTime = curve.Evaluate((float)directorTime);
         
-        Assert.AreEqual((float)((clip.duration - timePerFrame) / clip.duration), playableAsset.GetNormalizedTime());
+        
+        Assert.AreEqual(normalizedTime, sceneCachePlayer.GetRequestedNormalizedTime());
     }
    
     
