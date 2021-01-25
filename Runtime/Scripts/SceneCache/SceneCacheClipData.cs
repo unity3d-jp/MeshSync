@@ -148,12 +148,15 @@ internal class SceneCacheClipData : BaseClipData {
     [SerializeField] private AnimationCurve m_animationCurve;
 
 
+#if UNITY_EDITOR    
     private static EditorCurveBinding m_timeCurveBinding =  
         new EditorCurveBinding() {
             path         = "",
             type         = typeof(SceneCachePlayableAsset),
             propertyName = "m_time"
-        };    
+        };
+#endif 
+    
 }
 
 
