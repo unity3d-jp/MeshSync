@@ -8,7 +8,7 @@ using UnityEngine.Timeline;
 namespace Unity.MeshSync.Editor {
 
 [CustomTimelineEditor(typeof(SceneCachePlayableAsset)), UsedImplicitly]
-internal class FaderPlayableAssetEditor : ClipEditor {
+internal class SceneCachePlayableAssetEditor : ClipEditor {
 
     /// <inheritdoc/>
     public override void OnCreate(TimelineClip clip, TrackAsset track, TimelineClip clonedFrom) {
