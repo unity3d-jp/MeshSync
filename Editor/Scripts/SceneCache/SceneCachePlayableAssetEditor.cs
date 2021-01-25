@@ -2,8 +2,10 @@
 using NUnit.Framework;
 using Unity.FilmInternalUtilities;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEditor.Timeline;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Timeline;
 
 namespace Unity.MeshSync.Editor {
@@ -11,6 +13,21 @@ namespace Unity.MeshSync.Editor {
 [CustomTimelineEditor(typeof(SceneCachePlayableAsset)), UsedImplicitly]
 internal class SceneCachePlayableAssetEditor : ClipEditor {
 
+    
+
+    [InitializeOnLoadMethod]
+    static void SceneCachePlayableAssetEditor_OnEditorLoad() {
+        
+        EditorSceneManager.sceneSaved += SceneCachePlayableAssetEditor_OnSceneSaved;
+    }
+    
+    static void SceneCachePlayableAssetEditor_OnSceneSaved(Scene scene) {
+        //Workaround to prevent errors: "The Playable is invalid. It has either been Disposed or was never created."
+        //when editing curves after saving the scene
+        TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved);    
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------    
     /// <inheritdoc/>
     public override void OnCreate(TimelineClip clip, TrackAsset track, TimelineClip clonedFrom) {
         
