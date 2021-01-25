@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Version: 0
   m_Tracks:
-  - {fileID: 1961882129478325090}
+  - {fileID: 4654884656074349566}
   m_FixedDuration: 0
   m_EditorSettings:
     m_Framerate: 60
+    m_ScenePreview: 1
   m_DurationMode: 0
   m_MarkerTrack: {fileID: 1071123597200051587}
 --- !u!114 &1071123597200051587
@@ -43,7 +44,23 @@ MonoBehaviour:
   m_Clips: []
   m_Markers:
     m_Objects: []
---- !u!114 &1961882129478325090
+--- !u!114 &2893259011537497102
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0abb9c4d041e5c14dac4f34815861091, type: 3}
+  m_Name: SceneCachePlayableAsset
+  m_EditorClassIdentifier: 
+  m_sceneCachePlayerRef:
+    exposedName: 
+    defaultValue: {fileID: 0}
+  m_time: 0.20666666328907013
+--- !u!114 &4654884656074349566
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
@@ -65,12 +82,12 @@ MonoBehaviour:
   m_Children: []
   m_Clips:
   - m_Version: 1
-    m_Start: 0
+    m_Start: 5.666666666666667
     m_ClipIn: 0
-    m_Asset: {fileID: 4620212775047648278}
+    m_Asset: {fileID: 2893259011537497102}
     m_Duration: 5
     m_TimeScale: 1
-    m_ParentTrack: {fileID: 1961882129478325090}
+    m_ParentTrack: {fileID: 4654884656074349566}
     m_EaseInDuration: 0
     m_EaseOutDuration: 0
     m_BlendInDuration: 0
@@ -135,18 +152,12 @@ MonoBehaviour:
     m_DisplayName: SceneCachePlayableAsset
   m_Markers:
     m_Objects: []
---- !u!114 &4620212775047648278
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0abb9c4d041e5c14dac4f34815861091, type: 3}
-  m_Name: SceneCachePlayableAsset
-  m_EditorClassIdentifier: 
-  m_sceneCachePlayerRef:
-    exposedName: 1bc9bfcdbfeb0334ca6a0b1e7c967da3
-    defaultValue: {fileID: 0}
+  m_serializedDataCollection:
+  - m_version: 1
+    m_animationCurve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_initialized: 0
