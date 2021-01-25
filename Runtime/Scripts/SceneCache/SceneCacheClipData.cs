@@ -20,9 +20,22 @@ internal class SceneCacheClipData : BaseClipData {
 //----------------------------------------------------------------------------------------------------------------------
     
     internal void BindSceneCachePlayer(SceneCachePlayer sceneCachePlayer) {
-        if (sceneCachePlayer == m_scPlayer) {
-            return;
+        
+        if (m_initialized) {
+            if (null == m_scPlayer) {
+                //Assuming that BindSceneCachePlayer() will be called() during "deserialization", we initialize scPlayer
+                //at first if this clipData has already been initialized.
+                //SceneCachePlayer can't be deserialized as usual, because SceneCacheClip belongs to a track, which is an asset.
+                m_scPlayer = sceneCachePlayer;
+                return;
+            } else if (m_scPlayer == sceneCachePlayer) {
+                return;
+            }
         }
+
+        m_scPlayer    = sceneCachePlayer;
+        m_initialized = true;
+        
 
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
@@ -41,7 +54,8 @@ internal class SceneCacheClipData : BaseClipData {
     }
 
     internal void UnbindSceneCachePlayer() {        
-        m_scPlayer = null;        
+        m_scPlayer    = null;
+        m_initialized = false;
         
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
@@ -149,12 +163,12 @@ internal class SceneCacheClipData : BaseClipData {
         
 //----------------------------------------------------------------------------------------------------------------------
    
-    [SerializeField] private SceneCachePlayer m_scPlayer;
-   
-    
-//----------------------------------------------------------------------------------------------------------------------
+    [SerializeField] private AnimationCurve   m_animationCurve;
+    [SerializeField] private bool             m_initialized = false;
 
-    [SerializeField] private AnimationCurve m_animationCurve;
+//----------------------------------------------------------------------------------------------------------------------
+    
+    SceneCachePlayer m_scPlayer    = null;
     
 }
 
