@@ -103,24 +103,21 @@ internal class SceneCacheClipData : BaseClipData {
     
     private static void ResetClipAndUpdateCurve(TimelineClip clip, AnimationCurve animationCurveToApply) {
 
+#if UNITY_EDITOR        
         clip.clipIn    = 0;
         clip.timeScale = 1;
         
         bool shouldRefresh = false;
         
-#if UNITY_EDITOR        
         AnimationCurve shownCurve = AnimationUtility.GetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding());
         shouldRefresh = !CurveApproximately(shownCurve, animationCurveToApply); 
-#endif
         
         clip.curves.SetCurve("", typeof(SceneCachePlayableAsset), "m_time", animationCurveToApply);
         
-#if UNITY_EDITOR        
         if (shouldRefresh) {
             TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved );            
         }
-#endif
-        
+#endif        
         
     }
 
