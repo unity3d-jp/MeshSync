@@ -88,19 +88,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     #endregion
     
-//----------------------------------------------------------------------------------------------------------------------
-
-    internal float GetNormalizedTime() {
-        if (null == m_sceneCachePlayableBehaviour) {
-            return 0;            
-        }
-
-        SceneCachePlayer sc = m_sceneCachePlayableBehaviour.GetSceneCachePlayer();
-        if (null == sc)
-            return 0;
-        
-        return sc.GetRequestedNormalizedTime();
-    }
     
 //----------------------------------------------------------------------------------------------------------------------
 
