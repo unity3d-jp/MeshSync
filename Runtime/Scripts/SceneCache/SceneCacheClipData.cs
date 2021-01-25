@@ -49,15 +49,15 @@ internal class SceneCacheClipData : BaseClipData {
             return null;
         }
 
-        float timeLength = timeRange.end - timeRange.start;
-        if (Mathf.Approximately(0, timeLength)) {
-            timeLength = Mathf.Epsilon;
+        float maxTime = timeRange.end;
+        if (Mathf.Approximately(0, maxTime)) {
+            maxTime = Mathf.Epsilon;
         }
 
         Keyframe[] keyframes = origTimeCurve.keys;
         int numKeyframes = keyframes.Length;
         for (int i = 0; i < numKeyframes; ++i) {
-            keyframes[i].value /= timeLength;
+            keyframes[i].value /= maxTime;
         }        
         
         AnimationCurve curve = new AnimationCurve(keyframes);        
