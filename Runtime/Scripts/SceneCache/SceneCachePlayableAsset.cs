@@ -18,9 +18,11 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
 //----------------------------------------------------------------------------------------------------------------------
     public ClipCaps clipCaps {
-        get {
-            return ClipCaps.None;
-        }
+#if AT_USE_TIMELINE_GE_1_4_0            
+        get { return ClipCaps.ClipIn | ClipCaps.AutoScale; }
+#else            
+        get { return ClipCaps.ClipIn | ClipCaps.SpeedMultiplier; }
+#endif           
     }
 
     public override Playable CreatePlayable(PlayableGraph graph, GameObject go) {
