@@ -53,7 +53,10 @@ internal class SceneCacheClipData : BaseClipData {
         
     }
 
-    internal void UnbindSceneCachePlayer() {        
+    internal void UnbindSceneCachePlayer() {
+        if (null == m_scPlayer)
+            return;
+        
         m_scPlayer    = null;
         m_initialized = false;
         
