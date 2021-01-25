@@ -59,7 +59,8 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         
         SceneCacheClipData clipData = playableAsset.GetBoundClipData() as SceneCacheClipData;
         if (null == clipData) {
-            clipData = playableAsset.BindNewClipData<SceneCacheClipData>(clip);
+            //The clip is not ready. Not deserialized yet
+            return;
         }
         
         Assert.IsNotNull(clip.curves);
