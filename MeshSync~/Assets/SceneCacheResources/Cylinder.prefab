@@ -462,6 +462,6 @@ MonoBehaviour:
   m_interpolation: 0
   m_baseFrame: 1
   m_frame: 1
-  m_preloadLength: 1
+  m_preloadLength: 0
   m_version: 2
   m_foldCacheSettings: 1
