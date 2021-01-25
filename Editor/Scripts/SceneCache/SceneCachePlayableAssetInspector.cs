@@ -22,8 +22,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         
         SerializedObject so = serializedObject;
 
-        EditorGUILayout.PropertyField(so.FindProperty("m_sceneCachePlayerRef"),
-            new GUIContent("SceneCachePlayerRef"));
+        EditorGUILayout.PropertyField(so.FindProperty("m_sceneCachePlayerRef"), SceneCachePlayerRef);
         
         so.ApplyModifiedProperties();
        
@@ -32,6 +31,9 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+    
+    public static readonly GUIContent SceneCachePlayerRef = EditorGUIUtility.TrTextContent("SceneCachePlayerRef");
+    
     private SceneCachePlayableAsset m_scPlayableAsset;
 
 }
