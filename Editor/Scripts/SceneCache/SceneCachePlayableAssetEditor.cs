@@ -1,4 +1,5 @@
 ﻿using JetBrains.Annotations;
+using NUnit.Framework;
 using Unity.FilmInternalUtilities;
 using UnityEditor;
 using UnityEditor.Timeline;
@@ -18,6 +19,9 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
             Debug.LogError("[MeshSync] Asset is not a SceneCachePlayableAsset: " + clip.asset);
             return;
         }
+
+        //OnCreate() is called the clip is assigned to the track, but we need the track for creating curves.
+        clip.parentTrack = track;
                        
         //If the clip already has curves (because of cloning, etc), then we don't set anything
         if (null == clip.curves) {
@@ -40,10 +44,8 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         if (null == clipData) {
             clipData = playableAsset.BindNewClipData<SceneCacheClipData>(clip);
         }
-
-        if (null == clip.curves) {
-            CreateClipCurve(clip);
-        }
+        
+        Assert.IsNotNull(clip.curves);
                
         //Always apply clipCurves to clipData
         AnimationCurve curve = AnimationUtility.GetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding());        
