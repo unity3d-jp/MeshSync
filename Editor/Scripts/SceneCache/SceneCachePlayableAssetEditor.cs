@@ -22,9 +22,7 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         //If the clip already has curves (because of cloning, etc), then we don't set anything
         if (null == clip.curves) {
             CreateClipCurve(clip);
-        }
-        TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved );
-        
+        }        
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
@@ -32,8 +30,6 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
     public override void OnClipChanged(TimelineClip clip) {       
         base.OnClipChanged(clip);
 
-        //Debug.Log("OnClipChanged");
-       
         SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
         if (null == playableAsset) {
             Debug.LogWarning("[MeshSync] Clip Internal Error: Asset is not SceneCache");
@@ -60,9 +56,10 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
     private void CreateClipCurve(TimelineClip clip) {        
         clip.CreateCurves("Curves: " + clip.displayName);
         
-        //Init dummy curve
+        //Init dummy linear curve
         AnimationCurve curve = AnimationCurve.Linear(0f,0f,(float)clip.duration,1f);
         clip.curves.SetCurve("", typeof(SceneCachePlayableAsset), "m_time", curve);
+        TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved );
         
         
     }
