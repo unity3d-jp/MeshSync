@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -20,24 +21,59 @@ internal class SceneCacheClipData : BaseClipData {
         if (sceneCachePlayer == m_scPlayer) {
             return;
         }
+        
+        
 
         m_scPlayer         = sceneCachePlayer;
-        m_animationCurve   = sceneCachePlayer.GetOrigAnimationCurve();
+        m_animationCurve = ExtractNormalizedTimeCurve(m_scPlayer);
+        if (null == m_animationCurve) {
+            ResetAnimationCurve();
+        }
         UpdateClipAnimationCurve();
         
     }
 
-    internal void UnbindSceneCachePlayer() {
-        
-        m_scPlayer = null;
-        
-        TimelineClip clip = GetOwner();
-        Assert.IsNotNull(clip);
-        m_animationCurve = AnimationCurve.Linear(0f, 0f,(float) clip.duration, 1f );
+    internal void UnbindSceneCachePlayer() {        
+        m_scPlayer = null;        
+        ResetAnimationCurve();
         UpdateClipAnimationCurve();
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
+    [CanBeNull]
+    private static AnimationCurve ExtractNormalizedTimeCurve(SceneCachePlayer scPlayer) {
+        AnimationCurve origTimeCurve = scPlayer.GetTimeCurve();
+        TimeRange timeRange = scPlayer.GetTimeRange();
+
+        if (null == origTimeCurve) {
+            return null;
+        }
+
+        float timeLength = timeRange.end - timeRange.start;
+        if (Mathf.Approximately(0, timeLength)) {
+            timeLength = Mathf.Epsilon;
+        }
+
+        Keyframe[] keyframes = origTimeCurve.keys;
+        int numKeyframes = keyframes.Length;
+        for (int i = 0; i < numKeyframes; ++i) {
+            keyframes[i].value /= timeLength;
+        }        
+        
+        AnimationCurve curve = new AnimationCurve(keyframes);        
+        return curve;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
+
+    private void ResetAnimationCurve() {
+        TimelineClip clip = GetOwner();
+        Assert.IsNotNull(clip);
+        m_animationCurve = AnimationCurve.Linear(0f, 0f,(float) clip.duration, 1f );        
+    }
+    
+
+    
     void UpdateClipAnimationCurve() {
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
@@ -89,6 +125,8 @@ internal class SceneCacheClipData : BaseClipData {
         //only check time and value
         return Mathf.Approximately(k0.time, k1.time) && Mathf.Approximately(k0.value, k1.value);
     }
+    
+    
 
 //----------------------------------------------------------------------------------------------------------------------
     internal void           SetAnimationCurve(AnimationCurve curve) { m_animationCurve = curve; }

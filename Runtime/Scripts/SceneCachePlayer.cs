@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using JetBrains.Annotations;
 using Unity.AnimeToolbox;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -100,8 +101,18 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     internal float GetRequestedNormalizedTime() { return m_reqNormalizedTime; }
 
     internal AnimationCurve GetOrigAnimationCurve() { return m_origAnimationCurve;}
-    
 
+    [CanBeNull]
+    internal AnimationCurve GetTimeCurve() {
+        if (!IsSceneCacheOpened())
+            return null;
+        
+        return m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
+    }
+
+    internal TimeRange GetTimeRange() { return m_timeRange;}
+    
+    
 
 //----------------------------------------------------------------------------------------------------------------------
     #region Properties
