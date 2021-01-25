@@ -21,43 +21,53 @@ internal class SceneCacheClipData : BaseClipData {
         if (sceneCachePlayer == m_scPlayer) {
             return;
         }
-        
-        
 
+        TimelineClip clip = GetOwner();
+        Assert.IsNotNull(clip);
+       
+        //Bind for the first time
         m_scPlayer         = sceneCachePlayer;
-        m_animationCurve = ExtractNormalizedTimeCurve(m_scPlayer);
-        if (null == m_animationCurve) {
-            ResetAnimationCurve();
+        m_animationCurve = ExtractNormalizedTimeCurve(m_scPlayer, out float endTime);
+        if (null != m_animationCurve) {
+            clip.duration = endTime;
+        } else {
+            m_animationCurve = CreateInitialAnimationCurve(clip);
+            
         }
-        UpdateClipAnimationCurve();
+        UpdateClipAnimationCurve(clip, m_animationCurve);
         
     }
 
     internal void UnbindSceneCachePlayer() {        
         m_scPlayer = null;        
-        ResetAnimationCurve();
-        UpdateClipAnimationCurve();
+        
+        TimelineClip clip = GetOwner();
+        Assert.IsNotNull(clip);
+        
+        m_animationCurve = CreateInitialAnimationCurve(clip);
+        UpdateClipAnimationCurve(clip, m_animationCurve);
     }
 
 //----------------------------------------------------------------------------------------------------------------------
     [CanBeNull]
-    private static AnimationCurve ExtractNormalizedTimeCurve(SceneCachePlayer scPlayer) {
+    private static AnimationCurve ExtractNormalizedTimeCurve(SceneCachePlayer scPlayer, out float endTime) {
         AnimationCurve origTimeCurve = scPlayer.GetTimeCurve();
-        TimeRange timeRange = scPlayer.GetTimeRange();
 
         if (null == origTimeCurve) {
+            endTime = 0;
             return null;
         }
 
-        float maxTime = timeRange.end;
-        if (Mathf.Approximately(0, maxTime)) {
-            maxTime = Mathf.Epsilon;
+        TimeRange timeRange = scPlayer.GetTimeRange();
+        endTime = timeRange.end;
+        if (Mathf.Approximately(0, endTime)) {
+            endTime = Mathf.Epsilon;
         }
 
         Keyframe[] keyframes = origTimeCurve.keys;
         int numKeyframes = keyframes.Length;
         for (int i = 0; i < numKeyframes; ++i) {
-            keyframes[i].value /= maxTime;
+            keyframes[i].value /= endTime;
         }        
         
         AnimationCurve curve = new AnimationCurve(keyframes);        
@@ -66,26 +76,22 @@ internal class SceneCacheClipData : BaseClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    private void ResetAnimationCurve() {
-        TimelineClip clip = GetOwner();
-        Assert.IsNotNull(clip);
-        m_animationCurve = AnimationCurve.Linear(0f, 0f,(float) clip.duration, 1f );        
+    private static AnimationCurve CreateInitialAnimationCurve(TimelineClip clip) {
+        return AnimationCurve.Linear(0f, 0f,(float) clip.duration, 1f );        
     }
     
 
     
-    void UpdateClipAnimationCurve() {
-        TimelineClip clip = GetOwner();
-        Assert.IsNotNull(clip);
+    private static void UpdateClipAnimationCurve(TimelineClip clip, AnimationCurve animationCurveToApply) {
 
         bool shouldRefresh = false;
         
 #if UNITY_EDITOR        
         AnimationCurve shownCurve = AnimationUtility.GetEditorCurve(clip.curves, m_timeCurveBinding);
-        shouldRefresh = !CurveApproximately(shownCurve, m_animationCurve); 
+        shouldRefresh = !CurveApproximately(shownCurve, animationCurveToApply); 
 #endif
         
-        clip.curves.SetCurve("", typeof(SceneCachePlayableAsset), "m_time", m_animationCurve);
+        clip.curves.SetCurve("", typeof(SceneCachePlayableAsset), "m_time", animationCurveToApply);
         
 #if UNITY_EDITOR        
         if (shouldRefresh) {
