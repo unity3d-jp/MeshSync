@@ -20,9 +20,22 @@ internal class SceneCacheClipData : BaseClipData {
 //----------------------------------------------------------------------------------------------------------------------
     
     internal void BindSceneCachePlayer(SceneCachePlayer sceneCachePlayer) {
-        if (sceneCachePlayer == m_scPlayer) {
-            return;
+        
+        if (m_initialized) {
+            if (null == m_scPlayer) {
+                //Assuming that BindSceneCachePlayer() will be called() during "deserialization", we initialize scPlayer
+                //at first if this clipData has already been initialized.
+                //SceneCachePlayer can't be deserialized as usual, because SceneCacheClip belongs to a track, which is an asset.
+                m_scPlayer = sceneCachePlayer;
+                return;
+            } else if (m_scPlayer == sceneCachePlayer) {
+                return;
+            }
         }
+
+        m_scPlayer    = sceneCachePlayer;
+        m_initialized = true;
+        
 
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
@@ -40,8 +53,12 @@ internal class SceneCacheClipData : BaseClipData {
         
     }
 
-    internal void UnbindSceneCachePlayer() {        
-        m_scPlayer = null;        
+    internal void UnbindSceneCachePlayer() {
+        if (null == m_scPlayer)
+            return;
+        
+        m_scPlayer    = null;
+        m_initialized = false;
         
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
@@ -86,24 +103,21 @@ internal class SceneCacheClipData : BaseClipData {
     
     private static void ResetClipAndUpdateCurve(TimelineClip clip, AnimationCurve animationCurveToApply) {
 
+#if UNITY_EDITOR        
         clip.clipIn    = 0;
         clip.timeScale = 1;
         
         bool shouldRefresh = false;
         
-#if UNITY_EDITOR        
         AnimationCurve shownCurve = AnimationUtility.GetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding());
         shouldRefresh = !CurveApproximately(shownCurve, animationCurveToApply); 
-#endif
         
         clip.curves.SetCurve("", typeof(SceneCachePlayableAsset), "m_time", animationCurveToApply);
         
-#if UNITY_EDITOR        
         if (shouldRefresh) {
             TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved );            
         }
-#endif
-        
+#endif        
         
     }
 
@@ -149,12 +163,12 @@ internal class SceneCacheClipData : BaseClipData {
         
 //----------------------------------------------------------------------------------------------------------------------
    
-    [SerializeField] private SceneCachePlayer m_scPlayer;
-   
-    
-//----------------------------------------------------------------------------------------------------------------------
+    [SerializeField] private AnimationCurve   m_animationCurve;
+    [SerializeField] private bool             m_initialized = false;
 
-    [SerializeField] private AnimationCurve m_animationCurve;
+//----------------------------------------------------------------------------------------------------------------------
+    
+    SceneCachePlayer m_scPlayer    = null;
     
 }
 
