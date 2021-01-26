@@ -49,7 +49,8 @@ internal class SceneCacheClipData : BaseClipData {
             m_animationCurve = CreateLinearAnimationCurve(clip);            
         }
 
-        ResetClipAndUpdateCurve(clip, m_animationCurve);
+        ResetClip(clip);
+        UpdateClipCurve(clip, m_animationCurve);
         
     }
 
@@ -64,7 +65,9 @@ internal class SceneCacheClipData : BaseClipData {
         Assert.IsNotNull(clip);
         
         m_animationCurve = CreateLinearAnimationCurve(clip);
-        ResetClipAndUpdateCurve(clip, m_animationCurve);
+        
+        ResetClip(clip);        
+        UpdateClipCurve(clip, m_animationCurve);
     }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -104,14 +107,17 @@ internal class SceneCacheClipData : BaseClipData {
     private static AnimationCurve CreateLinearAnimationCurve(TimelineClip clip) {
         return AnimationCurve.Linear(0f, 0f,(float) clip.duration, 1f );        
     }
-    
 
-    
-    private static void ResetClipAndUpdateCurve(TimelineClip clip, AnimationCurve animationCurveToApply) {
 
-#if UNITY_EDITOR        
+    private static void ResetClip(TimelineClip clip) {
         clip.clipIn    = 0;
         clip.timeScale = 1;
+        
+    }
+    
+    private static void UpdateClipCurve(TimelineClip clip, AnimationCurve animationCurveToApply) {
+
+#if UNITY_EDITOR        
         
         bool shouldRefresh = false;
         
