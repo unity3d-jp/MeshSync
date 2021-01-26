@@ -64,8 +64,7 @@ internal class SceneCacheClipData : BaseClipData {
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
         
-        m_animationCurve = CreateLinearAnimationCurve(clip);
-        
+        m_animationCurve = CreateLinearAnimationCurve(clip);        
         ResetClip(clip);        
         UpdateClipCurve(clip, m_animationCurve);
     }
@@ -81,6 +80,18 @@ internal class SceneCacheClipData : BaseClipData {
         UpdateClipCurve(clip, m_animationCurve);        
     }
 
+    internal void ApplyOriginalSceneCacheCurve() {
+        if (null == m_scPlayer)
+            return;
+                
+        TimelineClip clip = GetOwner();
+        Assert.IsNotNull(clip);
+        clip.clipIn = 0;
+        
+        m_animationCurve = ExtractNormalizedTimeCurve(m_scPlayer, out float endTime);
+        UpdateClipCurve(clip, m_animationCurve);
+    }
+    
 //----------------------------------------------------------------------------------------------------------------------
     [CanBeNull]
     private static AnimationCurve ExtractNormalizedTimeCurve(SceneCachePlayer scPlayer, out float endTime) {

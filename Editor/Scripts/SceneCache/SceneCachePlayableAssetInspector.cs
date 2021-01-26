@@ -36,7 +36,8 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
             }
             
             if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"Apply Original")) {
-                
+                SceneCacheClipData clipData = m_scPlayableAsset.GetBoundClipData();
+                clipData.ApplyOriginalSceneCacheCurve();                
             }
             
             GUILayout.EndVertical();                    
