@@ -37,7 +37,7 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
             return;
         }
 
-        //OnCreate() is called the clip is assigned to the track, but we need the track for creating curves.
+        //OnCreate() is called before the clip is assigned to the track, but we need the track for creating curves.
         clip.parentTrack = track;
                        
         //If the clip already has curves (because of cloning, etc), then we don't set anything
