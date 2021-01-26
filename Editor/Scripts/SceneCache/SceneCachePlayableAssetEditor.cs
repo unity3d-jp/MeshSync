@@ -50,12 +50,17 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
     //Called when a clip is changed by the Editor. (TrimStart, TrimEnd, etc)    
     public override void OnClipChanged(TimelineClip clip) {       
         base.OnClipChanged(clip);
-
+        
         SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
         if (null == playableAsset) {
             Debug.LogWarning("[MeshSync] Clip Internal Error: Asset is not SceneCache");
             return;            
         }
+        
+        //Check if the curves is null, which may happen if the clip is created using code ?
+        if (null == clip.curves) {
+            CreateClipCurve(clip);
+        }        
         
         SceneCacheClipData clipData = playableAsset.GetBoundClipData() as SceneCacheClipData;
         if (null == clipData) {
@@ -63,7 +68,6 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
             return;
         }
         
-        Assert.IsNotNull(clip.curves);
                
         //Always apply clipCurves to clipData
         AnimationCurve curve = AnimationUtility.GetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding());        
