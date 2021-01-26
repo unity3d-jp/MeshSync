@@ -73,7 +73,12 @@ internal class SceneCacheClipData : BaseClipData {
 //----------------------------------------------------------------------------------------------------------------------
     
     internal void SetCurveToLinear() {
+        TimelineClip clip = GetOwner();
+        Assert.IsNotNull(clip);
+        clip.clipIn = 0;
         
+        m_animationCurve = CreateLinearAnimationCurve(clip);
+        UpdateClipCurve(clip, m_animationCurve);        
     }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -105,7 +110,7 @@ internal class SceneCacheClipData : BaseClipData {
 //----------------------------------------------------------------------------------------------------------------------
 
     private static AnimationCurve CreateLinearAnimationCurve(TimelineClip clip) {
-        return AnimationCurve.Linear(0f, 0f,(float) clip.duration, 1f );        
+        return AnimationCurve.Linear(0f, 0f,(float) (clip.duration * clip.timeScale), 1f );        
     }
 
 
