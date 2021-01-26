@@ -146,7 +146,7 @@ internal class SceneCacheClipData : BaseClipData {
         AnimationCurve shownCurve = AnimationUtility.GetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding());
         shouldRefresh = !CurveApproximately(shownCurve, animationCurveToApply); 
         
-        clip.curves.SetCurve("", typeof(SceneCachePlayableAsset), "m_time", animationCurveToApply);
+        AnimationUtility.SetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding(),animationCurveToApply);
         
         if (shouldRefresh) {
             TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved );            
