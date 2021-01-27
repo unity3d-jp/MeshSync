@@ -82,7 +82,7 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         
         //Init dummy linear curve
         AnimationCurve curve = AnimationCurve.Linear(0f,0f,(float)clip.duration,1f);
-        clip.curves.SetCurve("", typeof(SceneCachePlayableAsset), "m_time", curve);
+        AnimationUtility.SetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding(),curve);
         TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved );
         
         
