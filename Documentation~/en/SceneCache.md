@@ -23,7 +23,7 @@ which will be played automatically in PlayMode.
 Normally, the playback is controlled using an 
 [*Animator*](https://docs.unity3d.com/ScriptReference/Animator.html) with an 
 [*AnimationClip*](https://docs.unity3d.com/ScriptReference/AnimationClip.html), but 
-we can also control the playback of [Scene Cache via Timeline](SceneCacheInTimeline.md).
+we can also control the playback of [Scene Cache in Timeline](SceneCacheInTimeline.md).
 
 ## Scene Cache Player
 
