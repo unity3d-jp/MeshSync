@@ -20,7 +20,10 @@ which will be played automatically in PlayMode.
 
 ![Menu](../images/MenuCreateCachePlayer.png)
 
-We can also control the playback of  [Scene Cache via Timeline](SceneCacheInTimeline.md).
+Normally, the playback is controlled using an 
+[*Animator*](https://docs.unity3d.com/ScriptReference/Animator.html) with an 
+[*AnimationClip*](https://docs.unity3d.com/ScriptReference/AnimationClip.html), but 
+we can also control the playback of [Scene Cache via Timeline](SceneCacheInTimeline.md).
 
 ## Scene Cache Player
 
@@ -28,9 +31,6 @@ We can also control the playback of  [Scene Cache via Timeline](SceneCacheInTime
 
 This component handles the playback. 
 There are many settings which are in common with [MeshSyncServer](MeshSyncServer.md).
-
-When "Create Cache Player" on the menu is selected, an AnimationClip, which also handles the animation Playback, will be created and tied to the SceneCachePlayer.  
-We can place this clip on an AnimationTrack to play it in Timeline.
 
 - **Cache File Path**  
 Initially, the path to the *.sc* file is absolute, and therefore the animation can only be played on that PC.  
