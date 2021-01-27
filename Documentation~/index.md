@@ -32,6 +32,7 @@ Similarly, DCC Tools integration can be configured on the
 
 # Advanced Features
 - [SceneCache](en/SceneCache.md)
+  - [SceneCache in Timeline](en/SceneCacheInTimeline.md)
 
 # Other Languages
 - [日本語](jp/index.md)

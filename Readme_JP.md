@@ -61,6 +61,7 @@ MeshSync のコンポネントに対するデフォルト設定は
 
 # アドバンスト 機能
 - [SceneCache](Documentation~/jp/SceneCache.md)
+  - [タイムライン上の SceneCache](Documentation~/jp/SceneCacheInTimeline.md)
 
 # プラグイン
 - [ビルド](Plugin~/Docs/en/BuildPlugins.md)

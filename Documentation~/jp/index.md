@@ -36,6 +36,7 @@ MeshSync のコンポネントに対するデフォルト設定は
 
 # アドバンスト 機能
 - [SceneCache](SceneCache.md)
+  - [タイムライン上の SceneCache](SceneCacheInTimeline.md)
 
 # 他の言語
 - [English](../index.md)
