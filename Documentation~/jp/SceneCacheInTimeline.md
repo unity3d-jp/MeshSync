@@ -1,6 +1,4 @@
-# Scene Cache
-
-### Timeline 経由で再生
+# タイムライン上の SceneCache
 
 ![Menu](../images/SceneCacheInTimeline.png)
 
@@ -13,8 +11,8 @@
    **SceneCacheTrack** を追加します。
 1. SceneCachePlayer の GameObject を新しく追加されたトラックにドラッグアンドドロップします。
 
-トラック名の横にあるカーブアイコンをクリックすれは、
-クリップのアニメーションカーブを表示できます。
+トラック名の横にあるカーブアイコンをクリックすれば、
+クリップのアニメーションカーブが表示されます。
 
 ## Scene Cache Playable Asset
 
@@ -25,5 +23,5 @@
 
 - **Curves**  
   - **To Linear:** アニメーションのカーブを線形曲線に設定する。
-  - **Apply Original:** SceneCache からの元のアニメーションカーブを適用します。
+  - **Apply Original:** SceneCache からの元のアニメーションカーブを適用する。
 
