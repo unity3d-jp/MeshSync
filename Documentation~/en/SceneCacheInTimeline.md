@@ -21,7 +21,7 @@ To view animation curves of the clip, click the Curves icon next to the Track na
 The [SceneCachePlayer](SceneCache.md#scene-cache-player) to be played in Timeline.
 
 - **Curves**  
-  - **To Linear:** set the animation curve to a linear curve
+  - **To Linear:** set the animation curve to a linear curve.
   - **Apply Original:** apply the original animation curve from the Scene Cache file.
 
 
