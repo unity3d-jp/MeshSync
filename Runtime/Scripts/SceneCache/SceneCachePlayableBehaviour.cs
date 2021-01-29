@@ -1,5 +1,4 @@
-﻿using Unity.AnimeToolbox;
-using Unity.FilmInternalUtilities;
+﻿using Unity.FilmInternalUtilities;
 using UnityEngine;
 using UnityEngine.Playables;
 
