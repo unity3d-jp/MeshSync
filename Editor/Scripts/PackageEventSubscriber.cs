@@ -1,6 +1,6 @@
 ﻿#if UNITY_2020_2
 
-using Unity.AnimeToolbox.Editor;
+using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using PackageInfo = UnityEditor.PackageManager.PackageInfo;
