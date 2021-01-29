@@ -21,7 +21,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
             return;
         
         SerializedObject so = serializedObject;
-        EditorGUILayout.PropertyField(so.FindProperty("m_sceneCachePlayerRef"), SceneCachePlayerRef);
+        EditorGUILayout.PropertyField(so.FindProperty("m_sceneCachePlayerRef"), SCENE_CACHE_PLAYER);
                 
         {
             // Curve Operations
@@ -55,8 +55,8 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    
-    public static readonly GUIContent SceneCachePlayerRef = EditorGUIUtility.TrTextContent("SceneCachePlayerRef");
+
+    private static readonly GUIContent SCENE_CACHE_PLAYER = EditorGUIUtility.TrTextContent("Scene Cache Player");
     
     private SceneCachePlayableAsset m_scPlayableAsset;
 

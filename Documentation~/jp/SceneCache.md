@@ -19,27 +19,16 @@ DCC 側でエクスポートした *.sc* ファイルを選択します。
 
 ![Menu](../images/MenuCreateCachePlayer.png)
 
-### Timeline 経由で再生
-
-![Menu](../images/SceneCacheInTimeline.png)
-
-下記の手順を行うことで、
-[Timeline](https://docs.unity3d.com/ja/Packages/com.unity.timeline@1.5/manual/index.html) 
-経由で Scene Cache の再生を制御することができます。
-
-1. Timeline ウィンドウを開きます。
-1. Timeline ウィンドウで **Unity.MeshSync > Scene Cache Track** をクリックし、
-   **SceneCacheTrack** を追加します。
-1. SceneCachePlayer の GameObject を新しく追加されたトラックにドラッグアンドドロップします。
+通常、Scene Cache の再生は 
+[*Animator*](https://docs.unity3d.com/ScriptReference/Animator.html) と
+[*AnimationClip*](https://docs.unity3d.com/ScriptReference/AnimationClip.html)
+で制御されていますが、[タイムライン上](SceneCacheInTimeline.md)でも再生を制御することができます。
 
 ## Scene Cache Player
 
 ![SceneCachePlayer](../images/SceneCachePlayer.png)
 
 このコンポーネントが再生を担当します。多くの設定は [MeshSyncServer](MeshSyncServer.md) と共通です。
-
-"Create Cache Player" メニューを選択した時、同時に アニメーションの再生を担当する AnimationClip が作成されて SceneCachePlayer に結び付いています。  
-Timeline で再生する場合も、この clip を AnimationTrack に配置することで対応できます。
 
 - **Cache File Path**  
 初期時に、 *.sc* ファイルへのパスが絶対パスになっており、その PC でしか再生できません。  
