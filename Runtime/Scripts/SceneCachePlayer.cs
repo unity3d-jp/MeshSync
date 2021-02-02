@@ -254,40 +254,42 @@ internal class SceneCachePlayer : MeshSyncPlayer {
             m_time = m_sceneCache.GetTime(m_frame - offset);
         }
 
-        if (m_sceneCache) {
-            if (m_time != m_timePrev) {
-                m_timePrev = m_time;
-                m_sceneCache.preloadLength = m_preloadLength;
+        if (!m_sceneCache) {
+            return;
+        }
+        
+        if (m_time != m_timePrev) {
+            m_timePrev = m_time;
+            m_sceneCache.preloadLength = m_preloadLength;
 #if UNITY_EDITOR
-                ulong sceneGetBegin = Misc.GetTimeNS();
+            ulong sceneGetBegin = Misc.GetTimeNS();
 #endif
-                // get scene
-                SceneData scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
+            // get scene
+            SceneData scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
 #if UNITY_EDITOR
-                m_dbgSceneGetTime = Misc.NS2MS(Misc.GetTimeNS() - sceneGetBegin);
+            m_dbgSceneGetTime = Misc.NS2MS(Misc.GetTimeNS() - sceneGetBegin);
 #endif
 
-                if (scene) {
+            if (scene) {
 #if UNITY_EDITOR
-                    ulong sceneUpdateBegin = Misc.GetTimeNS();
+                ulong sceneUpdateBegin = Misc.GetTimeNS();
 #endif
-                    // update scene
-                    this.BeforeUpdateScene();
-                    this.UpdateScene(scene, updateNonMaterialAssets);
-                    this.AfterUpdateScene();
+                // update scene
+                this.BeforeUpdateScene();
+                this.UpdateScene(scene, updateNonMaterialAssets);
+                this.AfterUpdateScene();
 #if UNITY_EDITOR
-                    SetSortEntities(false);
+                SetSortEntities(false);
 
-                    if (m_config.Profiling) {
-                        m_dbgSceneUpdateTime = Misc.NS2MS(Misc.GetTimeNS() - sceneUpdateBegin);
-                        UpdateProfileReport(scene);
-                    }
-#endif
+                if (m_config.Profiling) {
+                    m_dbgSceneUpdateTime = Misc.NS2MS(Misc.GetTimeNS() - sceneUpdateBegin);
+                    UpdateProfileReport(scene);
                 }
-            } else if(m_sceneCache.preloadLength != m_preloadLength) {
-                m_sceneCache.preloadLength = m_preloadLength;
-                m_sceneCache.Preload(m_sceneCache.GetFrame(m_time));
+#endif
             }
+        } else if(m_sceneCache.preloadLength != m_preloadLength) {
+            m_sceneCache.preloadLength = m_preloadLength;
+            m_sceneCache.Preload(m_sceneCache.GetFrame(m_time));
         }
 
     }
