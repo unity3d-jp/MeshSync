@@ -80,22 +80,34 @@ internal class DCCPluginDownloader  {
     void CopyDCCPluginsFromPackage(string version) {
 
         foreach (string dccPlatformName in m_dccPlatformNames) {
-            const string DCC_PLUGIN_SRC_FOLDER = "Packages/" + MESHSYNC_DCC_PLUGIN_PACKAGE + "/Editor/Plugins~";
 
+            //Check several folders
+            string[] folders = {
+                $"Packages/{MESHSYNC_DCC_PLUGIN_PACKAGE}/Editor/Plugins~",
+                $"Library/PackageCache/{MESHSYNC_DCC_PLUGIN_PACKAGE}@{version}/Editor/Plugins~",                
+            };
+            
             string[] zipFileNames = {
                 "UnityMeshSync_" + version + "_" + dccPlatformName,
                 "UnityMeshSync_" + dccPlatformName,
             };
 
             string srcZipFilePath = null;
-            foreach (string zipFileName in zipFileNames) {
-                string path = Path.GetFullPath(Path.Combine(DCC_PLUGIN_SRC_FOLDER, zipFileName));
-                if (!File.Exists(path)) {
-                    continue;
+
+            foreach (string folder in folders) {
+                foreach (string zipFileName in zipFileNames) {
+                    string path = Path.GetFullPath(Path.Combine(folder, zipFileName));
+                    Debug.Log("Checking path: " + path);
+                    if (!File.Exists(path)) {
+                        continue;
+                    }
+
+                    srcZipFilePath = path;
+                    break;
                 }
 
-                srcZipFilePath = path;
-                break;
+                if (!string.IsNullOrEmpty(srcZipFilePath))
+                    break;
             }
 
             if (string.IsNullOrEmpty(srcZipFilePath)) {
