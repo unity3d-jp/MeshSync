@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.7.1-preview] - 2021-02-03
+* fix: error when copying DCC Plugins after installing MeshSyncDCCPlugins 
+
 ## [0.7.0-preview] - 2021-02-03
 * feat: install DCC plugin from MeshSyncDCCPlugin package, instead of from Github
 * feat: apply animation tweaks of SceneCachePlayer directly without clicking Apply button 
