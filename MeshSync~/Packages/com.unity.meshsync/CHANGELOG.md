@@ -1,6 +1,17 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.7.0-preview] - 2021-02-03
+* feat: install DCC plugin from MeshSyncDCCPlugin package, instead of from Github
+* feat: apply animation tweaks of SceneCachePlayer directly without clicking Apply button 
+* feat: support SceneCachePlayer in Timeline 
+* feat: AnimationCurve editing of SceneCachePlayableAsset in Timeline 
+* feat: add buttons to set the curve of SceneCachePlayableAsset to linear or reset it to the original values
+* fix: install Blender plugin on Mac 
+* chore: replace dependency from com.unity.anime-toolbox to com.unity.film-internal-utilities
+* chore: separate ClientSettings from msClient in the plugin code 
+* doc: separate the use of SceneCache in Timeline to its own doc and add curves section 
+
 ## [0.6.1-preview] - 2020-12-16
 * fix: add missing DCC install scripts
 
