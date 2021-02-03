@@ -97,7 +97,6 @@ internal class DCCPluginDownloader  {
             foreach (string folder in folders) {
                 foreach (string zipFileName in zipFileNames) {
                     string path = Path.GetFullPath(Path.Combine(folder, zipFileName));
-                    Debug.Log("Checking path: " + path);
                     if (!File.Exists(path)) {
                         continue;
                     }
