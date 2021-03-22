@@ -18,6 +18,21 @@ namespace Unity.MeshSync {
 internal class SceneCacheClipData : BaseClipData {
 
 //----------------------------------------------------------------------------------------------------------------------
+    protected override void OnBeforeSerializeInternalV() {
+        m_sceneCacheClipDataVersion = CUR_SCENE_CACHE_CLIP_DATA_VERSION;
+    }
+
+    protected override void OnAfterDeserializeInternalV() {
+        
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
+
+    internal override void Destroy() {
+        
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
     
     internal void BindSceneCachePlayer(SceneCachePlayer sceneCachePlayer) {
         
@@ -200,9 +215,15 @@ internal class SceneCacheClipData : BaseClipData {
     [SerializeField] private AnimationCurve   m_animationCurve;
     [SerializeField] private bool             m_initialized = false;
 
+#pragma warning disable 414    
+    [HideInInspector][SerializeField] private int m_sceneCacheClipDataVersion = CUR_SCENE_CACHE_CLIP_DATA_VERSION; 
+#pragma warning restore 414    
+    
 //----------------------------------------------------------------------------------------------------------------------
     
     SceneCachePlayer m_scPlayer    = null;
+    
+    private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = 1;
     
 }
 
