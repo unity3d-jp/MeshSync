@@ -112,7 +112,8 @@ internal class DCCPluginDownloader  {
             if (string.IsNullOrEmpty(srcZipFilePath)) {
                 continue;
             }
-            
+
+            Directory.CreateDirectory(m_destFolder);
             string dest = Path.Combine(m_destFolder,"UnityMeshSync_" + version + "_" + dccPlatformName);
             File.Copy(srcZipFilePath, dest, /*overwrite=*/true);
             m_finishedDCCPluginLocalPaths.Add(dest);
