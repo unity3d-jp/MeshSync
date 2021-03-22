@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using NUnit.Framework;
 using Unity.FilmInternalUtilities;
 using Unity.SharpZipLib.Utils;
 using UnityEditor;
@@ -18,14 +19,10 @@ internal class MayaIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileNameWithoutExt, 
+    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string srcPluginRoot, 
         string tempPath) 
     {
-
-        string srcRoot = Path.Combine(tempPath, pluginFileNameWithoutExt);
-        if (!Directory.Exists(srcRoot)) {
-            return false;
-        }
+        Assert.IsTrue(Directory.Exists(srcPluginRoot));
 
         string configFolder = FindConfigFolder();
         

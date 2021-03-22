@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using JetBrains.Annotations;
+using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
@@ -39,23 +40,15 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileNameWithoutExt2, 
+    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string srcPluginRoot, 
         string tempPath) 
-    {        
-        //Go down one folder
-        string extractedPath = null;
-        foreach (string dir in Directory.EnumerateDirectories(tempPath)) {
-            extractedPath = dir;
-            break;
-        }
-
-        if (string.IsNullOrEmpty(extractedPath))
-            return false;
+    {
+        Assert.IsTrue(Directory.Exists(srcPluginRoot));
 
         //Must use '/' for the pluginFile which is going to be inserted into the template
         string ver = dccToolInfo.DCCToolVersion;
 
-        string[] pluginFiles = Directory.GetFiles(extractedPath, $"blender-{ver}*.zip");
+        string[] pluginFiles = Directory.GetFiles(srcPluginRoot, $"blender-{ver}*.zip");
         if (pluginFiles.Length <= 0) {
             return false;            
         }

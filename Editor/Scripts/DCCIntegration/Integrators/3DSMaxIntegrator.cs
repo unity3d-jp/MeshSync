@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using NUnit.Framework;
 using Unity.FilmInternalUtilities;
 using UnityEditor;
 using UnityEngine;
@@ -25,14 +26,10 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
     
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileNameWithoutExt, 
+    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string srcPluginRoot, 
         string tempPath) 
     {        
-
-        string extractedPluginRootFolder = Path.Combine(tempPath, pluginFileNameWithoutExt);
-        if (!Directory.Exists(extractedPluginRootFolder)) {
-            return false;
-        }
+        Assert.IsTrue(Directory.Exists(srcPluginRoot));
                
         string appVersion = $"3dsMax{dccToolInfo.DCCToolVersion}";
         
@@ -42,7 +39,7 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         Directory.CreateDirectory(configFolder);
 
         //Copy dlu file to configFolder
-        string srcPluginPath = Path.Combine(extractedPluginRootFolder, appVersion);
+        string srcPluginPath = Path.Combine(srcPluginRoot, appVersion);
         if (!Directory.Exists(srcPluginPath)) {
             return false;
         }
