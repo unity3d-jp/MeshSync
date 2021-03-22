@@ -21,7 +21,7 @@ internal abstract class BaseDCCIntegrator {
         string dccPluginFileName = dccToolName + "_" + GetCurrentDCCPluginPlatform() + ".zip";
     
         //Make sure the DCC plugin zip file exists first
-        DCCPluginDownloader downloader = new DCCPluginDownloader(false,SAVED_PLUGINS_FOLDER, 
+        DCCPluginDownloader downloader = new DCCPluginDownloader(false, 
             new string[] { dccPluginFileName }
         );
         
@@ -146,9 +146,6 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
 
     private readonly DCCToolInfo m_dccToolInfo = null;
-
-    private static readonly string SAVED_PLUGINS_FOLDER = Path.Combine(Application.dataPath, "MeshSyncDCCPlugins~");
-    
 }
 
 } //end namespace
