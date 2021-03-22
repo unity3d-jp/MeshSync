@@ -16,18 +16,17 @@ namespace Unity.MeshSync.Editor {
 internal class DCCPluginDownloader  {
 
     //dccPlatformNames example: Maya_Windows.zip
-    internal DCCPluginDownloader(bool showProgressBar, string destFolder, string[] dccPlatformNames) {
+    internal DCCPluginDownloader(bool showProgressBar, string[] dccPlatformNames) {
         m_showProgressBar = showProgressBar;
-        m_destFolder = destFolder;
         m_dccPlatformNames = new Queue<string>(dccPlatformNames);
-        m_finishedDCCPluginLocalPaths = new List<string>();
+        m_dccPluginLocalPaths = new List<string>();
     } 
     
 //----------------------------------------------------------------------------------------------------------------------    
     
     internal void Execute(string requestedVersion, Action<string, List<string>> onSuccess, Action onFail) {
         
-        m_finishedDCCPluginLocalPaths.Clear();
+        m_dccPluginLocalPaths.Clear();
         
         //Try to get the files from the package. If failed, then handle it
         DisplayProgressBar("Copying MeshSync DCC Plugins","",0);
@@ -35,7 +34,7 @@ internal class DCCPluginDownloader  {
             
             /*onSuccess=*/ (string installedVersion) => {
                 ClearProgressBar();
-                onSuccess(installedVersion, m_finishedDCCPluginLocalPaths);
+                onSuccess(installedVersion, m_dccPluginLocalPaths);
             
             }, 
             /*onFail=*/ (string version) => {
@@ -112,10 +111,8 @@ internal class DCCPluginDownloader  {
             if (string.IsNullOrEmpty(srcZipFilePath)) {
                 continue;
             }
-            
-            string dest = Path.Combine(m_destFolder,"UnityMeshSync_" + version + "_" + dccPlatformName);
-            File.Copy(srcZipFilePath, dest, /*overwrite=*/true);
-            m_finishedDCCPluginLocalPaths.Add(dest);
+
+            m_dccPluginLocalPaths.Add(srcZipFilePath);
         }
         
         
@@ -155,9 +152,8 @@ internal class DCCPluginDownloader  {
 //----------------------------------------------------------------------------------------------------------------------        
 
     private readonly bool m_showProgressBar;
-    private readonly string m_destFolder;
     private readonly Queue<string> m_dccPlatformNames;
-    private readonly List<string> m_finishedDCCPluginLocalPaths;
+    private readonly List<string> m_dccPluginLocalPaths;
         
     private const string MESHSYNC_DCC_PLUGIN_PACKAGE = "com.unity.meshsync.dcc-plugins";
 }

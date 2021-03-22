@@ -21,7 +21,7 @@ internal abstract class BaseDCCIntegrator {
         string dccPluginFileName = dccToolName + "_" + GetCurrentDCCPluginPlatform() + ".zip";
     
         //Make sure the DCC plugin zip file exists first
-        DCCPluginDownloader downloader = new DCCPluginDownloader(false,SAVED_PLUGINS_FOLDER, 
+        DCCPluginDownloader downloader = new DCCPluginDownloader(false, 
             new string[] { dccPluginFileName }
         );
         
@@ -40,8 +40,12 @@ internal abstract class BaseDCCIntegrator {
                     string tempPath = FileUtil.GetUniqueTempPathInProject();        
                     Directory.CreateDirectory(tempPath);
                     ZipUtility.UncompressFromZip(localPluginPath, null, tempPath);
-                    
-                    dccConfigured = ConfigureDCCToolV(m_dccToolInfo, Path.GetFileNameWithoutExtension(localPluginPath),tempPath);
+
+                    //Go down one folder
+                    string[] extractedDirs = Directory.GetDirectories(tempPath);
+                    if (extractedDirs.Length > 0) {
+                        dccConfigured = ConfigureDCCToolV(m_dccToolInfo, extractedDirs[0],tempPath);
+                    } 
                     
                     //Cleanup
                     FileUtility.DeleteFilesAndFolders(tempPath);
@@ -107,8 +111,8 @@ internal abstract class BaseDCCIntegrator {
     protected abstract string GetDCCToolInFileNameV();
 
     //returns null when failed
-    protected abstract bool ConfigureDCCToolV( DCCToolInfo dccToolInfo, string pluginFileNameWithoutExt, 
-        string extractedTempPath);
+    protected abstract bool ConfigureDCCToolV( DCCToolInfo dccToolInfo, string srcPluginRoot, 
+        string tempPath);
     
     protected abstract void FinalizeDCCConfigurationV();
     
@@ -146,9 +150,6 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
 
     private readonly DCCToolInfo m_dccToolInfo = null;
-
-    private static readonly string SAVED_PLUGINS_FOLDER = Path.Combine(Application.dataPath, "MeshSyncDCCPlugins~");
-    
 }
 
 } //end namespace

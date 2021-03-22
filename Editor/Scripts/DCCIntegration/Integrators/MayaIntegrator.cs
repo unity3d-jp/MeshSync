@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using NUnit.Framework;
 using Unity.FilmInternalUtilities;
 using Unity.SharpZipLib.Utils;
 using UnityEditor;
@@ -18,14 +19,10 @@ internal class MayaIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileNameWithoutExt, 
-        string extractedTempPath) 
+    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string srcPluginRoot, 
+        string tempPath) 
     {
-
-        string srcRoot = Path.Combine(extractedTempPath, pluginFileNameWithoutExt);
-        if (!Directory.Exists(srcRoot)) {
-            return false;
-        }
+        Assert.IsTrue(Directory.Exists(srcPluginRoot));
 
         string configFolder = FindConfigFolder();
         
@@ -34,17 +31,17 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         //const string MAYA_CLOSE_COMMAND = "scriptJob -idleEvent quit;";
         const string FINALIZE_SETUP = AUTOLOAD_SETUP + SHELF_SETUP;
         
-        string copySrcFolder  = srcRoot;
+        string copySrcFolder  = srcPluginRoot;
         string copyDestFolder = configFolder;
-        string argFormat = null;
-        string loadPluginCmd = null;
+        string argFormat      = null;
+        string loadPluginCmd  = null;
             
             
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
                 //C:\Users\Unity\Documents\maya\modules
                 const string FOLDER_PREFIX = "modules";
-                copySrcFolder  = Path.Combine(srcRoot, FOLDER_PREFIX);
+                copySrcFolder  = Path.Combine(srcPluginRoot, FOLDER_PREFIX);
                 copyDestFolder = Path.Combine(configFolder, FOLDER_PREFIX);                
                 
                 argFormat = "-command \"{0}\"";
@@ -70,7 +67,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
             case RuntimePlatform.LinuxEditor: {
                 //Example: /home/Unity/maya/2019/modules
                 const string FOLDER_PREFIX = "modules";
-                copySrcFolder  = Path.Combine(srcRoot, FOLDER_PREFIX);
+                copySrcFolder  = Path.Combine(srcPluginRoot, FOLDER_PREFIX);
                 copyDestFolder = Path.Combine(configFolder, FOLDER_PREFIX);
 
                 argFormat = @"-command '{0}'";

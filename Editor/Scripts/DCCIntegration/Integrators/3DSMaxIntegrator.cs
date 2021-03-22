@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using NUnit.Framework;
 using Unity.FilmInternalUtilities;
 using UnityEditor;
 using UnityEngine;
@@ -25,14 +26,10 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
     
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileNameWithoutExt, 
-        string extractedTempPath) 
+    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string srcPluginRoot, 
+        string tempPath) 
     {        
-
-        string extractedPluginRootFolder = Path.Combine(extractedTempPath, pluginFileNameWithoutExt);
-        if (!Directory.Exists(extractedPluginRootFolder)) {
-            return false;
-        }
+        Assert.IsTrue(Directory.Exists(srcPluginRoot));
                
         string appVersion = $"3dsMax{dccToolInfo.DCCToolVersion}";
         
@@ -42,7 +39,7 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         Directory.CreateDirectory(configFolder);
 
         //Copy dlu file to configFolder
-        string srcPluginPath = Path.Combine(extractedPluginRootFolder, appVersion);
+        string srcPluginPath = Path.Combine(srcPluginRoot, appVersion);
         if (!Directory.Exists(srcPluginPath)) {
             return false;
         }
@@ -57,15 +54,16 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
 
         //Check version
         bool   versionIsInt          = int.TryParse(dccToolInfo.DCCToolVersion, out int versionInt);
-        string installScriptPath     = CreateInstallScript(dccToolInfo.DCCToolVersion, configFolder, extractedTempPath);        
+        string installScriptPath     = CreateInstallScript(dccToolInfo.DCCToolVersion, configFolder, tempPath);        
         if (versionIsInt && versionInt <= 2018) {
             
             //3dsmax -U MAXScript install_script.ms
             setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, $"-U MAXScript \"{installScriptPath}\"");
         } else {
             string dccAppDir = Path.GetDirectoryName(dccToolInfo.AppPath);
-            if (string.IsNullOrEmpty(dccAppDir))
-                return false;
+            if (string.IsNullOrEmpty(dccAppDir)) {
+                return false;                
+            }
 
             //3dsmaxbatch.exe install_script.ms
             string dccBatchPath = Path.Combine(dccAppDir, "3dsmaxbatch.exe");
