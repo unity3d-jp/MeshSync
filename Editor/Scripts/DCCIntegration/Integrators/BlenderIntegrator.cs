@@ -39,12 +39,12 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileNameWithoutExt, 
-        string extractedTempPath) 
+    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileNameWithoutExt2, 
+        string tempPath) 
     {        
         //Go down one folder
         string extractedPath = null;
-        foreach (string dir in Directory.EnumerateDirectories(extractedTempPath)) {
+        foreach (string dir in Directory.EnumerateDirectories(tempPath)) {
             extractedPath = dir;
             break;
         }
@@ -73,7 +73,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
         //Replace the path in the template with actual path.
         string installScriptFormat = File.ReadAllText(templatePath);
         string installScript = String.Format(installScriptFormat,pluginFile);
-        string installScriptPath = Path.Combine(extractedTempPath, $"InstallBlenderPlugin_{ver}.py");
+        string installScriptPath = Path.Combine(tempPath, $"InstallBlenderPlugin_{ver}.py");
         File.WriteAllText(installScriptPath, installScript);
         
         //Prepare remove script to remove old plugin

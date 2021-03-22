@@ -19,10 +19,10 @@ internal class MayaIntegrator : BaseDCCIntegrator {
 
 //----------------------------------------------------------------------------------------------------------------------
     protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string pluginFileNameWithoutExt, 
-        string extractedTempPath) 
+        string tempPath) 
     {
 
-        string srcRoot = Path.Combine(extractedTempPath, pluginFileNameWithoutExt);
+        string srcRoot = Path.Combine(tempPath, pluginFileNameWithoutExt);
         if (!Directory.Exists(srcRoot)) {
             return false;
         }
