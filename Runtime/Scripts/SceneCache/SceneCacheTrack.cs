@@ -7,7 +7,7 @@ namespace Unity.MeshSync {
 
 [TrackClipType(typeof(SceneCachePlayableAsset))]
 [TrackColor(0.196f, 0.804f, 0.196f)] //limegreen
-internal class SceneCacheTrack : BaseExtendedClipTrack<BaseExtendedClipPlayableAsset<SceneCacheClipData>, SceneCacheClipData> {
+internal class SceneCacheTrack : BaseExtendedClipTrack<SceneCacheClipData> {
 
     protected override Playable CreateTrackMixerInternal(PlayableGraph graph, GameObject go, int inputCount) {
         
