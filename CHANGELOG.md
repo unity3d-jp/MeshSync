@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.7.2-preview] - 2021-03-22
+* fix: errors when installing Blender plugin from a project which has space in its path
+* fix: stop copying zip files unnecessarily when installing a supported DCC plugin 
+* chore: use com.unity.film-internal-utilities@0.8.4-preview
+
 ## [0.7.1-preview] - 2021-02-03
 * fix: error when copying DCC Plugins after installing MeshSyncDCCPlugins 
 
