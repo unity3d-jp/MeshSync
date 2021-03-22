@@ -28,7 +28,7 @@ internal class SceneCacheClipData : BaseClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    internal override void Destroy() {
+    internal override void DestroyV() {
         
     }
     
