@@ -5,7 +5,7 @@
     "unity": "2019.4",
     "displayName": "MeshSync",
     "dependencies": {
-        "com.unity.film-internal-utilities": "0.8.2-preview",
+        "com.unity.film-internal-utilities": "0.8.3-preview",
         "com.unity.editorcoroutines": "1.0.0",      
         "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.animation": "1.0.0",      
