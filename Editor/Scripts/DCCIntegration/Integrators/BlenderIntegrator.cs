@@ -130,7 +130,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
             
             //Install
             const int PYTHON_EXIT_CODE = 10;
-            process.StartInfo.Arguments = $"-b -P {installScriptPath} --python-exit-code {PYTHON_EXIT_CODE}";
+            process.StartInfo.Arguments = $"-b -P \"{installScriptPath}\" --python-exit-code {PYTHON_EXIT_CODE}";
             process.Start();
             process.WaitForExit();
             int exitCode = process.ExitCode;
