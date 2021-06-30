@@ -167,7 +167,9 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
             try {
                 File.Delete(binaryPluginFile);
             } catch (Exception e) {
-                Debug.LogError($"[MeshSync] Error when overwriting plugin: {binaryPluginFile}. Error: {e}");
+                string errMsg = $"[MeshSync] Error when overwriting plugin: {binaryPluginFile}. Error: {e}";
+                SetLastErrorMessage(errMsg);
+                Debug.LogError(errMsg);
             }
         }
 
