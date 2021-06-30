@@ -103,7 +103,10 @@ internal abstract class BaseDCCIntegrator {
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
-    internal DCCToolInfo GetDCCToolInfo() { return m_dccToolInfo; }
+    internal DCCToolInfo GetDCCToolInfo()      { return m_dccToolInfo; }
+    
+    internal string GetLastErrorMessage()           { return m_lastErrorMessage; }
+    internal void   SetLastErrorMessage(string msg) { m_lastErrorMessage = msg; }
 
 //----------------------------------------------------------------------------------------------------------------------    
 
@@ -150,6 +153,7 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
 
     private readonly DCCToolInfo m_dccToolInfo = null;
+    private          string      m_lastErrorMessage = null;
 }
 
 } //end namespace
