@@ -98,7 +98,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
                 Path.Combine(copyDestFolder, scriptFolder),
                 true);
         } catch {
-            SetLastErrorMessage($"Failed in copying mod file to dest: {copyDestFolder}");
+            SetLastErrorMessage($"Failed to copy files to dest: {copyDestFolder}");
             return false;
         }
 
@@ -187,7 +187,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
             // int exitCode = mayaProcess.ExitCode;
             
         } catch (Exception e) {
-            SetLastErrorMessage($"Failed to start Maya. Exception: {e.Message}");
+            SetLastErrorMessage($"Process error. Exception: {e.Message}");
             return false;
         }
 
