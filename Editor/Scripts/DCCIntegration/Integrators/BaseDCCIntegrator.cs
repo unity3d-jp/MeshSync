@@ -53,7 +53,7 @@ internal abstract class BaseDCCIntegrator {
                 }
                 
                 if (!dccConfigured) {
-                    HandleFailedIntegration("Failed in configuring DCC ", dccDesc);
+                    HandleFailedIntegration(GetLastErrorMessage(), dccDesc);
                     return;
                 }
 
@@ -139,7 +139,8 @@ internal abstract class BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------    
 
     private static void HandleFailedIntegration(string errMessage, string dccDesc) {
-        Debug.LogError($"[MeshSync] Error: {errMessage}, when installing plugin for " + dccDesc);
+        Debug.LogError($"[MeshSync] Error when installing plugin for {dccDesc}. {System.Environment.NewLine} " +
+            $"Message:  {errMessage}");
         EditorUtility.ClearProgressBar();
         EditorUtility.DisplayDialog("MeshSync",
             $"Failed in installing plugin. Please make sure to close down all running instances of {dccDesc}", 
