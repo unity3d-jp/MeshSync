@@ -41,12 +41,14 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         //Copy dlu file to configFolder
         string srcPluginPath = Path.Combine(srcPluginRoot, appVersion);
         if (!Directory.Exists(srcPluginPath)) {
+            SetLastErrorMessage($"Can't find src directory: {srcPluginPath}");
             return false;
         }
 
         try {
             FileUtility.CopyRecursive(srcPluginPath, configFolder, true);
         } catch {
+            SetLastErrorMessage($"Failed to copy files to dest: {configFolder}");
             return false;
         }
 
@@ -62,6 +64,7 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         } else {
             string dccAppDir = Path.GetDirectoryName(dccToolInfo.AppPath);
             if (string.IsNullOrEmpty(dccAppDir)) {
+                SetLastErrorMessage($"Can't determine application directory from: {dccToolInfo.AppPath}");
                 return false;                
             }
 
@@ -104,7 +107,7 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         
         try {
             if (!System.IO.File.Exists(appPath)) {
-                Debug.LogError("[MeshSync] No maya installation found at " + appPath);
+                SetLastErrorMessage($"No 3dsMax installation found at {appPath}");
                 return false;
             }
 
@@ -119,12 +122,12 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
             
             if (0!=exitCode) {
                 string stderr = process.StandardError.ReadToEnd();
-                Debug.LogError($"[MeshSync] 3dsMax plugin installation error. ExitCode: {exitCode}. {stderr}");
+                SetLastErrorMessage($"Process error. ExitCode: {exitCode}. {stderr}");
                 return false;
             }
             
         } catch (Exception e) {
-            Debug.LogError("[MeshSync] Failed to setup 3dsMax plugin. Exception: " + e.Message);
+            SetLastErrorMessage($"Process error. Exception: {e.Message}");
             return false;
         }
 
