@@ -88,6 +88,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         string scriptFolder = Path.Combine("UnityMeshSync",dccToolInfo.DCCToolVersion);
         string srcModFile = Path.Combine(copySrcFolder, MOD_FILE);
         if (!File.Exists(srcModFile)) {
+            SetLastErrorMessage($"Can't find mod file: {srcModFile}");
             return false;
         }
         try {
@@ -97,6 +98,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
                 Path.Combine(copyDestFolder, scriptFolder),
                 true);
         } catch {
+            SetLastErrorMessage($"Failed to copy files to dest: {copyDestFolder}");
             return false;
         }
 
@@ -161,7 +163,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         
         try {
             if (!System.IO.File.Exists(mayaPath)) {
-                Debug.LogError("[MeshSync] No maya installation found at " + mayaPath);
+                SetLastErrorMessage($"No Maya installation found at {mayaPath}");
                 return false;
             }
 
@@ -185,7 +187,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
             // int exitCode = mayaProcess.ExitCode;
             
         } catch (Exception e) {
-            Debug.LogError("[MeshSync] Failed to start Maya. Exception: " + e.Message);
+            SetLastErrorMessage($"Process error. Exception: {e.Message}");
             return false;
         }
 

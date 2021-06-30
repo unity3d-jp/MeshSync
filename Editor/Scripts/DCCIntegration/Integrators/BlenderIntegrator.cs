@@ -48,20 +48,25 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
         //Must use '/' for the pluginFile which is going to be inserted into the template
         string ver = dccToolInfo.DCCToolVersion;
 
-        string[] pluginFiles = Directory.GetFiles(srcPluginRoot, $"blender-{ver}*.zip");
+        string   zipFileName = $"blender-{ver}*.zip";
+        string[] pluginFiles = Directory.GetFiles(srcPluginRoot, zipFileName);
         if (pluginFiles.Length <= 0) {
+            SetLastErrorMessage($"Can't find {zipFileName} in MeshSyncDCCPlugins package");
             return false;            
         }
         
         string pluginFile = pluginFiles[0].Replace(Path.DirectorySeparatorChar,'/');        
         if (!File.Exists(pluginFile)) {
+            SetLastErrorMessage($"Can't find plugin file: {pluginFile}");
             return false;
         }
         
         //Prepare install script
         string templatePath = GetInstallScriptTemplatePath(ver);
-        if (string.IsNullOrEmpty(templatePath))
+        if (string.IsNullOrEmpty(templatePath)) {
+            SetLastErrorMessage($"Can't find install script template path: {templatePath}");            
             return false;
+        }
         
         //Replace the path in the template with actual path.
         string installScriptFormat = File.ReadAllText(templatePath);
@@ -71,8 +76,10 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
         
         //Prepare remove script to remove old plugin
         string uninstallScriptPath = GetUninstallScriptPath(ver);
-        if (string.IsNullOrEmpty(uninstallScriptPath))
-            return false;
+        if (string.IsNullOrEmpty(uninstallScriptPath)) {
+            SetLastErrorMessage($"Can't find uninstall script path: {uninstallScriptPath}");            
+            return false;            
+        }
       
         bool setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, 
             dccToolInfo.DCCToolVersion,
@@ -104,7 +111,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
 
         try {
             if (!System.IO.File.Exists(appPath)) {
-                Debug.LogError("[MeshSync] No Blender installation found at " + appPath);
+                SetLastErrorMessage("No Blender installation found at " + appPath);
                 return false;
             }
 
@@ -130,12 +137,12 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
             
             if (0!=exitCode) {
                 string stderr = process.StandardError.ReadToEnd();
-                Debug.LogError($"[MeshSync] Installation error. ExitCode: {exitCode}. {stderr}");
+                SetLastErrorMessage($"Process error. ExitCode: {exitCode}. {stderr}");
                 return false;
             }
                         
         } catch (Exception e) {
-            Debug.LogError("[MeshSync] Failed to install plugin. Exception: " + e.Message);
+            SetLastErrorMessage($"Process error. Exception: {e.Message}");
             return false;
         }
 
@@ -160,7 +167,9 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
             try {
                 File.Delete(binaryPluginFile);
             } catch (Exception e) {
-                Debug.LogError($"[MeshSync] Error when overwriting plugin: {binaryPluginFile}. Error: {e}");
+                string errMsg = $"[MeshSync] Error when overwriting plugin: {binaryPluginFile}. Error: {e}";
+                SetLastErrorMessage(errMsg);
+                Debug.LogError(errMsg);
             }
         }
 
