@@ -55,16 +55,16 @@ internal class MeshSyncEditorConstants {
         { "blender-2.83.10-linux64", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
         { "blender-2.83.12-linux64", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
         { "blender-2.83.13-linux64", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
-        { "blender-2.83.14-linux64", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
-        { "blender-2.83.15-linux64", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
-        { "blender-2.83.16-linux64", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
+        { "blender-2.83.14-stable+blender-v2-83-release.759fd9e4c204-linux.x86_64-release", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
+        { "blender-2.83.15-stable+blender-v283-release.fd3036520101-linux.x86_64-release", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
+        { "blender-2.83.16-linux-x64", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
         { "blender-2.90.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) },
         { "blender-2.90.1-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) },
         { "blender-2.91.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.91" ) },
         { "blender-2.91.2-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.91" ) },
         { "blender-2.92.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.92" ) },
-        { "blender-2.93.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
-        { "blender-2.93.1-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
+        { "blender-2.93.0-stable+blender-v293-release.84da05a8b806-linux.x86_64-release", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
+        { "blender-2.93.1-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
         
 #endif        
         
