@@ -12,7 +12,7 @@
 
 #include "MeshSync/SceneCache/msSceneCache.h"
 #include "MeshSync/SceneCache/msSceneCacheSettings.h"
-#include "MeshSync/Utility/msAsyncSceneExporter.h" //AsyncSceneCacheWriter
+#include "MeshSync/SceneCache/SceneCacheWriter.h" //SceneCacheWriter
 
 #include "MeshSync/Utility/msMaterialExt.h"     //standardMaterial
 
@@ -31,7 +31,7 @@ TestCase(Test_SendMesh) {
     c2.flatten_hierarchy = 0;
     c2.encoder_settings.zstd.compression_level = 100;
 
-    ms::AsyncSceneCacheWriter writer0, writer1, writer2;
+    ms::SceneCacheWriter writer0, writer1, writer2;
     writer0.open("wave_c0.sc", c0);
     writer1.open("wave_c1.sc", c1);
     writer2.open("wave_c2.sc", c2);
