@@ -22,7 +22,7 @@ internal static class MeshSyncMenu  {
     internal static MeshSyncServer CreateMeshSyncServer(bool autoStart) {
         GameObject     go  = new GameObject("MeshSyncServer");
         MeshSyncServer mss = go.AddComponent<MeshSyncServer>();
-        mss.Init("Assets/MeshSyncAssets");
+        mss.Init(MeshSyncConstants.DEFAULT_ASSETS_PATH);
         mss.SetAutoStartServer(autoStart);
         return mss;
     }
