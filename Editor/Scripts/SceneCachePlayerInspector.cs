@@ -37,11 +37,10 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
         }
         
         Undo.RecordObject(target, "SceneCachePlayer Update");        
-        SerializedObject so = serializedObject;
 
         EditorGUILayout.Space();
-        DrawCacheSettings(so);
-        DrawPlayerSettings(m_sceneCachePlayer, so);
+        DrawCacheSettings();
+        DrawPlayerSettings(m_sceneCachePlayer);
         MeshSyncPlayerConfig config = m_sceneCachePlayer.GetConfig();
         if (config.Profiling) {
             EditorGUILayout.TextArea(m_sceneCachePlayer.dbgProfileReport, GUILayout.Height(120));
@@ -54,14 +53,13 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
         DrawExportAssets(m_sceneCachePlayer);
         DrawPluginVersion();
 
-        so.ApplyModifiedProperties();
         PrefabUtility.RecordPrefabInstancePropertyModifications(m_sceneCachePlayer);
         
     }
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    void DrawCacheSettings(SerializedObject so) {
+    void DrawCacheSettings() {
         GUIStyle styleFold = EditorStyles.foldout;
         styleFold.fontStyle = FontStyle.Bold;
 
@@ -94,11 +92,6 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
             }
             EditorGUILayout.Space();
 
-            // time / frame
-            System.Action resetTimeAnimation = () => {
-                so.ApplyModifiedProperties();
-                m_sceneCachePlayer.ResetTimeAnimation();
-            };
 
             EditorGUI.BeginChangeCheck();
             
@@ -106,7 +99,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
                 EditorGUILayout.Popup("Time Unit", (int)m_sceneCachePlayer.GetTimeUnit(), m_timeUnitEnums);
             if (EditorGUI.EndChangeCheck()) {
                 m_sceneCachePlayer.SetTimeUnit(selectedTimeUnit);
-                resetTimeAnimation();                
+                m_sceneCachePlayer.ResetTimeAnimation();
             }
 
             if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Seconds) {
@@ -120,7 +113,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
                     EditorGUILayout.Popup("Base Frame", (int)m_sceneCachePlayer.GetBaseFrame(), m_baseFrameEnums);
                 if (EditorGUI.EndChangeCheck()) {
                     m_sceneCachePlayer.SetBaseFrame(selectedBaseFrame);                    
-                    resetTimeAnimation();
+                    m_sceneCachePlayer.ResetTimeAnimation();
                 }
 
                 m_sceneCachePlayer.SetFrame(EditorGUILayout.IntField("Frame", m_sceneCachePlayer.GetFrame()));

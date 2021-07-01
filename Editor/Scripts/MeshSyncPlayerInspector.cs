@@ -34,7 +34,7 @@ namespace Unity.MeshSync.Editor
         }
 //----------------------------------------------------------------------------------------------------------------------
         
-        protected void DrawPlayerSettings(MeshSyncPlayer t, SerializedObject so)
+        protected void DrawPlayerSettings(MeshSyncPlayer t)
         {
             var styleFold = EditorStyles.foldout;
             styleFold.fontStyle = FontStyle.Bold;
