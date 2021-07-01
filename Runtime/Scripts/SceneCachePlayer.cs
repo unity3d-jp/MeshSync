@@ -71,6 +71,23 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         if (m_timeUnit == TimeUnit.Frames)
             m_interpolation = false;        
     }
+
+
+    internal float GetTime() { return m_time;}
+    internal void SetTime(float time) { m_time = time; }
+
+    internal bool GetInterpolation() { return m_interpolation; }
+    internal void SetInterpolation(bool interpolation) { m_interpolation = interpolation;}
+
+    internal BaseFrame GetBaseFrame() { return m_baseFrame; }
+    internal void SetBaseFrame(BaseFrame baseFrame) { m_baseFrame = baseFrame; }
+
+    internal int GetFrame() { return m_frame; }
+    internal void SetFrame(int frame) { m_frame = frame;}
+
+    internal int GetPreloadLength() { return m_preloadLength;}
+    internal void SetPreloadLength(int preloadLength) { m_preloadLength = preloadLength;}
+
     
 //----------------------------------------------------------------------------------------------------------------------
     
