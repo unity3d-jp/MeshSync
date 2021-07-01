@@ -131,13 +131,11 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
     void OnSceneCacheFileReload() {
         string sceneCacheFilePath = m_sceneCachePlayer.GetSceneCacheFilePath();
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(m_sceneCachePlayer, sceneCacheFilePath);
-        GUIUtility.ExitGUI();        
     }
     
 //----------------------------------------------------------------------------------------------------------------------
     private static void ChangeSceneCacheFileInInspector(SceneCachePlayer cachePlayer, string sceneCacheFilePath) {
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(cachePlayer, sceneCacheFilePath);
-        GUIUtility.ExitGUI();
     }
 
 
@@ -152,7 +150,6 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
                 string sceneCacheFilePath = player.GetSceneCacheFilePath();
                 SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, sceneCacheFilePath);                
             }
-            GUIUtility.ExitGUI();                
         }
         EditorGUILayout.EndHorizontal();
         
