@@ -133,6 +133,12 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     internal string GetAssetsFolder() { return m_assetsFolder;}   
 
+    internal void SetAssetsFolder(string folder) { m_assetsFolder = folder;}   
+
+    internal Transform GetRootObject() { return m_rootObject;}   
+
+    internal void SetRootObject(Transform t) { m_rootObject = t;}   
+    
     #endregion Simple Getter/Setter
     
 
@@ -150,11 +156,9 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     internal MeshSyncPlayerConfig GetConfig() { return m_config; }
 
 
-    internal bool usePhysicalCameraParams
-    {
-        get { return m_usePhysicalCameraParams; }
-        set { m_usePhysicalCameraParams = value; }
-    }
+    internal bool GetUsePhysicalCameraParams() { return m_usePhysicalCameraParams;}
+    internal void SetUsePhysicalCameraParams(bool use) { m_usePhysicalCameraParams = use;}
+
     
     internal bool useCustomCameraMatrices
     {

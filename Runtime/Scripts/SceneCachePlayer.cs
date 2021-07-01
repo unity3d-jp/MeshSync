@@ -63,6 +63,31 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
 
     internal float GetRequestedNormalizedTime() { return m_reqNormalizedTime;}
+
+    internal TimeUnit GetTimeUnit() { return m_timeUnit; }
+
+    internal void SetTimeUnit(TimeUnit timeUnit) {
+        m_timeUnit = timeUnit;
+        if (m_timeUnit == TimeUnit.Frames)
+            m_interpolation = false;        
+    }
+
+
+    internal float GetTime() { return m_time;}
+    internal void SetTime(float time) { m_time = time; }
+
+    internal bool GetInterpolation() { return m_interpolation; }
+    internal void SetInterpolation(bool interpolation) { m_interpolation = interpolation;}
+
+    internal BaseFrame GetBaseFrame() { return m_baseFrame; }
+    internal void SetBaseFrame(BaseFrame baseFrame) { m_baseFrame = baseFrame; }
+
+    internal int GetFrame() { return m_frame; }
+    internal void SetFrame(int frame) { m_frame = frame;}
+
+    internal int GetPreloadLength() { return m_preloadLength;}
+    internal void SetPreloadLength(int preloadLength) { m_preloadLength = preloadLength;}
+
     
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -103,17 +128,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     public int frameCount {
         get { return m_sceneCache.sceneCount; }
     }
-
-    public TimeUnit timeUnit {
-        get { return m_timeUnit; }
-        set
-        {
-            m_timeUnit = value;
-            if (m_timeUnit == TimeUnit.Frames)
-                m_interpolation = false;
-        }
-    }
-
 
 #if UNITY_EDITOR
     public bool foldCacheSettings {

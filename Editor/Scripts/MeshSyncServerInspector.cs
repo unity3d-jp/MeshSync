@@ -1,3 +1,5 @@
+using Unity.FilmInternalUtilities;
+using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -19,24 +21,22 @@ namespace Unity.MeshSync.Editor  {
         public override void OnInspectorGUI()
         {
             Undo.RecordObject(m_meshSyncServer, "MeshSyncServer Update");        
-            SerializedObject so = serializedObject;
 
             EditorGUILayout.Space();
-            DrawServerSettings(m_meshSyncServer, so);
-            DrawPlayerSettings(m_meshSyncServer, so);
+            DrawServerSettings(m_meshSyncServer);
+            DrawPlayerSettings(m_meshSyncServer);
             DrawMaterialList(m_meshSyncServer);
             DrawTextureList(m_meshSyncServer);
             DrawAnimationTweak(m_meshSyncServer);
             DrawExportAssets(m_meshSyncServer);
             DrawPluginVersion();
 
-            so.ApplyModifiedProperties();
             PrefabUtility.RecordPrefabInstancePropertyModifications(m_meshSyncServer);
             
         }
 //----------------------------------------------------------------------------------------------------------------------
 
-        public void DrawServerSettings(MeshSyncServer t, SerializedObject so)
+        public void DrawServerSettings(MeshSyncServer t)
         {
             var styleFold = EditorStyles.foldout;
             styleFold.fontStyle = FontStyle.Bold;
@@ -67,8 +67,14 @@ namespace Unity.MeshSync.Editor  {
                 GUILayout.EndHorizontal();
                 EditorGUI.EndDisabledGroup();
                 
-                EditorGUILayout.PropertyField(so.FindProperty("m_assetDir"));
-                EditorGUILayout.PropertyField(so.FindProperty("m_rootObject"));
+                string selectedFolder = EditorGUIDrawerUtility.DrawFolderSelectorGUI("Asset Dir", "Asset Dir", 
+                    t.GetAssetsFolder(), null);
+                t.SetAssetsFolder(AssetUtility.NormalizeAssetPath(selectedFolder));
+                
+                Transform rootObject = (Transform) EditorGUILayout.ObjectField("Root Object", t.GetRootObject(), 
+                    typeof(Transform), allowSceneObjects: true);                
+                t.SetRootObject(rootObject);
+                
                 EditorGUILayout.Space();
             }
         }
