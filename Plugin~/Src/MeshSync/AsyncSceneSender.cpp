@@ -1,70 +1,15 @@
 #include "pch.h"
-#include "MeshSync/Utility/msAsyncSceneExporter.h"
+#include "MeshSync/AsyncSceneSender.h"
 
 #ifndef msRuntime
 
-#include "SceneCache/msOSceneCacheImpl.h"
-#include "MeshSync/msClient.h"
+#include "MeshSync/msClient.h" //Client
 #include "MeshSync/SceneGraph/msMaterial.h"
-#include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msTexture.h"
-#include "MeshSync/SceneGraph/msTransform.h"
+
+#include "Utils/EntityUtility.h"
 
 namespace ms {
-
-template<class Entities>
-static inline void SetupDataFlags(Entities& entities)
-{
-    for (auto& e : entities)
-        e->setupDataFlags();
-}
-
-
-AsyncSceneExporter::~AsyncSceneExporter()
-{
-}
-
-void AsyncSceneExporter::clear()
-{
-    assets.clear();
-    textures.clear();
-    materials.clear();
-    transforms.clear();
-    geometries.clear();
-    animations.clear();
-
-    deleted_entities.clear();
-    deleted_materials.clear();
-}
-
-void AsyncSceneExporter::add(ScenePtr scene)
-{
-    scene_settings = scene->settings;
-    for (auto& a : scene->assets) {
-        switch (a->getAssetType())
-        {
-        case AssetType::Texture:
-            textures.push_back(std::static_pointer_cast<Texture>(a));
-            break;
-        case AssetType::Material:
-            materials.push_back(std::static_pointer_cast<Material>(a));
-            break;
-        case AssetType::Animation:
-            animations.push_back(std::static_pointer_cast<AnimationClip>(a));
-            break;
-        default:
-            assets.push_back(a);
-            break;
-        }
-    }
-    for (auto& e : scene->entities) {
-        if (e->isGeometry())
-            geometries.push_back(e);
-        else
-            transforms.push_back(e);
-    }
-}
-
 
 AsyncSceneSender::AsyncSceneSender(int sid)
 {
@@ -238,102 +183,6 @@ void AsyncSceneSender::send()
     }
 
 cleanup:
-    if (succeeded) {
-        if (on_success)
-            on_success();
-    }
-    else {
-        if (on_error)
-            on_error();
-    }
-    if (on_complete)
-        on_complete();
-
-    clear();
-}
-
-
-AsyncSceneCacheWriter::AsyncSceneCacheWriter()
-{
-}
-
-AsyncSceneCacheWriter::~AsyncSceneCacheWriter()
-{
-    close();
-}
-
-bool AsyncSceneCacheWriter::open(const char *path, const OSceneCacheSettings& oscs)
-{
-    m_osc = OpenOSceneCacheFile(path, oscs);
-    return m_osc != nullptr;
-}
-
-void AsyncSceneCacheWriter::close()
-{
-    if (valid()) {
-        wait();
-        m_osc.reset();
-    }
-}
-
-bool AsyncSceneCacheWriter::valid() const
-{
-    return m_osc != nullptr;
-}
-
-bool AsyncSceneCacheWriter::isExporting()
-{
-    if (!valid())
-        return false;
-    return m_osc->isWriting();
-}
-
-void AsyncSceneCacheWriter::wait()
-{
-    if (!valid())
-        return;
-    m_osc->flush();
-}
-
-void AsyncSceneCacheWriter::kick()
-{
-    if (!valid())
-        return;
-
-    write();
-}
-
-void AsyncSceneCacheWriter::write()
-{
-    if (on_prepare)
-        on_prepare();
-
-    if (assets.empty() && transforms.empty() && geometries.empty())
-        return;
-
-    SetupDataFlags(transforms);
-    SetupDataFlags(geometries);
-    AssignIDs(transforms, id_table);
-    AssignIDs(geometries, id_table);
-
-    auto append = [](auto& dst, auto& src) { dst.insert(dst.end(), src.begin(), src.end()); };
-
-    bool succeeded = true;
-
-    {
-        auto scene = Scene::create();
-        scene->settings = scene_settings;
-
-        scene->assets = assets;
-        append(scene->assets, textures);
-        append(scene->assets, materials);
-        append(scene->assets, animations);
-
-        scene->entities = transforms;
-        append(scene->entities, geometries);
-        m_osc->addScene(scene, time);
-    }
-
     if (succeeded) {
         if (on_success)
             on_success();
