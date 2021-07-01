@@ -38,7 +38,7 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         }
 
         //OnCreate() is called before the clip is assigned to the track, but we need the track for creating curves.
-        clip.parentTrack = track;
+        clip.TryMoveToTrack(track);
                        
         //If the clip already has curves (because of cloning, etc), then we don't set anything
         if (null == clip.curves) {
