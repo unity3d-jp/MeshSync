@@ -133,6 +133,12 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     internal string GetAssetsFolder() { return m_assetsFolder;}   
 
+    internal void SetAssetsFolder(string folder) { m_assetsFolder = folder;}   
+
+    internal Transform GetRootObject() { return m_rootObject;}   
+
+    internal void SetRootObject(Transform t) { m_rootObject = t;}   
+    
     #endregion Simple Getter/Setter
     
 
