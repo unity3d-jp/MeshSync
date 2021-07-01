@@ -150,11 +150,9 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     internal MeshSyncPlayerConfig GetConfig() { return m_config; }
 
 
-    internal bool usePhysicalCameraParams
-    {
-        get { return m_usePhysicalCameraParams; }
-        set { m_usePhysicalCameraParams = value; }
-    }
+    internal bool GetUsePhysicalCameraParams() { return m_usePhysicalCameraParams;}
+    internal void SetUsePhysicalCameraParams(bool use) { m_usePhysicalCameraParams = use;}
+
     
     internal bool useCustomCameraMatrices
     {
