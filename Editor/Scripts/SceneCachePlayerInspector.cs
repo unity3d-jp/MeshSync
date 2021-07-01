@@ -102,16 +102,17 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
 
             EditorGUI.BeginChangeCheck();
             
-            int selectedTimeUnit = EditorGUILayout.Popup("Time Unit", (int)m_sceneCachePlayer.GetTimeUnit(), m_timeUnitEnums);
+            SceneCachePlayer.TimeUnit selectedTimeUnit = (SceneCachePlayer.TimeUnit) 
+                EditorGUILayout.Popup("Time Unit", (int)m_sceneCachePlayer.GetTimeUnit(), m_timeUnitEnums);
             if (EditorGUI.EndChangeCheck()) {
-                m_sceneCachePlayer.SetTimeUnit((SceneCachePlayer.TimeUnit)selectedTimeUnit);
+                m_sceneCachePlayer.SetTimeUnit(selectedTimeUnit);
                 resetTimeAnimation();                
             }
 
-            if (m_sceneCachePlayer.timeUnit == SceneCachePlayer.TimeUnit.Seconds) {
+            if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Seconds) {
                 EditorGUILayout.PropertyField(so.FindProperty("m_time"));
                 EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
-            } else if (m_sceneCachePlayer.timeUnit == SceneCachePlayer.TimeUnit.Frames) {
+            } else if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Frames) {
                 EditorGUI.BeginChangeCheck();
                 EditorGUILayout.PropertyField(so.FindProperty("m_baseFrame"));
                 if (EditorGUI.EndChangeCheck())
