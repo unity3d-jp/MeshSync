@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using System.Collections;
 using System.IO;
+using Unity.FilmInternalUtilities;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Playables;
@@ -49,7 +50,7 @@ internal class SceneCachePlayableAssetTest {
         yield return null;
         
         Assert.AreEqual(0, sceneCachePlayer.GetRequestedNormalizedTime());
-        double timePerFrame = 1.0f / sceneCacheTrack.timelineAsset.editorSettings.fps;
+        double timePerFrame = 1.0f / sceneCacheTrack.timelineAsset.editorSettings.GetFPS();
 
         double directorTime = clip.start + clip.duration - timePerFrame;
         SetDirectorTime(director, directorTime);
