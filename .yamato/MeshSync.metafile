@@ -2,8 +2,8 @@ yamato_name: MeshSync
 
 test_editors:
   - version: 2019.4
-  - version: 2020.2
-  - version: trunk
+  - version: 2020.3
+  - version: 2021.2
 test_platforms:
   - name: win
     type: Unity::VM
