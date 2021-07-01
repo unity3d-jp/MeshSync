@@ -110,21 +110,28 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
             }
 
             if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Seconds) {
-                EditorGUILayout.PropertyField(so.FindProperty("m_time"));
-                EditorGUILayout.PropertyField(so.FindProperty("m_interpolation"));
+                m_sceneCachePlayer.SetTime(EditorGUILayout.FloatField("Time", m_sceneCachePlayer.GetTime()));
+                m_sceneCachePlayer.SetInterpolation(EditorGUILayout.Toggle("Interpolation", m_sceneCachePlayer.GetInterpolation()));
             } else if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Frames) {
+                
                 EditorGUI.BeginChangeCheck();
-                EditorGUILayout.PropertyField(so.FindProperty("m_baseFrame"));
-                if (EditorGUI.EndChangeCheck())
-                    resetTimeAnimation();
 
-                EditorGUILayout.PropertyField(so.FindProperty("m_frame"));
+                SceneCachePlayer.BaseFrame selectedBaseFrame = (SceneCachePlayer.BaseFrame) 
+                    EditorGUILayout.Popup("Base Frame", (int)m_sceneCachePlayer.GetBaseFrame(), m_baseFrameEnums);
+                if (EditorGUI.EndChangeCheck()) {
+                    m_sceneCachePlayer.SetBaseFrame(selectedBaseFrame);                    
+                    resetTimeAnimation();
+                    Debug.Log("BaseFrame: " + selectedBaseFrame);
+                }
+
+                m_sceneCachePlayer.SetFrame(EditorGUILayout.IntField("Frame", m_sceneCachePlayer.GetFrame()));
             }
 
             // preload
             {
-                SerializedProperty preloadLength = so.FindProperty("m_preloadLength");
-                preloadLength.intValue = EditorGUILayout.IntSlider("Preload Length", preloadLength.intValue, 0, m_sceneCachePlayer.frameCount);
+                int preloadLength = EditorGUILayout.IntSlider("Preload Length", m_sceneCachePlayer.GetPreloadLength(), 0, m_sceneCachePlayer.frameCount);
+                m_sceneCachePlayer.SetPreloadLength(preloadLength);
+
             }
 
             EditorGUILayout.Space();
@@ -179,6 +186,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
 
 
     private readonly string[] m_timeUnitEnums = System.Enum.GetNames( typeof( SceneCachePlayer.TimeUnit ) );
+    private readonly string[] m_baseFrameEnums = System.Enum.GetNames( typeof( SceneCachePlayer.BaseFrame ) );
     
 
 }
