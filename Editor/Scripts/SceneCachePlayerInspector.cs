@@ -121,14 +121,13 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
                 if (EditorGUI.EndChangeCheck()) {
                     m_sceneCachePlayer.SetBaseFrame(selectedBaseFrame);                    
                     resetTimeAnimation();
-                    Debug.Log("BaseFrame: " + selectedBaseFrame);
                 }
 
                 m_sceneCachePlayer.SetFrame(EditorGUILayout.IntField("Frame", m_sceneCachePlayer.GetFrame()));
             }
 
             // preload
-            {
+            {                
                 int preloadLength = EditorGUILayout.IntSlider("Preload Length", m_sceneCachePlayer.GetPreloadLength(), 0, m_sceneCachePlayer.frameCount);
                 m_sceneCachePlayer.SetPreloadLength(preloadLength);
 
