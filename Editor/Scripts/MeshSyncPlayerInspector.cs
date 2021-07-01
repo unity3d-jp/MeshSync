@@ -51,7 +51,8 @@ namespace Unity.MeshSync.Editor
                 if (playerConfig.SyncCameras)
                 {
                     EditorGUI.indentLevel++;
-                    EditorGUILayout.PropertyField(so.FindProperty("m_usePhysicalCameraParams"), new GUIContent("Physical Camera Params"));
+                    
+                    t.SetUsePhysicalCameraParams(EditorGUILayout.Toggle("Physical Camera Params", t.GetUsePhysicalCameraParams()));
                     //EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
                     EditorGUI.indentLevel--;
                 }
