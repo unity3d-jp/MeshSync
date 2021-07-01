@@ -63,6 +63,10 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
 
     internal float GetRequestedNormalizedTime() { return m_reqNormalizedTime;}
+
+    internal TimeUnit GetTimeUnit() { return m_timeUnit; }
+
+    internal void SetTimeUnit(TimeUnit timeUnit) { m_timeUnit = timeUnit; }
     
 //----------------------------------------------------------------------------------------------------------------------
     

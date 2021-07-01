@@ -101,9 +101,12 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
             };
 
             EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(so.FindProperty("m_timeUnit"));
-            if (EditorGUI.EndChangeCheck())
-                resetTimeAnimation();
+            
+            int selectedTimeUnit = EditorGUILayout.Popup("Time Unit", (int)m_sceneCachePlayer.GetTimeUnit(), m_timeUnitEnums);
+            if (EditorGUI.EndChangeCheck()) {
+                m_sceneCachePlayer.SetTimeUnit((SceneCachePlayer.TimeUnit)selectedTimeUnit);
+                resetTimeAnimation();                
+            }
 
             if (m_sceneCachePlayer.timeUnit == SceneCachePlayer.TimeUnit.Seconds) {
                 EditorGUILayout.PropertyField(so.FindProperty("m_time"));
@@ -174,6 +177,8 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
     private List<SceneCachePlayer> m_targets          = new List<SceneCachePlayer>();
 
 
+    private readonly string[] m_timeUnitEnums = System.Enum.GetNames( typeof( SceneCachePlayer.TimeUnit ) );
+    
 
 }
 
