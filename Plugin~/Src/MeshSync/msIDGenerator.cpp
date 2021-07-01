@@ -2,7 +2,7 @@
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msTransform.h"
 
-#include "MeshSync/Utility/msIDGenerator.h"
+#include "MeshSync/msIDGenerator.h"
 
 
 namespace ms {
