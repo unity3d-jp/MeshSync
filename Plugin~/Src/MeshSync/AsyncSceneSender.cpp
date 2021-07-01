@@ -7,15 +7,9 @@
 #include "MeshSync/SceneGraph/msMaterial.h"
 #include "MeshSync/SceneGraph/msTexture.h"
 
+#include "Utils/EntityUtility.h"
+
 namespace ms {
-
-template<class Entities>
-static inline void SetupDataFlags(Entities& entities)
-{
-    for (auto& e : entities)
-        e->setupDataFlags();
-}
-
 
 AsyncSceneSender::AsyncSceneSender(int sid)
 {
