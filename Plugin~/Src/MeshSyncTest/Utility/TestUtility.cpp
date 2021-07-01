@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "TestUtility.h"
 #include "Test.h"               //GetArg
-#include "MeshSync/Utility/msAsyncSceneExporter.h" //ms::AsyncSceneSender
+#include "MeshSync/AsyncSceneSender.h" //ms::AsyncSceneSender
 
 ms::ClientSettings TestUtility::GetClientSettings(){
     ms::ClientSettings ret;
