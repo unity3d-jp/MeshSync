@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.8.0-preview] - 2021-07-2
+
+* feat: support plugin auto-installation of Blender 2.92 and 2.93
+* fix: better error messages when the auto-installation of  DCC plugin has failed
+* fix: warnings when using Timeline 1.6.x 
+* deps: use com.unity.film-internal-utilities@0.10.1-preview
+
+* fix-plugin: include <string> in ClientSettings.h 
+* refactor-plugin: separate msAsyncSceneExporter into three files. 
+* refactor-plugin: remove noncopyable
+* refactor-plugin: move class macro from MeshSyncDCCPlugins 
+
 ## [0.7.2-preview] - 2021-03-22
 * fix: errors when installing Blender plugin from a project which has space in its path
 * fix: stop copying zip files unnecessarily when installing a supported DCC plugin 
