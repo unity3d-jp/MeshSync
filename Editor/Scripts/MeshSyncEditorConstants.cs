@@ -32,7 +32,6 @@ internal class MeshSyncEditorConstants {
         { "3ds Max 2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020" ) },
 
 #if UNITY_EDITOR_WIN        
-        { "Blender",      new DCCToolInfo(DCCToolType.BLENDER, null ) },
         { "Blender 2.83", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },
         { "Blender 2.90", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) },
         { "Blender 2.91", new DCCToolInfo(DCCToolType.BLENDER, "2.91" ) },
@@ -40,7 +39,6 @@ internal class MeshSyncEditorConstants {
         { "Blender 2.93", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
 #elif UNITY_EDITOR_OSX        
         { "Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
-        { "Blender/Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
 #elif UNITY_EDITOR_LINUX
         { "blender-2.83.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
         { "blender-2.83.1-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
