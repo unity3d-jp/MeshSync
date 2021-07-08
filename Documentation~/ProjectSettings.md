@@ -5,7 +5,7 @@
 
 ## Server
 
-![ProjectSettingsServer](../images/ProjectSettingsServer.png)
+![ProjectSettingsServer](images/ProjectSettingsServer.png)
 
 Use the **Server** tab to set the default setting values for 
 [MeshSyncServer](MeshSyncServer.md) component, 
@@ -22,7 +22,7 @@ and connection-related settings:
 
 ## Scene Cache Player
 
-![ProjectSettingsSceneCache](../images/ProjectSettingsSceneCache.png)
+![ProjectSettingsSceneCache](images/ProjectSettingsSceneCache.png)
 
 Use the **Scene Cache Player** tab to set the default setting values for 
 [SceneCache](SceneCache.md) component.

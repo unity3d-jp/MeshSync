@@ -8,7 +8,7 @@ it automatically detects DCC tools which have been
 installed in their default locations automatically and 
 display them inside the window.
 
-![Preferences](../images/Preferences.png)
+![Preferences](images/Preferences.png)
 
 | Legend  | Use                                                                                       | 
 | ------- | ----------------------------------------------------------------------------------------- | 
