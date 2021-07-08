@@ -10,7 +10,7 @@ All notable changes to the MeshSync package will be documented in this file.
 ### Changed
 * better error messages when the auto-installation of  DCC plugin has failed
 * use com.unity.film-internal-utilities@0.10.1-preview
-* plugin: include `<string>` in ClientSettings.h 
+* plugin: include &lt;string&gt; in ClientSettings.h 
 * plugin: separate msAsyncSceneExporter into three files. 
 
 ### Fixed
