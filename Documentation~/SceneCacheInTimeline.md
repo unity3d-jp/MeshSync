@@ -1,6 +1,6 @@
 # Scene Cache In Timeline
 
-![Menu](../images/SceneCacheInTimeline.png)
+![Menu](images/SceneCacheInTimeline.png)
 
 [Scene Cache](SceneCache.md) can be controlled via 
 [Timeline](https://docs.unity3d.com/Packages/com.unity.timeline@latest) 
@@ -16,7 +16,7 @@ To view animation curves of the clip, click the Curves icon next to the Track na
 
 ## Scene Cache Playable Asset
 
-![SceneCachePlayableAsset](../images/SceneCachePlayableAsset.png)
+![SceneCachePlayableAsset](images/SceneCachePlayableAsset.png)
 
 - **Scene Cache Player:**  
 The [SceneCachePlayer](SceneCache.md#scene-cache-player) to be played in Timeline.

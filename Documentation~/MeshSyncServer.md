@@ -1,6 +1,6 @@
 # MeshSyncServer
 
-![MeshSyncServer](../images/MeshSyncServer.png)
+![MeshSyncServer](images/MeshSyncServer.png)
 
 - **Auto Start**  
   On: automatically start the server using the specified port.  
@@ -77,7 +77,7 @@ In order to use them in other scenes or projects, we can save them as asset file
   Unity GameView via the browser (the default is [127.0.0.1:8080](http://127.0.0.1:8080)).  
   If a message is sent from the browser's message form, that message will appear in Unity's Console. This communication method can be useful when Unity and the DCC tool are being used by different people. 
 
-  ![GameViewInBrowser](../images/GameViewInBrowser.png)
+  ![GameViewInBrowser](images/GameViewInBrowser.png)
 
 
 - If only the pose/animation are being edited, we recommend disabling **Sync Meshes** in MeshSyncServer component, which can make the performance lighter.

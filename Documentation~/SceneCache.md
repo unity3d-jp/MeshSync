@@ -18,7 +18,7 @@ This will automatically create a GameObject with
 [SceneCachePlayer](#scene-cache-player) component, 
 which will be played automatically in PlayMode.
 
-![Menu](../images/MenuCreateCachePlayer.png)
+![Menu](images/MenuCreateCachePlayer.png)
 
 Normally, the playback is controlled using an 
 [*Animator*](https://docs.unity3d.com/ScriptReference/Animator.html) with an 
@@ -27,7 +27,7 @@ we can also control the playback of [Scene Cache in Timeline](SceneCacheInTimeli
 
 ## Scene Cache Player
 
-![SceneCachePlayer](../images/SceneCachePlayer.png)
+![SceneCachePlayer](images/SceneCachePlayer.png)
 
 This component handles the playback. 
 There are many settings which are in common with [MeshSyncServer](MeshSyncServer.md).
