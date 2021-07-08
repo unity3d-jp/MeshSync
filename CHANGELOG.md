@@ -10,11 +10,11 @@ All notable changes to the MeshSync package will be documented in this file.
 ### Changed
 * better error messages when the auto-installation of  DCC plugin has failed
 * use com.unity.film-internal-utilities@0.10.1-preview
-* plugin: include <string> in ClientSettings.h 
+* plugin: include `<string>` in ClientSettings.h 
 * plugin: separate msAsyncSceneExporter into three files. 
 
 ### Fixed
-* warnings when using Timeline 1.6.x 
+* fix warnings when using Timeline 1.6.x 
 
 ### Removed
 * plugin: remove noncopyable
@@ -23,16 +23,16 @@ All notable changes to the MeshSync package will be documented in this file.
 ## [0.7.2-preview] - 2021-03-22
 
 ### Changed
-* use com.unity.film-internal-utilities@0.8.4-preview
+* deps: use com.unity.film-internal-utilities@0.8.4-preview
 
 ### Fixed
-* errors when installing Blender plugin from a project which has space in its path
+* fix errors when installing Blender plugin from a project which has space in its path
 * stop copying zip files unnecessarily when installing a supported DCC plugin 
 
 ## [0.7.1-preview] - 2021-02-03
 
 ### Fixed
-* error when copying DCC Plugins after installing MeshSyncDCCPlugins 
+* fix errors when copying DCC Plugins after installing MeshSyncDCCPlugins 
 
 ## [0.7.0-preview] - 2021-02-03
 
@@ -44,12 +44,12 @@ All notable changes to the MeshSync package will be documented in this file.
 ### Changed
 * install DCC plugin from MeshSyncDCCPlugin package, instead of from Github
 * apply animation tweaks of SceneCachePlayer directly without clicking Apply button 
-* replace dependency from com.unity.anime-toolbox to com.unity.film-internal-utilities
+* deps: replace dependency from com.unity.anime-toolbox to com.unity.film-internal-utilities
 * plugin: separate ClientSettings from msClient in the plugin code 
 * doc: separate the use of SceneCache in Timeline to its own doc and add curves section 
 
 ### Fixed
-* install Blender plugin on Mac 
+* fix the installation of Blender plugin on Mac 
 
 ## [0.6.1-preview] - 2020-12-16
 
@@ -62,10 +62,12 @@ All notable changes to the MeshSync package will be documented in this file.
 ### Added
 * find Blender 2.91 in default locations
 
+### Changed
+* include module dependencies in package dependencies 
+
 ### Fixed
 * create the asset folder before it's required instead of before updating the scene (#306)
-* inaccurate internal path of SceneCachePlayer after copying to StreamingAssets
-* include module dependencies in package dependencies 
+* fix inaccurate internal path of SceneCachePlayer after copying to StreamingAssets
 
 ## [0.5.5-preview] - 2020-12-03
 
@@ -77,7 +79,6 @@ All notable changes to the MeshSync package will be documented in this file.
 ### Fixed
 * record property modification for SceneCachePlayer and MeshSyncServer prefabs, and support undo
 * store the correct version of installed MeshSyncDCCPlugin
-
 
 ## [0.5.4-preview] - 2020-11-25
 
@@ -107,11 +108,11 @@ All notable changes to the MeshSync package will be documented in this file.
 
 ### Changed
 * update Preferences doc 
-* use com.unity.anime-toolbox@0.2.0-preview
+* deps: use com.unity.anime-toolbox@0.2.0-preview
 
 ### Fixed
-* misleading plugin installation info for multiple DCC Tools which have the same major version
-* Blender plugin installation on Mac OSX
+* fix misleading plugin installation info for multiple DCC Tools which have the same major version
+* fix Blender plugin installation on Mac OSX
 
 ## [0.4.0-preview] - 2020-09-29
 
@@ -132,7 +133,7 @@ All notable changes to the MeshSync package will be documented in this file.
 ## [0.3.4-preview] - 2020-09-09
 
 ### Fixed
-* error when creating SceneCachePlayer 
+* fix errors when creating SceneCachePlayer 
 
 ## [0.3.3-preview] - 2020-09-08
 
@@ -168,7 +169,7 @@ All notable changes to the MeshSync package will be documented in this file.
 ## [0.2.5-preview] - 2020-08-31
 
 ### Fixed
-* compile error when targeting Android platform
+* fix compile error when targeting Android platform
 
 ## [0.2.4-preview] - 2020-07-28
 
@@ -185,7 +186,7 @@ All notable changes to the MeshSync package will be documented in this file.
 ## [0.2.2-preview] - 2020-07-03
 
 ### Fixed
-* fix prevent access using DNS rebinding
+* fix the prevention of access using DNS rebinding
 
 ## [0.2.1-preview] - 2020-07-02
 
@@ -196,8 +197,8 @@ All notable changes to the MeshSync package will be documented in this file.
 
 ### Fixed
 * fix a bug in ProjectSettings when switching tab
-* prevent server root path traversal 
-* prevent public access to the server by default 
+* fix the prevention of server root path traversal 
+* fix the prevention of public access to the server by default 
 
 ## [0.2.0-preview] - 2020-06-17
 
@@ -222,14 +223,14 @@ All notable changes to the MeshSync package will be documented in this file.
 ## [0.0.3-preview] - 2020-03-24
 
 ### Added
-* docs: add Linux section for building plugins
-* docs: add a separate doc page for building zstd
+* doc: add Linux section for building plugins
+* doc: add a separate doc page for building zstd
 
 ### Changed
 * plugin: prebuilding zstd on Mac and Linux
 * plugin: update zstd library on Windows to 1.4.4
 * plugin: use Unicode for building plugins
-* docs: update plugin build steps for Windows and Mac
+* doc: update plugin build steps for Windows and Mac
 
 ### Fixed
 * fix: compile errors on Linux
@@ -243,17 +244,17 @@ All notable changes to the MeshSync package will be documented in this file.
 
 ### Changed
 * Removing unused meta files	
-* docs: Updating img tag to MD
+* doc: Updating img tag to MD
 
 ## [0.0.2-preview] - 2020-03-13
 
 ### Changed
 * plugin: Add additional Windows dependencies directly in Poco_LIBRARIES	
-* docs: Specify the version of Poco and zstd used. Also some other minor updates
+* doc: Specify the version of Poco and zstd used. Also some other minor updates
 
 ### Fixed
 * Add missing Tests.meta
-* docs: Fix broken links
+* doc: Fix broken links
 
 
 ## [0.0.1-preview.3] - 2020-03-10
