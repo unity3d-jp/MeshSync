@@ -105,7 +105,7 @@ installed in the appropriate DCC tool.
 
 When there is a MeshSyncServer object in the scene in Unity, we can:
 
-- view Unity's Game view in the browser by typing MeshSyncServer's address and port in the URL box
+- view Unity's Game view in the browser by typing MeshSyncServer's IP address and port in the URL box
   (the default is [127.0.0.1:8080](http://127.0.0.1:8080)).  
 
   ![GameViewInBrowser](images/GameViewInBrowser.png)
