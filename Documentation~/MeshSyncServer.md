@@ -2,7 +2,7 @@
 
 A component to sync meshes/models editing in DCC tools into Unity in real time.
 
-<img align="left" style="padding: 3px 30px 0px 3px;" src="images/MeshSyncServer.png">
+<img align="right" src="images/MeshSyncServer.png">
 
 - **Auto Start**  
   On: automatically start the server using the specified port.  
