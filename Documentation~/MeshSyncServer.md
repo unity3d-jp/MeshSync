@@ -50,39 +50,45 @@ A component to sync meshes/models editing in DCC tools into Unity in real time.
   |**Values** |**Description** |
   |:---       |:---|
   | Flip YZ   | converts all vertices of Transform and Mesh to Y-up.|
-  | Rotate X  | converts the root object's Transform to a Y-up by applying a -90 X axis rotation to the root object, leaving the mesh in Z-up.|
+  | Rotate X  | converts the root object's Transform to a Y-up by <br/>applying a -90 X axis rotation to the root object, <br/> leaving the mesh in Z-up.|
 
-  > "Flip YZ" works better in most cases. 
+  > "Flip YZ" works better in most cases.   
   > For reference, Unity's standard FBX Importer does the equivalent of "Rotate X".
 
-- **Material List**  
-MeshSyncServer and [SceneCachePlayer](SceneCache.md) maintain a list of materials.   
-Changing the materials in this list will apply the changes in the corresponding objects.
-  - If **Sync Material List** is enabled, changes in an object's material will be reflected in the material list and propagated to other objects with the same material.
-  - We can save and load the list with **Import List, Export List**.  
-  When updating the cache file, this can be used to carry over the materials. 
+- **Sync Material List** 
+  When enabled, changing an object's material will update the material list (see below),
+  and other objects which use the previous material will be updated to use the new material.
 
 - **Progressive Display**  
-On: mid-reception scene updates will be reflected in real-time.  
-Off: updates will be reflected after all of the scene data is received. 
+
+  |**Values** |**Description** |
+  |:---       |:---|
+  | On        | scene updates will be reflected while receiving data in real-time.|
+  | Off       | updates will be reflected after all of the scene data is received.|
+
+- **Material List**  
+  Changing a material in this list will apply the changes to objects which have the same material.
+
+  Saving and loading materials lists can be done with **Import List** and **Export List** buttons.  
+  When updating the cache file, this can be used to carry over the materials. 
 
 - **Animation Tweak**  
-Basic animation adjustments.
+  Basic animation adjustments.
   - **Override Frame Rate**: change the frame rate.    
-  Unlike Unity's standard "Set Sample Rate", only the frame rate changes, but not the key duration or the animation length.   
-  Playing a 24 FPS animation without interpolation in an environment of 60 FPS will cause jittery movements. In this case, a possible option would be to change the animation to 120 FPS to mitigate it.  
+    Unlike Unity's standard "Set Sample Rate", only the frame rate changes, but not the key duration or the animation length.   
+    Playing a 24 FPS animation without interpolation in an environment of 60 FPS will cause jittery movements. In this case, a possible option would be to change the animation to 120 FPS to mitigate it.  
   - **Time Scale**: perform time scaling.   
-  For example, applying 0.5 will double the speed.  
+    For example, applying 0.5 will double the speed.  
        - **Offset** adds an offset for the specified seconds.    
     For example, applying a scale of -1 and an offset of -5 to a 5 second animation will result in reverse playback.    
   - **Drop Keyframes**: drop keyframes.   
-  If we apply **Step=2** to an animation with 30 keystrokes, then the odd frames will be removed and the animation will become 15 frames.   
-  Similarly, if **Step=3**, then the animation will become 10 frames.
+    If we apply **Step=2** to an animation with 30 keystrokes, then the odd frames will be removed and the animation will become 15 frames.   
+    Similarly, if **Step=3**, then the animation will become 10 frames.
   
 
 - **Make Asset**  
-Meshes which are created by editing in DCC tools are objects that only exist in the scene where they are created. 
-In order to use them in other scenes or projects, we can save them as asset files by clicking the "Export Mesh "button.
+  Meshes which are created by editing in DCC tools are objects that only exist in the scene where they are created. 
+  In order to use them in other scenes or projects, we can save them as asset files by clicking the "Export Mesh "button.
 
 
 # Tips
