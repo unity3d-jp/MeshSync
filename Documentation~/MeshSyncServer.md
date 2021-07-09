@@ -25,9 +25,8 @@ installed in the appropriate DCC tool.
 
 - **Sync Visibility, Sync Transform, etc.**  
   Settings for enabling/disabling the sync of the applicable properties.  
-
-  > This can be used to confirm specific results, for example, unchecking **Sync Transform** will let us confirm
-  > the physics simulation behavior in Play mode accurately.
+  This can be used to confirm specific results, for example, unchecking **Sync Transform** will let us confirm
+  the physics simulation behavior in Play mode accurately.
 
   - **Update Mesh Colliders**  
     if enabled and the mesh is updated, MeshCollider properties will be updated as well.
@@ -89,8 +88,8 @@ installed in the appropriate DCC tool.
     > Changing the animation to 120 FPS is one possible approach to mitigate it. 
      
   - **Time Scale**       
-    - **Scale** applies time scaling. For example, applying 0.5 will double the speed.  
-    - **Offset** adds an offset for the specified seconds.    
+    - **Scale**: applies time scaling. For example, applying 0.5 will double the speed.  
+    - **Offset**: adds an offset for the specified seconds.    
        For example, applying a scale of -1 and an offset of -5 to a 5 second animation will result in reverse playback.    
   - **Drop Keyframes**: drop keyframes.   
     If we apply **Step=2** to an animation with 30 keystrokes, then the odd frames will be removed and the animation will become 15 frames.   
@@ -100,14 +99,16 @@ installed in the appropriate DCC tool.
   Export meshes/materials into asset files, which can be reused in other scenes or projects.  
   Normally, meshes/materials synced using MeshSync only exist in the active scene.
 
-# Others
+# Tips
 
-- When there is a MeshSyncServer object in the scene in Unity, we can open the server's address:port in our browser to view the server's 
-  Unity GameView via the browser (the default is [127.0.0.1:8080](http://127.0.0.1:8080)).  
-  If a message is sent from the browser's message form, that message will appear in Unity's Console. This communication method can be useful when Unity and the DCC tool are being used by different people. 
+When there is a MeshSyncServer object in the scene in Unity, we can:
+
+- view Unity's Game view in the browser by typing MeshSyncServer's address and port as the URL 
+  (the default is [127.0.0.1:8080](http://127.0.0.1:8080)).  
 
   ![GameViewInBrowser](images/GameViewInBrowser.png)
 
+- send a message from a browser's message form to Unity's console.
 
 # Caveats
 
