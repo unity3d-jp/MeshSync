@@ -28,5 +28,6 @@ This object has [MeshSyncServer](MeshSyncServer.md) component that handles the s
       * [SceneCache in Timeline](SceneCacheInTimeline.md)
 * [Project Settings](ProjectSettings.md): to configure default settings for MeshSync components. 
 * [Preferences](Preferences.md): to configure DCC Tools integration.
-  <img src="Documentation~/images/Preferences.png" height=400>
+
+<img src="Documentation~/images/Preferences.png" height=360>
 

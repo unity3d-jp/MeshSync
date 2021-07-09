@@ -42,7 +42,8 @@ Please refer to the [installation](Documentation~/Installation.md) page to insta
       * [SceneCache in Timeline](Documentation~/SceneCacheInTimeline.md)
 * [Project Settings](Documentation~/ProjectSettings.md): to configure default settings for MeshSync components. 
 * [Preferences](Documentation~/Preferences.md): to configure DCC Tools integration.
-  <img src="Documentation~/images/Preferences.png" height=400>
+
+<img src="Documentation~/images/Preferences.png" height=360>
 
 
 # Internal Plugins
