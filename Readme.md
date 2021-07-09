@@ -1,6 +1,6 @@
 ![demo](Documentation~/images/Demo.gif)
 # Other Languages
-- [日本語](Readme_JP.md)
+- [日本語](https://docs.unity3d.com/ja/Packages/com.unity.meshsync@latest)
 
 
 # MeshSync
