@@ -5,8 +5,11 @@ A component to sync meshes/models editing in DCC tools into Unity in real time.
 <img align="right" src="images/MeshSyncServer.png">
 
 - **Auto Start**  
-  On: automatically start the server using the specified port.  
-  Off: click **Start/Stop** button to start/stop the server manually.
+
+  |**Values** |**Description** |
+  |:---       |:---|
+  | On        | automatically start the server using the specified port.|
+  | Off       | click **Start/Stop** button to start/stop the server manually.|
 
   > Caveat: in a public network, other users will have access to MeshSync as well when the server is running. 
   > For example: they may view our Unity screen.
@@ -23,7 +26,7 @@ A component to sync meshes/models editing in DCC tools into Unity in real time.
   - **Update Mesh Colliders**
     if enabled and the mesh is updated, update MeshCollider properties as well.
 
-- **Animation Interpolation** : Sets the animation interpolation method.   
+- **Animation Interpolation**: sets the animation interpolation method.   
 
   |**Values** |**Description** |
   |:---       |:---|
@@ -31,21 +34,26 @@ A component to sync meshes/models editing in DCC tools into Unity in real time.
   | Linear    | do linear interpolation between neighboring animation keys.|
   | Constant  | disable interpolation.|
 
-  > For use cases in film productions, constant or no interpolation may be preferable to match 
+  > For use cases in film productions, "Constant" may be preferable to match 
   > the number of animation samples to the target framerate on the DCC side.
 
 
-- **Keyframe Reduction**  
-Perform keyframe reduction when importing animations.  
+- **Keyframe Reduction**: performs keyframe reduction when importing animations.  
   - **Threshold**: the error tolerance.   
-  The number of keys will decrease is the threshold increases, but the error will increase as well.   
+    Higher threshold means less number of keys and higher errors, and vice versa.   
   - **Erase Flat Curves**: delete curves that have no change (flat).
   
 - **Z-Up Correction**  
-This setting is related only to 3ds Max and Blender which coordinate system is Z-Up, and specifies how to convert Z-Up to Y-Up.  
-"Flip YZ" converts all vertices of Transform and Mesh to Y-up.  
-"Rotate X" converts the root object's Transform to a Y-up by applying a -90 X rotation to the root object, leaving the Mesh as a Z-up.  
-In many cases, "Flip YZ" is preferable. For reference, Unity's standard fbx Importer does the equivalent of "Rotate X".
+  Specifies how to convert Z-Up to Y-Up, 
+  and therefore only related to DCC tools in which the coordinate system is Z-up (3ds Max, Blender, etc.)
+
+  |**Values** |**Description** |
+  |:---       |:---|
+  | Flip YZ   | converts all vertices of Transform and Mesh to Y-up.|
+  | Rotate X  | converts the root object's Transform to a Y-up by applying a -90 X axis rotation to the root object, leaving the mesh in Z-up.|
+
+  > "Flip YZ" works better in most cases. 
+  > For reference, Unity's standard FBX Importer does the equivalent of "Rotate X".
 
 - **Material List**  
 MeshSyncServer and [SceneCachePlayer](SceneCache.md) maintain a list of materials.   
