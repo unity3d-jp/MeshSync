@@ -28,7 +28,7 @@ A component to sync meshes/models editing in DCC tools into Unity in real time.
   |:---       |:---|
   | Smooth    | smoothly interpolate animation curves.|
   | Linear    | do linear interpolation between neighboring animation keys.|
-  | Constant  | disable interpolation to match the number of animation samples to the target framerate on the DCC side,  which can be useful in creating films.|
+  | Constant  | disable interpolation to match the number of animation samples <br/>to the target framerate on the DCC side,  which can be useful in creating films.|
 
 - **Keyframe Reduction**  
 Perform keyframe reduction when importing animations.  
