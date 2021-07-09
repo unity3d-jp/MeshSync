@@ -47,7 +47,7 @@ This component handles the playback of an *.sc* file.
   Smoothens animations by interpolating the meshes and transforms between neighboring frames.   
   Note that meshes are only interpolated if the topologies match (the vertex indexes remain unchanged).
 
-SceneCache shares a lot of the same properties with MeshSyncServer.  
+SceneCache shares a lot of properties with MeshSyncServer.  
 Please refer to [MeshSyncServer](MeshSyncServer.md)'s documentation for more details.
 
 
