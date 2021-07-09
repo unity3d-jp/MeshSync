@@ -29,14 +29,14 @@ displays them inside the window.
 
 1. Please close all instances of a DCC tool before installing the plugin for that DCC tool.
 2. For some DCC tools, MeshSync plugin installation will launch the DCC tool automatically 
-   to finalize the MeshSyncDCCPlugins installation process.
+   to finalize the installation process.
 
 ## MeshSyncDCCPlugins installation info
 
 The installation info is stored in the following location.
 
 | Operating System  | Path                                              | 
-| ----------------- | --------------------------------------------------| 
+| :---              | :---                                              | 
 | Linux             | ~/.config/unity3d/Unity/MeshSync                  |   
 | macOS             | ~/Library/Application Support/Unity/MeshSync      |   
 | Windows           | C:\Users\username\AppData\Local\Unity\MeshSync    |  
