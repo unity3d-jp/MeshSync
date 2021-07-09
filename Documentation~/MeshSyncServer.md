@@ -6,7 +6,7 @@ this connection can be configured in the server/port settings of
 the [MeshSync DCC Plugin](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
 installed in the appropriate DCC tool.
 
-# Properties
+## Properties
 
 <img align="right" src="images/MeshSyncServer.png">
 
@@ -101,7 +101,7 @@ installed in the appropriate DCC tool.
   Export meshes/materials into asset files, in order to reuse them in other scenes or projects.  
   Normally, meshes/materials synced using MeshSync only exist in the active scene.
 
-# Tips
+## Tips
 
 When there is a MeshSyncServer object in the scene in Unity, we can:
 
@@ -112,7 +112,7 @@ When there is a MeshSyncServer object in the scene in Unity, we can:
 
 - send a message from a message form in the browser to Unity's console.
 
-# Caveats
+## Caveats
 
 - Necessary MeshSync assets are automatically created in *StreamingAssets/MeshSyncServerRoot*.
   These files should be left as they are.

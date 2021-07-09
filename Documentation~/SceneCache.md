@@ -1,7 +1,7 @@
 # Scene Cache
 
 Scene Cache is a feature to playback all frames of an *.sc* file that 
-was exported using [MeshSyncDCCPlugins](https://github.com/Unity-Technologies/MeshSyncDCCPlugins)
+was exported using [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
 installed in a DCC Tool.   
 This functionality is very similar to [AlembicForUnity](https://docs.unity3d.com/Packages/com.unity.formats.alembic@latest/index.html),
 but it has the following differences:
@@ -25,23 +25,36 @@ Normally, the playback is controlled using an
 [*AnimationClip*](https://docs.unity3d.com/ScriptReference/AnimationClip.html), but 
 we can also control the playback of [Scene Cache in Timeline](SceneCacheInTimeline.md).
 
-## Scene Cache Player
+## Scene Cache Player 
 
-![SceneCachePlayer](images/SceneCachePlayer.png)
+This component handles the playback of an *.sc* file. 
 
-This component handles the playback. 
-There are many settings which are in common with [MeshSyncServer](MeshSyncServer.md).
+### Properties
 
-- **Cache File Path**  
-Initially, the path to the *.sc* file is absolute, and therefore the animation can only be played on that PC.  
-Copying the cache file to StreamingAssets is recommended, and can be done by simply clicking the "Copy" button.  
-This will allow us to play the clips on the same project copied to another PC, or in a runtime executable.
+<img align="right" src="images/SceneCachePlayer.png" height="480">
 
-- **Time**  
-This is the playback time. We can play the animation by moving this parameter.
-Usually this will be controlled by the AnimationClip.
+- **Cache File Path**: the path to the *.sc* file.  
+  Copying the cache file to StreamingAssets is recommended, and can be done by simply clicking the **Copy** button.  
+ 
+  > Playing *.sc* files located in folders outside the active Unity project is supported, 
+  > but keep in mind that only the computer which stores those *.sc* files can play them.
+
+- **Time**: shows the playback time.  
+  Editing this property will update the animation, and it will also be updated automatically by 
+  AnimationClip or Timeline.  
 
 - **Interpolation**  
-Smooths animations by interpolating meshes and transforms from previous and subsequent frames.   
-Mesh is only interpolated if the topologies match (the index remains unchanged).
+  Smoothens animations by interpolating the meshes and transforms between neighboring frames.   
+  Note that meshes are only interpolated if the topologies match (the vertex indexes remain unchanged).
+
+SceneCache shares a lot of properties with MeshSyncServer.  
+Please refer to [MeshSyncServer](MeshSyncServer.md)'s documentation for more details.
+
+
+
+### Tips
+
+* **Material List** property can be used to carry over existing materials when the cache file is updated.
+
+
 
