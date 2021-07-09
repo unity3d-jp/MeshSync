@@ -16,7 +16,7 @@ To view animation curves of the clip, click the Curves icon next to the Track na
 
 ## Scene Cache Playable Asset
 
-<img align="right" src="images/SceneCachePlayableAsset.png" height="80">
+<img align="right" src="images/SceneCachePlayableAsset.png" height="160">
 
 - **Scene Cache Player:**  
 The [SceneCachePlayer](SceneCache.md#scene-cache-player) to be played in Timeline.
