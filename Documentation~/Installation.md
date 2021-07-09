@@ -19,7 +19,7 @@ differ based on the version of Unity.
 1. Open [Package Manager](https://docs.unity3d.com/Manual/upm-ui.html) 
 1. Click the **+** button, and choose **Add package from git URL** 
 1. Type in `com.unity.meshsync@` followed by the version.  
-    For example: `com.unity.meshsync@0.2.5-preview`
+   For example: `com.unity.meshsync@0.8.0-preview`
 
 
 
