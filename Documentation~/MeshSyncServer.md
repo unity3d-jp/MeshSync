@@ -31,7 +31,7 @@ A component to sync meshes/models editing in DCC tools into Unity in real time.
   | Linear    | do linear interpolation between neighboring animation keys.|
   | Constant  | disable interpolation.|
 
-  > Constant or no interpolation may be preferable for films to match 
+  > For use cases in film productions, constant or no interpolation may be preferable to match 
   > the number of animation samples to the target framerate on the DCC side.
 
 
