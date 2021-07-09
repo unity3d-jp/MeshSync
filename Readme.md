@@ -1,5 +1,7 @@
 ![demo](Documentation~/images/Demo.gif)
-# Other Languages
+
+# Latest official docs
+- [English](https://docs.unity3d.com/en/Packages/com.unity.meshsync@latest)
 - [日本語](https://docs.unity3d.com/ja/Packages/com.unity.meshsync@latest)
 
 
