@@ -33,18 +33,19 @@ This component handles the playback of an *.sc* file.
 
 <img align="right" src="images/SceneCachePlayer.png" height="480">
 
-- **Cache File Path**  
-Initially, the path to the *.sc* file is absolute, and therefore the animation can only be played on that PC.  
-Copying the cache file to StreamingAssets is recommended, and can be done by simply clicking the "Copy" button.  
-This will allow us to play the clips on the same project copied to another PC, or in a runtime executable.
+- **Cache File Path**: the path to the *.sc* file.  
+  Copying the cache file to StreamingAssets is recommended, and can be done by simply clicking the **Copy** button.  
+ 
+  > Scene Cache Player can play *.sc* files located in folders outside the active Unity project, 
+  > but notice that this means the scene cache is only playable on the computer which stores the *.sc* files.
 
-- **Time**  
-This is the playback time. We can play the animation by moving this parameter.
-Usually this will be controlled by the AnimationClip.
+- **Time**: shows the playback time.  
+  This property is automatically updated by AnimationClip or Timeline.  
+  Note that updating this property manually will also update the animation.
 
 - **Interpolation**  
-Smooths animations by interpolating meshes and transforms from previous and subsequent frames.   
-Meshes are only interpolated if the topologies match (the vertex indexes remain unchanged).
+  Smoothens animations by interpolating meshes and transforms from previous and subsequent frames.   
+  Note that meshes are only interpolated if the topologies match (the vertex indexes remain unchanged).
 
 SceneCache shares a lot of the same properties with MeshSyncServer.  
 Please refer to [MeshSyncServer](MeshSyncServer.md)'s documentation for more details.
