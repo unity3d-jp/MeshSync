@@ -1,7 +1,8 @@
 ![demo](images/Demo.gif)
 # MeshSync
 
-Working together with [MeshSyncDCCPlugins](https://github.com/Unity-Technologies/MeshSyncDCCPlugins), MeshSync is a package for synchronizing meshes/models editing in DCC tools into Unity in real time.
+Working together with [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest), 
+MeshSync is a package for synchronizing meshes/models editing in DCC tools into Unity in real time.
 This allows devs to immediately see how things will look in-game while modelling.  
 
 ## Supported Platforms
