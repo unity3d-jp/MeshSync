@@ -13,25 +13,9 @@
 ![ReleaseBadge](https://badge-proxy.cds.internal.unity3d.com/9cb90abe-572c-440c-b7f9-f212c5573261)
 ![ReleaseBadge](https://badge-proxy.cds.internal.unity3d.com/4661afc4-7953-410d-a4fa-9668ed7da2b9)
 
-Working together with [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest), MeshSync is a package for synchronizing meshes/models editing in DCC tools into Unity in real time. 
+Working together with [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest), 
+MeshSync is a package for synchronizing meshes/models editing in DCC tools into Unity in real time. 
 This allows devs to immediately see how things will look in-game while modelling.  
-
-MeshSync is currently a preview package and the steps to install it 
-differ based on the version of Unity.
-
-* Unity 2019.x  
-  ![PackageManager2019](Documentation~/images/PackageManager2019.png)
-  1. Open [Package Manager](https://docs.unity3d.com/Manual/upm-ui.html) 
-  2. Ensure that **Show preview packages** is checked. 
-  3. Search for *MeshSync*.
-  
-* Unity 2020.1  
-  ![PackageManager2020](Documentation~/images/PackageManager2020.1.png)
-  1. Open [Package Manager](https://docs.unity3d.com/Manual/upm-ui.html) 
-  2. Click the **+** button, and choose **Add package from git URL** 
-  3. Type in `com.unity.meshsync@` followed by the version.  
-     For example: `com.unity.meshsync@0.2.5-preview`
-
 
 ## Supported Platforms
 
@@ -42,26 +26,22 @@ differ based on the version of Unity.
 # Basic usage
 
 From the **GameObject** menu, choose **MeshSync > Create Server** to create a server object.  
-This object has [MeshSyncServer](Documentation~/en/MeshSyncServer.md) component that handles the sync process.
+This object has [MeshSyncServer](Documentation~/MeshSyncServer.md) component that handles the sync process.
 
 ![Menu](Documentation~/images/MenuCreateServer.png)
 
-# Settings
+# Features
 
-Default settings for MeshSync components can be configured on the 
-[Project Settings](Documentation~/en/ProjectSettings.md) window.
-
-![Server Settings](Documentation~/images/ProjectSettingsServer.png)
-
-Similarly, DCC Tools integration can be configured on the 
-[Preferences](Documentation~/en/Preferences.md) window
-
-![Server Settings](Documentation~/images/Preferences.png)
-
-
-# Advanced Features
-- [SceneCache](Documentation~/en/SceneCache.md)
-  - [SceneCache in Timeline](Documentation~/en/SceneCacheInTimeline.md)
+* Components:
+    * [MeshSyncServer](Documentation~/MeshSyncServer.md)  
+      To sync meshes/models editing in DCC tools into Unity in real time.
+    * [SceneCache](Documentation~/SceneCache.md)
+      To playback all frames of an *.sc* file exported using [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
+      * [SceneCache in Timeline](Documentation~/SceneCacheInTimeline.md)
+* [Project Settings](Documentation~/ProjectSettings.md)
+  To configure default settings for MeshSync components. 
+* [Preferences](Documentation~/Preferences.md)
+  To configure DCC Tools integration.
 
 
 # Plugins
