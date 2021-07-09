@@ -31,7 +31,7 @@ This component handles the playback of an *.sc* file.
 
 ### Properties
 
-<img align="right" src="images/SceneCachePlayer.png">
+<img align="right" src="images/SceneCachePlayer.png" height="480">
 
 - **Cache File Path**  
 Initially, the path to the *.sc* file is absolute, and therefore the animation can only be played on that PC.  
@@ -44,9 +44,16 @@ Usually this will be controlled by the AnimationClip.
 
 - **Interpolation**  
 Smooths animations by interpolating meshes and transforms from previous and subsequent frames.   
-Mesh is only interpolated if the topologies match (the index remains unchanged).
+Meshes are only interpolated if the topologies match (the vertex indexes remain unchanged).
 
 SceneCache shares a lot of the same properties with MeshSyncServer.  
 Please refer to [MeshSyncServer](MeshSyncServer.md)'s documentation for more details.
+
+
+
+### Tips
+
+* **Material List** can be used to carry over existing materials when the cache file is updated.
+
 
 
