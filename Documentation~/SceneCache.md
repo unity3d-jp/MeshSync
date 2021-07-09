@@ -1,7 +1,7 @@
 # Scene Cache
 
 Scene Cache is a feature to playback all frames of an *.sc* file that 
-was exported using [MeshSyncDCCPlugins](https://github.com/Unity-Technologies/MeshSyncDCCPlugins)
+was exported using [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
 installed in a DCC Tool.   
 This functionality is very similar to [AlembicForUnity](https://docs.unity3d.com/Packages/com.unity.formats.alembic@latest/index.html),
 but it has the following differences:
@@ -25,12 +25,13 @@ Normally, the playback is controlled using an
 [*AnimationClip*](https://docs.unity3d.com/ScriptReference/AnimationClip.html), but 
 we can also control the playback of [Scene Cache in Timeline](SceneCacheInTimeline.md).
 
-## Scene Cache Player
+## Scene Cache Player 
 
-![SceneCachePlayer](images/SceneCachePlayer.png)
+This component handles the playback of an *.sc* file. 
 
-This component handles the playback. 
-There are many settings which are in common with [MeshSyncServer](MeshSyncServer.md).
+### Properties
+
+<img align="right" src="images/SceneCachePlayer.png">
 
 - **Cache File Path**  
 Initially, the path to the *.sc* file is absolute, and therefore the animation can only be played on that PC.  
@@ -44,4 +45,8 @@ Usually this will be controlled by the AnimationClip.
 - **Interpolation**  
 Smooths animations by interpolating meshes and transforms from previous and subsequent frames.   
 Mesh is only interpolated if the topologies match (the index remains unchanged).
+
+SceneCache shares a lot of the same properties with MeshSyncServer.  
+Please refer to [MeshSyncServer](MeshSyncServer.md)'s documentation for more details.
+
 
