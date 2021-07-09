@@ -1,11 +1,12 @@
 # MeshSyncServer
 
 A component to sync meshes/models editing in DCC tools into Unity in real time.  
-This sync process is done via TCP/IP, allowing the use of DCC tools in separate machines.   
-This connection can be configured in the server/port settings of the [MeshSync DCC Plugin](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
+This sync process is done via TCP/IP, allowing the use of DCC tools in separate machines, and 
+this connection can be configured in the server/port settings of 
+the [MeshSync DCC Plugin](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
 installed in the appropriate DCC tool.
 
-# MeshSyncServer Properties
+# Properties
 
 <img align="right" src="images/MeshSyncServer.png">
 
