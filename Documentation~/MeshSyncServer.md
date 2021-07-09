@@ -1,6 +1,9 @@
 # MeshSyncServer
 
-A component to sync meshes/models editing in DCC tools into Unity in real time.
+A component to sync meshes/models editing in DCC tools into Unity in real time.  
+This sync process is done via TCP/IP, allowing the use of DCC tools in separate machines.   
+This connection can be configured in the server/port settings of the [MeshSync DCC Plugin](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
+installed in the appropriate DCC tool.
 
 <img align="right" src="images/MeshSyncServer.png">
 
@@ -24,7 +27,10 @@ A component to sync meshes/models editing in DCC tools into Unity in real time.
   without being overridden by the transform sync.
 
   - **Update Mesh Colliders**
-    if enabled and the mesh is updated, update MeshCollider properties as well.
+    if enabled and the mesh is updated, MeshCollider properties will be updated as well.
+
+  > Disabling **Sync Meshes** brings better performance, and is recommended if syncing meshes is not necessary, 
+  > for example, when editing only the pose/animation.
 
 - **Animation Interpolation**: sets the animation interpolation method.   
 
@@ -44,8 +50,8 @@ A component to sync meshes/models editing in DCC tools into Unity in real time.
   - **Erase Flat Curves**: delete curves that have no change (flat).
   
 - **Z-Up Correction**  
-  Specifies how to convert Z-Up to Y-Up, 
-  and therefore only related to DCC tools in which the coordinate system is Z-up (3ds Max, Blender, etc.)
+  Specifies how to convert Z-Up to Y-Up for DCC tools 
+  in which the coordinate system is Z-up (3ds Max, Blender, etc.)
 
   |**Values** |**Description** |
   |:---       |:---|
@@ -55,8 +61,8 @@ A component to sync meshes/models editing in DCC tools into Unity in real time.
   > "Flip YZ" works better in most cases.   
   > For reference, Unity's standard FBX Importer does the equivalent of "Rotate X".
 
-- **Sync Material List** 
-  When enabled, changing an object's material will update the material list (see below),
+- **Sync Material List**  
+  When enabled, changing an object's material in the Scene view will update the material list (see below),
   and other objects which use the previous material will be updated to use the new material.
 
 - **Progressive Display**  
@@ -67,37 +73,31 @@ A component to sync meshes/models editing in DCC tools into Unity in real time.
   | Off       | updates will be reflected after all of the scene data is received.|
 
 - **Material List**  
-  Changing a material in this list will apply the changes to objects which have the same material.
+  Changing a material in this list will update objects using the previous material 
+  to use the new material.
 
-  Saving and loading materials lists can be done with **Import List** and **Export List** buttons.  
-  When updating the cache file, this can be used to carry over the materials. 
+  Saving and loading materials lists can be done with **Import List** and **Export List** buttons.   
 
-- **Animation Tweak**  
-  Basic animation adjustments.
+- **Animation Tweak** : various animation adjustments.
   - **Override Frame Rate**: change the frame rate.    
-    Unlike Unity's standard "Set Sample Rate", only the frame rate changes, but not the key duration or the animation length.   
-    Playing a 24 FPS animation without interpolation in an environment of 60 FPS will cause jittery movements. In this case, a possible option would be to change the animation to 120 FPS to mitigate it.  
-  - **Time Scale**: perform time scaling.   
-    For example, applying 0.5 will double the speed.  
-       - **Offset** adds an offset for the specified seconds.    
-    For example, applying a scale of -1 and an offset of -5 to a 5 second animation will result in reverse playback.    
+    This option changes the frame rate while keeping the key duration or the animation length.    
+
+    > Tips: playing a 24 FPS animation without interpolation when targetting 60 FPS will cause jittery movements.   
+    > Changing the animation to 120 FPS is one possible approach to mitigate it. 
+     
+  - **Time Scale**       
+    - **Scale** applies time scaling. For example, applying 0.5 will double the speed.  
+    - **Offset** adds an offset for the specified seconds.    
+       For example, applying a scale of -1 and an offset of -5 to a 5 second animation will result in reverse playback.    
   - **Drop Keyframes**: drop keyframes.   
     If we apply **Step=2** to an animation with 30 keystrokes, then the odd frames will be removed and the animation will become 15 frames.   
     Similarly, if **Step=3**, then the animation will become 10 frames.
   
+- **Export Assets**  
+  Export meshes/materials into asset files, which can be reused in other scenes or projects.  
+  Normally, meshes/materials synced using MeshSync only exist in the active scene.
 
-- **Make Asset**  
-  Meshes which are created by editing in DCC tools are objects that only exist in the scene where they are created. 
-  In order to use them in other scenes or projects, we can save them as asset files by clicking the "Export Mesh "button.
-
-
-# Tips
-
-- Starting from Unity 2019, a maximum of 255 bones can be used, allowing MeshSync to sync models that require a lot of bones, such as facial animations.
-  See [Quality Settings-Blend Weights](https://docs.unity3d.com/Manual/class-QualitySettings.html#BlendWeights) for more detail.
-
-- The sync process is done via TCP/IP, so Unity and the DCC tool can be located on separate machines.   
-  To set up this connection, go to the client DCC tool's Server/Port setting and designate the machine running Unity.
+# Others
 
 - When there is a MeshSyncServer object in the scene in Unity, we can open the server's address:port in our browser to view the server's 
   Unity GameView via the browser (the default is [127.0.0.1:8080](http://127.0.0.1:8080)).  
@@ -106,17 +106,11 @@ A component to sync meshes/models editing in DCC tools into Unity in real time.
   ![GameViewInBrowser](images/GameViewInBrowser.png)
 
 
-- If only the pose/animation are being edited, we recommend disabling **Sync Meshes** in MeshSyncServer component, which can make the performance lighter.
-
 # Caveats
 
-- When MeshSyncServer runs, it will automatically copy required MeshSync assets to *StreamingAssets/MeshSyncServerRoot*.  
-  Please keep them as they are.
+- Necessary MeshSync assets are automatically created in *StreamingAssets/MeshSyncServerRoot*.
+  These files should be left as they are.
 
 - Although this package is designed to be used in the Editor, model syncing will still work in runtime as well, but not the animations.  
-**For performance reasons, make sure that the syncing is not executed in the final build, unless it is required.**
-
-- It is possible to use this package in Unity 2018 and earlier, but bear in mind that the maximum number of bones per vertex is 4 in these earlier versions of Unity.   
-If the model is using too many bones, the model won't sync correctly. 
-
+**For performance reasons, make sure that syncing is not executed in the final build, unless it is required.**
 
