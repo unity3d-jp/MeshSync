@@ -5,7 +5,7 @@ differ based on the version of Unity.
 
 ## Unity 2019.x  
 
-<img src="images/PackageManager2019.png" height="240">
+<img src="images/PackageManager2019.png" height="300">
 
 1. Open [Package Manager](https://docs.unity3d.com/Manual/upm-ui.html) 
 2. Ensure that **Show preview packages** is checked. 
