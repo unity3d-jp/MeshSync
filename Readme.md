@@ -32,21 +32,20 @@ This object has [MeshSyncServer](Documentation~/MeshSyncServer.md) component tha
 
 ![Menu](Documentation~/images/MenuCreateServer.png)
 
+Please refer to the [installation](Documentation~/Installation.md) page to install MeshSync package.
+
 # Features
 
 * Components:
-    * [MeshSyncServer](Documentation~/MeshSyncServer.md)  
-      To sync meshes/models editing in DCC tools into Unity in real time.
-    * [SceneCache](Documentation~/SceneCache.md)
-      To playback all frames of an *.sc* file exported using [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
+    * [MeshSyncServer](Documentation~/MeshSyncServer.md): to sync meshes/models editing in DCC tools into Unity in real time.
+    * [SceneCache](Documentation~/SceneCache.md): to playback all frames of an *.sc* file exported using [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
       * [SceneCache in Timeline](Documentation~/SceneCacheInTimeline.md)
-* [Project Settings](Documentation~/ProjectSettings.md)
-  To configure default settings for MeshSync components. 
-* [Preferences](Documentation~/Preferences.md)
-  To configure DCC Tools integration.
+* [Project Settings](Documentation~/ProjectSettings.md): to configure default settings for MeshSync components. 
+* [Preferences](Documentation~/Preferences.md): to configure DCC Tools integration.
+  ![Preferences](Documentation~/images/Preferences.png)
 
 
-# Plugins
+# Internal Plugins
 - [Building](Plugin~/Docs/en/BuildPlugins.md)
 
 # License
