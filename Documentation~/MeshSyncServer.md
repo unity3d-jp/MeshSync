@@ -23,7 +23,13 @@ A component to sync meshes/models editing in DCC tools into Unity in real time.
     if enabled and the mesh is updated, update MeshCollider properties as well.
 
 - **Animation Interpolation** : Sets the animation interpolation method.   
-  Smooth: smoothly interpolate animation curves.  
+
+  |**Values** |**Description** |
+  |:---       |:---|
+  | Smooth    | smoothly interpolate animation curves.|
+
+
+  Smooth:   
   Linear: do linear interpolation between neighboring animation keys.  
   Constant: disable interpolation to match the number of animation samples to the target framerate on the DCC side,
   which can be useful in creating films.
