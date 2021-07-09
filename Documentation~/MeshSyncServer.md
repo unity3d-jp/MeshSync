@@ -1,7 +1,7 @@
 # MeshSyncServer
 
 A component to sync meshes/models editing in DCC tools into Unity in real time.  
-This sync process is done via TCP/IP, allowing the use of DCC tools in separate machines, and 
+This sync process is done via TCP/IP, allowing developers to use DCC tools in difference machines, and 
 this connection can be configured in the server/port settings of 
 the [MeshSync DCC Plugin](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
 installed in the appropriate DCC tool.
@@ -15,7 +15,7 @@ installed in the appropriate DCC tool.
   |**Values** |**Description** |
   |:---       |:---|
   | On        | automatically start the server using the specified port.|
-  | Off       | click **Start/Stop** button to start/stop the server manually.|
+  | Off       | start/stop the server manually by clicking the **Start/Stop** button.|
 
   > Caveat: in a public network, other users will have access to MeshSync as well when the server is running. 
   > For example: they may view our Unity screen.
@@ -25,12 +25,12 @@ installed in the appropriate DCC tool.
   If empty, the objects will be created in the root. 
 
 - **Sync Visibility, Sync Transform, etc.**  
-  Settings for enabling/disabling the sync of the applicable properties.  
-  This can be used to confirm specific results, for example, unchecking **Sync Transform** will let us confirm
+  Settings for enabling/disabling the sync of the applicable properties, which can be used to confirm specific results.  
+  For example, unchecking **Sync Transform** will let us confirm
   the physics simulation behavior in Play mode accurately.
 
   - **Update Mesh Colliders**  
-    if enabled and the mesh is updated, MeshCollider properties will be updated as well.
+    If enabled and the mesh is updated, MeshCollider properties will be updated as well.
 
   > Disabling **Sync Meshes** brings better performance, and is recommended if syncing meshes is not necessary, 
   > for example, when editing only the pose/animation.
@@ -53,8 +53,8 @@ installed in the appropriate DCC tool.
   - **Erase Flat Curves**: delete curves that have no change (flat).
   
 - **Z-Up Correction**  
-  Specifies how to convert Z-Up to Y-Up for DCC tools 
-  in which the coordinate system is Z-up (3ds Max, Blender, etc.)
+  Specifies how to convert Z-Up to Y-Up for data from DCC tools 
+  which have Z-up coordinate system (3ds Max, Blender, etc).
 
   |**Values** |**Description** |
   |:---       |:---|
@@ -82,40 +82,42 @@ installed in the appropriate DCC tool.
   Saving and loading materials lists can be done with **Import List** and **Export List** buttons.   
 
 - **Animation Tweak** : various animation adjustments.
-  - **Override Frame Rate**: change the frame rate.    
-    This option changes the frame rate while keeping the key duration or the animation length.    
+  - **Override Frame Rate**    
+    Changes the frame rate while keeping the key duration or the animation length.    
 
     > Tips: playing a 24 FPS animation without interpolation when targetting 60 FPS will cause jittery movements.   
     > Changing the animation to 120 FPS is one possible approach to mitigate it. 
      
   - **Time Scale**       
-    - **Scale**: applies time scaling. For example, applying 0.5 will double the speed.  
+    - **Scale**: applies time scaling.   
+      For example, applying 0.5 will double the speed.  
     - **Offset**: adds an offset for the specified seconds.    
        For example, applying a scale of -1 and an offset of -5 to a 5 second animation will result in reverse playback.    
-  - **Drop Keyframes**: drop keyframes.   
+  - **Drop Keyframes**: drops keyframes.   
     If we apply **Step=2** to an animation with 30 keystrokes, then the odd frames will be removed and the animation will become 15 frames.   
     Similarly, if **Step=3**, then the animation will become 10 frames.
   
 - **Export Assets**  
-  Export meshes/materials into asset files, which can be reused in other scenes or projects.  
+  Export meshes/materials into asset files, in order to reuse them in other scenes or projects.  
   Normally, meshes/materials synced using MeshSync only exist in the active scene.
 
 # Tips
 
 When there is a MeshSyncServer object in the scene in Unity, we can:
 
-- view Unity's Game view in the browser by typing MeshSyncServer's address and port as the URL 
+- view Unity's Game view in the browser by typing MeshSyncServer's address and port in the URL box
   (the default is [127.0.0.1:8080](http://127.0.0.1:8080)).  
 
   ![GameViewInBrowser](images/GameViewInBrowser.png)
 
-- send a message from a browser's message form to Unity's console.
+- send a message from a message form in the browser to Unity's console.
 
 # Caveats
 
 - Necessary MeshSync assets are automatically created in *StreamingAssets/MeshSyncServerRoot*.
   These files should be left as they are.
 
-- Although this package is designed to be used in the Editor, model syncing will still work in runtime as well, but not the animations.  
-**For performance reasons, make sure that syncing is not executed in the final build, unless it is required.**
+- Although this package is designed to be used in the Editor, model syncing will still work in runtime as well, 
+  except for the animations.  
+  **For performance reasons, make sure that syncing is not executed in the final build, unless it is required.**
 
