@@ -5,6 +5,8 @@ This sync process is done via TCP/IP, allowing the use of DCC tools in separate 
 This connection can be configured in the server/port settings of the [MeshSync DCC Plugin](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
 installed in the appropriate DCC tool.
 
+# MeshSyncServer Properties
+
 <img align="right" src="images/MeshSyncServer.png">
 
 - **Auto Start**  
@@ -22,11 +24,12 @@ installed in the appropriate DCC tool.
   If empty, the objects will be created in the root. 
 
 - **Sync Visibility, Sync Transform, etc.**  
-  Settings for enabling/disabling the sync of the applicable properties.
-  This is useful for confirming the results precisely, such as the physics simulation behavior in Play mode
-  without being overridden by the transform sync.
+  Settings for enabling/disabling the sync of the applicable properties.  
 
-  - **Update Mesh Colliders**
+  > This can be used to confirm specific results, for example, unchecking **Sync Transform** will let us confirm
+  > the physics simulation behavior in Play mode accurately.
+
+  - **Update Mesh Colliders**  
     if enabled and the mesh is updated, MeshCollider properties will be updated as well.
 
   > Disabling **Sync Meshes** brings better performance, and is recommended if syncing meshes is not necessary, 
