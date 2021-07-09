@@ -1,6 +1,8 @@
 # MeshSyncServer
 
-![MeshSyncServer](images/MeshSyncServer.png)
+A component to sync meshes/models editing in DCC tools into Unity in real time.
+
+<img align="left" src="images/MeshSyncServer.png">
 
 - **Auto Start**  
   On: automatically start the server using the specified port.  
