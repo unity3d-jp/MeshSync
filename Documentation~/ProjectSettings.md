@@ -8,7 +8,7 @@
 ![ProjectSettingsServer](images/ProjectSettingsServer.png)
 
 Use the **Server** tab to set the default setting values for 
-MeshSyncServer component, and connection-related settings.
+**MeshSyncServer** component, and connection-related settings.
 
 |**Connection Settings**   |**Description** |
 |:---                      |:---|
@@ -16,7 +16,7 @@ MeshSyncServer component, and connection-related settings.
 | **Allow public access**  |     Allows public access to MeshSync. By default, this setting is turned off, and only computers in local network     (127.0.0.1, 10.0.0.0/24, 192.168.0.0/16 or 172.16.0.0 to 172.31.255.255) can connect to MeshSync. |
 
 Please refer to [MeshSyncServer](MeshSyncServer.md)'s documentation 
-for more details on these settings.
+for more details on the other settings.
 
 
 ## Scene Cache Player
@@ -24,7 +24,8 @@ for more details on these settings.
 ![ProjectSettingsSceneCache](images/ProjectSettingsSceneCache.png)
 
 Use the **Scene Cache Player** tab to set the default setting values for 
-SceneCachePlayer component. Please refer to [SceneCache](SceneCache.md)'s documentation 
+**SceneCachePlayer** component.   
+Please refer to [SceneCache](SceneCache.md)'s documentation 
 for more details on these settings.
 
 
