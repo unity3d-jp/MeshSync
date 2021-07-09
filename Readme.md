@@ -43,7 +43,10 @@ Please refer to the [installation](Documentation~/Installation.md) page to insta
 * [Project Settings](Documentation~/ProjectSettings.md): to configure default settings for MeshSync components. 
 * [Preferences](Documentation~/Preferences.md): to configure DCC Tools integration.
 
-<img align="center" src="Documentation~/images/Preferences.png" height=360>
+<p align="center">
+    <img src="Documentation~/images/Preferences.png" height=360>
+</p>
+
 
 
 # Internal Plugins

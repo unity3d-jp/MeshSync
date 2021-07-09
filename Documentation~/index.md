@@ -29,5 +29,7 @@ This object has [MeshSyncServer](MeshSyncServer.md) component that handles the s
 * [Project Settings](ProjectSettings.md): to configure default settings for MeshSync components. 
 * [Preferences](Preferences.md): to configure DCC Tools integration.
 
-<img align="center" src="images/Preferences.png" height=360>
+<p align="center">
+    <img src="images/Preferences.png" height=360>
+</p>
 
