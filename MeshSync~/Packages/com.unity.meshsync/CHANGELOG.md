@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
-## [0.8.0-preview] - 2021-07-12
+## [0.8.1-preview] - 2021-07-12
 
 ### Changed
 * fix: convert changelog format to semantics versioning 
