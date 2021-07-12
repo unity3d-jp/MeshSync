@@ -1,7 +1,18 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
-## [0.8.0-preview] - 2021-07-2
+## [0.8.1-preview] - 2021-07-12
+
+### Changed
+* fix: convert changelog format to semantics versioning 
+* doc: update all English documentations
+
+### Removed
+* remove plugin auto-installation for Blender 2.79 
+* doc: remove Japanese translation inside the package. (Moved to the doc official site)
+* doc: remove Japanese readme page 
+
+## [0.8.0-preview] - 2021-07-02
 
 ### Added
 * support plugin auto-installation of Blender 2.92 and 2.93
