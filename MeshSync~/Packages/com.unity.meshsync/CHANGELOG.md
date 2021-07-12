@@ -1,184 +1,298 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
-## [0.8.0-preview] - 2021-07-2
+## [0.8.0-preview] - 2021-07-12
 
-* feat: support plugin auto-installation of Blender 2.92 and 2.93
-* fix: better error messages when the auto-installation of  DCC plugin has failed
-* fix: warnings when using Timeline 1.6.x 
-* deps: use com.unity.film-internal-utilities@0.10.1-preview
+### Changed
+* fix: convert changelog format to semantics versioning 
+* doc: update all English documentations
 
-* fix-plugin: include <string> in ClientSettings.h 
-* refactor-plugin: separate msAsyncSceneExporter into three files. 
-* refactor-plugin: remove noncopyable
-* refactor-plugin: move class macro from MeshSyncDCCPlugins 
+### Removed
+* remove plugin auto-installation for Blender 2.79 
+* doc: remove Japanese translation inside the package. (Moved to the doc official site)
+* doc: remove Japanese readme page 
+
+## [0.8.0-preview] - 2021-07-02
+
+### Added
+* support plugin auto-installation of Blender 2.92 and 2.93
+* plugin: move class macro from MeshSyncDCCPlugins 
+
+### Changed
+* better error messages when the auto-installation of  DCC plugin has failed
+* use com.unity.film-internal-utilities@0.10.1-preview
+* plugin: include &lt;string&gt; in ClientSettings.h 
+* plugin: separate msAsyncSceneExporter into three files. 
+
+### Fixed
+* fix warnings when using Timeline 1.6.x 
+
+### Removed
+* plugin: remove noncopyable
+
 
 ## [0.7.2-preview] - 2021-03-22
-* fix: errors when installing Blender plugin from a project which has space in its path
-* fix: stop copying zip files unnecessarily when installing a supported DCC plugin 
-* chore: use com.unity.film-internal-utilities@0.8.4-preview
+
+### Changed
+* deps: use com.unity.film-internal-utilities@0.8.4-preview
+
+### Fixed
+* fix errors when installing Blender plugin from a project which has space in its path
+* stop copying zip files unnecessarily when installing a supported DCC plugin 
 
 ## [0.7.1-preview] - 2021-02-03
-* fix: error when copying DCC Plugins after installing MeshSyncDCCPlugins 
+
+### Fixed
+* fix errors when copying DCC Plugins after installing MeshSyncDCCPlugins 
 
 ## [0.7.0-preview] - 2021-02-03
-* feat: install DCC plugin from MeshSyncDCCPlugin package, instead of from Github
-* feat: apply animation tweaks of SceneCachePlayer directly without clicking Apply button 
-* feat: support SceneCachePlayer in Timeline 
-* feat: AnimationCurve editing of SceneCachePlayableAsset in Timeline 
-* feat: add buttons to set the curve of SceneCachePlayableAsset to linear or reset it to the original values
-* fix: install Blender plugin on Mac 
-* chore: replace dependency from com.unity.anime-toolbox to com.unity.film-internal-utilities
-* chore: separate ClientSettings from msClient in the plugin code 
+
+### Added
+* support SceneCachePlayer in Timeline 
+* AnimationCurve editing of SceneCachePlayableAsset in Timeline 
+* add buttons to set the curve of SceneCachePlayableAsset to linear or reset it to the original values
+
+### Changed
+* install DCC plugin from MeshSyncDCCPlugin package, instead of from Github
+* apply animation tweaks of SceneCachePlayer directly without clicking Apply button 
+* deps: replace dependency from com.unity.anime-toolbox to com.unity.film-internal-utilities
+* plugin: separate ClientSettings from msClient in the plugin code 
 * doc: separate the use of SceneCache in Timeline to its own doc and add curves section 
 
+### Fixed
+* fix the installation of Blender plugin on Mac 
+
 ## [0.6.1-preview] - 2020-12-16
-* fix: add missing DCC install scripts
+
+### Fixed
+* add missing DCC install scripts
 
 
 ## [0.6.0-preview] - 2020-12-15
-* feat: find Blender 2.91 in default locations
-* fix: create the asset folder before it's required instead of before updating the scene (#306)
-* fix: inaccurate internal path of SceneCachePlayer after copying to StreamingAssets
-* fix: include module dependencies in package dependencies 
+
+### Added
+* find Blender 2.91 in default locations
+
+### Changed
+* include module dependencies in package dependencies 
+
+### Fixed
+* create the asset folder before it's required instead of before updating the scene (#306)
+* fix inaccurate internal path of SceneCachePlayer after copying to StreamingAssets
 
 ## [0.5.5-preview] - 2020-12-03
-* fix: record property modification for SceneCachePlayer and MeshSyncServer prefabs, and support undo
-* fix: use the SceneCache path specified in ProjectSettings for the path of SceneCachePlayer resources
-* fix: store the correct version of installed MeshSyncDCCPlugin
-* chore: change the default generated resources path for SceneCache  
-* chore: disable logging by default 
+
+### Changed
+* use the SceneCache path specified in ProjectSettings for the path of SceneCachePlayer resources
+* change the default generated resources path for SceneCache  
+* disable logging by default 
+
+### Fixed
+* record property modification for SceneCachePlayer and MeshSyncServer prefabs, and support undo
+* store the correct version of installed MeshSyncDCCPlugin
 
 ## [0.5.4-preview] - 2020-11-25
-* fix: add MeshSyncConstants implementation to fix undefined symbol errors 
+
+### Fixed
+* plugin: add MeshSyncConstants implementation to fix undefined symbol errors 
 
 ## [0.5.3-preview] - 2020-11-20
-* fix: update the source of ISPC library and update to use ISPC 1.14.1
+
+### Changed
+* plugin: update the source of ISPC library and update to use ISPC 1.14.1
 
 ## [0.5.2-preview] - 2020-11-19
-* fix: remove "-Wl,--no-undefined" linker flag from MeshUtils plugin library
+
+### Changed
+* plugin: remove "-Wl,--no-undefined" linker flag from MeshUtils plugin library
 
 ## [0.5.1-preview] - 2020-11-18
-* chore: make plugin project dependencies explicit and remove msEnableZSTD preprocessor directive
+
+### Changed
+* plugin: make plugin project dependencies explicit and remove msEnableZSTD preprocessor directive
 
 ## [0.5.0-preview] - 2020-11-17
-* feat: add a button to launch DCC tool in the Preferences page 
-* feat: notify users to restart Unity after upgrading MeshSync for Unity 2020.2+
-* fix: misleading plugin installation info for multiple DCC Tools which have the same major version
-* fix: Blender plugin installation on Mac OSX
-* doc: update Preferences doc 
-* chore: use com.unity.anime-toolbox@0.2.0-preview
+
+### Added
+* add a button to launch DCC tool in the Preferences page 
+* notify users to restart Unity after upgrading MeshSync for Unity 2020.2+
+
+### Changed
+* update Preferences doc 
+* deps: use com.unity.anime-toolbox@0.2.0-preview
+
+### Fixed
+* fix misleading plugin installation info for multiple DCC Tools which have the same major version
+* fix Blender plugin installation on Mac OSX
 
 ## [0.4.0-preview] - 2020-09-29
-* feat: add support for Blender 2.90
-* feat: split ProjectSettings to Server tab and SceneCache tab
-* feat: enable the setting of the output path of Scene Cache assets
-* feat: select/load a new scene cache file via the inspector of ScenePlayerCache
-* feat: reload scene cache file via the inspector of ScenePlayerCache 
-* feat: reload/refresh multiple SceneCachePlayer using their original SceneCache file paths 
-* ui: change the layout of the GUI to copy scene cache to StreamingAssets for SceneCachePlayer
-* chore: move DCCTool Settings to Preferences (User Settings)
+
+### Added
+* add support for Blender 2.90
+* enable the setting of the output path of Scene Cache assets
+* select/load a new scene cache file via the inspector of ScenePlayerCache
+* reload scene cache file via the inspector of ScenePlayerCache 
+* reload/refresh multiple SceneCachePlayer using their original SceneCache file paths 
+
+### Changed
+* split ProjectSettings to Server tab and SceneCache tab
+* change the layout of the GUI to copy scene cache to StreamingAssets for SceneCachePlayer
+* move DCCTool Settings to Preferences (User Settings)
 * refactor: refactored the initialization code of SceneCachePlayer
 * doc: update doc about Project Settings, Preferences, and SceneCache 
 
 ## [0.3.4-preview] - 2020-09-09
-* fix: error when creating SceneCachePlayer 
+
+### Fixed
+* fix errors when creating SceneCachePlayer 
 
 ## [0.3.3-preview] - 2020-09-08
-* fix: insufficient number of mesh refiner attributes (causing crash when an object has 8 UV sets)
+
+### Fixed
+* plugin: insufficient number of mesh refiner attributes (causing crash when an object has 8 UV sets)
 
 ## [0.3.2-preview] - 2020-09-07
-* chore: cleanup the dependencies of MeshSync plugin library code  
-* fix: update the version of the required MeshSyncDCCPlugins 
+
+### Changed
+* plugin: cleanup the dependencies of MeshSync plugin library code  
+
+### Fixed
+* update the version of the required MeshSyncDCCPlugins 
 
 
 ## [0.3.1-preview] - 2020-09-04
-* refactor: major plugin code refactoring to reduce dependencies and make used types more explicit 
+
+### Changed
+* plugin: major plugin code refactoring to reduce dependencies and make used types more explicit 
 
 ## [0.3.0-preview] - 2020-09-03
-* feat: core multiple UV support
-* feat: Set DetailMap Albedo and Secondary UV properties of StandardMaterial 
-* refactor: use bit shifting and masking for flag structures instead of using bitfields
-* chore: organize the source code of cmake-built project by folder 
+
+### Added
+* core multiple UV support
+* Set DetailMap Albedo and Secondary UV properties of StandardMaterial 
+
+### Changed
+* plugin: use bit shifting and masking for flag structures instead of using bitfields
+* plugin: organize the source code of cmake-built project by folder 
 * chore: configure Yamato setting to target 2019.4, and add a job to build docs 
 * doc: update package installation steps, esp. for 2020.1 
 
 ## [0.2.5-preview] - 2020-08-31
-* fix: compile error when targeting Android platform
+
+### Fixed
+* fix compile error when targeting Android platform
 
 ## [0.2.4-preview] - 2020-07-28
-* fix: fix errors when building app build
+
+### Fixed
+* fix errors when building app build
 
 ## [0.2.3-preview] - 2020-07-08
-* fix: bug in preventing DNS rebinding
-* fix: broken links in docs and package warnings
+
+### Fixed
+* fix bug in preventing DNS rebinding
+* fix broken links in docs and package warnings
 
 
 ## [0.2.2-preview] - 2020-07-03
-* fix: prevent access using DNS rebinding
+
+### Fixed
+* fix the prevention of access using DNS rebinding
 
 ## [0.2.1-preview] - 2020-07-02
 
-* fix: fix a bug in ProjectSettings when switching tab
-* fix: prevent server root path traversal 
-* fix: prevent public access to the server by default 
-* chore: Update latest known MeshSyncDCCPlugins version to 0.2.0-preview
-* chore: various polishes
+### Changed
+* Update latest known MeshSyncDCCPlugins version to 0.2.0-preview
+* various polishes
 * doc: Add installation steps for Unity 2020 in the top readme
 
+### Fixed
+* fix a bug in ProjectSettings when switching tab
+* fix the prevention of server root path traversal 
+* fix the prevention of public access to the server by default 
+
 ## [0.2.0-preview] - 2020-06-17
-* feat: add Project Settings to configure MeshSync objects and DCC Tools integrations
-* feat: add DCC Tools integration support for Maya 2017-2020
-* feat: add DCC Tools integration support for 3ds Max 2017-2020
-* feat: add DCC Tools integration support for Blender 2.79, 2.80, 2.81, 2.82, 2.83
+
+### Added
+* add Project Settings to configure MeshSync objects and DCC Tools integrations
+* add DCC Tools integration support for Maya 2017-2020
+* add DCC Tools integration support for 3ds Max 2017-2020
+* add DCC Tools integration support for Blender 2.79, 2.80, 2.81, 2.82, 2.83
 * doc: add documentation about Project Settings
-* chore: use com.unity.sharp-zip-lib
+* deps: use com.unity.sharp-zip-lib
 
 
 ## [0.1.0-preview] - 2020-04-16
-* feat: add a menu item to download DCC plugins
-* chore: change plugin build configuration to Release from MinSizeRel
-* docs: update links to MeshSyncDCCPlugins
+
+### Added
+* add a menu item to download DCC plugins
+
+### Changed
+* plugin: change plugin build configuration to Release from MinSizeRel
+* doc: update links to MeshSyncDCCPlugins
 
 ## [0.0.3-preview] - 2020-03-24
-* fix: compile errors on Linux
-* chore: prebuilding zstd on Mac and Linux
-* chore: update zstd library on Windows to 1.4.4
-* chore: use Unicode for building plugins
-* docs: update plugin build steps for Windows and Mac
-* docs: add Linux section for building plugins
-* docs: add a separate doc page for building zstd
 
+### Added
+* doc: add Linux section for building plugins
+* doc: add a separate doc page for building zstd
+
+### Changed
+* plugin: prebuilding zstd on Mac and Linux
+* plugin: update zstd library on Windows to 1.4.4
+* plugin: use Unicode for building plugins
+* doc: update plugin build steps for Windows and Mac
+
+### Fixed
+* fix: compile errors on Linux
 
 ## [0.0.2-preview.2] - 2020-03-17
-* fix: pluginVersion warning
+
+### Fixed
+* fix pluginVersion warning
 
 ## [0.0.2-preview.1] - 2020-03-16
-* chore: Removing unused meta files	
-* docs: Updating img tag to MD
+
+### Changed
+* Removing unused meta files	
+* doc: Updating img tag to MD
 
 ## [0.0.2-preview] - 2020-03-13
-* chore: Add additional Windows dependencies directly in Poco_LIBRARIES	
-* chore: Add missing Tests.meta
-* docs: Fix broken links
-* docs: Specify the version of Poco and zstd used. Also some other minor updates
+
+### Changed
+* plugin: Add additional Windows dependencies directly in Poco_LIBRARIES	
+* doc: Specify the version of Poco and zstd used. Also some other minor updates
+
+### Fixed
+* Add missing Tests.meta
+* doc: Fix broken links
 
 
 ## [0.0.1-preview.3] - 2020-03-10
-* chore: fix script to build plugin
+
+### Fixed
+* plugin: fix script to build plugin
 
 ## [0.0.1-preview.2] - 2020-03-06
 
-* chore: fix the build process on Mac (muEnableISPC, Poco conf)
-* feat: server manual start 
-* fix: the deployment of MeshSync's streaming assets 
+### Added
+* server manual start 
+
+
+### Fixed
+* fix the deployment of MeshSync's streaming assets 
+* plugin: fix the build process on Mac (muEnableISPC, Poco conf)
 
 ## [0.0.1-preview.1] - 2020-03-02
 
+### Changed
 * Removing unrelevant files from a package
+
+### Fixed
 * Minor license fix
 
 ## [0.0.1-preview] - 2020-02-28
 
+### Changed
 * Converting To Package format
 
