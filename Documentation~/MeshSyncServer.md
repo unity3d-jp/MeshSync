@@ -83,7 +83,7 @@ installed in the appropriate DCC tool.
 
 - **Animation Tweak** : various animation adjustments.
   - **Override Frame Rate**    
-    Changes the frame rate while keeping the key duration or the animation length.    
+    Changes the frame rate while keeping the key time or the animation length.    
 
     > Tips: playing a 24 FPS animation without interpolation when targetting 60 FPS will cause jittery movements.   
     > Changing the animation to 120 FPS is one possible approach to mitigate it. 
