@@ -1,7 +1,7 @@
 # Preferences
 
 Use the Preferences window to install 
-[MeshSyncDCCPlugins](https://github.com/Unity-Technologies/MeshSyncDCCPlugins) 
+[MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
 in [supported DCC Tools](#supported-dcc-tools).  
 When this window is opened for the first time, 
 it automatically detects DCC tools which have been 

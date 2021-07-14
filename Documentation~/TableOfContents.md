@@ -1,4 +1,5 @@
 * [MeshSync](index.md)
+* [Installation](Installation.md)
 * Components
     * [MeshSyncServer](MeshSyncServer.md)
     * [SceneCache](SceneCache.md)
