@@ -54,12 +54,12 @@ installed in the appropriate DCC tool.
   
 - **Z-Up Correction**  
   Specifies how to convert Z-Up to Y-Up for data from DCC tools 
-  which have Z-up coordinate system (3ds Max, Blender, etc).
+  which have Z-Up coordinate system (3ds Max, Blender, etc).
 
   |**Values** |**Description** |
   |:---       |:---|
-  | Flip YZ   | converts all vertices of Transform and Mesh to Y-up.|
-  | Rotate X  | converts the root object's Transform to a Y-up by <br/>applying a -90 X axis rotation to the root object, <br/> leaving the mesh in Z-up.|
+  | Flip YZ   | converts all vertices of Transform and Mesh to Y-Up.|
+  | Rotate X  | converts the root object's Transform to a Y-Up by <br/>applying a -90 X axis rotation to the root object, <br/> leaving the mesh in Z-Up.|
 
   > "Flip YZ" works better in most cases.   
   > For reference, Unity's standard FBX Importer does the equivalent of "Rotate X".
