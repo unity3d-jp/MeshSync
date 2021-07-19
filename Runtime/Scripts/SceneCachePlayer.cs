@@ -171,10 +171,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     }
 #endif //UNITY_EDITOR    
 
-    private bool ReopenCache() {
-        Assert.IsFalse(string.IsNullOrEmpty(m_sceneCacheFilePath));
-        return OpenCacheInternal(m_sceneCacheFilePath);
-    }
 
     private bool OpenCacheInternal(string path) {
         CloseCache();
@@ -406,10 +402,12 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
 //----------------------------------------------------------------------------------------------------------------------    
     protected override void OnEnable() {
+
+        
         base.OnEnable();
         m_animator = GetComponent<Animator>();
         if (!string.IsNullOrEmpty(m_sceneCacheFilePath)) {
-            ReopenCache();
+            OpenCacheInternal(m_sceneCacheFilePath);
         }
         
         if (!m_sceneCache)
