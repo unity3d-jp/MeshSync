@@ -428,7 +428,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     // Update() is called *before* animation update.
     // in many cases m_time is controlled by animation system. so scene update must be handled in LateUpdate()
     void LateUpdate() {
-        UpdatePlayer( /*updateNonMaterialAssets = */ false);
+        UpdatePlayer( updateNonMaterialAssets: false);
     }
     #endregion
 
