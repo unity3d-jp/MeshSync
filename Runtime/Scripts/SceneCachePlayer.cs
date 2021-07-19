@@ -304,7 +304,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
     }
 
-    public SceneData GetLastScene() {
+    private SceneData GetLastScene() {
         if (m_sceneCache)
             return m_sceneCache.GetSceneByTime(m_timePrev, m_interpolation);
         return default(SceneData);
