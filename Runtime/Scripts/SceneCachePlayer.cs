@@ -26,13 +26,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         One = 1,
     }
     
-    //[TODO-sin: 2020-9-25] Move to another package?
-    private enum LogType {
-        DEBUG,
-        WARNING,
-        ERROR,
-    }
-    
     #endregion
 
 
