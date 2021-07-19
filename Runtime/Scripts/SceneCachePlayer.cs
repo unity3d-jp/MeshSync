@@ -198,7 +198,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         Log($"SceneCachePlayer: cache opened ({path})", LogType.DEBUG);
 
         //[Note-sin: 2021-7-19] Time/Frame 0 must be loaded first, because the data of other frames might contain "No change from frame 0" 
-        //LoadSceneCacheToScene(0, m_interpolation);
+        LoadSceneCacheToScene(0, m_interpolation);
         
         return true;
     }
