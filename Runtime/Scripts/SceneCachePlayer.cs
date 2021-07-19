@@ -196,6 +196,10 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         SetSortEntities(true);
 #endif
         Log($"SceneCachePlayer: cache opened ({path})", LogType.DEBUG);
+
+        //[Note-sin: 2021-7-19] Time/Frame 0 must be loaded first, because the data of other frames might contain "No change from frame 0" 
+        //LoadSceneCacheToScene(0, m_interpolation);
+        
         return true;
     }
     
@@ -267,6 +271,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
     private void UpdatePlayer(bool updateNonMaterialAssets) {
 
+
         if (m_timeUnit == TimeUnit.Frames) {
             int offset = (int)m_baseFrame;
             m_frame = Mathf.Clamp(m_frame, offset, frameCount + offset);
@@ -278,34 +283,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         }
         
         if (m_time != m_timePrev) {
-            m_timePrev = m_time;
-            m_sceneCache.preloadLength = m_preloadLength;
-#if UNITY_EDITOR
-            ulong sceneGetBegin = Misc.GetTimeNS();
-#endif
-            // get scene
-            SceneData scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
-#if UNITY_EDITOR
-            m_dbgSceneGetTime = Misc.NS2MS(Misc.GetTimeNS() - sceneGetBegin);
-#endif
-
-            if (scene) {
-#if UNITY_EDITOR
-                ulong sceneUpdateBegin = Misc.GetTimeNS();
-#endif
-                // update scene
-                this.BeforeUpdateScene();
-                this.UpdateScene(scene, updateNonMaterialAssets);
-                this.AfterUpdateScene();
-#if UNITY_EDITOR
-                SetSortEntities(false);
-
-                if (m_config.Profiling) {
-                    m_dbgSceneUpdateTime = Misc.NS2MS(Misc.GetTimeNS() - sceneUpdateBegin);
-                    UpdateProfileReport(scene);
-                }
-#endif
-            }
+            LoadSceneCacheToScene(m_time, updateNonMaterialAssets);
         } else if(m_sceneCache.preloadLength != m_preloadLength) {
             m_sceneCache.preloadLength = m_preloadLength;
             m_sceneCache.Preload(m_sceneCache.GetFrame(m_time));
@@ -313,7 +291,40 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
     }
     #endregion
-   
+
+
+    void LoadSceneCacheToScene(float time, bool updateNonMaterialAssets) {
+        m_timePrev = m_time = time;
+        m_sceneCache.preloadLength = m_preloadLength;
+#if UNITY_EDITOR
+        ulong sceneGetBegin = Misc.GetTimeNS();
+#endif
+        // get scene
+        SceneData scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
+#if UNITY_EDITOR
+        m_dbgSceneGetTime = Misc.NS2MS(Misc.GetTimeNS() - sceneGetBegin);
+#endif
+
+        if (scene) {
+#if UNITY_EDITOR
+            ulong sceneUpdateBegin = Misc.GetTimeNS();
+#endif
+            // update scene
+            this.BeforeUpdateScene();
+            this.UpdateScene(scene, updateNonMaterialAssets);
+            this.AfterUpdateScene();
+#if UNITY_EDITOR
+            SetSortEntities(false);
+
+            if (m_config.Profiling) {
+                m_dbgSceneUpdateTime = Misc.NS2MS(Misc.GetTimeNS() - sceneUpdateBegin);
+                UpdateProfileReport(scene);
+            }
+#endif
+        }
+        
+    }
+    
 //----------------------------------------------------------------------------------------------------------------------
 
     protected override void OnBeforeSerializeMeshSyncPlayerV() {
