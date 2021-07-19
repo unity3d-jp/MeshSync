@@ -169,8 +169,17 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         
         return true;
     }
+    
+
+    private SceneData GetLastScene() {
+        if (m_sceneCache)
+            return m_sceneCache.GetSceneByTime(m_timePrev, m_interpolation);
+        return default(SceneData);
+    }
+    
 #endif //UNITY_EDITOR    
 
+//----------------------------------------------------------------------------------------------------------------------    
 
     private bool OpenCacheInternal(string path) {
         CloseCache();
@@ -302,12 +311,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
             m_sceneCache.Preload(m_sceneCache.GetFrame(m_time));
         }
 
-    }
-
-    private SceneData GetLastScene() {
-        if (m_sceneCache)
-            return m_sceneCache.GetSceneByTime(m_timePrev, m_interpolation);
-        return default(SceneData);
     }
     #endregion
    
