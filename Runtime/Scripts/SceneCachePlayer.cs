@@ -26,13 +26,6 @@ internal class SceneCachePlayer : MeshSyncPlayer {
         One = 1,
     }
     
-    //[TODO-sin: 2020-9-25] Move to another package?
-    private enum LogType {
-        DEBUG,
-        WARNING,
-        ERROR,
-    }
-    
     #endregion
 
 
@@ -186,7 +179,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 
         m_sceneCache = SceneCacheData.Open(path);
         if (!m_sceneCache) {
-            Log($"SceneCachePlayer: cache open failed ({path})", LogType.ERROR);
+            Debug.LogError($"SceneCachePlayer: cache open failed ({path})");
             return false;            
         }
         
@@ -195,7 +188,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 #if UNITY_EDITOR
         SetSortEntities(true);
 #endif
-        Log($"SceneCachePlayer: cache opened ({path})", LogType.DEBUG);
+        LogDebug($"SceneCachePlayer: cache opened ({path})");
 
         //[Note-sin: 2021-7-19] Time/Frame 0 must be loaded first, because the data of other frames might contain "No change from frame 0" 
         LoadSceneCacheToScene(0, m_interpolation);
@@ -206,7 +199,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     internal void CloseCache() {
         if (m_sceneCache) {
             m_sceneCache.Close();
-            Log($"SceneCachePlayer: cache closed ({m_sceneCacheFilePath})");
+            LogDebug($"SceneCachePlayer: cache closed ({m_sceneCacheFilePath})");
         }
         m_timePrev = -1;
     }
@@ -379,17 +372,11 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    void Log(string logMessage, LogType logType = LogType.DEBUG) {
+    void LogDebug(string logMessage) {
         if (!m_config.Logging)
             return;
 
-        switch (logType) {
-            case LogType.DEBUG: Debug.Log(logMessage); break; 
-            case LogType.WARNING: Debug.LogWarning(logMessage); break; 
-            case LogType.ERROR: Debug.LogError(logMessage); break;
-            default: break;
-                
-        }        
+        Debug.Log(logMessage); 
     }
     
 //----------------------------------------------------------------------------------------------------------------------
