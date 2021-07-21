@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.8.3-preview] - 2021-07-21
+
+### Fixed
+* SceneCache not playing properly when started from non-zero time
+* Ensure error and warning logs appear for SceneCachePlayer 
+
 ## [0.8.2-preview] - 2021-07-14
 
 ### Fixed
