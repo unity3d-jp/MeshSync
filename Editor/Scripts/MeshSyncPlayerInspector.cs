@@ -230,9 +230,6 @@ namespace Unity.MeshSync.Editor
             }
         }
 
-        public static void DrawTextureList(MeshSyncPlayer t) {
-
-        }
 
 //----------------------------------------------------------------------------------------------------------------------        
 

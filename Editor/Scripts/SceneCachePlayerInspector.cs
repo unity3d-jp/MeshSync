@@ -46,7 +46,6 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
         }
 
         DrawMaterialList(m_sceneCachePlayer);
-        DrawTextureList(m_sceneCachePlayer);
         DrawAnimationTweak(m_sceneCachePlayer);
         DrawExportAssets(m_sceneCachePlayer);
         DrawPluginVersion();
