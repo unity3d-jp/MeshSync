@@ -19,9 +19,6 @@ namespace Unity.MeshSync.Editor
         
 //----------------------------------------------------------------------------------------------------------------------
 
-        static void EditorGUIIntField(string label, ref int src) {
-            src = EditorGUILayout.IntField(label, src);
-        }
         static void EditorGUIFloatField(string label, ref float src) {
             src = EditorGUILayout.FloatField(label, src);
         }
@@ -294,7 +291,12 @@ namespace Unity.MeshSync.Editor
                     EditorGUILayout.LabelField("Drop Keyframes", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
                     int prevDropStep = animationTweakSettings.DropStep;
-                    EditorGUIIntField("Step", ref animationTweakSettings.DropStep);
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Step",
+                        guiFunc: () => EditorGUILayout.IntField("Step", animationTweakSettings.DropStep), 
+                        updateFunc: (int val) => { animationTweakSettings.DropStep = val; }
+                    );
+                    
                     if (prevDropStep != animationTweakSettings.DropStep && animationTweakSettings.DropStep > 1) {
                         ApplyDropKeyframes(clips, animationTweakSettings.DropStep);                                        
                     }
