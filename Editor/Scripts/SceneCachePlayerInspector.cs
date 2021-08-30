@@ -130,9 +130,9 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
 
             // preload
             {                
-                int preloadLength = EditorGUILayout.IntSlider("Preload Length", m_sceneCachePlayer.GetPreloadLength(), 0, m_sceneCachePlayer.frameCount);
-                m_sceneCachePlayer.SetPreloadLength(preloadLength);
-
+                EditorGUIDrawerUtility.DrawUndoableGUI(m_sceneCachePlayer, "SceneCache: Preload",
+                    guiFunc: () => (EditorGUILayout.IntSlider("Preload Length", m_sceneCachePlayer.GetPreloadLength(), 0, m_sceneCachePlayer.frameCount)),
+                    updateFunc: (int preloadLength) => { m_sceneCachePlayer.SetPreloadLength(preloadLength); });
             }
 
             EditorGUILayout.Space();
