@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using Unity.FilmInternalUtilities.Editor;
 using Unity.MeshSync;
 using UnityEditor;
 using UnityEngine;
@@ -44,10 +45,21 @@ namespace Unity.MeshSync.Editor
             MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
             if (t.foldSyncSettings) {
 
-                EditorGUIToggle("Visibility", ref playerConfig.SyncVisibility );
-                EditorGUIToggle("Transform", ref playerConfig.SyncTransform );
-                EditorGUIToggle("Cameras", ref playerConfig.SyncCameras );
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Visibility",
+                    guiFunc: () => EditorGUILayout.Toggle("Visibility", playerConfig.SyncVisibility), 
+                    updateFunc: (bool toggle) => { playerConfig.SyncVisibility = toggle; }
+                );
 
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Transform",
+                    guiFunc: () => EditorGUILayout.Toggle("Transform", playerConfig.SyncTransform), 
+                    updateFunc: (bool toggle) => { playerConfig.SyncTransform = toggle; }
+                );
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Cameras",
+                    guiFunc: () => EditorGUILayout.Toggle("Cameras", playerConfig.SyncCameras), 
+                    updateFunc: (bool toggle) => { playerConfig.SyncCameras = toggle; }
+                );
+                
                 if (playerConfig.SyncCameras)
                 {
                     EditorGUI.indentLevel++;
