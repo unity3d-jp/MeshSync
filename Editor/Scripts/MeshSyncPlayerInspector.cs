@@ -329,20 +329,23 @@ namespace Unity.MeshSync.Editor
                     EditorGUI.indentLevel++;
                     float prevReductionThreshold = animationTweakSettings.ReductionThreshold;
                     bool  prevEraseFlatCurves    = animationTweakSettings.EraseFlatCurves;
-                    EditorGUIFloatField("Threshold", ref animationTweakSettings.ReductionThreshold);
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Threshold",
+                        guiFunc: () => EditorGUILayout.FloatField("Threshold", animationTweakSettings.ReductionThreshold), 
+                        updateFunc: (float val) => {
+                            animationTweakSettings.ReductionThreshold = val;
+                            ApplyKeyframeReduction(clips, val, animationTweakSettings.EraseFlatCurves);                                        
+                        }
+                    );                   
                     
                     EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Erase Flat Curves",
                         guiFunc: () => EditorGUILayout.Toggle("Erase Flat Curves", animationTweakSettings.EraseFlatCurves), 
-                        updateFunc: (bool toggle) => { animationTweakSettings.EraseFlatCurves = toggle; }
+                        updateFunc: (bool toggle) => {
+                            animationTweakSettings.EraseFlatCurves = toggle; 
+                            ApplyKeyframeReduction(clips, animationTweakSettings.ReductionThreshold, toggle);                                                                    
+                        }
                     );
                     
-                    if (!Mathf.Approximately(prevReductionThreshold, animationTweakSettings.ReductionThreshold)
-                        || prevEraseFlatCurves!=animationTweakSettings.EraseFlatCurves) 
-                    {
-                        ApplyKeyframeReduction(clips, animationTweakSettings.ReductionThreshold, 
-                            animationTweakSettings.EraseFlatCurves
-                        );                                        
-                    }               
                     EditorGUI.indentLevel--;
                     GUILayout.EndVertical();                    
                 }
