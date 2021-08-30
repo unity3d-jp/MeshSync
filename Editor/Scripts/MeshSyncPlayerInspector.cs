@@ -63,8 +63,12 @@ namespace Unity.MeshSync.Editor
                 if (playerConfig.SyncCameras)
                 {
                     EditorGUI.indentLevel++;
+
+                    EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Physical Camera Params",
+                        guiFunc: () => EditorGUILayout.Toggle("Physical Camera Params", t.GetUsePhysicalCameraParams()), 
+                        updateFunc: (bool toggle) => { t.SetUsePhysicalCameraParams(toggle); }
+                    );
                     
-                    t.SetUsePhysicalCameraParams(EditorGUILayout.Toggle("Physical Camera Params", t.GetUsePhysicalCameraParams()));
                     //EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
                     EditorGUI.indentLevel--;
                 }
