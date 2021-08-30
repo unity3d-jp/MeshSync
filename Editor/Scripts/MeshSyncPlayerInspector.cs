@@ -19,10 +19,6 @@ namespace Unity.MeshSync.Editor
         
 //----------------------------------------------------------------------------------------------------------------------
 
-        static void EditorGUIToggle(string label, ref bool src) {
-            src = EditorGUILayout.Toggle(label, src);
-        }
-
         static void EditorGUIIntField(string label, ref int src) {
             src = EditorGUILayout.IntField(label, src);
         }
@@ -314,7 +310,12 @@ namespace Unity.MeshSync.Editor
                     float prevReductionThreshold = animationTweakSettings.ReductionThreshold;
                     bool  prevEraseFlatCurves    = animationTweakSettings.EraseFlatCurves;
                     EditorGUIFloatField("Threshold", ref animationTweakSettings.ReductionThreshold);
-                    EditorGUIToggle("Erase Flat Curves", ref animationTweakSettings.EraseFlatCurves);
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Erase Flat Curves",
+                        guiFunc: () => EditorGUILayout.Toggle("Erase Flat Curves", animationTweakSettings.EraseFlatCurves), 
+                        updateFunc: (bool toggle) => { animationTweakSettings.EraseFlatCurves = toggle; }
+                    );
+                    
                     if (!Mathf.Approximately(prevReductionThreshold, animationTweakSettings.ReductionThreshold)
                         || prevEraseFlatCurves!=animationTweakSettings.EraseFlatCurves) 
                     {
