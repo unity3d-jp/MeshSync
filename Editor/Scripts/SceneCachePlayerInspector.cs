@@ -91,7 +91,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
             EditorGUILayout.Space();
 
             //Time Unit
-            EditorGUIDrawerUtility.DrawUndoableGUI(m_sceneCachePlayer,"SceneCache Time Unit",
+            EditorGUIDrawerUtility.DrawUndoableGUI(m_sceneCachePlayer,"SceneCache: Time Unit",
                 guiFunc: () => (SceneCachePlayer.TimeUnit) EditorGUILayout.Popup("Time Unit", 
                     (int) m_sceneCachePlayer.GetTimeUnit(), m_timeUnitEnums), 
                 updateFunc: (SceneCachePlayer.TimeUnit timeUnit) => {
