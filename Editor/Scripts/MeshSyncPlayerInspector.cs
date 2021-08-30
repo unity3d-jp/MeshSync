@@ -279,8 +279,17 @@ namespace Unity.MeshSync.Editor
                     EditorGUI.indentLevel++;
                     float prevTimeScale  = animationTweakSettings.TimeScale;
                     float prevTimeOffset = animationTweakSettings.TimeOffset;
-                    EditorGUIFloatField("Scale", ref animationTweakSettings.TimeScale);
-                    EditorGUIFloatField("Offset", ref animationTweakSettings.TimeOffset);
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Scale",
+                        guiFunc: () => EditorGUILayout.FloatField("Scale", animationTweakSettings.TimeScale), 
+                        updateFunc: (float val) => { animationTweakSettings.TimeScale = val; }
+                    );
+                    
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Offset",
+                        guiFunc: () => EditorGUILayout.FloatField("Offset", animationTweakSettings.TimeOffset), 
+                        updateFunc: (float val) => { animationTweakSettings.TimeOffset = val; }
+                    );                    
                     if (!Mathf.Approximately(prevTimeScale, animationTweakSettings.TimeScale) ||
                         !Mathf.Approximately(prevTimeOffset, animationTweakSettings.TimeOffset)
                     ) 
