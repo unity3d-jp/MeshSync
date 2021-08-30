@@ -23,9 +23,6 @@ namespace Unity.MeshSync.Editor
             src = EditorGUILayout.FloatField(label, src);
         }
   
-        static void EditorGUIPopup(GUIContent content, string[] options, ref int src) {
-            src = EditorGUILayout.Popup(content, src, options);                
-        }
 //----------------------------------------------------------------------------------------------------------------------
         
         protected void DrawPlayerSettings(MeshSyncPlayer t)
@@ -105,9 +102,11 @@ namespace Unity.MeshSync.Editor
             t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, styleFold);
             if (t.foldImportSettings)
             {
-                EditorGUIPopup(new GUIContent("Animation Interpolation"), 
-                    m_animationInterpolationEnums, ref playerConfig.AnimationInterpolation
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Animation Interpolation",
+                    guiFunc: () => EditorGUILayout.Popup(new GUIContent("Animation Interpolation"), playerConfig.AnimationInterpolation, m_animationInterpolationEnums), 
+                    updateFunc: (int val) => { playerConfig.AnimationInterpolation = val; }
                 );
+                
 
                 EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Keyframe Reduction",
                     guiFunc: () => EditorGUILayout.Toggle("Keyframe Reduction", playerConfig.KeyframeReduction), 
@@ -124,7 +123,12 @@ namespace Unity.MeshSync.Editor
                     );
                     EditorGUI.indentLevel--;
                 }
-                EditorGUIPopup(new GUIContent("Z-Up Correction"),m_zUpCorrectionEnums, ref playerConfig.ZUpCorrection);
+                
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Z-Up Correction",
+                    guiFunc: () => EditorGUILayout.Popup(new GUIContent("Z-Up Correction"), playerConfig.ZUpCorrection, m_zUpCorrectionEnums), 
+                    updateFunc: (int val) => { playerConfig.ZUpCorrection = val; }
+                );
+
                 EditorGUILayout.Space();
             }
 
