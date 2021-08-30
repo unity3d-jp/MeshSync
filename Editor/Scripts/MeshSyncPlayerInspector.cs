@@ -256,7 +256,9 @@ namespace Unity.MeshSync.Editor
                     EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Frame Rate",
                         guiFunc: () => EditorGUILayout.FloatField("Frame Rate", frameRate), 
                         updateFunc: (float val) => {
-                            ApplyFrameRate(clips, val);                    
+                            if (val > 0) {
+                                ApplyFrameRate(clips, val);                                                    
+                            }
                         }
                     );                                       
                     EditorGUI.indentLevel--;
