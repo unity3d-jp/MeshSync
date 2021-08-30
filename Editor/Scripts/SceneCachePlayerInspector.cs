@@ -114,17 +114,18 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
                     updateFunc: (bool toggle) => { m_sceneCachePlayer.SetInterpolation(toggle); });
                 
             } else if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Frames) {
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(m_sceneCachePlayer, "SceneCache: Base Frame",
+                    guiFunc: () => ((SceneCachePlayer.BaseFrame) EditorGUILayout.Popup("Base Frame", (int)m_sceneCachePlayer.GetBaseFrame(), m_baseFrameEnums)),                   
+                    updateFunc: (SceneCachePlayer.BaseFrame baseFrame) => {
+                        m_sceneCachePlayer.SetBaseFrame(baseFrame);                    
+                        m_sceneCachePlayer.ResetTimeAnimation();
+                    });
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(m_sceneCachePlayer, "SceneCache: Frame",
+                    guiFunc: () => (EditorGUILayout.IntField("Frame", m_sceneCachePlayer.GetFrame())),
+                    updateFunc: (int frame) => { m_sceneCachePlayer.SetFrame(frame); });
                 
-                EditorGUI.BeginChangeCheck();
-
-                SceneCachePlayer.BaseFrame selectedBaseFrame = (SceneCachePlayer.BaseFrame) 
-                    EditorGUILayout.Popup("Base Frame", (int)m_sceneCachePlayer.GetBaseFrame(), m_baseFrameEnums);
-                if (EditorGUI.EndChangeCheck()) {
-                    m_sceneCachePlayer.SetBaseFrame(selectedBaseFrame);                    
-                    m_sceneCachePlayer.ResetTimeAnimation();
-                }
-
-                m_sceneCachePlayer.SetFrame(EditorGUILayout.IntField("Frame", m_sceneCachePlayer.GetFrame()));
             }
 
             // preload
