@@ -111,12 +111,20 @@ namespace Unity.MeshSync.Editor
                 EditorGUIPopup(new GUIContent("Animation Interpolation"), 
                     m_animationInterpolationEnums, ref playerConfig.AnimationInterpolation
                 );
-                EditorGUIToggle("Keyframe Reduction", ref playerConfig.KeyframeReduction );
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Keyframe Reduction",
+                    guiFunc: () => EditorGUILayout.Toggle("Keyframe Reduction", playerConfig.KeyframeReduction), 
+                    updateFunc: (bool toggle) => { playerConfig.KeyframeReduction = toggle; }
+                );
+                
                 if (playerConfig.KeyframeReduction)
                 {
                     EditorGUI.indentLevel++;
                     EditorGUIFloatField("Threshold",ref playerConfig.ReductionThreshold);
-                    EditorGUIToggle("Erase Flat Curves", ref playerConfig.ReductionEraseFlatCurves );
+                    EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Erase Flat Curves",
+                        guiFunc: () => EditorGUILayout.Toggle("Erase Flat Curves", playerConfig.ReductionEraseFlatCurves), 
+                        updateFunc: (bool toggle) => { playerConfig.ReductionEraseFlatCurves = toggle; }
+                    );
                     EditorGUI.indentLevel--;
                 }
                 EditorGUIPopup(new GUIContent("Z-Up Correction"),m_zUpCorrectionEnums, ref playerConfig.ZUpCorrection);
