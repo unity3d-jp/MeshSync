@@ -68,17 +68,37 @@ namespace Unity.MeshSync.Editor
                     //EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
                     EditorGUI.indentLevel--;
                 }
-                EditorGUIToggle("Lights", ref playerConfig.SyncLights );
-                EditorGUIToggle("Meshes", ref playerConfig.SyncMeshes );
+                
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Lights",
+                    guiFunc: () => EditorGUILayout.Toggle("Lights", playerConfig.SyncLights), 
+                    updateFunc: (bool toggle) => { playerConfig.SyncLights = toggle; }
+                );
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Meshes",
+                    guiFunc: () => EditorGUILayout.Toggle("Meshes", playerConfig.SyncMeshes), 
+                    updateFunc: (bool toggle) => { playerConfig.SyncMeshes = toggle; }
+                );
+                
 
                 EditorGUI.indentLevel++;
-                EditorGUIToggle("Update Mesh Colliders", ref playerConfig.UpdateMeshColliders );
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Update Mesh Colliders",
+                    guiFunc: () => EditorGUILayout.Toggle("Update Mesh Colliders", playerConfig.UpdateMeshColliders), 
+                    updateFunc: (bool toggle) => { playerConfig.UpdateMeshColliders = toggle; }
+                );
                 EditorGUI.indentLevel--;
 
                 //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));
-                EditorGUIToggle("Materials", ref playerConfig.SyncMaterials );
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Materials",
+                    guiFunc: () => EditorGUILayout.Toggle("Materials", playerConfig.SyncMaterials), 
+                    updateFunc: (bool toggle) => { playerConfig.SyncMaterials = toggle; }
+                );
+                
                 EditorGUI.indentLevel++;
-                EditorGUIToggle("Find From AssetDatabase", ref playerConfig.FindMaterialFromAssets );
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Find From Asset Database",
+                    guiFunc: () => EditorGUILayout.Toggle("Find From AssetDatabase", playerConfig.FindMaterialFromAssets), 
+                    updateFunc: (bool toggle) => { playerConfig.FindMaterialFromAssets = toggle; }
+                );
+                
                 EditorGUI.indentLevel--;
 
                 EditorGUILayout.Space();
