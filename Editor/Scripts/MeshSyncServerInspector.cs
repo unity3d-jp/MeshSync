@@ -26,7 +26,6 @@ namespace Unity.MeshSync.Editor  {
             DrawServerSettings(m_meshSyncServer);
             DrawPlayerSettings(m_meshSyncServer);
             DrawMaterialList(m_meshSyncServer);
-            DrawTextureList(m_meshSyncServer);
             DrawAnimationTweak(m_meshSyncServer);
             DrawExportAssets(m_meshSyncServer);
             DrawPluginVersion();

@@ -36,8 +36,6 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
             return;
         }
         
-        Undo.RecordObject(target, "SceneCachePlayer Update");        
-
         EditorGUILayout.Space();
         DrawCacheSettings();
         DrawPlayerSettings(m_sceneCachePlayer);
@@ -48,7 +46,6 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
         }
 
         DrawMaterialList(m_sceneCachePlayer);
-        DrawTextureList(m_sceneCachePlayer);
         DrawAnimationTweak(m_sceneCachePlayer);
         DrawExportAssets(m_sceneCachePlayer);
         DrawPluginVersion();
@@ -92,38 +89,49 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
             }
             EditorGUILayout.Space();
 
-
-            EditorGUI.BeginChangeCheck();
-            
-            SceneCachePlayer.TimeUnit selectedTimeUnit = (SceneCachePlayer.TimeUnit) 
-                EditorGUILayout.Popup("Time Unit", (int)m_sceneCachePlayer.GetTimeUnit(), m_timeUnitEnums);
-            if (EditorGUI.EndChangeCheck()) {
-                m_sceneCachePlayer.SetTimeUnit(selectedTimeUnit);
-                m_sceneCachePlayer.ResetTimeAnimation();
-            }
-
-            if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Seconds) {
-                m_sceneCachePlayer.SetTime(EditorGUILayout.FloatField("Time", m_sceneCachePlayer.GetTime()));
-                m_sceneCachePlayer.SetInterpolation(EditorGUILayout.Toggle("Interpolation", m_sceneCachePlayer.GetInterpolation()));
-            } else if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Frames) {
-                
-                EditorGUI.BeginChangeCheck();
-
-                SceneCachePlayer.BaseFrame selectedBaseFrame = (SceneCachePlayer.BaseFrame) 
-                    EditorGUILayout.Popup("Base Frame", (int)m_sceneCachePlayer.GetBaseFrame(), m_baseFrameEnums);
-                if (EditorGUI.EndChangeCheck()) {
-                    m_sceneCachePlayer.SetBaseFrame(selectedBaseFrame);                    
-                    m_sceneCachePlayer.ResetTimeAnimation();
+            //Time Unit
+            EditorGUIDrawerUtility.DrawUndoableGUI(m_sceneCachePlayer,"SceneCache: Time Unit",
+                guiFunc: () => (SceneCachePlayer.TimeUnit) EditorGUILayout.Popup("Time Unit", 
+                    (int) m_sceneCachePlayer.GetTimeUnit(), m_timeUnitEnums), 
+                updateFunc: (SceneCachePlayer.TimeUnit timeUnit) => {
+                    m_sceneCachePlayer.SetTimeUnit(timeUnit);
+                    m_sceneCachePlayer.ResetTimeAnimation();                    
                 }
+            );
 
-                m_sceneCachePlayer.SetFrame(EditorGUILayout.IntField("Frame", m_sceneCachePlayer.GetFrame()));
+
+            SceneCachePlayer.TimeUnit selectedTimeUnit = m_sceneCachePlayer.GetTimeUnit();
+            
+            if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Seconds) {
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(m_sceneCachePlayer, "SceneCache: Time",
+                    guiFunc: () => (EditorGUILayout.FloatField("Time", m_sceneCachePlayer.GetTime())),
+                    updateFunc: (float time) => { m_sceneCachePlayer.SetTime(time); });
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(m_sceneCachePlayer, "SceneCache: Interpolation",
+                    guiFunc: () => (EditorGUILayout.Toggle("Interpolation", m_sceneCachePlayer.GetInterpolation())),
+                    updateFunc: (bool toggle) => { m_sceneCachePlayer.SetInterpolation(toggle); });
+                
+            } else if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Frames) {
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(m_sceneCachePlayer, "SceneCache: Base Frame",
+                    guiFunc: () => ((SceneCachePlayer.BaseFrame) EditorGUILayout.Popup("Base Frame", (int)m_sceneCachePlayer.GetBaseFrame(), m_baseFrameEnums)),                   
+                    updateFunc: (SceneCachePlayer.BaseFrame baseFrame) => {
+                        m_sceneCachePlayer.SetBaseFrame(baseFrame);                    
+                        m_sceneCachePlayer.ResetTimeAnimation();
+                    });
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(m_sceneCachePlayer, "SceneCache: Frame",
+                    guiFunc: () => (EditorGUILayout.IntField("Frame", m_sceneCachePlayer.GetFrame())),
+                    updateFunc: (int frame) => { m_sceneCachePlayer.SetFrame(frame); });
+                
             }
 
             // preload
             {                
-                int preloadLength = EditorGUILayout.IntSlider("Preload Length", m_sceneCachePlayer.GetPreloadLength(), 0, m_sceneCachePlayer.frameCount);
-                m_sceneCachePlayer.SetPreloadLength(preloadLength);
-
+                EditorGUIDrawerUtility.DrawUndoableGUI(m_sceneCachePlayer, "SceneCache: Preload",
+                    guiFunc: () => (EditorGUILayout.IntSlider("Preload Length", m_sceneCachePlayer.GetPreloadLength(), 0, m_sceneCachePlayer.frameCount)),
+                    updateFunc: (int preloadLength) => { m_sceneCachePlayer.SetPreloadLength(preloadLength); });
             }
 
             EditorGUILayout.Space();

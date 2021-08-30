@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using Unity.FilmInternalUtilities.Editor;
 using Unity.MeshSync;
 using UnityEditor;
 using UnityEngine;
@@ -15,23 +16,7 @@ namespace Unity.MeshSync.Editor
         public virtual void OnEnable() {
             m_asset = target as MeshSyncPlayer;
         }
-        
-//----------------------------------------------------------------------------------------------------------------------
-
-        static void EditorGUIToggle(string label, ref bool src) {
-            src = EditorGUILayout.Toggle(label, src);
-        }
-
-        static void EditorGUIIntField(string label, ref int src) {
-            src = EditorGUILayout.IntField(label, src);
-        }
-        static void EditorGUIFloatField(string label, ref float src) {
-            src = EditorGUILayout.FloatField(label, src);
-        }
   
-        static void EditorGUIPopup(GUIContent content, string[] options, ref int src) {
-            src = EditorGUILayout.Popup(content, src, options);                
-        }
 //----------------------------------------------------------------------------------------------------------------------
         
         protected void DrawPlayerSettings(MeshSyncPlayer t)
@@ -44,29 +29,64 @@ namespace Unity.MeshSync.Editor
             MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
             if (t.foldSyncSettings) {
 
-                EditorGUIToggle("Visibility", ref playerConfig.SyncVisibility );
-                EditorGUIToggle("Transform", ref playerConfig.SyncTransform );
-                EditorGUIToggle("Cameras", ref playerConfig.SyncCameras );
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Visibility",
+                    guiFunc: () => EditorGUILayout.Toggle("Visibility", playerConfig.SyncVisibility), 
+                    updateFunc: (bool toggle) => { playerConfig.SyncVisibility = toggle; }
+                );
 
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Transform",
+                    guiFunc: () => EditorGUILayout.Toggle("Transform", playerConfig.SyncTransform), 
+                    updateFunc: (bool toggle) => { playerConfig.SyncTransform = toggle; }
+                );
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Cameras",
+                    guiFunc: () => EditorGUILayout.Toggle("Cameras", playerConfig.SyncCameras), 
+                    updateFunc: (bool toggle) => { playerConfig.SyncCameras = toggle; }
+                );
+                
                 if (playerConfig.SyncCameras)
                 {
                     EditorGUI.indentLevel++;
+
+                    EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Physical Camera Params",
+                        guiFunc: () => EditorGUILayout.Toggle("Physical Camera Params", t.GetUsePhysicalCameraParams()), 
+                        updateFunc: (bool toggle) => { t.SetUsePhysicalCameraParams(toggle); }
+                    );
                     
-                    t.SetUsePhysicalCameraParams(EditorGUILayout.Toggle("Physical Camera Params", t.GetUsePhysicalCameraParams()));
                     //EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
                     EditorGUI.indentLevel--;
                 }
-                EditorGUIToggle("Lights", ref playerConfig.SyncLights );
-                EditorGUIToggle("Meshes", ref playerConfig.SyncMeshes );
+                
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Lights",
+                    guiFunc: () => EditorGUILayout.Toggle("Lights", playerConfig.SyncLights), 
+                    updateFunc: (bool toggle) => { playerConfig.SyncLights = toggle; }
+                );
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Meshes",
+                    guiFunc: () => EditorGUILayout.Toggle("Meshes", playerConfig.SyncMeshes), 
+                    updateFunc: (bool toggle) => { playerConfig.SyncMeshes = toggle; }
+                );
+                
 
                 EditorGUI.indentLevel++;
-                EditorGUIToggle("Update Mesh Colliders", ref playerConfig.UpdateMeshColliders );
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Update Mesh Colliders",
+                    guiFunc: () => EditorGUILayout.Toggle("Update Mesh Colliders", playerConfig.UpdateMeshColliders), 
+                    updateFunc: (bool toggle) => { playerConfig.UpdateMeshColliders = toggle; }
+                );
                 EditorGUI.indentLevel--;
 
                 //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));
-                EditorGUIToggle("Materials", ref playerConfig.SyncMaterials );
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Materials",
+                    guiFunc: () => EditorGUILayout.Toggle("Materials", playerConfig.SyncMaterials), 
+                    updateFunc: (bool toggle) => { playerConfig.SyncMaterials = toggle; }
+                );
+                
                 EditorGUI.indentLevel++;
-                EditorGUIToggle("Find From AssetDatabase", ref playerConfig.FindMaterialFromAssets );
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Find From Asset Database",
+                    guiFunc: () => EditorGUILayout.Toggle("Find From AssetDatabase", playerConfig.FindMaterialFromAssets), 
+                    updateFunc: (bool toggle) => { playerConfig.FindMaterialFromAssets = toggle; }
+                );
+                
                 EditorGUI.indentLevel--;
 
                 EditorGUILayout.Space();
@@ -76,18 +96,38 @@ namespace Unity.MeshSync.Editor
             t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, styleFold);
             if (t.foldImportSettings)
             {
-                EditorGUIPopup(new GUIContent("Animation Interpolation"), 
-                    m_animationInterpolationEnums, ref playerConfig.AnimationInterpolation
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Animation Interpolation",
+                    guiFunc: () => EditorGUILayout.Popup(new GUIContent("Animation Interpolation"), playerConfig.AnimationInterpolation, m_animationInterpolationEnums), 
+                    updateFunc: (int val) => { playerConfig.AnimationInterpolation = val; }
                 );
-                EditorGUIToggle("Keyframe Reduction", ref playerConfig.KeyframeReduction );
+                
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Keyframe Reduction",
+                    guiFunc: () => EditorGUILayout.Toggle("Keyframe Reduction", playerConfig.KeyframeReduction), 
+                    updateFunc: (bool toggle) => { playerConfig.KeyframeReduction = toggle; }
+                );
+                
                 if (playerConfig.KeyframeReduction)
                 {
                     EditorGUI.indentLevel++;
-                    EditorGUIFloatField("Threshold",ref playerConfig.ReductionThreshold);
-                    EditorGUIToggle("Erase Flat Curves", ref playerConfig.ReductionEraseFlatCurves );
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Threshold",
+                        guiFunc: () => EditorGUILayout.FloatField("Threshold", playerConfig.ReductionThreshold), 
+                        updateFunc: (float val) => { playerConfig.ReductionThreshold = val; }
+                    );
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Erase Flat Curves",
+                        guiFunc: () => EditorGUILayout.Toggle("Erase Flat Curves", playerConfig.ReductionEraseFlatCurves), 
+                        updateFunc: (bool toggle) => { playerConfig.ReductionEraseFlatCurves = toggle; }
+                    );
                     EditorGUI.indentLevel--;
                 }
-                EditorGUIPopup(new GUIContent("Z-Up Correction"),m_zUpCorrectionEnums, ref playerConfig.ZUpCorrection);
+                
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Z-Up Correction",
+                    guiFunc: () => EditorGUILayout.Popup(new GUIContent("Z-Up Correction"), playerConfig.ZUpCorrection, m_zUpCorrectionEnums), 
+                    updateFunc: (int val) => { playerConfig.ZUpCorrection = val; }
+                );
+
                 EditorGUILayout.Space();
             }
 
@@ -95,10 +135,27 @@ namespace Unity.MeshSync.Editor
             t.foldMisc = EditorGUILayout.Foldout(t.foldMisc, "Misc", true, styleFold);
             if (t.foldMisc)
             {
-                EditorGUIToggle("Sync Material List", ref playerConfig.SyncMaterialList );
-                EditorGUIToggle("Progressive Display", ref playerConfig.ProgressiveDisplay );
-                EditorGUIToggle("Logging", ref playerConfig.Logging );
-                EditorGUIToggle("Profiling", ref playerConfig.Profiling );
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Material List",
+                    guiFunc: () => EditorGUILayout.Toggle("Sync Material List", playerConfig.SyncMaterialList), 
+                    updateFunc: (bool toggle) => { playerConfig.SyncMaterialList = toggle; }
+                );
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Progressive Display",
+                    guiFunc: () => EditorGUILayout.Toggle("Progressive Display", playerConfig.ProgressiveDisplay), 
+                    updateFunc: (bool toggle) => { playerConfig.ProgressiveDisplay = toggle; }
+                );
+                
+                
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Logging",
+                    guiFunc: () => EditorGUILayout.Toggle("Logging", playerConfig.Logging), 
+                    updateFunc: (bool toggle) => { playerConfig.Logging = toggle; }
+                );
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Profiling",
+                    guiFunc: () => EditorGUILayout.Toggle("Profiling", playerConfig.Profiling), 
+                    updateFunc: (bool toggle) => { playerConfig.Profiling = toggle; }
+                );
+                
                 EditorGUILayout.Space();
             }
         }
@@ -173,9 +230,6 @@ namespace Unity.MeshSync.Editor
             }
         }
 
-        public static void DrawTextureList(MeshSyncPlayer t) {
-
-        }
 
 //----------------------------------------------------------------------------------------------------------------------        
 
@@ -198,11 +252,15 @@ namespace Unity.MeshSync.Editor
                     GUILayout.BeginVertical("Box");
                     EditorGUILayout.LabelField("Override Frame Rate", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
-                    float prevFrameRate = frameRate;
-                    frameRate = EditorGUILayout.FloatField("Frame Rate", frameRate);
-                    if (!Mathf.Approximately(prevFrameRate, frameRate) && frameRate > 0) {
-                        ApplyFrameRate(clips, frameRate);                    
-                    }
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Frame Rate",
+                        guiFunc: () => EditorGUILayout.FloatField("Frame Rate", frameRate), 
+                        updateFunc: (float val) => {
+                            if (val > 0) {
+                                ApplyFrameRate(clips, val);                                                    
+                            }
+                        }
+                    );                                       
                     EditorGUI.indentLevel--;
                     GUILayout.EndVertical();                    
                 }
@@ -216,8 +274,17 @@ namespace Unity.MeshSync.Editor
                     EditorGUI.indentLevel++;
                     float prevTimeScale  = animationTweakSettings.TimeScale;
                     float prevTimeOffset = animationTweakSettings.TimeOffset;
-                    EditorGUIFloatField("Scale", ref animationTweakSettings.TimeScale);
-                    EditorGUIFloatField("Offset", ref animationTweakSettings.TimeOffset);
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Scale",
+                        guiFunc: () => EditorGUILayout.FloatField("Scale", animationTweakSettings.TimeScale), 
+                        updateFunc: (float val) => { animationTweakSettings.TimeScale = val; }
+                    );
+                    
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Offset",
+                        guiFunc: () => EditorGUILayout.FloatField("Offset", animationTweakSettings.TimeOffset), 
+                        updateFunc: (float val) => { animationTweakSettings.TimeOffset = val; }
+                    );                    
                     if (!Mathf.Approximately(prevTimeScale, animationTweakSettings.TimeScale) ||
                         !Mathf.Approximately(prevTimeOffset, animationTweakSettings.TimeOffset)
                     ) 
@@ -237,7 +304,12 @@ namespace Unity.MeshSync.Editor
                     EditorGUILayout.LabelField("Drop Keyframes", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
                     int prevDropStep = animationTweakSettings.DropStep;
-                    EditorGUIIntField("Step", ref animationTweakSettings.DropStep);
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Step",
+                        guiFunc: () => EditorGUILayout.IntField("Step", animationTweakSettings.DropStep), 
+                        updateFunc: (int val) => { animationTweakSettings.DropStep = val; }
+                    );
+                    
                     if (prevDropStep != animationTweakSettings.DropStep && animationTweakSettings.DropStep > 1) {
                         ApplyDropKeyframes(clips, animationTweakSettings.DropStep);                                        
                     }
@@ -252,15 +324,23 @@ namespace Unity.MeshSync.Editor
                     EditorGUI.indentLevel++;
                     float prevReductionThreshold = animationTweakSettings.ReductionThreshold;
                     bool  prevEraseFlatCurves    = animationTweakSettings.EraseFlatCurves;
-                    EditorGUIFloatField("Threshold", ref animationTweakSettings.ReductionThreshold);
-                    EditorGUIToggle("Erase Flat Curves", ref animationTweakSettings.EraseFlatCurves);
-                    if (!Mathf.Approximately(prevReductionThreshold, animationTweakSettings.ReductionThreshold)
-                        || prevEraseFlatCurves!=animationTweakSettings.EraseFlatCurves) 
-                    {
-                        ApplyKeyframeReduction(clips, animationTweakSettings.ReductionThreshold, 
-                            animationTweakSettings.EraseFlatCurves
-                        );                                        
-                    }               
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Threshold",
+                        guiFunc: () => EditorGUILayout.FloatField("Threshold", animationTweakSettings.ReductionThreshold), 
+                        updateFunc: (float val) => {
+                            animationTweakSettings.ReductionThreshold = val;
+                            ApplyKeyframeReduction(clips, val, animationTweakSettings.EraseFlatCurves);                                        
+                        }
+                    );                   
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Erase Flat Curves",
+                        guiFunc: () => EditorGUILayout.Toggle("Erase Flat Curves", animationTweakSettings.EraseFlatCurves), 
+                        updateFunc: (bool toggle) => {
+                            animationTweakSettings.EraseFlatCurves = toggle; 
+                            ApplyKeyframeReduction(clips, animationTweakSettings.ReductionThreshold, toggle);                                                                    
+                        }
+                    );
+                    
                     EditorGUI.indentLevel--;
                     GUILayout.EndVertical();                    
                 }
