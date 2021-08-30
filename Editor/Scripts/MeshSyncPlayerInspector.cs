@@ -135,10 +135,27 @@ namespace Unity.MeshSync.Editor
             t.foldMisc = EditorGUILayout.Foldout(t.foldMisc, "Misc", true, styleFold);
             if (t.foldMisc)
             {
-                EditorGUIToggle("Sync Material List", ref playerConfig.SyncMaterialList );
-                EditorGUIToggle("Progressive Display", ref playerConfig.ProgressiveDisplay );
-                EditorGUIToggle("Logging", ref playerConfig.Logging );
-                EditorGUIToggle("Profiling", ref playerConfig.Profiling );
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Material List",
+                    guiFunc: () => EditorGUILayout.Toggle("Sync Material List", playerConfig.SyncMaterialList), 
+                    updateFunc: (bool toggle) => { playerConfig.SyncMaterialList = toggle; }
+                );
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Progressive Display",
+                    guiFunc: () => EditorGUILayout.Toggle("Progressive Display", playerConfig.ProgressiveDisplay), 
+                    updateFunc: (bool toggle) => { playerConfig.ProgressiveDisplay = toggle; }
+                );
+                
+                
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Logging",
+                    guiFunc: () => EditorGUILayout.Toggle("Logging", playerConfig.Logging), 
+                    updateFunc: (bool toggle) => { playerConfig.Logging = toggle; }
+                );
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Profiling",
+                    guiFunc: () => EditorGUILayout.Toggle("Profiling", playerConfig.Profiling), 
+                    updateFunc: (bool toggle) => { playerConfig.Profiling = toggle; }
+                );
+                
                 EditorGUILayout.Space();
             }
         }
