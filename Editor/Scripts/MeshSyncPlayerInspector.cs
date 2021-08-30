@@ -116,7 +116,12 @@ namespace Unity.MeshSync.Editor
                 if (playerConfig.KeyframeReduction)
                 {
                     EditorGUI.indentLevel++;
-                    EditorGUIFloatField("Threshold",ref playerConfig.ReductionThreshold);
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Threshold",
+                        guiFunc: () => EditorGUILayout.FloatField("Threshold", playerConfig.ReductionThreshold), 
+                        updateFunc: (float val) => { playerConfig.ReductionThreshold = val; }
+                    );
+                    
                     EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Erase Flat Curves",
                         guiFunc: () => EditorGUILayout.Toggle("Erase Flat Curves", playerConfig.ReductionEraseFlatCurves), 
                         updateFunc: (bool toggle) => { playerConfig.ReductionEraseFlatCurves = toggle; }
