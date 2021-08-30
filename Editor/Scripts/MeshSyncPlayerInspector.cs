@@ -16,12 +16,6 @@ namespace Unity.MeshSync.Editor
         public virtual void OnEnable() {
             m_asset = target as MeshSyncPlayer;
         }
-        
-//----------------------------------------------------------------------------------------------------------------------
-
-        static void EditorGUIFloatField(string label, ref float src) {
-            src = EditorGUILayout.FloatField(label, src);
-        }
   
 //----------------------------------------------------------------------------------------------------------------------
         
