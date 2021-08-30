@@ -36,8 +36,6 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
             return;
         }
         
-        Undo.RecordObject(target, "SceneCachePlayer Update");        
-
         EditorGUILayout.Space();
         DrawCacheSettings();
         DrawPlayerSettings(m_sceneCachePlayer);
