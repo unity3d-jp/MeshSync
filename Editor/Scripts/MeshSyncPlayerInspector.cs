@@ -252,11 +252,13 @@ namespace Unity.MeshSync.Editor
                     GUILayout.BeginVertical("Box");
                     EditorGUILayout.LabelField("Override Frame Rate", EditorStyles.boldLabel);
                     EditorGUI.indentLevel++;
-                    float prevFrameRate = frameRate;
-                    frameRate = EditorGUILayout.FloatField("Frame Rate", frameRate);
-                    if (!Mathf.Approximately(prevFrameRate, frameRate) && frameRate > 0) {
-                        ApplyFrameRate(clips, frameRate);                    
-                    }
+                    
+                    EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Frame Rate",
+                        guiFunc: () => EditorGUILayout.FloatField("Frame Rate", frameRate), 
+                        updateFunc: (float val) => {
+                            ApplyFrameRate(clips, val);                    
+                        }
+                    );                                       
                     EditorGUI.indentLevel--;
                     GUILayout.EndVertical();                    
                 }
