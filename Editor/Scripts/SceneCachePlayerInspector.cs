@@ -104,8 +104,15 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
             SceneCachePlayer.TimeUnit selectedTimeUnit = m_sceneCachePlayer.GetTimeUnit();
             
             if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Seconds) {
-                m_sceneCachePlayer.SetTime(EditorGUILayout.FloatField("Time", m_sceneCachePlayer.GetTime()));
-                m_sceneCachePlayer.SetInterpolation(EditorGUILayout.Toggle("Interpolation", m_sceneCachePlayer.GetInterpolation()));
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(m_sceneCachePlayer, "SceneCache: Time",
+                    guiFunc: () => (EditorGUILayout.FloatField("Time", m_sceneCachePlayer.GetTime())),
+                    updateFunc: (float time) => { m_sceneCachePlayer.SetTime(time); });
+
+                EditorGUIDrawerUtility.DrawUndoableGUI(m_sceneCachePlayer, "SceneCache: Interpolation",
+                    guiFunc: () => (EditorGUILayout.Toggle("Interpolation", m_sceneCachePlayer.GetInterpolation())),
+                    updateFunc: (bool toggle) => { m_sceneCachePlayer.SetInterpolation(toggle); });
+                
             } else if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Frames) {
                 
                 EditorGUI.BeginChangeCheck();
