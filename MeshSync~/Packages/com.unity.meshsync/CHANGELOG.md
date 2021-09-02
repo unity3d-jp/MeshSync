@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.8.4-preview] - 2021-09-02
+
+### Changed
+* deps: update dependencies to com.unity.film-internal-utilities@0.12.2-preview 
+* opt: optimize SceneCache inspector by doing BeginChangeCheck() per property
+
 ## [0.8.3-preview] - 2021-07-21
 
 ### Fixed
