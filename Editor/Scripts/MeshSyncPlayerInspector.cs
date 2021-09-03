@@ -70,7 +70,7 @@ namespace Unity.MeshSync.Editor
                 
 
                 EditorGUI.indentLevel++;
-                EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Update Mesh Colliders",
+                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Update Mesh Colliders",
                     guiFunc: () => EditorGUILayout.Toggle("Update Mesh Colliders", playerConfig.UpdateMeshColliders), 
                     updateFunc: (bool toggle) => { playerConfig.UpdateMeshColliders = toggle; }
                 );
