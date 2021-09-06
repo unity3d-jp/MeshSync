@@ -404,42 +404,40 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return ret;
     }
 
-    internal Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created)
-    {
+//----------------------------------------------------------------------------------------------------------------------    
+
+    private Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created) {
         string[] names = path.Split('/');
         Transform t = m_rootObject;
-        foreach (string name in names)
-        {
-            if (name.Length == 0)
+        foreach (string nameToken in names) {
+            if (nameToken.Length == 0)
                 continue;
-            t = FindOrCreateObjectByName(t, name, createIfNotExist, ref created);
+            t = FindOrCreateObjectByName(t, nameToken, createIfNotExist, ref created);
             if (t == null)
                 break;
         }
         return t;
     }
 
-    internal Transform FindOrCreateObjectByName(Transform parent, string name, bool createIfNotExist, ref bool created)
+    private static Transform FindOrCreateObjectByName(Transform parent, string objectName, 
+        bool createIfNotExist, ref bool created)
     {
         Transform ret = null;
-        if (parent == null)
-        {
-            GameObject[] roots = SceneManager.GetActiveScene().GetRootGameObjects();
-            foreach (GameObject go in roots)
-            {
-                if (go.name == name)
-                {
-                    ret = go.GetComponent<Transform>();
-                    break;
-                }
-            }
+        if (null!=parent) {
+            ret = parent.Find(objectName);
         } else {
-            ret = parent.Find(name);
-        }
-
+            GameObject[] roots = SceneManager.GetActiveScene().GetRootGameObjects();
+            foreach (GameObject go in roots) {
+                if (go.name != objectName) 
+                    continue;
+                
+                ret = go.GetComponent<Transform>();
+                break;
+            }
+        } 
+        
         if (createIfNotExist && ret == null) {
-            GameObject go = new GameObject();
-            go.name = name;
+            GameObject go = new GameObject { name = objectName };
             ret = go.GetComponent<Transform>();
             if (parent != null)
                 ret.SetParent(parent, false);
@@ -448,8 +446,9 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return ret;
     }
 
-    internal static Material CreateDefaultMaterial()
-    {
+//----------------------------------------------------------------------------------------------------------------------    
+
+    private static Material CreateDefaultMaterial() {
         // prefer non Standard shader because it will be pink in HDRP
         Shader shader = Shader.Find("HDRP/Lit");
         if (shader == null)
@@ -1836,45 +1835,43 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     #endregion
 
     #region Tools
-    internal bool ApplyMaterialList(MaterialList ml)
+
+    private bool ApplyMaterialList(MaterialList ml)
     {
         if (ml == null)
             return false;
 
-        if (ml.materials != null || ml.materials.Count != 0)
-        {
+        List<MaterialHolder> mats = ml.materials;
+        if (mats != null && mats.Count != 0) {
             bool updated = false;
             int materialCount = Mathf.Min(m_materialList.Count, ml.materials.Count);
             for (int mi = 0; mi < materialCount; ++mi)
             {
                 MaterialHolder src = ml.materials[mi];
-                if (src.material != null)
-                {
-                    MaterialHolder dst = m_materialList.Find(a => a.id == src.id);
-                    if (dst != null)
-                    {
-                        dst.material = src.material;
-                        updated = true;
-                    }
-                }
+                if (src.material == null) 
+                    continue;
+                MaterialHolder dst = m_materialList.Find(a => a.id == src.id);
+                if (dst == null) 
+                    continue;
+                dst.material = src.material;
+                updated = true;
             }
             if (updated)
                 ReassignMaterials();
         }
 
-        if (ml.nodes != null)
-        {
-            foreach (MaterialList.Node node in ml.nodes)
-            {
-                bool dummy = false;
-                Transform trans = FindOrCreateObjectByPath(node.path, false, ref dummy);
-                if (trans != null)
-                {
-                    Renderer renderer = trans.GetComponent<Renderer>();
-                    if (renderer != null)
-                        renderer.sharedMaterials = node.materials;
-                }
-            }
+        if (ml.nodes == null) 
+            return true;
+        
+        foreach (MaterialList.Node node in ml.nodes) {
+            bool dummy = false;
+            Transform trans = FindOrCreateObjectByPath(node.path, false, ref dummy);
+            if (trans == null) 
+                continue;
+                
+            Renderer r = trans.GetComponent<Renderer>();
+            if (r != null)
+                r.sharedMaterials = node.materials;
         }
 
         return true;
