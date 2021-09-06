@@ -1835,45 +1835,43 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     #endregion
 
     #region Tools
-    internal bool ApplyMaterialList(MaterialList ml)
+
+    private bool ApplyMaterialList(MaterialList ml)
     {
         if (ml == null)
             return false;
 
-        if (ml.materials != null || ml.materials.Count != 0)
-        {
+        List<MaterialHolder> mats = ml.materials;
+        if (mats != null && mats.Count != 0) {
             bool updated = false;
             int materialCount = Mathf.Min(m_materialList.Count, ml.materials.Count);
             for (int mi = 0; mi < materialCount; ++mi)
             {
                 MaterialHolder src = ml.materials[mi];
-                if (src.material != null)
-                {
-                    MaterialHolder dst = m_materialList.Find(a => a.id == src.id);
-                    if (dst != null)
-                    {
-                        dst.material = src.material;
-                        updated = true;
-                    }
-                }
+                if (src.material == null) 
+                    continue;
+                MaterialHolder dst = m_materialList.Find(a => a.id == src.id);
+                if (dst == null) 
+                    continue;
+                dst.material = src.material;
+                updated = true;
             }
             if (updated)
                 ReassignMaterials();
         }
 
-        if (ml.nodes != null)
-        {
-            foreach (MaterialList.Node node in ml.nodes)
-            {
-                bool dummy = false;
-                Transform trans = FindOrCreateObjectByPath(node.path, false, ref dummy);
-                if (trans != null)
-                {
-                    Renderer renderer = trans.GetComponent<Renderer>();
-                    if (renderer != null)
-                        renderer.sharedMaterials = node.materials;
-                }
-            }
+        if (ml.nodes == null) 
+            return true;
+        
+        foreach (MaterialList.Node node in ml.nodes) {
+            bool dummy = false;
+            Transform trans = FindOrCreateObjectByPath(node.path, false, ref dummy);
+            if (trans == null) 
+                continue;
+                
+            Renderer r = trans.GetComponent<Renderer>();
+            if (r != null)
+                r.sharedMaterials = node.materials;
         }
 
         return true;
