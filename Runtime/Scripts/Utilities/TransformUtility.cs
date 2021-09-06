@@ -58,7 +58,41 @@ internal static class TransformUtility {
 
         return t;        
     }
-    
+       
+    //[TODO-sin: 2021-9-6] Move to FIU
+    // Delimiter is '/'
+    internal static Transform FindOrCreateByPath(Transform parent, string path) {
+        string[] names = path.Split('/');
+        if (names.Length <= 0)
+            return null;
+
+        //if parent is null, search from root 
+        Transform t             = parent;
+        int       tokenStartIdx = 0;
+        if (null == t) {
+            string rootGameObjectName = names[0];
+            t = FindFirstRoot(rootGameObjectName);
+            if (null == t) {
+                GameObject go = new GameObject { name = rootGameObjectName };
+                t = go.GetComponent<Transform>();                
+            }
+            tokenStartIdx = 1;
+        }
+
+        //loop
+        int nameLength = names.Length;
+        for (int i = tokenStartIdx; i < nameLength; ++i) {
+            string nameToken = names[i];
+            if (string.IsNullOrEmpty(nameToken))
+                continue;
+
+            t = t.FindOrCreate(nameToken);
+            if (null == t)
+                return t;
+        }
+
+        return t;        
+    }
     
     
 }
