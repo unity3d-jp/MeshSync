@@ -10,8 +10,7 @@ internal static class TransformExtensions {
         Transform childT = t.Find(childName);
         if (null != childT)
             return childT;
-        
-        
+                
         GameObject go = new GameObject { name = childName };
         childT = go.transform;
         childT.SetParent(t, worldPositionStays);
