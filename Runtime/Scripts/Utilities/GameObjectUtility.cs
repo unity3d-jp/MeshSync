@@ -1,11 +1,10 @@
-﻿using System;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Unity.MeshSync {
 
-internal static class TransformUtility {
+internal static class GameObjectUtility {
 
     //[TODO-sin: 2021-9-6] Move to FIU
     [CanBeNull]
