@@ -25,8 +25,9 @@ internal static class TransformUtility {
     
 
     //[TODO-sin: 2021-9-6] Move to FIU
-    // Delimiter is '/'
-    // returns null if not found
+    // 1. Returns null if not found
+    // 2. Name Delimiter is '/'
+    // 3. Empty names are ignored
     [CanBeNull]
     internal static Transform FindByPath(Transform parent, string path) {
         string[] names = path.Split('/');
@@ -60,7 +61,8 @@ internal static class TransformUtility {
     }
        
     //[TODO-sin: 2021-9-6] Move to FIU
-    // Delimiter is '/'
+    // 2. Name Delimiter is '/'
+    // 3. Empty names are ignored
     internal static Transform FindOrCreateByPath(Transform parent, string path) {
         string[] names = path.Split('/');
         if (names.Length <= 0)
@@ -73,7 +75,7 @@ internal static class TransformUtility {
             string rootGameObjectName = names[0];
             t = FindFirstRoot(rootGameObjectName);
             if (null == t) {
-                GameObject go = new GameObject { name = rootGameObjectName };
+                GameObject go = new GameObject(rootGameObjectName);
                 t = go.GetComponent<Transform>();                
             }
             tokenStartIdx = 1;
