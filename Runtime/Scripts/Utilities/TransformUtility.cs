@@ -47,6 +47,8 @@ internal static class TransformUtility {
                 continue;
 
             t = t.Find(nameToken);
+            if (null == t)
+                return t;
         }
 
         return t;        
