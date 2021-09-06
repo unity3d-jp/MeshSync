@@ -423,7 +423,9 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         bool createIfNotExist, ref bool created)
     {
         Transform ret = null;
-        if (parent == null) {
+        if (null!=parent) {
+            ret = parent.Find(objectName);
+        } else {
             GameObject[] roots = SceneManager.GetActiveScene().GetRootGameObjects();
             foreach (GameObject go in roots) {
                 if (go.name != objectName) 
@@ -432,13 +434,10 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 ret = go.GetComponent<Transform>();
                 break;
             }
-        } else {
-            ret = parent.Find(objectName);
-        }
-
+        } 
+        
         if (createIfNotExist && ret == null) {
-            GameObject go = new GameObject();
-            go.name = objectName;
+            GameObject go = new GameObject { name = objectName };
             ret = go.GetComponent<Transform>();
             if (parent != null)
                 ret.SetParent(parent, false);
