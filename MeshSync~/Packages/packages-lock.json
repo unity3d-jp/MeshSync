@@ -1,21 +1,14 @@
 {
   "dependencies": {
     "com.autodesk.fbx": {
-      "version": "3.0.1-preview.1",
+      "version": "4.1.0",
       "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
-    "com.unity.animation.rigging": {
-      "version": "0.1.4-preview",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://packages.unity.com"
-    },
     "com.unity.collab-proxy": {
-      "version": "1.2.16",
+      "version": "1.8.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -46,13 +39,12 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.formats.fbx": {
-      "version": "3.1.0-preview.1",
+      "version": "4.1.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.unity.recorder": "2.1.0-preview.1",
-        "com.unity.timeline": "1.0.0",
-        "com.autodesk.fbx": "3.0.1-preview.1"
+        "com.unity.timeline": "1.5.2",
+        "com.autodesk.fbx": "4.1.0"
       },
       "url": "https://packages.unity.com"
     },
@@ -66,7 +58,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.8",
+      "version": "2.0.11",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -75,7 +67,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.vscode": {
-      "version": "1.2.3",
+      "version": "1.2.4",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -115,7 +107,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.package-validation-suite": {
-      "version": "0.20.2-preview",
+      "version": "0.22.0-preview",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -124,19 +116,10 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.quicksearch": {
-      "version": "1.5.2",
+      "version": "2.0.2",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
-      "url": "https://packages.unity.com"
-    },
-    "com.unity.recorder": {
-      "version": "2.1.0-preview.1",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.timeline": "1.0.0"
-      },
       "url": "https://packages.unity.com"
     },
     "com.unity.sharp-zip-lib": {
@@ -147,7 +130,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.test-framework": {
-      "version": "1.1.24",
+      "version": "1.1.29",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -158,7 +141,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.textmeshpro": {
-      "version": "2.1.4",
+      "version": "2.1.6",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -167,7 +150,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.timeline": {
-      "version": "1.6.1",
+      "version": "1.6.2",
       "depth": 0,
       "source": "registry",
       "dependencies": {
