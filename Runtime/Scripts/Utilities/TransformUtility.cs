@@ -9,7 +9,7 @@ internal static class TransformUtility {
 
     //[TODO-sin: 2021-9-6] Move to FIU
     [CanBeNull]
-    internal static Transform FindFirstRootGameObject(string objectName) {
+    internal static Transform FindFirstRoot(string objectName) {
 
         GameObject[] roots = SceneManager.GetActiveScene().GetRootGameObjects();
         foreach (GameObject go in roots) {
@@ -28,11 +28,11 @@ internal static class TransformUtility {
         if (names.Length <= 0)
             return null;
 
-        //if parent is null, search from root game objects
+        //if parent is null, search from root 
         Transform t = parent;
         int       tokenStartIdx = 0;
         if (null == t) {
-            t = FindFirstRootGameObject(names[0]);
+            t = FindFirstRoot(names[0]);
             if (null == t)
                 return t;
 
