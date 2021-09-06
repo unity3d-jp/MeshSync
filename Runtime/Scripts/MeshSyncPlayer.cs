@@ -408,11 +408,11 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     {
         string[] names = path.Split('/');
         Transform t = m_rootObject;
-        foreach (string name in names)
+        foreach (string nameToken in names)
         {
-            if (name.Length == 0)
+            if (nameToken.Length == 0)
                 continue;
-            t = FindOrCreateObjectByName(t, name, createIfNotExist, ref created);
+            t = FindOrCreateObjectByName(t, nameToken, createIfNotExist, ref created);
             if (t == null)
                 break;
         }
