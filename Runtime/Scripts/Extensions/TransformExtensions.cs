@@ -17,10 +17,6 @@ internal static class TransformExtensions {
         childT.SetParent(t, worldPositionStays);
         return childT;
     }
-    
-
-
-    
 }
 
 } //end namespace
