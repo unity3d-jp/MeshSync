@@ -20,10 +20,15 @@ internal static class TransformUtility {
         }
         return null;
     }
+
+//----------------------------------------------------------------------------------------------------------------------    
     
 
+    //[TODO-sin: 2021-9-6] Move to FIU
+    // Delimiter is '/'
     // returns null if not found
-    private static Transform FindByPath(Transform parent, string path) {
+    [CanBeNull]
+    internal static Transform FindByPath(Transform parent, string path) {
         string[] names = path.Split('/');
         if (names.Length <= 0)
             return null;
