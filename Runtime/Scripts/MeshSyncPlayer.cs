@@ -404,7 +404,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return ret;
     }
 
-    internal Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created)
+    private Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created)
     {
         string[] names = path.Split('/');
         Transform t = m_rootObject;
@@ -419,7 +419,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return t;
     }
 
-    internal Transform FindOrCreateObjectByName(Transform parent, string name, bool createIfNotExist, ref bool created)
+    private static Transform FindOrCreateObjectByName(Transform parent, string name, bool createIfNotExist, ref bool created)
     {
         Transform ret = null;
         if (parent == null)
