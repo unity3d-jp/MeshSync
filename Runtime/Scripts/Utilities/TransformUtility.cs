@@ -39,7 +39,7 @@ internal static class TransformUtility {
         if (null == t) {
             t = FindFirstRoot(names[0]);
             if (null == t)
-                return t;
+                return null;
 
             tokenStartIdx = 1;
         }
@@ -53,7 +53,7 @@ internal static class TransformUtility {
 
             t = t.Find(nameToken);
             if (null == t)
-                return t;
+                return null;
         }
 
         return t;        
@@ -88,7 +88,7 @@ internal static class TransformUtility {
 
             t = t.FindOrCreate(nameToken);
             if (null == t)
-                return t;
+                return null;
         }
 
         return t;        
