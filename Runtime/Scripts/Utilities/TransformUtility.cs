@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 
 namespace Unity.MeshSync {
 
-internal static class ObjectUtility {
+internal static class TransformUtility {
 
     //[TODO-sin: 2021-9-6] Move to FIU
     [CanBeNull]
