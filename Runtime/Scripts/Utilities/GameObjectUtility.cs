@@ -62,7 +62,7 @@ internal static class GameObjectUtility {
     //[TODO-sin: 2021-9-6] Move to FIU
     // 2. Name Delimiter is '/'
     // 3. Empty names are ignored
-    internal static Transform FindOrCreateByPath(Transform parent, string path) {
+    internal static Transform FindOrCreateByPath(Transform parent, string path, bool worldPositionStays = true) {
         string[] names = path.Split('/');
         if (names.Length <= 0)
             return null;
@@ -87,7 +87,7 @@ internal static class GameObjectUtility {
             if (string.IsNullOrEmpty(nameToken))
                 continue;
 
-            t = t.FindOrCreate(nameToken);
+            t = t.FindOrCreate(nameToken, worldPositionStays);
             if (null == t)
                 return null;
         }
