@@ -60,8 +60,8 @@ internal static class GameObjectUtility {
     }
        
     //[TODO-sin: 2021-9-6] Move to FIU
-    // 1. Name Delimiter is '/'
-    // 2. Empty names are ignored
+    // 2. Name Delimiter is '/'
+    // 3. Empty names are ignored
     internal static Transform FindOrCreateByPath(Transform parent, string path, bool worldPositionStays = true) {
         string[] names = path.Split('/');
         if (names.Length <= 0)
@@ -94,28 +94,7 @@ internal static class GameObjectUtility {
 
         return t;        
     }
-
-//----------------------------------------------------------------------------------------------------------------------    
     
-    //[TODO-sin: 2021-9-6] Move to FIU
-    // 1. delimiter is '/'
-    // 2. may return null
-    [CanBeNull]
-    internal static string GetParentPath(string path) {
-        if (string.IsNullOrEmpty(path))
-            return null;
-        
-        int lastDelimiterPos = path.LastIndexOf('/');
-        if (lastDelimiterPos == -1)
-            return null;
-
-        //Check if the path doesn't contain any parent
-        int firstDelimiterPos = path.IndexOf('/');
-        if (firstDelimiterPos == lastDelimiterPos)
-            return null;
-        
-        return path.Substring(0, lastDelimiterPos);
-    }
     
 }
 
