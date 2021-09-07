@@ -76,19 +76,6 @@ internal class GameObjectUtilityTest {
         Assert.AreEqual(d,  created_d);        
     }
     
-//----------------------------------------------------------------------------------------------------------------------    
-
-    [Test]
-    public void CheckParentPaths() {
-        
-        Assert.AreEqual(null, GameObjectUtility.GetParentPath(null));
-        Assert.AreEqual(null, GameObjectUtility.GetParentPath("/"));
-        Assert.AreEqual(null, GameObjectUtility.GetParentPath("Root"));
-        Assert.AreEqual(null, GameObjectUtility.GetParentPath("/Root"));
-
-        Assert.AreEqual("/Root", GameObjectUtility.GetParentPath("/Root/Child"));
-        Assert.AreEqual("/Root/Child", GameObjectUtility.GetParentPath("/Root/Child/GrandChild"));
-    }
     
 //----------------------------------------------------------------------------------------------------------------------    
     

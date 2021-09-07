@@ -8,7 +8,6 @@ using UnityEngine.Animations;
 using Unity.Collections;
 using UnityEngine.Assertions;
 using System.IO;
-using JetBrains.Annotations;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -1276,24 +1275,15 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 return null;
         } else  {
             if (m_clientObjects.TryGetValue(path, out rec)) {
-                if (rec.go == null) {
+                if (rec.go == null)
+                {
                     m_clientObjects.Remove(path);
                     rec = null;
                 }
             }
             
             if (rec == null) {
-
-                //Optimize: try using registered parent to find/create 
-                Transform parentTrans = GetRegisteredParentTransform(path, out string parentPath);
-                if (null != parentTrans) {
-                    string childPath = path.Substring(parentPath.Length+1);
-                    trans = GameObjectUtility.FindOrCreateByPath(parentTrans, childPath, false);                                                
-                } else {
-                    trans = GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);                    
-                }
-
-                Assert.IsNotNull(trans);                
+                trans = GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
                 rec = new EntityRecord {
                     go = trans.gameObject,
                     trans = trans,
@@ -1797,25 +1787,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         }
         return ret;
     }
-
-    //Get the parent transform from m_clientObjects
-    [CanBeNull]
-    Transform GetRegisteredParentTransform(string path, out string retParentPath) {
-        retParentPath = null;
-        string parentPath = GameObjectUtility.GetParentPath(path);
-        if (!string.IsNullOrEmpty(parentPath)) {
-            if (m_clientObjects.TryGetValue(parentPath, out EntityRecord parentRec)) {
-                if (null != parentRec.go) {
-                    retParentPath = parentPath;
-                    return parentRec.trans;
-                }
-            }
-        }
-
-        return null;
-
-    }
-    
     #endregion
 
     #region Tools
