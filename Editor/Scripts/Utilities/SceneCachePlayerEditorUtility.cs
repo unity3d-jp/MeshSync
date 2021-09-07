@@ -24,12 +24,16 @@ internal static class SceneCachePlayerEditorUtility {
             Object.DestroyImmediate(go);            
             return false;
         }
-        
+
+        //Optimize serialization by ensuring to serialize the key values at the end 
+        player.EnableKeyValuesSerialization(false);
         prefab = player.gameObject.SaveAsPrefab(prefabPath);
         if (null == prefab) {
             Object.DestroyImmediate(go);            
             return false;
         }
+        
+        player.EnableKeyValuesSerialization(true);       
         PrefabUtility.ApplyPrefabInstance(player.gameObject, InteractionMode.AutomatedAction);
         
         Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
