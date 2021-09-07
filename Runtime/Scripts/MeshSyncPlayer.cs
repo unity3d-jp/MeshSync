@@ -1275,15 +1275,28 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 return null;
         } else  {
             if (m_clientObjects.TryGetValue(path, out rec)) {
-                if (rec.go == null)
-                {
+                if (rec.go == null) {
                     m_clientObjects.Remove(path);
                     rec = null;
                 }
             }
             
             if (rec == null) {
-                trans = GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
+                
+                //Try to create using the parent for optimization 
+                string parentPath = GameObjectUtility.GetParentPath(path);
+                if (!string.IsNullOrEmpty(parentPath)) {
+                    if (m_clientObjects.TryGetValue(parentPath, out EntityRecord parentRec)) {
+                        if (null != parentRec.go) {
+                            string childPath = path.Substring(parentPath.Length+1);
+                            trans = GameObjectUtility.FindOrCreateByPath(parentRec.trans, childPath, false);                            
+                        }
+                    }
+                }
+                
+                if (null == trans)
+                    trans = GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
+                
                 rec = new EntityRecord {
                     go = trans.gameObject,
                     trans = trans,
