@@ -151,7 +151,8 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     protected void SetSaveAssetsInScene(bool saveAssetsInScene) { m_saveAssetsInScene = saveAssetsInScene; }
 
     protected void MarkMeshesDynamic(bool markMeshesDynamic) { m_markMeshesDynamic = markMeshesDynamic; }
-  
+
+    internal void EnableKeyValuesSerialization(bool kvEnabled) { m_keyValuesSerializationEnabled = kvEnabled;}
 
     internal MeshSyncPlayerConfig GetConfig() { return m_config; }
 
@@ -237,6 +238,10 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     /// </summary>
     public void OnBeforeSerialize() {
         OnBeforeSerializeMeshSyncPlayerV();
+
+        if (!m_keyValuesSerializationEnabled)
+            return;
+        
         SerializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
         SerializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
         SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
@@ -2178,9 +2183,10 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     bool                  m_recordAssignMaterials = false;
 #endif
 
-    private bool m_saveAssetsInScene     = true;
-    private bool m_markMeshesDynamic     = false;
-    private bool m_needReassignMaterials = false;
+    private bool m_saveAssetsInScene            = true;
+    private bool m_markMeshesDynamic            = false;
+    private bool m_needReassignMaterials        = false;
+    private bool m_keyValuesSerializationEnabled = true;
 
     private   Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
     protected Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
