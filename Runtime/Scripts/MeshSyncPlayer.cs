@@ -1864,8 +1864,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             return true;
         
         foreach (MaterialList.Node node in ml.nodes) {
-            bool dummy = false;
-            Transform trans = FindOrCreateObjectByPath(node.path, false, ref dummy);
+            Transform trans = GameObjectUtility.FindByPath(m_rootObject, node.path);
             if (trans == null) 
                 continue;
                 
