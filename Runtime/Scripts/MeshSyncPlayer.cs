@@ -406,48 +406,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
 //----------------------------------------------------------------------------------------------------------------------    
 
-    private Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created) {
-        string[] names = path.Split('/');
-        Transform t = m_rootObject;
-        foreach (string nameToken in names) {
-            if (nameToken.Length == 0)
-                continue;
-            t = FindOrCreateObjectByName(t, nameToken, createIfNotExist, ref created);
-            if (t == null)
-                break;
-        }
-        return t;
-    }
-
-    private static Transform FindOrCreateObjectByName(Transform parent, string objectName, 
-        bool createIfNotExist, ref bool created)
-    {
-        Transform ret = null;
-        if (null!=parent) {
-            ret = parent.Find(objectName);
-        } else {
-            GameObject[] roots = SceneManager.GetActiveScene().GetRootGameObjects();
-            foreach (GameObject go in roots) {
-                if (go.name != objectName) 
-                    continue;
-                
-                ret = go.GetComponent<Transform>();
-                break;
-            }
-        } 
-        
-        if (createIfNotExist && ret == null) {
-            GameObject go = new GameObject { name = objectName };
-            ret = go.GetComponent<Transform>();
-            if (parent != null)
-                ret.SetParent(parent, false);
-            created = true;
-        }
-        return ret;
-    }
-
-//----------------------------------------------------------------------------------------------------------------------    
-
     private static Material CreateDefaultMaterial() {
         // prefer non Standard shader because it will be pink in HDRP
         Shader shader = Shader.Find("HDRP/Lit");
