@@ -101,7 +101,7 @@ internal static class GameObjectUtility {
     // 1. delimiter is '/'
     // 2. may return null
     [CanBeNull]
-    internal static string FindParentPath(string path) {
+    internal static string GetParentPath(string path) {
         if (string.IsNullOrEmpty(path))
             return null;
         
