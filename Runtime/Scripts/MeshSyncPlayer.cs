@@ -584,15 +584,15 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 if (rec.bonePaths != null && rec.bonePaths.Length > 0)
                 {
                     int boneCount = rec.bonePaths.Length;
-                    bool dummy = false;
 
                     Transform[] bones = new Transform[boneCount];
                     for (int bi = 0; bi < boneCount; ++bi)
-                        bones[bi] = FindOrCreateObjectByPath(rec.bonePaths[bi], false, ref dummy);
+                        bones[bi] = GameObjectUtility.FindByPath(m_rootObject, rec.bonePaths[bi]);
 
                     Transform root = null;
                     if (!string.IsNullOrEmpty(rec.rootBonePath))
-                        root = FindOrCreateObjectByPath(rec.rootBonePath, false, ref dummy);
+                        root = GameObjectUtility.FindByPath(m_rootObject, rec.rootBonePath); 
+                    
                     if (root == null && boneCount > 0)
                     {
                         // find root bone
