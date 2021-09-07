@@ -406,48 +406,6 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
 //----------------------------------------------------------------------------------------------------------------------    
 
-    private Transform FindOrCreateObjectByPath(string path, bool createIfNotExist, ref bool created) {
-        string[] names = path.Split('/');
-        Transform t = m_rootObject;
-        foreach (string nameToken in names) {
-            if (nameToken.Length == 0)
-                continue;
-            t = FindOrCreateObjectByName(t, nameToken, createIfNotExist, ref created);
-            if (t == null)
-                break;
-        }
-        return t;
-    }
-
-    private static Transform FindOrCreateObjectByName(Transform parent, string objectName, 
-        bool createIfNotExist, ref bool created)
-    {
-        Transform ret = null;
-        if (null!=parent) {
-            ret = parent.Find(objectName);
-        } else {
-            GameObject[] roots = SceneManager.GetActiveScene().GetRootGameObjects();
-            foreach (GameObject go in roots) {
-                if (go.name != objectName) 
-                    continue;
-                
-                ret = go.GetComponent<Transform>();
-                break;
-            }
-        } 
-        
-        if (createIfNotExist && ret == null) {
-            GameObject go = new GameObject { name = objectName };
-            ret = go.GetComponent<Transform>();
-            if (parent != null)
-                ret.SetParent(parent, false);
-            created = true;
-        }
-        return ret;
-    }
-
-//----------------------------------------------------------------------------------------------------------------------    
-
     private static Material CreateDefaultMaterial() {
         // prefer non Standard shader because it will be pink in HDRP
         Shader shader = Shader.Find("HDRP/Lit");
@@ -584,15 +542,15 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 if (rec.bonePaths != null && rec.bonePaths.Length > 0)
                 {
                     int boneCount = rec.bonePaths.Length;
-                    bool dummy = false;
 
                     Transform[] bones = new Transform[boneCount];
                     for (int bi = 0; bi < boneCount; ++bi)
-                        bones[bi] = FindOrCreateObjectByPath(rec.bonePaths[bi], false, ref dummy);
+                        bones[bi] = GameObjectUtility.FindByPath(m_rootObject, rec.bonePaths[bi]);
 
                     Transform root = null;
                     if (!string.IsNullOrEmpty(rec.rootBonePath))
-                        root = FindOrCreateObjectByPath(rec.rootBonePath, false, ref dummy);
+                        root = GameObjectUtility.FindByPath(m_rootObject, rec.rootBonePath); 
+                    
                     if (root == null && boneCount > 0)
                     {
                         // find root bone
@@ -1325,8 +1283,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             }
             
             if (rec == null) {
-                bool created = false;
-                trans = FindOrCreateObjectByPath(path, true, ref created);
+                trans = GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
                 rec = new EntityRecord {
                     go = trans.gameObject,
                     trans = trans,
@@ -1595,8 +1552,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     void UpdateConstraint(ConstraintData data)
     {
-        bool dummy = false;
-        Transform trans = FindOrCreateObjectByPath(data.path, true, ref dummy);
+        Transform trans = GameObjectUtility.FindOrCreateByPath(m_rootObject, data.path, false);
         if (trans == null)
             return;
 
@@ -1606,7 +1562,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 c.AddSource(new ConstraintSource());
             for (int si = 0; si < ns; ++si) {
                 ConstraintSource s = c.GetSource(si);
-                s.sourceTransform = FindOrCreateObjectByPath(data.GetSourcePath(si), true, ref dummy);
+                s.sourceTransform = GameObjectUtility.FindOrCreateByPath(m_rootObject, data.GetSourcePath(si), false);
             }
         };
 
@@ -1676,8 +1632,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 target = rec.trans;
             if (target == null)
             {
-                bool dummy = false;
-                target = FindOrCreateObjectByPath(path, true, ref dummy);
+                target = GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
                 if (target == null)
                     return;
             }
@@ -1864,8 +1819,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             return true;
         
         foreach (MaterialList.Node node in ml.nodes) {
-            bool dummy = false;
-            Transform trans = FindOrCreateObjectByPath(node.path, false, ref dummy);
+            Transform trans = GameObjectUtility.FindByPath(m_rootObject, node.path);
             if (trans == null) 
                 continue;
                 
