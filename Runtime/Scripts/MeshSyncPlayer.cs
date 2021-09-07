@@ -1674,8 +1674,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 target = rec.trans;
             if (target == null)
             {
-                bool dummy = false;
-                target = FindOrCreateObjectByPath(path, true, ref dummy);
+                target = GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
                 if (target == null)
                     return;
             }
