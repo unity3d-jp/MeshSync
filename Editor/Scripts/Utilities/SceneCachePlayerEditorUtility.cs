@@ -24,11 +24,13 @@ internal static class SceneCachePlayerEditorUtility {
             Object.DestroyImmediate(go);            
             return false;
         }
+        
         prefab = player.gameObject.SaveAsPrefab(prefabPath);
         if (null == prefab) {
             Object.DestroyImmediate(go);            
             return false;
         }
+        PrefabUtility.ApplyPrefabInstance(player.gameObject, InteractionMode.AutomatedAction);
         
         Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
         return true;
