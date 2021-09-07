@@ -81,7 +81,7 @@ internal class GameObjectUtilityTest {
     
     private Transform FindOrCreateGameObject(Transform parent, string path) {
 
-        int        pos = path.IndexOf('/');        
+        int pos = path.IndexOf('/');        
         if (pos == -1) {
             return FindOrCreateChild(parent, path);
         } else {
@@ -132,8 +132,8 @@ internal class GameObjectUtilityTest {
     private Transform VerifySingleChildExists(Transform parent, string childName) {
         Assert.IsNotNull(parent);
 
-        Transform       ret           = null;
-        int             found         = 0;
+        Transform ret   = null;
+        int       found = 0;
 
         int childCount = parent.childCount;
         for (int i = 0; i < childCount; ++i) {
