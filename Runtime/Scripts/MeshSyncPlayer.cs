@@ -1325,8 +1325,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             }
             
             if (rec == null) {
-                bool created = false;
-                trans = FindOrCreateObjectByPath(path, true, ref created);
+                trans = GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
                 rec = new EntityRecord {
                     go = trans.gameObject,
                     trans = trans,
@@ -1595,8 +1594,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     void UpdateConstraint(ConstraintData data)
     {
-        bool dummy = false;
-        Transform trans = FindOrCreateObjectByPath(data.path, true, ref dummy);
+        Transform trans = GameObjectUtility.FindOrCreateByPath(m_rootObject, data.path, false);
         if (trans == null)
             return;
 
@@ -1606,7 +1604,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 c.AddSource(new ConstraintSource());
             for (int si = 0; si < ns; ++si) {
                 ConstraintSource s = c.GetSource(si);
-                s.sourceTransform = FindOrCreateObjectByPath(data.GetSourcePath(si), true, ref dummy);
+                s.sourceTransform = GameObjectUtility.FindOrCreateByPath(m_rootObject, data.GetSourcePath(si), false);
             }
         };
 
