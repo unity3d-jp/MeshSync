@@ -42,9 +42,9 @@ internal static class MeshSyncMenu  {
         }
 
         //Prefab and assets path
-        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
         
-        string scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
+        string scOutputPath    = projectSettings.GetSceneCacheOutputPath();
         string prefabFileName = Path.GetFileNameWithoutExtension(sceneCacheFilePath);
         string prefabPath = $"{scOutputPath}/{prefabFileName}.prefab";
         string assetsFolder = Path.Combine(scOutputPath, prefabFileName);

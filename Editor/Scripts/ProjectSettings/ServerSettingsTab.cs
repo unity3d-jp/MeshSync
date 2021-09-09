@@ -28,21 +28,21 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
 
 	    //Templates
 	    VisualTreeAsset fieldTemplate = LoadVisualTreeAsset(Constants.PROJECT_SETTINGS_FIELD_TEMPLATE_PATH);
-	    MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+	    MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
 	    
 	    //Add server port
 	    m_serverPortField = AddField<IntegerField,int>(fieldTemplate, content, Contents.ServerPort,
-		    runtimeSettings.GetDefaultServerPort(),
+		    projectSettings.GetDefaultServerPort(),
 		    (int newValue) => {
-			    MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+			    MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
 			    settings.SetDefaultServerPort((ushort) newValue);
 		    }
 	    );
 
 	    m_allowPublicAccessToggle = AddField<Toggle,bool>(fieldTemplate, content, Contents.AllowPublicAccess,
-		    runtimeSettings.GetServerPublicAccess(),
+		    projectSettings.GetServerPublicAccess(),
 		    (bool  newValue) => {
-			    MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+			    MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
 			    settings.SetServerPublicAccess(newValue);
 		    }
 	    );
@@ -77,7 +77,7 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
 		field.RegisterValueChangedCallback((ChangeEvent<V> changeEvent) => {
         
 			onValueChanged(changeEvent.newValue);
-			MeshSyncRuntimeSettings.GetOrCreateSettings().SaveSettings();
+			MeshSyncProjectSettings.GetOrCreateSettings().SaveSettings();
 		});        
         
 		fieldContainer.Add(field);
