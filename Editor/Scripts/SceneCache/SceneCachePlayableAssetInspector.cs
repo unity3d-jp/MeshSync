@@ -1,4 +1,5 @@
 ﻿using Unity.FilmInternalUtilities;
+using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -22,6 +23,13 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         
         SerializedObject so = serializedObject;
         EditorGUILayout.PropertyField(so.FindProperty("m_sceneCachePlayerRef"), SCENE_CACHE_PLAYER);
+        
+        EditorGUIDrawerUtility.DrawUndoableGUI(m_scPlayableAsset, "SceneCache: Snap",            
+            guiFunc: () => {
+                int snap = (int)m_scPlayableAsset.GetSnapToFrame();
+                return (SnapToFrame)EditorGUILayout.Popup(Contents.SnapToFrame, snap, m_snapToFrameEnums);
+            }, 
+            updateFunc: (SnapToFrame snap) => { m_scPlayableAsset.SetSnapToFrame(snap); });
                 
         {
             // Curve Operations
@@ -59,6 +67,15 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
     private static readonly GUIContent SCENE_CACHE_PLAYER = EditorGUIUtility.TrTextContent("Scene Cache Player");
     
     private SceneCachePlayableAsset m_scPlayableAsset;
+    
+    private readonly string[] m_snapToFrameEnums = System.Enum.GetNames( typeof( SnapToFrame ) );
+    
+    
+//----------------------------------------------------------------------------------------------------------------------
+    private static class Contents {
+        public static readonly GUIContent SnapToFrame = EditorGUIUtility.TrTextContent("Snap To Frame");
+    }
+    
 
 }
 } //end namespace
