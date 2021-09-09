@@ -117,6 +117,11 @@ class MeshSyncProjectSettingsProvider : SettingsProvider {
 			m_selectedTabButton = null;
 			return;
 		}
+
+		if (null == m_content) {
+			Debug.LogError("MeshSync: Can't create Project Settings");
+			return;			
+		}
 			
 		m_tabs[m_selectedTab].Setup(m_content);
 		
