@@ -7,9 +7,9 @@ using UnityEngine;
 namespace Unity.MeshSync {
 
 [Serializable]
-internal class MeshSyncRuntimeSettings : BaseJsonSettings {
+internal class MeshSyncProjectSettings : BaseJsonSettings {
 
-    internal static MeshSyncRuntimeSettings GetOrCreateSettings() {
+    internal static MeshSyncProjectSettings GetOrCreateSettings() {
         
         if (null != m_instance) {
             return m_instance;
@@ -20,7 +20,7 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 #if UNITY_EDITOR
             const string PATH = MESHSYNC_RUNTIME_SETTINGS_PATH;
             if (File.Exists(PATH)) {
-                m_instance = FileUtility.DeserializeFromJson<MeshSyncRuntimeSettings>(PATH);
+                m_instance = FileUtility.DeserializeFromJson<MeshSyncProjectSettings>(PATH);
                 m_instance.UpgradeVersionToLatest();
                 m_instance.ValidatePlayerConfigs();
             }
@@ -29,7 +29,7 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
             }            
 #endif
             
-            m_instance = new MeshSyncRuntimeSettings();
+            m_instance = new MeshSyncProjectSettings();
         }        
 
 #if UNITY_EDITOR
@@ -43,7 +43,7 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 //----------------------------------------------------------------------------------------------------------------------
 
     //Constructor
-    private MeshSyncRuntimeSettings() {
+    private MeshSyncProjectSettings() {
         ValidatePlayerConfigs();
         
     }
@@ -122,7 +122,7 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    private static MeshSyncRuntimeSettings m_instance = null;
+    private static MeshSyncProjectSettings m_instance = null;
     private static readonly object m_instanceLock = new object();
 
     private const string MESHSYNC_RUNTIME_SETTINGS_PATH = "ProjectSettings/MeshSyncSettings.asset";

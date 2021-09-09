@@ -48,8 +48,8 @@ internal static class SceneCachePlayerEditorUtility {
         //Check if it's possible to reuse the old assetsFolder
         string assetsFolder = cachePlayer.GetAssetsFolder();
         if (string.IsNullOrEmpty(assetsFolder)) {
-            MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();        
-            string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();            
+            MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();        
+            string                  scOutputPath    = projectSettings.GetSceneCacheOutputPath();            
             assetsFolder = Path.Combine(scOutputPath, Path.GetFileNameWithoutExtension(sceneCacheFilePath));
         }
         
@@ -114,8 +114,8 @@ internal static class SceneCachePlayerEditorUtility {
 
     private static bool ValidateSceneCacheOutputPath() {
         
-        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        string                  scOutputPath    = runtimeSettings.GetSceneCacheOutputPath();
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+        string                  scOutputPath    = projectSettings.GetSceneCacheOutputPath();
         if (!scOutputPath.StartsWith("Assets")) {
             DisplaySceneCacheOutputPathErrorDialog(scOutputPath);
             return false;            

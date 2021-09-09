@@ -390,7 +390,7 @@ internal class SceneCachePlayer : MeshSyncPlayer {
     #region Events
 #if UNITY_EDITOR
     void Reset() {
-        m_config = MeshSyncRuntimeSettings.GetOrCreateSettings().GetDefaultSceneCachePlayerConfig();            
+        m_config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultSceneCachePlayerConfig();            
     }
 
     void OnValidate() {
