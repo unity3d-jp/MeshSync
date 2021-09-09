@@ -11,7 +11,7 @@ internal class SceneCachePlayerConfig : MeshSyncPlayerConfig{
 //----------------------------------------------------------------------------------------------------------------------       
     
     //Timeline
-    internal int TimelineSnapToFrame = (int) SnapToFrame.NONE; 
+    [SerializeField] internal int TimelineSnapToFrame = (int) SnapToFrame.NONE; 
     
 //----------------------------------------------------------------------------------------------------------------------    
     
