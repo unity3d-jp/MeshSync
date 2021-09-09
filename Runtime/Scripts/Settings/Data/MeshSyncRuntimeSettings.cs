@@ -84,12 +84,13 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
         }
 
         if (m_meshSyncRuntimeSettingsVersion < (int) Version.SEPARATE_SCENE_CACHE_PLAYER_CONFIG) {
-            if (m_defaultPlayerConfigs.Length >= 2) {
+            if (null!= m_defaultPlayerConfigs && m_defaultPlayerConfigs.Length >= 2) {
                 m_defaultMeshSyncPlayerConfig   = m_defaultPlayerConfigs[0];
                 m_defaultSceneCachePlayerConfig = new SceneCachePlayerConfig(m_defaultPlayerConfigs[1]);
             }
         }
 
+        m_defaultPlayerConfigs = null;
         m_meshSyncRuntimeSettingsVersion = ClassVersion = LATEST_VERSION;
         SaveSettings();
     }
