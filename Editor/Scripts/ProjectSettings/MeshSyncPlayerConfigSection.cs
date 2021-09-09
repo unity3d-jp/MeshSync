@@ -244,7 +244,7 @@ internal class MeshSyncPlayerConfigSection {
 		MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
 		MeshSyncPlayerConfig    config = null;
 		if (m_playerType == MeshSyncPlayerType.SERVER)
-			config = runtimeSettings.GetDefaultMeshSyncPlayerConfig();
+			config = runtimeSettings.GetDefaultServerConfig();
 		else 
 			config = runtimeSettings.GetDefaultSceneCachePlayerConfig();
 	

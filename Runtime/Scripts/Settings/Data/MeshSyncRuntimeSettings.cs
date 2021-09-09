@@ -62,14 +62,14 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
     internal void   SetServerPublicAccess(bool access) { m_serverPublicAccess = access;}
     
     
-    internal MeshSyncPlayerConfig   GetDefaultMeshSyncPlayerConfig() { return m_defaultMeshSyncPlayerConfig; }
+    internal MeshSyncPlayerConfig   GetDefaultServerConfig() { return m_defaultServerConfig; }
     internal SceneCachePlayerConfig GetDefaultSceneCachePlayerConfig() { return m_defaultSceneCachePlayerConfig; }
     
 //----------------------------------------------------------------------------------------------------------------------
     private void ValidatePlayerConfigs() {
 
-        if (null == m_defaultMeshSyncPlayerConfig) {
-            m_defaultMeshSyncPlayerConfig = new MeshSyncPlayerConfig();            
+        if (null == m_defaultServerConfig) {
+            m_defaultServerConfig = new MeshSyncPlayerConfig();            
         }
 
         if (null == m_defaultSceneCachePlayerConfig) {
@@ -90,7 +90,7 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 
         if (m_meshSyncRuntimeSettingsVersion < (int) Version.SEPARATE_SCENE_CACHE_PLAYER_CONFIG) {
             if (null!= m_defaultPlayerConfigs && m_defaultPlayerConfigs.Length >= 2) {
-                m_defaultMeshSyncPlayerConfig   = m_defaultPlayerConfigs[0];
+                m_defaultServerConfig   = m_defaultPlayerConfigs[0];
                 m_defaultSceneCachePlayerConfig = new SceneCachePlayerConfig(m_defaultPlayerConfigs[1]);
             }
         }
@@ -110,7 +110,7 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
     [SerializeField] private string m_sceneCacheOutputPath = MeshSyncConstants.DEFAULT_SCENE_CACHE_OUTPUT_PATH;
     
     
-    [SerializeField] private MeshSyncPlayerConfig   m_defaultMeshSyncPlayerConfig   = null;
+    [SerializeField] private MeshSyncPlayerConfig   m_defaultServerConfig   = null;
     [SerializeField] private SceneCachePlayerConfig m_defaultSceneCachePlayerConfig = null;
     
 
