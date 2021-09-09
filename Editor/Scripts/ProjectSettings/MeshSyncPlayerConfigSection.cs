@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using NUnit.Framework;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -58,11 +59,11 @@ internal class MeshSyncPlayerConfigSection {
 //----------------------------------------------------------------------------------------------------------------------        
     internal void Setup(VisualElement parent) {
 	    m_playerConfigUIElements = new List<VisualElement>();
-	    VisualTreeAsset container = LoadVisualTreeAsset(Constants.MESHSYNC_PLAYER_CONFIG_CONTAINER_PATH);	    
-        TemplateContainer containerInstance = container.CloneTree();
+	    
+        TemplateContainer containerInstance = InstantiateContainer(m_playerType);
         
 	    //Templates
-	    VisualTreeAsset fieldTemplate = LoadVisualTreeAsset(Constants.PROJECT_SETTINGS_FIELD_TEMPLATE_PATH);
+	    VisualTreeAsset fieldTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.PROJECT_SETTINGS_FIELD_TEMPLATE_PATH);
     
 	    //Add server port	            	          
 	    Foldout syncSettingsFoldout = containerInstance.Query<Foldout>("SyncSettingsFoldout").First();
@@ -170,9 +171,8 @@ internal class MeshSyncPlayerConfigSection {
 			    config.GetAnimationTweakSettings().EraseFlatCurves = newValue;
 		    }
 	    );
-
+	    
 	    bool isSceneCachePlayerConfig = (m_playerType == MeshSyncPlayerType.CACHE_PLAYER);
-
 	    if (isSceneCachePlayerConfig) {
 		    Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();	    
 		    m_timelineSnapToFramePopup = AddPlayerConfigPopupField(fieldTemplate, timelineSettingsFoldout, 
@@ -318,12 +318,6 @@ internal class MeshSyncPlayerConfigSection {
 	}
 	
 //----------------------------------------------------------------------------------------------------------------------
-	private VisualTreeAsset LoadVisualTreeAsset(string path) {
-		return UIElementsEditorUtility.LoadVisualTreeAsset(path); 
-	}
-
-
-//----------------------------------------------------------------------------------------------------------------------
 
 	// [TODO-sin: 2021-9-9] Move to FIU
 	static List<string> GetEnumInspectorNames(Type t) {
@@ -339,7 +333,25 @@ internal class MeshSyncPlayerConfigSection {
 		}
 
 		return ret;
-	}	
+	}
+
+	private static TemplateContainer InstantiateContainer(MeshSyncPlayerType playerType) {
+
+		VisualTreeAsset container = null;
+		switch (playerType) {
+			case MeshSyncPlayerType.SERVER: 
+				container = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SERVER_CONFIG_CONTAINER_PATH);
+				break; 
+			case MeshSyncPlayerType.CACHE_PLAYER: 
+				container = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SCENE_CACHE_PLAYER_CONFIG_CONTAINER_PATH);
+				break;
+			default : 
+				Assert.Fail();
+				break;
+		}
+		
+		return container.CloneTree();		
+	}
 	
 //----------------------------------------------------------------------------------------------------------------------
 	
