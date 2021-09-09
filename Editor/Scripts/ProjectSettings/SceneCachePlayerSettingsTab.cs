@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using Unity.FilmInternalUtilities;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
@@ -15,6 +16,8 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
 
 //----------------------------------------------------------------------------------------------------------------------        
     public void Setup(VisualElement root) {
+        Assert.IsNotNull(root);
+        
         VisualTreeAsset tab = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SCENE_CACHE_PLAYER_SETTINGS_TAB_PATH);
         TemplateContainer tabInstance = tab.CloneTree();
         
