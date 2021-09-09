@@ -422,7 +422,7 @@ internal class MeshSyncServer : MeshSyncPlayer {
 
     void Reset() {
         MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        m_config = MeshSyncRuntimeSettings.CreatePlayerConfig(MeshSyncPlayerType.SERVER);
+        m_config = MeshSyncRuntimeSettings.GetOrCreateSettings().GetDefaultMeshSyncPlayerConfig();
         m_serverPort = runtimeSettings.GetDefaultServerPort();
         
     }
