@@ -73,6 +73,10 @@ internal class MeshSyncPlayerConfig {
 //----------------------------------------------------------------------------------------------------------------------    
     
     [SerializeField] AnimationTweakSettings m_animationTweakSettings;
+    
+#pragma warning disable 414           
     [SerializeField] private readonly int m_meshSyncPlayerConfigVersion = 1;
+#pragma warning restore 414    
+    
 }
 } //end namespace
