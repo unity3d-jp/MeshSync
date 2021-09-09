@@ -49,7 +49,7 @@ internal class MeshSyncPlayerConfigSection {
 	internal MeshSyncPlayerConfigSection(MeshSyncPlayerType playerType) {
 		m_playerType = playerType;
 	}
-
+	
 //----------------------------------------------------------------------------------------------------------------------        
     internal void Setup(VisualElement parent) {
 	    m_playerConfigUIElements = new List<VisualElement>();
@@ -167,8 +167,12 @@ internal class MeshSyncPlayerConfigSection {
 	    );
 	    
 	    //Timeline 
-	    Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();
-	    
+	    Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();	    
+	    m_timelineSnapToFramePopup = AddPlayerConfigPopupField(fieldTemplate, timelineSettingsFoldout, 
+		    Contents.ZUpCorrection, m_zUpCorrectionEnums,
+		    (MeshSyncPlayerConfig config, int newValue) => { config.ZUpCorrection = newValue; }
+	    );
+	        
 	    	       
 	    UpdatePlayerConfigUIElements();
 	    
@@ -324,11 +328,14 @@ internal class MeshSyncPlayerConfigSection {
 	private Toggle m_profilingToggle;
 	
 	//AnimationTweak Settings
-	public FloatField   m_animationTweakTimeScaleField;
-	public FloatField   m_animationTweakTimeOffsetField;
-	public IntegerField m_animationTweakDropStepField;
-	public FloatField   m_animationTweakReductionThresholdField;
-	public Toggle       m_animationTweakEraseFlatCurvesToggle;
+	private FloatField   m_animationTweakTimeScaleField;
+	private FloatField   m_animationTweakTimeOffsetField;
+	private IntegerField m_animationTweakDropStepField;
+	private FloatField   m_animationTweakReductionThresholdField;
+	private Toggle       m_animationTweakEraseFlatCurvesToggle;
+	
+	//Timeline
+	private PopupField<string> m_timelineSnapToFramePopup;
 	
 	
 	private readonly MeshSyncPlayerType m_playerType;
