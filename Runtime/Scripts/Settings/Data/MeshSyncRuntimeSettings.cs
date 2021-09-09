@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.Serialization;
 using Unity.FilmInternalUtilities;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -21,11 +22,12 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 #if UNITY_EDITOR
             const string PATH = MESHSYNC_RUNTIME_SETTINGS_PATH;
             if (File.Exists(PATH)) {
-                m_instance = FileUtility.DeserializeFromJson<MeshSyncRuntimeSettings>(PATH);                
+                m_instance = FileUtility.DeserializeFromJson<MeshSyncRuntimeSettings>(PATH);
+                m_instance.UpgradeVersionToLatest();
             }
             if (null != m_instance) {
                 return m_instance;
-            }
+            }            
 #endif
             
             m_instance = new MeshSyncRuntimeSettings();
@@ -43,18 +45,14 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 
     //Constructor
     private MeshSyncRuntimeSettings() {
-        
-        m_defaultPlayerConfigs = new MeshSyncPlayerConfig[(int) MeshSyncPlayerType.NUM_TYPES]; 
 
-        MeshSyncPlayerConfig config = new MeshSyncPlayerConfig();
-        m_defaultPlayerConfigs[(int) MeshSyncPlayerType.SERVER] = config;
-
-        config = new MeshSyncPlayerConfig {
-            UpdateMeshColliders = false, 
+        m_defaultMeshSyncPlayerConfig = new MeshSyncPlayerConfig();
+        m_defaultSceneCachePlayerConfig = new SceneCachePlayerConfig() {
+            UpdateMeshColliders    = false,
             FindMaterialFromAssets = false,
-            ProgressiveDisplay = false,
+            ProgressiveDisplay     = false,
         };
-        m_defaultPlayerConfigs[(int) MeshSyncPlayerType.CACHE_PLAYER] = config;
+        
     }
    
 //----------------------------------------------------------------------------------------------------------------------
@@ -81,6 +79,20 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
         return new MeshSyncPlayerConfig(settings.GetDefaultPlayerConfig(playerType));
     }
 
+    private void UpgradeVersionToLatest() {
+        if (m_meshSyncRuntimeSettingsVersion == LATEST_VERSION) {
+            return;            
+        }
+
+        if (m_meshSyncRuntimeSettingsVersion < (int) Version.SEPARATE_SCENE_CACHE_PLAYER_CONFIG) {
+            if (m_defaultPlayerConfigs.Length >= 2) {
+                m_defaultMeshSyncPlayerConfig   = m_defaultPlayerConfigs[0];
+                m_defaultSceneCachePlayerConfig = new SceneCachePlayerConfig(m_defaultPlayerConfigs[1]);
+            }
+        }
+
+        m_meshSyncRuntimeSettingsVersion = LATEST_VERSION;
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -91,6 +103,10 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
     [SerializeField] private string m_sceneCacheOutputPath = MeshSyncConstants.DEFAULT_SCENE_CACHE_OUTPUT_PATH;
     
     [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
+    
+    [SerializeField] private MeshSyncPlayerConfig   m_defaultMeshSyncPlayerConfig   = null;
+    [SerializeField] private SceneCachePlayerConfig m_defaultSceneCachePlayerConfig = null;
+    
 
     [FormerlySerializedAs("ClassVersion")][SerializeField] internal int m_meshSyncRuntimeSettingsVersion = 3;    
     
@@ -101,8 +117,14 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 
     private const string MESHSYNC_RUNTIME_SETTINGS_PATH = "ProjectSettings/MeshSyncSettings.asset";
 
-    
-    
+
+
+    private const int LATEST_VERSION = (int) Version.SEPARATE_SCENE_CACHE_PLAYER_CONFIG; 
+    enum Version {
+        LEGACY = 3,
+        SEPARATE_SCENE_CACHE_PLAYER_CONFIG = 4,
+    };
+
 
 }
 
