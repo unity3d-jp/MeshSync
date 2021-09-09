@@ -2,6 +2,7 @@
 using System.IO;
 using Unity.FilmInternalUtilities;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 
 namespace Unity.MeshSync {
@@ -91,7 +92,7 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
     
     [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
 
-    [SerializeField] internal int ClassVersion = 3;    
+    [FormerlySerializedAs("ClassVersion")][SerializeField] internal int m_meshSyncRuntimeSettingsVersion = 3;    
     
 //----------------------------------------------------------------------------------------------------------------------
 
