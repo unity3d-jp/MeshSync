@@ -170,16 +170,27 @@ internal class MeshSyncPlayerConfigSection {
 			    config.GetAnimationTweakSettings().EraseFlatCurves = newValue;
 		    }
 	    );
+
+	    bool isSceneCachePlayerConfig = (m_playerType == MeshSyncPlayerType.CACHE_PLAYER);
+
+	    if (isSceneCachePlayerConfig) {
+		    
+	    }
 	    
 	    //Timeline 
-	    Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();	    
-	    m_timelineSnapToFramePopup = AddPlayerConfigPopupField(fieldTemplate, timelineSettingsFoldout, 
-		    Contents.TimelineSnapToFrame, m_snapToFrameEnums,
-		    (MeshSyncPlayerConfig config, int newValue) => { config.TimelineSnapToFrame = newValue; }
-	    );
-	        
-	    	       
-	    UpdatePlayerConfigUIElements();
+	    // Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();	    
+	    // m_timelineSnapToFramePopup = AddPlayerConfigPopupField(fieldTemplate, timelineSettingsFoldout, 
+		   //  Contents.TimelineSnapToFrame, m_snapToFrameEnums,
+		   //  (MeshSyncPlayerConfig config, int newValue) => { config.TimelineSnapToFrame = newValue; }
+	    // );
+		
+    
+	    //Update the values in each UI elements
+	    if (isSceneCachePlayerConfig) {
+		    UpdateSceneCacheUIElements();
+	    } else {
+		    UpdateServerUIElements();
+	    }
 	    
         parent.Add(containerInstance);
     }
@@ -251,16 +262,22 @@ internal class MeshSyncPlayerConfigSection {
 	}
 	
 
-//----------------------------------------------------------------------------------------------------------------------	
+//----------------------------------------------------------------------------------------------------------------------
 
-	private void UpdatePlayerConfigUIElements() {
-		MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
-		MeshSyncPlayerConfig    config = null;
-		if (m_playerType == MeshSyncPlayerType.SERVER)
-			config = projectSettings.GetDefaultServerConfig();
-		else 
-			config = projectSettings.GetDefaultSceneCachePlayerConfig();
+	private void UpdateServerUIElements() {
+		MeshSyncPlayerConfig config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultServerConfig();	
+		UpdateCommonUIElements(config);		
+		SetupUIElementUserData(config);		
+	}
 	
+	private void UpdateSceneCacheUIElements() {
+		SceneCachePlayerConfig config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultSceneCachePlayerConfig();	
+		UpdateCommonUIElements(config);		
+		m_timelineSnapToFramePopup.SetValueWithoutNotify(m_snapToFrameEnums[config.TimelineSnapToFrame]);
+		SetupUIElementUserData(config);
+	}
+
+	private void UpdateCommonUIElements(MeshSyncPlayerConfig config) {
 		//sync
 		m_syncVisibilityToggle.SetValueWithoutNotify(config.SyncVisibility);
 		m_syncTransformToggle.SetValueWithoutNotify(config.SyncTransform);
@@ -291,18 +308,15 @@ internal class MeshSyncPlayerConfigSection {
 		m_animationTweakDropStepField.SetValueWithoutNotify(animationTweakSettings.DropStep);
 		m_animationTweakReductionThresholdField.SetValueWithoutNotify(animationTweakSettings.ReductionThreshold);
 		m_animationTweakEraseFlatCurvesToggle.SetValueWithoutNotify(animationTweakSettings.EraseFlatCurves);
-
-		//Timeline
-		m_timelineSnapToFramePopup.SetValueWithoutNotify(m_snapToFrameEnums[config.TimelineSnapToFrame]);
 		
-		//userData
-		foreach (VisualElement uiElement in m_playerConfigUIElements) {
-			uiElement.userData = config;
-		}
-		
-	
 	}
 
+	private void SetupUIElementUserData(MeshSyncPlayerConfig config) {
+		foreach (VisualElement uiElement in m_playerConfigUIElements) {
+			uiElement.userData = config;
+		}		
+	}
+	
 //----------------------------------------------------------------------------------------------------------------------
 	private VisualTreeAsset LoadVisualTreeAsset(string path) {
 		return UIElementsEditorUtility.LoadVisualTreeAsset(path); 
