@@ -96,8 +96,11 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 //----------------------------------------------------------------------------------------------------------------------
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
- 
-    
+
+    internal void SetSnapToFrame(SnapToFrame snap) { m_snapToFrame = snap;}
+    internal SnapToFrame GetSnapToFrame() { return m_snapToFrame; }
+
+
 #if UNITY_EDITOR    
     internal static EditorCurveBinding GetTimeCurveBinding() {return m_timeCurveBinding; }
     
@@ -112,7 +115,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 //----------------------------------------------------------------------------------------------------------------------
     
     [SerializeField] private ExposedReference<SceneCachePlayer> m_sceneCachePlayerRef;
-    [SerializeField]         double                             m_time;
+    
+    [SerializeField] private double      m_time;
+    [SerializeField] private SnapToFrame m_snapToFrame;
 
     
     SceneCachePlayableBehaviour m_sceneCachePlayableBehaviour = null;
