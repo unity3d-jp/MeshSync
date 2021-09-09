@@ -27,7 +27,7 @@ namespace Unity.MeshSync
         public static ServerSettings defaultValue
         {
             get {
-                MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+                MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
                 ServerSettings ret = new ServerSettings {
                     maxQueue = 512,
                     maxThreads = 8,

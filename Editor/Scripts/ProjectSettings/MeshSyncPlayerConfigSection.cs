@@ -197,7 +197,7 @@ internal class MeshSyncPlayerConfigSection {
 			}
 			
 			onValueChanged(config, changeEvent.newValue);
-			MeshSyncProjectSettings.GetOrCreateSettings().SaveSettings();
+			MeshSyncRuntimeSettings.GetOrCreateSettings().SaveSettings();
 		});		
 		
 		fieldContainer.Add(field);
@@ -228,7 +228,7 @@ internal class MeshSyncPlayerConfigSection {
 			}
 			
 			onValueChanged(config, popupField.index);
-			MeshSyncProjectSettings.GetOrCreateSettings().SaveSettings();
+			MeshSyncRuntimeSettings.GetOrCreateSettings().SaveSettings();
 		});
 				
 		fieldContainer.Add(popupField);
@@ -241,12 +241,12 @@ internal class MeshSyncPlayerConfigSection {
 //----------------------------------------------------------------------------------------------------------------------	
 
 	private void UpdatePlayerConfigUIElements() {
-		MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+		MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
 		MeshSyncPlayerConfig    config = null;
 		if (m_playerType == MeshSyncPlayerType.SERVER)
-			config = projectSettings.GetDefaultMeshSyncPlayerConfig();
+			config = runtimeSettings.GetDefaultMeshSyncPlayerConfig();
 		else 
-			config = projectSettings.GetDefaultSceneCachePlayerConfig();
+			config = runtimeSettings.GetDefaultSceneCachePlayerConfig();
 	
 		//sync
 		m_syncVisibilityToggle.SetValueWithoutNotify(config.SyncVisibility);

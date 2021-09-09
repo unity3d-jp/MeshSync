@@ -66,7 +66,7 @@ internal class MeshSyncServer : MeshSyncPlayer {
         //Deploy HTTP assets to StreamingAssets
         DeployStreamingAssets.Deploy();
 #endif
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         
         
         m_serverSettings.port = (ushort)m_serverPort;
@@ -74,7 +74,7 @@ internal class MeshSyncServer : MeshSyncPlayer {
 
         m_server = Server.Start(ref m_serverSettings);
         m_server.fileRootPath = GetServerDocRootPath();
-        m_server.AllowPublicAccess(projectSettings.GetServerPublicAccess());
+        m_server.AllowPublicAccess(runtimeSettings.GetServerPublicAccess());
         
         m_handler = OnServerMessage;
 
@@ -421,9 +421,9 @@ internal class MeshSyncServer : MeshSyncPlayer {
     }
 
     void Reset() {
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
-        m_config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultMeshSyncPlayerConfig();
-        m_serverPort = projectSettings.GetDefaultServerPort();
+        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        m_config = MeshSyncRuntimeSettings.GetOrCreateSettings().GetDefaultMeshSyncPlayerConfig();
+        m_serverPort = runtimeSettings.GetDefaultServerPort();
         
     }
 #endif

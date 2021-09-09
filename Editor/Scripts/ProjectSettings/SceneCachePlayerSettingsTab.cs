@@ -22,7 +22,7 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
         
         m_generatedSCResPathTextField	 = tabInstance.Query<TextField>("GeneratedSCResPathText").First();
         m_generatedSCResPathTextField.RegisterValueChangedCallback((ChangeEvent<string> changeEvent) => {
-            MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+            MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
             settings.SetSceneCacheOutputPath(changeEvent.newValue);
             settings.SaveSettings();
         });        
@@ -55,7 +55,7 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
             return;            
         }        
 
-        MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+        MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         
         path = AssetUtility.NormalizeAssetPath(path);		
         settings.SetSceneCacheOutputPath(path);
@@ -66,7 +66,7 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
 //----------------------------------------------------------------------------------------------------------------------
 
     void RefreshSettings() {
-        MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+        MeshSyncRuntimeSettings settings = MeshSyncRuntimeSettings.GetOrCreateSettings();
         m_generatedSCResPathTextField.value = settings.GetSceneCacheOutputPath();		
     }
 
