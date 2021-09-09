@@ -291,7 +291,10 @@ internal class MeshSyncPlayerConfigSection {
 		m_animationTweakDropStepField.SetValueWithoutNotify(animationTweakSettings.DropStep);
 		m_animationTweakReductionThresholdField.SetValueWithoutNotify(animationTweakSettings.ReductionThreshold);
 		m_animationTweakEraseFlatCurvesToggle.SetValueWithoutNotify(animationTweakSettings.EraseFlatCurves);
-	
+
+		//Timeline
+		m_timelineSnapToFramePopup.SetValueWithoutNotify(m_snapToFrameEnums[config.TimelineSnapToFrame]);
+		
 		//userData
 		foreach (VisualElement uiElement in m_playerConfigUIElements) {
 			uiElement.userData = config;
