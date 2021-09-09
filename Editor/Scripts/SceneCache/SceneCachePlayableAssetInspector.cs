@@ -26,8 +26,8 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         
         EditorGUIDrawerUtility.DrawUndoableGUI(m_scPlayableAsset, "SceneCache: Snap",            
             guiFunc: () => {
-                int snap = (int)m_scPlayableAsset.GetSnapToFrame();
-                return (SnapToFrame)EditorGUILayout.Popup(Contents.SnapToFrame, snap, m_snapToFrameEnums);
+                SnapToFrame snap = m_scPlayableAsset.GetSnapToFrame();
+                return (SnapToFrame)EditorGUILayout.EnumPopup(Contents.SnapToFrame, snap);
             }, 
             updateFunc: (SnapToFrame snap) => { m_scPlayableAsset.SetSnapToFrame(snap); });
                 
@@ -66,10 +66,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
 
     private static readonly GUIContent SCENE_CACHE_PLAYER = EditorGUIUtility.TrTextContent("Scene Cache Player");
     
-    private SceneCachePlayableAsset m_scPlayableAsset;
-    
-    private readonly string[] m_snapToFrameEnums = System.Enum.GetNames( typeof( SnapToFrame ) );
-    
+    private SceneCachePlayableAsset m_scPlayableAsset;        
     
 //----------------------------------------------------------------------------------------------------------------------
     private static class Contents {
