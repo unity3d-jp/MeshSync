@@ -1,4 +1,5 @@
 ﻿using Unity.FilmInternalUtilities;
+using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -22,6 +23,13 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         
         SerializedObject so = serializedObject;
         EditorGUILayout.PropertyField(so.FindProperty("m_sceneCachePlayerRef"), SCENE_CACHE_PLAYER);
+        
+        EditorGUIDrawerUtility.DrawUndoableGUI(m_scPlayableAsset, "SceneCache: Snap",            
+            guiFunc: () => {
+                SnapToFrame snap = m_scPlayableAsset.GetSnapToFrame();
+                return (SnapToFrame)EditorGUILayout.EnumPopup(Contents.SnapToFrame, snap);
+            }, 
+            updateFunc: (SnapToFrame snap) => { m_scPlayableAsset.SetSnapToFrame(snap); });
                 
         {
             // Curve Operations
@@ -32,12 +40,12 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
             const float BUTTON_WIDTH = 160f;
             if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"To Linear")) {
                 SceneCacheClipData clipData = m_scPlayableAsset.GetBoundClipData();
-                clipData.SetCurveToLinear();
+                clipData?.SetCurveToLinear();
             }
             
             if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"Apply Original")) {
                 SceneCacheClipData clipData = m_scPlayableAsset.GetBoundClipData();
-                clipData.ApplyOriginalSceneCacheCurve();                
+                clipData?.ApplyOriginalSceneCacheCurve();                
             }
             
             GUILayout.EndVertical();                    
@@ -58,7 +66,13 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
 
     private static readonly GUIContent SCENE_CACHE_PLAYER = EditorGUIUtility.TrTextContent("Scene Cache Player");
     
-    private SceneCachePlayableAsset m_scPlayableAsset;
+    private SceneCachePlayableAsset m_scPlayableAsset;        
+    
+//----------------------------------------------------------------------------------------------------------------------
+    private static class Contents {
+        public static readonly GUIContent SnapToFrame = EditorGUIUtility.TrTextContent("Snap To Frame");
+    }
+    
 
 }
 } //end namespace
