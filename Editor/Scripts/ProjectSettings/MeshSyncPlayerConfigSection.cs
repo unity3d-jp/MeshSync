@@ -42,6 +42,8 @@ internal class MeshSyncPlayerConfigSection {
 		public static readonly GUIContent TweakDropStep = EditorGUIUtility.TrTextContent("Drop step");
 		public static readonly GUIContent TweakReductionThreshold = EditorGUIUtility.TrTextContent("Reduction threshold");
 		public static readonly GUIContent TweakEraseFlatCurves = EditorGUIUtility.TrTextContent("Erase flat curves");
+
+		public static readonly GUIContent TimelineSnapToFrame = EditorGUIUtility.TrTextContent("Snap To Frame");
 		
 	}
 
@@ -172,8 +174,8 @@ internal class MeshSyncPlayerConfigSection {
 	    //Timeline 
 	    Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();	    
 	    m_timelineSnapToFramePopup = AddPlayerConfigPopupField(fieldTemplate, timelineSettingsFoldout, 
-		    Contents.ZUpCorrection, m_zUpCorrectionEnums,
-		    (MeshSyncPlayerConfig config, int newValue) => { config.ZUpCorrection = newValue; }
+		    Contents.TimelineSnapToFrame, m_snapToFrameEnums,
+		    (MeshSyncPlayerConfig config, int newValue) => { config.TimelineSnapToFrame = newValue; }
 	    );
 	        
 	    	       

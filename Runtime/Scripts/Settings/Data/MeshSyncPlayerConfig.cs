@@ -68,7 +68,7 @@ internal class MeshSyncPlayerConfig {
 
     
     //Timeline
-    
+    internal int TimelineSnapToFrame = (int) SnapToFrame.NONE; 
     
 //----------------------------------------------------------------------------------------------------------------------    
     
