@@ -103,7 +103,6 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
     //Ex: "Assets/Foo"
     [SerializeField] private string m_sceneCacheOutputPath = MeshSyncConstants.DEFAULT_SCENE_CACHE_OUTPUT_PATH;
     
-    [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
     
     [SerializeField] private MeshSyncPlayerConfig   m_defaultMeshSyncPlayerConfig   = null;
     [SerializeField] private SceneCachePlayerConfig m_defaultSceneCachePlayerConfig = null;
@@ -111,7 +110,8 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 
     [SerializeField] private int m_meshSyncRuntimeSettingsVersion = LATEST_VERSION;
     
-    //[TODO-sin: 2021-9-9] Remove this field. Obsolete starting from 0.9.x. FormerSerializedAs doesn't work with json
+    //[TODO-sin: 2021-9-9] Remove these 2 fields. Obsolete starting from 0.9.x. FormerSerializedAs doesn't work with json
+    [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
     [SerializeField] private int ClassVersion = LATEST_VERSION;    
     
 //----------------------------------------------------------------------------------------------------------------------
