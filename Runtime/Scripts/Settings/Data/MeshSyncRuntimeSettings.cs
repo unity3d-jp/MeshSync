@@ -80,6 +80,7 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
     }
 
     private void UpgradeVersionToLatest() {
+        m_meshSyncRuntimeSettingsVersion = ClassVersion;
         if (m_meshSyncRuntimeSettingsVersion == LATEST_VERSION) {
             return;            
         }
@@ -91,8 +92,10 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
             }
         }
 
-        m_meshSyncRuntimeSettingsVersion = LATEST_VERSION;
+        m_meshSyncRuntimeSettingsVersion = ClassVersion = LATEST_VERSION;
+        SaveSettings();
     }
+    
     
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -108,7 +111,10 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
     [SerializeField] private SceneCachePlayerConfig m_defaultSceneCachePlayerConfig = null;
     
 
-    [FormerlySerializedAs("ClassVersion")][SerializeField] internal int m_meshSyncRuntimeSettingsVersion = 3;    
+    [SerializeField] private int m_meshSyncRuntimeSettingsVersion = LATEST_VERSION;
+    
+    //[TODO-sin: 2021-9-9] Remove this field. Obsolete starting from 0.9.x. FormerSerializedAs doesn't work with json
+    [SerializeField] private int ClassVersion = LATEST_VERSION;    
     
 //----------------------------------------------------------------------------------------------------------------------
 
