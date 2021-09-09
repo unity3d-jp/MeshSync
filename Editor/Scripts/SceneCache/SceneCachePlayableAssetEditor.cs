@@ -31,7 +31,7 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
     /// <inheritdoc/>
     public override void OnCreate(TimelineClip clip, TrackAsset track, TimelineClip clonedFrom) {
         
-        SceneCachePlayableAsset asset  = clip.asset as SceneCachePlayableAsset;
+        SceneCachePlayableAsset asset = clip.asset as SceneCachePlayableAsset;
         if (null == asset) {
             Debug.LogError("[MeshSync] Asset is not a SceneCachePlayableAsset: " + clip.asset);
             return;
