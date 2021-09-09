@@ -165,6 +165,10 @@ internal class MeshSyncPlayerConfigSection {
 			    config.GetAnimationTweakSettings().EraseFlatCurves = newValue;
 		    }
 	    );
+	    
+	    //Timeline 
+	    Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();
+	    
 	    	       
 	    UpdatePlayerConfigUIElements();
 	    
