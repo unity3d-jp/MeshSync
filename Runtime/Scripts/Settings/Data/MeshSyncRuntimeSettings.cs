@@ -67,15 +67,9 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
     internal void   SetServerPublicAccess(bool access) { m_serverPublicAccess = access;}
     
 //----------------------------------------------------------------------------------------------------------------------
-
-    internal MeshSyncPlayerConfig GetDefaultPlayerConfig(MeshSyncPlayerType playerType) {
-        return m_defaultPlayerConfigs[(int) playerType];
-    }
-
-    internal static MeshSyncPlayerConfig CreatePlayerConfig(MeshSyncPlayerType playerType) {
-        MeshSyncRuntimeSettings settings = GetOrCreateSettings();
-        return new MeshSyncPlayerConfig(settings.GetDefaultPlayerConfig(playerType));
-    }
+    
+    internal MeshSyncPlayerConfig   GetDefaultMeshSyncPlayerConfig() { return m_defaultMeshSyncPlayerConfig; }
+    internal SceneCachePlayerConfig GetDefaultSceneCachePlayerConfig() { return m_defaultSceneCachePlayerConfig; }
 
     private void UpgradeVersionToLatest() {
         m_meshSyncRuntimeSettingsVersion = ClassVersion;
