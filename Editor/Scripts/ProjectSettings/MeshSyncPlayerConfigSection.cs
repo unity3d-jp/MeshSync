@@ -174,15 +174,15 @@ internal class MeshSyncPlayerConfigSection {
 	    bool isSceneCachePlayerConfig = (m_playerType == MeshSyncPlayerType.CACHE_PLAYER);
 
 	    if (isSceneCachePlayerConfig) {
+		    Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();	    
+		    m_timelineSnapToFramePopup = AddPlayerConfigPopupField(fieldTemplate, timelineSettingsFoldout, 
+				Contents.TimelineSnapToFrame, m_snapToFrameEnums,
+				(MeshSyncPlayerConfig config, int newValue) => {  }
+		    );
 		    
 	    }
 	    
 	    //Timeline 
-	    // Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();	    
-	    // m_timelineSnapToFramePopup = AddPlayerConfigPopupField(fieldTemplate, timelineSettingsFoldout, 
-		   //  Contents.TimelineSnapToFrame, m_snapToFrameEnums,
-		   //  (MeshSyncPlayerConfig config, int newValue) => { config.TimelineSnapToFrame = newValue; }
-	    // );
 		
     
 	    //Update the values in each UI elements
