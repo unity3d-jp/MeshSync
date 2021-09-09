@@ -1,9 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Runtime.Serialization;
 using Unity.FilmInternalUtilities;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 
 namespace Unity.MeshSync {
