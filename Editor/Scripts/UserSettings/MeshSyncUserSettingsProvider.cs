@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UIElements;
 
@@ -28,6 +29,10 @@ internal class MeshSyncUserSettingsProvider : SettingsProvider {
 			UIElementsEditorUtility.LoadAndAddStyle( root.styleSheets, MeshSyncEditorConstants.USER_SETTINGS_STYLE_PATH);	
 			
 			VisualElement content = root.Query<VisualElement>("Content");
+			if (null == content) {
+				Debug.LogError("MeshSync: Can't create User Settings");
+				return;
+			}
 			m_dccToolsSettingsTab.Setup(content);			
 		};
 				
