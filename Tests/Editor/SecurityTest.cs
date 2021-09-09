@@ -23,27 +23,27 @@ internal class SecurityTest  {
     public IEnumerator SetServerPublicAccess() {
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
 
-        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
         MeshSyncServer mss = MeshSyncMenu.CreateMeshSyncServer(true);
         Assert.IsTrue(mss.IsServerStarted());       
         yield return null;
 
         //Check the original public access
-        bool origPublicAccess = runtimeSettings.GetServerPublicAccess();
+        bool origPublicAccess = projectSettings.GetServerPublicAccess();
         UnityEngine.Assertions.Assert.AreEqual(origPublicAccess, mss.DoesServerAllowPublicAccess());
         yield return null;
         
         //Change the public access and check
-        runtimeSettings.SetServerPublicAccess(!origPublicAccess);
+        projectSettings.SetServerPublicAccess(!origPublicAccess);
         mss.StopServer();
         mss.StartServer();
         Assert.IsTrue(mss.IsServerStarted());       
         yield return null;
-        UnityEngine.Assertions.Assert.AreEqual(runtimeSettings.GetServerPublicAccess(), mss.DoesServerAllowPublicAccess());        
+        UnityEngine.Assertions.Assert.AreEqual(projectSettings.GetServerPublicAccess(), mss.DoesServerAllowPublicAccess());        
         
         //Change back
-        runtimeSettings.SetServerPublicAccess(origPublicAccess);
-        UnityEngine.Assertions.Assert.AreEqual(origPublicAccess, runtimeSettings.GetServerPublicAccess());
+        projectSettings.SetServerPublicAccess(origPublicAccess);
+        UnityEngine.Assertions.Assert.AreEqual(origPublicAccess, projectSettings.GetServerPublicAccess());
         
     }
     

@@ -14,9 +14,9 @@ internal class ProjectSettingsTest {
     [Test]
     public void CreateRuntimeSettings() {
 
-        MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-        Assert.NotNull(runtimeSettings);
-        Assert.True(File.Exists(runtimeSettings.GetSettingsPath()));           
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+        Assert.NotNull(projectSettings);
+        Assert.True(File.Exists(projectSettings.GetSettingsPath()));           
     }    
 
 
