@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Unity.MeshSync {
 [Serializable]
@@ -66,9 +67,13 @@ internal class MeshSyncPlayerConfig {
     public bool Logging            = false;
     public bool Profiling          = false;
 
+    
+    //Timeline
+    
+    
 //----------------------------------------------------------------------------------------------------------------------    
     
     [SerializeField] AnimationTweakSettings m_animationTweakSettings;
-    [SerializeField] internal readonly int ClassVersion = 1;
+    [FormerlySerializedAs("ClassVersion")] [SerializeField] internal readonly int m_meshSyncPlayerConfigVersion = 1;
 }
 } //end namespace
