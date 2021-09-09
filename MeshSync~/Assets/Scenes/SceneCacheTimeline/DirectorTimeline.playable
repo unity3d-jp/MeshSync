@@ -109,7 +109,7 @@ MonoBehaviour:
   m_Markers:
     m_Objects: []
   m_serializedDataCollection:
-  - m_version: 1
+  - m_baseClipDataVersion: 1
     m_animationCurve:
       serializedVersion: 2
       m_Curve:
@@ -162,6 +162,7 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
     m_initialized: 1
+    m_sceneCacheClipDataVersion: 1
 --- !u!74 &-1568784706669874391
 AnimationClip:
   m_ObjectHideFlags: 0
@@ -360,7 +361,7 @@ MonoBehaviour:
   m_sceneCachePlayerRef:
     exposedName: 4c2b50ec22abf2b48b6416a93b926d5c
     defaultValue: {fileID: 0}
-  m_time: 0.9078238606452942
+  m_time: 0.11922162026166916
 --- !u!114 &1071123597200051587
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -477,7 +478,7 @@ MonoBehaviour:
   m_Markers:
     m_Objects: []
   m_serializedDataCollection:
-  - m_version: 1
+  - m_baseClipDataVersion: 1
     m_animationCurve:
       serializedVersion: 2
       m_Curve:
@@ -2717,6 +2718,7 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
     m_initialized: 1
+    m_sceneCacheClipDataVersion: 1
 --- !u!74 &5317331040282977767
 AnimationClip:
   m_ObjectHideFlags: 0
