@@ -182,9 +182,6 @@ internal class MeshSyncPlayerConfigSection {
 		    
 	    }
 	    
-	    //Timeline 
-		
-    
 	    //Update the values in each UI elements
 	    if (isSceneCachePlayerConfig) {
 		    UpdateSceneCacheUIElements();
