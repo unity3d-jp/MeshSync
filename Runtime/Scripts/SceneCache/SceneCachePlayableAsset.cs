@@ -38,6 +38,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         SceneCachePlayer scPlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
         m_sceneCachePlayableBehaviour.SetSceneCachePlayer(scPlayer);
         m_sceneCachePlayableBehaviour.SetClipData(scClipData);
+        m_sceneCachePlayableBehaviour.SetSnapToFrame(m_snapToFrame);
         
         //Initialize or clear curve
         if (scPlayer) {
