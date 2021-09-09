@@ -1,4 +1,5 @@
 using System;
+using NUnit.Framework;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -19,6 +20,7 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
 
 //----------------------------------------------------------------------------------------------------------------------        
     public void Setup(VisualElement root) {
+	    Assert.IsNotNull(root);
 	    
 		VisualTreeAsset tab = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SERVER_SETTINGS_TAB_PATH);	    
 		TemplateContainer tabInstance = tab.CloneTree();

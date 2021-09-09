@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
+using NUnit.Framework;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -41,6 +43,8 @@ internal class MeshSyncPlayerConfigSection {
 		public static readonly GUIContent TweakDropStep = EditorGUIUtility.TrTextContent("Drop step");
 		public static readonly GUIContent TweakReductionThreshold = EditorGUIUtility.TrTextContent("Reduction threshold");
 		public static readonly GUIContent TweakEraseFlatCurves = EditorGUIUtility.TrTextContent("Erase flat curves");
+
+		public static readonly GUIContent TimelineSnapToFrame = EditorGUIUtility.TrTextContent("Snap To Frame");
 		
 	}
 
@@ -48,16 +52,18 @@ internal class MeshSyncPlayerConfigSection {
 	
 	internal MeshSyncPlayerConfigSection(MeshSyncPlayerType playerType) {
 		m_playerType = playerType;
+		
+		
 	}
-
+	
 //----------------------------------------------------------------------------------------------------------------------        
     internal void Setup(VisualElement parent) {
 	    m_playerConfigUIElements = new List<VisualElement>();
-	    VisualTreeAsset container = LoadVisualTreeAsset(Constants.MESHSYNC_PLAYER_CONFIG_CONTAINER_PATH);	    
-        TemplateContainer containerInstance = container.CloneTree();
+	    
+        TemplateContainer containerInstance = InstantiateContainer(m_playerType);
         
 	    //Templates
-	    VisualTreeAsset fieldTemplate = LoadVisualTreeAsset(Constants.PROJECT_SETTINGS_FIELD_TEMPLATE_PATH);
+	    VisualTreeAsset fieldTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.PROJECT_SETTINGS_FIELD_TEMPLATE_PATH);
     
 	    //Add server port	            	          
 	    Foldout syncSettingsFoldout = containerInstance.Query<Foldout>("SyncSettingsFoldout").First();
@@ -165,8 +171,23 @@ internal class MeshSyncPlayerConfigSection {
 			    config.GetAnimationTweakSettings().EraseFlatCurves = newValue;
 		    }
 	    );
-	    	       
-	    UpdatePlayerConfigUIElements();
+	    
+	    bool isSceneCachePlayerConfig = (m_playerType == MeshSyncPlayerType.CACHE_PLAYER);
+	    if (isSceneCachePlayerConfig) {
+		    Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();	    
+		    m_timelineSnapToFramePopup = AddPlayerConfigPopupField(fieldTemplate, timelineSettingsFoldout, 
+				Contents.TimelineSnapToFrame, m_snapToFrameEnums,
+			    (SceneCachePlayerConfig config, int newValue) => { config.TimelineSnapToFrame = newValue;}
+		    );
+		    
+	    }
+	    
+	    //Update the values in each UI elements
+	    if (isSceneCachePlayerConfig) {
+		    UpdateSceneCacheUIElements();
+	    } else {
+		    UpdateServerUIElements();
+	    }
 	    
         parent.Add(containerInstance);
     }
@@ -207,8 +228,8 @@ internal class MeshSyncPlayerConfigSection {
 	}
 	
 //----------------------------------------------------------------------------------------------------------------------	
-	private PopupField<T> AddPlayerConfigPopupField<T>(VisualTreeAsset template, VisualElement parent, GUIContent content,
-		List<T> options, Action<MeshSyncPlayerConfig,int> onValueChanged) 
+	private PopupField<T> AddPlayerConfigPopupField<T,UserDataType>(VisualTreeAsset template, VisualElement parent, GUIContent content,
+		List<T> options, Action<UserDataType,int> onValueChanged) where UserDataType: class
 	{
 
 		TemplateContainer templateInstance = template.CloneTree();
@@ -221,7 +242,7 @@ internal class MeshSyncPlayerConfigSection {
 		label.tooltip = content.tooltip;
 		popupField.RegisterValueChangedCallback( ( ChangeEvent<T> changeEvent)  => {
 		
-			MeshSyncPlayerConfig config = popupField.userData as MeshSyncPlayerConfig;
+			UserDataType config = popupField.userData as UserDataType;
 			if (null == config) {
 				Debug.LogError("[MeshSync] Toggle doesn't have the correct user data");
 				return;
@@ -238,16 +259,22 @@ internal class MeshSyncPlayerConfigSection {
 	}
 	
 
-//----------------------------------------------------------------------------------------------------------------------	
+//----------------------------------------------------------------------------------------------------------------------
 
-	private void UpdatePlayerConfigUIElements() {
-		MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
-		MeshSyncPlayerConfig    config = null;
-		if (m_playerType == MeshSyncPlayerType.SERVER)
-			config = projectSettings.GetDefaultServerConfig();
-		else 
-			config = projectSettings.GetDefaultSceneCachePlayerConfig();
+	private void UpdateServerUIElements() {
+		MeshSyncPlayerConfig config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultServerConfig();	
+		UpdateCommonUIElements(config);		
+		SetupUIElementUserData(config);		
+	}
 	
+	private void UpdateSceneCacheUIElements() {
+		SceneCachePlayerConfig config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultSceneCachePlayerConfig();	
+		UpdateCommonUIElements(config);		
+		m_timelineSnapToFramePopup.SetValueWithoutNotify(m_snapToFrameEnums[config.TimelineSnapToFrame]);
+		SetupUIElementUserData(config);
+	}
+
+	private void UpdateCommonUIElements(MeshSyncPlayerConfig config) {
 		//sync
 		m_syncVisibilityToggle.SetValueWithoutNotify(config.SyncVisibility);
 		m_syncTransformToggle.SetValueWithoutNotify(config.SyncTransform);
@@ -278,22 +305,51 @@ internal class MeshSyncPlayerConfigSection {
 		m_animationTweakDropStepField.SetValueWithoutNotify(animationTweakSettings.DropStep);
 		m_animationTweakReductionThresholdField.SetValueWithoutNotify(animationTweakSettings.ReductionThreshold);
 		m_animationTweakEraseFlatCurvesToggle.SetValueWithoutNotify(animationTweakSettings.EraseFlatCurves);
-	
-		//userData
-		foreach (VisualElement uiElement in m_playerConfigUIElements) {
-			uiElement.userData = config;
-		}
 		
-	
 	}
 
+	private void SetupUIElementUserData(MeshSyncPlayerConfig config) {
+		foreach (VisualElement uiElement in m_playerConfigUIElements) {
+			uiElement.userData = config;
+		}		
+	}
+	
 //----------------------------------------------------------------------------------------------------------------------
-	private VisualTreeAsset LoadVisualTreeAsset(string path) {
-		return UIElementsEditorUtility.LoadVisualTreeAsset(path); 
-	} 
-	
-	
 
+	// [TODO-sin: 2021-9-9] Move to FIU
+	static List<string> GetEnumInspectorNames(Type t) {
+		List<string> ret = new List<string>();
+		foreach (MemberInfo mi in t.GetMembers( BindingFlags.Static | BindingFlags.Public)) {
+			InspectorNameAttribute inspectorNameAttribute = (InspectorNameAttribute) Attribute.GetCustomAttribute(mi, typeof(InspectorNameAttribute));
+			if (null == inspectorNameAttribute) {
+				ret.Add(mi.Name);
+				continue;
+			}
+			
+			ret.Add(inspectorNameAttribute.displayName);			
+		}
+
+		return ret;
+	}
+
+	private static TemplateContainer InstantiateContainer(MeshSyncPlayerType playerType) {
+
+		VisualTreeAsset container = null;
+		switch (playerType) {
+			case MeshSyncPlayerType.SERVER: 
+				container = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SERVER_CONFIG_CONTAINER_PATH);
+				break; 
+			case MeshSyncPlayerType.CACHE_PLAYER: 
+				container = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SCENE_CACHE_PLAYER_CONFIG_CONTAINER_PATH);
+				break;
+			default : 
+				Assert.Fail();
+				break;
+		}
+		
+		return container.CloneTree();		
+	}
+	
 //----------------------------------------------------------------------------------------------------------------------
 	
 	//Sync Settings
@@ -320,11 +376,14 @@ internal class MeshSyncPlayerConfigSection {
 	private Toggle m_profilingToggle;
 	
 	//AnimationTweak Settings
-	public FloatField   m_animationTweakTimeScaleField;
-	public FloatField   m_animationTweakTimeOffsetField;
-	public IntegerField m_animationTweakDropStepField;
-	public FloatField   m_animationTweakReductionThresholdField;
-	public Toggle       m_animationTweakEraseFlatCurvesToggle;
+	private FloatField   m_animationTweakTimeScaleField;
+	private FloatField   m_animationTweakTimeOffsetField;
+	private IntegerField m_animationTweakDropStepField;
+	private FloatField   m_animationTweakReductionThresholdField;
+	private Toggle       m_animationTweakEraseFlatCurvesToggle;
+	
+	//Timeline
+	private PopupField<string> m_timelineSnapToFramePopup;
 	
 	
 	private readonly MeshSyncPlayerType m_playerType;
@@ -332,6 +391,8 @@ internal class MeshSyncPlayerConfigSection {
 
 	private readonly List<string> m_animationInterpolationEnums = new List<string>(Enum.GetNames( typeof( InterpolationMode )));
 	private readonly List<string> m_zUpCorrectionEnums = new List<string>(Enum.GetNames( typeof( ZUpCorrectionMode )));
+
+	private readonly List<string> m_snapToFrameEnums = GetEnumInspectorNames(typeof(SnapToFrame));
 	
 }
 

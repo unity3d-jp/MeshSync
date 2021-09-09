@@ -65,10 +65,6 @@ internal class MeshSyncPlayerConfig {
     public bool ProgressiveDisplay = true;
     public bool Logging            = false;
     public bool Profiling          = false;
-
-    
-    //Timeline
-    
     
 //----------------------------------------------------------------------------------------------------------------------    
     
