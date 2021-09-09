@@ -177,7 +177,7 @@ internal class MeshSyncPlayerConfigSection {
 		    Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();	    
 		    m_timelineSnapToFramePopup = AddPlayerConfigPopupField(fieldTemplate, timelineSettingsFoldout, 
 				Contents.TimelineSnapToFrame, m_snapToFrameEnums,
-				(MeshSyncPlayerConfig config, int newValue) => {  }
+			    (SceneCachePlayerConfig config, int newValue) => { config.TimelineSnapToFrame = newValue;}
 		    );
 		    
 	    }
@@ -231,8 +231,8 @@ internal class MeshSyncPlayerConfigSection {
 	}
 	
 //----------------------------------------------------------------------------------------------------------------------	
-	private PopupField<T> AddPlayerConfigPopupField<T>(VisualTreeAsset template, VisualElement parent, GUIContent content,
-		List<T> options, Action<MeshSyncPlayerConfig,int> onValueChanged) 
+	private PopupField<T> AddPlayerConfigPopupField<T,UserDataType>(VisualTreeAsset template, VisualElement parent, GUIContent content,
+		List<T> options, Action<UserDataType,int> onValueChanged) where UserDataType: class
 	{
 
 		TemplateContainer templateInstance = template.CloneTree();
@@ -245,7 +245,7 @@ internal class MeshSyncPlayerConfigSection {
 		label.tooltip = content.tooltip;
 		popupField.RegisterValueChangedCallback( ( ChangeEvent<T> changeEvent)  => {
 		
-			MeshSyncPlayerConfig config = popupField.userData as MeshSyncPlayerConfig;
+			UserDataType config = popupField.userData as UserDataType;
 			if (null == config) {
 				Debug.LogError("[MeshSync] Toggle doesn't have the correct user data");
 				return;
