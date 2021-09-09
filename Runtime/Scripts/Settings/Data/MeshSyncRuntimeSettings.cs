@@ -20,11 +20,13 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 #if UNITY_EDITOR
             const string PATH = MESHSYNC_RUNTIME_SETTINGS_PATH;
             if (File.Exists(PATH)) {
-                m_instance = FileUtility.DeserializeFromJson<MeshSyncRuntimeSettings>(PATH);                
+                m_instance = FileUtility.DeserializeFromJson<MeshSyncRuntimeSettings>(PATH);
+                m_instance.UpgradeVersionToLatest();
+                m_instance.ValidatePlayerConfigs();
             }
             if (null != m_instance) {
                 return m_instance;
-            }
+            }            
 #endif
             
             m_instance = new MeshSyncRuntimeSettings();
@@ -42,18 +44,8 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 
     //Constructor
     private MeshSyncRuntimeSettings() {
+        ValidatePlayerConfigs();
         
-        m_defaultPlayerConfigs = new MeshSyncPlayerConfig[(int) MeshSyncPlayerType.NUM_TYPES]; 
-
-        MeshSyncPlayerConfig config = new MeshSyncPlayerConfig();
-        m_defaultPlayerConfigs[(int) MeshSyncPlayerType.SERVER] = config;
-
-        config = new MeshSyncPlayerConfig {
-            UpdateMeshColliders = false, 
-            FindMaterialFromAssets = false,
-            ProgressiveDisplay = false,
-        };
-        m_defaultPlayerConfigs[(int) MeshSyncPlayerType.CACHE_PLAYER] = config;
     }
    
 //----------------------------------------------------------------------------------------------------------------------
@@ -69,17 +61,45 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
     internal bool   GetServerPublicAccess()            { return m_serverPublicAccess; }
     internal void   SetServerPublicAccess(bool access) { m_serverPublicAccess = access;}
     
+    
+    internal MeshSyncPlayerConfig   GetDefaultServerConfig() { return m_defaultServerConfig; }
+    internal SceneCachePlayerConfig GetDefaultSceneCachePlayerConfig() { return m_defaultSceneCachePlayerConfig; }
+    
 //----------------------------------------------------------------------------------------------------------------------
+    private void ValidatePlayerConfigs() {
 
-    internal MeshSyncPlayerConfig GetDefaultPlayerConfig(MeshSyncPlayerType playerType) {
-        return m_defaultPlayerConfigs[(int) playerType];
+        if (null == m_defaultServerConfig) {
+            m_defaultServerConfig = new MeshSyncPlayerConfig();            
+        }
+
+        if (null == m_defaultSceneCachePlayerConfig) {
+            m_defaultSceneCachePlayerConfig = new SceneCachePlayerConfig() {
+                UpdateMeshColliders    = false,
+                FindMaterialFromAssets = false,
+                ProgressiveDisplay     = false,
+            };            
+        }         
     }
 
-    internal static MeshSyncPlayerConfig CreatePlayerConfig(MeshSyncPlayerType playerType) {
-        MeshSyncRuntimeSettings settings = GetOrCreateSettings();
-        return new MeshSyncPlayerConfig(settings.GetDefaultPlayerConfig(playerType));
-    }
+//----------------------------------------------------------------------------------------------------------------------
+    private void UpgradeVersionToLatest() {
+        m_meshSyncProjectSettingsVersion = ClassVersion;
+        if (m_meshSyncProjectSettingsVersion == LATEST_VERSION) {
+            return;            
+        }
 
+        if (m_meshSyncProjectSettingsVersion < (int) Version.SEPARATE_SCENE_CACHE_PLAYER_CONFIG) {
+            if (null!= m_defaultPlayerConfigs && m_defaultPlayerConfigs.Length >= 2) {
+                m_defaultServerConfig   = m_defaultPlayerConfigs[0];
+                m_defaultSceneCachePlayerConfig = new SceneCachePlayerConfig(m_defaultPlayerConfigs[1]);
+            }
+        }
+
+        m_defaultPlayerConfigs = null;
+        m_meshSyncProjectSettingsVersion = ClassVersion = LATEST_VERSION;
+        SaveSettings();
+    }
+    
     
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -89,9 +109,16 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
     //Ex: "Assets/Foo"
     [SerializeField] private string m_sceneCacheOutputPath = MeshSyncConstants.DEFAULT_SCENE_CACHE_OUTPUT_PATH;
     
-    [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
+    
+    [SerializeField] private MeshSyncPlayerConfig   m_defaultServerConfig   = null;
+    [SerializeField] private SceneCachePlayerConfig m_defaultSceneCachePlayerConfig = null;
+    
 
-    [SerializeField] internal int ClassVersion = 3;    
+    [SerializeField] private int m_meshSyncProjectSettingsVersion = LATEST_VERSION;
+    
+    //[TODO-sin: 2021-9-9] Remove these 2 fields. Obsolete starting from 0.9.x. FormerSerializedAs doesn't work with json
+    [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
+    [SerializeField] private int ClassVersion = LATEST_VERSION;    
     
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -100,8 +127,14 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 
     private const string MESHSYNC_RUNTIME_SETTINGS_PATH = "ProjectSettings/MeshSyncSettings.asset";
 
-    
-    
+
+
+    private const int LATEST_VERSION = (int) Version.SEPARATE_SCENE_CACHE_PLAYER_CONFIG; 
+    enum Version {
+        LEGACY = 3,
+        SEPARATE_SCENE_CACHE_PLAYER_CONFIG = 4,
+    };
+
 
 }
 

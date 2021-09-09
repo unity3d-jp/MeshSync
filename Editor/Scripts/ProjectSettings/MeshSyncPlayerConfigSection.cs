@@ -242,7 +242,11 @@ internal class MeshSyncPlayerConfigSection {
 
 	private void UpdatePlayerConfigUIElements() {
 		MeshSyncRuntimeSettings runtimeSettings = MeshSyncRuntimeSettings.GetOrCreateSettings();
-		MeshSyncPlayerConfig config = runtimeSettings.GetDefaultPlayerConfig(m_playerType);
+		MeshSyncPlayerConfig    config = null;
+		if (m_playerType == MeshSyncPlayerType.SERVER)
+			config = runtimeSettings.GetDefaultServerConfig();
+		else 
+			config = runtimeSettings.GetDefaultSceneCachePlayerConfig();
 	
 		//sync
 		m_syncVisibilityToggle.SetValueWithoutNotify(config.SyncVisibility);
