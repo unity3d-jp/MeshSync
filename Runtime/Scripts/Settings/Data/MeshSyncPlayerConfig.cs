@@ -1,6 +1,5 @@
 ﻿using System;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Unity.MeshSync {
 [Serializable]
@@ -74,6 +73,6 @@ internal class MeshSyncPlayerConfig {
 //----------------------------------------------------------------------------------------------------------------------    
     
     [SerializeField] AnimationTweakSettings m_animationTweakSettings;
-    [FormerlySerializedAs("ClassVersion")] [SerializeField] internal readonly int m_meshSyncPlayerConfigVersion = 1;
+    [SerializeField] private readonly int m_meshSyncPlayerConfigVersion = 1;
 }
 } //end namespace
