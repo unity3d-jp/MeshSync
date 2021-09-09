@@ -22,6 +22,7 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
             if (File.Exists(PATH)) {
                 m_instance = FileUtility.DeserializeFromJson<MeshSyncRuntimeSettings>(PATH);
                 m_instance.UpgradeVersionToLatest();
+                m_instance.ValidatePlayerConfigs();
             }
             if (null != m_instance) {
                 return m_instance;
@@ -43,13 +44,7 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
 
     //Constructor
     private MeshSyncRuntimeSettings() {
-
-        m_defaultMeshSyncPlayerConfig = new MeshSyncPlayerConfig();
-        m_defaultSceneCachePlayerConfig = new SceneCachePlayerConfig() {
-            UpdateMeshColliders    = false,
-            FindMaterialFromAssets = false,
-            ProgressiveDisplay     = false,
-        };
+        ValidatePlayerConfigs();
         
     }
    
@@ -66,11 +61,27 @@ internal class MeshSyncRuntimeSettings : BaseJsonSettings {
     internal bool   GetServerPublicAccess()            { return m_serverPublicAccess; }
     internal void   SetServerPublicAccess(bool access) { m_serverPublicAccess = access;}
     
-//----------------------------------------------------------------------------------------------------------------------
     
     internal MeshSyncPlayerConfig   GetDefaultMeshSyncPlayerConfig() { return m_defaultMeshSyncPlayerConfig; }
     internal SceneCachePlayerConfig GetDefaultSceneCachePlayerConfig() { return m_defaultSceneCachePlayerConfig; }
+    
+//----------------------------------------------------------------------------------------------------------------------
+    private void ValidatePlayerConfigs() {
 
+        if (null == m_defaultMeshSyncPlayerConfig) {
+            m_defaultMeshSyncPlayerConfig = new MeshSyncPlayerConfig();            
+        }
+
+        if (null == m_defaultSceneCachePlayerConfig) {
+            m_defaultSceneCachePlayerConfig = new SceneCachePlayerConfig() {
+                UpdateMeshColliders    = false,
+                FindMaterialFromAssets = false,
+                ProgressiveDisplay     = false,
+            };            
+        }         
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
     private void UpgradeVersionToLatest() {
         m_meshSyncRuntimeSettingsVersion = ClassVersion;
         if (m_meshSyncRuntimeSettingsVersion == LATEST_VERSION) {
