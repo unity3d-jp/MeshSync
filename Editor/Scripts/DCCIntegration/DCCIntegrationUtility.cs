@@ -34,6 +34,7 @@ internal static class DCCIntegrationUtility {
         string installInfoPath   = DCCPluginInstallInfo.GetInstallInfoPath(dccToolInfo);
         string installInfoFolder = Path.GetDirectoryName(installInfoPath);
         if (null == installInfoPath || null == installInfoFolder) {
+            integrator.SetLastErrorMessage($"Invalid path: {installInfoPath}");
             return false;
         }
 
