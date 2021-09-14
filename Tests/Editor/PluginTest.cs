@@ -4,6 +4,7 @@ using Unity.FilmInternalUtilities.Editor;
 using UnityEngine.TestTools;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
+using UnityEngine;
 
 namespace Unity.MeshSync.Editor.Tests {
 internal class PluginTest {
@@ -15,8 +16,10 @@ internal class PluginTest {
         while (!list.IsCompleted)
             yield return null;
 
-        string pluginVersion = Lib.GetPluginVersion();
-        bool   parsed        = PackageVersion.TryParse(pluginVersion, out PackageVersion libVersion);
+        string pluginVersion   = Lib.GetPluginVersion();
+        bool   parsed          = TryParseMajorAndMinorVersion(pluginVersion, out Vector2Int libVersion);
+        int    libMajorVersion = libVersion.x;
+        int    libMinorVersion = libVersion.y;
         Assert.IsTrue(parsed, $"Invalid version: {pluginVersion}");
         
         
@@ -30,8 +33,8 @@ internal class PluginTest {
             
             //Based on our rule to increase the major/minor version whenever we change any plugin code,
             //it's ok for the patch version to be different.
-            Assert.AreEqual(libVersion.Major, packageVersion.Major, $"Major: {libVersion.Major} !={packageVersion.Major}");           
-            Assert.AreEqual(libVersion.Minor, packageVersion.Minor, $"Minor: {libVersion.Minor} !={packageVersion.Minor}");            
+            Assert.AreEqual(libMajorVersion, packageVersion.Major, $"Major: {libMajorVersion} !={packageVersion.Major}");           
+            Assert.AreEqual(libMinorVersion, packageVersion.Minor, $"Minor: {libMinorVersion} !={packageVersion.Minor}");            
             yield break;
         }
         
@@ -39,14 +42,9 @@ internal class PluginTest {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    /// <summary>
-    /// Parse a semantic versioned string to a PackageVersion class
-    /// </summary>
-    /// <param name="semanticVer">Semantic versioned input string</param>
-    /// <param name="packageVersion">The detected PackageVersion. Set to null when the parsing fails</param>
-    /// <returns>true if successful, false otherwise</returns>
-    public static bool TryParseMajorAndMinorVersion(string semanticVer, out PackageVersion packageVersion) {
-        packageVersion = null;
+    //Parse only the major and minor version of semantic versioning
+    public static bool TryParseMajorAndMinorVersion(string semanticVer, out Vector2Int version) {
+        version = Vector2Int.zero;
         string[] tokens = semanticVer.Split('.');
         if (tokens.Length <= 2)
             return false;
@@ -57,40 +55,8 @@ internal class PluginTest {
         if (!int.TryParse(tokens[1], out int minor))
             return false;
 
-        //Find patch and lifecycle
-        string[] patches = tokens[2].Split('-');
-        if (!int.TryParse(patches[0], out int patch))
-            return false;
-               
-        PackageLifecycle lifecycle = PackageLifecycle.INVALID;
-        if (patches.Length > 1) {
-            string lifecycleStr = patches[1].ToLower();                    
-            switch (lifecycleStr) {
-                case "experimental": lifecycle = PackageLifecycle.EXPERIMENTAL; break;
-                case "preview"     : lifecycle = PackageLifecycle.PREVIEW; break;
-                case "pre"         : lifecycle = PackageLifecycle.PRERELEASE; break;
-                default: lifecycle             = PackageLifecycle.INVALID; break;
-            }
-            
-        } else {
-            lifecycle = PackageLifecycle.RELEASED; 
-            
-        }
-
-        packageVersion = new PackageVersion() {
-            Major     = major,
-            Minor     = minor,
-            Patch     = patch,
-            Lifecycle = lifecycle
-        };
-
-        const int METADATA_INDEX = 3;
-        if (tokens.Length > METADATA_INDEX) {
-            packageVersion.AdditionalMetadata = String.Join(".",tokens, METADATA_INDEX, tokens.Length-METADATA_INDEX);
-        }
-
+        version = new Vector2Int(major, minor);
         return true;
-
     } 
     
 }
