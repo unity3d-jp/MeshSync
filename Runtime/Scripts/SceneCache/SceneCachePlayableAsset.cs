@@ -118,7 +118,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     [SerializeField] private ExposedReference<SceneCachePlayer> m_sceneCachePlayerRef;
     
     [SerializeField] private double      m_time;
-    [SerializeField] private SnapToFrame m_snapToFrame;
+    [SerializeField] private SnapToFrame m_snapToFrame = SnapToFrame.NEAREST;
 
     
     SceneCachePlayableBehaviour m_sceneCachePlayableBehaviour = null;
