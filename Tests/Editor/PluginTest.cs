@@ -15,8 +15,9 @@ internal class PluginTest {
         while (!list.IsCompleted)
             yield return null;
 
-        bool parsed = PackageVersion.TryParse(Lib.GetPluginVersion(), out PackageVersion libVersion);
-        Assert.IsTrue(parsed);
+        string pluginVersion = Lib.GetPluginVersion();
+        bool   parsed        = PackageVersion.TryParse(pluginVersion, out PackageVersion libVersion);
+        Assert.IsTrue(parsed, $"Invalid version: {pluginVersion}");
         
         
         foreach (PackageInfo packageInfo in list.Result) {
@@ -29,8 +30,8 @@ internal class PluginTest {
             
             //Based on our rule to increase the major/minor version whenever we change any plugin code,
             //it's ok for the patch version to be different.
-            Assert.AreEqual(libVersion.Major, packageVersion.Major);           
-            Assert.AreEqual(libVersion.Minor, packageVersion.Minor);            
+            Assert.AreEqual(libVersion.Major, packageVersion.Major, $"Major: {libVersion.Major} !={packageVersion.Major}");           
+            Assert.AreEqual(libVersion.Minor, packageVersion.Minor, $"Minor: {libVersion.Minor} !={packageVersion.Minor}");            
             yield break;
         }
         
