@@ -26,10 +26,12 @@ internal class MeshSyncEditorConstants {
         { "maya2018", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2018" ) },
         { "maya2019", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2019" ) },
         { "maya2020", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2020" ) },
+        { "maya2022", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2022" ) },
         { "3ds Max 2017", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2017" ) },
         { "3ds Max 2018", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2018" ) },
         { "3ds Max 2019", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2019" ) },
         { "3ds Max 2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020" ) },
+        { "3ds Max 2021", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2021" ) },
 
 #if UNITY_EDITOR_WIN        
         { "Blender 2.83", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },
