@@ -361,10 +361,12 @@ public static class DCCFinderUtility {
         { "MAYA_LOCATION_2018", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2018" ) },
         { "MAYA_LOCATION_2019", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2019" ) },
         { "MAYA_LOCATION_2020", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2020" ) },
+        { "MAYA_LOCATION_2022", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2022" ) },
         { "ADSK_3DSMAX_SDK_2017", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2017" ) },
         { "ADSK_3DSMAX_SDK_2018", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2018" ) },
         { "ADSK_3DSMAX_SDK_2019", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2019" ) },
         { "ADSK_3DSMAX_SDK_2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020" ) },
+        { "ADSK_3DSMAX_SDK_2021", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2021" ) },
     };
 
     private const string UNKNOWN_VERSION = "Unknown";
