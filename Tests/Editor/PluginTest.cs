@@ -4,9 +4,10 @@ using Unity.FilmInternalUtilities.Editor;
 using UnityEngine.TestTools;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
+using UnityEngine;
 
 namespace Unity.MeshSync.Editor.Tests {
-public class PluginTest {
+internal class PluginTest {
     
     [UnityTest]
     public IEnumerator CheckPluginVersion() {
@@ -15,8 +16,11 @@ public class PluginTest {
         while (!list.IsCompleted)
             yield return null;
 
-        bool parsed = PackageVersion.TryParse(Lib.GetPluginVersion(), out PackageVersion libVersion);
-        Assert.IsTrue(parsed);
+        string pluginVersion   = Lib.GetPluginVersion();
+        bool   parsed          = TryParseMajorAndMinorVersion(pluginVersion, out Vector2Int libVersion);
+        int    libMajorVersion = libVersion.x;
+        int    libMinorVersion = libVersion.y;
+        Assert.IsTrue(parsed, $"Invalid version: {pluginVersion}");
         
         
         foreach (PackageInfo packageInfo in list.Result) {
@@ -29,12 +33,32 @@ public class PluginTest {
             
             //Based on our rule to increase the major/minor version whenever we change any plugin code,
             //it's ok for the patch version to be different.
-            Assert.AreEqual(libVersion.Major, packageVersion.Major);           
-            Assert.AreEqual(libVersion.Minor, packageVersion.Minor);            
+            Assert.AreEqual(libMajorVersion, packageVersion.Major, $"Major: {libMajorVersion} !={packageVersion.Major}");           
+            Assert.AreEqual(libMinorVersion, packageVersion.Minor, $"Minor: {libMinorVersion} !={packageVersion.Minor}");            
             yield break;
         }
         
     }
+    
+//----------------------------------------------------------------------------------------------------------------------
+    
+    //Parse only the major and minor version of semantic versioning
+    private static bool TryParseMajorAndMinorVersion(string semanticVer, out Vector2Int version) {
+        version = Vector2Int.zero;
+        string[] tokens = semanticVer.Split('.');
+        if (tokens.Length <= 2)
+            return false;
+
+        if (!int.TryParse(tokens[0], out int major))
+            return false;
+
+        if (!int.TryParse(tokens[1], out int minor))
+            return false;
+
+        version = new Vector2Int(major, minor);
+        return true;
+    } 
+    
 }
 
 } //end namespace
