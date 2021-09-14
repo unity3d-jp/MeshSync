@@ -1,10 +1,24 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.9.0-preview] - 2021-09-14
+
+### Added
+* feat: add an option in SceneCachePlayableAsset to snap to nearest frame
+* feat: add an option in ProjectSettings to set the default SnapToFrame behaviour 
+
+### Changed
+* deps: update dependencies to com.unity.film-internal-utilities@0.11.0-preview 
+* opt: record instance modification if there is an actual change for SceneCachePlayer
+* opt: disable serialization temporarily when creating SceneCache for the first time 
+
+### Fixed
+* fix: ensure SceneCache prefab modifications are saved after creating 
+
 ## [0.8.4-preview] - 2021-09-02
 
 ### Changed
-* deps: update dependencies to com.unity.film-internal-utilities@0.12.2-preview 
+* deps: update dependencies to com.unity.film-internal-utilities@0.10.2-preview 
 * opt: optimize SceneCache inspector by doing BeginChangeCheck() per property
 
 ## [0.8.3-preview] - 2021-07-21
