@@ -19,7 +19,7 @@ internal class MayaIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    protected override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string srcPluginRoot, 
+    internal override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string srcPluginRoot, 
         string tempPath) 
     {
         Assert.IsTrue(Directory.Exists(srcPluginRoot));

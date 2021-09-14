@@ -125,7 +125,7 @@ internal abstract class BaseDCCIntegrator {
     protected abstract string GetDCCToolInFileNameV();
 
     //returns null when failed
-    protected abstract bool ConfigureDCCToolV( DCCToolInfo dccToolInfo, string srcPluginRoot, 
+    internal abstract bool ConfigureDCCToolV( DCCToolInfo dccToolInfo, string srcPluginRoot, 
         string tempPath);
     
     protected abstract void FinalizeDCCConfigurationV();
