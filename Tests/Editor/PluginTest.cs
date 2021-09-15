@@ -16,25 +16,20 @@ internal class PluginTest {
         while (!list.IsCompleted)
             yield return null;
 
-        string pluginVersion   = Lib.GetPluginVersion();
-        bool   parsed          = TryParseMajorAndMinorVersion(pluginVersion, out Vector2Int libVersion);
-        int    libMajorVersion = libVersion.x;
-        int    libMinorVersion = libVersion.y;
-        Assert.IsTrue(parsed, $"Invalid version: {pluginVersion}");
-        
+        PackageVersion pluginVersion = MeshSyncEditorConstants.PACKAGE_VERSION;
+        Assert.IsFalse(pluginVersion.Major == 0 && pluginVersion.Minor == 0 && pluginVersion.Patch == 0);
         
         foreach (PackageInfo packageInfo in list.Result) {
             if (packageInfo.name != MeshSyncConstants.PACKAGE_NAME)
                 continue;
 
-            parsed = PackageVersion.TryParse(packageInfo.version, out PackageVersion packageVersion);
+            bool parsed = PackageVersion.TryParse(packageInfo.version, out PackageVersion packageVersion);
             Assert.IsTrue(parsed);
-            
-            
+                        
             //Based on our rule to increase the major/minor version whenever we change any plugin code,
             //it's ok for the patch version to be different.
-            Assert.AreEqual(libMajorVersion, packageVersion.Major, $"Major: {libMajorVersion} !={packageVersion.Major}");           
-            Assert.AreEqual(libMinorVersion, packageVersion.Minor, $"Minor: {libMinorVersion} !={packageVersion.Minor}");            
+            Assert.AreEqual(pluginVersion.Major, packageVersion.Major, $"Major: {pluginVersion.Major} !={packageVersion.Major}");           
+            Assert.AreEqual(pluginVersion.Minor, packageVersion.Minor, $"Minor: {pluginVersion.Minor} !={packageVersion.Minor}");            
             yield break;
         }
         
