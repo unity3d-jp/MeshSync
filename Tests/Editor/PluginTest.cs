@@ -10,14 +10,15 @@ namespace Unity.MeshSync.Editor.Tests {
 internal class PluginTest {
     
     [UnityTest]
-    public IEnumerator CheckPluginVersion() {
+    public IEnumerator CheckPluginVersionCompatibility() {
 
         ListRequest list = Client.List(true, false);
         while (!list.IsCompleted)
             yield return null;
 
         PackageVersion pluginVersion = MeshSyncEditorConstants.PACKAGE_VERSION;
-        Assert.IsFalse(pluginVersion.Major == 0 && pluginVersion.Minor == 0 && pluginVersion.Patch == 0);
+        bool pluginVersionValid = !(pluginVersion.Major == 0 && pluginVersion.Minor == 0 && pluginVersion.Patch == 0); 
+        Assert.IsTrue(pluginVersionValid, $"Plugin version is not valid: {pluginVersion}" );
         
         foreach (PackageInfo packageInfo in list.Result) {
             if (packageInfo.name != MeshSyncConstants.PACKAGE_NAME)
