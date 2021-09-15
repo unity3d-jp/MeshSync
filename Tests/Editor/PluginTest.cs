@@ -38,22 +38,6 @@ internal class PluginTest {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    //Parse only the major and minor version of semantic versioning
-    private static bool TryParseMajorAndMinorVersion(string semanticVer, out Vector2Int version) {
-        version = Vector2Int.zero;
-        string[] tokens = semanticVer.Split('.');
-        if (tokens.Length <= 2)
-            return false;
-
-        if (!int.TryParse(tokens[0], out int major))
-            return false;
-
-        if (!int.TryParse(tokens[1], out int minor))
-            return false;
-
-        version = new Vector2Int(major, minor);
-        return true;
-    } 
     
 }
 
