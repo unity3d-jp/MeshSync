@@ -1,9 +1,15 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.9.1-preview] - 2021-09-15
+
+### Fixed
+* fix: automatic plugin installation 
+
 ## [0.9.0-preview] - 2021-09-14
 
 ### Added
+* feat: support automatic installation for Maya 2022 and 3ds Max 2021 
 * feat: add an option in SceneCachePlayableAsset to snap to nearest frame
 * feat: add an option in ProjectSettings to set the default SnapToFrame behaviour 
 
