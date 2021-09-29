@@ -43,7 +43,11 @@ public class MeshSyncServer : MeshSyncPlayer {
 #endregion
 
 //----------------------------------------------------------------------------------------------------------------------        
-    internal void SetAutoStartServer(bool autoStart) {
+    /// <summary>
+    /// Sets whether the server should be started automatically or not
+    /// </summary>
+    /// <param name="autoStart">true if the server should start automatically; otherwise, false.</param>
+    public void SetAutoStartServer(bool autoStart) {
         m_autoStartServer = autoStart; 
 
 #if UNITY_STANDALONE        
@@ -74,7 +78,10 @@ public class MeshSyncServer : MeshSyncPlayer {
         return ret;
     }
     
-    internal void StartServer()
+    /// <summary>
+    /// Starts the server. If the server is already running, it will be restarted.
+    /// </summary>
+    public void StartServer()
     {
 #if UNITY_STANDALONE            
         StopServer();
