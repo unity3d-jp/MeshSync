@@ -1838,7 +1838,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
 //----------------------------------------------------------------------------------------------------------------------    
 #if UNITY_EDITOR
-    public void GenerateLightmapUV(GameObject go)
+    private void GenerateLightmapUV(GameObject go)
     {
         if (go == null)
             return;
@@ -1859,7 +1859,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             }
         }
     }
-    public void GenerateLightmapUV()
+    private void GenerateLightmapUV()
     {
         foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
             GenerateLightmapUV(kvp.Value.go);
@@ -1904,7 +1904,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         ReassignMaterials();
     }
 
-    public void ExportMeshes(bool overwrite = true, bool useExistingOnes = false)
+    internal void ExportMeshes(bool overwrite = true, bool useExistingOnes = false)
     {
         MakeSureAssetDirectoryExists();
 
@@ -1960,7 +1960,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
             AssetDatabase.SaveAssets();
     }
 
-    public bool ExportMaterialList(string path)
+    internal bool ExportMaterialList(string path)
     {
         if (string.IsNullOrEmpty(path))
             return false;
@@ -1994,7 +1994,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return true;
     }
 
-    public bool ImportMaterialList(string path)
+    internal bool ImportMaterialList(string path)
     {
         if (path == null || path.Length == 0)
             return false;
@@ -2005,7 +2005,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         return ApplyMaterialList(ml);
     }
 
-    public void CheckMaterialAssigned(bool recordUndo = true)
+    private void CheckMaterialAssigned(bool recordUndo = true)
     {
         bool changed = false;
         foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
@@ -2068,7 +2068,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         ForceRepaint();
     }
 
-    public List<AnimationClip> GetAnimationClips()
+    internal List<AnimationClip> GetAnimationClips()
     {
         List<AnimationClip> ret = new List<AnimationClip>();
 
