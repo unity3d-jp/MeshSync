@@ -15,6 +15,19 @@ namespace Unity.MeshSync {
 /// </summary>
 [ExecuteInEditMode]
 public class MeshSyncServer : MeshSyncPlayer {
+
+    
+    /// <summary>
+    /// Sets a callback which will be called after MeshSync receives data from server and finishes processing it
+    /// </summary>
+    /// <param name="cb"></param>
+    public void SetOnPostServerMessageCallback(ServerMessageCallback cb) {
+
+        m_onServerMessage = cb;
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
+    
     
     protected override void InitInternalV() {
         
@@ -478,7 +491,7 @@ public class MeshSyncServer : MeshSyncPlayer {
     
     private bool m_serverStarted = false;
     
-    private Server.MessageHandler m_onServerMessage = null;
+    private ServerMessageCallback m_onServerMessage = null;
     
 
 //----------------------------------------------------------------------------------------------------------------------    
