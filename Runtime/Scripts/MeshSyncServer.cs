@@ -23,7 +23,7 @@ public class MeshSyncServer : MeshSyncPlayer {
     /// <param name="cb"></param>
     public void SetOnPostServerMessageCallback(ServerMessageCallback cb) {
 
-        m_onServerMessage = cb;
+        m_onPostServerMessageCB = cb;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -198,7 +198,7 @@ public class MeshSyncServer : MeshSyncPlayer {
             }
         });
 
-        m_onServerMessage?.Invoke(type, data);
+        m_onPostServerMessageCB?.Invoke(type, data);
     }
 
     void OnRecvGet(GetMessage mes) {
@@ -491,7 +491,7 @@ public class MeshSyncServer : MeshSyncPlayer {
     
     private bool m_serverStarted = false;
     
-    private ServerMessageCallback m_onServerMessage = null;
+    private ServerMessageCallback m_onPostServerMessageCB = null;
     
 
 //----------------------------------------------------------------------------------------------------------------------    
