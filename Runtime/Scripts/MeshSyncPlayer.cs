@@ -54,7 +54,8 @@ internal delegate void DeleteEntityHandler(GameObject obj);
 //----------------------------------------------------------------------------------------------------------------------
 
 /// <summary>
-/// MeshSyncPlayer
+/// The base class of main MeshSync components (MeshSyncServer, SceneCachePlayer),
+/// which encapsulates common functionalities
 /// </summary>
 [ExecuteInEditMode]
 public abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver {
