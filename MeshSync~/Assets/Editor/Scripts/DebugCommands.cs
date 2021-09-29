@@ -164,7 +164,7 @@ public static class DebugCommands  {
     
     [MenuItem("MeshSyncDebug/Create MeshSync Server with Callback")]
     static void CreateMeshSyncServerWithCallback() {
-        GameObject     go     = new GameObject();
+        GameObject     go     = new GameObject("MeshSyncServer");
         MeshSyncServer server = go.AddComponent<MeshSyncServer>();
         server.SetAutoStartServer(true);
         server.SetOnPostRecvMessageCallback(OnRecvServerMessage);
