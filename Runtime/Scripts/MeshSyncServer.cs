@@ -39,7 +39,7 @@ internal class MeshSyncServer : MeshSyncPlayer {
 //----------------------------------------------------------------------------------------------------------------------        
     
 #if UNITY_EDITOR
-    public bool foldServerSettings
+    internal bool foldServerSettings
     {
         get { return m_foldServerSettings; }
         set { m_foldServerSettings = value; }
@@ -137,7 +137,8 @@ internal class MeshSyncServer : MeshSyncPlayer {
     #endregion
 
     #region MessageHandlers
-    public void PollServerEvents() {
+
+    private void PollServerEvents() {
         if (m_requestRestartServer) {
             m_requestRestartServer = false;
             StartServer();
@@ -212,7 +213,7 @@ internal class MeshSyncServer : MeshSyncPlayer {
         }
     }
 
-    void OnRecvText(TextMessage mes) {
+    static void OnRecvText(TextMessage mes) {
         mes.Print();
     }
 
