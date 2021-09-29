@@ -195,7 +195,7 @@ namespace Unity.MeshSync
         internal Identifier GetMaterial(int i) { return msDeleteGetMaterial(self, i); }
     }
 
-    public struct FenceMessage
+    internal struct FenceMessage
     {
         #region internal
         public IntPtr self;
@@ -219,7 +219,7 @@ namespace Unity.MeshSync
         public FenceType type { get { return msFenceGetType(self); } }
     }
 
-    public struct TextMessage
+    internal struct TextMessage
     {
         #region internal
         public IntPtr self;
@@ -262,7 +262,7 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct QueryMessage
+    internal struct QueryMessage
     {
         #region internal
         public IntPtr self;
@@ -300,7 +300,7 @@ namespace Unity.MeshSync
         }
     }
 
-    public struct PollMessage
+    internal struct PollMessage
     {
         public enum PollType
         {
