@@ -1,7 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace Unity.MeshSync
 {
@@ -9,8 +8,7 @@ namespace Unity.MeshSync
 /// <summary>
 /// The type of messages that can be sent to MeshSyncServer 
 /// </summary>
-public enum MessageType
-{
+public enum MessageType {
     Unknown,
     Get,
     Set,
@@ -22,8 +20,9 @@ public enum MessageType
     Response,
 }
 
-internal struct GetMessage
-{
+//----------------------------------------------------------------------------------------------------------------------
+
+internal struct GetMessage {
     #region internal
     public IntPtr self;
     [DllImport(Lib.name)] static extern GetFlags msGetGetFlags(IntPtr self);
@@ -31,8 +30,7 @@ internal struct GetMessage
     [DllImport(Lib.name)] static extern int msGetGetBakeCloth(IntPtr self);
     #endregion
 
-    public static explicit operator GetMessage(IntPtr v)
-    {
+    public static explicit operator GetMessage(IntPtr v) {
         GetMessage ret;
         ret.self = v;
         return ret;
@@ -43,8 +41,7 @@ internal struct GetMessage
     public bool bakeCloth { get { return msGetGetBakeCloth(self) != 0; } }
 }
 
-internal struct SetMessage
-{
+internal struct SetMessage {
     #region internal
     public IntPtr self;
     [DllImport(Lib.name)] static extern SceneData msSetGetSceneData(IntPtr self);
@@ -63,8 +60,7 @@ internal struct SetMessage
     }
 }
 
-internal struct DeleteMessage
-{
+internal struct DeleteMessage {
     #region internal
     public IntPtr self;
     [DllImport(Lib.name)] static extern int msDeleteGetNumEntities(IntPtr self);
@@ -73,8 +69,7 @@ internal struct DeleteMessage
     [DllImport(Lib.name)] static extern Identifier msDeleteGetMaterial(IntPtr self, int i);
     #endregion
 
-    public static explicit operator DeleteMessage(IntPtr v)
-    {
+    public static explicit operator DeleteMessage(IntPtr v) {
         DeleteMessage ret;
         ret.self = v;
         return ret;
@@ -87,22 +82,19 @@ internal struct DeleteMessage
     internal Identifier GetMaterial(int i) { return msDeleteGetMaterial(self, i); }
 }
 
-internal struct FenceMessage
-{
+internal struct FenceMessage {
     #region internal
     public IntPtr self;
     [DllImport(Lib.name)] static extern FenceType msFenceGetType(IntPtr self);
     #endregion
 
-    public enum FenceType
-    {
+    public enum FenceType {
         Unknown,
         SceneBegin,
         SceneEnd,
     }
 
-    public static explicit operator FenceMessage(IntPtr v)
-    {
+    public static explicit operator FenceMessage(IntPtr v) {
         FenceMessage ret;
         ret.self = v;
         return ret;
@@ -111,8 +103,7 @@ internal struct FenceMessage
     public FenceType type { get { return msFenceGetType(self); } }
 }
 
-internal struct TextMessage
-{
+internal struct TextMessage {
     #region internal
     public IntPtr self;
     [DllImport(Lib.name)] static extern IntPtr msTextGetText(IntPtr self);
@@ -136,8 +127,7 @@ internal struct TextMessage
     public string text { get { return Misc.S(msTextGetText(self)); } }
     public TextType textType { get { return msTextGetType(self); } }
 
-    public void Print()
-    {
+    public void Print() {
         switch (textType)
         {
             case TextType.Error:
@@ -163,8 +153,7 @@ internal struct QueryMessage
     [DllImport(Lib.name)] static extern void msQueryAddResponseText(IntPtr self, string text);
     #endregion
 
-    public enum QueryType
-    {
+    public enum QueryType {
         Unknown,
         PluginVersion,
         ProtocolVersion,
@@ -173,8 +162,7 @@ internal struct QueryMessage
         AllNodes,
     }
 
-    public static explicit operator QueryMessage(IntPtr v)
-    {
+    public static explicit operator QueryMessage(IntPtr v) {
         QueryMessage ret;
         ret.self = v;
         return ret;
@@ -182,20 +170,16 @@ internal struct QueryMessage
 
     public QueryType queryType { get { return msQueryGetType(self); } }
 
-    public void FinishRespond()
-    {
+    public void FinishRespond() {
         msQueryFinishRespond(self);
     }
-    public void AddResponseText(string text)
-    {
+    public void AddResponseText(string text) {
         msQueryAddResponseText(self, text);
     }
 }
 
-internal struct PollMessage
-{
-    public enum PollType
-    {
+internal struct PollMessage {
+    public enum PollType {
         Unknown,
         SceneUpdate,
     }
