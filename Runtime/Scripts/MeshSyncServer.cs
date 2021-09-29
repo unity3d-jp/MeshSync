@@ -198,7 +198,7 @@ public class MeshSyncServer : MeshSyncPlayer {
             }
         });
 
-        m_onPostServerMessageCB?.Invoke(type, data);
+        m_onPostServerMessageCB?.Invoke(type);
     }
 
     void OnRecvGet(GetMessage mes) {
