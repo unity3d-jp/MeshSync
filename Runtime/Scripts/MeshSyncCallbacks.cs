@@ -3,7 +3,7 @@ using System;
 namespace Unity.MeshSync {
 
 /// <summary>
-/// This callback will be called when receiving message data from server, if it is set to MeshSyncServer.  
+/// A callback that can be set to MeshSyncServer to be called when the server receives data   
 /// </summary>
 public delegate void ServerMessageCallback(MessageType type);
 
