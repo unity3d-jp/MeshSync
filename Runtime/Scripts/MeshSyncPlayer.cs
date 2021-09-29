@@ -2159,10 +2159,10 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     [SerializeField] private bool m_usePhysicalCameraParams = true;
     [SerializeField] private bool m_useCustomCameraMatrices = true;
             
-    [SerializeField] private   Material             m_dummyMaterial;
+    [SerializeField] private Material             m_dummyMaterial;
     [SerializeField] protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
-    [SerializeField] protected List<TextureHolder>  m_textureList  = new List<TextureHolder>();
-    [SerializeField] protected List<AudioHolder>    m_audioList    = new List<AudioHolder>();
+    [SerializeField] private List<TextureHolder>  m_textureList  = new List<TextureHolder>();
+    [SerializeField] private List<AudioHolder>    m_audioList    = new List<AudioHolder>();
 
     [SerializeField] string[]       m_clientObjects_keys;
     [SerializeField] EntityRecord[] m_clientObjects_values;
@@ -2188,9 +2188,9 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
     private bool m_needReassignMaterials        = false;
     private bool m_keyValuesSerializationEnabled = true;
 
-    private   Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
+    private Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
     protected Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
-    private   Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
+    private Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
 
     
 //----------------------------------------------------------------------------------------------------------------------
