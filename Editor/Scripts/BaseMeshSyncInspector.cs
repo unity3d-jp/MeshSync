@@ -7,8 +7,7 @@ using UnityEngine;
 
 namespace Unity.MeshSync.Editor
 {
-[CustomEditor(typeof(BaseMeshSync))]
-internal class MeshSyncPlayerInspector : UnityEditor.Editor {
+internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
             
    
 //----------------------------------------------------------------------------------------------------------------------        
