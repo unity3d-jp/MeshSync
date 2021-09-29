@@ -180,10 +180,8 @@ internal class MeshSyncServer : MeshSyncPlayer {
                     break;
             }
         });
-        
-        if (null != m_onServerMessage) {
-            m_onServerMessage(type, data);
-        }
+
+        m_onServerMessage?.Invoke(type, data);
     }
 
     void OnRecvGet(GetMessage mes) {
