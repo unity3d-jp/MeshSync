@@ -8,7 +8,7 @@ namespace Unity.MeshSync.Editor  {
 
 [CustomEditor(typeof(SceneCachePlayer))]
 [CanEditMultipleObjects]
-internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
+internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
     
 
 //----------------------------------------------------------------------------------------------------------------------
