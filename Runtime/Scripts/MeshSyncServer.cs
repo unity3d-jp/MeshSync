@@ -262,7 +262,7 @@ public class MeshSyncServer : BaseMeshSync {
                 data.AddResponseText(Lib.GetPluginVersion());
                 break;
             case QueryMessage.QueryType.ProtocolVersion:
-                data.AddResponseText(Lib.protocolVersion.ToString());
+                data.AddResponseText(Lib.GetProtocolVersion().ToString());
                 break;
             case QueryMessage.QueryType.HostName:
                 data.AddResponseText("Unity " + Application.unityVersion);
