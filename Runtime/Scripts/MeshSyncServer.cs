@@ -18,7 +18,7 @@ public class MeshSyncServer : MeshSyncPlayer {
 
     
     /// <summary>
-    /// Sets a callback which will be called after MeshSync receives data from server and finishes processing it
+    /// Sets a callback which will be called after MeshSyncServer receives data and finishes processing it
     /// </summary>
     /// <param name="cb"></param>
     public void SetOnPostServerMessageCallback(ServerMessageCallback cb) {
