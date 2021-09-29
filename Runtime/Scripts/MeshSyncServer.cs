@@ -259,7 +259,7 @@ public class MeshSyncServer : BaseMeshSync {
     void OnRecvQuery(QueryMessage data) {
         switch (data.queryType) {
             case QueryMessage.QueryType.PluginVersion:
-                data.AddResponseText(BaseMeshSync.GetPluginVersion());
+                data.AddResponseText(Lib.GetPluginVersion());
                 break;
             case QueryMessage.QueryType.ProtocolVersion:
                 data.AddResponseText(BaseMeshSync.protocolVersion.ToString());

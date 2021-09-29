@@ -502,8 +502,8 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
         EditorGUILayout.Space();
     }
 
-    public static void DrawPluginVersion() {
-        EditorGUILayout.LabelField("Plugin Version: " + BaseMeshSync.GetPluginVersion());
+    protected static void DrawPluginVersion() {
+        EditorGUILayout.LabelField("Plugin Version: " + Lib.GetPluginVersion());
     }
 
     

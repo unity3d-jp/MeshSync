@@ -128,8 +128,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 //----------------------------------------------------------------------------------------------------------------------
     
     #region Getter/Setter
-    internal static string GetPluginVersion() { return Lib.GetPluginVersion(); }
-
     internal static int protocolVersion { get { return Lib.protocolVersion; } }
 
     internal string GetAssetsFolder() { return m_assetsFolder;}   
