@@ -5,7 +5,7 @@ namespace Unity.MeshSync.Editor.Tests {
 
     
 [ExecuteInEditMode]
-[RequireComponent(typeof(MeshSyncPlayer))]
+[RequireComponent(typeof(BaseMeshSync))]
 public class SceneEventHandler : MonoBehaviour {
     string m_log;
 
@@ -45,7 +45,7 @@ public class SceneEventHandler : MonoBehaviour {
 
 
     void OnEnable() {
-        var mss = GetComponent<MeshSyncPlayer>();
+        var mss = GetComponent<BaseMeshSync>();
         if (mss != null) {
             mss.onSceneUpdateBegin += OnSceneUpdateBegin;
             mss.onSceneUpdateEnd += OnSceneUpdateEnd;
@@ -59,7 +59,7 @@ public class SceneEventHandler : MonoBehaviour {
     }
 
     void OnDisable() {
-        var mss = GetComponent<MeshSyncPlayer>();
+        var mss = GetComponent<BaseMeshSync>();
         if (mss != null) {
             mss.onSceneUpdateBegin -= OnSceneUpdateBegin;
             mss.onSceneUpdateEnd -= OnSceneUpdateEnd;

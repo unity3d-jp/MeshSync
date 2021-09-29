@@ -14,7 +14,7 @@ namespace Unity.MeshSync {
 /// A component to sync meshes/models editing in DCC tools into Unity in real time.
 /// </summary>
 [ExecuteInEditMode]
-public class MeshSyncServer : MeshSyncPlayer {
+public class MeshSyncServer : BaseMeshSync {
 
     
     /// <summary>
@@ -259,10 +259,10 @@ public class MeshSyncServer : MeshSyncPlayer {
     void OnRecvQuery(QueryMessage data) {
         switch (data.queryType) {
             case QueryMessage.QueryType.PluginVersion:
-                data.AddResponseText(MeshSyncPlayer.GetPluginVersion());
+                data.AddResponseText(BaseMeshSync.GetPluginVersion());
                 break;
             case QueryMessage.QueryType.ProtocolVersion:
-                data.AddResponseText(MeshSyncPlayer.protocolVersion.ToString());
+                data.AddResponseText(BaseMeshSync.protocolVersion.ToString());
                 break;
             case QueryMessage.QueryType.HostName:
                 data.AddResponseText("Unity " + Application.unityVersion);
