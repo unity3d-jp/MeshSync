@@ -9,8 +9,12 @@ using UnityEditor;
 #endif
 
 namespace Unity.MeshSync {
+
+/// <summary>
+/// A component to sync meshes/models editing in DCC tools into Unity in real time.
+/// </summary>
 [ExecuteInEditMode]
-internal class MeshSyncServer : MeshSyncPlayer {
+public class MeshSyncServer : MeshSyncPlayer {
     
     protected override void InitInternalV() {
         
