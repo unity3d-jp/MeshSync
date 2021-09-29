@@ -14,7 +14,7 @@ namespace Unity.MeshSync
 
 [RequireComponent(typeof(Animator))]
 [ExecuteInEditMode]
-internal class SceneCachePlayer : MeshSyncPlayer {
+internal class SceneCachePlayer : BaseMeshSync {
     #region Types
     public enum TimeUnit {
         Seconds,

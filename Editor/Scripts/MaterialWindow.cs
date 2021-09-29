@@ -6,7 +6,7 @@ namespace Unity.MeshSync.Editor
 {
 class MaterialWindow : EditorWindow
 {
-    public static void Open(MeshSyncPlayer server)
+    public static void Open(BaseMeshSync server)
     {
         var window = (MaterialWindow)EditorWindow.GetWindow(typeof(MaterialWindow));
         window.titleContent = new GUIContent("Material List");
@@ -15,7 +15,7 @@ class MaterialWindow : EditorWindow
     }
 
 
-    public MeshSyncPlayer m_server;
+    public BaseMeshSync m_server;
     Vector2 m_scrollPos;
 
 

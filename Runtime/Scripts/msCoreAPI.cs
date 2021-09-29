@@ -1865,7 +1865,7 @@ namespace Unity.MeshSync
             }
             set { msMeshWriteBindPoses(self, value, value.Length); }
         }
-        internal void SetBonePaths(MeshSyncPlayer mss, Transform[] bones)
+        internal void SetBonePaths(BaseMeshSync mss, Transform[] bones)
         {
             int n = bones.Length;
             for (int i = 0; i < n; ++i)

@@ -7,18 +7,18 @@ using UnityEngine;
 
 namespace Unity.MeshSync.Editor
 {
-[CustomEditor(typeof(MeshSyncPlayer))]
+[CustomEditor(typeof(BaseMeshSync))]
 internal class MeshSyncPlayerInspector : UnityEditor.Editor {
             
    
 //----------------------------------------------------------------------------------------------------------------------        
     public virtual void OnEnable() {
-        m_asset = target as MeshSyncPlayer;
+        m_asset = target as BaseMeshSync;
     }
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    protected bool DrawPlayerSettings(MeshSyncPlayer t) 
+    protected bool DrawPlayerSettings(BaseMeshSync t) 
     {
         bool changed   = false;
         var  styleFold = EditorStyles.foldout;
@@ -162,7 +162,7 @@ internal class MeshSyncPlayerInspector : UnityEditor.Editor {
         return changed;
     }
 
-    public static void DrawMaterialList(MeshSyncPlayer t, bool allowFold = true)
+    public static void DrawMaterialList(BaseMeshSync t, bool allowFold = true)
     {
         Action drawInExportButton = () =>
         {
@@ -202,7 +202,7 @@ internal class MeshSyncPlayerInspector : UnityEditor.Editor {
         }
     }
 
-    static void DrawMaterialListElements(MeshSyncPlayer t)
+    static void DrawMaterialListElements(BaseMeshSync t)
     {
         // calculate label width
         float labelWidth = 60; // minimum
@@ -235,7 +235,7 @@ internal class MeshSyncPlayerInspector : UnityEditor.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------        
 
-    protected static bool DrawAnimationTweak(MeshSyncPlayer player) {
+    protected static bool DrawAnimationTweak(BaseMeshSync player) {
         bool changed = false;
         
         GUIStyle styleFold = EditorStyles.foldout;
@@ -485,7 +485,7 @@ internal class MeshSyncPlayerInspector : UnityEditor.Editor {
     }
 
 
-    public static void DrawExportAssets(MeshSyncPlayer t)
+    public static void DrawExportAssets(BaseMeshSync t)
     {
         var style = EditorStyles.foldout;
         style.fontStyle = FontStyle.Bold;
@@ -504,13 +504,13 @@ internal class MeshSyncPlayerInspector : UnityEditor.Editor {
     }
 
     public static void DrawPluginVersion() {
-        EditorGUILayout.LabelField("Plugin Version: " + MeshSyncPlayer.GetPluginVersion());
+        EditorGUILayout.LabelField("Plugin Version: " + BaseMeshSync.GetPluginVersion());
     }
 
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    private MeshSyncPlayer m_asset = null;
+    private BaseMeshSync m_asset = null;
     private readonly string[] m_animationInterpolationEnums = System.Enum.GetNames( typeof( InterpolationMode ) );
     private readonly string[] m_zUpCorrectionEnums          = System.Enum.GetNames( typeof( ZUpCorrectionMode ) );
 
