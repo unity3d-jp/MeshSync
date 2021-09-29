@@ -57,7 +57,7 @@ internal delegate void DeleteEntityHandler(GameObject obj);
 /// MeshSyncPlayer
 /// </summary>
 [ExecuteInEditMode]
-internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver {
+public abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackReceiver {
 
     
     #region EventHandler Declarations
