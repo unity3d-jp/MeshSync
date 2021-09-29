@@ -21,9 +21,9 @@ public class MeshSyncServer : MeshSyncPlayer {
     /// Sets a callback which will be called after MeshSyncServer receives data and finishes processing it
     /// </summary>
     /// <param name="cb"></param>
-    public void SetOnPostServerMessageCallback(ServerMessageCallback cb) {
+    public void SetOnPostRecvMessageCallback(ServerMessageCallback cb) {
 
-        m_onPostServerMessageCB = cb;
+        m_onPostRecvMessageCB = cb;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -205,7 +205,7 @@ public class MeshSyncServer : MeshSyncPlayer {
             }
         });
 
-        m_onPostServerMessageCB?.Invoke(type);
+        m_onPostRecvMessageCB?.Invoke(type);
     }
 
     void OnRecvGet(GetMessage mes) {
@@ -498,7 +498,7 @@ public class MeshSyncServer : MeshSyncPlayer {
     
     private bool m_serverStarted = false;
     
-    private ServerMessageCallback m_onPostServerMessageCB = null;
+    private ServerMessageCallback m_onPostRecvMessageCB = null;
     
 
 //----------------------------------------------------------------------------------------------------------------------    

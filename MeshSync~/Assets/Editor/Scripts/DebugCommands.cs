@@ -168,7 +168,7 @@ public static class DebugCommands  {
         GameObject     go     = new GameObject();
         MeshSyncServer server = go.AddComponent<MeshSyncServer>();
         server.SetAutoStartServer(true);
-        server.SetOnPostServerMessageCallback(OnRecvServerMessage);
+        server.SetOnPostRecvMessageCallback(OnRecvServerMessage);
     }
     
     static void OnRecvServerMessage(MessageType messageType) {
