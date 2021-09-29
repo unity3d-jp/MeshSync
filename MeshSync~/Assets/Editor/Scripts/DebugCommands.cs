@@ -4,7 +4,6 @@ using Unity.MeshSync;
 using UnityEngine;
 using UnityEditor;
 using Unity.MeshSync.Editor;
-using MessageType = Unity.MeshSync.MessageType;
 
 
 public static class DebugCommands  {
@@ -171,8 +170,8 @@ public static class DebugCommands  {
         server.SetOnPostRecvMessageCallback(OnRecvServerMessage);
     }
     
-    static void OnRecvServerMessage(MessageType messageType) {
-        UnityEngine.Debug.Log(messageType);
+    static void OnRecvServerMessage(NetworkMessageType networkMessageType) {
+        UnityEngine.Debug.Log(networkMessageType);
     }
     
     
