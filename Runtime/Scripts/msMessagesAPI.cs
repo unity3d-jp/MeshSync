@@ -40,6 +40,7 @@ internal struct GetMessage {
     public bool bakeSkin { get { return msGetGetBakeSkin(self) != 0; } }
     public bool bakeCloth { get { return msGetGetBakeCloth(self) != 0; } }
 }
+//----------------------------------------------------------------------------------------------------------------------
 
 internal struct SetMessage {
     #region internal
@@ -59,6 +60,7 @@ internal struct SetMessage {
         get { return msSetGetSceneData(self); }
     }
 }
+//----------------------------------------------------------------------------------------------------------------------
 
 internal struct DeleteMessage {
     #region internal
@@ -81,6 +83,7 @@ internal struct DeleteMessage {
     public int numMaterials { get { return msDeleteGetNumMaterials(self); } }
     internal Identifier GetMaterial(int i) { return msDeleteGetMaterial(self, i); }
 }
+//----------------------------------------------------------------------------------------------------------------------
 
 internal struct FenceMessage {
     #region internal
@@ -102,6 +105,7 @@ internal struct FenceMessage {
 
     public FenceType type { get { return msFenceGetType(self); } }
 }
+//----------------------------------------------------------------------------------------------------------------------
 
 internal struct TextMessage {
     #region internal
@@ -143,6 +147,7 @@ internal struct TextMessage {
 
     }
 }
+//----------------------------------------------------------------------------------------------------------------------
 
 internal struct QueryMessage
 {
@@ -177,6 +182,7 @@ internal struct QueryMessage
         msQueryAddResponseText(self, text);
     }
 }
+//----------------------------------------------------------------------------------------------------------------------
 
 internal struct PollMessage {
     public enum PollType {
