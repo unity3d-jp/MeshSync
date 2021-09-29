@@ -212,7 +212,7 @@ internal class MeshSyncServer : MeshSyncPlayer {
         }
     }
 
-    void OnRecvText(TextMessage mes) {
+    static void OnRecvText(TextMessage mes) {
         mes.Print();
     }
 
