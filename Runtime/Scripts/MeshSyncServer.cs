@@ -100,7 +100,7 @@ public class MeshSyncServer : MeshSyncPlayer {
         m_server.fileRootPath = GetServerDocRootPath();
         m_server.AllowPublicAccess(projectSettings.GetServerPublicAccess());
         
-        m_handler = HandleServerMessage;
+        m_handler = HandleRecvMessage;
 
 #if UNITY_EDITOR
         EditorApplication.update += PollServerEvents;
@@ -176,7 +176,7 @@ public class MeshSyncServer : MeshSyncPlayer {
             m_server.ProcessMessages(m_handler);
     }
 
-    void HandleServerMessage(MessageType type, IntPtr data) {
+    void HandleRecvMessage(MessageType type, IntPtr data) {
         Try(() => {
             switch (type) {
                 case MessageType.Get:
