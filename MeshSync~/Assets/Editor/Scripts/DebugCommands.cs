@@ -1,19 +1,21 @@
 using System.Collections.Generic;
 using System.Text;
+using Unity.MeshSync;
 using UnityEngine;
 using UnityEditor;
 using Unity.MeshSync.Editor;
+using MessageType = Unity.MeshSync.MessageType;
 
 
-public static class DebugCommands
-{
+public static class DebugCommands  {
     [MenuItem("MeshSyncDebug/Open Log Directory")]
     public static void Open()
     {
         var path = System.Environment.GetEnvironmentVariable("LOCALAPPDATA") + "\\Unity\\Editor";
         System.Diagnostics.Process.Start(path);
     }
-
+    
+//----------------------------------------------------------------------------------------------------------------------
 
     [MenuItem("MeshSyncDebug/Dump Transform")]
     public static void DumpTransform()
@@ -158,5 +160,22 @@ public static class DebugCommands
             Debug.Log(info.Type.ToString() + " " + info.DCCToolVersion.ToString() + " " + info.AppPath);
         }
     }
+
+//----------------------------------------------------------------------------------------------------------------------
+    
+    [MenuItem("MeshSyncDebug/Create MeshSync Server with Callback")]
+    static void CreateMeshSyncServerWithCallback() {
+        GameObject     go     = new GameObject();
+        MeshSyncServer server = go.AddComponent<MeshSyncServer>();
+        server.SetAutoStartServer(true);
+        server.SetOnPostRecvMessageCallback(OnRecvServerMessage);
+    }
+    
+    static void OnRecvServerMessage(MessageType messageType) {
+        UnityEngine.Debug.Log(messageType);
+    }
+    
+    
+//----------------------------------------------------------------------------------------------------------------------
     
 }

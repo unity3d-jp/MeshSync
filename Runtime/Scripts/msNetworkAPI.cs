@@ -113,6 +113,10 @@ namespace Unity.MeshSync
 
 
     #region Messages
+
+    /// <summary>
+    /// The type of messages that can be sent to MeshSyncServer 
+    /// </summary>
     public enum MessageType
     {
         Unknown,

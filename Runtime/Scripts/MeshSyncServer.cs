@@ -9,8 +9,25 @@ using UnityEditor;
 #endif
 
 namespace Unity.MeshSync {
+
+/// <summary>
+/// A component to sync meshes/models editing in DCC tools into Unity in real time.
+/// </summary>
 [ExecuteInEditMode]
-internal class MeshSyncServer : MeshSyncPlayer {
+public class MeshSyncServer : MeshSyncPlayer {
+
+    
+    /// <summary>
+    /// Sets a callback which will be called after MeshSyncServer receives data and finishes processing it
+    /// </summary>
+    /// <param name="cb"></param>
+    public void SetOnPostRecvMessageCallback(ServerMessageCallback cb) {
+
+        m_onPostRecvMessageCB = cb;
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
+    
     
     protected override void InitInternalV() {
         
@@ -26,7 +43,11 @@ internal class MeshSyncServer : MeshSyncPlayer {
 #endregion
 
 //----------------------------------------------------------------------------------------------------------------------        
-    internal void SetAutoStartServer(bool autoStart) {
+    /// <summary>
+    /// Sets whether the server should be started automatically or not
+    /// </summary>
+    /// <param name="autoStart">true if the server should start automatically; otherwise, false.</param>
+    public void SetAutoStartServer(bool autoStart) {
         m_autoStartServer = autoStart; 
 
 #if UNITY_STANDALONE        
@@ -57,7 +78,10 @@ internal class MeshSyncServer : MeshSyncPlayer {
         return ret;
     }
     
-    internal void StartServer()
+    /// <summary>
+    /// Starts the server. If the server is already running, it will be restarted.
+    /// </summary>
+    public void StartServer()
     {
 #if UNITY_STANDALONE            
         StopServer();
@@ -76,7 +100,7 @@ internal class MeshSyncServer : MeshSyncPlayer {
         m_server.fileRootPath = GetServerDocRootPath();
         m_server.AllowPublicAccess(projectSettings.GetServerPublicAccess());
         
-        m_handler = OnServerMessage;
+        m_handler = HandleRecvMessage;
 
 #if UNITY_EDITOR
         EditorApplication.update += PollServerEvents;
@@ -152,7 +176,7 @@ internal class MeshSyncServer : MeshSyncPlayer {
             m_server.ProcessMessages(m_handler);
     }
 
-    void OnServerMessage(MessageType type, IntPtr data) {
+    void HandleRecvMessage(MessageType type, IntPtr data) {
         Try(() => {
             switch (type) {
                 case MessageType.Get:
@@ -180,6 +204,8 @@ internal class MeshSyncServer : MeshSyncPlayer {
                     break;
             }
         });
+
+        m_onPostRecvMessageCB?.Invoke(type);
     }
 
     void OnRecvGet(GetMessage mes) {
@@ -471,6 +497,9 @@ internal class MeshSyncServer : MeshSyncPlayer {
     
     
     private bool m_serverStarted = false;
+    
+    private ServerMessageCallback m_onPostRecvMessageCB = null;
+    
 
 //----------------------------------------------------------------------------------------------------------------------    
     
