@@ -130,7 +130,7 @@ namespace Unity.MeshSync
         Response,
     }
 
-    public struct GetMessage
+    internal struct GetMessage
     {
         #region internal
         public IntPtr self;
