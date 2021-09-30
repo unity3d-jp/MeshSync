@@ -12,16 +12,21 @@ using UnityEditor;
 namespace Unity.MeshSync
 {
 
+
+/// <summary>
+/// SceneCachePlayer controls the playback of an .sc file that has been exported
+/// using MeshSyncDCCPlugins installed in a DCC Tool.
+/// </summary>
 [RequireComponent(typeof(Animator))]
 [ExecuteInEditMode]
-internal class SceneCachePlayer : BaseMeshSync {
+public class SceneCachePlayer : BaseMeshSync {
     #region Types
-    public enum TimeUnit {
+    internal enum TimeUnit {
         Seconds,
         Frames,
     }
 
-    public enum BaseFrame {
+    internal enum BaseFrame {
         Zero = 0,
         One = 1,
     }
@@ -118,16 +123,16 @@ internal class SceneCachePlayer : BaseMeshSync {
 
 //----------------------------------------------------------------------------------------------------------------------
     #region Properties
-    public int frameCount {
+    internal int frameCount {
         get { return m_sceneCache.sceneCount; }
     }
 
 #if UNITY_EDITOR
-    public bool foldCacheSettings {
+    internal bool foldCacheSettings {
         get { return m_foldCacheSettings; }
         set { m_foldCacheSettings = value; }
     }
-    public string dbgProfileReport {
+    internal string dbgProfileReport {
         get { return m_dbgProfileReport; }
     }
 #endif
