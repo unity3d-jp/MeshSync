@@ -259,10 +259,10 @@ public class MeshSyncServer : BaseMeshSync {
     void OnRecvQuery(QueryMessage data) {
         switch (data.queryType) {
             case QueryMessage.QueryType.PluginVersion:
-                data.AddResponseText(BaseMeshSync.GetPluginVersion());
+                data.AddResponseText(Lib.GetPluginVersion());
                 break;
             case QueryMessage.QueryType.ProtocolVersion:
-                data.AddResponseText(BaseMeshSync.protocolVersion.ToString());
+                data.AddResponseText(Lib.GetProtocolVersion().ToString());
                 break;
             case QueryMessage.QueryType.HostName:
                 data.AddResponseText("Unity " + Application.unityVersion);

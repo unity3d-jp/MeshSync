@@ -26,12 +26,12 @@ namespace Unity.MeshSync
         #endregion
         
         
-        public static string GetPluginVersion() {
+        internal static string GetPluginVersion() {
             IntPtr nativeStr = msGetPluginVersionStr();//Not direct marshalling because there is no free on C# side.
             return Marshal.PtrToStringAnsi(nativeStr);
         }
 
-        public static int protocolVersion { get { return msGetProtocolVersion(); } }
+        internal static int GetProtocolVersion() { return msGetProtocolVersion(); } 
 
         public const int invalidID = -1;
         public const uint maxVerticesPerMesh =
