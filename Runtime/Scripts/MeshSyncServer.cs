@@ -176,28 +176,28 @@ public class MeshSyncServer : BaseMeshSync {
             m_server.ProcessMessages(m_handler);
     }
 
-    void HandleRecvMessage(MessageType type, IntPtr data) {
+    void HandleRecvMessage(NetworkMessageType type, IntPtr data) {
         Try(() => {
             switch (type) {
-                case MessageType.Get:
+                case NetworkMessageType.Get:
                     OnRecvGet((GetMessage)data);
                     break;
-                case MessageType.Set:
+                case NetworkMessageType.Set:
                     OnRecvSet((SetMessage)data);
                     break;
-                case MessageType.Delete:
+                case NetworkMessageType.Delete:
                     OnRecvDelete((DeleteMessage)data);
                     break;
-                case MessageType.Fence:
+                case NetworkMessageType.Fence:
                     OnRecvFence((FenceMessage)data);
                     break;
-                case MessageType.Text:
+                case NetworkMessageType.Text:
                     OnRecvText((TextMessage)data);
                     break;
-                case MessageType.Screenshot:
+                case NetworkMessageType.Screenshot:
                     OnRecvScreenshot(data);
                     break;
-                case MessageType.Query:
+                case NetworkMessageType.Query:
                     OnRecvQuery((QueryMessage)data);
                     break;
                 default:

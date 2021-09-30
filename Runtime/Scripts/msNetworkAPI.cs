@@ -69,7 +69,7 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)] static extern void msServerNotifyPoll(IntPtr self, PollMessage.PollType t);
         #endregion
 
-        public delegate void MessageHandler(MessageType type, IntPtr data);
+        public delegate void MessageHandler(NetworkMessageType type, IntPtr data);
 
         public static implicit operator bool(Server v) { return v.self != IntPtr.Zero; }
 

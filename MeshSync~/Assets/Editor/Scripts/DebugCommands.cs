@@ -4,7 +4,6 @@ using Unity.MeshSync;
 using UnityEngine;
 using UnityEditor;
 using Unity.MeshSync.Editor;
-using MessageType = Unity.MeshSync.MessageType;
 
 
 public static class DebugCommands  {
@@ -165,14 +164,14 @@ public static class DebugCommands  {
     
     [MenuItem("MeshSyncDebug/Create MeshSync Server with Callback")]
     static void CreateMeshSyncServerWithCallback() {
-        GameObject     go     = new GameObject();
+        GameObject     go     = new GameObject("MeshSyncServer");
         MeshSyncServer server = go.AddComponent<MeshSyncServer>();
         server.SetAutoStartServer(true);
         server.SetOnPostRecvMessageCallback(OnRecvServerMessage);
     }
     
-    static void OnRecvServerMessage(MessageType messageType) {
-        UnityEngine.Debug.Log(messageType);
+    static void OnRecvServerMessage(NetworkMessageType networkMessageType) {
+        UnityEngine.Debug.Log(networkMessageType);
     }
     
     
