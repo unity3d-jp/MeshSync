@@ -12,9 +12,14 @@ using UnityEditor;
 namespace Unity.MeshSync
 {
 
+
+/// <summary>
+/// SceneCachePlayer controls the playback of an .sc file that has been exported
+/// using MeshSyncDCCPlugins installed in a DCC Tool.
+/// </summary>
 [RequireComponent(typeof(Animator))]
 [ExecuteInEditMode]
-internal class SceneCachePlayer : BaseMeshSync {
+public class SceneCachePlayer : BaseMeshSync {
     #region Types
     internal enum TimeUnit {
         Seconds,
