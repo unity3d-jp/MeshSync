@@ -45,6 +45,14 @@ public class SceneCachePlayer : BaseMeshSync {
         
     }
     
+//----------------------------------------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// Force SceneCache to be updated and loaded to scene.
+    /// </summary>
+    public void ForceUpdate() {
+        UpdatePlayer( updateNonMaterialAssets: false);        
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
 
