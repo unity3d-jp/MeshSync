@@ -54,14 +54,9 @@ public class SceneCachePlayerTest  {
         Assert.IsTrue(prefab.IsPrefab());              
         SceneCachePlayer prefabPlayer = prefab.GetComponent<SceneCachePlayer>();
         Assert.IsNotNull(prefabPlayer);
-        
-        
+                
         //Change
-        string newSceneCacheFilePath = Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH);
-        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(prefabPlayer, newSceneCacheFilePath);
-        string convertedPath = newSceneCacheFilePath.Replace('\\','/');
-        Assert.AreEqual(AssetUtility.NormalizeAssetPath(convertedPath), player.GetSceneCacheFilePath());
-        
+        ChangeSceneCacheFileAndVerify(prefabPlayer,Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH));        
 
         //Cleanup
         Object.DestroyImmediate(player.gameObject);
@@ -88,11 +83,7 @@ public class SceneCachePlayerTest  {
         
         
         //Change
-        string newSceneCacheFilePath = Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH);
-        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, newSceneCacheFilePath);
-        string convertedPath = newSceneCacheFilePath.Replace('\\','/');
-        Assert.IsTrue(player.IsSceneCacheOpened());
-        Assert.AreEqual(AssetUtility.NormalizeAssetPath(convertedPath), player.GetSceneCacheFilePath());
+        ChangeSceneCacheFileAndVerify(player,Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH));
 
         //Cleanup
         Object.DestroyImmediate(player.gameObject);
@@ -180,10 +171,8 @@ public class SceneCachePlayerTest  {
         Directory.CreateDirectory(destFolder);
         File.Copy(player.GetSceneCacheFilePath(), streamingAssetsPath);
         Assert.IsTrue(File.Exists(streamingAssetsPath));
-        AssetDatabase.Refresh();        
-        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, streamingAssetsPath);
-        string convertedPath = streamingAssetsPath.Replace('\\','/');
-        Assert.AreEqual(AssetUtility.NormalizeAssetPath(convertedPath), player.GetSceneCacheFilePath());
+        AssetDatabase.Refresh();
+        ChangeSceneCacheFileAndVerify(player, streamingAssetsPath);        
 
         //Cleanup        
         Object.DestroyImmediate(player.gameObject);
@@ -204,6 +193,16 @@ public class SceneCachePlayerTest  {
         return (normalizedPath == path);
 
     }
+    
+//----------------------------------------------------------------------------------------------------------------------
+
+    static void ChangeSceneCacheFileAndVerify(SceneCachePlayer player, string scPath) {
+        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, scPath);
+        Assert.IsTrue(player.IsSceneCacheOpened());
+        Assert.AreEqual(AssetUtility.NormalizeAssetPath(scPath), player.GetSceneCacheFilePath());        
+    }
+    
+    
 }
 
 }
