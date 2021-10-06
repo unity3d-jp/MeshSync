@@ -353,9 +353,6 @@ public class SceneCachePlayer : BaseMeshSync {
         } 
         
         m_version = CUR_SCENE_CACHE_PLAYER_VERSION;
-#if UNITY_EDITOR            
-        EditorUtility.SetDirty(this);
-#endif            
     }
     
 //----------------------------------------------------------------------------------------------------------------------
