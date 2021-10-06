@@ -163,6 +163,7 @@ public class SceneCachePlayer : BaseMeshSync {
          
         //Initialization after opening a cache file
         m_sceneCacheFilePath = System.IO.Path.GetFullPath(path).Replace('\\','/');
+        m_sceneCacheFilePath = AssetUtility.NormalizeAssetPath(m_sceneCacheFilePath);
                
         UpdatePlayer(/* updateNonMaterialAssets = */ true);
         ExportMaterials(false, true);
@@ -338,15 +339,21 @@ public class SceneCachePlayer : BaseMeshSync {
     }
 
     protected override void OnAfterDeserializeMeshSyncPlayerV() {
-        
+
+        if (m_version == CUR_SCENE_CACHE_PLAYER_VERSION)
+            return;
         
         if (m_version < (int) SceneCachePlayerVersion.STRING_PATH_0_4_0) {
             Assert.IsNotNull(m_cacheFilePath);           
-            m_sceneCacheFilePath = m_cacheFilePath.GetFullPath();
+            m_sceneCacheFilePath = MeshSyncAssetUtility.NormalizeAssetPathInEditor(m_cacheFilePath.GetFullPath());
+        } 
+
+        if (m_version < (int) SceneCachePlayerVersion.NORMALIZED_PATH_0_9_2) {
+            m_sceneCacheFilePath = MeshSyncAssetUtility.NormalizeAssetPathInEditor(m_sceneCacheFilePath);
         } 
         
         m_version = CUR_SCENE_CACHE_PLAYER_VERSION;
-    }   
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -457,7 +464,7 @@ public class SceneCachePlayer : BaseMeshSync {
 
     
     [HideInInspector][SerializeField] private int m_version = (int) CUR_SCENE_CACHE_PLAYER_VERSION;
-    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.STRING_PATH_0_4_0;
+    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.NORMALIZED_PATH_0_9_2;
         
     SceneCacheData m_sceneCache;
     TimeRange      m_timeRange;
@@ -475,8 +482,9 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------    
     
     enum SceneCachePlayerVersion {
-        NO_VERSIONING = 0, //Didn't have versioning in earlier versions
+        NO_VERSIONING     = 0, //Didn't have versioning in earlier versions
         STRING_PATH_0_4_0 = 2, //0.4.0-preview: the path is declared as a string 
+        NORMALIZED_PATH_0_9_2 = 3, //0.9.2-preview: Path must be normalized by default 
     
     }
     
