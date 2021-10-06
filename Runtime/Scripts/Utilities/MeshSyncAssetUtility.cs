@@ -27,7 +27,7 @@ internal static class MeshSyncAssetUtility {
         if (null != m_appRootPath)
             return m_appRootPath;
 
-        m_appRootPath = System.IO.Directory.GetCurrentDirectory().Replace('\\','/') + "/Assets";
+        m_appRootPath = System.IO.Directory.GetCurrentDirectory().Replace('\\','/');
         return m_appRootPath;
     }
     
