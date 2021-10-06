@@ -22,8 +22,7 @@ public class SceneCachePlayerTest  {
     public void ChangeSceneCacheOnGameObject() {
         
         //Initial setup            
-        GameObject       go     = new GameObject();
-        SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
+        SceneCachePlayer player = ObjectUtility.CreateGameObjectWithComponent<SceneCachePlayer>("SceneCache");
         Assert.IsFalse(player.IsSceneCacheOpened());
         
         //Change
@@ -32,9 +31,8 @@ public class SceneCachePlayerTest  {
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH));
         Assert.IsTrue(player.IsSceneCacheOpened());
 
-        //Cleanup
-        Object.DestroyImmediate(go);
         
+        Object.DestroyImmediate(player.gameObject); //Cleanup        
     }
 
 //----------------------------------------------------------------------------------------------------------------------       
@@ -97,7 +95,6 @@ public class SceneCachePlayerTest  {
     [UnityTest]
     public IEnumerator ReloadSceneCache() {
         
-        //Initial setup
         SceneCachePlayer player = ObjectUtility.CreateGameObjectWithComponent<SceneCachePlayer>("SceneCache");
         
         //Set and reload
@@ -111,9 +108,8 @@ public class SceneCachePlayerTest  {
 
         yield return null;
         
-        //Cleanup
-        Object.DestroyImmediate(player.gameObject);
         
+        Object.DestroyImmediate(player.gameObject); //Cleanup        
     }
     
 //----------------------------------------------------------------------------------------------------------------------       
