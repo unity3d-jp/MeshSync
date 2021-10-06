@@ -163,6 +163,7 @@ public class SceneCachePlayer : BaseMeshSync {
          
         //Initialization after opening a cache file
         m_sceneCacheFilePath = System.IO.Path.GetFullPath(path).Replace('\\','/');
+        m_sceneCacheFilePath = AssetUtility.NormalizeAssetPath(m_sceneCacheFilePath);
                
         UpdatePlayer(/* updateNonMaterialAssets = */ true);
         ExportMaterials(false, true);
@@ -342,7 +343,7 @@ public class SceneCachePlayer : BaseMeshSync {
         
         if (m_version < (int) SceneCachePlayerVersion.STRING_PATH_0_4_0) {
             Assert.IsNotNull(m_cacheFilePath);           
-            m_sceneCacheFilePath = m_cacheFilePath.GetFullPath();
+            m_sceneCacheFilePath = AssetUtility.NormalizeAssetPath(m_cacheFilePath.GetFullPath());
         } 
         
         m_version = CUR_SCENE_CACHE_PLAYER_VERSION;
