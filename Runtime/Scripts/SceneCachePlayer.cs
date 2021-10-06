@@ -151,15 +151,16 @@ public class SceneCachePlayer : BaseMeshSync {
 #if UNITY_EDITOR    
     internal bool OpenCacheInEditor(string path) {
 
-        if (!OpenCacheInternal(path)) {
-            return false;
-        }
-
-        //Delete all children
+        //Delete all children first
         if (gameObject.IsPrefabInstance()) {
             PrefabUtility.UnpackPrefabInstance(gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);            
         } 
         gameObject.DestroyChildrenImmediate();
+
+        if (!OpenCacheInternal(path)) {
+            return false;
+        }
+
          
         //Initialization after opening a cache file
         m_sceneCacheFilePath = System.IO.Path.GetFullPath(path).Replace('\\','/');
