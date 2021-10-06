@@ -113,6 +113,8 @@ public class SceneCachePlayerTest  {
         );
         Assert.IsTrue(prefabCreated);
 
+        Assert.IsTrue(IsAssetPathNormalized(player.GetSceneCacheFilePath()));
+
         //Check player
         Assert.IsNotNull(player);
         Assert.IsTrue(player.IsSceneCacheOpened());       
@@ -194,8 +196,14 @@ public class SceneCachePlayerTest  {
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
-    
-    
+
+    //[TODO-sin: 2021-10-6] Move to FIU
+    bool IsAssetPathNormalized(string path) {
+        Assert.IsNotNull(path);
+        string normalizedPath = AssetUtility.NormalizeAssetPath(path);
+        return (normalizedPath == path);
+
+    }
 }
 
 }
