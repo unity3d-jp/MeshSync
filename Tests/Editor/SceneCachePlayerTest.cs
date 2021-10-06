@@ -191,7 +191,7 @@ public class SceneCachePlayerTest  {
 //----------------------------------------------------------------------------------------------------------------------    
 
     //[TODO-sin: 2021-10-6] Move to FIU
-    bool IsAssetPathNormalized(string path) {
+    static bool IsAssetPathNormalized(string path) {
         Assert.IsNotNull(path);
         string normalizedPath = AssetUtility.NormalizeAssetPath(path);
         return (normalizedPath == path);
@@ -203,6 +203,7 @@ public class SceneCachePlayerTest  {
     static void ChangeSceneCacheFileAndVerify(SceneCachePlayer player, string scPath) {
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, scPath);
         Assert.AreEqual(AssetUtility.NormalizeAssetPath(scPath), player.GetSceneCacheFilePath());        
+        Assert.IsTrue(IsAssetPathNormalized(player.GetSceneCacheFilePath()));
     }
     
     
