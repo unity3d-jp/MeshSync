@@ -84,6 +84,7 @@ public class SceneCachePlayerTest  {
         
         //Change
         ChangeSceneCacheFileAndVerify(player,Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH));
+        Assert.IsTrue(player.IsSceneCacheOpened());
 
         //Cleanup
         Object.DestroyImmediate(player.gameObject);
@@ -172,7 +173,10 @@ public class SceneCachePlayerTest  {
         File.Copy(player.GetSceneCacheFilePath(), streamingAssetsPath);
         Assert.IsTrue(File.Exists(streamingAssetsPath));
         AssetDatabase.Refresh();
+        
+        //Change
         ChangeSceneCacheFileAndVerify(player, streamingAssetsPath);        
+        Assert.IsTrue(player.IsSceneCacheOpened());
 
         //Cleanup        
         Object.DestroyImmediate(player.gameObject);
@@ -198,7 +202,6 @@ public class SceneCachePlayerTest  {
 
     static void ChangeSceneCacheFileAndVerify(SceneCachePlayer player, string scPath) {
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, scPath);
-        Assert.IsTrue(player.IsSceneCacheOpened());
         Assert.AreEqual(AssetUtility.NormalizeAssetPath(scPath), player.GetSceneCacheFilePath());        
     }
     
