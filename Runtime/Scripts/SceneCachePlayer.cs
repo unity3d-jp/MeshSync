@@ -347,9 +347,11 @@ public class SceneCachePlayer : BaseMeshSync {
         } 
 
         if (m_version < (int) SceneCachePlayerVersion.NORMALIZED_PATH_0_9_2) {
-            m_sceneCacheFilePath = AssetUtility.NormalizeAssetPath(m_sceneCacheFilePath);
+            m_sceneCacheFilePath = MeshSyncAssetUtility.NormalizeAssetPathInEditor(m_sceneCacheFilePath);
         } 
 
+        m_sceneCacheFilePath = MeshSyncAssetUtility.NormalizeAssetPathInEditor(m_sceneCacheFilePath);
+        
         
         m_version = CUR_SCENE_CACHE_PLAYER_VERSION;
     }
