@@ -339,7 +339,9 @@ public class SceneCachePlayer : BaseMeshSync {
     }
 
     protected override void OnAfterDeserializeMeshSyncPlayerV() {
-        
+
+        if (m_version == CUR_SCENE_CACHE_PLAYER_VERSION)
+            return;
         
         if (m_version < (int) SceneCachePlayerVersion.STRING_PATH_0_4_0) {
             Assert.IsNotNull(m_cacheFilePath);           
@@ -351,6 +353,9 @@ public class SceneCachePlayer : BaseMeshSync {
         } 
         
         m_version = CUR_SCENE_CACHE_PLAYER_VERSION;
+#if UNITY_EDITOR            
+        EditorUtility.SetDirty(this);
+#endif            
     }
     
 //----------------------------------------------------------------------------------------------------------------------
