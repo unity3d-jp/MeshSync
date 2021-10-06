@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.9.2-preview] - 2021-10-07
+
+### Fixed
+* fix: make reloading SceneCache work properly again 
+* fix: properly normalize the paths inside SceneCachePlayer 
+
 ## [0.9.1-preview] - 2021-09-15
 
 ### Fixed
