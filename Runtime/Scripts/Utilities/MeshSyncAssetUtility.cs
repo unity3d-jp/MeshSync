@@ -1,9 +1,4 @@
-﻿using JetBrains.Annotations;
-using Unity.FilmInternalUtilities;
-using UnityEditor;
-using UnityEngine;
-
-namespace Unity.MeshSync {
+﻿namespace Unity.MeshSync {
 
 //[TODO-sin: 2021-10-6] Move to FIU
 internal static class MeshSyncAssetUtility {
