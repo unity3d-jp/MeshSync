@@ -345,7 +345,7 @@ public class SceneCachePlayer : BaseMeshSync {
         
         if (m_version < (int) SceneCachePlayerVersion.STRING_PATH_0_4_0) {
             Assert.IsNotNull(m_cacheFilePath);           
-            m_sceneCacheFilePath = AssetUtility.NormalizeAssetPath(m_cacheFilePath.GetFullPath());
+            m_sceneCacheFilePath = MeshSyncAssetUtility.NormalizeAssetPathInEditor(m_cacheFilePath.GetFullPath());
         } 
 
         if (m_version < (int) SceneCachePlayerVersion.NORMALIZED_PATH_0_9_2) {
