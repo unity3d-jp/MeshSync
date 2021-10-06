@@ -1,8 +1,10 @@
-﻿using System.IO;
+﻿using System.Collections;
+using System.IO;
 using NUnit.Framework;
 using Unity.FilmInternalUtilities;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Unity.MeshSync.Editor.Tests {
 
@@ -20,8 +22,7 @@ public class SceneCachePlayerTest  {
     public void ChangeSceneCacheOnGameObject() {
         
         //Initial setup            
-        GameObject       go     = new GameObject();
-        SceneCachePlayer player = go.AddComponent<SceneCachePlayer>();
+        SceneCachePlayer player = ObjectUtility.CreateGameObjectWithComponent<SceneCachePlayer>("SceneCache");
         Assert.IsFalse(player.IsSceneCacheOpened());
         
         //Change
@@ -30,9 +31,8 @@ public class SceneCachePlayerTest  {
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH));
         Assert.IsTrue(player.IsSceneCacheOpened());
 
-        //Cleanup
-        Object.DestroyImmediate(go);
         
+        Object.DestroyImmediate(player.gameObject); //Cleanup        
     }
 
 //----------------------------------------------------------------------------------------------------------------------       
@@ -89,6 +89,27 @@ public class SceneCachePlayerTest  {
         //Cleanup
         Object.DestroyImmediate(player.gameObject);
         DeleteSceneCachePlayerPrefab(prefab);        
+    }
+
+//----------------------------------------------------------------------------------------------------------------------       
+    [UnityTest]
+    public IEnumerator ReloadSceneCache() {
+        
+        SceneCachePlayer player = ObjectUtility.CreateGameObjectWithComponent<SceneCachePlayer>("SceneCache");
+        
+        //Set and reload
+        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH));
+        Assert.IsTrue(player.IsSceneCacheOpened());
+        yield return null;
+        
+        SceneCachePlayerEditorUtility.ReloadSceneCacheFile(player);
+        Assert.IsTrue(player.transform.childCount > 0);
+        Assert.IsTrue(player.IsSceneCacheOpened());        
+
+        yield return null;
+        
+        
+        Object.DestroyImmediate(player.gameObject); //Cleanup        
     }
     
 //----------------------------------------------------------------------------------------------------------------------       
@@ -204,6 +225,7 @@ public class SceneCachePlayerTest  {
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, scPath);
         Assert.AreEqual(AssetUtility.NormalizeAssetPath(scPath), player.GetSceneCacheFilePath());        
         Assert.IsTrue(IsAssetPathNormalized(player.GetSceneCacheFilePath()));
+        Assert.IsTrue(player.transform.childCount > 0);
     }
     
     
