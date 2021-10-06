@@ -88,6 +88,12 @@ internal static class SceneCachePlayerEditorUtility {
             cachePlayer.gameObject.SaveAsPrefab(prefabPath);            
         }        
     }
+
+    internal static void ReloadSceneCacheFile(SceneCachePlayer cachePlayer) {
+        string sceneCacheFilePath = cachePlayer.GetSceneCacheFilePath();        
+        ChangeSceneCacheFile(cachePlayer, sceneCacheFilePath);
+        
+    }
     
 //----------------------------------------------------------------------------------------------------------------------    
     private static SceneCachePlayer  AddSceneCachePlayer(GameObject go, 

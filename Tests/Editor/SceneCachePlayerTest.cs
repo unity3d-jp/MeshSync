@@ -1,8 +1,10 @@
-﻿using System.IO;
+﻿using System.Collections;
+using System.IO;
 using NUnit.Framework;
 using Unity.FilmInternalUtilities;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Unity.MeshSync.Editor.Tests {
 
@@ -89,6 +91,29 @@ public class SceneCachePlayerTest  {
         //Cleanup
         Object.DestroyImmediate(player.gameObject);
         DeleteSceneCachePlayerPrefab(prefab);        
+    }
+
+//----------------------------------------------------------------------------------------------------------------------       
+    [UnityTest]
+    public IEnumerator ReloadSceneCache() {
+        
+        //Initial setup
+        SceneCachePlayer player = ObjectUtility.CreateGameObjectWithComponent<SceneCachePlayer>("SceneCache");
+        
+        //Set and reload
+        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH));
+        Assert.IsTrue(player.IsSceneCacheOpened());
+        yield return null;
+        
+        SceneCachePlayerEditorUtility.ReloadSceneCacheFile(player);
+        Assert.IsTrue(player.transform.childCount > 0);
+        Assert.IsTrue(player.IsSceneCacheOpened());        
+
+        yield return null;
+        
+        //Cleanup
+        Object.DestroyImmediate(player.gameObject);
+        
     }
     
 //----------------------------------------------------------------------------------------------------------------------       
@@ -204,6 +229,7 @@ public class SceneCachePlayerTest  {
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, scPath);
         Assert.AreEqual(AssetUtility.NormalizeAssetPath(scPath), player.GetSceneCacheFilePath());        
         Assert.IsTrue(IsAssetPathNormalized(player.GetSceneCacheFilePath()));
+        Assert.IsTrue(player.transform.childCount > 0);
     }
     
     
