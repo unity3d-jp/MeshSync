@@ -146,8 +146,7 @@ internal class SceneCachePlayerInspector : MeshSyncPlayerInspector {
 
 //----------------------------------------------------------------------------------------------------------------------
     void OnSceneCacheFileReload() {
-        string sceneCacheFilePath = m_sceneCachePlayer.GetSceneCacheFilePath();
-        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(m_sceneCachePlayer, sceneCacheFilePath);
+        SceneCachePlayerEditorUtility.ReloadSceneCacheFile(m_sceneCachePlayer);
     }
     
 //----------------------------------------------------------------------------------------------------------------------
