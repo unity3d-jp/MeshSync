@@ -1,6 +1,7 @@
 ﻿using Unity.FilmInternalUtilities;
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.Timeline;
 
 namespace Unity.MeshSync
 {
@@ -35,7 +36,12 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
             }
             case SnapToFrame.NEAREST: {
 
-                float fps = (float) m_clipData.GetOwner().GetParentTrack().timelineAsset.editorSettings.GetFPS();
+                TrackAsset trackAsset = m_clipData.GetOwner().GetParentTrack();
+                if (null == trackAsset) {
+                    return;
+                }
+                     
+                float fps = (float) trackAsset.timelineAsset.editorSettings.GetFPS();
                 
                 float timePerFrame = 1.0f / fps;
                 int   frame        = Mathf.RoundToInt((float)playable.GetTime() * fps);
