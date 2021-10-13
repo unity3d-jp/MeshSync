@@ -23,6 +23,11 @@
             "name": "com.unity.timeline",
             "expression": "1.4.0",
             "define": "AT_USE_TIMELINE_GE_1_4_0"
+        },
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "",
+            "define": "AT_USE_HDRP"
         }
     ],
     "noEngineReferences": false
