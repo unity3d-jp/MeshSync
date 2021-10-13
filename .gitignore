@@ -21,9 +21,11 @@ MeshSync*~/Builds/*
 MeshSync*~/Logs/*
 MeshSync*~/UIElementsSchema/*
 MeshSync*~/Assets/MeshSyncDCCPlugins~/*
+MeshSync*~/UserSettings/**
+
+# Default path to store synced assets
 MeshSyncAssets/
 MeshSyncAssets.meta
-MeshSync*~/UserSettings/**
 
 # Rider
 MeshSync*~/*.idea/**
