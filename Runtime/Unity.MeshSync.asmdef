@@ -28,6 +28,11 @@
             "name": "com.unity.render-pipelines.high-definition",
             "expression": "",
             "define": "AT_USE_HDRP"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "",
+            "define": "AT_USE_URP"
         }
     ],
     "noEngineReferences": false
