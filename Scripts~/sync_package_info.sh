@@ -1,6 +1,7 @@
 allProjects=(
     "MeshSync~"
     "MeshSync_HDRP~"
+    "MeshSync_URP~"
 )
 
 packageName="com.unity.meshsync"

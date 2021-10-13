@@ -1,0 +1,16 @@
+.html text/html
+.txt text/plain
+.css text/css
+.js application/javascript
+.js_ application/javascript
+.json application/json
+.png image/png
+.jpg image/jpeg
+.gif image/gif
+.webp image/webp
+.ico image/x-icon
+.webm video/webm
+.mp4 video/mp4
+.m3u audio/mpegURL
+.m3u8 application/vnd.apple.mpegurl
+.ts application/octet-stream
