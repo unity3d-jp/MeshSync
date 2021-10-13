@@ -14,19 +14,19 @@ TestLocal/
 TestLocal.meta
 
 # MeshSync~ test project
-MeshSync~/*.csproj
-MeshSync~/*.sln
-MeshSync~/*.vsconfig
-MeshSync~/Builds/*
-MeshSync~/Logs/*
-MeshSync~/UIElementsSchema/*
-MeshSync~/Assets/MeshSyncDCCPlugins~/*
+MeshSync*~/*.csproj
+MeshSync*~/*.sln
+MeshSync*~/*.vsconfig
+MeshSync*~/Builds/*
+MeshSync*~/Logs/*
+MeshSync*~/UIElementsSchema/*
+MeshSync*~/Assets/MeshSyncDCCPlugins~/*
 MeshSyncAssets/
 MeshSyncAssets.meta
-MeshSync~/UserSettings/**
+MeshSync*~/UserSettings/**
 
 # Rider
-MeshSync~/*.idea/**
+MeshSync*~/*.idea/**
 
 
 # CMake
