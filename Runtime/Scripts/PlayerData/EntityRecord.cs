@@ -1,5 +1,7 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Assertions;
+using UnityEngine.Rendering.HighDefinition;
 
 namespace Unity.MeshSync {
 
@@ -24,6 +26,38 @@ internal class EntityRecord {
         }
         return updated;
     }
+//----------------------------------------------------------------------------------------------------------------------
+
+    internal void SetLight(LightData lightData, bool syncVisibility) {
+        TransformData  transformData = lightData.transform;
+        LightDataFlags flags = lightData.dataFlags;
+        Light          lt     = this.light;
+        
+        Assert.IsNotNull(this.go);
+        if (lt == null)
+            lt = this.light = Misc.GetOrAddComponent<Light>(this.go);
+
+        if (syncVisibility && transformData.dataFlags.hasVisibility)
+            lt.enabled = transformData.visibility.visibleInRender;
+
+        LightType lightType = lightData.lightType;
+        if ((int)lightType != -1)
+            lt.type = lightData.lightType;
+        if (flags.hasShadowType)
+            lt.shadows = lightData.shadowType;
+
+        if(flags.hasColor)
+            lt.color = lightData.color;
+        if (flags.hasIntensity)
+            lt.intensity = lightData.intensity;
+        if (flags.hasRange)
+            lt.range = lightData.range;
+        if (flags.hasSpotAngle)
+            lt.spotAngle = lightData.spotAngle;
+        return rec;
+
+    }
+    
     
 //----------------------------------------------------------------------------------------------------------------------
     
