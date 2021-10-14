@@ -2,7 +2,6 @@
 using Unity.FilmInternalUtilities;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Rendering.HighDefinition;
 
 namespace Unity.MeshSync {
 
