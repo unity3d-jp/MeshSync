@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.FilmInternalUtilities;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Rendering.HighDefinition;
@@ -64,19 +65,24 @@ internal class EntityRecord {
             return;
         Assert.IsNotNull(this.go);
             
-        Light dstlt = this.light;
-        if (dstlt == null)
-            dstlt = this.light = Misc.GetOrAddComponent<Light>(this.go);
+        Light destLight = GetOrAddLight();
         if (syncVisibility && this.hasVisibility)
-            dstlt.enabled = this.visibility.visibleInRender;
-        dstlt.type      = srcLight.type;
-        dstlt.color     = srcLight.color;
-        dstlt.intensity = srcLight.intensity;
-        dstlt.range     = srcLight.range;
-        dstlt.spotAngle = srcLight.spotAngle;
+            destLight.enabled = this.visibility.visibleInRender;
+        destLight.type      = srcLight.type;
+        destLight.color     = srcLight.color;
+        destLight.intensity = srcLight.intensity;
+        destLight.range     = srcLight.range;
+        destLight.spotAngle = srcLight.spotAngle;
 
     }
-    
+
+    Light GetOrAddLight() {
+        if (null != this.light) 
+            return this.light;
+
+        this.light = this.go.GetOrAddComponent<Light>();
+        return this.light;        
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
     
