@@ -78,7 +78,7 @@ internal class EntityRecord {
             return this.light;
 
         Assert.IsNotNull(this.go);
-        this.light = this.go.GetOrAddComponent<Light>();
+        this.light = Misc.GetOrAddComponent<Light>(this.go);
         return this.light;        
     }
     
