@@ -54,7 +54,6 @@ internal class EntityRecord {
             lt.range = lightData.range;
         if (flags.hasSpotAngle)
             lt.spotAngle = lightData.spotAngle;
-        return rec;
 
     }
     
