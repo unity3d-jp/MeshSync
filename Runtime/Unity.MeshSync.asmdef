@@ -3,7 +3,9 @@
     "references": [
         "GUID:f06555f75b070af458a003d92f9efb00",
         "GUID:02f771204943f4a40949438e873e3eff",
-        "GUID:405bbed08ae367a47a5c7f18bf3b6328"
+        "GUID:405bbed08ae367a47a5c7f18bf3b6328",
+        "GUID:457756d89b35d2941b3e7b37b4ece6f1",
+        "GUID:15fc0a57446b3144c949da3e2b9737a9"
     ],
     "includePlatforms": [
         "Editor",
@@ -22,6 +24,16 @@
             "name": "com.unity.timeline",
             "expression": "1.4.0",
             "define": "AT_USE_TIMELINE_GE_1_4_0"
+        },
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "",
+            "define": "AT_USE_HDRP"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "",
+            "define": "AT_USE_URP"
         }
     ],
     "noEngineReferences": false
