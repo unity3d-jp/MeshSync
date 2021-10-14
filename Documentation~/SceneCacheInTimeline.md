@@ -18,10 +18,10 @@ To view animation curves of the clip, click the Curves icon next to the Track na
 
 ![](images/SceneCachePlayableAsset.png)
 
-|**Parameters**           |**Description** |
+|**Properties**           |**Description** |
 |:----------------------- |:---|
 | **Scene Cache Player**  | The [SceneCachePlayer](SceneCache.md#scene-cache-player) to be played in Timeline. |
-| **Snap To Frame**       | The blend mode. |
+| **Snap To Frame**       | Sets if the playback time should snap to a frame and how. |
 
 ### Curve buttons
 
