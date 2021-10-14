@@ -16,17 +16,17 @@ To view animation curves of the clip, click the Curves icon next to the Track na
 
 ## Scene Cache Playable Asset
 
-<img align="right" src="images/SceneCachePlayableAsset.png" height="160">
+![](images/SceneCachePlayableAsset.png)
 
-- **Scene Cache Player:**  
-The [SceneCachePlayer](SceneCache.md#scene-cache-player) to be played in Timeline.
+|**Parameters**           |**Description** |
+|:----------------------- |:---|
+| **Scene Cache Player**  | The [SceneCachePlayer](SceneCache.md#scene-cache-player) to be played in Timeline. |
+| **Snap To Frame**       | The blend mode. |
 
-- **Curves**  
-  - **To Linear:** set the animation curve to a linear curve.
-  - **Apply Original:** apply the original animation curve from the Scene Cache (.sc) file.
+### Curve buttons
 
-
-
-
-
+|**Buttons**          |**Description** |
+|:--------------------|:---|
+| **To Linear**       | Set the animation curve to a linear curve. |
+| **Apply Original**  | Applies the original animation curve from the Scene Cache (.sc) file. |
 
