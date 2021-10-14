@@ -59,9 +59,8 @@ internal class EntityRecord {
     internal void SetLight(EntityRecord srcRecord, bool syncVisibility) {
         
         Light srcLight = srcRecord.light;
-        if (srcLight == null) 
+        if (null == srcLight) 
             return;
-        Assert.IsNotNull(this.go);
             
         Light destLight = GetOrAddLight();
         if (syncVisibility && this.hasVisibility)
