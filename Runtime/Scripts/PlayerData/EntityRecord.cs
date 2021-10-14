@@ -57,6 +57,26 @@ internal class EntityRecord {
 
     }
     
+    internal void SetLight(EntityRecord srcRecord, bool syncVisibility) {
+        
+        Light srcLight = srcRecord.light;
+        if (srcLight == null) 
+            return;
+        Assert.IsNotNull(this.go);
+            
+        Light dstlt = this.light;
+        if (dstlt == null)
+            dstlt = this.light = Misc.GetOrAddComponent<Light>(this.go);
+        if (syncVisibility && this.hasVisibility)
+            dstlt.enabled = this.visibility.visibleInRender;
+        dstlt.type      = srcLight.type;
+        dstlt.color     = srcLight.color;
+        dstlt.intensity = srcLight.intensity;
+        dstlt.range     = srcLight.range;
+        dstlt.spotAngle = srcLight.spotAngle;
+
+    }
+    
     
 //----------------------------------------------------------------------------------------------------------------------
     

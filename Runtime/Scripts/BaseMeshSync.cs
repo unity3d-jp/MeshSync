@@ -1427,19 +1427,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 dstcam.farClipPlane = srccam.farClipPlane;
             }
         } else if (src.dataType == EntityType.Light) {
-            Light srclt = src.light;
-            if (srclt != null) {
-                Light dstlt = dst.light;
-                if (dstlt == null)
-                    dstlt = dst.light = Misc.GetOrAddComponent<Light>(dstgo);
-                if (m_config.SyncVisibility && dst.hasVisibility)
-                    dstlt.enabled = dst.visibility.visibleInRender;
-                dstlt.type = srclt.type;
-                dstlt.color = srclt.color;
-                dstlt.intensity = srclt.intensity;
-                dstlt.range = srclt.range;
-                dstlt.spotAngle = srclt.spotAngle;
-            }
+            dst.SetLight(src,m_config.SyncVisibility);
         }
         else if (src.dataType == EntityType.Mesh)
         {
