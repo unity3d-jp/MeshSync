@@ -64,15 +64,16 @@ internal class EntityRecord {
             return;
         Assert.IsNotNull(this.go);
             
-        if (this.light == null)
-            this.light = Misc.GetOrAddComponent<Light>(this.go);
+        Light dstlt = this.light;
+        if (dstlt == null)
+            dstlt = this.light = Misc.GetOrAddComponent<Light>(this.go);
         if (syncVisibility && this.hasVisibility)
-            this.light.enabled = this.visibility.visibleInRender;
-        this.light.type      = srcLight.type;
-        this.light.color     = srcLight.color;
-        this.light.intensity = srcLight.intensity;
-        this.light.range     = srcLight.range;
-        this.light.spotAngle = srcLight.spotAngle;
+            dstlt.enabled = this.visibility.visibleInRender;
+        dstlt.type      = srcLight.type;
+        dstlt.color     = srcLight.color;
+        dstlt.intensity = srcLight.intensity;
+        dstlt.range     = srcLight.range;
+        dstlt.spotAngle = srcLight.spotAngle;
 
     }
     
