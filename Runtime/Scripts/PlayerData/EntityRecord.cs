@@ -85,7 +85,7 @@ internal class EntityRecord {
     public GameObject          go;
     public Transform           trans;
     public Camera              camera;
-    public Light               light;
+    private Light               light;
     public MeshFilter          meshFilter;
     public MeshRenderer        meshRenderer;
     public SkinnedMeshRenderer skinnedMeshRenderer;
