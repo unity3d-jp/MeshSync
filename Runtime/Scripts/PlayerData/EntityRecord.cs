@@ -84,15 +84,17 @@ internal class EntityRecord {
         if (null == this.light) {
             this.light = Misc.GetOrAddComponent<Light>(this.go);
         }
+        Assert.IsNotNull(this.light);
+        recComponents.LightComponent = this.light;
 
+#if AT_USE_HDRP    
         if (null == m_hdAdditionalLightData) {
             m_hdAdditionalLightData = Misc.GetOrAddComponent<HDAdditionalLightData>(this.go);
         }
-
-        Assert.IsNotNull(this.light);
         Assert.IsNotNull(m_hdAdditionalLightData);
-        recComponents.LightComponent                 = this.light;
         recComponents.HDAdditionalLightDataComponent = m_hdAdditionalLightData;
+#endif
+        
         return recComponents;        
     }
 
