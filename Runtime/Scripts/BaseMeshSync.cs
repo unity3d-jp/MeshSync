@@ -410,12 +410,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 //----------------------------------------------------------------------------------------------------------------------    
 
     private static Material CreateDefaultMaterial() {
-        // prefer non Standard shader because it will be pink in HDRP
+#if AT_USE_HDRP                
         Shader shader = Shader.Find("HDRP/Lit");
-        if (shader == null)
-            shader = Shader.Find("LWRP/Lit");
-        if (shader == null)
-            shader = Shader.Find("Standard");
+#elif AT_USE_URP
+        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+#else 
+        Shader shader = Shader.Find("Standard");
+#endif        
+        Assert.IsNotNull(shader);
         Material ret = new Material(shader);
         return ret;
     }
