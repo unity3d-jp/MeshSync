@@ -31,25 +31,25 @@ internal class EntityRecord {
         TransformData  transformData = lightData.transform;
         LightDataFlags flags = lightData.dataFlags;
                
-        Light destLight = GetOrAddLight();
+        LightRecordComponents components = GetOrAddLight();
 
         if (syncVisibility && transformData.dataFlags.hasVisibility)
-            destLight.enabled = transformData.visibility.visibleInRender;
+            components.LightComponent.enabled = transformData.visibility.visibleInRender;
 
         LightType lightType = lightData.lightType;
         if ((int)lightType != -1)
-            destLight.type = lightData.lightType;
+            components.LightComponent.type = lightData.lightType;
         if (flags.hasShadowType)
-            destLight.shadows = lightData.shadowType;
+            components.LightComponent.shadows = lightData.shadowType;
 
         if(flags.hasColor)
-            destLight.color = lightData.color;
+            components.LightComponent.color = lightData.color;
         if (flags.hasIntensity)
-            destLight.intensity = lightData.intensity;
+            components.LightComponent.intensity = lightData.intensity;
         if (flags.hasRange)
-            destLight.range = lightData.range;
+            components.LightComponent.range = lightData.range;
         if (flags.hasSpotAngle)
-            destLight.spotAngle = lightData.spotAngle;
+            components.LightComponent.spotAngle = lightData.spotAngle;
 
     }
     
@@ -59,30 +59,34 @@ internal class EntityRecord {
         if (null == srcLight) 
             return;
             
-        Light destLight = GetOrAddLight();
+        LightRecordComponents components = GetOrAddLight();
         if (syncVisibility && this.hasVisibility)
-            destLight.enabled = this.visibility.visibleInRender;
-        destLight.type      = srcLight.type;
-        destLight.color     = srcLight.color;
-        destLight.intensity = srcLight.intensity;
-        destLight.range     = srcLight.range;
-        destLight.spotAngle = srcLight.spotAngle;
+            components.LightComponent.enabled = this.visibility.visibleInRender;
+        components.LightComponent.type      = srcLight.type;
+        components.LightComponent.color     = srcLight.color;
+        components.LightComponent.intensity = srcLight.intensity;
+        components.LightComponent.range     = srcLight.range;
+        components.LightComponent.spotAngle = srcLight.spotAngle;
 
     }
 
-    Light GetOrAddLight() {
-        if (null != this.light) 
-            return this.light;
+    LightRecordComponents GetOrAddLight() {
 
-        Assert.IsNotNull(this.go);
-        this.light = Misc.GetOrAddComponent<Light>(this.go);
-        return this.light;        
+        LightRecordComponents recComponents;
+        if (null == this.light) {
+            Assert.IsNotNull(this.go);
+            this.light = Misc.GetOrAddComponent<Light>(this.go);            
+        } 
+
+        Assert.IsNotNull(this.light);
+        recComponents.LightComponent = this.light;
+        return recComponents;        
     }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    private struct EntityLightComponents {
-        internal Light EntityLight;
+    private struct LightRecordComponents {
+        internal Light LightComponent;
     }    
     
 //----------------------------------------------------------------------------------------------------------------------
