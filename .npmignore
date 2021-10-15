@@ -5,7 +5,7 @@ node_modules/**
 Documentation/ApiDocs/**
 Documentation~/ApiDocs/**
 AE~/**
-MeshSync~/**
+MeshSync*~/**
 Plugin~/**
 .DS_Store
 .npmrc
