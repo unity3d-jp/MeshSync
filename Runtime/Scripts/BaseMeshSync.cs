@@ -1398,27 +1398,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         if (rec == null || dflags.unchanged)
             return null;
 
-        Light lt = rec.light;
-        if (lt == null)
-            lt = rec.light = Misc.GetOrAddComponent<Light>(rec.go);
-
-        if (m_config.SyncVisibility && dtrans.dataFlags.hasVisibility)
-            lt.enabled = dtrans.visibility.visibleInRender;
-
-        LightType lightType = data.lightType;
-        if ((int)lightType != -1)
-            lt.type = data.lightType;
-        if (dflags.hasShadowType)
-            lt.shadows = data.shadowType;
-
-        if(dflags.hasColor)
-            lt.color = data.color;
-        if (dflags.hasIntensity)
-            lt.intensity = data.intensity;
-        if (dflags.hasRange)
-            lt.range = data.range;
-        if (dflags.hasSpotAngle)
-            lt.spotAngle = data.spotAngle;
+        rec.SetLight(data,m_config.SyncVisibility);
         return rec;
     }
 
@@ -1447,19 +1427,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 dstcam.farClipPlane = srccam.farClipPlane;
             }
         } else if (src.dataType == EntityType.Light) {
-            Light srclt = src.light;
-            if (srclt != null) {
-                Light dstlt = dst.light;
-                if (dstlt == null)
-                    dstlt = dst.light = Misc.GetOrAddComponent<Light>(dstgo);
-                if (m_config.SyncVisibility && dst.hasVisibility)
-                    dstlt.enabled = dst.visibility.visibleInRender;
-                dstlt.type = srclt.type;
-                dstlt.color = srclt.color;
-                dstlt.intensity = srclt.intensity;
-                dstlt.range = srclt.range;
-                dstlt.spotAngle = srclt.spotAngle;
-            }
+            dst.SetLight(src,m_config.SyncVisibility);
         }
         else if (src.dataType == EntityType.Mesh)
         {
