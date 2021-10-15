@@ -31,7 +31,7 @@ internal class EntityRecord {
         TransformData  transformData = lightData.transform;
         LightDataFlags flags = lightData.dataFlags;
                
-        LightRecordComponents components = GetOrAddLight();
+        LightComponents components = GetOrAddLight();
         Light                 destLight  = components.LightComponent;
 
         if (syncVisibility && transformData.dataFlags.hasVisibility)
@@ -60,7 +60,7 @@ internal class EntityRecord {
         if (null == srcLight) 
             return;
             
-        LightRecordComponents components = GetOrAddLight();
+        LightComponents components = GetOrAddLight();
         Light                 destLight  = components.LightComponent;
         
         if (syncVisibility && this.hasVisibility)
@@ -73,9 +73,9 @@ internal class EntityRecord {
 
     }
 
-    LightRecordComponents GetOrAddLight() {
+    LightComponents GetOrAddLight() {
 
-        LightRecordComponents recComponents;
+        LightComponents recComponents;
         if (null == this.light) {
             Assert.IsNotNull(this.go);
             this.light = Misc.GetOrAddComponent<Light>(this.go);            
@@ -88,7 +88,7 @@ internal class EntityRecord {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    private struct LightRecordComponents {
+    private struct LightComponents {
         internal Light LightComponent;
     }    
     
