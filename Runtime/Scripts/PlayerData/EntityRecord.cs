@@ -78,6 +78,12 @@ internal class EntityRecord {
         this.light = Misc.GetOrAddComponent<Light>(this.go);
         return this.light;        
     }
+
+//----------------------------------------------------------------------------------------------------------------------
+
+    private struct EntityLightComponents {
+        internal Light EntityLight;
+    }    
     
 //----------------------------------------------------------------------------------------------------------------------
     
