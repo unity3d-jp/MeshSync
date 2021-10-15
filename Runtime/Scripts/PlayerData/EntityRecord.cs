@@ -1,5 +1,4 @@
 ﻿using System;
-using Unity.FilmInternalUtilities;
 using UnityEngine;
 using UnityEngine.Assertions;
 
