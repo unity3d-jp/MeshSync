@@ -32,7 +32,7 @@ internal class EntityRecord {
         LightDataFlags flags = lightData.dataFlags;
                
         LightComponents components = GetOrAddLight();
-        Light                 destLight  = components.LightComponent;
+        Light destLight  = components.LightComponent;
 
         if (syncVisibility && transformData.dataFlags.hasVisibility)
             destLight.enabled = transformData.visibility.visibleInRender;
@@ -61,7 +61,7 @@ internal class EntityRecord {
             return;
             
         LightComponents components = GetOrAddLight();
-        Light                 destLight  = components.LightComponent;
+        Light destLight  = components.LightComponent;
         
         if (syncVisibility && this.hasVisibility)
             destLight.enabled = this.visibility.visibleInRender;
