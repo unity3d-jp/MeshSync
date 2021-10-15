@@ -74,6 +74,16 @@ internal class EntityRecord {
         destLight.intensity = srcLight.intensity;
         destLight.range     = srcLight.range;
         destLight.spotAngle = srcLight.spotAngle;
+        
+#if AT_USE_HDRP
+        HDAdditionalLightData destHDLightData = components.HDAdditionalLightDataComponent;
+        destHDLightData.SetTypeFromLegacy(srcLight.type);
+        destHDLightData.color     = srcLight.color;
+        destHDLightData.intensity = srcLight.intensity;
+        destHDLightData.range     = srcLight.range;
+        destHDLightData.SetSpotAngle(srcLight.spotAngle);
+#endif
+
 
     }
 
