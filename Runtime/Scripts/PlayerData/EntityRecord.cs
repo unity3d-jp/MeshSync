@@ -1,5 +1,4 @@
 ﻿using System;
-using Unity.FilmInternalUtilities;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -31,10 +30,9 @@ internal class EntityRecord {
     internal void SetLight(LightData lightData, bool syncVisibility) {
         TransformData  transformData = lightData.transform;
         LightDataFlags flags = lightData.dataFlags;
-        
-        Assert.IsNotNull(this.go);
-        
-        Light destLight = GetOrAddLight();
+               
+        LightComponents components = GetOrAddLight();
+        Light destLight  = components.LightComponent;
 
         if (syncVisibility && transformData.dataFlags.hasVisibility)
             destLight.enabled = transformData.visibility.visibleInRender;
@@ -62,7 +60,9 @@ internal class EntityRecord {
         if (null == srcLight) 
             return;
             
-        Light destLight = GetOrAddLight();
+        LightComponents components = GetOrAddLight();
+        Light destLight  = components.LightComponent;
+        
         if (syncVisibility && this.hasVisibility)
             destLight.enabled = this.visibility.visibleInRender;
         destLight.type      = srcLight.type;
@@ -73,14 +73,24 @@ internal class EntityRecord {
 
     }
 
-    Light GetOrAddLight() {
-        if (null != this.light) 
-            return this.light;
+    LightComponents GetOrAddLight() {
 
-        Assert.IsNotNull(this.go);
-        this.light = Misc.GetOrAddComponent<Light>(this.go);
-        return this.light;        
+        LightComponents recComponents;
+        if (null == this.light) {
+            Assert.IsNotNull(this.go);
+            this.light = Misc.GetOrAddComponent<Light>(this.go);            
+        } 
+
+        Assert.IsNotNull(this.light);
+        recComponents.LightComponent = this.light;
+        return recComponents;        
     }
+
+//----------------------------------------------------------------------------------------------------------------------
+
+    private struct LightComponents {
+        internal Light LightComponent;
+    }    
     
 //----------------------------------------------------------------------------------------------------------------------
     
