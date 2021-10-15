@@ -2,6 +2,10 @@
 using UnityEngine;
 using UnityEngine.Assertions;
 
+#if AT_USE_HDRP
+using UnityEngine.Rendering.HighDefinition;
+#endif
+    
 namespace Unity.MeshSync {
 
 [Serializable]
@@ -101,7 +105,9 @@ internal class EntityRecord {
     public Camera              camera;
     
     [SerializeField] private Light               light;
-    
+#if AT_USE_HDRP    
+    [SerializeField] private HDAdditionalLightData m_hdAdditionalLightData;
+#endif    
     public MeshFilter          meshFilter;
     public MeshRenderer        meshRenderer;
     public SkinnedMeshRenderer skinnedMeshRenderer;
