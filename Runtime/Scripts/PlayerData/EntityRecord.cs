@@ -30,9 +30,7 @@ internal class EntityRecord {
     internal void SetLight(LightData lightData, bool syncVisibility) {
         TransformData  transformData = lightData.transform;
         LightDataFlags flags = lightData.dataFlags;
-        
-        Assert.IsNotNull(this.go);
-        
+               
         Light destLight = GetOrAddLight();
 
         if (syncVisibility && transformData.dataFlags.hasVisibility)
