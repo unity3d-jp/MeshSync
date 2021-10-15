@@ -32,24 +32,25 @@ internal class EntityRecord {
         LightDataFlags flags = lightData.dataFlags;
                
         LightRecordComponents components = GetOrAddLight();
+        Light                 destLight  = components.LightComponent;
 
         if (syncVisibility && transformData.dataFlags.hasVisibility)
-            components.LightComponent.enabled = transformData.visibility.visibleInRender;
+            destLight.enabled = transformData.visibility.visibleInRender;
 
         LightType lightType = lightData.lightType;
         if ((int)lightType != -1)
-            components.LightComponent.type = lightData.lightType;
+            destLight.type = lightData.lightType;
         if (flags.hasShadowType)
-            components.LightComponent.shadows = lightData.shadowType;
+            destLight.shadows = lightData.shadowType;
 
         if(flags.hasColor)
-            components.LightComponent.color = lightData.color;
+            destLight.color = lightData.color;
         if (flags.hasIntensity)
-            components.LightComponent.intensity = lightData.intensity;
+            destLight.intensity = lightData.intensity;
         if (flags.hasRange)
-            components.LightComponent.range = lightData.range;
+            destLight.range = lightData.range;
         if (flags.hasSpotAngle)
-            components.LightComponent.spotAngle = lightData.spotAngle;
+            destLight.spotAngle = lightData.spotAngle;
 
     }
     
@@ -60,13 +61,15 @@ internal class EntityRecord {
             return;
             
         LightRecordComponents components = GetOrAddLight();
+        Light                 destLight  = components.LightComponent;
+        
         if (syncVisibility && this.hasVisibility)
-            components.LightComponent.enabled = this.visibility.visibleInRender;
-        components.LightComponent.type      = srcLight.type;
-        components.LightComponent.color     = srcLight.color;
-        components.LightComponent.intensity = srcLight.intensity;
-        components.LightComponent.range     = srcLight.range;
-        components.LightComponent.spotAngle = srcLight.spotAngle;
+            destLight.enabled = this.visibility.visibleInRender;
+        destLight.type      = srcLight.type;
+        destLight.color     = srcLight.color;
+        destLight.intensity = srcLight.intensity;
+        destLight.range     = srcLight.range;
+        destLight.spotAngle = srcLight.spotAngle;
 
     }
 
