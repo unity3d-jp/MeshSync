@@ -80,13 +80,19 @@ internal class EntityRecord {
     LightComponents GetOrAddLight() {
 
         LightComponents recComponents;
+        Assert.IsNotNull(this.go);
         if (null == this.light) {
-            Assert.IsNotNull(this.go);
-            this.light = Misc.GetOrAddComponent<Light>(this.go);            
-        } 
+            this.light = Misc.GetOrAddComponent<Light>(this.go);
+        }
+
+        if (null == m_hdAdditionalLightData) {
+            m_hdAdditionalLightData = Misc.GetOrAddComponent<HDAdditionalLightData>(this.go);
+        }
 
         Assert.IsNotNull(this.light);
-        recComponents.LightComponent = this.light;
+        Assert.IsNotNull(m_hdAdditionalLightData);
+        recComponents.LightComponent                 = this.light;
+        recComponents.HDAdditionalLightDataComponent = m_hdAdditionalLightData;
         return recComponents;        
     }
 
@@ -94,6 +100,10 @@ internal class EntityRecord {
 
     private struct LightComponents {
         internal Light LightComponent;
+        
+#if AT_USE_HDRP    
+        internal HDAdditionalLightData HDAdditionalLightDataComponent;
+#endif    
     }    
     
 //----------------------------------------------------------------------------------------------------------------------
