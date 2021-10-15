@@ -35,7 +35,7 @@ internal class EntityRecord {
         TransformData  transformData = lightData.transform;
         LightDataFlags flags = lightData.dataFlags;
                
-        LightComponents components = GetOrAddLight();
+        LightComponents components = GetOrAddLightComponents();
         Light destLight  = components.LightComponent;
 
 #if AT_USE_HDRP
@@ -93,7 +93,7 @@ internal class EntityRecord {
         if (null == srcLight) 
             return;
             
-        LightComponents components = GetOrAddLight();
+        LightComponents components = GetOrAddLightComponents();
         Light destLight  = components.LightComponent;
         
         if (syncVisibility && this.hasVisibility)
@@ -116,7 +116,7 @@ internal class EntityRecord {
 
     }
 
-    LightComponents GetOrAddLight() {
+    LightComponents GetOrAddLightComponents() {
 
         LightComponents recComponents;
         Assert.IsNotNull(this.go);
