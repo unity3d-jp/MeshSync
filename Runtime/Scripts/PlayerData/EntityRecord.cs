@@ -38,23 +38,52 @@ internal class EntityRecord {
         LightComponents components = GetOrAddLight();
         Light destLight  = components.LightComponent;
 
+#if AT_USE_HDRP
+        HDAdditionalLightData destHDLightData = components.HDAdditionalLightDataComponent;
+#endif
+        
         if (syncVisibility && transformData.dataFlags.hasVisibility)
             destLight.enabled = transformData.visibility.visibleInRender;
 
         LightType lightType = lightData.lightType;
-        if ((int)lightType != -1)
+        if ((int)lightType != -1) {
             destLight.type = lightData.lightType;
+#if AT_USE_HDRP
+            destHDLightData.SetTypeFromLegacy(lightData.lightType);
+#endif
+        }
+        
         if (flags.hasShadowType)
             destLight.shadows = lightData.shadowType;
 
-        if(flags.hasColor)
+        if (flags.hasColor) {
             destLight.color = lightData.color;
-        if (flags.hasIntensity)
+#if AT_USE_HDRP
+            destHDLightData.color = lightData.color;
+#endif
+        }
+
+        if (flags.hasIntensity) {
             destLight.intensity = lightData.intensity;
-        if (flags.hasRange)
+#if AT_USE_HDRP
+            destHDLightData.intensity = lightData.intensity;
+#endif
+        }
+
+        if (flags.hasRange) {
             destLight.range = lightData.range;
-        if (flags.hasSpotAngle)
+#if AT_USE_HDRP
+            destHDLightData.range = lightData.range;
+#endif
+        }
+
+        if (flags.hasSpotAngle) {
+            
             destLight.spotAngle = lightData.spotAngle;
+#if AT_USE_HDRP
+            destHDLightData.SetSpotAngle(lightData.spotAngle);
+#endif
+        }
 
     }
     
