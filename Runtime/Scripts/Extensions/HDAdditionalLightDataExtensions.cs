@@ -34,12 +34,14 @@ internal static class HDAdditionalLightDataExtensions {
                 break;
             }
             default: {
-                Debug.LogWarning($"[MeshSync] Unsupported legacy light: {legacyLightType}");
+                Debug.LogWarning($"[MeshSync] Unsupported legacy light type: {legacyLightType}");
                 break;
             };
         
         }        
     }
+    
+
 }
 
 } //end namespace
