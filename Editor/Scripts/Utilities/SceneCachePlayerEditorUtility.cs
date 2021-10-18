@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using NUnit.Framework;
 using Unity.FilmInternalUtilities;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Analytics;
+using UnityEngine.Animations;
 using Object = UnityEngine.Object;
 
 namespace Unity.MeshSync.Editor  {
@@ -84,13 +87,23 @@ internal static class SceneCachePlayerEditorUtility {
         Dictionary<string,EntityRecord> prevRecords = new Dictionary<string, EntityRecord>(cachePlayer.GetClientObjects());                
         if (isPrefabInstance) {
             PrefabUtility.UnpackPrefabInstance(cachePlayer.gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);            
-        } 
+            
+        }
+
+
+        UpdateEntityHandler doExport2 = (GameObject updatedGo, TransformData data) => {
+            UpdateEntityHandler(updatedGo, data, prevRecords);
+        };
+
+        
+        cachePlayer.onUpdateEntity += doExport2;
         
         cachePlayer.Init(assetsFolder);
         cachePlayer.OpenCacheInEditor(sceneCacheFilePath);        
         IDictionary<string,EntityRecord> curRecords = cachePlayer.GetClientObjects();
 
-
+        cachePlayer.onUpdateEntity -= doExport2;
+        
         UpdateGameObjectsByComparingRecords(prevRecords, curRecords);
 
         if (string.IsNullOrEmpty(prefabPath)) {
@@ -107,6 +120,70 @@ internal static class SceneCachePlayerEditorUtility {
         
     }
 
+    private static void UpdateEntityHandler(GameObject obj, TransformData data, IDictionary<string, EntityRecord> prevRecords) 
+    {
+        if (!prevRecords.ContainsKey(data.path))
+            return;
+
+        EntityRecord prevRecord = prevRecords[data.path];
+
+        if (data.entityType == prevRecord.dataType)
+            return;
+
+        HashSet<Type> componentTypes = new HashSet<Type>() {
+            typeof(SkinnedMeshRenderer),             //check bones
+            typeof(MeshFilter),            
+            typeof(MeshRenderer),            
+            typeof(PointCacheRenderer),
+            typeof(PointCache),
+            typeof(Camera),
+            typeof(Light),            
+//            typeof(HDAdditionalLightData),            
+
+            //Constraints
+            typeof(AimConstraint),
+            typeof(ParentConstraint),
+            typeof(PositionConstraint),
+            typeof(RotationConstraint),
+            typeof(ScaleConstraint),
+            
+            //Animator
+            typeof(MeshCollider),
+            
+        };
+
+        //Check which component should remain
+        switch (data.entityType) {
+            case EntityType.Camera:
+                componentTypes.Remove(typeof(Camera));
+                break;
+            case EntityType.Light:
+                componentTypes.Remove(typeof(Light));
+                break;
+            case EntityType.Mesh: {
+                componentTypes.Remove(typeof(SkinnedMeshRenderer));
+                componentTypes.Remove(typeof(MeshFilter));
+                componentTypes.Remove(typeof(MeshRenderer));
+                break;                
+            }                
+            case EntityType.Points:
+                componentTypes.Remove(typeof(PointCache));
+                componentTypes.Remove(typeof(PointCacheRenderer));
+                break;
+            
+        }
+        
+
+        foreach (Type c in componentTypes) {
+            var a = obj.GetComponent(c);
+            if (null == a)
+                continue;
+            
+            ObjectUtility.Destroy(a);
+        }
+
+    }
+    
     //Delete GameObject if they exist in prevRecords, but not in curRecords
     //Update them if the type is different
     private static void UpdateGameObjectsByComparingRecords(IDictionary<string, EntityRecord> prevRecords,
