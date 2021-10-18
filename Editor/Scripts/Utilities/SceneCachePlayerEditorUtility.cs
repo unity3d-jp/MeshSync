@@ -132,7 +132,7 @@ internal static class SceneCachePlayerEditorUtility {
             Transform origParent = kv.Value;
             Transform t             = kv.Key;
             if (null == kv.Value) {
-                ObjectUtility.Destroy(t);
+                ObjectUtility.Destroy(t.gameObject);
             }
             else {
                 t.SetParent(origParent);
