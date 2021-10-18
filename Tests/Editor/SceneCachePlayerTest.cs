@@ -231,12 +231,33 @@ public class SceneCachePlayerTest  {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    static void ChangeSceneCacheFileAndVerify(SceneCachePlayer player, string scPath) {
+    static TestDataComponents ChangeSceneCacheFileAndVerify(SceneCachePlayer player, string scPath) {
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, scPath);
         Assert.AreEqual(AssetUtility.NormalizeAssetPath(scPath), player.GetSceneCacheFilePath());        
         Assert.IsTrue(IsAssetPathNormalized(player.GetSceneCacheFilePath()));
         Assert.IsTrue(player.transform.childCount > 0);
+
+        TestDataComponents ret = new TestDataComponents(
+            player.GetComponentInChildren<Camera>(),
+            player.GetComponentInChildren<Light>()
+        );
+        
+        Assert.IsNotNull(ret.cam);
+        Assert.IsNotNull(ret.light);
+        return ret;
     }
+
+    class TestDataComponents {
+        internal Camera cam;
+        internal Light  light;
+
+        internal TestDataComponents(Camera _cam, Light _light) {
+            cam   = _cam;
+            light = _light;
+        }
+    }
+    
+    
     
     
 }
