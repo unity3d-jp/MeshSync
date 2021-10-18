@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Unity.FilmInternalUtilities;
 using UnityEditor;
@@ -79,9 +80,18 @@ internal static class SceneCachePlayerEditorUtility {
         
         //[TODO-sin: 2020-9-28] Find out if it is possible to do undo properly
         Undo.RegisterFullObjectHierarchyUndo(cachePlayer.gameObject, "SceneCachePlayer");
+
+        Dictionary<string,EntityRecord> prevRecords = new Dictionary<string, EntityRecord>(cachePlayer.GetClientObjects());                
+        if (isPrefabInstance) {
+            PrefabUtility.UnpackPrefabInstance(cachePlayer.gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);            
+        } 
         
         cachePlayer.Init(assetsFolder);
-        cachePlayer.OpenCacheInEditor(sceneCacheFilePath);
+        cachePlayer.OpenCacheInEditor(sceneCacheFilePath);        
+        IDictionary<string,EntityRecord> curRecords = cachePlayer.GetClientObjects();
+
+
+        UpdateGameObjectsByComparingRecords(prevRecords, curRecords);
 
         if (string.IsNullOrEmpty(prefabPath)) {
             return;
@@ -95,6 +105,27 @@ internal static class SceneCachePlayerEditorUtility {
         string sceneCacheFilePath = cachePlayer.GetSceneCacheFilePath();        
         ChangeSceneCacheFile(cachePlayer, sceneCacheFilePath);
         
+    }
+
+    private static void UpdateGameObjectsByComparingRecords(IDictionary<string, EntityRecord> prevRecords,
+        IDictionary<string, EntityRecord> curRecords) 
+    {
+        foreach (KeyValuePair<string, EntityRecord> kv in prevRecords) {
+            string       goPath           = kv.Key;
+            EntityRecord prevEntityRecord = kv.Value;
+
+            if (!curRecords.ContainsKey(goPath)) {
+                FilmInternalUtilities.ObjectUtility.Destroy(prevEntityRecord.go);
+                continue;
+            }
+
+            EntityRecord curEntityRecord = curRecords[goPath];
+            if (prevEntityRecord.dataType == curEntityRecord.dataType)
+                continue;
+
+            //Update entity
+
+        }
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
