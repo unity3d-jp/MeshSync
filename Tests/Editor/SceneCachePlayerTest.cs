@@ -97,14 +97,19 @@ public class SceneCachePlayerTest  {
         Assert.IsNotNull(player);              
         Assert.IsTrue(player.gameObject.IsPrefabInstance());              
         Camera cam0   = player.GetComponentInChildren<Camera>();        
-        Light  light0 = player.GetComponentInChildren<Light>();        
-        
+        Light  light0 = player.GetComponentInChildren<Light>();
+
+        GameObject capsule = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        capsule.transform.SetParent(light0.transform);
         
         //Change
         TestDataComponents comps = ChangeSceneCacheFileAndVerify(player,Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH));
         Assert.IsTrue(player.IsSceneCacheOpened());
         Assert.AreEqual(cam0, comps.cam);
         Assert.AreEqual(light0, comps.light);
+        
+        Assert.IsNotNull(capsule);
+        Assert.IsFalse(capsule.IsPrefabInstance());
 
         //Cleanup
         Object.DestroyImmediate(player.gameObject);
