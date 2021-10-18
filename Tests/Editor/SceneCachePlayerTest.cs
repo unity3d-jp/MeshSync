@@ -36,6 +36,8 @@ public class SceneCachePlayerTest  {
         Camera cam1   = player.GetComponentInChildren<Camera>();
         Light  light1 = player.GetComponentInChildren<Light>();        
         
+        Assert.IsNotNull(cam0);
+        Assert.IsNotNull(light0);
         Assert.AreEqual(cam0, cam1);
         Assert.AreEqual(light0, light1);
 
