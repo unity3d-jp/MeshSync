@@ -64,8 +64,8 @@ public class SceneCachePlayerTest  {
         Assert.IsTrue(prefab.IsPrefab());              
         SceneCachePlayer prefabPlayer = prefab.GetComponent<SceneCachePlayer>();
         Assert.IsNotNull(prefabPlayer);
-        Camera cam0   = player.GetComponentInChildren<Camera>();        
-        Light  light0 = player.GetComponentInChildren<Light>();        
+        Camera cam0   = prefabPlayer.GetComponentInChildren<Camera>();        
+        Light  light0 = prefabPlayer.GetComponentInChildren<Light>();        
         
         //Change
         TestDataComponents comps = ChangeSceneCacheFileAndVerify(prefabPlayer,
