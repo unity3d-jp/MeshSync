@@ -89,19 +89,26 @@ internal static class SceneCachePlayerEditorUtility {
         }
 
 
-        UpdateEntityHandler doExport2 = (GameObject updatedGo, TransformData data) => {
-            UpdateEntityHandler(updatedGo, data, prevRecords);
-        };
+        //remove irrelevant  components of the GameObject if the entity type is different
+        void ChangeEntityTypeCB(GameObject updatedGo, TransformData data) {
+            string dataPath = data.path;
+            if (!prevRecords.ContainsKey(dataPath)) 
+                return;
 
-        
-        cachePlayer.onUpdateEntity += doExport2;
-        
+            EntityRecord prevRecord = prevRecords[dataPath];
+            if (data.entityType == prevRecord.dataType) 
+                return;
+
+            DestroyIrrelevantComponents(updatedGo, data.entityType);
+        }
+
+
+        cachePlayer.onUpdateEntity += ChangeEntityTypeCB;        
         cachePlayer.Init(assetsFolder);
         cachePlayer.OpenCacheInEditor(sceneCacheFilePath);        
-        IDictionary<string,EntityRecord> curRecords = cachePlayer.GetClientObjects();
-
-        cachePlayer.onUpdateEntity -= doExport2;
+        cachePlayer.onUpdateEntity -= ChangeEntityTypeCB;
         
+        IDictionary<string,EntityRecord> curRecords = cachePlayer.GetClientObjects();
         DeleteInvalidRecordedGameObjects(prevRecords, curRecords);
 
         if (string.IsNullOrEmpty(prefabPath)) {
@@ -118,66 +125,40 @@ internal static class SceneCachePlayerEditorUtility {
         
     }
 
-    private static void UpdateEntityHandler(GameObject obj, TransformData data, IDictionary<string, EntityRecord> prevRecords) 
-    {
-        if (!prevRecords.ContainsKey(data.path))
-            return;
+//----------------------------------------------------------------------------------------------------------------------    
+    private static void DestroyIrrelevantComponents(GameObject obj, EntityType curEntityType) {
 
-        EntityRecord prevRecord = prevRecords[data.path];
+        HashSet<Type> componentsToDelete = new HashSet<Type>(m_componentsToDeleteOnReload);
 
-        if (data.entityType == prevRecord.dataType)
-            return;
-
-        HashSet<Type> componentTypes = new HashSet<Type>() {
-            typeof(SkinnedMeshRenderer),             //check bones
-            typeof(MeshFilter),            
-            typeof(MeshRenderer),            
-            typeof(PointCacheRenderer),
-            typeof(PointCache),
-            typeof(Camera),
-            typeof(Light),            
-//            typeof(HDAdditionalLightData),            
-
-            //Constraints
-            typeof(AimConstraint),
-            typeof(ParentConstraint),
-            typeof(PositionConstraint),
-            typeof(RotationConstraint),
-            typeof(ScaleConstraint),
-            
-            //Animator
-            typeof(MeshCollider),
-            
-        };
-
-        //Check which component should remain
-        switch (data.entityType) {
+        //Check which component should remain (should not be deleted)
+        switch (curEntityType) {
             case EntityType.Camera:
-                componentTypes.Remove(typeof(Camera));
+                componentsToDelete.Remove(typeof(Camera));
                 break;
             case EntityType.Light:
-                componentTypes.Remove(typeof(Light));
+                componentsToDelete.Remove(typeof(Light));
                 break;
             case EntityType.Mesh: {
-                componentTypes.Remove(typeof(SkinnedMeshRenderer));
-                componentTypes.Remove(typeof(MeshFilter));
-                componentTypes.Remove(typeof(MeshRenderer));
-                break;                
+                componentsToDelete.Remove(typeof(SkinnedMeshRenderer));
+                componentsToDelete.Remove(typeof(MeshFilter));
+                componentsToDelete.Remove(typeof(MeshRenderer));
+                break;
             }                
             case EntityType.Points:
-                componentTypes.Remove(typeof(PointCache));
-                componentTypes.Remove(typeof(PointCacheRenderer));
+                componentsToDelete.Remove(typeof(PointCache));
+                componentsToDelete.Remove(typeof(PointCacheRenderer));
                 break;
-            
+            default:
+                break;
         }
         
 
-        foreach (Type c in componentTypes) {
-            var a = obj.GetComponent(c);
-            if (null == a)
+        foreach (Type t in componentsToDelete) {
+            Component c = obj.GetComponent(t);
+            if (null == c)
                 continue;
             
-            ObjectUtility.Destroy(a);
+            ObjectUtility.Destroy(c);
         }
 
     }
