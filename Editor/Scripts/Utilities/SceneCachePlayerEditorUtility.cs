@@ -177,6 +177,18 @@ internal static class SceneCachePlayerEditorUtility {
             ObjectUtility.Destroy(prevEntityRecord.go);
         }
     }
+
+    private static void FindNonPrefabChildren(Transform t, ref Dictionary<Transform, Transform> nonPrefabTransforms) {
+        if (!t.gameObject.IsPrefabInstance()) {
+            nonPrefabTransforms.Add(t, t.parent);
+        }
+        
+        int numChildren = t.childCount;
+        for (int i = 0; i < numChildren; ++i) {
+            Transform child = t.GetChild(i);
+            FindNonPrefabChildren(child, ref nonPrefabTransforms);
+        }
+    }
     
 //----------------------------------------------------------------------------------------------------------------------    
     private static SceneCachePlayer  AddSceneCachePlayer(GameObject go, 
