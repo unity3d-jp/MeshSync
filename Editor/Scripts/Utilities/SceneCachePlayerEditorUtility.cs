@@ -107,6 +107,8 @@ internal static class SceneCachePlayerEditorUtility {
         
     }
 
+    //Delete GameObject if they exist in prevRecords, but not in curRecords
+    //Update them if the type is different
     private static void UpdateGameObjectsByComparingRecords(IDictionary<string, EntityRecord> prevRecords,
         IDictionary<string, EntityRecord> curRecords) 
     {
@@ -115,7 +117,7 @@ internal static class SceneCachePlayerEditorUtility {
             EntityRecord prevEntityRecord = kv.Value;
 
             if (!curRecords.ContainsKey(goPath)) {
-                FilmInternalUtilities.ObjectUtility.Destroy(prevEntityRecord.go);
+                ObjectUtility.Destroy(prevEntityRecord.go);
                 continue;
             }
 
