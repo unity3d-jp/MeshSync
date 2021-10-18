@@ -115,8 +115,9 @@ public class SceneCachePlayerTest  {
         Assert.IsTrue(player.IsSceneCacheOpened());
         Assert.AreEqual(cam0, comps.cam);
         Assert.AreEqual(light0, comps.light);
+        Assert.AreNotEqual(mr0, comps.meshRenderer);
         
-        Assert.IsNotNull(capsule);
+        Assert.IsTrue(capsule !=null);
         Assert.IsFalse(capsule.IsPrefabInstance());
         Assert.IsTrue(cylinder == null); //should have been deleted when changing sc
         
@@ -264,21 +265,25 @@ public class SceneCachePlayerTest  {
 
         TestDataComponents ret = new TestDataComponents(
             player.GetComponentInChildren<Camera>(),
-            player.GetComponentInChildren<Light>()
+            player.GetComponentInChildren<Light>(),
+            player.GetComponentInChildren<MeshRenderer>()
         );
         
         Assert.IsNotNull(ret.cam);
         Assert.IsNotNull(ret.light);
+        Assert.IsNotNull(ret.meshRenderer);
         return ret;
     }
 
     class TestDataComponents {
-        internal Camera cam;
-        internal Light  light;
+        internal readonly Camera       cam;
+        internal readonly Light        light;
+        internal readonly MeshRenderer meshRenderer;
 
-        internal TestDataComponents(Camera _cam, Light _light) {
-            cam   = _cam;
-            light = _light;
+        internal TestDataComponents(Camera _cam, Light _light, MeshRenderer _mr) {
+            cam          = _cam;
+            light        = _light;
+            meshRenderer = _mr;
         }
     }
     
