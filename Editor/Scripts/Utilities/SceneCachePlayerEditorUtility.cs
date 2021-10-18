@@ -230,9 +230,9 @@ internal static class SceneCachePlayerEditorUtility {
     
     
     static readonly HashSet<Type> m_componentsToDeleteOnReload = new HashSet<Type>() {
-        typeof(SkinnedMeshRenderer),             
-        typeof(MeshFilter),            
-        typeof(MeshRenderer),            
+        typeof(SkinnedMeshRenderer),
+        typeof(MeshFilter),
+        typeof(MeshRenderer),
         typeof(PointCacheRenderer),
         typeof(PointCache),
         typeof(Camera),
