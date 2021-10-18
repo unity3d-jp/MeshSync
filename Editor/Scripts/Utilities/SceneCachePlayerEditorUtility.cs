@@ -104,7 +104,7 @@ internal static class SceneCachePlayerEditorUtility {
 
         cachePlayer.onUpdateEntity -= doExport2;
         
-        UpdateGameObjectsByComparingRecords(prevRecords, curRecords);
+        DeleteInvalidRecordedGameObjects(prevRecords, curRecords);
 
         if (string.IsNullOrEmpty(prefabPath)) {
             return;
@@ -185,25 +185,17 @@ internal static class SceneCachePlayerEditorUtility {
     }
     
     //Delete GameObject if they exist in prevRecords, but not in curRecords
-    //Update them if the type is different
-    private static void UpdateGameObjectsByComparingRecords(IDictionary<string, EntityRecord> prevRecords,
+    private static void DeleteInvalidRecordedGameObjects(IDictionary<string, EntityRecord> prevRecords,
         IDictionary<string, EntityRecord> curRecords) 
     {
         foreach (KeyValuePair<string, EntityRecord> kv in prevRecords) {
             string       goPath           = kv.Key;
             EntityRecord prevEntityRecord = kv.Value;
 
-            if (!curRecords.ContainsKey(goPath)) {
-                ObjectUtility.Destroy(prevEntityRecord.go);
+            if (curRecords.ContainsKey(goPath)) 
                 continue;
-            }
-
-            EntityRecord curEntityRecord = curRecords[goPath];
-            if (prevEntityRecord.dataType == curEntityRecord.dataType)
-                continue;
-
-            //Update entity
-
+            
+            ObjectUtility.Destroy(prevEntityRecord.go);
         }
     }
     
