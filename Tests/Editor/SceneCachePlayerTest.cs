@@ -27,9 +27,17 @@ public class SceneCachePlayerTest  {
         
         //Change
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH));
-        Assert.IsTrue(player.IsSceneCacheOpened());       
+        Assert.IsTrue(player.IsSceneCacheOpened());
+        Camera cam0   = player.GetComponentInChildren<Camera>();        
+        Light  light0 = player.GetComponentInChildren<Light>();        
+        
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH));
         Assert.IsTrue(player.IsSceneCacheOpened());
+        Camera cam1   = player.GetComponentInChildren<Camera>();
+        Light  light1 = player.GetComponentInChildren<Light>();        
+        
+        Assert.AreEqual(cam0, cam1);
+        Assert.AreEqual(light0, light1);
 
         
         Object.DestroyImmediate(player.gameObject); //Cleanup        
