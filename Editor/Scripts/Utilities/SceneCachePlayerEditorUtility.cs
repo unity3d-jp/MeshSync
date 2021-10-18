@@ -66,7 +66,13 @@ internal static class SceneCachePlayerEditorUtility {
         
         if (isPrefabInstance) {
             GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(cachePlayer.gameObject);
-            prefabPath = AssetDatabase.GetAssetPath(prefab);
+            
+            //GetCorrespondingObjectFromSource() may return the ".sc" GameObject instead of the prefab
+            //due to the SceneCacheImporter
+            string assetPath = AssetDatabase.GetAssetPath(prefab);
+            if (Path.GetExtension(assetPath).ToLower() == ".prefab") {
+                prefabPath = assetPath;
+            }            
         } 
         
         cachePlayer.CloseCache();
@@ -77,16 +83,12 @@ internal static class SceneCachePlayerEditorUtility {
         cachePlayer.Init(assetsFolder);
         cachePlayer.OpenCacheInEditor(sceneCacheFilePath);
 
-        //Save as prefab again
         if (string.IsNullOrEmpty(prefabPath)) {
             return;
         }
         
-        //Prevent overwriting ".sc" file itself
-        bool isPrefabExt = (Path.GetExtension(prefabPath).ToLower() == ".prefab");
-        if (isPrefabExt) {
-            cachePlayer.gameObject.SaveAsPrefab(prefabPath);            
-        }        
+        //Save as prefab again if it was truly a prefab instance
+        cachePlayer.gameObject.SaveAsPrefab(prefabPath);
     }
 
     internal static void ReloadSceneCacheFile(SceneCachePlayer cachePlayer) {
