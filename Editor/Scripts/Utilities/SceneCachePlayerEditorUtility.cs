@@ -77,16 +77,12 @@ internal static class SceneCachePlayerEditorUtility {
         cachePlayer.Init(assetsFolder);
         cachePlayer.OpenCacheInEditor(sceneCacheFilePath);
 
-        //Save as prefab again if it was a prefab
+        //Save as prefab again if it was a prefab instance
         if (string.IsNullOrEmpty(prefabPath)) {
             return;
         }
         
-        //Prevent overwriting ".sc" file itself
-        bool isPrefabExt = (Path.GetExtension(prefabPath).ToLower() == ".prefab");
-        if (isPrefabExt) {
-            cachePlayer.gameObject.SaveAsPrefab(prefabPath);            
-        }        
+        cachePlayer.gameObject.SaveAsPrefab(prefabPath);
     }
 
     internal static void ReloadSceneCacheFile(SceneCachePlayer cachePlayer) {
