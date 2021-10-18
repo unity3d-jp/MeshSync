@@ -27,9 +27,19 @@ public class SceneCachePlayerTest  {
         
         //Change
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH));
-        Assert.IsTrue(player.IsSceneCacheOpened());       
+        Assert.IsTrue(player.IsSceneCacheOpened());
+        Camera cam0   = player.GetComponentInChildren<Camera>();        
+        Light  light0 = player.GetComponentInChildren<Light>();        
+        
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH));
         Assert.IsTrue(player.IsSceneCacheOpened());
+        Camera cam1   = player.GetComponentInChildren<Camera>();
+        Light  light1 = player.GetComponentInChildren<Light>();        
+        
+        Assert.IsNotNull(cam0);
+        Assert.IsNotNull(light0);
+        Assert.AreEqual(cam0, cam1);
+        Assert.AreEqual(light0, light1);
 
         
         Object.DestroyImmediate(player.gameObject); //Cleanup        
@@ -54,9 +64,15 @@ public class SceneCachePlayerTest  {
         Assert.IsTrue(prefab.IsPrefab());              
         SceneCachePlayer prefabPlayer = prefab.GetComponent<SceneCachePlayer>();
         Assert.IsNotNull(prefabPlayer);
-                
+        Camera cam0   = prefabPlayer.GetComponentInChildren<Camera>();        
+        Light  light0 = prefabPlayer.GetComponentInChildren<Light>();        
+        
         //Change
-        ChangeSceneCacheFileAndVerify(prefabPlayer,Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH));        
+        TestDataComponents comps = ChangeSceneCacheFileAndVerify(prefabPlayer,
+            Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH)
+        );
+        Assert.AreEqual(cam0, comps.cam);
+        Assert.AreEqual(light0, comps.light);
 
         //Cleanup
         Object.DestroyImmediate(player.gameObject);
@@ -80,11 +96,15 @@ public class SceneCachePlayerTest  {
         //Check the instanced prefab
         Assert.IsNotNull(player);              
         Assert.IsTrue(player.gameObject.IsPrefabInstance());              
+        Camera cam0   = player.GetComponentInChildren<Camera>();        
+        Light  light0 = player.GetComponentInChildren<Light>();        
         
         
         //Change
-        ChangeSceneCacheFileAndVerify(player,Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH));
+        TestDataComponents comps = ChangeSceneCacheFileAndVerify(player,Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH));
         Assert.IsTrue(player.IsSceneCacheOpened());
+        Assert.AreEqual(cam0, comps.cam);
+        Assert.AreEqual(light0, comps.light);
 
         //Cleanup
         Object.DestroyImmediate(player.gameObject);
@@ -221,12 +241,33 @@ public class SceneCachePlayerTest  {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    static void ChangeSceneCacheFileAndVerify(SceneCachePlayer player, string scPath) {
+    static TestDataComponents ChangeSceneCacheFileAndVerify(SceneCachePlayer player, string scPath) {
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, scPath);
         Assert.AreEqual(AssetUtility.NormalizeAssetPath(scPath), player.GetSceneCacheFilePath());        
         Assert.IsTrue(IsAssetPathNormalized(player.GetSceneCacheFilePath()));
         Assert.IsTrue(player.transform.childCount > 0);
+
+        TestDataComponents ret = new TestDataComponents(
+            player.GetComponentInChildren<Camera>(),
+            player.GetComponentInChildren<Light>()
+        );
+        
+        Assert.IsNotNull(ret.cam);
+        Assert.IsNotNull(ret.light);
+        return ret;
     }
+
+    class TestDataComponents {
+        internal Camera cam;
+        internal Light  light;
+
+        internal TestDataComponents(Camera _cam, Light _light) {
+            cam   = _cam;
+            light = _light;
+        }
+    }
+    
+    
     
     
 }

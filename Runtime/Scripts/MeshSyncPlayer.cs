@@ -137,11 +137,14 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     internal Transform GetRootObject() { return m_rootObject;}   
 
-    internal void SetRootObject(Transform t) { m_rootObject = t;}   
+    internal void SetRootObject(Transform t) { m_rootObject = t;}
+
+
+    internal IDictionary<string, EntityRecord> GetClientObjects() {
+        return m_clientObjects;
+    }
     
     #endregion Simple Getter/Setter
-    
-
     
     #region Properties
     

@@ -138,17 +138,10 @@ internal class SceneCachePlayer : MeshSyncPlayer {
 #if UNITY_EDITOR    
     internal bool OpenCacheInEditor(string path) {
 
-        //Delete all children first
-        if (gameObject.IsPrefabInstance()) {
-            PrefabUtility.UnpackPrefabInstance(gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);            
-        } 
-        gameObject.DestroyChildrenImmediate();
-
         if (!OpenCacheInternal(path)) {
             return false;
         }
-
-         
+        
         //Initialization after opening a cache file
         m_sceneCacheFilePath = System.IO.Path.GetFullPath(path).Replace('\\','/');
         m_sceneCacheFilePath = AssetUtility.NormalizeAssetPath(m_sceneCacheFilePath);

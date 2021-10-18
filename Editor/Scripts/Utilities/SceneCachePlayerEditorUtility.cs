@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Unity.FilmInternalUtilities;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Animations;
 using Object = UnityEngine.Object;
 
 namespace Unity.MeshSync.Editor  {
@@ -79,9 +81,35 @@ internal static class SceneCachePlayerEditorUtility {
         
         //[TODO-sin: 2020-9-28] Find out if it is possible to do undo properly
         Undo.RegisterFullObjectHierarchyUndo(cachePlayer.gameObject, "SceneCachePlayer");
-        
+
+        Dictionary<string,EntityRecord> prevRecords = new Dictionary<string, EntityRecord>(cachePlayer.GetClientObjects());                
+        if (isPrefabInstance) {
+            PrefabUtility.UnpackPrefabInstance(cachePlayer.gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);            
+            
+        }
+
+
+        //remove irrelevant  components of the GameObject if the entity type is different
+        void ChangeEntityTypeCB(GameObject updatedGo, TransformData data) {
+            string dataPath = data.path;
+            if (!prevRecords.ContainsKey(dataPath)) 
+                return;
+
+            EntityRecord prevRecord = prevRecords[dataPath];
+            if (data.entityType == prevRecord.dataType) 
+                return;
+
+            DestroyIrrelevantComponents(updatedGo, data.entityType);
+        }
+
+
+        cachePlayer.onUpdateEntity += ChangeEntityTypeCB;        
         cachePlayer.Init(assetsFolder);
-        cachePlayer.OpenCacheInEditor(sceneCacheFilePath);
+        cachePlayer.OpenCacheInEditor(sceneCacheFilePath);        
+        cachePlayer.onUpdateEntity -= ChangeEntityTypeCB;
+        
+        IDictionary<string,EntityRecord> curRecords = cachePlayer.GetClientObjects();
+        DeleteInvalidRecordedGameObjects(prevRecords, curRecords);
 
         if (string.IsNullOrEmpty(prefabPath)) {
             return;
@@ -95,6 +123,59 @@ internal static class SceneCachePlayerEditorUtility {
         string sceneCacheFilePath = cachePlayer.GetSceneCacheFilePath();        
         ChangeSceneCacheFile(cachePlayer, sceneCacheFilePath);
         
+    }
+
+//----------------------------------------------------------------------------------------------------------------------    
+    private static void DestroyIrrelevantComponents(GameObject obj, EntityType curEntityType) {
+
+        HashSet<Type> componentsToDelete = new HashSet<Type>(m_componentsToDeleteOnReload);
+
+        //Check which component should remain (should not be deleted)
+        switch (curEntityType) {
+            case EntityType.Camera:
+                componentsToDelete.Remove(typeof(Camera));
+                break;
+            case EntityType.Light:
+                componentsToDelete.Remove(typeof(Light));
+                break;
+            case EntityType.Mesh: {
+                componentsToDelete.Remove(typeof(SkinnedMeshRenderer));
+                componentsToDelete.Remove(typeof(MeshFilter));
+                componentsToDelete.Remove(typeof(MeshRenderer));
+                break;
+            }                
+            case EntityType.Points:
+                componentsToDelete.Remove(typeof(PointCache));
+                componentsToDelete.Remove(typeof(PointCacheRenderer));
+                break;
+            default:
+                break;
+        }
+        
+
+        foreach (Type t in componentsToDelete) {
+            Component c = obj.GetComponent(t);
+            if (null == c)
+                continue;
+            
+            ObjectUtility.Destroy(c);
+        }
+
+    }
+    
+    //Delete GameObject if they exist in prevRecords, but not in curRecords
+    private static void DeleteInvalidRecordedGameObjects(IDictionary<string, EntityRecord> prevRecords,
+        IDictionary<string, EntityRecord> curRecords) 
+    {
+        foreach (KeyValuePair<string, EntityRecord> kv in prevRecords) {
+            string       goPath           = kv.Key;
+            EntityRecord prevEntityRecord = kv.Value;
+
+            if (curRecords.ContainsKey(goPath)) 
+                continue;
+            
+            ObjectUtility.Destroy(prevEntityRecord.go);
+        }
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
@@ -146,6 +227,30 @@ internal static class SceneCachePlayerEditorUtility {
             "Ok");
         
     }
+    
+    
+    static readonly HashSet<Type> m_componentsToDeleteOnReload = new HashSet<Type>() {
+        typeof(SkinnedMeshRenderer),
+        typeof(MeshFilter),
+        typeof(MeshRenderer),
+        typeof(PointCacheRenderer),
+        typeof(PointCache),
+        typeof(Camera),
+        typeof(Light),
+#if AT_USE_HDRP            
+        typeof(HDAdditionalLightData),
+#endif            
+
+        typeof(AimConstraint),
+        typeof(ParentConstraint),
+        typeof(PositionConstraint),
+        typeof(RotationConstraint),
+        typeof(ScaleConstraint),
+            
+        //typeof(Animator),
+        typeof(MeshCollider),
+            
+    };
     
     
 }
