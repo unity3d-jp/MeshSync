@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Unity.MeshSync {
 
@@ -16,6 +17,15 @@ internal static class TransformExtensions {
         childT.SetParent(t, worldPositionStays);
         return childT;
     }
+    
+
+    //[TODO-sin: 2021-10-18] Move to FIU 
+    internal static void SetParent(this ICollection<Transform> collection, Transform parent) {        
+        foreach (Transform t in collection) {
+            t.SetParent(parent);
+        }
+    }
+    
 }
 
 } //end namespace
