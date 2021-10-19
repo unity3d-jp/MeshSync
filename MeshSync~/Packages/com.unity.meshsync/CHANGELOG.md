@@ -1,6 +1,22 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.9.3-preview] - 2021-10-20
+
+### Changed
+* deps: update to use com.unity.sharp-zip-lib@1.2.2-preview.2
+* deps: update dependency to com.unity.film-internal-utilities@0.11.1-preview 
+* doc: update SceneCachePlayableAsset documentation
+
+### Fixed
+* fix: prioritize files under "Library/PackageCache/*" for installing DCC Plugins (#444)
+* fix: retain previous GameObjects if applicable when reloading SceneCache
+* fix: previously manually added children should not be saved along as prefab when reloading SceneCache
+* fix: choose the correct shader for default materials on URP projects 
+* fix: set light values correctly on HDRP projects
+* fix errors when dragging clips with SceneCachePlayableAsset to another track
+* fix the incorrect extra addition of curve key when dragging a folder to SceneCacheTrack
+
 ## [0.9.2-preview] - 2021-10-07
 
 ### Fixed
