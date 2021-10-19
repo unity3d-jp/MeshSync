@@ -96,15 +96,31 @@ public class SceneCachePlayerTest  {
         //Check the instanced prefab
         Assert.IsNotNull(player);              
         Assert.IsTrue(player.gameObject.IsPrefabInstance());              
-        Camera cam0   = player.GetComponentInChildren<Camera>();        
-        Light  light0 = player.GetComponentInChildren<Light>();        
+        Camera       cam0   = player.GetComponentInChildren<Camera>();        
+        Light        light0 = player.GetComponentInChildren<Light>();
+        MeshRenderer mr0    = player.GetComponentInChildren<MeshRenderer>();
         
+        Assert.IsNotNull(cam0);
+        Assert.IsNotNull(light0);
+        Assert.IsNotNull(mr0);
+
+        GameObject capsule = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        capsule.transform.SetParent(light0.transform);
         
+        GameObject cylinder = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        cylinder.transform.SetParent(mr0.transform);
+                
         //Change
         TestDataComponents comps = ChangeSceneCacheFileAndVerify(player,Path.GetFullPath(MeshSyncTestEditorConstants.SPHERE_TEST_DATA_PATH));
         Assert.IsTrue(player.IsSceneCacheOpened());
         Assert.AreEqual(cam0, comps.cam);
         Assert.AreEqual(light0, comps.light);
+        Assert.AreNotEqual(mr0, comps.meshRenderer);
+        
+        Assert.IsTrue(capsule !=null);
+        Assert.IsFalse(capsule.IsPrefabInstance());
+        Assert.IsTrue(cylinder == null); //should have been deleted when changing sc
+        
 
         //Cleanup
         Object.DestroyImmediate(player.gameObject);
@@ -249,21 +265,25 @@ public class SceneCachePlayerTest  {
 
         TestDataComponents ret = new TestDataComponents(
             player.GetComponentInChildren<Camera>(),
-            player.GetComponentInChildren<Light>()
+            player.GetComponentInChildren<Light>(),
+            player.GetComponentInChildren<MeshRenderer>()
         );
         
         Assert.IsNotNull(ret.cam);
         Assert.IsNotNull(ret.light);
+        Assert.IsNotNull(ret.meshRenderer);
         return ret;
     }
 
     class TestDataComponents {
-        internal Camera cam;
-        internal Light  light;
+        internal readonly Camera       cam;
+        internal readonly Light        light;
+        internal readonly MeshRenderer meshRenderer;
 
-        internal TestDataComponents(Camera _cam, Light _light) {
-            cam   = _cam;
-            light = _light;
+        internal TestDataComponents(Camera _cam, Light _light, MeshRenderer _mr) {
+            cam          = _cam;
+            light        = _light;
+            meshRenderer = _mr;
         }
     }
     
