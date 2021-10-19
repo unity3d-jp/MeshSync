@@ -1,6 +1,11 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Assertions;
 
+#if AT_USE_HDRP
+using UnityEngine.Rendering.HighDefinition;
+#endif
+    
 namespace Unity.MeshSync {
 
 [Serializable]
@@ -24,6 +29,123 @@ internal class EntityRecord {
         }
         return updated;
     }
+//----------------------------------------------------------------------------------------------------------------------
+
+    internal void SetLight(LightData lightData, bool syncVisibility) {
+        TransformData  transformData = lightData.transform;
+        LightDataFlags flags = lightData.dataFlags;
+               
+        LightComponents components = GetOrAddLightComponents();
+        Light destLight  = components.LightComponent;
+
+#if AT_USE_HDRP
+        HDAdditionalLightData destHDLightData = components.HDAdditionalLightDataComponent;
+#endif
+        
+        if (syncVisibility && transformData.dataFlags.hasVisibility)
+            destLight.enabled = transformData.visibility.visibleInRender;
+
+        LightType lightType = lightData.lightType;
+        if ((int)lightType != -1) {
+            destLight.type = lightData.lightType;
+#if AT_USE_HDRP
+            destHDLightData.SetTypeFromLegacy(lightData.lightType);
+#endif
+        }
+        
+        if (flags.hasShadowType)
+            destLight.shadows = lightData.shadowType;
+
+        if (flags.hasColor) {
+            destLight.color = lightData.color;
+#if AT_USE_HDRP
+            destHDLightData.color = lightData.color;
+#endif
+        }
+
+        if (flags.hasIntensity) {
+            destLight.intensity = lightData.intensity;
+#if AT_USE_HDRP
+            destHDLightData.intensity = lightData.intensity;
+#endif
+        }
+
+        if (flags.hasRange) {
+            destLight.range = lightData.range;
+#if AT_USE_HDRP
+            destHDLightData.range = lightData.range;
+#endif
+        }
+
+        if (flags.hasSpotAngle) {
+            
+            destLight.spotAngle = lightData.spotAngle;
+#if AT_USE_HDRP
+            destHDLightData.SetSpotAngle(lightData.spotAngle);
+#endif
+        }
+
+    }
+    
+    internal void SetLight(EntityRecord srcRecord, bool syncVisibility) {
+        
+        Light srcLight = srcRecord.light;
+        if (null == srcLight) 
+            return;
+            
+        LightComponents components = GetOrAddLightComponents();
+        Light destLight  = components.LightComponent;
+        
+        if (syncVisibility && this.hasVisibility)
+            destLight.enabled = this.visibility.visibleInRender;
+        destLight.type      = srcLight.type;
+        destLight.color     = srcLight.color;
+        destLight.intensity = srcLight.intensity;
+        destLight.range     = srcLight.range;
+        destLight.spotAngle = srcLight.spotAngle;
+        
+#if AT_USE_HDRP
+        HDAdditionalLightData destHDLightData = components.HDAdditionalLightDataComponent;
+        destHDLightData.SetTypeFromLegacy(srcLight.type);
+        destHDLightData.color     = srcLight.color;
+        destHDLightData.intensity = srcLight.intensity;
+        destHDLightData.range     = srcLight.range;
+        destHDLightData.SetSpotAngle(srcLight.spotAngle);
+#endif
+
+
+    }
+
+    LightComponents GetOrAddLightComponents() {
+
+        LightComponents recComponents;
+        Assert.IsNotNull(this.go);
+        if (null == this.light) {
+            this.light = Misc.GetOrAddComponent<Light>(this.go);
+        }
+        Assert.IsNotNull(this.light);
+        recComponents.LightComponent = this.light;
+
+#if AT_USE_HDRP    
+        if (null == m_hdAdditionalLightData) {
+            m_hdAdditionalLightData = Misc.GetOrAddComponent<HDAdditionalLightData>(this.go);
+        }
+        Assert.IsNotNull(m_hdAdditionalLightData);
+        recComponents.HDAdditionalLightDataComponent = m_hdAdditionalLightData;
+#endif
+        
+        return recComponents;        
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
+
+    private struct LightComponents {
+        internal Light LightComponent;
+        
+#if AT_USE_HDRP    
+        internal HDAdditionalLightData HDAdditionalLightDataComponent;
+#endif    
+    }    
     
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -32,7 +154,11 @@ internal class EntityRecord {
     public GameObject          go;
     public Transform           trans;
     public Camera              camera;
-    public Light               light;
+    
+    [SerializeField] private Light               light;
+#if AT_USE_HDRP    
+    [SerializeField] private HDAdditionalLightData m_hdAdditionalLightData;
+#endif    
     public MeshFilter          meshFilter;
     public MeshRenderer        meshRenderer;
     public SkinnedMeshRenderer skinnedMeshRenderer;

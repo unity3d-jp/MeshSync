@@ -137,11 +137,14 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 
     internal Transform GetRootObject() { return m_rootObject;}   
 
-    internal void SetRootObject(Transform t) { m_rootObject = t;}   
+    internal void SetRootObject(Transform t) { m_rootObject = t;}
+
+
+    internal IDictionary<string, EntityRecord> GetClientObjects() {
+        return m_clientObjects;
+    }
     
     #endregion Simple Getter/Setter
-    
-
     
     #region Properties
     
@@ -412,12 +415,14 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
 //----------------------------------------------------------------------------------------------------------------------    
 
     private static Material CreateDefaultMaterial() {
-        // prefer non Standard shader because it will be pink in HDRP
+#if AT_USE_HDRP                
         Shader shader = Shader.Find("HDRP/Lit");
-        if (shader == null)
-            shader = Shader.Find("LWRP/Lit");
-        if (shader == null)
-            shader = Shader.Find("Standard");
+#elif AT_USE_URP
+        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+#else 
+        Shader shader = Shader.Find("Standard");
+#endif        
+        Assert.IsNotNull(shader);
         Material ret = new Material(shader);
         return ret;
     }
@@ -1400,27 +1405,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
         if (rec == null || dflags.unchanged)
             return null;
 
-        Light lt = rec.light;
-        if (lt == null)
-            lt = rec.light = Misc.GetOrAddComponent<Light>(rec.go);
-
-        if (m_config.SyncVisibility && dtrans.dataFlags.hasVisibility)
-            lt.enabled = dtrans.visibility.visibleInRender;
-
-        LightType lightType = data.lightType;
-        if ((int)lightType != -1)
-            lt.type = data.lightType;
-        if (dflags.hasShadowType)
-            lt.shadows = data.shadowType;
-
-        if(dflags.hasColor)
-            lt.color = data.color;
-        if (dflags.hasIntensity)
-            lt.intensity = data.intensity;
-        if (dflags.hasRange)
-            lt.range = data.range;
-        if (dflags.hasSpotAngle)
-            lt.spotAngle = data.spotAngle;
+        rec.SetLight(data,m_config.SyncVisibility);
         return rec;
     }
 
@@ -1449,19 +1434,7 @@ internal abstract class MeshSyncPlayer : MonoBehaviour, ISerializationCallbackRe
                 dstcam.farClipPlane = srccam.farClipPlane;
             }
         } else if (src.dataType == EntityType.Light) {
-            Light srclt = src.light;
-            if (srclt != null) {
-                Light dstlt = dst.light;
-                if (dstlt == null)
-                    dstlt = dst.light = Misc.GetOrAddComponent<Light>(dstgo);
-                if (m_config.SyncVisibility && dst.hasVisibility)
-                    dstlt.enabled = dst.visibility.visibleInRender;
-                dstlt.type = srclt.type;
-                dstlt.color = srclt.color;
-                dstlt.intensity = srclt.intensity;
-                dstlt.range = srclt.range;
-                dstlt.spotAngle = srclt.spotAngle;
-            }
+            dst.SetLight(src,m_config.SyncVisibility);
         }
         else if (src.dataType == EntityType.Mesh)
         {

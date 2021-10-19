@@ -29,7 +29,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.film-internal-utilities": {
-      "version": "0.11.0-preview",
+      "version": "0.11.1-preview",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -78,7 +78,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.unity.film-internal-utilities": "0.11.0-preview",
+        "com.unity.film-internal-utilities": "0.11.1-preview",
         "com.unity.editorcoroutines": "1.0.0",
         "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.animation": "1.0.0",
@@ -86,7 +86,7 @@
         "com.unity.modules.director": "1.0.0",
         "com.unity.modules.particlesystem": "1.0.0",
         "com.unity.modules.screencapture": "1.0.0",
-        "com.unity.sharp-zip-lib": "1.2.2-preview.1",
+        "com.unity.sharp-zip-lib": "1.2.2-preview.2",
         "com.unity.timeline": "1.2.14"
       }
     },
@@ -123,7 +123,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.sharp-zip-lib": {
-      "version": "1.2.2-preview.1",
+      "version": "1.2.2-preview.2",
       "depth": 1,
       "source": "registry",
       "dependencies": {},
