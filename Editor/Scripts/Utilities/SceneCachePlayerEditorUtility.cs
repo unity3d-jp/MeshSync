@@ -5,6 +5,11 @@ using Unity.FilmInternalUtilities;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
+
+#if AT_USE_HDRP
+using UnityEngine.Rendering.HighDefinition;
+#endif
+
 using Object = UnityEngine.Object;
 
 namespace Unity.MeshSync.Editor  {
