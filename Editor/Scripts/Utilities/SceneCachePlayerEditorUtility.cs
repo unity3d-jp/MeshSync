@@ -79,6 +79,8 @@ internal static class SceneCachePlayerEditorUtility {
             string assetPath = AssetDatabase.GetAssetPath(prefab);
             if (Path.GetExtension(assetPath).ToLower() == ".prefab") {
                 prefabPath = assetPath;
+            } else {
+                isPrefabInstance = false;
             }            
         } 
         
@@ -86,11 +88,18 @@ internal static class SceneCachePlayerEditorUtility {
         
         //[TODO-sin: 2020-9-28] Find out if it is possible to do undo properly
         Undo.RegisterFullObjectHierarchyUndo(cachePlayer.gameObject, "SceneCachePlayer");
-
-        Dictionary<string,EntityRecord> prevRecords = new Dictionary<string, EntityRecord>(cachePlayer.GetClientObjects());                
+        
+        Dictionary<string,EntityRecord> prevRecords = new Dictionary<string, EntityRecord>(cachePlayer.GetClientObjects());        
+        
+        GameObject tempGO = null;
+        Dictionary<Transform, Transform> nonPrefabTrans = new Dictionary<Transform, Transform>(); //nonPrefab -> origParent
         if (isPrefabInstance) {
-            PrefabUtility.UnpackPrefabInstance(cachePlayer.gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);            
+            //Move non-prefab transforms
+            tempGO = new GameObject("Temp");
+            FindNonPrefabChildren(cachePlayer.transform, ref nonPrefabTrans);
+            nonPrefabTrans.Keys.SetParent(tempGO.transform);
             
+            PrefabUtility.UnpackPrefabInstance(cachePlayer.gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);                       
         }
 
 
@@ -116,12 +125,26 @@ internal static class SceneCachePlayerEditorUtility {
         IDictionary<string,EntityRecord> curRecords = cachePlayer.GetClientObjects();
         DeleteInvalidRecordedGameObjects(prevRecords, curRecords);
 
-        if (string.IsNullOrEmpty(prefabPath)) {
+        if (!isPrefabInstance) {
             return;
         }
         
-        //Save as prefab again if it was truly a prefab instance
-        cachePlayer.gameObject.SaveAsPrefab(prefabPath);
+        
+        cachePlayer.gameObject.SaveAsPrefab(prefabPath); //Save as prefab if it was originally a prefab instance
+        
+        //Move nonPrefab transforms back
+        foreach (KeyValuePair<Transform, Transform> kv in nonPrefabTrans) {
+            Transform origParent = kv.Value;
+            Transform t          = kv.Key;
+            if (null == origParent) {
+                ObjectUtility.Destroy(t.gameObject);
+            } else {
+                t.SetParent(origParent);
+            } 
+        }
+        ObjectUtility.Destroy(tempGO);
+        
+        
     }
 
     internal static void ReloadSceneCacheFile(SceneCachePlayer cachePlayer) {
@@ -180,6 +203,18 @@ internal static class SceneCachePlayerEditorUtility {
                 continue;
             
             ObjectUtility.Destroy(prevEntityRecord.go);
+        }
+    }
+
+    private static void FindNonPrefabChildren(Transform t, ref Dictionary<Transform, Transform> nonPrefabTransforms) {
+        if (!t.gameObject.IsPrefabInstance()) {
+            nonPrefabTransforms.Add(t, t.parent);
+        }
+        
+        int numChildren = t.childCount;
+        for (int i = 0; i < numChildren; ++i) {
+            Transform child = t.GetChild(i);
+            FindNonPrefabChildren(child, ref nonPrefabTransforms);
         }
     }
     
