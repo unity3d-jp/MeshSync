@@ -130,11 +130,10 @@ internal static class SceneCachePlayerEditorUtility {
         //Move nonPrefab transforms back
         foreach (KeyValuePair<Transform, Transform> kv in nonPrefabTrans) {
             Transform origParent = kv.Value;
-            Transform t             = kv.Key;
-            if (null == kv.Value) {
+            Transform t          = kv.Key;
+            if (null == origParent) {
                 ObjectUtility.Destroy(t.gameObject);
-            }
-            else {
+            } else {
                 t.SetParent(origParent);
             } 
         }
