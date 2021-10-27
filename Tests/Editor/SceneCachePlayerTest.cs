@@ -22,7 +22,7 @@ public class SceneCachePlayerTest  {
     public void ChangeSceneCacheOnGameObject() {
         
         //Initial setup            
-        SceneCachePlayer player = ObjectUtility.CreateGameObjectWithComponent<SceneCachePlayer>("SceneCache");
+        SceneCachePlayer player = new GameObject("SceneCache").AddComponent<SceneCachePlayer>();
         Assert.IsFalse(player.IsSceneCacheOpened());
         
         //Change
@@ -131,7 +131,7 @@ public class SceneCachePlayerTest  {
     [UnityTest]
     public IEnumerator ReloadSceneCache() {
         
-        SceneCachePlayer player = ObjectUtility.CreateGameObjectWithComponent<SceneCachePlayer>("SceneCache");
+        SceneCachePlayer player = new GameObject("SceneCache").AddComponent<SceneCachePlayer>();
         
         //Set and reload
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH));
