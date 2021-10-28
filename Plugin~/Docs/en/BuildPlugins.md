@@ -67,7 +67,7 @@ The build process will try to link againts Poco's release libraries in the follo
     xcode-select --install
     ```  
 1. Install [Homebrew](https://brew.sh/).
-1. Install [cmake](https://cmake.org/)  version 3.18 or later.
+1. Install [cmake](https://cmake.org/)  version 3.20.4 or later.
     ``` 
     brew install cmake
     ```  
