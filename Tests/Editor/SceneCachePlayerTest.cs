@@ -163,7 +163,7 @@ public class SceneCachePlayerTest  {
         );
         Assert.IsTrue(prefabCreated);
 
-        Assert.IsTrue(IsAssetPathNormalized(player.GetSceneCacheFilePath()));
+        Assert.IsTrue(AssetEditorUtility.IsPathNormalized(player.GetSceneCacheFilePath()));
 
         //Check player
         Assert.IsNotNull(player);
@@ -245,23 +245,13 @@ public class SceneCachePlayerTest  {
         AssetDatabase.Refresh();                
         
     }
-
-//----------------------------------------------------------------------------------------------------------------------    
-
-    //[TODO-sin: 2021-10-6] Move to FIU
-    static bool IsAssetPathNormalized(string path) {
-        Assert.IsNotNull(path);
-        string normalizedPath = AssetEditorUtility.NormalizePath(path);
-        return (normalizedPath == path);
-
-    }
     
 //----------------------------------------------------------------------------------------------------------------------
 
     static TestDataComponents ChangeSceneCacheFileAndVerify(SceneCachePlayer player, string scPath) {
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, scPath);
         Assert.AreEqual(AssetEditorUtility.NormalizePath(scPath), player.GetSceneCacheFilePath());        
-        Assert.IsTrue(IsAssetPathNormalized(player.GetSceneCacheFilePath()));
+        Assert.IsTrue(AssetEditorUtility.IsPathNormalized(player.GetSceneCacheFilePath()));
         Assert.IsTrue(player.transform.childCount > 0);
 
         TestDataComponents ret = new TestDataComponents(
