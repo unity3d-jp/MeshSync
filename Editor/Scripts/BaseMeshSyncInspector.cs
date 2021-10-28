@@ -80,14 +80,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                 updateFunc: (bool toggle) => { playerConfig.SyncMaterials = toggle; }
             );
             
-            EditorGUI.indentLevel++;
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Find From Asset Database",
-                guiFunc: () => EditorGUILayout.Toggle("Find From AssetDatabase", playerConfig.FindMaterialFromAssets), 
-                updateFunc: (bool toggle) => { playerConfig.FindMaterialFromAssets = toggle; }
-            );
-            
-            EditorGUI.indentLevel--;
-
             EditorGUILayout.Space();
         }
 
