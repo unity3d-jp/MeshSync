@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using System.IO;
 using System.Text.RegularExpressions;
-using Unity.FilmInternalUtilities;
+using Unity.FilmInternalUtilities.Editor;
 using UnityEngine;
 using UnityEditor;
 
@@ -45,8 +45,10 @@ namespace Unity.MeshSync {
                 file.CopyTo(destPath, overwrite);
 
                 // ImportAsset() require relative path from Assets/
-                string importPath = AssetUtility.NormalizeAssetPath(destPath);
+#if UNITY_EDITOR                
+                string importPath = AssetEditorUtility.NormalizePath(destPath);
                 AssetDatabase.ImportAsset(importPath);
+#endif                
             }
 
             // recurse
