@@ -35,17 +35,9 @@ namespace Unity.MeshSync
 
         public const int invalidID = -1;
         public const uint maxVerticesPerMesh =
-#if UNITY_2017_3_OR_NEWER
             0xffffffff;
-#else
-            0xffff;
-#endif
         public const uint maxBoneInfluence =
-#if UNITY_2019_1_OR_NEWER
             255;
-#else
-            4;
-#endif
     }
 
 
