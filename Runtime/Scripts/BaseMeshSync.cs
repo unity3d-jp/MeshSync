@@ -553,11 +553,11 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
                     Transform[] bones = new Transform[boneCount];
                     for (int bi = 0; bi < boneCount; ++bi)
-                        bones[bi] = GameObjectUtility.FindByPath(m_rootObject, rec.bonePaths[bi]);
+                        bones[bi] = FilmInternalUtilities.GameObjectUtility.FindByPath(m_rootObject, rec.bonePaths[bi]);
 
                     Transform root = null;
                     if (!string.IsNullOrEmpty(rec.rootBonePath))
-                        root = GameObjectUtility.FindByPath(m_rootObject, rec.rootBonePath); 
+                        root = FilmInternalUtilities.GameObjectUtility.FindByPath(m_rootObject, rec.rootBonePath); 
                     
                     if (root == null && boneCount > 0)
                     {
@@ -1291,7 +1291,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             }
             
             if (rec == null) {
-                trans = GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
+                trans = FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
                 rec = new EntityRecord {
                     go = trans.gameObject,
                     trans = trans,
@@ -1528,7 +1528,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
     void UpdateConstraint(ConstraintData data)
     {
-        Transform trans = GameObjectUtility.FindOrCreateByPath(m_rootObject, data.path, false);
+        Transform trans = FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, data.path, false);
         if (trans == null)
             return;
 
@@ -1538,7 +1538,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 c.AddSource(new ConstraintSource());
             for (int si = 0; si < ns; ++si) {
                 ConstraintSource s = c.GetSource(si);
-                s.sourceTransform = GameObjectUtility.FindOrCreateByPath(m_rootObject, data.GetSourcePath(si), false);
+                s.sourceTransform = FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, data.GetSourcePath(si), false);
             }
         };
 
@@ -1608,7 +1608,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 target = rec.trans;
             if (target == null)
             {
-                target = GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
+                target = FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
                 if (target == null)
                     return;
             }
@@ -1795,7 +1795,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             return true;
         
         foreach (MaterialList.Node node in ml.nodes) {
-            Transform trans = GameObjectUtility.FindByPath(m_rootObject, node.path);
+            Transform trans = FilmInternalUtilities.GameObjectUtility.FindByPath(m_rootObject, node.path);
             if (trans == null) 
                 continue;
                 
