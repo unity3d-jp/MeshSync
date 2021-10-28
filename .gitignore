@@ -47,5 +47,6 @@ Plugin~/Build/x64/**
 Plugin~/Build/DerivedData
 Plugin~/Build/*.build/*
 Plugin~/Build/Src/**
+Plugin~/Build/build/XCBuildData/**
 
 
