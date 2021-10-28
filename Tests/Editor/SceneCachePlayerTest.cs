@@ -2,6 +2,7 @@
 using System.IO;
 using NUnit.Framework;
 using Unity.FilmInternalUtilities;
+using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -239,8 +240,8 @@ public class SceneCachePlayerTest  {
         Object.DestroyImmediate(player.gameObject);
         DeleteSceneCachePlayerPrefab(prefab);
         
-        AssetDatabase.DeleteAsset(AssetUtility.NormalizeAssetPath(streamingAssetsPath));
-        AssetDatabase.DeleteAsset(AssetUtility.NormalizeAssetPath(destFolder));
+        AssetDatabase.DeleteAsset(AssetEditorUtility.NormalizePath(streamingAssetsPath));
+        AssetDatabase.DeleteAsset(AssetEditorUtility.NormalizePath(destFolder));
         AssetDatabase.Refresh();                
         
     }
@@ -250,7 +251,7 @@ public class SceneCachePlayerTest  {
     //[TODO-sin: 2021-10-6] Move to FIU
     static bool IsAssetPathNormalized(string path) {
         Assert.IsNotNull(path);
-        string normalizedPath = AssetUtility.NormalizeAssetPath(path);
+        string normalizedPath = AssetEditorUtility.NormalizePath(path);
         return (normalizedPath == path);
 
     }

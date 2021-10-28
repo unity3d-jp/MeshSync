@@ -68,7 +68,7 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
             
             string selectedFolder = EditorGUIDrawerUtility.DrawFolderSelectorGUI("Asset Dir", "Asset Dir", 
                 t.GetAssetsFolder(), null);
-            t.SetAssetsFolder(AssetUtility.NormalizeAssetPath(selectedFolder));
+            t.SetAssetsFolder(AssetEditorUtility.NormalizePath(selectedFolder));
             
             Transform rootObject = (Transform) EditorGUILayout.ObjectField("Root Object", t.GetRootObject(), 
                 typeof(Transform), allowSceneObjects: true);                

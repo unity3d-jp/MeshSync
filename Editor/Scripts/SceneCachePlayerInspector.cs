@@ -68,11 +68,11 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         if (m_sceneCachePlayer.foldCacheSettings) {
             //Show Selector GUI. Check if we should reopen
             string fullPath           = m_sceneCachePlayer.GetSceneCacheFilePath();
-            string prevNormalizedPath = AssetUtility.NormalizeAssetPath(fullPath);
+            string prevNormalizedPath = AssetEditorUtility.NormalizePath(fullPath);
 
             string newNormalizedPath = EditorGUIDrawerUtility.DrawFileSelectorGUI("Cache File Path", "MeshSync", 
                 prevNormalizedPath, "sc", OnSceneCacheFileReload);
-            newNormalizedPath = AssetUtility.NormalizeAssetPath(newNormalizedPath);            
+            newNormalizedPath = AssetEditorUtility.NormalizePath(newNormalizedPath);            
 
             if (newNormalizedPath != prevNormalizedPath) {
                 ChangeSceneCacheFileInInspector(m_sceneCachePlayer, newNormalizedPath);
