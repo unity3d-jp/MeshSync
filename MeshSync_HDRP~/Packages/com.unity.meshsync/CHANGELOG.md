@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.10.0-preview] - 2021-10-29
+
+### Added
+* api: open MeshSyncPlayer class to public
+* api: add a callback in MeshSyncServer that is called after receiving data 
+* api: open SceneCachePlayer to public 
+* api: add a public API to force update SceneCachePlayer
+
+### Changed
+* TBD
+* TBD
+* TBD
+* TBD
+
 ## [0.9.3-preview] - 2021-10-20
 
 ### Changed
