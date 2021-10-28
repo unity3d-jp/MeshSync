@@ -250,8 +250,9 @@ public class SceneCachePlayerTest  {
 
     static TestDataComponents ChangeSceneCacheFileAndVerify(SceneCachePlayer player, string scPath) {
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, scPath);
-        Assert.AreEqual(AssetEditorUtility.NormalizePath(scPath), player.GetSceneCacheFilePath());        
-        Assert.IsTrue(AssetEditorUtility.IsPathNormalized(player.GetSceneCacheFilePath()));
+        string savedScFilePath = player.GetSceneCacheFilePath();
+        Assert.AreEqual(AssetEditorUtility.NormalizePath(scPath), savedScFilePath);                
+        Assert.IsTrue(AssetEditorUtility.IsPathNormalized(savedScFilePath),$"{savedScFilePath} is not normalized");
         Assert.IsTrue(player.transform.childCount > 0);
 
         TestDataComponents ret = new TestDataComponents(
