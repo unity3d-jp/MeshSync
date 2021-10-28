@@ -60,7 +60,7 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
 
         MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
         
-        path = AssetUtility.NormalizeAssetPath(path);		
+        path = AssetEditorUtility.NormalizePath(path);
         settings.SetSceneCacheOutputPath(path);
         settings.SaveSettings();
 

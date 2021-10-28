@@ -260,7 +260,7 @@ public class SceneCachePlayerTest  {
 
     static TestDataComponents ChangeSceneCacheFileAndVerify(SceneCachePlayer player, string scPath) {
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, scPath);
-        Assert.AreEqual(AssetUtility.NormalizeAssetPath(scPath), player.GetSceneCacheFilePath());        
+        Assert.AreEqual(AssetEditorUtility.NormalizePath(scPath), player.GetSceneCacheFilePath());        
         Assert.IsTrue(IsAssetPathNormalized(player.GetSceneCacheFilePath()));
         Assert.IsTrue(player.transform.childCount > 0);
 
