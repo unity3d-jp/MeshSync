@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
-#if UNITY_2019_1_OR_NEWER
 using Unity.Collections;
-#endif
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
