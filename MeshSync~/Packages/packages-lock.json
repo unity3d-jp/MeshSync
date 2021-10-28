@@ -38,6 +38,15 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.unity.formats.alembic": {
+      "version": "1.0.7",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.timeline": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.formats.fbx": {
       "version": "4.1.0",
       "depth": 0,
