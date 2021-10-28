@@ -19,7 +19,6 @@ internal class MeshSyncPlayerConfig {
         SyncMeshes             = other.SyncMeshes;
         UpdateMeshColliders    = other.UpdateMeshColliders;
         SyncMaterials          = other.SyncMaterials;
-        FindMaterialFromAssets = other.FindMaterialFromAssets;
 
         //Import Settings   
         AnimationInterpolation   = other.AnimationInterpolation;
@@ -50,7 +49,6 @@ internal class MeshSyncPlayerConfig {
     public bool SyncMeshes             = true;
     public bool UpdateMeshColliders    = true;
     public bool SyncMaterials          = true;
-    public bool FindMaterialFromAssets = true;
 
     //Import Settings   
     public int   AnimationInterpolation   = (int) InterpolationMode.Smooth;

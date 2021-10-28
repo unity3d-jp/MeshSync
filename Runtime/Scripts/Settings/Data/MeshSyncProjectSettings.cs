@@ -74,9 +74,9 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
 
         if (null == m_defaultSceneCachePlayerConfig) {
             m_defaultSceneCachePlayerConfig = new SceneCachePlayerConfig() {
-                UpdateMeshColliders    = false,
-                FindMaterialFromAssets = false,
-                ProgressiveDisplay     = false,
+                UpdateMeshColliders = false,
+                SyncMaterials       = false,
+                ProgressiveDisplay  = false,
             };            
         }         
     }

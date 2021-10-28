@@ -91,10 +91,6 @@ internal class MeshSyncPlayerConfigSection {
         m_syncMaterialsToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Materials,
             (MeshSyncPlayerConfig config, bool newValue) => { config.SyncMaterials = newValue; }
         );
-        m_findMaterialFromAssetsToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, 
-            Contents.FindMaterialsFromAssetDatabase,
-            (MeshSyncPlayerConfig config, bool newValue) => { config.FindMaterialFromAssets = newValue; }
-        );
 
         //import
         Foldout importSettingsFoldout = containerInstance.Query<Foldout>("ImportSettingsFoldout").First();
@@ -283,7 +279,6 @@ internal class MeshSyncPlayerConfigSection {
         m_syncMeshesToggle.SetValueWithoutNotify(config.SyncMeshes);
         m_updateMeshCollidersToggle.SetValueWithoutNotify(config.UpdateMeshColliders);
         m_syncMaterialsToggle.SetValueWithoutNotify(config.SyncMaterials);
-        m_findMaterialFromAssetsToggle.SetValueWithoutNotify(config.FindMaterialFromAssets);
 
         //Import
         m_animationInterpolationPopup.SetValueWithoutNotify(m_animationInterpolationEnums[config.AnimationInterpolation]);
@@ -360,7 +355,6 @@ internal class MeshSyncPlayerConfigSection {
     private Toggle m_syncMeshesToggle;
     private Toggle m_updateMeshCollidersToggle;
     private Toggle m_syncMaterialsToggle;
-    private Toggle m_findMaterialFromAssetsToggle;
     
     //Import Settings
     private PopupField<string> m_animationInterpolationPopup;

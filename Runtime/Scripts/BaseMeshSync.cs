@@ -826,8 +826,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             m_materialList.Add(dst);
         }
 #if UNITY_EDITOR
-        if (m_config.FindMaterialFromAssets && m_config.SyncMaterials 
-            && (dst.material == null || dst.name != materialName))
+        if (m_config.SyncMaterials && (dst.material == null || dst.name != materialName))
         {
             Material candidate = null;
 
