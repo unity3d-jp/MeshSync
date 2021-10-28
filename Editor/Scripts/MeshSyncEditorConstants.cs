@@ -1,23 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using NUnit.Framework;
 using Unity.FilmInternalUtilities.Editor;
+using UnityEditor;
 using UnityEngine;
 
 namespace Unity.MeshSync.Editor {
 
-internal class MeshSyncEditorConstants {
-
-    internal const string   PACKAGE_NAME             = MeshSyncConstants.PACKAGE_NAME;
-    internal static readonly PackageVersion PACKAGE_VERSION = ParsePluginVersion(Lib.GetPluginVersion());
+internal static class MeshSyncEditorConstants {
     
+    [InitializeOnLoadMethod]
+    static void MeshSyncEditorConstants_OnLoad() {
+        bool parsed = PackageVersion.TryParse(Lib.GetPluginVersion(), out m_pluginVersion);
+        Assert.IsTrue(parsed);        
+    }
 
+    internal static PackageVersion GetPluginVersion() {
+        return m_pluginVersion;
+    }
+    
+    
     //Project settings
-    internal const int UNINITIALIZED_TAB    = -1;
-    internal const int SERVER_SETTINGS_TAB              = 0;
-    internal const int SCENE_CACHE_PLAYER_SETTINGS_TAB  = 1;
-    internal const int MAX_SETTINGS_TAB                 = 2;
-    
+    internal const int            UNINITIALIZED_TAB               = -1;
+    internal const int            SERVER_SETTINGS_TAB             = 0;
+    internal const int            SCENE_CACHE_PLAYER_SETTINGS_TAB = 1;
+    internal const int            MAX_SETTINGS_TAB                = 2;
 
     //
     internal const string DCC_INSTALL_SCRIPTS_PATH = "Packages/com.unity.meshsync/Editor/DCCInstallScripts";
@@ -117,73 +125,10 @@ internal class MeshSyncEditorConstants {
     }
     
     
-    //----------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
     
-    //[TODO-sin: 2021-9-15] Move to PackageVersion in FIU
-    private static PackageVersion ParsePluginVersion(string semanticVer) {
-        if (!TryParsePluginVersion(semanticVer, out PackageVersion packageVersion)) {
-            Debug.LogError($"MeshSync: Invalid plugin version {semanticVer}");
-        }
-        return packageVersion;
-    }
-
-    private static bool TryParsePluginVersion(string semanticVer, out PackageVersion packageVersion) {
-        packageVersion = new PackageVersion() {
-            Major = 0,
-            Minor = 0,
-            Patch = 0,
-        };
-        
-        string[] tokens = semanticVer.Split('.');
-        if (tokens.Length <= 2)
-            return false;
-
-        if (int.TryParse(tokens[0], out int major)) {
-            packageVersion.Major = major;
-        }
-
-        if (int.TryParse(tokens[1], out int minor)) {
-            packageVersion.Minor = minor;            
-        }
-
-        //Find patch and lifecycle
-        string[] patches = tokens[2].Split('-');
-        if (int.TryParse(patches[0], out int patch)) {
-            packageVersion.Patch = patch;                        
-        }
-               
-        PackageLifecycle lifecycle = PackageLifecycle.INVALID;
-        if (patches.Length > 1) {
-            string lifecycleStr = patches[1].ToLower();                    
-            switch (lifecycleStr) {
-                case "experimental": lifecycle = PackageLifecycle.EXPERIMENTAL; break;
-                case "preview"     : lifecycle = PackageLifecycle.PREVIEW; break;
-                case "pre"         : lifecycle = PackageLifecycle.PRERELEASE; break;
-                default: lifecycle             = PackageLifecycle.INVALID; break;
-            }
-            
-        } else {
-            lifecycle = PackageLifecycle.RELEASED; 
-            
-        }
-
-        packageVersion = new PackageVersion() {
-            Major     = major,
-            Minor     = minor,
-            Patch     = patch,
-            Lifecycle = lifecycle
-        };
-
-        const int METADATA_INDEX = 3;
-        if (tokens.Length > METADATA_INDEX) {
-            packageVersion.AdditionalMetadata = String.Join(".",tokens, METADATA_INDEX, tokens.Length-METADATA_INDEX);
-        }
-
-        return true;
-
-
-        
-    } 
+    private static PackageVersion m_pluginVersion;
+    
     
     
 }    

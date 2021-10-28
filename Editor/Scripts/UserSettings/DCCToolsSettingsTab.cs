@@ -207,7 +207,7 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
 
         if (null == m_latestCompatibleDCCPluginVersion) {
             EditorUtility.DisplayDialog("MeshSync",
-                $"DCC Plugin compatible with MeshSync@{MeshSyncEditorConstants.PACKAGE_VERSION} is not found", 
+                $"DCC Plugin compatible with MeshSync@{MeshSyncEditorConstants.GetPluginVersion()} is not found", 
                 "Ok"
             );
             return;
@@ -267,20 +267,21 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
     }
 
     void UpdateLatestCompatibleDCCPlugin(VersionsInfo versionsInfo) {
+        PackageVersion pluginVer = MeshSyncEditorConstants.GetPluginVersion();
         
         foreach (string dccPluginVer in versionsInfo.all) {
             bool parsed = PackageVersion.TryParse(dccPluginVer, out PackageVersion dccPluginPackageVersion);
             Assert.IsTrue(parsed);
 
             //Skip incompatible versions
-            if (dccPluginPackageVersion.Major != MeshSyncEditorConstants.PACKAGE_VERSION.Major
-                || dccPluginPackageVersion.Minor != MeshSyncEditorConstants.PACKAGE_VERSION.Minor) 
+            if (dccPluginPackageVersion.GetMajor() != pluginVer.GetMajor()
+                || dccPluginPackageVersion.GetMinor() != pluginVer.GetMinor()) 
             {
                 continue;
             }
 
             if (null == m_latestCompatibleDCCPluginVersion 
-                || dccPluginPackageVersion.Patch > m_latestCompatibleDCCPluginVersion.Patch) 
+                || dccPluginPackageVersion.GetPatch() > m_latestCompatibleDCCPluginVersion.GetPatch()) 
             {
                 m_latestCompatibleDCCPluginVersion = dccPluginPackageVersion;
             }
@@ -373,12 +374,15 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         statusLabel.RemoveFromClassList(PLUGIN_INCOMPATIBLE_CLASS);
         statusLabel.RemoveFromClassList(PLUGIN_INSTALLED_CLASS);
         statusLabel.RemoveFromClassList(PLUGIN_INSTALLED_OLD_CLASS);
+
+        PackageVersion pluginVer = MeshSyncEditorConstants.GetPluginVersion();
         
+        //[TODO-sin: 2021-10-28] this TryParse() check is called more than once in this file. Refactor this code 
         //The DCC Plugin is installed, and we need to check if it's compatible with this version of MeshSync
         bool parsed = PackageVersion.TryParse(installedPluginVersionStr, out PackageVersion installedPluginVersion);
         if (!parsed ||
-            installedPluginVersion.Major != MeshSyncEditorConstants.PACKAGE_VERSION.Major ||
-            installedPluginVersion.Minor != MeshSyncEditorConstants.PACKAGE_VERSION.Minor) 
+            installedPluginVersion.GetMajor() != pluginVer.GetMajor() ||
+            installedPluginVersion.GetMinor() != pluginVer.GetMinor()) 
         {                
             statusLabel.AddToClassList(PLUGIN_INCOMPATIBLE_CLASS);
             statusLabel.text = "Installed MeshSync Plugin is incompatible. Version: " + installedPluginVersionStr; 
@@ -387,7 +391,7 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         
         //Check if we have newer compatible DCCPlugin
         if (null!= m_latestCompatibleDCCPluginVersion 
-            && installedPluginVersion.Patch < m_latestCompatibleDCCPluginVersion.Patch) 
+            && installedPluginVersion.GetPatch() < m_latestCompatibleDCCPluginVersion.GetPatch()) 
         {                
             statusLabel.AddToClassList(PLUGIN_INSTALLED_OLD_CLASS);
             statusLabel.text = $"Plugin {installedPluginVersionStr} installed. " +
