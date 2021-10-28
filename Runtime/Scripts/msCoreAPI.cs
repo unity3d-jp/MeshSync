@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
-#if UNITY_2019_1_OR_NEWER
 using Unity.Collections;
-#endif
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -35,17 +33,9 @@ namespace Unity.MeshSync
 
         public const int invalidID = -1;
         public const uint maxVerticesPerMesh =
-#if UNITY_2017_3_OR_NEWER
             0xffffffff;
-#else
-            0xffff;
-#endif
         public const uint maxBoneInfluence =
-#if UNITY_2019_1_OR_NEWER
             255;
-#else
-            4;
-#endif
     }
 
 
@@ -640,9 +630,7 @@ namespace Unity.MeshSync
         public GameObject target;
         public string path;
         public bool enableVisibility;
-#if UNITY_2018_1_OR_NEWER
         public bool usePhysicalCameraParams;
-#endif
     }
 
     internal struct AnimationCurveData
@@ -849,7 +837,6 @@ namespace Unity.MeshSync
             var clip = ctx.clip;
             var path = ctx.path;
 
-#if UNITY_2018_1_OR_NEWER
             // use physical camera params if available
             bool isPhysicalCameraParamsAvailable = false;
             if (ctx.usePhysicalCameraParams)
@@ -885,7 +872,6 @@ namespace Unity.MeshSync
                 }
             }
             else
-#endif
             {
                 const string Target = "field of view";
                 SetCurve(clip, path, tcam, Target, null, true);

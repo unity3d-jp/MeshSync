@@ -1,13 +1,10 @@
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using UnityEngine;
-#if UNITY_2019_1_OR_NEWER
 using Unity.Collections;
-#endif
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -250,9 +247,7 @@ namespace Unity.MeshSync
             }
         }
 
-#if UNITY_2019_1_OR_NEWER
         // explicit layout doesn't work with generics...
-
         [StructLayout(LayoutKind.Explicit)]
         struct NAByte
         {
@@ -278,7 +273,7 @@ namespace Unity.MeshSync
             union.nativeArray = na;
             return union.pointer;
         }
-#endif
+        
         internal class UniqueNameGenerator
         {
             public string Gen(string name)
