@@ -2,6 +2,7 @@
 using System.IO;
 using NUnit.Framework;
 using Unity.FilmInternalUtilities;
+using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -22,7 +23,7 @@ public class SceneCachePlayerTest  {
     public void ChangeSceneCacheOnGameObject() {
         
         //Initial setup            
-        SceneCachePlayer player = ObjectUtility.CreateGameObjectWithComponent<SceneCachePlayer>("SceneCache");
+        SceneCachePlayer player = new GameObject("SceneCache").AddComponent<SceneCachePlayer>();
         Assert.IsFalse(player.IsSceneCacheOpened());
         
         //Change
@@ -131,7 +132,7 @@ public class SceneCachePlayerTest  {
     [UnityTest]
     public IEnumerator ReloadSceneCache() {
         
-        SceneCachePlayer player = ObjectUtility.CreateGameObjectWithComponent<SceneCachePlayer>("SceneCache");
+        SceneCachePlayer player = new GameObject("SceneCache").AddComponent<SceneCachePlayer>();
         
         //Set and reload
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, Path.GetFullPath(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH));
@@ -162,7 +163,9 @@ public class SceneCachePlayerTest  {
         );
         Assert.IsTrue(prefabCreated);
 
-        Assert.IsTrue(IsAssetPathNormalized(player.GetSceneCacheFilePath()));
+
+        string savedScFilePath = player.GetSceneCacheFilePath();
+        Assert.IsTrue(AssetEditorUtility.IsPathNormalized(savedScFilePath),$"{savedScFilePath} is not normalized");
 
         //Check player
         Assert.IsNotNull(player);
@@ -239,28 +242,19 @@ public class SceneCachePlayerTest  {
         Object.DestroyImmediate(player.gameObject);
         DeleteSceneCachePlayerPrefab(prefab);
         
-        AssetDatabase.DeleteAsset(AssetUtility.NormalizeAssetPath(streamingAssetsPath));
-        AssetDatabase.DeleteAsset(AssetUtility.NormalizeAssetPath(destFolder));
+        AssetDatabase.DeleteAsset(AssetEditorUtility.NormalizePath(streamingAssetsPath));
+        AssetDatabase.DeleteAsset(AssetEditorUtility.NormalizePath(destFolder));
         AssetDatabase.Refresh();                
         
-    }
-
-//----------------------------------------------------------------------------------------------------------------------    
-
-    //[TODO-sin: 2021-10-6] Move to FIU
-    static bool IsAssetPathNormalized(string path) {
-        Assert.IsNotNull(path);
-        string normalizedPath = AssetUtility.NormalizeAssetPath(path);
-        return (normalizedPath == path);
-
     }
     
 //----------------------------------------------------------------------------------------------------------------------
 
     static TestDataComponents ChangeSceneCacheFileAndVerify(SceneCachePlayer player, string scPath) {
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(player, scPath);
-        Assert.AreEqual(AssetUtility.NormalizeAssetPath(scPath), player.GetSceneCacheFilePath());        
-        Assert.IsTrue(IsAssetPathNormalized(player.GetSceneCacheFilePath()));
+        string savedScFilePath = player.GetSceneCacheFilePath();
+        Assert.AreEqual(AssetEditorUtility.NormalizePath(scPath), savedScFilePath);                
+        Assert.IsTrue(AssetEditorUtility.IsPathNormalized(savedScFilePath),$"{savedScFilePath} is not normalized");
         Assert.IsTrue(player.transform.childCount > 0);
 
         TestDataComponents ret = new TestDataComponents(

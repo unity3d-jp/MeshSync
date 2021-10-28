@@ -4,9 +4,10 @@ using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Serialization;
+
 #if UNITY_EDITOR
 using UnityEditor;
+using Unity.FilmInternalUtilities.Editor;
 #endif
 
 namespace Unity.MeshSync
@@ -157,7 +158,7 @@ public class SceneCachePlayer : BaseMeshSync {
         
         //Initialization after opening a cache file
         m_sceneCacheFilePath = System.IO.Path.GetFullPath(path).Replace('\\','/');
-        m_sceneCacheFilePath = AssetUtility.NormalizeAssetPath(m_sceneCacheFilePath);
+        m_sceneCacheFilePath = AssetEditorUtility.NormalizePath(m_sceneCacheFilePath);
                
         UpdatePlayer(/* updateNonMaterialAssets = */ true);
         ExportMaterials(false, true);
