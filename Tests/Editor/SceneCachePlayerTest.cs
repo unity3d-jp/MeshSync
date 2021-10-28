@@ -163,7 +163,9 @@ public class SceneCachePlayerTest  {
         );
         Assert.IsTrue(prefabCreated);
 
-        Assert.IsTrue(AssetEditorUtility.IsPathNormalized(player.GetSceneCacheFilePath()));
+
+        string savedScFilePath = player.GetSceneCacheFilePath();
+        Assert.IsTrue(AssetEditorUtility.IsPathNormalized(savedScFilePath),$"{savedScFilePath} is not normalized");
 
         //Check player
         Assert.IsNotNull(player);
