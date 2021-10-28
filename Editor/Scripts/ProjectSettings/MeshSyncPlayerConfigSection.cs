@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
 using NUnit.Framework;
+using Unity.FilmInternalUtilities;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Unity.MeshSync;
 using UnityEditor;
 using UnityEditor.UIElements;
 using Constants = Unity.MeshSync.Editor.MeshSyncEditorConstants;
@@ -316,22 +314,6 @@ internal class MeshSyncPlayerConfigSection {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    // [TODO-sin: 2021-9-9] Move to FIU
-    static List<string> GetEnumInspectorNames(Type t) {
-        List<string> ret = new List<string>();
-        foreach (MemberInfo mi in t.GetMembers( BindingFlags.Static | BindingFlags.Public)) {
-            InspectorNameAttribute inspectorNameAttribute = (InspectorNameAttribute) Attribute.GetCustomAttribute(mi, typeof(InspectorNameAttribute));
-            if (null == inspectorNameAttribute) {
-                ret.Add(mi.Name);
-                continue;
-            }
-            
-            ret.Add(inspectorNameAttribute.displayName);			
-        }
-
-        return ret;
-    }
-
     private static TemplateContainer InstantiateContainer(MeshSyncPlayerType playerType) {
 
         VisualTreeAsset container = null;
@@ -392,7 +374,7 @@ internal class MeshSyncPlayerConfigSection {
     private readonly List<string> m_animationInterpolationEnums = new List<string>(Enum.GetNames( typeof( InterpolationMode )));
     private readonly List<string> m_zUpCorrectionEnums = new List<string>(Enum.GetNames( typeof( ZUpCorrectionMode )));
 
-    private readonly List<string> m_snapToFrameEnums = GetEnumInspectorNames(typeof(SnapToFrame));
+    private readonly List<string> m_snapToFrameEnums = EnumUtility.ToInspectorNames(typeof(SnapToFrame));
     
 }
 
