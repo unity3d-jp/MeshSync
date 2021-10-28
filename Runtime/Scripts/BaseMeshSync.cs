@@ -450,7 +450,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 for (int i = 0; i < numAssets; ++i) {
                     AssetData asset = scene.GetAsset(i);
 
-                    //Only update MaterialAsset if specified
+                    //Only update non-MaterialAsset if specified
                     if (!updateNonMaterialAssets && asset.type != AssetType.Material)
                         continue;
                     
