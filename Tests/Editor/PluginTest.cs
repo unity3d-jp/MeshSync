@@ -16,8 +16,16 @@ internal class PluginTest {
         while (!list.IsCompleted)
             yield return null;
 
-        PackageVersion pluginVersion = MeshSyncEditorConstants.PACKAGE_VERSION;
-        bool pluginVersionValid = !(pluginVersion.Major == 0 && pluginVersion.Minor == 0 && pluginVersion.Patch == 0); 
+        PackageVersion pluginVersion = MeshSyncEditorConstants.GetPluginVersion();
+
+        int? pluginMajor = pluginVersion.GetMajor();
+        int? pluginMinor = pluginVersion.GetMinor();
+        int? pluginPatch = pluginVersion.GetPatch();
+        
+        Assert.IsNotNull(pluginMajor);
+        Assert.IsNotNull(pluginMinor);
+        
+        bool pluginVersionValid = !(pluginMajor == 0 && pluginMinor == 0 && pluginPatch == 0); 
         Assert.IsTrue(pluginVersionValid, $"Plugin version is not valid: {pluginVersion}" );
         
         foreach (PackageInfo packageInfo in list.Result) {
@@ -29,8 +37,8 @@ internal class PluginTest {
                         
             //Based on our rule to increase the major/minor version whenever we change any plugin code,
             //it's ok for the patch version to be different.
-            Assert.AreEqual(pluginVersion.Major, packageVersion.Major, $"Major: {pluginVersion.Major} !={packageVersion.Major}");           
-            Assert.AreEqual(pluginVersion.Minor, packageVersion.Minor, $"Minor: {pluginVersion.Minor} !={packageVersion.Minor}");            
+            Assert.AreEqual(pluginMajor, packageVersion.GetMajor(), $"Major: {pluginMajor} !={packageVersion.GetMajor()}");           
+            Assert.AreEqual(pluginMinor, packageVersion.GetMinor(), $"Minor: {pluginMinor} !={packageVersion.GetMinor()}");            
             yield break;
         }
         
