@@ -45,10 +45,8 @@ namespace Unity.MeshSync {
                 file.CopyTo(destPath, overwrite);
 
                 // ImportAsset() require relative path from Assets/
-#if UNITY_EDITOR                
                 string importPath = AssetEditorUtility.NormalizePath(destPath);
                 AssetDatabase.ImportAsset(importPath);
-#endif                
             }
 
             // recurse
@@ -61,4 +59,4 @@ namespace Unity.MeshSync {
 
     }
 }
-#endif
+#endif //UNITY_EDITOR
