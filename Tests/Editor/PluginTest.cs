@@ -24,7 +24,6 @@ internal class PluginTest {
         
         Assert.IsNotNull(pluginMajor);
         Assert.IsNotNull(pluginMinor);
-        Assert.IsNotNull(pluginPatch);
         
         bool pluginVersionValid = !(pluginMajor == 0 && pluginMinor == 0 && pluginPatch == 0); 
         Assert.IsTrue(pluginVersionValid, $"Plugin version is not valid: {pluginVersion}" );
