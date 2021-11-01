@@ -465,7 +465,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                             UpdateTextureAsset((TextureData)asset);
                             break;
                         case AssetType.Material:
-                            UpdateMaterialAsset((MaterialData)asset);
+                            UpdateMaterialAssetV((MaterialData)asset);
                             break;
                         case AssetType.Animation:
                             UpdateAnimationAsset((AnimationClipData)asset);
@@ -814,7 +814,9 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return ImageConversion.EncodeToEXR(tex, flags);
     }
 
-    void UpdateMaterialAsset(MaterialData src)
+    private protected abstract void UpdateMaterialAssetV(MaterialData materialData);
+
+    private protected void UpdateMaterialAssetByDefault(MaterialData src)
     {
         int materialID = src.id;
         string materialName = src.name;
