@@ -19,11 +19,9 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
     protected bool DrawAssetSyncSettings(BaseMeshSync t) {
         bool changed   = false;
-        var  styleFold = EditorStyles.foldout;
-        styleFold.fontStyle = FontStyle.Bold;
 
         // Asset Sync Settings
-        t.foldSyncSettings = EditorGUILayout.Foldout(t.foldSyncSettings, "Asset Sync Settings", true, styleFold);
+        t.foldSyncSettings = EditorGUILayout.Foldout(t.foldSyncSettings, "Asset Sync Settings", true, GetBoldFoldoutStyle());
         MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
         if (t.foldSyncSettings) {
 
@@ -83,12 +81,10 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
     protected bool DrawImportSettings(BaseMeshSync t) {
 
         bool changed   = false;
-        var  styleFold = EditorStyles.foldout;
-        styleFold.fontStyle = FontStyle.Bold;
 
         MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
         
-        t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, styleFold);
+        t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, GetBoldFoldoutStyle());
         if (t.foldImportSettings) {
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Create Materials",
                 guiFunc: () =>
@@ -138,12 +134,11 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
     protected bool DrawMiscSettings(BaseMeshSync t) {
 
         bool changed   = false;
-        var  styleFold = EditorStyles.foldout;
-        styleFold.fontStyle = FontStyle.Bold;
+
         MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
         
         // Misc
-        t.foldMisc = EditorGUILayout.Foldout(t.foldMisc, "Misc", true, styleFold);
+        t.foldMisc = EditorGUILayout.Foldout(t.foldMisc, "Misc", true, GetBoldFoldoutStyle());
         if (t.foldMisc)
         {
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Material List",
@@ -516,6 +511,12 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
     protected static void DrawPluginVersion() {
         EditorGUILayout.LabelField("Plugin Version: " + Lib.GetPluginVersion());
+    }
+
+    private static GUIStyle GetBoldFoldoutStyle() {
+        GUIStyle boldFoldoutStyle = EditorStyles.foldout;
+        boldFoldoutStyle.fontStyle = FontStyle.Bold;
+        return boldFoldoutStyle;
     }
 
     
