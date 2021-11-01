@@ -86,8 +86,8 @@ internal class MeshSyncPlayerConfigSection {
             Contents.UpdateMeshColliders,
             (MeshSyncPlayerConfig config, bool newValue) => { config.UpdateMeshColliders = newValue; }
         );
-        m_syncMaterialsToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Materials,
-            (MeshSyncPlayerConfig config, bool newValue) => { config.SyncMaterials = newValue; }
+        m_createMaterialsToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Materials,
+            (MeshSyncPlayerConfig config, bool newValue) => { config.GetModelImporterSettings().CreateMaterials = newValue; }
         );
 
         //import
@@ -276,9 +276,9 @@ internal class MeshSyncPlayerConfigSection {
         m_syncLightsToggle.SetValueWithoutNotify(config.SyncLights);
         m_syncMeshesToggle.SetValueWithoutNotify(config.SyncMeshes);
         m_updateMeshCollidersToggle.SetValueWithoutNotify(config.UpdateMeshColliders);
-        m_syncMaterialsToggle.SetValueWithoutNotify(config.SyncMaterials);
 
         //Import
+        m_createMaterialsToggle.SetValueWithoutNotify(config.GetModelImporterSettings().CreateMaterials);
         m_animationInterpolationPopup.SetValueWithoutNotify(m_animationInterpolationEnums[config.AnimationInterpolation]);
         m_keyframeReductionToggle.SetValueWithoutNotify(config.KeyframeReduction);
         m_reductionThresholdField.SetValueWithoutNotify(config.ReductionThreshold);
@@ -336,7 +336,7 @@ internal class MeshSyncPlayerConfigSection {
     private Toggle m_syncLightsToggle;
     private Toggle m_syncMeshesToggle;
     private Toggle m_updateMeshCollidersToggle;
-    private Toggle m_syncMaterialsToggle;
+    private Toggle m_createMaterialsToggle;
     
     //Import Settings
     private PopupField<string> m_animationInterpolationPopup;

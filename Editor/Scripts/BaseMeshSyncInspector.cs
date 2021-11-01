@@ -76,8 +76,8 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
             //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Materials",
-                guiFunc: () => EditorGUILayout.Toggle("Materials", playerConfig.SyncMaterials), 
-                updateFunc: (bool toggle) => { playerConfig.SyncMaterials = toggle; }
+                guiFunc: () => EditorGUILayout.Toggle("Materials", playerConfig.GetModelImporterSettings().CreateMaterials), 
+                updateFunc: (bool toggle) => { playerConfig.GetModelImporterSettings().CreateMaterials = toggle; }
             );
             
             EditorGUILayout.Space();
