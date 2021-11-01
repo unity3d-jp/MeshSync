@@ -107,6 +107,7 @@ internal class DCCPluginInstallInfo : ISerializationCallbackReceiver {
     [SerializeField] private List<string> m_pluginVersionList;
     
 #pragma warning disable 414
+    //Renamed in 0.10.x-preview
     [FormerlySerializedAs("m_classVersion")] [SerializeField] private int m_dccPluginInstallInfoVersion = CUR_PLUGIN_INSTALL_INFO_VERSION;
 #pragma warning restore 414
 

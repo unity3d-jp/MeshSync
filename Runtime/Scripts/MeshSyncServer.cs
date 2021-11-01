@@ -492,6 +492,7 @@ public class MeshSyncServer : BaseMeshSync {
 #endif
 
 #pragma warning disable 414
+    //Renamed in 0.10.x-preview
     [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_serverVersion = (int) ServerVersion.NO_VERSIONING;
 #pragma warning restore 414
     private const int CUR_SERVER_VERSION = (int) ServerVersion.INITIAL_0_4_0;
