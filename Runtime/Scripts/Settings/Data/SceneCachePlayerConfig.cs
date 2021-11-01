@@ -16,7 +16,7 @@ internal class SceneCachePlayerConfig : MeshSyncPlayerConfig{
 //----------------------------------------------------------------------------------------------------------------------    
     
 #pragma warning disable 414       
-    [SerializeField] private readonly int m_sceneCachePlayerConfigVersion = 1;
+    [SerializeField] private int m_sceneCachePlayerConfigVersion = 1;
 #pragma warning restore 414    
 }
 } //end namespace
