@@ -2125,6 +2125,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [SerializeField] private Transform m_rootObject;
 
     [SerializeField] private protected MeshSyncPlayerConfig m_config;
+    [SerializeField] private protected CommonImporterSettings m_importerSettings;
     
     [SerializeField] private bool m_usePhysicalCameraParams = true;
     [SerializeField] private bool m_useCustomCameraMatrices = true;
