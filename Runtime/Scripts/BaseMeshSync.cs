@@ -1645,7 +1645,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                         clipName = root.name;
 
                     string dstPath = m_assetsFolder + "/" + Misc.SanitizeFileName(clipName) + ".anim";
-                    SaveAsset(ref clip, dstPath);
+                    clip = Misc.SaveOrOverwriteAsset(clip, dstPath);
                     animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(dstPath + ".controller", clip);
                     animClipCache[root.gameObject] = clip;
                 }
@@ -1860,7 +1860,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             Material existing = AssetDatabase.LoadAssetAtPath<Material>(dstPath);
             if (overwrite || existing == null)
             {
-                SaveAsset(ref mat, dstPath);
+                mat = Misc.SaveOrOverwriteAsset(mat, dstPath);
                 if (m_config.Logging)
                     Debug.Log("exported material " + dstPath);
             }
@@ -1896,7 +1896,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(dstPath);
             if (overwrite || existing == null)
             {
-                SaveAsset(ref mesh, dstPath);
+                mesh = Misc.SaveOrOverwriteAsset(mesh, dstPath);
                 kvp.Value.mesh = mesh; // mesh maybe updated by SaveAsset()
                 if (m_config.Logging)
                     Debug.Log("exported material " + dstPath);
