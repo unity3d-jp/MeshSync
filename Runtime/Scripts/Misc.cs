@@ -185,7 +185,7 @@ namespace Unity.MeshSync
 
         // save asset to path.
         // if there is already a file, overwrite it but keep .meta intact.
-        public static T SaveAsset<T>(T asset, string path) where T : UnityEngine.Object
+        public static T SaveOrOverwriteAsset<T>(T asset, string path) where T : UnityEngine.Object
         {
             try
             {

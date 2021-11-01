@@ -309,7 +309,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     private bool SaveAsset<T>(ref T obj, string assetPath) where T : UnityEngine.Object
     {
 #if UNITY_EDITOR
-        T ret = Misc.SaveAsset(obj, assetPath);
+        T ret = Misc.SaveOrOverwriteAsset(obj, assetPath);
         if (ret != null)
         {
             obj = ret;
