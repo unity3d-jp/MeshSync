@@ -109,7 +109,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
     internal void Init(string assetsFolder) {
         Assert.IsTrue(assetsFolder.StartsWith("Assets"));
-        m_assetsFolder = assetsFolder;
+        m_assetsFolder = assetsFolder.Replace('\\','/');
         m_rootObject   = gameObject.transform;
         
         m_materialList.Clear();
@@ -309,7 +309,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     private bool SaveAsset<T>(ref T obj, string assetPath) where T : UnityEngine.Object
     {
 #if UNITY_EDITOR
-        T ret = Misc.SaveAsset(obj, assetPath);
+        T ret = Misc.OverwriteOrCreateAsset(obj, assetPath);
         if (ret != null)
         {
             obj = ret;
