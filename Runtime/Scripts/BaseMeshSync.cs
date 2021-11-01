@@ -816,7 +816,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
     private protected abstract void UpdateMaterialAssetV(MaterialData materialData);
 
-    void UpdateMaterialAssetInternal(MaterialData src)
+    private protected void UpdateMaterialAssetByDefault(MaterialData src)
     {
         int materialID = src.id;
         string materialName = src.name;
