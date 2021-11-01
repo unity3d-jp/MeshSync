@@ -256,34 +256,13 @@ public class SceneCachePlayer : BaseMeshSync {
         if (m_sceneCache.sceneCount < 2)
             return false;
 
-        AnimationClip clip = null;
-        if (m_animator.runtimeAnimatorController != null) {
-            AnimationClip[] clips = m_animator.runtimeAnimatorController.animationClips;
-            if (clips != null && clips.Length > 0) {
-                AnimationClip tmp = m_animator.runtimeAnimatorController.animationClips[0];
-                if (tmp != null) {
-                    clip = tmp;
-                    Undo.RegisterCompleteObjectUndo(clip, "SceneCachePlayer");
-                }
-            }
-        }
+        m_animator.runtimeAnimatorController = GetOrCreateAnimatorControllerWithClip();
+        Assert.IsNotNull(m_animator.runtimeAnimatorController);
+        Assert.IsNotNull(m_animator.runtimeAnimatorController.animationClips);
+        Assert.IsTrue(m_animator.runtimeAnimatorController.animationClips.Length > 0);
+        AnimationClip clip = m_animator.runtimeAnimatorController.animationClips[0];
 
-        if (null == clip) {
-            clip = new AnimationClip();
-
-            string assetsFolder = GetAssetsFolder();
-
-            string animPath       = string.Format("{0}/{1}.anim", assetsFolder, gameObject.name);
-            string controllerPath = string.Format("{0}/{1}.controller", assetsFolder, gameObject.name);
-            clip = Misc.SaveAsset(clip, animPath);
-            if (clip.IsNullRef()) {
-                Debug.LogError("[MeshSync] Internal error in initializing clip for SceneCache");
-                return false;
-                
-            }
-
-            m_animator.runtimeAnimatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(controllerPath, clip);
-        }
+        
         float sampleRate = m_sceneCache.sampleRate;
         if (sampleRate > 0.0f)
             clip.frameRate = sampleRate;
