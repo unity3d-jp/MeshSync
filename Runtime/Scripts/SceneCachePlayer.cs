@@ -231,20 +231,21 @@ public class SceneCachePlayer : BaseMeshSync {
             }
         }
    
-        //create new 
-        AnimationClip clip = new AnimationClip();
         string assetsFolder = GetAssetsFolder();
-
-        string goName         = gameObject.name;
-        string animPath       = $"{assetsFolder}/{goName}.anim";
-        string controllerPath = $"{assetsFolder}/{goName}.controller";
-        clip = Misc.SaveAsset(clip, animPath);
-        if (clip.IsNullRef()) {
-            Debug.LogError("[MeshSync] Internal error in initializing clip for SceneCache");
-            return null;
-            
+        string goName       = gameObject.name;
+        string animPath     = $"{assetsFolder}/{goName}.anim";
+        
+        AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(animPath);
+        if (null == clip) {
+            clip = new AnimationClip();
+            AssetDatabase.CreateAsset(clip, animPath);
         }
+        
+        
+        clip.ClearCurves();
+        Assert.IsNotNull(clip);
 
+        string controllerPath = $"{assetsFolder}/{goName}.controller";
         animatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(controllerPath, clip);
         m_animator.runtimeAnimatorController = animatorController; 
 
