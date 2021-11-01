@@ -74,12 +74,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
             );
             EditorGUI.indentLevel--;
 
-            //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Materials",
-                guiFunc: () => EditorGUILayout.Toggle("Materials", playerConfig.GetModelImporterSettings().CreateMaterials), 
-                updateFunc: (bool toggle) => { playerConfig.GetModelImporterSettings().CreateMaterials = toggle; }
-            );
-            
+            //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));            
             EditorGUILayout.Space();
         }
 
@@ -87,6 +82,11 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
         t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, styleFold);
         if (t.foldImportSettings)
         {
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Create Materials",
+                guiFunc: () => EditorGUILayout.Toggle("Create Materials", playerConfig.GetModelImporterSettings().CreateMaterials), 
+                updateFunc: (bool toggle) => { playerConfig.GetModelImporterSettings().CreateMaterials = toggle; }
+            );
+            
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Animation Interpolation",
                 guiFunc: () => EditorGUILayout.Popup(new GUIContent("Animation Interpolation"), playerConfig.AnimationInterpolation, m_animationInterpolationEnums), 
                 updateFunc: (int val) => { playerConfig.AnimationInterpolation = val; }
