@@ -53,8 +53,7 @@ public class SceneCachePlayer : BaseMeshSync {
 
         
 #if UNITY_EDITOR
-        IHasModelImporterSettings importer = AssetImporter.GetAtPath(m_sceneCacheFilePath) as IHasModelImporterSettings;
-        if (null != importer) {
+        if (AssetImporter.GetAtPath(m_sceneCacheFilePath) is IHasModelImporterSettings importer) {
             modelImporterSettings = importer.GetModelImporterSettings();
         } 
 #endif            
