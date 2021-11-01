@@ -18,15 +18,8 @@ public class SceneCacheImporterInspector: ScriptedImporterEditor
     }
     
     public override void OnInspectorGUI() {
-        DrawModelImporterSettingsGUI(m_scImporter, m_scImporter.GetModelImporterSettings());
+        MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(m_scImporter, m_scImporter.GetModelImporterSettings());
         base.ApplyRevertGUI();
-    }
-
-    static void DrawModelImporterSettingsGUI(Object obj, ModelImporterSettings settings) {
-        EditorGUIDrawerUtility.DrawUndoableGUI(obj, "SceneCache: Snap",            
-            guiFunc: () => (bool)EditorGUILayout.Toggle("Create Materials", settings.CreateMaterials), 
-            updateFunc: (bool createMat) => { settings.CreateMaterials = createMat; });
-        
     }
 
 //----------------------------------------------------------------------------------------------------------------------
