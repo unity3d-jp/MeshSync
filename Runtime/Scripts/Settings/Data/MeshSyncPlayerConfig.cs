@@ -39,7 +39,9 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
-    public void OnBeforeSerialize() {}
+    public void OnBeforeSerialize() {
+        m_meshSyncPlayerConfigVersion = CUR_MESHSYNC_PLAYER_CONFIG_VERSION;
+    }
 
     public void OnAfterDeserialize() {
         if (m_meshSyncPlayerConfigVersion == CUR_MESHSYNC_PLAYER_CONFIG_VERSION)
