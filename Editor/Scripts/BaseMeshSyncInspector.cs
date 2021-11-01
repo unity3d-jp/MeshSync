@@ -78,28 +78,27 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
     }
 
-    protected bool DrawImportSettings(BaseMeshSync t) {
+    protected static bool DrawImportSettings(BaseMeshSync t) {
 
         bool changed   = false;
-
-        MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
+        MeshSyncPlayerConfig playerConfig = t.GetConfig();
         
         t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, GetBoldFoldoutStyle());
         if (t.foldImportSettings) {
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Create Materials",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Create Materials",
                 guiFunc: () =>
                     EditorGUILayout.Toggle("Create Materials", playerConfig.GetModelImporterSettings().CreateMaterials),
                 updateFunc: (bool toggle) => { playerConfig.GetModelImporterSettings().CreateMaterials = toggle; }
             );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Animation Interpolation",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Animation Interpolation",
                 guiFunc: () => EditorGUILayout.Popup(new GUIContent("Animation Interpolation"),
                     playerConfig.AnimationInterpolation, m_animationInterpolationEnums),
                 updateFunc: (int val) => { playerConfig.AnimationInterpolation = val; }
             );
 
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Keyframe Reduction",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Keyframe Reduction",
                 guiFunc: () => EditorGUILayout.Toggle("Keyframe Reduction", playerConfig.KeyframeReduction),
                 updateFunc: (bool toggle) => { playerConfig.KeyframeReduction = toggle; }
             );
@@ -107,19 +106,19 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
             if (playerConfig.KeyframeReduction) {
                 EditorGUI.indentLevel++;
 
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Threshold",
+                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Threshold",
                     guiFunc: () => EditorGUILayout.FloatField("Threshold", playerConfig.ReductionThreshold),
                     updateFunc: (float val) => { playerConfig.ReductionThreshold = val; }
                 );
 
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Erase Flat Curves",
+                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Erase Flat Curves",
                     guiFunc: () => EditorGUILayout.Toggle("Erase Flat Curves", playerConfig.ReductionEraseFlatCurves),
                     updateFunc: (bool toggle) => { playerConfig.ReductionEraseFlatCurves = toggle; }
                 );
                 EditorGUI.indentLevel--;
             }
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Z-Up Correction",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Z-Up Correction",
                 guiFunc: () => EditorGUILayout.Popup(new GUIContent("Z-Up Correction"), playerConfig.ZUpCorrection,
                     m_zUpCorrectionEnums),
                 updateFunc: (int val) => { playerConfig.ZUpCorrection = val; }
@@ -134,7 +133,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
     protected bool DrawMiscSettings(BaseMeshSync t) {
 
         bool changed   = false;
-
         MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
         
         // Misc
@@ -523,8 +521,8 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 //----------------------------------------------------------------------------------------------------------------------
 
     private BaseMeshSync m_asset = null;
-    private readonly string[] m_animationInterpolationEnums = System.Enum.GetNames( typeof( InterpolationMode ) );
-    private readonly string[] m_zUpCorrectionEnums          = System.Enum.GetNames( typeof( ZUpCorrectionMode ) );
+    private static readonly string[] m_animationInterpolationEnums = System.Enum.GetNames( typeof( InterpolationMode ) );
+    private static readonly string[] m_zUpCorrectionEnums          = System.Enum.GetNames( typeof( ZUpCorrectionMode ) );
 
 }
 
