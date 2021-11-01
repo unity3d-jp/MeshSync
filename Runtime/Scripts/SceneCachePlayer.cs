@@ -262,6 +262,7 @@ public class SceneCachePlayer : BaseMeshSync {
         AnimationClip clip = animatorController.animationClips[0];
         Assert.IsNotNull(clip);
 
+        Undo.RegisterCompleteObjectUndo(clip, "SceneCachePlayer");
         
         float sampleRate = m_sceneCache.sampleRate;
         if (sampleRate > 0.0f)
