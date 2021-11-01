@@ -4,8 +4,10 @@ using UnityEngine;
 namespace Unity.MeshSync {
 
 [Serializable]
-internal struct ModelImporterSettings {
+internal class ModelImporterSettings {
 
+    internal ModelImporterSettings() { }
+    
     internal ModelImporterSettings(ModelImporterSettings other) {
         this.SyncMaterials = other.SyncMaterials;
     }

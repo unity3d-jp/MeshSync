@@ -56,7 +56,7 @@ internal class MeshSyncPlayerConfig {
     public bool UpdateMeshColliders    = true;
     [Obsolete] public bool SyncMaterials          = true;
 
-    [SerializeField] private ModelImporterSettings m_importerSettings;
+    [SerializeField] private ModelImporterSettings m_importerSettings = new ModelImporterSettings();
 
     //Import Settings   
     public int   AnimationInterpolation   = (int) InterpolationMode.Smooth;
