@@ -1,7 +1,13 @@
-namespace Unity.MeshSync.Editor {
+
+#if UNITY_2020_2_OR_NEWER
+using UnityEditor.AssetImporters;
+#else
+    using UnityEditor.Experimental.AssetImporters;
+#endif
 
 using UnityEditor;
-using UnityEditor.Experimental.AssetImporters;
+
+namespace Unity.MeshSync.Editor {
 
 [CustomEditor(typeof(SceneCacheImporter))]
 public class SceneCacheImporterInspector: ScriptedImporterEditor
