@@ -4,11 +4,11 @@ using UnityEngine;
 namespace Unity.MeshSync {
 
 [Serializable]
-internal class CommonImporterSettings {
+internal class ModelImporterSettings {
 
-    internal CommonImporterSettings() {}
+    internal ModelImporterSettings() {}
 
-    internal CommonImporterSettings(CommonImporterSettings other) {
+    internal ModelImporterSettings(ModelImporterSettings other) {
         m_syncMaterials = other.m_syncMaterials;
     }
 

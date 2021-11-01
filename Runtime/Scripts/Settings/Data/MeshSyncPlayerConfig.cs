@@ -20,7 +20,7 @@ internal class MeshSyncPlayerConfig {
         UpdateMeshColliders    = other.UpdateMeshColliders;
 
         //Import Settings   
-        m_importerSettings       = new CommonImporterSettings(other.m_importerSettings); 
+        m_importerSettings       = new ModelImporterSettings(other.m_importerSettings); 
         AnimationInterpolation   = other.AnimationInterpolation;
         KeyframeReduction        = other.KeyframeReduction;
         ReductionThreshold       = other.ReductionThreshold;
@@ -50,7 +50,7 @@ internal class MeshSyncPlayerConfig {
     public bool UpdateMeshColliders    = true;
     [Obsolete] public bool SyncMaterials          = true;
 
-    [SerializeField] private CommonImporterSettings m_importerSettings;
+    [SerializeField] private ModelImporterSettings m_importerSettings;
 
     //Import Settings   
     public int   AnimationInterpolation   = (int) InterpolationMode.Smooth;
