@@ -10,11 +10,6 @@ namespace Unity.MeshSync.Editor
 internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
             
    
-//----------------------------------------------------------------------------------------------------------------------        
-    public virtual void OnEnable() {
-        m_asset = target as BaseMeshSync;
-    }
-
 //----------------------------------------------------------------------------------------------------------------------
 
     protected static bool DrawAssetSyncSettings(BaseMeshSync t) {
@@ -520,7 +515,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    private BaseMeshSync m_asset = null;
     private static readonly string[] ANIMATION_INTERPOLATION_ENUMS = System.Enum.GetNames( typeof( InterpolationMode ) );
     private static readonly string[] Z_UP_CORRECTION_ENUMS         = System.Enum.GetNames( typeof( ZUpCorrectionMode ) );
 

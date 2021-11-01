@@ -13,8 +13,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    public override void OnEnable() {
-        base.OnEnable();
+    public void OnEnable() {
         m_sceneCachePlayer = target as SceneCachePlayer;
         
         m_targets.Clear();

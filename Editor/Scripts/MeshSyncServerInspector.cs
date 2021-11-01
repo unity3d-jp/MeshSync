@@ -7,14 +7,11 @@ namespace Unity.MeshSync.Editor  {
 [CustomEditor(typeof(MeshSyncServer))]
 internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
     
-//----------------------------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    public override void OnEnable() {
-        base.OnEnable();
+    public void OnEnable() {
         m_meshSyncServer = target as MeshSyncServer;
-
     }
 
 //----------------------------------------------------------------------------------------------------------------------
