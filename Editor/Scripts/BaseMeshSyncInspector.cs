@@ -16,9 +16,8 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    
-    protected bool DrawPlayerSettings(BaseMeshSync t) 
-    {
+
+    protected bool DrawAssetSyncSettings(BaseMeshSync t) {
         bool changed   = false;
         var  styleFold = EditorStyles.foldout;
         styleFold.fontStyle = FontStyle.Bold;
@@ -28,48 +27,47 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
         MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
         if (t.foldSyncSettings) {
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Visibility",
-                guiFunc: () => EditorGUILayout.Toggle("Visibility", playerConfig.SyncVisibility), 
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Sync Visibility",
+                guiFunc: () => EditorGUILayout.Toggle("Visibility", playerConfig.SyncVisibility),
                 updateFunc: (bool toggle) => { playerConfig.SyncVisibility = toggle; }
             );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Transform",
-                guiFunc: () => EditorGUILayout.Toggle("Transform", playerConfig.SyncTransform), 
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Sync Transform",
+                guiFunc: () => EditorGUILayout.Toggle("Transform", playerConfig.SyncTransform),
                 updateFunc: (bool toggle) => { playerConfig.SyncTransform = toggle; }
             );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Cameras",
-                guiFunc: () => EditorGUILayout.Toggle("Cameras", playerConfig.SyncCameras), 
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Sync Cameras",
+                guiFunc: () => EditorGUILayout.Toggle("Cameras", playerConfig.SyncCameras),
                 updateFunc: (bool toggle) => { playerConfig.SyncCameras = toggle; }
             );
-            
-            if (playerConfig.SyncCameras)
-            {
+
+            if (playerConfig.SyncCameras) {
                 EditorGUI.indentLevel++;
 
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Physical Camera Params",
-                    guiFunc: () => EditorGUILayout.Toggle("Physical Camera Params", t.GetUsePhysicalCameraParams()), 
+                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Physical Camera Params",
+                    guiFunc: () => EditorGUILayout.Toggle("Physical Camera Params", t.GetUsePhysicalCameraParams()),
                     updateFunc: (bool toggle) => { t.SetUsePhysicalCameraParams(toggle); }
-                );
-                
+                    );
+
                 //EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
                 EditorGUI.indentLevel--;
             }
-            
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Lights",
-                guiFunc: () => EditorGUILayout.Toggle("Lights", playerConfig.SyncLights), 
+
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Sync Lights",
+                guiFunc: () => EditorGUILayout.Toggle("Lights", playerConfig.SyncLights),
                 updateFunc: (bool toggle) => { playerConfig.SyncLights = toggle; }
             );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Meshes",
-                guiFunc: () => EditorGUILayout.Toggle("Meshes", playerConfig.SyncMeshes), 
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Sync Meshes",
+                guiFunc: () => EditorGUILayout.Toggle("Meshes", playerConfig.SyncMeshes),
                 updateFunc: (bool toggle) => { playerConfig.SyncMeshes = toggle; }
             );
-            
+
 
             EditorGUI.indentLevel++;
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Update Mesh Colliders",
-                guiFunc: () => EditorGUILayout.Toggle("Update Mesh Colliders", playerConfig.UpdateMeshColliders), 
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Update Mesh Colliders",
+                guiFunc: () => EditorGUILayout.Toggle("Update Mesh Colliders", playerConfig.UpdateMeshColliders),
                 updateFunc: (bool toggle) => { playerConfig.UpdateMeshColliders = toggle; }
             );
             EditorGUI.indentLevel--;
@@ -78,50 +76,72 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
             EditorGUILayout.Space();
         }
 
-        // Import Settings
+        return changed;
+
+    }
+
+    protected bool DrawImportSettings(BaseMeshSync t) {
+
+        bool changed   = false;
+        var  styleFold = EditorStyles.foldout;
+        styleFold.fontStyle = FontStyle.Bold;
+
+        MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
+        
         t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, styleFold);
-        if (t.foldImportSettings)
-        {
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Create Materials",
-                guiFunc: () => EditorGUILayout.Toggle("Create Materials", playerConfig.GetModelImporterSettings().CreateMaterials), 
+        if (t.foldImportSettings) {
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Create Materials",
+                guiFunc: () =>
+                    EditorGUILayout.Toggle("Create Materials", playerConfig.GetModelImporterSettings().CreateMaterials),
                 updateFunc: (bool toggle) => { playerConfig.GetModelImporterSettings().CreateMaterials = toggle; }
             );
-            
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Animation Interpolation",
-                guiFunc: () => EditorGUILayout.Popup(new GUIContent("Animation Interpolation"), playerConfig.AnimationInterpolation, m_animationInterpolationEnums), 
+
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Animation Interpolation",
+                guiFunc: () => EditorGUILayout.Popup(new GUIContent("Animation Interpolation"),
+                    playerConfig.AnimationInterpolation, m_animationInterpolationEnums),
                 updateFunc: (int val) => { playerConfig.AnimationInterpolation = val; }
             );
-            
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Keyframe Reduction",
-                guiFunc: () => EditorGUILayout.Toggle("Keyframe Reduction", playerConfig.KeyframeReduction), 
+
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Keyframe Reduction",
+                guiFunc: () => EditorGUILayout.Toggle("Keyframe Reduction", playerConfig.KeyframeReduction),
                 updateFunc: (bool toggle) => { playerConfig.KeyframeReduction = toggle; }
             );
-            
-            if (playerConfig.KeyframeReduction)
-            {
+
+            if (playerConfig.KeyframeReduction) {
                 EditorGUI.indentLevel++;
-                
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Threshold",
-                    guiFunc: () => EditorGUILayout.FloatField("Threshold", playerConfig.ReductionThreshold), 
+
+                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Threshold",
+                    guiFunc: () => EditorGUILayout.FloatField("Threshold", playerConfig.ReductionThreshold),
                     updateFunc: (float val) => { playerConfig.ReductionThreshold = val; }
                 );
-                
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Erase Flat Curves",
-                    guiFunc: () => EditorGUILayout.Toggle("Erase Flat Curves", playerConfig.ReductionEraseFlatCurves), 
+
+                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Erase Flat Curves",
+                    guiFunc: () => EditorGUILayout.Toggle("Erase Flat Curves", playerConfig.ReductionEraseFlatCurves),
                     updateFunc: (bool toggle) => { playerConfig.ReductionEraseFlatCurves = toggle; }
                 );
                 EditorGUI.indentLevel--;
             }
-            
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Z-Up Correction",
-                guiFunc: () => EditorGUILayout.Popup(new GUIContent("Z-Up Correction"), playerConfig.ZUpCorrection, m_zUpCorrectionEnums), 
+
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Z-Up Correction",
+                guiFunc: () => EditorGUILayout.Popup(new GUIContent("Z-Up Correction"), playerConfig.ZUpCorrection,
+                    m_zUpCorrectionEnums),
                 updateFunc: (int val) => { playerConfig.ZUpCorrection = val; }
             );
 
             EditorGUILayout.Space();
         }
 
+        return changed;
+    }
+
+    protected bool DrawMiscSettings(BaseMeshSync t) {
+
+        bool changed   = false;
+        var  styleFold = EditorStyles.foldout;
+        styleFold.fontStyle = FontStyle.Bold;
+        MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
+        
         // Misc
         t.foldMisc = EditorGUILayout.Foldout(t.foldMisc, "Misc", true, styleFold);
         if (t.foldMisc)
