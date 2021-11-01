@@ -4,6 +4,7 @@ using System.IO;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Analytics;
+using UnityEngine.Serialization;
 
 namespace Unity.MeshSync.Editor {
 
@@ -106,7 +107,7 @@ internal class DCCPluginInstallInfo : ISerializationCallbackReceiver {
     [SerializeField] private List<string> m_pluginVersionList;
     
 #pragma warning disable 414
-    [SerializeField] private int m_classVersion = CUR_PLUGIN_INSTALL_INFO_VERSION;
+    [FormerlySerializedAs("m_classVersion")] [SerializeField] private int m_dccPluginInstallInfoVersion = CUR_PLUGIN_INSTALL_INFO_VERSION;
 #pragma warning restore 414
 
     
