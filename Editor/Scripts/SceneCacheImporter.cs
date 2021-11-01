@@ -13,6 +13,13 @@ namespace Unity.MeshSync.Editor {
 [ScriptedImporter(1, "sc")]
 internal class SceneCacheImporter : ScriptedImporter, IHasModelImporterSettings
 {
+    private void Reset() {
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings(); 
+        m_importerSettings = projectSettings.GetDefaultSceneCachePlayerConfig().GetModelImporterSettings();
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
+    
     public override void OnImportAsset(AssetImportContext ctx) {
         //Ignore assets outside Assets folder (for example: Packages, etc)
         if (!ctx.assetPath.StartsWith("Assets/"))
@@ -34,7 +41,7 @@ internal class SceneCacheImporter : ScriptedImporter, IHasModelImporterSettings
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    [SerializeField] private ModelImporterSettings m_importerSettings = new ModelImporterSettings();
+    [SerializeField] private ModelImporterSettings m_importerSettings;
     
 }
 
