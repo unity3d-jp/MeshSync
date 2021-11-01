@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
-using UnityEngine;
 
 namespace Unity.MeshSync.Editor {
 
@@ -19,6 +17,11 @@ internal static class MeshSyncEditorConstants {
     internal static PackageVersion GetPluginVersion() {
         return m_pluginVersion;
     }
+
+//----------------------------------------------------------------------------------------------------------------------    
+    
+    internal static readonly string[] ANIMATION_INTERPOLATION_ENUMS = System.Enum.GetNames( typeof( InterpolationMode ) );
+    internal static readonly string[] Z_UP_CORRECTION_ENUMS         = System.Enum.GetNames( typeof( ZUpCorrectionMode ) );
     
     
     //Project settings
