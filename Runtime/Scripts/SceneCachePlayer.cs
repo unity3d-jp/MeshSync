@@ -255,11 +255,12 @@ public class SceneCachePlayer : BaseMeshSync {
         if (m_sceneCache.sceneCount < 2)
             return false;
 
-        m_animator.runtimeAnimatorController = GetOrCreateAnimatorControllerWithClip();
-        Assert.IsNotNull(m_animator.runtimeAnimatorController);
-        Assert.IsNotNull(m_animator.runtimeAnimatorController.animationClips);
-        Assert.IsTrue(m_animator.runtimeAnimatorController.animationClips.Length > 0);
-        AnimationClip clip = m_animator.runtimeAnimatorController.animationClips[0];
+        RuntimeAnimatorController animatorController = GetOrCreateAnimatorControllerWithClip();
+        Assert.IsNotNull(animatorController);
+        Assert.IsNotNull(animatorController.animationClips);
+        Assert.IsTrue(animatorController.animationClips.Length > 0);
+        AnimationClip clip = animatorController.animationClips[0];
+        Assert.IsNotNull(clip);
 
         
         float sampleRate = m_sceneCache.sampleRate;
