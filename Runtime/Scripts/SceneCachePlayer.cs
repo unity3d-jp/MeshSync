@@ -53,6 +53,7 @@ public class SceneCachePlayer : BaseMeshSync {
 
         
 #if UNITY_EDITOR
+        //[TODO-sin: 2021-11-1] Enable to override
         if (AssetImporter.GetAtPath(m_sceneCacheFilePath) is IHasModelImporterSettings importer) {
             modelImporterSettings = importer.GetModelImporterSettings();
         } 
