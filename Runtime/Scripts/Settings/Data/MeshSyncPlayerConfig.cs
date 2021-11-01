@@ -48,7 +48,7 @@ internal class MeshSyncPlayerConfig {
     public bool SyncLights             = true;
     public bool SyncMeshes             = true;
     public bool UpdateMeshColliders    = true;
-    public bool SyncMaterials          = true;
+    [Obsolete] public bool SyncMaterials          = true;
 
     //Import Settings   
     public int   AnimationInterpolation   = (int) InterpolationMode.Smooth;
