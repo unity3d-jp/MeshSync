@@ -465,7 +465,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                             UpdateTextureAsset((TextureData)asset);
                             break;
                         case AssetType.Material:
-                            UpdateMaterialAssetInternal((MaterialData)asset);
+                            UpdateMaterialAssetV((MaterialData)asset);
                             break;
                         case AssetType.Animation:
                             UpdateAnimationAsset((AnimationClipData)asset);
