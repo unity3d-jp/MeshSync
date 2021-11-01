@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Serialization;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -335,19 +336,19 @@ public class SceneCachePlayer : BaseMeshSync {
 
     protected override void OnAfterDeserializeMeshSyncPlayerV() {
 
-        if (m_version == CUR_SCENE_CACHE_PLAYER_VERSION)
+        if (m_sceneCachePlayerVersion == CUR_SCENE_CACHE_PLAYER_VERSION)
             return;
         
-        if (m_version < (int) SceneCachePlayerVersion.STRING_PATH_0_4_0) {
+        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.STRING_PATH_0_4_0) {
             Assert.IsNotNull(m_cacheFilePath);           
             m_sceneCacheFilePath = AssetEditorUtility.NormalizePath(m_cacheFilePath.GetFullPath());
         } 
 
-        if (m_version < (int) SceneCachePlayerVersion.NORMALIZED_PATH_0_9_2) {
+        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.NORMALIZED_PATH_0_9_2) {
             m_sceneCacheFilePath = AssetEditorUtility.NormalizePath(m_sceneCacheFilePath);
         } 
         
-        m_version = CUR_SCENE_CACHE_PLAYER_VERSION;
+        m_sceneCachePlayerVersion = CUR_SCENE_CACHE_PLAYER_VERSION;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -458,7 +459,8 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] int       m_preloadLength = 1;
 
     
-    [HideInInspector][SerializeField] private int m_version = (int) CUR_SCENE_CACHE_PLAYER_VERSION;
+    //Renamed in 0.10.x-preview
+    [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_sceneCachePlayerVersion = (int) CUR_SCENE_CACHE_PLAYER_VERSION;
     private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.NORMALIZED_PATH_0_9_2;
         
     SceneCacheData m_sceneCache;
