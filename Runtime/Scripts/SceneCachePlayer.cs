@@ -218,6 +218,40 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------
     
 #if UNITY_EDITOR
+
+    private RuntimeAnimatorController GetOrCreateAnimatorControllerWithClip() {
+        RuntimeAnimatorController animatorController = m_animator.runtimeAnimatorController; 
+        if (animatorController != null) {
+            AnimationClip[] clips = animatorController.animationClips;
+            if (clips != null && clips.Length > 0) {
+                AnimationClip tmp = animatorController.animationClips[0];
+                if (tmp != null) {
+                    return animatorController;
+                }
+            }
+        }
+   
+        //create new 
+        AnimationClip clip = new AnimationClip();
+        string assetsFolder = GetAssetsFolder();
+
+        string goName         = gameObject.name;
+        string animPath       = $"{assetsFolder}/{goName}.anim";
+        string controllerPath = $"{assetsFolder}/{goName}.controller";
+        clip = Misc.SaveAsset(clip, animPath);
+        if (clip.IsNullRef()) {
+            Debug.LogError("[MeshSync] Internal error in initializing clip for SceneCache");
+            return null;
+            
+        }
+
+        animatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(controllerPath, clip);
+        m_animator.runtimeAnimatorController = animatorController; 
+
+        return animatorController;
+    }
+    
+    
     internal bool ResetTimeAnimation() {
         if (m_sceneCache.sceneCount < 2)
             return false;
