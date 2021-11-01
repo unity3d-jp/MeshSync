@@ -303,22 +303,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     
 //----------------------------------------------------------------------------------------------------------------------    
 
-    // this function has a complex behavior to keep existing .meta:
-    //  if an asset already exists in assetPath, load it and copy the content of obj to it and replace obj with it.
-    //  otherwise obj is simply saved by AssetDatabase.CreateAsset().
-    private bool SaveAsset<T>(ref T obj, string assetPath) where T : UnityEngine.Object
-    {
-#if UNITY_EDITOR
-        T ret = Misc.OverwriteOrCreateAsset(obj, assetPath);
-        if (ret != null)
-        {
-            obj = ret;
-            return true;
-        }
-#endif
-        return false;
-    }
-
     private bool IsAsset(UnityEngine.Object obj)
     {
 #if UNITY_EDITOR
