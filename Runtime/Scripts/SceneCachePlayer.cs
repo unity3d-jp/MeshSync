@@ -227,7 +227,8 @@ public class SceneCachePlayer : BaseMeshSync {
         string animPath       = $"{assetsFolder}/{goName}.anim";
         string controllerPath = $"{assetsFolder}/{goName}.controller";
 
-        if (null == m_animator.runtimeAnimatorController) {
+        //reuse
+        if (null == m_animator.runtimeAnimatorController) { 
             m_animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(controllerPath);
         } 
         
