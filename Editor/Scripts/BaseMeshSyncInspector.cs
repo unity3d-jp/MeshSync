@@ -17,25 +17,25 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    protected bool DrawAssetSyncSettings(BaseMeshSync t) {
+    protected static bool DrawAssetSyncSettings(BaseMeshSync t) {
         bool changed   = false;
 
         // Asset Sync Settings
         t.foldSyncSettings = EditorGUILayout.Foldout(t.foldSyncSettings, "Asset Sync Settings", true, GetBoldFoldoutStyle());
-        MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
+        MeshSyncPlayerConfig playerConfig = t.GetConfig();
         if (t.foldSyncSettings) {
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Sync Visibility",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Visibility",
                 guiFunc: () => EditorGUILayout.Toggle("Visibility", playerConfig.SyncVisibility),
                 updateFunc: (bool toggle) => { playerConfig.SyncVisibility = toggle; }
             );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Sync Transform",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Transform",
                 guiFunc: () => EditorGUILayout.Toggle("Transform", playerConfig.SyncTransform),
                 updateFunc: (bool toggle) => { playerConfig.SyncTransform = toggle; }
             );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Sync Cameras",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Cameras",
                 guiFunc: () => EditorGUILayout.Toggle("Cameras", playerConfig.SyncCameras),
                 updateFunc: (bool toggle) => { playerConfig.SyncCameras = toggle; }
             );
@@ -43,7 +43,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
             if (playerConfig.SyncCameras) {
                 EditorGUI.indentLevel++;
 
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Physical Camera Params",
+                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Physical Camera Params",
                     guiFunc: () => EditorGUILayout.Toggle("Physical Camera Params", t.GetUsePhysicalCameraParams()),
                     updateFunc: (bool toggle) => { t.SetUsePhysicalCameraParams(toggle); }
                     );
@@ -52,19 +52,19 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                 EditorGUI.indentLevel--;
             }
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Sync Lights",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Lights",
                 guiFunc: () => EditorGUILayout.Toggle("Lights", playerConfig.SyncLights),
                 updateFunc: (bool toggle) => { playerConfig.SyncLights = toggle; }
             );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Sync Meshes",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Meshes",
                 guiFunc: () => EditorGUILayout.Toggle("Meshes", playerConfig.SyncMeshes),
                 updateFunc: (bool toggle) => { playerConfig.SyncMeshes = toggle; }
             );
 
 
             EditorGUI.indentLevel++;
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "MeshSync: Update Mesh Colliders",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Update Mesh Colliders",
                 guiFunc: () => EditorGUILayout.Toggle("Update Mesh Colliders", playerConfig.UpdateMeshColliders),
                 updateFunc: (bool toggle) => { playerConfig.UpdateMeshColliders = toggle; }
             );
@@ -130,32 +130,32 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
         return changed;
     }
 
-    protected bool DrawMiscSettings(BaseMeshSync t) {
+    protected static bool DrawMiscSettings(BaseMeshSync t) {
 
         bool changed   = false;
-        MeshSyncPlayerConfig playerConfig = m_asset.GetConfig();
+        MeshSyncPlayerConfig playerConfig = t.GetConfig();
         
         // Misc
         t.foldMisc = EditorGUILayout.Foldout(t.foldMisc, "Misc", true, GetBoldFoldoutStyle());
         if (t.foldMisc)
         {
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Sync Material List",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Sync Material List",
                 guiFunc: () => EditorGUILayout.Toggle("Sync Material List", playerConfig.SyncMaterialList), 
                 updateFunc: (bool toggle) => { playerConfig.SyncMaterialList = toggle; }
             );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Progressive Display",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Progressive Display",
                 guiFunc: () => EditorGUILayout.Toggle("Progressive Display", playerConfig.ProgressiveDisplay), 
                 updateFunc: (bool toggle) => { playerConfig.ProgressiveDisplay = toggle; }
             );
             
             
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Logging",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Logging",
                 guiFunc: () => EditorGUILayout.Toggle("Logging", playerConfig.Logging), 
                 updateFunc: (bool toggle) => { playerConfig.Logging = toggle; }
             );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target,"MeshSync: Profiling",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Profiling",
                 guiFunc: () => EditorGUILayout.Toggle("Profiling", playerConfig.Profiling), 
                 updateFunc: (bool toggle) => { playerConfig.Profiling = toggle; }
             );
