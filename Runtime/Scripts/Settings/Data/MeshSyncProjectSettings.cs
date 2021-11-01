@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Unity.MeshSync {
 
 [Serializable]
-internal class MeshSyncProjectSettings : BaseJsonSettings {
+internal class MeshSyncProjectSettings : FilmInternalUtilities.BaseJsonSettings {
 
     internal static MeshSyncProjectSettings GetOrCreateSettings() {
         
@@ -33,7 +33,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
         }        
 
 #if UNITY_EDITOR
-        m_instance.SaveSettings();
+        m_instance.Save();
 #endif
         return m_instance;
         
@@ -43,15 +43,17 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
 //----------------------------------------------------------------------------------------------------------------------
 
     //Constructor
-    private MeshSyncProjectSettings() {
+    private MeshSyncProjectSettings() : base(MESHSYNC_RUNTIME_SETTINGS_PATH) {
         ValidatePlayerConfigs();
         
     }
    
 //----------------------------------------------------------------------------------------------------------------------
-    protected override object GetLock() { return m_instanceLock; }
-    internal override string GetSettingsPath() { return MESHSYNC_RUNTIME_SETTINGS_PATH;}
+    protected override object GetLockV() { return m_instanceLock; }
+    
+    protected override void OnDeserializeV() {}
 
+    
     internal ushort GetDefaultServerPort() { return m_defaultServerPort;}
     internal void SetDefaultServerPort(ushort port) { m_defaultServerPort = port;}
 
@@ -97,7 +99,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
 
         m_defaultPlayerConfigs = null;
         m_meshSyncProjectSettingsVersion = ClassVersion = LATEST_VERSION;
-        SaveSettings();
+        Save();
     }
     
     

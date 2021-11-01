@@ -212,7 +212,7 @@ internal class MeshSyncPlayerConfigSection {
             }
             
             onValueChanged(config, changeEvent.newValue);
-            MeshSyncProjectSettings.GetOrCreateSettings().SaveSettings();
+            MeshSyncProjectSettings.GetOrCreateSettings().Save();
         });		
         
         fieldContainer.Add(field);
@@ -243,7 +243,7 @@ internal class MeshSyncPlayerConfigSection {
             }
             
             onValueChanged(config, popupField.index);
-            MeshSyncProjectSettings.GetOrCreateSettings().SaveSettings();
+            MeshSyncProjectSettings.GetOrCreateSettings().Save();
         });
                 
         fieldContainer.Add(popupField);
