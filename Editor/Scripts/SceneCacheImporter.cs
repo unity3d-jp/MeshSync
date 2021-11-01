@@ -34,7 +34,7 @@ internal class SceneCacheImporter : ScriptedImporter, IHasModelImporterSettings
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    [SerializeField] private ModelImporterSettings m_importerSettings;
+    [SerializeField] private ModelImporterSettings m_importerSettings = new ModelImporterSettings();
     
 }
 
