@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Unity.MeshSync {
 
 [Serializable]
-internal class MeshSyncProjectSettings : FilmInternalUtilities.BaseJsonSettings {
+internal class MeshSyncProjectSettings : BaseJsonSettings {
 
     internal static MeshSyncProjectSettings GetOrCreateSettings() {
         
