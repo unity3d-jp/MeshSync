@@ -33,6 +33,10 @@ public class MeshSyncServer : BaseMeshSync {
     protected override void InitInternalV() {
         
     }
+
+
+    protected override void UpdateMaterialAssetV() {
+    }
     
 //----------------------------------------------------------------------------------------------------------------------        
     

@@ -46,6 +46,9 @@ public class SceneCachePlayer : BaseMeshSync {
     protected override void InitInternalV() {
         
     }
+
+    protected override void UpdateMaterialAssetV() {
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
 
