@@ -13,8 +13,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    public override void OnEnable() {
-        base.OnEnable();
+    public void OnEnable() {
         m_sceneCachePlayer = target as SceneCachePlayer;
         
         m_targets.Clear();
@@ -38,7 +37,10 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         
         EditorGUILayout.Space();
         bool changed = DrawCacheSettings();
-        changed |= DrawPlayerSettings(m_sceneCachePlayer);
+        changed |= DrawAssetSyncSettings(m_sceneCachePlayer);
+        changed |= DrawImportSettings(m_sceneCachePlayer);
+        changed |= DrawMiscSettings(m_sceneCachePlayer);
+        
         MeshSyncPlayerConfig config = m_sceneCachePlayer.GetConfig();
         if (config.Profiling) {
             EditorGUILayout.TextArea(m_sceneCachePlayer.dbgProfileReport, GUILayout.Height(120));
