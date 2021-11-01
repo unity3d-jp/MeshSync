@@ -1,5 +1,4 @@
 using NUnit.Framework;
-using Unity.FilmInternalUtilities;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -27,7 +26,7 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
         m_generatedSCResPathTextField.RegisterValueChangedCallback((ChangeEvent<string> changeEvent) => {
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
             settings.SetSceneCacheOutputPath(changeEvent.newValue);
-            settings.SaveSettings();
+            settings.Save();
         });        
         
         m_outputPathSelectButton = tabInstance.Query<Button>("OutputPathSelectButton").First();
@@ -62,7 +61,7 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
         
         path = AssetEditorUtility.NormalizePath(path);
         settings.SetSceneCacheOutputPath(path);
-        settings.SaveSettings();
+        settings.Save();
 
         RefreshSettings();
     }

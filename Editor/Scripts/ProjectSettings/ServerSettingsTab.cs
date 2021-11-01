@@ -79,7 +79,7 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
         field.RegisterValueChangedCallback((ChangeEvent<V> changeEvent) => {
         
             onValueChanged(changeEvent.newValue);
-            MeshSyncProjectSettings.GetOrCreateSettings().SaveSettings();
+            MeshSyncProjectSettings.GetOrCreateSettings().Save();
         });        
         
         fieldContainer.Add(field);
