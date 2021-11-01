@@ -11,7 +11,7 @@ public class SceneCachePlayerImporterTest  {
     public void CheckImporterProperties() {
         SceneCacheImporter importer         = new SceneCacheImporter();
         SerializedObject   serializedObject = new SerializedObject(importer);
-        Assert.IsNotNull(serializedObject.FindProperty("m_importerSettings"));
+        Assert.IsNotNull(serializedObject.FindProperty(MeshSyncEditorConstants.SCENE_CACHE_IMPORTER_SETTINGS_PROP));
     }
     
 }
