@@ -40,6 +40,10 @@ internal class MeshSyncPlayerConfig {
 //----------------------------------------------------------------------------------------------------------------------    
     internal AnimationTweakSettings GetAnimationTweakSettings() { return m_animationTweakSettings;}
 
+    internal void SetModelImporterSettings(ModelImporterSettings importerSettings) {
+        m_importerSettings = importerSettings;
+    }
+
 //----------------------------------------------------------------------------------------------------------------------    
     //Sync Settings
     public bool SyncVisibility         = true;
