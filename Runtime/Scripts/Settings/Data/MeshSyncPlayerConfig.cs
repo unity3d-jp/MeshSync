@@ -18,9 +18,9 @@ internal class MeshSyncPlayerConfig {
         SyncLights             = other.SyncLights;
         SyncMeshes             = other.SyncMeshes;
         UpdateMeshColliders    = other.UpdateMeshColliders;
-        SyncMaterials          = other.SyncMaterials;
 
         //Import Settings   
+        m_importerSettings       = new CommonImporterSettings(other.m_importerSettings); 
         AnimationInterpolation   = other.AnimationInterpolation;
         KeyframeReduction        = other.KeyframeReduction;
         ReductionThreshold       = other.ReductionThreshold;
@@ -49,6 +49,8 @@ internal class MeshSyncPlayerConfig {
     public bool SyncMeshes             = true;
     public bool UpdateMeshColliders    = true;
     [Obsolete] public bool SyncMaterials          = true;
+
+    [SerializeField] private CommonImporterSettings m_importerSettings;
 
     //Import Settings   
     public int   AnimationInterpolation   = (int) InterpolationMode.Smooth;
