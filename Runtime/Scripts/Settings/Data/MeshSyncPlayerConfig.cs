@@ -95,13 +95,13 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     [SerializeField] AnimationTweakSettings m_animationTweakSettings;
     
 #pragma warning disable 414           
-    [SerializeField] private int m_meshSyncPlayerConfigVersion = CUR_MESHSYNC_PLAYER_CONFIG_VERSION;
+    [SerializeField] private int m_meshSyncPlayerConfigVersion = (int)MeshSyncPlayerConfigVersion.NO_VERSIONING;
 #pragma warning restore 414
 
     private const int CUR_MESHSYNC_PLAYER_CONFIG_VERSION = (int)MeshSyncPlayerConfigVersion.MODEL_IMPORTER_0_10_X; 
 
     enum MeshSyncPlayerConfigVersion {
-        INITIAL = 1,
+        NO_VERSIONING = 0,
         MODEL_IMPORTER_0_10_X, //With ModelImporterSettings for version 0.10.x-preview
     }
     
