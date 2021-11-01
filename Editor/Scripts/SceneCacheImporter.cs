@@ -28,6 +28,14 @@ internal class SceneCacheImporter : ScriptedImporter
         ctx.AddObjectToAsset(objectName, go);
         ctx.SetMainObject(go);
     }
+
+//----------------------------------------------------------------------------------------------------------------------
+    internal ModelImporterSettings GetModelImporterSettings() => m_importerSettings;
+    
+//----------------------------------------------------------------------------------------------------------------------
+    
+    [SerializeField] private ModelImporterSettings m_importerSettings;
+    
 }
 
 } //end namespace
