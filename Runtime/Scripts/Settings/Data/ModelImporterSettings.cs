@@ -9,6 +9,11 @@ internal struct ModelImporterSettings {
     internal ModelImporterSettings(ModelImporterSettings other) {
         m_syncMaterials = other.m_syncMaterials;
     }
+    
+    internal ModelImporterSettings(bool syncMaterials) {
+        m_syncMaterials = syncMaterials;
+    }
+    
 
 //----------------------------------------------------------------------------------------------------------------------
     
