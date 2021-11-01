@@ -239,15 +239,8 @@ public class SceneCachePlayer : BaseMeshSync {
         Misc.OverwriteOrCreateAsset(clip, animPath);
         Assert.IsNotNull(clip);
 
-        //Create a different controller asset if necessary to prevent GuidPersistentManager errors
-        string controllerPath     = $"{assetsFolder}/{goName}.controller".Replace('\\','/');
-        string tempControllerPath = AssetDatabase.GenerateUniqueAssetPath(controllerPath).Replace('\\','/');
-        RuntimeAnimatorController tempController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(tempControllerPath, clip);
-        animatorController = Misc.OverwriteOrCreateAsset(tempController, controllerPath);
-        if (tempControllerPath != controllerPath) {
-            AssetDatabase.DeleteAsset(tempControllerPath);
-        }
-        
+        string controllerPath = $"{assetsFolder}/{goName}.controller".Replace('\\','/');
+        animatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(controllerPath, clip);        
         m_animator.runtimeAnimatorController = animatorController; 
 
         return animatorController;
