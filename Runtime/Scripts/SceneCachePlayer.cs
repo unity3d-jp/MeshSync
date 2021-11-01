@@ -220,6 +220,17 @@ public class SceneCachePlayer : BaseMeshSync {
 #if UNITY_EDITOR
 
     private RuntimeAnimatorController GetOrCreateAnimatorControllerWithClip() {
+
+        //paths
+        string assetsFolder   = GetAssetsFolder();
+        string goName         = gameObject.name;
+        string animPath       = $"{assetsFolder}/{goName}.anim";
+        string controllerPath = $"{assetsFolder}/{goName}.controller";
+
+        if (null == m_animator.runtimeAnimatorController) {
+            m_animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(controllerPath);
+        } 
+        
         RuntimeAnimatorController animatorController = m_animator.runtimeAnimatorController; 
         if (animatorController != null) {
             AnimationClip[] clips = animatorController.animationClips;
@@ -231,15 +242,11 @@ public class SceneCachePlayer : BaseMeshSync {
             }
         }
    
-        string assetsFolder = GetAssetsFolder();
-        string goName       = gameObject.name;
-        string animPath     = $"{assetsFolder}/{goName}.anim";
         
         AnimationClip clip = new AnimationClip();
         Misc.OverwriteOrCreateAsset(clip, animPath);
         Assert.IsNotNull(clip);
 
-        string controllerPath = $"{assetsFolder}/{goName}.controller".Replace('\\','/');
         animatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(controllerPath, clip);        
         m_animator.runtimeAnimatorController = animatorController; 
 
