@@ -44,6 +44,8 @@ internal class MeshSyncPlayerConfig {
         m_importerSettings = importerSettings;
     }
 
+    internal ModelImporterSettings GetModelImporterSettings() => m_importerSettings;
+    
 //----------------------------------------------------------------------------------------------------------------------    
     //Sync Settings
     public bool SyncVisibility         = true;
