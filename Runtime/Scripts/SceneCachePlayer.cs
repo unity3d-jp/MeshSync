@@ -235,14 +235,8 @@ public class SceneCachePlayer : BaseMeshSync {
         string goName       = gameObject.name;
         string animPath     = $"{assetsFolder}/{goName}.anim";
         
-        AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(animPath);
-        if (null == clip) {
-            clip = new AnimationClip();
-            AssetDatabase.CreateAsset(clip, animPath);
-        }
-        
-        
-        clip.ClearCurves();
+        AnimationClip clip = new AnimationClip();
+        Misc.SaveAsset(clip, animPath);
         Assert.IsNotNull(clip);
 
         string controllerPath     = $"{assetsFolder}/{goName}.controller";
