@@ -69,15 +69,16 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
     private void ValidatePlayerConfigs() {
 
         if (null == m_defaultServerConfig) {
-            m_defaultServerConfig = new MeshSyncPlayerConfig();            
+            m_defaultServerConfig = new MeshSyncPlayerConfig();
+            m_defaultServerConfig.SetModelImporterSettings(new ModelImporterSettings(createMaterials:true));
         }
 
         if (null == m_defaultSceneCachePlayerConfig) {
             m_defaultSceneCachePlayerConfig = new SceneCachePlayerConfig() {
                 UpdateMeshColliders = false,
-                SyncMaterials       = false,
                 ProgressiveDisplay  = false,
             };            
+            m_defaultServerConfig.SetModelImporterSettings(new ModelImporterSettings(createMaterials:false));
         }         
     }
 
