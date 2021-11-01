@@ -116,7 +116,7 @@ internal class DCCPluginInstallInfo : ISerializationCallbackReceiver {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    private const            int CUR_PLUGIN_INSTALL_INFO_VERSION  = (int) DCCPluginInstallInfoVersion.APP_LIST_0_5_X;    
+    private const int CUR_PLUGIN_INSTALL_INFO_VERSION  = (int) DCCPluginInstallInfoVersion.APP_LIST_0_5_X;    
     
 //----------------------------------------------------------------------------------------------------------------------
     
