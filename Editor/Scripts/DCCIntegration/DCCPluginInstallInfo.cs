@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using JetBrains.Annotations;
 using UnityEngine;
-using UnityEngine.Analytics;
 using UnityEngine.Serialization;
 
 namespace Unity.MeshSync.Editor {
@@ -17,18 +16,11 @@ internal class DCCPluginInstallInfo : ISerializationCallbackReceiver {
 
     [CanBeNull]
     internal string GetPluginVersion(string appPath) {
-        
-        if (m_pluginVersions.ContainsKey(appPath)) {
-            return m_pluginVersions[appPath];            
-        }
-
-        //[TODO-sin: 2020-10-28] Should remove PluginVersion in 1.0.0-preview
-        return PluginVersion;        
+        return m_pluginVersions.ContainsKey(appPath) ? m_pluginVersions[appPath] : null;
     }
     
     internal void RemovePluginVersion(string appPath) {
         m_pluginVersions.Remove(appPath);
-        PluginVersion = null;
     }
     
     
@@ -99,9 +91,6 @@ internal class DCCPluginInstallInfo : ISerializationCallbackReceiver {
     }
     
 //----------------------------------------------------------------------------------------------------------------------       
-
-    //Obsolete
-    [SerializeField] private string PluginVersion = null;
    
     [SerializeField] private List<string> m_appPathList;
     [SerializeField] private List<string> m_pluginVersionList;
