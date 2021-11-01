@@ -3,6 +3,7 @@ using System;
 #endif
 using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -143,7 +144,7 @@ public class MeshSyncServer : BaseMeshSync {
     }
 
     protected override void OnAfterDeserializeMeshSyncPlayerV() {
-        m_version = CUR_SERVER_VERSION;
+        m_serverVersion = CUR_SERVER_VERSION;
     }   
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -491,7 +492,8 @@ public class MeshSyncServer : BaseMeshSync {
 #endif
 
 #pragma warning disable 414
-    [HideInInspector][SerializeField] private int m_version = (int) ServerVersion.NO_VERSIONING;
+    //Renamed in 0.10.x-preview
+    [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_serverVersion = (int) ServerVersion.NO_VERSIONING;
 #pragma warning restore 414
     private const int CUR_SERVER_VERSION = (int) ServerVersion.INITIAL_0_4_0;
     
