@@ -72,7 +72,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
 
         if (null == m_defaultServerConfig) {
             m_defaultServerConfig = new MeshSyncPlayerConfig();
-            m_defaultServerConfig.ImporterSettings = new ModelImporterSettings(createMaterials:true);
+            m_defaultServerConfig.SetModelImporterSettings(new ModelImporterSettings(createMaterials:true));
         }
 
         if (null == m_defaultSceneCachePlayerConfig) {
@@ -80,7 +80,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
                 UpdateMeshColliders = false,
                 ProgressiveDisplay  = false,
             };            
-            m_defaultServerConfig.ImporterSettings = new ModelImporterSettings(createMaterials:false);
+            m_defaultServerConfig.SetModelImporterSettings(new ModelImporterSettings(createMaterials:false));
         }         
     }
 
