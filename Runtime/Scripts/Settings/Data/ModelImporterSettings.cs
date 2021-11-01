@@ -7,17 +7,17 @@ namespace Unity.MeshSync {
 internal struct ModelImporterSettings {
 
     internal ModelImporterSettings(ModelImporterSettings other) {
-        m_syncMaterials = other.m_syncMaterials;
+        this.SyncMaterials = other.SyncMaterials;
     }
     
     internal ModelImporterSettings(bool syncMaterials) {
-        m_syncMaterials = syncMaterials;
+        this.SyncMaterials = syncMaterials;
     }
     
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    [SerializeField] private bool m_syncMaterials;
+    [SerializeField] internal bool SyncMaterials;
 }
 
 } //end namespace
