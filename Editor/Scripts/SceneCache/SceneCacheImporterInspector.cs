@@ -1,8 +1,3 @@
-
-using Unity.FilmInternalUtilities.Editor;
-using UnityEditor.UIElements;
-using UnityEngine;
-
 namespace Unity.MeshSync.Editor {
 
 using UnityEditor;
