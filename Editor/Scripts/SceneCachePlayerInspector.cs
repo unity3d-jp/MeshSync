@@ -158,7 +158,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
 
             IHasModelImporterSettings importer = AssetImporter.GetAtPath(t.GetSceneCacheFilePath()) as IHasModelImporterSettings;
             if (null == importer) {
-                MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(t, playerConfig.GetModelImporterSettings());                
+                MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(t, playerConfig.ImporterSettings);                
             }
 
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Animation Interpolation",
