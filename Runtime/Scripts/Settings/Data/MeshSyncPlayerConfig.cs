@@ -3,11 +3,12 @@ using UnityEngine;
 
 namespace Unity.MeshSync {
 [Serializable]
-internal class MeshSyncPlayerConfig {
+internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
     internal MeshSyncPlayerConfig() {
         m_animationTweakSettings = new AnimationTweakSettings();        
     }
+        
 //----------------------------------------------------------------------------------------------------------------------    
 
     internal MeshSyncPlayerConfig(MeshSyncPlayerConfig other) {
@@ -36,6 +37,21 @@ internal class MeshSyncPlayerConfig {
         
         m_animationTweakSettings = new AnimationTweakSettings(other.GetAnimationTweakSettings());
     }
+    
+//----------------------------------------------------------------------------------------------------------------------    
+    public void OnBeforeSerialize() {}
+
+    public void OnAfterDeserialize() {
+        if (m_meshSyncPlayerConfigVersion == CUR_MESHSYNC_PLAYER_CONFIG_VERSION)
+            return;
+
+        if (m_meshSyncPlayerConfigVersion < (int) MeshSyncPlayerConfigVersion.MODEL_IMPORTER_0_10_X) {
+            m_importerSettings.CreateMaterials = SyncMaterials;
+        }
+
+        m_meshSyncPlayerConfigVersion = CUR_MESHSYNC_PLAYER_CONFIG_VERSION;                    
+    }
+    
 
 //----------------------------------------------------------------------------------------------------------------------    
     internal AnimationTweakSettings GetAnimationTweakSettings() { return m_animationTweakSettings;}
@@ -77,8 +93,15 @@ internal class MeshSyncPlayerConfig {
     [SerializeField] AnimationTweakSettings m_animationTweakSettings;
     
 #pragma warning disable 414           
-    [SerializeField] private readonly int m_meshSyncPlayerConfigVersion = 1;
-#pragma warning restore 414    
+    [SerializeField] private int m_meshSyncPlayerConfigVersion = CUR_MESHSYNC_PLAYER_CONFIG_VERSION;
+#pragma warning restore 414
+
+    private const int CUR_MESHSYNC_PLAYER_CONFIG_VERSION = (int)MeshSyncPlayerConfigVersion.MODEL_IMPORTER_0_10_X; 
+
+    enum MeshSyncPlayerConfigVersion {
+        INITIAL = 1,
+        MODEL_IMPORTER_0_10_X, //With ModelImporterSettings for version 0.10.x-preview
+    }
     
 }
 } //end namespace
