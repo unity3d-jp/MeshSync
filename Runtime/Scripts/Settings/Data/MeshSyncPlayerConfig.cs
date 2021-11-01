@@ -46,10 +46,12 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
             return;
 
         if (m_meshSyncPlayerConfigVersion < (int) MeshSyncPlayerConfigVersion.MODEL_IMPORTER_0_10_X) {
+#pragma warning disable 612
             m_importerSettings.CreateMaterials = SyncMaterials;
+#pragma warning restore 612
         }
 
-        m_meshSyncPlayerConfigVersion = CUR_MESHSYNC_PLAYER_CONFIG_VERSION;                    
+        m_meshSyncPlayerConfigVersion = CUR_MESHSYNC_PLAYER_CONFIG_VERSION;
     }
     
 
