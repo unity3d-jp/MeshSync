@@ -239,8 +239,8 @@ public class SceneCachePlayer : BaseMeshSync {
         Misc.OverwriteOrCreateAsset(clip, animPath);
         Assert.IsNotNull(clip);
 
-        string controllerPath     = $"{assetsFolder}/{goName}.controller";
-        string tempControllerPath = AssetDatabase.GenerateUniqueAssetPath(controllerPath);
+        string controllerPath     = $"{assetsFolder}/{goName}.controller".Replace('\\','/');
+        string tempControllerPath = AssetDatabase.GenerateUniqueAssetPath(controllerPath).Replace('\\','/');
         RuntimeAnimatorController tempController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(tempControllerPath, clip);
         animatorController = Misc.OverwriteOrCreateAsset(tempController, controllerPath);
         if (tempControllerPath != controllerPath) {
