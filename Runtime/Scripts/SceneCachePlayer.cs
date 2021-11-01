@@ -243,7 +243,9 @@ public class SceneCachePlayer : BaseMeshSync {
         string tempControllerPath = AssetDatabase.GenerateUniqueAssetPath(controllerPath);
         RuntimeAnimatorController tempController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(tempControllerPath, clip);
         animatorController = Misc.OverwriteOrCreateAsset(tempController, controllerPath);
-        AssetDatabase.DeleteAsset(tempControllerPath);
+        if (tempControllerPath != controllerPath) {
+            AssetDatabase.DeleteAsset(tempControllerPath);
+        }
         
         m_animator.runtimeAnimatorController = animatorController; 
 
