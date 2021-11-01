@@ -6,20 +6,11 @@ using UnityEditor.Experimental.AssetImporters;
 [CustomEditor(typeof(SceneCacheImporter))]
 public class SceneCacheImporterInspector: ScriptedImporterEditor
 {
-    public override void OnEnable() {
-        base.OnEnable();
-        m_scImporter = target as SceneCacheImporter;
-
-    }
-    
     public override void OnInspectorGUI() {
-        MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(m_scImporter, m_scImporter.GetModelImporterSettings());
+
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("m_importerSettings"));
         base.ApplyRevertGUI();
     }
-
-//----------------------------------------------------------------------------------------------------------------------
-    
-    private SceneCacheImporter m_scImporter = null;
 
 }
 
