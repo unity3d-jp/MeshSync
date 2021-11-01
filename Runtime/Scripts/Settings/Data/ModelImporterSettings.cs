@@ -9,17 +9,17 @@ internal class ModelImporterSettings {
     internal ModelImporterSettings() { }
     
     internal ModelImporterSettings(ModelImporterSettings other) {
-        this.SyncMaterials = other.SyncMaterials;
+        this.CreateMaterials = other.CreateMaterials;
     }
     
-    internal ModelImporterSettings(bool syncMaterials) {
-        this.SyncMaterials = syncMaterials;
+    internal ModelImporterSettings(bool createMaterials) {
+        this.CreateMaterials = createMaterials;
     }
     
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    [SerializeField] internal bool SyncMaterials;
+    [SerializeField] internal bool CreateMaterials;
 }
 
 } //end namespace
