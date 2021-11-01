@@ -93,7 +93,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Animation Interpolation",
                 guiFunc: () => EditorGUILayout.Popup(new GUIContent("Animation Interpolation"),
-                    playerConfig.AnimationInterpolation, m_animationInterpolationEnums),
+                    playerConfig.AnimationInterpolation, ANIMATION_INTERPOLATION_ENUMS),
                 updateFunc: (int val) => { playerConfig.AnimationInterpolation = val; }
             );
 
@@ -120,7 +120,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Z-Up Correction",
                 guiFunc: () => EditorGUILayout.Popup(new GUIContent("Z-Up Correction"), playerConfig.ZUpCorrection,
-                    m_zUpCorrectionEnums),
+                    Z_UP_CORRECTION_ENUMS),
                 updateFunc: (int val) => { playerConfig.ZUpCorrection = val; }
             );
 
@@ -521,8 +521,8 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 //----------------------------------------------------------------------------------------------------------------------
 
     private BaseMeshSync m_asset = null;
-    private static readonly string[] m_animationInterpolationEnums = System.Enum.GetNames( typeof( InterpolationMode ) );
-    private static readonly string[] m_zUpCorrectionEnums          = System.Enum.GetNames( typeof( ZUpCorrectionMode ) );
+    private static readonly string[] ANIMATION_INTERPOLATION_ENUMS = System.Enum.GetNames( typeof( InterpolationMode ) );
+    private static readonly string[] Z_UP_CORRECTION_ENUMS         = System.Enum.GetNames( typeof( ZUpCorrectionMode ) );
 
 }
 
