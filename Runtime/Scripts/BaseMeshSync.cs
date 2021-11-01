@@ -814,7 +814,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return ImageConversion.EncodeToEXR(tex, flags);
     }
 
-    protected abstract void UpdateMaterialAssetV();
+    private protected abstract void UpdateMaterialAssetV(MaterialData materialData);
 
     void UpdateMaterialAssetInternal(MaterialData src)
     {
