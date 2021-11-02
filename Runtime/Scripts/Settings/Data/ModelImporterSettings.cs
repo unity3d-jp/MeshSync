@@ -23,6 +23,13 @@ internal class ModelImporterSettings {
     [SerializeField] internal bool CreateMaterials;
     [SerializeField] internal AssetSearchMode MaterialSearchMode;
 
+//----------------------------------------------------------------------------------------------------------------------
+    
+    //properties
+    internal const string CREATE_MATERIALS_PROP     = "CreateMaterials";
+    internal const string MATERIAL_SEARCH_MODE_PROP = "MaterialSearchMode";
+    
+    
 }
 
 } //end namespace

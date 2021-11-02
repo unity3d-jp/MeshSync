@@ -25,8 +25,6 @@ internal static class MeshSyncEditorConstants {
     
     //
     internal const string SCENE_CACHE_IMPORTER_SETTINGS_PROP = "m_importerSettings";
-    internal const string MODEL_IMPORTER_CREATE_MATERIALS_PROP = "CreateMaterials";
-    internal const string MODEL_IMPORTER_MATERIAL_SEARCH_MODE_PROP = "MaterialSearchMode";
     
     //Project settings
     internal const int            UNINITIALIZED_TAB               = -1;
