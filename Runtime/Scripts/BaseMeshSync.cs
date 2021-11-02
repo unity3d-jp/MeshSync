@@ -396,14 +396,24 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
 //----------------------------------------------------------------------------------------------------------------------    
 
-    private static Material CreateDefaultMaterial() {
+    private static Material CreateDefaultMaterial(string shaderName =null) {
+        
+        Shader shader = null;
+        if (!string.IsNullOrEmpty(shaderName)) {
+            shader = Shader.Find(shaderName); 
+        }
+            
+        if (shader == null) 
+        {            
 #if AT_USE_HDRP                
-        Shader shader = Shader.Find("HDRP/Lit");
+            shader = Shader.Find("HDRP/Lit");
 #elif AT_USE_URP
-        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            shader = Shader.Find("Universal Render Pipeline/Lit");
 #else 
-        Shader shader = Shader.Find("Standard");
+            shader = Shader.Find("Standard");
 #endif        
+        }
+        
         Assert.IsNotNull(shader);
         Material ret = new Material(shader);
         return ret;
