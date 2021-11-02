@@ -11,7 +11,7 @@ internal class MaterialHolder {
     public string   shader;
     public Color    color = Color.white;
     public Material material;
-    public bool     IsMaterialDataApplied = false;
+    public bool     ShouldApplyMaterialData = true;
 
 }
 

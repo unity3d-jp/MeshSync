@@ -840,6 +840,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
             if (candidate != null) {
                 dst.material = candidate;
+                dst.ShouldApplyMaterialData = false;
                 m_needReassignMaterials = true;
             }
         }
@@ -858,9 +859,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         dst.color = src.color;
 
         Material destMat = dst.material;
-        if (importerSettings.CreateMaterials && !dst.IsMaterialDataApplied) {
+        if (importerSettings.CreateMaterials && dst.ShouldApplyMaterialData) {
             ApplyMaterialDataToMaterial(src,destMat);
-            dst.IsMaterialDataApplied = true;
         }
 
         if (onUpdateMaterial != null)
