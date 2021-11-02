@@ -15,7 +15,7 @@ internal class SceneCacheImporter : ScriptedImporter, IHasModelImporterSettings
 {
     private void Reset() {
         MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings(); 
-        m_importerSettings = projectSettings.GetDefaultSceneCachePlayerConfig().GetModelImporterSettings();
+        m_importerSettings = projectSettings.GetDefaultSceneCachePlayerConfig().ImporterSettings;
     }
 
 //----------------------------------------------------------------------------------------------------------------------
