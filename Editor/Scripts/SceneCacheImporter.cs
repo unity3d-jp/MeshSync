@@ -11,8 +11,15 @@ using UnityEditor.Experimental.AssetImporters;
 namespace Unity.MeshSync.Editor {
 
 [ScriptedImporter(1, "sc")]
-internal class SceneCacheImporter : ScriptedImporter
+internal class SceneCacheImporter : ScriptedImporter, IHasModelImporterSettings
 {
+    private void Reset() {
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings(); 
+        m_importerSettings = projectSettings.GetDefaultSceneCachePlayerConfig().GetModelImporterSettings();
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
+    
     public override void OnImportAsset(AssetImportContext ctx) {
         //Ignore assets outside Assets folder (for example: Packages, etc)
         if (!ctx.assetPath.StartsWith("Assets/"))
@@ -28,6 +35,14 @@ internal class SceneCacheImporter : ScriptedImporter
         ctx.AddObjectToAsset(objectName, go);
         ctx.SetMainObject(go);
     }
+
+//----------------------------------------------------------------------------------------------------------------------
+    public ModelImporterSettings GetModelImporterSettings() => m_importerSettings;
+    
+//----------------------------------------------------------------------------------------------------------------------
+    
+    [SerializeField] private ModelImporterSettings m_importerSettings;
+    
 }
 
 } //end namespace

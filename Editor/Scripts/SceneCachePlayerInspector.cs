@@ -38,7 +38,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         EditorGUILayout.Space();
         bool changed = DrawCacheSettings();
         changed |= DrawAssetSyncSettings(m_sceneCachePlayer);
-        changed |= DrawImportSettings(m_sceneCachePlayer);
+        changed |= DrawSceneCacheImportSettings(m_sceneCachePlayer);
         changed |= DrawMiscSettings(m_sceneCachePlayer);
         
         MeshSyncPlayerConfig config = m_sceneCachePlayer.GetConfig();
@@ -57,7 +57,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         
         PrefabUtility.RecordPrefabInstancePropertyModifications(m_sceneCachePlayer);
         
-    }
+    }     
 
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -146,6 +146,60 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         return changed;
     }
 
+//----------------------------------------------------------------------------------------------------------------------
+
+    private static bool DrawSceneCacheImportSettings(SceneCachePlayer t) {
+
+        bool changed   = false;
+        MeshSyncPlayerConfig playerConfig = t.GetConfig();
+        
+        t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, GetBoldFoldoutStyle());
+        if (t.foldImportSettings) {
+
+            IHasModelImporterSettings importer = AssetImporter.GetAtPath(t.GetSceneCacheFilePath()) as IHasModelImporterSettings;
+            if (null == importer) {
+                MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(t, playerConfig.GetModelImporterSettings());                
+            }
+
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Animation Interpolation",
+                guiFunc: () => EditorGUILayout.Popup(new GUIContent("Animation Interpolation"),
+                    playerConfig.AnimationInterpolation, MeshSyncEditorConstants.ANIMATION_INTERPOLATION_ENUMS),
+                updateFunc: (int val) => { playerConfig.AnimationInterpolation = val; }
+            );
+
+
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Keyframe Reduction",
+                guiFunc: () => EditorGUILayout.Toggle("Keyframe Reduction", playerConfig.KeyframeReduction),
+                updateFunc: (bool toggle) => { playerConfig.KeyframeReduction = toggle; }
+            );
+
+            if (playerConfig.KeyframeReduction) {
+                EditorGUI.indentLevel++;
+
+                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Threshold",
+                    guiFunc: () => EditorGUILayout.FloatField("Threshold", playerConfig.ReductionThreshold),
+                    updateFunc: (float val) => { playerConfig.ReductionThreshold = val; }
+                );
+
+                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Erase Flat Curves",
+                    guiFunc: () => EditorGUILayout.Toggle("Erase Flat Curves", playerConfig.ReductionEraseFlatCurves),
+                    updateFunc: (bool toggle) => { playerConfig.ReductionEraseFlatCurves = toggle; }
+                );
+                EditorGUI.indentLevel--;
+            }
+
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Z-Up Correction",
+                guiFunc: () => EditorGUILayout.Popup(new GUIContent("Z-Up Correction"), playerConfig.ZUpCorrection,
+                    MeshSyncEditorConstants.Z_UP_CORRECTION_ENUMS),
+                updateFunc: (int val) => { playerConfig.ZUpCorrection = val; }
+            );
+
+            EditorGUILayout.Space();
+        }
+
+        return changed;
+    }
+    
 //----------------------------------------------------------------------------------------------------------------------
     void OnSceneCacheFileReload() {
         SceneCachePlayerEditorUtility.ReloadSceneCacheFile(m_sceneCachePlayer);

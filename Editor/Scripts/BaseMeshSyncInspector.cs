@@ -80,15 +80,11 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
         
         t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, GetBoldFoldoutStyle());
         if (t.foldImportSettings) {
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Create Materials",
-                guiFunc: () =>
-                    EditorGUILayout.Toggle("Create Materials", playerConfig.GetModelImporterSettings().CreateMaterials),
-                updateFunc: (bool toggle) => { playerConfig.GetModelImporterSettings().CreateMaterials = toggle; }
-            );
+            MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(t, playerConfig.GetModelImporterSettings());
 
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Animation Interpolation",
                 guiFunc: () => EditorGUILayout.Popup(new GUIContent("Animation Interpolation"),
-                    playerConfig.AnimationInterpolation, ANIMATION_INTERPOLATION_ENUMS),
+                    playerConfig.AnimationInterpolation, MeshSyncEditorConstants.ANIMATION_INTERPOLATION_ENUMS),
                 updateFunc: (int val) => { playerConfig.AnimationInterpolation = val; }
             );
 
@@ -115,7 +111,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Z-Up Correction",
                 guiFunc: () => EditorGUILayout.Popup(new GUIContent("Z-Up Correction"), playerConfig.ZUpCorrection,
-                    Z_UP_CORRECTION_ENUMS),
+                    MeshSyncEditorConstants.Z_UP_CORRECTION_ENUMS),
                 updateFunc: (int val) => { playerConfig.ZUpCorrection = val; }
             );
 
@@ -506,18 +502,13 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
         EditorGUILayout.LabelField("Plugin Version: " + Lib.GetPluginVersion());
     }
 
-    private static GUIStyle GetBoldFoldoutStyle() {
+    protected static GUIStyle GetBoldFoldoutStyle() {
         GUIStyle boldFoldoutStyle = EditorStyles.foldout;
         boldFoldoutStyle.fontStyle = FontStyle.Bold;
         return boldFoldoutStyle;
     }
 
     
-//----------------------------------------------------------------------------------------------------------------------
-
-    private static readonly string[] ANIMATION_INTERPOLATION_ENUMS = System.Enum.GetNames( typeof( InterpolationMode ) );
-    private static readonly string[] Z_UP_CORRECTION_ENUMS         = System.Enum.GetNames( typeof( ZUpCorrectionMode ) );
-
 }
 
 } // end namespace

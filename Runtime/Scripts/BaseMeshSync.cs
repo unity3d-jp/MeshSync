@@ -816,7 +816,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
     private protected abstract void UpdateMaterialAssetV(MaterialData materialData);
 
-    private protected void UpdateMaterialAssetByDefault(MaterialData src)
+    private protected void UpdateMaterialAssetByDefault(MaterialData src, ModelImporterSettings importerSettings)
     {
         int materialID = src.id;
         string materialName = src.name;
@@ -827,7 +827,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             dst.id = materialID;
             m_materialList.Add(dst);
         }
-        ModelImporterSettings importerSettings = m_config.GetModelImporterSettings();
+        
 #if UNITY_EDITOR
         if (importerSettings.CreateMaterials && (dst.material == null || dst.name != materialName))
         {
