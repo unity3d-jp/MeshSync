@@ -258,15 +258,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         DeserializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
         DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
         
-        //[TODO-sin: 2020-9-24] Remove in MeshSync 2.0.0
-        //Convert old assets which are using DataPath to hold assetFolder.
-        string leaf = m_assetDir.GetLeaf();
-        if (!string.IsNullOrEmpty(leaf)) {
-            m_assetsFolder = $"Assets/{leaf}";
-        } 
-        
-        
-        
         OnAfterDeserializeMeshSyncPlayerV();
     }
     
@@ -2107,7 +2098,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     //will keep the synced resources as edits are performed on the DCC tool side.
     //For SceneCachePlayer, m_assetsFolder is needed only when loading the file, so it should be passed as a parameter 
     
-    [SerializeField] private DataPath  m_assetDir = null;   //OBSOLETE
     [SerializeField] private string  m_assetsFolder = null; //Always starts with "Assets"
     [SerializeField] private Transform m_rootObject;
 
