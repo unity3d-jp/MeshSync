@@ -861,7 +861,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         dst.color = src.color;
 
         Material dstmat = dst.material;
-        if (importerSettings.CreateMaterials && dst.materialIID == dst.material.GetInstanceID())
+        if (importerSettings.CreateMaterials && !dst.IsMaterialDataApplied)
         {
             int numKeywords = src.numKeywords;
             for (int ki = 0; ki < numKeywords; ++ki)
@@ -955,6 +955,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                     default: break;
                 }
             }
+
+            dst.IsMaterialDataApplied = true;
         }
 
         if (onUpdateMaterial != null)
