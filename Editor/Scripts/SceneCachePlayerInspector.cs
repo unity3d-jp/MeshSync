@@ -34,6 +34,11 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             ShowReloadSelectedSceneCacheFilesGUI();
             return;
         }
+
+        //prevent errors when applying new SceneCacheImporter settings
+        if (null == m_sceneCachePlayer)
+            return;
+
         
         EditorGUILayout.Space();
         bool changed = DrawCacheSettings();
