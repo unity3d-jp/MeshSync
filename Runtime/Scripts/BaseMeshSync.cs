@@ -857,108 +857,111 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         dst.shader = src.shader;
         dst.color = src.color;
 
-        Material dstmat = dst.material;
-        if (importerSettings.CreateMaterials && !dst.IsMaterialDataApplied)
-        {
-            int numKeywords = src.numKeywords;
-            for (int ki = 0; ki < numKeywords; ++ki)
-            {
-                MaterialKeywordData kw = src.GetKeyword(ki);
-                if (kw.value)
-                    dstmat.EnableKeyword(kw.name);
-                else
-                    dstmat.DisableKeyword(kw.name);
-            }
-
-            int numProps = src.numProperties;
-            for (int pi = 0; pi < numProps; ++pi)
-            {
-                MaterialPropertyData      prop     = src.GetProperty(pi);
-                string                    propName = prop.name;
-                MaterialPropertyData.Type propType = prop.type;
-                if (!dstmat.HasProperty(propName))
-                    continue;
-
-                // todo: handle transparent
-                //if (propName == _Color)
-                //{
-                //    var color = prop.vectorValue;
-                //    if (color.w > 0.0f && color.w < 1.0f && dstmat.HasProperty("_SrcBlend"))
-                //    {
-                //        dstmat.SetOverrideTag("RenderType", "Transparent");
-                //        dstmat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                //        dstmat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                //        dstmat.SetInt("_ZWrite", 0);
-                //        dstmat.DisableKeyword("_ALPHATEST_ON");
-                //        dstmat.DisableKeyword("_ALPHABLEND_ON");
-                //        dstmat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-                //        dstmat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-                //    }
-                //}
-                if (propName == _EmissionColor)
-                {
-                    if (dstmat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
-                    {
-                        dstmat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-                        dstmat.EnableKeyword(_EMISSION);
-                    }
-                }
-                else if (propName == _MetallicGlossMap)
-                {
-                    dstmat.EnableKeyword(_METALLICGLOSSMAP);
-                }
-                else if (propName == _BumpMap)
-                {
-                    dstmat.EnableKeyword(_NORMALMAP);
-                }
-
-                int len = prop.arrayLength;
-                switch (propType)
-                {
-                    case MaterialPropertyData.Type.Int:
-                        dstmat.SetInt(propName, prop.intValue);
-                        break;
-                    case MaterialPropertyData.Type.Float:
-                        if (len == 1)
-                            dstmat.SetFloat(propName, prop.floatValue);
-                        else
-                            dstmat.SetFloatArray(propName, prop.floatArray);
-                        break;
-                    case MaterialPropertyData.Type.Vector:
-                        if (len == 1)
-                            dstmat.SetVector(propName, prop.vectorValue);
-                        else
-                            dstmat.SetVectorArray(propName, prop.vectorArray);
-                        break;
-                    case MaterialPropertyData.Type.Matrix:
-                        if (len == 1)
-                            dstmat.SetMatrix(propName, prop.matrixValue);
-                        else
-                            dstmat.SetMatrixArray(propName, prop.matrixArray);
-                        break;
-                    case MaterialPropertyData.Type.Texture:
-                        {
-                            MaterialPropertyData.TextureRecord rec = prop.textureValue;
-                            Texture2D tex = FindTexture(rec.id);
-                            if (tex != null) {
-                                dstmat.SetTexture(propName, tex);
-                                if (rec.hasScaleOffset) {
-                                    dstmat.SetTextureScale(propName, rec.scale);
-                                    dstmat.SetTextureOffset(propName, rec.offset);
-                                }
-                            }
-                        }
-                        break;
-                    default: break;
-                }
-            }
-
+        Material destMat = dst.material;
+        if (importerSettings.CreateMaterials && !dst.IsMaterialDataApplied) {
+            ApplyMaterialDataToMaterial(src,destMat);
             dst.IsMaterialDataApplied = true;
         }
 
         if (onUpdateMaterial != null)
-            onUpdateMaterial.Invoke(dstmat, src);
+            onUpdateMaterial.Invoke(destMat, src);
     }
+
+    static void ApplyMaterialDataToMaterial(MaterialData src, Material destMat) {
+        int numKeywords = src.numKeywords;
+        for (int ki = 0; ki < numKeywords; ++ki)
+        {
+            MaterialKeywordData kw = src.GetKeyword(ki);
+            if (kw.value)
+                destMat.EnableKeyword(kw.name);
+            else
+                destMat.DisableKeyword(kw.name);
+        }
+
+        int numProps = src.numProperties;
+        for (int pi = 0; pi < numProps; ++pi)
+        {
+            MaterialPropertyData      prop     = src.GetProperty(pi);
+            string                    propName = prop.name;
+            MaterialPropertyData.Type propType = prop.type;
+            if (!destMat.HasProperty(propName))
+                continue;
+
+            // todo: handle transparent
+            //if (propName == _Color)
+            //{
+            //    var color = prop.vectorValue;
+            //    if (color.w > 0.0f && color.w < 1.0f && dstmat.HasProperty("_SrcBlend"))
+            //    {
+            //        dstmat.SetOverrideTag("RenderType", "Transparent");
+            //        dstmat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+            //        dstmat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            //        dstmat.SetInt("_ZWrite", 0);
+            //        dstmat.DisableKeyword("_ALPHATEST_ON");
+            //        dstmat.DisableKeyword("_ALPHABLEND_ON");
+            //        dstmat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+            //        dstmat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            //    }
+            //}
+            if (propName == _EmissionColor)
+            {
+                if (destMat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
+                {
+                    destMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    destMat.EnableKeyword(_EMISSION);
+                }
+            }
+            else if (propName == _MetallicGlossMap)
+            {
+                destMat.EnableKeyword(_METALLICGLOSSMAP);
+            }
+            else if (propName == _BumpMap)
+            {
+                destMat.EnableKeyword(_NORMALMAP);
+            }
+
+            int len = prop.arrayLength;
+            switch (propType)
+            {
+                case MaterialPropertyData.Type.Int:
+                    destMat.SetInt(propName, prop.intValue);
+                    break;
+                case MaterialPropertyData.Type.Float:
+                    if (len == 1)
+                        destMat.SetFloat(propName, prop.floatValue);
+                    else
+                        destMat.SetFloatArray(propName, prop.floatArray);
+                    break;
+                case MaterialPropertyData.Type.Vector:
+                    if (len == 1)
+                        destMat.SetVector(propName, prop.vectorValue);
+                    else
+                        destMat.SetVectorArray(propName, prop.vectorArray);
+                    break;
+                case MaterialPropertyData.Type.Matrix:
+                    if (len == 1)
+                        destMat.SetMatrix(propName, prop.matrixValue);
+                    else
+                        destMat.SetMatrixArray(propName, prop.matrixArray);
+                    break;
+                case MaterialPropertyData.Type.Texture:
+                    {
+                        MaterialPropertyData.TextureRecord rec = prop.textureValue;
+                        Texture2D tex = FindTexture(rec.id);
+                        if (tex != null) {
+                            destMat.SetTexture(propName, tex);
+                            if (rec.hasScaleOffset) {
+                                destMat.SetTextureScale(propName, rec.scale);
+                                destMat.SetTextureOffset(propName, rec.offset);
+                            }
+                        }
+                    }
+                    break;
+                default: break;
+            }
+        }        
+    }
+    
     
 #if UNITY_EDITOR    
     //[TODO-sin: 2021-11-2] Move to FIU
