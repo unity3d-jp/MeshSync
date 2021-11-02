@@ -43,7 +43,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         EditorGUILayout.Space();
         bool changed = DrawCacheSettings(m_sceneCachePlayer);
         changed |= DrawAssetSyncSettings(m_sceneCachePlayer);
-        changed |= DrawSceneCacheImportSettings(m_sceneCachePlayer);
+        changed |= DrawSceneCacheImportSettings(m_sceneCachePlayer, serializedObject);
         changed |= DrawMiscSettings(m_sceneCachePlayer);
         
         MeshSyncPlayerConfig config = m_sceneCachePlayer.GetConfig();
@@ -153,7 +153,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    private static bool DrawSceneCacheImportSettings(SceneCachePlayer t) {
+    private static bool DrawSceneCacheImportSettings(SceneCachePlayer t, SerializedObject serializedObject) {
 
         bool changed   = false;
         MeshSyncPlayerConfig playerConfig = t.GetConfig();
@@ -163,7 +163,9 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
 
             IHasModelImporterSettings importer = AssetImporter.GetAtPath(t.GetSceneCacheFilePath()) as IHasModelImporterSettings;
             if (null == importer) {
-                MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(t, playerConfig.GetModelImporterSettings());                
+                MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(
+                    serializedObject.FindProperty(MeshSyncEditorConstants.SCENE_CACHE_IMPORTER_SETTINGS_PROP)
+                );                
             }
 
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Animation Interpolation",
