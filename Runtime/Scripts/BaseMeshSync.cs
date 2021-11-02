@@ -825,13 +825,11 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         bool applyMaterialParams = true;
         
 #if UNITY_EDITOR
-        if (importerSettings.CreateMaterials && (dst.material == null || dst.name != materialName))
-        {
+        if (importerSettings.CreateMaterials && (dst.material == null || dst.name != materialName)) {
             Material candidate = null;
 
             string[] guids = AssetDatabase.FindAssets("t:Material " + materialName);
-            foreach (string guid in guids)
-            {
+            foreach (string guid in guids) {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
                 if (material.name == materialName)
@@ -844,8 +842,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 }
             }
 
-            if (candidate != null)
-            {
+            if (candidate != null) {
                 dst.material = candidate;
                 applyMaterialParams = false;
             }
