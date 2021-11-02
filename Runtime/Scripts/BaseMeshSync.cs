@@ -331,11 +331,11 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             return "/" + t.name;
     }
 
-    internal Texture2D FindTexture(int id)
+    private static Texture2D FindTexture(int id, List<TextureHolder> textureHolders)
     {
         if (id == Lib.invalidID)
             return null;
-        TextureHolder rec = m_textureList.Find(a => a.id == id);
+        TextureHolder rec = textureHolders.Find(a => a.id == id);
         return rec != null ? rec.texture : null;
     }
 
@@ -860,14 +860,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
         Material destMat = dst.material;
         if (importerSettings.CreateMaterials && dst.ShouldApplyMaterialData) {
-            ApplyMaterialDataToMaterial(src,destMat);
+            ApplyMaterialDataToMaterial(src,destMat, m_textureList);
         }
 
         if (onUpdateMaterial != null)
             onUpdateMaterial.Invoke(destMat, src);
     }
 
-    static void ApplyMaterialDataToMaterial(MaterialData src, Material destMat) {
+    static void ApplyMaterialDataToMaterial(MaterialData src, Material destMat, List<TextureHolder> textureHolders) {
         int numKeywords = src.numKeywords;
         for (int ki = 0; ki < numKeywords; ++ki)
         {
@@ -947,7 +947,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 case MaterialPropertyData.Type.Texture:
                     {
                         MaterialPropertyData.TextureRecord rec = prop.textureValue;
-                        Texture2D tex = FindTexture(rec.id);
+                        Texture2D tex = FindTexture(rec.id, textureHolders);
                         if (tex != null) {
                             destMat.SetTexture(propName, tex);
                             if (rec.hasScaleOffset) {
