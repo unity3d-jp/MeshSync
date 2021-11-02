@@ -832,8 +832,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             foreach (string guid in guids) {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
-                if (material.name == materialName)
-                {
+                if (material.name == materialName) {
                     candidate = material;
 
                     // if there are multiple candidates, prefer the editable one (= not a part of fbx etc)
