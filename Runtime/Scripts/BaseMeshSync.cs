@@ -851,17 +851,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         }
 #endif
         if (dst.material == null)
-        {
-            // prefer non Standard shader because it will be pink in HDRP
-            string shaderName = src.shader;
-            if (shaderName != "Standard")
-            {
-                Shader shader = Shader.Find(src.shader);
-                if (shader != null)
-                    dst.material = new Material(shader);
-            }
-            if (dst.material == null)
-                dst.material = CreateDefaultMaterial();
+        {                
+            dst.material = CreateDefaultMaterial(src.shader);
             dst.material.name = materialName;
 
             dst.materialIID = dst.material.GetInstanceID();
