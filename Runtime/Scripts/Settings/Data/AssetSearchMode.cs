@@ -1,10 +1,12 @@
-﻿namespace Unity.MeshSync {
+﻿using UnityEngine;
+
+namespace Unity.MeshSync {
 
 internal enum AssetSearchMode {
 
-    LOCAL = 0,
-    RECURSIVE_UP,
-    EVERYWHERE,
+    [InspectorName("Local")] LOCAL = 0,
+    [InspectorName("Recursive Up")] RECURSIVE_UP,
+    [InspectorName("Everywhere")] EVERYWHERE,
     
 }
 
