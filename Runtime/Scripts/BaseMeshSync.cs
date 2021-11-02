@@ -848,7 +848,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             {
                 dst.material = candidate;
                 applyMaterialParams = false;
-                m_needReassignMaterials = true;
             }
         }
 #endif
@@ -856,10 +855,10 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             dst.material = CreateDefaultMaterial(src.shader);
             dst.material.name = materialName;
 
-            m_needReassignMaterials = true;
         }
         
         Assert.IsNotNull(dst.material);
+        m_needReassignMaterials = true;
         
         dst.name = materialName;
         dst.index = src.index;
