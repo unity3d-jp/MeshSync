@@ -4,15 +4,21 @@ using NUnit.Framework;
 namespace Unity.MeshSync.Editor.Tests {
 
 
-public class SceneCachePlayerImporterTest  {
+public class PropertyExistenceTests  {
 
 //----------------------------------------------------------------------------------------------------------------------
     [Test]
-    public void CheckImporterProperties() {
+    public void CheckSceneCacheImporterProperties() {
         VerifyMemberExists(typeof(SceneCacheImporter), MeshSyncEditorConstants.SCENE_CACHE_IMPORTER_SETTINGS_PROP);
     }
 
+    [Test]
+    public void CheckModelImporterSettingsProperties() {
+        VerifyMemberExists(typeof(ModelImporterSettings), MeshSyncEditorConstants.MODEL_IMPORTER_CREATE_MATERIALS_PROP);
+        VerifyMemberExists(typeof(ModelImporterSettings), MeshSyncEditorConstants.MODEL_IMPORTER_MATERIAL_SEARCH_MODE_PROP);
+    }
 
+    
     static void VerifyMemberExists(System.Type type, string memberName) {
         MemberInfo[] m = type.GetMember(memberName, BindingFlags.NonPublic | BindingFlags.Instance);
         Assert.Greater(m.Length, 0);
