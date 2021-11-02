@@ -14,8 +14,8 @@ public class PropertyExistenceTests  {
 
     [Test]
     public void CheckModelImporterSettingsProperties() {
-        VerifyMemberExists(typeof(ModelImporterSettings), MeshSyncEditorConstants.MODEL_IMPORTER_CREATE_MATERIALS_PROP);
-        VerifyMemberExists(typeof(ModelImporterSettings), MeshSyncEditorConstants.MODEL_IMPORTER_MATERIAL_SEARCH_MODE_PROP);
+        VerifyMemberExists(typeof(ModelImporterSettings), ModelImporterSettings.CREATE_MATERIALS_PROP);
+        VerifyMemberExists(typeof(ModelImporterSettings), ModelImporterSettings.MATERIAL_SEARCH_MODE_PROP);
     }
 
     
