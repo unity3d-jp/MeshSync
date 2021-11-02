@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
-
+using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace Unity.MeshSync.Editor  {
@@ -26,10 +26,21 @@ internal static class MeshSyncInspectorUtility {
                 updateFunc: (AssetSearchMode mode) => { settings.MaterialSearchMode = mode; });
         }
         
-        
-        
     }
 
+    internal static void DrawModelImporterSettingsGUI(SerializedProperty property) {
+
+        SerializedProperty createMatProp = property.FindPropertyRelative("CreateMaterials"); 
+        EditorGUILayout.PropertyField(createMatProp, new GUIContent("Create Materials"));
+        
+        using (new EditorGUI.DisabledScope(!createMatProp.boolValue)) {
+            ++EditorGUI.indentLevel;
+            EditorGUILayout.PropertyField(property.FindPropertyRelative("MaterialSearchMode"),
+                new GUIContent("Material Search Mode"));
+            --EditorGUI.indentLevel;
+        }
+    }
+    
 }
 
 } //end namespace
