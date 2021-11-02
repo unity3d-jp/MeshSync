@@ -811,6 +811,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             dst.id = materialID;
             m_materialList.Add(dst);
         }
+
+        bool applyMaterialParams = true;
         
 #if UNITY_EDITOR
         if (importerSettings.CreateMaterials && (dst.material == null || dst.name != materialName))
@@ -835,7 +837,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             if (candidate != null)
             {
                 dst.material = candidate;
-                dst.materialIID = 0; // ignore material params
+                applyMaterialParams = false;
                 m_needReassignMaterials = true;
             }
         }
@@ -854,7 +856,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 dst.material = CreateDefaultMaterial();
             dst.material.name = materialName;
 
-            dst.materialIID = dst.material.GetInstanceID();
             m_needReassignMaterials = true;
         }
         dst.name = materialName;
@@ -863,7 +864,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         dst.color = src.color;
 
         Material dstmat = dst.material;
-        if (importerSettings.CreateMaterials && dst.materialIID == dst.material.GetInstanceID())
+        if (importerSettings.CreateMaterials && applyMaterialParams)
         {
             int numKeywords = src.numKeywords;
             for (int ki = 0; ki < numKeywords; ++ki)
