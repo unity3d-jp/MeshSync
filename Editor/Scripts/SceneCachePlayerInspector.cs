@@ -164,7 +164,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             IHasModelImporterSettings importer = AssetImporter.GetAtPath(t.GetSceneCacheFilePath()) as IHasModelImporterSettings;
             if (null == importer) {
                 MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(
-                    serializedObject.FindProperty(MeshSyncEditorConstants.SCENE_CACHE_IMPORTER_SETTINGS_PROP)
+                    serializedObject.FindProperty(SceneCacheImporter.IMPORTER_SETTINGS_PROP)
                 );                
             }
 

@@ -43,6 +43,10 @@ internal class SceneCacheImporter : ScriptedImporter, IHasModelImporterSettings
     
     [SerializeField] private ModelImporterSettings m_importerSettings;
     
+//----------------------------------------------------------------------------------------------------------------------
+    //properties
+    internal const string IMPORTER_SETTINGS_PROP = "m_importerSettings";
+    
 }
 
 } //end namespace
