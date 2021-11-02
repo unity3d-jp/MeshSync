@@ -821,11 +821,9 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             dst.id = materialID;
             m_materialList.Add(dst);
         }
-
-        bool isMaterialUnassigned = (dst.material == null || dst.name != materialName);
         
 #if UNITY_EDITOR
-        if (importerSettings.CreateMaterials && isMaterialUnassigned) {
+        if (importerSettings.CreateMaterials && (dst.material == null || dst.name != materialName)) {
             Material candidate = null;
 
             string[] guids = AssetDatabase.FindAssets("t:Material " + materialName);
