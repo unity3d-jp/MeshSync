@@ -832,14 +832,13 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
-                if (material.name == materialName)
-                {
-                    candidate = material;
+                if (material.name != materialName) 
+                    continue;
+                candidate = material;
 
-                    // if there are multiple candidates, prefer the editable one (= not a part of fbx etc)
-                    if (((int)material.hideFlags & (int)HideFlags.NotEditable) == 0)
-                        break;
-                }
+                // if there are multiple candidates, prefer the editable one (= not a part of fbx etc)
+                if (((int)material.hideFlags & (int)HideFlags.NotEditable) == 0)
+                    break;
             }
 
             if (candidate != null)
