@@ -1,6 +1,6 @@
 ﻿namespace Unity.MeshSync {
 
-internal enum MaterialSearchMode {
+internal enum AssetSearchMode {
 
     LOCAL = 0,
     RECURSIVE_UP,
