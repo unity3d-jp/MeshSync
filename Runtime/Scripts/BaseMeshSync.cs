@@ -852,13 +852,15 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             }
         }
 #endif
-        if (dst.material == null)
-        {                
+        if (dst.material == null) {
             dst.material = CreateDefaultMaterial(src.shader);
             dst.material.name = materialName;
 
             m_needReassignMaterials = true;
         }
+        
+        Assert.IsNotNull(dst.material);
+        
         dst.name = materialName;
         dst.index = src.index;
         dst.shader = src.shader;
