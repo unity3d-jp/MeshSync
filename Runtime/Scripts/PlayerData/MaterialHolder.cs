@@ -12,6 +12,8 @@ internal class MaterialHolder {
     public Color    color = Color.white;
     public Material material;
     public int      materialIID;
+    public bool     IsMaterialDataApplied = false;
+
 }
 
 } //end namespace
