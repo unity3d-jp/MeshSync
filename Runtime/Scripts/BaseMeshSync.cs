@@ -830,8 +830,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             string[] guids = AssetDatabase.FindAssets("t:Material " + materialName);
             foreach (string guid in guids)
             {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+                Material material = LoadAssetByGUID<Material>(guid);
                 if (material.name != materialName) 
                     continue;
                 candidate = material;
