@@ -845,8 +845,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             }
         }
 #endif
-        bool needToCreateMaterial = (dst.material == null);
-        if (needToCreateMaterial) {
+        if (dst.material == null) {
             dst.material = CreateDefaultMaterial(src.shader);
             dst.material.name = materialName;
 
