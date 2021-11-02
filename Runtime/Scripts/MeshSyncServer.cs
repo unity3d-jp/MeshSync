@@ -36,7 +36,7 @@ public class MeshSyncServer : BaseMeshSync {
 
 
     private protected override void UpdateMaterialAssetV(MaterialData materialData) {
-        UpdateMaterialAssetByDefault(materialData,m_config.ImporterSettings);
+        UpdateMaterialAssetByDefault(materialData,m_config.GetModelImporterSettings());
     }
     
 //----------------------------------------------------------------------------------------------------------------------        
