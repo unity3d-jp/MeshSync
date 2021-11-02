@@ -103,7 +103,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             //Time Unit
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"SceneCache: Time Unit",
                 guiFunc: () => (SceneCachePlayer.TimeUnit) EditorGUILayout.Popup("Time Unit", 
-                    (int) t.GetTimeUnit(), m_timeUnitEnums), 
+                    (int) t.GetTimeUnit(), TIME_UNIT_ENUMS), 
                 updateFunc: (SceneCachePlayer.TimeUnit timeUnit) => {
                     t.SetTimeUnit(timeUnit);
                     t.ResetTimeAnimation();                    
@@ -126,7 +126,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             } else if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Frames) {
 
                 changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Base Frame",
-                    guiFunc: () => ((SceneCachePlayer.BaseFrame) EditorGUILayout.Popup("Base Frame", (int)t.GetBaseFrame(), m_baseFrameEnums)),                   
+                    guiFunc: () => ((SceneCachePlayer.BaseFrame) EditorGUILayout.Popup("Base Frame", (int)t.GetBaseFrame(), BASE_FRAME_ENUMS)),                   
                     updateFunc: (SceneCachePlayer.BaseFrame baseFrame) => {
                         t.SetBaseFrame(baseFrame);                    
                         t.ResetTimeAnimation();
@@ -251,8 +251,8 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
     private List<SceneCachePlayer> m_targets          = new List<SceneCachePlayer>();
 
 
-    private static readonly string[] m_timeUnitEnums = System.Enum.GetNames( typeof( SceneCachePlayer.TimeUnit ) );
-    private static readonly string[] m_baseFrameEnums = System.Enum.GetNames( typeof( SceneCachePlayer.BaseFrame ) );
+    private static readonly string[] TIME_UNIT_ENUMS = System.Enum.GetNames( typeof( SceneCachePlayer.TimeUnit ) );
+    private static readonly string[] BASE_FRAME_ENUMS = System.Enum.GetNames( typeof( SceneCachePlayer.BaseFrame ) );
     
 
 }
