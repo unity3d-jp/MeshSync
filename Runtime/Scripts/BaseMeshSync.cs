@@ -396,14 +396,24 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
 //----------------------------------------------------------------------------------------------------------------------    
 
-    private static Material CreateDefaultMaterial() {
+    private static Material CreateDefaultMaterial(string shaderName =null) {
+        
+        Shader shader = null;
+        if (!string.IsNullOrEmpty(shaderName)) {
+            shader = Shader.Find(shaderName); 
+        }
+            
+        if (shader == null) 
+        {            
 #if AT_USE_HDRP                
-        Shader shader = Shader.Find("HDRP/Lit");
+            shader = Shader.Find("HDRP/Lit");
 #elif AT_USE_URP
-        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            shader = Shader.Find("Universal Render Pipeline/Lit");
 #else 
-        Shader shader = Shader.Find("Standard");
+            shader = Shader.Find("Standard");
 #endif        
+        }
+        
         Assert.IsNotNull(shader);
         Material ret = new Material(shader);
         return ret;
@@ -813,50 +823,38 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         }
         
 #if UNITY_EDITOR
-        if (importerSettings.CreateMaterials && (dst.material == null || dst.name != materialName))
-        {
+        if (importerSettings.CreateMaterials && (dst.material == null || dst.name != materialName)) {
             Material candidate = null;
 
             string[] guids = AssetDatabase.FindAssets("t:Material " + materialName);
-            foreach (string guid in guids)
-            {
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
-                if (material.name == materialName)
-                {
-                    candidate = material;
+            foreach (string guid in guids) {
+                Material material = LoadAssetByGUID<Material>(guid);
+                if (material.name != materialName) 
+                    continue;
+                candidate = material;
 
-                    // if there are multiple candidates, prefer the editable one (= not a part of fbx etc)
-                    if (((int)material.hideFlags & (int)HideFlags.NotEditable) == 0)
-                        break;
-                }
+                // if there are multiple candidates, prefer the editable one (= not a part of fbx etc)
+                if (((int)material.hideFlags & (int)HideFlags.NotEditable) == 0)
+                    break;
             }
 
-            if (candidate != null)
-            {
+            if (candidate != null) {
                 dst.material = candidate;
                 dst.materialIID = 0; // ignore material params
                 m_needReassignMaterials = true;
             }
         }
 #endif
-        if (dst.material == null)
-        {
-            // prefer non Standard shader because it will be pink in HDRP
-            string shaderName = src.shader;
-            if (shaderName != "Standard")
-            {
-                Shader shader = Shader.Find(src.shader);
-                if (shader != null)
-                    dst.material = new Material(shader);
-            }
-            if (dst.material == null)
-                dst.material = CreateDefaultMaterial();
+        if (dst.material == null) {
+            dst.material = CreateDefaultMaterial(src.shader);
             dst.material.name = materialName;
 
             dst.materialIID = dst.material.GetInstanceID();
             m_needReassignMaterials = true;
         }
+        
+        Assert.IsNotNull(dst.material);
+        
         dst.name = materialName;
         dst.index = src.index;
         dst.shader = src.shader;
@@ -962,6 +960,15 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         if (onUpdateMaterial != null)
             onUpdateMaterial.Invoke(dstmat, src);
     }
+    
+#if UNITY_EDITOR    
+    //[TODO-sin: 2021-11-2] Move to FIU
+    static T LoadAssetByGUID<T>(string guid) where T:UnityEngine.Object {
+        string path  = AssetDatabase.GUIDToAssetPath(guid);
+        T      asset = AssetDatabase.LoadAssetAtPath<T>(path);
+        return asset;
+    }    
+#endif    
 
 //----------------------------------------------------------------------------------------------------------------------
     
