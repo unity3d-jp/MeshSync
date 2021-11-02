@@ -10,6 +10,7 @@ internal class ModelImporterSettings {
     
     internal ModelImporterSettings(ModelImporterSettings other) {
         this.CreateMaterials = other.CreateMaterials;
+        this.MaterialSearchMode = other.MaterialSearchMode;
     }
     
     internal ModelImporterSettings(bool createMaterials) {
@@ -20,6 +21,8 @@ internal class ModelImporterSettings {
 //----------------------------------------------------------------------------------------------------------------------
     
     [SerializeField] internal bool CreateMaterials;
+    [SerializeField] internal AssetSearchMode MaterialSearchMode;
+
 }
 
 } //end namespace
