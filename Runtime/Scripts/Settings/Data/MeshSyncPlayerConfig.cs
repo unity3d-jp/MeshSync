@@ -21,7 +21,7 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
         UpdateMeshColliders    = other.UpdateMeshColliders;
 
         //Import Settings   
-        m_importerSettings       = new ModelImporterSettings(other.m_importerSettings); 
+        ImporterSettings         = new ModelImporterSettings(other.ImporterSettings); 
         AnimationInterpolation   = other.AnimationInterpolation;
         KeyframeReduction        = other.KeyframeReduction;
         ReductionThreshold       = other.ReductionThreshold;
@@ -49,7 +49,7 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
         if (m_meshSyncPlayerConfigVersion < (int) MeshSyncPlayerConfigVersion.MODEL_IMPORTER_0_10_X) {
 #pragma warning disable 612
-            m_importerSettings.CreateMaterials = SyncMaterials;
+            ImporterSettings.CreateMaterials = SyncMaterials;
 #pragma warning restore 612
         }
 
@@ -59,12 +59,6 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
 //----------------------------------------------------------------------------------------------------------------------    
     internal AnimationTweakSettings GetAnimationTweakSettings() { return m_animationTweakSettings;}
-
-    internal void SetModelImporterSettings(ModelImporterSettings importerSettings) {
-        m_importerSettings = importerSettings;
-    }
-
-    internal ModelImporterSettings GetModelImporterSettings() => m_importerSettings;
     
 //----------------------------------------------------------------------------------------------------------------------    
     //Sync Settings
@@ -76,7 +70,7 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     public bool UpdateMeshColliders    = true;
     [Obsolete] public bool SyncMaterials          = true;
 
-    [SerializeField] private ModelImporterSettings m_importerSettings = new ModelImporterSettings();
+    [SerializeField] internal ModelImporterSettings ImporterSettings;
 
     //Import Settings   
     public int   AnimationInterpolation   = (int) InterpolationMode.Smooth;
