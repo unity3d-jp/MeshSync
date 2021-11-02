@@ -22,7 +22,7 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
         EditorGUILayout.Space();
         DrawServerSettings(m_meshSyncServer);
         DrawAssetSyncSettings(m_meshSyncServer);
-        DrawImportSettings(m_meshSyncServer);
+        DrawImportSettings(m_meshSyncServer, serializedObject);
         DrawMiscSettings(m_meshSyncServer);
         DrawMaterialList(m_meshSyncServer);
         DrawAnimationTweak(m_meshSyncServer);

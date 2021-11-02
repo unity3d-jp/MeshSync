@@ -73,14 +73,16 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
     }
 
-    protected static bool DrawImportSettings(BaseMeshSync t) {
+    protected static bool DrawImportSettings(BaseMeshSync t, SerializedObject serializedObject) {
 
         bool changed   = false;
         MeshSyncPlayerConfig playerConfig = t.GetConfig();
         
         t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, GetBoldFoldoutStyle());
         if (t.foldImportSettings) {
-            MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(t, playerConfig.GetModelImporterSettings());
+            MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(
+                serializedObject.FindProperty(SceneCacheImporter.IMPORTER_SETTINGS_PROP)
+            );
 
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Animation Interpolation",
                 guiFunc: () => EditorGUILayout.Popup(new GUIContent("Animation Interpolation"),
