@@ -372,6 +372,7 @@ public class SceneCachePlayer : BaseMeshSync {
         if (m_sceneCachePlayerVersion == CUR_SCENE_CACHE_PLAYER_VERSION)
             return;
         
+#if UNITY_EDITOR
         if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.STRING_PATH_0_4_0) {
             Assert.IsNotNull(m_cacheFilePath);           
             m_sceneCacheFilePath = AssetEditorUtility.NormalizePath(m_cacheFilePath.GetFullPath());
@@ -380,6 +381,7 @@ public class SceneCachePlayer : BaseMeshSync {
         if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.NORMALIZED_PATH_0_9_2) {
             m_sceneCacheFilePath = AssetEditorUtility.NormalizePath(m_sceneCacheFilePath);
         } 
+#endif        
         
         m_sceneCachePlayerVersion = CUR_SCENE_CACHE_PLAYER_VERSION;
     }
