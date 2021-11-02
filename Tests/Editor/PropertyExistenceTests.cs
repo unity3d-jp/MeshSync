@@ -9,7 +9,7 @@ public class PropertyExistenceTests  {
 //----------------------------------------------------------------------------------------------------------------------
     [Test]
     public void CheckSceneCacheImporterProperties() {
-        VerifyMemberExists(typeof(SceneCacheImporter), MeshSyncEditorConstants.SCENE_CACHE_IMPORTER_SETTINGS_PROP);
+        VerifyMemberExists(typeof(SceneCacheImporter), SceneCacheImporter.IMPORTER_SETTINGS_PROP);
     }
 
     [Test]
