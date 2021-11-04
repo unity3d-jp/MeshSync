@@ -249,7 +249,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         SerializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
         SerializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
         SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
-        
+
+        m_baseMeshSyncVersion = CUR_BASE_MESHSYNC_VERSION;
     }
 
 
@@ -262,6 +263,23 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
         
         OnAfterDeserializeMeshSyncPlayerV();
+
+        if (CUR_BASE_MESHSYNC_VERSION == m_baseMeshSyncVersion)
+            return;
+
+        if (m_baseMeshSyncVersion < (int) BaseMeshSyncVersion.INITIAL_0_10_0) {
+            foreach (MaterialHolder m in m_materialList) {
+#pragma warning disable 612
+                if (m.materialIID != 0) 
+                    continue;
+#pragma warning restore 612
+                
+                m.ShouldApplyMaterialData = false;
+            }
+        }
+        
+        m_baseMeshSyncVersion = CUR_BASE_MESHSYNC_VERSION;
+        
     }
     
     protected abstract void OnBeforeSerializeMeshSyncPlayerV();
@@ -2224,6 +2242,11 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [SerializeField] int[]          m_objIDTable_values;
     [SerializeField] int            m_objIDSeed = 0;
 
+#pragma warning disable 414
+    [HideInInspector][SerializeField] private int m_baseMeshSyncVersion = (int) BaseMeshSyncVersion.NO_VERSIONING;
+#pragma warning restore 414
+    private const int CUR_BASE_MESHSYNC_VERSION = (int) BaseMeshSyncVersion.INITIAL_0_10_0;
+    
 #if UNITY_EDITOR
     [SerializeField] bool m_sortEntities          = true;
     [SerializeField] bool m_foldSyncSettings      = true;
@@ -2270,6 +2293,13 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
     const string _BumpMap   = "_BumpMap";
     const string _NORMALMAP = "_NORMALMAP";
+
+    enum BaseMeshSyncVersion {
+        NO_VERSIONING = 0,  //Didn't have versioning in earlier versions
+        INITIAL_0_10_0 = 1, //initial for version 0.10.0-preview 
+    
+    }
+    
     
 }
 
