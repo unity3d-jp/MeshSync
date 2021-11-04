@@ -912,6 +912,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
 //----------------------------------------------------------------------------------------------------------------------
     
+    
+#if UNITY_EDITOR    
     //[TODO-sin: 2021-11-4] To FIU
     static List<string> FindAssets(string filter, string[] searchInFolders = null, bool searchSubFolder = true) {
                 
@@ -941,6 +943,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
 
     }
+#endif    
     
 //----------------------------------------------------------------------------------------------------------------------    
 
