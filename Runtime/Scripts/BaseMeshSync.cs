@@ -2139,6 +2139,19 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         ForceRepaint();
     }
 
+    private Material GetOrCreateDefaultMaterial() {
+        if (m_dummyMaterial != null)
+            return m_dummyMaterial;
+        
+        GameObject primitive = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        primitive.SetActive(false);
+        m_dummyMaterial = primitive.GetComponent<MeshRenderer>().sharedMaterial;
+        DestroyImmediate(primitive);
+        return m_dummyMaterial;
+    }
+    
+//---------------------------------------------------------------------------------------------------------------------    
+
     internal List<AnimationClip> GetAnimationClips()
     {
         List<AnimationClip> ret = new List<AnimationClip>();
