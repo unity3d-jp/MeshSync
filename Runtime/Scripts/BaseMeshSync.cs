@@ -1963,8 +1963,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
         foreach (MaterialHolder m in m_materialList)
             m.material = doExport(m.material); // material maybe updated by SaveAsset()
-        m_cachedDefaultMaterial = doExport(m_cachedDefaultMaterial);
-
+ 
         AssetDatabase.SaveAssets();
         ReassignMaterials();
     }
@@ -2236,7 +2235,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [SerializeField] private bool m_usePhysicalCameraParams = true;
     [SerializeField] private bool m_useCustomCameraMatrices = true;
             
-    [SerializeField] private           Material             m_cachedDefaultMaterial;
     [SerializeField] private protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
     [SerializeField] private           List<TextureHolder>  m_textureList  = new List<TextureHolder>();
     [SerializeField] private           List<AudioHolder>    m_audioList    = new List<AudioHolder>();
@@ -2269,6 +2267,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     private bool m_markMeshesDynamic            = false;
     private bool m_needReassignMaterials        = false;
     private bool m_keyValuesSerializationEnabled = true;
+    
+    private Material m_cachedDefaultMaterial;
 
     private readonly           Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
     private protected readonly Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
