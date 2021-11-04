@@ -167,15 +167,14 @@ public class SceneCachePlayer : BaseMeshSync {
 
 #if UNITY_EDITOR    
     internal bool OpenCacheInEditor(string path) {
+        
+        string normalizedPath = System.IO.Path.GetFullPath(path).Replace('\\','/');
+        normalizedPath = AssetEditorUtility.NormalizePath(normalizedPath);
 
-        if (!OpenCacheInternal(path)) {
+        if (!OpenCacheInternal(normalizedPath)) {
             return false;
         }
         
-        //Initialization after opening a cache file
-        m_sceneCacheFilePath = System.IO.Path.GetFullPath(path).Replace('\\','/');
-        m_sceneCacheFilePath = AssetEditorUtility.NormalizePath(m_sceneCacheFilePath);
-               
         UpdatePlayer(/* updateNonMaterialAssets = */ true);
         ExportMaterials(false, true);
         ResetTimeAnimation();
@@ -207,8 +206,9 @@ public class SceneCachePlayer : BaseMeshSync {
             Debug.LogError($"SceneCachePlayer: cache open failed ({path})");
             return false;            
         }
-        
-        m_timeRange = m_sceneCache.timeRange;
+
+        m_sceneCacheFilePath = path;
+        m_timeRange= m_sceneCache.timeRange;
         
 #if UNITY_EDITOR
         SetSortEntities(true);
