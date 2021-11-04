@@ -810,8 +810,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
         MaterialHolder dst = m_materialList.Find(a => a.id == materialID);
         if (dst == null) {
-            dst = new MaterialHolder();
-            dst.id = materialID;
+            dst = new MaterialHolder { id = materialID };
             m_materialList.Add(dst);
         }
         Assert.IsNotNull(dst);
