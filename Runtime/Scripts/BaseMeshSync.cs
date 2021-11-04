@@ -1813,7 +1813,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                     changed = true;
                 }
             } else if (materials[si] == null) {
-                materials[si] = GetDefaultMaterial();
+                materials[si] = FindDefaultMaterial();
                 changed = true;
             }
         }
@@ -1963,7 +1963,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
         foreach (MaterialHolder m in m_materialList)
             m.material = doExport(m.material); // material maybe updated by SaveAsset()
-        m_dummyMaterial = doExport(m_dummyMaterial);
+        m_cachedDefaultMaterial = doExport(m_cachedDefaultMaterial);
 
         AssetDatabase.SaveAssets();
         ReassignMaterials();
@@ -2133,15 +2133,15 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         ForceRepaint();
     }
 
-    private Material GetDefaultMaterial() {
-        if (m_dummyMaterial != null)
-            return m_dummyMaterial;
+    private Material FindDefaultMaterial() {
+        if (m_cachedDefaultMaterial != null)
+            return m_cachedDefaultMaterial;
         
         GameObject primitive = GameObject.CreatePrimitive(PrimitiveType.Plane);
         primitive.SetActive(false);
-        m_dummyMaterial = primitive.GetComponent<MeshRenderer>().sharedMaterial;
+        m_cachedDefaultMaterial = primitive.GetComponent<MeshRenderer>().sharedMaterial;
         DestroyImmediate(primitive);
-        return m_dummyMaterial;
+        return m_cachedDefaultMaterial;
     }
     
 //---------------------------------------------------------------------------------------------------------------------    
@@ -2236,7 +2236,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [SerializeField] private bool m_usePhysicalCameraParams = true;
     [SerializeField] private bool m_useCustomCameraMatrices = true;
             
-    [SerializeField] private           Material             m_dummyMaterial;
+    [SerializeField] private           Material             m_cachedDefaultMaterial;
     [SerializeField] private protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
     [SerializeField] private           List<TextureHolder>  m_textureList  = new List<TextureHolder>();
     [SerializeField] private           List<AudioHolder>    m_audioList    = new List<AudioHolder>();
