@@ -265,8 +265,11 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             return;
 
         if (m_baseMeshSyncVersion < (int) BaseMeshSyncVersion.INITIAL_0_10_0) {
-            
-            
+            foreach (MaterialHolder m in m_materialList) {
+                if (m.materialIID != 0) 
+                    continue;
+                m.ShouldApplyMaterialData = false;
+            }
         }
         
         m_baseMeshSyncVersion = CUR_BASE_MESHSYNC_VERSION;
