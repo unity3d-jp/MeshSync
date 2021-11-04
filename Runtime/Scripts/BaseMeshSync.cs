@@ -817,25 +817,12 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         
 #if UNITY_EDITOR
         if (importerSettings.CreateMaterials && (dst.material == null || dst.name != materialName)) {
-            Material candidate = null;
-
-            string[] guids = AssetDatabase.FindAssets("t:Material " + materialName);
-            foreach (string guid in guids) {
-                Material material = LoadAssetByGUID<Material>(guid);
-                if (material.name != materialName) 
-                    continue;
-                candidate = material;
-
-                // if there are multiple candidates, prefer the editable one (= not a part of fbx etc)
-                if (((int)material.hideFlags & (int)HideFlags.NotEditable) == 0)
-                    break;
-            }
-
-            if (candidate != null) {
-                dst.material = candidate;
+            dst.material = SearchMaterialInEditor(importerSettings.MaterialSearchMode, materialName);
+            if (null != dst.material) {
                 dst.ShouldApplyMaterialData = false;
-                m_needReassignMaterials = true;
+                m_needReassignMaterials     = true; //dst.material was not valid, but "fixed", so we need to reassign
             }
+            
         }
 #endif
         if (dst.material == null) {
