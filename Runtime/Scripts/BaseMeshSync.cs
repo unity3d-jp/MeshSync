@@ -860,8 +860,12 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             onUpdateMaterial.Invoke(destMat, src);
     }
 
+//----------------------------------------------------------------------------------------------------------------------    
+    
+#if UNITY_EDITOR
+    
     [CanBeNull]
-    Material SearchMaterial(AssetSearchMode materialSearchMode, string materialName) {
+    Material SearchMaterialInEditor(AssetSearchMode materialSearchMode, string materialName) {
         
         string[] materialGUIDs = null;
         string   assetsFolder  = GetAssetsFolder();
@@ -905,6 +909,9 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         Assert.IsNotNull(candidate);
         return candidate;
     }
+#endif
+    
+//----------------------------------------------------------------------------------------------------------------------    
 
     static void ApplyMaterialDataToMaterial(MaterialData src, Material destMat, List<TextureHolder> textureHolders) {
         int numKeywords = src.numKeywords;
