@@ -8,6 +8,9 @@ using UnityEngine.Animations;
 using Unity.Collections;
 using UnityEngine.Assertions;
 using System.IO;
+using JetBrains.Annotations;
+using Unity.FilmInternalUtilities;
+using Object = UnityEngine.Object;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -806,43 +809,33 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         int materialID = src.id;
         string materialName = src.name;
 
-        MaterialHolder dst = m_materialList.Find(a => a.id == materialID);
-        if (dst == null) {
-            dst = new MaterialHolder();
-            dst.id = materialID;
-            m_materialList.Add(dst);
-        }
+        MaterialHolder dst = m_materialList.Find(a => a.id == materialID);        
+
+        //if (invalid && creating materials is allowed)
+        if ((dst == null || dst.material == null || dst.name != materialName) && importerSettings.CreateMaterials) {
+
+            if (null == dst) {
+                dst = new MaterialHolder { id = materialID };
+                m_materialList.Add(dst);
+            }
+            Assert.IsNotNull(dst);
         
 #if UNITY_EDITOR
-        if (importerSettings.CreateMaterials && (dst.material == null || dst.name != materialName)) {
-            Material candidate = null;
-
-            string[] guids = AssetDatabase.FindAssets("t:Material " + materialName);
-            foreach (string guid in guids) {
-                Material material = LoadAssetByGUID<Material>(guid);
-                if (material.name != materialName) 
-                    continue;
-                candidate = material;
-
-                // if there are multiple candidates, prefer the editable one (= not a part of fbx etc)
-                if (((int)material.hideFlags & (int)HideFlags.NotEditable) == 0)
-                    break;
-            }
-
-            if (candidate != null) {
-                dst.material = candidate;
+            dst.material = SearchMaterialInEditor(importerSettings.MaterialSearchMode, materialName);
+            if (null != dst.material) {
                 dst.ShouldApplyMaterialData = false;
-                m_needReassignMaterials = true;
             }
-        }
+            else
 #endif
-        if (dst.material == null) {
-            dst.material = CreateDefaultMaterial(src.shader);
-            dst.material.name = materialName;
-            m_needReassignMaterials = true;
+            {
+                dst.material      = CreateDefaultMaterial(src.shader);
+                dst.material.name = materialName;
+            }
+            m_needReassignMaterials = true; 
         }
-        
-        Assert.IsNotNull(dst.material);
+
+        if (dst == null || dst.material == null)
+            return;
         
         dst.name = materialName;
         dst.index = src.index;
@@ -857,6 +850,109 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         if (onUpdateMaterial != null)
             onUpdateMaterial.Invoke(destMat, src);
     }
+
+//----------------------------------------------------------------------------------------------------------------------    
+    
+#if UNITY_EDITOR
+    
+    [CanBeNull]
+    Material SearchMaterialInEditor(AssetSearchMode materialSearchMode, string materialName) {
+        
+        HashSet<string> materialPaths = null;
+        string assetsFolder  = GetAssetsFolder();
+        switch (materialSearchMode) {
+            case AssetSearchMode.LOCAL: {
+                if (Directory.Exists(assetsFolder)) {
+                    materialPaths = FindAssetPaths("t:Material ", materialName, new string[] {assetsFolder});
+                }
+                break;
+            }
+
+            case AssetSearchMode.RECURSIVE_UP: {
+                string nextFolder = assetsFolder;
+                while (!string.IsNullOrEmpty(nextFolder) && (null==materialPaths|| materialPaths.Count <= 0)) {
+                    if (Directory.Exists(nextFolder)) {
+                        materialPaths = FindAssetPaths("t:Material ", materialName, new string[] {nextFolder}, false);
+                    }
+                    
+                    nextFolder    = PathUtility.GetDirectoryName(nextFolder,1);
+                    if (null != nextFolder) {
+                        nextFolder = nextFolder.Replace('\\','/'); //[TODO-sin: 2021-11-4] Fix in FIU                        
+                    }                        
+                }                
+                break;
+            }
+            case AssetSearchMode.EVERYWHERE: {
+                materialPaths = FindAssetPaths("t:Material ", materialName);
+                break;
+            } 
+        }
+
+        if (null == materialPaths || materialPaths.Count <= 0) 
+            return null;
+        
+        Material candidate = null;
+        
+        foreach (string materialPath in materialPaths) {
+            
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);            
+            candidate = material;
+            //if there are multiple candidates, prefer the editable one (= not a part of fbx etc)
+            if (((int)material.hideFlags & (int)HideFlags.NotEditable) == 0)
+                return material;
+            
+        }
+        Assert.IsNotNull(candidate);
+        return candidate;
+    }
+#endif
+
+//----------------------------------------------------------------------------------------------------------------------
+    
+    
+#if UNITY_EDITOR    
+    //[TODO-sin: 2021-11-4] To FIU
+    //return a set of paths
+    //exactAssetName: the exact asset name without extention
+    static HashSet<string> FindAssetPaths(string filterPrefix, string exactAssetName=null, 
+        string[] searchInFolders = null, bool searchSubFolder = true) 
+    {
+                
+        string[]   guids       = AssetDatabase.FindAssets($"{filterPrefix} {exactAssetName}", searchInFolders);
+        HashSet<string> foundAssetPaths = new HashSet<string>();
+
+        foreach (string guid in guids) {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            if (null != exactAssetName && exactAssetName != Path.GetFileNameWithoutExtension(path))
+                continue;
+
+            if (searchSubFolder || null == searchInFolders) {
+                foundAssetPaths.Add(path);
+                continue;
+            }
+
+            //exact folder required
+            string folder = PathUtility.GetDirectoryName(path,1); 
+            if (null != folder) {
+                folder = folder.Replace('\\','/'); //[TODO-sin: 2021-11-4] Fix in FIU                        
+            }
+            
+            foreach (string searchedFolder in searchInFolders) {
+                if (folder != searchedFolder) 
+                    continue;
+                
+                foundAssetPaths.Add(path);
+                break;
+            }            
+            
+
+        }
+        
+        return foundAssetPaths;
+    }
+#endif    
+    
+//----------------------------------------------------------------------------------------------------------------------    
 
     static void ApplyMaterialDataToMaterial(MaterialData src, Material destMat, List<TextureHolder> textureHolders) {
         int numKeywords = src.numKeywords;
