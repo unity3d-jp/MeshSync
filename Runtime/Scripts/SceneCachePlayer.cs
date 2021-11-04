@@ -113,6 +113,11 @@ public class SceneCachePlayer : BaseMeshSync {
     internal int GetPreloadLength() { return m_preloadLength;}
     internal void SetPreloadLength(int preloadLength) { m_preloadLength = preloadLength;}
 
+    internal bool IsModelImporterSettingsOverridden() => m_overrideModelImporterSettings;
+
+    internal void OverrideModelImporterSettings(bool overrideValue) {
+        m_overrideModelImporterSettings = overrideValue;
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
     
