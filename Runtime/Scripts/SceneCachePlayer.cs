@@ -175,9 +175,6 @@ public class SceneCachePlayer : BaseMeshSync {
             return false;
         }
         
-        //Initialization after opening a cache file
-        m_sceneCacheFilePath = normalizedPath;
-               
         UpdatePlayer(/* updateNonMaterialAssets = */ true);
         ExportMaterials(false, true);
         ResetTimeAnimation();
@@ -209,8 +206,9 @@ public class SceneCachePlayer : BaseMeshSync {
             Debug.LogError($"SceneCachePlayer: cache open failed ({path})");
             return false;            
         }
-        
-        m_timeRange = m_sceneCache.timeRange;
+
+        m_sceneCacheFilePath = path;
+        m_timeRange= m_sceneCache.timeRange;
         
 #if UNITY_EDITOR
         SetSortEntities(true);
