@@ -905,6 +905,38 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return candidate;
     }
 #endif
+
+//----------------------------------------------------------------------------------------------------------------------
+    
+    //[TODO-sin: 2021-11-4] To FIU
+    static List<string> FindAssets(string filter, string[] searchInFolders = null, bool searchSubFolder = true) {
+                
+        string[] guids = AssetDatabase.FindAssets(filter, searchInFolders);
+        if (searchSubFolder || null==searchInFolders)
+            return new List<string>(guids);
+
+        List<string> ret = new List<string>();
+        foreach (string guid in guids) {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+                
+            string folder = PathUtility.GetDirectoryName(path,1); 
+            if (null != folder) {
+                folder = folder.Replace('\\','/'); //[TODO-sin: 2021-11-4] Fix in FIU                        
+            }
+            
+            foreach (string searchedFolder in searchInFolders) {
+                if (folder != searchedFolder) 
+                    continue;
+                
+                ret.Add(guid);
+                break;
+            }            
+        }
+
+        return ret;
+
+
+    }
     
 //----------------------------------------------------------------------------------------------------------------------    
 
