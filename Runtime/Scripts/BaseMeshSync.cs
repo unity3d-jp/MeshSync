@@ -879,7 +879,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 string nextFolder = assetsFolder;
                 while (!string.IsNullOrEmpty(nextFolder) && (null==materialGUIDs|| materialGUIDs.Length <= 0)) {
                     materialGUIDs = AssetDatabase.FindAssets("t:Material " + materialName, new string[] {nextFolder});
-                    nextFolder     = PathUtility.GetDirectoryName(nextFolder, 1);
+                    nextFolder    = PathUtility.GetDirectoryName(nextFolder, 1);
                 }                
                 break;
             }
