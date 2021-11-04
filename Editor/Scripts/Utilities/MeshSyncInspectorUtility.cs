@@ -13,7 +13,11 @@ internal static class MeshSyncInspectorUtility {
             guiFunc: () => (bool)EditorGUILayout.Toggle("Create Materials", settings.CreateMaterials), 
             updateFunc: (bool createMat) => { settings.CreateMaterials = createMat; });
 
-        
+
+        DrawModelImporterMaterialSearchMode(obj, settings);
+    }
+
+    internal static void DrawModelImporterMaterialSearchMode(Object obj, ModelImporterSettings settings) {
         using (new EditorGUI.DisabledScope(!settings.CreateMaterials)) {
             
             EditorGUIDrawerUtility.DrawUndoableGUI(obj, "Search Mode",            
@@ -25,7 +29,6 @@ internal static class MeshSyncInspectorUtility {
                 }, 
                 updateFunc: (AssetSearchMode mode) => { settings.MaterialSearchMode = mode; });
         }
-        
     }
 
     internal static void DrawModelImporterSettingsGUI(SerializedProperty property) {
