@@ -165,6 +165,29 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             if (null == importer) {
                 MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(t, playerConfig.GetModelImporterSettings());                
             }
+            else {
+                EditorGUILayout.BeginHorizontal();                    
+                EditorGUIDrawerUtility.DrawUndoableGUI(t, "Override",            
+                    guiFunc: () => GUILayout.Toggle(t.IsModelImporterSettingsOverridden(), "", GUILayout.MaxWidth(15.0f)), 
+                    updateFunc: (bool overrideValue) => { t.OverrideModelImporterSettings(overrideValue); });
+
+                using (new EditorGUI.DisabledScope(!t.IsModelImporterSettingsOverridden())) {
+                    EditorGUIDrawerUtility.DrawUndoableGUI(t, "Create Materials",            
+                        guiFunc: () => (bool)EditorGUILayout.Toggle("Create Materials", playerConfig.GetModelImporterSettings().CreateMaterials), 
+                        updateFunc: (bool createMat) => { playerConfig.GetModelImporterSettings().CreateMaterials = createMat; });
+                }
+                
+                EditorGUILayout.EndHorizontal();
+
+                using (new EditorGUI.DisabledScope(!t.IsModelImporterSettingsOverridden())) {
+                    ++EditorGUI.indentLevel;
+                    MeshSyncInspectorUtility.DrawModelImporterMaterialSearchMode(t, playerConfig.GetModelImporterSettings());                
+                    --EditorGUI.indentLevel;                
+                }
+                
+            }
+            
+            
 
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Animation Interpolation",
                 guiFunc: () => EditorGUILayout.Popup(new GUIContent("Animation Interpolation"),
