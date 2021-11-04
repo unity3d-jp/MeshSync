@@ -53,8 +53,10 @@ public class SceneCachePlayer : BaseMeshSync {
 
         
 #if UNITY_EDITOR
-        //[TODO-sin: 2021-11-1] Enable to override
-        if (AssetImporter.GetAtPath(m_sceneCacheFilePath) is IHasModelImporterSettings importer) {
+        //Get the settings from the SceneCacheImporter if not set to override
+        if (AssetImporter.GetAtPath(m_sceneCacheFilePath) is IHasModelImporterSettings importer 
+            && !m_overrideModelImporterSettings) 
+        {
             modelImporterSettings = importer.GetModelImporterSettings();
         } 
 #endif            
@@ -487,6 +489,8 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] int       m_frame         = 1;
     [SerializeField] int       m_preloadLength = 1;
 
+    //only used when the sceneCacheFilePath has a valid importer (under Assets)
+    [SerializeField] bool m_overrideModelImporterSettings = false;
     
     //Renamed in 0.10.x-preview
     [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_sceneCachePlayerVersion = (int) CUR_SCENE_CACHE_PLAYER_VERSION;
