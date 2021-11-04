@@ -857,34 +857,38 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [CanBeNull]
     Material SearchMaterialInEditor(AssetSearchMode materialSearchMode, string materialName) {
         
-        string[] materialGUIDs = null;
+        List<string> materialGUIDs = null;
         string   assetsFolder  = GetAssetsFolder();
         switch (materialSearchMode) {
             case AssetSearchMode.LOCAL: {
                 if (Directory.Exists(assetsFolder)) {
-                    materialGUIDs = AssetDatabase.FindAssets("t:Material " + materialName, new string[] {assetsFolder});
+                    materialGUIDs = FindAssets("t:Material " + materialName, new string[] {assetsFolder});
                 }
                 break;
             }
 
             case AssetSearchMode.RECURSIVE_UP: {
                 string nextFolder = assetsFolder;
-                while (!string.IsNullOrEmpty(nextFolder) && (null==materialGUIDs|| materialGUIDs.Length <= 0)) {
+                while (!string.IsNullOrEmpty(nextFolder) && (null==materialGUIDs|| materialGUIDs.Count <= 0)) {
                     if (!Directory.Exists(nextFolder)) {
                         continue;
                     }
-                    materialGUIDs = AssetDatabase.FindAssets("t:Material " + materialName, new string[] {nextFolder});
-                    nextFolder    = PathUtility.GetDirectoryName(nextFolder, 1);
+                    materialGUIDs = FindAssets("t:Material " + materialName, new string[] {nextFolder}, false);
+                    nextFolder    = PathUtility.GetDirectoryName(nextFolder,1);
+
+                    if (null != nextFolder) {
+                        nextFolder = nextFolder.Replace('\\','/'); //[TODO-sin: 2021-11-4] Fix in FIU                        
+                    }                        
                 }                
                 break;
             }
             case AssetSearchMode.EVERYWHERE: {
-                materialGUIDs = AssetDatabase.FindAssets("t:Material " + materialName);
+                materialGUIDs = FindAssets("t:Material " + materialName);
                 break;
             } 
         }
 
-        if (null == materialGUIDs || materialGUIDs.Length <= 0) 
+        if (null == materialGUIDs || materialGUIDs.Count <= 0) 
             return null;
         
         Material candidate = null;
