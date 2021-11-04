@@ -870,12 +870,11 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             case AssetSearchMode.RECURSIVE_UP: {
                 string nextFolder = assetsFolder;
                 while (!string.IsNullOrEmpty(nextFolder) && (null==materialGUIDs|| materialGUIDs.Count <= 0)) {
-                    if (!Directory.Exists(nextFolder)) {
-                        continue;
+                    if (Directory.Exists(nextFolder)) {
+                        materialGUIDs = FindAssets("t:Material " + materialName, new string[] {nextFolder}, false);
                     }
-                    materialGUIDs = FindAssets("t:Material " + materialName, new string[] {nextFolder}, false);
+                    
                     nextFolder    = PathUtility.GetDirectoryName(nextFolder,1);
-
                     if (null != nextFolder) {
                         nextFolder = nextFolder.Replace('\\','/'); //[TODO-sin: 2021-11-4] Fix in FIU                        
                     }                        
