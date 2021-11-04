@@ -815,7 +815,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
             if (null == dst) {
                 dst = new MaterialHolder { id = materialID };
-                m_materialList.Add(dst);                
+                m_materialList.Add(dst);
             }
             Assert.IsNotNull(dst);
         
@@ -827,8 +827,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             else
 #endif
             {
-                dst.material            = CreateDefaultMaterial(src.shader);
-                dst.material.name       = materialName;
+                dst.material      = CreateDefaultMaterial(src.shader);
+                dst.material.name = materialName;
             }
             m_needReassignMaterials = true; 
         }
