@@ -2139,7 +2139,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         ForceRepaint();
     }
 
-    private Material GetOrCreateDefaultMaterial() {
+    private Material GetDefaultMaterial() {
         if (m_dummyMaterial != null)
             return m_dummyMaterial;
         
