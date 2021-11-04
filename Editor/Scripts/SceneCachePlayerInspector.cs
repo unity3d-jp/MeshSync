@@ -164,25 +164,27 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             IHasModelImporterSettings importer = AssetImporter.GetAtPath(t.GetSceneCacheFilePath()) as IHasModelImporterSettings;
             if (null == importer) {
                 MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(t, playerConfig.GetModelImporterSettings());                
-            }
-            else {
-                EditorGUILayout.BeginHorizontal();                    
-                EditorGUIDrawerUtility.DrawUndoableGUI(t, "Override",            
-                    guiFunc: () => GUILayout.Toggle(t.IsModelImporterSettingsOverridden(), "", GUILayout.MaxWidth(15.0f)), 
+            } else {
+
+                bool isOverride = t.IsModelImporterSettingsOverridden();
+                
+                EditorGUILayout.BeginHorizontal();
+                EditorGUIDrawerUtility.DrawUndoableGUI(t, "Override",
+                    guiFunc: () => GUILayout.Toggle(isOverride, "", GUILayout.MaxWidth(15.0f)), 
                     updateFunc: (bool overrideValue) => { t.OverrideModelImporterSettings(overrideValue); });
 
-                using (new EditorGUI.DisabledScope(!t.IsModelImporterSettingsOverridden())) {
-                    EditorGUIDrawerUtility.DrawUndoableGUI(t, "Create Materials",            
-                        guiFunc: () => (bool)EditorGUILayout.Toggle("Create Materials", playerConfig.GetModelImporterSettings().CreateMaterials), 
+                using (new EditorGUI.DisabledScope(!isOverride)) {
+                    EditorGUIDrawerUtility.DrawUndoableGUI(t, "Create Materials",
+                        guiFunc: () => (bool)EditorGUILayout.Toggle("Create Materials", playerConfig.GetModelImporterSettings().CreateMaterials),
                         updateFunc: (bool createMat) => { playerConfig.GetModelImporterSettings().CreateMaterials = createMat; });
                 }
                 
                 EditorGUILayout.EndHorizontal();
 
-                using (new EditorGUI.DisabledScope(!t.IsModelImporterSettingsOverridden())) {
+                using (new EditorGUI.DisabledScope(!isOverride)) {
                     ++EditorGUI.indentLevel;
                     MeshSyncInspectorUtility.DrawModelImporterMaterialSearchMode(t, playerConfig.GetModelImporterSettings());                
-                    --EditorGUI.indentLevel;                
+                    --EditorGUI.indentLevel;
                 }
                 
             }
