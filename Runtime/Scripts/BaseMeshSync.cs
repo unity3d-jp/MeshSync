@@ -808,30 +808,33 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         int materialID = src.id;
         string materialName = src.name;
 
-        MaterialHolder dst = m_materialList.Find(a => a.id == materialID);
-        if (dst == null) {
-            dst = new MaterialHolder { id = materialID };
-            m_materialList.Add(dst);
-        }
-        Assert.IsNotNull(dst);
+        MaterialHolder dst = m_materialList.Find(a => a.id == materialID);        
+
+        //if (invalid && creating materials is allowed)
+        if ((dst == null || dst.material == null || dst.name != materialName) && importerSettings.CreateMaterials) {
+
+            if (null == dst) {
+                dst = new MaterialHolder { id = materialID };
+                m_materialList.Add(dst);                
+            }
+            Assert.IsNotNull(dst);
         
 #if UNITY_EDITOR
-        if (importerSettings.CreateMaterials && (dst.material == null || dst.name != materialName)) {
             dst.material = SearchMaterialInEditor(importerSettings.MaterialSearchMode, materialName);
             if (null != dst.material) {
                 dst.ShouldApplyMaterialData = false;
-                m_needReassignMaterials     = true; //dst.material was not valid, but "fixed", so we need to reassign
             }
-            
-        }
+            else
 #endif
-        if (dst.material == null) {
-            dst.material = CreateDefaultMaterial(src.shader);
-            dst.material.name = materialName;
-            m_needReassignMaterials = true;
+            {
+                dst.material            = CreateDefaultMaterial(src.shader);
+                dst.material.name       = materialName;
+            }
+            m_needReassignMaterials = true; 
         }
-        
-        Assert.IsNotNull(dst.material);
+
+        if (dst == null || dst.material == null)
+            return;
         
         dst.name = materialName;
         dst.index = src.index;
