@@ -167,14 +167,16 @@ public class SceneCachePlayer : BaseMeshSync {
 
 #if UNITY_EDITOR    
     internal bool OpenCacheInEditor(string path) {
+        
+        string normalizedPath = System.IO.Path.GetFullPath(path).Replace('\\','/');
+        normalizedPath = AssetEditorUtility.NormalizePath(normalizedPath);
 
-        if (!OpenCacheInternal(path)) {
+        if (!OpenCacheInternal(normalizedPath)) {
             return false;
         }
         
         //Initialization after opening a cache file
-        m_sceneCacheFilePath = System.IO.Path.GetFullPath(path).Replace('\\','/');
-        m_sceneCacheFilePath = AssetEditorUtility.NormalizePath(m_sceneCacheFilePath);
+        m_sceneCacheFilePath = normalizedPath;
                
         UpdatePlayer(/* updateNonMaterialAssets = */ true);
         ExportMaterials(false, true);
