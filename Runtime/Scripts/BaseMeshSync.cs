@@ -814,6 +814,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             dst.id = materialID;
             m_materialList.Add(dst);
         }
+        Assert.IsNotNull(dst);
         
 #if UNITY_EDITOR
         if (importerSettings.CreateMaterials && (dst.material == null || dst.name != materialName)) {
