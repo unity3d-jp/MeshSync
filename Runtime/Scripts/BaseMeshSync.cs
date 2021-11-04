@@ -870,7 +870,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             case AssetSearchMode.RECURSIVE_UP: {
                 string nextFolder = assetsFolder;
                 while (!string.IsNullOrEmpty(nextFolder) && (null==materialGUIDs|| materialGUIDs.Length <= 0)) {
-                    if (!Directory.Exists(assetsFolder)) {
+                    if (!Directory.Exists(nextFolder)) {
                         continue;
                     }
                     materialGUIDs = AssetDatabase.FindAssets("t:Material " + materialName, new string[] {nextFolder});
