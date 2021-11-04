@@ -9,6 +9,7 @@ using Unity.Collections;
 using UnityEngine.Assertions;
 using System.IO;
 using JetBrains.Annotations;
+using Unity.FilmInternalUtilities;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -863,9 +864,21 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     Material SearchMaterial(AssetSearchMode materialSearchMode, string materialName) {
         
         string[] materialGUIDs = null;
+        string   assetsFolder  = GetAssetsFolder();
         switch (materialSearchMode) {
-            case AssetSearchMode.LOCAL: break;
-            case AssetSearchMode.RECURSIVE_UP: break;
+            case AssetSearchMode.LOCAL: {
+                materialGUIDs = AssetDatabase.FindAssets("t:Material " + materialName, new string[] {assetsFolder});
+                break;
+            }
+
+            case AssetSearchMode.RECURSIVE_UP: {
+                string nextFolder = assetsFolder;
+                while (!string.IsNullOrEmpty(nextFolder) && (null==materialGUIDs|| materialGUIDs.Length <= 0)) {
+                    materialGUIDs = AssetDatabase.FindAssets("t:Material " + materialName, new string[] {nextFolder});
+                    nextFolder     = PathUtility.GetDirectoryName(nextFolder, 1);
+                }                
+                break;
+            }
             case AssetSearchMode.EVERYWHERE: {
                 materialGUIDs = AssetDatabase.FindAssets("t:Material " + materialName);
                 break;
