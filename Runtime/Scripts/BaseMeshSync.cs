@@ -266,8 +266,11 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
         if (m_baseMeshSyncVersion < (int) BaseMeshSyncVersion.INITIAL_0_10_0) {
             foreach (MaterialHolder m in m_materialList) {
+#pragma warning disable 612
                 if (m.materialIID != 0) 
                     continue;
+#pragma warning restore 612
+                
                 m.ShouldApplyMaterialData = false;
             }
         }
