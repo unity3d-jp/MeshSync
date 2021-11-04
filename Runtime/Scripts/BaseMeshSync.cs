@@ -1813,13 +1813,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                     changed = true;
                 }
             } else if (materials[si] == null) {
-                // assign dummy material to prevent to go pink
-                if (m_dummyMaterial == null)
-                {
-                    m_dummyMaterial = CreateDefaultMaterial();
-                    m_dummyMaterial.name = "Dummy";
-                }
-                materials[si] = m_dummyMaterial;
+                materials[si] = GetDefaultMaterial();
                 changed = true;
             }
         }
