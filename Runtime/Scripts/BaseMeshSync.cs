@@ -858,6 +858,39 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             onUpdateMaterial.Invoke(destMat, src);
     }
 
+    Material SearchMaterial(AssetSearchMode materialSearchMode, string materialName) {
+        
+        string[] materialGUIDs = null;
+        switch (materialSearchMode) {
+            case AssetSearchMode.LOCAL: break;
+            case AssetSearchMode.RECURSIVE_UP: break;
+            case AssetSearchMode.EVERYWHERE: {                
+                materialGUIDs = AssetDatabase.FindAssets("t:Material " + materialName);
+                break;
+            } 
+        }
+
+        if (null == materialGUIDs || materialGUIDs.Length <= 0) 
+            return null;
+        
+        Material candidate = null;            
+        
+        foreach (string guid in materialGUIDs) {
+            
+            Material material = LoadAssetByGUID<Material>(guid);
+            if (material.name != materialName) 
+                continue;
+            
+            candidate = material;
+            //if there are multiple candidates, prefer the editable one (= not a part of fbx etc)
+            if (((int)material.hideFlags & (int)HideFlags.NotEditable) == 0)
+                return material;
+            
+        }
+        Assert.IsNotNull(candidate);
+        return candidate;
+    }
+
     static void ApplyMaterialDataToMaterial(MaterialData src, Material destMat, List<TextureHolder> textureHolders) {
         int numKeywords = src.numKeywords;
         for (int ki = 0; ki < numKeywords; ++ki)
