@@ -8,6 +8,7 @@ using UnityEngine.Animations;
 using Unity.Collections;
 using UnityEngine.Assertions;
 using System.IO;
+using JetBrains.Annotations;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -858,13 +859,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             onUpdateMaterial.Invoke(destMat, src);
     }
 
+    [CanBeNull]
     Material SearchMaterial(AssetSearchMode materialSearchMode, string materialName) {
         
         string[] materialGUIDs = null;
         switch (materialSearchMode) {
             case AssetSearchMode.LOCAL: break;
             case AssetSearchMode.RECURSIVE_UP: break;
-            case AssetSearchMode.EVERYWHERE: {                
+            case AssetSearchMode.EVERYWHERE: {
                 materialGUIDs = AssetDatabase.FindAssets("t:Material " + materialName);
                 break;
             } 
@@ -873,7 +875,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         if (null == materialGUIDs || materialGUIDs.Length <= 0) 
             return null;
         
-        Material candidate = null;            
+        Material candidate = null;
         
         foreach (string guid in materialGUIDs) {
             
