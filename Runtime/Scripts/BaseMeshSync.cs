@@ -10,6 +10,7 @@ using UnityEngine.Assertions;
 using System.IO;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
+using Object = UnityEngine.Object;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -857,21 +858,21 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [CanBeNull]
     Material SearchMaterialInEditor(AssetSearchMode materialSearchMode, string materialName) {
         
-        List<string> materialGUIDs = null;
-        string   assetsFolder  = GetAssetsFolder();
+        HashSet<string> materialPaths = null;
+        string assetsFolder  = GetAssetsFolder();
         switch (materialSearchMode) {
             case AssetSearchMode.LOCAL: {
                 if (Directory.Exists(assetsFolder)) {
-                    materialGUIDs = FindAssets("t:Material " + materialName, new string[] {assetsFolder});
+                    materialPaths = FindAssetPaths("t:Material ", materialName, new string[] {assetsFolder});
                 }
                 break;
             }
 
             case AssetSearchMode.RECURSIVE_UP: {
                 string nextFolder = assetsFolder;
-                while (!string.IsNullOrEmpty(nextFolder) && (null==materialGUIDs|| materialGUIDs.Count <= 0)) {
+                while (!string.IsNullOrEmpty(nextFolder) && (null==materialPaths|| materialPaths.Count <= 0)) {
                     if (Directory.Exists(nextFolder)) {
-                        materialGUIDs = FindAssets("t:Material " + materialName, new string[] {nextFolder}, false);
+                        materialPaths = FindAssetPaths("t:Material ", materialName, new string[] {nextFolder}, false);
                     }
                     
                     nextFolder    = PathUtility.GetDirectoryName(nextFolder,1);
@@ -882,22 +883,19 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 break;
             }
             case AssetSearchMode.EVERYWHERE: {
-                materialGUIDs = FindAssets("t:Material " + materialName);
+                materialPaths = FindAssetPaths("t:Material ", materialName);
                 break;
             } 
         }
 
-        if (null == materialGUIDs || materialGUIDs.Count <= 0) 
+        if (null == materialPaths || materialPaths.Count <= 0) 
             return null;
         
         Material candidate = null;
         
-        foreach (string guid in materialGUIDs) {
+        foreach (string materialPath in materialPaths) {
             
-            Material material = LoadAssetByGUID<Material>(guid);
-            if (material.name != materialName) 
-                continue;
-            
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);            
             candidate = material;
             //if there are multiple candidates, prefer the editable one (= not a part of fbx etc)
             if (((int)material.hideFlags & (int)HideFlags.NotEditable) == 0)
@@ -914,16 +912,26 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     
 #if UNITY_EDITOR    
     //[TODO-sin: 2021-11-4] To FIU
-    static List<string> FindAssets(string filter, string[] searchInFolders = null, bool searchSubFolder = true) {
+    //return a set of paths
+    //exactAssetName: the exact asset name without extention
+    static HashSet<string> FindAssetPaths(string filterPrefix, string exactAssetName=null, 
+        string[] searchInFolders = null, bool searchSubFolder = true) 
+    {
                 
-        string[] guids = AssetDatabase.FindAssets(filter, searchInFolders);
-        if (searchSubFolder || null==searchInFolders)
-            return new List<string>(guids);
+        string[]   guids       = AssetDatabase.FindAssets($"{filterPrefix} {exactAssetName}", searchInFolders);
+        HashSet<string> foundAssetPaths = new HashSet<string>();
 
-        List<string> ret = new List<string>();
         foreach (string guid in guids) {
             string path = AssetDatabase.GUIDToAssetPath(guid);
-                
+            if (null != exactAssetName && exactAssetName != Path.GetFileNameWithoutExtension(path))
+                continue;
+
+            if (searchSubFolder || null == searchInFolders) {
+                foundAssetPaths.Add(path);
+                continue;
+            }
+
+            //exact folder required
             string folder = PathUtility.GetDirectoryName(path,1); 
             if (null != folder) {
                 folder = folder.Replace('\\','/'); //[TODO-sin: 2021-11-4] Fix in FIU                        
@@ -933,14 +941,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 if (folder != searchedFolder) 
                     continue;
                 
-                ret.Add(guid);
+                foundAssetPaths.Add(path);
                 break;
             }            
+            
+
         }
-
-        return ret;
-
-
+        
+        return foundAssetPaths;
     }
 #endif    
     
