@@ -57,7 +57,6 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
             m_componentSyncSettings = new List<ComponentSyncSettings>() {
                 new ComponentSyncSettings(), //Camera
                 new ComponentSyncSettings(), //Lights
-                new ComponentSyncSettings(), //Meshes
             };
         }
         
@@ -145,7 +144,6 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     
     internal const int SYNC_CAMERA = 0;
     internal const int SYNC_LIGHTS = 1;
-    internal const int SYNC_MESHES = 2;
     internal const int SYNC_COUNT  = 3;
 
 }
