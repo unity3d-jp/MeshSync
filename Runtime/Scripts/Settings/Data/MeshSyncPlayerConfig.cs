@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Unity.MeshSync {
 [Serializable]
@@ -72,6 +74,16 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
     internal void SetSyncLightSettings(ComponentSyncSettings settings) { m_syncLightSettings = settings; }
     internal ComponentSyncSettings GetSyncLightSettings() => m_syncLightSettings;
+
+
+    internal void SetComponentSyncSettings(int index, ComponentSyncSettings settings) {
+        Assert.IsNotNull(settings);
+        Assert.IsTrue(index >= 0 && index<SYNC_MAX);
+        m_componentSyncSettings[index] = settings;
+    }
+    
+    internal ComponentSyncSettings GetComponentSyncSettings(int index) => m_componentSyncSettings[index];
+    
     
 //----------------------------------------------------------------------------------------------------------------------    
     //Sync Settings
@@ -84,6 +96,12 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     
     [SerializeField] private ComponentSyncSettings m_syncCameraSettings = new ComponentSyncSettings();
     [SerializeField] private ComponentSyncSettings m_syncLightSettings = new ComponentSyncSettings();
+
+    [SerializeField] private List<ComponentSyncSettings> m_componentSyncSettings = new List<ComponentSyncSettings>() {
+        new ComponentSyncSettings(),
+        new ComponentSyncSettings(),
+        new ComponentSyncSettings(),
+    };
     
     
     public bool UpdateMeshColliders    = true;
@@ -120,5 +138,12 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
         MODEL_IMPORTER_0_10_X, //With ModelImporterSettings for version 0.10.x-preview
     }
     
+//----------------------------------------------------------------------------------------------------------------------
+
+    
+    internal const int SYNC_CAMERA = 0;
+    internal const int SYNC_LIGHTS = 1;
+    internal const int SYNC_MAX    = 2;
+
 }
 } //end namespace
