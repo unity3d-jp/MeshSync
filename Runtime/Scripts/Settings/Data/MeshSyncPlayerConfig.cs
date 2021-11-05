@@ -50,6 +50,7 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
         if (m_meshSyncPlayerConfigVersion < (int) MeshSyncPlayerConfigVersion.MODEL_IMPORTER_0_10_X) {
 #pragma warning disable 612
             m_importerSettings.CreateMaterials = SyncMaterials;
+            m_syncCameraSettings.CanCreate = m_syncCameraSettings.CanUpdate = SyncCameras;
 #pragma warning restore 612
         }
 
