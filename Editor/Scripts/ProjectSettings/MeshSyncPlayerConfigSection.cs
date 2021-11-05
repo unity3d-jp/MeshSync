@@ -17,10 +17,20 @@ internal class MeshSyncPlayerConfigSection {
 
         public static readonly GUIContent Visibility          = EditorGUIUtility.TrTextContent("Visibility");
         public static readonly GUIContent Transform           = EditorGUIUtility.TrTextContent("Transform");
-        public static readonly GUIContent CamerasCreate       = EditorGUIUtility.TrTextContent("Cameras Create");
-        public static readonly GUIContent CamerasUpdate       = EditorGUIUtility.TrTextContent("Cameras Update");
-        public static readonly GUIContent LightsCreate        = EditorGUIUtility.TrTextContent("Lights Create");
-        public static readonly GUIContent LightsUpdate        = EditorGUIUtility.TrTextContent("Lights Update");
+
+        public static readonly GUIContent[] ComponentSyncCreate = new [] {
+            EditorGUIUtility.TrTextContent("Camera Create"),
+            EditorGUIUtility.TrTextContent("Lights Create"),
+            EditorGUIUtility.TrTextContent("Meshes Create"),
+        };
+
+        public static readonly GUIContent[] ComponentSyncUpdate = new [] {
+            EditorGUIUtility.TrTextContent("Camera Update"),
+            EditorGUIUtility.TrTextContent("Lights Update"),
+            EditorGUIUtility.TrTextContent("Meshes Update"),
+        };
+        
+        
         public static readonly GUIContent Meshes              = EditorGUIUtility.TrTextContent("Meshes");
         public static readonly GUIContent UpdateMeshColliders = EditorGUIUtility.TrTextContent("Update mesh colliders");
 
@@ -75,19 +85,21 @@ internal class MeshSyncPlayerConfigSection {
         m_syncTransformToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Transform,
             (MeshSyncPlayerConfig config, bool newValue) => { config.SyncTransform = newValue; }
         );
-                
-        m_syncCamerasCreateToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.CamerasCreate,
-            (MeshSyncPlayerConfig config, bool newValue) => { config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA).CanCreate = newValue; }
-        );
-        m_syncCamerasUpdateToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.CamerasUpdate,
-            (MeshSyncPlayerConfig config, bool newValue) => { config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA).CanUpdate = newValue; }
-        );
-        m_syncLightsCreateToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.LightsCreate,
-            (MeshSyncPlayerConfig config, bool newValue) => { config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS).CanCreate = newValue; }
-        );
-        m_syncLightsUpdateToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.LightsCreate,
-            (MeshSyncPlayerConfig config, bool newValue) => { config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS).CanUpdate = newValue; }
-        );
+
+        m_componentSyncSettingsUIList.Clear();
+        for (int i = 0; i < MeshSyncPlayerConfig.SYNC_MAX; ++i) {
+            ComponentSyncSettingsUI syncSettings = new ComponentSyncSettingsUI(i);
+            m_componentSyncSettingsUIList.Add(syncSettings);
+
+            syncSettings.CanCreateToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.ComponentSyncCreate[i],
+                (MeshSyncPlayerConfig config, bool newValue) => { config.GetComponentSyncSettings(syncSettings.SyncIndex).CanCreate = newValue; }
+            );
+            syncSettings.CanUpdateToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.ComponentSyncUpdate[i],
+                (MeshSyncPlayerConfig config, bool newValue) => { config.GetComponentSyncSettings(syncSettings.SyncIndex).CanUpdate = newValue; }
+            );
+            
+        }
+        
         m_syncMeshesToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Meshes,
             (MeshSyncPlayerConfig config, bool newValue) => { config.SyncMeshes = newValue; }
         );
@@ -281,12 +293,13 @@ internal class MeshSyncPlayerConfigSection {
         //sync
         m_syncVisibilityToggle.SetValueWithoutNotify(config.SyncVisibility);
         m_syncTransformToggle.SetValueWithoutNotify(config.SyncTransform);
-               
+
+        foreach (ComponentSyncSettingsUI syncSettingsUI in m_componentSyncSettingsUIList) {
+            int index = syncSettingsUI.SyncIndex;
+            syncSettingsUI.CanCreateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(index).CanCreate);
+            syncSettingsUI.CanUpdateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(index).CanUpdate);
+        }
         
-        m_syncCamerasCreateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA).CanCreate);
-        m_syncCamerasUpdateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA).CanUpdate);
-        m_syncLightsCreateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS).CanCreate);
-        m_syncLightsUpdateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS).CanUpdate);
         m_syncMeshesToggle.SetValueWithoutNotify(config.SyncMeshes);
         m_updateMeshCollidersToggle.SetValueWithoutNotify(config.UpdateMeshColliders);
 
@@ -345,10 +358,9 @@ internal class MeshSyncPlayerConfigSection {
     //Sync Settings
     private Toggle m_syncVisibilityToggle;
     private Toggle m_syncTransformToggle;
-    private Toggle m_syncCamerasCreateToggle;
-    private Toggle m_syncCamerasUpdateToggle;
-    private Toggle m_syncLightsCreateToggle;
-    private Toggle m_syncLightsUpdateToggle;
+
+    private readonly List<ComponentSyncSettingsUI> m_componentSyncSettingsUIList = new List<ComponentSyncSettingsUI>();  
+        
     private Toggle m_syncMeshesToggle;
     private Toggle m_updateMeshCollidersToggle;
     private Toggle m_createMaterialsToggle;
