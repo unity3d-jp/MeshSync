@@ -64,8 +64,8 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
     internal ModelImporterSettings GetModelImporterSettings() => m_importerSettings;
 
-    internal void SetCameraSyncSettings(ComponentSyncSettings settings) { m_cameraSyncSettings = settings; }
-    internal ComponentSyncSettings GetCameraSyncSettings() => m_cameraSyncSettings;
+    internal void SetSyncCameraSettings(ComponentSyncSettings settings) { m_syncCameraSettings = settings; }
+    internal ComponentSyncSettings GetSyncCameraSettings() => m_syncCameraSettings;
     
 //----------------------------------------------------------------------------------------------------------------------    
     //Sync Settings
@@ -76,7 +76,7 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     public bool SyncLights             = true;
     public bool SyncMeshes             = true;
     
-    [SerializeField] private ComponentSyncSettings m_cameraSyncSettings = new ComponentSyncSettings();
+    [SerializeField] private ComponentSyncSettings m_syncCameraSettings = new ComponentSyncSettings();
     
     
     public bool UpdateMeshColliders    = true;
