@@ -88,7 +88,6 @@ internal static class MeshSyncEditorConstants {
     internal static readonly string SERVER_SETTINGS_TAB_PATH             = ProjSettingsUIPath("ServerSettings_Tab");
     internal static readonly string SCENE_CACHE_PLAYER_SETTINGS_TAB_PATH = ProjSettingsUIPath("SceneCachePlayerSettings_Tab");
     internal static readonly string TAB_BUTTON_TEMPLATE_PATH             = ProjSettingsUIPath("TabButtonTemplate");
-    internal static readonly string PROJECT_SETTINGS_FIELD_TEMPLATE_PATH = ProjSettingsUIPath("ProjectSettingsFieldTemplate");
     internal static readonly string PROJECT_SETTINGS_STYLE_PATH          = ProjSettingsUIPath("ProjectSettings_Style");
 
     //Project Settings UIElements - Config    
