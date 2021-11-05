@@ -27,25 +27,17 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
       
         VisualElement content = tabInstance.Query<VisualElement>("Content").First();
         
-
-        //Templates
         MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
         
         //Add server port
         m_serverPortField = AddField<IntegerField,int>(content, Contents.ServerPort,
             projectSettings.GetDefaultServerPort(),
-            (int newValue) => {
-                MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
-                settings.SetDefaultServerPort((ushort) newValue);
-            }
+            (int newValue) => { projectSettings.SetDefaultServerPort((ushort) newValue); }
         );
 
         m_allowPublicAccessToggle = AddField<Toggle,bool>(content, Contents.AllowPublicAccess,
             projectSettings.GetServerPublicAccess(),
-            (bool  newValue) => {
-                MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
-                settings.SetServerPublicAccess(newValue);
-            }
+            (bool  newValue) => { projectSettings.SetServerPublicAccess(newValue); }
         );
         
 
