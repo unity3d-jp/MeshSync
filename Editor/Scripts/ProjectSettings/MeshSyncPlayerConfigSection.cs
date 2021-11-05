@@ -33,7 +33,9 @@ internal class MeshSyncPlayerConfigSection {
         public static readonly GUIContent UpdateMeshColliders = EditorGUIUtility.TrTextContent("Update mesh colliders");
 
         //Import
-        public static readonly GUIContent CreateMaterials = EditorGUIUtility.TrTextContent("Create Materials");
+        public static readonly GUIContent CreateMaterials    = EditorGUIUtility.TrTextContent("Create Materials");
+        public static readonly GUIContent MaterialSearchMode = EditorGUIUtility.TrTextContent("Material Search Mode");
+        
         public static readonly GUIContent AnimationInterpolation = EditorGUIUtility.TrTextContent("Animation interpolation");
         public static readonly GUIContent KeyframeReduction  = EditorGUIUtility.TrTextContent("Keyframe reduction");
         public static readonly GUIContent ReductionThreshold = EditorGUIUtility.TrTextContent("Reduction threshold");
@@ -111,6 +113,13 @@ internal class MeshSyncPlayerConfigSection {
             Contents.CreateMaterials,false,
             (MeshSyncPlayerConfig config, bool newValue) => { config.GetModelImporterSettings().CreateMaterials = newValue; }
         );
+        m_materialSearchModePopup = AddPlayerConfigPopupField(importSettingsFoldout, 
+            Contents.MaterialSearchMode, m_assetSearchModeEnums,m_assetSearchModeEnums[0],
+            (MeshSyncPlayerConfig config, int newValue) => {
+                config.GetModelImporterSettings().MaterialSearchMode = (AssetSearchMode) newValue;
+            }
+        );
+        
         m_animationInterpolationPopup = AddPlayerConfigPopupField(importSettingsFoldout, 
             Contents.AnimationInterpolation, m_animationInterpolationEnums,m_animationInterpolationEnums[0],
             (MeshSyncPlayerConfig config, int newValue) => { config.AnimationInterpolation = newValue; }
@@ -288,7 +297,9 @@ internal class MeshSyncPlayerConfigSection {
         m_updateMeshCollidersToggle.SetValueWithoutNotify(config.UpdateMeshColliders);
 
         //Import
-        m_createMaterialsToggle.SetValueWithoutNotify(config.GetModelImporterSettings().CreateMaterials);
+        ModelImporterSettings importerSettings = config.GetModelImporterSettings();
+        m_createMaterialsToggle.SetValueWithoutNotify(importerSettings.CreateMaterials);
+        m_materialSearchModePopup.SetValueWithoutNotify(m_assetSearchModeEnums[(int)importerSettings.MaterialSearchMode]);
         m_animationInterpolationPopup.SetValueWithoutNotify(m_animationInterpolationEnums[config.AnimationInterpolation]);
         m_keyframeReductionToggle.SetValueWithoutNotify(config.KeyframeReduction);
         m_reductionThresholdField.SetValueWithoutNotify(config.ReductionThreshold);
@@ -347,9 +358,11 @@ internal class MeshSyncPlayerConfigSection {
         
     private Toggle m_syncMeshesToggle;
     private Toggle m_updateMeshCollidersToggle;
-    private Toggle m_createMaterialsToggle;
     
     //Import Settings
+    private Toggle             m_createMaterialsToggle;
+    private PopupField<string> m_materialSearchModePopup;
+    
     private PopupField<string> m_animationInterpolationPopup;
     private Toggle m_keyframeReductionToggle;
     private FloatField m_reductionThresholdField;
@@ -378,6 +391,7 @@ internal class MeshSyncPlayerConfigSection {
 
     private readonly List<string> m_animationInterpolationEnums = new List<string>(Enum.GetNames( typeof( InterpolationMode )));
     private readonly List<string> m_zUpCorrectionEnums = new List<string>(Enum.GetNames( typeof( ZUpCorrectionMode )));
+    private readonly List<string> m_assetSearchModeEnums = new List<string>(Enum.GetNames( typeof( AssetSearchMode )));
 
     private readonly List<string> m_snapToFrameEnums = EnumUtility.ToInspectorNames(typeof(SnapToFrame));
     
