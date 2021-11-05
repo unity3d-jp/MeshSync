@@ -118,9 +118,9 @@ public class SceneCachePlayer : BaseMeshSync {
     internal int GetPreloadLength() { return m_preloadLength;}
     internal void SetPreloadLength(int preloadLength) { m_preloadLength = preloadLength;}
 
-    internal bool IsModelImporterSettingsOverridden() => m_overrideCreateMaterialsImporterSettings;
+    internal bool IsCreateMaterialsImporterSettingsOverridden() => m_overrideCreateMaterialsImporterSettings;
 
-    internal void OverrideModelImporterSettings(bool overrideValue) {
+    internal void OverrideCreateMaterialImporterSettings(bool overrideValue) {
         m_overrideCreateMaterialsImporterSettings = overrideValue;
     }
     

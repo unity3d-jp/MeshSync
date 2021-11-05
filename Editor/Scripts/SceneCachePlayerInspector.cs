@@ -168,12 +168,12 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
                 MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(t, importerSettings);
             } else {
 
-                bool isOverride = t.IsModelImporterSettingsOverridden();
+                bool isOverride = t.IsCreateMaterialsImporterSettingsOverridden();
                 
                 EditorGUILayout.BeginHorizontal();
                 EditorGUIDrawerUtility.DrawUndoableGUI(t, "Override",
                     guiFunc: () => GUILayout.Toggle(isOverride, "", GUILayout.MaxWidth(15.0f)), 
-                    updateFunc: (bool overrideValue) => { t.OverrideModelImporterSettings(overrideValue); });
+                    updateFunc: (bool overrideValue) => { t.OverrideCreateMaterialImporterSettings(overrideValue); });
 
                 using (new EditorGUI.DisabledScope(!isOverride)) {
                     EditorGUIDrawerUtility.DrawUndoableGUI(t, "Create Materials",
