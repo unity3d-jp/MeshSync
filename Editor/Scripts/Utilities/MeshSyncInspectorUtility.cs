@@ -47,23 +47,25 @@ internal static class MeshSyncInspectorUtility {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    internal static void DrawComponentSyncSettings(Object obj, string prefixLabel,  ComponentSyncSettings syncSettings) {
+    //returns true if there is any change. False otherwise
+    internal static bool DrawComponentSyncSettings(Object obj, string prefixLabel,  ComponentSyncSettings syncSettings) {
         EditorGUILayout.BeginHorizontal();
         
         EditorGUILayout.PrefixLabel(prefixLabel);        
-        EditorGUIDrawerUtility.DrawUndoableGUI(obj, "Sync: Create",            
+        bool changed = EditorGUIDrawerUtility.DrawUndoableGUI(obj, "Sync: Create",            
             guiFunc: () => (bool)GUILayout.Toggle(syncSettings.CanCreate,"Create"), 
             updateFunc: (bool val) => { syncSettings.CanCreate = val; });
 
         using (new EditorGUI.DisabledScope(!syncSettings.CanCreate)) {
             
-            EditorGUIDrawerUtility.DrawUndoableGUI(obj, "Sync: Update",            
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(obj, "Sync: Update",            
                 guiFunc: () => (bool)GUILayout.Toggle(syncSettings.CanUpdate,"Update"), 
                 updateFunc: (bool val) => { syncSettings.CanUpdate = val; });
         }
 
         EditorGUILayout.EndHorizontal();
-        
+        return changed;
+
     }
     
     
