@@ -22,7 +22,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.film-internal-utilities": {
-      "version": "0.12.1-preview",
+      "version": "0.12.2-preview",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -61,7 +61,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.unity.film-internal-utilities": "0.12.1-preview",
+        "com.unity.film-internal-utilities": "0.12.2-preview",
         "com.unity.editorcoroutines": "1.0.0",
         "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.animation": "1.0.0",
