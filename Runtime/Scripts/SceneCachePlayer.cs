@@ -49,16 +49,21 @@ public class SceneCachePlayer : BaseMeshSync {
 
     private protected override void UpdateMaterialAssetV(MaterialData materialData) {
         
-        ModelImporterSettings modelImporterSettings = m_config.GetModelImporterSettings();
+        ModelImporterSettings overrideSettings      = m_config.GetModelImporterSettings();
+        ModelImporterSettings modelImporterSettings = overrideSettings;
 
         
 #if UNITY_EDITOR
-        //Get the settings from the SceneCacheImporter if not set to override
-        if (AssetImporter.GetAtPath(m_sceneCacheFilePath) is IHasModelImporterSettings importer 
-            && !m_overrideCreateMaterialsImporterSettings) 
-        {
-            modelImporterSettings = importer.GetModelImporterSettings();
-        } 
+        //Try to get the settings from the SceneCacheImporter 
+        if (AssetImporter.GetAtPath(m_sceneCacheFilePath) is IHasModelImporterSettings importer) {
+
+            modelImporterSettings = new ModelImporterSettings(importer.GetModelImporterSettings());
+            if (m_overrideCreateMaterialsImporterSettings) {
+                modelImporterSettings.CreateMaterials    = overrideSettings.CreateMaterials;
+                modelImporterSettings.MaterialSearchMode = overrideSettings.MaterialSearchMode;
+            }
+        }
+
 #endif            
         
         UpdateMaterialAssetByDefault(materialData,  modelImporterSettings);
