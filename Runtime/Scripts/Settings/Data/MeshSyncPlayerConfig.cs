@@ -60,22 +60,28 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 //----------------------------------------------------------------------------------------------------------------------    
     internal AnimationTweakSettings GetAnimationTweakSettings() { return m_animationTweakSettings;}
 
-    internal void SetModelImporterSettings(ModelImporterSettings importerSettings) {
-        m_importerSettings = importerSettings;
-    }
+    internal void SetModelImporterSettings(ModelImporterSettings importerSettings) { m_importerSettings = importerSettings; }
 
     internal ModelImporterSettings GetModelImporterSettings() => m_importerSettings;
+
+    internal void SetCameraSyncSettings(ComponentSyncSettings settings) { m_cameraSyncSettings = settings; }
+    internal ComponentSyncSettings GetCameraSyncSettings() => m_cameraSyncSettings;
     
 //----------------------------------------------------------------------------------------------------------------------    
     //Sync Settings
     public bool SyncVisibility         = true;
-    public bool SyncTransform          = true;
-    public bool SyncCameras            = true;
+    public bool SyncTransform          = true; //Create and Update
+    
+    [Obsolete]public bool SyncCameras  = true;
     public bool SyncLights             = true;
     public bool SyncMeshes             = true;
+    
+    [SerializeField] private ComponentSyncSettings m_cameraSyncSettings = new ComponentSyncSettings();
+    
+    
     public bool UpdateMeshColliders    = true;
-    [Obsolete] public bool SyncMaterials          = true;
 
+    [Obsolete] public bool SyncMaterials          = true;
     [SerializeField] private ModelImporterSettings m_importerSettings = new ModelImporterSettings();
 
     //Import Settings   
