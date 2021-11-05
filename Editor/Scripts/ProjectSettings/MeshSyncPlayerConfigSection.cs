@@ -69,10 +69,7 @@ internal class MeshSyncPlayerConfigSection {
         m_playerConfigUIElements = new List<VisualElement>();
         
         TemplateContainer containerInstance = InstantiateContainer(m_playerType);
-        
-        //Templates
-        VisualTreeAsset fieldTemplate = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.PROJECT_SETTINGS_FIELD_TEMPLATE_PATH);
-    
+            
         //Add server port	            	          
         Foldout syncSettingsFoldout = containerInstance.Query<Foldout>("SyncSettingsFoldout").First();
 
