@@ -49,6 +49,17 @@
     width: 250px;
 }
 
+.inner-field-container {
+    flex-direction: row;
+    -unity-font-style: normal;
+    font-size:  12px;
+    margin-left: 16px;
+}
+
+.inner-field-container > Label {
+    width: 234px;
+}
+
 /*----------------------------------------------- General Settings--------------------------------------------------- */
 
 .general-header-container {
