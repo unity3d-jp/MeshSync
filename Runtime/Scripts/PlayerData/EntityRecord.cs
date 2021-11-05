@@ -31,11 +31,15 @@ internal class EntityRecord {
     }
 //----------------------------------------------------------------------------------------------------------------------
 
-    internal void SetLight(LightData lightData, bool syncVisibility) {
+    internal void SetLight(LightData lightData, bool syncVisibility, bool shouldUpdate) {
         TransformData  transformData = lightData.transform;
         LightDataFlags flags = lightData.dataFlags;
                
         LightComponents components = GetOrAddLightComponents();
+
+        if (!shouldUpdate)
+            return;
+        
         Light destLight  = components.LightComponent;
 
 #if AT_USE_HDRP

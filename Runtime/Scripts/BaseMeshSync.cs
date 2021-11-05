@@ -1441,9 +1441,9 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return rec;
     }
 
-    EntityRecord UpdateCameraEntity(CameraData data)
-    {
-        if (!m_config.SyncCameras)
+    EntityRecord UpdateCameraEntity(CameraData data) {
+        ComponentSyncSettings cameraSyncSettings = m_config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA);
+        if (!cameraSyncSettings.CanCreate)
             return null;
 
         TransformData dtrans = data.transform;
@@ -1455,6 +1455,10 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         Camera cam = rec.camera;
         if (cam == null)
             cam = rec.camera = Misc.GetOrAddComponent<Camera>(rec.go);
+
+        if (!cameraSyncSettings.CanUpdate)
+            return null;
+        
         if (m_config.SyncVisibility && dtrans.dataFlags.hasVisibility)
             cam.enabled = dtrans.visibility.visibleInRender;
 
@@ -1492,9 +1496,9 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return rec;
     }
 
-    EntityRecord UpdateLightEntity(LightData data)
-    {
-        if (!m_config.SyncLights)
+    EntityRecord UpdateLightEntity(LightData data) {
+        ComponentSyncSettings syncLightSettings = m_config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS); 
+        if (!syncLightSettings.CanCreate)
             return null;
 
         TransformData dtrans = data.transform;
@@ -1503,7 +1507,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         if (rec == null || dflags.unchanged)
             return null;
 
-        rec.SetLight(data,m_config.SyncVisibility);
+        rec.SetLight(data,m_config.SyncVisibility,syncLightSettings.CanUpdate);
         return rec;
     }
 

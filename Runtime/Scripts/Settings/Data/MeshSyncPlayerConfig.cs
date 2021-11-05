@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Unity.MeshSync {
 [Serializable]
@@ -13,12 +15,17 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
     internal MeshSyncPlayerConfig(MeshSyncPlayerConfig other) {
         //Sync Settings
-        SyncVisibility         = other.SyncVisibility;
-        SyncTransform          = other.SyncTransform;
-        SyncCameras            = other.SyncCameras;
-        SyncLights             = other.SyncLights;
-        SyncMeshes             = other.SyncMeshes;
-        UpdateMeshColliders    = other.UpdateMeshColliders;
+        SyncVisibility       = other.SyncVisibility;
+        SyncTransform        = other.SyncTransform;
+
+
+        m_componentSyncSettings = new List<ComponentSyncSettings>();  
+        for (int i = 0; i < SYNC_COUNT; ++i) {
+            m_componentSyncSettings.Add(other.m_componentSyncSettings[i]);                 
+        }
+        
+        SyncMeshes           = other.SyncMeshes;
+        UpdateMeshColliders  = other.UpdateMeshColliders;
 
         //Import Settings   
         m_importerSettings       = new ModelImporterSettings(other.m_importerSettings); 
@@ -44,12 +51,24 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     }
 
     public void OnAfterDeserialize() {
+        
+        //Validate
+        if (null == m_componentSyncSettings || m_componentSyncSettings.Count != SYNC_COUNT) {
+            m_componentSyncSettings = new List<ComponentSyncSettings>() {
+                new ComponentSyncSettings(), //Camera
+                new ComponentSyncSettings(), //Lights
+            };
+        }
+        
         if (m_meshSyncPlayerConfigVersion == CUR_MESHSYNC_PLAYER_CONFIG_VERSION)
             return;
 
         if (m_meshSyncPlayerConfigVersion < (int) MeshSyncPlayerConfigVersion.MODEL_IMPORTER_0_10_X) {
 #pragma warning disable 612
             m_importerSettings.CreateMaterials = SyncMaterials;
+
+            m_componentSyncSettings[SYNC_CAMERA].CanCreate = m_componentSyncSettings[SYNC_CAMERA].CanUpdate = SyncCameras;  
+            m_componentSyncSettings[SYNC_LIGHTS].CanCreate = m_componentSyncSettings[SYNC_LIGHTS].CanUpdate = SyncLights;  
 #pragma warning restore 612
         }
 
@@ -60,22 +79,35 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 //----------------------------------------------------------------------------------------------------------------------    
     internal AnimationTweakSettings GetAnimationTweakSettings() { return m_animationTweakSettings;}
 
-    internal void SetModelImporterSettings(ModelImporterSettings importerSettings) {
-        m_importerSettings = importerSettings;
-    }
+    internal void SetModelImporterSettings(ModelImporterSettings importerSettings) { m_importerSettings = importerSettings; }
 
     internal ModelImporterSettings GetModelImporterSettings() => m_importerSettings;
+
+    internal void SetComponentSyncSettings(int index, ComponentSyncSettings settings) {
+        Assert.IsNotNull(settings);
+        Assert.IsTrue(index >= 0 && index<SYNC_COUNT);
+        m_componentSyncSettings[index] = settings;
+    }
+    
+    internal ComponentSyncSettings GetComponentSyncSettings(int index) => m_componentSyncSettings[index];
+    
     
 //----------------------------------------------------------------------------------------------------------------------    
     //Sync Settings
     public bool SyncVisibility         = true;
-    public bool SyncTransform          = true;
-    public bool SyncCameras            = true;
-    public bool SyncLights             = true;
-    public bool SyncMeshes             = true;
-    public bool UpdateMeshColliders    = true;
-    [Obsolete] public bool SyncMaterials          = true;
+    public bool SyncTransform          = true; //Create and Update
+    
+    [Obsolete] public bool SyncCameras = true;
+    [Obsolete] public bool SyncLights  = true;
+    public bool SyncMeshes  = true;
 
+
+    [SerializeField] private List<ComponentSyncSettings> m_componentSyncSettings = null;
+    
+    
+    public bool UpdateMeshColliders    = true;
+
+    [Obsolete] public bool SyncMaterials          = true;
     [SerializeField] private ModelImporterSettings m_importerSettings = new ModelImporterSettings();
 
     //Import Settings   
@@ -107,5 +139,12 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
         MODEL_IMPORTER_0_10_X, //With ModelImporterSettings for version 0.10.x-preview
     }
     
+//----------------------------------------------------------------------------------------------------------------------
+
+    
+    internal const int SYNC_CAMERA = 0;
+    internal const int SYNC_LIGHTS = 1;
+    internal const int SYNC_COUNT  = 2;
+
 }
 } //end namespace

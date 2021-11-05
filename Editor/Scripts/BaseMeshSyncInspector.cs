@@ -30,16 +30,15 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                 updateFunc: (bool toggle) => { playerConfig.SyncTransform = toggle; }
             );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Cameras",
-                guiFunc: () => EditorGUILayout.Toggle("Cameras", playerConfig.SyncCameras),
-                updateFunc: (bool toggle) => { playerConfig.SyncCameras = toggle; }
-            );
+            ComponentSyncSettings syncCameraSettings = playerConfig.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA);
+            changed |= MeshSyncInspectorUtility.DrawComponentSyncSettings(t, "Cameras", syncCameraSettings);
 
-            if (playerConfig.SyncCameras) {
+            using (new EditorGUI.DisabledScope(! (syncCameraSettings.CanCreate && syncCameraSettings.CanUpdate))) {
+
                 EditorGUI.indentLevel++;
 
                 changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Physical Camera Params",
-                    guiFunc: () => EditorGUILayout.Toggle("Physical Camera Params", t.GetUsePhysicalCameraParams()),
+                    guiFunc: () => EditorGUILayout.Toggle("Use Physical Params", t.GetUsePhysicalCameraParams()),
                     updateFunc: (bool toggle) => { t.SetUsePhysicalCameraParams(toggle); }
                     );
 
@@ -47,16 +46,14 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                 EditorGUI.indentLevel--;
             }
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Lights",
-                guiFunc: () => EditorGUILayout.Toggle("Lights", playerConfig.SyncLights),
-                updateFunc: (bool toggle) => { playerConfig.SyncLights = toggle; }
-            );
+            changed |= MeshSyncInspectorUtility.DrawComponentSyncSettings(t, "Lights", 
+                playerConfig.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS));
+            
 
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Meshes",
                 guiFunc: () => EditorGUILayout.Toggle("Meshes", playerConfig.SyncMeshes),
                 updateFunc: (bool toggle) => { playerConfig.SyncMeshes = toggle; }
             );
-
 
             EditorGUI.indentLevel++;
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Update Mesh Colliders",
