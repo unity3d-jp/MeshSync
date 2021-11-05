@@ -396,7 +396,7 @@ internal class MeshSyncPlayerConfigSection {
 
     private readonly List<string> m_animationInterpolationEnums = new List<string>(Enum.GetNames( typeof( InterpolationMode )));
     private readonly List<string> m_zUpCorrectionEnums = new List<string>(Enum.GetNames( typeof( ZUpCorrectionMode )));
-    private readonly List<string> m_assetSearchModeEnums = new List<string>(Enum.GetNames( typeof( AssetSearchMode )));
+    private readonly List<string> m_assetSearchModeEnums = EnumUtility.ToInspectorNames(typeof(AssetSearchMode));
 
     private readonly List<string> m_snapToFrameEnums = EnumUtility.ToInspectorNames(typeof(SnapToFrame));
     
