@@ -17,8 +17,8 @@ internal class ComponentSyncSettings {
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    [SerializeField] internal bool CanCreate;
-    [SerializeField] internal bool CanUpdate;
+    [SerializeField] internal bool CanCreate = true;
+    [SerializeField] internal bool CanUpdate = true;
     
 }
 
