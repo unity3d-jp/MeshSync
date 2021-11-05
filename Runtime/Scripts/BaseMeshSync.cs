@@ -1451,12 +1451,16 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         TransformData dtrans = data.transform;
         CameraDataFlags dflags = data.dataFlags;
         EntityRecord rec = UpdateTransformEntity(dtrans);
-        if (rec == null || dflags.unchanged || cameraSyncSettings.CanUpdate)
+        if (rec == null || dflags.unchanged)
             return null;
 
         Camera cam = rec.camera;
         if (cam == null)
             cam = rec.camera = Misc.GetOrAddComponent<Camera>(rec.go);
+
+        if (!cameraSyncSettings.CanUpdate)
+            return null;
+        
         if (m_config.SyncVisibility && dtrans.dataFlags.hasVisibility)
             cam.enabled = dtrans.visibility.visibleInRender;
 
