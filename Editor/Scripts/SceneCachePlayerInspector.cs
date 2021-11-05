@@ -162,9 +162,36 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         if (t.foldImportSettings) {
 
             IHasModelImporterSettings importer = AssetImporter.GetAtPath(t.GetSceneCacheFilePath()) as IHasModelImporterSettings;
+            ModelImporterSettings importerSettings = playerConfig.GetModelImporterSettings();
+                
             if (null == importer) {
-                MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(t, playerConfig.GetModelImporterSettings());                
+                MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(t, importerSettings);
+            } else {
+
+                bool isOverride = t.IsModelImporterSettingsOverridden();
+                
+                EditorGUILayout.BeginHorizontal();
+                EditorGUIDrawerUtility.DrawUndoableGUI(t, "Override",
+                    guiFunc: () => GUILayout.Toggle(isOverride, "", GUILayout.MaxWidth(15.0f)), 
+                    updateFunc: (bool overrideValue) => { t.OverrideModelImporterSettings(overrideValue); });
+
+                using (new EditorGUI.DisabledScope(!isOverride)) {
+                    EditorGUIDrawerUtility.DrawUndoableGUI(t, "Create Materials",
+                        guiFunc: () => (bool)EditorGUILayout.Toggle("Create Materials", importerSettings.CreateMaterials),
+                        updateFunc: (bool createMat) => { importerSettings.CreateMaterials = createMat; });
+                }
+                
+                EditorGUILayout.EndHorizontal();
+
+                using (new EditorGUI.DisabledScope(!isOverride)) {
+                    ++EditorGUI.indentLevel;
+                    MeshSyncInspectorUtility.DrawModelImporterMaterialSearchMode(t, importerSettings);
+                    --EditorGUI.indentLevel;
+                }
+                
             }
+            
+            
 
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Animation Interpolation",
                 guiFunc: () => EditorGUILayout.Popup(new GUIContent("Animation Interpolation"),
