@@ -59,7 +59,6 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
             MeshSyncProjectSettings.GetOrCreateSettings().Save();
         });
 
-        field.parent.AddToClassList("project-settings-field-container");
         field.AddToClassList("project-settings-field");
         return field;
     }	

@@ -226,7 +226,6 @@ internal class MeshSyncPlayerConfigSection {
             MeshSyncProjectSettings.GetOrCreateSettings().Save();
         });
 
-        field.parent.AddToClassList("general-settings-field-container");
         field.AddToClassList("general-settings-field");
         m_playerConfigUIElements.Add(field);
         return field;
@@ -253,7 +252,6 @@ internal class MeshSyncPlayerConfigSection {
             }
         );
         
-        popupField.parent.AddToClassList("general-settings-field-container");
         popupField.AddToClassList("general-settings-field");
         m_playerConfigUIElements.Add(popupField);
         return popupField;
