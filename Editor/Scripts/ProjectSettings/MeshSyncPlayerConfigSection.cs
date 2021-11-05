@@ -76,9 +76,6 @@ internal class MeshSyncPlayerConfigSection {
         Foldout syncSettingsFoldout = containerInstance.Query<Foldout>("SyncSettingsFoldout").First();
 
         //Sync	           
-        m_syncVisibilityToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.Visibility, false,
-            (MeshSyncPlayerConfig config, bool newValue) => { config.SyncVisibility = newValue; }
-        );
         m_syncTransformToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.Transform, false,
             (MeshSyncPlayerConfig config, bool newValue) => { config.SyncTransform = newValue; }
         );
@@ -106,6 +103,10 @@ internal class MeshSyncPlayerConfigSection {
             (MeshSyncPlayerConfig config, bool newValue) => { config.UpdateMeshColliders = newValue; }
         );
 
+        m_syncVisibilityToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.Visibility, false,
+            (MeshSyncPlayerConfig config, bool newValue) => { config.SyncVisibility = newValue; }
+        );
+        
         //import
         Foldout importSettingsFoldout = containerInstance.Query<Foldout>("ImportSettingsFoldout").First();
 
