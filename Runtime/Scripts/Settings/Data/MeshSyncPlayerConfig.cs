@@ -51,6 +51,16 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     }
 
     public void OnAfterDeserialize() {
+        
+        //Validate
+        if (null == m_componentSyncSettings || m_componentSyncSettings.Count != SYNC_MAX) {
+            m_componentSyncSettings = new List<ComponentSyncSettings>() {
+                new ComponentSyncSettings(), //Camera
+                new ComponentSyncSettings(), //Lights
+                new ComponentSyncSettings(), //Meshes
+            };
+        }
+        
         if (m_meshSyncPlayerConfigVersion == CUR_MESHSYNC_PLAYER_CONFIG_VERSION)
             return;
 
@@ -91,13 +101,9 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     [Obsolete] public bool SyncCameras = true;
     [Obsolete] public bool SyncLights  = true;
     public bool SyncMeshes  = true;
-    
 
-    [SerializeField] private List<ComponentSyncSettings> m_componentSyncSettings = new List<ComponentSyncSettings>() {
-        new ComponentSyncSettings(), //Camera
-        new ComponentSyncSettings(), //Lights
-        new ComponentSyncSettings(), //Meshes
-    };
+
+    [SerializeField] private List<ComponentSyncSettings> m_componentSyncSettings = null;
     
     
     public bool UpdateMeshColliders    = true;
@@ -139,7 +145,8 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     
     internal const int SYNC_CAMERA = 0;
     internal const int SYNC_LIGHTS = 1;
-    internal const int SYNC_MAX    = 2;
+    internal const int SYNC_MESHES = 2;
+    internal const int SYNC_MAX    = 3;
 
 }
 } //end namespace
