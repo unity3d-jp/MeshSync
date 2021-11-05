@@ -286,7 +286,7 @@ internal class MeshSyncPlayerConfigSection {
         m_syncCamerasCreateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA).CanCreate);
         m_syncCamerasUpdateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA).CanUpdate);
         m_syncLightsCreateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS).CanCreate);
-        m_syncLightsCreateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS).CanUpdate);
+        m_syncLightsUpdateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS).CanUpdate);
         m_syncMeshesToggle.SetValueWithoutNotify(config.SyncMeshes);
         m_updateMeshCollidersToggle.SetValueWithoutNotify(config.UpdateMeshColliders);
 
