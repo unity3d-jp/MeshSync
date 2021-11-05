@@ -38,7 +38,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                 updateFunc: (bool toggle) => { t.SetUsePhysicalCameraParams(toggle); }
             );
 
-            //EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
             EditorGUI.indentLevel--;
         }
 
@@ -63,7 +62,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
             updateFunc: (bool toggle) => { config.SyncVisibility = toggle; }
         );
         
-        //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));            
         EditorGUILayout.Space();
 
         return changed;
