@@ -114,8 +114,8 @@ internal class MeshSyncPlayerConfigSection {
             Contents.CreateMaterials,false,
             (MeshSyncPlayerConfig config, bool newValue) => { config.GetModelImporterSettings().CreateMaterials = newValue; }
         );
-        m_animationInterpolationPopup = AddPlayerConfigPopupField(fieldTemplate, importSettingsFoldout, 
-            Contents.AnimationInterpolation, m_animationInterpolationEnums,
+        m_animationInterpolationPopup = AddPlayerConfigPopupField(importSettingsFoldout, 
+            Contents.AnimationInterpolation, m_animationInterpolationEnums,m_animationInterpolationEnums[0],
             (MeshSyncPlayerConfig config, int newValue) => { config.AnimationInterpolation = newValue; }
         );
         m_keyframeReductionToggle = AddPlayerConfigField<Toggle,bool>(importSettingsFoldout, 
@@ -130,8 +130,8 @@ internal class MeshSyncPlayerConfigSection {
             Contents.ReductionEraseFlatCurves,false,
             (MeshSyncPlayerConfig config, bool newValue) => { config.ReductionEraseFlatCurves = newValue; }
         );
-        m_zUpCorrectionPopup = AddPlayerConfigPopupField(fieldTemplate, importSettingsFoldout, 
-            Contents.ZUpCorrection, m_zUpCorrectionEnums,
+        m_zUpCorrectionPopup = AddPlayerConfigPopupField(importSettingsFoldout, 
+            Contents.ZUpCorrection, m_zUpCorrectionEnums,m_zUpCorrectionEnums[0],
             (MeshSyncPlayerConfig config, int newValue) => { config.ZUpCorrection = newValue; }
         );
         
@@ -189,8 +189,8 @@ internal class MeshSyncPlayerConfigSection {
         bool isSceneCachePlayerConfig = (m_playerType == MeshSyncPlayerType.CACHE_PLAYER);
         if (isSceneCachePlayerConfig) {
             Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();	    
-            m_timelineSnapToFramePopup = AddPlayerConfigPopupField(fieldTemplate, timelineSettingsFoldout, 
-                Contents.TimelineSnapToFrame, m_snapToFrameEnums,
+            m_timelineSnapToFramePopup = AddPlayerConfigPopupField(timelineSettingsFoldout, 
+                Contents.TimelineSnapToFrame, m_snapToFrameEnums,m_snapToFrameEnums[0],
                 (SceneCachePlayerConfig config, int newValue) => { config.TimelineSnapToFrame = newValue;}
             );
             
@@ -230,38 +230,35 @@ internal class MeshSyncPlayerConfigSection {
         });
 
         field.parent.AddToClassList("general-settings-field-container");
+        field.AddToClassList("general-settings-field");
         m_playerConfigUIElements.Add(field);
         return field;
     }
     
 //----------------------------------------------------------------------------------------------------------------------	
-    private PopupField<T> AddPlayerConfigPopupField<T,UserDataType>(VisualTreeAsset template, VisualElement parent, GUIContent content,
-        List<T> options, Action<UserDataType,int> onValueChanged) where UserDataType: class
-    {
+    private PopupField<T> AddPlayerConfigPopupField<T,UserDataType>(VisualElement parent, GUIContent content,
+        List<T> options, T initialValue, Action<UserDataType,int> onValueChanged) where UserDataType: class {
 
-        TemplateContainer templateInstance = template.CloneTree();
-        VisualElement fieldContainer = templateInstance.Query<VisualElement>("FieldContainer").First();
-        PopupField<T> popupField = new PopupField<T>(options,options[0]);
-        popupField.AddToClassList("general-settings-field");
-        
-        Label label = templateInstance.Query<Label>().First();
-        label.text    = content.text;
-        label.tooltip = content.tooltip;
-        popupField.RegisterValueChangedCallback( ( ChangeEvent<T> changeEvent)  => {
-        
-            UserDataType config = popupField.userData as UserDataType;
-            if (null == config) {
-                Debug.LogError("[MeshSync] Toggle doesn't have the correct user data");
-                return;
-            }
+        PopupField<T> popupField = UIElementsEditorUtility.AddPopupField<T>(parent, content, options, initialValue,
+            (ChangeEvent<T> changeEvent) => {
+                PopupField<T> targetField = (changeEvent.target) as PopupField<T>;
+                if (null == targetField)
+                    return;
+
+                UserDataType config = targetField.userData as UserDataType;
+                if (null == config) {
+                    Debug.LogError("[MeshSync] Toggle doesn't have the correct user data");
+                    return;
+                }
             
-            onValueChanged(config, popupField.index);
-            MeshSyncProjectSettings.GetOrCreateSettings().Save();
-        });
-                
-        fieldContainer.Add(popupField);
-        parent.Add(templateInstance);
-        m_playerConfigUIElements.Add(popupField);		
+                onValueChanged(config, targetField.index);
+                MeshSyncProjectSettings.GetOrCreateSettings().Save();                
+            }
+        );
+        
+        popupField.parent.AddToClassList("general-settings-field-container");
+        popupField.AddToClassList("general-settings-field");
+        m_playerConfigUIElements.Add(popupField);
         return popupField;
     }
     
