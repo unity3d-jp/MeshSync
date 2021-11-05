@@ -29,7 +29,6 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
         
 
         //Templates
-        VisualTreeAsset fieldTemplate = LoadVisualTreeAsset(Constants.PROJECT_SETTINGS_FIELD_TEMPLATE_PATH);
         MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
         
         //Add server port
