@@ -144,7 +144,7 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     
     internal const int SYNC_CAMERA = 0;
     internal const int SYNC_LIGHTS = 1;
-    internal const int SYNC_COUNT  = 3;
+    internal const int SYNC_COUNT  = 2;
 
 }
 } //end namespace

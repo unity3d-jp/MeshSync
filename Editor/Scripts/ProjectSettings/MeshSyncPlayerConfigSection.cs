@@ -21,13 +21,11 @@ internal class MeshSyncPlayerConfigSection {
         public static readonly GUIContent[] ComponentSyncCreate = new [] {
             EditorGUIUtility.TrTextContent("Camera Create"),
             EditorGUIUtility.TrTextContent("Lights Create"),
-            EditorGUIUtility.TrTextContent("Meshes Create"),
         };
 
         public static readonly GUIContent[] ComponentSyncUpdate = new [] {
             EditorGUIUtility.TrTextContent("Camera Update"),
             EditorGUIUtility.TrTextContent("Lights Update"),
-            EditorGUIUtility.TrTextContent("Meshes Update"),
         };
         
         
