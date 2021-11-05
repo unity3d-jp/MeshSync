@@ -13,12 +13,12 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
     internal MeshSyncPlayerConfig(MeshSyncPlayerConfig other) {
         //Sync Settings
-        SyncVisibility         = other.SyncVisibility;
-        SyncTransform          = other.SyncTransform;
-        SyncCameras            = other.SyncCameras;
-        SyncLights             = other.SyncLights;
-        SyncMeshes             = other.SyncMeshes;
-        UpdateMeshColliders    = other.UpdateMeshColliders;
+        SyncVisibility       = other.SyncVisibility;
+        SyncTransform        = other.SyncTransform;
+        m_syncCameraSettings = new ComponentSyncSettings(other.m_syncCameraSettings);
+        SyncLights           = other.SyncLights;
+        SyncMeshes           = other.SyncMeshes;
+        UpdateMeshColliders  = other.UpdateMeshColliders;
 
         //Import Settings   
         m_importerSettings       = new ModelImporterSettings(other.m_importerSettings); 
