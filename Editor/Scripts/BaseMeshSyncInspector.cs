@@ -30,7 +30,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                 updateFunc: (bool toggle) => { playerConfig.SyncTransform = toggle; }
             );
 
-            ComponentSyncSettings syncCameraSettings = playerConfig.GetSyncCameraSettings();
+            ComponentSyncSettings syncCameraSettings = playerConfig.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA);
             MeshSyncInspectorUtility.DrawComponentSyncSettings(t, "Cameras", syncCameraSettings);
 
             using (new EditorGUI.DisabledScope(! (syncCameraSettings.CanCreate && syncCameraSettings.CanUpdate))) {
@@ -46,7 +46,8 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                 EditorGUI.indentLevel--;
             }
 
-            MeshSyncInspectorUtility.DrawComponentSyncSettings(t, "Lights", playerConfig.GetSyncLightSettings());
+            MeshSyncInspectorUtility.DrawComponentSyncSettings(t, "Lights", 
+                playerConfig.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS));
             
 
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Meshes",

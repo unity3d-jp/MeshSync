@@ -75,17 +75,18 @@ internal class MeshSyncPlayerConfigSection {
         m_syncTransformToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Transform,
             (MeshSyncPlayerConfig config, bool newValue) => { config.SyncTransform = newValue; }
         );
+                
         m_syncCamerasCreateToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.CamerasCreate,
-            (MeshSyncPlayerConfig config, bool newValue) => { config.GetSyncCameraSettings().CanCreate = newValue; }
+            (MeshSyncPlayerConfig config, bool newValue) => { config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA).CanCreate = newValue; }
         );
         m_syncCamerasUpdateToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.CamerasUpdate,
-            (MeshSyncPlayerConfig config, bool newValue) => { config.GetSyncCameraSettings().CanUpdate = newValue; }
+            (MeshSyncPlayerConfig config, bool newValue) => { config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA).CanUpdate = newValue; }
         );
         m_syncLightsCreateToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.LightsCreate,
-            (MeshSyncPlayerConfig config, bool newValue) => { config.GetSyncLightSettings().CanCreate = newValue; }
+            (MeshSyncPlayerConfig config, bool newValue) => { config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS).CanCreate = newValue; }
         );
         m_syncLightsUpdateToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.LightsCreate,
-            (MeshSyncPlayerConfig config, bool newValue) => { config.GetSyncLightSettings().CanUpdate = newValue; }
+            (MeshSyncPlayerConfig config, bool newValue) => { config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS).CanUpdate = newValue; }
         );
         m_syncMeshesToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Meshes,
             (MeshSyncPlayerConfig config, bool newValue) => { config.SyncMeshes = newValue; }
@@ -280,10 +281,12 @@ internal class MeshSyncPlayerConfigSection {
         //sync
         m_syncVisibilityToggle.SetValueWithoutNotify(config.SyncVisibility);
         m_syncTransformToggle.SetValueWithoutNotify(config.SyncTransform);
-        m_syncCamerasCreateToggle.SetValueWithoutNotify(config.GetSyncCameraSettings().CanCreate);
-        m_syncCamerasUpdateToggle.SetValueWithoutNotify(config.GetSyncCameraSettings().CanUpdate);
-        m_syncLightsCreateToggle.SetValueWithoutNotify(config.GetSyncLightSettings().CanCreate);
-        m_syncLightsCreateToggle.SetValueWithoutNotify(config.GetSyncLightSettings().CanUpdate);
+               
+        
+        m_syncCamerasCreateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA).CanCreate);
+        m_syncCamerasUpdateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA).CanUpdate);
+        m_syncLightsCreateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS).CanCreate);
+        m_syncLightsCreateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS).CanUpdate);
         m_syncMeshesToggle.SetValueWithoutNotify(config.SyncMeshes);
         m_updateMeshCollidersToggle.SetValueWithoutNotify(config.UpdateMeshColliders);
 

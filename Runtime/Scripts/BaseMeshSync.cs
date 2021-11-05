@@ -1442,7 +1442,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     }
 
     EntityRecord UpdateCameraEntity(CameraData data) {
-        ComponentSyncSettings cameraSyncSettings = m_config.GetSyncCameraSettings();
+        ComponentSyncSettings cameraSyncSettings = m_config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA);
         if (!cameraSyncSettings.CanCreate)
             return null;
 
@@ -1493,7 +1493,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     }
 
     EntityRecord UpdateLightEntity(LightData data) {
-        ComponentSyncSettings syncLightSettings = m_config.GetSyncLightSettings(); 
+        ComponentSyncSettings syncLightSettings = m_config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS); 
         if (!syncLightSettings.CanCreate)
             return null;
 

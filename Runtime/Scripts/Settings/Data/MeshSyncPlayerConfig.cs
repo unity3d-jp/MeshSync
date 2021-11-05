@@ -17,8 +17,13 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
         //Sync Settings
         SyncVisibility       = other.SyncVisibility;
         SyncTransform        = other.SyncTransform;
-        m_syncCameraSettings = new ComponentSyncSettings(other.m_syncCameraSettings);
-        m_syncLightSettings = new ComponentSyncSettings(other.m_syncLightSettings);
+
+
+        m_componentSyncSettings = new List<ComponentSyncSettings>();  
+        for (int i = 0; i < SYNC_MAX; ++i) {
+            m_componentSyncSettings.Add(other.m_componentSyncSettings[i]);                 
+        }
+        
         SyncMeshes           = other.SyncMeshes;
         UpdateMeshColliders  = other.UpdateMeshColliders;
 
@@ -52,9 +57,9 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
         if (m_meshSyncPlayerConfigVersion < (int) MeshSyncPlayerConfigVersion.MODEL_IMPORTER_0_10_X) {
 #pragma warning disable 612
             m_importerSettings.CreateMaterials = SyncMaterials;
-            
-            m_syncCameraSettings.CanCreate = m_syncCameraSettings.CanUpdate = SyncCameras;
-            m_syncLightSettings.CanCreate  = m_syncLightSettings.CanUpdate  = SyncLights;
+
+            m_componentSyncSettings[SYNC_CAMERA].CanCreate = m_componentSyncSettings[SYNC_CAMERA].CanUpdate = SyncCameras;  
+            m_componentSyncSettings[SYNC_LIGHTS].CanCreate = m_componentSyncSettings[SYNC_LIGHTS].CanUpdate = SyncLights;  
 #pragma warning restore 612
         }
 
@@ -68,13 +73,6 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     internal void SetModelImporterSettings(ModelImporterSettings importerSettings) { m_importerSettings = importerSettings; }
 
     internal ModelImporterSettings GetModelImporterSettings() => m_importerSettings;
-
-    internal void SetSyncCameraSettings(ComponentSyncSettings settings) { m_syncCameraSettings = settings; }
-    internal ComponentSyncSettings GetSyncCameraSettings() => m_syncCameraSettings;
-
-    internal void SetSyncLightSettings(ComponentSyncSettings settings) { m_syncLightSettings = settings; }
-    internal ComponentSyncSettings GetSyncLightSettings() => m_syncLightSettings;
-
 
     internal void SetComponentSyncSettings(int index, ComponentSyncSettings settings) {
         Assert.IsNotNull(settings);
@@ -94,13 +92,11 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     [Obsolete] public bool SyncLights  = true;
     public bool SyncMeshes  = true;
     
-    [SerializeField] private ComponentSyncSettings m_syncCameraSettings = new ComponentSyncSettings();
-    [SerializeField] private ComponentSyncSettings m_syncLightSettings = new ComponentSyncSettings();
 
     [SerializeField] private List<ComponentSyncSettings> m_componentSyncSettings = new List<ComponentSyncSettings>() {
-        new ComponentSyncSettings(),
-        new ComponentSyncSettings(),
-        new ComponentSyncSettings(),
+        new ComponentSyncSettings(), //Camera
+        new ComponentSyncSettings(), //Lights
+        new ComponentSyncSettings(), //Meshes
     };
     
     
