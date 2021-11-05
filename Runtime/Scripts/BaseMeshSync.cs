@@ -1441,15 +1441,15 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return rec;
     }
 
-    EntityRecord UpdateCameraEntity(CameraData data)
-    {
-        if (!m_config.SyncCameras)
+    EntityRecord UpdateCameraEntity(CameraData data) {
+        ComponentSyncSettings cameraSyncSettings = m_config.GetSyncCameraSettings();
+        if (!cameraSyncSettings.CanCreate)
             return null;
 
         TransformData dtrans = data.transform;
         CameraDataFlags dflags = data.dataFlags;
         EntityRecord rec = UpdateTransformEntity(dtrans);
-        if (rec == null || dflags.unchanged)
+        if (rec == null || dflags.unchanged || cameraSyncSettings.CanUpdate)
             return null;
 
         Camera cam = rec.camera;
