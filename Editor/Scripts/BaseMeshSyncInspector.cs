@@ -35,11 +35,15 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                 updateFunc: (bool toggle) => { playerConfig.SyncCameras = toggle; }
             );
 
-            if (playerConfig.SyncCameras) {
+            ComponentSyncSettings syncCameraSettings = playerConfig.GetSyncCameraSettings();
+            MeshSyncInspectorUtility.DrawComponentSyncSettings(t, "Cameras", syncCameraSettings);
+
+            using (new EditorGUI.DisabledScope(! (syncCameraSettings.CanCreate && syncCameraSettings.CanUpdate))) {
+
                 EditorGUI.indentLevel++;
 
                 changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Physical Camera Params",
-                    guiFunc: () => EditorGUILayout.Toggle("Physical Camera Params", t.GetUsePhysicalCameraParams()),
+                    guiFunc: () => EditorGUILayout.Toggle("Use Physical Params", t.GetUsePhysicalCameraParams()),
                     updateFunc: (bool toggle) => { t.SetUsePhysicalCameraParams(toggle); }
                     );
 
