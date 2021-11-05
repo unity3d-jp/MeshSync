@@ -46,10 +46,8 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                 EditorGUI.indentLevel--;
             }
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Lights",
-                guiFunc: () => EditorGUILayout.Toggle("Lights", playerConfig.SyncLights),
-                updateFunc: (bool toggle) => { playerConfig.SyncLights = toggle; }
-            );
+            MeshSyncInspectorUtility.DrawComponentSyncSettings(t, "Lights", playerConfig.GetSyncLightSettings());
+            
 
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Meshes",
                 guiFunc: () => EditorGUILayout.Toggle("Meshes", playerConfig.SyncMeshes),

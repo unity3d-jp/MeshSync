@@ -16,7 +16,7 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
         SyncVisibility       = other.SyncVisibility;
         SyncTransform        = other.SyncTransform;
         m_syncCameraSettings = new ComponentSyncSettings(other.m_syncCameraSettings);
-        SyncLights           = other.SyncLights;
+        m_syncLightSettings = new ComponentSyncSettings(other.m_syncLightSettings);
         SyncMeshes           = other.SyncMeshes;
         UpdateMeshColliders  = other.UpdateMeshColliders;
 
@@ -50,7 +50,9 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
         if (m_meshSyncPlayerConfigVersion < (int) MeshSyncPlayerConfigVersion.MODEL_IMPORTER_0_10_X) {
 #pragma warning disable 612
             m_importerSettings.CreateMaterials = SyncMaterials;
+            
             m_syncCameraSettings.CanCreate = m_syncCameraSettings.CanUpdate = SyncCameras;
+            m_syncLightSettings.CanCreate  = m_syncLightSettings.CanUpdate  = SyncLights;
 #pragma warning restore 612
         }
 
@@ -67,17 +69,21 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
     internal void SetSyncCameraSettings(ComponentSyncSettings settings) { m_syncCameraSettings = settings; }
     internal ComponentSyncSettings GetSyncCameraSettings() => m_syncCameraSettings;
+
+    internal void SetSyncLightSettings(ComponentSyncSettings settings) { m_syncLightSettings = settings; }
+    internal ComponentSyncSettings GetSyncLightSettings() => m_syncLightSettings;
     
 //----------------------------------------------------------------------------------------------------------------------    
     //Sync Settings
     public bool SyncVisibility         = true;
     public bool SyncTransform          = true; //Create and Update
     
-    [Obsolete]public bool SyncCameras  = true;
-    public bool SyncLights             = true;
-    public bool SyncMeshes             = true;
+    [Obsolete] public bool SyncCameras = true;
+    [Obsolete] public bool SyncLights  = true;
+    public bool SyncMeshes  = true;
     
     [SerializeField] private ComponentSyncSettings m_syncCameraSettings = new ComponentSyncSettings();
+    [SerializeField] private ComponentSyncSettings m_syncLightSettings = new ComponentSyncSettings();
     
     
     public bool UpdateMeshColliders    = true;
