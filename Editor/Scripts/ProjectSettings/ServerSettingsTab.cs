@@ -45,10 +45,6 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
         MeshSyncPlayerConfigSection section = new MeshSyncPlayerConfigSection(MeshSyncPlayerType.SERVER);
         section.Setup(content);
         
-      
-                
-        
-        
         root.Add(tabInstance);
     }
 
