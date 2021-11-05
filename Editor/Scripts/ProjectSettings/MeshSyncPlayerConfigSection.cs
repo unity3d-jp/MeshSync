@@ -117,7 +117,8 @@ internal class MeshSyncPlayerConfigSection {
             Contents.MaterialSearchMode, m_assetSearchModeEnums,m_assetSearchModeEnums[0],
             (MeshSyncPlayerConfig config, int newValue) => {
                 config.GetModelImporterSettings().MaterialSearchMode = (AssetSearchMode) newValue;
-            }
+            },
+            "inner-field-container"
         );
         
         m_animationInterpolationPopup = AddPlayerConfigPopupField(importSettingsFoldout, 
@@ -242,7 +243,9 @@ internal class MeshSyncPlayerConfigSection {
     
 //----------------------------------------------------------------------------------------------------------------------	
     private PopupField<T> AddPlayerConfigPopupField<T,UserDataType>(VisualElement parent, GUIContent content,
-        List<T> options, T initialValue, Action<UserDataType,int> onValueChanged) where UserDataType: class {
+        List<T> options, T initialValue, Action<UserDataType,int> onValueChanged, 
+        string containerClass = null) where UserDataType: class 
+    {
 
         PopupField<T> popupField = UIElementsEditorUtility.AddPopupField<T>(parent, content, options, initialValue,
             (ChangeEvent<T> changeEvent) => {
@@ -259,9 +262,11 @@ internal class MeshSyncPlayerConfigSection {
                 onValueChanged(config, targetField.index);
                 MeshSyncProjectSettings.GetOrCreateSettings().Save();                
             }
-        );
-        
+        );        
         popupField.AddToClassList("general-settings-field");
+        if (!string.IsNullOrEmpty(containerClass)) {
+            popupField.parent.AddToClassList(containerClass);
+        }
         m_playerConfigUIElements.Add(popupField);
         return popupField;
     }
