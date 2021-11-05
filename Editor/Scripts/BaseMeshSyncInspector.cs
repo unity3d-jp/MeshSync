@@ -13,58 +13,58 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 //----------------------------------------------------------------------------------------------------------------------
 
     protected static bool DrawAssetSyncSettings(BaseMeshSync t) {
-        bool changed   = false;
 
-        // Asset Sync Settings
         t.foldSyncSettings = EditorGUILayout.Foldout(t.foldSyncSettings, "Asset Sync Settings", true, GetBoldFoldoutStyle());
-        MeshSyncPlayerConfig playerConfig = t.GetConfig();
-        if (t.foldSyncSettings) {
+        MeshSyncPlayerConfig config = t.GetConfig();
+        if (!t.foldSyncSettings) 
+            return false;
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Visibility",
-                guiFunc: () => EditorGUILayout.Toggle("Visibility", playerConfig.SyncVisibility),
-                updateFunc: (bool toggle) => { playerConfig.SyncVisibility = toggle; }
-            );
+        bool changed = false;
+        
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Visibility",
+            guiFunc: () => EditorGUILayout.Toggle("Visibility", config.SyncVisibility),
+            updateFunc: (bool toggle) => { config.SyncVisibility = toggle; }
+        );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Transform",
-                guiFunc: () => EditorGUILayout.Toggle("Transform", playerConfig.SyncTransform),
-                updateFunc: (bool toggle) => { playerConfig.SyncTransform = toggle; }
-            );
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Transform",
+            guiFunc: () => EditorGUILayout.Toggle("Transform", config.SyncTransform),
+            updateFunc: (bool toggle) => { config.SyncTransform = toggle; }
+        );
 
-            ComponentSyncSettings syncCameraSettings = playerConfig.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA);
-            changed |= MeshSyncInspectorUtility.DrawComponentSyncSettings(t, "Cameras", syncCameraSettings);
+        ComponentSyncSettings syncCameraSettings = config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA);
+        changed |= MeshSyncInspectorUtility.DrawComponentSyncSettings(t, "Cameras", syncCameraSettings);
 
-            using (new EditorGUI.DisabledScope(! (syncCameraSettings.CanCreate && syncCameraSettings.CanUpdate))) {
-
-                EditorGUI.indentLevel++;
-
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Physical Camera Params",
-                    guiFunc: () => EditorGUILayout.Toggle("Use Physical Params", t.GetUsePhysicalCameraParams()),
-                    updateFunc: (bool toggle) => { t.SetUsePhysicalCameraParams(toggle); }
-                    );
-
-                //EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
-                EditorGUI.indentLevel--;
-            }
-
-            changed |= MeshSyncInspectorUtility.DrawComponentSyncSettings(t, "Lights", 
-                playerConfig.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS));
-            
-
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Meshes",
-                guiFunc: () => EditorGUILayout.Toggle("Meshes", playerConfig.SyncMeshes),
-                updateFunc: (bool toggle) => { playerConfig.SyncMeshes = toggle; }
-            );
+        using (new EditorGUI.DisabledScope(! (syncCameraSettings.CanCreate && syncCameraSettings.CanUpdate))) {
 
             EditorGUI.indentLevel++;
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Update Mesh Colliders",
-                guiFunc: () => EditorGUILayout.Toggle("Update Mesh Colliders", playerConfig.UpdateMeshColliders),
-                updateFunc: (bool toggle) => { playerConfig.UpdateMeshColliders = toggle; }
-            );
-            EditorGUI.indentLevel--;
 
-            //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));            
-            EditorGUILayout.Space();
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Physical Camera Params",
+                guiFunc: () => EditorGUILayout.Toggle("Use Physical Params", t.GetUsePhysicalCameraParams()),
+                updateFunc: (bool toggle) => { t.SetUsePhysicalCameraParams(toggle); }
+            );
+
+            //EditorGUILayout.PropertyField(so.FindProperty("m_useCustomCameraMatrices"), new GUIContent("Custom View/Proj Matrices"));
+            EditorGUI.indentLevel--;
         }
+
+        changed |= MeshSyncInspectorUtility.DrawComponentSyncSettings(t, "Lights", 
+            config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS));
+            
+
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Meshes",
+            guiFunc: () => EditorGUILayout.Toggle("Meshes", config.SyncMeshes),
+            updateFunc: (bool toggle) => { config.SyncMeshes = toggle; }
+        );
+
+        EditorGUI.indentLevel++;
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Update Mesh Colliders",
+            guiFunc: () => EditorGUILayout.Toggle("Update Mesh Colliders", config.UpdateMeshColliders),
+            updateFunc: (bool toggle) => { config.UpdateMeshColliders = toggle; }
+        );
+        EditorGUI.indentLevel--;
+
+        //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));            
+        EditorGUILayout.Space();
 
         return changed;
 
