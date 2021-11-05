@@ -20,11 +20,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
             return false;
 
         bool changed = false;
-        
-        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Visibility",
-            guiFunc: () => EditorGUILayout.Toggle("Visibility", config.SyncVisibility),
-            updateFunc: (bool toggle) => { config.SyncVisibility = toggle; }
-        );
 
         changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Transform",
             guiFunc: () => EditorGUILayout.Toggle("Transform", config.SyncTransform),
@@ -63,6 +58,11 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
         );
         EditorGUI.indentLevel--;
 
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Visibility",
+            guiFunc: () => EditorGUILayout.Toggle("Visibility", config.SyncVisibility),
+            updateFunc: (bool toggle) => { config.SyncVisibility = toggle; }
+        );
+        
         //EditorGUILayout.PropertyField(so.FindProperty("m_syncPoints"), new GUIContent("Points"));            
         EditorGUILayout.Space();
 
