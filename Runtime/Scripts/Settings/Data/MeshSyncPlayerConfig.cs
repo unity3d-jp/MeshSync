@@ -20,7 +20,7 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
 
         m_componentSyncSettings = new List<ComponentSyncSettings>();  
-        for (int i = 0; i < SYNC_MAX; ++i) {
+        for (int i = 0; i < SYNC_COUNT; ++i) {
             m_componentSyncSettings.Add(other.m_componentSyncSettings[i]);                 
         }
         
@@ -52,7 +52,7 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     public void OnAfterDeserialize() {
         
         //Validate
-        if (null == m_componentSyncSettings || m_componentSyncSettings.Count != SYNC_MAX) {
+        if (null == m_componentSyncSettings || m_componentSyncSettings.Count != SYNC_COUNT) {
             m_componentSyncSettings = new List<ComponentSyncSettings>() {
                 new ComponentSyncSettings(), //Camera
                 new ComponentSyncSettings(), //Lights
@@ -86,7 +86,7 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
     internal void SetComponentSyncSettings(int index, ComponentSyncSettings settings) {
         Assert.IsNotNull(settings);
-        Assert.IsTrue(index >= 0 && index<SYNC_MAX);
+        Assert.IsTrue(index >= 0 && index<SYNC_COUNT);
         m_componentSyncSettings[index] = settings;
     }
     
@@ -147,7 +147,7 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     internal const int SYNC_CAMERA = 0;
     internal const int SYNC_LIGHTS = 1;
     internal const int SYNC_MESHES = 2;
-    internal const int SYNC_MAX    = 3;
+    internal const int SYNC_COUNT  = 3;
 
 }
 } //end namespace

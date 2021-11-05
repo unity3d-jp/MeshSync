@@ -87,7 +87,7 @@ internal class MeshSyncPlayerConfigSection {
         );
 
         m_componentSyncSettingsUIList.Clear();
-        for (int i = 0; i < MeshSyncPlayerConfig.SYNC_MAX; ++i) {
+        for (int i = 0; i < MeshSyncPlayerConfig.SYNC_COUNT; ++i) {
             ComponentSyncSettingsUI syncSettings = new ComponentSyncSettingsUI(i);
             m_componentSyncSettingsUIList.Add(syncSettings);
 
