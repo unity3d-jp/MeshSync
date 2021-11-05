@@ -11,14 +11,14 @@ internal class ComponentSyncSettings {
     }
 
     internal ComponentSyncSettings(ComponentSyncSettings other) {
-        this.Create = other.Create;
-        this.Update = other.Update;
+        this.CanCreate = other.CanCreate;
+        this.CanUpdate = other.CanUpdate;
     }
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    [SerializeField] internal bool Create;
-    [SerializeField] internal bool Update;
+    [SerializeField] internal bool CanCreate;
+    [SerializeField] internal bool CanUpdate;
     
 }
 
