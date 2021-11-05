@@ -8,7 +8,10 @@ internal class ComponentSyncSettingsUI {
         SyncIndex = syncIndex;
     }
     
-    internal int    SyncIndex = 0;
+//----------------------------------------------------------------------------------------------------------------------    
+    
+    internal readonly int SyncIndex = 0;
+    
     internal Toggle CanCreateToggle;
     internal Toggle CanUpdateToggle;
 }
