@@ -38,6 +38,16 @@
     background-color: #808080;
 }
 
+/*----------------------------------------------- Field Containers -------------------------------------------------- */
+.field-container {
+    flex-direction: row;
+    -unity-font-style: normal;
+    font-size:  12px;
+}
+
+.field-container > Label {
+    width: 250px;
+}
 
 /*----------------------------------------------- General Settings--------------------------------------------------- */
 
@@ -61,16 +71,7 @@
     margin: 1px 15px;
 }
 
-.general-settings-field-container {
-    flex-direction: row;
-    -unity-font-style: normal;
-    font-size:  12px;
 
-}
-
-.general-settings-field-container > Label {
-    width: 250px;
-}
 
 .general-settings-field {
     width: 100px;
@@ -90,17 +91,6 @@
     width: 500px;
     -unity-font-style:bold;
     font-size:  14px;
-}
-
-.project-settings-field-container {
-    flex-direction: row;
-    -unity-font-style: normal;
-    font-size:  12px;
-
-}
-
-.project-settings-field-container > Label {
-    width: 250px;
 }
 
 .project-settings-field {

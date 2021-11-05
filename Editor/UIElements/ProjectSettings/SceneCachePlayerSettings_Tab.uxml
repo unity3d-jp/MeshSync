@@ -7,7 +7,7 @@
 
         <VisualElement name="Content" class="project-settings-content">
 
-            <VisualElement name="FieldContainer" class="project-settings-field-container">
+            <VisualElement name="FieldContainer" class="field-container">
                 <Label text="Generated Scene Cache Resources Path"/>
                 <TextField class="project-settings-path-field" name="GeneratedSCResPathText"/>
                 <Button text="..." name="OutputPathSelectButton"/>
