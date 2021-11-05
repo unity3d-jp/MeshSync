@@ -1502,10 +1502,10 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         TransformData dtrans = data.transform;
         LightDataFlags dflags = data.dataFlags;
         EntityRecord rec = UpdateTransformEntity(dtrans);
-        if (rec == null || dflags.unchanged || !syncLightSettings.CanUpdate)
+        if (rec == null || dflags.unchanged)
             return null;
 
-        rec.SetLight(data,m_config.SyncVisibility);
+        rec.SetLight(data,m_config.SyncVisibility,syncLightSettings.CanUpdate);
         return rec;
     }
 
