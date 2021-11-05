@@ -30,11 +30,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                 updateFunc: (bool toggle) => { playerConfig.SyncTransform = toggle; }
             );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Cameras",
-                guiFunc: () => EditorGUILayout.Toggle("Cameras", playerConfig.SyncCameras),
-                updateFunc: (bool toggle) => { playerConfig.SyncCameras = toggle; }
-            );
-
             ComponentSyncSettings syncCameraSettings = playerConfig.GetSyncCameraSettings();
             MeshSyncInspectorUtility.DrawComponentSyncSettings(t, "Cameras", syncCameraSettings);
 
