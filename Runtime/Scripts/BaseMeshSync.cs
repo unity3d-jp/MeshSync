@@ -1813,13 +1813,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                     changed = true;
                 }
             } else if (materials[si] == null) {
-                // assign dummy material to prevent to go pink
-                if (m_dummyMaterial == null)
-                {
-                    m_dummyMaterial = CreateDefaultMaterial();
-                    m_dummyMaterial.name = "Dummy";
-                }
-                materials[si] = m_dummyMaterial;
+                materials[si] = FindDefaultMaterial();
                 changed = true;
             }
         }
@@ -1969,8 +1963,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
         foreach (MaterialHolder m in m_materialList)
             m.material = doExport(m.material); // material maybe updated by SaveAsset()
-        m_dummyMaterial = doExport(m_dummyMaterial);
-
+ 
         AssetDatabase.SaveAssets();
         ReassignMaterials();
     }
@@ -2139,6 +2132,19 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         ForceRepaint();
     }
 
+    private Material FindDefaultMaterial() {
+        if (m_cachedDefaultMaterial != null)
+            return m_cachedDefaultMaterial;
+        
+        GameObject primitive = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        primitive.SetActive(false);
+        m_cachedDefaultMaterial = primitive.GetComponent<MeshRenderer>().sharedMaterial;
+        DestroyImmediate(primitive);
+        return m_cachedDefaultMaterial;
+    }
+    
+//---------------------------------------------------------------------------------------------------------------------    
+
     internal List<AnimationClip> GetAnimationClips()
     {
         List<AnimationClip> ret = new List<AnimationClip>();
@@ -2229,7 +2235,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [SerializeField] private bool m_usePhysicalCameraParams = true;
     [SerializeField] private bool m_useCustomCameraMatrices = true;
             
-    [SerializeField] private           Material             m_dummyMaterial;
     [SerializeField] private protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
     [SerializeField] private           List<TextureHolder>  m_textureList  = new List<TextureHolder>();
     [SerializeField] private           List<AudioHolder>    m_audioList    = new List<AudioHolder>();
@@ -2262,6 +2267,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     private bool m_markMeshesDynamic            = false;
     private bool m_needReassignMaterials        = false;
     private bool m_keyValuesSerializationEnabled = true;
+    
+    private Material m_cachedDefaultMaterial;
 
     private readonly           Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
     private protected readonly Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
