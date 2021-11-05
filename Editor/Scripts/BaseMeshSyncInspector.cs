@@ -22,7 +22,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
         bool changed = false;
 
         changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Transform",
-            guiFunc: () => EditorGUILayout.Toggle("Transform", config.SyncTransform),
+            guiFunc: () => EditorGUILayout.Toggle("Update Transform", config.SyncTransform),
             updateFunc: (bool toggle) => { config.SyncTransform = toggle; }
         );
 
