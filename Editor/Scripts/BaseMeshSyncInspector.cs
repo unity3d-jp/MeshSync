@@ -50,8 +50,10 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                 playerConfig.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS));
             
 
-            changed |= MeshSyncInspectorUtility.DrawComponentSyncSettings(t, "Meshes", 
-                playerConfig.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_MESHES));
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Meshes",
+                guiFunc: () => EditorGUILayout.Toggle("Meshes", playerConfig.SyncMeshes),
+                updateFunc: (bool toggle) => { playerConfig.SyncMeshes = toggle; }
+            );
 
             EditorGUI.indentLevel++;
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Update Mesh Colliders",

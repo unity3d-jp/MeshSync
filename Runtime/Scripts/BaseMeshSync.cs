@@ -1080,15 +1080,13 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 //----------------------------------------------------------------------------------------------------------------------
     
     EntityRecord UpdateMeshEntity(MeshData data) {
-        
-        ComponentSyncSettings syncMeshesSettings = m_config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_MESHES); 
-        if (!syncMeshesSettings.CanCreate)
+        if (!m_config.SyncMeshes)
             return null;
 
         TransformData dtrans = data.transform;
         MeshDataFlags dflags = data.dataFlags;
         EntityRecord rec = UpdateTransformEntity(dtrans);
-        if (rec == null || dflags.unchanged || !syncMeshesSettings.CanUpdate)
+        if (rec == null || dflags.unchanged)
             return null;
 
         if (!string.IsNullOrEmpty(rec.reference))

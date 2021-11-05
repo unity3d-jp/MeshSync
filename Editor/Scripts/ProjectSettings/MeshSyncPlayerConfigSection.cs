@@ -100,6 +100,9 @@ internal class MeshSyncPlayerConfigSection {
             
         }
         
+        m_syncMeshesToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, Contents.Meshes,
+            (MeshSyncPlayerConfig config, bool newValue) => { config.SyncMeshes = newValue; }
+        );
         m_updateMeshCollidersToggle = AddPlayerConfigField<Toggle,bool>(fieldTemplate, syncSettingsFoldout, 
             Contents.UpdateMeshColliders,
             (MeshSyncPlayerConfig config, bool newValue) => { config.UpdateMeshColliders = newValue; }
@@ -297,6 +300,7 @@ internal class MeshSyncPlayerConfigSection {
             syncSettingsUI.CanUpdateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(index).CanUpdate);
         }
         
+        m_syncMeshesToggle.SetValueWithoutNotify(config.SyncMeshes);
         m_updateMeshCollidersToggle.SetValueWithoutNotify(config.UpdateMeshColliders);
 
         //Import
@@ -357,6 +361,7 @@ internal class MeshSyncPlayerConfigSection {
 
     private readonly List<ComponentSyncSettingsUI> m_componentSyncSettingsUIList = new List<ComponentSyncSettingsUI>();  
         
+    private Toggle m_syncMeshesToggle;
     private Toggle m_updateMeshCollidersToggle;
     private Toggle m_createMaterialsToggle;
     

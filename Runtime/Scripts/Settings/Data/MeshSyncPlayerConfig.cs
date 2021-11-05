@@ -24,6 +24,7 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
             m_componentSyncSettings.Add(other.m_componentSyncSettings[i]);                 
         }
         
+        SyncMeshes           = other.SyncMeshes;
         UpdateMeshColliders  = other.UpdateMeshColliders;
 
         //Import Settings   
@@ -69,7 +70,6 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
             m_componentSyncSettings[SYNC_CAMERA].CanCreate = m_componentSyncSettings[SYNC_CAMERA].CanUpdate = SyncCameras;  
             m_componentSyncSettings[SYNC_LIGHTS].CanCreate = m_componentSyncSettings[SYNC_LIGHTS].CanUpdate = SyncLights;  
-            m_componentSyncSettings[SYNC_MESHES].CanCreate = m_componentSyncSettings[SYNC_MESHES].CanUpdate = SyncMeshes;  
 #pragma warning restore 612
         }
 
@@ -98,10 +98,9 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     public bool SyncVisibility         = true;
     public bool SyncTransform          = true; //Create and Update
     
-    //[TODO-sin: 2021-11-5] Remove in 2022
     [Obsolete] public bool SyncCameras = true;
     [Obsolete] public bool SyncLights  = true;
-    [Obsolete] public bool SyncMeshes  = true;
+    public bool SyncMeshes  = true;
 
 
     [SerializeField] private List<ComponentSyncSettings> m_componentSyncSettings = null;
