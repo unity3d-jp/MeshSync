@@ -111,8 +111,6 @@ class MeshSyncProjectSettingsProvider : SettingsProvider {
             return;
         
         m_selectedTab = tab;
-        m_content?.Clear();
-
         if (MeshSyncEditorConstants.UNINITIALIZED_TAB == m_selectedTab) {
             m_selectedTabButton = null;
             return;

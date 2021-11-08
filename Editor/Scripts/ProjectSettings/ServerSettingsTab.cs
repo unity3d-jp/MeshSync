@@ -21,6 +21,7 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
 //----------------------------------------------------------------------------------------------------------------------        
     public void Setup(VisualElement root) {
         Assert.IsNotNull(root);
+        root.Clear();
         
         VisualTreeAsset tab = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SERVER_SETTINGS_TAB_PATH);	    
         TemplateContainer tabInstance = tab.CloneTree();
@@ -40,10 +41,16 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
             (bool  newValue) => { projectSettings.SetServerPublicAccess(newValue); }
         );
         
-
         //MeshSyncPlayerConfig section
         MeshSyncPlayerConfigSection section = new MeshSyncPlayerConfigSection(MeshSyncPlayerType.SERVER);
         section.Setup(content);
+        
+        Button resetButton = tabInstance.Query<Button>("ResetButton").First();
+        resetButton.clicked += () => {
+            projectSettings.ResetDefaultServerConfig();
+            Setup(root);
+        };
+        
         
         root.Add(tabInstance);
     }
