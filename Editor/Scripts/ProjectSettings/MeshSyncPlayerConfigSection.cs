@@ -90,11 +90,11 @@ internal class MeshSyncPlayerConfigSection {
             ComponentSyncSettings componentSyncSettings = config.GetComponentSyncSettings(i);
 
             ui.CanCreateToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, 
-                Contents.ComponentSyncCreate[i],false,
+                Contents.ComponentSyncCreate[i],componentSyncSettings.CanCreate,
                 (bool newValue) => { componentSyncSettings.CanCreate = newValue; }
             );
             ui.CanUpdateToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, 
-                Contents.ComponentSyncUpdate[i],false,
+                Contents.ComponentSyncUpdate[i],componentSyncSettings.CanUpdate,
                 (bool newValue) => { componentSyncSettings.CanUpdate = newValue; }
             );
             
