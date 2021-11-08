@@ -5,7 +5,7 @@ using UnityEngine.Assertions;
 
 namespace Unity.MeshSync {
 [Serializable]
-internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
+internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
     internal MeshSyncPlayerConfig() {
         m_animationTweakSettings = new AnimationTweakSettings();        

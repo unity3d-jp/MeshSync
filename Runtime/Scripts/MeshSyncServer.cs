@@ -46,6 +46,9 @@ public class MeshSyncServer : BaseMeshSync {
     internal bool IsAutoStart()                 { return m_autoStartServer; }
     internal int  GetServerPort()               { return m_serverPort; }
     internal void SetServerPort(int port )      { m_serverPort = port; }
+    
+    internal override MeshSyncPlayerConfig GetConfigV() => m_config;
+    
 #endregion
 
 //----------------------------------------------------------------------------------------------------------------------        
@@ -491,10 +494,12 @@ public class MeshSyncServer : BaseMeshSync {
 #endif // UNITY_STANDALONE
     
     [SerializeField] private bool m_autoStartServer = false;
-    [SerializeField]         int  m_serverPort      = MeshSyncConstants.DEFAULT_SERVER_PORT;
+    [SerializeField] private int  m_serverPort      = MeshSyncConstants.DEFAULT_SERVER_PORT;
 #if UNITY_EDITOR
     [SerializeField] bool m_foldServerSettings = true;
 #endif
+    
+    [SerializeField] private MeshSyncServerConfig m_config;
 
 #pragma warning disable 414
     //Renamed in 0.10.x-preview

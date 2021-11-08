@@ -15,7 +15,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
     protected static bool DrawAssetSyncSettings(BaseMeshSync t) {
 
         t.foldSyncSettings = EditorGUILayout.Foldout(t.foldSyncSettings, "Asset Sync Settings", true, GetBoldFoldoutStyle());
-        MeshSyncPlayerConfig config = t.GetConfig();
+        MeshSyncPlayerConfig config = t.GetConfigV();
         if (!t.foldSyncSettings) 
             return false;
 
@@ -71,7 +71,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
     protected static bool DrawImportSettings(BaseMeshSync t) {
 
         bool changed   = false;
-        MeshSyncPlayerConfig playerConfig = t.GetConfig();
+        MeshSyncPlayerConfig playerConfig = t.GetConfigV();
         
         t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, GetBoldFoldoutStyle());
         if (t.foldImportSettings) {
@@ -119,7 +119,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
     protected static bool DrawMiscSettings(BaseMeshSync t) {
 
         bool changed   = false;
-        MeshSyncPlayerConfig playerConfig = t.GetConfig();
+        MeshSyncPlayerConfig playerConfig = t.GetConfigV();
         
         // Misc
         t.foldMisc = EditorGUILayout.Foldout(t.foldMisc, "Misc", true, GetBoldFoldoutStyle());
@@ -232,7 +232,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
         styleFold.fontStyle = FontStyle.Bold;
         player.foldAnimationTweak = EditorGUILayout.Foldout(player.foldAnimationTweak, "Animation Tweak", true, styleFold);
         if (player.foldAnimationTweak) {
-            MeshSyncPlayerConfig config = player.GetConfig();
+            MeshSyncPlayerConfig config = player.GetConfigV();
             AnimationTweakSettings animationTweakSettings = config.GetAnimationTweakSettings();
             
             float               frameRate = 30.0f;

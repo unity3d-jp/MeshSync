@@ -46,7 +46,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         changed |= DrawSceneCacheImportSettings(m_sceneCachePlayer);
         changed |= DrawMiscSettings(m_sceneCachePlayer);
         
-        MeshSyncPlayerConfig config = m_sceneCachePlayer.GetConfig();
+        MeshSyncPlayerConfig config = m_sceneCachePlayer.GetConfigV();
         if (config.Profiling) {
             EditorGUILayout.TextArea(m_sceneCachePlayer.dbgProfileReport, GUILayout.Height(120));
             EditorGUILayout.Space();
@@ -156,7 +156,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
     private static bool DrawSceneCacheImportSettings(SceneCachePlayer t) {
 
         bool changed   = false;
-        MeshSyncPlayerConfig playerConfig = t.GetConfig();
+        MeshSyncPlayerConfig playerConfig = t.GetConfigV();
         
         t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, GetBoldFoldoutStyle());
         if (t.foldImportSettings) {

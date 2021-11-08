@@ -78,6 +78,8 @@ public class SceneCachePlayer : BaseMeshSync {
     internal string GetSceneCacheFilePath() { return m_sceneCacheFilePath; }
     internal bool IsSceneCacheOpened() { return m_sceneCache;}
 
+    internal override MeshSyncPlayerConfig GetConfigV() => m_config;
+    
     internal void SetAutoplay(bool autoPlay) {
         //[Note-sin: 2021-1-18] May be called before m_animator is initialized in Playmode.
         //It is expected that the animator was already disabled previously in EditMode though.
@@ -494,6 +496,8 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] int       m_frame         = 1;
     [SerializeField] int       m_preloadLength = 1;
 
+    [SerializeField] private SceneCachePlayerConfig m_config;
+    
     //only used when the sceneCacheFilePath has a valid importer (under Assets)
     [SerializeField] bool m_overrideModelImporterSettings = false;
     
