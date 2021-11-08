@@ -180,23 +180,12 @@
 }
 
 
-/*---------------------------------------------- DCC Tools Footer ----------------------------------------------------- */
+/*---------------------------------------------- Footer ------------------------------------------------------------- */
 
-.dcc-tool-footer-container  {
-    height: 30px;
-    justify-content: space-between;
-    flex-direction: row;
-    margin-top: 10px;
-    margin-left: 30px;
-    margin-right: 45px;
-    flex-shrink: 0;
+.footer {
+    margin-top: 15px;
 }
 
-.add-dcc-tool-button {
-    width: 100px;
+.footer-button  {
+    max-width: 100px;
 }
-
-.auto-detect-button {
-    width: 100px;
-}
-
