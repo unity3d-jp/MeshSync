@@ -77,7 +77,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
             UpdateMeshColliders = false,
             ProgressiveDisplay  = false,
         };            
-        m_defaultSceneCachePlayerConfig.SetModelImporterSettings(new ModelImporterSettings(createMaterials:false));
+        m_defaultSceneCachePlayerConfig.SetModelImporterSettings(new ModelImporterSettings(createMaterials:true));
         
     }
     
