@@ -238,12 +238,15 @@ internal class MeshSyncPlayerConfigSection {
 
         Toggle createToggle = templateInstance.Query<Toggle>("CreateToggle").First();
         Assert.IsNotNull(createToggle);
+
+        createToggle.SetValueWithoutNotify(componentSyncSettings.CanCreate);
         createToggle.RegisterValueChangedCallback((ChangeEvent<bool> changeEvent) => {
             componentSyncSettings.CanCreate = changeEvent.newValue;
         });        
 
         Toggle updateToggle = templateInstance.Query<Toggle>("UpdateToggle").First();
         Assert.IsNotNull(updateToggle);
+        updateToggle.SetValueWithoutNotify(componentSyncSettings.CanUpdate);
         updateToggle.RegisterValueChangedCallback((ChangeEvent<bool> changeEvent) => {
             componentSyncSettings.CanUpdate = changeEvent.newValue;
         });
