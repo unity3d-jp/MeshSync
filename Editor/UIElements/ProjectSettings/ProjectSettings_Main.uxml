@@ -8,9 +8,5 @@
     
     <VisualElement name="Content">
     </VisualElement>
-
-    <VisualElement name="Footer" class="footer">
-        <Button text="Reset" class="footer-button"/>
-    </VisualElement>
     
 </UXML>
