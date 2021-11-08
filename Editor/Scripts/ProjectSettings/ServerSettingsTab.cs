@@ -48,6 +48,7 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
         Button resetButton = tabInstance.Query<Button>("ResetButton").First();
         resetButton.clicked += () => {
             projectSettings.ResetDefaultServerConfig();
+            projectSettings.Save();
             Setup(root);
         };
         

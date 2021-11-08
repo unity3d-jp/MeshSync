@@ -42,6 +42,7 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
         resetButton.clicked += () => {
             MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
             projectSettings.ResetDefaultSceneCachePlayerConfig();
+            projectSettings.Save();
             Setup(root);
         };
        
