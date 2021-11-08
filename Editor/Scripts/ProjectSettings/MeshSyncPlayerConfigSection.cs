@@ -237,6 +237,31 @@ internal class MeshSyncPlayerConfigSection {
         }
         return popupField;
     }
+
+    private void something(VisualElement parent, GUIContent content, ComponentSyncSettings componentSyncSettings, ref ComponentSyncSettingsUI ui) {
+
+        VisualTreeAsset template = UIElementsEditorUtility.LoadVisualTreeAsset(
+            Constants.COMPONENT_SYNC_FIELDS_TEMPLATE_PATH);
+        TemplateContainer templateInstance = template.CloneTree();            
+        
+        VisualElement     fieldContainer   = templateInstance.Query<VisualElement>("FieldContainer").First();        
+        templateInstance.Query<VisualElement>("FieldContainer").First();
+        
+        Label label = templateInstance.Query<Label>().First();
+        label.text    = content.text;
+        label.tooltip = content.tooltip;
+
+        ui.CanCreateToggle = templateInstance.Query<Toggle>("CreateToggle").First();        
+        ui.CanCreateToggle.RegisterValueChangedCallback((ChangeEvent<bool> changeEvent) => {
+            componentSyncSettings.CanCreate = changeEvent.newValue;
+        });        
+
+        ui.CanUpdateToggle = templateInstance.Query<Toggle>("CanUpdateToggle").First();
+        ui.CanUpdateToggle.RegisterValueChangedCallback((ChangeEvent<bool> changeEvent) => {
+            componentSyncSettings.CanUpdate = changeEvent.newValue;
+        });        
+        
+    }
     
     
 //----------------------------------------------------------------------------------------------------------------------
