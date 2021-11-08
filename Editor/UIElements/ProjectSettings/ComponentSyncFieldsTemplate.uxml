@@ -2,8 +2,8 @@
 
     <VisualElement name="FieldContainer" class="field-container">
         <Label text="label"/>
-        <Toggle text="Create"/>
-        <Toggle text="Update"/>
+        <Toggle name="CreateToggle" text="Create">abc</Toggle>>
+        <Toggle name="UpdateToggle" text="Update"/>
             
     </VisualElement>
 
