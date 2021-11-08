@@ -21,7 +21,7 @@ internal class ModelImporterSettings {
 //----------------------------------------------------------------------------------------------------------------------
     
     [SerializeField] internal bool CreateMaterials;
-    [SerializeField] internal AssetSearchMode MaterialSearchMode;
+    [SerializeField] internal AssetSearchMode MaterialSearchMode = AssetSearchMode.LOCAL;
 
 //----------------------------------------------------------------------------------------------------------------------
     
