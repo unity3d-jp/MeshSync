@@ -1,0 +1,10 @@
+<UXML xmlns="UnityEngine.UIElements">
+
+    <VisualElement name="FieldContainer" class="field-container">
+        <Label text="label"/>
+        <Toggle text="Create"/>
+        <Toggle text="Update"/>
+            
+    </VisualElement>
+
+</UXML>
