@@ -7,12 +7,12 @@ internal class MeshSyncServerConfig : MeshSyncPlayerConfig {
 
     
 #pragma warning disable 414
-    [SerializeField] private int m_meshSyncServerConfigVersion = (int)MeshSyncPlayerConfigVersion.INITIAL;
+    [SerializeField] private int m_meshSyncServerConfigVersion = (int)MeshSyncServerConfigVersion.INITIAL;
 #pragma warning restore 414
 
-    private const int CUR_MESHSYNC_SERVER_CONFIG_VERSION = (int)MeshSyncPlayerConfigVersion.INITIAL; 
+    private const int CUR_MESHSYNC_SERVER_CONFIG_VERSION = (int)MeshSyncServerConfigVersion.INITIAL; 
 
-    enum MeshSyncPlayerConfigVersion {
+    enum MeshSyncServerConfigVersion {
         INITIAL = 1,
     }
    
