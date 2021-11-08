@@ -69,7 +69,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
 
     internal void ResetDefaultServerConfig() {
         m_defaultServerConfig = new MeshSyncServerConfig();
-        m_defaultServerConfig.SetModelImporterSettings(new ModelImporterSettings(createMaterials:true));
+        m_defaultServerConfig.SetModelImporterSettings(new ModelImporterSettings());
     }
 
     internal void ResetDefaultSceneCachePlayerConfig() {
@@ -77,7 +77,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
             UpdateMeshColliders = false,
             ProgressiveDisplay  = false,
         };            
-        m_defaultSceneCachePlayerConfig.SetModelImporterSettings(new ModelImporterSettings(createMaterials:true));
+        m_defaultSceneCachePlayerConfig.SetModelImporterSettings(new ModelImporterSettings());
         
     }
     
