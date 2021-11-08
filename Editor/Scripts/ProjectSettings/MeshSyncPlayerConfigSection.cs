@@ -195,7 +195,7 @@ internal class MeshSyncPlayerConfigSection {
             (bool newValue) => { animationTweakSettings.EraseFlatCurves = newValue; }
         );
                 
-        //Update the values in each UI elements
+        //Additional UI for SceneCache
         if (isSceneCachePlayerConfig) {
             SceneCachePlayerConfig scPlayerConfig = config as SceneCachePlayerConfig;
             Assert.IsNotNull(scPlayerConfig);
@@ -204,11 +204,7 @@ internal class MeshSyncPlayerConfigSection {
                 Contents.TimelineSnapToFrame, m_snapToFrameEnums,m_snapToFrameEnums[scPlayerConfig.TimelineSnapToFrame],
                 (int newValue) => { scPlayerConfig.TimelineSnapToFrame = newValue;}
             );
-            
-            UpdateSceneCacheUIElements();
-        } else {
-            UpdateServerUIElements();
-        }
+        } 
         
         parent.Add(containerInstance);
     }
@@ -265,19 +261,6 @@ internal class MeshSyncPlayerConfigSection {
         return popupField;
     }
     
-
-//----------------------------------------------------------------------------------------------------------------------
-
-    private void UpdateServerUIElements() {
-        MeshSyncPlayerConfig config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultServerConfig();	
-    }
-    
-    private void UpdateSceneCacheUIElements() {
-        SceneCachePlayerConfig config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultSceneCachePlayerConfig();	
-        m_timelineSnapToFramePopup.SetValueWithoutNotify(m_snapToFrameEnums[config.TimelineSnapToFrame]);
-    }
-
-
     
 //----------------------------------------------------------------------------------------------------------------------
 
