@@ -168,35 +168,26 @@ internal class MeshSyncPlayerConfigSection {
         
         //Animation Tweak
         Foldout animationTweakSettingsFoldout = containerInstance.Query<Foldout>("AnimationTweakSettingsFoldout").First();
+        AnimationTweakSettings animationTweakSettings = config.GetAnimationTweakSettings();
         m_animationTweakTimeScaleField = AddPlayerConfigField<FloatField, float>(animationTweakSettingsFoldout, 
-            Contents.TweakTimeScale,0.0f,
-            (float newValue) => {
-                config.GetAnimationTweakSettings().TimeScale = newValue;
-            }
+            Contents.TweakTimeScale,animationTweakSettings.TimeScale,
+            (float newValue) => { animationTweakSettings.TimeScale = newValue; }
         );
         m_animationTweakTimeOffsetField = AddPlayerConfigField<FloatField, float>(animationTweakSettingsFoldout, 
-            Contents.TweakTimeOffset,0.0f,
-            (float newValue) => {
-                config.GetAnimationTweakSettings().TimeOffset = newValue;
-            }
+            Contents.TweakTimeOffset,animationTweakSettings.TimeOffset,
+            (float newValue) => { animationTweakSettings.TimeOffset = newValue; }
         );
         m_animationTweakDropStepField = AddPlayerConfigField<IntegerField, int>(animationTweakSettingsFoldout, 
-            Contents.TweakDropStep,0,
-            (int newValue) => {
-                config.GetAnimationTweakSettings().DropStep = newValue;
-            }
+            Contents.TweakDropStep,animationTweakSettings.DropStep,
+            (int newValue) => { animationTweakSettings.DropStep = newValue; }
         );
         m_animationTweakReductionThresholdField = AddPlayerConfigField<FloatField, float>(animationTweakSettingsFoldout, 
-            Contents.TweakReductionThreshold,0,
-            (float newValue) => {
-                config.GetAnimationTweakSettings().ReductionThreshold = newValue;
-            }
+            Contents.TweakReductionThreshold,animationTweakSettings.ReductionThreshold,
+            (float newValue) => { animationTweakSettings.ReductionThreshold = newValue; }
         );
         m_animationTweakEraseFlatCurvesToggle = AddPlayerConfigField<Toggle, bool>(animationTweakSettingsFoldout, 
-            Contents.TweakEraseFlatCurves,false,
-            (bool newValue) => {
-                config.GetAnimationTweakSettings().EraseFlatCurves = newValue;
-            }
+            Contents.TweakEraseFlatCurves,animationTweakSettings.EraseFlatCurves,
+            (bool newValue) => { animationTweakSettings.EraseFlatCurves = newValue; }
         );
                 
         //Update the values in each UI elements
