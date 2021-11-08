@@ -84,8 +84,6 @@ internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 //----------------------------------------------------------------------------------------------------------------------    
     internal AnimationTweakSettings GetAnimationTweakSettings() { return m_animationTweakSettings;}
 
-    internal void SetModelImporterSettings(ModelImporterSettings importerSettings) { m_importerSettings = importerSettings; }
-
     internal ModelImporterSettings GetModelImporterSettings() => m_importerSettings;
 
     internal void SetComponentSyncSettings(int index, ComponentSyncSettings settings) {
