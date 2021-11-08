@@ -15,8 +15,8 @@ internal class MeshSyncPlayerConfigSection {
 
     internal class Contents {
 
-        public static readonly GUIContent Visibility          = EditorGUIUtility.TrTextContent("Visibility");
-        public static readonly GUIContent Transform           = EditorGUIUtility.TrTextContent("Transform");
+        public static readonly GUIContent Visibility      = EditorGUIUtility.TrTextContent("Visibility");
+        public static readonly GUIContent UpdateTransform = EditorGUIUtility.TrTextContent("Update Transform");
 
         public static readonly GUIContent[] ComponentSyncs = new [] {
             EditorGUIUtility.TrTextContent("Camera"),
