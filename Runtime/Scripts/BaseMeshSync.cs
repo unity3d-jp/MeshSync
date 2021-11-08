@@ -471,7 +471,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                             UpdateMaterialAssetV((MaterialData)asset);
                             break;
                         case AssetType.Animation:
-                            UpdateAnimationAsset((AnimationClipData)asset);
+                            UpdateAnimationAsset((AnimationClipData)asset, config);
                             save = true;
                             break;
                         default:
@@ -495,19 +495,19 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 TransformData src = scene.GetEntity(i);
                 switch (src.entityType) {
                     case EntityType.Transform:
-                        dst = UpdateTransformEntity(src);
+                        dst = UpdateTransformEntity(src, config);
                         break;
                     case EntityType.Camera:
-                        dst = UpdateCameraEntity((CameraData)src);
+                        dst = UpdateCameraEntity((CameraData)src, config);
                         break;
                     case EntityType.Light:
-                        dst = UpdateLightEntity((LightData)src);
+                        dst = UpdateLightEntity((LightData)src, config);
                         break;
                     case EntityType.Mesh:
-                        dst = UpdateMeshEntity((MeshData)src);
+                        dst = UpdateMeshEntity((MeshData)src, config);
                         break;
                     case EntityType.Points:
-                        dst = UpdatePointsEntity((PointsData)src);
+                        dst = UpdatePointsEntity((PointsData)src, config);
                         break;
                 }
 
@@ -600,7 +600,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 if (m_clientObjects.TryGetValue(rec.reference, out srcrec) && srcrec.go != null)
                 {
                     rec.materialIDs = srcrec.materialIDs;
-                    UpdateReference(rec, srcrec);
+                    UpdateReference(rec, srcrec, GetConfigV());
                 }
             }
         }
@@ -1076,14 +1076,13 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    EntityRecord UpdateMeshEntity(MeshData data) {
-        MeshSyncPlayerConfig config = GetConfigV();
+    EntityRecord UpdateMeshEntity(MeshData data, MeshSyncPlayerConfig config) {
         if (!config.SyncMeshes)
             return null;
 
         TransformData dtrans = data.transform;
         MeshDataFlags dflags = data.dataFlags;
-        EntityRecord rec = UpdateTransformEntity(dtrans);
+        EntityRecord rec = UpdateTransformEntity(dtrans, config);
         if (rec == null || dflags.unchanged)
             return null;
 
@@ -1323,12 +1322,12 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     }
 
 //----------------------------------------------------------------------------------------------------------------------        
-    EntityRecord UpdatePointsEntity(PointsData data)
+    EntityRecord UpdatePointsEntity(PointsData data,MeshSyncPlayerConfig config)
     {
 
         TransformData dtrans = data.transform;
         PointsDataFlags dflags = data.dataFlags;
-        EntityRecord rec = UpdateTransformEntity(dtrans);
+        EntityRecord rec = UpdateTransformEntity(dtrans, config);
         if (rec == null || dflags.unchanged)
             return null;
 
@@ -1361,7 +1360,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return rec;
     }
 
-    EntityRecord UpdateTransformEntity(TransformData data)
+    EntityRecord UpdateTransformEntity(TransformData data,MeshSyncPlayerConfig config)
     {
         string path = data.path;
         int hostID = data.hostID;
@@ -1403,7 +1402,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         if (trans == null)
             trans = rec.trans = rec.go.transform;
 
-        MeshSyncPlayerConfig config = GetConfigV();
         TransformDataFlags dflags = data.dataFlags;
         if (!dflags.unchanged)
         {
@@ -1440,15 +1438,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return rec;
     }
 
-    EntityRecord UpdateCameraEntity(CameraData data) {
-        MeshSyncPlayerConfig config = GetConfigV();
+    EntityRecord UpdateCameraEntity(CameraData data, MeshSyncPlayerConfig config) {
         ComponentSyncSettings cameraSyncSettings = config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA);
         if (!cameraSyncSettings.CanCreate)
             return null;
 
         TransformData dtrans = data.transform;
         CameraDataFlags dflags = data.dataFlags;
-        EntityRecord rec = UpdateTransformEntity(dtrans);
+        EntityRecord rec = UpdateTransformEntity(dtrans, config);
         if (rec == null || dflags.unchanged)
             return null;
 
@@ -1496,15 +1493,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return rec;
     }
 
-    EntityRecord UpdateLightEntity(LightData data) {
-        MeshSyncPlayerConfig config = GetConfigV();
+    EntityRecord UpdateLightEntity(LightData data,MeshSyncPlayerConfig config) {
         ComponentSyncSettings syncLightSettings = config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS); 
         if (!syncLightSettings.CanCreate)
             return null;
 
         TransformData dtrans = data.transform;
         LightDataFlags dflags = data.dataFlags;
-        EntityRecord rec = UpdateTransformEntity(dtrans);
+        EntityRecord rec = UpdateTransformEntity(dtrans, config);
         if (rec == null || dflags.unchanged)
             return null;
 
@@ -1512,9 +1508,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return rec;
     }
 
-    void UpdateReference(EntityRecord dst, EntityRecord src)
+    void UpdateReference(EntityRecord dst, EntityRecord src,MeshSyncPlayerConfig config)
     {
-        MeshSyncPlayerConfig config = GetConfigV();        
         if (src.dataType == EntityType.Unknown)
         {
             Debug.LogError("MeshSync: should not be here!");
@@ -1687,9 +1682,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
 //----------------------------------------------------------------------------------------------------------------------   
     
-    void UpdateAnimationAsset(AnimationClipData clipData) {
+    void UpdateAnimationAsset(AnimationClipData clipData,MeshSyncPlayerConfig config) {
         MakeSureAssetDirectoryExists();
-        MeshSyncPlayerConfig config = GetConfigV();
         
 #if UNITY_EDITOR
 
