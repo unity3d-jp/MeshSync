@@ -114,16 +114,16 @@ internal class MeshSyncPlayerConfigSection {
         
         //import
         Foldout importSettingsFoldout = containerInstance.Query<Foldout>("ImportSettingsFoldout").First();
+        ModelImporterSettings modelImporterSettings = config.GetModelImporterSettings();
 
         m_createMaterialsToggle = AddPlayerConfigField<Toggle,bool>(importSettingsFoldout, 
-            Contents.CreateMaterials,false,
-            (bool newValue) => { config.GetModelImporterSettings().CreateMaterials = newValue; }
+            Contents.CreateMaterials,modelImporterSettings.CreateMaterials,
+            (bool newValue) => { modelImporterSettings.CreateMaterials = newValue; }
         );
         m_materialSearchModePopup = AddPlayerConfigPopupField(importSettingsFoldout, 
-            Contents.MaterialSearchMode, m_assetSearchModeEnums,m_assetSearchModeEnums[0],
-            (int newValue) => {
-                config.GetModelImporterSettings().MaterialSearchMode = (AssetSearchMode) newValue;
-            },
+            Contents.MaterialSearchMode, m_assetSearchModeEnums,
+                m_assetSearchModeEnums[(int) modelImporterSettings.MaterialSearchMode],
+            (int newValue) => { modelImporterSettings.MaterialSearchMode = (AssetSearchMode) newValue; },
             "inner-field-container"
         );
         
