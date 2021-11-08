@@ -81,34 +81,38 @@ internal class MeshSyncPlayerConfigSection {
         Foldout syncSettingsFoldout = containerInstance.Query<Foldout>("SyncSettingsFoldout").First();
 
         //Sync	           
-        m_syncTransformToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.Transform, false,
+        m_syncTransformToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, 
+            Contents.Transform, config.SyncTransform,
             (bool newValue) => { config.SyncTransform = newValue; }
         );
 
         m_componentSyncSettingsUIList.Clear();
         for (int i = 0; i < MeshSyncPlayerConfig.SYNC_COUNT; ++i) {
-            ComponentSyncSettingsUI syncSettings = new ComponentSyncSettingsUI(i);
-            m_componentSyncSettingsUIList.Add(syncSettings);
+            ComponentSyncSettingsUI ui = new ComponentSyncSettingsUI(i);
+            ComponentSyncSettings componentSyncSettings = config.GetComponentSyncSettings(i);
+            m_componentSyncSettingsUIList.Add(ui);
 
-            syncSettings.CanCreateToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, 
+            ui.CanCreateToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, 
                 Contents.ComponentSyncCreate[i],false,
-                (bool newValue) => { config.GetComponentSyncSettings(syncSettings.SyncIndex).CanCreate = newValue; }
+                (bool newValue) => { componentSyncSettings.CanCreate = newValue; }
             );
-            syncSettings.CanUpdateToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, 
+            ui.CanUpdateToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, 
                 Contents.ComponentSyncUpdate[i],false,
-                (bool newValue) => { config.GetComponentSyncSettings(syncSettings.SyncIndex).CanUpdate = newValue; }
+                (bool newValue) => { componentSyncSettings.CanUpdate = newValue; }
             );
             
         }
         
-        m_syncMeshesToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.Meshes,false,
+        m_syncMeshesToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.Meshes,config.SyncMeshes,
             (bool newValue) => { config.SyncMeshes = newValue; }
         );
-        m_updateMeshCollidersToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.UpdateMeshColliders, false,
+        m_updateMeshCollidersToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, 
+            Contents.UpdateMeshColliders, config.UpdateMeshColliders,
             (bool newValue) => { config.UpdateMeshColliders = newValue; }
         );
 
-        m_syncVisibilityToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.Visibility, false,
+        m_syncVisibilityToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, 
+            Contents.Visibility, config.SyncVisibility,
             (bool newValue) => { config.SyncVisibility = newValue; }
         );
         
