@@ -94,11 +94,12 @@ internal class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     
 //----------------------------------------------------------------------------------------------------------------------    
     //Sync Settings
-    public bool SyncVisibility         = true;
-    public bool SyncTransform          = true; //Create and Update
+    public bool SyncVisibility = true;
+    public bool SyncTransform  = true; //for Update
     
-    [Obsolete] public bool SyncCameras = true;
-    [Obsolete] public bool SyncLights  = true;
+    [Obsolete] private bool SyncCameras = true;
+    [Obsolete] private bool SyncLights  = true;
+    
     public bool SyncMeshes  = true;
 
 
