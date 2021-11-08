@@ -76,6 +76,7 @@ internal class MeshSyncPlayerConfigSection {
             MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultServerConfig();
         
         TemplateContainer containerInstance = InstantiateContainer(m_playerType);
+        parent.Add(containerInstance);
             
         //Add server port	            	          
         Foldout syncSettingsFoldout = containerInstance.Query<Foldout>("SyncSettingsFoldout").First();
@@ -180,18 +181,18 @@ internal class MeshSyncPlayerConfigSection {
             (bool newValue) => { ats.EraseFlatCurves = newValue; }
         );
                 
-        //Additional UI for SceneCache
-        if (isSceneCachePlayerConfig) {
-            SceneCachePlayerConfig scPlayerConfig = config as SceneCachePlayerConfig;
-            Assert.IsNotNull(scPlayerConfig);
-            Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();	    
-            AddPlayerConfigPopupField(timelineSettingsFoldout, 
-                Contents.TimelineSnapToFrame, m_snapToFrameEnums,m_snapToFrameEnums[scPlayerConfig.TimelineSnapToFrame],
-                (int newValue) => { scPlayerConfig.TimelineSnapToFrame = newValue;}
-            );
-        } 
+        if (!isSceneCachePlayerConfig) 
+            return;
         
-        parent.Add(containerInstance);
+        //Additional UI for SceneCache
+        SceneCachePlayerConfig scPlayerConfig = config as SceneCachePlayerConfig;
+        Assert.IsNotNull(scPlayerConfig);
+        Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();
+        AddPlayerConfigPopupField(timelineSettingsFoldout, 
+            Contents.TimelineSnapToFrame, m_snapToFrameEnums,m_snapToFrameEnums[scPlayerConfig.TimelineSnapToFrame],
+            (int newValue) => { scPlayerConfig.TimelineSnapToFrame = newValue;}
+        );
+
     }
 
     
