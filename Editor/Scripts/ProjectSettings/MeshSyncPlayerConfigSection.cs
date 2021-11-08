@@ -197,7 +197,7 @@ internal class MeshSyncPlayerConfigSection {
             Assert.IsNotNull(scPlayerConfig);
             Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();	    
             m_timelineSnapToFramePopup = AddPlayerConfigPopupField(timelineSettingsFoldout, 
-                Contents.TimelineSnapToFrame, m_snapToFrameEnums,m_snapToFrameEnums[0],
+                Contents.TimelineSnapToFrame, m_snapToFrameEnums,m_snapToFrameEnums[scPlayerConfig.TimelineSnapToFrame],
                 (int newValue) => { scPlayerConfig.TimelineSnapToFrame = newValue;}
             );
             
