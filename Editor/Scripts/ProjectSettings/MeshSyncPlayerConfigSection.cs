@@ -128,41 +128,42 @@ internal class MeshSyncPlayerConfigSection {
         );
         
         m_animationInterpolationPopup = AddPlayerConfigPopupField(importSettingsFoldout, 
-            Contents.AnimationInterpolation, m_animationInterpolationEnums,m_animationInterpolationEnums[0],
+            Contents.AnimationInterpolation, m_animationInterpolationEnums,
+            m_animationInterpolationEnums[config.AnimationInterpolation],
             (int newValue) => { config.AnimationInterpolation = newValue; }
         );
         m_keyframeReductionToggle = AddPlayerConfigField<Toggle,bool>(importSettingsFoldout, 
-            Contents.KeyframeReduction,false,
+            Contents.KeyframeReduction,config.KeyframeReduction,
             (bool newValue) => { config.KeyframeReduction = newValue; }
         );
         m_reductionThresholdField = AddPlayerConfigField<FloatField, float>(importSettingsFoldout, 
-            Contents.ReductionThreshold,0.0f,
+            Contents.ReductionThreshold,config.ReductionThreshold,
             (float newValue) => { config.ReductionThreshold = newValue; }
         );
         m_reductionEraseFlatCurves = AddPlayerConfigField<Toggle,bool>(importSettingsFoldout, 
-            Contents.ReductionEraseFlatCurves,false,
+            Contents.ReductionEraseFlatCurves,config.ReductionEraseFlatCurves,
             (bool newValue) => { config.ReductionEraseFlatCurves = newValue; }
         );
         m_zUpCorrectionPopup = AddPlayerConfigPopupField(importSettingsFoldout, 
-            Contents.ZUpCorrection, m_zUpCorrectionEnums,m_zUpCorrectionEnums[0],
+            Contents.ZUpCorrection, m_zUpCorrectionEnums,m_zUpCorrectionEnums[config.ZUpCorrection],
             (int newValue) => { config.ZUpCorrection = newValue; }
         );
         
         //Misc 
         Foldout miscSettingsFoldout = containerInstance.Query<Foldout>("MiscSettingsFoldout").First();
         m_syncMaterialListToggle = AddPlayerConfigField<Toggle,bool>(miscSettingsFoldout, 
-            Contents.SyncMaterialList,false,
+            Contents.SyncMaterialList,config.SyncMaterialList,
             (bool newValue) => { config.SyncMaterialList = newValue; }
         );
         m_progressiveDisplayToggle = AddPlayerConfigField<Toggle,bool>(miscSettingsFoldout, 
-            Contents.ProgressiveDisplay,false,
+            Contents.ProgressiveDisplay,config.ProgressiveDisplay,
             (bool newValue) => { config.ProgressiveDisplay = newValue; }
         );
-        m_loggingToggle = AddPlayerConfigField<Toggle,bool>(miscSettingsFoldout, Contents.Logging,false,
+        m_loggingToggle = AddPlayerConfigField<Toggle,bool>(miscSettingsFoldout, Contents.Logging,config.Logging,
             (bool newValue) => { config.Logging = newValue; }
         );
         m_profilingToggle = AddPlayerConfigField<Toggle,bool>(miscSettingsFoldout, 
-            Contents.Profiling,false,
+            Contents.Profiling,config.Profiling,
             (bool newValue) => { config.Profiling = newValue; }
         );
         
