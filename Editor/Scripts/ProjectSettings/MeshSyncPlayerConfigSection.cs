@@ -68,7 +68,6 @@ internal class MeshSyncPlayerConfigSection {
     
 //----------------------------------------------------------------------------------------------------------------------        
     internal void Setup(VisualElement parent) {
-        m_playerConfigUIElements = new List<VisualElement>();
         
         bool isSceneCachePlayerConfig = (m_playerType == MeshSyncPlayerType.CACHE_PLAYER);
         MeshSyncPlayerConfig config = isSceneCachePlayerConfig ? 
@@ -219,7 +218,6 @@ internal class MeshSyncPlayerConfigSection {
         });
 
         field.AddToClassList("general-settings-field");
-        m_playerConfigUIElements.Add(field);
         return field;
     }
     
@@ -243,7 +241,6 @@ internal class MeshSyncPlayerConfigSection {
         if (!string.IsNullOrEmpty(containerClass)) {
             popupField.parent.AddToClassList(containerClass);
         }
-        m_playerConfigUIElements.Add(popupField);
         return popupField;
     }
     
@@ -272,7 +269,6 @@ internal class MeshSyncPlayerConfigSection {
     
     
     private readonly MeshSyncPlayerType m_playerType;
-    private List<VisualElement> m_playerConfigUIElements;
 
     private readonly List<string> m_animationInterpolationEnums = new List<string>(Enum.GetNames( typeof( InterpolationMode )));
     private readonly List<string> m_zUpCorrectionEnums = new List<string>(Enum.GetNames( typeof( ZUpCorrectionMode )));
