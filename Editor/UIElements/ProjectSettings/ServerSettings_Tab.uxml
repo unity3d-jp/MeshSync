@@ -11,6 +11,12 @@
             
             
         </VisualElement>
+
+
+        <VisualElement name="FooterContainer" class="general-footer-container">
+            <Button name="ResetButton" text="Reset" class="footer-button"/>
+        </VisualElement>
+        
         
     </ScrollView>
 
