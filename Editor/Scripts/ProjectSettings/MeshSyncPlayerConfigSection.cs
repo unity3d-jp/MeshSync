@@ -270,54 +270,13 @@ internal class MeshSyncPlayerConfigSection {
 
     private void UpdateServerUIElements() {
         MeshSyncPlayerConfig config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultServerConfig();	
-        UpdateCommonUIElements(config);		
     }
     
     private void UpdateSceneCacheUIElements() {
         SceneCachePlayerConfig config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultSceneCachePlayerConfig();	
-        UpdateCommonUIElements(config);		
         m_timelineSnapToFramePopup.SetValueWithoutNotify(m_snapToFrameEnums[config.TimelineSnapToFrame]);
     }
 
-    private void UpdateCommonUIElements(MeshSyncPlayerConfig config) {
-        //sync
-        m_syncVisibilityToggle.SetValueWithoutNotify(config.SyncVisibility);
-        m_syncTransformToggle.SetValueWithoutNotify(config.SyncTransform);
-
-        foreach (ComponentSyncSettingsUI syncSettingsUI in m_componentSyncSettingsUIList) {
-            int index = syncSettingsUI.SyncIndex;
-            syncSettingsUI.CanCreateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(index).CanCreate);
-            syncSettingsUI.CanUpdateToggle.SetValueWithoutNotify(config.GetComponentSyncSettings(index).CanUpdate);
-        }
-        
-        m_syncMeshesToggle.SetValueWithoutNotify(config.SyncMeshes);
-        m_updateMeshCollidersToggle.SetValueWithoutNotify(config.UpdateMeshColliders);
-
-        //Import
-        ModelImporterSettings importerSettings = config.GetModelImporterSettings();
-        m_createMaterialsToggle.SetValueWithoutNotify(importerSettings.CreateMaterials);
-        m_materialSearchModePopup.SetValueWithoutNotify(m_assetSearchModeEnums[(int)importerSettings.MaterialSearchMode]);
-        m_animationInterpolationPopup.SetValueWithoutNotify(m_animationInterpolationEnums[config.AnimationInterpolation]);
-        m_keyframeReductionToggle.SetValueWithoutNotify(config.KeyframeReduction);
-        m_reductionThresholdField.SetValueWithoutNotify(config.ReductionThreshold);
-        m_reductionEraseFlatCurves.SetValueWithoutNotify(config.ReductionEraseFlatCurves);
-        m_zUpCorrectionPopup.SetValueWithoutNotify(m_zUpCorrectionEnums[config.ZUpCorrection]);
-
-        //Misc
-        m_syncMaterialListToggle.SetValueWithoutNotify(config.SyncMaterialList);
-        m_progressiveDisplayToggle.SetValueWithoutNotify(config.ProgressiveDisplay);
-        m_loggingToggle.SetValueWithoutNotify(config.Logging);
-        m_profilingToggle.SetValueWithoutNotify(config.Profiling);
-
-        //Animation Tweak
-        AnimationTweakSettings animationTweakSettings = config.GetAnimationTweakSettings();
-        m_animationTweakTimeScaleField.SetValueWithoutNotify(animationTweakSettings.TimeScale);
-        m_animationTweakTimeOffsetField.SetValueWithoutNotify(animationTweakSettings.TimeOffset);
-        m_animationTweakDropStepField.SetValueWithoutNotify(animationTweakSettings.DropStep);
-        m_animationTweakReductionThresholdField.SetValueWithoutNotify(animationTweakSettings.ReductionThreshold);
-        m_animationTweakEraseFlatCurvesToggle.SetValueWithoutNotify(animationTweakSettings.EraseFlatCurves);
-        
-    }
 
     
 //----------------------------------------------------------------------------------------------------------------------
