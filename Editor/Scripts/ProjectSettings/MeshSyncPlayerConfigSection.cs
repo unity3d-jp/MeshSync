@@ -227,10 +227,9 @@ internal class MeshSyncPlayerConfigSection {
     {
         VisualTreeAsset template = UIElementsEditorUtility.LoadVisualTreeAsset(
             Constants.COMPONENT_SYNC_FIELDS_TEMPLATE_PATH);
-        TemplateContainer templateInstance = template.CloneTree();            
+        TemplateContainer templateInstance = template.CloneTree();                    
+        VisualElement     fieldContainer   = templateInstance.Query<VisualElement>("FieldContainer").First();
         
-        VisualElement     fieldContainer   = templateInstance.Query<VisualElement>("FieldContainer").First();        
-        templateInstance.Query<VisualElement>("FieldContainer").First();
         
         Label label = templateInstance.Query<Label>().First();
         label.text    = content.text;
