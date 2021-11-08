@@ -8,7 +8,15 @@ namespace Unity.MeshSync {
 internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
     internal MeshSyncPlayerConfig() {
-        m_animationTweakSettings = new AnimationTweakSettings();        
+        m_animationTweakSettings = new AnimationTweakSettings();
+        InitComponentSyncSettings();
+    }
+
+    internal void InitComponentSyncSettings() {
+        m_componentSyncSettings = new List<ComponentSyncSettings>() {
+            new ComponentSyncSettings(), //Camera
+            new ComponentSyncSettings(), //Lights
+        };        
     }
         
 //----------------------------------------------------------------------------------------------------------------------    
@@ -54,10 +62,7 @@ internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
         
         //Validate
         if (null == m_componentSyncSettings || m_componentSyncSettings.Count != SYNC_COUNT) {
-            m_componentSyncSettings = new List<ComponentSyncSettings>() {
-                new ComponentSyncSettings(), //Camera
-                new ComponentSyncSettings(), //Lights
-            };
+            InitComponentSyncSettings();
         }
         
         if (m_meshSyncPlayerConfigVersion == CUR_MESHSYNC_PLAYER_CONFIG_VERSION)
@@ -75,11 +80,9 @@ internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
         m_meshSyncPlayerConfigVersion = CUR_MESHSYNC_PLAYER_CONFIG_VERSION;
     }
     
-
+    
 //----------------------------------------------------------------------------------------------------------------------    
     internal AnimationTweakSettings GetAnimationTweakSettings() { return m_animationTweakSettings;}
-
-    internal void SetModelImporterSettings(ModelImporterSettings importerSettings) { m_importerSettings = importerSettings; }
 
     internal ModelImporterSettings GetModelImporterSettings() => m_importerSettings;
 

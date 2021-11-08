@@ -66,21 +66,28 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
     
     internal MeshSyncServerConfig   GetDefaultServerConfig() { return m_defaultServerConfig; }
     internal SceneCachePlayerConfig GetDefaultSceneCachePlayerConfig() { return m_defaultSceneCachePlayerConfig; }
+
+    internal void ResetDefaultServerConfig() {
+        m_defaultServerConfig = new MeshSyncServerConfig();
+    }
+
+    internal void ResetDefaultSceneCachePlayerConfig() {
+        m_defaultSceneCachePlayerConfig = new SceneCachePlayerConfig() {
+            UpdateMeshColliders = false,
+            ProgressiveDisplay  = false,
+        };            
+        
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
     private void ValidatePlayerConfigs() {
 
         if (null == m_defaultServerConfig) {
-            m_defaultServerConfig = new MeshSyncServerConfig();
-            m_defaultServerConfig.SetModelImporterSettings(new ModelImporterSettings(createMaterials:true));
+            ResetDefaultServerConfig();
         }
 
         if (null == m_defaultSceneCachePlayerConfig) {
-            m_defaultSceneCachePlayerConfig = new SceneCachePlayerConfig() {
-                UpdateMeshColliders = false,
-                ProgressiveDisplay  = false,
-            };            
-            m_defaultServerConfig.SetModelImporterSettings(new ModelImporterSettings(createMaterials:false));
+            ResetDefaultSceneCachePlayerConfig();
         }         
     }
 
