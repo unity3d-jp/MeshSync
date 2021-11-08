@@ -158,7 +158,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
     internal void EnableKeyValuesSerialization(bool kvEnabled) { m_keyValuesSerializationEnabled = kvEnabled;}
 
-    internal MeshSyncPlayerConfig GetConfig() { return m_config; }
+    internal abstract MeshSyncPlayerConfig GetConfigV();
 
 
     internal bool GetUsePhysicalCameraParams() { return m_usePhysicalCameraParams;}
@@ -290,16 +290,12 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
     #region Misc
     //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected bool Try(Action act)
-    {
-        try
-        {
+    protected bool Try(Action act) {
+        try {
             act.Invoke();
             return true;
-        }
-        catch (Exception e)
-        {
-            if (m_config.Logging)
+        } catch (Exception e) {
+            if (GetConfigV().Logging)
                 Debug.LogError(e);
             return false;
         }
@@ -448,6 +444,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     }
 
     private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets) {
+        MeshSyncPlayerConfig  config = GetConfigV();
         // handle assets
         Try(() => {
             int numAssets = scene.numAssets;
@@ -478,7 +475,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                             save = true;
                             break;
                         default:
-                            if (m_config.Logging)
+                            if (config.Logging)
                                 Debug.Log("unknown asset: " + asset.name);
                             break;
                     }
@@ -527,7 +524,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         });
         
 #if UNITY_EDITOR
-        if (m_config.ProgressiveDisplay)
+        if (config.ProgressiveDisplay)
             ForceRepaint();
 #endif
     }
@@ -1080,7 +1077,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 //----------------------------------------------------------------------------------------------------------------------
     
     EntityRecord UpdateMeshEntity(MeshData data) {
-        if (!m_config.SyncMeshes)
+        MeshSyncPlayerConfig config = GetConfigV();
+        if (!config.SyncMeshes)
             return null;
 
         TransformData dtrans = data.transform;
@@ -1146,7 +1144,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             }
 
             rec.smrUpdated = true;
-            if (m_config.SyncVisibility && dtrans.dataFlags.hasVisibility)
+            if (config.SyncVisibility && dtrans.dataFlags.hasVisibility)
                 rec.smrEnabled = data.transform.visibility.visibleInRender;
             else
                 rec.smrEnabled = smr.enabled;
@@ -1187,14 +1185,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 }
             }
 
-            if (m_config.SyncVisibility && dtrans.dataFlags.hasVisibility)
+            if (config.SyncVisibility && dtrans.dataFlags.hasVisibility)
                 mr.enabled = data.transform.visibility.visibleInRender;
             mf.sharedMesh = rec.mesh;
             rec.smrEnabled = false;
         }
 
         if (meshUpdated) {
-            MeshCollider collider = m_config.UpdateMeshColliders ? trans.GetComponent<MeshCollider>() : null;
+            MeshCollider collider = config.UpdateMeshColliders ? trans.GetComponent<MeshCollider>() : null;
             if (collider != null &&
                 (collider.sharedMesh == null || collider.sharedMesh == rec.mesh))
             {
@@ -1405,6 +1403,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         if (trans == null)
             trans = rec.trans = rec.go.transform;
 
+        MeshSyncPlayerConfig config = GetConfigV();
         TransformDataFlags dflags = data.dataFlags;
         if (!dflags.unchanged)
         {
@@ -1413,7 +1412,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             rec.dataType = data.entityType;
 
             // sync TRS
-            if (m_config.SyncTransform)
+            if (config.SyncTransform)
             {
                 if (dflags.hasPosition)
                     trans.localPosition = data.position;
@@ -1424,7 +1423,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             }
 
             // visibility
-            if (m_config.SyncVisibility && dflags.hasVisibility)
+            if (config.SyncVisibility && dflags.hasVisibility)
                 trans.gameObject.SetActive(visibility.active);
 
             // visibility for reference
@@ -1442,7 +1441,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     }
 
     EntityRecord UpdateCameraEntity(CameraData data) {
-        ComponentSyncSettings cameraSyncSettings = m_config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA);
+        MeshSyncPlayerConfig config = GetConfigV();
+        ComponentSyncSettings cameraSyncSettings = config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA);
         if (!cameraSyncSettings.CanCreate)
             return null;
 
@@ -1459,7 +1459,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         if (!cameraSyncSettings.CanUpdate)
             return null;
         
-        if (m_config.SyncVisibility && dtrans.dataFlags.hasVisibility)
+        if (config.SyncVisibility && dtrans.dataFlags.hasVisibility)
             cam.enabled = dtrans.visibility.visibleInRender;
 
         cam.orthographic = data.orthographic;
@@ -1497,7 +1497,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     }
 
     EntityRecord UpdateLightEntity(LightData data) {
-        ComponentSyncSettings syncLightSettings = m_config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS); 
+        MeshSyncPlayerConfig config = GetConfigV();
+        ComponentSyncSettings syncLightSettings = config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS); 
         if (!syncLightSettings.CanCreate)
             return null;
 
@@ -1507,12 +1508,13 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         if (rec == null || dflags.unchanged)
             return null;
 
-        rec.SetLight(data,m_config.SyncVisibility,syncLightSettings.CanUpdate);
+        rec.SetLight(data,config.SyncVisibility,syncLightSettings.CanUpdate);
         return rec;
     }
 
     void UpdateReference(EntityRecord dst, EntityRecord src)
     {
+        MeshSyncPlayerConfig config = GetConfigV();        
         if (src.dataType == EntityType.Unknown)
         {
             Debug.LogError("MeshSync: should not be here!");
@@ -1527,7 +1529,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 Camera dstcam = dst.camera;
                 if (dstcam == null)
                     dstcam = dst.camera = Misc.GetOrAddComponent<Camera>(dstgo);
-                if (m_config.SyncVisibility && dst.hasVisibility)
+                if (config.SyncVisibility && dst.hasVisibility)
                     dstcam.enabled = dst.visibility.visibleInRender;
                 dstcam.enabled = srccam.enabled;
                 dstcam.orthographic = srccam.orthographic;
@@ -1536,7 +1538,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 dstcam.farClipPlane = srccam.farClipPlane;
             }
         } else if (src.dataType == EntityType.Light) {
-            dst.SetLight(src,m_config.SyncVisibility);
+            dst.SetLight(src,config.SyncVisibility);
         }
         else if (src.dataType == EntityType.Mesh)
         {
@@ -1548,7 +1550,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             {
                 PointCacheRenderer dstpcr = dst.pointCacheRenderer;
                 if (dstpcr != null) {
-                    if (m_config.SyncVisibility && dst.hasVisibility)
+                    if (config.SyncVisibility && dst.hasVisibility)
                         dstpcr.enabled = dst.visibility.visibleInRender;
                     dstpcr.sharedMesh = mesh;
 
@@ -1575,7 +1577,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                         dstmf = dst.meshFilter = Misc.GetOrAddComponent<MeshFilter>(dstgo);
                     }
 
-                    if (m_config.SyncVisibility && dst.hasVisibility)
+                    if (config.SyncVisibility && dst.hasVisibility)
                         dstmr.enabled = dst.visibility.visibleInRender;
                     dstmf.sharedMesh = mesh;
                     dstmr.sharedMaterials = srcmr.sharedMaterials;
@@ -1596,14 +1598,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                     for (int bi = 0; bi < blendShapeCount; ++bi)
                         dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
 
-                    if (m_config.SyncVisibility && dst.hasVisibility)
+                    if (config.SyncVisibility && dst.hasVisibility)
                         dstsmr.enabled = dst.visibility.visibleInRender;
                     else
                         dstsmr.enabled = oldEnabled;
                 }
 
                 // handle mesh collider
-                if (m_config.UpdateMeshColliders) {
+                if (config.UpdateMeshColliders) {
                     MeshCollider srcmc = srcgo.GetComponent<MeshCollider>();
                     if (srcmc != null && srcmc.sharedMesh == mesh) {
                         MeshCollider dstmc = Misc.GetOrAddComponent<MeshCollider>(dstgo);
@@ -1687,12 +1689,13 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     
     void UpdateAnimationAsset(AnimationClipData clipData) {
         MakeSureAssetDirectoryExists();
+        MeshSyncPlayerConfig config = GetConfigV();
         
 #if UNITY_EDITOR
 
-        clipData.Convert((InterpolationMode) m_config.AnimationInterpolation);
-        if (m_config.KeyframeReduction)
-            clipData.KeyframeReduction(m_config.ReductionThreshold, m_config.ReductionEraseFlatCurves);
+        clipData.Convert((InterpolationMode) config.AnimationInterpolation);
+        if (config.KeyframeReduction)
+            clipData.KeyframeReduction(config.ReductionThreshold, config.ReductionEraseFlatCurves);
 
         //float start = Time.realtimeSinceStartup;
 
@@ -1764,7 +1767,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 root = root.gameObject,
                 target = target.gameObject,
                 path = animPath,
-                enableVisibility = m_config.SyncVisibility,
+                enableVisibility = config.SyncVisibility,
                 usePhysicalCameraParams = m_usePhysicalCameraParams,
             };
             if (rec != null)
@@ -1957,7 +1960,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             if (overwrite || existing == null)
             {
                 mat = Misc.OverwriteOrCreateAsset(mat, dstPath);
-                if (m_config.Logging)
+                MeshSyncPlayerConfig config = GetConfigV();
+                if (config.Logging)
                     Debug.Log("exported material " + dstPath);
             }
             else if (useExistingOnes && existing != null)
@@ -1981,6 +1985,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         string basePath = m_assetsFolder;
 
         // export client meshes
+        MeshSyncPlayerConfig config = GetConfigV();
         foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
         {
             Mesh mesh = kvp.Value.mesh;
@@ -1993,7 +1998,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             {
                 mesh = Misc.OverwriteOrCreateAsset(mesh, dstPath);
                 kvp.Value.mesh = mesh; // mesh maybe updated by SaveAsset()
-                if (m_config.Logging)
+                if (config.Logging)
                     Debug.Log("exported material " + dstPath);
             }
             else if (useExistingOnes && existing != null)
@@ -2020,7 +2025,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             if (smr != null)
                 smr.sharedMesh = rec.origMesh;
 
-            if (m_config.Logging)
+            if (config.Logging)
                 Debug.Log("updated mesh " + rec.origMesh.name);
             ++n;
         }
@@ -2171,7 +2176,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
     private void OnSceneViewGUI(SceneView sceneView)
     {
-        if (m_config.SyncMaterialList) {
+        MeshSyncPlayerConfig config = GetConfigV();
+        if (config.SyncMaterialList) {
             if (Event.current.type == EventType.DragExited && Event.current.button == 0)
                 CheckMaterialAssigned();
         }
@@ -2233,8 +2239,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     
     [SerializeField] private string  m_assetsFolder = null; //Always starts with "Assets"
     [SerializeField] private Transform m_rootObject;
-
-    [SerializeField] private protected MeshSyncPlayerConfig m_config;
     
     [SerializeField] private bool m_usePhysicalCameraParams = true;
     [SerializeField] private bool m_useCustomCameraMatrices = true;

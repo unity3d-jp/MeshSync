@@ -64,14 +64,14 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
     internal void   SetServerPublicAccess(bool access) { m_serverPublicAccess = access;}
     
     
-    internal MeshSyncPlayerConfig   GetDefaultServerConfig() { return m_defaultServerConfig; }
+    internal MeshSyncServerConfig   GetDefaultServerConfig() { return m_defaultServerConfig; }
     internal SceneCachePlayerConfig GetDefaultSceneCachePlayerConfig() { return m_defaultSceneCachePlayerConfig; }
     
 //----------------------------------------------------------------------------------------------------------------------
     private void ValidatePlayerConfigs() {
 
         if (null == m_defaultServerConfig) {
-            m_defaultServerConfig = new MeshSyncPlayerConfig();
+            m_defaultServerConfig = new MeshSyncServerConfig();
             m_defaultServerConfig.SetModelImporterSettings(new ModelImporterSettings(createMaterials:true));
         }
 
@@ -93,7 +93,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
 
         if (m_meshSyncProjectSettingsVersion < (int) Version.SEPARATE_SCENE_CACHE_PLAYER_CONFIG) {
             if (null!= m_defaultPlayerConfigs && m_defaultPlayerConfigs.Length >= 2) {
-                m_defaultServerConfig   = m_defaultPlayerConfigs[0];
+                m_defaultServerConfig   = m_defaultPlayerConfigs[0] as MeshSyncServerConfig;
                 m_defaultSceneCachePlayerConfig = new SceneCachePlayerConfig(m_defaultPlayerConfigs[1]);
             }
         }
@@ -113,7 +113,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
     [SerializeField] private string m_sceneCacheOutputPath = MeshSyncConstants.DEFAULT_SCENE_CACHE_OUTPUT_PATH;
     
     
-    [SerializeField] private MeshSyncPlayerConfig   m_defaultServerConfig   = null;
+    [SerializeField] private MeshSyncServerConfig   m_defaultServerConfig   = null;
     [SerializeField] private SceneCachePlayerConfig m_defaultSceneCachePlayerConfig = null;
     
 
