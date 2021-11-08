@@ -271,14 +271,12 @@ internal class MeshSyncPlayerConfigSection {
     private void UpdateServerUIElements() {
         MeshSyncPlayerConfig config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultServerConfig();	
         UpdateCommonUIElements(config);		
-        SetupUIElementUserData(config);		
     }
     
     private void UpdateSceneCacheUIElements() {
         SceneCachePlayerConfig config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultSceneCachePlayerConfig();	
         UpdateCommonUIElements(config);		
         m_timelineSnapToFramePopup.SetValueWithoutNotify(m_snapToFrameEnums[config.TimelineSnapToFrame]);
-        SetupUIElementUserData(config);
     }
 
     private void UpdateCommonUIElements(MeshSyncPlayerConfig config) {
@@ -321,11 +319,6 @@ internal class MeshSyncPlayerConfigSection {
         
     }
 
-    private void SetupUIElementUserData(MeshSyncPlayerConfig config) {
-        foreach (VisualElement uiElement in m_playerConfigUIElements) {
-            uiElement.userData = config;
-        }		
-    }
     
 //----------------------------------------------------------------------------------------------------------------------
 
