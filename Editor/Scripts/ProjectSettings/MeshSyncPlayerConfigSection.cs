@@ -15,19 +15,13 @@ internal class MeshSyncPlayerConfigSection {
 
     internal class Contents {
 
-        public static readonly GUIContent Visibility          = EditorGUIUtility.TrTextContent("Visibility");
-        public static readonly GUIContent Transform           = EditorGUIUtility.TrTextContent("Transform");
+        public static readonly GUIContent Visibility      = EditorGUIUtility.TrTextContent("Visibility");
+        public static readonly GUIContent UpdateTransform = EditorGUIUtility.TrTextContent("Update Transform");
 
-        public static readonly GUIContent[] ComponentSyncCreate = new [] {
-            EditorGUIUtility.TrTextContent("Camera Create"),
-            EditorGUIUtility.TrTextContent("Lights Create"),
+        public static readonly GUIContent[] ComponentSyncs = new [] {
+            EditorGUIUtility.TrTextContent("Camera"),
+            EditorGUIUtility.TrTextContent("Lights"),
         };
-
-        public static readonly GUIContent[] ComponentSyncUpdate = new [] {
-            EditorGUIUtility.TrTextContent("Camera Update"),
-            EditorGUIUtility.TrTextContent("Lights Update"),
-        };
-        
         
         public static readonly GUIContent Meshes              = EditorGUIUtility.TrTextContent("Meshes");
         public static readonly GUIContent UpdateMeshColliders = EditorGUIUtility.TrTextContent("Update mesh colliders");
@@ -85,23 +79,13 @@ internal class MeshSyncPlayerConfigSection {
         Foldout syncSettingsFoldout = containerInstance.Query<Foldout>("SyncSettingsFoldout").First();
 
         //Sync	           
-        AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.Transform, config.SyncTransform,
+        AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.UpdateTransform, config.SyncTransform,
             (bool newValue) => { config.SyncTransform = newValue; }
         );
 
         for (int i = 0; i < MeshSyncPlayerConfig.SYNC_COUNT; ++i) {
-            ComponentSyncSettingsUI ui = new ComponentSyncSettingsUI(i);
             ComponentSyncSettings componentSyncSettings = config.GetComponentSyncSettings(i);
-
-            ui.CanCreateToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, 
-                Contents.ComponentSyncCreate[i],componentSyncSettings.CanCreate,
-                (bool newValue) => { componentSyncSettings.CanCreate = newValue; }
-            );
-            ui.CanUpdateToggle = AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, 
-                Contents.ComponentSyncUpdate[i],componentSyncSettings.CanUpdate,
-                (bool newValue) => { componentSyncSettings.CanUpdate = newValue; }
-            );
-            
+            AddComponentSyncSettingFields(syncSettingsFoldout, Contents.ComponentSyncs[i], componentSyncSettings);
         }
         
         AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.Meshes,config.SyncMeshes,
@@ -240,6 +224,37 @@ internal class MeshSyncPlayerConfigSection {
             popupField.parent.AddToClassList(containerClass);
         }
         return popupField;
+    }
+
+    private static void AddComponentSyncSettingFields(VisualElement parent, GUIContent content, 
+        ComponentSyncSettings componentSyncSettings) 
+    {
+        VisualTreeAsset template = UIElementsEditorUtility.LoadVisualTreeAsset(
+            Constants.COMPONENT_SYNC_FIELDS_TEMPLATE_PATH);
+        TemplateContainer templateInstance = template.CloneTree();                    
+        VisualElement     fieldContainer   = templateInstance.Query<VisualElement>("FieldContainer").First();
+        
+        
+        Label label = templateInstance.Query<Label>().First();
+        label.text    = content.text;
+        label.tooltip = content.tooltip;
+
+        Toggle createToggle = templateInstance.Query<Toggle>("CreateToggle").First();
+        Assert.IsNotNull(createToggle);
+
+        createToggle.SetValueWithoutNotify(componentSyncSettings.CanCreate);
+        createToggle.RegisterValueChangedCallback((ChangeEvent<bool> changeEvent) => {
+            componentSyncSettings.CanCreate = changeEvent.newValue;
+        });        
+
+        Toggle updateToggle = templateInstance.Query<Toggle>("UpdateToggle").First();
+        Assert.IsNotNull(updateToggle);
+        updateToggle.SetValueWithoutNotify(componentSyncSettings.CanUpdate);
+        updateToggle.RegisterValueChangedCallback((ChangeEvent<bool> changeEvent) => {
+            componentSyncSettings.CanUpdate = changeEvent.newValue;
+        });
+        
+        parent.Add(fieldContainer);
     }
     
     
