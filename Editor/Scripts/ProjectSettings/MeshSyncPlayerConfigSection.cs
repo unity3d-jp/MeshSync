@@ -206,13 +206,7 @@ internal class MeshSyncPlayerConfigSection {
             F targetField = (changeEvent.target) as F;
             if (null == targetField)
                 return;
-                            
-            MeshSyncPlayerConfig config = targetField.userData as MeshSyncPlayerConfig;
-            if (null == config) {
-                Debug.LogError("[MeshSync] Field doesn't have the correct user data");
-                return;
-            }
-            
+                                        
             onValueChanged(changeEvent.newValue);
             MeshSyncProjectSettings.GetOrCreateSettings().Save();
         });
