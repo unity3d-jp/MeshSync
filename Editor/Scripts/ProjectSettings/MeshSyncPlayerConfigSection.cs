@@ -75,7 +75,7 @@ internal class MeshSyncPlayerConfigSection {
         Foldout syncSettingsFoldout = containerInstance.Query<Foldout>("SyncSettingsFoldout").First();
 
         //Sync	           
-        AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.Transform, config.SyncTransform,
+        AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.UpdateTransform, config.SyncTransform,
             (bool newValue) => { config.SyncTransform = newValue; }
         );
 
