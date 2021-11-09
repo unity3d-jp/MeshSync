@@ -29,7 +29,7 @@ internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
         m_componentSyncSettings = new List<ComponentSyncSettings>();  
         for (int i = 0; i < SYNC_COUNT; ++i) {
-            m_componentSyncSettings.Add(other.m_componentSyncSettings[i]);                 
+            m_componentSyncSettings.Add(new ComponentSyncSettings(other.m_componentSyncSettings[i]));                 
         }
         
         SyncMeshes           = other.SyncMeshes;
