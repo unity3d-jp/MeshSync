@@ -92,7 +92,8 @@ internal class MeshSyncPlayerConfigSection {
             (bool newValue) => { config.SyncMeshes = newValue; }
         );
         AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.UpdateMeshColliders, config.UpdateMeshColliders,
-            (bool newValue) => { config.UpdateMeshColliders = newValue; }
+            (bool newValue) => { config.UpdateMeshColliders = newValue; },
+            "inner-field-container"
         );
 
         AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.Visibility, config.SyncVisibility,
@@ -187,7 +188,7 @@ internal class MeshSyncPlayerConfigSection {
 
     //Support Toggle, FloatField, etc
     private F AddPlayerConfigField<F,V>(VisualElement parent, GUIContent content, V initialValue,
-        Action<V> onValueChanged) where F: VisualElement,INotifyValueChanged<V>, new() 
+        Action<V> onValueChanged, string containerClass = null) where F: VisualElement,INotifyValueChanged<V>, new() 
     {
         F field = UIElementsEditorUtility.AddField<F, V>(parent, content, initialValue, (ChangeEvent<V> changeEvent) => {
 
@@ -200,6 +201,10 @@ internal class MeshSyncPlayerConfigSection {
         });
 
         field.AddToClassList("general-settings-field");
+        if (!string.IsNullOrEmpty(containerClass)) {
+            field.parent.AddToClassList(containerClass);
+        }
+        
         return field;
     }
     
