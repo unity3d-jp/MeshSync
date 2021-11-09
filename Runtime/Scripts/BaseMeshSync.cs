@@ -2234,7 +2234,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [SerializeField] private string  m_assetsFolder = null; //Always starts with "Assets"
     [SerializeField] private Transform m_rootObject;
     
-    [SerializeField] private bool m_usePhysicalCameraParams = true;
+    [Obsolete][SerializeField] private bool m_usePhysicalCameraParams = true;  
     [SerializeField] private bool m_useCustomCameraMatrices = true;
             
     [SerializeField] private protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
