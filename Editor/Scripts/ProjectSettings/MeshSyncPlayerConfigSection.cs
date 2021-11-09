@@ -22,7 +22,8 @@ internal class MeshSyncPlayerConfigSection {
             EditorGUIUtility.TrTextContent("Camera"),
             EditorGUIUtility.TrTextContent("Lights"),
         };
-        
+
+        public static readonly GUIContent UsePhysicalCameraParams = EditorGUIUtility.TrTextContent("Use Physical Camera Params");
         public static readonly GUIContent Meshes              = EditorGUIUtility.TrTextContent("Meshes");
         public static readonly GUIContent UpdateMeshColliders = EditorGUIUtility.TrTextContent("Update mesh colliders");
 
@@ -83,10 +84,23 @@ internal class MeshSyncPlayerConfigSection {
             (bool newValue) => { config.SyncTransform = newValue; }
         );
 
-        for (int i = 0; i < MeshSyncPlayerConfig.SYNC_COUNT; ++i) {
+        {
+            int i = MeshSyncPlayerConfig.SYNC_CAMERA;
             ComponentSyncSettings componentSyncSettings = config.GetComponentSyncSettings(i);
             AddComponentSyncSettingFields(syncSettingsFoldout, Contents.ComponentSyncs[i], componentSyncSettings);
         }
+
+        AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.UsePhysicalCameraParams, config.IsPhysicalCameraParamsUsed(),
+            (bool newValue) => { config.UsePhysicalCameraParams(newValue); },
+            "inner-field-container"
+        );
+        
+        {
+            int i = MeshSyncPlayerConfig.SYNC_LIGHTS;
+            ComponentSyncSettings componentSyncSettings = config.GetComponentSyncSettings(i);
+            AddComponentSyncSettingFields(syncSettingsFoldout, Contents.ComponentSyncs[i], componentSyncSettings);
+        }
+        
         
         AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.Meshes,config.SyncMeshes,
             (bool newValue) => { config.SyncMeshes = newValue; }
