@@ -16,6 +16,7 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
 //----------------------------------------------------------------------------------------------------------------------        
     public void Setup(VisualElement root) {
         Assert.IsNotNull(root);
+        root.Clear();
         
         VisualTreeAsset tab = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SCENE_CACHE_PLAYER_SETTINGS_TAB_PATH);
         TemplateContainer tabInstance = tab.CloneTree();
@@ -36,7 +37,16 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
         //MeshSyncPlayerConfig
         MeshSyncPlayerConfigSection section = new MeshSyncPlayerConfigSection(MeshSyncPlayerType.CACHE_PLAYER);	    
         section.Setup(content);
-                
+
+        Button resetButton = tabInstance.Query<Button>("ResetButton").First();
+        resetButton.clicked += () => {
+            MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+            projectSettings.ResetDefaultSceneCachePlayerConfig();
+            projectSettings.Save();
+            Setup(root);
+        };
+       
+        
         root.Add(tabInstance);	    
     }
     
