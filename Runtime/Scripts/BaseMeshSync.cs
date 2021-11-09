@@ -160,10 +160,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
     internal abstract MeshSyncPlayerConfig GetConfigV();
 
-
-    internal bool GetUsePhysicalCameraParams() { return m_usePhysicalCameraParams;}
-    internal void SetUsePhysicalCameraParams(bool use) { m_usePhysicalCameraParams = use;}
-
     
     internal bool useCustomCameraMatrices
     {
@@ -268,14 +264,18 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             return;
 
         if (m_baseMeshSyncVersion < (int) BaseMeshSyncVersion.INITIAL_0_10_0) {
-            foreach (MaterialHolder m in m_materialList) {
 #pragma warning disable 612
+            foreach (MaterialHolder m in m_materialList) {
                 if (m.materialIID != 0) 
                     continue;
-#pragma warning restore 612
                 
                 m.ShouldApplyMaterialData = false;
             }
+
+            MeshSyncPlayerConfig config = GetConfigV();
+            config?.UsePhysicalCameraParams(m_usePhysicalCameraParams);
+#pragma warning restore 612
+
         }
         
         m_baseMeshSyncVersion = CUR_BASE_MESHSYNC_VERSION;
@@ -1462,7 +1462,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         cam.orthographic = data.orthographic;
 
         // use physical camera params if available
-        if (m_usePhysicalCameraParams && dflags.hasFocalLength && dflags.hasSensorSize)
+        if (config.IsPhysicalCameraParamsUsed() && dflags.hasFocalLength && dflags.hasSensorSize)
         {
             cam.usePhysicalProperties = true;
             cam.focalLength = data.focalLength;
@@ -1762,7 +1762,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 target = target.gameObject,
                 path = animPath,
                 enableVisibility = config.SyncVisibility,
-                usePhysicalCameraParams = m_usePhysicalCameraParams,
+                usePhysicalCameraParams = config.IsPhysicalCameraParamsUsed(),
             };
             if (rec != null)
             {
@@ -2234,7 +2234,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [SerializeField] private string  m_assetsFolder = null; //Always starts with "Assets"
     [SerializeField] private Transform m_rootObject;
     
-    [SerializeField] private bool m_usePhysicalCameraParams = true;
+    [Obsolete][SerializeField] private bool m_usePhysicalCameraParams = true;  
     [SerializeField] private bool m_useCustomCameraMatrices = true;
             
     [SerializeField] private protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
