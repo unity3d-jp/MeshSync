@@ -94,6 +94,9 @@ internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     
     internal ComponentSyncSettings GetComponentSyncSettings(int index) => m_componentSyncSettings[index];
     
+    internal bool GetUsePhysicalCameraParams()         { return m_usePhysicalCameraParams;}
+    internal void SetUsePhysicalCameraParams(bool use) { m_usePhysicalCameraParams = use;}
+    
     
 //----------------------------------------------------------------------------------------------------------------------    
     //Sync Settings
@@ -107,9 +110,10 @@ internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
 
     [SerializeField] private List<ComponentSyncSettings> m_componentSyncSettings = null;
-    
-    
-    public bool UpdateMeshColliders    = true;
+
+
+    public bool m_usePhysicalCameraParams = true;
+    public bool UpdateMeshColliders = true;
 
     [Obsolete] public bool SyncMaterials          = true;
     [SerializeField] private ModelImporterSettings m_importerSettings = new ModelImporterSettings();
