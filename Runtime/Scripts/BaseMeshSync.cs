@@ -160,10 +160,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
     internal abstract MeshSyncPlayerConfig GetConfigV();
 
-
-    internal bool GetUsePhysicalCameraParams() { return m_usePhysicalCameraParams;}
-    internal void SetUsePhysicalCameraParams(bool use) { m_usePhysicalCameraParams = use;}
-
     
     internal bool useCustomCameraMatrices
     {
