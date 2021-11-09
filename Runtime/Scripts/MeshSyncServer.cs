@@ -458,7 +458,7 @@ public class MeshSyncServer : BaseMeshSync {
 
     void Reset() {
         MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
-        m_config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultServerConfig();
+        m_config = new MeshSyncServerConfig(projectSettings.GetDefaultServerConfig());
         m_serverPort = projectSettings.GetDefaultServerPort();
         
     }
