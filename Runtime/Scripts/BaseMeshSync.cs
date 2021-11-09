@@ -1458,7 +1458,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         cam.orthographic = data.orthographic;
 
         // use physical camera params if available
-        if (config.GetUsePhysicalCameraParams() && dflags.hasFocalLength && dflags.hasSensorSize)
+        if (config.IsPhysicalCameraParamsUsed() && dflags.hasFocalLength && dflags.hasSensorSize)
         {
             cam.usePhysicalProperties = true;
             cam.focalLength = data.focalLength;
@@ -1758,7 +1758,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 target = target.gameObject,
                 path = animPath,
                 enableVisibility = config.SyncVisibility,
-                usePhysicalCameraParams = config.GetUsePhysicalCameraParams(),
+                usePhysicalCameraParams = config.IsPhysicalCameraParamsUsed(),
             };
             if (rec != null)
             {

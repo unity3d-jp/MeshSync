@@ -34,8 +34,8 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
             EditorGUI.indentLevel++;
 
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Physical Camera Params",
-                guiFunc: () => EditorGUILayout.Toggle("Use Physical Params", config.GetUsePhysicalCameraParams()),
-                updateFunc: (bool toggle) => { config.SetUsePhysicalCameraParams(toggle); }
+                guiFunc: () => EditorGUILayout.Toggle("Use Physical Params", config.IsPhysicalCameraParamsUsed()),
+                updateFunc: (bool toggle) => { config.UsePhysicalCameraParams(toggle); }
             );
 
             EditorGUI.indentLevel--;

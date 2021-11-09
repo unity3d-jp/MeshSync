@@ -94,8 +94,8 @@ internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     
     internal ComponentSyncSettings GetComponentSyncSettings(int index) => m_componentSyncSettings[index];
     
-    internal bool GetUsePhysicalCameraParams()         { return m_usePhysicalCameraParams;}
-    internal void SetUsePhysicalCameraParams(bool use) { m_usePhysicalCameraParams = use;}
+    internal bool IsPhysicalCameraParamsUsed() { return m_usePhysicalCameraParams;}
+    internal void UsePhysicalCameraParams(bool use) { m_usePhysicalCameraParams = use;}
     
     
 //----------------------------------------------------------------------------------------------------------------------    
