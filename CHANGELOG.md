@@ -1,19 +1,30 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
-## [0.10.0-preview] - 2021-10-29
+## [0.10.0-preview] - 2021-11-10
 
 ### Added
+* feat: search materials based on MaterialSearchMode settings for MeshSyncServer and SceneCachePlayer
+* feat: add a custom inspector for SceneCache files under Assets folder to set material creation settings 
+* feat: override material creation settings for SceneCachePlayer when the assigned SceneCache file is under Assets folder
+* feat: allow enabling/disabling the creation and update of Lights and Cameras objects for MeshSyncServer and SceneCachePlayer
+* feat: add a checkbox in ProjectSettings to set the default material creation settings
+* feat: add options in ProjectSettings to set the default setting to use physical camera params 
+* feat: add a button to reset MeshSync configs in ProjectSettings 
 * api: open MeshSyncPlayer class to public
 * api: add a callback in MeshSyncServer that is called after receiving data 
 * api: open SceneCachePlayer to public 
 * api: add a public API to force update SceneCachePlayer
 
 ### Changed
-* TBD
-* TBD
-* TBD
-* TBD
+* deps: update dependency to com.unity.film-internal-utilities@0.12.2-preview
+* ui: indent "Update Mesh Colliders" setting in ProjectSettings
+
+### Fixed
+* fix: try to use existing animationController asset for SceneCache if possible
+
+### Removed
+* removed plugin installation support for Maya 2017 and 3ds Max 2017
 
 ## [0.9.3-preview] - 2021-10-20
 
