@@ -112,7 +112,7 @@ Properties to tweak animations.
 
 ## Export Assets 
 
-![Menu](images/MeshSyncExportAssetProperties.png)
+![Menu](images/MeshSyncExportAssetsProperties.png)
   
 Export meshes/materials into asset files, in order to reuse them in other scenes or projects.  
 Normally, meshes/materials synced using MeshSync only exist in the active scene.
