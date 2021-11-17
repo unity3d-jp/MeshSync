@@ -23,6 +23,16 @@ These properties are shared by multiple components in this package.
    
 ![Menu](images/MeshSyncImportProperties.png)
 
+- **Create Materials**: finds existing materials based on their names using the **Search Mode**
+  and applies them to relevant **GameObject**, 
+  or create new materials in the local folder of the MeshSync component if not found.   
+
+  |**Search Mode**  |**Description** |
+  |:---             |:---|
+  | Local           | search in the local folder of the MeshSync component.|
+  | Recursive-Up    | search starting from the local folder of the MeshSync component up to the Assets folder.|
+  | Everywhere      | search in all Unity Project folders.|
+
 - **Animation Interpolation**: sets the animation interpolation method.   
 
   |**Values** |**Description** |
