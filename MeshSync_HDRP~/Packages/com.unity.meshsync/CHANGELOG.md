@@ -1,6 +1,19 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.10.1-preview] - 2021-11-17
+
+### Added
+* doc: add a section about SceneCache import settings
+
+### Changed
+* doc: update the documentation of MeshSync components (MeshSyncServer, SceneCachePlayer)
+* doc: update ProjectSettings documentation
+
+### Fixed
+* fix: validate the asset folder of MeshSyncServer component
+* fix: null check when changing an object's material in the Scene view
+
 ## [0.10.0-preview] - 2021-11-10
 
 ### Added
