@@ -24,8 +24,8 @@ These properties are shared by multiple components in this package.
 ![Menu](images/MeshSyncImportProperties.png)
 
 - **Create Materials**: finds existing materials based on their names using the **Search Mode**
-  and applies them to relevant **GameObject**.
-  If the material is not found, then a new material is created.
+  and applies them to relevant **GameObjects**.  
+  If the material is not found, then a new material is created.  
   All materials are always added to the [material list](#material-list) of the component.
 
   |**Search Mode**  |**Description** |
@@ -58,7 +58,7 @@ These properties are shared by multiple components in this package.
   |**Values** |**Description** |
   |:---       |:---|
   | Flip YZ   | converts all vertices of Transform and Mesh to Y-Up.|
-  | Rotate X  | converts the root object's Transform to a Y-Up by <br/>applying a -90 X axis rotation to the root object, <br/> leaving the mesh in Z-Up.|
+  | Rotate X  | converts the root object's Transform to a Y-Up by applying a -90 X axis rotation to the root object, leaving the mesh in Z-Up.|
 
   > "Flip YZ" works better in most cases.   
   > For reference, Unity's standard FBX Importer does the equivalent of "Rotate X".
@@ -68,7 +68,7 @@ These properties are shared by multiple components in this package.
 ![Menu](images/MeshSyncMiscProperties.png)
 
 - **Sync Material List**  
-  When enabled, changing an object's material in the Scene view will update the material list (see below),
+  When enabled, changing an object's material in the Scene view will update the [material list](#material-list),
   and other objects which use the previous material will be updated to use the new material.
 
 - **Progressive Display**  
