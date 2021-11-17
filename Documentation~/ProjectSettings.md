@@ -8,7 +8,7 @@
 ![ProjectSettingsServer](images/ProjectSettingsServer.png)
 
 Use the **Server** tab to set the default setting values for 
-**MeshSyncServer** component, and connection-related settings.
+**MeshSyncServer** component.
 
 |**Connection Settings**   |**Description** |
 |:---                      |:---|
