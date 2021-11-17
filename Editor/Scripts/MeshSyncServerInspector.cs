@@ -64,10 +64,19 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
             }
             GUILayout.EndHorizontal();
             EditorGUI.EndDisabledGroup();
-            
-            string selectedFolder = EditorGUIDrawerUtility.DrawFolderSelectorGUI("Asset Dir", "Asset Dir", 
-                t.GetAssetsFolder(), null);
-            t.SetAssetsFolder(AssetEditorUtility.NormalizePath(selectedFolder));
+
+            string prevFolder = t.GetAssetsFolder(); 
+            string selectedFolder = AssetEditorUtility.NormalizePath(
+                EditorGUIDrawerUtility.DrawFolderSelectorGUI("Asset Dir", "Asset Dir", prevFolder, null)
+            );
+            if (selectedFolder != prevFolder) {
+                if (string.IsNullOrEmpty(selectedFolder) || !AssetEditorUtility.IsPathNormalized(selectedFolder)) {
+                    Debug.LogError($"[MeshSync] {selectedFolder} is not under Assets. Ignoring.");  
+                } else {
+                    t.SetAssetsFolder(selectedFolder);
+                }
+                
+            }
             
             Transform rootObject = (Transform) EditorGUILayout.ObjectField("Root Object", t.GetRootObject(), 
                 typeof(Transform), allowSceneObjects: true);                
