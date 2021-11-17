@@ -24,8 +24,9 @@ These properties are shared by multiple components in this package.
 ![Menu](images/MeshSyncImportProperties.png)
 
 - **Create Materials**: finds existing materials based on their names using the **Search Mode**
-  and applies them to relevant **GameObject**, 
-  or create new materials in the local folder of the MeshSync component if not found.   
+  and applies them to relevant **GameObject**.
+  If the material is not found, then a new material is created.
+  All materials are always added to the [material list](#material-list) of the component.
 
   |**Search Mode**  |**Description** |
   |:---             |:---|
@@ -77,23 +78,26 @@ These properties are shared by multiple components in this package.
   | On        | scene updates will be reflected while receiving data in real-time.|
   | Off       | updates will be reflected after all of the scene data is received.|
 
-## Materials 
+## Material List
    
 ![Menu](images/MeshSyncMaterialsProperties.png)
 
-- **Material List**  
-  Changing a material in this list will update objects using the previous material 
-  to use the new material.
+This material list holds all the materials that are used by this MeshSync component.   
+Changing a material in this list will update objects that use the previous material 
+to use the new material.
 
-  Saving and loading materials lists can be done with **Import List** and **Export List** buttons.   
+**Import List** and **Export List** buttons are used to load and save material lists.    
+
 
 ## Animation Tweaks 
+
+![Menu](images/MeshSyncAnimationTweakProperties.png)
 
 - **Animation Tweak** : various animation adjustments.
   - **Override Frame Rate**    
     Changes the frame rate while keeping the key time or the animation length.    
 
-    > Tips: playing a 24 FPS animation without interpolation when targetting 60 FPS will cause jittery movements.   
+    > Tips: playing a 24 FPS animation without interpolation when targetting 60 FPS will cause jittery movements.
     > Changing the animation to 120 FPS is one possible approach to mitigate it. 
      
   - **Time Scale**       
