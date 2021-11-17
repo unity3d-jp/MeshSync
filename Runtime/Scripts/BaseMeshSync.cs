@@ -2171,10 +2171,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     private void OnSceneViewGUI(SceneView sceneView)
     {
         MeshSyncPlayerConfig config = GetConfigV();
-        if (config.SyncMaterialList) {
-            if (Event.current.type == EventType.DragExited && Event.current.button == 0)
-                CheckMaterialAssigned();
-        }
+        if (null == config) //may happen after deleting prefabs (SceneCache)
+            return;
+
+        if (!config.SyncMaterialList) 
+            return;
+        
+        if (Event.current.type == EventType.DragExited && Event.current.button == 0)
+            CheckMaterialAssigned();
     }
 #endif //UNITY_EDITOR
     #endregion
