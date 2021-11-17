@@ -13,7 +13,7 @@ Use the **Server** tab to set the default setting values for
 |**Connection Settings**   |**Description** |
 |:---                      |:---|
 | **Server Port**          | The default server port.|
-| **Allow public access**  | Allows public access to MeshSync. <br/> By default, this setting is turned off, and only computers in local network     (127.0.0.1, 10.0.0.0/24, 192.168.0.0/16 or 172.16.0.0 to 172.31.255.255) can connect to MeshSync. |
+| **Allow public access**  | Allows public access to **MeshSyncServer**. <br/> By default, this setting is turned off, and only computers in local network     (127.0.0.1, 10.0.0.0/24, 192.168.0.0/16 or 172.16.0.0 to 172.31.255.255) can connect to **MeshSyncServer**. |
 
 Please refer to [MeshSyncServer](MeshSyncServer.md) 
 or [Common MeshSync Properties](CommonMeshSyncProperties.md)'s documentations 
