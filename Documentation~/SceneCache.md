@@ -31,7 +31,7 @@ This component handles the playback of an *.sc* file.
 
 ### Properties
 
-<img align="right" src="images/SceneCachePlayer.png" height="480">
+![](images/SceneCachePlayer.png)
 
 - **Cache File Path**: the path to the *.sc* file.  
   Copying the cache file to StreamingAssets is recommended, and can be done by simply clicking the **Copy** button.  
