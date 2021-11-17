@@ -8,12 +8,12 @@ These properties are shared by multiple components in this package.
 
 |**Properties** |**Description** |
 |:---       |:---|
-| Update Transform      | updates the position, rotation, and scale of each applicable **GameObjects**.|
+| Update Transform      | updates the position, rotation, and scale of each applicable **GameObject**.|
 | Cameras               | **Create**: create camera **GameObjects**. <br/> **Update**: update camera properties.|
 | Use Physical Params   | update physical camera properties.|
 | Cameras               | **Create**: create light **GameObjects**. <br/> **Update**: update light properties.|
-| Meshes                | if enabled and the mesh is updated, MeshCollider properties will be updated as well.|
-| Update Mesh Colliders | create and update MeshCollider properties of **GameObjects** which have meshes.|
+| Meshes                | create and update the MeshRenderer or SkinnedMeshRenderer component of the **GameObject**.|
+| Update Mesh Colliders | create and update MeshCollider properties of **GameObjects** which have meshes if the meshes are updated.|
 | Visibility            | enable/disable relevant components based on the visibility flag in the source data.|
 
 > Tips: disabling **Sync Meshes** brings better performance, and is recommended if syncing meshes is not necessary, 
