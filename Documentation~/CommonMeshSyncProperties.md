@@ -2,6 +2,13 @@
 
 These properties are shared by multiple components in this package.
 
+1. [Asset Sync Settings](#asset-sync-settings)
+1. [Import](#import)
+1. [Misc](#misc)
+1. [Material List](#material-list)
+1. [Animation Tweaks](#animation-tweaks)
+1. [Export Assets](#export-assets)
+
 ## Asset Sync Settings
 
 ![Menu](images/MeshSyncAssetSyncProperties.png)
