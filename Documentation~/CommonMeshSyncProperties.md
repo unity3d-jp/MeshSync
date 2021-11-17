@@ -8,13 +8,13 @@ These properties are shared by multiple components in this package.
 
 |**Properties** |**Description** |
 |:---       |:---|
-| Update Transform      | automatically start the server using the specified port.|
-| Cameras               | start/stop the server manually by clicking the **Start/Stop** button.|
-| Use Physical Params   | start/stop the server manually by clicking the **Start/Stop** button.|
-| Lights                | start/stop the server manually by clicking the **Start/Stop** button.|
+| Update Transform      | updates the position, rotation, and scale of each applicable **GameObjects**.|
+| Cameras               | **Create**: create camera **GameObjects**. <br/> **Update**: update camera properties.|
+| Use Physical Params   | update physical camera properties.|
+| Cameras               | **Create**: create light **GameObjects**. <br/> **Update**: update light properties.|
 | Meshes                | if enabled and the mesh is updated, MeshCollider properties will be updated as well.|
-| Update Mesh Colliders | start/stop the server manually by clicking the **Start/Stop** button.|
-| Visibility            | start/stop the server manually by clicking the **Start/Stop** button.|
+| Update Mesh Colliders | create and update MeshCollider properties of **GameObjects** which have meshes.|
+| Visibility            | enable/disable relevant components based on the visibility flag in the source data.|
 
 > Tips: disabling **Sync Meshes** brings better performance, and is recommended if syncing meshes is not necessary, 
 > for example, when editing only the pose/animation.
