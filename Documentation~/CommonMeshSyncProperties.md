@@ -11,7 +11,7 @@ These properties are shared by multiple components in this package.
 
 ## Asset Sync Settings
 
-![Menu](images/MeshSyncAssetSyncProperties.png)
+![](images/MeshSyncAssetSyncProperties.png)
 
 |**Properties** |**Description** |
 |:---       |:---|
@@ -28,7 +28,7 @@ These properties are shared by multiple components in this package.
 
 ## Import 
    
-![Menu](images/MeshSyncImportProperties.png)
+![](images/MeshSyncImportProperties.png)
 
 - **Create Materials**: finds existing materials based on their names using the **Search Mode**
   and applies them to relevant **GameObjects**.  
@@ -72,7 +72,7 @@ These properties are shared by multiple components in this package.
 
 ## Misc 
    
-![Menu](images/MeshSyncMiscProperties.png)
+![](images/MeshSyncMiscProperties.png)
 
 - **Sync Material List**  
   When enabled, changing an object's material in the Scene view will update the [material list](#material-list),
@@ -87,7 +87,7 @@ These properties are shared by multiple components in this package.
 
 ## Material List
    
-![Menu](images/MeshSyncMaterialsProperties.png)
+![](images/MeshSyncMaterialsProperties.png)
 
 This material list holds all the materials that are used by this component.   
 Changing a material in this list will update objects that use the previous material 
@@ -98,7 +98,7 @@ to use the new material.
 
 ## Animation Tweaks 
 
-![Menu](images/MeshSyncAnimationTweakProperties.png)
+![](images/MeshSyncAnimationTweakProperties.png)
 
 Properties to tweak animations.
 
@@ -119,7 +119,7 @@ Properties to tweak animations.
 
 ## Export Assets 
 
-![Menu](images/MeshSyncExportAssetsProperties.png)
+![](images/MeshSyncExportAssetsProperties.png)
   
 Export meshes and materials into asset files, in order to reuse them in other scenes or projects.  
 Normally, meshes and materials hold by this component only exist in the active scene.
