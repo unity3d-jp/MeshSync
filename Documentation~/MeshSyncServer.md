@@ -8,7 +8,7 @@ installed in the appropriate DCC tool.
 
 ## Properties
 
-![Menu](images/MeshSyncServer.png)
+![Menu](images/MeshSyncServerProperties.png)
 
 - **Auto Start**  
 
