@@ -153,6 +153,11 @@ public class MeshSyncServer : BaseMeshSync {
 
     protected override void OnAfterDeserializeMeshSyncPlayerV() {
         m_serverVersion = CUR_SERVER_VERSION;
+        
+        if (string.IsNullOrEmpty(GetAssetsFolder())) {
+            SetAssetsFolder(MeshSyncConstants.DEFAULT_ASSETS_PATH);
+        }
+        
     }   
     
 //----------------------------------------------------------------------------------------------------------------------
