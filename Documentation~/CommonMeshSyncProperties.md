@@ -15,11 +15,11 @@ These properties are shared by multiple components in this package.
 
 |**Properties** |**Description** |
 |:---       |:---|
-| Update Transform      | updates the position, rotation, and scale of each applicable **GameObject**.|
+| Update Transform      | updates the position, rotation, and scale of each **GameObject**.|
 | Cameras               | **Create**: create camera **GameObjects**. <br/> **Update**: update camera properties.|
 | Use Physical Params   | update physical camera properties.|
 | Cameras               | **Create**: create light **GameObjects**. <br/> **Update**: update light properties.|
-| Meshes                | create and update the MeshRenderer or SkinnedMeshRenderer component of the **GameObject**.|
+| Meshes                | create and update the MeshRenderer or SkinnedMeshRenderer component of applicable **GameObjects**.|
 | Update Mesh Colliders | create and update MeshCollider properties of **GameObjects** which have meshes if the meshes are updated.|
 | Visibility            | enable/disable relevant components based on the visibility flag in the source data.|
 
