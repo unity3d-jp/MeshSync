@@ -55,13 +55,13 @@ These properties are shared by multiple components in this package.
   Specifies how to convert Z-Up to Y-Up for data from DCC tools 
   which have Z-Up coordinate system (3ds Max, Blender, etc).
 
-  |**Values** |**Description** |
-  |:---       |:---|
-  | Flip YZ   | converts all vertices of Transform and Mesh to Y-Up.|
-  | Rotate X  | converts the root object's Transform to a Y-Up by applying a -90 X axis rotation to the root object, leaving the mesh in Z-Up.|
+  |**Values**     |**Description** |
+  |:---           |:---|
+  | **Flip YZ**   | converts all vertices of Transform and Mesh to Y-Up.|
+  | **Rotate X**  | converts the root object's Transform to a Y-Up by applying a -90 X axis rotation to the root object, leaving the mesh in Z-Up.|
 
-  > "Flip YZ" works better in most cases.   
-  > For reference, Unity's standard FBX Importer does the equivalent of "Rotate X".
+  > **Flip YZ** works better in most cases.   
+  > For reference, Unity's standard FBX Importer does the equivalent of **Rotate X**.
 
 ## Misc 
    
@@ -82,7 +82,7 @@ These properties are shared by multiple components in this package.
    
 ![Menu](images/MeshSyncMaterialsProperties.png)
 
-This material list holds all the materials that are used by this MeshSync component.   
+This material list holds all the materials that are used by this component.   
 Changing a material in this list will update objects that use the previous material 
 to use the new material.
 
@@ -98,7 +98,7 @@ Properties to tweak animations.
 - **Override Frame Rate**    
   Changes the frame rate while keeping the key time or the animation length.    
 
-  > Tips: playing a 24 FPS animation without interpolation when targetting 60 FPS will cause jittery movements.
+  > Tips: playing a 24 FPS animation without interpolation when targetting 60 FPS will cause jittery movements.  
   > Changing the animation to 120 FPS is one possible approach to mitigate it. 
      
 - **Time Scale**       
@@ -107,13 +107,13 @@ Properties to tweak animations.
   - **Offset**: adds an offset for the specified seconds.    
     For example, applying a scale of -1 and an offset of -5 to a 5 second animation will result in reverse playback.    
 - **Drop Keyframes**: drops keyframes.   
-  If we apply **Step=2** to an animation with 30 keystrokes, then the odd frames will be removed and the animation will become 15 frames.   
+  For example, if we apply **Step=2** to an animation with 30 keystrokes, then the odd frames will be removed and the animation will become 15 frames.   
   Similarly, if **Step=3**, then the animation will become 10 frames.
 
 ## Export Assets 
 
 ![Menu](images/MeshSyncExportAssetsProperties.png)
   
-Export meshes/materials into asset files, in order to reuse them in other scenes or projects.  
-Normally, meshes/materials synced using MeshSync only exist in the active scene.
+Export meshes and materials into asset files, in order to reuse them in other scenes or projects.  
+Normally, meshes and materials hold by this component only exist in the active scene.
 
