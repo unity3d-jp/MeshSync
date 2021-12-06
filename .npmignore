@@ -7,6 +7,7 @@ Documentation~/ApiDocs/**
 AE~/**
 MeshSync*~/**
 Plugin~/**
+Scripts~/**
 .DS_Store
 .npmrc
 .npmignore
