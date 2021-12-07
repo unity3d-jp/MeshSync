@@ -1,14 +1,14 @@
 {
   "dependencies": {
     "com.autodesk.fbx": {
-      "version": "4.1.0",
+      "version": "4.1.1",
       "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
     "com.unity.collab-proxy": {
-      "version": "1.12.5",
+      "version": "1.14.4",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -48,12 +48,12 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.formats.fbx": {
-      "version": "4.1.0",
+      "version": "4.1.2",
       "depth": 0,
       "source": "registry",
       "dependencies": {
         "com.unity.timeline": "1.5.2",
-        "com.autodesk.fbx": "4.1.0"
+        "com.autodesk.fbx": "4.1.1"
       },
       "url": "https://packages.unity.com"
     },
@@ -67,7 +67,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.11",
+      "version": "2.0.12",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -116,7 +116,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.package-validation-suite": {
-      "version": "0.22.0-preview",
+      "version": "0.23.3-preview",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -139,7 +139,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.test-framework": {
-      "version": "1.1.29",
+      "version": "1.1.30",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -159,7 +159,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.timeline": {
-      "version": "1.6.2",
+      "version": "1.6.3",
       "depth": 0,
       "source": "registry",
       "dependencies": {
