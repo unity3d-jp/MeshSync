@@ -52,7 +52,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             EditorGUILayout.Space();
         }
 
-        DrawMaterialList(m_sceneCachePlayer);
+        changed |= DrawMaterialList(m_sceneCachePlayer);
         changed |= DrawAnimationTweak(m_sceneCachePlayer);
         DrawExportAssets(m_sceneCachePlayer);
         DrawPluginVersion();
