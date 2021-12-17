@@ -151,46 +151,45 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
         return changed;
     }
-
-    public static void DrawMaterialList(BaseMeshSync t, bool allowFold = true)
-    {
-        Action drawInExportButton = () =>
-        {
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Import List", GUILayout.Width(110.0f)))
-            {
-                var path = EditorUtility.OpenFilePanel("Import material list", "Assets", "asset");
-                t.ImportMaterialList(path);
-            }
-            if (GUILayout.Button("Export List", GUILayout.Width(110.0f)))
-            {
-                var path = EditorUtility.SaveFilePanel("Export material list", "Assets", t.name + "_MaterialList", "asset");
-                t.ExportMaterialList(path);
-            }
-            GUILayout.EndHorizontal();
-        };
-
-        if (allowFold)
-        {
+    
+//----------------------------------------------------------------------------------------------------------------------
+    internal static bool DrawMaterialList(BaseMeshSync t, bool allowFold = true) {
+        
+        if (allowFold) {
             var styleFold = EditorStyles.foldout;
             styleFold.fontStyle = FontStyle.Bold;
             t.foldMaterialList = EditorGUILayout.Foldout(t.foldMaterialList, "Materials", true, styleFold);
-            if (t.foldMaterialList)
-            {
-                DrawMaterialListElements(t);
-                drawInExportButton();
-                if (GUILayout.Button("Open Material Window", GUILayout.Width(160.0f)))
-                    MaterialWindow.Open(t);
-                EditorGUILayout.Space();
-            }
-        }
-        else
-        {
+            if (!t.foldMaterialList) 
+                return false;
+            
+            DrawMaterialListElements(t);
+            DrawMaterialImportExportButtons(t);
+            if (GUILayout.Button("Open Material Window", GUILayout.Width(160.0f)))
+                MaterialWindow.Open(t);
+            EditorGUILayout.Space();
+        } else  {
             GUILayout.Label("Materials", EditorStyles.boldLabel);
             DrawMaterialListElements(t);
-            drawInExportButton();
+            DrawMaterialImportExportButtons(t);
         }
+
+        return false;
     }
+    static void DrawMaterialImportExportButtons(BaseMeshSync t) {
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("Import List", GUILayout.Width(110.0f))) {
+            var path = EditorUtility.OpenFilePanel("Import material list", "Assets", "asset");
+            t.ImportMaterialList(path);
+        }
+
+        if (GUILayout.Button("Export List", GUILayout.Width(110.0f))) {
+            var path = EditorUtility.SaveFilePanel("Export material list", "Assets", t.name + "_MaterialList", "asset");
+            t.ExportMaterialList(path);
+        }
+
+        GUILayout.EndHorizontal();
+    }
+    
 
     static void DrawMaterialListElements(BaseMeshSync t)
     {
@@ -221,7 +220,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
             EditorGUILayout.EndHorizontal();
         }
     }
-
 
 //----------------------------------------------------------------------------------------------------------------------        
 
