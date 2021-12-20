@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.10.2-preview] - 2021-12-20
+
+### Fixed
+* fix: the material list of SceneCache was not properly updated after edit 
+* fix: build error caused by FindDefaultMaterial() 
+* chore: ignore Scripts~ folder when making the package 
+
 ## [0.10.1-preview] - 2021-11-17
 
 ### Added
