@@ -1802,8 +1802,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         Material[] prevMaterials = r.sharedMaterials;
         Array.Copy(prevMaterials, materials, Math.Min(prevMaterials.Length, materials.Length));
 
-        for (int si = 0; si < materialCount; ++si)
-        {
+        for (int si = 0; si < materialCount; ++si) {
             int mid = rec.materialIDs[si];
             Material material = FindMaterial(mid);
             if (material != null) {
