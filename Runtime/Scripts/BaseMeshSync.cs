@@ -1902,6 +1902,17 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return true;
     }
 
+    private Material FindDefaultMaterial() {
+        if (m_cachedDefaultMaterial != null)
+            return m_cachedDefaultMaterial;
+        
+        GameObject primitive = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        primitive.SetActive(false);
+        m_cachedDefaultMaterial = primitive.GetComponent<MeshRenderer>().sharedMaterial;
+        DestroyImmediate(primitive);
+        return m_cachedDefaultMaterial;
+    }
+    
 //----------------------------------------------------------------------------------------------------------------------    
 #if UNITY_EDITOR
     private void GenerateLightmapUV(GameObject go)
@@ -2133,17 +2144,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             Undo.FlushUndoRecordObjects();
         }
         ForceRepaint();
-    }
-
-    private Material FindDefaultMaterial() {
-        if (m_cachedDefaultMaterial != null)
-            return m_cachedDefaultMaterial;
-        
-        GameObject primitive = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        primitive.SetActive(false);
-        m_cachedDefaultMaterial = primitive.GetComponent<MeshRenderer>().sharedMaterial;
-        DestroyImmediate(primitive);
-        return m_cachedDefaultMaterial;
     }
     
 //---------------------------------------------------------------------------------------------------------------------    
