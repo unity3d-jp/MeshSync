@@ -2110,19 +2110,20 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 break;
         }
 
-        if (changed) {
-            // assume last undo group is "Assign Material" performed by mouse drag & drop.
-            // collapse reassigning materials into it.
-            int group = Undo.GetCurrentGroup() - 1;
-            m_recordAssignMaterials = true;
-            ReassignMaterials();
-            m_recordAssignMaterials = false;
-            Undo.CollapseUndoOperations(group);
-            Undo.FlushUndoRecordObjects();
-            ForceRepaint();
-        }
+        if (!changed) 
+            return false;
+        
+        // assume last undo group is "Assign Material" performed by mouse drag & drop.
+        // collapse reassigning materials into it.
+        int group = Undo.GetCurrentGroup() - 1;
+        m_recordAssignMaterials = true;
+        ReassignMaterials();
+        m_recordAssignMaterials = false;
+        Undo.CollapseUndoOperations(@group);
+        Undo.FlushUndoRecordObjects();
+        ForceRepaint();
 
-        return changed;
+        return true;
     }
 
     internal void AssignMaterial(MaterialHolder holder, Material mat) {
