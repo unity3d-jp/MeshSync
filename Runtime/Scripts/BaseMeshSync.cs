@@ -2130,8 +2130,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return ret;
     }
 
-    private void OnSceneViewGUI(SceneView sceneView)
-    {
+    private void OnSceneViewGUI(SceneView sceneView) {
         MeshSyncPlayerConfig config = GetConfigV();
         if (null == config) //may happen after deleting prefabs (SceneCache)
             return;
