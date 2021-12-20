@@ -2138,21 +2138,21 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         if (!config.SyncMaterialList) 
             return;
 
-        if (Event.current.type == EventType.DragExited && Event.current.button == 0) {
-            bool changed = IsMaterialAssignedInSceneView();
-            if (changed) {
-                // assume last undo group is "Assign Material" performed by mouse drag & drop.
-                // collapse reassigning materials into it.
-                int group = Undo.GetCurrentGroup() - 1;
-                ReassignMaterials(true);
-                Undo.CollapseUndoOperations(@group);
-                Undo.FlushUndoRecordObjects();
-                ForceRepaint();
-                
-                m_onMaterialChangedInSceneViewCB?.Invoke();
-            }
-            
-        }
+        if (Event.current.type != EventType.DragExited || Event.current.button != 0) 
+            return;
+        
+        bool changed = IsMaterialAssignedInSceneView();
+        if (!changed) 
+            return;
+        
+        // assume last undo group is "Assign Material" performed by mouse drag & drop.
+        // collapse reassigning materials into it.
+        int group = Undo.GetCurrentGroup() - 1;
+        ReassignMaterials(true);
+        Undo.CollapseUndoOperations(@group);
+        Undo.FlushUndoRecordObjects();
+        ForceRepaint();
+        m_onMaterialChangedInSceneViewCB?.Invoke();
     }
     
     internal void AssignMaterial(MaterialHolder holder, Material mat) {
