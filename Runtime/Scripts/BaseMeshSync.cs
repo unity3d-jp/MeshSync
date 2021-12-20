@@ -2173,17 +2173,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         // force disable batching for export
         MethodInfo method = typeof(UnityEditor.PlayerSettings).GetMethod("SetBatchingForPlatform", 
             BindingFlags.NonPublic | BindingFlags.Static);
-        if (method != null) {
-            method.Invoke(null, new object[] { BuildTarget.StandaloneWindows, 0, 0 });
-            method.Invoke(null, new object[] { BuildTarget.StandaloneWindows64, 0, 0 });
-        }
-
-                  
+        if (method == null) 
+            return;
+        method.Invoke(null, new object[] { BuildTarget.StandaloneWindows, 0, 0 });
+        method.Invoke(null, new object[] { BuildTarget.StandaloneWindows64, 0, 0 });
     }
 #endif
 
-    void OnDestroy()
-    {
+    void OnDestroy() {
         m_tmpI.Dispose();
         m_tmpV2.Dispose();
         m_tmpV3.Dispose();
