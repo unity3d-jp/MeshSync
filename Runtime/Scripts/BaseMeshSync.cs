@@ -1817,14 +1817,13 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             }
         }
 
-        if (changed)
-        {
+        if (!changed) 
+            return;
 #if UNITY_EDITOR
-            if (m_recordAssignMaterials)
-                Undo.RecordObject(r, "Assign Material");
+        if (m_recordAssignMaterials)
+            Undo.RecordObject(r, "Assign Material");
 #endif
-            r.sharedMaterials = materials;
-        }
+        r.sharedMaterials = materials;
     }
 
     internal bool EraseEntityRecord(Identifier identifier)
