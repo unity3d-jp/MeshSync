@@ -2085,7 +2085,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
     //[TODO-sin: 2021-12-20] Remove recordUndo parameter
     //Returns true if changed
-    private bool CheckMaterialAssigned(bool recordUndo = true)
+    private bool CheckMaterialAssigned()
     {
         bool changed = false;
         foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
@@ -2116,19 +2116,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         }
 
         if (changed) {
-            int group = 0;
-            if (recordUndo) {
-                // assume last undo group is "Assign Material" performed by mouse drag & drop.
-                // collapse reassigning materials into it.
-                group = Undo.GetCurrentGroup() - 1;
-                m_recordAssignMaterials = true;
-            }
+            // assume last undo group is "Assign Material" performed by mouse drag & drop.
+            // collapse reassigning materials into it.
+            int group = Undo.GetCurrentGroup() - 1;
+            m_recordAssignMaterials = true;
             ReassignMaterials();
-            if (recordUndo) {
-                m_recordAssignMaterials = false;
-                Undo.CollapseUndoOperations(group);
-                Undo.FlushUndoRecordObjects();
-            }
+            m_recordAssignMaterials = false;
+            Undo.CollapseUndoOperations(group);
+            Undo.FlushUndoRecordObjects();
             ForceRepaint();
         }
 
