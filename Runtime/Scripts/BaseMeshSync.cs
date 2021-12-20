@@ -2093,12 +2093,11 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 for (int si = 0; si < n; ++si) {
                     int mid = rec.materialIDs[si];
                     MaterialHolder mrec = m_materialList.Find(a => a.id == mid);
-                    if (mrec != null && materials[si] != mrec.material)
-                    {
-                        mrec.material = materials[si];
-                        changed = true;
-                        break;
-                    }
+                    if (mrec == null || materials[si] == mrec.material) 
+                        continue;
+                    mrec.material = materials[si];
+                    changed       = true;
+                    break;
                 }
             }
             if (changed)
