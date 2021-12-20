@@ -2127,18 +2127,13 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return changed;
     }
 
-    internal void AssignMaterial(MaterialHolder holder, Material mat, bool recordUndo = true)
-    {
-        if (recordUndo) {
-            Undo.RegisterCompleteObjectUndo(this, "Assign Material");
-            m_recordAssignMaterials = true;
-        }
+    internal void AssignMaterial(MaterialHolder holder, Material mat) {
+        Undo.RegisterCompleteObjectUndo(this, "Assign Material");
+        m_recordAssignMaterials = true;
         holder.material = mat;
         ReassignMaterials();
-        if (recordUndo) {
-            m_recordAssignMaterials = false;
-            Undo.FlushUndoRecordObjects();
-        }
+        m_recordAssignMaterials = false;
+        Undo.FlushUndoRecordObjects();
         ForceRepaint();
     }
     
