@@ -1781,16 +1781,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 #endif
     }
 
-    private void ReassignMaterials()
-    {
+    private void ReassignMaterials() {
         foreach (KeyValuePair<string, EntityRecord> rec in m_clientObjects)
             AssignMaterials(rec.Value);
         foreach (KeyValuePair<int, EntityRecord> rec in m_hostObjects)
             AssignMaterials(rec.Value);
     }
 
-    private void AssignMaterials(EntityRecord rec)
-    {
+    private void AssignMaterials(EntityRecord rec) {
         if (rec.go == null || rec.mesh == null || rec.materialIDs == null)
             return;
 
