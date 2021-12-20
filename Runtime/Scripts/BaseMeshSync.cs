@@ -1781,7 +1781,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 #endif
     }
 
-    internal void ReassignMaterials()
+    private void ReassignMaterials()
     {
         foreach (KeyValuePair<string, EntityRecord> rec in m_clientObjects)
             AssignMaterials(rec.Value);
@@ -1789,7 +1789,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             AssignMaterials(rec.Value);
     }
 
-    internal void AssignMaterials(EntityRecord rec)
+    private void AssignMaterials(EntityRecord rec)
     {
         if (rec.go == null || rec.mesh == null || rec.materialIDs == null)
             return;
