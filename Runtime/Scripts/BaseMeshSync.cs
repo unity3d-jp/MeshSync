@@ -1806,10 +1806,10 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             int mid = rec.materialIDs[si];
             Material material = FindMaterial(mid);
             if (material != null) {
-                if (materials[si] != material) {
-                    materials[si] = material;
-                    changed = true;
-                }
+                if (materials[si] == material) 
+                    continue;
+                materials[si] = material;
+                changed       = true;
             } else if (materials[si] == null) {
                 materials[si] = FindDefaultMaterial();
                 changed = true;
