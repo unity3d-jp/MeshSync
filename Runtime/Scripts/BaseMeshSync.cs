@@ -2072,6 +2072,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return ApplyMaterialList(ml);
     }
 
+    //[TODO-sin: 2021-12-20] Remove recordUndo parameter
     private void CheckMaterialAssigned(bool recordUndo = true)
     {
         bool changed = false;
