@@ -2068,8 +2068,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return true;
     }
 
-    internal bool ImportMaterialList(string path)
-    {
+    internal bool ImportMaterialList(string path) {
         if (path == null || path.Length == 0)
             return false;
 
@@ -2080,22 +2079,18 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     }
 
     //Returns true if changed
-    private bool CheckMaterialAssigned()
-    {
+    private bool CheckMaterialAssigned() {
         bool changed = false;
-        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
-        {
+        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects) {
             EntityRecord rec = kvp.Value;
-            if (rec.go != null && rec.go.activeInHierarchy)
-            {
+            if (rec.go != null && rec.go.activeInHierarchy) {
                 Renderer mr = rec.go.GetComponent<Renderer>();
                 if (mr == null || rec.mesh == null)
                     continue;
 
                 Material[] materials = mr.sharedMaterials;
                 int n = Math.Min(materials.Length, rec.materialIDs.Length);
-                for (int si = 0; si < n; ++si)
-                {
+                for (int si = 0; si < n; ++si) {
                     int mid = rec.materialIDs[si];
                     MaterialHolder mrec = m_materialList.Find(a => a.id == mid);
                     if (mrec != null && materials[si] != mrec.material)
