@@ -2083,7 +2083,9 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return ApplyMaterialList(ml);
     }
 
-    private void CheckMaterialAssigned(bool recordUndo = true)
+    //[TODO-sin: 2021-12-20] Remove recordUndo parameter
+    //Returns true if changed
+    private bool CheckMaterialAssigned(bool recordUndo = true)
     {
         bool changed = false;
         foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
@@ -2129,6 +2131,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             }
             ForceRepaint();
         }
+
+        return changed;
     }
 
     internal void AssignMaterial(MaterialHolder holder, Material mat, bool recordUndo = true)
@@ -2176,10 +2180,17 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
         if (!config.SyncMaterialList) 
             return;
-        
-        if (Event.current.type == EventType.DragExited && Event.current.button == 0)
-            CheckMaterialAssigned();
+
+        if (Event.current.type == EventType.DragExited && Event.current.button == 0) {
+            bool changed = CheckMaterialAssigned();
+            if (changed) {
+                m_onMaterialChangedInSceneViewCB?.Invoke();
+            }
+            
+        }
     }
+            
+    
 #endif //UNITY_EDITOR
     #endregion
 
@@ -2280,6 +2291,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     private protected readonly Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
     private readonly           Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
 
+
+    protected Action m_onMaterialChangedInSceneViewCB = null;
     
 //----------------------------------------------------------------------------------------------------------------------
 
