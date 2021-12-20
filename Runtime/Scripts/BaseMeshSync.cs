@@ -2069,7 +2069,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     }
 
     internal bool ImportMaterialList(string path) {
-        if (path == null || path.Length == 0)
+        if (string.IsNullOrEmpty(path))
             return false;
 
         path = path.Replace(Application.dataPath, "Assets/");
