@@ -2079,7 +2079,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     }
 
     //Returns true if changed
-    private bool CheckMaterialAssigned() {
+    private bool IsMaterialAssignedInSceneView() {
         bool changed = false;
         foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects) {
             EntityRecord rec = kvp.Value;
@@ -2104,28 +2104,10 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 break;
         }
 
-        if (!changed) 
-            return false;
-        
-        // assume last undo group is "Assign Material" performed by mouse drag & drop.
-        // collapse reassigning materials into it.
-        int group = Undo.GetCurrentGroup() - 1;
-        ReassignMaterials(true);
-        Undo.CollapseUndoOperations(@group);
-        Undo.FlushUndoRecordObjects();
-        ForceRepaint();
-
-        return true;
+        return changed;
     }
 
-    internal void AssignMaterial(MaterialHolder holder, Material mat) {
-        Undo.RegisterCompleteObjectUndo(this, "Assign Material");
-        holder.material = mat;
-        ReassignMaterials(true);
-        Undo.FlushUndoRecordObjects();
-        ForceRepaint();
-    }
-    
+   
 //---------------------------------------------------------------------------------------------------------------------    
 
     internal List<AnimationClip> GetAnimationClips()
@@ -2158,14 +2140,29 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             return;
 
         if (Event.current.type == EventType.DragExited && Event.current.button == 0) {
-            bool changed = CheckMaterialAssigned();
+            bool changed = IsMaterialAssignedInSceneView();
             if (changed) {
+                // assume last undo group is "Assign Material" performed by mouse drag & drop.
+                // collapse reassigning materials into it.
+                int group = Undo.GetCurrentGroup() - 1;
+                ReassignMaterials(true);
+                Undo.CollapseUndoOperations(@group);
+                Undo.FlushUndoRecordObjects();
+                ForceRepaint();
+                
                 m_onMaterialChangedInSceneViewCB?.Invoke();
             }
             
         }
     }
-            
+    
+    internal void AssignMaterial(MaterialHolder holder, Material mat) {
+        Undo.RegisterCompleteObjectUndo(this, "Assign Material");
+        holder.material = mat;
+        ReassignMaterials(true);
+        Undo.FlushUndoRecordObjects();
+        ForceRepaint();
+    }            
     
 #endif //UNITY_EDITOR
     #endregion
