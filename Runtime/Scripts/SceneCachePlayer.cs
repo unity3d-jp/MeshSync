@@ -202,7 +202,7 @@ public class SceneCachePlayer : BaseMeshSync {
         return default(SceneData);
     }
 
-    void SavePrefab() {
+    void SavePrefabInEditor() {
         PrefabUtility.RecordPrefabInstancePropertyModifications(this);
     }
     
@@ -464,8 +464,10 @@ public class SceneCachePlayer : BaseMeshSync {
     protected override void OnEnable() {
         base.OnEnable();
         
-        m_onMaterialChangedInSceneViewCB += SavePrefab; 
-            
+#if UNITY_EDITOR
+        m_onMaterialChangedInSceneViewCB += SavePrefabInEditor; 
+#endif
+        
         m_animator = GetComponent<Animator>();
         if (!string.IsNullOrEmpty(m_sceneCacheFilePath)) {
             OpenCacheInternal(m_sceneCacheFilePath);
@@ -480,7 +482,9 @@ public class SceneCachePlayer : BaseMeshSync {
 
     protected override void OnDisable() {
         base.OnDisable();
-        m_onMaterialChangedInSceneViewCB -= SavePrefab; 
+#if UNITY_EDITOR
+        m_onMaterialChangedInSceneViewCB -= SavePrefabInEditor; 
+#endif
         
         CloseCache();
     }
