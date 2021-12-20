@@ -609,7 +609,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         if (m_needReassignMaterials)
         {
             m_materialList = m_materialList.OrderBy(v => v.index).ToList();
-            ReassignMaterials();
+            ReassignMaterials(recordUndo:false);
             m_needReassignMaterials = false;
         }
 
@@ -1201,7 +1201,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
         // assign materials if needed
         if (materialsUpdated)
-            AssignMaterials(rec);
+            AssignMaterials(rec,recordUndo:false);
 
         return rec;
     }
@@ -1781,14 +1781,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 #endif
     }
 
-    private void ReassignMaterials() {
+    private void ReassignMaterials(bool recordUndo) {
         foreach (KeyValuePair<string, EntityRecord> rec in m_clientObjects)
-            AssignMaterials(rec.Value);
+            AssignMaterials(rec.Value, recordUndo);
         foreach (KeyValuePair<int, EntityRecord> rec in m_hostObjects)
-            AssignMaterials(rec.Value);
+            AssignMaterials(rec.Value, recordUndo);
     }
 
-    private void AssignMaterials(EntityRecord rec) {
+    private void AssignMaterials(EntityRecord rec, bool recordUndo) {
         if (rec.go == null || rec.mesh == null || rec.materialIDs == null)
             return;
 
@@ -1819,7 +1819,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         if (!changed) 
             return;
 #if UNITY_EDITOR
-        if (m_recordAssignMaterials)
+        if (recordUndo)
             Undo.RecordObject(r, "Assign Material");
 #endif
         r.sharedMaterials = materials;
@@ -1879,7 +1879,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 updated = true;
             }
             if (updated)
-                ReassignMaterials();
+                ReassignMaterials(recordUndo:false);
         }
 
         if (ml.nodes == null) 
@@ -1974,7 +1974,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             m.material = doExport(m.material); // material maybe updated by SaveAsset()
  
         AssetDatabase.SaveAssets();
-        ReassignMaterials();
+        ReassignMaterials(recordUndo:false);
     }
 
     internal void ExportMeshes(bool overwrite = true, bool useExistingOnes = false)
@@ -2110,9 +2110,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         // assume last undo group is "Assign Material" performed by mouse drag & drop.
         // collapse reassigning materials into it.
         int group = Undo.GetCurrentGroup() - 1;
-        m_recordAssignMaterials = true;
-        ReassignMaterials();
-        m_recordAssignMaterials = false;
+        ReassignMaterials(true);
         Undo.CollapseUndoOperations(@group);
         Undo.FlushUndoRecordObjects();
         ForceRepaint();
@@ -2122,10 +2120,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
     internal void AssignMaterial(MaterialHolder holder, Material mat) {
         Undo.RegisterCompleteObjectUndo(this, "Assign Material");
-        m_recordAssignMaterials = true;
         holder.material = mat;
-        ReassignMaterials();
-        m_recordAssignMaterials = false;
+        ReassignMaterials(true);
         Undo.FlushUndoRecordObjects();
         ForceRepaint();
     }
@@ -2257,7 +2253,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [SerializeField] bool m_foldMaterialList      = true;
     [SerializeField] bool m_foldAnimationTweak    = true;
     [SerializeField] bool m_foldExportAssets      = true;
-    bool                  m_recordAssignMaterials = false;
 #endif
 
     private bool m_saveAssetsInScene            = true;
