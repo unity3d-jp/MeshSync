@@ -10,11 +10,11 @@ using UnityEngine.Assertions;
 using System.IO;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
-using Object = UnityEngine.Object;
 
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using Unity.FilmInternalUtilities.Editor;
 #endif
 
 namespace Unity.MeshSync
@@ -878,7 +878,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         switch (materialSearchMode) {
             case AssetSearchMode.LOCAL: {
                 if (Directory.Exists(assetsFolder)) {
-                    materialPaths = FindAssetPaths("t:Material ", materialName, new string[] {assetsFolder});
+                    materialPaths = AssetEditorUtility.FindAssetPaths("t:Material ", materialName, new string[] {assetsFolder});
                 }
                 break;
             }
@@ -887,7 +887,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 string nextFolder = assetsFolder;
                 while (!string.IsNullOrEmpty(nextFolder) && (null==materialPaths|| materialPaths.Count <= 0)) {
                     if (Directory.Exists(nextFolder)) {
-                        materialPaths = FindAssetPaths("t:Material ", materialName, new string[] {nextFolder}, false);
+                        materialPaths = AssetEditorUtility.FindAssetPaths("t:Material ", materialName, new string[] {nextFolder}, false);
                     }
                     
                     nextFolder    = PathUtility.GetDirectoryName(nextFolder,1);
@@ -895,7 +895,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 break;
             }
             case AssetSearchMode.EVERYWHERE: {
-                materialPaths = FindAssetPaths("t:Material ", materialName);
+                materialPaths = AssetEditorUtility.FindAssetPaths("t:Material ", materialName);
                 break;
             } 
         }
@@ -919,48 +919,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     }
 #endif
 
-//----------------------------------------------------------------------------------------------------------------------
-    
-    
-#if UNITY_EDITOR    
-    //[TODO-sin: 2021-11-4] To FIU
-    //return a set of paths
-    //exactAssetName: the exact asset name without extention
-    static HashSet<string> FindAssetPaths(string filterPrefix, string exactAssetName=null, 
-        string[] searchInFolders = null, bool searchSubFolder = true) 
-    {
-                
-        string[]   guids       = AssetDatabase.FindAssets($"{filterPrefix} {exactAssetName}", searchInFolders);
-        HashSet<string> foundAssetPaths = new HashSet<string>();
-
-        foreach (string guid in guids) {
-            string path = AssetDatabase.GUIDToAssetPath(guid);
-            if (null != exactAssetName && exactAssetName != Path.GetFileNameWithoutExtension(path))
-                continue;
-
-            if (searchSubFolder || null == searchInFolders) {
-                foundAssetPaths.Add(path);
-                continue;
-            }
-
-            //exact folder required
-            string folder = PathUtility.GetDirectoryName(path,1); 
-            
-            foreach (string searchedFolder in searchInFolders) {
-                if (folder != searchedFolder) 
-                    continue;
-                
-                foundAssetPaths.Add(path);
-                break;
-            }            
-            
-
-        }
-        
-        return foundAssetPaths;
-    }
-#endif    
-    
 //----------------------------------------------------------------------------------------------------------------------    
 
     static void ApplyMaterialDataToMaterial(MaterialData src, Material destMat, List<TextureHolder> textureHolders) {
