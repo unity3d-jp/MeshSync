@@ -891,9 +891,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                     }
                     
                     nextFolder    = PathUtility.GetDirectoryName(nextFolder,1);
-                    if (null != nextFolder) {
-                        nextFolder = nextFolder.Replace('\\','/'); //[TODO-sin: 2021-11-4] Fix in FIU                        
-                    }                        
                 }                
                 break;
             }
@@ -948,9 +945,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
             //exact folder required
             string folder = PathUtility.GetDirectoryName(path,1); 
-            if (null != folder) {
-                folder = folder.Replace('\\','/'); //[TODO-sin: 2021-11-4] Fix in FIU                        
-            }
             
             foreach (string searchedFolder in searchInFolders) {
                 if (folder != searchedFolder) 
