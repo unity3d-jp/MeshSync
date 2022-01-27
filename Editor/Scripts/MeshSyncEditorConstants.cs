@@ -49,6 +49,7 @@ internal static class MeshSyncEditorConstants {
         { "Blender 2.91", new DCCToolInfo(DCCToolType.BLENDER, "2.91" ) },
         { "Blender 2.92", new DCCToolInfo(DCCToolType.BLENDER, "2.92" ) },
         { "Blender 2.93", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
+        { "Blender 3.0", new DCCToolInfo(DCCToolType.BLENDER, "3.0" ) },
 #elif UNITY_EDITOR_OSX        
         { "Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },
 #elif UNITY_EDITOR_LINUX
@@ -75,7 +76,7 @@ internal static class MeshSyncEditorConstants {
         { "blender-2.92.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.92" ) },
         { "blender-2.93.0-stable+blender-v293-release.84da05a8b806-linux.x86_64-release", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
         { "blender-2.93.1-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
-        
+        { "blender-3.0.1-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.0" ) },
 #endif        
         
     };
