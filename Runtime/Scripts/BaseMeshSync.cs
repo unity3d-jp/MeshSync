@@ -1016,16 +1016,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         }        
     }
     
-    
-#if UNITY_EDITOR    
-    //[TODO-sin: 2021-11-2] Move to FIU
-    static T LoadAssetByGUID<T>(string guid) where T:UnityEngine.Object {
-        string path  = AssetDatabase.GUIDToAssetPath(guid);
-        T      asset = AssetDatabase.LoadAssetAtPath<T>(path);
-        return asset;
-    }    
-#endif    
-
 //----------------------------------------------------------------------------------------------------------------------
     
     EntityRecord UpdateMeshEntity(MeshData data, MeshSyncPlayerConfig config) {
