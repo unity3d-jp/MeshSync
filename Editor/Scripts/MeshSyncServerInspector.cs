@@ -24,7 +24,7 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
         DrawAssetSyncSettings(m_meshSyncServer);
         DrawImportSettings(m_meshSyncServer);
         DrawMiscSettings(m_meshSyncServer);
-        DrawMaterialList(m_meshSyncServer);
+        DrawDefaultMaterialList(m_meshSyncServer);
         DrawAnimationTweak(m_meshSyncServer);
         DrawExportAssets(m_meshSyncServer);
         DrawPluginVersion();

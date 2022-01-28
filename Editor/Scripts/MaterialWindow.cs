@@ -28,7 +28,7 @@ class MaterialWindow : EditorWindow
 
         var pos = position;
         m_scrollPos = EditorGUILayout.BeginScrollView(m_scrollPos, GUILayout.Width(pos.width), GUILayout.Height(pos.height));
-        MeshSyncServerInspector.DrawMaterialList(m_server, false);
+        BaseMeshSyncInspector.DrawSimpleMaterialList(m_server);
         EditorGUILayout.EndScrollView();
     }
 }
