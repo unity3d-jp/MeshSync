@@ -153,27 +153,19 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
     }
     
 //----------------------------------------------------------------------------------------------------------------------
-    internal static bool DrawDefaultMaterialList(BaseMeshSync t, bool allowFold = true) {
+    internal static bool DrawDefaultMaterialList(BaseMeshSync t) {
 
-        //[TODO-sin: 2021-12-7] Refactor. Remove allowFold
-        bool changed = false;
-        if (allowFold) {
-            var styleFold = EditorStyles.foldout;
-            styleFold.fontStyle = FontStyle.Bold;
-            t.foldMaterialList = EditorGUILayout.Foldout(t.foldMaterialList, "Materials", true, styleFold);
-            if (!t.foldMaterialList) 
-                return false;
-            
-            changed = DrawMaterialListElements(t);
-            DrawMaterialImportExportButtons(t);
-            if (GUILayout.Button("Open Material Window", GUILayout.Width(160.0f)))
-                MaterialWindow.Open(t);
-            EditorGUILayout.Space();
-        } else  {
-            GUILayout.Label("Materials", EditorStyles.boldLabel);
-            changed = DrawMaterialListElements(t);
-            DrawMaterialImportExportButtons(t);
-        }
+        var styleFold = EditorStyles.foldout;
+        styleFold.fontStyle = FontStyle.Bold;
+        t.foldMaterialList = EditorGUILayout.Foldout(t.foldMaterialList, "Materials", true, styleFold);
+        if (!t.foldMaterialList) 
+            return false;
+        
+        bool changed = DrawMaterialListElements(t);
+        DrawMaterialImportExportButtons(t);
+        if (GUILayout.Button("Open Material Window", GUILayout.Width(160.0f)))
+            MaterialWindow.Open(t);
+        EditorGUILayout.Space();
 
         return changed;
     }
