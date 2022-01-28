@@ -9,7 +9,7 @@ using UnityEngine.UIElements;
 using Constants = Unity.MeshSync.Editor.MeshSyncEditorConstants;
 
 namespace Unity.MeshSync.Editor.Tests {
-internal class UserSettingsTest {
+internal class UserSettingsTests {
     
     
     [Test]
