@@ -8,7 +8,6 @@ internal class MaterialHolder {
     public int      id;
     public string   name;
     public int      index;
-    public string   shader;
     public Color    color = Color.white;
     public Material material;
     

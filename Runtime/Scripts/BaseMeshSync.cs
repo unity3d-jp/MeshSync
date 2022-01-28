@@ -854,7 +854,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         
         dst.name = materialName;
         dst.index = src.index;
-        dst.shader = src.shader;
         dst.color = src.color;
 
         Material destMat = dst.material;
