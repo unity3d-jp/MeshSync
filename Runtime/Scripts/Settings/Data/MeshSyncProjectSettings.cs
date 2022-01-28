@@ -93,20 +93,11 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
 
 //----------------------------------------------------------------------------------------------------------------------
     private void UpgradeVersionToLatest() {
-        m_meshSyncProjectSettingsVersion = ClassVersion;
         if (m_meshSyncProjectSettingsVersion == LATEST_VERSION) {
             return;            
         }
-
-        if (m_meshSyncProjectSettingsVersion < (int) Version.SEPARATE_SCENE_CACHE_PLAYER_CONFIG) {
-            if (null!= m_defaultPlayerConfigs && m_defaultPlayerConfigs.Length >= 2) {
-                m_defaultServerConfig   = m_defaultPlayerConfigs[0] as MeshSyncServerConfig;
-                m_defaultSceneCachePlayerConfig = new SceneCachePlayerConfig(m_defaultPlayerConfigs[1]);
-            }
-        }
-
-        m_defaultPlayerConfigs = null;
-        m_meshSyncProjectSettingsVersion = ClassVersion = LATEST_VERSION;
+        
+        m_meshSyncProjectSettingsVersion = LATEST_VERSION;
         Save();
     }
     
@@ -125,11 +116,7 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
     
 
     [SerializeField] private int m_meshSyncProjectSettingsVersion = LATEST_VERSION;
-    
-    //[TODO-sin: 2021-9-9] Remove these 2 fields. Obsolete starting from 0.9.x. FormerSerializedAs doesn't work with json
-    [SerializeField] private MeshSyncPlayerConfig[] m_defaultPlayerConfigs;
-    [SerializeField] private int ClassVersion = LATEST_VERSION;    
-    
+       
 //----------------------------------------------------------------------------------------------------------------------
 
     private static MeshSyncProjectSettings m_instance = null;
