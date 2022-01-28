@@ -12,7 +12,7 @@ using UnityEngine.Timeline;
 
 namespace Unity.MeshSync.Editor.Tests {
 
-internal class SceneCachePlayableAssetTest {
+internal class SceneCachePlayableAssetTests {
 
     [UnityTest]
     public IEnumerator CreatePlayableAsset() {
