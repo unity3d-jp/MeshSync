@@ -4,7 +4,7 @@ using NUnit.Framework;
 namespace Unity.MeshSync.Editor.Tests {
 
 
-public class PropertyExistenceTests  {
+internal class PropertyExistenceTests  {
 
 //----------------------------------------------------------------------------------------------------------------------
     [Test]
