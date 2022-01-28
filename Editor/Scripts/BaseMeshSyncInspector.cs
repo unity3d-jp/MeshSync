@@ -177,6 +177,16 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
         return changed;
     }
+
+    internal static bool DrawSimpleMaterialList(BaseMeshSync t) {
+        GUILayout.Label("Materials", EditorStyles.boldLabel);
+        bool changed = DrawMaterialListElements(t);
+        DrawMaterialImportExportButtons(t);
+        return changed;
+    }
+    
+    
+    
     static void DrawMaterialImportExportButtons(BaseMeshSync t) {
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("Import List", GUILayout.Width(110.0f))) {
