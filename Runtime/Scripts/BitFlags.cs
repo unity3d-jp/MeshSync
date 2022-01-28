@@ -17,4 +17,5 @@ internal struct BitFlags {
         }
     }
 }
-}
+
+} //end namespace

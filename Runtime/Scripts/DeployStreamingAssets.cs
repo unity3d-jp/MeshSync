@@ -55,5 +55,7 @@ internal static class DeployStreamingAssets {
         return true;
     }
 }
-}
+
+} //end namespace
+
 #endif //UNITY_EDITOR
