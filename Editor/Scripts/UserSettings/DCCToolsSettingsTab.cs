@@ -269,21 +269,16 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
     void UpdateLatestCompatibleDCCPlugin(VersionsInfo versionsInfo) {
         PackageVersion pluginVer = MeshSyncEditorConstants.GetPluginVersion();
         
-        foreach (string dccPluginVer in versionsInfo.all) {
-            bool parsed = PackageVersion.TryParse(dccPluginVer, out PackageVersion dccPluginPackageVersion);
-            Assert.IsTrue(parsed);
+        foreach (string dccPluginVerStr in versionsInfo.all) {
 
             //Skip incompatible versions
-            if (dccPluginPackageVersion.GetMajor() != pluginVer.GetMajor()
-                || dccPluginPackageVersion.GetMinor() != pluginVer.GetMinor()) 
-            {
+            if (!IsPackageVersionCompatible(dccPluginVerStr, pluginVer, out PackageVersion dccPluginVer))
                 continue;
-            }
-
+            
             if (null == m_latestCompatibleDCCPluginVersion 
-                || dccPluginPackageVersion.GetPatch() > m_latestCompatibleDCCPluginVersion.GetPatch()) 
+                || dccPluginVer.GetPatch() > m_latestCompatibleDCCPluginVersion.GetPatch()) 
             {
-                m_latestCompatibleDCCPluginVersion = dccPluginPackageVersion;
+                m_latestCompatibleDCCPluginVersion = dccPluginVer;
             }
         }
     }
