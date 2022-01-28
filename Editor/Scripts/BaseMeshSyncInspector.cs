@@ -153,7 +153,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
     }
     
 //----------------------------------------------------------------------------------------------------------------------
-    internal static bool DrawMaterialList(BaseMeshSync t, bool allowFold = true) {
+    internal static bool DrawDefaultMaterialList(BaseMeshSync t, bool allowFold = true) {
 
         //[TODO-sin: 2021-12-7] Refactor. Remove allowFold
         bool changed = false;
