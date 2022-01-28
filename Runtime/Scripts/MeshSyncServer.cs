@@ -22,17 +22,6 @@ public class MeshSyncServer : BaseMeshSync {
     /// </summary>
     public ServerMessageCallback OnPostRecvMessageCallback = null;
     
-//----------------------------------------------------------------------------------------------------------------------    
-    
-    /// <summary>
-    /// Sets 
-    /// </summary>
-    /// <param name="cb"></param>
-    public void SetOnPostRecvMessageCallback(ServerMessageCallback cb) {
-
-        OnPostRecvMessageCallback = cb;
-    }
-    
 //----------------------------------------------------------------------------------------------------------------------
     
     
