@@ -1,4 +1,3 @@
-using Unity.MeshSync;
 using UnityEditor;
 using UnityEngine;
 
@@ -8,29 +7,31 @@ class MaterialWindow : EditorWindow
 {
     public static void Open(BaseMeshSync server)
     {
-        var window = (MaterialWindow)EditorWindow.GetWindow(typeof(MaterialWindow));
+        MaterialWindow window = (MaterialWindow)EditorWindow.GetWindow(typeof(MaterialWindow));
         window.titleContent = new GUIContent("Material List");
-        window.m_server = server;
+        window.m_meshSyncComponent = server;
         window.Show();
     }
 
-
-    public BaseMeshSync m_server;
-    Vector2 m_scrollPos;
-
+//----------------------------------------------------------------------------------------------------------------------    
 
     void OnGUI()
     {
-        if(m_server == null)
+        if(m_meshSyncComponent == null)
         {
             return;
         }
 
-        var pos = position;
+        Rect pos = position;
         m_scrollPos = EditorGUILayout.BeginScrollView(m_scrollPos, GUILayout.Width(pos.width), GUILayout.Height(pos.height));
-        MeshSyncServerInspector.DrawMaterialList(m_server, false);
+        BaseMeshSyncInspector.DrawSimpleMaterialList(m_meshSyncComponent);
         EditorGUILayout.EndScrollView();
     }
+    
+//----------------------------------------------------------------------------------------------------------------------    
+    private BaseMeshSync m_meshSyncComponent;
+    private Vector2      m_scrollPos;
+    
 }
 
-}
+} //end namespace
