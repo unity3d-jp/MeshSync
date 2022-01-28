@@ -395,7 +395,7 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         
     }
 
-    static bool IsPackageVersionCompatible(string ver0Str, PackageVersion ver1, out PackageVersion ver0) {
+    internal static bool IsPackageVersionCompatible(string ver0Str, PackageVersion ver1, out PackageVersion ver0) {
 
         bool parsed = PackageVersion.TryParse(ver0Str, out ver0);
         if (!parsed)
