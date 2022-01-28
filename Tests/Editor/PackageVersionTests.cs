@@ -23,7 +23,6 @@ internal class PackageVersionTests {
         }
 
         List<string> inCompatiblePackages = new List<string>() {
-            null, 
             "",
             "...",
             "1.1.2-preview",
