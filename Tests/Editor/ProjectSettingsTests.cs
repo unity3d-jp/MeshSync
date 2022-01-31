@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 using Constants = Unity.MeshSync.Editor.MeshSyncEditorConstants;
 
 namespace Unity.MeshSync.Editor.Tests {
-internal class ProjectSettingsTest {
+internal class ProjectSettingsTests {
     
    
    

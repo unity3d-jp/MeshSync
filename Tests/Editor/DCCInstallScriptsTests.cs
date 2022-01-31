@@ -1,14 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using NUnit.Framework;
-using Unity.MeshSync;
-using UnityEditor.SceneManagement;
-using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace Unity.MeshSync.Editor.Tests {
-internal class DCCInstallScriptsTest {
+internal class DCCInstallScriptsTests {
     [Test]
     public void CheckSupportedBlenderInstallScripts() {
         HashSet<string> versions = FindUniqueVersionsOfSupportedDCCTools(DCCToolType.BLENDER);

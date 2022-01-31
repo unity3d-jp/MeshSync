@@ -4,10 +4,9 @@ using Unity.FilmInternalUtilities.Editor;
 using UnityEngine.TestTools;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
-using UnityEngine;
 
 namespace Unity.MeshSync.Editor.Tests {
-internal class PluginTest {
+internal class PluginTests {
     
     [UnityTest]
     public IEnumerator CheckPluginVersionCompatibility() {

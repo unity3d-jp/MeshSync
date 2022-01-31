@@ -1,12 +1,11 @@
 using UnityEngine;
-using Unity.MeshSync;
 
 namespace Unity.MeshSync.Editor.Tests {
 
     
 [ExecuteInEditMode]
 [RequireComponent(typeof(BaseMeshSync))]
-public class SceneEventHandler : MonoBehaviour {
+internal class SceneEventHandler : MonoBehaviour {
     string m_log;
 
     void OnSceneUpdateBegin() {
