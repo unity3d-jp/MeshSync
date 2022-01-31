@@ -17,15 +17,10 @@ namespace Unity.MeshSync {
 [ExecuteInEditMode]
 public class MeshSyncServer : BaseMeshSync {
 
-    
     /// <summary>
-    /// Sets a callback which will be called after MeshSyncServer receives data and finishes processing it
+    /// Callback which will be called after MeshSyncServer receives data and finishes processing it
     /// </summary>
-    /// <param name="cb"></param>
-    public void SetOnPostRecvMessageCallback(ServerMessageCallback cb) {
-
-        m_onPostRecvMessageCB = cb;
-    }
+    public ServerMessageCallback OnPostRecvMessageCallback = null;
     
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -219,7 +214,7 @@ public class MeshSyncServer : BaseMeshSync {
             }
         });
 
-        m_onPostRecvMessageCB?.Invoke(type);
+        OnPostRecvMessageCallback?.Invoke(type);
     }
 
     void OnRecvGet(GetMessage mes) {
@@ -515,9 +510,6 @@ public class MeshSyncServer : BaseMeshSync {
     
     private bool m_serverStarted = false;
     
-    private ServerMessageCallback m_onPostRecvMessageCB = null;
-    
-
 //----------------------------------------------------------------------------------------------------------------------    
     
     enum ServerVersion {
