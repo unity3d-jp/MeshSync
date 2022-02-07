@@ -17,11 +17,7 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
     internal static string GetInstallScriptTemplatePath(string version) {
         string installScriptFileName = $"Install3dsMaxPlugin.ms";
         string templatePath = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH,installScriptFileName );
-        if (!File.Exists(templatePath)) {
-            return null;
-        }
-
-        return templatePath;
+        return File.Exists(templatePath) ? templatePath : null;
     }
     
 
