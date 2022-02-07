@@ -12,7 +12,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------
     [CanBeNull]
     internal static string GetInstallScriptTemplatePath(string ver) {
-        string installScriptFileName = $"InstallBlenderPlugin_{ver}.py";
+        string installScriptFileName = $"InstallBlenderPlugin.py";
         string templatePath = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH,installScriptFileName );
         if (!File.Exists(templatePath)) {
             return null;
@@ -24,7 +24,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
 
     [CanBeNull]
     internal static string GetUninstallScriptPath(string ver) {
-        string uninstallScriptFilename = $"UninstallBlenderPlugin_{ver}.py";
+        string uninstallScriptFilename = $"UninstallBlenderPlugin.py";
         string uninstallScriptPath = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH,uninstallScriptFilename );
         if (!File.Exists(uninstallScriptPath)) {
             return null;
