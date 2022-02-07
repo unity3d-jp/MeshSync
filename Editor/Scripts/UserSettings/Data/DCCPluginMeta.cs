@@ -13,11 +13,7 @@ internal class DCCPluginMeta : ISerializationCallbackReceiver {
     //May return null
     [CanBeNull]
     internal DCCPluginSignature GetSignature(string dccPluginFileName) {
-        if (m_dictionary.ContainsKey(dccPluginFileName)) {
-            return m_dictionary[dccPluginFileName];
-        }
-
-        return null;
+        return m_dictionary.TryGetValue(dccPluginFileName, out DCCPluginSignature signature) ? signature : null;
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
