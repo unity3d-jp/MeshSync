@@ -1366,15 +1366,15 @@ internal struct VariantData {
         Float4x4,
     }
 
-    string name {
+    internal string name {
         get { return Misc.S(msVariantGetName(self)); }
     }
 
-    Type type {
+    internal Type type {
         get { return msVariantGetType(self); }
     }
 
-    int arrayLength {
+    internal int arrayLength {
         get { return msVariantGetArrayLength(self); }
     }
 
@@ -1735,7 +1735,7 @@ internal struct TransformData {
         return msTransformGetUserProperty(self, i);
     }
 
-    VariantData FindUserProperty(int i, string name) {
+    internal VariantData FindUserProperty(string name) {
         return msTransformFindUserProperty(self, name);
     }
 }

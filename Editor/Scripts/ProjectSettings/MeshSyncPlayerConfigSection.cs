@@ -17,6 +17,7 @@ internal class MeshSyncPlayerConfigSection {
 
         public static readonly GUIContent Visibility      = EditorGUIUtility.TrTextContent("Visibility");
         public static readonly GUIContent UpdateTransform = EditorGUIUtility.TrTextContent("Update Transform");
+        public static readonly GUIContent RenderInstances = EditorGUIUtility.TrTextContent("Render Instances");
 
         public static readonly GUIContent[] ComponentSyncs = new [] {
             EditorGUIUtility.TrTextContent("Camera"),
@@ -112,6 +113,10 @@ internal class MeshSyncPlayerConfigSection {
 
         AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.Visibility, config.SyncVisibility,
             (bool newValue) => { config.SyncVisibility = newValue; }
+        );
+        
+        AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.RenderInstances, config.SyncInstances,
+            (bool newValue) => { config.SyncInstances = newValue; }
         );
         
         //import
