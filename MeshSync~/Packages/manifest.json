@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "com.unity.collab-proxy": "1.14.7",
+    "com.unity.collab-proxy": "1.14.9",
     "com.unity.ext.nunit": "1.0.6",
     "com.unity.formats.alembic": "1.0.7",
     "com.unity.formats.fbx": "4.1.2",
