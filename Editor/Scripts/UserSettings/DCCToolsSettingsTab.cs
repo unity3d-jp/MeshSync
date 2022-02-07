@@ -181,14 +181,12 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
                 FileUtility.SerializeToJson(installInfo, installInfoPath);                    
             }
             
-            if (!m_dccContainers.ContainsKey(dccToolInfo.AppPath)) {                    
+            if (!m_dccContainers.TryGetValue(dccToolInfo.AppPath, out VisualElement container)) {                    
                 SetupInternal(m_root);
                 return;
             }
-
-            //Remove the VisualElement container from the UI
-            VisualElement container = m_dccContainers[dccToolInfo.AppPath];            
-            container.parent.Remove(container);
+            
+            container.parent.Remove(container); //Remove the VisualElement container from the UI
         }
         
     }
@@ -221,12 +219,12 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
 
         integrator.Integrate(m_latestCompatibleDCCPluginVersion.ToString(), () => {
             DCCToolInfo dccToolInfo = integrator.GetDCCToolInfo();                
-            if (!m_dccStatusLabels.ContainsKey(dccToolInfo.AppPath)) {
+            if (!m_dccStatusLabels.TryGetValue(dccToolInfo.AppPath, out Label statusLabel)) {
                 SetupInternal(m_root);
                 return;
             }
 
-            UpdateDCCPluginStatusLabel(m_dccStatusLabels[dccToolInfo.AppPath]);
+            UpdateDCCPluginStatusLabel(statusLabel);
         });
 
     }
