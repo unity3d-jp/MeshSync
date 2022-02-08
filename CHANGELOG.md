@@ -7,7 +7,8 @@ All notable changes to the MeshSync package will be documented in this file.
 * TBD
 
 ### Changed
-* TBD
+* api: change OnPostRecvMessageCallback in MeshSyncServer to a public delegate
+* deps: change dependency to com.unity.film-internal-utilities@0.12.5-preview 
 
 ### Fixed
 * TBD
