@@ -392,13 +392,11 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         if (go == null)
             return Lib.invalidID;
 
-        int ret;
-        if (m_objIDTable.ContainsKey(go)) {
-            ret = m_objIDTable[go];
-        } else {
-            ret = ++m_objIDSeed;
-            m_objIDTable[go] = ret;
-        }
+        if (m_objIDTable.TryGetValue(go, out int ret)) 
+            return ret;
+        
+        ret              = ++m_objIDSeed;
+        m_objIDTable[go] = ret;
         return ret;
     }
 

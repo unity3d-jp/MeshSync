@@ -10,7 +10,7 @@ using UnityEngine.TestTools;
 namespace Unity.MeshSync.Editor.Tests {
 
 
-public class SceneCachePlayerTest  {
+internal class SceneCachePlayerTests  {
 
     [Test]
     public void CreateSceneCache() {

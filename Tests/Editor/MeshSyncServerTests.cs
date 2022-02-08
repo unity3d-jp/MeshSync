@@ -1,13 +1,12 @@
 ﻿using System.Collections;
 using System.IO;
 using NUnit.Framework;
-using Unity.MeshSync;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace Unity.MeshSync.Editor.Tests {
-internal class MeshSyncServerTest  {
+internal class MeshSyncServerTests  {
     [UnityTest]
     public IEnumerator CreateAutoServer()  {
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);

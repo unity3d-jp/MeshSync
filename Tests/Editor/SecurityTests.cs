@@ -5,7 +5,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine.TestTools;
 
 namespace Unity.MeshSync.Editor.Tests {
-internal class SecurityTest  {
+internal class SecurityTests {
     [UnityTest]
     public IEnumerator BlockServerRootTraversal()  {
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);

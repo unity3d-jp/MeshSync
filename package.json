@@ -1,11 +1,11 @@
 {
     "name": "com.unity.meshsync",
     "description": "Working together with MeshSyncDCCPlugin, MeshSync provides features to reflect changes to models made in DCC tools into Unity in real time",
-    "version": "0.10.2-preview",
+    "version": "0.11.0-preview",
     "unity": "2019.4",
     "displayName": "MeshSync",
     "dependencies": {
-        "com.unity.film-internal-utilities": "0.12.2-preview",
+        "com.unity.film-internal-utilities": "0.13.0-preview",
         "com.unity.editorcoroutines": "1.0.0",      
         "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.animation": "1.0.0",      

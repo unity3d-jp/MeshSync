@@ -16,7 +16,7 @@ internal class DCCPluginInstallInfo : ISerializationCallbackReceiver {
 
     [CanBeNull]
     internal string GetPluginVersion(string appPath) {
-        return m_pluginVersions.ContainsKey(appPath) ? m_pluginVersions[appPath] : null;
+        return m_pluginVersions.TryGetValue(appPath, out string version) ? version : null;
     }
     
     internal void RemovePluginVersion(string appPath) {

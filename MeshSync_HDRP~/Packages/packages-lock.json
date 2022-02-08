@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.unity.collab-proxy": {
-      "version": "1.14.7",
+      "version": "1.14.12",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -22,7 +22,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.film-internal-utilities": {
-      "version": "0.12.2-preview",
+      "version": "0.13.0-preview",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -32,7 +32,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "3.0.9",
+      "version": "3.0.12",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -41,7 +41,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.12",
+      "version": "2.0.14",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -61,7 +61,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.unity.film-internal-utilities": "0.12.2-preview",
+        "com.unity.film-internal-utilities": "0.13.0-preview",
         "com.unity.editorcoroutines": "1.0.0",
         "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.animation": "1.0.0",
