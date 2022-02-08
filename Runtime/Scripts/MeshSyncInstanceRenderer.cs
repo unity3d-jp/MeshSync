@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Analytics;
 
 namespace Unity.MeshSync{
     
@@ -45,8 +46,17 @@ namespace Unity.MeshSync{
             if (instances.self == IntPtr.Zero)
                 return;
 
-            var meshFilter = obj.GetComponent<MeshFilter>();
+            if (!obj.TryGetComponent(out MeshFilter meshFilter))
+            {
+                Debug.LogWarningFormat("Object {0} has instances but no MeshFilter", obj.name);
+                return;
+            }
 
+            if (!obj.TryGetComponent(out MeshRenderer renderer))
+            {
+                Debug.LogWarningFormat("Object {0} has instance but no MeshRenderer", obj.name);
+            }
+            
             var mesh = meshFilter.sharedMesh;
 
             var entry = meshInstances.Find(x => x.Mesh == mesh);
@@ -60,7 +70,7 @@ namespace Unity.MeshSync{
                 meshInstances.Add(entry);
             }
 
-            var renderer = obj.GetComponent<MeshRenderer>();
+           
 
             entry.Instances = DivideArrays(instances.matrixArray);
             entry.Materials = renderer.sharedMaterials;
@@ -119,11 +129,15 @@ namespace Unity.MeshSync{
             var mesh = entry.Mesh;
             var matrixBatches = entry.Instances;
 
+            if (entry.Materials.Length == 0)
+                return;
+            
             for (var i = 0; i < mesh.subMeshCount; i++)
             {
                 // Try to get the material in the same index position as the mesh
                 // or the last material.
-                var materialIndex = Mathf.Min(entry.Materials.Length -1, i);
+                
+                var materialIndex = Mathf.Max(Mathf.Min(entry.Materials.Length -1, i), 0);
                 var material = entry.Materials[materialIndex];
                 for (var j = 0; j < matrixBatches.Count; j++)
                 {
