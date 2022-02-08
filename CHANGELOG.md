@@ -4,7 +4,7 @@ All notable changes to the MeshSync package will be documented in this file.
 ## [0.11.0-preview] - 2022-02-01
 
 ### Added
-* feat: support for installing Blender 3.0 plugin
+* feat: support for installing Blender 3.0.x plugin
 
 ### Changed
 * api: change OnPostRecvMessageCallback in MeshSyncServer to a public delegate
