@@ -67,7 +67,7 @@ namespace Unity.MeshSync{
             foreach (var mat in entry.Materials)
             {
                 mat.enableInstancing = true;
-            }
+            }            
         }
 
         private List<Matrix4x4[]> DivideArrays(Matrix4x4[] arrays)
@@ -121,17 +121,14 @@ namespace Unity.MeshSync{
 
             for (var i = 0; i < mesh.subMeshCount; i++)
             {
+                // Try to get the material in the same index position as the mesh
+                // or the last material.
+                var materialIndex = Mathf.Min(entry.Materials.Length -1, i);
+                var material = entry.Materials[materialIndex];
                 for (var j = 0; j < matrixBatches.Count; j++)
                 {
                     var batch = matrixBatches[j];
-                    var material = entry.Materials.Last();
                     Graphics.DrawMeshInstanced(mesh, i, material, batch);
-                    /*for (var k = 0; k < entry.Materials.Length; k++)
-                    {
-                        
-                        var material = entry.Materials[k];
-                        Graphics.DrawMeshInstanced(mesh, i, material, batch);
-                    }*/
                 }
             }
         }
