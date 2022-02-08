@@ -4,13 +4,14 @@ All notable changes to the MeshSync package will be documented in this file.
 ## [0.11.0-preview] - 2022-02-01
 
 ### Added
-* TBD
+* feat: support for installing Blender 3.0.x plugin
 
 ### Changed
-* TBD
+* api: change OnPostRecvMessageCallback in MeshSyncServer to a public delegate
+* deps: change dependency to com.unity.film-internal-utilities@0.13.0-preview 
 
-### Fixed
-* TBD
+### Removed
+* remove: obsolete code for deserializing old versions MeshSyncProjectSettings
 
 ## [0.10.2-preview] - 2021-12-20
 
