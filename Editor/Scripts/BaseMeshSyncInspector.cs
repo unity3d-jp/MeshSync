@@ -62,15 +62,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
             updateFunc: (bool toggle) => { config.SyncVisibility = toggle; }
         );
         
-        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Render Instances",
-            guiFunc: () => EditorGUILayout.Toggle("Render Instances", config.SyncInstances),
-            updateFunc: (bool toggle) =>
-            {
-                config.SyncInstances = toggle;
-                t.SetInstanceRendererActive(toggle);
-            }
-        );
-        
         EditorGUILayout.Space();
 
         return changed;

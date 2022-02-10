@@ -2232,22 +2232,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         INITIAL_0_10_0 = 1, //initial for version 0.10.0-preview 
     
     }
-
-
-    public void SetInstanceRendererActive(bool active)
-    {
-        var renderer = GetComponent<MeshSyncInstanceRenderer>();
-        
-        if (active && renderer == null)
-        {
-            renderer = gameObject.AddComponent<MeshSyncInstanceRenderer>();
-            renderer.Init(this);
-        }
-        else if (!active && renderer != null)
-        {
-            ObjectUtility.Destroy(renderer);
-        }
-    }
 }
 
 } //end namespace

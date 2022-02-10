@@ -4,10 +4,8 @@ using UnityEngine;
 
 namespace Unity.MeshSync{
     
-    [ExecuteInEditMode]
-    public class MeshSyncInstanceRenderer : MonoBehaviour
+    public class MeshSyncInstanceRenderer
     {
-
         private BaseMeshSync ms;
         
         public void Init(BaseMeshSync ms)
@@ -15,14 +13,6 @@ namespace Unity.MeshSync{
             this.ms = ms;
             ms.onUpdateEntity -= OnUpdateEntity;
             ms.onUpdateEntity += OnUpdateEntity;
-        }
-
-        private void OnDestroy()
-        {
-            if (ms == null)
-                return;
-
-            ms.onUpdateEntity -= OnUpdateEntity;
         }
 
         private Dictionary<GameObject, MeshInstanceInfo> meshInstances = new Dictionary<GameObject, MeshInstanceInfo>();
@@ -55,14 +45,14 @@ namespace Unity.MeshSync{
             
             var mesh = meshFilter.sharedMesh;
 
-            var entry = meshInstances[obj];
             
-            if (entry == null)
+            if (!meshInstances.TryGetValue(obj, out MeshInstanceInfo entry))
             {
                 entry = new MeshInstanceInfo
                 {
                     Mesh = mesh
                 };
+                
                 meshInstances.Add(obj, entry);
             }
 
@@ -109,8 +99,8 @@ namespace Unity.MeshSync{
 
             return result;
         }
-
-        private void Update()
+        
+        public void Draw()
         {
             foreach (var entry in meshInstances)
             {
