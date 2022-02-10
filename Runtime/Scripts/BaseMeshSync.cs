@@ -2245,12 +2245,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         }
         else if (!active && renderer != null)
         {
-            #if UNITY_EDITOR
-                DestroyImmediate(renderer);
-            #else
-                Destroy(renderer);
-            #endif
-            
+            ObjectUtility.Destroy(renderer);
         }
     }
 }
