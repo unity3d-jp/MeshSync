@@ -1346,6 +1346,9 @@ internal struct VariantData {
     [DllImport(Lib.name)]
     static extern void msVariantCopyData(IntPtr self, Matrix4x4[] dst);
 
+    [DllImport(Lib.name)]
+    static extern void msVariantCopyData(IntPtr self, byte[] dst);
+    
     #endregion
 
     public static explicit operator bool(VariantData v) {
@@ -1378,6 +1381,18 @@ internal struct VariantData {
         get { return msVariantGetArrayLength(self); }
     }
 
+    public string stringValue
+    {
+        get
+        {
+            var bytes = new byte[arrayLength];
+            
+            msVariantCopyData(self, bytes);
+            var decoded = System.Text.Encoding.Default.GetString(bytes);
+            return decoded;
+        }
+    }
+    
     public int intValue {
         get {
             int ret = 0;

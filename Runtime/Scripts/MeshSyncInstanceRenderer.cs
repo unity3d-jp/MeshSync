@@ -2,7 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
+
 using UnityEngine;
 using UnityEngine.Analytics;
 
@@ -37,10 +42,138 @@ namespace Unity.MeshSync{
             public List<Matrix4x4[]> Instances;
             public Material[] Materials;
         }
+
+        internal abstract class ModifierInfo
+        {
+            public string Name { get; private set; }
+
+            public virtual void Set(VariantData data)
+            {
+                Name = data.name;
+            }
+
+            public enum ModifierType
+            {
+                Float, 
+                Int, 
+                Vector
+            }
+
+            public ModifierType Type { get; protected set; }
+        }
+
+        internal class FloatModifierInfo : ModifierInfo
+        {
+            public float Value;
+            public float Min = Mathf.NegativeInfinity;
+            public float Max = Mathf.Infinity;
+            public override void Set(VariantData data)
+            {
+                base.Set(data);
+                Value = data.floatValue;
+                Type = ModifierType.Float;
+            }
+        }
+
+        internal class IntModifierInfo : ModifierInfo
+        {
+            public int Value;
+            public int Min = int.MinValue;
+            public int Max = int.MaxValue;
+            public override void Set(VariantData data)
+            {
+                base.Set(data);
+                Value = data.intValue;
+                Type = ModifierType.Int;
+            }
+        }
+
+        internal class VectorModifierInfo : ModifierInfo
+        {
+            public Vector3 Value;
+            public Vector3 Min = Vector3.negativeInfinity;
+            public Vector3 Max = Vector3.positiveInfinity;
+            public override void Set(VariantData data)
+            {
+                base.Set(data);
+                Value = data.vector3Value;
+                Type = ModifierType.Vector;
+            }
+        }
+
+        internal class ModifierInfoFactory
+        {
+            public static ModifierInfo Create(VariantData data)
+            {
+                switch (data.type)
+                {
+                    case VariantData.Type.Float:
+                        return new FloatModifierInfo();
+                    case VariantData.Type.Float3:
+                        return new VectorModifierInfo();
+                    case VariantData.Type.Int:
+                        return new IntModifierInfo();
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
+
+        internal Dictionary<GameObject, HashSet<ModifierInfo>> modifiersInfo = new Dictionary<GameObject, HashSet<ModifierInfo>>();
+
+        private void HandleModifiers(TransformData data, GameObject go)
+        {
+            var modifiersProperty = data.FindUserProperty("modifiers");
+            if (modifiersProperty.self == IntPtr.Zero)
+            {
+                return;
+            }
+            
+            var modifierNames = modifiersProperty.stringValue.Split('\n');
+
+            var index = 0;
+            foreach (var modifierName in modifierNames)
+            {
+
+                if (string.IsNullOrEmpty(modifierName))
+                    continue;
+                
+                Debug.LogFormat("[MeshSync] Modifier{0}: {1}", index++, modifierName);
+
+                var modifier = data.FindUserProperty(modifierName);
+
+                if (modifier.self == IntPtr.Zero)
+                {
+                    Debug.LogWarningFormat("[MeshSync] Modifier {0} found in manifest but does not exist in properties", modifierName);
+                    continue;
+                }
+
+                var modifierInfo = ModifierInfoFactory.Create(modifier);
+                modifierInfo.Set(modifier);
+                if (!modifiersInfo.TryGetValue(go, out HashSet<ModifierInfo> modifiers))
+                {
+                    modifiers = new HashSet<ModifierInfo>();
+                    modifiersInfo.Add(go, modifiers);
+                }
+
+                modifiers.Add(modifierInfo);
+            }
+        }
         
         private void OnUpdateEntity(GameObject obj, TransformData data)
         {
-            
+            HandleModifiers(data, obj);
+            HandleInstances(obj, data);
+
+            // If Running on Editor, the app might be out of focus, need to force a draw as update will not be invoked
+#if UNITY_EDITOR
+            Draw();
+            SceneView.RepaintAll();
+#endif
+        }
+
+        private void HandleInstances(GameObject obj, TransformData data)
+        {
             var instances = data.FindUserProperty("instances");
 
             if (instances.self == IntPtr.Zero)
@@ -55,12 +188,13 @@ namespace Unity.MeshSync{
             if (!obj.TryGetComponent(out MeshRenderer renderer))
             {
                 Debug.LogWarningFormat("Object {0} has instance but no MeshRenderer", obj.name);
+                return;
             }
-            
+
             var mesh = meshFilter.sharedMesh;
 
             var entry = meshInstances.Find(x => x.Mesh == mesh);
-            
+
             if (entry == null)
             {
                 entry = new MeshInstanceInfo
@@ -70,14 +204,12 @@ namespace Unity.MeshSync{
                 meshInstances.Add(entry);
             }
 
-           
-
             entry.Instances = DivideArrays(instances.matrixArray);
             entry.Materials = renderer.sharedMaterials;
             foreach (var mat in entry.Materials)
             {
                 mat.enableInstancing = true;
-            }            
+            }
         }
 
         private List<Matrix4x4[]> DivideArrays(Matrix4x4[] arrays)
@@ -117,6 +249,11 @@ namespace Unity.MeshSync{
         }
 
         private void Update()
+        {
+            Draw();
+        }
+
+        private void Draw()
         {
             foreach (var entry in meshInstances)
             {
