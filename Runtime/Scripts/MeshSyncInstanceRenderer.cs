@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.Analytics;
 
 namespace Unity.MeshSync{
     
@@ -29,7 +25,7 @@ namespace Unity.MeshSync{
             ms.onUpdateEntity -= OnUpdateEntity;
         }
 
-        private List<MeshInstanceInfo> meshInstances = new List<MeshInstanceInfo>();
+        private Dictionary<GameObject, MeshInstanceInfo> meshInstances = new Dictionary<GameObject, MeshInstanceInfo>();
 
         private class MeshInstanceInfo
         {
@@ -48,18 +44,18 @@ namespace Unity.MeshSync{
 
             if (!obj.TryGetComponent(out MeshFilter meshFilter))
             {
-                Debug.LogWarningFormat("Object {0} has instances but no MeshFilter", obj.name);
+                Debug.LogWarningFormat("[MeshSync] Object {0} has instances info but no MeshFilter", obj.name);
                 return;
             }
 
             if (!obj.TryGetComponent(out MeshRenderer renderer))
             {
-                Debug.LogWarningFormat("Object {0} has instance but no MeshRenderer", obj.name);
+                Debug.LogWarningFormat("[MeshSync] Object {0} has instances info but no MeshRenderer", obj.name);
             }
             
             var mesh = meshFilter.sharedMesh;
 
-            var entry = meshInstances.Find(x => x.Mesh == mesh);
+            var entry = meshInstances[obj];
             
             if (entry == null)
             {
@@ -67,10 +63,8 @@ namespace Unity.MeshSync{
                 {
                     Mesh = mesh
                 };
-                meshInstances.Add(entry);
+                meshInstances.Add(obj, entry);
             }
-
-           
 
             entry.Instances = DivideArrays(instances.matrixArray);
             entry.Materials = renderer.sharedMaterials;
@@ -120,7 +114,7 @@ namespace Unity.MeshSync{
         {
             foreach (var entry in meshInstances)
             {
-                RenderInstances(entry);
+                RenderInstances(entry.Value);
             }
         }
 
