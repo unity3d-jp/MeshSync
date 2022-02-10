@@ -136,8 +136,8 @@ namespace Unity.MeshSync{
             {
                 // Try to get the material in the same index position as the mesh
                 // or the last material.
+                var materialIndex = Mathf.Clamp(i, 0, entry.Materials.Length -1);
                 
-                var materialIndex = Mathf.Max(Mathf.Min(entry.Materials.Length -1, i), 0);
                 var material = entry.Materials[materialIndex];
                 for (var j = 0; j < matrixBatches.Count; j++)
                 {
