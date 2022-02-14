@@ -7,16 +7,19 @@ namespace Unity.MeshSync.Editor {
 
 internal static class MeshSyncMenu  {
 
-    
 
-//----------------------------------------------------------------------------------------------------------------------    
+
+    //----------------------------------------------------------------------------------------------------------------------    
     #region Server
     [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
-    internal static void CreateMeshSyncServerMenu(MenuCommand menuCommand) {
+    internal static MeshSyncServer CreateMeshSyncServerMenu(MenuCommand menuCommand)
+    {
         MeshSyncServer mss = CreateMeshSyncServer(true);
         if (mss != null)
             Undo.RegisterCreatedObjectUndo(mss.gameObject, "MeshSyncServer");
         Selection.activeTransform = mss.transform;
+
+        return mss;
     }
 
     internal static MeshSyncServer CreateMeshSyncServer(bool autoStart) {

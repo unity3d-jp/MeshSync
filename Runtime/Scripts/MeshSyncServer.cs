@@ -482,8 +482,14 @@ public class MeshSyncServer : BaseMeshSync {
         StopServer();
     }
 
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+        m_DCCInterop?.Cleanup();
+    }
+
     void LateUpdate() {
-        PollServerEvents();
+    PollServerEvents();
     }
     #endregion
 
@@ -502,9 +508,13 @@ public class MeshSyncServer : BaseMeshSync {
     [SerializeField] private int  m_serverPort      = MeshSyncConstants.DEFAULT_SERVER_PORT;
 #if UNITY_EDITOR
     [SerializeField] bool m_foldServerSettings = true;
+
+    public IDCCLauncher m_DCCInterop;
+    public GameObject m_DCCAsset;
+      
 #endif
-    
-    [SerializeField] private MeshSyncServerConfig m_config;
+
+        [SerializeField] private MeshSyncServerConfig m_config;
 
 #pragma warning disable 414
     //Renamed in 0.10.x-preview
@@ -516,7 +526,7 @@ public class MeshSyncServer : BaseMeshSync {
     private bool m_serverStarted = false;
     
     private ServerMessageCallback m_onPostRecvMessageCB = null;
-    
+         
 
 //----------------------------------------------------------------------------------------------------------------------    
     

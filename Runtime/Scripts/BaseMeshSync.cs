@@ -204,13 +204,19 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         get { return m_foldExportAssets; }
         set { m_foldExportAssets = value; }
     }
-#endif
-    #endregion
 
-//----------------------------------------------------------------------------------------------------------------------
-    
-    #region Impl
-    void SerializeDictionary<K,V>(Dictionary<K,V> dic, ref K[] keys, ref V[] values)
+    internal bool foldBlenderSettings
+    {
+        get { return m_foldBlenderSettings; }
+        set { m_foldBlenderSettings = value; }
+        }
+#endif
+        #endregion
+
+        //----------------------------------------------------------------------------------------------------------------------
+
+        #region Impl
+        void SerializeDictionary<K,V>(Dictionary<K,V> dic, ref K[] keys, ref V[] values)
     {
         keys = dic.Keys.ToArray();
         values = dic.Values.ToArray();
@@ -2180,7 +2186,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     }
 #endif
 
-    void OnDestroy() {
+        protected virtual void OnDestroy() {
         m_tmpI.Dispose();
         m_tmpV2.Dispose();
         m_tmpV3.Dispose();
@@ -2246,6 +2252,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [SerializeField] bool m_foldMaterialList      = true;
     [SerializeField] bool m_foldAnimationTweak    = true;
     [SerializeField] bool m_foldExportAssets      = true;
+    [SerializeField] bool m_foldBlenderSettings   = true;        
 #endif
 
     private bool m_saveAssetsInScene            = true;
