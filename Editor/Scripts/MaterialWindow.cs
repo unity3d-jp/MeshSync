@@ -1,36 +1,33 @@
-using Unity.MeshSync;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.MeshSync.Editor
-{
-class MaterialWindow : EditorWindow
-{
-    public static void Open(BaseMeshSync server)
-    {
-        var window = (MaterialWindow)EditorWindow.GetWindow(typeof(MaterialWindow));
-        window.titleContent = new GUIContent("Material List");
-        window.m_server = server;
+namespace Unity.MeshSync.Editor {
+internal class MaterialWindow : EditorWindow {
+    public static void Open(BaseMeshSync server) {
+        MaterialWindow window = (MaterialWindow)EditorWindow.GetWindow(typeof(MaterialWindow));
+        window.titleContent        = new GUIContent("Material List");
+        window.m_meshSyncComponent = server;
         window.Show();
     }
+    
+//----------------------------------------------------------------------------------------------------------------------
 
-
-    public BaseMeshSync m_server;
-    Vector2 m_scrollPos;
-
-
-    void OnGUI()
-    {
-        if(m_server == null)
-        {
+    void OnGUI() {
+        if (m_meshSyncComponent == null) {
             return;
         }
 
-        var pos = position;
-        m_scrollPos = EditorGUILayout.BeginScrollView(m_scrollPos, GUILayout.Width(pos.width), GUILayout.Height(pos.height));
-        MeshSyncServerInspector.DrawMaterialList(m_server, false);
+        Rect pos = position;
+        m_scrollPos =
+            EditorGUILayout.BeginScrollView(m_scrollPos, GUILayout.Width(pos.width), GUILayout.Height(pos.height));
+        BaseMeshSyncInspector.DrawSimpleMaterialList(m_meshSyncComponent);
         EditorGUILayout.EndScrollView();
     }
+
+//----------------------------------------------------------------------------------------------------------------------
+
+    private BaseMeshSync m_meshSyncComponent;
+    private Vector2      m_scrollPos;
 }
 
-}
+} //end namespace

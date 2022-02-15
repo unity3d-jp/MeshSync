@@ -10,11 +10,11 @@ using UnityEngine.Assertions;
 using System.IO;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
-using Object = UnityEngine.Object;
 
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using Unity.FilmInternalUtilities.Editor;
 #endif
 
 namespace Unity.MeshSync
@@ -398,13 +398,11 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         if (go == null)
             return Lib.invalidID;
 
-        int ret;
-        if (m_objIDTable.ContainsKey(go)) {
-            ret = m_objIDTable[go];
-        } else {
-            ret = ++m_objIDSeed;
-            m_objIDTable[go] = ret;
-        }
+        if (m_objIDTable.TryGetValue(go, out int ret)) 
+            return ret;
+        
+        ret              = ++m_objIDSeed;
+        m_objIDTable[go] = ret;
         return ret;
     }
 
@@ -860,7 +858,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         
         dst.name = materialName;
         dst.index = src.index;
-        dst.shader = src.shader;
         dst.color = src.color;
 
         Material destMat = dst.material;
@@ -884,7 +881,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         switch (materialSearchMode) {
             case AssetSearchMode.LOCAL: {
                 if (Directory.Exists(assetsFolder)) {
-                    materialPaths = FindAssetPaths("t:Material ", materialName, new string[] {assetsFolder});
+                    materialPaths = AssetEditorUtility.FindAssetPaths("t:Material ", materialName, new string[] {assetsFolder});
                 }
                 break;
             }
@@ -893,18 +890,15 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 string nextFolder = assetsFolder;
                 while (!string.IsNullOrEmpty(nextFolder) && (null==materialPaths|| materialPaths.Count <= 0)) {
                     if (Directory.Exists(nextFolder)) {
-                        materialPaths = FindAssetPaths("t:Material ", materialName, new string[] {nextFolder}, false);
+                        materialPaths = AssetEditorUtility.FindAssetPaths("t:Material ", materialName, new string[] {nextFolder}, false);
                     }
                     
                     nextFolder    = PathUtility.GetDirectoryName(nextFolder,1);
-                    if (null != nextFolder) {
-                        nextFolder = nextFolder.Replace('\\','/'); //[TODO-sin: 2021-11-4] Fix in FIU                        
-                    }                        
                 }                
                 break;
             }
             case AssetSearchMode.EVERYWHERE: {
-                materialPaths = FindAssetPaths("t:Material ", materialName);
+                materialPaths = AssetEditorUtility.FindAssetPaths("t:Material ", materialName);
                 break;
             } 
         }
@@ -928,51 +922,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     }
 #endif
 
-//----------------------------------------------------------------------------------------------------------------------
-    
-    
-#if UNITY_EDITOR    
-    //[TODO-sin: 2021-11-4] To FIU
-    //return a set of paths
-    //exactAssetName: the exact asset name without extention
-    static HashSet<string> FindAssetPaths(string filterPrefix, string exactAssetName=null, 
-        string[] searchInFolders = null, bool searchSubFolder = true) 
-    {
-                
-        string[]   guids       = AssetDatabase.FindAssets($"{filterPrefix} {exactAssetName}", searchInFolders);
-        HashSet<string> foundAssetPaths = new HashSet<string>();
-
-        foreach (string guid in guids) {
-            string path = AssetDatabase.GUIDToAssetPath(guid);
-            if (null != exactAssetName && exactAssetName != Path.GetFileNameWithoutExtension(path))
-                continue;
-
-            if (searchSubFolder || null == searchInFolders) {
-                foundAssetPaths.Add(path);
-                continue;
-            }
-
-            //exact folder required
-            string folder = PathUtility.GetDirectoryName(path,1); 
-            if (null != folder) {
-                folder = folder.Replace('\\','/'); //[TODO-sin: 2021-11-4] Fix in FIU                        
-            }
-            
-            foreach (string searchedFolder in searchInFolders) {
-                if (folder != searchedFolder) 
-                    continue;
-                
-                foundAssetPaths.Add(path);
-                break;
-            }            
-            
-
-        }
-        
-        return foundAssetPaths;
-    }
-#endif    
-    
 //----------------------------------------------------------------------------------------------------------------------    
 
     static void ApplyMaterialDataToMaterial(MaterialData src, Material destMat, List<TextureHolder> textureHolders) {
@@ -1070,16 +1019,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         }        
     }
     
-    
-#if UNITY_EDITOR    
-    //[TODO-sin: 2021-11-2] Move to FIU
-    static T LoadAssetByGUID<T>(string guid) where T:UnityEngine.Object {
-        string path  = AssetDatabase.GUIDToAssetPath(guid);
-        T      asset = AssetDatabase.LoadAssetAtPath<T>(path);
-        return asset;
-    }    
-#endif    
-
 //----------------------------------------------------------------------------------------------------------------------
     
     EntityRecord UpdateMeshEntity(MeshData data, MeshSyncPlayerConfig config) {
@@ -2300,8 +2239,27 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         INITIAL_0_10_0 = 1, //initial for version 0.10.0-preview 
     
     }
-    
-    
+
+
+    public void SetInstanceRendererActive(bool active)
+    {
+        var renderer = GetComponent<MeshSyncInstanceRenderer>();
+        
+        if (active && renderer == null)
+        {
+            renderer = gameObject.AddComponent<MeshSyncInstanceRenderer>();
+            renderer.Init(this);
+        }
+        else if (!active && renderer != null)
+        {
+            #if UNITY_EDITOR
+                DestroyImmediate(renderer);
+            #else
+                Destroy(renderer);
+            #endif
+            
+        }
+    }
 }
 
 } //end namespace

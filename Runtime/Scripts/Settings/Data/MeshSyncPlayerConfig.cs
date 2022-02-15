@@ -25,6 +25,7 @@ internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
         //Sync Settings
         SyncVisibility       = other.SyncVisibility;
         SyncTransform        = other.SyncTransform;
+        SyncInstances        = other.SyncInstances;
 
 
         m_componentSyncSettings = new List<ComponentSyncSettings>();  
@@ -102,6 +103,8 @@ internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     //Sync Settings
     public bool SyncVisibility = true;
     public bool SyncTransform  = true; //for Update
+
+    public bool SyncInstances = false; 
     
     [Obsolete] private bool SyncCameras = true;
     [Obsolete] private bool SyncLights  = true;

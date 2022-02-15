@@ -106,10 +106,9 @@ internal static class SceneCachePlayerEditorUtility {
         //remove irrelevant  components of the GameObject if the entity type is different
         void ChangeEntityTypeCB(GameObject updatedGo, TransformData data) {
             string dataPath = data.path;
-            if (!prevRecords.ContainsKey(dataPath)) 
+            if (!prevRecords.TryGetValue(dataPath, out EntityRecord prevRecord)) 
                 return;
 
-            EntityRecord prevRecord = prevRecords[dataPath];
             if (data.entityType == prevRecord.dataType) 
                 return;
 

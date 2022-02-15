@@ -16,29 +16,28 @@ namespace Unity.MeshSync.Editor  {
             m_meshSyncServer = target as MeshSyncServer;
         }
 
-        //----------------------------------------------------------------------------------------------------------------------
-        public override void OnInspectorGUI()
-        {
-            Undo.RecordObject(m_meshSyncServer, "MeshSyncServer Update");
+//----------------------------------------------------------------------------------------------------------------------
+    public override void OnInspectorGUI()
+    {
+        Undo.RecordObject(m_meshSyncServer, "MeshSyncServer Update");        
 
-            EditorGUILayout.Space();
-            DrawServerSettings(m_meshSyncServer);
-            DrawAssetSyncSettings(m_meshSyncServer);
-            DrawImportSettings(m_meshSyncServer);
-            DrawMiscSettings(m_meshSyncServer);
-            DrawMaterialList(m_meshSyncServer);
-            DrawAnimationTweak(m_meshSyncServer);
-            DrawExportAssets(m_meshSyncServer);
+        EditorGUILayout.Space();
+        DrawServerSettings(m_meshSyncServer);
+        DrawAssetSyncSettings(m_meshSyncServer);
+        DrawImportSettings(m_meshSyncServer);
+        DrawMiscSettings(m_meshSyncServer);
+        DrawDefaultMaterialList(m_meshSyncServer);
+        DrawAnimationTweak(m_meshSyncServer);
+        DrawExportAssets(m_meshSyncServer);
 
-            if(m_meshSyncServer.m_DCCAsset != null && m_meshSyncServer.m_DCCInterop == null)
+            if (m_meshSyncServer.m_DCCAsset != null && m_meshSyncServer.m_DCCInterop == null)
             {
                 m_meshSyncServer.m_DCCInterop = GetLauncherForAsset(m_meshSyncServer.m_DCCAsset);
             }
 
             m_meshSyncServer.m_DCCInterop?.DrawDCCToolVersion(m_meshSyncServer);
+            
             DrawPluginVersion();
-
-            PrefabUtility.RecordPrefabInstancePropertyModifications(m_meshSyncServer);
         }
 
         //----------------------------------------------------------------------------------------------------------------------
