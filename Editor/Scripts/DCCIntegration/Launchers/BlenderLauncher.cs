@@ -246,7 +246,7 @@ namespace Unity.MeshSync.Editor
 
                 if (EditorGUI.EndChangeCheck())
                 {
-
+                    // TODO: Send modifiers backk to blender here.
                 }
             }
         }
