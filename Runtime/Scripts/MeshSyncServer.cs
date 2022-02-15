@@ -106,7 +106,7 @@ public class MeshSyncServer : BaseMeshSync {
         
         m_handler = HandleRecvMessage;
 
-        SetInstanceRendererActive(m_config.SyncInstances);
+        //SetInstanceRendererActive(m_config.SyncInstances);
 
 #if UNITY_EDITOR
         EditorApplication.update += PollServerEvents;
@@ -472,6 +472,8 @@ public class MeshSyncServer : BaseMeshSync {
         if (m_autoStartServer) {
             m_requestRestartServer = true;
         }
+        
+        m_instanceRenderer.Init(this);
     }
 
     protected override void OnDisable() {
@@ -484,7 +486,12 @@ public class MeshSyncServer : BaseMeshSync {
         base.OnDestroy();
         m_DCCInterop?.Cleanup();
     }
-
+ 
+    void Update()
+    {
+        m_instanceRenderer.Draw();
+    }
+     
     void LateUpdate() {
     PollServerEvents();
     }
@@ -499,6 +506,8 @@ public class MeshSyncServer : BaseMeshSync {
     bool m_requestRestartServer = false;
     bool m_captureScreenshotInProgress = false;
     
+    MeshSyncInstanceRenderer m_instanceRenderer = new MeshSyncInstanceRenderer();
+
 #endif // UNITY_STANDALONE
     
     [SerializeField] private bool m_autoStartServer = false;

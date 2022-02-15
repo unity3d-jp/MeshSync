@@ -248,12 +248,7 @@ namespace Unity.MeshSync{
             return result;
         }
 
-        private void Update()
-        {
-            Draw();
-        }
-
-        private void Draw()
+        public void Draw()
         {
             foreach (var entry in meshInstances)
             {

@@ -114,11 +114,7 @@ internal class MeshSyncPlayerConfigSection {
         AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.Visibility, config.SyncVisibility,
             (bool newValue) => { config.SyncVisibility = newValue; }
         );
-        
-        AddPlayerConfigField<Toggle,bool>(syncSettingsFoldout, Contents.RenderInstances, config.SyncInstances,
-            (bool newValue) => { config.SyncInstances = newValue; }
-        );
-        
+
         //import
         Foldout importSettingsFoldout = containerInstance.Query<Foldout>("ImportSettingsFoldout").First();
         ModelImporterSettings modelImporterSettings = config.GetModelImporterSettings();
