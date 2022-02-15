@@ -106,6 +106,8 @@ public class MeshSyncServer : BaseMeshSync {
         
         m_handler = HandleRecvMessage;
 
+        SetInstanceRendererActive(m_config.SyncInstances);
+
 #if UNITY_EDITOR
         EditorApplication.update += PollServerEvents;
 #endif

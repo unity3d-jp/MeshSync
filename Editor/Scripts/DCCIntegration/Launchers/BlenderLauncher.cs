@@ -200,12 +200,55 @@ namespace Unity.MeshSync.Editor
                             OpenDCCTool(server.m_DCCAsset);
                         }
                     }
+
+                    DrawSliders(player);
                 }
 
                 GUILayout.EndVertical();
             }
 
             EditorGUILayout.Space();
+        }
+
+        void DrawSliders(BaseMeshSync player)
+        {
+            var records = player.modifiersInfo;
+
+            foreach (var entry in records)
+            {
+                var gameObject = entry.Key;
+                var name = gameObject.name;
+
+                EditorGUILayout.LabelField(name);
+
+                EditorGUI.BeginChangeCheck();
+
+                var modifiers = entry.Value;
+                foreach (var modifier in modifiers)
+                {
+                    var modifierType = modifier.Type;
+                    switch (modifierType)
+                    {
+                        case BaseMeshSync.ModifierInfo.ModifierType.Float:
+                            var floatModifier = modifier as BaseMeshSync.FloatModifierInfo;
+                            floatModifier.Value = EditorGUILayout.Slider(floatModifier.Name, floatModifier.Value, -1, 1);
+                            break;
+                        case BaseMeshSync.ModifierInfo.ModifierType.Int:
+                            var intModifier = modifier as BaseMeshSync.IntModifierInfo;
+                            intModifier.Value = EditorGUILayout.IntSlider(intModifier.Name, intModifier.Value, -1, 1);
+                            break;
+                        case BaseMeshSync.ModifierInfo.ModifierType.Vector:
+                            var vectorModifier = modifier as BaseMeshSync.VectorModifierInfo;
+                            vectorModifier.Value = EditorGUILayout.Vector3Field(vectorModifier.Name, vectorModifier.Value);
+                            break;
+                    }
+                }
+
+                if (EditorGUI.EndChangeCheck())
+                {
+
+                }
+            }
         }
 
         public void Cleanup()
