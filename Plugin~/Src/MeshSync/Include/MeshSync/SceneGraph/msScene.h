@@ -12,12 +12,15 @@
 //Used in template
 #include "MeshSync/SceneGraph/msTransform.h"
 
+#include "MeshSync/SceneGraph/msInstanceInfo.h"
+
 //Forward declarations
 msDeclClassPtr(Asset);
 msDeclClassPtr(Constraint);
 msDeclClassPtr(Scene);
 
 msDeclStructPtr(SceneImportSettings);
+msDeclStructPtr(InstanceInfo)
 
 namespace ms {
 
@@ -38,6 +41,7 @@ struct SceneDataFlags
     uint32_t has_assets : 1;
     uint32_t has_entities : 1;
     uint32_t has_constraints : 1;
+    uint32_t has_instanceInfos : 1;
 
     SceneDataFlags();
 };
@@ -51,6 +55,7 @@ public:
     std::vector<AssetPtr> assets;
     std::vector<TransformPtr> entities;
     std::vector<ConstraintPtr> constraints;
+    std::vector<InstanceInfoPtr> instanceInfos;
 
     // non-serializable
     std::list<RawVector<char>> scene_buffers;

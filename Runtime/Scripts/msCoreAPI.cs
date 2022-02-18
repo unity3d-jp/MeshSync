@@ -2901,6 +2901,38 @@ internal struct SceneProfileData {
     public float lerpTime; // in ms
 };
 
+#region InstanceInfo
+
+internal struct InstanceInfoData
+{
+    public IntPtr self;
+
+    [DllImport((Lib.name))]
+    static extern IntPtr msInstanceInfoGetPath(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern int msInstanceInfoPropGetArrayLength(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern void msInstanceInfoCopyTransforms(IntPtr self, Matrix4x4[] matrices);
+    
+    public string path => Misc.S(msInstanceInfoGetPath(self));
+
+    public int arrayLength => msInstanceInfoPropGetArrayLength(self);
+
+    public Matrix4x4[] transforms
+    {
+        get
+        {
+            var mat = new Matrix4x4[arrayLength];
+            msInstanceInfoCopyTransforms(self, mat);
+            return mat;
+        }
+    }
+}
+
+#endregion
+
 internal struct SceneData {
     #region internal
 
@@ -2930,6 +2962,12 @@ internal struct SceneData {
     [DllImport(Lib.name)]
     static extern SceneProfileData msSceneGetProfileData(IntPtr self);
 
+    [DllImport(Lib.name)]
+    static extern int msSceneGetNumInstanceInfos(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern InstanceInfoData msSceneGetInstanceInfo(IntPtr self, int i);
+
     #endregion
 
     public static implicit operator bool(SceneData v) {
@@ -2948,6 +2986,11 @@ internal struct SceneData {
         get { return msSceneGetNumConstraints(self); }
     }
 
+    public int numInstanceInfos
+    {
+        get { return msSceneGetNumInstanceInfos(self); }
+    }
+    
     public bool submeshesHaveUniqueMaterial {
         get { return msSceneSubmeshesHaveUniqueMaterial(self) != 0; }
     }
@@ -2966,6 +3009,11 @@ internal struct SceneData {
 
     public ConstraintData GetConstraint(int i) {
         return msSceneGetConstraint(self, i);
+    }
+
+    public InstanceInfoData GetInstanceInfo(int i)
+    {
+        return msSceneGetInstanceInfo(self, i);
     }
 }
 

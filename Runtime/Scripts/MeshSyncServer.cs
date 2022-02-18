@@ -237,6 +237,10 @@ public class MeshSyncServer : BaseMeshSync {
         int numMaterials = mes.numMaterials;
         for (int i = 0; i < numMaterials; ++i)
             EraseMaterialRecord(mes.GetMaterial(i).id);
+
+        int numInstanceInfos = mes.numInstanceInfos;
+        for (int i = 0; i < numInstanceInfos; ++i)
+            EraseInstanceInfoRecord(mes.GetInstanceInfo(i));
     }
 
     void OnRecvFence(FenceMessage mes) {

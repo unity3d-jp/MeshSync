@@ -1,6 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Unity.MeshSync{
     
@@ -11,10 +16,11 @@ namespace Unity.MeshSync{
         public void Init(BaseMeshSync ms)
         {
             this.ms = ms;
-            ms.onUpdateEntity -= OnUpdateEntity;
-            ms.onUpdateEntity += OnUpdateEntity;
-        }
 
+            ms.onUpdateInstanceInfo -= OnUpdateInstanceInfo;
+            ms.onUpdateInstanceInfo += OnUpdateInstanceInfo;
+        }
+        
         private Dictionary<GameObject, MeshInstanceInfo> meshInstances = new Dictionary<GameObject, MeshInstanceInfo>();
 
         private class MeshInstanceInfo
@@ -24,14 +30,14 @@ namespace Unity.MeshSync{
             public Material[] Materials;
         }
         
-        private void OnUpdateEntity(GameObject obj, TransformData data)
+        private void OnUpdateInstanceInfo(GameObject obj, InstanceInfoData data)
         {
-            
-            var instances = data.FindUserProperty("instances");
-
-            if (instances.self == IntPtr.Zero)
+            if (obj == null)
+            {
+                Debug.LogWarningFormat("[MeshSync] No Gameobject found: {0}", data.path);
                 return;
-
+            }
+            
             if (!obj.TryGetComponent(out MeshFilter meshFilter))
             {
                 Debug.LogWarningFormat("[MeshSync] Object {0} has instances info but no MeshFilter", obj.name);
@@ -41,11 +47,11 @@ namespace Unity.MeshSync{
             if (!obj.TryGetComponent(out MeshRenderer renderer))
             {
                 Debug.LogWarningFormat("[MeshSync] Object {0} has instances info but no MeshRenderer", obj.name);
+                return;
             }
             
             var mesh = meshFilter.sharedMesh;
 
-            
             if (!meshInstances.TryGetValue(obj, out MeshInstanceInfo entry))
             {
                 entry = new MeshInstanceInfo
@@ -56,12 +62,19 @@ namespace Unity.MeshSync{
                 meshInstances.Add(obj, entry);
             }
 
-            entry.Instances = DivideArrays(instances.matrixArray);
+            var transforms = data.transforms;
+
+            entry.Instances = DivideArrays(transforms);
             entry.Materials = renderer.sharedMaterials;
             foreach (var mat in entry.Materials)
             {
                 mat.enableInstancing = true;
-            }            
+            } 
+            
+            #if UNITY_EDITOR
+                Draw();
+                SceneView.RepaintAll();
+            #endif
         }
 
         private List<Matrix4x4[]> DivideArrays(Matrix4x4[] arrays)

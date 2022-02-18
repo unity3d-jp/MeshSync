@@ -54,6 +54,18 @@ internal delegate void UpdateAnimationHandler(AnimationClip anim, AnimationClipD
 /// </summary>
 internal delegate void DeleteEntityHandler(GameObject obj);
 
+/// <summary>
+/// A delegate to handle instance info updates
+/// </summary>
+/// <param name="data"></param>
+internal delegate void UpdateInstanceInfoHandler(GameObject obj, InstanceInfoData data);
+
+/// <summary>
+/// A delegate to handle instance info deletions
+/// </summary>
+/// <param name="obj"></param>
+internal delegate void DeleteInstanceInfoHandler(GameObject obj);
+
 //----------------------------------------------------------------------------------------------------------------------
 
 /// <summary>
@@ -105,6 +117,10 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     /// An event that is executed when the scene update is finished
     /// </summary>
     internal event SceneHandler onSceneUpdateEnd;
+
+    internal event UpdateInstanceInfoHandler onUpdateInstanceInfo;
+
+    internal event DeleteInstanceInfoHandler onDeleteInstanceInfo;
     
     #endregion EventHandler Declarations
 
@@ -519,6 +535,19 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             int numConstraints = scene.numConstraints;
             for (int i = 0; i < numConstraints; ++i)
                 UpdateConstraint(scene.GetConstraint(i));
+        });
+        
+        // handle instances
+        Try(() =>
+        {
+            var numInstances = scene.numInstanceInfos;
+            for (var i = 0; i < numInstances; ++i)
+            {
+                var src = scene.GetInstanceInfo(i);
+                var dst = UpdateInstanceInfo(src);
+                if (onUpdateInstanceInfo != null)
+                    onUpdateInstanceInfo.Invoke(dst.go, src);
+            }
         });
         
 #if UNITY_EDITOR
@@ -1566,6 +1595,23 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         }
     }
 
+    InstanceInfoRecord UpdateInstanceInfo(InstanceInfoData data)
+    {
+        var path = data.path;
+        var transforms = data.transforms;
+        InstanceInfoRecord rec = null;
+        
+        if (!this.m_clientInstances.TryGetValue(data.path, out rec))
+        {
+            rec = new InstanceInfoRecord();
+            m_clientInstances.Add(data.path, rec);
+        }
+        
+        rec.go = GameObject.Find(path);
+
+        return rec;
+    }
+    
     void UpdateConstraint(ConstraintData data)
     {
         Transform trans = FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, data.path, false);
@@ -1618,7 +1664,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 break;
         }
     }
-
+    
 //----------------------------------------------------------------------------------------------------------------------   
     
     void UpdateAnimationAsset(AnimationClipData clipData,MeshSyncPlayerConfig config) {
@@ -1764,6 +1810,22 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         r.sharedMaterials = materials;
     }
 
+    internal bool EraseInstanceInfoRecord(Identifier identifier)
+    {
+        var path = identifier.name;
+
+        var ret = false;
+        if (this.m_clientInstances.TryGetValue(path, out InstanceInfoRecord rec))
+        {
+             ret = this.m_clientInstances.Remove(path);
+             
+            if (onDeleteInstanceInfo != null)
+                onDeleteInstanceInfo(rec.go);
+        }
+
+        return ret;
+    }
+    
     internal bool EraseEntityRecord(Identifier identifier)
     {
         int id = identifier.id;
@@ -2197,6 +2259,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     private readonly           Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
     private protected readonly Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
     private readonly           Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
+    
+    private readonly Dictionary<string, InstanceInfoRecord> m_clientInstances =  new Dictionary<string, InstanceInfoRecord>();
 
 
     protected Action m_onMaterialChangedInSceneViewCB = null;

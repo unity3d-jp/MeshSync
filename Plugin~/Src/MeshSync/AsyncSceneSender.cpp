@@ -152,6 +152,19 @@ void AsyncSceneSender::send()
         };
     }
 
+    // instance infos
+    if (!instanceInfos.empty()) {
+        for (auto& instanceInfo : instanceInfos) {
+            ms::SetMessage mes;
+            setup_message(mes);
+            mes.scene->settings = scene_settings;
+            mes.scene->instanceInfos = { instanceInfo };
+            succeeded = succeeded && client.send(mes);
+            if (!succeeded)
+                goto cleanup;
+        }
+    }
+
     // animations
     if (!animations.empty()) {
         ms::SetMessage mes;

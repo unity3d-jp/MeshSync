@@ -15,6 +15,8 @@
 #include "MeshSync/SceneGraph/msTexture.h"
 #include "MeshSync/SceneGraph/msSceneImportSettings.h"
 
+#include "MeshSync/SceneGraph/msInstanceInfo.h"
+
 
 //Forward declaration
 msDeclClassPtr(EntityConverter)
@@ -30,7 +32,7 @@ SceneDataFlags::SceneDataFlags()
 
 
 #define EachMember(F)\
-    F(settings) F(assets) F(entities) F(constraints)
+    F(settings) F(assets) F(entities) F(constraints) F(instanceInfos)
 
 Scene::Scene()
 {
@@ -63,6 +65,7 @@ void Scene::serialize(std::ostream& os) const
     data_flags.has_assets = !assets.empty();
     data_flags.has_entities = !entities.empty();
     data_flags.has_constraints = !constraints.empty();
+    data_flags.has_instanceInfos = !instanceInfos.empty();
 
     const uint64_t validation_hash = hash();
     write(os, validation_hash);
@@ -94,6 +97,7 @@ void Scene::concat(Scene& src, bool move_buffer)
     assets.insert(assets.end(), src.assets.begin(), src.assets.end());
     entities.insert(entities.end(), src.entities.begin(), src.entities.end());
     constraints.insert(constraints.end(), src.constraints.begin(), src.constraints.end());
+    instanceInfos.insert(instanceInfos.end(), src.instanceInfos.begin(), src.instanceInfos.end());
 
     if (move_buffer) {
         for (auto& buf : src.scene_buffers)
@@ -190,6 +194,7 @@ void Scene::clear()
     assets.clear();
     entities.clear();
     constraints.clear();
+    instanceInfos.clear();
 
     scene_buffers.clear();
     data_sources.clear();
@@ -203,6 +208,8 @@ uint64_t Scene::hash() const
         ret += a->hash();
     for (auto& e : entities)
         ret += e->hash();
+    for (auto& i : instanceInfos)
+        ret += i->hash();
     return ret;
 }
 
