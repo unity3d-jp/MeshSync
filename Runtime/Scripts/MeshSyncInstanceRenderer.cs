@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -19,8 +20,20 @@ namespace Unity.MeshSync{
 
             ms.onUpdateInstanceInfo -= OnUpdateInstanceInfo;
             ms.onUpdateInstanceInfo += OnUpdateInstanceInfo;
+            ms.onDeleteInstanceInfo -= OnDeleteInstanceInfo;
+            ms.onDeleteInstanceInfo += OnDeleteInstanceInfo;
+            ms.onDeleteEntity -= OnDeleteInstanceInfo;
+            ms.onDeleteEntity += OnDeleteInstanceInfo;
         }
-        
+
+        private void OnDeleteInstanceInfo(GameObject obj)
+        {
+            if (obj == null)
+                return;
+            
+            meshInstances.Remove(obj);
+        }
+
         private Dictionary<GameObject, MeshInstanceInfo> meshInstances = new Dictionary<GameObject, MeshInstanceInfo>();
 
         private class MeshInstanceInfo

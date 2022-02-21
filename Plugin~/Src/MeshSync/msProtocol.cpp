@@ -74,12 +74,14 @@ void DeleteMessage::serialize(std::ostream& os) const
     super::serialize(os);
     write(os, entities);
     write(os, materials);
+    write(os, instanceInfos);
 }
 void DeleteMessage::deserialize(std::istream& is)
 {
     super::deserialize(is);
     read(is, entities);
     read(is, materials);
+    read(is, instanceInfos);
 }
 
 

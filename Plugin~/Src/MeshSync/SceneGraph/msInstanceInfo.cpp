@@ -1,5 +1,6 @@
 #include "MeshSync/SceneGraph/msInstanceInfo.h"
 #include <MeshSync/msFoundation.h>
+#include <MeshSync/SceneGraph/msIdentifier.h>
 
 namespace ms {
 	void InstanceInfo::serialize(ostream& os)
@@ -29,5 +30,9 @@ namespace ms {
 	uint64_t InstanceInfo::hash()
 	{
 		return m_hash;
+	}
+	Identifier InstanceInfo::getIdentifier()
+	{
+		return Identifier{ path, InvalidID};
 	}
 }

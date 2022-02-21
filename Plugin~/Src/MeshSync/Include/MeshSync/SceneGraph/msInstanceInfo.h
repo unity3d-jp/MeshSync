@@ -1,6 +1,7 @@
 #pragma once
 #include "MeshUtils/muMath.h"
 #include "MeshSync/msFoundation.h"
+#include "MeshSync/SceneGraph/msIdentifier.h"
 
 namespace ms {
 	using namespace std;
@@ -30,6 +31,8 @@ namespace ms {
 
 		static shared_ptr<InstanceInfo> create(std::istream& is);
 		uint64_t hash();
+
+		Identifier getIdentifier();
 	};
 	msSerializable(InstanceInfo)
 }

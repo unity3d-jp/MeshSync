@@ -177,11 +177,13 @@ void AsyncSceneSender::send()
     }
 
     // deleted
-    if (!deleted_entities.empty() || !deleted_materials.empty()) {
+    if (!deleted_entities.empty() || !deleted_materials.empty() || !deleted_instanceInfos.empty()) {
         ms::DeleteMessage mes;
         setup_message(mes);
         mes.entities = deleted_entities;
         mes.materials = deleted_materials;
+        mes.instanceInfos = deleted_instanceInfos;
+
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
             goto cleanup;
