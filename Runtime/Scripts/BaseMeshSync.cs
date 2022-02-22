@@ -1606,8 +1606,15 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             rec = new InstanceInfoRecord();
             m_clientInstances.Add(data.path, rec);
         }
-        
-        rec.go = GameObject.Find(path);
+
+        if (this.m_clientObjects.TryGetValue(data.path, out EntityRecord entityRecord))
+        {
+            rec.go = entityRecord.go;
+        }
+        else
+        {
+            Debug.LogWarningFormat("[MeshSync] Could not locate entity record for path {0}", data.path);
+        }
 
         return rec;
     }
