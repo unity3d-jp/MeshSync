@@ -13,7 +13,7 @@ namespace ms {
 class OSceneCache
 {
 public:
-    virtual ~OSceneCache() {}
+    virtual ~OSceneCache() = default;
     virtual bool valid() const = 0;
 
     // note:

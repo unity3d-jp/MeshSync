@@ -13,7 +13,7 @@ namespace ms {
 class ISceneCache
 {
 public:
-    virtual ~ISceneCache() {}
+    virtual ~ISceneCache() = default;
     virtual bool valid() const = 0;
 
     virtual int getPreloadLength() const = 0;
