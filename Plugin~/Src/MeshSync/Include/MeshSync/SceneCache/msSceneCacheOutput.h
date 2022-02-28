@@ -1,11 +1,9 @@
 #pragma once
 
-#include "MeshSync/SceneCache/msSceneCacheSettings.h" //TimeRange
-#include "MeshSync/SceneGraph/msScene.h"
-#include "MeshSync/SceneGraph/msAnimation.h"
+#include "MeshSync/msTimeRange.h" 
+#include "MeshSync/SceneGraph/msScene.h" //ScenePtr
 
 //Forward declarations
-msDeclClassPtr(Scene)
 msDeclClassPtr(SceneCacheOutput)
 
 namespace ms {
