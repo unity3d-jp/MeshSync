@@ -5,7 +5,7 @@
 
 namespace ms {
 
-class OSceneCacheImpl : public OSceneCache
+class OSceneCacheImpl : public SceneCacheOutput
 {
 public:
     using StreamPtr = std::shared_ptr<std::ostream>;

@@ -328,7 +328,7 @@ OSceneCacheFile::StreamPtr OSceneCacheFile::createStream(const char *path)
 }
 
 
-OSceneCache* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSettings& oscs)
+SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSettings& oscs)
 {
     auto ret = new OSceneCacheFile(path, oscs);
     if (ret->valid()) {

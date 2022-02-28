@@ -6,14 +6,14 @@
 
 //Forward declarations
 msDeclClassPtr(Scene)
-msDeclClassPtr(OSceneCache)
+msDeclClassPtr(SceneCacheOutput)
 
 namespace ms {
 
-class OSceneCache
+class SceneCacheOutput
 {
 public:
-    virtual ~OSceneCache() = default;
+    virtual ~SceneCacheOutput() = default;
     virtual bool valid() const = 0;
 
     // note:

@@ -7,7 +7,7 @@
 //Forward declarations
 msDeclClassPtr(Scene)
 msDeclClassPtr(ISceneCache)
-msDeclClassPtr(OSceneCache)
+msDeclClassPtr(SceneCacheOutput)
 
 namespace ms {
 
@@ -71,7 +71,7 @@ struct ISceneCacheSettingsBase
 struct ISceneCacheSettings : ISceneCacheSettingsBase, SceneImportSettings {};
 
 OSceneCachePtr OpenOSceneCacheFile(const char *path, const OSceneCacheSettings& oscs = OSceneCacheSettings());
-OSceneCache* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSettings& oscs = OSceneCacheSettings());
+SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSettings& oscs = OSceneCacheSettings());
 
 ISceneCachePtr OpenISceneCacheFile(const char *path, const ISceneCacheSettings& iscs = ISceneCacheSettings());
 ISceneCache* OpenISceneCacheFileRaw(const char *path, const ISceneCacheSettings& iscs = ISceneCacheSettings());
