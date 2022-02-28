@@ -3012,6 +3012,7 @@ internal struct SceneCacheData {
     [DllImport(Lib.name)]
     static extern SceneData msISceneCacheGetSceneByTime(IntPtr self, float time, bool lerp);
 
+    //[TODO-sin: 2022-2-28] Rename
     [DllImport(Lib.name)]
     static extern void msISceneCacheRefesh(IntPtr self);
 
