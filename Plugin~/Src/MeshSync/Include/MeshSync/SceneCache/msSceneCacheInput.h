@@ -2,7 +2,7 @@
 
 #include "MeshSync/msTimeRange.h" 
 #include "MeshSync/SceneGraph/msScene.h"
-#include "MeshSync/SceneGraph/msAnimation.h"
+#include "MeshSync/SceneGraph/msAnimation.h" //AnimationCurvePtr
 
 //Forward declarations
 msDeclClassPtr(Scene)
