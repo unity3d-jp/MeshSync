@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "MeshSync/SceneCache/msSceneCache.h"
+#include "MeshSync/SceneCache/msSceneCacheOutput.h"
 #include "msSceneCacheImpl.h"
 
 namespace ms {
