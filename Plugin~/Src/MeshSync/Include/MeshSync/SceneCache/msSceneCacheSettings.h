@@ -3,7 +3,8 @@
 #include "MeshSync/SceneCache/msSceneCacheEncoding.h"
 #include "MeshSync/SceneCache/msSceneCacheEncoderSettings.h"
 
-#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneCache/msSceneCacheInput.h"
+#include "MeshSync/SceneCache/msSceneCacheOutput.h"
 #include "MeshSync/SceneGraph/msSceneImportSettings.h"
 
 //Forward declarations
