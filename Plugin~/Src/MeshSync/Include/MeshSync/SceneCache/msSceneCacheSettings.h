@@ -7,7 +7,6 @@
 #include "MeshSync/SceneGraph/msSceneImportSettings.h"
 
 //Forward declarations
-msDeclClassPtr(Scene)
 msDeclClassPtr(SceneCacheInput)
 msDeclClassPtr(SceneCacheOutput)
 
