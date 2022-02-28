@@ -6,7 +6,7 @@
 
 //Forward declarations
 msDeclClassPtr(Scene)
-msDeclClassPtr(ISceneCache)
+msDeclClassPtr(SceneCacheInput)
 msDeclClassPtr(SceneCacheOutput)
 
 namespace ms {
