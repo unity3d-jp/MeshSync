@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MeshSync/SceneCache/msSceneCacheEncoding.h"
+
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msSceneImportSettings.h"
 #include "MeshSync/SceneGraph/msAnimation.h"
@@ -10,12 +12,6 @@ msDeclClassPtr(SceneCacheInput)
 msDeclClassPtr(SceneCacheOutput)
 
 namespace ms {
-
-enum class SceneCacheEncoding
-{
-    Plain,
-    ZSTD,
-};
 
 union SceneCacheEncoderSettings
 {
