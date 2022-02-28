@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MeshSync/SceneCache/msSceneCacheSettings.h" //TimeRange
+#include "MeshSync/msTimeRange.h" 
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msAnimation.h"
 

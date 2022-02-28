@@ -19,12 +19,6 @@ union SceneCacheEncoderSettings
     } zstd;
 };
 
-struct TimeRange
-{
-    float start = 0.0f;
-    float end = 0.0f;
-};
-
 struct OSceneCacheSettingsBase
 {
     // serialized in cache file
