@@ -70,11 +70,11 @@ struct ISceneCacheSettingsBase
 };
 struct ISceneCacheSettings : ISceneCacheSettingsBase, SceneImportSettings {};
 
+//[TODO-sin: 2022-2-28] Move these functions to the appropriate classes
 SceneCacheOutputPtr OpenOSceneCacheFile(const char *path, const OSceneCacheSettings& oscs = OSceneCacheSettings());
 SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSettings& oscs = OSceneCacheSettings());
-
-ISceneCachePtr OpenISceneCacheFile(const char *path, const ISceneCacheSettings& iscs = ISceneCacheSettings());
-ISceneCache* OpenISceneCacheFileRaw(const char *path, const ISceneCacheSettings& iscs = ISceneCacheSettings());
+SceneCacheInputPtr OpenISceneCacheFile(const char *path, const ISceneCacheSettings& iscs = ISceneCacheSettings());
+SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const ISceneCacheSettings& iscs = ISceneCacheSettings());
 
 std::tuple<int, int> GetZSTDCompressionLevelRange();
 int ClampZSTDCompressionLevel(int v);
