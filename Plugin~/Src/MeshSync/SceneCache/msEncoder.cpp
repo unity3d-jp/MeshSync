@@ -34,21 +34,6 @@ BufferEncoderPtr CreatePlainEncoder() { return std::make_shared<PlainBufferEncod
 
 //----------------------------------------------------------------------------------------------------------------------
 
-std::tuple<int, int> GetZSTDCompressionLevelRange()
-{
-    return{ ZSTD_minCLevel(), ZSTD_maxCLevel() };
-}
-
-int ClampZSTDCompressionLevel(int v)
-{
-    return mu::clamp(v, 0, ZSTD_maxCLevel());
-}
-
-int GetZSTDDefaultCompressionLevel()
-{
-    return ZSTD_CLEVEL_DEFAULT;
-}
-
 class ZSTDBufferEncoder : public BufferEncoder
 {
 public:

@@ -59,8 +59,4 @@ SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSett
 SceneCacheInputPtr OpenISceneCacheFile(const char *path, const ISceneCacheSettings& iscs = ISceneCacheSettings());
 SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const ISceneCacheSettings& iscs = ISceneCacheSettings());
 
-std::tuple<int, int> GetZSTDCompressionLevelRange();
-int ClampZSTDCompressionLevel(int v);
-int GetZSTDDefaultCompressionLevel();
-
 } // namespace ms
