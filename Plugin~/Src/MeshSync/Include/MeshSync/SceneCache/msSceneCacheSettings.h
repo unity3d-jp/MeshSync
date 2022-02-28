@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MeshSync/SceneCache/msSceneCacheEncoding.h"
+#include "MeshSync/SceneCache/msSceneCacheEncoderSettings.h"
 
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msSceneImportSettings.h"
@@ -11,13 +12,6 @@ msDeclClassPtr(SceneCacheInput)
 msDeclClassPtr(SceneCacheOutput)
 
 namespace ms {
-
-union SceneCacheEncoderSettings
-{
-    struct {
-        int compression_level;
-    } zstd;
-};
 
 struct OSceneCacheSettingsBase
 {
