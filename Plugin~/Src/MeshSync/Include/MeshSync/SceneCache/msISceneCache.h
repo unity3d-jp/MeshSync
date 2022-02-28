@@ -6,14 +6,14 @@
 
 //Forward declarations
 msDeclClassPtr(Scene)
-msDeclClassPtr(ISceneCache)
+msDeclClassPtr(SceneCacheInput)
 
 namespace ms {
 
-class ISceneCache
+class SceneCacheInput
 {
 public:
-    virtual ~ISceneCache() = default;
+    virtual ~SceneCacheInput() = default;
     virtual bool valid() const = 0;
 
     virtual int getPreloadLength() const = 0;
