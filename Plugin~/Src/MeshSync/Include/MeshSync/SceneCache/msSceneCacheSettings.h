@@ -4,7 +4,6 @@
 
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msSceneImportSettings.h"
-#include "MeshSync/SceneGraph/msAnimation.h"
 
 //Forward declarations
 msDeclClassPtr(Scene)
