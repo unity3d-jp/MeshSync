@@ -1,11 +1,10 @@
 #pragma once
 
 #include "MeshSync/msTimeRange.h" 
-#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msScene.h"     //ScenePtr
 #include "MeshSync/SceneGraph/msAnimation.h" //AnimationCurvePtr
 
 //Forward declarations
-msDeclClassPtr(Scene)
 msDeclClassPtr(SceneCacheInput)
 
 namespace ms {
