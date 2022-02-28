@@ -340,9 +340,9 @@ SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSett
     }
 }
 
-OSceneCachePtr OpenOSceneCacheFile(const char *path, const OSceneCacheSettings& oscs)
+SceneCacheOutputPtr OpenOSceneCacheFile(const char *path, const OSceneCacheSettings& oscs)
 {
-    return OSceneCachePtr(OpenOSceneCacheFileRaw(path, oscs));
+    return SceneCacheOutputPtr(OpenOSceneCacheFileRaw(path, oscs));
 }
 
 } // namespace ms
