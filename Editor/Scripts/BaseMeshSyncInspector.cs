@@ -507,8 +507,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
         boldFoldoutStyle.fontStyle = FontStyle.Bold;
         return boldFoldoutStyle;
     }
-
-    
-}
+    }
 
 } // end namespace

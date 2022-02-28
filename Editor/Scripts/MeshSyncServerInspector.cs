@@ -3,7 +3,8 @@ using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEngine;
 
-namespace Unity.MeshSync.Editor  {
+namespace Unity.MeshSync.Editor
+{
     [CustomEditor(typeof(MeshSyncServer))]
     internal class MeshSyncServerInspector : BaseMeshSyncInspector
     {
@@ -16,19 +17,20 @@ namespace Unity.MeshSync.Editor  {
             m_meshSyncServer = target as MeshSyncServer;
         }
 
-//----------------------------------------------------------------------------------------------------------------------
-    public override void OnInspectorGUI()
-    {
-        Undo.RecordObject(m_meshSyncServer, "MeshSyncServer Update");        
+        //----------------------------------------------------------------------------------------------------------------------
+        public override void OnInspectorGUI()
+        {
+            Undo.RecordObject(m_meshSyncServer, "MeshSyncServer Update");
 
-        EditorGUILayout.Space();
-        DrawServerSettings(m_meshSyncServer);
-        DrawAssetSyncSettings(m_meshSyncServer);
-        DrawImportSettings(m_meshSyncServer);
-        DrawMiscSettings(m_meshSyncServer);
-        DrawDefaultMaterialList(m_meshSyncServer);
-        DrawAnimationTweak(m_meshSyncServer);
-        DrawExportAssets(m_meshSyncServer);
+            EditorGUILayout.Space();
+            DrawServerSettings(m_meshSyncServer);
+            DrawAssetSyncSettings(m_meshSyncServer);
+            DrawImportSettings(m_meshSyncServer);
+            DrawMiscSettings(m_meshSyncServer);
+            DrawDefaultMaterialList(m_meshSyncServer);
+            DrawAnimationTweak(m_meshSyncServer);
+            DrawExportAssets(m_meshSyncServer);
+            DrawSliders(m_meshSyncServer);
 
             if (m_meshSyncServer.m_DCCAsset != null && m_meshSyncServer.m_DCCInterop == null)
             {
@@ -36,7 +38,7 @@ namespace Unity.MeshSync.Editor  {
             }
 
             m_meshSyncServer.m_DCCInterop?.DrawDCCToolVersion(m_meshSyncServer);
-            
+
             DrawPluginVersion();
         }
 
@@ -101,6 +103,47 @@ namespace Unity.MeshSync.Editor  {
                 t.SetRootObject(rootObject);
 
                 EditorGUILayout.Space();
+            }
+        }
+
+        void DrawSliders(BaseMeshSync player)
+        {
+            var records = player.modifiersInfo;
+
+            foreach (var entry in records)
+            {
+                var gameObject = entry.Key;
+                var name = gameObject.name;
+
+                EditorGUILayout.LabelField(name);
+
+                EditorGUI.BeginChangeCheck();
+
+                var modifiers = entry.Value;
+                foreach (var modifier in modifiers)
+                {
+                    var modifierType = modifier.Type;
+                    switch (modifierType)
+                    {
+                        case BaseMeshSync.ModifierInfo.ModifierType.Float:
+                            var floatModifier = modifier as BaseMeshSync.FloatModifierInfo;
+                            floatModifier.Value = EditorGUILayout.Slider(floatModifier.Name, floatModifier.Value, floatModifier.Min, floatModifier.Max);
+                            break;
+                        case BaseMeshSync.ModifierInfo.ModifierType.Int:
+                            var intModifier = modifier as BaseMeshSync.IntModifierInfo;
+                            intModifier.Value = EditorGUILayout.IntSlider(intModifier.Name, intModifier.Value, intModifier.Min, intModifier.Max);
+                            break;
+                        case BaseMeshSync.ModifierInfo.ModifierType.Vector:
+                            var vectorModifier = modifier as BaseMeshSync.VectorModifierInfo;
+                            vectorModifier.Value = EditorGUILayout.Vector3Field(vectorModifier.Name, vectorModifier.Value);
+                            break;
+                    }
+                }
+
+                if (EditorGUI.EndChangeCheck())
+                {
+                    // TODO: Send modifiers back to blender here.
+                }
             }
         }
 
