@@ -2,7 +2,7 @@
 #include "MeshUtils/MeshUtils.h"
 #include "msCoreAPI.h"
 
-#include "MeshSync/SceneCache/msISceneCache.h"
+#include "MeshSync/SceneCache/msSceneCacheInput.h"
 
 using namespace mu;
 
