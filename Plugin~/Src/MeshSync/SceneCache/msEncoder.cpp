@@ -4,7 +4,6 @@
 
 #define ZSTD_STATIC_LINKING_ONLY
 #include <zstd.h>
-#include "MeshSync/SceneCache/msSceneCache.h"
 #pragma comment(lib, "libzstd_static.lib")
 
 namespace ms {

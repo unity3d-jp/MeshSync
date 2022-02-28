@@ -1,5 +1,5 @@
 #pragma once
-#include "MeshSync/SceneCache/msSceneCache.h"
+#include "MeshSync/SceneCache/msISceneCache.h"
 #include "msSceneCacheImpl.h"
 
 namespace ms {
