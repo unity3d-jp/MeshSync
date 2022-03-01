@@ -3,9 +3,6 @@
 #include "MeshSync/SceneCache/msSceneCacheInput.h"
 #include "MeshSync/SceneGraph/msSceneImportSettings.h"
 
-//Forward declarations
-msDeclClassPtr(SceneCacheInput)
-
 namespace ms {
 
 struct ISceneCacheSettingsBase
