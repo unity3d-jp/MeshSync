@@ -20,7 +20,7 @@ SceneCacheWriter::~SceneCacheWriter()
     close();
 }
 
-bool SceneCacheWriter::open(const char *path, const OSceneCacheSettings& oscs)
+bool SceneCacheWriter::open(const char *path, const SceneCacheOutputSettings& oscs)
 {
     m_osc = OpenOSceneCacheFile(path, oscs);
     return m_osc != nullptr;

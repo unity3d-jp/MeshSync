@@ -10,7 +10,7 @@
 
 namespace ms {
 
-OSceneCacheImpl::OSceneCacheImpl(StreamPtr ost, const OSceneCacheSettings& oscs)
+OSceneCacheImpl::OSceneCacheImpl(StreamPtr ost, const SceneCacheOutputSettings& oscs)
 {
     m_ost = ost;
     m_oscs = oscs;
@@ -316,7 +316,7 @@ void OSceneCacheImpl::doWrite()
     }
 }
 
-OSceneCacheFile::OSceneCacheFile(const char *path, const OSceneCacheSettings& oscs)
+OSceneCacheFile::OSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs)
     : super(createStream(path), oscs)
 {
 }
@@ -328,7 +328,7 @@ OSceneCacheFile::StreamPtr OSceneCacheFile::createStream(const char *path)
 }
 
 
-SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSettings& oscs)
+SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs)
 {
     auto ret = new OSceneCacheFile(path, oscs);
     if (ret->valid()) {
@@ -340,7 +340,7 @@ SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSett
     }
 }
 
-SceneCacheOutputPtr OpenOSceneCacheFile(const char *path, const OSceneCacheSettings& oscs)
+SceneCacheOutputPtr OpenOSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs)
 {
     return SceneCacheOutputPtr(OpenOSceneCacheFileRaw(path, oscs));
 }

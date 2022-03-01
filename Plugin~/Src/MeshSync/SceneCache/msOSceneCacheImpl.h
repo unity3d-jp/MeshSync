@@ -10,7 +10,7 @@ class OSceneCacheImpl : public SceneCacheOutput
 public:
     using StreamPtr = std::shared_ptr<std::ostream>;
 
-    OSceneCacheImpl(StreamPtr ost, const OSceneCacheSettings& oscs);
+    OSceneCacheImpl(StreamPtr ost, const SceneCacheOutputSettings& oscs);
     ~OSceneCacheImpl() override;
     bool valid() const override;
 
@@ -51,7 +51,7 @@ protected:
     };
 
     StreamPtr m_ost = nullptr;
-    OSceneCacheSettings m_oscs;
+    SceneCacheOutputSettings m_oscs;
 
     std::mutex m_mutex;
     std::list<SceneRecordPtr> m_queue;
@@ -71,7 +71,7 @@ class OSceneCacheFile : public OSceneCacheImpl
 {
 using super = OSceneCacheImpl;
 public:
-    OSceneCacheFile(const char *path, const OSceneCacheSettings& oscs);
+    OSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs);
 
     static StreamPtr createStream(const char *path);
 };
