@@ -1,9 +1,10 @@
 #pragma once
 #include "MeshSync/SceneCache/msSceneCacheInput.h"
+#include "MeshSync/SceneCache/msSceneCacheInputSettings.h"
 #include "msSceneCacheImpl.h"
 
 namespace ms {
-
+   
 class ISceneCacheImpl : public SceneCacheInput
 {
 public:

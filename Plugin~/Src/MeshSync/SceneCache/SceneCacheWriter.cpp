@@ -4,6 +4,7 @@
 #ifndef msRuntime
 
 #include "SceneCache/msOSceneCacheImpl.h"
+#include "MeshSync/SceneCache/msSceneCacheInputSettings.h"
 #include "MeshSync/SceneGraph/msMaterial.h"
 #include "MeshSync/SceneGraph/msTexture.h"
 #include "Utils/EntityUtility.h"
