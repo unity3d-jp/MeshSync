@@ -55,6 +55,14 @@ msAPI ms::Identifier* msDeleteGetInstanceInfo(ms::DeleteMessage* self, int i) {
     return &self->instanceInfos[i];
 }
 
+msAPI int msDeleteGetNumInstanceMeshes(ms::DeleteMessage* self) {
+    return (int)self->instanceMeshes.size();
+}
+
+msAPI ms::Identifier* msDeleteGetInstanceMesh(ms::DeleteMessage* self, int i) {
+    return &self->instanceMeshes[i];
+}
+
 msAPI ms::FenceMessage::FenceType msFenceGetType(ms::FenceMessage *self)
 {
     return self->type;

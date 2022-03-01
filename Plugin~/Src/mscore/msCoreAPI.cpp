@@ -544,10 +544,12 @@ msAPI int msSceneGetNumAssets(const ms::Scene *self) { return (int)self->assets.
 msAPI int msSceneGetNumEntities(const ms::Scene *self) { return (int)self->entities.size(); }
 msAPI int msSceneGetNumConstraints(const ms::Scene *self) { return (int)self->constraints.size(); }
 msAPI int msSceneGetNumInstanceInfos(const ms::Scene* self) { return (int)self->instanceInfos.size();}
+msAPI int msSceneGetNumInstanceMeshes(const ms::Scene* self) { return (int)self->instanceMeshes.size();}
 msAPI ms::Asset* msSceneGetAsset(const ms::Scene *self, int i) { return self->assets[i].get(); }
 msAPI ms::Transform* msSceneGetEntity(const ms::Scene *self, int i) { return self->entities[i].get(); }
 msAPI ms::Constraint* msSceneGetConstraint(const ms::Scene *self, int i) { return self->constraints[i].get(); }
 msAPI ms::InstanceInfo* msSceneGetInstanceInfo(const ms::Scene* self, int i) { return self->instanceInfos[i].get(); }
+msAPI ms::Transform* msSceneGetInstanceMesh(const ms::Scene* self, int i) { return self->instanceMeshes[i].get(); }
 msAPI bool msSceneSubmeshesHaveUniqueMaterial(const ms::Scene *self) { return self->submeshesHaveUniqueMaterial(); }
 msAPI ms::SceneProfileData msSceneGetProfileData(const ms::Scene *self) { return self->profile_data; }
 #pragma endregion
@@ -558,6 +560,8 @@ msAPI int msInstanceInfoPropGetArrayLength(const ms::InstanceInfo* self) { retur
 msAPI void msInstanceInfoCopyTransforms(const ms::InstanceInfo* self, float4x4* dst) {
     memcpy(dst, self->transforms.data(), self->transforms.size() * sizeof(float4x4));
 }
+
+msAPI ms::InstanceInfo::ReferenceType msInstanceInfoGetType(const ms::InstanceInfo* self) { return self->type; };
 #pragma endregion
 
 #pragma region Misc

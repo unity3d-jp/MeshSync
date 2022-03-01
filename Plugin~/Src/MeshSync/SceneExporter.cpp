@@ -25,6 +25,7 @@ void SceneExporter::clear()
     deleted_entities.clear();
     deleted_materials.clear();
     deleted_instanceInfos.clear();
+    deleted_instanceMeshes.clear();
 }
 
 void SceneExporter::add(ScenePtr scene)

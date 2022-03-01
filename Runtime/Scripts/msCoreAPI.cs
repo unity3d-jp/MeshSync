@@ -2905,6 +2905,12 @@ internal struct SceneProfileData {
 
 internal struct InstanceInfoData
 {
+    public enum ReferenceType
+    {
+        EntityPath = 1,
+        MeshPath = 2
+    }
+    
     public IntPtr self;
 
     [DllImport((Lib.name))]
@@ -2915,8 +2921,13 @@ internal struct InstanceInfoData
 
     [DllImport(Lib.name)]
     static extern void msInstanceInfoCopyTransforms(IntPtr self, Matrix4x4[] matrices);
-    
+
+    [DllImport(Lib.name)]
+    static extern ReferenceType msInstanceInfoGetType(IntPtr self);
+
     public string path => Misc.S(msInstanceInfoGetPath(self));
+
+    public ReferenceType type => msInstanceInfoGetType(self);
 
     public int arrayLength => msInstanceInfoPropGetArrayLength(self);
 
@@ -2968,6 +2979,12 @@ internal struct SceneData {
     [DllImport(Lib.name)]
     static extern InstanceInfoData msSceneGetInstanceInfo(IntPtr self, int i);
 
+    [DllImport(Lib.name)]
+    static extern int msSceneGetNumInstanceMeshes(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern TransformData msSceneGetInstanceMesh(IntPtr self, int i);
+
     #endregion
 
     public static implicit operator bool(SceneData v) {
@@ -2989,6 +3006,11 @@ internal struct SceneData {
     public int numInstanceInfos
     {
         get { return msSceneGetNumInstanceInfos(self); }
+    }
+
+    public int numInstanceMeshes
+    {
+        get { return msSceneGetNumInstanceMeshes(self); }
     }
     
     public bool submeshesHaveUniqueMaterial {
@@ -3014,6 +3036,11 @@ internal struct SceneData {
     public InstanceInfoData GetInstanceInfo(int i)
     {
         return msSceneGetInstanceInfo(self, i);
+    }
+
+    public TransformData GetInstanceMesh(int i)
+    {
+        return msSceneGetInstanceMesh(self, i);
     }
 }
 

@@ -2,6 +2,7 @@
 #include "MeshUtils/muMath.h"
 #include "MeshSync/msFoundation.h"
 #include "MeshSync/SceneGraph/msIdentifier.h"
+#include "MeshSync/SceneGraph/msMesh.h"
 
 namespace ms {
 	using namespace std;
@@ -12,8 +13,19 @@ namespace ms {
 
 	public:
 
+		enum ReferenceType {
+			NONE = 0,
+			ENTITY_PATH = 1,
+			MESH_PATH = 2
+		};
+
 		/// <summary>
-		/// /// Path on the hierachy tree to the mesh that it referes to
+		/// The type of mesh reference.
+		/// </summary>
+		ReferenceType type;
+
+		/// <summary>
+		/// /// Path on the hierachy tree to the mesh that the instances refer to.
 		/// /// </summary>
 		string path;
 
@@ -33,6 +45,7 @@ namespace ms {
 		uint64_t hash();
 
 		Identifier getIdentifier();
+
 	};
 	msSerializable(InstanceInfo)
 }
