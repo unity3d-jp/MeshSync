@@ -3,8 +3,10 @@
 #ifndef msRuntime
 
 #include "MeshSync/SceneExporter.h"
+#include "MeshSync/SceneCache/msSceneCacheOutputSettings.h"
 
 namespace ms {
+
 
 class SceneCacheWriter : public SceneExporter
 {
