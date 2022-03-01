@@ -1,34 +1,17 @@
 #pragma once
 
-#include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneCache/msSceneCacheEncoding.h"
+#include "MeshSync/SceneCache/msSceneCacheEncoderSettings.h"
+
+#include "MeshSync/SceneCache/msSceneCacheInput.h"
+#include "MeshSync/SceneCache/msSceneCacheOutput.h"
 #include "MeshSync/SceneGraph/msSceneImportSettings.h"
-#include "MeshSync/SceneGraph/msAnimation.h"
 
 //Forward declarations
-msDeclClassPtr(Scene)
-msDeclClassPtr(ISceneCache)
-msDeclClassPtr(OSceneCache)
+msDeclClassPtr(SceneCacheInput)
+msDeclClassPtr(SceneCacheOutput)
 
 namespace ms {
-
-enum class SceneCacheEncoding
-{
-    Plain,
-    ZSTD,
-};
-
-union SceneCacheEncoderSettings
-{
-    struct {
-        int compression_level;
-    } zstd;
-};
-
-struct TimeRange
-{
-    float start = 0.0f;
-    float end = 0.0f;
-};
 
 struct OSceneCacheSettingsBase
 {
@@ -70,14 +53,10 @@ struct ISceneCacheSettingsBase
 };
 struct ISceneCacheSettings : ISceneCacheSettingsBase, SceneImportSettings {};
 
-OSceneCachePtr OpenOSceneCacheFile(const char *path, const OSceneCacheSettings& oscs = OSceneCacheSettings());
-OSceneCache* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSettings& oscs = OSceneCacheSettings());
-
-ISceneCachePtr OpenISceneCacheFile(const char *path, const ISceneCacheSettings& iscs = ISceneCacheSettings());
-ISceneCache* OpenISceneCacheFileRaw(const char *path, const ISceneCacheSettings& iscs = ISceneCacheSettings());
-
-std::tuple<int, int> GetZSTDCompressionLevelRange();
-int ClampZSTDCompressionLevel(int v);
-int GetZSTDDefaultCompressionLevel();
+//[TODO-sin: 2022-2-28] Move these functions to the appropriate classes
+SceneCacheOutputPtr OpenOSceneCacheFile(const char *path, const OSceneCacheSettings& oscs = OSceneCacheSettings());
+SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSettings& oscs = OSceneCacheSettings());
+SceneCacheInputPtr OpenISceneCacheFile(const char *path, const ISceneCacheSettings& iscs = ISceneCacheSettings());
+SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const ISceneCacheSettings& iscs = ISceneCacheSettings());
 
 } // namespace ms

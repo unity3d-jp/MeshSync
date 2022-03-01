@@ -26,7 +26,7 @@ public:
 private:
     void write();
 
-    OSceneCachePtr m_osc;
+    SceneCacheOutputPtr m_osc;
     std::string m_error_message;
 };
 

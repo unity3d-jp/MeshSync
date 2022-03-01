@@ -1,10 +1,10 @@
 #pragma once
-#include "MeshSync/SceneCache/msSceneCache.h"
+#include "MeshSync/SceneCache/msSceneCacheInput.h"
 #include "msSceneCacheImpl.h"
 
 namespace ms {
 
-class ISceneCacheImpl : public ISceneCache
+class ISceneCacheImpl : public SceneCacheInput
 {
 public:
     using StreamPtr = std::shared_ptr<std::istream>;

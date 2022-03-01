@@ -493,7 +493,7 @@ ISceneCacheFile::StreamPtr ISceneCacheFile::createStream(const char *path, const
 }
 
 
-ISceneCache* OpenISceneCacheFileRaw(const char *path, const ISceneCacheSettings& iscs)
+SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const ISceneCacheSettings& iscs)
 {
     auto ret = new ISceneCacheFile(path, iscs);
     if (ret->valid()) {
@@ -505,9 +505,9 @@ ISceneCache* OpenISceneCacheFileRaw(const char *path, const ISceneCacheSettings&
     }
 }
 
-ISceneCachePtr OpenISceneCacheFile(const char *path, const ISceneCacheSettings& settings)
+SceneCacheInputPtr OpenISceneCacheFile(const char *path, const ISceneCacheSettings& settings)
 {
-    return ISceneCachePtr(OpenISceneCacheFileRaw(path, settings));
+    return SceneCacheInputPtr(OpenISceneCacheFileRaw(path, settings));
 }
 
 } // namespace ms

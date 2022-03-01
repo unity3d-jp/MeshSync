@@ -4,7 +4,6 @@
 
 #define ZSTD_STATIC_LINKING_ONLY
 #include <zstd.h>
-#include "MeshSync/SceneCache/msSceneCache.h"
 #pragma comment(lib, "libzstd_static.lib")
 
 namespace ms {
@@ -34,21 +33,6 @@ void PlainBufferEncoder::decode(RawVector<char>& dst, const RawVector<char>& src
 BufferEncoderPtr CreatePlainEncoder() { return std::make_shared<PlainBufferEncoder>(); }
 
 //----------------------------------------------------------------------------------------------------------------------
-
-std::tuple<int, int> GetZSTDCompressionLevelRange()
-{
-    return{ ZSTD_minCLevel(), ZSTD_maxCLevel() };
-}
-
-int ClampZSTDCompressionLevel(int v)
-{
-    return mu::clamp(v, 0, ZSTD_maxCLevel());
-}
-
-int GetZSTDDefaultCompressionLevel()
-{
-    return ZSTD_CLEVEL_DEFAULT;
-}
 
 class ZSTDBufferEncoder : public BufferEncoder
 {

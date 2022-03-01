@@ -328,7 +328,7 @@ OSceneCacheFile::StreamPtr OSceneCacheFile::createStream(const char *path)
 }
 
 
-OSceneCache* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSettings& oscs)
+SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSettings& oscs)
 {
     auto ret = new OSceneCacheFile(path, oscs);
     if (ret->valid()) {
@@ -340,9 +340,9 @@ OSceneCache* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSettings&
     }
 }
 
-OSceneCachePtr OpenOSceneCacheFile(const char *path, const OSceneCacheSettings& oscs)
+SceneCacheOutputPtr OpenOSceneCacheFile(const char *path, const OSceneCacheSettings& oscs)
 {
-    return OSceneCachePtr(OpenOSceneCacheFileRaw(path, oscs));
+    return SceneCacheOutputPtr(OpenOSceneCacheFileRaw(path, oscs));
 }
 
 } // namespace ms
