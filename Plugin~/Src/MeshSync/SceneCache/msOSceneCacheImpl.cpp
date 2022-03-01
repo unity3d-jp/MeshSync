@@ -327,22 +327,4 @@ OSceneCacheFile::StreamPtr OSceneCacheFile::createStream(const char *path)
     return *ret ? ret : nullptr;
 }
 
-
-SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs)
-{
-    auto ret = new OSceneCacheFile(path, oscs);
-    if (ret->valid()) {
-        return ret;
-    }
-    else {
-        delete ret;
-        return nullptr;
-    }
-}
-
-SceneCacheOutputPtr OpenOSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs)
-{
-    return SceneCacheOutputPtr(OpenOSceneCacheFileRaw(path, oscs));
-}
-
 } // namespace ms

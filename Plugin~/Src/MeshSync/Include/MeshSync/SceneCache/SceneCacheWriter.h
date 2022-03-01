@@ -26,6 +26,9 @@ public:
     void kick() override;
 
 private:
+    static SceneCacheOutputPtr OpenOSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs);
+    static SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs);
+
     void write();
 
     SceneCacheOutputPtr m_osc;

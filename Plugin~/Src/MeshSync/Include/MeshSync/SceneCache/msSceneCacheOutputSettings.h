@@ -33,7 +33,4 @@ struct SceneCacheOutputSettings : OSceneCacheSettingsBase, SceneImportSettings
     int max_scene_segments = 8;
 };
 
-SceneCacheOutputPtr OpenOSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs = SceneCacheOutputSettings());
-SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs = SceneCacheOutputSettings());
-
 } // namespace ms
