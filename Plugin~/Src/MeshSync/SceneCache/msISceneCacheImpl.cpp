@@ -9,7 +9,7 @@
 
 namespace ms {
 
-ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs)
+ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const SceneCacheInputSettings& iscs)
 {
     m_ist = ist;
     m_iscs = iscs;
@@ -477,12 +477,12 @@ const AnimationCurvePtr ISceneCacheImpl::getFrameCurve(int base_frame)
 }
 
 
-ISceneCacheFile::ISceneCacheFile(const char *path, const ISceneCacheSettings& iscs)
+ISceneCacheFile::ISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs)
     : super(createStream(path, iscs), iscs)
 {
 }
 
-ISceneCacheFile::StreamPtr ISceneCacheFile::createStream(const char *path, const ISceneCacheSettings& /*iscs*/)
+ISceneCacheFile::StreamPtr ISceneCacheFile::createStream(const char *path, const SceneCacheInputSettings& /*iscs*/)
 {
     if (!path)
         return nullptr;
@@ -493,7 +493,7 @@ ISceneCacheFile::StreamPtr ISceneCacheFile::createStream(const char *path, const
 }
 
 
-SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const ISceneCacheSettings& iscs)
+SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const SceneCacheInputSettings& iscs)
 {
     auto ret = new ISceneCacheFile(path, iscs);
     if (ret->valid()) {
@@ -505,7 +505,7 @@ SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const ISceneCacheSetti
     }
 }
 
-SceneCacheInputPtr OpenISceneCacheFile(const char *path, const ISceneCacheSettings& settings)
+SceneCacheInputPtr OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& settings)
 {
     return SceneCacheInputPtr(OpenISceneCacheFileRaw(path, settings));
 }

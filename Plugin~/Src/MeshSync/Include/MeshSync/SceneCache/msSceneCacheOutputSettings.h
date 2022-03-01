@@ -26,14 +26,14 @@ struct OSceneCacheSettingsBase
     OSceneCacheSettingsBase();
 };
 
-struct OSceneCacheSettings : OSceneCacheSettingsBase, SceneImportSettings
+struct SceneCacheOutputSettings : OSceneCacheSettingsBase, SceneImportSettings
 {
     // *not* serialized in cache file
     int max_queue_size = 4;
     int max_scene_segments = 8;
 };
 
-SceneCacheOutputPtr OpenOSceneCacheFile(const char *path, const OSceneCacheSettings& oscs = OSceneCacheSettings());
-SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const OSceneCacheSettings& oscs = OSceneCacheSettings());
+SceneCacheOutputPtr OpenOSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs = SceneCacheOutputSettings());
+SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs = SceneCacheOutputSettings());
 
 } // namespace ms

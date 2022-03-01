@@ -10,7 +10,7 @@ class ISceneCacheImpl : public SceneCacheInput
 public:
     using StreamPtr = std::shared_ptr<std::istream>;
 
-    ISceneCacheImpl(StreamPtr ist, const ISceneCacheSettings& iscs);
+    ISceneCacheImpl(StreamPtr ist, const SceneCacheInputSettings& iscs);
     ~ISceneCacheImpl() override;
     bool valid() const override;
 
@@ -66,7 +66,7 @@ protected:
     };
 
     StreamPtr m_ist;
-    ISceneCacheSettings m_iscs;
+    SceneCacheInputSettings m_iscs;
     CacheFileHeader m_header;
     BufferEncoderPtr m_encoder;
 
@@ -87,9 +87,9 @@ class ISceneCacheFile : public ISceneCacheImpl
 {
 using super = ISceneCacheImpl;
 public:
-    ISceneCacheFile(const char *path, const ISceneCacheSettings& iscs);
+    ISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs);
 
-    static StreamPtr createStream(const char *path, const ISceneCacheSettings& iscs);
+    static StreamPtr createStream(const char *path, const SceneCacheInputSettings& iscs);
 };
 
 } // namespace ms

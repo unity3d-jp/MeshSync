@@ -17,7 +17,7 @@ public:
     SceneCacheWriter();
     ~SceneCacheWriter() override;
 
-    bool open(const char *path, const OSceneCacheSettings& oscs = OSceneCacheSettings());
+    bool open(const char *path, const SceneCacheOutputSettings& oscs = SceneCacheOutputSettings());
     void close();
     bool valid() const;
 
