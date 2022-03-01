@@ -1,8 +1,5 @@
 #pragma once
 
-#include "MeshSync/SceneCache/msSceneCacheEncoding.h"
-#include "MeshSync/SceneCache/msSceneCacheEncoderSettings.h"
-
 #include "MeshSync/SceneCache/msSceneCacheInput.h"
 #include "MeshSync/SceneGraph/msSceneImportSettings.h"
 
