@@ -108,7 +108,7 @@ void SceneCacheWriter::write()
 
 SceneCacheOutput* SceneCacheWriter::OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs)
 {
-    auto ret = new OSceneCacheFile(path, oscs);
+    OSceneCacheFile* ret = new OSceneCacheFile(path, oscs);
     if (ret->valid()) {
         return ret;
     }
