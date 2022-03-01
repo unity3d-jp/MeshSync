@@ -3,7 +3,7 @@
 #include "msCoreAPI.h"
 
 #include "MeshSync/SceneCache/msSceneCacheInput.h"
-#include "MeshSync/SceneCache/msSceneCacheSettings.h"
+#include "MeshSync/SceneCache/msSceneCacheInputSettings.h"
 
 using namespace mu;
 
