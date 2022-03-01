@@ -18,9 +18,9 @@ struct ISceneCacheSettingsBase
     ISceneCacheSettingsBase();
     void setPreloadLength(int n);
 };
-struct ISceneCacheSettings : ISceneCacheSettingsBase, SceneImportSettings {};
+struct SceneCacheInputSettings : ISceneCacheSettingsBase, SceneImportSettings {};
 
-SceneCacheInputPtr OpenISceneCacheFile(const char *path, const ISceneCacheSettings& iscs = ISceneCacheSettings());
-SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const ISceneCacheSettings& iscs = ISceneCacheSettings());
+SceneCacheInputPtr OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs = SceneCacheInputSettings());
+SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const SceneCacheInputSettings& iscs = SceneCacheInputSettings());
 
 } // namespace ms
