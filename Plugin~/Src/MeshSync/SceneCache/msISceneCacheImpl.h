@@ -19,8 +19,8 @@ public:
     ~SceneCacheInputFile() override;
     bool valid() const override;
 
-    static SceneCacheInputPtr OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs);
-    static SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const SceneCacheInputSettings& iscs);
+    static SceneCacheInputPtr Open(const char *path, const SceneCacheInputSettings& iscs);
+    static SceneCacheInput* OpenRaw(const char *path, const SceneCacheInputSettings& iscs);
 
     int getPreloadLength() const override;
     void setPreloadLength(int v) override;
