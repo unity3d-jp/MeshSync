@@ -506,8 +506,8 @@ SceneCacheInput* ISceneCacheFile::OpenISceneCacheFileRaw(const char *path, const
 
 //----------------------------------------------------------------------------------------------------------------------
 
-SceneCacheInputPtr ISceneCacheFile::OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& settings) {
-    return SceneCacheInputPtr(OpenISceneCacheFileRaw(path, settings));
+SceneCacheInputPtr ISceneCacheFile::OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs) {
+    return SceneCacheInputPtr(OpenISceneCacheFileRaw(path, iscs));
 }
 
 } // namespace ms
