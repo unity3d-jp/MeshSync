@@ -492,22 +492,22 @@ ISceneCacheFile::StreamPtr ISceneCacheFile::createStream(const char *path, const
     return *ret ? ret : nullptr;
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 
-SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const SceneCacheInputSettings& iscs)
-{
-    auto ret = new ISceneCacheFile(path, iscs);
+SceneCacheInput* ISceneCacheFile::OpenISceneCacheFileRaw(const char *path, const SceneCacheInputSettings& iscs) {
+    ISceneCacheFile* ret = new ISceneCacheFile(path, iscs);
     if (ret->valid()) {
         return ret;
-    }
-    else {
+    } else {
         delete ret;
         return nullptr;
     }
 }
 
-SceneCacheInputPtr OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& settings)
-{
-    return SceneCacheInputPtr(OpenISceneCacheFileRaw(path, settings));
+//----------------------------------------------------------------------------------------------------------------------
+
+SceneCacheInputPtr ISceneCacheFile::OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs) {
+    return SceneCacheInputPtr(OpenISceneCacheFileRaw(path, iscs));
 }
 
 } // namespace ms

@@ -1,4 +1,7 @@
 #pragma once
+#include <future>
+#include <deque>
+
 #include "MeshSync/SceneCache/msSceneCacheInput.h"
 #include "MeshSync/SceneCache/msSceneCacheInputSettings.h"
 #include "msSceneCacheImpl.h"
@@ -90,6 +93,11 @@ public:
     ISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs);
 
     static StreamPtr createStream(const char *path, const SceneCacheInputSettings& iscs);
+
+
+    static SceneCacheInputPtr OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs);
+    static SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const SceneCacheInputSettings& iscs);
+
 };
 
 } // namespace ms
