@@ -15,7 +15,7 @@ using namespace mu;
 msAPI ms::SceneCacheInput* msISceneCacheOpen(const char *path)
 {
     ms::SceneCacheInputSettings ps;
-    return ms::ISceneCacheFile::OpenISceneCacheFileRaw(path, ps);
+    return ms::ISceneCacheImpl::OpenISceneCacheFileRaw(path, ps);
 }
 msAPI void msISceneCacheClose(ms::SceneCacheInput *self)
 {
