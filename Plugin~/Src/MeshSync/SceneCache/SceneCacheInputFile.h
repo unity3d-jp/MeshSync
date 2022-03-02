@@ -13,6 +13,7 @@ class SceneCacheInputFile : public SceneCacheInput
 public:
     using StreamPtr = std::shared_ptr<std::istream>;
 
+    SceneCacheInputFile(StreamPtr ist, const SceneCacheInputSettings& iscs);
     SceneCacheInputFile(const char *path, const SceneCacheInputSettings& iscs);
 
     ~SceneCacheInputFile() override;
@@ -47,7 +48,6 @@ protected:
     void popHistory();
 
 private:
-    void Init(StreamPtr ist, const SceneCacheInputSettings& iscs);
     static StreamPtr createStream(const char *path, const SceneCacheInputSettings& iscs);
 
     struct SceneSegment
