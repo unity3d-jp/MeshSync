@@ -20,7 +20,5 @@ struct ISceneCacheSettingsBase
 };
 struct SceneCacheInputSettings : ISceneCacheSettingsBase, SceneImportSettings {};
 
-SceneCacheInputPtr OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs = SceneCacheInputSettings());
-SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const SceneCacheInputSettings& iscs = SceneCacheInputSettings());
 
 } // namespace ms
