@@ -87,6 +87,13 @@ ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const SceneCacheInputSettings& i
     //preloadAll(); // for test
 }
 
+ISceneCacheImpl::ISceneCacheImpl(const char *path, const SceneCacheInputSettings& iscs)
+    : ISceneCacheImpl(createStream(path, iscs), iscs)
+{
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 ISceneCacheImpl::~ISceneCacheImpl()
 {
     waitAllPreloads();
@@ -477,12 +484,7 @@ const AnimationCurvePtr ISceneCacheImpl::getFrameCurve(int base_frame)
 }
 
 
-ISceneCacheFile::ISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs)
-    : super(createStream(path, iscs), iscs)
-{
-}
-
-ISceneCacheFile::StreamPtr ISceneCacheFile::createStream(const char *path, const SceneCacheInputSettings& /*iscs*/)
+ISceneCacheImpl::StreamPtr ISceneCacheImpl::createStream(const char *path, const SceneCacheInputSettings& /*iscs*/)
 {
     if (!path)
         return nullptr;
@@ -494,8 +496,8 @@ ISceneCacheFile::StreamPtr ISceneCacheFile::createStream(const char *path, const
 
 //----------------------------------------------------------------------------------------------------------------------
 
-SceneCacheInput* ISceneCacheFile::OpenISceneCacheFileRaw(const char *path, const SceneCacheInputSettings& iscs) {
-    ISceneCacheFile* ret = new ISceneCacheFile(path, iscs);
+SceneCacheInput* ISceneCacheImpl::OpenISceneCacheFileRaw(const char *path, const SceneCacheInputSettings& iscs) {
+    ISceneCacheImpl* ret = new ISceneCacheImpl(path, iscs);
     if (ret->valid()) {
         return ret;
     } else {
@@ -506,7 +508,7 @@ SceneCacheInput* ISceneCacheFile::OpenISceneCacheFileRaw(const char *path, const
 
 //----------------------------------------------------------------------------------------------------------------------
 
-SceneCacheInputPtr ISceneCacheFile::OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs) {
+SceneCacheInputPtr ISceneCacheImpl::OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs) {
     return SceneCacheInputPtr(OpenISceneCacheFileRaw(path, iscs));
 }
 

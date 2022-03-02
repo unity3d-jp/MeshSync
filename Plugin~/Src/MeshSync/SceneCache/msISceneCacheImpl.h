@@ -14,6 +14,8 @@ public:
     using StreamPtr = std::shared_ptr<std::istream>;
 
     ISceneCacheImpl(StreamPtr ist, const SceneCacheInputSettings& iscs);
+    ISceneCacheImpl(const char *path, const SceneCacheInputSettings& iscs);
+
     ~ISceneCacheImpl() override;
     bool valid() const override;
 
@@ -83,15 +85,8 @@ protected:
     int m_last_index = -1, m_last_index2 = -1;
     ScenePtr m_base_scene, m_last_scene, m_last_diff;
     std::deque<size_t> m_history;
-};
 
-
-class ISceneCacheFile : public ISceneCacheImpl
-{
-using super = ISceneCacheImpl;
 public:
-    ISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs);
-
     static StreamPtr createStream(const char *path, const SceneCacheInputSettings& iscs);
 
 
