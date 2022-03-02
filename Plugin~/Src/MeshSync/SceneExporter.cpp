@@ -20,9 +20,11 @@ void SceneExporter::clear()
     transforms.clear();
     geometries.clear();
     animations.clear();
+    instanceInfos.clear();
 
     deleted_entities.clear();
     deleted_materials.clear();
+    deleted_instanceInfos.clear();
 }
 
 void SceneExporter::add(ScenePtr scene)

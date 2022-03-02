@@ -108,36 +108,32 @@ namespace Unity.MeshSync.Editor
 
         void DrawSliders(BaseMeshSync player)
         {
-            var records = player.modifiersInfo;
-
-            foreach (var entry in records)
+            var style = EditorStyles.foldout;
+            style.fontStyle = FontStyle.Bold;
+            player.foldBlenderSettings = EditorGUILayout.Foldout(player.foldBlenderSettings, "Blender properties", true, style);
+            if (!player.foldBlenderSettings)
             {
-                var gameObject = entry.Key;
-                var name = gameObject.name;
+                return;
+            }
 
-                EditorGUILayout.LabelField(name);
+            var properties = player.propertyInfos;
 
+            foreach (var prop in properties)
+            {
                 EditorGUI.BeginChangeCheck();
 
-                var modifiers = entry.Value;
-                foreach (var modifier in modifiers)
+                switch (prop.type)
                 {
-                    var modifierType = modifier.Type;
-                    switch (modifierType)
-                    {
-                        case BaseMeshSync.ModifierInfo.ModifierType.Float:
-                            var floatModifier = modifier as BaseMeshSync.FloatModifierInfo;
-                            floatModifier.Value = EditorGUILayout.Slider(floatModifier.Name, floatModifier.Value, floatModifier.Min, floatModifier.Max);
+                    case PropertyInfoData.Type.Int:
+                        {
+                            EditorGUILayout.Slider(prop.name, prop.ValueInt, prop.min, prop.max);
                             break;
-                        case BaseMeshSync.ModifierInfo.ModifierType.Int:
-                            var intModifier = modifier as BaseMeshSync.IntModifierInfo;
-                            intModifier.Value = EditorGUILayout.IntSlider(intModifier.Name, intModifier.Value, intModifier.Min, intModifier.Max);
+                        }
+                    case PropertyInfoData.Type.Float:
+                        {
+                            EditorGUILayout.Slider(prop.name, prop.ValueFloat, prop.min, prop.max);
                             break;
-                        case BaseMeshSync.ModifierInfo.ModifierType.Vector:
-                            var vectorModifier = modifier as BaseMeshSync.VectorModifierInfo;
-                            vectorModifier.Value = EditorGUILayout.Vector3Field(vectorModifier.Name, vectorModifier.Value);
-                            break;
-                    }
+                        }
                 }
 
                 if (EditorGUI.EndChangeCheck())

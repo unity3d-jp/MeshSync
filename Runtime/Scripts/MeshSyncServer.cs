@@ -106,8 +106,6 @@ public class MeshSyncServer : BaseMeshSync {
         
         m_handler = HandleRecvMessage;
 
-        //SetInstanceRendererActive(m_config.SyncInstances);
-
 #if UNITY_EDITOR
         EditorApplication.update += PollServerEvents;
 #endif
@@ -232,6 +230,11 @@ public class MeshSyncServer : BaseMeshSync {
     }
 
     void OnRecvDelete(DeleteMessage mes) {
+        
+        int numInstanceInfos = mes.numInstanceInfos;
+        for (int i = 0; i < numInstanceInfos; ++i)
+            EraseInstanceInfoRecord(mes.GetInstanceInfo(i));
+        
         int numEntities = mes.numEntities;
         for (int i = 0; i < numEntities; ++i)
             EraseEntityRecord(mes.GetEntity(i));
@@ -491,9 +494,9 @@ public class MeshSyncServer : BaseMeshSync {
     {
         m_instanceRenderer.Draw();
     }
-     
+    
     void LateUpdate() {
-    PollServerEvents();
+        PollServerEvents();
     }
     #endregion
 
@@ -519,8 +522,8 @@ public class MeshSyncServer : BaseMeshSync {
     public GameObject m_DCCAsset;
       
 #endif
-
-        [SerializeField] private MeshSyncServerConfig m_config;
+    
+    [SerializeField] private MeshSyncServerConfig m_config;
 
 #pragma warning disable 414
     //Renamed in 0.10.x-preview

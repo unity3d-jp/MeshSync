@@ -1346,9 +1346,6 @@ internal struct VariantData {
     [DllImport(Lib.name)]
     static extern void msVariantCopyData(IntPtr self, Matrix4x4[] dst);
 
-    [DllImport(Lib.name)]
-    static extern void msVariantCopyData(IntPtr self, byte[] dst);
-    
     #endregion
 
     public static explicit operator bool(VariantData v) {
@@ -1381,18 +1378,6 @@ internal struct VariantData {
         get { return msVariantGetArrayLength(self); }
     }
 
-    public string stringValue
-    {
-        get
-        {
-            var bytes = new byte[arrayLength];
-            
-            msVariantCopyData(self, bytes);
-            var decoded = System.Text.Encoding.Default.GetString(bytes);
-            return decoded;
-        }
-    }
-    
     public int intValue {
         get {
             int ret = 0;
@@ -2916,7 +2901,112 @@ internal struct SceneProfileData {
     public float lerpTime; // in ms
 };
 
-internal struct SceneData {
+#region InstanceInfo
+
+internal struct InstanceInfoData
+{
+    public IntPtr self;
+
+    [DllImport((Lib.name))]
+    static extern IntPtr msInstanceInfoGetPath(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern int msInstanceInfoPropGetArrayLength(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern void msInstanceInfoCopyTransforms(IntPtr self, Matrix4x4[] matrices);
+    
+    public string path => Misc.S(msInstanceInfoGetPath(self));
+
+    public int arrayLength => msInstanceInfoPropGetArrayLength(self);
+
+    public Matrix4x4[] transforms
+    {
+        get
+        {
+            var mat = new Matrix4x4[arrayLength];
+            msInstanceInfoCopyTransforms(self, mat);
+            return mat;
+        }
+    }
+}
+
+    #endregion
+
+
+
+    #region PropertyInfo
+
+    internal struct PropertyInfoData
+    {
+        #region DLL Imports
+        [DllImport((Lib.name))]
+        static extern IntPtr msPropertyInfoGetPath(IntPtr self);
+
+        [DllImport((Lib.name))]
+        static extern IntPtr msPropertyInfoGetName(IntPtr self);
+
+        [DllImport(Lib.name)]
+        static extern int msPropertyInfoGetType(IntPtr self);
+
+        [DllImport(Lib.name)]
+        static extern void msPropertyInfoCopyData(IntPtr self, ref int dst);
+
+        [DllImport(Lib.name)]
+        static extern void msPropertyInfoCopyData(IntPtr self, ref float dst);
+
+        [DllImport(Lib.name)]
+        static extern float msPropertyInfoGetMin(IntPtr self);
+
+        [DllImport(Lib.name)]
+        static extern float msPropertyInfoGetMax(IntPtr self);
+        #endregion DLL Imports
+
+        public enum Type
+        {
+            Int,
+            Float,
+            Vector
+        };
+
+        public IntPtr self;
+
+        public float min => msPropertyInfoGetMin(self);
+        public float max => msPropertyInfoGetMax(self);
+
+        public string path => Misc.S(msPropertyInfoGetPath(self));
+
+        public string name => Misc.S(msPropertyInfoGetName(self));
+
+        public Type type => (Type)msPropertyInfoGetType(self);
+
+        public int ValueInt
+        {
+            get
+            {
+                int r = 0;
+                msPropertyInfoCopyData(self, ref r);
+                return r;
+            }
+        }
+
+        public float ValueFloat
+        {
+            get
+            {
+                float r = 0;
+                msPropertyInfoCopyData(self, ref r);
+                return r;
+            }
+        }
+    }
+
+    #endregion
+
+
+
+
+    internal struct SceneData {
     #region internal
 
     public IntPtr self;
@@ -2945,9 +3035,21 @@ internal struct SceneData {
     [DllImport(Lib.name)]
     static extern SceneProfileData msSceneGetProfileData(IntPtr self);
 
+    [DllImport(Lib.name)]
+    static extern int msSceneGetNumInstanceInfos(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern int msSceneGetNumPropertyInfos(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern InstanceInfoData msSceneGetInstanceInfo(IntPtr self, int i);
+
+    [DllImport(Lib.name)]
+    static extern PropertyInfoData msSceneGetPropertyInfo(IntPtr self, int i);
+
     #endregion
 
-    public static implicit operator bool(SceneData v) {
+        public static implicit operator bool(SceneData v) {
         return v.self != IntPtr.Zero;
     }
 
@@ -2963,8 +3065,18 @@ internal struct SceneData {
         get { return msSceneGetNumConstraints(self); }
     }
 
+    public int numInstanceInfos
+    {
+        get { return msSceneGetNumInstanceInfos(self); }
+    }
+
+    public int numPropertyInfos
+    {
+        get { return msSceneGetNumPropertyInfos(self); }
+    }
+
     public bool submeshesHaveUniqueMaterial {
-        get { return msSceneSubmeshesHaveUniqueMaterial(self) != 0; }
+    get { return msSceneSubmeshesHaveUniqueMaterial(self) != 0; }
     }
 
     public SceneProfileData profileData {
@@ -2982,7 +3094,17 @@ internal struct SceneData {
     public ConstraintData GetConstraint(int i) {
         return msSceneGetConstraint(self, i);
     }
-}
+
+    public InstanceInfoData GetInstanceInfo(int i)
+    {
+        return msSceneGetInstanceInfo(self, i);
+    }
+
+    public PropertyInfoData GetPropertyInfo(int i)
+    {
+        return msSceneGetPropertyInfo(self, i);
+    }
+    }
 
 #endregion Scene
 

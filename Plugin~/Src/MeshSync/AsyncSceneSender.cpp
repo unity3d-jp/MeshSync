@@ -152,6 +152,39 @@ void AsyncSceneSender::send()
         };
     }
 
+    // instance infos
+    if (!instanceInfos.empty()) {
+        for (auto& instanceInfo : instanceInfos) {
+            ms::SetMessage mes;
+            setup_message(mes);
+            mes.scene->settings = scene_settings;
+            mes.scene->instanceInfos = { instanceInfo };
+            succeeded = succeeded && client.send(mes);
+            if (!succeeded)
+                goto cleanup;
+        }
+    }
+
+    // property infos
+    if (!propertyInfos.empty()) {
+        ms::SetMessage mes;
+        setup_message(mes);
+        mes.scene->settings = scene_settings;
+        mes.scene->propertyInfos = propertyInfos;
+        succeeded = succeeded && client.send(mes);
+        if (!succeeded)
+            goto cleanup;
+       /* for (auto& propertyInfo : propertyInfos) {
+            ms::SetMessage mes;
+            setup_message(mes);
+            mes.scene->settings = scene_settings;
+            mes.scene->propertyInfos = { propertyInfo };
+            succeeded = succeeded && client.send(mes);
+            if (!succeeded)
+                goto cleanup;
+        }*/
+    }
+
     // animations
     if (!animations.empty()) {
         ms::SetMessage mes;
@@ -164,11 +197,13 @@ void AsyncSceneSender::send()
     }
 
     // deleted
-    if (!deleted_entities.empty() || !deleted_materials.empty()) {
+    if (!deleted_entities.empty() || !deleted_materials.empty() || !deleted_instanceInfos.empty()) {
         ms::DeleteMessage mes;
         setup_message(mes);
         mes.entities = deleted_entities;
         mes.materials = deleted_materials;
+        mes.instanceInfos = deleted_instanceInfos;
+
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
             goto cleanup;
