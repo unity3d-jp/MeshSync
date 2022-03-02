@@ -78,7 +78,7 @@ int SceneCacheInputFile::GetFrameByTimeV(float time) const
 void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& iscs)
 {
     m_ist = createStream(path, iscs);
-    m_iscs = iscs;
+    SetSettings(iscs);
     if (!m_ist || !(*m_ist))
         return;
 
@@ -291,7 +291,8 @@ ScenePtr SceneCacheInputFile::getByIndexImpl(size_t scene_index, bool wait_prelo
             }
 
             // do import
-            ret->import(m_iscs.sis);
+            const SceneCacheInputSettings& settings = GetSettings();
+            ret->import(settings.sis);
 
             prof.setup_time = timer.elapsed();
         }
@@ -315,7 +316,8 @@ ScenePtr SceneCacheInputFile::postprocess(ScenePtr& sp, size_t scene_index)
 
     // m_last_scene and m_last_diff keep reference counts and keep scenes alive.
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
-    if (m_last_scene && (m_iscs.enable_diff && m_header.oscs.strip_unchanged)) {
+    const SceneCacheInputSettings& settings = GetSettings();
+    if (m_last_scene && (settings.enable_diff && m_header.oscs.strip_unchanged)) {
         msProfileScope("SceneCacheInputFile: [%d] diff", (int)scene_index);
         m_last_diff = Scene::create();
         m_last_diff->diff(*sp, *m_last_scene);

@@ -77,7 +77,6 @@ private:
     };
 
     StreamPtr m_ist;
-    SceneCacheInputSettings m_iscs;
     CacheFileHeader m_header;
     BufferEncoderPtr m_encoder;
 
