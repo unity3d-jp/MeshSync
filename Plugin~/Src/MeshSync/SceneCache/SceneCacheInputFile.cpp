@@ -443,7 +443,7 @@ void SceneCacheInputFile::RefreshV()
     m_last_diff = nullptr;
 }
 
-void SceneCacheInputFile::PreloadV(int frame)
+void SceneCacheInputFile::PreloadV(const int frame)
 {
     // kick preload
     if (m_iscs.preload_length > 0 && frame + 1 < m_records.size()) {
