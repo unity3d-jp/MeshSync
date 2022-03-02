@@ -85,10 +85,10 @@ TestCase(Test_SceneCacheRead)
     if (!isc)
         return;
 
-    const auto range = isc->getTimeRange();
+    const ms::TimeRange range = isc->GetTimeRangeV();
     const float step = 0.1f;
     for (float t = range.start; t < range.end; t += step) {
-        const ms::ScenePtr scene = isc->getByTime(t, true);
+        const ms::ScenePtr scene = isc->GetByTimeV(t, true);
         if (!scene)
             break;
         TestUtility::Send(scene);

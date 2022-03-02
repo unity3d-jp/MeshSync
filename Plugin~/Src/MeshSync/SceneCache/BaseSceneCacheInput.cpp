@@ -10,17 +10,17 @@ BaseSceneCacheInput::BaseSceneCacheInput()
     
 }
 
-int BaseSceneCacheInput::getPreloadLength() const {
+int BaseSceneCacheInput::GetPreloadLength() const {
     return m_iscs.preload_length;
 }
 
-void BaseSceneCacheInput::setPreloadLength(int v) {
+void BaseSceneCacheInput::SetPreloadLength(int v) {
     m_iscs.setPreloadLength(v);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-const AnimationCurvePtr BaseSceneCacheInput::getTimeCurve() const {
+const AnimationCurvePtr BaseSceneCacheInput::GetTimeCurve() const {
     return m_time_curve;
 }
 

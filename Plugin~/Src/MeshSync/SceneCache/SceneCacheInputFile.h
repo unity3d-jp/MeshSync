@@ -21,20 +21,20 @@ public:
     static SceneCacheInputFilePtr Open(const char *path, const SceneCacheInputSettings& iscs);
     static SceneCacheInputFile*   OpenRaw(const char *path, const SceneCacheInputSettings& iscs);
 
-    bool valid() const;
+    bool IsValid() const;
+    void PreloadAll();
 
-    float getSampleRate() const override;
-    size_t getNumScenes() const override;
-    TimeRange getTimeRange() const override;
-    float getTime(int i) const override;
-    int getFrameByTime(float time) const override;
-    ScenePtr getByIndex(size_t i) override;
-    ScenePtr getByTime(float t, bool lerp) override;
-    void refresh() override;
-    void preload(int f) override;
-    void preloadAll();
-
-    const AnimationCurvePtr getFrameCurve(int base_frame) override;
+    //Virtual
+    float GetSampleRateV() const override;
+    size_t GetNumScenesV() const override;
+    TimeRange GetTimeRangeV() const override;
+    float GetTimeV(int i) const override;
+    int GetFrameByTimeV(float time) const override;
+    ScenePtr GetByIndexV(size_t i) override;
+    ScenePtr GetByTimeV(float time, bool interpolation) override;
+    void RefreshV() override;
+    void PreloadV(int frame) override;
+    const AnimationCurvePtr GetFrameCurveV(int baseFrame) override;
 
 
 private:
