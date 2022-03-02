@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Unity.MeshSync.Editor
 {
     [CustomEditor(typeof(MeshSyncServer))]
-    internal class MeshSyncServerInspector : BaseMeshSyncInspector
+    internal partial class MeshSyncServerInspector : BaseMeshSyncInspector
     {
 
 
@@ -104,44 +104,7 @@ namespace Unity.MeshSync.Editor
 
                 EditorGUILayout.Space();
             }
-        }
-
-        void DrawSliders(BaseMeshSync player)
-        {
-            var style = EditorStyles.foldout;
-            style.fontStyle = FontStyle.Bold;
-            player.foldBlenderSettings = EditorGUILayout.Foldout(player.foldBlenderSettings, "Blender properties", true, style);
-            if (!player.foldBlenderSettings)
-            {
-                return;
-            }
-
-            var properties = player.propertyInfos;
-
-            foreach (var prop in properties)
-            {
-                EditorGUI.BeginChangeCheck();
-
-                switch (prop.type)
-                {
-                    case PropertyInfoData.Type.Int:
-                        {
-                            EditorGUILayout.Slider(prop.name, prop.ValueInt, prop.min, prop.max);
-                            break;
-                        }
-                    case PropertyInfoData.Type.Float:
-                        {
-                            EditorGUILayout.Slider(prop.name, prop.ValueFloat, prop.min, prop.max);
-                            break;
-                        }
-                }
-
-                if (EditorGUI.EndChangeCheck())
-                {
-                    // TODO: Send modifiers back to blender here.
-                }
-            }
-        }
+        }  
 
         public static IDCCLauncher GetLauncherForAsset(GameObject asset)
         {

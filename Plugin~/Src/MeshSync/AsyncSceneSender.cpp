@@ -188,15 +188,6 @@ void AsyncSceneSender::send()
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
             goto cleanup;
-       /* for (auto& propertyInfo : propertyInfos) {
-            ms::SetMessage mes;
-            setup_message(mes);
-            mes.scene->settings = scene_settings;
-            mes.scene->propertyInfos = { propertyInfo };
-            succeeded = succeeded && client.send(mes);
-            if (!succeeded)
-                goto cleanup;
-        }*/
     }
 
     // animations

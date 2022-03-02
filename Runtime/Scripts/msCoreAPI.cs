@@ -2991,10 +2991,17 @@ internal struct InstanceInfoData
 
         public Type type => (Type)msPropertyInfoGetType(self);
 
+        public object newValue;
+
         public int ValueInt
         {
             get
             {
+                if (newValue is int x)
+                {
+                    return x;
+                }
+
                 int r = 0;
                 msPropertyInfoCopyData(self, ref r);
                 return r;
@@ -3005,6 +3012,11 @@ internal struct InstanceInfoData
         {
             get
             {
+                if (newValue is float x)
+                {
+                    return x;
+                }
+
                 float r = 0;
                 msPropertyInfoCopyData(self, ref r);
                 return r;
@@ -3012,9 +3024,7 @@ internal struct InstanceInfoData
         }
     }
 
-    #endregion
-
-
+    #endregion PropertyInfo
 
 
     internal struct SceneData {
@@ -3131,7 +3141,7 @@ internal struct InstanceInfoData
     {
         return msSceneGetInstanceMesh(self, i);
     }
-    }
+}
 
 #endregion Scene
 
