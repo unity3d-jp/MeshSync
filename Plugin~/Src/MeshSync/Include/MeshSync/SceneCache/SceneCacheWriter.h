@@ -3,10 +3,11 @@
 #ifndef msRuntime
 
 #include "MeshSync/SceneExporter.h"
-#include "MeshSync/SceneCache/msSceneCacheOutputSettings.h"
+#include "MeshSync/SceneCache/msSceneCacheOutput.h"
 
 namespace ms {
 
+class SceneCacheOutputSettings;
 
 class SceneCacheWriter : public SceneExporter
 {
@@ -17,7 +18,7 @@ public:
     SceneCacheWriter();
     ~SceneCacheWriter() override;
 
-    bool open(const char *path, const SceneCacheOutputSettings& oscs = SceneCacheOutputSettings());
+    bool open(const char *path, const SceneCacheOutputSettings& oscs);
     void close();
     bool valid() const;
 
@@ -26,6 +27,9 @@ public:
     void kick() override;
 
 private:
+    static SceneCacheOutputPtr OpenOSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs);
+    static SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs);
+
     void write();
 
     SceneCacheOutputPtr m_osc;
