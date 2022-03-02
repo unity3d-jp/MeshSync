@@ -14,7 +14,7 @@ struct ISceneCacheSettingsBase
 
     ISceneCacheSettingsBase();
 };
-struct SceneCacheInputSettings : ISceneCacheSettingsBase, SceneImportSettings{
+struct SceneCacheInputSettings : ISceneCacheSettingsBase {
 public:
     SceneCacheInputSettings() = default;
     explicit SceneCacheInputSettings(const SceneCacheInputSettings&) = default;
