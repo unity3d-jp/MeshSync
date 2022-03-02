@@ -7,7 +7,7 @@
 
 namespace ms {
 
-class SceneCacheOutputSettings;
+struct SceneCacheOutputSettings;
 
 class SceneCacheWriter : public SceneExporter
 {

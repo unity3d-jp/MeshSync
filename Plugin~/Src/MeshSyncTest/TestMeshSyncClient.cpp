@@ -10,24 +10,26 @@
 #include "MeshSync/SceneGraph/msPoints.h"
 #include "MeshSync/SceneGraph/msScene.h"
 
-#include "MeshSync/SceneCache/msSceneCache.h"
-#include "MeshSync/SceneCache/msSceneCacheSettings.h"
+#include "MeshSync/SceneCache/msSceneCacheInputSettings.h"
+#include "MeshSync/SceneCache/msSceneCacheOutputSettings.h"
+#include "MeshSync/SceneCache/msSceneCacheEncoding.h"
 #include "MeshSync/SceneCache/SceneCacheWriter.h" //SceneCacheWriter
 
 #include "MeshSync/Utility/msMaterialExt.h"     //standardMaterial
+#include "MeshSync/SceneCache/msISceneCacheImpl.h"
 
 using namespace mu;
 
 TestCase(Test_SendMesh) {
-    ms::OSceneCacheSettings c0;
+    ms::SceneCacheOutputSettings c0;
     c0.strip_unchanged = 0;
     c0.flatten_hierarchy = 0;
     c0.encoding = ms::SceneCacheEncoding::Plain;
 
-    ms::OSceneCacheSettings c1;
+    ms::SceneCacheOutputSettings c1;
     c1.flatten_hierarchy = 0;
 
-    ms::OSceneCacheSettings c2;
+    ms::SceneCacheOutputSettings c2;
     c2.flatten_hierarchy = 0;
     c2.encoder_settings.zstd.compression_level = 100;
 
@@ -76,9 +78,9 @@ TestCase(Test_SendMesh) {
 
 TestCase(Test_SceneCacheRead)
 {
-    ms::ISceneCacheSettings iscs;
+    ms::SceneCacheInputSettings iscs;
     iscs.enable_diff = false;
-    ms::ISceneCachePtr isc = ms::OpenISceneCacheFile("wave_c2.sc", iscs);
+    ms::SceneCacheInputPtr isc = ms::ISceneCacheFile::OpenISceneCacheFile("wave_c2.sc", iscs);
     Expect(isc);
     if (!isc)
         return;
