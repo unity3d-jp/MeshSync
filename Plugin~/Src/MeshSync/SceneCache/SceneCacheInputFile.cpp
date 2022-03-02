@@ -471,17 +471,17 @@ void SceneCacheInputFile::popHistory()
     }
 }
 
-const AnimationCurvePtr SceneCacheInputFile::GetFrameCurveV(int base_frame)
+const AnimationCurvePtr SceneCacheInputFile::GetFrameCurveV(const int baseFrame)
 {
     // generate on the fly
-    size_t scene_count = m_records.size();
+    const size_t sceneCount = m_records.size();
     m_frame_curve = AnimationCurve::create();
     TAnimationCurve<int> curve(m_frame_curve);
-    curve.resize(scene_count);
-    for (size_t i = 0; i < scene_count; ++i) {
+    curve.resize(sceneCount);
+    for (size_t i = 0; i < sceneCount; ++i) {
         TAnimationCurve<int>::key_t& kvp = curve[i];
         kvp.time = m_records[i].time;
-        kvp.value = (int)i + base_frame;
+        kvp.value = static_cast<int>(i) + baseFrame;
     }
     return m_frame_curve;
 }
