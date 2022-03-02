@@ -21,8 +21,10 @@ public:
     static SceneCacheInputFilePtr Open(const char *path, const SceneCacheInputSettings& iscs);
     static SceneCacheInputFile*   OpenRaw(const char *path, const SceneCacheInputSettings& iscs);
 
-    bool valid() const;
+    bool IsValid() const;
+    void PreloadAll();
 
+    //Virtual
     float GetSampleRateV() const override;
     size_t GetNumScenesV() const override;
     TimeRange GetTimeRangeV() const override;
@@ -33,9 +35,6 @@ public:
     void RefreshV() override;
     void PreloadV(int frame) override;
     const AnimationCurvePtr GetFrameCurveV(int baseFrame) override;
-
-    void PreloadAll();
-
 
 
 private:

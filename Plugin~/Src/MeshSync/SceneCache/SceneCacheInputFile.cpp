@@ -9,7 +9,7 @@ SceneCacheInputFile::~SceneCacheInputFile() {
     waitAllPreloads();
 }
 
-bool SceneCacheInputFile::valid() const {
+bool SceneCacheInputFile::IsValid() const {
     return !m_records.empty();
 }
 
@@ -22,7 +22,7 @@ SceneCacheInputFilePtr SceneCacheInputFile::Open(const char *path, const SceneCa
 SceneCacheInputFile* SceneCacheInputFile::OpenRaw(const char *path, const SceneCacheInputSettings& iscs) {
     SceneCacheInputFile* ret = new SceneCacheInputFile();
     ret->Init(path, iscs);
-    if (ret->valid()) {
+    if (ret->IsValid()) {
         return ret;
     } else {
         delete ret;
@@ -38,21 +38,21 @@ float SceneCacheInputFile::GetSampleRateV() const {
 
 size_t SceneCacheInputFile::GetNumScenesV() const
 {
-    if (!valid())
+    if (!IsValid())
         return 0;
     return m_records.size();
 }
 
 TimeRange SceneCacheInputFile::GetTimeRangeV() const
 {
-    if (!valid())
+    if (!IsValid())
         return {0.0f, 0.0f};
     return { m_records.front().time, m_records.back().time };
 }
 
 float SceneCacheInputFile::GetTimeV(int i) const
 {
-    if (!valid())
+    if (!IsValid())
         return 0.0f;
     if (i <= 0)
         return m_records.front().time;
@@ -63,7 +63,7 @@ float SceneCacheInputFile::GetTimeV(int i) const
 
 int SceneCacheInputFile::GetFrameByTimeV(float time) const
 {
-    if (!valid())
+    if (!IsValid())
         return 0;
     auto p = std::lower_bound(m_records.begin(), m_records.end(), time, [](auto& a, float t) { return a.time < t; });
     if (p != m_records.end()) {
@@ -168,7 +168,7 @@ SceneCacheInputFile::StreamPtr SceneCacheInputFile::createStream(const char *pat
 // thread safe
 ScenePtr SceneCacheInputFile::getByIndexImpl(size_t scene_index, bool wait_preload)
 {
-    if (!valid() || scene_index >= m_records.size())
+    if (!IsValid() || scene_index >= m_records.size())
         return nullptr;
 
     SceneRecord& rec = m_records[scene_index];
@@ -356,7 +356,7 @@ void SceneCacheInputFile::waitAllPreloads()
 
 ScenePtr SceneCacheInputFile::GetByIndexV(size_t i)
 {
-    if (!valid())
+    if (!IsValid())
         return nullptr;
 
     ScenePtr ret = getByIndexImpl(i);
@@ -365,7 +365,7 @@ ScenePtr SceneCacheInputFile::GetByIndexV(size_t i)
 
 ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
 {
-    if (!valid())
+    if (!IsValid())
         return nullptr;
     if (time == m_last_time) {
         if (m_last_diff)
