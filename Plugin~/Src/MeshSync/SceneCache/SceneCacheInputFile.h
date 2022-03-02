@@ -14,13 +14,11 @@ public:
     using StreamPtr = std::shared_ptr<std::istream>;
 
     ~SceneCacheInputFile() override;
-    bool valid() const override;
 
     static SceneCacheInputPtr Open(const char *path, const SceneCacheInputSettings& iscs);
     static SceneCacheInput* OpenRaw(const char *path, const SceneCacheInputSettings& iscs);
 
-    int getPreloadLength() const override;
-    void setPreloadLength(int v) override;
+    bool valid() const;
 
     float getSampleRate() const override;
     size_t getNumScenes() const override;
@@ -31,13 +29,16 @@ public:
     ScenePtr getByTime(float t, bool lerp) override;
     void refresh() override;
     void preload(int f) override;
-    void preloadAll() override;
+    void preloadAll();
 
-    const AnimationCurvePtr getTimeCurve() const override;
     const AnimationCurvePtr getFrameCurve(int base_frame) override;
 
 
-protected:
+private:
+    SceneCacheInputFile() = default;
+    void Init(const char *path, const SceneCacheInputSettings& iscs);
+    static StreamPtr createStream(const char *path, const SceneCacheInputSettings& iscs);
+
     ScenePtr getByIndexImpl(size_t i, bool wait_preload = true);
     ScenePtr postprocess(ScenePtr& sp, size_t scene_index);
     bool kickPreload(size_t i);
@@ -45,10 +46,6 @@ protected:
     void popHistory();
 
 private:
-    SceneCacheInputFile() = default;
-    void Init(const char *path, const SceneCacheInputSettings& iscs);
-    static StreamPtr createStream(const char *path, const SceneCacheInputSettings& iscs);
-
     struct SceneSegment
     {
         RawVector<char> encoded_buf;
@@ -84,7 +81,6 @@ private:
     std::mutex m_mutex;
     std::vector<SceneRecord> m_records;
     RawVector<CacheFileEntityMeta> m_entity_meta;
-    AnimationCurvePtr m_time_curve;
     AnimationCurvePtr m_frame_curve;
 
     float m_last_time = -1.0f;

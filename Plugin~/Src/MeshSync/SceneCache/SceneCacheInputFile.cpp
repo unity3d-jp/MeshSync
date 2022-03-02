@@ -32,16 +32,6 @@ SceneCacheInput* SceneCacheInputFile::OpenRaw(const char *path, const SceneCache
 
 //----------------------------------------------------------------------------------------------------------------------
 
-int SceneCacheInputFile::getPreloadLength() const
-{
-    return m_iscs.preload_length;
-}
-
-void SceneCacheInputFile::setPreloadLength(int v)
-{
-    m_iscs.setPreloadLength(v);
-}
-
 float SceneCacheInputFile::getSampleRate() const
 {
     return m_header.oscs.sample_rate;
@@ -83,6 +73,98 @@ int SceneCacheInputFile::getFrameByTime(float time) const
     }
     return 0;
 }
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& iscs)
+{
+    m_ist = createStream(path, iscs);
+    m_iscs = iscs;
+    if (!m_ist || !(*m_ist))
+        return;
+
+    m_header.version = 0;
+    m_ist->read((char*)&m_header, sizeof(m_header));
+    if (m_header.version != msProtocolVersion)
+        return;
+
+    m_encoder = CreateEncoder(m_header.oscs.encoding, m_header.oscs.encoder_settings);
+    if (!m_encoder) {
+        // encoder associated with m_settings.encoding is not available
+        return;
+    }
+
+    m_records.reserve(512);
+    for (;;) {
+        // enumerate all scene headers
+        CacheFileSceneHeader sh;
+        m_ist->read((char*)&sh, sizeof(sh));
+        if (sh.buffer_count == 0) {
+            // empty header is a terminator
+            break;
+        }
+        else {
+            SceneRecord rec;
+            rec.time = sh.time;
+
+            rec.buffer_sizes.resize_discard(sh.buffer_count);
+            m_ist->read((char*)rec.buffer_sizes.data(), rec.buffer_sizes.size_in_byte());
+            rec.pos = (uint64_t)m_ist->tellg();
+
+            rec.buffer_size_total = 0;
+            for (auto s : rec.buffer_sizes)
+                rec.buffer_size_total += s;
+
+            rec.segments.resize(sh.buffer_count);
+
+            m_records.emplace_back(std::move(rec));
+            m_ist->seekg(rec.buffer_size_total, std::ios::cur);
+        }
+    }
+
+    const size_t scene_count = m_records.size();
+    std::sort(m_records.begin(), m_records.end(), [](auto& a, auto& b) { return a.time < b.time; });
+
+    TAnimationCurve<float> curve(GetTimeCurve());
+    curve.resize(scene_count);
+    for (size_t i = 0; i < scene_count; ++i) {
+        auto& kvp = curve[i];
+        kvp.time = kvp.value = m_records[i].time;
+    }
+
+    {
+        RawVector<char> encoded_buf, tmp_buf;
+
+        // read meta data
+        CacheFileMetaHeader mh;
+        m_ist->read((char*)&mh, sizeof(mh));
+
+        encoded_buf.resize((size_t)mh.size);
+        m_ist->read(encoded_buf.data(), encoded_buf.size());
+
+        m_encoder->decode(tmp_buf, encoded_buf);
+        m_entity_meta.resize_discard(tmp_buf.size() / sizeof(CacheFileEntityMeta));
+        tmp_buf.copy_to((char*)m_entity_meta.data());
+    }
+
+    if (m_header.oscs.strip_unchanged)
+        m_base_scene = getByIndexImpl(0);
+
+    //preloadAll(); // for test
+}
+
+
+SceneCacheInputFile::StreamPtr SceneCacheInputFile::createStream(const char *path, const SceneCacheInputSettings& /*iscs*/)
+{
+    if (!path)
+        return nullptr;
+
+    auto ret = std::make_shared<std::ifstream>();
+    ret->open(path, std::ios::binary);
+    return *ret ? ret : nullptr;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 
 // thread safe
 ScenePtr SceneCacheInputFile::getByIndexImpl(size_t scene_index, bool wait_preload)
@@ -390,11 +472,6 @@ void SceneCacheInputFile::popHistory()
     }
 }
 
-const AnimationCurvePtr SceneCacheInputFile::getTimeCurve() const
-{
-    return m_time_curve;
-}
-
 const AnimationCurvePtr SceneCacheInputFile::getFrameCurve(int base_frame)
 {
     // generate on the fly
@@ -408,97 +485,6 @@ const AnimationCurvePtr SceneCacheInputFile::getFrameCurve(int base_frame)
         kvp.value = (int)i + base_frame;
     }
     return m_frame_curve;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& iscs)
-{
-    m_ist = createStream(path, iscs);
-    m_iscs = iscs;
-    if (!m_ist || !(*m_ist))
-        return;
-
-    m_header.version = 0;
-    m_ist->read((char*)&m_header, sizeof(m_header));
-    if (m_header.version != msProtocolVersion)
-        return;
-
-    m_encoder = CreateEncoder(m_header.oscs.encoding, m_header.oscs.encoder_settings);
-    if (!m_encoder) {
-        // encoder associated with m_settings.encoding is not available
-        return;
-    }
-
-    m_records.reserve(512);
-    for (;;) {
-        // enumerate all scene headers
-        CacheFileSceneHeader sh;
-        m_ist->read((char*)&sh, sizeof(sh));
-        if (sh.buffer_count == 0) {
-            // empty header is a terminator
-            break;
-        }
-        else {
-            SceneRecord rec;
-            rec.time = sh.time;
-
-            rec.buffer_sizes.resize_discard(sh.buffer_count);
-            m_ist->read((char*)rec.buffer_sizes.data(), rec.buffer_sizes.size_in_byte());
-            rec.pos = (uint64_t)m_ist->tellg();
-
-            rec.buffer_size_total = 0;
-            for (auto s : rec.buffer_sizes)
-                rec.buffer_size_total += s;
-
-            rec.segments.resize(sh.buffer_count);
-
-            m_records.emplace_back(std::move(rec));
-            m_ist->seekg(rec.buffer_size_total, std::ios::cur);
-        }
-    }
-
-    const size_t scene_count = m_records.size();
-    std::sort(m_records.begin(), m_records.end(), [](auto& a, auto& b) { return a.time < b.time; });
-
-    m_time_curve = AnimationCurve::create();
-    TAnimationCurve<float> curve(m_time_curve);
-    curve.resize(scene_count);
-    for (size_t i = 0; i < scene_count; ++i) {
-        auto& kvp = curve[i];
-        kvp.time = kvp.value = m_records[i].time;
-    }
-
-    {
-        RawVector<char> encoded_buf, tmp_buf;
-
-        // read meta data
-        CacheFileMetaHeader mh;
-        m_ist->read((char*)&mh, sizeof(mh));
-
-        encoded_buf.resize((size_t)mh.size);
-        m_ist->read(encoded_buf.data(), encoded_buf.size());
-
-        m_encoder->decode(tmp_buf, encoded_buf);
-        m_entity_meta.resize_discard(tmp_buf.size() / sizeof(CacheFileEntityMeta));
-        tmp_buf.copy_to((char*)m_entity_meta.data());
-    }
-
-    if (m_header.oscs.strip_unchanged)
-        m_base_scene = getByIndexImpl(0);
-
-    //preloadAll(); // for test
-}
-
-
-SceneCacheInputFile::StreamPtr SceneCacheInputFile::createStream(const char *path, const SceneCacheInputSettings& /*iscs*/)
-{
-    if (!path)
-        return nullptr;
-
-    auto ret = std::make_shared<std::ifstream>();
-    ret->open(path, std::ios::binary);
-    return *ret ? ret : nullptr;
 }
 
 } // namespace ms

@@ -3,6 +3,7 @@
 #include "MeshSync/msTimeRange.h" 
 #include "MeshSync/SceneGraph/msScene.h"     //ScenePtr
 #include "MeshSync/SceneGraph/msAnimation.h" //AnimationCurvePtr
+#include "MeshSync/SceneCache/msSceneCacheInputSettings.h"
 
 //Forward declarations
 msDeclClassPtr(SceneCacheInput)
@@ -12,11 +13,12 @@ namespace ms {
 class SceneCacheInput
 {
 public:
+    SceneCacheInput();
     virtual ~SceneCacheInput() = default;
-    virtual bool valid() const = 0;
 
-    virtual int getPreloadLength() const = 0;
-    virtual void setPreloadLength(int v) = 0;
+    int getPreloadLength() const;
+    void setPreloadLength(int v);
+    const AnimationCurvePtr getTimeCurve() const;
 
     virtual float getSampleRate() const = 0;
     virtual TimeRange getTimeRange() const = 0;
@@ -26,11 +28,16 @@ public:
     virtual ScenePtr getByIndex(size_t i) = 0;
     virtual ScenePtr getByTime(float t, bool lerp) = 0;
     virtual void refresh() = 0;
-    virtual void preload(int f) = 0;
-    virtual void preloadAll() = 0;
-
-    virtual const AnimationCurvePtr getTimeCurve() const = 0;
+    virtual void preload(int f) = 0;    
     virtual const AnimationCurvePtr getFrameCurve(int base_frame) = 0;
+
+protected:
+
+    AnimationCurvePtr GetTimeCurve();
+
+private:
+    SceneCacheInputSettings m_iscs;
+    AnimationCurvePtr m_time_curve;
 };
 
 } // namespace ms
