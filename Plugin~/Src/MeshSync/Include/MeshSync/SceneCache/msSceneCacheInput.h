@@ -31,7 +31,6 @@ public:
 
     virtual const AnimationCurvePtr getTimeCurve() const = 0;
     virtual const AnimationCurvePtr getFrameCurve(int base_frame) = 0;
-
 };
 
 } // namespace ms
