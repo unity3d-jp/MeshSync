@@ -16,9 +16,9 @@ public:
     BaseSceneCacheInput();
     virtual ~BaseSceneCacheInput() = default;
 
-    int getPreloadLength() const;
-    void setPreloadLength(int v);
-    const AnimationCurvePtr getTimeCurve() const;
+    int GetPreloadLength() const;
+    void SetPreloadLength(int v);
+    const AnimationCurvePtr GetTimeCurve() const;
 
     virtual float getSampleRate() const = 0;
     virtual TimeRange getTimeRange() const = 0;
