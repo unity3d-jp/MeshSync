@@ -9,8 +9,6 @@ msDeclClassPtr(SceneCacheInput)
 
 namespace ms {
 
-class SceneCacheInputSettings;
-
 class SceneCacheInput
 {
 public:
