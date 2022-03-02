@@ -2,11 +2,14 @@
 #include <future>
 #include <deque>
 
-#include "MeshSync/SceneCache/msSceneCacheInput.h"
+#include "MeshSync/SceneCache/msBaseSceneCacheInput.h"
 #include "MeshSync/SceneCache/msSceneCacheInputSettings.h"
 #include "msSceneCacheImpl.h"
 
+msDeclClassPtr(SceneCacheInputFile)
+
 namespace ms {
+
    
 class SceneCacheInputFile : public BaseSceneCacheInput
 {
@@ -15,8 +18,8 @@ public:
 
     ~SceneCacheInputFile() override;
 
-    static SceneCacheInputPtr Open(const char *path, const SceneCacheInputSettings& iscs);
-    static BaseSceneCacheInput* OpenRaw(const char *path, const SceneCacheInputSettings& iscs);
+    static SceneCacheInputFilePtr Open(const char *path, const SceneCacheInputSettings& iscs);
+    static SceneCacheInputFile*   OpenRaw(const char *path, const SceneCacheInputSettings& iscs);
 
     bool valid() const;
 

@@ -80,7 +80,7 @@ TestCase(Test_SceneCacheRead)
 {
     ms::SceneCacheInputSettings iscs;
     iscs.enable_diff = false;
-    ms::SceneCacheInputPtr isc = ms::SceneCacheInputFile::Open("wave_c2.sc", iscs);
+    ms::SceneCacheInputFilePtr isc = ms::SceneCacheInputFile::Open("wave_c2.sc", iscs);
     Expect(isc);
     if (!isc)
         return;
