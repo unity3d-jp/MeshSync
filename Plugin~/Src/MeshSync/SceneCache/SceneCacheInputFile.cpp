@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "msISceneCacheImpl.h"
+#include "SceneCacheInputFile.h"
 #include "Utils/msDebug.h"
 
 #include "MeshUtils/muLog.h"
@@ -9,7 +9,7 @@
 
 namespace ms {
 
-ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const SceneCacheInputSettings& iscs)
+SceneCacheInputFile::SceneCacheInputFile(StreamPtr ist, const SceneCacheInputSettings& iscs)
 {
     m_ist = ist;
     m_iscs = iscs;
@@ -87,47 +87,69 @@ ISceneCacheImpl::ISceneCacheImpl(StreamPtr ist, const SceneCacheInputSettings& i
     //preloadAll(); // for test
 }
 
-ISceneCacheImpl::~ISceneCacheImpl()
+SceneCacheInputFile::SceneCacheInputFile(const char *path, const SceneCacheInputSettings& iscs)
+    : SceneCacheInputFile(createStream(path, iscs), iscs)
 {
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+SceneCacheInputFile::~SceneCacheInputFile() {
     waitAllPreloads();
 }
 
-bool ISceneCacheImpl::valid() const
-{
+bool SceneCacheInputFile::valid() const {
     return !m_records.empty();
 }
 
+//----------------------------------------------------------------------------------------------------------------------
 
-int ISceneCacheImpl::getPreloadLength() const
+SceneCacheInputPtr SceneCacheInputFile::Open(const char *path, const SceneCacheInputSettings& iscs) {
+    return SceneCacheInputPtr(OpenRaw(path, iscs));
+}
+
+SceneCacheInput* SceneCacheInputFile::OpenRaw(const char *path, const SceneCacheInputSettings& iscs) {
+    SceneCacheInputFile* ret = new SceneCacheInputFile(path, iscs);
+    if (ret->valid()) {
+        return ret;
+    } else {
+        delete ret;
+        return nullptr;
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+int SceneCacheInputFile::getPreloadLength() const
 {
     return m_iscs.preload_length;
 }
 
-void ISceneCacheImpl::setPreloadLength(int v)
+void SceneCacheInputFile::setPreloadLength(int v)
 {
     m_iscs.setPreloadLength(v);
 }
 
-float ISceneCacheImpl::getSampleRate() const
+float SceneCacheInputFile::getSampleRate() const
 {
     return m_header.oscs.sample_rate;
 }
 
-size_t ISceneCacheImpl::getNumScenes() const
+size_t SceneCacheInputFile::getNumScenes() const
 {
     if (!valid())
         return 0;
     return m_records.size();
 }
 
-TimeRange ISceneCacheImpl::getTimeRange() const
+TimeRange SceneCacheInputFile::getTimeRange() const
 {
     if (!valid())
         return {0.0f, 0.0f};
     return { m_records.front().time, m_records.back().time };
 }
 
-float ISceneCacheImpl::getTime(int i) const
+float SceneCacheInputFile::getTime(int i) const
 {
     if (!valid())
         return 0.0f;
@@ -138,7 +160,7 @@ float ISceneCacheImpl::getTime(int i) const
     return m_records[i].time;
 }
 
-int ISceneCacheImpl::getFrameByTime(float time) const
+int SceneCacheInputFile::getFrameByTime(float time) const
 {
     if (!valid())
         return 0;
@@ -151,7 +173,7 @@ int ISceneCacheImpl::getFrameByTime(float time) const
 }
 
 // thread safe
-ScenePtr ISceneCacheImpl::getByIndexImpl(size_t scene_index, bool wait_preload)
+ScenePtr SceneCacheInputFile::getByIndexImpl(size_t scene_index, bool wait_preload)
 {
     if (!valid() || scene_index >= m_records.size())
         return nullptr;
@@ -183,7 +205,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t scene_index, bool wait_preload)
 
             // read segment
             {
-                msProfileScope("ISceneCacheImpl: [%d] read segment (%d - %u byte)", (int)scene_index, (int)si, (uint32_t)seg.size_encoded);
+                msProfileScope("SceneCacheInputFile: [%d] read segment (%d - %u byte)", (int)scene_index, (int)si, (uint32_t)seg.size_encoded);
                 mu::ScopedTimer timer;
 
                 seg.encoded_buf.resize((size_t)seg.size_encoded);
@@ -194,7 +216,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t scene_index, bool wait_preload)
 
             // launch async decode
             seg.task = std::async(std::launch::async, [this, &seg, scene_index, si]() {
-                msProfileScope("ISceneCacheImpl: [%d] decode segment (%d)", (int)scene_index, (int)si);
+                msProfileScope("SceneCacheInputFile: [%d] decode segment (%d)", (int)scene_index, (int)si);
                 mu::ScopedTimer timer;
 
                 RawVector<char> tmp_buf;
@@ -256,7 +278,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t scene_index, bool wait_preload)
         }
 
         {
-            msProfileScope("ISceneCacheImpl: [%d] merge & import", (int)scene_index);
+            msProfileScope("SceneCacheInputFile: [%d] merge & import", (int)scene_index);
             mu::ScopedTimer timer;
 
             if (m_header.oscs.strip_unchanged && m_base_scene) {
@@ -291,7 +313,7 @@ ScenePtr ISceneCacheImpl::getByIndexImpl(size_t scene_index, bool wait_preload)
     return ret;
 }
 
-ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp, size_t scene_index)
+ScenePtr SceneCacheInputFile::postprocess(ScenePtr& sp, size_t scene_index)
 {
     if (!sp)
         return sp;
@@ -301,7 +323,7 @@ ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp, size_t scene_index)
     // m_last_scene and m_last_diff keep reference counts and keep scenes alive.
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
     if (m_last_scene && (m_iscs.enable_diff && m_header.oscs.strip_unchanged)) {
-        msProfileScope("ISceneCacheImpl: [%d] diff", (int)scene_index);
+        msProfileScope("SceneCacheInputFile: [%d] diff", (int)scene_index);
         m_last_diff = Scene::create();
         m_last_diff->diff(*sp, *m_last_scene);
         m_last_scene = sp;
@@ -319,7 +341,7 @@ ScenePtr ISceneCacheImpl::postprocess(ScenePtr& sp, size_t scene_index)
     return ret;
 }
 
-bool ISceneCacheImpl::kickPreload(size_t i)
+bool SceneCacheInputFile::kickPreload(size_t i)
 {
     auto& rec = m_records[i];
     if (rec.scene || rec.preload.valid())
@@ -329,7 +351,7 @@ bool ISceneCacheImpl::kickPreload(size_t i)
     return true;
 }
 
-void ISceneCacheImpl::waitAllPreloads()
+void SceneCacheInputFile::waitAllPreloads()
 {
     for (auto& rec : m_records) {
         if (rec.preload.valid()) {
@@ -339,7 +361,7 @@ void ISceneCacheImpl::waitAllPreloads()
     }
 }
 
-ScenePtr ISceneCacheImpl::getByIndex(size_t i)
+ScenePtr SceneCacheInputFile::getByIndex(size_t i)
 {
     if (!valid())
         return nullptr;
@@ -348,7 +370,7 @@ ScenePtr ISceneCacheImpl::getByIndex(size_t i)
     return postprocess(ret, i);
 }
 
-ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
+ScenePtr SceneCacheInputFile::getByTime(float time, bool interpolation)
 {
     if (!valid())
         return nullptr;
@@ -393,7 +415,7 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
             auto s2 = getByIndexImpl(si + 1);
 
             {
-                msProfileScope("ISceneCacheImpl: [%d] lerp", (int)si);
+                msProfileScope("SceneCacheInputFile: [%d] lerp", (int)si);
                 mu::ScopedTimer timer;
 
                 float t = (time - t1) / (t2 - t1);
@@ -420,7 +442,7 @@ ScenePtr ISceneCacheImpl::getByTime(float time, bool interpolation)
     return postprocess(ret, m_last_index2);
 }
 
-void ISceneCacheImpl::refresh()
+void SceneCacheInputFile::refresh()
 {
     m_last_index = m_last_index2  = -1;
     m_last_time = -1.0f;
@@ -428,7 +450,7 @@ void ISceneCacheImpl::refresh()
     m_last_diff = nullptr;
 }
 
-void ISceneCacheImpl::preload(int frame)
+void SceneCacheInputFile::preload(int frame)
 {
     // kick preload
     if (m_iscs.preload_length > 0 && frame + 1 < m_records.size()) {
@@ -440,7 +462,7 @@ void ISceneCacheImpl::preload(int frame)
     popHistory();
 }
 
-void ISceneCacheImpl::preloadAll()
+void SceneCacheInputFile::preloadAll()
 {
     size_t n = m_records.size();
     m_iscs.max_history = (int)n + 1;
@@ -448,7 +470,7 @@ void ISceneCacheImpl::preloadAll()
         kickPreload(i);
 }
 
-void ISceneCacheImpl::popHistory()
+void SceneCacheInputFile::popHistory()
 {
     while (m_history.size() > m_iscs.max_history) {
         m_records[m_history.front()].scene.reset();
@@ -456,12 +478,12 @@ void ISceneCacheImpl::popHistory()
     }
 }
 
-const AnimationCurvePtr ISceneCacheImpl::getTimeCurve() const
+const AnimationCurvePtr SceneCacheInputFile::getTimeCurve() const
 {
     return m_time_curve;
 }
 
-const AnimationCurvePtr ISceneCacheImpl::getFrameCurve(int base_frame)
+const AnimationCurvePtr SceneCacheInputFile::getFrameCurve(int base_frame)
 {
     // generate on the fly
     size_t scene_count = m_records.size();
@@ -477,12 +499,7 @@ const AnimationCurvePtr ISceneCacheImpl::getFrameCurve(int base_frame)
 }
 
 
-ISceneCacheFile::ISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs)
-    : super(createStream(path, iscs), iscs)
-{
-}
-
-ISceneCacheFile::StreamPtr ISceneCacheFile::createStream(const char *path, const SceneCacheInputSettings& /*iscs*/)
+SceneCacheInputFile::StreamPtr SceneCacheInputFile::createStream(const char *path, const SceneCacheInputSettings& /*iscs*/)
 {
     if (!path)
         return nullptr;
@@ -490,24 +507,6 @@ ISceneCacheFile::StreamPtr ISceneCacheFile::createStream(const char *path, const
     auto ret = std::make_shared<std::ifstream>();
     ret->open(path, std::ios::binary);
     return *ret ? ret : nullptr;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-SceneCacheInput* ISceneCacheFile::OpenISceneCacheFileRaw(const char *path, const SceneCacheInputSettings& iscs) {
-    ISceneCacheFile* ret = new ISceneCacheFile(path, iscs);
-    if (ret->valid()) {
-        return ret;
-    } else {
-        delete ret;
-        return nullptr;
-    }
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-SceneCacheInputPtr ISceneCacheFile::OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs) {
-    return SceneCacheInputPtr(OpenISceneCacheFileRaw(path, iscs));
 }
 
 } // namespace ms

@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "msCoreAPI.h" //msAPI
-#include "MeshSync/SceneCache/msISceneCacheImpl.h" //OpenISceneCacheFileRaw()
+#include "MeshSync/SceneCache/SceneCacheInputFile.h" //SceneCacheInputFile::OpenRaw()
 
 using namespace mu;
 
@@ -15,7 +15,7 @@ using namespace mu;
 msAPI ms::SceneCacheInput* msISceneCacheOpen(const char *path)
 {
     ms::SceneCacheInputSettings ps;
-    return ms::ISceneCacheFile::OpenISceneCacheFileRaw(path, ps);
+    return ms::SceneCacheInputFile::OpenRaw(path, ps);
 }
 msAPI void msISceneCacheClose(ms::SceneCacheInput *self)
 {

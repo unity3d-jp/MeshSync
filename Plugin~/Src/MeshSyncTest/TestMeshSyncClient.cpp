@@ -16,7 +16,7 @@
 #include "MeshSync/SceneCache/SceneCacheWriter.h" //SceneCacheWriter
 
 #include "MeshSync/Utility/msMaterialExt.h"     //standardMaterial
-#include "MeshSync/SceneCache/msISceneCacheImpl.h"
+#include "MeshSync/SceneCache/SceneCacheInputFile.h"
 
 using namespace mu;
 
@@ -80,7 +80,7 @@ TestCase(Test_SceneCacheRead)
 {
     ms::SceneCacheInputSettings iscs;
     iscs.enable_diff = false;
-    ms::SceneCacheInputPtr isc = ms::ISceneCacheFile::OpenISceneCacheFile("wave_c2.sc", iscs);
+    ms::SceneCacheInputPtr isc = ms::SceneCacheInputFile::Open("wave_c2.sc", iscs);
     Expect(isc);
     if (!isc)
         return;
