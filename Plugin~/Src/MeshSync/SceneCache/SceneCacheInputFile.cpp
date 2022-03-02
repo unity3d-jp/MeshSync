@@ -67,7 +67,7 @@ int SceneCacheInputFile::GetFrameByTimeV(float time) const
         return 0;
     auto p = std::lower_bound(m_records.begin(), m_records.end(), time, [](auto& a, float t) { return a.time < t; });
     if (p != m_records.end()) {
-        int d = (int)std::distance(m_records.begin(), p);
+        int d = static_cast<int>(std::distance(m_records.begin(), p));
         return p->time == time ? d : d - 1;
     }
     return 0;
@@ -83,7 +83,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
         return;
 
     m_header.version = 0;
-    m_ist->read((char*)&m_header, sizeof(m_header));
+    m_ist->read(reinterpret_cast<char*>(&m_header), sizeof(m_header));
     if (m_header.version != msProtocolVersion)
         return;
 
@@ -107,8 +107,8 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
             rec.time = sh.time;
 
             rec.buffer_sizes.resize_discard(sh.buffer_count);
-            m_ist->read((char*)rec.buffer_sizes.data(), rec.buffer_sizes.size_in_byte());
-            rec.pos = (uint64_t)m_ist->tellg();
+            m_ist->read(reinterpret_cast<char*>(rec.buffer_sizes.data()), rec.buffer_sizes.size_in_byte());
+            rec.pos = static_cast<uint64_t>(m_ist->tellg());
 
             rec.buffer_size_total = 0;
             for (uint64_t s : rec.buffer_sizes)
@@ -136,14 +136,14 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
 
         // read meta data
         CacheFileMetaHeader mh;
-        m_ist->read((char*)&mh, sizeof(mh));
+        m_ist->read(reinterpret_cast<char*>(&mh), sizeof(mh));
 
-        encoded_buf.resize((size_t)mh.size);
+        encoded_buf.resize(static_cast<size_t>(mh.size));
         m_ist->read(encoded_buf.data(), encoded_buf.size());
 
         m_encoder->decode(tmp_buf, encoded_buf);
         m_entity_meta.resize_discard(tmp_buf.size() / sizeof(CacheFileEntityMeta));
-        tmp_buf.copy_to((char*)m_entity_meta.data());
+        tmp_buf.copy_to(reinterpret_cast<char*>(m_entity_meta.data()));
     }
 
     if (m_header.oscs.strip_unchanged)
@@ -376,11 +376,11 @@ ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
 
     ScenePtr ret;
 
-    const int scene_count = (int)m_records.size();
+    const int scene_count = static_cast<int>(m_records.size());
 
-    TimeRange time_range = GetTimeRangeV();
+    const TimeRange time_range = GetTimeRangeV();
     if (time <= time_range.start) {
-        int si = 0;
+        const int si = 0;
         if ((!interpolation && m_last_index == si) ||
             (m_last_index == si && m_last_index2 == si))
             return nullptr;
@@ -389,7 +389,7 @@ ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
         ret = getByIndexImpl(si);
     }
     else if (time >= time_range.end) {
-        int si =  scene_count - 1;
+        const int si =  scene_count - 1;
         if ((!interpolation && m_last_index == si) ||
             (m_last_index == si && m_last_index2 == si))
             return nullptr;
@@ -398,14 +398,14 @@ ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
         ret = getByIndexImpl(si);
     }
     else {
-        int si = GetFrameByTimeV(time);
+        const int si = GetFrameByTimeV(time);
         if (interpolation) {
-            float t1 = m_records[si + 0].time;
-            float t2 = m_records[si + 1].time;
+            const float t1 = m_records[si + 0].time;
+            const float t2 = m_records[si + 1].time;
 
             kickPreload(si + 1);
-            ScenePtr s1 = getByIndexImpl(si + 0);
-            ScenePtr s2 = getByIndexImpl(si + 1);
+            const ScenePtr s1 = getByIndexImpl(si + 0);
+            const ScenePtr s2 = getByIndexImpl(si + 1);
 
             {
                 msProfileScope("SceneCacheInputFile: [%d] lerp", (int)si);
@@ -447,8 +447,8 @@ void SceneCacheInputFile::PreloadV(int frame)
 {
     // kick preload
     if (m_iscs.preload_length > 0 && frame + 1 < m_records.size()) {
-        int begin_frame = frame + 1;
-        int end_frame = std::min(frame + m_iscs.preload_length, (int)m_records.size());
+        const int begin_frame = frame + 1;
+        const int end_frame = std::min(frame + m_iscs.preload_length, (int)m_records.size());
         for (int f = begin_frame; f < end_frame; ++f)
             kickPreload(f);
     }
@@ -458,7 +458,7 @@ void SceneCacheInputFile::PreloadV(int frame)
 void SceneCacheInputFile::PreloadAll()
 {
     size_t n = m_records.size();
-    m_iscs.max_history = (int)n + 1;
+    m_iscs.max_history = static_cast<int>(n) + 1;
     for (size_t i = 0; i < n; ++i)
         kickPreload(i);
 }
