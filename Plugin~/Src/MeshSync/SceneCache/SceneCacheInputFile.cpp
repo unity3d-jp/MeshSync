@@ -448,7 +448,7 @@ void SceneCacheInputFile::PreloadV(int frame)
     // kick preload
     if (m_iscs.preload_length > 0 && frame + 1 < m_records.size()) {
         const int begin_frame = frame + 1;
-        const int end_frame = std::min(frame + m_iscs.preload_length, (int)m_records.size());
+        const int end_frame = std::min(frame + m_iscs.preload_length, static_cast<int>(m_records.size()));
         for (int f = begin_frame; f < end_frame; ++f)
             kickPreload(f);
     }

@@ -26,9 +26,9 @@ public:
     virtual float GetTimeV(int i) const = 0;
     virtual int GetFrameByTimeV(float time) const = 0;
     virtual ScenePtr GetByIndexV(size_t i) = 0;
-    virtual ScenePtr GetByTimeV(float t, bool lerp) = 0;
+    virtual ScenePtr GetByTimeV(float time, bool interpolation) = 0;
     virtual void RefreshV() = 0;
-    virtual void PreloadV(int f) = 0;
+    virtual void PreloadV(int frame) = 0;
     virtual const AnimationCurvePtr GetFrameCurveV(int baseFrame) = 0;
 
 protected:

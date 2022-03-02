@@ -29,10 +29,10 @@ public:
     float GetTimeV(int i) const override;
     int GetFrameByTimeV(float time) const override;
     ScenePtr GetByIndexV(size_t i) override;
-    ScenePtr GetByTimeV(float t, bool lerp) override;
+    ScenePtr GetByTimeV(float time, bool interpolation) override;
     void RefreshV() override;
-    void PreloadV(int f) override;
-    const AnimationCurvePtr GetFrameCurveV(int base_frame) override;
+    void PreloadV(int frame) override;
+    const AnimationCurvePtr GetFrameCurveV(int baseFrame) override;
 
     void PreloadAll();
 
