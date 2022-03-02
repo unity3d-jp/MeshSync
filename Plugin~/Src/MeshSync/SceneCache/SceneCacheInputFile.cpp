@@ -1,17 +1,9 @@
 #include "pch.h"
 #include "SceneCacheInputFile.h"
-#include "Utils/msDebug.h"
-
-#include "MeshUtils/muLog.h"
-
-#include "MeshSync/SceneGraph/msTransform.h"
-
+#include "Utils/msDebug.h" //msProfileScope
+#include "MeshUtils/muLog.h" //muLogError
 
 namespace ms {
-
-SceneCacheInputFile::SceneCacheInputFile(const char *path, const SceneCacheInputSettings& iscs) {
-    Init(createStream(path, iscs), iscs);
-}
 
 SceneCacheInputFile::~SceneCacheInputFile() {
     waitAllPreloads();
@@ -28,7 +20,8 @@ SceneCacheInputPtr SceneCacheInputFile::Open(const char *path, const SceneCacheI
 }
 
 SceneCacheInput* SceneCacheInputFile::OpenRaw(const char *path, const SceneCacheInputSettings& iscs) {
-    SceneCacheInputFile* ret = new SceneCacheInputFile(path, iscs);
+    SceneCacheInputFile* ret = new SceneCacheInputFile();
+    ret->Init(path, iscs);
     if (ret->valid()) {
         return ret;
     } else {
@@ -419,9 +412,9 @@ const AnimationCurvePtr SceneCacheInputFile::getFrameCurve(int base_frame)
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void SceneCacheInputFile::Init(StreamPtr ist, const SceneCacheInputSettings& iscs)
+void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& iscs)
 {
-    m_ist = ist;
+    m_ist = createStream(path, iscs);
     m_iscs = iscs;
     if (!m_ist || !(*m_ist))
         return;
