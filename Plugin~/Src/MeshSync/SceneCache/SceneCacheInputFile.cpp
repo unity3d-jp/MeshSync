@@ -78,7 +78,7 @@ int SceneCacheInputFile::GetFrameByTimeV(float time) const
 void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& iscs)
 {
     m_ist = createStream(path, iscs);
-    m_iscs = iscs;
+    SetSettings(iscs);
     if (!m_ist || !(*m_ist))
         return;
 
@@ -149,7 +149,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
     if (m_header.oscs.strip_unchanged)
         m_base_scene = getByIndexImpl(0);
 
-    //preloadAll(); // for test
+    //PreloadAll(); // for test
 }
 
 
@@ -291,7 +291,8 @@ ScenePtr SceneCacheInputFile::getByIndexImpl(size_t scene_index, bool wait_prelo
             }
 
             // do import
-            ret->import(m_iscs.sis);
+            const SceneCacheInputSettings& settings = GetSettings();
+            ret->import(settings.sis);
 
             prof.setup_time = timer.elapsed();
         }
@@ -315,7 +316,8 @@ ScenePtr SceneCacheInputFile::postprocess(ScenePtr& sp, size_t scene_index)
 
     // m_last_scene and m_last_diff keep reference counts and keep scenes alive.
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
-    if (m_last_scene && (m_iscs.enable_diff && m_header.oscs.strip_unchanged)) {
+    const SceneCacheInputSettings& settings = GetSettings();
+    if (m_last_scene && (settings.enable_diff && m_header.oscs.strip_unchanged)) {
         msProfileScope("SceneCacheInputFile: [%d] diff", (int)scene_index);
         m_last_diff = Scene::create();
         m_last_diff->diff(*sp, *m_last_scene);
@@ -446,9 +448,10 @@ void SceneCacheInputFile::RefreshV()
 void SceneCacheInputFile::PreloadV(const int frame)
 {
     // kick preload
-    if (m_iscs.preload_length > 0 && frame + 1 < m_records.size()) {
+    const int32_t preloadLength = GetPreloadLength();
+    if (preloadLength> 0 && frame + 1 < m_records.size()) {
         const int begin_frame = frame + 1;
-        const int end_frame = std::min(frame + m_iscs.preload_length, static_cast<int>(m_records.size()));
+        const int end_frame = std::min(frame + preloadLength, static_cast<int>(m_records.size()));
         for (int f = begin_frame; f < end_frame; ++f)
             kickPreload(f);
     }
@@ -457,15 +460,16 @@ void SceneCacheInputFile::PreloadV(const int frame)
 
 void SceneCacheInputFile::PreloadAll()
 {
-    size_t n = m_records.size();
-    m_iscs.max_history = static_cast<int>(n) + 1;
+    const size_t n = m_records.size();
+    SetMaxLoadedSamples(static_cast<int>(n) + 1);
     for (size_t i = 0; i < n; ++i)
         kickPreload(i);
 }
 
 void SceneCacheInputFile::popHistory()
 {
-    while (m_history.size() > m_iscs.max_history) {
+    const int32_t maxSamples = GetMaxLoadedSamples();
+    while (m_history.size() > maxSamples) {
         m_records[m_history.front()].scene.reset();
         m_history.pop_front();
     }

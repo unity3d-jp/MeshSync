@@ -10,12 +10,9 @@ BaseSceneCacheInput::BaseSceneCacheInput()
     
 }
 
-int BaseSceneCacheInput::GetPreloadLength() const {
-    return m_iscs.preload_length;
-}
-
 void BaseSceneCacheInput::SetPreloadLength(int v) {
-    m_iscs.setPreloadLength(v);
+    m_preloadLength = std::max(v, 0);
+    m_maxLoadedSamples = m_preloadLength + 2;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

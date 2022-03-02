@@ -16,7 +16,7 @@ public:
     BaseSceneCacheInput();
     virtual ~BaseSceneCacheInput() = default;
 
-    int GetPreloadLength() const;
+    inline int32_t GetPreloadLength() const;
     void SetPreloadLength(int v);
     const AnimationCurvePtr GetTimeCurve() const;
 
@@ -35,9 +35,29 @@ protected:
 
     AnimationCurvePtr GetTimeCurve();
 
+    inline int32_t GetMaxLoadedSamples() const;
+    inline void SetMaxLoadedSamples(const int32_t sampleCount);
+    inline const SceneCacheInputSettings& GetSettings() const;
+    inline void SetSettings(const SceneCacheInputSettings& settings);
+
 private:
     SceneCacheInputSettings m_iscs;
     AnimationCurvePtr m_time_curve;
+
+    int32_t m_maxLoadedSamples = 3;
+    int32_t m_preloadLength = 1;
+
 };
+
+//----------------------------------------------------------------------------------------------------------------------
+
+int32_t BaseSceneCacheInput::GetPreloadLength() const { return m_preloadLength; }
+
+inline int32_t BaseSceneCacheInput::GetMaxLoadedSamples() const { return m_maxLoadedSamples; }
+void BaseSceneCacheInput::SetMaxLoadedSamples(const int32_t sampleCount) { m_maxLoadedSamples = sampleCount; }
+
+const SceneCacheInputSettings& BaseSceneCacheInput::GetSettings() const { return m_iscs; }
+void BaseSceneCacheInput::SetSettings(const SceneCacheInputSettings& settings)  {m_iscs = settings; }
+
 
 } // namespace ms
