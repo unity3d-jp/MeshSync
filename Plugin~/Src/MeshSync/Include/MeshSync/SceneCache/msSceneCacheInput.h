@@ -13,24 +13,24 @@ class SceneCacheInput
 {
 public:
     virtual ~SceneCacheInput() = default;
-    virtual bool valid() const = 0;
+    bool valid() const;
 
-    virtual int getPreloadLength() const = 0;
-    virtual void setPreloadLength(int v) = 0;
+    int getPreloadLength() const;
+    void setPreloadLength(int v);
 
-    virtual float getSampleRate() const = 0;
-    virtual TimeRange getTimeRange() const = 0;
-    virtual size_t getNumScenes() const = 0;
-    virtual float getTime(int i) const = 0;
-    virtual int getFrameByTime(float time) const = 0;
-    virtual ScenePtr getByIndex(size_t i) = 0;
-    virtual ScenePtr getByTime(float t, bool lerp) = 0;
-    virtual void refresh() = 0;
-    virtual void preload(int f) = 0;
-    virtual void preloadAll() = 0;
+    float getSampleRate() const;
+    TimeRange getTimeRange() const;
+    size_t getNumScenes() const;
+    float getTime(int i) const;
+    int getFrameByTime(float time) const;
+    ScenePtr getByIndex(size_t i);
+    ScenePtr getByTime(float t, bool lerp);
+    void refresh();
+    void preload(int f);
+    void preloadAll();
 
-    virtual const AnimationCurvePtr getTimeCurve() const = 0;
-    virtual const AnimationCurvePtr getFrameCurve(int base_frame) = 0;
+    const AnimationCurvePtr getTimeCurve();
+    const AnimationCurvePtr getFrameCurve(int base_frame);
 };
 
 } // namespace ms

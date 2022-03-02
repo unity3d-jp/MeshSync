@@ -14,27 +14,27 @@ public:
     using StreamPtr = std::shared_ptr<std::istream>;
 
     ~SceneCacheInputFile() override;
-    bool valid() const override;
 
     static SceneCacheInputPtr Open(const char *path, const SceneCacheInputSettings& iscs);
     static SceneCacheInput* OpenRaw(const char *path, const SceneCacheInputSettings& iscs);
 
-    int getPreloadLength() const override;
-    void setPreloadLength(int v) override;
+    //bool valid() const override;
+    //int getPreloadLength() const override;
+    //void setPreloadLength(int v) override;
 
-    float getSampleRate() const override;
-    size_t getNumScenes() const override;
-    TimeRange getTimeRange() const override;
-    float getTime(int i) const override;
-    int getFrameByTime(float time) const override;
-    ScenePtr getByIndex(size_t i) override;
-    ScenePtr getByTime(float t, bool lerp) override;
-    void refresh() override;
-    void preload(int f) override;
-    void preloadAll() override;
+    //float getSampleRate() const override;
+    //size_t getNumScenes() const override;
+    //TimeRange getTimeRange() const override;
+    //float getTime(int i) const override;
+    //int getFrameByTime(float time) const override;
+    //ScenePtr getByIndex(size_t i) override;
+    //ScenePtr getByTime(float t, bool lerp) override;
+    //void refresh() override;
+    //void preload(int f) override;
+    //void preloadAll() override;
 
-    const AnimationCurvePtr getTimeCurve() const override;
-    const AnimationCurvePtr getFrameCurve(int base_frame) override;
+    //const AnimationCurvePtr getTimeCurve() const override;
+    //const AnimationCurvePtr getFrameCurve(int base_frame) override;
 
 
 protected:
