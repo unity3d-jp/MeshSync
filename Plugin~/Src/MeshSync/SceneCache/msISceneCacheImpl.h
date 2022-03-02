@@ -8,15 +8,15 @@
 
 namespace ms {
    
-class ISceneCacheImpl : public SceneCacheInput
+class SceneCacheInputFile : public SceneCacheInput
 {
 public:
     using StreamPtr = std::shared_ptr<std::istream>;
 
-    ISceneCacheImpl(StreamPtr ist, const SceneCacheInputSettings& iscs);
-    ISceneCacheImpl(const char *path, const SceneCacheInputSettings& iscs);
+    SceneCacheInputFile(StreamPtr ist, const SceneCacheInputSettings& iscs);
+    SceneCacheInputFile(const char *path, const SceneCacheInputSettings& iscs);
 
-    ~ISceneCacheImpl() override;
+    ~SceneCacheInputFile() override;
     bool valid() const override;
 
     static SceneCacheInputPtr OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs);
