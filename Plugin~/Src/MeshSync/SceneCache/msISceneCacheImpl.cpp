@@ -94,16 +94,31 @@ ISceneCacheImpl::ISceneCacheImpl(const char *path, const SceneCacheInputSettings
 
 //----------------------------------------------------------------------------------------------------------------------
 
-ISceneCacheImpl::~ISceneCacheImpl()
-{
+ISceneCacheImpl::~ISceneCacheImpl() {
     waitAllPreloads();
 }
 
-bool ISceneCacheImpl::valid() const
-{
+bool ISceneCacheImpl::valid() const {
     return !m_records.empty();
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+
+SceneCacheInput* ISceneCacheImpl::OpenISceneCacheFileRaw(const char *path, const SceneCacheInputSettings& iscs) {
+    ISceneCacheImpl* ret = new ISceneCacheImpl(path, iscs);
+    if (ret->valid()) {
+        return ret;
+    } else {
+        delete ret;
+        return nullptr;
+    }
+}
+
+SceneCacheInputPtr ISceneCacheImpl::OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs) {
+    return SceneCacheInputPtr(OpenISceneCacheFileRaw(path, iscs));
+}
+
+//----------------------------------------------------------------------------------------------------------------------
 
 int ISceneCacheImpl::getPreloadLength() const
 {
@@ -492,24 +507,6 @@ ISceneCacheImpl::StreamPtr ISceneCacheImpl::createStream(const char *path, const
     auto ret = std::make_shared<std::ifstream>();
     ret->open(path, std::ios::binary);
     return *ret ? ret : nullptr;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-SceneCacheInput* ISceneCacheImpl::OpenISceneCacheFileRaw(const char *path, const SceneCacheInputSettings& iscs) {
-    ISceneCacheImpl* ret = new ISceneCacheImpl(path, iscs);
-    if (ret->valid()) {
-        return ret;
-    } else {
-        delete ret;
-        return nullptr;
-    }
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-SceneCacheInputPtr ISceneCacheImpl::OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs) {
-    return SceneCacheInputPtr(OpenISceneCacheFileRaw(path, iscs));
 }
 
 } // namespace ms

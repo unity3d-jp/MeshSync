@@ -19,6 +19,9 @@ public:
     ~ISceneCacheImpl() override;
     bool valid() const override;
 
+    static SceneCacheInputPtr OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs);
+    static SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const SceneCacheInputSettings& iscs);
+
     int getPreloadLength() const override;
     void setPreloadLength(int v) override;
 
@@ -36,12 +39,16 @@ public:
     const AnimationCurvePtr getTimeCurve() const override;
     const AnimationCurvePtr getFrameCurve(int base_frame) override;
 
+
 protected:
     ScenePtr getByIndexImpl(size_t i, bool wait_preload = true);
     ScenePtr postprocess(ScenePtr& sp, size_t scene_index);
     bool kickPreload(size_t i);
     void waitAllPreloads();
     void popHistory();
+
+private:
+    static StreamPtr createStream(const char *path, const SceneCacheInputSettings& iscs);
 
     struct SceneSegment
     {
@@ -85,13 +92,6 @@ protected:
     int m_last_index = -1, m_last_index2 = -1;
     ScenePtr m_base_scene, m_last_scene, m_last_diff;
     std::deque<size_t> m_history;
-
-public:
-    static StreamPtr createStream(const char *path, const SceneCacheInputSettings& iscs);
-
-
-    static SceneCacheInputPtr OpenISceneCacheFile(const char *path, const SceneCacheInputSettings& iscs);
-    static SceneCacheInput* OpenISceneCacheFileRaw(const char *path, const SceneCacheInputSettings& iscs);
 
 };
 
