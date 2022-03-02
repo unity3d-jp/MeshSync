@@ -3,6 +3,7 @@
 #include "MeshSync/msTimeRange.h" 
 #include "MeshSync/SceneGraph/msScene.h"     //ScenePtr
 #include "MeshSync/SceneGraph/msAnimation.h" //AnimationCurvePtr
+#include "MeshSync/SceneCache/msSceneCacheInputSettings.h"
 
 //Forward declarations
 msDeclClassPtr(SceneCacheInput)
@@ -31,6 +32,11 @@ public:
 
     const AnimationCurvePtr getTimeCurve();
     const AnimationCurvePtr getFrameCurve(int base_frame);
+
+
+private:
+    SceneCacheInputSettings m_iscs;
+
 };
 
 } // namespace ms

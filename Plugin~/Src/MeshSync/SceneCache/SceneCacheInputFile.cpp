@@ -32,16 +32,6 @@ SceneCacheInput* SceneCacheInputFile::OpenRaw(const char *path, const SceneCache
 
 //----------------------------------------------------------------------------------------------------------------------
 
-int SceneCacheInputFile::getPreloadLength() const
-{
-    return m_iscs.preload_length;
-}
-
-void SceneCacheInputFile::setPreloadLength(int v)
-{
-    m_iscs.setPreloadLength(v);
-}
-
 float SceneCacheInputFile::getSampleRate() const
 {
     return m_header.oscs.sample_rate;
