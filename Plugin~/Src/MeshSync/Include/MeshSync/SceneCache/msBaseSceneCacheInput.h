@@ -42,7 +42,7 @@ private:
     SceneCacheInputSettings m_iscs;
     AnimationCurvePtr m_time_curve;
 
-    int32_t m_maxLoadedFrames = 3;
+    int32_t m_maxLoadedSamples = 3;
     int32_t m_preloadLength = 1;
 
 };
@@ -51,8 +51,8 @@ private:
 
 int32_t BaseSceneCacheInput::GetPreloadLength() const { return m_preloadLength; }
 
-inline int32_t BaseSceneCacheInput::GetMaxLoadedSamples() const { return m_maxLoadedFrames; }
-void BaseSceneCacheInput::SetMaxLoadedSamples(const int32_t sampleCount) { m_maxLoadedFrames = sampleCount; }
+inline int32_t BaseSceneCacheInput::GetMaxLoadedSamples() const { return m_maxLoadedSamples; }
+void BaseSceneCacheInput::SetMaxLoadedSamples(const int32_t sampleCount) { m_maxLoadedSamples = sampleCount; }
 
 
 } // namespace ms
