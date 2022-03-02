@@ -23,18 +23,19 @@ public:
 
     bool valid() const;
 
-    float getSampleRate() const override;
-    size_t getNumScenes() const override;
-    TimeRange getTimeRange() const override;
-    float getTime(int i) const override;
-    int getFrameByTime(float time) const override;
-    ScenePtr getByIndex(size_t i) override;
-    ScenePtr getByTime(float t, bool lerp) override;
-    void refresh() override;
-    void preload(int f) override;
-    void preloadAll();
+    float GetSampleRateV() const override;
+    size_t GetNumScenesV() const override;
+    TimeRange GetTimeRangeV() const override;
+    float GetTimeV(int i) const override;
+    int GetFrameByTimeV(float time) const override;
+    ScenePtr GetByIndexV(size_t i) override;
+    ScenePtr GetByTimeV(float t, bool lerp) override;
+    void RefreshV() override;
+    void PreloadV(int f) override;
+    const AnimationCurvePtr GetFrameCurveV(int base_frame) override;
 
-    const AnimationCurvePtr getFrameCurve(int base_frame) override;
+    void PreloadAll();
+
 
 
 private:

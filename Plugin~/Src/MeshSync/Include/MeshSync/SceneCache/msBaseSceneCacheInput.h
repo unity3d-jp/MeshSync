@@ -20,16 +20,16 @@ public:
     void SetPreloadLength(int v);
     const AnimationCurvePtr GetTimeCurve() const;
 
-    virtual float getSampleRate() const = 0;
-    virtual TimeRange getTimeRange() const = 0;
-    virtual size_t getNumScenes() const = 0;
-    virtual float getTime(int i) const = 0;
-    virtual int getFrameByTime(float time) const = 0;
-    virtual ScenePtr getByIndex(size_t i) = 0;
-    virtual ScenePtr getByTime(float t, bool lerp) = 0;
-    virtual void refresh() = 0;
-    virtual void preload(int f) = 0;    
-    virtual const AnimationCurvePtr getFrameCurve(int base_frame) = 0;
+    virtual float GetSampleRateV() const = 0;
+    virtual TimeRange GetTimeRangeV() const = 0;
+    virtual size_t GetNumScenesV() const = 0;
+    virtual float GetTimeV(int i) const = 0;
+    virtual int GetFrameByTimeV(float time) const = 0;
+    virtual ScenePtr GetByIndexV(size_t i) = 0;
+    virtual ScenePtr GetByTimeV(float t, bool lerp) = 0;
+    virtual void RefreshV() = 0;
+    virtual void PreloadV(int f) = 0;
+    virtual const AnimationCurvePtr GetFrameCurveV(int baseFrame) = 0;
 
 protected:
 

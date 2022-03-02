@@ -32,26 +32,25 @@ SceneCacheInputFile* SceneCacheInputFile::OpenRaw(const char *path, const SceneC
 
 //----------------------------------------------------------------------------------------------------------------------
 
-float SceneCacheInputFile::getSampleRate() const
-{
+float SceneCacheInputFile::GetSampleRateV() const {
     return m_header.oscs.sample_rate;
 }
 
-size_t SceneCacheInputFile::getNumScenes() const
+size_t SceneCacheInputFile::GetNumScenesV() const
 {
     if (!valid())
         return 0;
     return m_records.size();
 }
 
-TimeRange SceneCacheInputFile::getTimeRange() const
+TimeRange SceneCacheInputFile::GetTimeRangeV() const
 {
     if (!valid())
         return {0.0f, 0.0f};
     return { m_records.front().time, m_records.back().time };
 }
 
-float SceneCacheInputFile::getTime(int i) const
+float SceneCacheInputFile::GetTimeV(int i) const
 {
     if (!valid())
         return 0.0f;
@@ -62,7 +61,7 @@ float SceneCacheInputFile::getTime(int i) const
     return m_records[i].time;
 }
 
-int SceneCacheInputFile::getFrameByTime(float time) const
+int SceneCacheInputFile::GetFrameByTimeV(float time) const
 {
     if (!valid())
         return 0;
@@ -330,7 +329,7 @@ ScenePtr SceneCacheInputFile::postprocess(ScenePtr& sp, size_t scene_index)
     }
 
     // kick preload
-    preload((int)scene_index);
+    PreloadV((int)scene_index);
 
     return ret;
 }
@@ -355,7 +354,7 @@ void SceneCacheInputFile::waitAllPreloads()
     }
 }
 
-ScenePtr SceneCacheInputFile::getByIndex(size_t i)
+ScenePtr SceneCacheInputFile::GetByIndexV(size_t i)
 {
     if (!valid())
         return nullptr;
@@ -364,7 +363,7 @@ ScenePtr SceneCacheInputFile::getByIndex(size_t i)
     return postprocess(ret, i);
 }
 
-ScenePtr SceneCacheInputFile::getByTime(float time, bool interpolation)
+ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
 {
     if (!valid())
         return nullptr;
@@ -379,7 +378,7 @@ ScenePtr SceneCacheInputFile::getByTime(float time, bool interpolation)
 
     const int scene_count = (int)m_records.size();
 
-    auto time_range = getTimeRange();
+    auto time_range = GetTimeRangeV();
     if (time <= time_range.start) {
         int si = 0;
         if ((!interpolation && m_last_index == si) ||
@@ -399,7 +398,7 @@ ScenePtr SceneCacheInputFile::getByTime(float time, bool interpolation)
         ret = getByIndexImpl(si);
     }
     else {
-        int si = getFrameByTime(time);
+        int si = GetFrameByTimeV(time);
         if (interpolation) {
             auto t1 = m_records[si + 0].time;
             auto t2 = m_records[si + 1].time;
@@ -436,7 +435,7 @@ ScenePtr SceneCacheInputFile::getByTime(float time, bool interpolation)
     return postprocess(ret, m_last_index2);
 }
 
-void SceneCacheInputFile::refresh()
+void SceneCacheInputFile::RefreshV()
 {
     m_last_index = m_last_index2  = -1;
     m_last_time = -1.0f;
@@ -444,7 +443,7 @@ void SceneCacheInputFile::refresh()
     m_last_diff = nullptr;
 }
 
-void SceneCacheInputFile::preload(int frame)
+void SceneCacheInputFile::PreloadV(int frame)
 {
     // kick preload
     if (m_iscs.preload_length > 0 && frame + 1 < m_records.size()) {
@@ -456,7 +455,7 @@ void SceneCacheInputFile::preload(int frame)
     popHistory();
 }
 
-void SceneCacheInputFile::preloadAll()
+void SceneCacheInputFile::PreloadAll()
 {
     size_t n = m_records.size();
     m_iscs.max_history = (int)n + 1;
@@ -472,7 +471,7 @@ void SceneCacheInputFile::popHistory()
     }
 }
 
-const AnimationCurvePtr SceneCacheInputFile::getFrameCurve(int base_frame)
+const AnimationCurvePtr SceneCacheInputFile::GetFrameCurveV(int base_frame)
 {
     // generate on the fly
     size_t scene_count = m_records.size();
