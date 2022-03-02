@@ -125,8 +125,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
     const size_t scene_count = m_records.size();
     std::sort(m_records.begin(), m_records.end(), [](auto& a, auto& b) { return a.time < b.time; });
 
-    m_time_curve = AnimationCurve::create();
-    TAnimationCurve<float> curve(m_time_curve);
+    TAnimationCurve<float> curve(GetTimeCurve());
     curve.resize(scene_count);
     for (size_t i = 0; i < scene_count; ++i) {
         auto& kvp = curve[i];
@@ -471,11 +470,6 @@ void SceneCacheInputFile::popHistory()
         m_records[m_history.front()].scene.reset();
         m_history.pop_front();
     }
-}
-
-const AnimationCurvePtr SceneCacheInputFile::getTimeCurve() const
-{
-    return m_time_curve;
 }
 
 const AnimationCurvePtr SceneCacheInputFile::getFrameCurve(int base_frame)
