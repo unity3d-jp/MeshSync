@@ -1,10 +1,6 @@
 #include "pch.h"
-#include "MeshUtils/MeshUtils.h"
-#include "msCoreAPI.h"
-
-#include "MeshSync/SceneCache/msSceneCacheInput.h"
-#include "MeshSync/SceneCache/msSceneCacheInputSettings.h"
-#include "MeshSync/SceneCache/msISceneCacheImpl.h"
+#include "msCoreAPI.h" //msAPI
+#include "MeshSync/SceneCache/msISceneCacheImpl.h" //OpenISceneCacheFileRaw()
 
 using namespace mu;
 
