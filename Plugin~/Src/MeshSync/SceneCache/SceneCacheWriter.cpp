@@ -106,20 +106,21 @@ void SceneCacheWriter::write()
     clear();
 }
 
-SceneCacheOutput* SceneCacheWriter::OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs)
-{
+//----------------------------------------------------------------------------------------------------------------------
+
+SceneCacheOutput* SceneCacheWriter::OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs) {
     OSceneCacheFile* ret = new OSceneCacheFile(path, oscs);
     if (ret->valid()) {
         return ret;
-    }
-    else {
+    } else {
         delete ret;
         return nullptr;
     }
 }
 
-SceneCacheOutputPtr SceneCacheWriter::OpenOSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs)
-{
+//----------------------------------------------------------------------------------------------------------------------
+
+SceneCacheOutputPtr SceneCacheWriter::OpenOSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs) {
     return SceneCacheOutputPtr(OpenOSceneCacheFileRaw(path, oscs));
 }
 
