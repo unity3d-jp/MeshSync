@@ -234,6 +234,10 @@ public class MeshSyncServer : BaseMeshSync {
         int numInstanceInfos = mes.numInstanceInfos;
         for (int i = 0; i < numInstanceInfos; ++i)
             EraseInstanceInfoRecord(mes.GetInstanceInfo(i));
+
+        int numInstanceMeshes = mes.numInstanceMeshes;
+        for (int i = 0; i < numInstanceMeshes; i++)
+            EraseInstanceMeshRecord(mes.GetInstanceMesh(i));
         
         int numEntities = mes.numEntities;
         for (int i = 0; i < numEntities; ++i)

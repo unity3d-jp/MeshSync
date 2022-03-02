@@ -45,6 +45,7 @@ struct SceneDataFlags
     uint32_t has_constraints : 1;
     uint32_t has_instanceInfos : 1;
     uint32_t has_propertyInfos : 1;
+    uint32_t has_instanceMeshes : 1;
 
     SceneDataFlags();
 };
@@ -60,6 +61,7 @@ public:
     std::vector<ConstraintPtr> constraints;
     std::vector<InstanceInfoPtr> instanceInfos;
     std::vector<PropertyInfoPtr> propertyInfos;
+    std::vector<TransformPtr> instanceMeshes;
 
     // non-serializable
     std::list<RawVector<char>> scene_buffers;

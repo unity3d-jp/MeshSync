@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-
+using UnityEngine.PlayerLoop;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -22,19 +22,49 @@ namespace Unity.MeshSync{
             ms.onUpdateInstanceInfo += OnUpdateInstanceInfo;
             ms.onDeleteInstanceInfo -= OnDeleteInstanceInfo;
             ms.onDeleteInstanceInfo += OnDeleteInstanceInfo;
-            ms.onDeleteEntity -= OnDeleteInstanceInfo;
-            ms.onDeleteEntity += OnDeleteInstanceInfo;
+            ms.onUpdateInstanceMesh -= OnUpdateInstanceMesh;
+            ms.onUpdateInstanceMesh += OnUpdateInstanceMesh;
+            ms.onDeleteInstanceMesh -= OnDeleteInstanceMesh;
+            ms.onDeleteInstanceMesh += OnDeleteInstanceMesh;
         }
 
-        private void OnDeleteInstanceInfo(GameObject obj)
+        private void OnDeleteInstanceMesh(string path)
         {
-            if (obj == null)
+            if (path == null)
+                return;
+
+            meshInstances.Remove(path);
+            
+            Debug.LogFormat("MS: DELETE INST MESH {0}", path);
+            RepaintAfterChanges();
+        }
+
+        private void OnUpdateInstanceMesh(string path, GameObject go)
+        {
+            Debug.LogFormat("MS: UPDATE INST MESH {0}", path);
+            if (!this.meshInstances.TryGetValue(path, out MeshInstanceInfo entry))
+            {
+                entry = new MeshInstanceInfo();
+                this.meshInstances.Add(path, entry);
+            }
+            
+            UpdateEntryMeshMaterials(path, go, entry);
+        }
+
+        private void OnDeleteInstanceInfo(string path)
+        {
+
+            if (path == null)
                 return;
             
-            meshInstances.Remove(obj);
+            meshInstances.Remove(path);
+            Debug.LogFormat("MS: DELETE INST INFO {0}", path);
+            
+            
+            RepaintAfterChanges();
         }
 
-        private Dictionary<GameObject, MeshInstanceInfo> meshInstances = new Dictionary<GameObject, MeshInstanceInfo>();
+        private Dictionary<string, MeshInstanceInfo> meshInstances = new Dictionary<string, MeshInstanceInfo>();
 
         private class MeshInstanceInfo
         {
@@ -43,51 +73,54 @@ namespace Unity.MeshSync{
             public Material[] Materials;
         }
         
-        private void OnUpdateInstanceInfo(GameObject obj, InstanceInfoData data)
+        private void OnUpdateInstanceInfo(
+            string path,
+            GameObject go,
+            Matrix4x4[] transforms)
         {
-            if (obj == null)
+            Debug.LogFormat("MS: UPDATE INST INFO {0}", path);
+            
+            if (go == null)
             {
-                Debug.LogWarningFormat("[MeshSync] No Gameobject found: {0}", data.path);
+                Debug.LogWarningFormat("[MeshSync] No Gameobject found: {0}", path);
                 return;
             }
             
-            if (!obj.TryGetComponent(out MeshFilter meshFilter))
-            {
-                Debug.LogWarningFormat("[MeshSync] Object {0} has instances info but no MeshFilter", obj.name);
-                return;
-            }
 
-            if (!obj.TryGetComponent(out MeshRenderer renderer))
+            if (!meshInstances.TryGetValue(path, out MeshInstanceInfo entry))
             {
-                Debug.LogWarningFormat("[MeshSync] Object {0} has instances info but no MeshRenderer", obj.name);
-                return;
-            }
-            
-            var mesh = meshFilter.sharedMesh;
-
-            if (!meshInstances.TryGetValue(obj, out MeshInstanceInfo entry))
-            {
-                entry = new MeshInstanceInfo
-                {
-                    Mesh = mesh
-                };
+                entry = new MeshInstanceInfo();
                 
-                meshInstances.Add(obj, entry);
+                meshInstances.Add(path, entry);
             }
 
-            var transforms = data.transforms;
+            UpdateEntryMeshMaterials(path, go, entry);
 
             entry.Instances = DivideArrays(transforms);
-            entry.Materials = renderer.sharedMaterials;
+            
             foreach (var mat in entry.Materials)
             {
                 mat.enableInstancing = true;
             } 
             
-            #if UNITY_EDITOR
-                Draw();
-                SceneView.RepaintAll();
-            #endif
+            RepaintAfterChanges();
+        }
+
+        private static void UpdateEntryMeshMaterials(string path, GameObject go, MeshInstanceInfo entry)
+        {
+            if (!go.TryGetComponent(out MeshFilter filter))
+            {
+                Debug.LogWarningFormat("[MeshSync] No Mesh Filter for {0}", path);
+            }
+
+            if (!go.TryGetComponent(out MeshRenderer renderer))
+            {
+                Debug.LogWarningFormat("[MeshSync] No renderer for {0}", path);
+            }
+
+            entry.Mesh = filter.sharedMesh;
+
+            entry.Materials = renderer.sharedMaterials;
         }
 
         private List<Matrix4x4[]> DivideArrays(Matrix4x4[] arrays)
@@ -136,6 +169,11 @@ namespace Unity.MeshSync{
 
         private void RenderInstances(MeshInstanceInfo entry)
         {
+            if (entry.Mesh == null || entry.Instances == null || entry.Materials == null)
+            {
+                return;
+            }
+            
             var mesh = entry.Mesh;
             var matrixBatches = entry.Instances;
 
@@ -155,6 +193,15 @@ namespace Unity.MeshSync{
                     Graphics.DrawMeshInstanced(mesh, i, material, batch);
                 }
             }
+        }
+
+        private void RepaintAfterChanges()
+        {
+#if UNITY_EDITOR
+            SceneView.RepaintAll();
+            Draw();
+            SceneView.RepaintAll();
+#endif     
         }
     }
 }

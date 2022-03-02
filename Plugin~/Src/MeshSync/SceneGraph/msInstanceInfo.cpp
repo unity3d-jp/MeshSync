@@ -5,12 +5,15 @@
 namespace ms {
 	void InstanceInfo::serialize(ostream& os)
 	{
+		write(os, type);
 		write(os, path);
 		write(os, transforms);
+		
 	}
 
 	void InstanceInfo::deserialize(istream& is)
 	{
+		read(is, type);
 		read(is, path);
 		read(is, transforms);
 	}
@@ -18,6 +21,7 @@ namespace ms {
 	{
 		this->path = "";
 		this->transforms.clear();
+		this->type = ReferenceType::NONE;
 	}
 
 	shared_ptr<InstanceInfo> InstanceInfo::create(istream& is)

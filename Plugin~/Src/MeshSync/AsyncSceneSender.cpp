@@ -71,7 +71,8 @@ void AsyncSceneSender::send()
 
     if (assets.empty() && textures.empty() && materials.empty() &&
         transforms.empty() && geometries.empty() && animations.empty() &&
-        deleted_entities.empty() && deleted_materials.empty())
+        deleted_entities.empty() && deleted_materials.empty() && 
+        deleted_instanceInfos.empty() && deleted_instanceMeshes.empty())
         return;
 
     SetupDataFlags(transforms);
@@ -152,6 +153,19 @@ void AsyncSceneSender::send()
         };
     }
 
+    //instance meshes
+    if (!instanceMeshes.empty()) {
+        for (auto& mesh : instanceMeshes) {
+            ms::SetMessage mes;
+            setup_message(mes);
+            mes.scene->settings = scene_settings;
+            mes.scene->instanceMeshes = { mesh };
+            succeeded = succeeded && client.send(mes);
+            if (!succeeded)
+                goto cleanup;
+        }
+    }
+
     // instance infos
     if (!instanceInfos.empty()) {
         for (auto& instanceInfo : instanceInfos) {
@@ -197,12 +211,17 @@ void AsyncSceneSender::send()
     }
 
     // deleted
-    if (!deleted_entities.empty() || !deleted_materials.empty() || !deleted_instanceInfos.empty()) {
+    if (!deleted_entities.empty() || 
+        !deleted_materials.empty() || 
+        !deleted_instanceInfos.empty() || 
+        !deleted_instanceMeshes.empty()) {
+
         ms::DeleteMessage mes;
         setup_message(mes);
         mes.entities = deleted_entities;
         mes.materials = deleted_materials;
         mes.instanceInfos = deleted_instanceInfos;
+        mes.instanceMeshes = deleted_instanceMeshes;
 
         succeeded = succeeded && client.send(mes);
         if (!succeeded)

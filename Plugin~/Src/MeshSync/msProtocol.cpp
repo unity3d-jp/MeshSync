@@ -75,6 +75,7 @@ void DeleteMessage::serialize(std::ostream& os) const
     write(os, entities);
     write(os, materials);
     write(os, instanceInfos);
+    write(os, instanceMeshes);
 }
 void DeleteMessage::deserialize(std::istream& is)
 {
@@ -82,6 +83,7 @@ void DeleteMessage::deserialize(std::istream& is)
     read(is, entities);
     read(is, materials);
     read(is, instanceInfos);
+    read(is, instanceMeshes);
 }
 
 

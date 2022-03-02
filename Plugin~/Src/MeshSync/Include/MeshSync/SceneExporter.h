@@ -25,10 +25,12 @@ public:
     std::vector<AnimationClipPtr> animations;
     std::vector<InstanceInfoPtr> instanceInfos;
     std::vector<PropertyInfoPtr> propertyInfos;
+    std::vector<TransformPtr> instanceMeshes;
 
     std::vector<Identifier> deleted_entities;
     std::vector<Identifier> deleted_materials;
     std::vector<Identifier> deleted_instanceInfos;
+    std::vector<Identifier> deleted_instanceMeshes;
 
     std::function<void()> on_prepare, on_success, on_error, on_complete;
     PathToID id_table;

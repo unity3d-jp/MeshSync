@@ -87,6 +87,7 @@ public:
     std::vector<Identifier> entities;
     std::vector<Identifier> materials;
     std::vector<Identifier> instanceInfos;
+    std::vector<Identifier> instanceMeshes;
 
     DeleteMessage();
     void serialize(std::ostream& os) const override;

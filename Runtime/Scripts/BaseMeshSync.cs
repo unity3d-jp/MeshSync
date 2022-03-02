@@ -58,13 +58,24 @@ internal delegate void DeleteEntityHandler(GameObject obj);
 /// A delegate to handle instance info updates
 /// </summary>
 /// <param name="data"></param>
-internal delegate void UpdateInstanceInfoHandler(GameObject obj, InstanceInfoData data);
+internal delegate void UpdateInstanceInfoHandler(string path, GameObject go, Matrix4x4[] transforms);
+
+/// <summary>
+/// A delegate to handle instance meshes.
+/// </summary>
+internal delegate void UpdateInstanceMeshHandler(string path, GameObject go);
 
 /// <summary>
 /// A delegate to handle instance info deletions
 /// </summary>
-/// <param name="obj"></param>
-internal delegate void DeleteInstanceInfoHandler(GameObject obj);
+/// <param name="data"></param>
+internal delegate void DeleteInstanceInfoHandler(string path);
+
+/// <summary>
+/// A delegate to handle instance mesh deletions
+/// </summary>
+/// <param name="path"></param>
+internal delegate void DeleteInstanceMeshHandler(string path);
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -120,7 +131,11 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
 
     internal event UpdateInstanceInfoHandler onUpdateInstanceInfo;
 
+    internal event UpdateInstanceMeshHandler onUpdateInstanceMesh;
+
     internal event DeleteInstanceInfoHandler onDeleteInstanceInfo;
+
+    internal event DeleteInstanceInfoHandler onDeleteInstanceMesh; 
     
     #endregion EventHandler Declarations
 
@@ -542,6 +557,19 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
                 UpdateConstraint(scene.GetConstraint(i));
         });
         
+        // handle instance meshes
+        Try(() =>
+        {
+            var numMeshes = scene.numInstanceMeshes;
+            for (var i = 0; i < numMeshes; ++i)
+            {
+                var src = scene.GetInstanceMesh(i);
+                var dst = UpdateInstanceMesh(src);
+                if (onUpdateInstanceMesh != null)
+                    onUpdateInstanceMesh(src.path, dst.go);
+            }
+        });
+        
         // handle instances
         Try(() =>
         {
@@ -551,7 +579,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
                 var src = scene.GetInstanceInfo(i);
                 var dst = UpdateInstanceInfo(src);
                 if (onUpdateInstanceInfo != null)
-                    onUpdateInstanceInfo.Invoke(dst.go, src);
+                    onUpdateInstanceInfo.Invoke(src.path, dst.go, src.transforms);
             }
         });
 
@@ -1602,6 +1630,20 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         }
     }
 
+    EntityRecord UpdateInstanceMesh(TransformData data)
+    {
+        var config = GetConfigV();
+        var rec = UpdateMeshEntity((MeshData)data, config);
+        if (!this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord meshRecord))
+        {
+            this.m_clientInstanceMeshes.Add(data.path, null);
+        }
+
+        this.m_clientInstanceMeshes[data.path] = rec;
+
+        return rec;
+    }
+    
     InstanceInfoRecord UpdateInstanceInfo(InstanceInfoData data)
     {
         var path = data.path;
@@ -1614,13 +1656,32 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
             m_clientInstances.Add(data.path, rec);
         }
 
-        if (this.m_clientObjects.TryGetValue(data.path, out EntityRecord entityRecord))
+        if (data.type == InstanceInfoData.ReferenceType.EntityPath)
         {
-            rec.go = entityRecord.go;
+            if (this.m_clientObjects.TryGetValue(data.path, out EntityRecord entityRecord))
+            {
+                rec.go = entityRecord.go;
+            }
+            else
+            {
+                Debug.LogWarningFormat("[MeshSync] Could not locate entity record for path {0}", data.path);
+            }
+        }
+        else if (data.type == InstanceInfoData.ReferenceType.MeshPath)
+        {
+            
+            if (this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord entityRecord))
+            {
+                rec.go = entityRecord.go;
+            }
+            else
+            {
+                Debug.LogWarningFormat("[MeshSync] No Mesh found for path {0}", data.path);
+            }
         }
         else
         {
-            Debug.LogWarningFormat("[MeshSync] Could not locate entity record for path {0}", data.path);
+            Debug.LogWarningFormat("[MeshSync] Unknown instance info type {0}", data.type);
         }
 
         return rec;
@@ -1834,9 +1895,25 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
              ret = this.m_clientInstances.Remove(path);
              
             if (onDeleteInstanceInfo != null)
-                onDeleteInstanceInfo(rec.go);
+                onDeleteInstanceInfo(identifier.name);
         }
 
+        return ret;
+    }
+
+    internal bool EraseInstanceMeshRecord(Identifier identifier)
+    {
+        var path = identifier.name;
+        var ret = false;
+        if (this.m_clientInstanceMeshes.TryGetValue(path, out EntityRecord rec))
+        {
+            ret = this.m_clientInstanceMeshes.Remove(path);
+            if (onDeleteInstanceMesh != null)
+                onDeleteInstanceMesh(identifier.name);
+            
+            DestroyImmediate(rec.go);
+        }
+        
         return ret;
     }
     
@@ -2276,6 +2353,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
     private readonly           Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
     
     private readonly Dictionary<string, InstanceInfoRecord> m_clientInstances =  new Dictionary<string, InstanceInfoRecord>();
+    private readonly Dictionary<string, EntityRecord> m_clientInstanceMeshes = new Dictionary<string, EntityRecord>();
 
 
     protected Action m_onMaterialChangedInSceneViewCB = null;
