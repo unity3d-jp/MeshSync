@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "msISceneCacheImpl.h"
+#include "SceneCacheInputFile.h"
 #include "Utils/msDebug.h"
 
 #include "MeshUtils/muLog.h"
