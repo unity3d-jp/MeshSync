@@ -466,8 +466,8 @@ void SceneCacheInputFile::PreloadAll()
 
 void SceneCacheInputFile::popHistory()
 {
-    const int32_t maxHistory = GetMaxLoadedSamples();
-    while (m_history.size() > maxHistory) {
+    const int32_t maxSamples = GetMaxLoadedSamples();
+    while (m_history.size() > maxSamples) {
         m_records[m_history.front()].scene.reset();
         m_history.pop_front();
     }
