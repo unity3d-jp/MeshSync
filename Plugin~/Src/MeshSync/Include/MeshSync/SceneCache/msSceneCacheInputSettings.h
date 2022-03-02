@@ -14,7 +14,11 @@ struct ISceneCacheSettingsBase
 
     ISceneCacheSettingsBase();
 };
-struct SceneCacheInputSettings : ISceneCacheSettingsBase, SceneImportSettings {};
+struct SceneCacheInputSettings : ISceneCacheSettingsBase, SceneImportSettings{
+public:
+    SceneCacheInputSettings() = default;
+    explicit SceneCacheInputSettings(const SceneCacheInputSettings&) = default;
+};
 
 
 } // namespace ms
