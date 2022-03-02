@@ -182,9 +182,9 @@ ScenePtr SceneCacheInputFile::getByIndexImpl(size_t scene_index, bool wait_prelo
     if (ret)
         return ret; // already loaded
 
-    mu::nanosec load_begin = mu::Now();
+    const mu::nanosec load_begin = mu::Now();
 
-    size_t seg_count = rec.buffer_sizes.size();
+    const size_t seg_count = rec.buffer_sizes.size();
     rec.segments.resize(seg_count);
 
     {
