@@ -4,26 +4,26 @@
 
 using namespace mu;
 
-#pragma region SceneCacheInput
+#pragma region BaseSceneCacheInput
 #ifdef msDebug
-    static ms::SceneCacheInput *g_dbg_last_scene;
+    static ms::BaseSceneCacheInput *g_dbg_last_scene;
     #define msDbgBreadcrumb() g_dbg_last_scene = self;
 #else
     #define msDbgBreadcrumb()
 #endif
 
-msAPI ms::SceneCacheInput* msISceneCacheOpen(const char *path)
+msAPI ms::BaseSceneCacheInput* msISceneCacheOpen(const char *path)
 {
     ms::SceneCacheInputSettings ps;
     return ms::SceneCacheInputFile::OpenRaw(path, ps);
 }
-msAPI void msISceneCacheClose(ms::SceneCacheInput *self)
+msAPI void msISceneCacheClose(ms::BaseSceneCacheInput *self)
 {
     msDbgBreadcrumb();
     delete self;
 }
 
-msAPI int msISceneCacheGetPreloadLength(ms::SceneCacheInput *self)
+msAPI int msISceneCacheGetPreloadLength(ms::BaseSceneCacheInput *self)
 {
     msDbgBreadcrumb();
     if (!self)
@@ -31,7 +31,7 @@ msAPI int msISceneCacheGetPreloadLength(ms::SceneCacheInput *self)
     return self->getPreloadLength();
 }
 
-msAPI void msISceneCacheSetPreloadLength(ms::SceneCacheInput *self, int v)
+msAPI void msISceneCacheSetPreloadLength(ms::BaseSceneCacheInput *self, int v)
 {
     msDbgBreadcrumb();
     if (!self)
@@ -39,14 +39,14 @@ msAPI void msISceneCacheSetPreloadLength(ms::SceneCacheInput *self, int v)
     self->setPreloadLength(v);
 }
 
-msAPI float msISceneCacheGetSampleRate(ms::SceneCacheInput *self)
+msAPI float msISceneCacheGetSampleRate(ms::BaseSceneCacheInput *self)
 {
     msDbgBreadcrumb();
     if (!self)
         return 0.0f;
     return self->getSampleRate();
 }
-msAPI void msISceneCacheGetTimeRange(ms::SceneCacheInput *self, float *start, float *end)
+msAPI void msISceneCacheGetTimeRange(ms::BaseSceneCacheInput *self, float *start, float *end)
 {
     msDbgBreadcrumb();
     if (!self)
@@ -55,42 +55,42 @@ msAPI void msISceneCacheGetTimeRange(ms::SceneCacheInput *self, float *start, fl
     *start = v.start;
     *end = v.end;
 }
-msAPI int msISceneCacheGetNumScenes(ms::SceneCacheInput *self)
+msAPI int msISceneCacheGetNumScenes(ms::BaseSceneCacheInput *self)
 {
     msDbgBreadcrumb();
     if (!self)
         return 0;
     return (int)self->getNumScenes();
 }
-msAPI float msISceneCacheGetTime(ms::SceneCacheInput *self, int index)
+msAPI float msISceneCacheGetTime(ms::BaseSceneCacheInput *self, int index)
 {
     msDbgBreadcrumb();
     if (!self)
         return 0.0f;
     return self->getTime(index);
 }
-msAPI int msISceneCacheGetFrameByTime(ms::SceneCacheInput *self, float time)
+msAPI int msISceneCacheGetFrameByTime(ms::BaseSceneCacheInput *self, float time)
 {
     msDbgBreadcrumb();
     if (!self)
         return 0;
     return self->getFrameByTime(time);
 }
-msAPI ms::Scene* msISceneCacheGetSceneByIndex(ms::SceneCacheInput *self, int index)
+msAPI ms::Scene* msISceneCacheGetSceneByIndex(ms::BaseSceneCacheInput *self, int index)
 {
     msDbgBreadcrumb();
     if (!self)
         return nullptr;
     return self->getByIndex(index).get();
 }
-msAPI ms::Scene* msISceneCacheGetSceneByTime(ms::SceneCacheInput *self, float time, bool lerp)
+msAPI ms::Scene* msISceneCacheGetSceneByTime(ms::BaseSceneCacheInput *self, float time, bool lerp)
 {
     msDbgBreadcrumb();
     if (!self)
         return nullptr;
     return self->getByTime(time, lerp).get();
 }
-msAPI void msISceneCacheRefesh(ms::SceneCacheInput *self)
+msAPI void msISceneCacheRefesh(ms::BaseSceneCacheInput *self)
 {
     msDbgBreadcrumb();
     if (!self)
@@ -98,7 +98,7 @@ msAPI void msISceneCacheRefesh(ms::SceneCacheInput *self)
     self->refresh();
 }
 
-msAPI void msISceneCachePreload(ms::SceneCacheInput *self, int v)
+msAPI void msISceneCachePreload(ms::BaseSceneCacheInput *self, int v)
 {
     msDbgBreadcrumb();
     if (!self)
@@ -106,14 +106,14 @@ msAPI void msISceneCachePreload(ms::SceneCacheInput *self, int v)
     self->preload(v);
 }
 
-msAPI const ms::AnimationCurve* msISceneCacheGetTimeCurve(ms::SceneCacheInput *self)
+msAPI const ms::AnimationCurve* msISceneCacheGetTimeCurve(ms::BaseSceneCacheInput *self)
 {
     msDbgBreadcrumb();
     if (!self)
         return nullptr;
     return self->getTimeCurve().get();
 }
-msAPI const ms::AnimationCurve* msISceneCacheGetFrameCurve(ms::SceneCacheInput *self, int base_frame)
+msAPI const ms::AnimationCurve* msISceneCacheGetFrameCurve(ms::BaseSceneCacheInput *self, int base_frame)
 {
     msDbgBreadcrumb();
     if (!self)

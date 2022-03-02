@@ -15,11 +15,11 @@ bool SceneCacheInputFile::valid() const {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-SceneCacheInputPtr SceneCacheInputFile::Open(const char *path, const SceneCacheInputSettings& iscs) {
-    return SceneCacheInputPtr(OpenRaw(path, iscs));
+SceneCacheInputFilePtr SceneCacheInputFile::Open(const char *path, const SceneCacheInputSettings& iscs) {
+    return SceneCacheInputFilePtr(OpenRaw(path, iscs));
 }
 
-SceneCacheInput* SceneCacheInputFile::OpenRaw(const char *path, const SceneCacheInputSettings& iscs) {
+SceneCacheInputFile* SceneCacheInputFile::OpenRaw(const char *path, const SceneCacheInputSettings& iscs) {
     SceneCacheInputFile* ret = new SceneCacheInputFile();
     ret->Init(path, iscs);
     if (ret->valid()) {

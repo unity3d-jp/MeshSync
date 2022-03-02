@@ -6,15 +6,15 @@
 #include "MeshSync/SceneCache/msSceneCacheInputSettings.h"
 
 //Forward declarations
-msDeclClassPtr(SceneCacheInput)
+msDeclClassPtr(BaseSceneCacheInput)
 
 namespace ms {
 
-class SceneCacheInput
+class BaseSceneCacheInput
 {
 public:
-    SceneCacheInput();
-    virtual ~SceneCacheInput() = default;
+    BaseSceneCacheInput();
+    virtual ~BaseSceneCacheInput() = default;
 
     int getPreloadLength() const;
     void setPreloadLength(int v);
