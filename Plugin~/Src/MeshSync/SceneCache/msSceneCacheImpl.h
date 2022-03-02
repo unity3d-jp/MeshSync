@@ -5,13 +5,6 @@
 
 namespace ms {
 
-struct CacheFileHeader
-{
-    char magic[4] = { 'M', 'S', 'S', 'C' };
-    int version = msProtocolVersion;
-    OSceneCacheSettingsBase oscs;
-};
-
 struct CacheFileSceneHeader
 {
     uint32_t buffer_count = 0;
