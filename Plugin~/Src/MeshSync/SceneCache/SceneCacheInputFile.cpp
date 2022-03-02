@@ -459,14 +459,14 @@ void SceneCacheInputFile::PreloadV(const int frame)
 void SceneCacheInputFile::PreloadAll()
 {
     const size_t n = m_records.size();
-    SetMaxHistory(static_cast<int>(n) + 1);
+    SetMaxLoadedSamples(static_cast<int>(n) + 1);
     for (size_t i = 0; i < n; ++i)
         kickPreload(i);
 }
 
 void SceneCacheInputFile::popHistory()
 {
-    const int32_t maxHistory = GetMaxHistory();
+    const int32_t maxHistory = GetMaxLoadedSamples();
     while (m_history.size() > maxHistory) {
         m_records[m_history.front()].scene.reset();
         m_history.pop_front();

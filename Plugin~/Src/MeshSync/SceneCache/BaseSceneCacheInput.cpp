@@ -11,8 +11,8 @@ BaseSceneCacheInput::BaseSceneCacheInput()
 }
 
 void BaseSceneCacheInput::SetPreloadLength(int v) {
-    preload_length = std::max(v, 0);
-    max_history = preload_length + 2;
+    m_preloadLength = std::max(v, 0);
+    m_maxLoadedFrames = m_preloadLength + 2;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

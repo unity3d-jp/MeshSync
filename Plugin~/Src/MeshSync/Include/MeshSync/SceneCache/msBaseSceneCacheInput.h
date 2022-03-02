@@ -35,24 +35,24 @@ protected:
 
     AnimationCurvePtr GetTimeCurve();
 
-    inline int32_t GetMaxHistory() const;
-    inline void SetMaxHistory(const int32_t count);
+    inline int32_t GetMaxLoadedSamples() const;
+    inline void SetMaxLoadedSamples(const int32_t sampleCount);
 
 private:
     SceneCacheInputSettings m_iscs;
     AnimationCurvePtr m_time_curve;
 
-    int32_t max_history = 3;
-    int32_t preload_length = 1;
+    int32_t m_maxLoadedFrames = 3;
+    int32_t m_preloadLength = 1;
 
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-int32_t BaseSceneCacheInput::GetPreloadLength() const { return preload_length; }
+int32_t BaseSceneCacheInput::GetPreloadLength() const { return m_preloadLength; }
 
-inline int32_t BaseSceneCacheInput::GetMaxHistory() const { return max_history; }
-void BaseSceneCacheInput::SetMaxHistory(const int32_t count) { max_history = count; }
+inline int32_t BaseSceneCacheInput::GetMaxLoadedSamples() const { return m_maxLoadedFrames; }
+void BaseSceneCacheInput::SetMaxLoadedSamples(const int32_t sampleCount) { m_maxLoadedFrames = sampleCount; }
 
 
 } // namespace ms
