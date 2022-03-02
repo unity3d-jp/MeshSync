@@ -71,6 +71,7 @@ void AsyncSceneSender::send()
 
     if (assets.empty() && textures.empty() && materials.empty() &&
         transforms.empty() && geometries.empty() && animations.empty() &&
+        instanceInfos.empty() && instanceMeshes.empty() &&
         deleted_entities.empty() && deleted_materials.empty() && 
         deleted_instanceInfos.empty() && deleted_instanceMeshes.empty())
         return;
