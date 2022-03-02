@@ -3,10 +3,11 @@
 
 namespace ms {
 
-ISceneCacheSettingsBase::ISceneCacheSettingsBase() {
-    convert_scenes = 1;
-    enable_diff = 1;
-    generate_velocities = 0;
+SceneCacheInputSettings::SceneCacheInputSettings()
+    : convert_scenes(1)
+    , enable_diff (1)
+    , generate_velocities(0)
+{
 }
 
 } // namespace ms
