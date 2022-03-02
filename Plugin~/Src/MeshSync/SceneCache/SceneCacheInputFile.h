@@ -35,7 +35,11 @@ public:
     const AnimationCurvePtr getFrameCurve(int base_frame) override;
 
 
-protected:
+private:
+    SceneCacheInputFile() = default;
+    void Init(const char *path, const SceneCacheInputSettings& iscs);
+    static StreamPtr createStream(const char *path, const SceneCacheInputSettings& iscs);
+
     ScenePtr getByIndexImpl(size_t i, bool wait_preload = true);
     ScenePtr postprocess(ScenePtr& sp, size_t scene_index);
     bool kickPreload(size_t i);
@@ -43,10 +47,6 @@ protected:
     void popHistory();
 
 private:
-    SceneCacheInputFile() = default;
-    void Init(const char *path, const SceneCacheInputSettings& iscs);
-    static StreamPtr createStream(const char *path, const SceneCacheInputSettings& iscs);
-
     struct SceneSegment
     {
         RawVector<char> encoded_buf;
