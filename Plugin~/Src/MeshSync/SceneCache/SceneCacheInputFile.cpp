@@ -19,7 +19,7 @@ SceneCacheInputPtr SceneCacheInputFile::Open(const char *path, const SceneCacheI
     return SceneCacheInputPtr(OpenRaw(path, iscs));
 }
 
-SceneCacheInput* SceneCacheInputFile::OpenRaw(const char *path, const SceneCacheInputSettings& iscs) {
+BaseSceneCacheInput* SceneCacheInputFile::OpenRaw(const char *path, const SceneCacheInputSettings& iscs) {
     SceneCacheInputFile* ret = new SceneCacheInputFile();
     ret->Init(path, iscs);
     if (ret->valid()) {

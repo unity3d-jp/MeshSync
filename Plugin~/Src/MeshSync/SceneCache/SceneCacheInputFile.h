@@ -8,7 +8,7 @@
 
 namespace ms {
    
-class SceneCacheInputFile : public SceneCacheInput
+class SceneCacheInputFile : public BaseSceneCacheInput
 {
 public:
     using StreamPtr = std::shared_ptr<std::istream>;
@@ -16,7 +16,7 @@ public:
     ~SceneCacheInputFile() override;
 
     static SceneCacheInputPtr Open(const char *path, const SceneCacheInputSettings& iscs);
-    static SceneCacheInput* OpenRaw(const char *path, const SceneCacheInputSettings& iscs);
+    static BaseSceneCacheInput* OpenRaw(const char *path, const SceneCacheInputSettings& iscs);
 
     bool valid() const;
 

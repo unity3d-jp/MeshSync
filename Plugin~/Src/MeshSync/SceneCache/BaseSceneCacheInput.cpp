@@ -4,28 +4,28 @@
 
 namespace ms {
 
-SceneCacheInput::SceneCacheInput() 
+BaseSceneCacheInput::BaseSceneCacheInput() 
     : m_time_curve(AnimationCurve::create())
 {
     
 }
 
-int SceneCacheInput::getPreloadLength() const {
+int BaseSceneCacheInput::getPreloadLength() const {
     return m_iscs.preload_length;
 }
 
-void SceneCacheInput::setPreloadLength(int v) {
+void BaseSceneCacheInput::setPreloadLength(int v) {
     m_iscs.setPreloadLength(v);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-const AnimationCurvePtr SceneCacheInput::getTimeCurve() const {
+const AnimationCurvePtr BaseSceneCacheInput::getTimeCurve() const {
     return m_time_curve;
 }
 
 
-AnimationCurvePtr SceneCacheInput::GetTimeCurve() {
+AnimationCurvePtr BaseSceneCacheInput::GetTimeCurve() {
     return m_time_curve;
 }
 
