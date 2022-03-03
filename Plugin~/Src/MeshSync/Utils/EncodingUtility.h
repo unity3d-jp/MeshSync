@@ -4,9 +4,10 @@
 #include "MeshSync/SceneCache/msSceneCacheEncoding.h"
 
 namespace ms {
-    union SceneCacheEncoderSettings;
 
-    class EncodingUtility {
+union SceneCacheEncoderSettings;
+
+class EncodingUtility {
 public:
     static std::tuple<int, int> GetZSTDCompressionLevelRange();
     static int ClampZSTDCompressionLevel(int v);
