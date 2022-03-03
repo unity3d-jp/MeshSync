@@ -5,13 +5,14 @@
 
 namespace ms {
 
-class OSceneCacheImpl : public SceneCacheOutput
+class SceneCacheOutputFile: public SceneCacheOutput
 {
 public:
     using StreamPtr = std::shared_ptr<std::ostream>;
 
-    OSceneCacheImpl(StreamPtr ost, const SceneCacheOutputSettings& oscs);
-    ~OSceneCacheImpl() override;
+    SceneCacheOutputFile(const char *path, const SceneCacheOutputSettings& oscs);
+
+    ~SceneCacheOutputFile() override;
     bool valid() const override;
 
     void addScene(ScenePtr scene, float time) override;
@@ -23,6 +24,11 @@ public:
 
 protected:
     void doWrite();
+
+private:
+    void Init(StreamPtr ost, const SceneCacheOutputSettings& oscs);
+
+    static StreamPtr createStream(const char *path);
 
     struct SceneSegment
     {
@@ -64,16 +70,6 @@ protected:
     std::vector<EntityRecord> m_entity_records;
 
     BufferEncoderPtr m_encoder;
-};
-
-
-class OSceneCacheFile : public OSceneCacheImpl
-{
-using super = OSceneCacheImpl;
-public:
-    OSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs);
-
-    static StreamPtr createStream(const char *path);
 };
 
 } // namespace ms

@@ -3,7 +3,7 @@
 
 #ifndef msRuntime
 
-#include "SceneCache/msOSceneCacheImpl.h"
+#include "SceneCache/SceneCacheOutputFile.h"
 #include "MeshSync/SceneGraph/msAnimation.h" //AnimationClipPtr
 #include "MeshSync/SceneGraph/msMaterial.h" //MaterialPtr
 #include "MeshSync/SceneGraph/msTexture.h" //TexturePtr
@@ -109,7 +109,7 @@ void SceneCacheWriter::write()
 //----------------------------------------------------------------------------------------------------------------------
 
 SceneCacheOutput* SceneCacheWriter::OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs) {
-    OSceneCacheFile* ret = new OSceneCacheFile(path, oscs);
+    SceneCacheOutputFile* ret = new SceneCacheOutputFile(path, oscs);
     if (ret->valid()) {
         return ret;
     } else {
