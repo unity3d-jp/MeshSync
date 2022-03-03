@@ -5,6 +5,8 @@ using UnityEngine.Rendering;
 
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.Rendering;
+
 #endif
 
 namespace Unity.MeshSync{
@@ -24,7 +26,7 @@ namespace Unity.MeshSync{
                 var go = GameObject.Find("SceneCamera");
                 if (go != null)
                 {
-                    m_camera =go.GetComponent<Camera>();
+                    m_camera = go.GetComponent<Camera>();
                 }
             }
 
@@ -199,7 +201,17 @@ namespace Unity.MeshSync{
                 {
                     var batch = matrixBatches[j];
                     
-                    Graphics.DrawMeshInstanced(mesh, i, material, batch);
+                    Graphics.DrawMeshInstanced(
+                        mesh:mesh,
+                        submeshIndex:i, 
+                        material:material, 
+                        matrices:batch, 
+                        count:batch.Length, 
+                        properties:null, 
+                        castShadows:ShadowCastingMode.On, 
+                        receiveShadows:true,
+                        layer:0, 
+                        camera:m_camera);
                 }
             }
         }
@@ -208,6 +220,7 @@ namespace Unity.MeshSync{
         {
 #if UNITY_EDITOR
             m_camera.Render();
+            Draw();
 #endif
         }
     }
