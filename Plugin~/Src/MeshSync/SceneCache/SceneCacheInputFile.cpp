@@ -77,13 +77,13 @@ int SceneCacheInputFile::GetFrameByTimeV(const float time) const
 
 void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& iscs)
 {
-    m_ist = CreateStream(path, iscs);
+    m_stream = CreateStream(path, iscs);
     SetSettings(iscs);
-    if (!m_ist || !(*m_ist))
+    if (!m_stream || !(*m_stream))
         return;
 
     m_header.version = 0;
-    m_ist->read(reinterpret_cast<char*>(&m_header), sizeof(m_header));
+    m_stream->read(reinterpret_cast<char*>(&m_header), sizeof(m_header));
     if (m_header.version != msProtocolVersion)
         return;
 
@@ -97,7 +97,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
     for (;;) {
         // enumerate all scene headers
         CacheFileSceneHeader sh;
-        m_ist->read(reinterpret_cast<char*>(&sh), sizeof(sh));
+        m_stream->read(reinterpret_cast<char*>(&sh), sizeof(sh));
         if (sh.buffer_count == 0) {
             // empty header is a terminator
             break;
@@ -107,8 +107,8 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
             rec.time = sh.time;
 
             rec.bufferSizes.resize_discard(sh.buffer_count);
-            m_ist->read(reinterpret_cast<char*>(rec.bufferSizes.data()), rec.bufferSizes.size_in_byte());
-            rec.pos = static_cast<uint64_t>(m_ist->tellg());
+            m_stream->read(reinterpret_cast<char*>(rec.bufferSizes.data()), rec.bufferSizes.size_in_byte());
+            rec.pos = static_cast<uint64_t>(m_stream->tellg());
 
             rec.bufferSizeTotal = 0;
             for (uint64_t s : rec.bufferSizes)
@@ -117,7 +117,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
             rec.segments.resize(sh.buffer_count);
 
             m_records.emplace_back(std::move(rec));
-            m_ist->seekg(rec.bufferSizeTotal, std::ios::cur);
+            m_stream->seekg(rec.bufferSizeTotal, std::ios::cur);
         }
     }
 
@@ -136,10 +136,10 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
 
         // read meta data
         CacheFileMetaHeader mh;
-        m_ist->read(reinterpret_cast<char*>(&mh), sizeof(mh));
+        m_stream->read(reinterpret_cast<char*>(&mh), sizeof(mh));
 
         encoded_buf.resize(static_cast<size_t>(mh.size));
-        m_ist->read(encoded_buf.data(), encoded_buf.size());
+        m_stream->read(encoded_buf.data(), encoded_buf.size());
 
         m_encoder->decode(tmp_buf, encoded_buf);
         m_entityMeta.resize_discard(tmp_buf.size() / sizeof(CacheFileEntityMeta));
@@ -191,7 +191,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
         // get exclusive file access
         std::unique_lock<std::mutex> lock(m_mutex);
 
-        m_ist->seekg(rec.pos, std::ios::beg);
+        m_stream->seekg(rec.pos, std::ios::beg);
         for (size_t si = 0; si < seg_count; ++si) {
             SceneSegment& seg = rec.segments[si];
             seg.encodedSize = rec.bufferSizes[si];
@@ -202,7 +202,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
                 mu::ScopedTimer timer;
 
                 seg.encodedBuf.resize(static_cast<size_t>(seg.encodedSize));
-                m_ist->read(seg.encodedBuf.data(), seg.encodedBuf.size());
+                m_stream->read(seg.encodedBuf.data(), seg.encodedBuf.size());
 
                 seg.readTime = timer.elapsed();
             }

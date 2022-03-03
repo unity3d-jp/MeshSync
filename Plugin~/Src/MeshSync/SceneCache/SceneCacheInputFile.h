@@ -76,7 +76,7 @@ private:
         std::vector<SceneSegment> segments;
     };
 
-    StreamPtr m_ist;
+    StreamPtr m_stream;
     CacheFileHeader m_header;
     BufferEncoderPtr m_encoder;
 
