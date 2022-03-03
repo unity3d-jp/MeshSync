@@ -3,8 +3,10 @@
 
 #include "MeshSync/SceneCache/msSceneCacheOutput.h"
 
-namespace ms {
+msDeclClassPtr(SceneCacheOutputFile)
 
+namespace ms {
+    
 class SceneCacheOutputFile: public SceneCacheOutput
 {
 public:
@@ -12,15 +14,15 @@ public:
 
     SceneCacheOutputFile(const char *path, const SceneCacheOutputSettings& oscs);
 
-    ~SceneCacheOutputFile() override;
-    bool valid() const override;
+    ~SceneCacheOutputFile() ;
+    bool valid() const ;
 
-    void addScene(ScenePtr scene, float time) override;
+    void addScene(ScenePtr scene, float time) ;
 
-    void flush() override;
-    bool isWriting() override;
-    int getSceneCountWritten() const override;
-    int getSceneCountInQueue() const override;
+    void flush() ;
+    bool isWriting() ;
+    int getSceneCountWritten() const ;
+    int getSceneCountInQueue() const ;
 
 protected:
     void doWrite();

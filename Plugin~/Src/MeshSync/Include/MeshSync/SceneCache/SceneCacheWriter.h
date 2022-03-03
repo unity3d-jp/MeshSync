@@ -5,9 +5,12 @@
 #include "MeshSync/SceneExporter.h"
 #include "MeshSync/SceneCache/msSceneCacheOutput.h"
 
+msDeclClassPtr(SceneCacheOutputFile)
+
 namespace ms {
 
 struct SceneCacheOutputSettings;
+class SceneCacheOutputFile;
 
 class SceneCacheWriter : public SceneExporter
 {
@@ -27,12 +30,12 @@ public:
     void kick() override;
 
 private:
-    static SceneCacheOutputPtr OpenOSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs);
-    static SceneCacheOutput* OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs);
+    static SceneCacheOutputFilePtr OpenOSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs);
+    static SceneCacheOutputFile* OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs);
 
     void write();
 
-    SceneCacheOutputPtr m_osc;
+    SceneCacheOutputFilePtr m_osc;
     std::string m_error_message;
 };
 
