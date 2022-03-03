@@ -9,6 +9,8 @@
 #include "MeshSync/SceneGraph/msMesh.h"
 #include "MeshSync/Utils/EncodingUtility.h"
 
+#include "MeshSync/SceneCache/msSceneCacheImpl.h" //CacheFileSceneHeader
+
 namespace ms {
 
 SceneCacheOutputFile::SceneCacheOutputFile(const char *path, const SceneCacheOutputSettings& oscs) {

@@ -1,7 +1,6 @@
 #pragma once
-#include "msEncoder.h"
 
-#include "MeshSync/SceneCache/msSceneCacheOutputSettings.h"
+#include "MeshSync/SceneCache/msSceneCacheExportSettings.h"
 
 namespace ms {
 
@@ -9,7 +8,7 @@ struct CacheFileHeader
 {
     char magic[4] = { 'M', 'S', 'S', 'C' };
     int version = msProtocolVersion;
-    OSceneCacheSettingsBase oscs;
+    SceneCacheExportSettings oscs;
 };
 
 struct CacheFileSceneHeader
