@@ -307,7 +307,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
     return ret;
 }
 
-ScenePtr SceneCacheInputFile::postprocess(ScenePtr& sp, size_t scene_index)
+ScenePtr SceneCacheInputFile::PostProcess(ScenePtr& sp, size_t scene_index)
 {
     if (!sp)
         return sp;
@@ -362,7 +362,7 @@ ScenePtr SceneCacheInputFile::GetByIndexV(size_t i)
         return nullptr;
 
     ScenePtr ret = LoadByIndexInternal(i);
-    return postprocess(ret, i);
+    return PostProcess(ret, i);
 }
 
 ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
@@ -434,7 +434,7 @@ ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
         }
     }
     m_last_time = time;
-    return postprocess(ret, m_last_index2);
+    return PostProcess(ret, m_last_index2);
 }
 
 void SceneCacheInputFile::RefreshV()
