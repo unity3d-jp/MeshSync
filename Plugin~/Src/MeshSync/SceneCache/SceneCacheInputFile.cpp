@@ -6,7 +6,7 @@
 namespace ms {
 
 SceneCacheInputFile::~SceneCacheInputFile() {
-    waitAllPreloads();
+    WaitAllPreloads();
 }
 
 bool SceneCacheInputFile::IsValid() const {
@@ -61,7 +61,7 @@ float SceneCacheInputFile::GetTimeV(int i) const
     return m_records[i].time;
 }
 
-int SceneCacheInputFile::GetFrameByTimeV(float time) const
+int SceneCacheInputFile::GetFrameByTimeV(const float time) const
 {
     if (!IsValid())
         return 0;
@@ -77,13 +77,13 @@ int SceneCacheInputFile::GetFrameByTimeV(float time) const
 
 void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& iscs)
 {
-    m_ist = createStream(path, iscs);
+    m_stream = CreateStream(path, iscs);
     SetSettings(iscs);
-    if (!m_ist || !(*m_ist))
+    if (!m_stream || !(*m_stream))
         return;
 
     m_header.version = 0;
-    m_ist->read(reinterpret_cast<char*>(&m_header), sizeof(m_header));
+    m_stream->read(reinterpret_cast<char*>(&m_header), sizeof(m_header));
     if (m_header.version != msProtocolVersion)
         return;
 
@@ -97,7 +97,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
     for (;;) {
         // enumerate all scene headers
         CacheFileSceneHeader sh;
-        m_ist->read((char*)&sh, sizeof(sh));
+        m_stream->read(reinterpret_cast<char*>(&sh), sizeof(sh));
         if (sh.buffer_count == 0) {
             // empty header is a terminator
             break;
@@ -106,18 +106,18 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
             SceneRecord rec;
             rec.time = sh.time;
 
-            rec.buffer_sizes.resize_discard(sh.buffer_count);
-            m_ist->read(reinterpret_cast<char*>(rec.buffer_sizes.data()), rec.buffer_sizes.size_in_byte());
-            rec.pos = static_cast<uint64_t>(m_ist->tellg());
+            rec.bufferSizes.resize_discard(sh.buffer_count);
+            m_stream->read(reinterpret_cast<char*>(rec.bufferSizes.data()), rec.bufferSizes.size_in_byte());
+            rec.pos = static_cast<uint64_t>(m_stream->tellg());
 
-            rec.buffer_size_total = 0;
-            for (uint64_t s : rec.buffer_sizes)
-                rec.buffer_size_total += s;
+            rec.bufferSizeTotal = 0;
+            for (uint64_t s : rec.bufferSizes)
+                rec.bufferSizeTotal += s;
 
             rec.segments.resize(sh.buffer_count);
 
             m_records.emplace_back(std::move(rec));
-            m_ist->seekg(rec.buffer_size_total, std::ios::cur);
+            m_stream->seekg(rec.bufferSizeTotal, std::ios::cur);
         }
     }
 
@@ -136,24 +136,24 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
 
         // read meta data
         CacheFileMetaHeader mh;
-        m_ist->read(reinterpret_cast<char*>(&mh), sizeof(mh));
+        m_stream->read(reinterpret_cast<char*>(&mh), sizeof(mh));
 
         encoded_buf.resize(static_cast<size_t>(mh.size));
-        m_ist->read(encoded_buf.data(), encoded_buf.size());
+        m_stream->read(encoded_buf.data(), encoded_buf.size());
 
         m_encoder->decode(tmp_buf, encoded_buf);
-        m_entity_meta.resize_discard(tmp_buf.size() / sizeof(CacheFileEntityMeta));
-        tmp_buf.copy_to(reinterpret_cast<char*>(m_entity_meta.data()));
+        m_entityMeta.resize_discard(tmp_buf.size() / sizeof(CacheFileEntityMeta));
+        tmp_buf.copy_to(reinterpret_cast<char*>(m_entityMeta.data()));
     }
 
     if (m_header.oscs.strip_unchanged)
-        m_base_scene = getByIndexImpl(0);
+        m_baseScene = LoadByIndexInternal(0);
 
     //PreloadAll(); // for test
 }
 
 
-SceneCacheInputFile::StreamPtr SceneCacheInputFile::createStream(const char *path, const SceneCacheInputSettings& /*iscs*/)
+SceneCacheInputFile::StreamPtr SceneCacheInputFile::CreateStream(const char *path, const SceneCacheInputSettings& /*iscs*/)
 {
     if (!path)
         return nullptr;
@@ -166,13 +166,13 @@ SceneCacheInputFile::StreamPtr SceneCacheInputFile::createStream(const char *pat
 //----------------------------------------------------------------------------------------------------------------------
 
 // thread safe
-ScenePtr SceneCacheInputFile::getByIndexImpl(size_t scene_index, bool wait_preload)
+ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPreload)
 {
-    if (!IsValid() || scene_index >= m_records.size())
+    if (!IsValid() || sceneIndex >= m_records.size())
         return nullptr;
 
-    SceneRecord& rec = m_records[scene_index];
-    if (wait_preload && rec.preload.valid()) {
+    SceneRecord& rec = m_records[sceneIndex];
+    if (waitPreload && rec.preload.valid()) {
         // wait preload
         rec.preload.wait();
         rec.preload = {};
@@ -184,37 +184,37 @@ ScenePtr SceneCacheInputFile::getByIndexImpl(size_t scene_index, bool wait_prelo
 
     const mu::nanosec load_begin = mu::Now();
 
-    const size_t seg_count = rec.buffer_sizes.size();
+    const size_t seg_count = rec.bufferSizes.size();
     rec.segments.resize(seg_count);
 
     {
         // get exclusive file access
         std::unique_lock<std::mutex> lock(m_mutex);
 
-        m_ist->seekg(rec.pos, std::ios::beg);
+        m_stream->seekg(rec.pos, std::ios::beg);
         for (size_t si = 0; si < seg_count; ++si) {
             SceneSegment& seg = rec.segments[si];
-            seg.size_encoded = rec.buffer_sizes[si];
+            seg.encodedSize = rec.bufferSizes[si];
 
             // read segment
             {
-                msProfileScope("SceneCacheInputFile: [%d] read segment (%d - %u byte)", (int)scene_index, (int)si, (uint32_t)seg.size_encoded);
+                msProfileScope("SceneCacheInputFile: [%d] read segment (%d - %u byte)", (int)sceneIndex, (int)si, (uint32_t)seg.encodedSize);
                 mu::ScopedTimer timer;
 
-                seg.encoded_buf.resize((size_t)seg.size_encoded);
-                m_ist->read(seg.encoded_buf.data(), seg.encoded_buf.size());
+                seg.encodedBuf.resize(static_cast<size_t>(seg.encodedSize));
+                m_stream->read(seg.encodedBuf.data(), seg.encodedBuf.size());
 
-                seg.read_time = timer.elapsed();
+                seg.readTime = timer.elapsed();
             }
 
             // launch async decode
-            seg.task = std::async(std::launch::async, [this, &seg, scene_index, si]() {
-                msProfileScope("SceneCacheInputFile: [%d] decode segment (%d)", (int)scene_index, (int)si);
+            seg.task = std::async(std::launch::async, [this, &seg, sceneIndex, si]() {
+                msProfileScope("SceneCacheInputFile: [%d] decode segment (%d)", (int)sceneIndex, (int)si);
                 mu::ScopedTimer timer;
 
                 RawVector<char> tmp_buf;
-                m_encoder->decode(tmp_buf, seg.encoded_buf);
-                seg.size_decoded = tmp_buf.size();
+                m_encoder->decode(tmp_buf, seg.encodedBuf);
+                seg.decodedSize = tmp_buf.size();
 
                 std::shared_ptr<Scene> ret = Scene::create();
                 mu::MemoryStream scene_buf(std::move(tmp_buf));
@@ -226,9 +226,9 @@ ScenePtr SceneCacheInputFile::getByIndexImpl(size_t scene_index, bool wait_prelo
                     seg.segment = ret;
 
                     // count vertices
-                    seg.vertex_count = 0;
+                    seg.vertexCount = 0;
                     for (std::vector<std::shared_ptr<Transform>>::value_type& e : seg.segment->entities)
-                        seg.vertex_count += e->vertexCount();
+                        seg.vertexCount += e->vertexCount();
                 }
                 catch (std::runtime_error& e) {
                     muLogError("exception: %s\n", e.what());
@@ -236,7 +236,7 @@ ScenePtr SceneCacheInputFile::getByIndexImpl(size_t scene_index, bool wait_prelo
                     seg.error = true;
                 }
 
-                seg.decode_time = timer.elapsed();
+                seg.decodeTime = timer.elapsed();
             });
         }
     }
@@ -263,22 +263,22 @@ ScenePtr SceneCacheInputFile::getByIndexImpl(size_t scene_index, bool wait_prelo
         prof = {};
         prof.load_time = mu::NS2MS(mu::Now() - load_begin);
         for (std::vector<SceneSegment>::value_type& seg : rec.segments) {
-            prof.size_encoded += seg.size_encoded;
-            prof.size_decoded += seg.size_decoded;
-            prof.read_time += seg.read_time;
-            prof.decode_time += seg.decode_time;
-            prof.vertex_count += seg.vertex_count;
+            prof.size_encoded += seg.encodedSize;
+            prof.size_decoded += seg.decodedSize;
+            prof.read_time += seg.readTime;
+            prof.decode_time += seg.decodeTime;
+            prof.vertex_count += seg.vertexCount;
         }
 
         {
-            msProfileScope("SceneCacheInputFile: [%d] merge & import", (int)scene_index);
+            msProfileScope("SceneCacheInputFile: [%d] merge & import", static_cast<int>(sceneIndex));
             mu::ScopedTimer timer;
 
-            if (m_header.oscs.strip_unchanged && m_base_scene) {
+            if (m_header.oscs.strip_unchanged && m_baseScene) {
                 // set cache flags
                 size_t n = ret->entities.size();
-                if (m_entity_meta.size() == n) {
-                    mu::enumerate(m_entity_meta, ret->entities, [](auto& meta, auto& e) {
+                if (m_entityMeta.size() == n) {
+                    mu::enumerate(m_entityMeta, ret->entities, [](auto& meta, auto& e) {
                         if (meta.id == e->id) {
                             e->cache_flags.constant = meta.constant;
                             e->cache_flags.constant_topology = meta.constant_topology;
@@ -287,7 +287,7 @@ ScenePtr SceneCacheInputFile::getByIndexImpl(size_t scene_index, bool wait_prelo
                 }
 
                 // merge
-                ret->merge(*m_base_scene);
+                ret->merge(*m_baseScene);
             }
 
             // do import
@@ -300,53 +300,53 @@ ScenePtr SceneCacheInputFile::getByIndexImpl(size_t scene_index, bool wait_prelo
     rec.segments.clear();
 
     // push & pop history
-    if (!m_header.oscs.strip_unchanged || scene_index != 0) {
-        m_history.push_back(scene_index);
-        popHistory();
+    if (!m_header.oscs.strip_unchanged || sceneIndex != 0) {
+        m_history.push_back(sceneIndex);
+        PopOverflowedSamples();
     }
     return ret;
 }
 
-ScenePtr SceneCacheInputFile::postprocess(ScenePtr& sp, size_t scene_index)
+ScenePtr SceneCacheInputFile::PostProcess(ScenePtr& sp, const size_t sceneIndex)
 {
     if (!sp)
         return sp;
 
     ScenePtr ret;
 
-    // m_last_scene and m_last_diff keep reference counts and keep scenes alive.
+    // m_lastScene and m_lastDiff keep reference counts and keep scenes alive.
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
     const SceneCacheInputSettings& settings = GetSettings();
-    if (m_last_scene && (settings.enable_diff && m_header.oscs.strip_unchanged)) {
-        msProfileScope("SceneCacheInputFile: [%d] diff", (int)scene_index);
-        m_last_diff = Scene::create();
-        m_last_diff->diff(*sp, *m_last_scene);
-        m_last_scene = sp;
-        ret = m_last_diff;
+    if (m_lastScene && (settings.enable_diff && m_header.oscs.strip_unchanged)) {
+        msProfileScope("SceneCacheInputFile: [%d] diff", static_cast<int>(sceneIndex));
+        m_lastDiff = Scene::create();
+        m_lastDiff->diff(*sp, *m_lastScene);
+        m_lastScene = sp;
+        ret = m_lastDiff;
     }
     else {
-        m_last_diff = nullptr;
-        m_last_scene = sp;
+        m_lastDiff = nullptr;
+        m_lastScene = sp;
         ret = sp;
     }
 
     // kick preload
-    PreloadV((int)scene_index);
+    PreloadV(static_cast<int>(sceneIndex));
 
     return ret;
 }
 
-bool SceneCacheInputFile::kickPreload(size_t i)
+bool SceneCacheInputFile::KickPreload(size_t i)
 {
     SceneRecord& rec = m_records[i];
     if (rec.scene || rec.preload.valid())
         return false; // already loaded or loading
 
-    rec.preload = std::async(std::launch::async, [this, i]() { getByIndexImpl(i, false); });
+    rec.preload = std::async(std::launch::async, [this, i]() { LoadByIndexInternal(i, false); });
     return true;
 }
 
-void SceneCacheInputFile::waitAllPreloads()
+void SceneCacheInputFile::WaitAllPreloads()
 {
     for (std::vector<SceneRecord>::value_type& rec : m_records) {
         if (rec.preload.valid()) {
@@ -356,24 +356,24 @@ void SceneCacheInputFile::waitAllPreloads()
     }
 }
 
-ScenePtr SceneCacheInputFile::GetByIndexV(size_t i)
+ScenePtr SceneCacheInputFile::LoadByIndexV(size_t i)
 {
     if (!IsValid())
         return nullptr;
 
-    ScenePtr ret = getByIndexImpl(i);
-    return postprocess(ret, i);
+    ScenePtr ret = LoadByIndexInternal(i);
+    return PostProcess(ret, i);
 }
 
-ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
+ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpolation)
 {
     if (!IsValid())
         return nullptr;
-    if (time == m_last_time) {
-        if (m_last_diff)
-            return m_last_diff;
-        else if (m_last_scene)
-            return m_last_scene;
+    if (time == m_lastTime) {
+        if (m_lastDiff)
+            return m_lastDiff;
+        else if (m_lastScene)
+            return m_lastScene;
     }
 
     ScenePtr ret;
@@ -383,21 +383,21 @@ ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
     const TimeRange time_range = GetTimeRangeV();
     if (time <= time_range.start) {
         const int si = 0;
-        if ((!interpolation && m_last_index == si) ||
-            (m_last_index == si && m_last_index2 == si))
+        if ((!interpolation && m_lastIndex == si) ||
+            (m_lastIndex == si && m_lastIndex2 == si))
             return nullptr;
 
-        m_last_index = m_last_index2 = si;
-        ret = getByIndexImpl(si);
+        m_lastIndex = m_lastIndex2 = si;
+        ret = LoadByIndexInternal(si);
     }
     else if (time >= time_range.end) {
         const int si =  scene_count - 1;
-        if ((!interpolation && m_last_index == si) ||
-            (m_last_index == si && m_last_index2 == si))
+        if ((!interpolation && m_lastIndex == si) ||
+            (m_lastIndex == si && m_lastIndex2 == si))
             return nullptr;
 
-        m_last_index = m_last_index2 = si;
-        ret = getByIndexImpl(si);
+        m_lastIndex = m_lastIndex2 = si;
+        ret = LoadByIndexInternal(si);
     }
     else {
         const int si = GetFrameByTimeV(time);
@@ -405,9 +405,9 @@ ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
             const float t1 = m_records[si + 0].time;
             const float t2 = m_records[si + 1].time;
 
-            kickPreload(si + 1);
-            const ScenePtr s1 = getByIndexImpl(si + 0);
-            const ScenePtr s2 = getByIndexImpl(si + 1);
+            KickPreload(si + 1);
+            const ScenePtr s1 = LoadByIndexInternal(si + 0);
+            const ScenePtr s2 = LoadByIndexInternal(si + 1);
 
             {
                 msProfileScope("SceneCacheInputFile: [%d] lerp", (int)si);
@@ -422,27 +422,27 @@ ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
                 ret->profile_data.lerp_time = timer.elapsed();
             }
 
-            m_last_index = si;
-            m_last_index2 = si + 1;
+            m_lastIndex = si;
+            m_lastIndex2 = si + 1;
         }
         else {
-            if (si == m_last_index)
+            if (si == m_lastIndex)
                 return nullptr;
-            ret = getByIndexImpl(si);
+            ret = LoadByIndexInternal(si);
 
-            m_last_index = m_last_index2 = si;
+            m_lastIndex = m_lastIndex2 = si;
         }
     }
-    m_last_time = time;
-    return postprocess(ret, m_last_index2);
+    m_lastTime = time;
+    return PostProcess(ret, m_lastIndex2);
 }
 
 void SceneCacheInputFile::RefreshV()
 {
-    m_last_index = m_last_index2  = -1;
-    m_last_time = -1.0f;
-    m_last_scene = nullptr;
-    m_last_diff = nullptr;
+    m_lastIndex = m_lastIndex2  = -1;
+    m_lastTime = -1.0f;
+    m_lastScene = nullptr;
+    m_lastDiff = nullptr;
 }
 
 void SceneCacheInputFile::PreloadV(const int frame)
@@ -453,9 +453,9 @@ void SceneCacheInputFile::PreloadV(const int frame)
         const int begin_frame = frame + 1;
         const int end_frame = std::min(frame + preloadLength, static_cast<int>(m_records.size()));
         for (int f = begin_frame; f < end_frame; ++f)
-            kickPreload(f);
+            KickPreload(f);
     }
-    popHistory();
+    PopOverflowedSamples();
 }
 
 void SceneCacheInputFile::PreloadAll()
@@ -463,10 +463,10 @@ void SceneCacheInputFile::PreloadAll()
     const size_t n = m_records.size();
     SetMaxLoadedSamples(static_cast<int>(n) + 1);
     for (size_t i = 0; i < n; ++i)
-        kickPreload(i);
+        KickPreload(i);
 }
 
-void SceneCacheInputFile::popHistory()
+void SceneCacheInputFile::PopOverflowedSamples()
 {
     const int32_t maxSamples = GetMaxLoadedSamples();
     while (m_history.size() > maxSamples) {
@@ -479,15 +479,15 @@ const AnimationCurvePtr SceneCacheInputFile::GetFrameCurveV(const int baseFrame)
 {
     // generate on the fly
     const size_t sceneCount = m_records.size();
-    m_frame_curve = AnimationCurve::create();
-    TAnimationCurve<int> curve(m_frame_curve);
+    m_frameCurve = AnimationCurve::create();
+    TAnimationCurve<int> curve(m_frameCurve);
     curve.resize(sceneCount);
     for (size_t i = 0; i < sceneCount; ++i) {
         TAnimationCurve<int>::key_t& kvp = curve[i];
         kvp.time = m_records[i].time;
         kvp.value = static_cast<int>(i) + baseFrame;
     }
-    return m_frame_curve;
+    return m_frameCurve;
 }
 
 } // namespace ms

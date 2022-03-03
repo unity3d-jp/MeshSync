@@ -25,8 +25,8 @@ public:
     virtual size_t GetNumScenesV() const = 0;
     virtual float GetTimeV(int i) const = 0;
     virtual int GetFrameByTimeV(float time) const = 0;
-    virtual ScenePtr GetByIndexV(size_t i) = 0;
-    virtual ScenePtr GetByTimeV(float time, bool interpolation) = 0;
+    virtual ScenePtr LoadByIndexV(size_t i) = 0;
+    virtual ScenePtr LoadByTimeV(float time, bool interpolation) = 0;
     virtual void RefreshV() = 0;
     virtual void PreloadV(int frame) = 0;
     virtual const AnimationCurvePtr GetFrameCurveV(int baseFrame) = 0;
@@ -42,7 +42,7 @@ protected:
 
 private:
     SceneCacheInputSettings m_iscs;
-    AnimationCurvePtr m_time_curve;
+    AnimationCurvePtr m_timeCurve;
 
     int32_t m_maxLoadedSamples = 3;
     int32_t m_preloadLength = 1;

@@ -30,8 +30,8 @@ public:
     TimeRange GetTimeRangeV() const override;
     float GetTimeV(int i) const override;
     int GetFrameByTimeV(float time) const override;
-    ScenePtr GetByIndexV(size_t i) override;
-    ScenePtr GetByTimeV(float time, bool interpolation) override;
+    ScenePtr LoadByIndexV(size_t i) override;
+    ScenePtr LoadByTimeV(float time, bool interpolation) override;
     void RefreshV() override;
     void PreloadV(int frame) override;
     const AnimationCurvePtr GetFrameCurveV(int baseFrame) override;
@@ -40,54 +40,54 @@ public:
 private:
     SceneCacheInputFile() = default;
     void Init(const char *path, const SceneCacheInputSettings& iscs);
-    static StreamPtr createStream(const char *path, const SceneCacheInputSettings& iscs);
+    static StreamPtr CreateStream(const char *path, const SceneCacheInputSettings& iscs);
 
-    ScenePtr getByIndexImpl(size_t i, bool wait_preload = true);
-    ScenePtr postprocess(ScenePtr& sp, size_t scene_index);
-    bool kickPreload(size_t i);
-    void waitAllPreloads();
-    void popHistory();
+    ScenePtr LoadByIndexInternal(size_t sceneIndex, bool waitPreload = true);
+    ScenePtr PostProcess(ScenePtr& sp, size_t sceneIndex);
+    bool KickPreload(size_t i);
+    void WaitAllPreloads();
+    void PopOverflowedSamples();
 
 private:
     struct SceneSegment
     {
-        RawVector<char> encoded_buf;
+        RawVector<char> encodedBuf;
         std::future<void> task;
         ScenePtr segment;
         bool error = false;
 
         // profile data
-        float read_time;
-        float decode_time;
-        uint64_t size_encoded;
-        uint64_t size_decoded;
-        uint64_t vertex_count;
+        float readTime;
+        float decodeTime;
+        uint64_t encodedSize;
+        uint64_t decodedSize;
+        uint64_t vertexCount;
     };
 
     struct SceneRecord
     {
         uint64_t pos = 0;
-        uint64_t buffer_size_total = 0;
+        uint64_t bufferSizeTotal = 0;
         float time = 0.0f;
 
         ScenePtr scene;
         std::future<void> preload;
-        RawVector<uint64_t> buffer_sizes;
+        RawVector<uint64_t> bufferSizes;
         std::vector<SceneSegment> segments;
     };
 
-    StreamPtr m_ist;
+    StreamPtr m_stream;
     CacheFileHeader m_header;
     BufferEncoderPtr m_encoder;
 
     std::mutex m_mutex;
     std::vector<SceneRecord> m_records;
-    RawVector<CacheFileEntityMeta> m_entity_meta;
-    AnimationCurvePtr m_frame_curve;
+    RawVector<CacheFileEntityMeta> m_entityMeta;
+    AnimationCurvePtr m_frameCurve;
 
-    float m_last_time = -1.0f;
-    int m_last_index = -1, m_last_index2 = -1;
-    ScenePtr m_base_scene, m_last_scene, m_last_diff;
+    float m_lastTime = -1.0f;
+    int m_lastIndex = -1, m_lastIndex2 = -1;
+    ScenePtr m_baseScene, m_lastScene, m_lastDiff;
     std::deque<size_t> m_history;
 
 };
