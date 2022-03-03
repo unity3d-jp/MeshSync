@@ -356,7 +356,7 @@ void SceneCacheInputFile::WaitAllPreloads()
     }
 }
 
-ScenePtr SceneCacheInputFile::GetByIndexV(size_t i)
+ScenePtr SceneCacheInputFile::LoadByIndexV(size_t i)
 {
     if (!IsValid())
         return nullptr;
@@ -365,7 +365,7 @@ ScenePtr SceneCacheInputFile::GetByIndexV(size_t i)
     return PostProcess(ret, i);
 }
 
-ScenePtr SceneCacheInputFile::GetByTimeV(const float time, const bool interpolation)
+ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpolation)
 {
     if (!IsValid())
         return nullptr;

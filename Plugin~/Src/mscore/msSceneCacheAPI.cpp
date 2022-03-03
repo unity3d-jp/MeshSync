@@ -81,14 +81,14 @@ msAPI ms::Scene* msISceneCacheGetSceneByIndex(ms::BaseSceneCacheInput *self, int
     msDbgBreadcrumb();
     if (!self)
         return nullptr;
-    return self->GetByIndexV(index).get();
+    return self->LoadByIndexV(index).get();
 }
 msAPI ms::Scene* msISceneCacheGetSceneByTime(ms::BaseSceneCacheInput *self, float time, bool lerp)
 {
     msDbgBreadcrumb();
     if (!self)
         return nullptr;
-    return self->GetByTimeV(time, lerp).get();
+    return self->LoadByTimeV(time, lerp).get();
 }
 msAPI void msISceneCacheRefesh(ms::BaseSceneCacheInput *self)
 {
