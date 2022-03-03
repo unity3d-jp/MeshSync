@@ -11,12 +11,12 @@
 
 namespace ms {
 
-OSceneCacheFile::OSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs)
-    : OSceneCacheFile(createStream(path), oscs)
+SceneCacheOutputFile::SceneCacheOutputFile(const char *path, const SceneCacheOutputSettings& oscs)
+    : SceneCacheOutputFile(createStream(path), oscs)
 {
 }
 
-OSceneCacheFile::OSceneCacheFile(StreamPtr ost, const SceneCacheOutputSettings& oscs)
+SceneCacheOutputFile::SceneCacheOutputFile(StreamPtr ost, const SceneCacheOutputSettings& oscs)
 {
     m_ost = ost;
     m_oscs = oscs;
@@ -34,7 +34,7 @@ OSceneCacheFile::OSceneCacheFile(StreamPtr ost, const SceneCacheOutputSettings& 
     m_ost->write((char*)&header, sizeof(header));
 }
 
-OSceneCacheFile::~OSceneCacheFile()
+SceneCacheOutputFile::~SceneCacheOutputFile()
 {
     if (!valid())
         return;
@@ -70,7 +70,7 @@ OSceneCacheFile::~OSceneCacheFile()
     }
 }
 
-bool OSceneCacheFile::valid() const
+bool SceneCacheOutputFile::valid() const
 {
     return m_ost && (*m_ost);
 }
@@ -132,7 +132,7 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
     return segments;
 }
 
-void OSceneCacheFile::addScene(ScenePtr scene, float time)
+void SceneCacheOutputFile::addScene(ScenePtr scene, float time)
 {
     while (m_scene_count_in_queue > 0 && ((m_oscs.strip_unchanged && !m_base_scene) || m_scene_count_in_queue >= m_oscs.max_queue_size)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -146,7 +146,7 @@ void OSceneCacheFile::addScene(ScenePtr scene, float time)
 
     rec.task = std::async(std::launch::async, [this, &rec]() {
         {
-            msProfileScope("OSceneCacheFile: [%d] scene optimization", rec.index);
+            msProfileScope("SceneCacheOutputFile: [%d] scene optimization", rec.index);
 
             auto& scene = rec.scene;
             std::sort(scene->entities.begin(), scene->entities.end(), [](auto& a, auto& b) { return a->id < b->id; });
@@ -205,7 +205,7 @@ void OSceneCacheFile::addScene(ScenePtr scene, float time)
 
         for (auto& seg : rec.segments) {
             seg.task = std::async(std::launch::async, [this, &rec, &seg]() {
-                msProfileScope("OSceneCacheFile: [%d] serialize & encode segment (%d)", rec.index, seg.index);
+                msProfileScope("SceneCacheOutputFile: [%d] serialize & encode segment (%d)", rec.index, seg.index);
 
                 mu::MemoryStream scene_buf;
                 seg.segment->serialize(scene_buf);
@@ -223,29 +223,29 @@ void OSceneCacheFile::addScene(ScenePtr scene, float time)
     doWrite();
 }
 
-void OSceneCacheFile::flush()
+void SceneCacheOutputFile::flush()
 {
     doWrite();
     if (m_task.valid())
         m_task.wait();
 }
 
-bool OSceneCacheFile::isWriting()
+bool SceneCacheOutputFile::isWriting()
 {
     return m_task.valid() && m_task.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
 }
 
-int OSceneCacheFile::getSceneCountWritten() const
+int SceneCacheOutputFile::getSceneCountWritten() const
 {
     return m_scene_count_written;
 }
 
-int OSceneCacheFile::getSceneCountInQueue() const
+int SceneCacheOutputFile::getSceneCountInQueue() const
 {
     return m_scene_count_in_queue;
 }
 
-void OSceneCacheFile::doWrite()
+void SceneCacheOutputFile::doWrite()
 {
     auto body = [this]() {
         for (;;) {
@@ -300,7 +300,7 @@ void OSceneCacheFile::doWrite()
                     total_buffer_size += seg.encoded_buf.size();
                 }
 
-                msProfileScope("OSceneCacheFile: [%d] write (%u byte)", rec.index, (uint32_t)total_buffer_size);
+                msProfileScope("SceneCacheOutputFile: [%d] write (%u byte)", rec.index, (uint32_t)total_buffer_size);
 
                 CacheFileSceneHeader header;
                 header.buffer_count = (uint32_t)buffer_sizes.size();
@@ -323,7 +323,7 @@ void OSceneCacheFile::doWrite()
 }
 
 
-OSceneCacheFile::StreamPtr OSceneCacheFile::createStream(const char *path)
+SceneCacheOutputFile::StreamPtr SceneCacheOutputFile::createStream(const char *path)
 {
     std::shared_ptr<std::basic_ofstream<char>> ret = std::make_shared<std::ofstream>(path, std::ios::binary);
     return *ret ? ret : nullptr;

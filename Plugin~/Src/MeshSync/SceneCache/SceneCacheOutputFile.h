@@ -5,15 +5,15 @@
 
 namespace ms {
 
-class OSceneCacheFile: public SceneCacheOutput
+class SceneCacheOutputFile: public SceneCacheOutput
 {
 public:
     using StreamPtr = std::shared_ptr<std::ostream>;
 
-    OSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs);
+    SceneCacheOutputFile(const char *path, const SceneCacheOutputSettings& oscs);
 
-    OSceneCacheFile(StreamPtr ost, const SceneCacheOutputSettings& oscs);
-    ~OSceneCacheFile() override;
+    SceneCacheOutputFile(StreamPtr ost, const SceneCacheOutputSettings& oscs);
+    ~SceneCacheOutputFile() override;
     bool valid() const override;
 
     void addScene(ScenePtr scene, float time) override;
