@@ -12,15 +12,15 @@
 namespace ms {
 
 SceneCacheOutputFile::SceneCacheOutputFile(const char *path, const SceneCacheOutputSettings& oscs) {
-    Init(createStream(path), oscs);
+    Init(CreateStream(path), oscs);
 }
 
 SceneCacheOutputFile::~SceneCacheOutputFile()
 {
-    if (!valid())
+    if (!IsValid())
         return;
 
-    flush();
+    Flush();
 
     {
         // add terminator
@@ -53,7 +53,7 @@ SceneCacheOutputFile::~SceneCacheOutputFile()
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool SceneCacheOutputFile::valid() const
+bool SceneCacheOutputFile::IsValid() const
 {
     return m_ost && (*m_ost);
 }
@@ -115,7 +115,7 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
     return segments;
 }
 
-void SceneCacheOutputFile::addScene(const ScenePtr scene, const float time)
+void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time)
 {
     while (m_scene_count_in_queue > 0 && ((m_oscs.strip_unchanged && !m_base_scene) || m_scene_count_in_queue >= m_oscs.max_queue_size)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -206,24 +206,24 @@ void SceneCacheOutputFile::addScene(const ScenePtr scene, const float time)
     doWrite();
 }
 
-void SceneCacheOutputFile::flush()
+void SceneCacheOutputFile::Flush()
 {
     doWrite();
     if (m_task.valid())
         m_task.wait();
 }
 
-bool SceneCacheOutputFile::isWriting()
+bool SceneCacheOutputFile::IsWriting() const
 {
     return m_task.valid() && m_task.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
 }
 
-int SceneCacheOutputFile::getSceneCountWritten() const
+int SceneCacheOutputFile::GetSceneCountWritten() const
 {
     return m_scene_count_written;
 }
 
-int SceneCacheOutputFile::getSceneCountInQueue() const
+int SceneCacheOutputFile::GetSceneCountInQueue() const
 {
     return m_scene_count_in_queue;
 }
@@ -299,7 +299,7 @@ void SceneCacheOutputFile::doWrite()
 
     {
         std::unique_lock<std::mutex> l(m_mutex);
-        if (!m_queue.empty() && !isWriting()) {
+        if (!m_queue.empty() && !IsWriting()) {
             m_task = std::async(std::launch::async, body);
         }
     }
@@ -325,7 +325,7 @@ void SceneCacheOutputFile::Init(const StreamPtr ost, const SceneCacheOutputSetti
 }
 
 
-SceneCacheOutputFile::StreamPtr SceneCacheOutputFile::createStream(const char *path)
+SceneCacheOutputFile::StreamPtr SceneCacheOutputFile::CreateStream(const char *path)
 {
     const std::shared_ptr<std::basic_ofstream<char>> ret = std::make_shared<std::ofstream>(path, std::ios::binary);
     return *ret ? ret : nullptr;

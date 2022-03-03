@@ -1,26 +1,27 @@
 #pragma once
 #include "msSceneCacheImpl.h"
 
-#include "MeshSync/SceneCache/msSceneCacheOutput.h"
+
+msDeclClassPtr(SceneCacheOutputFile)
 
 namespace ms {
-
-class SceneCacheOutputFile: public SceneCacheOutput
+    
+class SceneCacheOutputFile
 {
 public:
     using StreamPtr = std::shared_ptr<std::ostream>;
 
     SceneCacheOutputFile(const char *path, const SceneCacheOutputSettings& oscs);
 
-    ~SceneCacheOutputFile() override;
-    bool valid() const override;
+    ~SceneCacheOutputFile() ;
+    bool IsValid() const ;
 
-    void addScene(ScenePtr scene, float time) override;
+    void AddScene(ScenePtr scene, float time) ;
 
-    void flush() override;
-    bool isWriting() override;
-    int getSceneCountWritten() const override;
-    int getSceneCountInQueue() const override;
+    void Flush() ;
+    bool IsWriting() const;
+    int GetSceneCountWritten() const ;
+    int GetSceneCountInQueue() const ;
 
 protected:
     void doWrite();
@@ -28,7 +29,7 @@ protected:
 private:
     void Init(StreamPtr ost, const SceneCacheOutputSettings& oscs);
 
-    static StreamPtr createStream(const char *path);
+    static StreamPtr CreateStream(const char *path);
 
     struct SceneSegment
     {

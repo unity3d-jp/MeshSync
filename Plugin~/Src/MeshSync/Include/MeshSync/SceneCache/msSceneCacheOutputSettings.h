@@ -3,7 +3,6 @@
 #include "MeshSync/SceneCache/msSceneCacheEncoding.h"
 #include "MeshSync/SceneCache/msSceneCacheEncoderSettings.h"
 
-#include "MeshSync/SceneCache/msSceneCacheOutput.h"
 #include "MeshSync/SceneGraph/msSceneImportSettings.h"
 
 namespace ms {
