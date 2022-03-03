@@ -87,7 +87,7 @@ private:
 
     float m_last_time = -1.0f;
     int m_last_index = -1, m_last_index2 = -1;
-    ScenePtr m_base_scene, m_last_scene, m_last_diff;
+    ScenePtr m_baseScene, m_lastScene, m_lastDiff;
     std::deque<size_t> m_history;
 
 };

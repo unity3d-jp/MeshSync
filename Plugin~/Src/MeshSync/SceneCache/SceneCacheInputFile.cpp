@@ -147,7 +147,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
     }
 
     if (m_header.oscs.strip_unchanged)
-        m_base_scene = LoadByIndexInternal(0);
+        m_baseScene = LoadByIndexInternal(0);
 
     //PreloadAll(); // for test
 }
@@ -274,7 +274,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
             msProfileScope("SceneCacheInputFile: [%d] merge & import", static_cast<int>(sceneIndex));
             mu::ScopedTimer timer;
 
-            if (m_header.oscs.strip_unchanged && m_base_scene) {
+            if (m_header.oscs.strip_unchanged && m_baseScene) {
                 // set cache flags
                 size_t n = ret->entities.size();
                 if (m_entity_meta.size() == n) {
@@ -287,7 +287,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
                 }
 
                 // merge
-                ret->merge(*m_base_scene);
+                ret->merge(*m_baseScene);
             }
 
             // do import
@@ -314,19 +314,19 @@ ScenePtr SceneCacheInputFile::PostProcess(ScenePtr& sp, const size_t sceneIndex)
 
     ScenePtr ret;
 
-    // m_last_scene and m_last_diff keep reference counts and keep scenes alive.
+    // m_lastScene and m_lastDiff keep reference counts and keep scenes alive.
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
     const SceneCacheInputSettings& settings = GetSettings();
-    if (m_last_scene && (settings.enable_diff && m_header.oscs.strip_unchanged)) {
+    if (m_lastScene && (settings.enable_diff && m_header.oscs.strip_unchanged)) {
         msProfileScope("SceneCacheInputFile: [%d] diff", static_cast<int>(sceneIndex));
-        m_last_diff = Scene::create();
-        m_last_diff->diff(*sp, *m_last_scene);
-        m_last_scene = sp;
-        ret = m_last_diff;
+        m_lastDiff = Scene::create();
+        m_lastDiff->diff(*sp, *m_lastScene);
+        m_lastScene = sp;
+        ret = m_lastDiff;
     }
     else {
-        m_last_diff = nullptr;
-        m_last_scene = sp;
+        m_lastDiff = nullptr;
+        m_lastScene = sp;
         ret = sp;
     }
 
@@ -370,10 +370,10 @@ ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpola
     if (!IsValid())
         return nullptr;
     if (time == m_last_time) {
-        if (m_last_diff)
-            return m_last_diff;
-        else if (m_last_scene)
-            return m_last_scene;
+        if (m_lastDiff)
+            return m_lastDiff;
+        else if (m_lastScene)
+            return m_lastScene;
     }
 
     ScenePtr ret;
@@ -441,8 +441,8 @@ void SceneCacheInputFile::RefreshV()
 {
     m_last_index = m_last_index2  = -1;
     m_last_time = -1.0f;
-    m_last_scene = nullptr;
-    m_last_diff = nullptr;
+    m_lastScene = nullptr;
+    m_lastDiff = nullptr;
 }
 
 void SceneCacheInputFile::PreloadV(const int frame)
