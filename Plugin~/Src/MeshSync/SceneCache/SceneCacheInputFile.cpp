@@ -6,7 +6,7 @@
 namespace ms {
 
 SceneCacheInputFile::~SceneCacheInputFile() {
-    waitAllPreloads();
+    WaitAllPreloads();
 }
 
 bool SceneCacheInputFile::IsValid() const {
@@ -346,7 +346,7 @@ bool SceneCacheInputFile::KickPreload(size_t i)
     return true;
 }
 
-void SceneCacheInputFile::waitAllPreloads()
+void SceneCacheInputFile::WaitAllPreloads()
 {
     for (std::vector<SceneRecord>::value_type& rec : m_records) {
         if (rec.preload.valid()) {
