@@ -307,7 +307,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
     return ret;
 }
 
-ScenePtr SceneCacheInputFile::PostProcess(ScenePtr& sp, size_t scene_index)
+ScenePtr SceneCacheInputFile::PostProcess(ScenePtr& sp, const size_t sceneIndex)
 {
     if (!sp)
         return sp;
@@ -318,7 +318,7 @@ ScenePtr SceneCacheInputFile::PostProcess(ScenePtr& sp, size_t scene_index)
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
     const SceneCacheInputSettings& settings = GetSettings();
     if (m_last_scene && (settings.enable_diff && m_header.oscs.strip_unchanged)) {
-        msProfileScope("SceneCacheInputFile: [%d] diff", static_cast<int>(scene_index));
+        msProfileScope("SceneCacheInputFile: [%d] diff", static_cast<int>(sceneIndex));
         m_last_diff = Scene::create();
         m_last_diff->diff(*sp, *m_last_scene);
         m_last_scene = sp;
@@ -331,7 +331,7 @@ ScenePtr SceneCacheInputFile::PostProcess(ScenePtr& sp, size_t scene_index)
     }
 
     // kick preload
-    PreloadV(static_cast<int>(scene_index));
+    PreloadV(static_cast<int>(sceneIndex));
 
     return ret;
 }

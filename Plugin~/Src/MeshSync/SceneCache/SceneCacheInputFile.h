@@ -43,7 +43,7 @@ private:
     static StreamPtr CreateStream(const char *path, const SceneCacheInputSettings& iscs);
 
     ScenePtr LoadByIndexInternal(size_t sceneIndex, bool waitPreload = true);
-    ScenePtr PostProcess(ScenePtr& sp, size_t scene_index);
+    ScenePtr PostProcess(ScenePtr& sp, size_t sceneIndex);
     bool KickPreload(size_t i);
     void WaitAllPreloads();
     void PopOverflowedSamples();
