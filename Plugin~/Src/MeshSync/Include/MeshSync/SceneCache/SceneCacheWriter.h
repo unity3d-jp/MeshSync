@@ -3,7 +3,6 @@
 #ifndef msRuntime
 
 #include "MeshSync/SceneExporter.h"
-#include "MeshSync/SceneCache/msSceneCacheOutput.h"
 
 msDeclClassPtr(SceneCacheOutputFile)
 
