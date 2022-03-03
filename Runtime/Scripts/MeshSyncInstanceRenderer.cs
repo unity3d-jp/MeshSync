@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
+using UnityEngine.Rendering;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -12,12 +11,26 @@ namespace Unity.MeshSync{
     
     public class MeshSyncInstanceRenderer
     {
-        private BaseMeshSync ms;
-        
+        private BaseMeshSync m_server;
+
+        private Camera m_camera;
+
         public void Init(BaseMeshSync ms)
         {
-            this.ms = ms;
+            this.m_server = ms;
 
+            if (Application.isEditor)
+            {
+                var go = GameObject.Find("SceneCamera");
+                if (go != null)
+                {
+                    m_camera =go.GetComponent<Camera>();
+                }
+            }
+
+            EditorApplication.update -= Draw;
+            EditorApplication.update += Draw;
+            
             ms.onUpdateInstanceInfo -= OnUpdateInstanceInfo;
             ms.onUpdateInstanceInfo += OnUpdateInstanceInfo;
             ms.onDeleteInstanceInfo -= OnDeleteInstanceInfo;
@@ -35,13 +48,11 @@ namespace Unity.MeshSync{
 
             meshInstances.Remove(path);
             
-            Debug.LogFormat("MS: DELETE INST MESH {0}", path);
             RepaintAfterChanges();
         }
 
         private void OnUpdateInstanceMesh(string path, GameObject go)
         {
-            Debug.LogFormat("MS: UPDATE INST MESH {0}", path);
             if (!this.meshInstances.TryGetValue(path, out MeshInstanceInfo entry))
             {
                 entry = new MeshInstanceInfo();
@@ -58,7 +69,6 @@ namespace Unity.MeshSync{
                 return;
             
             meshInstances.Remove(path);
-            Debug.LogFormat("MS: DELETE INST INFO {0}", path);
             
             
             RepaintAfterChanges();
@@ -78,8 +88,6 @@ namespace Unity.MeshSync{
             GameObject go,
             Matrix4x4[] transforms)
         {
-            Debug.LogFormat("MS: UPDATE INST INFO {0}", path);
-            
             if (go == null)
             {
                 Debug.LogWarningFormat("[MeshSync] No Gameobject found: {0}", path);
@@ -190,18 +198,17 @@ namespace Unity.MeshSync{
                 for (var j = 0; j < matrixBatches.Count; j++)
                 {
                     var batch = matrixBatches[j];
+                    
                     Graphics.DrawMeshInstanced(mesh, i, material, batch);
                 }
             }
         }
-
+        
         private void RepaintAfterChanges()
         {
 #if UNITY_EDITOR
-            SceneView.RepaintAll();
-            Draw();
-            SceneView.RepaintAll();
-#endif     
+            m_camera.Render();
+#endif
         }
     }
 }
