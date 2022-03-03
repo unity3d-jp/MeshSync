@@ -166,13 +166,13 @@ SceneCacheInputFile::StreamPtr SceneCacheInputFile::createStream(const char *pat
 //----------------------------------------------------------------------------------------------------------------------
 
 // thread safe
-ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t scene_index, bool wait_preload)
+ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPreload)
 {
-    if (!IsValid() || scene_index >= m_records.size())
+    if (!IsValid() || sceneIndex >= m_records.size())
         return nullptr;
 
-    SceneRecord& rec = m_records[scene_index];
-    if (wait_preload && rec.preload.valid()) {
+    SceneRecord& rec = m_records[sceneIndex];
+    if (waitPreload && rec.preload.valid()) {
         // wait preload
         rec.preload.wait();
         rec.preload = {};
@@ -198,7 +198,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t scene_index, bool wait_
 
             // read segment
             {
-                msProfileScope("SceneCacheInputFile: [%d] read segment (%d - %u byte)", (int)scene_index, (int)si, (uint32_t)seg.size_encoded);
+                msProfileScope("SceneCacheInputFile: [%d] read segment (%d - %u byte)", (int)sceneIndex, (int)si, (uint32_t)seg.size_encoded);
                 mu::ScopedTimer timer;
 
                 seg.encoded_buf.resize((size_t)seg.size_encoded);
@@ -208,8 +208,8 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t scene_index, bool wait_
             }
 
             // launch async decode
-            seg.task = std::async(std::launch::async, [this, &seg, scene_index, si]() {
-                msProfileScope("SceneCacheInputFile: [%d] decode segment (%d)", (int)scene_index, (int)si);
+            seg.task = std::async(std::launch::async, [this, &seg, sceneIndex, si]() {
+                msProfileScope("SceneCacheInputFile: [%d] decode segment (%d)", (int)sceneIndex, (int)si);
                 mu::ScopedTimer timer;
 
                 RawVector<char> tmp_buf;
@@ -271,7 +271,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t scene_index, bool wait_
         }
 
         {
-            msProfileScope("SceneCacheInputFile: [%d] merge & import", (int)scene_index);
+            msProfileScope("SceneCacheInputFile: [%d] merge & import", (int)sceneIndex);
             mu::ScopedTimer timer;
 
             if (m_header.oscs.strip_unchanged && m_base_scene) {
@@ -300,8 +300,8 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t scene_index, bool wait_
     rec.segments.clear();
 
     // push & pop history
-    if (!m_header.oscs.strip_unchanged || scene_index != 0) {
-        m_history.push_back(scene_index);
+    if (!m_header.oscs.strip_unchanged || sceneIndex != 0) {
+        m_history.push_back(sceneIndex);
         popHistory();
     }
     return ret;
