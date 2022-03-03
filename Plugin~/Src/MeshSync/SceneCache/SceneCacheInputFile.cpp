@@ -147,7 +147,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
     }
 
     if (m_header.oscs.strip_unchanged)
-        m_base_scene = getByIndexImpl(0);
+        m_base_scene = LoadByIndexInternal(0);
 
     //PreloadAll(); // for test
 }
@@ -166,7 +166,7 @@ SceneCacheInputFile::StreamPtr SceneCacheInputFile::createStream(const char *pat
 //----------------------------------------------------------------------------------------------------------------------
 
 // thread safe
-ScenePtr SceneCacheInputFile::getByIndexImpl(size_t scene_index, bool wait_preload)
+ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t scene_index, bool wait_preload)
 {
     if (!IsValid() || scene_index >= m_records.size())
         return nullptr;
@@ -342,7 +342,7 @@ bool SceneCacheInputFile::kickPreload(size_t i)
     if (rec.scene || rec.preload.valid())
         return false; // already loaded or loading
 
-    rec.preload = std::async(std::launch::async, [this, i]() { getByIndexImpl(i, false); });
+    rec.preload = std::async(std::launch::async, [this, i]() { LoadByIndexInternal(i, false); });
     return true;
 }
 
@@ -361,7 +361,7 @@ ScenePtr SceneCacheInputFile::GetByIndexV(size_t i)
     if (!IsValid())
         return nullptr;
 
-    ScenePtr ret = getByIndexImpl(i);
+    ScenePtr ret = LoadByIndexInternal(i);
     return postprocess(ret, i);
 }
 
@@ -388,7 +388,7 @@ ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
             return nullptr;
 
         m_last_index = m_last_index2 = si;
-        ret = getByIndexImpl(si);
+        ret = LoadByIndexInternal(si);
     }
     else if (time >= time_range.end) {
         const int si =  scene_count - 1;
@@ -397,7 +397,7 @@ ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
             return nullptr;
 
         m_last_index = m_last_index2 = si;
-        ret = getByIndexImpl(si);
+        ret = LoadByIndexInternal(si);
     }
     else {
         const int si = GetFrameByTimeV(time);
@@ -406,8 +406,8 @@ ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
             const float t2 = m_records[si + 1].time;
 
             kickPreload(si + 1);
-            const ScenePtr s1 = getByIndexImpl(si + 0);
-            const ScenePtr s2 = getByIndexImpl(si + 1);
+            const ScenePtr s1 = LoadByIndexInternal(si + 0);
+            const ScenePtr s2 = LoadByIndexInternal(si + 1);
 
             {
                 msProfileScope("SceneCacheInputFile: [%d] lerp", (int)si);
@@ -428,7 +428,7 @@ ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
         else {
             if (si == m_last_index)
                 return nullptr;
-            ret = getByIndexImpl(si);
+            ret = LoadByIndexInternal(si);
 
             m_last_index = m_last_index2 = si;
         }

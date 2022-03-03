@@ -42,7 +42,7 @@ private:
     void Init(const char *path, const SceneCacheInputSettings& iscs);
     static StreamPtr createStream(const char *path, const SceneCacheInputSettings& iscs);
 
-    ScenePtr getByIndexImpl(size_t i, bool wait_preload = true);
+    ScenePtr LoadByIndexInternal(size_t i, bool wait_preload = true);
     ScenePtr postprocess(ScenePtr& sp, size_t scene_index);
     bool kickPreload(size_t i);
     void waitAllPreloads();
