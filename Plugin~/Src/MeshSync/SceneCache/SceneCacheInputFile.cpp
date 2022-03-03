@@ -302,7 +302,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
     // push & pop history
     if (!m_header.oscs.strip_unchanged || sceneIndex != 0) {
         m_history.push_back(sceneIndex);
-        popHistory();
+        PopOverflowedSamples();
     }
     return ret;
 }
@@ -455,7 +455,7 @@ void SceneCacheInputFile::PreloadV(const int frame)
         for (int f = begin_frame; f < end_frame; ++f)
             KickPreload(f);
     }
-    popHistory();
+    PopOverflowedSamples();
 }
 
 void SceneCacheInputFile::PreloadAll()
@@ -466,7 +466,7 @@ void SceneCacheInputFile::PreloadAll()
         KickPreload(i);
 }
 
-void SceneCacheInputFile::popHistory()
+void SceneCacheInputFile::PopOverflowedSamples()
 {
     const int32_t maxSamples = GetMaxLoadedSamples();
     while (m_history.size() > maxSamples) {

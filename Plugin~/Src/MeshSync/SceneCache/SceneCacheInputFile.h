@@ -46,7 +46,7 @@ private:
     ScenePtr PostProcess(ScenePtr& sp, size_t scene_index);
     bool KickPreload(size_t i);
     void WaitAllPreloads();
-    void popHistory();
+    void PopOverflowedSamples();
 
 private:
     struct SceneSegment
