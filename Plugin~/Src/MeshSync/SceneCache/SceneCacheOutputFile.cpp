@@ -60,7 +60,7 @@ bool SceneCacheOutputFile::valid() const
 
 static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments)
 {
-    auto scene_settings = base->settings;
+    const auto scene_settings = base->settings;
 
     std::vector<uint64_t> vertex_counts;
     std::vector<ScenePtr> segments;
@@ -87,7 +87,7 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
         vertex_counts.resize(segments.size());
 
         int segment_count = (int)segments.size();
-        auto add_geometry = [&](TransformPtr& entity) {
+        const auto add_geometry = [&](TransformPtr& entity) {
             // add entity to the scene with lowest vertex count. this can improve encode & decode time.
             int idx = 0;
             uint64_t lowest = ~0u;
@@ -109,20 +109,20 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
         }
         std::sort(geometries.begin(), geometries.end(),
             [](auto& a, auto& b) { return a->vertexCount() > b->vertexCount();  });
-        for (auto& g : geometries)
+        for (std::vector<TransformPtr>::value_type& g : geometries)
             add_geometry(g);
     }
     return segments;
 }
 
-void SceneCacheOutputFile::addScene(ScenePtr scene, float time)
+void SceneCacheOutputFile::addScene(const ScenePtr scene, const float time)
 {
     while (m_scene_count_in_queue > 0 && ((m_oscs.strip_unchanged && !m_base_scene) || m_scene_count_in_queue >= m_oscs.max_queue_size)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    auto rec_ptr = std::make_shared<SceneRecord>();
-    auto& rec = *rec_ptr;
+    std::shared_ptr<SceneRecord> rec_ptr = std::make_shared<SceneRecord>();
+    SceneRecord& rec = *rec_ptr;
     rec.index = m_scene_count_queued++;
     rec.time = time;
     rec.scene = scene;
@@ -176,11 +176,11 @@ void SceneCacheOutputFile::addScene(ScenePtr scene, float time)
 
             // split into segments
             auto scene_segments = LoadBalancing(rec.scene, m_oscs.max_scene_segments);
-            size_t seg_count = scene_segments.size();
+            const size_t seg_count = scene_segments.size();
             rec.segments.resize(seg_count);
             for (size_t si = 0; si < seg_count; ++si) {
                 auto& seg = rec.segments[si];
-                seg.index = (int)si;
+                seg.index = static_cast<int>(si);
                 seg.segment = scene_segments[si];
                 seg.segment->settings = {};
             }
@@ -201,7 +201,7 @@ void SceneCacheOutputFile::addScene(ScenePtr scene, float time)
     {
         std::unique_lock<std::mutex> l(m_mutex);
         m_queue.emplace_back(std::move(rec_ptr));
-        m_scene_count_in_queue = (int)m_queue.size();
+        m_scene_count_in_queue = static_cast<int>(m_queue.size());
     }
     doWrite();
 }
@@ -246,14 +246,14 @@ void SceneCacheOutputFile::doWrite()
             }
             if (!rec_ptr)
                 break;
-            auto& rec = *rec_ptr;
+            SceneRecord& rec = *rec_ptr;
             if (rec.task.valid())
                 rec.task.wait();
             {
 
                 // update entity record
-                auto& scene = *rec.scene;
-                size_t n = scene.entities.size();
+                Scene& scene = *rec.scene;
+                const size_t n = scene.entities.size();
                 m_entity_records.resize(n);
                 for (size_t i = 0; i < n; ++i) {
                     auto& e = scene.entities[i];
@@ -286,9 +286,9 @@ void SceneCacheOutputFile::doWrite()
                 msProfileScope("SceneCacheOutputFile: [%d] write (%u byte)", rec.index, (uint32_t)total_buffer_size);
 
                 CacheFileSceneHeader header;
-                header.buffer_count = (uint32_t)buffer_sizes.size();
+                header.buffer_count = static_cast<uint32_t>(buffer_sizes.size());
                 header.time = rec.time;
-                m_ost->write((char*)&header, sizeof(header));
+                m_ost->write(reinterpret_cast<char*>(&header), sizeof(header));
                 m_ost->write((char*)buffer_sizes.cdata(), buffer_sizes.size_in_byte());
                 for (auto& seg : rec.segments)
                     m_ost->write(seg.encoded_buf.cdata(), seg.encoded_buf.size());
