@@ -12,7 +12,6 @@ public:
 
     SceneCacheOutputFile(const char *path, const SceneCacheOutputSettings& oscs);
 
-    SceneCacheOutputFile(StreamPtr ost, const SceneCacheOutputSettings& oscs);
     ~SceneCacheOutputFile() override;
     bool valid() const override;
 
@@ -27,6 +26,8 @@ protected:
     void doWrite();
 
 private:
+    void Init(StreamPtr ost, const SceneCacheOutputSettings& oscs);
+
     static StreamPtr createStream(const char *path);
 
     struct SceneSegment

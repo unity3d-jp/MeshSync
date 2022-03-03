@@ -11,27 +11,8 @@
 
 namespace ms {
 
-SceneCacheOutputFile::SceneCacheOutputFile(const char *path, const SceneCacheOutputSettings& oscs)
-    : SceneCacheOutputFile(createStream(path), oscs)
-{
-}
-
-SceneCacheOutputFile::SceneCacheOutputFile(StreamPtr ost, const SceneCacheOutputSettings& oscs)
-{
-    m_ost = ost;
-    m_oscs = oscs;
-    if (!m_ost || !(*m_ost))
-        return;
-
-    m_encoder = EncodingUtility::CreateEncoder(m_oscs.encoding, m_oscs.encoder_settings);
-    if (!m_encoder) {
-        m_oscs.encoding = SceneCacheEncoding::Plain;
-        m_encoder = CreatePlainEncoder();
-    }
-
-    CacheFileHeader header;
-    header.oscs = m_oscs;
-    m_ost->write((char*)&header, sizeof(header));
+SceneCacheOutputFile::SceneCacheOutputFile(const char *path, const SceneCacheOutputSettings& oscs) {
+    Init(createStream(path), oscs);
 }
 
 SceneCacheOutputFile::~SceneCacheOutputFile()
@@ -69,6 +50,8 @@ SceneCacheOutputFile::~SceneCacheOutputFile()
         m_ost->write(encoded_buf.data(), encoded_buf.size());
     }
 }
+
+//----------------------------------------------------------------------------------------------------------------------
 
 bool SceneCacheOutputFile::valid() const
 {
@@ -258,7 +241,7 @@ void SceneCacheOutputFile::doWrite()
                 else {
                     rec_ptr = std::move(m_queue.back());
                     m_queue.pop_back();
-                    m_scene_count_in_queue = (int)m_queue.size();
+                    m_scene_count_in_queue = static_cast<int>(m_queue.size());
                 }
             }
             if (!rec_ptr)
@@ -293,7 +276,7 @@ void SceneCacheOutputFile::doWrite()
             {
                 uint64_t total_buffer_size = 0;
                 RawVector<uint64_t> buffer_sizes;
-                for (auto& seg : rec.segments) {
+                for (std::vector<SceneSegment>::value_type& seg : rec.segments) {
                     if (seg.task.valid())
                         seg.task.wait();
                     buffer_sizes.push_back(seg.encoded_buf.size());
@@ -322,10 +305,29 @@ void SceneCacheOutputFile::doWrite()
     }
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+
+void SceneCacheOutputFile::Init(const StreamPtr ost, const SceneCacheOutputSettings& oscs) {
+    m_ost = ost;
+    m_oscs = oscs;
+    if (!m_ost || !(*m_ost))
+        return;
+
+    m_encoder = EncodingUtility::CreateEncoder(m_oscs.encoding, m_oscs.encoder_settings);
+    if (!m_encoder) {
+        m_oscs.encoding = SceneCacheEncoding::Plain;
+        m_encoder = CreatePlainEncoder();
+    }
+
+    CacheFileHeader header;
+    header.oscs = m_oscs;
+    m_ost->write(reinterpret_cast<char*>(&header), sizeof(header));
+}
+
 
 SceneCacheOutputFile::StreamPtr SceneCacheOutputFile::createStream(const char *path)
 {
-    std::shared_ptr<std::basic_ofstream<char>> ret = std::make_shared<std::ofstream>(path, std::ios::binary);
+    const std::shared_ptr<std::basic_ofstream<char>> ret = std::make_shared<std::ofstream>(path, std::ios::binary);
     return *ret ? ret : nullptr;
 }
 
