@@ -20,14 +20,5 @@ OSceneCacheSettingsBase::OSceneCacheSettingsBase()
     strip_tangents = 0;
 }
 
-BufferEncoderPtr CreateEncoder(SceneCacheEncoding encoding, const SceneCacheEncoderSettings& settings)
-{
-    BufferEncoderPtr ret;
-    switch (encoding) {
-    case SceneCacheEncoding::ZSTD: ret = CreateZSTDEncoder(settings.zstd.compression_level); break;
-    default: break;
-    }
-    return ret;
-}
 
 } // namespace ms
