@@ -51,28 +51,28 @@ private:
 private:
     struct SceneSegment
     {
-        RawVector<char> encoded_buf;
+        RawVector<char> encodedBuf;
         std::future<void> task;
         ScenePtr segment;
         bool error = false;
 
         // profile data
-        float read_time;
-        float decode_time;
-        uint64_t size_encoded;
-        uint64_t size_decoded;
-        uint64_t vertex_count;
+        float readTime;
+        float decodeTime;
+        uint64_t encodedSize;
+        uint64_t decodedSize;
+        uint64_t vertexCount;
     };
 
     struct SceneRecord
     {
         uint64_t pos = 0;
-        uint64_t buffer_size_total = 0;
+        uint64_t bufferSizeTotal = 0;
         float time = 0.0f;
 
         ScenePtr scene;
         std::future<void> preload;
-        RawVector<uint64_t> buffer_sizes;
+        RawVector<uint64_t> bufferSizes;
         std::vector<SceneSegment> segments;
     };
 

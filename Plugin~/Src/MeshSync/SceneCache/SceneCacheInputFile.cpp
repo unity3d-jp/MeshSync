@@ -106,18 +106,18 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
             SceneRecord rec;
             rec.time = sh.time;
 
-            rec.buffer_sizes.resize_discard(sh.buffer_count);
-            m_ist->read(reinterpret_cast<char*>(rec.buffer_sizes.data()), rec.buffer_sizes.size_in_byte());
+            rec.bufferSizes.resize_discard(sh.buffer_count);
+            m_ist->read(reinterpret_cast<char*>(rec.bufferSizes.data()), rec.bufferSizes.size_in_byte());
             rec.pos = static_cast<uint64_t>(m_ist->tellg());
 
-            rec.buffer_size_total = 0;
-            for (uint64_t s : rec.buffer_sizes)
-                rec.buffer_size_total += s;
+            rec.bufferSizeTotal = 0;
+            for (uint64_t s : rec.bufferSizes)
+                rec.bufferSizeTotal += s;
 
             rec.segments.resize(sh.buffer_count);
 
             m_records.emplace_back(std::move(rec));
-            m_ist->seekg(rec.buffer_size_total, std::ios::cur);
+            m_ist->seekg(rec.bufferSizeTotal, std::ios::cur);
         }
     }
 
@@ -184,7 +184,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
 
     const mu::nanosec load_begin = mu::Now();
 
-    const size_t seg_count = rec.buffer_sizes.size();
+    const size_t seg_count = rec.bufferSizes.size();
     rec.segments.resize(seg_count);
 
     {
@@ -194,17 +194,17 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
         m_ist->seekg(rec.pos, std::ios::beg);
         for (size_t si = 0; si < seg_count; ++si) {
             SceneSegment& seg = rec.segments[si];
-            seg.size_encoded = rec.buffer_sizes[si];
+            seg.encodedSize = rec.bufferSizes[si];
 
             // read segment
             {
-                msProfileScope("SceneCacheInputFile: [%d] read segment (%d - %u byte)", (int)sceneIndex, (int)si, (uint32_t)seg.size_encoded);
+                msProfileScope("SceneCacheInputFile: [%d] read segment (%d - %u byte)", (int)sceneIndex, (int)si, (uint32_t)seg.encodedSize);
                 mu::ScopedTimer timer;
 
-                seg.encoded_buf.resize(static_cast<size_t>(seg.size_encoded));
-                m_ist->read(seg.encoded_buf.data(), seg.encoded_buf.size());
+                seg.encodedBuf.resize(static_cast<size_t>(seg.encodedSize));
+                m_ist->read(seg.encodedBuf.data(), seg.encodedBuf.size());
 
-                seg.read_time = timer.elapsed();
+                seg.readTime = timer.elapsed();
             }
 
             // launch async decode
@@ -213,8 +213,8 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
                 mu::ScopedTimer timer;
 
                 RawVector<char> tmp_buf;
-                m_encoder->decode(tmp_buf, seg.encoded_buf);
-                seg.size_decoded = tmp_buf.size();
+                m_encoder->decode(tmp_buf, seg.encodedBuf);
+                seg.decodedSize = tmp_buf.size();
 
                 std::shared_ptr<Scene> ret = Scene::create();
                 mu::MemoryStream scene_buf(std::move(tmp_buf));
@@ -226,9 +226,9 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
                     seg.segment = ret;
 
                     // count vertices
-                    seg.vertex_count = 0;
+                    seg.vertexCount = 0;
                     for (std::vector<std::shared_ptr<Transform>>::value_type& e : seg.segment->entities)
-                        seg.vertex_count += e->vertexCount();
+                        seg.vertexCount += e->vertexCount();
                 }
                 catch (std::runtime_error& e) {
                     muLogError("exception: %s\n", e.what());
@@ -236,7 +236,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
                     seg.error = true;
                 }
 
-                seg.decode_time = timer.elapsed();
+                seg.decodeTime = timer.elapsed();
             });
         }
     }
@@ -263,11 +263,11 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
         prof = {};
         prof.load_time = mu::NS2MS(mu::Now() - load_begin);
         for (std::vector<SceneSegment>::value_type& seg : rec.segments) {
-            prof.size_encoded += seg.size_encoded;
-            prof.size_decoded += seg.size_decoded;
-            prof.read_time += seg.read_time;
-            prof.decode_time += seg.decode_time;
-            prof.vertex_count += seg.vertex_count;
+            prof.size_encoded += seg.encodedSize;
+            prof.size_decoded += seg.decodedSize;
+            prof.read_time += seg.readTime;
+            prof.decode_time += seg.decodeTime;
+            prof.vertex_count += seg.vertexCount;
         }
 
         {
