@@ -85,8 +85,8 @@ private:
     RawVector<CacheFileEntityMeta> m_entityMeta;
     AnimationCurvePtr m_frameCurve;
 
-    float m_last_time = -1.0f;
-    int m_last_index = -1, m_last_index2 = -1;
+    float m_lastTime = -1.0f;
+    int m_lastIndex = -1, m_lastIndex2 = -1;
     ScenePtr m_baseScene, m_lastScene, m_lastDiff;
     std::deque<size_t> m_history;
 

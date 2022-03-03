@@ -369,7 +369,7 @@ ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpola
 {
     if (!IsValid())
         return nullptr;
-    if (time == m_last_time) {
+    if (time == m_lastTime) {
         if (m_lastDiff)
             return m_lastDiff;
         else if (m_lastScene)
@@ -383,20 +383,20 @@ ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpola
     const TimeRange time_range = GetTimeRangeV();
     if (time <= time_range.start) {
         const int si = 0;
-        if ((!interpolation && m_last_index == si) ||
-            (m_last_index == si && m_last_index2 == si))
+        if ((!interpolation && m_lastIndex == si) ||
+            (m_lastIndex == si && m_lastIndex2 == si))
             return nullptr;
 
-        m_last_index = m_last_index2 = si;
+        m_lastIndex = m_lastIndex2 = si;
         ret = LoadByIndexInternal(si);
     }
     else if (time >= time_range.end) {
         const int si =  scene_count - 1;
-        if ((!interpolation && m_last_index == si) ||
-            (m_last_index == si && m_last_index2 == si))
+        if ((!interpolation && m_lastIndex == si) ||
+            (m_lastIndex == si && m_lastIndex2 == si))
             return nullptr;
 
-        m_last_index = m_last_index2 = si;
+        m_lastIndex = m_lastIndex2 = si;
         ret = LoadByIndexInternal(si);
     }
     else {
@@ -422,25 +422,25 @@ ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpola
                 ret->profile_data.lerp_time = timer.elapsed();
             }
 
-            m_last_index = si;
-            m_last_index2 = si + 1;
+            m_lastIndex = si;
+            m_lastIndex2 = si + 1;
         }
         else {
-            if (si == m_last_index)
+            if (si == m_lastIndex)
                 return nullptr;
             ret = LoadByIndexInternal(si);
 
-            m_last_index = m_last_index2 = si;
+            m_lastIndex = m_lastIndex2 = si;
         }
     }
-    m_last_time = time;
-    return PostProcess(ret, m_last_index2);
+    m_lastTime = time;
+    return PostProcess(ret, m_lastIndex2);
 }
 
 void SceneCacheInputFile::RefreshV()
 {
-    m_last_index = m_last_index2  = -1;
-    m_last_time = -1.0f;
+    m_lastIndex = m_lastIndex2  = -1;
+    m_lastTime = -1.0f;
     m_lastScene = nullptr;
     m_lastDiff = nullptr;
 }
