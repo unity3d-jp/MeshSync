@@ -19,7 +19,7 @@ public:
     void AddScene(ScenePtr scene, float time) ;
 
     void Flush() ;
-    bool IsWriting() ;
+    bool IsWriting() const;
     int GetSceneCountWritten() const ;
     int GetSceneCountInQueue() const ;
 

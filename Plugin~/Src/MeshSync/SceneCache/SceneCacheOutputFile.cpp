@@ -213,7 +213,7 @@ void SceneCacheOutputFile::Flush()
         m_task.wait();
 }
 
-bool SceneCacheOutputFile::IsWriting()
+bool SceneCacheOutputFile::IsWriting() const
 {
     return m_task.valid() && m_task.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
 }
