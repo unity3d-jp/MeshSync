@@ -61,7 +61,7 @@ float SceneCacheInputFile::GetTimeV(int i) const
     return m_records[i].time;
 }
 
-int SceneCacheInputFile::GetFrameByTimeV(float time) const
+int SceneCacheInputFile::GetFrameByTimeV(const float time) const
 {
     if (!IsValid())
         return 0;
@@ -97,7 +97,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
     for (;;) {
         // enumerate all scene headers
         CacheFileSceneHeader sh;
-        m_ist->read((char*)&sh, sizeof(sh));
+        m_ist->read(reinterpret_cast<char*>(&sh), sizeof(sh));
         if (sh.buffer_count == 0) {
             // empty header is a terminator
             break;
@@ -201,7 +201,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
                 msProfileScope("SceneCacheInputFile: [%d] read segment (%d - %u byte)", (int)sceneIndex, (int)si, (uint32_t)seg.size_encoded);
                 mu::ScopedTimer timer;
 
-                seg.encoded_buf.resize((size_t)seg.size_encoded);
+                seg.encoded_buf.resize(static_cast<size_t>(seg.size_encoded));
                 m_ist->read(seg.encoded_buf.data(), seg.encoded_buf.size());
 
                 seg.read_time = timer.elapsed();
@@ -271,7 +271,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
         }
 
         {
-            msProfileScope("SceneCacheInputFile: [%d] merge & import", (int)sceneIndex);
+            msProfileScope("SceneCacheInputFile: [%d] merge & import", static_cast<int>(sceneIndex));
             mu::ScopedTimer timer;
 
             if (m_header.oscs.strip_unchanged && m_base_scene) {
@@ -318,7 +318,7 @@ ScenePtr SceneCacheInputFile::PostProcess(ScenePtr& sp, size_t scene_index)
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
     const SceneCacheInputSettings& settings = GetSettings();
     if (m_last_scene && (settings.enable_diff && m_header.oscs.strip_unchanged)) {
-        msProfileScope("SceneCacheInputFile: [%d] diff", (int)scene_index);
+        msProfileScope("SceneCacheInputFile: [%d] diff", static_cast<int>(scene_index));
         m_last_diff = Scene::create();
         m_last_diff->diff(*sp, *m_last_scene);
         m_last_scene = sp;
@@ -331,7 +331,7 @@ ScenePtr SceneCacheInputFile::PostProcess(ScenePtr& sp, size_t scene_index)
     }
 
     // kick preload
-    PreloadV((int)scene_index);
+    PreloadV(static_cast<int>(scene_index));
 
     return ret;
 }
@@ -365,7 +365,7 @@ ScenePtr SceneCacheInputFile::GetByIndexV(size_t i)
     return PostProcess(ret, i);
 }
 
-ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
+ScenePtr SceneCacheInputFile::GetByTimeV(const float time, const bool interpolation)
 {
     if (!IsValid())
         return nullptr;
