@@ -29,7 +29,7 @@ protected:
 private:
     void Init(StreamPtr ost, const SceneCacheOutputSettings& oscs);
 
-    static StreamPtr createStream(const char *path);
+    static StreamPtr CreateStream(const char *path);
 
     struct SceneSegment
     {

@@ -12,7 +12,7 @@
 namespace ms {
 
 SceneCacheOutputFile::SceneCacheOutputFile(const char *path, const SceneCacheOutputSettings& oscs) {
-    Init(createStream(path), oscs);
+    Init(CreateStream(path), oscs);
 }
 
 SceneCacheOutputFile::~SceneCacheOutputFile()
@@ -325,7 +325,7 @@ void SceneCacheOutputFile::Init(const StreamPtr ost, const SceneCacheOutputSetti
 }
 
 
-SceneCacheOutputFile::StreamPtr SceneCacheOutputFile::createStream(const char *path)
+SceneCacheOutputFile::StreamPtr SceneCacheOutputFile::CreateStream(const char *path)
 {
     const std::shared_ptr<std::basic_ofstream<char>> ret = std::make_shared<std::ofstream>(path, std::ios::binary);
     return *ret ? ret : nullptr;
