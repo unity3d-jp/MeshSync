@@ -43,14 +43,14 @@ bool SceneCacheWriter::isExporting()
 {
     if (!valid())
         return false;
-    return m_osc->isWriting();
+    return m_osc->IsWriting();
 }
 
 void SceneCacheWriter::wait()
 {
     if (!valid())
         return;
-    m_osc->flush();
+    m_osc->Flush();
 }
 
 void SceneCacheWriter::kick()
@@ -89,7 +89,7 @@ void SceneCacheWriter::write()
 
         scene->entities = transforms;
         append(scene->entities, geometries);
-        m_osc->addScene(scene, time);
+        m_osc->AddScene(scene, time);
     }
 
     if (succeeded) {
@@ -110,7 +110,7 @@ void SceneCacheWriter::write()
 
 SceneCacheOutputFile* SceneCacheWriter::OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs) {
     SceneCacheOutputFile* ret = new SceneCacheOutputFile(path, oscs);
-    if (ret->valid()) {
+    if (ret->IsValid()) {
         return ret;
     } else {
         delete ret;

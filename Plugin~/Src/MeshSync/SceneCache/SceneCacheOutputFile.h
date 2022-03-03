@@ -14,14 +14,14 @@ public:
     SceneCacheOutputFile(const char *path, const SceneCacheOutputSettings& oscs);
 
     ~SceneCacheOutputFile() ;
-    bool valid() const ;
+    bool IsValid() const ;
 
-    void addScene(ScenePtr scene, float time) ;
+    void AddScene(ScenePtr scene, float time) ;
 
-    void flush() ;
-    bool isWriting() ;
-    int getSceneCountWritten() const ;
-    int getSceneCountInQueue() const ;
+    void Flush() ;
+    bool IsWriting() ;
+    int GetSceneCountWritten() const ;
+    int GetSceneCountInQueue() const ;
 
 protected:
     void doWrite();
