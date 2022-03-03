@@ -77,7 +77,7 @@ int SceneCacheInputFile::GetFrameByTimeV(float time) const
 
 void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& iscs)
 {
-    m_ist = createStream(path, iscs);
+    m_ist = CreateStream(path, iscs);
     SetSettings(iscs);
     if (!m_ist || !(*m_ist))
         return;
@@ -153,7 +153,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
 }
 
 
-SceneCacheInputFile::StreamPtr SceneCacheInputFile::createStream(const char *path, const SceneCacheInputSettings& /*iscs*/)
+SceneCacheInputFile::StreamPtr SceneCacheInputFile::CreateStream(const char *path, const SceneCacheInputSettings& /*iscs*/)
 {
     if (!path)
         return nullptr;

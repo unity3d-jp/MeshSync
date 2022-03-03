@@ -40,7 +40,7 @@ public:
 private:
     SceneCacheInputFile() = default;
     void Init(const char *path, const SceneCacheInputSettings& iscs);
-    static StreamPtr createStream(const char *path, const SceneCacheInputSettings& iscs);
+    static StreamPtr CreateStream(const char *path, const SceneCacheInputSettings& iscs);
 
     ScenePtr LoadByIndexInternal(size_t sceneIndex, bool waitPreload = true);
     ScenePtr postprocess(ScenePtr& sp, size_t scene_index);
