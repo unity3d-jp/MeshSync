@@ -1,13 +1,12 @@
 #pragma once
 #include "msSceneCacheImpl.h"
 
-#include "MeshSync/SceneCache/msSceneCacheOutput.h"
 
 msDeclClassPtr(SceneCacheOutputFile)
 
 namespace ms {
     
-class SceneCacheOutputFile: public SceneCacheOutput
+class SceneCacheOutputFile
 {
 public:
     using StreamPtr = std::shared_ptr<std::ostream>;
