@@ -44,7 +44,7 @@ private:
 
     ScenePtr LoadByIndexInternal(size_t sceneIndex, bool waitPreload = true);
     ScenePtr PostProcess(ScenePtr& sp, size_t scene_index);
-    bool kickPreload(size_t i);
+    bool KickPreload(size_t i);
     void waitAllPreloads();
     void popHistory();
 

@@ -336,7 +336,7 @@ ScenePtr SceneCacheInputFile::PostProcess(ScenePtr& sp, size_t scene_index)
     return ret;
 }
 
-bool SceneCacheInputFile::kickPreload(size_t i)
+bool SceneCacheInputFile::KickPreload(size_t i)
 {
     SceneRecord& rec = m_records[i];
     if (rec.scene || rec.preload.valid())
@@ -405,7 +405,7 @@ ScenePtr SceneCacheInputFile::GetByTimeV(float time, bool interpolation)
             const float t1 = m_records[si + 0].time;
             const float t2 = m_records[si + 1].time;
 
-            kickPreload(si + 1);
+            KickPreload(si + 1);
             const ScenePtr s1 = LoadByIndexInternal(si + 0);
             const ScenePtr s2 = LoadByIndexInternal(si + 1);
 
@@ -453,7 +453,7 @@ void SceneCacheInputFile::PreloadV(const int frame)
         const int begin_frame = frame + 1;
         const int end_frame = std::min(frame + preloadLength, static_cast<int>(m_records.size()));
         for (int f = begin_frame; f < end_frame; ++f)
-            kickPreload(f);
+            KickPreload(f);
     }
     popHistory();
 }
@@ -463,7 +463,7 @@ void SceneCacheInputFile::PreloadAll()
     const size_t n = m_records.size();
     SetMaxLoadedSamples(static_cast<int>(n) + 1);
     for (size_t i = 0; i < n; ++i)
-        kickPreload(i);
+        KickPreload(i);
 }
 
 void SceneCacheInputFile::popHistory()
