@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "msOSceneCacheImpl.h"
+#include "SceneCacheOutputFile.h"
 
 #include "Utils/msDebug.h"
 

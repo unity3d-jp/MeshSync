@@ -3,7 +3,7 @@
 
 #ifndef msRuntime
 
-#include "SceneCache/msOSceneCacheImpl.h"
+#include "SceneCache/SceneCacheOutputFile.h"
 #include "MeshSync/SceneGraph/msAnimation.h" //AnimationClipPtr
 #include "MeshSync/SceneGraph/msMaterial.h" //MaterialPtr
 #include "MeshSync/SceneGraph/msTexture.h" //TexturePtr
