@@ -5,8 +5,6 @@ using UnityEngine.Rendering;
 
 #if UNITY_EDITOR
 using UnityEditor;
-using UnityEditor.Rendering;
-
 #endif
 
 namespace Unity.MeshSync{
@@ -21,17 +19,26 @@ namespace Unity.MeshSync{
         {
             this.m_server = ms;
 
-            if (Application.isEditor)
+#if UNITY_EDITOR
+            if (Application.isPlaying)
             {
+                m_camera = Camera.main;
+            }
+            else
+            {
+                EditorApplication.update -= Draw;
+                EditorApplication.update += Draw;
                 var go = GameObject.Find("SceneCamera");
+
                 if (go != null)
                 {
                     m_camera = go.GetComponent<Camera>();
                 }
             }
+#else
+                m_camera = Camera.main;
+#endif
 
-            EditorApplication.update -= Draw;
-            EditorApplication.update += Draw;
             
             ms.onUpdateInstanceInfo -= OnUpdateInstanceInfo;
             ms.onUpdateInstanceInfo += OnUpdateInstanceInfo;
@@ -218,10 +225,12 @@ namespace Unity.MeshSync{
         
         private void RepaintAfterChanges()
         {
-#if UNITY_EDITOR
-            m_camera.Render();
+            if (Application.isEditor && !Application.isPlaying)
+            {
+                m_camera.Render();
+            }
+
             Draw();
-#endif
         }
     }
 }
