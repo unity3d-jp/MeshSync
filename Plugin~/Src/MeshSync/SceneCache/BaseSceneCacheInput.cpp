@@ -5,7 +5,7 @@
 namespace ms {
 
 BaseSceneCacheInput::BaseSceneCacheInput() 
-    : m_time_curve(AnimationCurve::create())
+    : m_timeCurve(AnimationCurve::create())
 {
     
 }
@@ -18,12 +18,12 @@ void BaseSceneCacheInput::SetPreloadLength(int v) {
 //----------------------------------------------------------------------------------------------------------------------
 
 const AnimationCurvePtr BaseSceneCacheInput::GetTimeCurve() const {
-    return m_time_curve;
+    return m_timeCurve;
 }
 
 
 AnimationCurvePtr BaseSceneCacheInput::GetTimeCurve() {
-    return m_time_curve;
+    return m_timeCurve;
 }
 
 } // namespace ms

@@ -42,7 +42,7 @@ protected:
 
 private:
     SceneCacheInputSettings m_iscs;
-    AnimationCurvePtr m_time_curve;
+    AnimationCurvePtr m_timeCurve;
 
     int32_t m_maxLoadedSamples = 3;
     int32_t m_preloadLength = 1;
