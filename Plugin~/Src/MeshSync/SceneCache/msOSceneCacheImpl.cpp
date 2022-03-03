@@ -7,6 +7,7 @@
 #include "MeshSync/SceneGraph/msMeshRefineFlags.h"
 #include "MeshSync/SceneGraph/msTransform.h"
 #include "MeshSync/SceneGraph/msMesh.h"
+#include "MeshSync/Utils/EncodingUtility.h"
 
 namespace ms {
 
@@ -17,7 +18,7 @@ OSceneCacheImpl::OSceneCacheImpl(StreamPtr ost, const SceneCacheOutputSettings& 
     if (!m_ost || !(*m_ost))
         return;
 
-    m_encoder = CreateEncoder(m_oscs.encoding, m_oscs.encoder_settings);
+    m_encoder = EncodingUtility::CreateEncoder(m_oscs.encoding, m_oscs.encoder_settings);
     if (!m_encoder) {
         m_oscs.encoding = SceneCacheEncoding::Plain;
         m_encoder = CreatePlainEncoder();

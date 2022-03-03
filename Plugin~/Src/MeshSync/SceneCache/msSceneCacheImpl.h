@@ -37,7 +37,4 @@ struct CacheFileEntityMeta
     uint32_t constant_topology : 1;
 };
 
-
-BufferEncoderPtr CreateEncoder(SceneCacheEncoding encoding, const SceneCacheEncoderSettings& settings);
-
 } // namespace ms
