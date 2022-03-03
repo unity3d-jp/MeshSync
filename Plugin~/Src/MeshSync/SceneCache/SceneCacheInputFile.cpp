@@ -142,8 +142,8 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
         m_ist->read(encoded_buf.data(), encoded_buf.size());
 
         m_encoder->decode(tmp_buf, encoded_buf);
-        m_entity_meta.resize_discard(tmp_buf.size() / sizeof(CacheFileEntityMeta));
-        tmp_buf.copy_to(reinterpret_cast<char*>(m_entity_meta.data()));
+        m_entityMeta.resize_discard(tmp_buf.size() / sizeof(CacheFileEntityMeta));
+        tmp_buf.copy_to(reinterpret_cast<char*>(m_entityMeta.data()));
     }
 
     if (m_header.oscs.strip_unchanged)
@@ -277,8 +277,8 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
             if (m_header.oscs.strip_unchanged && m_baseScene) {
                 // set cache flags
                 size_t n = ret->entities.size();
-                if (m_entity_meta.size() == n) {
-                    mu::enumerate(m_entity_meta, ret->entities, [](auto& meta, auto& e) {
+                if (m_entityMeta.size() == n) {
+                    mu::enumerate(m_entityMeta, ret->entities, [](auto& meta, auto& e) {
                         if (meta.id == e->id) {
                             e->cache_flags.constant = meta.constant;
                             e->cache_flags.constant_topology = meta.constant_topology;
@@ -479,15 +479,15 @@ const AnimationCurvePtr SceneCacheInputFile::GetFrameCurveV(const int baseFrame)
 {
     // generate on the fly
     const size_t sceneCount = m_records.size();
-    m_frame_curve = AnimationCurve::create();
-    TAnimationCurve<int> curve(m_frame_curve);
+    m_frameCurve = AnimationCurve::create();
+    TAnimationCurve<int> curve(m_frameCurve);
     curve.resize(sceneCount);
     for (size_t i = 0; i < sceneCount; ++i) {
         TAnimationCurve<int>::key_t& kvp = curve[i];
         kvp.time = m_records[i].time;
         kvp.value = static_cast<int>(i) + baseFrame;
     }
-    return m_frame_curve;
+    return m_frameCurve;
 }
 
 } // namespace ms

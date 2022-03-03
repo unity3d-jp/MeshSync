@@ -82,8 +82,8 @@ private:
 
     std::mutex m_mutex;
     std::vector<SceneRecord> m_records;
-    RawVector<CacheFileEntityMeta> m_entity_meta;
-    AnimationCurvePtr m_frame_curve;
+    RawVector<CacheFileEntityMeta> m_entityMeta;
+    AnimationCurvePtr m_frameCurve;
 
     float m_last_time = -1.0f;
     int m_last_index = -1, m_last_index2 = -1;
