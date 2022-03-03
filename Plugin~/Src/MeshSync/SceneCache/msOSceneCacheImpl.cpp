@@ -11,7 +11,12 @@
 
 namespace ms {
 
-OSceneCacheImpl::OSceneCacheImpl(StreamPtr ost, const SceneCacheOutputSettings& oscs)
+OSceneCacheFile::OSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs)
+    : OSceneCacheFile(createStream(path), oscs)
+{
+}
+
+OSceneCacheFile::OSceneCacheFile(StreamPtr ost, const SceneCacheOutputSettings& oscs)
 {
     m_ost = ost;
     m_oscs = oscs;
@@ -29,7 +34,7 @@ OSceneCacheImpl::OSceneCacheImpl(StreamPtr ost, const SceneCacheOutputSettings& 
     m_ost->write((char*)&header, sizeof(header));
 }
 
-OSceneCacheImpl::~OSceneCacheImpl()
+OSceneCacheFile::~OSceneCacheFile()
 {
     if (!valid())
         return;
@@ -65,7 +70,7 @@ OSceneCacheImpl::~OSceneCacheImpl()
     }
 }
 
-bool OSceneCacheImpl::valid() const
+bool OSceneCacheFile::valid() const
 {
     return m_ost && (*m_ost);
 }
@@ -127,7 +132,7 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
     return segments;
 }
 
-void OSceneCacheImpl::addScene(ScenePtr scene, float time)
+void OSceneCacheFile::addScene(ScenePtr scene, float time)
 {
     while (m_scene_count_in_queue > 0 && ((m_oscs.strip_unchanged && !m_base_scene) || m_scene_count_in_queue >= m_oscs.max_queue_size)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -141,7 +146,7 @@ void OSceneCacheImpl::addScene(ScenePtr scene, float time)
 
     rec.task = std::async(std::launch::async, [this, &rec]() {
         {
-            msProfileScope("OSceneCacheImpl: [%d] scene optimization", rec.index);
+            msProfileScope("OSceneCacheFile: [%d] scene optimization", rec.index);
 
             auto& scene = rec.scene;
             std::sort(scene->entities.begin(), scene->entities.end(), [](auto& a, auto& b) { return a->id < b->id; });
@@ -200,7 +205,7 @@ void OSceneCacheImpl::addScene(ScenePtr scene, float time)
 
         for (auto& seg : rec.segments) {
             seg.task = std::async(std::launch::async, [this, &rec, &seg]() {
-                msProfileScope("OSceneCacheImpl: [%d] serialize & encode segment (%d)", rec.index, seg.index);
+                msProfileScope("OSceneCacheFile: [%d] serialize & encode segment (%d)", rec.index, seg.index);
 
                 mu::MemoryStream scene_buf;
                 seg.segment->serialize(scene_buf);
@@ -218,29 +223,29 @@ void OSceneCacheImpl::addScene(ScenePtr scene, float time)
     doWrite();
 }
 
-void OSceneCacheImpl::flush()
+void OSceneCacheFile::flush()
 {
     doWrite();
     if (m_task.valid())
         m_task.wait();
 }
 
-bool OSceneCacheImpl::isWriting()
+bool OSceneCacheFile::isWriting()
 {
     return m_task.valid() && m_task.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout;
 }
 
-int OSceneCacheImpl::getSceneCountWritten() const
+int OSceneCacheFile::getSceneCountWritten() const
 {
     return m_scene_count_written;
 }
 
-int OSceneCacheImpl::getSceneCountInQueue() const
+int OSceneCacheFile::getSceneCountInQueue() const
 {
     return m_scene_count_in_queue;
 }
 
-void OSceneCacheImpl::doWrite()
+void OSceneCacheFile::doWrite()
 {
     auto body = [this]() {
         for (;;) {
@@ -295,7 +300,7 @@ void OSceneCacheImpl::doWrite()
                     total_buffer_size += seg.encoded_buf.size();
                 }
 
-                msProfileScope("OSceneCacheImpl: [%d] write (%u byte)", rec.index, (uint32_t)total_buffer_size);
+                msProfileScope("OSceneCacheFile: [%d] write (%u byte)", rec.index, (uint32_t)total_buffer_size);
 
                 CacheFileSceneHeader header;
                 header.buffer_count = (uint32_t)buffer_sizes.size();
@@ -317,14 +322,10 @@ void OSceneCacheImpl::doWrite()
     }
 }
 
-OSceneCacheFile::OSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs)
-    : super(createStream(path), oscs)
-{
-}
 
 OSceneCacheFile::StreamPtr OSceneCacheFile::createStream(const char *path)
 {
-    auto ret = std::make_shared<std::ofstream>(path, std::ios::binary);
+    std::shared_ptr<std::basic_ofstream<char>> ret = std::make_shared<std::ofstream>(path, std::ios::binary);
     return *ret ? ret : nullptr;
 }
 
