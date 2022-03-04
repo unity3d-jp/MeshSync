@@ -3,12 +3,12 @@
 #include <deque>
 
 #include "MeshSync/SceneCache/msBaseSceneCacheInput.h"
+#include "MeshSync/SceneCache/msCacheFileHeader.h"
 #include "MeshSync/SceneCache/msSceneCacheInputSettings.h"
 
-#include "SceneCache/BufferEncoder.h"
-#include "SceneCache/CacheFileHeader.h"
 
 msDeclClassPtr(SceneCacheInputFile)
+msDeclClassPtr(BufferEncoder)
 
 namespace ms {
 
