@@ -13,7 +13,7 @@ namespace Unity.MeshSync{
     {
         private BaseMeshSync m_server;
 
-        private Camera m_camera;
+        private Camera[] m_cameras;
 
         public void Init(BaseMeshSync ms)
         {
@@ -22,7 +22,8 @@ namespace Unity.MeshSync{
 #if UNITY_EDITOR
             if (Application.isPlaying)
             {
-                m_camera = Camera.main;
+                m_cameras = GameObject.FindObjectsOfType<Camera>();
+                
             }
             else
             {
@@ -32,7 +33,7 @@ namespace Unity.MeshSync{
 
                 if (go != null)
                 {
-                    m_camera = go.GetComponent<Camera>();
+                    m_cameras = new[] {go.GetComponent<Camera>()};
                 }
             }
 #else
@@ -206,28 +207,53 @@ namespace Unity.MeshSync{
                 var material = entry.Materials[materialIndex];
                 for (var j = 0; j < matrixBatches.Count; j++)
                 {
-                    var batch = matrixBatches[j];
+                    var batch = matrixBatches[j]; 
                     
-                    Graphics.DrawMeshInstanced(
-                        mesh:mesh,
-                        submeshIndex:i, 
-                        material:material, 
-                        matrices:batch, 
-                        count:batch.Length, 
-                        properties:null, 
-                        castShadows:ShadowCastingMode.On, 
-                        receiveShadows:true,
-                        layer:0, 
-                        camera:m_camera);
+                    DrawAllCameras(mesh, i, material, batch);
                 }
             }
         }
+
+        private void DrawAllCameras(Mesh mesh,int submeshIndex, Material material, Matrix4x4[] matrices)
+        {
+            for (var i = 0; i < m_cameras.Length; i++)
+            {
+                var camera = m_cameras[i];
+                if (camera == null)
+                    continue;
+                
+                Graphics.DrawMeshInstanced(
+                    mesh:mesh,
+                    submeshIndex:submeshIndex, 
+                    material:material, 
+                    matrices:matrices, 
+                    count:matrices.Length, 
+                    properties:null, 
+                    castShadows:ShadowCastingMode.On, 
+                    receiveShadows:true,
+                    layer:0, 
+                    camera:camera);
+            }
+        }
+
+        private void RenderAllCameras()
+        {
+            for (var i = 0; i < m_cameras.Length; i++)
+            {
+                var camera = m_cameras[i];
+                if (camera == null)
+                    continue;
+                
+                camera.Render();
+            }
+        }
+        
         
         private void RepaintAfterChanges()
         {
             if (Application.isEditor && !Application.isPlaying)
             {
-                m_camera.Render();
+                RenderAllCameras();
             }
 
             Draw();
