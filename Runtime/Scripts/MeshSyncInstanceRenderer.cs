@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -14,6 +13,9 @@ namespace Unity.MeshSync{
         private BaseMeshSync m_server;
 
         private Camera[] m_cameras;
+        
+        private Dictionary<string, MeshInstanceInfo> m_instanceInfo = new Dictionary<string, MeshInstanceInfo>();
+
 
         public enum CameraMode
         {
@@ -57,7 +59,7 @@ namespace Unity.MeshSync{
 #if UNITY_EDITOR
         private void RefreshCameraListWithGameAndSceneCameras()
         {
-            var gameViewCameras = GameObject.FindObjectsOfType<Camera>();
+            var gameViewCameras = Object.FindObjectsOfType<Camera>();
             var sceneViewCameras = SceneView.GetAllSceneCameras();
             m_cameras = new Camera[gameViewCameras.Length + sceneViewCameras.Length];
 
@@ -89,19 +91,19 @@ namespace Unity.MeshSync{
             }
             else if (m_cameraMode == CameraMode.GameCameras)
             {
-                m_cameras = GameObject.FindObjectsOfType<Camera>();
+                m_cameras = Object.FindObjectsOfType<Camera>();
             }
             else if (m_cameraMode == CameraMode.SceneCameras)
             {
                 m_cameras = SceneView.GetAllSceneCameras();
             }
-
-            Draw();
 #else
             m_cameras = GameObject.FindObjectsOfType<Camera>();
 #endif
         }
-        
+
+        #region Events
+
         private void OnDeleteEntity(GameObject obj)
         {
             if (obj.TryGetComponent(out Camera _))
@@ -123,17 +125,17 @@ namespace Unity.MeshSync{
             if (path == null)
                 return;
 
-            meshInstances.Remove(path);
+            m_instanceInfo.Remove(path);
             
             RepaintAfterChanges();
         }
 
         private void OnUpdateInstanceMesh(string path, GameObject go)
         {
-            if (!this.meshInstances.TryGetValue(path, out MeshInstanceInfo entry))
+            if (!this.m_instanceInfo.TryGetValue(path, out MeshInstanceInfo entry))
             {
                 entry = new MeshInstanceInfo();
-                this.meshInstances.Add(path, entry);
+                this.m_instanceInfo.Add(path, entry);
             }
             
             UpdateEntryMeshMaterials(path, go, entry);
@@ -145,57 +147,12 @@ namespace Unity.MeshSync{
             if (path == null)
                 return;
             
-            meshInstances.Remove(path);
-            
+            m_instanceInfo.Remove(path);
             
             RepaintAfterChanges();
         }
 
-        private Dictionary<string, MeshInstanceInfo> meshInstances = new Dictionary<string, MeshInstanceInfo>();
 
-        private class MeshInstanceInfo
-        {
-            public Mesh Mesh;
-            public List<Matrix4x4[]> Instances;
-            public Material[] Materials;
-            public GameObject GameObject;
-            public MeshRenderer Renderer;
-            public int Layer
-            {
-                get
-                {
-                    if (GameObject == null) 
-                        return 0;
-                    
-                    return GameObject.layer; 
-                } 
-            }
-
-            public bool ReceiveShadows
-            {
-                get
-                {
-                    if (Renderer == null)
-                        return true;
-                    
-                    return Renderer.receiveShadows;
-                }
-            }
-
-            public ShadowCastingMode ShadowCastingMode
-            {
-                get
-                {
-                    if (Renderer == null)
-                    {
-                        return ShadowCastingMode.On;
-                    }
-
-                    return Renderer.shadowCastingMode;
-                }
-            }
-        }
-        
         private void OnUpdateInstanceInfo(
             string path,
             GameObject go,
@@ -208,16 +165,16 @@ namespace Unity.MeshSync{
             }
             
 
-            if (!meshInstances.TryGetValue(path, out MeshInstanceInfo entry))
+            if (!m_instanceInfo.TryGetValue(path, out MeshInstanceInfo entry))
             {
                 entry = new MeshInstanceInfo();
                 
-                meshInstances.Add(path, entry);
+                m_instanceInfo.Add(path, entry);
             }
 
             UpdateEntryMeshMaterials(path, go, entry);
 
-            entry.Instances = DivideArrays(transforms);
+            entry.Instances = transforms;
             
             foreach (var mat in entry.Materials)
             {
@@ -227,7 +184,7 @@ namespace Unity.MeshSync{
             RepaintAfterChanges();
         }
 
-        private static void UpdateEntryMeshMaterials(string path, GameObject go, MeshInstanceInfo entry)
+        private void UpdateEntryMeshMaterials(string path, GameObject go, MeshInstanceInfo entry)
         {
             if (!go.TryGetComponent(out MeshFilter filter))
             {
@@ -243,62 +200,30 @@ namespace Unity.MeshSync{
             entry.Materials = renderer.sharedMaterials;
             entry.GameObject = go;
             entry.Renderer = renderer;
+            entry.Root = m_server.transform;
         }
-
-        private List<Matrix4x4[]> DivideArrays(Matrix4x4[] arrays)
-        {
-            var maxSize = 1023;
-            var result = new List<Matrix4x4[]>();
-            var iterations = arrays.Length / maxSize;
-            for (var i = 0; i < iterations; i++)
-            {
-                var array = new Matrix4x4[maxSize];
-                
-                Array.Copy(
-                    arrays, 
-                    i * maxSize, 
-                    array, 
-                    0, 
-                    maxSize);
-                
-                result.Add(array);
-            }
-
-            var remainder = arrays.Length % maxSize;
-            if (remainder > 0)
-            {
-                var array = new Matrix4x4[remainder];
-                
-                Array.Copy(
-                    arrays, 
-                    iterations * maxSize, 
-                    array, 
-                    0, 
-                    remainder);
-                
-                result.Add(array);
-            }
-
-            return result;
-        }
+        #endregion
         
+        #region Rendering
         public void Draw()
         {
-            foreach (var entry in meshInstances)
+            foreach (var entry in m_instanceInfo)
             {
-                RenderInstances(entry.Value);
+                DrawInstances(entry.Value);
             }
         }
 
-        private void RenderInstances(MeshInstanceInfo entry)
+        private void DrawInstances(MeshInstanceInfo entry)
         {
-            if (entry.Mesh == null || entry.Instances == null || entry.Materials == null)
+            if (entry.Mesh == null || entry.DividedInstances == null || entry.Materials == null)
             {
                 return;
             }
             
             var mesh = entry.Mesh;
-            var matrixBatches = entry.Instances;
+            
+            entry.UpdateDividedInstances();
+            var matrixBatches = entry.DividedInstances;
 
             if (entry.Materials.Length == 0)
                 return;
@@ -312,9 +237,10 @@ namespace Unity.MeshSync{
                 var material = entry.Materials[materialIndex];
                 for (var j = 0; j < matrixBatches.Count; j++)
                 {
-                    var batch = matrixBatches[j]; 
+                    var batch = matrixBatches[j];
                     
-                    DrawAllCameras(
+                    
+                    DrawOnCameras(
                         mesh, 
                         i,
                         material,
@@ -325,8 +251,8 @@ namespace Unity.MeshSync{
                 }
             }
         }
-
-        private void DrawAllCameras(
+        
+        private void DrawOnCameras(
             Mesh mesh,
             int submeshIndex,
             Material material,
@@ -391,6 +317,9 @@ namespace Unity.MeshSync{
             m_server = null;
             m_cameraMode = CameraMode.None;
         }
+        #endregion
     }
+
+
 }
 
