@@ -1,5 +1,6 @@
 #include "pch.h"
-#include "MeshSync/SceneCache/msSceneCacheOutputSettings.h"
+#include "MeshSync/SceneCache/msSceneCacheExportSettings.h"
+
 #include "MeshSync/Utils/EncodingUtility.h"
 #include "msSceneCacheImpl.h"
 
@@ -7,7 +8,7 @@ namespace ms {
 
 static_assert(sizeof(CacheFileEntityMeta) == 8, "");
 
-OSceneCacheSettingsBase::OSceneCacheSettingsBase()
+SceneCacheExportSettings::SceneCacheExportSettings()
 {
     encoding = SceneCacheEncoding::ZSTD;
     encoder_settings.zstd.compression_level = EncodingUtility::GetZSTDDefaultCompressionLevel();

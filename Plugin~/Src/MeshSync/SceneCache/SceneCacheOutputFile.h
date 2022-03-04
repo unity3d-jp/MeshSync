@@ -1,6 +1,8 @@
 #pragma once
-#include "msSceneCacheImpl.h"
 
+#include "MeshSync/SceneGraph/msScene.h" 
+#include "MeshSync/SceneCache/msSceneCacheOutputSettings.h"
+#include "MeshSync/SceneCache/msEncoder.h"
 
 msDeclClassPtr(SceneCacheOutputFile)
 
