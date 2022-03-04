@@ -480,7 +480,11 @@ public class MeshSyncServer : BaseMeshSync {
             m_requestRestartServer = true;
         }
         
-        m_instanceRenderer.Init(this);
+#if UNITY_EDITOR
+        m_instanceRenderer.Init(this, m_cameraMode);
+#else
+         m_instanceRenderer.Init(this);
+#endif
     }
 
     protected override void OnDisable() {
@@ -541,6 +545,35 @@ public class MeshSyncServer : BaseMeshSync {
         INITIAL_0_4_0 = 1, //initial for version 0.4.0-preview 
     
     }
+
+#if UNITY_EDITOR
+    [SerializeField]
+    private bool m_foldInstanceSettings = true;
+
+    internal bool foldInstanceSettings
+    {
+        get => m_foldInstanceSettings;
+        set => m_foldInstanceSettings = value;
+    }
+    
+    [SerializeField]
+    private MeshSyncInstanceRenderer.CameraMode m_cameraMode = MeshSyncInstanceRenderer.CameraMode.GameCameras;
+    
+    public MeshSyncInstanceRenderer.CameraMode cameraMode
+    {
+        get => m_cameraMode;
+        set
+        {
+            if (m_cameraMode == value)
+                return;
+            
+            m_cameraMode = value;
+            
+            m_instanceRenderer.Init(this, m_cameraMode);
+        }
+    }
+#endif    
+    
     
 }
 
