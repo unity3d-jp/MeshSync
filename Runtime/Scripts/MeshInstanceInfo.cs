@@ -111,7 +111,7 @@ namespace Unity.MeshSync
 
                 for (var j = 0; j < array.Length; j++)
                 {
-                    array[j] = worldMatrix * Instances[i * maxSize + j];
+                    array[j] =  Instances[i * maxSize + j] * worldMatrix;
                 }
                 
                 DividedInstances.Add(array);
