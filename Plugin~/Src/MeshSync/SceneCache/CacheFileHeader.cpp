@@ -1,4 +1,4 @@
-#include "MeshSync/SceneCache/CacheFileHeader.h"
+#include "CacheFileHeader.h"
 
 namespace ms {
 
