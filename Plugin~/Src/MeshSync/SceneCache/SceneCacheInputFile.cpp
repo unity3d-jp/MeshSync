@@ -2,7 +2,6 @@
 #include "SceneCacheInputFile.h"
 #include "Utils/msDebug.h" //msProfileScope
 #include "MeshUtils/muLog.h" //muLogError
-#include "Utils/EncodingUtility.h"
 
 namespace ms {
 
@@ -88,7 +87,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
     if (m_header.version != msProtocolVersion)
         return;
 
-    m_encoder = EncodingUtility::CreateEncoder(m_header.exportSettings.encoding, m_header.exportSettings.encoder_settings);
+    m_encoder = BufferEncoder::CreateEncoder(m_header.exportSettings.encoding, m_header.exportSettings.encoder_settings);
     if (!m_encoder) {
         // encoder associated with m_settings.encoding is not available
         return;
@@ -142,7 +141,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
         encoded_buf.resize(static_cast<size_t>(mh.size));
         m_stream->read(encoded_buf.data(), encoded_buf.size());
 
-        m_encoder->decode(tmp_buf, encoded_buf);
+        m_encoder->DecodeV(tmp_buf, encoded_buf);
         m_entityMeta.resize_discard(tmp_buf.size() / sizeof(CacheFileEntityMeta));
         tmp_buf.copy_to(reinterpret_cast<char*>(m_entityMeta.data()));
     }
@@ -214,7 +213,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
                 mu::ScopedTimer timer;
 
                 RawVector<char> tmp_buf;
-                m_encoder->decode(tmp_buf, seg.encodedBuf);
+                m_encoder->DecodeV(tmp_buf, seg.encodedBuf);
                 seg.decodedSize = tmp_buf.size();
 
                 std::shared_ptr<Scene> ret = Scene::create();

@@ -44,7 +44,7 @@ SceneCacheOutputFile::~SceneCacheOutputFile()
         scene_buf.flush();
 
         RawVector<char> encoded_buf;
-        m_encoder->encode(encoded_buf, scene_buf.getBuffer());
+        m_encoder->EncodeV(encoded_buf, scene_buf.getBuffer());
 
         CacheFileMetaHeader header;
         header.size = encoded_buf.size();
@@ -196,7 +196,7 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
                 mu::MemoryStream scene_buf;
                 seg.segment->serialize(scene_buf);
                 scene_buf.flush();
-                m_encoder->encode(seg.encoded_buf, scene_buf.getBuffer());
+                m_encoder->EncodeV(seg.encoded_buf, scene_buf.getBuffer());
             });
         }
     });
@@ -317,10 +317,10 @@ void SceneCacheOutputFile::Init(const StreamPtr ost, const SceneCacheOutputSetti
         return;
 
     SceneCacheExportSettings* exportSettings = &m_oscs.exportSettings;
-    m_encoder = EncodingUtility::CreateEncoder(exportSettings->encoding, exportSettings->encoder_settings);
+    m_encoder = BufferEncoder::CreateEncoder(exportSettings->encoding, exportSettings->encoder_settings);
     if (!m_encoder) {
         exportSettings->encoding = SceneCacheEncoding::Plain;
-        m_encoder = CreatePlainEncoder();
+        m_encoder = BufferEncoder::CreateEncoder(SceneCacheEncoding::Plain, exportSettings->encoder_settings);
     }
 
     CacheFileHeader header;
