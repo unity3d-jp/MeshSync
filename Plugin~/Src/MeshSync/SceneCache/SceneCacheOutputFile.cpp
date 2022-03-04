@@ -317,10 +317,10 @@ void SceneCacheOutputFile::Init(const StreamPtr ost, const SceneCacheOutputSetti
         return;
 
     SceneCacheExportSettings* exportSettings = &m_oscs.exportSettings;
-    m_encoder = EncodingUtility::CreateEncoder(exportSettings->encoding, exportSettings->encoder_settings);
+    m_encoder = BufferEncoder::CreateEncoder(exportSettings->encoding, exportSettings->encoder_settings);
     if (!m_encoder) {
         exportSettings->encoding = SceneCacheEncoding::Plain;
-        m_encoder = CreatePlainEncoder();
+        m_encoder = BufferEncoder::CreateEncoder(SceneCacheEncoding::Plain, exportSettings->encoder_settings);
     }
 
     CacheFileHeader header;

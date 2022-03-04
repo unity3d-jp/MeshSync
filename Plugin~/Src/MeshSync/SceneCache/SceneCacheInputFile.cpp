@@ -2,7 +2,6 @@
 #include "SceneCacheInputFile.h"
 #include "Utils/msDebug.h" //msProfileScope
 #include "MeshUtils/muLog.h" //muLogError
-#include "Utils/EncodingUtility.h"
 
 namespace ms {
 
@@ -88,7 +87,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
     if (m_header.version != msProtocolVersion)
         return;
 
-    m_encoder = EncodingUtility::CreateEncoder(m_header.exportSettings.encoding, m_header.exportSettings.encoder_settings);
+    m_encoder = BufferEncoder::CreateEncoder(m_header.exportSettings.encoding, m_header.exportSettings.encoder_settings);
     if (!m_encoder) {
         // encoder associated with m_settings.encoding is not available
         return;

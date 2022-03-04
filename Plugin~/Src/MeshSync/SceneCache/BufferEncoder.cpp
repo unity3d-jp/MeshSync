@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "BufferEncoder.h"
 
+#include "MeshSync/SceneCache/msSceneCacheEncoderSettings.h"
+
 #define ZSTD_STATIC_LINKING_ONLY
 #include <zstd.h>
 #pragma comment(lib, "libzstd_static.lib")
@@ -20,8 +22,6 @@ void PlainBufferEncoder::EncodeV(RawVector<char>& dst, const RawVector<char>& sr
 void PlainBufferEncoder::DecodeV(RawVector<char>& dst, const RawVector<char>& src) {
     dst = src;
 }
-
-BufferEncoderPtr CreatePlainEncoder() { return std::make_shared<PlainBufferEncoder>(); }
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -56,9 +56,23 @@ void ZSTDBufferEncoder::DecodeV(RawVector<char>& dst, const RawVector<char>& src
     dst.resize(dsize);
 }
 
-BufferEncoderPtr CreateZSTDEncoder(int compression_level) {
-    return std::make_shared<ZSTDBufferEncoder>(compression_level);
-}
+//----------------------------------------------------------------------------------------------------------------------
 
+BufferEncoderPtr BufferEncoder::CreateEncoder(const ms::SceneCacheEncoding encoding, 
+    const ms::SceneCacheEncoderSettings& settings) 
+{
+    BufferEncoderPtr ret = nullptr;
+    switch (encoding) {
+        case SceneCacheEncoding::ZSTD: {
+            ret = std::make_shared<ZSTDBufferEncoder>(settings.zstd.compression_level);
+            break;
+        }
+        default: {
+            ret = std::make_shared<PlainBufferEncoder>();
+            break;
+        }
+    }
+    return ret;
+}
 
 } // namespace ms
