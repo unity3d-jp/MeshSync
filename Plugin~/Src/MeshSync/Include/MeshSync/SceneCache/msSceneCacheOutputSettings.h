@@ -6,8 +6,9 @@
 
 namespace ms {
 
-struct SceneCacheOutputSettings : SceneCacheExportSettings, SceneImportSettings
+struct SceneCacheOutputSettings : SceneImportSettings
 {
+    SceneCacheExportSettings exportSettings;
     // *not* serialized in cache file
     int max_queue_size = 4;
     int max_scene_segments = 8;

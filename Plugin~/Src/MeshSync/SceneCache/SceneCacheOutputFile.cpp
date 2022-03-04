@@ -117,9 +117,10 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
     return segments;
 }
 
-void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time)
-{
-    while (m_scene_count_in_queue > 0 && ((m_oscs.strip_unchanged && !m_base_scene) || m_scene_count_in_queue >= m_oscs.max_queue_size)) {
+void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
+
+    const SceneCacheExportSettings& scExportSettings = m_oscs.exportSettings;
+    while (m_scene_count_in_queue > 0 && ((scExportSettings.strip_unchanged && !m_base_scene) || m_scene_count_in_queue >= m_oscs.max_queue_size)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
@@ -132,21 +133,21 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time)
     rec.task = std::async(std::launch::async, [this, &rec]() {
         {
             msProfileScope("SceneCacheOutputFile: [%d] scene optimization", rec.index);
-
-            auto& scene = rec.scene;
+            const SceneCacheExportSettings& exportSettings = m_oscs.exportSettings;
+            ScenePtr& scene = rec.scene;
             std::sort(scene->entities.begin(), scene->entities.end(), [](auto& a, auto& b) { return a->id < b->id; });
 
-            if (m_oscs.flatten_hierarchy)
+            if (exportSettings.flatten_hierarchy)
                 scene->flatternHierarchy();
 
-            if (m_oscs.strip_normals) {
+            if (exportSettings.strip_normals) {
                 scene->eachEntity<Mesh>([](Mesh& mesh) {
                     mesh.normals.clear();
                     mesh.md_flags.Set(MESH_DATA_FLAG_HAS_NORMALS , false);
                     mesh.refine_settings.flags.Set(MESH_REFINE_FLAG_GEN_NORMALS, false );
                 });
             }
-            if (m_oscs.strip_tangents) {
+            if (exportSettings.strip_tangents) {
                 scene->eachEntity<Mesh>([](Mesh& mesh) {
                     mesh.tangents.clear();
                     mesh.md_flags.Set(MESH_DATA_FLAG_HAS_TANGENTS,false);
@@ -154,22 +155,22 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time)
                 });
             }
 
-            if (m_oscs.apply_refinement)
+            if (exportSettings.apply_refinement)
                 scene->import(m_oscs);
 
-            if (m_oscs.strip_normals) {
+            if (exportSettings.strip_normals) {
                 scene->eachEntity<Mesh>([](Mesh& mesh) {
                     mesh.refine_settings.flags.Set(MESH_REFINE_FLAG_GEN_NORMALS, true);
                 });
             }
-            if (m_oscs.strip_tangents) {
+            if (exportSettings.strip_tangents) {
                 scene->eachEntity<Mesh>([](Mesh& mesh) {
                     mesh.refine_settings.flags.Set(MESH_REFINE_FLAG_GEN_TANGENTS, true);
                 });
             }
 
             // strip unchanged
-            if (m_oscs.strip_unchanged) {
+            if (exportSettings.strip_unchanged) {
                 if (!m_base_scene)
                     m_base_scene = scene;
                 else
@@ -177,7 +178,7 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time)
             }
 
             // split into segments
-            auto scene_segments = LoadBalancing(rec.scene, m_oscs.max_scene_segments);
+            std::vector<ScenePtr> scene_segments = LoadBalancing(rec.scene, m_oscs.max_scene_segments);
             const size_t seg_count = scene_segments.size();
             rec.segments.resize(seg_count);
             for (size_t si = 0; si < seg_count; ++si) {
@@ -315,14 +316,15 @@ void SceneCacheOutputFile::Init(const StreamPtr ost, const SceneCacheOutputSetti
     if (!m_ost || !(*m_ost))
         return;
 
-    m_encoder = EncodingUtility::CreateEncoder(m_oscs.encoding, m_oscs.encoder_settings);
+    SceneCacheExportSettings* exportSettings = &m_oscs.exportSettings;
+    m_encoder = EncodingUtility::CreateEncoder(exportSettings->encoding, exportSettings->encoder_settings);
     if (!m_encoder) {
-        m_oscs.encoding = SceneCacheEncoding::Plain;
+        exportSettings->encoding = SceneCacheEncoding::Plain;
         m_encoder = CreatePlainEncoder();
     }
 
     CacheFileHeader header;
-    header.oscs = m_oscs;
+    header.oscs = m_oscs.exportSettings;
     m_ost->write(reinterpret_cast<char*>(&header), sizeof(header));
 }
 
