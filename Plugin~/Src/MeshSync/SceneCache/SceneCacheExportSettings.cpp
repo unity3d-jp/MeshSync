@@ -2,11 +2,8 @@
 #include "MeshSync/SceneCache/msSceneCacheExportSettings.h"
 
 #include "MeshSync/Utils/EncodingUtility.h"
-#include "msSceneCacheImpl.h"
 
 namespace ms {
-
-static_assert(sizeof(CacheFileEntityMeta) == 8, "");
 
 SceneCacheExportSettings::SceneCacheExportSettings()
 {
