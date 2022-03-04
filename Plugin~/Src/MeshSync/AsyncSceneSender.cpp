@@ -220,11 +220,12 @@ void AsyncSceneSender::send()
     }
 
     // request properties
-    if (false && !propertyInfos.empty()) {
+    if (!propertyInfos.empty()) {
         ms::RequestPropertiesMessage mes;
         setup_message(mes);
 
         succeeded = succeeded && client.send(mes);
+        properties = client.properties;
         if (!succeeded)
             goto cleanup;
     }

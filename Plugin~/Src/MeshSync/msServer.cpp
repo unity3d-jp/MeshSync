@@ -144,7 +144,8 @@ int Server::processMessages(const MessageHandler& handler)
         else if (auto q = std::dynamic_pointer_cast<QueryMessage>(mes)) {
             handler(Message::Type::Query, *mes);
         }
-        else if (auto q = std::dynamic_pointer_cast<RequestPropertiesMessage>(mes)) {
+        else if (auto req = std::dynamic_pointer_cast<RequestPropertiesMessage>(mes)) {
+            m_current_properties_request = req;
             handler(Message::Type::RequestProperties, *mes);
         }
 
@@ -625,7 +626,19 @@ void Server::recvRequestProperties(HTTPServerRequest& request, HTTPServerRespons
 
     // serve data
     response.set("Cache-Control", "no-store, must-revalidate");
-    response.sendFile(m_screenshot_file_path, "image/png");
+    
+    auto reqResponse = RequestPropertiesResponse();
+
+    for (auto prop : m_pending_properties)
+    {
+        PropertyInfo p = PropertyInfo(*prop);
+        reqResponse.properties.push_back(p);
+    }
+    m_pending_properties.clear();
+
+    auto& os = response.send();
+    reqResponse.serialize(os);
+    os.flush();
 }
 
 void Server::notifyPoll(PollMessage::PollType t)
@@ -638,6 +651,14 @@ void Server::notifyPoll(PollMessage::PollType t)
         }
     }
     m_polls.erase(std::remove(m_polls.begin(), m_polls.end(), PollMessagePtr()), m_polls.end());
+}
+
+void Server::receivedProperty(PropertyInfo* prop) {    
+    if (m_current_properties_request) {
+        m_current_properties_request->ready = true;
+    }
+        
+    m_pending_properties.push_back(prop);
 }
 
 Server::MessageHolder::MessageHolder()

@@ -240,9 +240,17 @@ msAPI void msServerNotifyPoll(ms::Server *server, ms::PollMessage::PollType t)
     if (!server) { return; }
     server->notifyPoll(t);
 }
-msAPI void msServerSendProperty(ms::Server* server, const char* path, void* newValue)
+msAPI void msServerSendPropertyInt(ms::Server* server, ms::PropertyInfo* prop, int newValue)
 {
     if (!server) { return; }
+    prop->set(newValue, prop->min, prop->max);
+    server->receivedProperty(prop);
+}
+msAPI void msServerSendPropertyFloat(ms::Server* server, ms::PropertyInfo* prop, float newValue)
+{
+    if (!server) { return; }
+    prop->set(newValue, prop->min, prop->max);
+    server->receivedProperty(prop);
 }
 
 msAPI int msGetGetBakeSkin(ms::GetMessage *self)

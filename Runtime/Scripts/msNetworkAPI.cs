@@ -100,10 +100,10 @@ internal struct Server {
     static extern void msServerNotifyPoll(IntPtr self, PollMessage.PollType t);
 
     [DllImport(Lib.name)]
-    static extern void msServerSendProperty(IntPtr self, string path, int newValue);
+    static extern void msServerSendPropertyInt(IntPtr self, IntPtr propertyInfo, int newValue);
 
     [DllImport(Lib.name)]
-    static extern void msServerSendProperty(IntPtr self, string path, float newValue);
+    static extern void msServerSendPropertyFloat(IntPtr self, IntPtr propertyInfo, float newValue);
 
     #endregion
 
@@ -157,11 +157,11 @@ internal struct Server {
         switch (prop.type)
         {
             case PropertyInfoData.Type.Int:
-                msServerSendProperty(self, prop.path, prop.ValueInt);
+                    msServerSendPropertyInt(self, prop.propertyPointer, prop.ValueInt);
                 break;
 
             case PropertyInfoData.Type.Float:
-                msServerSendProperty(self, prop.path, prop.ValueFloat);
+                msServerSendPropertyFloat(self, prop.propertyPointer, prop.ValueFloat);
                 break;
         }
     }

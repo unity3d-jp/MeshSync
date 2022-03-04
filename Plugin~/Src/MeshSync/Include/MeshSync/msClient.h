@@ -25,6 +25,7 @@ public:
     ResponseMessagePtr send(const QueryMessage& mes);
     ResponseMessagePtr send(const QueryMessage& mes, int timeout_ms);
 
+    std::vector<PropertyInfo> properties;
 private:
     ClientSettings m_settings;
     std::string m_error_message;

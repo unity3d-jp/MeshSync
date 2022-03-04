@@ -3,55 +3,20 @@
 #include <MeshSync/SceneGraph/msIdentifier.h>
 
 namespace ms {
+
 #define EachMember(F) F(type) F(name) F(path) F(min) F(max) F(data)
-	void PropertyInfo::serialize(ostream& os)
+
+	void PropertyInfo::serialize(ostream& os) const
 	{
 		EachMember(msWrite);
-		/*write(os, type);
-		write(os, path);
-
-		write(os, data);*/
-
-		//switch (type)
-		//{
-		//case ms::PropertyInfo::Int: recordInt.serialize(os); break;
-		//case ms::PropertyInfo::Float: recordFloat.serialize(os); break;
-		//case ms::PropertyInfo::Vector: recordVector.serialize(os); break;
-		//default:
-		//	break;
-		//}
 	}
 
 	void PropertyInfo::deserialize(istream& is)
 	{
 		EachMember(msRead);
-
-		//switch (type)
-		//{
-		//case ms::PropertyInfo::Int: recordInt.deserialize(is); break;
-		//case ms::PropertyInfo::Float: recordFloat.deserialize(is); break;
-		//case ms::PropertyInfo::Vector: recordVector.deserialize(is); break;
-		//default:
-		//	break;
-		//}
 	}
 
-	//#define EachMember(F) F(value) F(min) F(max)
-	//
-	//	template <typename T>
-	//	void PropertyInfo::RecordImpl<T>::serialize(ostream& os)
-	//	{
-	//		EachMember(msWrite);
-	//	}
-	//
-	//	template <typename T>
-	//	void PropertyInfo::RecordImpl<T>::deserialize(istream& is)
-	//	{
-	//		EachMember(msRead);
-	//	}
-	
-
-	#undef EachMember(F)
+#undef EachMember(F)
 
 	void PropertyInfo::clear()
 	{
@@ -80,24 +45,6 @@ namespace ms {
 	{
 		data.copy_to((char*)dst);
 	}
-
-	//void PropertyInfo::set(RecordImpl<int> record)
-	//{
-	//	type = RecordType::Int;
-	//	this->recordInt = record;
-	//}
-
-	//void PropertyInfo::set(RecordImpl<float> record)
-	//{
-	//	type = RecordType::Float;
-	//	this->recordFloat = record;
-	//}
-
-	//void PropertyInfo::set(RecordImpl<float3> record)
-	//{
-	//	type = RecordType::Vector;
-	//	this->recordVector = record;
-	//}
 
 	template<class T>
 	static inline void set_impl(SharedVector<char>& dst, const T& v)

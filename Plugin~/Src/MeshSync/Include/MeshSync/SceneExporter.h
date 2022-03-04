@@ -35,6 +35,8 @@ public:
     std::function<void()> on_prepare, on_success, on_error, on_complete;
     PathToID id_table;
 
+    std::vector<PropertyInfo> properties;
+
 public:
     virtual ~SceneExporter();
     virtual void clear();

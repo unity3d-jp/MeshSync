@@ -184,8 +184,14 @@ bool Client::send(const RequestPropertiesMessage& mes)
 
         HTTPResponse response;
         auto& rs = session.receiveResponse(response);
-        std::ostringstream ostr;
-        StreamCopier::copyStream(rs, ostr);
+        //std::ostringstream ostr;
+        //StreamCopier::copyStream(rs, ostr);
+
+        auto reqResponse = RequestPropertiesResponse();
+        reqResponse.deserialize(rs);
+
+        properties = reqResponse.properties;
+
         return response.getStatus() == HTTPResponse::HTTP_OK;
     }
     catch (...) {

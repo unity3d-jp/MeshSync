@@ -2959,6 +2959,9 @@ internal struct InstanceInfoData
         [DllImport((Lib.name))]
         static extern IntPtr msPropertyInfoGetName(IntPtr self);
 
+        [DllImport((Lib.name))]
+        static extern IntPtr msPropertyInfoGetModifierName(IntPtr self);
+
         [DllImport(Lib.name)]
         static extern int msPropertyInfoGetType(IntPtr self);
 
@@ -2980,6 +2983,8 @@ internal struct InstanceInfoData
         public float max => msPropertyInfoGetMax(self);
 
         public string path => Misc.S(msPropertyInfoGetPath(self));
+
+        public string modifierName => Misc.S(msPropertyInfoGetModifierName(self));
 
         public string name => Misc.S(msPropertyInfoGetName(self));
 

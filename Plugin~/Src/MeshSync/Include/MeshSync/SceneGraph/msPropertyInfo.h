@@ -25,6 +25,8 @@ namespace ms {
 		/// Path on the hierachy tree to the object it refers to
 		/// </summary>
 		string path;
+
+		string modifierName;
 		
 		string name;
 
@@ -33,7 +35,7 @@ namespace ms {
 
 		SharedVector<char> data;
 
-		void serialize(ostream& os);
+		void serialize(ostream& os) const;
 		void deserialize(istream& is);
 
 		msDefinePool(PropertyInfo);

@@ -172,4 +172,15 @@ RequestPropertiesMessage::RequestPropertiesMessage() {}
 void RequestPropertiesMessage::serialize(std::ostream& os) const { super::serialize(os); }
 void RequestPropertiesMessage::deserialize(std::istream& is) { super::deserialize(is); }
 
+
+void RequestPropertiesResponse::serialize(std::ostream& os) const
+{
+    write(os, properties);
+}
+
+void RequestPropertiesResponse::deserialize(std::istream& is)
+{
+    read(is, properties);
+}
+
 } // namespace ms

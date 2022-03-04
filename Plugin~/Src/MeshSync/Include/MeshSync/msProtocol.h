@@ -10,7 +10,7 @@
 #include "MeshSync/SceneGraph/msIdentifier.h" //InvalidID
 #include "MeshSync/SceneGraph/msMeshRefineSettings.h"
 #include "MeshSync/SceneGraph/msSceneSettings.h"
-
+#include "MeshSync/SceneGraph/msPropertyInfo.h"
 
 msDeclClassPtr(ResponseMessage)
 msDeclClassPtr(Scene)
@@ -231,5 +231,14 @@ public:
     void deserialize(std::istream& is) override;
 };
 msSerializable(RequestPropertiesMessage);
+
+class RequestPropertiesResponse {
+public:
+    std::vector<PropertyInfo> properties;
+
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+};
+msSerializable(RequestPropertiesResponse);
 
 } // namespace ms

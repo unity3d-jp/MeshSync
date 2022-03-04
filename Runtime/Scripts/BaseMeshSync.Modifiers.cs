@@ -29,6 +29,8 @@ namespace Unity.MeshSync
 
         public PropertyInfoData.Type type => propertyInfoData.type;
 
+        public IntPtr propertyPointer => propertyInfoData.self;
+
         public string name => propertyInfoData.name;
         public float min => propertyInfoData.min;
         public float max => propertyInfoData.max;
