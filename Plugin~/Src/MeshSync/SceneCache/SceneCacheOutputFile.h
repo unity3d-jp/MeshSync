@@ -3,7 +3,7 @@
 #include "MeshSync/SceneGraph/msScene.h" 
 #include "MeshSync/SceneCache/msSceneCacheOutputSettings.h"
 
-#include "MeshSync/SceneCache/BufferEncoder.h"
+#include "SceneCache/BufferEncoder.h"
 
 msDeclClassPtr(SceneCacheOutputFile)
 

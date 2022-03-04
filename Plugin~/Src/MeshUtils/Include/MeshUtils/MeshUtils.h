@@ -2,22 +2,22 @@
 
 #include <vector>
 #include <memory>
-#include "muRawVector.h"
-#include "muIntrusiveArray.h"
-#include "muHalf.h"
-#include "muMath.h"
-#include "muQuat32.h"
-#include "muLimits.h"
-#include "muSIMD.h"
-#include "muAlgorithm.h"
-#include "muVertex.h"
-#include "muColor.h"
-#include "muTLS.h"
+#include "MeshUtils/muAlgorithm.h"
+#include "MeshUtils/muColor.h"
+#include "MeshUtils/muCompression.h"
+#include "MeshUtils/muConcurrency.h"
+#include "MeshUtils/muDebugTimer.h"
+#include "MeshUtils/muHalf.h"
+#include "MeshUtils/muIntrusiveArray.h"
+#include "MeshUtils/muLimits.h"
+#include "MeshUtils/muMath.h"
 #include "MeshUtils/muMisc.h"
-#include "muConcurrency.h"
-#include "muCompression.h"
-#include "muStream.h"
-#include "muDebugTimer.h"
+#include "MeshUtils/muQuat32.h"
+#include "MeshUtils/muRawVector.h"
+#include "MeshUtils/muSIMD.h"
+#include "MeshUtils/muStream.h"
+#include "MeshUtils/muTLS.h"
+#include "MeshUtils/muVertex.h"
 
 namespace mu {
 

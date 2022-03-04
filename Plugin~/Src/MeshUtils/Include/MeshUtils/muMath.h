@@ -4,8 +4,8 @@
 #include <cstring>
 #include <algorithm>
 #include <limits>
-#include "muIntrusiveArray.h"
-#include "muHalf.h"
+#include "MeshUtils/muIntrusiveArray.h"
+#include "MeshUtils/muHalf.h"
 
 #define muEpsilon 1e-4f
 

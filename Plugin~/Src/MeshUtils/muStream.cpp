@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "muStream.h"
+#include "MeshUtils/muStream.h"
 
 namespace mu {
 

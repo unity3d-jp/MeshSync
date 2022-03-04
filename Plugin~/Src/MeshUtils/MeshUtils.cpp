@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "MeshUtils.h"
-#include "muMeshRefiner.h"
+#include "MeshUtils/MeshUtils.h"
+#include "MeshUtils/muMeshRefiner.h"
 
 
 namespace mu {

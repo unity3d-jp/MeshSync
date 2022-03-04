@@ -1,8 +1,8 @@
 #pragma once
-#include "muMath.h"
-#include "muHalf.h"
-#include "muQuat32.h"
-#include "muRawVector.h"
+#include "MeshUtils/muMath.h"
+#include "MeshUtils/muHalf.h"
+#include "MeshUtils/muQuat32.h"
+#include "MeshUtils/muRawVector.h"
 
 namespace mu {
 
