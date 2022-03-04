@@ -9,7 +9,7 @@
 #include "MeshSync/SceneGraph/msMesh.h"
 #include "MeshSync/Utils/EncodingUtility.h"
 
-#include "MeshSync/SceneCache/msSceneCacheImpl.h" //CacheFileSceneHeader
+#include "MeshSync/SceneCache/CacheFileHeader.h" //CacheFileSceneHeader
 
 namespace ms {
 

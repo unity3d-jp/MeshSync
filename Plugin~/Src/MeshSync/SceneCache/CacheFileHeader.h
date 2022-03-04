@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MeshSync/SceneCache/msSceneCacheExportSettings.h"
+#include "MeshSync/msConfig.h"
 
 namespace ms {
 
