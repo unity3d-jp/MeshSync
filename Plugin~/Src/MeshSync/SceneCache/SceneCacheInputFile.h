@@ -5,7 +5,7 @@
 #include "MeshSync/SceneCache/msBaseSceneCacheInput.h"
 #include "MeshSync/SceneCache/msSceneCacheInputSettings.h"
 
-#include "MeshSync/SceneCache/msEncoder.h"
+#include "MeshSync/SceneCache/BufferEncoder.h"
 #include "MeshSync/SceneCache/CacheFileHeader.h"
 
 msDeclClassPtr(SceneCacheInputFile)
