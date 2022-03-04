@@ -44,7 +44,7 @@ SceneCacheOutputFile::~SceneCacheOutputFile()
         scene_buf.flush();
 
         RawVector<char> encoded_buf;
-        m_encoder->encode(encoded_buf, scene_buf.getBuffer());
+        m_encoder->EncodeV(encoded_buf, scene_buf.getBuffer());
 
         CacheFileMetaHeader header;
         header.size = encoded_buf.size();
@@ -196,7 +196,7 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
                 mu::MemoryStream scene_buf;
                 seg.segment->serialize(scene_buf);
                 scene_buf.flush();
-                m_encoder->encode(seg.encoded_buf, scene_buf.getBuffer());
+                m_encoder->EncodeV(seg.encoded_buf, scene_buf.getBuffer());
             });
         }
     });
