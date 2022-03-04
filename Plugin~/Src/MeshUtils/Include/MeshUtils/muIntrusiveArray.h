@@ -1,6 +1,6 @@
 #pragma once
 
-#include "muIterator.h"
+#include "MeshUtils/muIterator.h"
 
 template<class T>
 class IntrusiveArray

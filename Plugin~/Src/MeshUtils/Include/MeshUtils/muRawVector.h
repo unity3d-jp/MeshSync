@@ -4,7 +4,7 @@
 #include <cstring>
 #include <algorithm>
 #include <initializer_list>
-#include "muAllocator.h"
+#include "MeshUtils/muAllocator.h"
 
 template<class T, int Align = 0x40> class RawVector;
 template<class T, int Align = 0x40> class SharedVector;

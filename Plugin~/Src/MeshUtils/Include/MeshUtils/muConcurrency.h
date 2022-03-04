@@ -1,6 +1,6 @@
 #pragma once
 
-#include "muConfig.h"
+#include "MeshUtils/muConfig.h"
 #include <atomic>
 #if defined(muEnablePPL)
     #include <ppl.h>

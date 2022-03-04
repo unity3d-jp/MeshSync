@@ -1,5 +1,5 @@
 #pragma once
-#include "muMath.h"
+#include "MeshUtils/muMath.h"
 
 namespace mu {
 
