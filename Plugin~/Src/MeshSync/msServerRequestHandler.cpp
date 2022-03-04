@@ -80,6 +80,9 @@ void ServerRequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerR
     else if (StartsWith(uri, "/plugin_version")) {
         m_server->serveText(response, msPluginVersionStr);
     }
+    else if (StartsWith(uri, "request_properties")) {
+        m_server->recvRequestProperties(request, response);
+    }
     else {
         // note: Poco handles commas in URI
         // e.g. "hoge/hage/../hige" -> "hoge/hige"

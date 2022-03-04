@@ -31,6 +31,7 @@ public:
         Screenshot,
         Query,
         Response,
+        RequestProperties
     };
     int protocol_version = msProtocolVersion;
     int session_id = InvalidID;
@@ -214,5 +215,21 @@ public:
     void deserialize(std::istream& is) override;
 };
 msSerializable(PollMessage);
+
+
+class RequestPropertiesMessage : public Message
+{
+    using super = Message;
+public:
+
+    // non-serializable fields
+    std::atomic_bool ready{ false };
+
+public:
+    RequestPropertiesMessage();
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+};
+msSerializable(RequestPropertiesMessage);
 
 } // namespace ms

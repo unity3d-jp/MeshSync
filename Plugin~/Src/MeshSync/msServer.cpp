@@ -144,6 +144,9 @@ int Server::processMessages(const MessageHandler& handler)
         else if (auto q = std::dynamic_pointer_cast<QueryMessage>(mes)) {
             handler(Message::Type::Query, *mes);
         }
+        else if (auto q = std::dynamic_pointer_cast<RequestPropertiesMessage>(mes)) {
+            handler(Message::Type::RequestProperties, *mes);
+        }
 
     next:
         if (skip) {
@@ -606,6 +609,23 @@ void Server::recvPoll(HTTPServerRequest& request, HTTPServerResponse& response)
     else {
         serveText(response, "timeout", HTTPResponse::HTTP_REQUEST_TIMEOUT);
     }
+}
+
+void Server::recvRequestProperties(HTTPServerRequest& request, HTTPServerResponse& response)
+{
+    auto mes = std::make_shared<RequestPropertiesMessage>();
+    queueMessage(mes);
+
+    // wait for data arrive (or timeout)
+    for (int i = 0; ; ++i) {
+        if (mes->ready)
+            break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    // serve data
+    response.set("Cache-Control", "no-store, must-revalidate");
+    response.sendFile(m_screenshot_file_path, "image/png");
 }
 
 void Server::notifyPoll(PollMessage::PollType t)

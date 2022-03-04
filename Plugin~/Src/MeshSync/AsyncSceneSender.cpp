@@ -219,6 +219,16 @@ void AsyncSceneSender::send()
             goto cleanup;
     }
 
+    // request properties
+    if (false && !propertyInfos.empty()) {
+        ms::RequestPropertiesMessage mes;
+        setup_message(mes);
+
+        succeeded = succeeded && client.send(mes);
+        if (!succeeded)
+            goto cleanup;
+    }
+    
     // notify scene end
     {
         ms::FenceMessage mes;

@@ -15,7 +15,7 @@ namespace Unity.MeshSync {
 /// A component to sync meshes/models editing in DCC tools into Unity in real time.
 /// </summary>
 [ExecuteInEditMode]
-public class MeshSyncServer : BaseMeshSync {
+public partial class MeshSyncServer : BaseMeshSync {
 
     /// <summary>
     /// Callback which will be called after MeshSyncServer receives data and finishes processing it
@@ -183,6 +183,8 @@ public class MeshSyncServer : BaseMeshSync {
 
         if (m_server.numMessages > 0)
             m_server.ProcessMessages(m_handler);
+
+        SendUpdatedProperties();
     }
 
     void HandleRecvMessage(NetworkMessageType type, IntPtr data) {
@@ -195,7 +197,7 @@ public class MeshSyncServer : BaseMeshSync {
                     OnRecvSet((SetMessage)data);
                     break;
                 case NetworkMessageType.Delete:
-                    OnRecvDelete((DeleteMessage)data);
+                    OnRecvDelete((DeleteMessage)data); 
                     break;
                 case NetworkMessageType.Fence:
                     OnRecvFence((FenceMessage)data);
@@ -208,6 +210,8 @@ public class MeshSyncServer : BaseMeshSync {
                     break;
                 case NetworkMessageType.Query:
                     OnRecvQuery((QueryMessage)data);
+                    break;
+                case NetworkMessageType.RequestProperties:
                     break;
                 default:
                     break;
@@ -303,6 +307,7 @@ public class MeshSyncServer : BaseMeshSync {
         }
         data.FinishRespond();
     }
+
     #endregion
 
     #region ServeScene

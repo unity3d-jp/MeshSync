@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -98,6 +99,12 @@ internal struct Server {
     [DllImport(Lib.name)]
     static extern void msServerNotifyPoll(IntPtr self, PollMessage.PollType t);
 
+    [DllImport(Lib.name)]
+    static extern void msServerSendProperty(IntPtr self, string path, int newValue);
+
+    [DllImport(Lib.name)]
+    static extern void msServerSendProperty(IntPtr self, string path, float newValue);
+
     #endregion
 
     public delegate void MessageHandler(NetworkMessageType type, IntPtr data);
@@ -143,6 +150,20 @@ internal struct Server {
 
     public string screenshotPath {
         set { msServerSetScreenshotFilePath(self, value); }
+    }
+
+    public void SendProperty(PropertyInfoDataWrapper prop)
+    {
+        switch (prop.type)
+        {
+            case PropertyInfoData.Type.Int:
+                msServerSendProperty(self, prop.path, prop.ValueInt);
+                break;
+
+            case PropertyInfoData.Type.Float:
+                msServerSendProperty(self, prop.path, prop.ValueFloat);
+                break;
+        }
     }
 
     public void BeginServe() {

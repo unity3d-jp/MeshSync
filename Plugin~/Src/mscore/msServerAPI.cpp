@@ -240,6 +240,10 @@ msAPI void msServerNotifyPoll(ms::Server *server, ms::PollMessage::PollType t)
     if (!server) { return; }
     server->notifyPoll(t);
 }
+msAPI void msServerSendProperty(ms::Server* server, const char* path, void* newValue)
+{
+    if (!server) { return; }
+}
 
 msAPI int msGetGetBakeSkin(ms::GetMessage *self)
 {

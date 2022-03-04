@@ -168,5 +168,8 @@ void PollMessage::deserialize(std::istream& is)
     read(is, poll_type);
 }
 
+RequestPropertiesMessage::RequestPropertiesMessage() {}
+void RequestPropertiesMessage::serialize(std::ostream& os) const { super::serialize(os); }
+void RequestPropertiesMessage::deserialize(std::istream& is) { super::deserialize(is); }
 
 } // namespace ms

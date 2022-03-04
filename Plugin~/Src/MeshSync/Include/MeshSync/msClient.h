@@ -21,6 +21,7 @@ public:
     bool send(const SetMessage& mes);
     bool send(const DeleteMessage& mes);
     bool send(const FenceMessage& mes);
+    bool send(const RequestPropertiesMessage& mes);
     ResponseMessagePtr send(const QueryMessage& mes);
     ResponseMessagePtr send(const QueryMessage& mes, int timeout_ms);
 

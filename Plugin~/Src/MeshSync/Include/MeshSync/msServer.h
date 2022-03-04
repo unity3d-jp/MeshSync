@@ -87,6 +87,7 @@ public:
     void recvText(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void recvScreenshot(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void recvPoll(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvRequestProperties(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
 
     static void sanitizeHierarchyPath(std::string& path);
 

@@ -2950,6 +2950,8 @@ internal struct InstanceInfoData
 
     internal struct PropertyInfoData
     {
+        public IntPtr self;
+
         #region DLL Imports
         [DllImport((Lib.name))]
         static extern IntPtr msPropertyInfoGetPath(IntPtr self);
@@ -2959,12 +2961,6 @@ internal struct InstanceInfoData
 
         [DllImport(Lib.name)]
         static extern int msPropertyInfoGetType(IntPtr self);
-
-        [DllImport(Lib.name)]
-        static extern void msPropertyInfoCopyData(IntPtr self, ref int dst);
-
-        [DllImport(Lib.name)]
-        static extern void msPropertyInfoCopyData(IntPtr self, ref float dst);
 
         [DllImport(Lib.name)]
         static extern float msPropertyInfoGetMin(IntPtr self);
@@ -2980,8 +2976,6 @@ internal struct InstanceInfoData
             Vector
         };
 
-        public IntPtr self;
-
         public float min => msPropertyInfoGetMin(self);
         public float max => msPropertyInfoGetMax(self);
 
@@ -2990,38 +2984,6 @@ internal struct InstanceInfoData
         public string name => Misc.S(msPropertyInfoGetName(self));
 
         public Type type => (Type)msPropertyInfoGetType(self);
-
-        public object newValue;
-
-        public int ValueInt
-        {
-            get
-            {
-                if (newValue is int x)
-                {
-                    return x;
-                }
-
-                int r = 0;
-                msPropertyInfoCopyData(self, ref r);
-                return r;
-            }
-        }
-
-        public float ValueFloat
-        {
-            get
-            {
-                if (newValue is float x)
-                {
-                    return x;
-                }
-
-                float r = 0;
-                msPropertyInfoCopyData(self, ref r);
-                return r;
-            }
-        }
     }
 
     #endregion PropertyInfo

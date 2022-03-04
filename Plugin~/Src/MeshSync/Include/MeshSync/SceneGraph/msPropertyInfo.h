@@ -15,32 +15,6 @@ namespace ms {
 		uint64_t m_hash = 0;
 
 	public:
-		//class Record {
-		//public:
-		//	virtual void serialize(ostream& os) {}
-		//	virtual void deserialize(istream& is) {}
-		//};
-
-		//template <typename T>
-		//class RecordImpl : public Record {
-		//public:
-		//	T value;
-		//	T min;
-		//	T max;
-
-		//	void serialize(ostream& os) override;
-		//	void deserialize(istream& is) override;
-
-		//	RecordImpl() { }
-
-		//	RecordImpl(T val, T minV, T maxV)
-		//	{
-		//		value = val;
-		//		min = minV;
-		//		max = maxV;
-		//	}
-		//};
-
 		enum Type {
 			Int,
 			Float,
@@ -59,10 +33,6 @@ namespace ms {
 
 		SharedVector<char> data;
 
-		//RecordImpl<int> recordInt;
-		//RecordImpl<float> recordFloat;
-		//RecordImpl<float3> recordVector;
-
 		void serialize(ostream& os);
 		void deserialize(istream& is);
 
@@ -79,9 +49,6 @@ namespace ms {
 		void set(const T& v, const float& min, const float& max);
 
 		template<class T> T& get() const;
-		//void set(RecordImpl<int> record);
-		//void set(RecordImpl<float> record);
-		//void set(RecordImpl<float3> record);
 
 		void copy(void* dst) const;
 	};

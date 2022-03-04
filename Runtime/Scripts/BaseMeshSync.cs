@@ -585,6 +585,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
 
             UpdateProperties(scene);
 
+
 #if UNITY_EDITOR
             if (config.ProgressiveDisplay)
             ForceRepaint();
