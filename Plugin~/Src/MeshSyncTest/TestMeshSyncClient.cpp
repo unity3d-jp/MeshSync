@@ -13,7 +13,7 @@
 #include "MeshSync/SceneCache/msSceneCacheInputSettings.h"
 #include "MeshSync/SceneCache/msSceneCacheOutputSettings.h"
 #include "MeshSync/SceneCache/msSceneCacheEncoding.h"
-#include "MeshSync/SceneCache/SceneCacheWriter.h" //SceneCacheWriter
+#include "MeshSync/SceneCache/msSceneCacheWriter.h" //SceneCacheWriter
 
 #include "MeshSync/Utility/msMaterialExt.h"     //standardMaterial
 #include "MeshSync/SceneCache/SceneCacheInputFile.h"

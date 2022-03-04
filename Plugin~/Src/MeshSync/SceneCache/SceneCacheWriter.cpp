@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "MeshSync/SceneCache/SceneCacheWriter.h"
+#include "MeshSync/SceneCache/msSceneCacheWriter.h"
 
 #ifndef msRuntime
 
