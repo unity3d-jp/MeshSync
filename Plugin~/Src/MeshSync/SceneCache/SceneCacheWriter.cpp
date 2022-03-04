@@ -11,10 +11,6 @@
 
 namespace ms {
 
-SceneCacheWriter::SceneCacheWriter()
-{
-}
-
 SceneCacheWriter::~SceneCacheWriter()
 {
     close();

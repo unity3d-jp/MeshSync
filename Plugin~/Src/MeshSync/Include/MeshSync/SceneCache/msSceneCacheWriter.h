@@ -17,7 +17,7 @@ public:
     float time = 0.0f;
 
 public:
-    SceneCacheWriter();
+    SceneCacheWriter() = default;
     ~SceneCacheWriter() override;
 
     bool open(const char *path, const SceneCacheOutputSettings& oscs);
