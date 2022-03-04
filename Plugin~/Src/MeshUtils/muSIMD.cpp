@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "muMath.h"
+#include "muSIMDConfig.h"
 #include "muSIMD.h"
 #include "muRawVector.h"
 

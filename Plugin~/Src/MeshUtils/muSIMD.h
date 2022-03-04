@@ -1,5 +1,4 @@
 #pragma once
-#include "muSIMDConfig.h"
 #include "muHalf.h"
 #include "muRawVector.h"
 #include "muMath.h"
