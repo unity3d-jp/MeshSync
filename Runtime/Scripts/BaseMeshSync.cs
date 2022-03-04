@@ -2265,7 +2265,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     }
 #endif
 
-    void OnDestroy() {
+    protected void OnDestroy() {
         m_tmpI.Dispose();
         m_tmpV2.Dispose();
         m_tmpV3.Dispose();

@@ -15,31 +15,43 @@ namespace Unity.MeshSync{
 
         private Camera[] m_cameras;
 
+        private enum CameraMode
+        {
+            None = 0,
+            SceneCameras = 1,
+            GameCameras = 2,
+        }
+
+        private CameraMode m_cameraMode = CameraMode.GameCameras;
+
         public void Init(BaseMeshSync ms)
         {
             this.m_server = ms;
 
 #if UNITY_EDITOR
-            if (Application.isPlaying)
+            EditorApplication.update -= Draw;
+            EditorApplication.update += Draw;
+            
+            //To cover cases where the user adds cameras to the scene manually
+            EditorApplication.hierarchyChanged -= OnHierarchyChanged;
+            EditorApplication.hierarchyChanged += OnHierarchyChanged;
+
+            if (m_cameraMode == CameraMode.GameCameras)
             {
                 m_cameras = GameObject.FindObjectsOfType<Camera>();
-                
             }
-            else
+            else if (m_cameraMode == CameraMode.SceneCameras)
             {
-                EditorApplication.update -= Draw;
-                EditorApplication.update += Draw;
-                var go = GameObject.Find("SceneCamera");
-
-                if (go != null)
-                {
-                    m_cameras = new[] {go.GetComponent<Camera>()};
-                }
+                m_cameras = SceneView.GetAllSceneCameras();
+            }
+            
+            if (m_cameras != null)
+            {
+                Debug.LogFormat("[MeshSync] Found {0} cameras", m_cameras.Length);
             }
 #else
-                m_camera = Camera.main;
+                m_cameras = GameObject.FindObjectsOfType<Camera>();
 #endif
-
             
             ms.onUpdateInstanceInfo -= OnUpdateInstanceInfo;
             ms.onUpdateInstanceInfo += OnUpdateInstanceInfo;
@@ -49,6 +61,43 @@ namespace Unity.MeshSync{
             ms.onUpdateInstanceMesh += OnUpdateInstanceMesh;
             ms.onDeleteInstanceMesh -= OnDeleteInstanceMesh;
             ms.onDeleteInstanceMesh += OnDeleteInstanceMesh;
+            ms.onUpdateEntity -= OnUpdateEntity;
+            ms.onUpdateEntity += OnUpdateEntity;
+            ms.onDeleteEntity -= OnDeleteEntity;
+        }
+
+
+
+#if UNITY_EDITOR
+        private void OnHierarchyChanged()
+        {
+            RefreshCameraList();
+        }
+#endif
+
+        private void RefreshCameraList()
+        {
+            if (m_cameraMode == CameraMode.GameCameras)
+            {
+                RenderAllCameras();
+                m_cameras = GameObject.FindObjectsOfType<Camera>();
+            }
+        }
+        
+        private void OnDeleteEntity(GameObject obj)
+        {
+            if (obj.TryGetComponent(out Camera _))
+            {
+                RefreshCameraList();
+            }
+        }
+
+        private void OnUpdateEntity(GameObject obj, TransformData data)
+        {
+            if (data.entityType  == EntityType.Camera)
+            {
+                RefreshCameraList();
+            }
         }
 
         private void OnDeleteInstanceMesh(string path)
@@ -216,6 +265,9 @@ namespace Unity.MeshSync{
 
         private void DrawAllCameras(Mesh mesh,int submeshIndex, Material material, Matrix4x4[] matrices)
         {
+            if (m_cameras == null)
+                return;
+            
             for (var i = 0; i < m_cameras.Length; i++)
             {
                 var camera = m_cameras[i];
@@ -238,6 +290,9 @@ namespace Unity.MeshSync{
 
         private void RenderAllCameras()
         {
+            if (m_cameras == null)
+                return;
+            
             for (var i = 0; i < m_cameras.Length; i++)
             {
                 var camera = m_cameras[i];
@@ -257,6 +312,14 @@ namespace Unity.MeshSync{
             }
 
             Draw();
+        }
+
+        public void Clear()
+        {
+            RenderAllCameras();
+            m_cameras = null;
+            m_server = null;
+            m_cameraMode = CameraMode.None;
         }
     }
 }

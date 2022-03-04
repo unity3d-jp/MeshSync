@@ -492,6 +492,12 @@ public class MeshSyncServer : BaseMeshSync {
     {
         m_instanceRenderer.Draw();
     }
+
+    void OnDestroy()
+    {
+        base.OnDestroy();
+        m_instanceRenderer.Clear();
+    }
     
     void LateUpdate() {
         PollServerEvents();
