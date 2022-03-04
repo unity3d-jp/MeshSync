@@ -28,7 +28,7 @@ void PlainBufferEncoder::DecodeV(RawVector<char>& dst, const RawVector<char>& sr
 class ZSTDBufferEncoder : public BufferEncoder
 {
 public:
-    ZSTDBufferEncoder(int cl);
+    explicit ZSTDBufferEncoder(int cl);
     void EncodeV(RawVector<char>& dst, const RawVector<char>& src) override;
     void DecodeV(RawVector<char>& dst, const RawVector<char>& src) override;
 
