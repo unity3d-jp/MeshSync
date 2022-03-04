@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "zstd.h"
 
-#include "MeshSync/Utils/EncodingUtility.h"
+#include "Utils/EncodingUtility.h"
 
 namespace ms {
 
