@@ -8,7 +8,7 @@
 #include "MeshSync/SceneGraph/msTransform.h"
 #include "MeshSync/SceneGraph/msMesh.h"
 
-#include "SceneCache/CacheFileHeader.h" //CacheFileSceneHeader
+#include "MeshSync/SceneCache/msCacheFileHeader.h" //CacheFileSceneHeader
 
 namespace ms {
 

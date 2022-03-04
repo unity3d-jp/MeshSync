@@ -1,7 +1,10 @@
 #include "pch.h"
-#include "SceneCacheInputFile.h"
-#include "Utils/msDebug.h" //msProfileScope
+#include "MeshSync/SceneCache/msSceneCacheInputFile.h"
 #include "MeshUtils/muLog.h" //muLogError
+
+#include "Utils/msDebug.h" //msProfileScope
+
+#include "SceneCache/BufferEncoder.h"
 
 namespace ms {
 

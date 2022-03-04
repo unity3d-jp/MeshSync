@@ -16,7 +16,7 @@
 #include "MeshSync/SceneCache/msSceneCacheWriter.h" //SceneCacheWriter
 
 #include "MeshSync/Utility/msMaterialExt.h"     //standardMaterial
-#include "MeshSync/SceneCache/SceneCacheInputFile.h"
+#include "MeshSync/SceneCache/msSceneCacheInputFile.h"
 
 using namespace mu;
 
