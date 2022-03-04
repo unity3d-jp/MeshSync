@@ -16,6 +16,8 @@ namespace Unity.MeshSync{
         
         private Dictionary<string, MeshInstanceInfo> m_instanceInfo = new Dictionary<string, MeshInstanceInfo>();
 
+        private bool m_isDirty = false;
+
 
         public enum CameraMode
         {
@@ -54,8 +56,19 @@ namespace Unity.MeshSync{
             ms.onUpdateEntity -= OnUpdateEntity;
             ms.onUpdateEntity += OnUpdateEntity;
             ms.onDeleteEntity -= OnDeleteEntity;
+            ms.onSceneUpdateEnd -= OnSceneUpdateEnd;
+            ms.onSceneUpdateEnd += OnSceneUpdateEnd;
         }
-        
+
+        private void OnSceneUpdateEnd()
+        {
+            if (m_isDirty)
+            {
+                RenderAndDraw();
+                m_isDirty = false;
+            }
+        }
+
 #if UNITY_EDITOR
         private void RefreshCameraListWithGameAndSceneCameras()
         {
@@ -127,7 +140,7 @@ namespace Unity.MeshSync{
 
             m_instanceInfo.Remove(path);
             
-            RepaintAfterChanges();
+            SetDirty();
         }
 
         private void OnUpdateInstanceMesh(string path, GameObject go)
@@ -149,7 +162,7 @@ namespace Unity.MeshSync{
             
             m_instanceInfo.Remove(path);
             
-            RepaintAfterChanges();
+            SetDirty();
         }
 
 
@@ -179,9 +192,9 @@ namespace Unity.MeshSync{
             foreach (var mat in entry.Materials)
             {
                 mat.enableInstancing = true;
-            } 
-            
-            RepaintAfterChanges();
+            }
+
+            SetDirty();
         }
 
         private void UpdateEntryMeshMaterials(string path, GameObject go, MeshInstanceInfo entry)
@@ -205,6 +218,12 @@ namespace Unity.MeshSync{
         #endregion
         
         #region Rendering
+
+        private void SetDirty()
+        {
+            m_isDirty = true;
+        }
+        
         public void Draw()
         {
             foreach (var entry in m_instanceInfo)
@@ -300,7 +319,7 @@ namespace Unity.MeshSync{
         }
         
         
-        private void RepaintAfterChanges()
+        private void RenderAndDraw()
         {
             if (Application.isEditor && !Application.isPlaying)
             {
