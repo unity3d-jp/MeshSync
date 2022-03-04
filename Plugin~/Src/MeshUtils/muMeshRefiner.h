@@ -3,9 +3,9 @@
 #include <cassert>
 
 #include "MeshUtils/MeshUtilsConstants.h" //MAX_MESH_REFINER_ATTRIBUTES
-#include "muMath.h"
-#include "muRawVector.h"
-#include "muIntrusiveArray.h"
+#include "MeshUtils/muMath.h"
+#include "MeshUtils/muRawVector.h"
+#include "MeshUtils/muIntrusiveArray.h"
 
 namespace mu {
 
