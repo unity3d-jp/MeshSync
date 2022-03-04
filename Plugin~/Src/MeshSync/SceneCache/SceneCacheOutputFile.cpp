@@ -324,7 +324,7 @@ void SceneCacheOutputFile::Init(const StreamPtr ost, const SceneCacheOutputSetti
     }
 
     CacheFileHeader header;
-    header.oscs = m_oscs.exportSettings;
+    header.exportSettings = m_oscs.exportSettings;
     m_ost->write(reinterpret_cast<char*>(&header), sizeof(header));
 }
 

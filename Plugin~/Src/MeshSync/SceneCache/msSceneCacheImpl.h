@@ -8,7 +8,7 @@ struct CacheFileHeader
 {
     char magic[4] = { 'M', 'S', 'S', 'C' };
     int version = msProtocolVersion;
-    SceneCacheExportSettings oscs;
+    SceneCacheExportSettings exportSettings;
 };
 
 struct CacheFileSceneHeader
