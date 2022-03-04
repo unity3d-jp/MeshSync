@@ -22,16 +22,16 @@ using namespace mu;
 
 TestCase(Test_SendMesh) {
     ms::SceneCacheOutputSettings c0;
-    c0.strip_unchanged = 0;
-    c0.flatten_hierarchy = 0;
-    c0.encoding = ms::SceneCacheEncoding::Plain;
+    c0.exportSettings.strip_unchanged = 0;
+    c0.exportSettings.flatten_hierarchy = 0;
+    c0.exportSettings.encoding = ms::SceneCacheEncoding::Plain;
 
     ms::SceneCacheOutputSettings c1;
-    c1.flatten_hierarchy = 0;
+    c1.exportSettings.flatten_hierarchy = 0;
 
     ms::SceneCacheOutputSettings c2;
-    c2.flatten_hierarchy = 0;
-    c2.encoder_settings.zstd.compression_level = 100;
+    c2.exportSettings.flatten_hierarchy = 0;
+    c2.exportSettings.encoder_settings.zstd.compression_level = 100;
 
     ms::SceneCacheWriter writer0, writer1, writer2;
     writer0.open("wave_c0.sc", c0);
