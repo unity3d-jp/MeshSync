@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using PlasticGui;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 using UnityEngine.Rendering;
@@ -85,6 +86,46 @@ namespace Unity.MeshSync
             }
         }
 
+        public LightProbeUsage LightProbeUsage
+        {
+            get
+            {
+                if (Renderer == null)
+                {
+                    return LightProbeUsage.BlendProbes;
+                }
+
+                return Renderer.lightProbeUsage;
+            }
+        }
+
+        public LightProbeProxyVolume LightProbeProxyVolume
+        {
+            get
+            {
+                if (Renderer == null)
+                    return null;
+                
+                if (Renderer.lightProbeUsage != LightProbeUsage.UseProxyVolume)
+                    return null;
+                
+                // Look for component in override
+                var overrideGO = Renderer.lightProbeProxyVolumeOverride;
+                if (overrideGO != null && overrideGO.TryGetComponent(out LightProbeProxyVolume volumeOverride))
+                {
+                    return volumeOverride;
+                }
+                
+                // Look for component in Renderer
+                if (Renderer.TryGetComponent(out LightProbeProxyVolume volume))
+                {
+                    return volume;
+                }
+
+                return null;
+            }
+        }
+        
         public Matrix4x4 WorldMatrix
         {
             get

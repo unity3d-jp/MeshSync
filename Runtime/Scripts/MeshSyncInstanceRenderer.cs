@@ -266,7 +266,9 @@ namespace Unity.MeshSync{
                         batch, 
                         entry.Layer, 
                         entry.ReceiveShadows, 
-                        entry.ShadowCastingMode);
+                        entry.ShadowCastingMode, 
+                        entry.LightProbeUsage, 
+                        entry.LightProbeProxyVolume);
                 }
             }
         }
@@ -278,7 +280,9 @@ namespace Unity.MeshSync{
             Matrix4x4[] matrices,
             int layer,
             bool receiveShadows,
-            ShadowCastingMode shadowCastingMode)
+            ShadowCastingMode shadowCastingMode,
+            LightProbeUsage lightProbeUsage, 
+            LightProbeProxyVolume lightProbeProxyVolume)
         {
             if (m_cameras == null)
                 return;
@@ -299,7 +303,9 @@ namespace Unity.MeshSync{
                     castShadows:shadowCastingMode, 
                     receiveShadows:receiveShadows,
                     layer:layer, 
-                    camera:camera);
+                    camera:camera,
+                    lightProbeUsage:lightProbeUsage, 
+                    lightProbeProxyVolume:lightProbeProxyVolume);
             }
         }
 
