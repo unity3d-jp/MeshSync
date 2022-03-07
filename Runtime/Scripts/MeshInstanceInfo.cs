@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
-using PlasticGui;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 using UnityEngine.Rendering;
 
 namespace Unity.MeshSync
@@ -9,7 +7,7 @@ namespace Unity.MeshSync
     public class MeshInstanceInfo
     {
         public Mesh Mesh;
-        public Matrix4x4[] Instances;
+        
         public List<Matrix4x4[]> DividedInstances { get; private set; } = new List<Matrix4x4[]>();
         public Material[] Materials;
 
@@ -17,6 +15,13 @@ namespace Unity.MeshSync
         private Matrix4x4 m_inverse = Matrix4x4.identity;
 
         private Transform m_root;
+
+        private bool m_dirtyInstances = true;
+        
+        private Matrix4x4 m_cachedWorldMatrix = Matrix4x4.zero;
+        
+        private Matrix4x4[] m_instances;
+        
         public Transform Root
         {
             get => m_root;
@@ -24,6 +29,16 @@ namespace Unity.MeshSync
             {
                 m_root = value;
                 UpdateInverse();
+            }
+        }
+
+        public Matrix4x4[] Instances
+        {
+            get => m_instances;
+            set
+            {
+                m_instances = value;
+                m_dirtyInstances = true;
             }
         }
         
@@ -139,7 +154,16 @@ namespace Unity.MeshSync
             
         public void UpdateDividedInstances()
         {
+            // Avoid recalculation if the instances are the same
+            // and the world matrix has not changed.
+            if (!m_dirtyInstances && m_cachedWorldMatrix == WorldMatrix)
+                return;
+            
+            m_dirtyInstances = false;
+            m_cachedWorldMatrix = WorldMatrix;
+            
             DividedInstances.Clear();
+            
             if (Instances == null)
                 return;
                 
