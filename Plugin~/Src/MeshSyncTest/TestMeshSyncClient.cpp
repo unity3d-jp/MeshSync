@@ -34,9 +34,9 @@ TestCase(Test_SendMesh) {
     c2.exportSettings.encoder_settings.zstd.compression_level = 100;
 
     ms::SceneCacheWriter writer0, writer1, writer2;
-    writer0.open("wave_c0.sc", c0);
-    writer1.open("wave_c1.sc", c1);
-    writer2.open("wave_c2.sc", c2);
+    writer0.Open("wave_c0.sc", c0);
+    writer1.Open("wave_c1.sc", c1);
+    writer2.Open("wave_c2.sc", c2);
 
     for (int i = 0; i < 8; ++i) {
         std::shared_ptr<ms::Scene> scene = ms::Scene::create();
