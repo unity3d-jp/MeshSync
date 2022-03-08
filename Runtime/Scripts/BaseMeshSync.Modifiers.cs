@@ -88,6 +88,14 @@ namespace Unity.MeshSync
     // Partial class for now to make merging code easier later.
     partial class BaseMeshSync
     {
+        bool m_foldBlenderSettings;
+
+        internal bool foldBlenderSettings
+        {
+            get { return m_foldBlenderSettings; }
+            set { m_foldBlenderSettings = value; }
+        }
+
         internal List<PropertyInfoDataWrapper> propertyInfos = new List<PropertyInfoDataWrapper>();
 
         void UpdateProperties(SceneData scene)

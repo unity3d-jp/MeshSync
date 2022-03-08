@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
+using UnityEngine.Rendering;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -12,12 +10,41 @@ namespace Unity.MeshSync{
     
     public class MeshSyncInstanceRenderer
     {
-        private BaseMeshSync ms;
-        
-        public void Init(BaseMeshSync ms)
-        {
-            this.ms = ms;
+        private BaseMeshSync m_server;
 
+        private Camera[] m_cameras;
+        
+        private Dictionary<string, MeshInstanceInfo> m_instanceInfo = new Dictionary<string, MeshInstanceInfo>();
+
+        private bool m_isDirty = false;
+
+
+        public enum CameraMode
+        {
+            None = 0,
+            SceneCameras = 1,
+            GameCameras = 2,
+            AllCameras = 3
+        }
+
+        private CameraMode m_cameraMode = CameraMode.GameCameras;
+
+        public void Init(BaseMeshSync ms, CameraMode cameraMode = CameraMode.GameCameras)
+        {
+            m_server = ms;
+            m_cameraMode = cameraMode;
+
+#if UNITY_EDITOR
+            EditorApplication.update -= Draw;
+            EditorApplication.update += Draw;
+            
+            //To cover cases where the user adds cameras to the scene manually
+            EditorApplication.hierarchyChanged -= OnHierarchyChanged;
+            EditorApplication.hierarchyChanged += OnHierarchyChanged;
+#endif
+            
+            RefreshCameraList();
+            
             ms.onUpdateInstanceInfo -= OnUpdateInstanceInfo;
             ms.onUpdateInstanceInfo += OnUpdateInstanceInfo;
             ms.onDeleteInstanceInfo -= OnDeleteInstanceInfo;
@@ -26,6 +53,84 @@ namespace Unity.MeshSync{
             ms.onUpdateInstanceMesh += OnUpdateInstanceMesh;
             ms.onDeleteInstanceMesh -= OnDeleteInstanceMesh;
             ms.onDeleteInstanceMesh += OnDeleteInstanceMesh;
+            ms.onUpdateEntity -= OnUpdateEntity;
+            ms.onUpdateEntity += OnUpdateEntity;
+            ms.onDeleteEntity -= OnDeleteEntity;
+            ms.onSceneUpdateEnd -= OnSceneUpdateEnd;
+            ms.onSceneUpdateEnd += OnSceneUpdateEnd;
+        }
+
+        private void OnSceneUpdateEnd()
+        {
+            if (m_isDirty)
+            {
+                RenderAndDraw();
+                m_isDirty = false;
+            }
+        }
+
+#if UNITY_EDITOR
+        private void RefreshCameraListWithGameAndSceneCameras()
+        {
+            var gameViewCameras = Object.FindObjectsOfType<Camera>();
+            var sceneViewCameras = SceneView.GetAllSceneCameras();
+            m_cameras = new Camera[gameViewCameras.Length + sceneViewCameras.Length];
+
+            for (var i = 0; i < gameViewCameras.Length; i++)
+            {
+                m_cameras[i] = gameViewCameras[i];
+            }
+
+            for (var i = 0; i < sceneViewCameras.Length; i++)
+            {
+                m_cameras[i + gameViewCameras.Length] = sceneViewCameras[i];
+            }
+        }
+        
+        private void OnHierarchyChanged()
+        {
+            RefreshCameraList();
+        }
+#endif
+
+        private void RefreshCameraList()
+        {
+            RenderAllCameras();
+            m_cameras = null;
+#if UNITY_EDITOR
+            if (m_cameraMode == CameraMode.AllCameras)
+            {
+                RefreshCameraListWithGameAndSceneCameras();
+            }
+            else if (m_cameraMode == CameraMode.GameCameras)
+            {
+                m_cameras = Object.FindObjectsOfType<Camera>();
+            }
+            else if (m_cameraMode == CameraMode.SceneCameras)
+            {
+                m_cameras = SceneView.GetAllSceneCameras();
+            }
+#else
+            m_cameras = GameObject.FindObjectsOfType<Camera>();
+#endif
+        }
+
+        #region Events
+
+        private void OnDeleteEntity(GameObject obj)
+        {
+            if (obj.TryGetComponent(out Camera _))
+            {
+                RefreshCameraList();
+            }
+        }
+
+        private void OnUpdateEntity(GameObject obj, TransformData data)
+        {
+            if (data.entityType  == EntityType.Camera)
+            {
+                RefreshCameraList();
+            }
         }
 
         private void OnDeleteInstanceMesh(string path)
@@ -33,19 +138,17 @@ namespace Unity.MeshSync{
             if (path == null)
                 return;
 
-            meshInstances.Remove(path);
+            m_instanceInfo.Remove(path);
             
-            Debug.LogFormat("MS: DELETE INST MESH {0}", path);
-            RepaintAfterChanges();
+            SetDirty();
         }
 
         private void OnUpdateInstanceMesh(string path, GameObject go)
         {
-            Debug.LogFormat("MS: UPDATE INST MESH {0}", path);
-            if (!this.meshInstances.TryGetValue(path, out MeshInstanceInfo entry))
+            if (!this.m_instanceInfo.TryGetValue(path, out MeshInstanceInfo entry))
             {
                 entry = new MeshInstanceInfo();
-                this.meshInstances.Add(path, entry);
+                this.m_instanceInfo.Add(path, entry);
             }
             
             UpdateEntryMeshMaterials(path, go, entry);
@@ -57,29 +160,17 @@ namespace Unity.MeshSync{
             if (path == null)
                 return;
             
-            meshInstances.Remove(path);
-            Debug.LogFormat("MS: DELETE INST INFO {0}", path);
+            m_instanceInfo.Remove(path);
             
-            
-            RepaintAfterChanges();
+            SetDirty();
         }
 
-        private Dictionary<string, MeshInstanceInfo> meshInstances = new Dictionary<string, MeshInstanceInfo>();
 
-        private class MeshInstanceInfo
-        {
-            public Mesh Mesh;
-            public List<Matrix4x4[]> Instances;
-            public Material[] Materials;
-        }
-        
         private void OnUpdateInstanceInfo(
             string path,
             GameObject go,
             Matrix4x4[] transforms)
         {
-            Debug.LogFormat("MS: UPDATE INST INFO {0}", path);
-            
             if (go == null)
             {
                 Debug.LogWarningFormat("[MeshSync] No Gameobject found: {0}", path);
@@ -87,26 +178,26 @@ namespace Unity.MeshSync{
             }
             
 
-            if (!meshInstances.TryGetValue(path, out MeshInstanceInfo entry))
+            if (!m_instanceInfo.TryGetValue(path, out MeshInstanceInfo entry))
             {
                 entry = new MeshInstanceInfo();
                 
-                meshInstances.Add(path, entry);
+                m_instanceInfo.Add(path, entry);
             }
 
             UpdateEntryMeshMaterials(path, go, entry);
 
-            entry.Instances = DivideArrays(transforms);
+            entry.Instances = transforms;
             
             foreach (var mat in entry.Materials)
             {
                 mat.enableInstancing = true;
-            } 
-            
-            RepaintAfterChanges();
+            }
+
+            SetDirty();
         }
 
-        private static void UpdateEntryMeshMaterials(string path, GameObject go, MeshInstanceInfo entry)
+        private void UpdateEntryMeshMaterials(string path, GameObject go, MeshInstanceInfo entry)
         {
             if (!go.TryGetComponent(out MeshFilter filter))
             {
@@ -119,63 +210,39 @@ namespace Unity.MeshSync{
             }
 
             entry.Mesh = filter.sharedMesh;
-
             entry.Materials = renderer.sharedMaterials;
+            entry.GameObject = go;
+            entry.Renderer = renderer;
+            entry.Root = m_server.transform;
         }
+        #endregion
+        
+        #region Rendering
 
-        private List<Matrix4x4[]> DivideArrays(Matrix4x4[] arrays)
+        private void SetDirty()
         {
-            var result = new List<Matrix4x4[]>();
-            var iterations = arrays.Length / 1023;
-            for (var i = 0; i < iterations; i++)
-            {
-                var array = new Matrix4x4[1023];
-                
-                Array.Copy(
-                    arrays, 
-                    i * 1023, 
-                    array, 
-                    0, 
-                    1023);
-                
-                result.Add(array);
-            }
-
-            var remainder = arrays.Length % 1023;
-            if (remainder > 0)
-            {
-                var array = new Matrix4x4[remainder];
-                
-                Array.Copy(
-                    arrays, 
-                    iterations*1023, 
-                    array, 
-                    0, 
-                    remainder);
-                
-                result.Add(array);
-            }
-
-            return result;
+            m_isDirty = true;
         }
         
         public void Draw()
         {
-            foreach (var entry in meshInstances)
+            foreach (var entry in m_instanceInfo)
             {
-                RenderInstances(entry.Value);
+                DrawInstances(entry.Value);
             }
         }
 
-        private void RenderInstances(MeshInstanceInfo entry)
+        private void DrawInstances(MeshInstanceInfo entry)
         {
-            if (entry.Mesh == null || entry.Instances == null || entry.Materials == null)
+            if (entry.Mesh == null || entry.DividedInstances == null || entry.Materials == null)
             {
                 return;
             }
             
             var mesh = entry.Mesh;
-            var matrixBatches = entry.Instances;
+            
+            entry.UpdateDividedInstances();
+            var matrixBatches = entry.DividedInstances;
 
             if (entry.Materials.Length == 0)
                 return;
@@ -190,19 +257,94 @@ namespace Unity.MeshSync{
                 for (var j = 0; j < matrixBatches.Count; j++)
                 {
                     var batch = matrixBatches[j];
-                    Graphics.DrawMeshInstanced(mesh, i, material, batch);
+                    
+                    
+                    DrawOnCameras(
+                        mesh, 
+                        i,
+                        material,
+                        batch, 
+                        entry.Layer, 
+                        entry.ReceiveShadows, 
+                        entry.ShadowCastingMode, 
+                        entry.LightProbeUsage, 
+                        entry.LightProbeProxyVolume);
                 }
             }
         }
-
-        private void RepaintAfterChanges()
+        
+        private void DrawOnCameras(
+            Mesh mesh,
+            int submeshIndex,
+            Material material,
+            Matrix4x4[] matrices,
+            int layer,
+            bool receiveShadows,
+            ShadowCastingMode shadowCastingMode,
+            LightProbeUsage lightProbeUsage, 
+            LightProbeProxyVolume lightProbeProxyVolume)
         {
-#if UNITY_EDITOR
-            SceneView.RepaintAll();
-            Draw();
-            SceneView.RepaintAll();
-#endif     
+            if (m_cameras == null)
+                return;
+            
+            for (var i = 0; i < m_cameras.Length; i++)
+            {
+                var camera = m_cameras[i];
+                if (camera == null)
+                    continue;
+                
+                Graphics.DrawMeshInstanced(
+                    mesh:mesh,
+                    submeshIndex:submeshIndex, 
+                    material:material, 
+                    matrices:matrices, 
+                    count:matrices.Length, 
+                    properties:null, 
+                    castShadows:shadowCastingMode, 
+                    receiveShadows:receiveShadows,
+                    layer:layer, 
+                    camera:camera,
+                    lightProbeUsage:lightProbeUsage, 
+                    lightProbeProxyVolume:lightProbeProxyVolume);
+            }
         }
+
+        private void RenderAllCameras()
+        {
+            if (m_cameras == null)
+                return;
+            
+            for (var i = 0; i < m_cameras.Length; i++)
+            {
+                var camera = m_cameras[i];
+                if (camera == null)
+                    continue;
+                
+                camera.Render();
+            }
+        }
+        
+        
+        private void RenderAndDraw()
+        {
+            if (Application.isEditor && !Application.isPlaying)
+            {
+                RenderAllCameras();
+            }
+
+            Draw();
+        }
+
+        public void Clear()
+        {
+            RenderAllCameras();
+            m_cameras = null;
+            m_server = null;
+            m_cameraMode = CameraMode.None;
+        }
+        #endregion
     }
+
+
 }
 

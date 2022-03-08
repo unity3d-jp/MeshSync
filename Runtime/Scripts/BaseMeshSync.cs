@@ -235,18 +235,13 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         get { return m_foldExportAssets; }
         set { m_foldExportAssets = value; }
     }
-    internal bool foldBlenderSettings
-    {
-        get { return m_foldBlenderSettings; }
-        set { m_foldBlenderSettings = value; }
-    }
 #endif
-        #endregion
+    #endregion
 
-        //----------------------------------------------------------------------------------------------------------------------
-
-        #region Impl
-        void SerializeDictionary<K,V>(Dictionary<K,V> dic, ref K[] keys, ref V[] values)
+//----------------------------------------------------------------------------------------------------------------------
+    
+    #region Impl
+    void SerializeDictionary<K,V>(Dictionary<K,V> dic, ref K[] keys, ref V[] values)
     {
         keys = dic.Keys.ToArray();
         values = dic.Values.ToArray();
@@ -582,12 +577,9 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
                     onUpdateInstanceInfo.Invoke(src.path, dst.go, src.transforms);
             }
         });
-
-            UpdateProperties(scene);
-
-
+        
 #if UNITY_EDITOR
-            if (config.ProgressiveDisplay)
+        if (config.ProgressiveDisplay)
             ForceRepaint();
 #endif
     }
@@ -2339,7 +2331,6 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
     [SerializeField] bool m_foldMaterialList      = true;
     [SerializeField] bool m_foldAnimationTweak    = true;
     [SerializeField] bool m_foldExportAssets      = true;
-    [SerializeField] bool m_foldBlenderSettings   = true;
 #endif
 
     private bool m_saveAssetsInScene            = true;

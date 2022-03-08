@@ -1,6 +1,7 @@
 #if UNITY_STANDALONE
 using System;
 #endif
+using AOT;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -23,7 +24,17 @@ public partial class MeshSyncServer : BaseMeshSync {
     public ServerMessageCallback OnPostRecvMessageCallback = null;
     
 //----------------------------------------------------------------------------------------------------------------------
-    
+
+#if ENABLE_IL2CPP
+    // When building with IL2CPP, we must use a static delegate
+    private static MeshSyncServer Instance;
+
+    [MonoPInvokeCallback(typeof(Server.MessageHandler))]
+    private static void HandleReceivedMessage(NetworkMessageType type, IntPtr data)
+    {
+        Instance.HandleRecvMessage(type, data);
+    }
+#endif
     
     protected override void InitInternalV() {
         
@@ -104,7 +115,11 @@ public partial class MeshSyncServer : BaseMeshSync {
         m_server.fileRootPath = GetServerDocRootPath();
         m_server.AllowPublicAccess(projectSettings.GetServerPublicAccess());
         
+#if ENABLE_IL2CPP
+        m_handler = HandleReceivedMessage;
+#else
         m_handler = HandleRecvMessage;
+#endif
 
 #if UNITY_EDITOR
         EditorApplication.update += PollServerEvents;
@@ -485,7 +500,11 @@ public partial class MeshSyncServer : BaseMeshSync {
             m_requestRestartServer = true;
         }
         
-        m_instanceRenderer.Init(this);
+#if UNITY_EDITOR
+        m_instanceRenderer.Init(this, m_cameraMode);
+#else
+         m_instanceRenderer.Init(this);
+#endif
     }
 
     protected override void OnDisable() {
@@ -497,13 +516,22 @@ public partial class MeshSyncServer : BaseMeshSync {
     {
         base.OnDestroy();
         m_DCCInterop?.Cleanup();
+
+        m_instanceRenderer.Clear();
     }
  
     void Update()
     {
         m_instanceRenderer.Draw();
     }
-    
+
+    void Start()
+    {
+#if ENABLE_IL2CPP
+        Instance = this;
+#endif
+    }
+            
     void LateUpdate() {
         PollServerEvents();
     }
@@ -550,6 +578,35 @@ public partial class MeshSyncServer : BaseMeshSync {
         INITIAL_0_4_0 = 1, //initial for version 0.4.0-preview 
     
     }
+
+#if UNITY_EDITOR
+    [SerializeField]
+    private bool m_foldInstanceSettings = true;
+
+    internal bool foldInstanceSettings
+    {
+        get => m_foldInstanceSettings;
+        set => m_foldInstanceSettings = value;
+    }
+    
+    [SerializeField]
+    private MeshSyncInstanceRenderer.CameraMode m_cameraMode = MeshSyncInstanceRenderer.CameraMode.GameCameras;
+    
+    public MeshSyncInstanceRenderer.CameraMode cameraMode
+    {
+        get => m_cameraMode;
+        set
+        {
+            if (m_cameraMode == value)
+                return;
+            
+            m_cameraMode = value;
+            
+            m_instanceRenderer.Init(this, m_cameraMode);
+        }
+    }
+#endif    
+    
     
 }
 

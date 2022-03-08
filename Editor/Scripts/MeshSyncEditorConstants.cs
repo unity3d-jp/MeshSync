@@ -22,6 +22,9 @@ internal static class MeshSyncEditorConstants {
     
     internal static readonly string[] ANIMATION_INTERPOLATION_ENUMS = System.Enum.GetNames( typeof( InterpolationMode ) );
     internal static readonly string[] Z_UP_CORRECTION_ENUMS         = System.Enum.GetNames( typeof( ZUpCorrectionMode ) );
+
+    internal static readonly string[] INSTANCE_CAMERA_MODE_ENUMS =
+        System.Enum.GetNames(typeof(MeshSyncInstanceRenderer.CameraMode));
         
     //Project settings
     internal const int            UNINITIALIZED_TAB               = -1;
