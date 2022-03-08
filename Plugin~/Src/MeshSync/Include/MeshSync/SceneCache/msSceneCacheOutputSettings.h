@@ -10,8 +10,8 @@ namespace ms {
 struct SceneCacheOutputSettings : SceneImportSettings
 {
     SceneCacheExportSettings exportSettings;
-    int max_queue_size = 4;
-    int max_scene_segments = 8;
+    int maxQueueSize = 4;
+    int maxSceneSegments = 8;
 };
 
 } // namespace ms

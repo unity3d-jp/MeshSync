@@ -119,7 +119,7 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
 void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
 
     const SceneCacheExportSettings& scExportSettings = m_outputSettings.exportSettings;
-    while (m_sceneCountInQueue > 0 && ((scExportSettings.strip_unchanged && !m_baseScene) || m_sceneCountInQueue >= m_outputSettings.max_queue_size)) {
+    while (m_sceneCountInQueue > 0 && ((scExportSettings.strip_unchanged && !m_baseScene) || m_sceneCountInQueue >= m_outputSettings.maxQueueSize)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
@@ -177,7 +177,7 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
             }
 
             // split into segments
-            std::vector<ScenePtr> scene_segments = LoadBalancing(rec.scene, m_outputSettings.max_scene_segments);
+            std::vector<ScenePtr> scene_segments = LoadBalancing(rec.scene, m_outputSettings.maxSceneSegments);
             const size_t seg_count = scene_segments.size();
             rec.segments.resize(seg_count);
             for (size_t si = 0; si < seg_count; ++si) {
