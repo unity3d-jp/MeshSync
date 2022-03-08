@@ -281,10 +281,10 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
                 // set cache flags
                 size_t n = ret->entities.size();
                 if (m_entityMeta.size() == n) {
-                    mu::enumerate(m_entityMeta, ret->entities, [](auto& meta, auto& e) {
+                    mu::enumerate(m_entityMeta, ret->entities, [](CacheFileEntityMeta& meta, auto& e) {
                         if (meta.id == e->id) {
                             e->cache_flags.constant = meta.constant;
-                            e->cache_flags.constant_topology = meta.constant_topology;
+                            e->cache_flags.constant_topology = meta.constantTopology;
                         }
                         });
                 }
