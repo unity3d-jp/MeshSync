@@ -31,7 +31,7 @@ TestCase(Test_SendMesh) {
 
     ms::SceneCacheOutputSettings c2;
     c2.exportSettings.flatten_hierarchy = 0;
-    c2.exportSettings.encoder_settings.zstd.compression_level = 100;
+    c2.exportSettings.encoder_settings.zstd.compressionLevel = 100;
 
     ms::SceneCacheWriter writer0, writer1, writer2;
     writer0.Open("wave_c0.sc", c0);

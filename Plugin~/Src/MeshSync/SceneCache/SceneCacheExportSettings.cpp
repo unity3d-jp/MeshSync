@@ -8,7 +8,7 @@ namespace ms {
 SceneCacheExportSettings::SceneCacheExportSettings()
 {
     encoding = SceneCacheEncoding::ZSTD;
-    encoder_settings.zstd.compression_level = EncodingUtility::GetZSTDDefaultCompressionLevel();
+    encoder_settings.zstd.compressionLevel = EncodingUtility::GetZSTDDefaultCompressionLevel();
 
     strip_unchanged = 1;
     apply_refinement = 1;

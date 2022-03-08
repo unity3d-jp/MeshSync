@@ -5,7 +5,7 @@ namespace ms {
 union SceneCacheEncoderSettings
 {
     struct {
-        int compression_level;
+        int compressionLevel;
     } zstd;
 };
 

@@ -64,7 +64,7 @@ BufferEncoderPtr BufferEncoder::CreateEncoder(const ms::SceneCacheEncoding encod
     BufferEncoderPtr ret = nullptr;
     switch (encoding) {
         case SceneCacheEncoding::ZSTD: {
-            ret = std::make_shared<ZSTDBufferEncoder>(settings.zstd.compression_level);
+            ret = std::make_shared<ZSTDBufferEncoder>(settings.zstd.compressionLevel);
             break;
         }
         default: {
