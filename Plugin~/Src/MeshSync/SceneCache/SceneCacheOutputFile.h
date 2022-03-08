@@ -27,7 +27,7 @@ public:
     int GetSceneCountInQueue() const ;
 
 protected:
-    void doWrite();
+    void DoWrite();
 
 private:
     void Init(StreamPtr ost, const SceneCacheOutputSettings& oscs);
@@ -38,7 +38,7 @@ private:
     {
         int index = 0;
         ScenePtr segment;
-        RawVector<char> encoded_buf;
+        RawVector<char> encodedBuf;
         std::future<void> task;
     };
 
@@ -56,8 +56,8 @@ private:
     {
         EntityType type = EntityType::Unknown;
         int id = 0;
-        int unchanged_count = 0;
-        int topology_unchanged_count = 0;
+        int unchangedCount = 0;
+        int topologyUnchangedCount = 0;
     };
 
     StreamPtr m_stream = nullptr;

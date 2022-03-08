@@ -36,8 +36,8 @@ SceneCacheOutputFile::~SceneCacheOutputFile()
             CacheFileEntityMeta meta{};
             meta.id = rec.id;
             meta.type = static_cast<uint32_t>(rec.type);
-            meta.constant = rec.unchanged_count == m_sceneCountWritten - 1;
-            meta.constant_topology = rec.topology_unchanged_count == m_sceneCountWritten - 1;
+            meta.constant = rec.unchangedCount == m_sceneCountWritten - 1;
+            meta.constant_topology = rec.topologyUnchangedCount == m_sceneCountWritten - 1;
             scene_buf.write(reinterpret_cast<char*>(&meta), sizeof(meta));
         }
         scene_buf.flush();
@@ -195,7 +195,7 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
                 mu::MemoryStream scene_buf;
                 seg.segment->serialize(scene_buf);
                 scene_buf.flush();
-                m_encoder->EncodeV(seg.encoded_buf, scene_buf.getBuffer());
+                m_encoder->EncodeV(seg.encodedBuf, scene_buf.getBuffer());
             });
         }
     });
@@ -205,12 +205,12 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
         m_queue.emplace_back(std::move(rec_ptr));
         m_sceneCountInQueue = static_cast<int>(m_queue.size());
     }
-    doWrite();
+    DoWrite();
 }
 
 void SceneCacheOutputFile::Flush()
 {
-    doWrite();
+    DoWrite();
     if (m_task.valid())
         m_task.wait();
 }
@@ -230,7 +230,7 @@ int SceneCacheOutputFile::GetSceneCountInQueue() const
     return m_sceneCountInQueue;
 }
 
-void SceneCacheOutputFile::doWrite()
+void SceneCacheOutputFile::DoWrite()
 {
     auto body = [this]() {
         for (;;) {
@@ -268,9 +268,9 @@ void SceneCacheOutputFile::doWrite()
                         continue;
 
                     if (e->isUnchanged())
-                        er.unchanged_count++;
+                        er.unchangedCount++;
                     if (e->isTopologyUnchanged())
-                        er.topology_unchanged_count++;
+                        er.topologyUnchangedCount++;
                 }
             }
 
@@ -281,8 +281,8 @@ void SceneCacheOutputFile::doWrite()
                 for (std::vector<SceneSegment>::value_type& seg : rec.segments) {
                     if (seg.task.valid())
                         seg.task.wait();
-                    buffer_sizes.push_back(seg.encoded_buf.size());
-                    total_buffer_size += seg.encoded_buf.size();
+                    buffer_sizes.push_back(seg.encodedBuf.size());
+                    total_buffer_size += seg.encodedBuf.size();
                 }
 
                 msProfileScope("SceneCacheOutputFile: [%d] write (%u byte)", rec.index, (uint32_t)total_buffer_size);
@@ -293,7 +293,7 @@ void SceneCacheOutputFile::doWrite()
                 m_stream->write(reinterpret_cast<char*>(&header), sizeof(header));
                 m_stream->write((char*)buffer_sizes.cdata(), buffer_sizes.size_in_byte());
                 for (std::vector<SceneSegment>::value_type& seg : rec.segments)
-                    m_stream->write(seg.encoded_buf.cdata(), seg.encoded_buf.size());
+                    m_stream->write(seg.encodedBuf.cdata(), seg.encodedBuf.size());
             }
             ++m_sceneCountWritten;
         }
