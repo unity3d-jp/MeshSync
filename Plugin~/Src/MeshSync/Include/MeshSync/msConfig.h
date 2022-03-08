@@ -1,7 +1,7 @@
 #pragma once
 
 //Note: Every update to the plugin must increase the version number
-#define msPluginVersionStr "0.11.x-preview"
+#define msPluginVersionStr "0.12.x-preview"
 #define msVendor "Unity Technologies"
 #define msProtocolVersion 123
 
