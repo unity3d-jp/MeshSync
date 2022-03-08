@@ -577,8 +577,8 @@ public class MeshSyncServer : BaseMeshSync {
     }
     
     [SerializeField]
-    private MeshSyncInstanceRenderer.CameraMode m_cameraMode = MeshSyncInstanceRenderer.CameraMode.GameCameras;
-    
+    private MeshSyncInstanceRenderer.CameraMode m_cameraMode = MeshSyncInstanceRenderer.CameraMode.AllCameras;
+
     internal MeshSyncInstanceRenderer.CameraMode cameraMode
     {
         get => m_cameraMode;
