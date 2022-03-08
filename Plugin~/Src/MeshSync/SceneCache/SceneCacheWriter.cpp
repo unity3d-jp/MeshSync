@@ -85,7 +85,7 @@ void SceneCacheWriter::write()
 
         scene->entities = transforms;
         append(scene->entities, geometries);
-        m_scOutputFile->AddScene(scene, time);
+        m_scOutputFile->AddScene(scene, m_time);
     }
 
     if (succeeded) {
