@@ -60,8 +60,8 @@ private:
         int topology_unchanged_count = 0;
     };
 
-    StreamPtr m_ost = nullptr;
-    SceneCacheOutputSettings m_oscs;
+    StreamPtr m_stream = nullptr;
+    SceneCacheOutputSettings m_outputSettings;
 
     std::mutex m_mutex;
     std::list<SceneRecordPtr> m_queue;
