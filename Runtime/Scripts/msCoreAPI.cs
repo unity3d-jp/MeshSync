@@ -2920,7 +2920,7 @@ internal struct InstanceInfoData
     static extern int msInstanceInfoPropGetArrayLength(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msInstanceInfoCopyTransforms(IntPtr self, Matrix4x4[] matrices);
+    static extern void msInstanceInfoCopyTransforms(IntPtr self, IntPtr matrices);
 
     [DllImport(Lib.name)]
     static extern ReferenceType msInstanceInfoGetType(IntPtr self);
@@ -2935,9 +2935,11 @@ internal struct InstanceInfoData
     {
         get
         {
-            var mat = new Matrix4x4[arrayLength];
-            msInstanceInfoCopyTransforms(self, mat);
-            return mat;
+            using (var pinnedData = new PinnedList<Matrix4x4>(arrayLength))
+            {
+                msInstanceInfoCopyTransforms(self, pinnedData.Pointer);
+                return pinnedData.Array;
+            }
         }
     }
 }
