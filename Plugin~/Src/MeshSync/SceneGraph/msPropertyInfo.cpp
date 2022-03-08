@@ -4,7 +4,7 @@
 
 namespace ms {
 
-#define EachMember(F) F(type) F(name) F(path) F(min) F(max) F(data)
+#define EachMember(F) F(type) F(name) F(path) F(min) F(max) F(data) F(modifierName) F(propertyName)
 
 	void PropertyInfo::serialize(ostream& os) const
 	{

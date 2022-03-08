@@ -105,6 +105,9 @@ internal struct Server {
     [DllImport(Lib.name)]
     static extern void msServerSendPropertyFloat(IntPtr self, IntPtr propertyInfo, float newValue);
 
+    [DllImport(Lib.name)]
+    static extern void msServerPropertiesReady(IntPtr self);
+
     #endregion
 
     public delegate void MessageHandler(NetworkMessageType type, IntPtr data);
@@ -157,13 +160,18 @@ internal struct Server {
         switch (prop.type)
         {
             case PropertyInfoData.Type.Int:
-                    msServerSendPropertyInt(self, prop.propertyPointer, prop.ValueInt);
+                msServerSendPropertyInt(self, prop.propertyPointer, prop.ValueInt);
                 break;
 
             case PropertyInfoData.Type.Float:
                 msServerSendPropertyFloat(self, prop.propertyPointer, prop.ValueFloat);
                 break;
         }
+    }
+
+    public void SendChangedProperties()
+    {
+        msServerPropertiesReady(self);
     }
 
     public void BeginServe() {

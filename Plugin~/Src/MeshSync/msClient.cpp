@@ -190,7 +190,13 @@ bool Client::send(const RequestPropertiesMessage& mes)
         auto reqResponse = RequestPropertiesResponse();
         reqResponse.deserialize(rs);
 
-        properties = reqResponse.properties;
+        properties = std::vector<PropertyInfo>();
+        for (int i = 0; i < reqResponse.properties.size(); i++)
+        {
+            auto prop = PropertyInfo(reqResponse.properties[i]);
+            reqResponse.properties[i].data.share(prop.data);
+            properties.push_back(prop);
+        }
 
         return response.getStatus() == HTTPResponse::HTTP_OK;
     }

@@ -10,13 +10,21 @@ namespace Unity.MeshSync
     {
         void SendUpdatedProperties()
         {
+            bool sendProps = false;
+
             foreach (var prop in propertyInfos)
             {
                 if (prop.IsDirty)
                 {
                     m_server.SendProperty(prop);
                     prop.IsDirty = false;
+                    sendProps = true;
                 }
+            }
+
+            if (sendProps)
+            {
+                m_server.SendChangedProperties();
             }
         }
     }

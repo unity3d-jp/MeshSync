@@ -92,6 +92,7 @@ public:
     void recvRequestProperties(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     
     void receivedProperty(PropertyInfo* prop);
+    void propertiesReady();
 
     static void sanitizeHierarchyPath(std::string& path);
 

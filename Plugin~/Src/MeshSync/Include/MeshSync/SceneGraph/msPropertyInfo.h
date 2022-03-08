@@ -26,10 +26,11 @@ namespace ms {
 		/// </summary>
 		string path;
 
-		string modifierName;
-		
 		string name;
 
+		string modifierName;
+		string propertyName;
+		
 		Type type;
 		float min, max;
 

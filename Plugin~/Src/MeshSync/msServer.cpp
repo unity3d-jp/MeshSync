@@ -654,11 +654,13 @@ void Server::notifyPoll(PollMessage::PollType t)
 }
 
 void Server::receivedProperty(PropertyInfo* prop) {    
+    m_pending_properties.push_back(prop);
+}
+
+void Server::propertiesReady() {
     if (m_current_properties_request) {
         m_current_properties_request->ready = true;
     }
-        
-    m_pending_properties.push_back(prop);
 }
 
 Server::MessageHolder::MessageHolder()

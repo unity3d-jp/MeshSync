@@ -64,6 +64,40 @@ void AsyncSceneSender::kick()
     m_future = std::async(std::launch::async, [this]() { send(); });
 }
 
+void AsyncSceneSender::requestProperties()
+{
+    // If we're already requesting properties, don't run it again:
+    if (m_request_properties_future.valid() && m_request_properties_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
+        return;
+
+    m_request_properties_future = std::async(std::launch::async, [this]() { requestPropertiesImpl(); });
+}
+
+void AsyncSceneSender::requestPropertiesImpl() {
+    if (!propertyInfos.empty()) {
+        auto setup_message = [this](ms::Message& mes) {
+            mes.session_id = session_id;
+            mes.message_id = message_count++;
+            mes.timestamp_send = mu::Now();
+        };
+
+        bool succeeded = true;
+        ms::Client client(client_settings);
+
+        ms::RequestPropertiesMessage mes;
+        setup_message(mes);
+
+        client.send(mes);
+
+        if (on_properties_received) {
+            on_properties_received(client.properties);
+        }
+
+        // Request again for next change:
+        requestPropertiesImpl();
+    }
+}
+
 void AsyncSceneSender::send()
 {
     if (on_prepare)
@@ -219,17 +253,6 @@ void AsyncSceneSender::send()
             goto cleanup;
     }
 
-    // request properties
-    if (!propertyInfos.empty()) {
-        ms::RequestPropertiesMessage mes;
-        setup_message(mes);
-
-        succeeded = succeeded && client.send(mes);
-        properties = client.properties;
-        if (!succeeded)
-            goto cleanup;
-    }
-    
     // notify scene end
     {
         ms::FenceMessage mes;
