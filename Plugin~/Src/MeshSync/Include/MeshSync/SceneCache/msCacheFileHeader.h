@@ -14,12 +14,12 @@ struct CacheFileHeader
 
 struct CacheFileSceneHeader
 {
-    uint32_t buffer_count = 0;
+    uint32_t bufferCount = 0;
     float time = 0.0f;
     // flags
     uint32_t keyframe : 1;
 
-    // uint64_t buffer_sizes[buffer_count];
+    // uint64_t buffer_sizes[bufferCount];
 
     static CacheFileSceneHeader terminator() { return CacheFileSceneHeader(); }
 };
@@ -34,7 +34,7 @@ struct CacheFileEntityMeta
     int id = 0;
     uint32_t type : 4; // EntityType
     uint32_t constant : 1;
-    uint32_t constant_topology : 1;
+    uint32_t constantTopology : 1;
 };
 
 } // namespace ms

@@ -9,11 +9,11 @@ public:
     SceneCacheInputSettings();
     explicit SceneCacheInputSettings(const SceneCacheInputSettings&) = default;
 
-    uint32_t convert_scenes : 1;
-    uint32_t enable_diff : 1;
-    uint32_t generate_velocities : 1;
+    uint32_t convertScenes : 1;
+    uint32_t enableDiff : 1;
+    uint32_t generateVelocities : 1;
 
-    SceneImportSettings sis;
+    SceneImportSettings importSettings;
 };
 
 } // namespace ms

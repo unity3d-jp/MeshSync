@@ -4,9 +4,9 @@
 namespace ms {
 
 SceneCacheInputSettings::SceneCacheInputSettings()
-    : convert_scenes(1)
-    , enable_diff (1)
-    , generate_velocities(0)
+    : convertScenes(1)
+    , enableDiff (1)
+    , generateVelocities(0)
 {
 }
 

@@ -41,7 +41,7 @@ protected:
     inline void SetSettings(const SceneCacheInputSettings& settings);
 
 private:
-    SceneCacheInputSettings m_iscs;
+    SceneCacheInputSettings m_inputSettings;
     AnimationCurvePtr m_timeCurve;
 
     int32_t m_maxLoadedSamples = 3;
@@ -56,8 +56,8 @@ int32_t BaseSceneCacheInput::GetPreloadLength() const { return m_preloadLength; 
 inline int32_t BaseSceneCacheInput::GetMaxLoadedSamples() const { return m_maxLoadedSamples; }
 void BaseSceneCacheInput::SetMaxLoadedSamples(const int32_t sampleCount) { m_maxLoadedSamples = sampleCount; }
 
-const SceneCacheInputSettings& BaseSceneCacheInput::GetSettings() const { return m_iscs; }
-void BaseSceneCacheInput::SetSettings(const SceneCacheInputSettings& settings)  {m_iscs = settings; }
+const SceneCacheInputSettings& BaseSceneCacheInput::GetSettings() const { return m_inputSettings; }
+void BaseSceneCacheInput::SetSettings(const SceneCacheInputSettings& settings)  {m_inputSettings = settings; }
 
 
 } // namespace ms

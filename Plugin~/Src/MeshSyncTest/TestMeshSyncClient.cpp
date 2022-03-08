@@ -22,16 +22,16 @@ using namespace mu;
 
 TestCase(Test_SendMesh) {
     ms::SceneCacheOutputSettings c0;
-    c0.exportSettings.strip_unchanged = 0;
-    c0.exportSettings.flatten_hierarchy = 0;
+    c0.exportSettings.stripUnchanged = 0;
+    c0.exportSettings.flattenHierarchy = 0;
     c0.exportSettings.encoding = ms::SceneCacheEncoding::Plain;
 
     ms::SceneCacheOutputSettings c1;
-    c1.exportSettings.flatten_hierarchy = 0;
+    c1.exportSettings.flattenHierarchy = 0;
 
     ms::SceneCacheOutputSettings c2;
-    c2.exportSettings.flatten_hierarchy = 0;
-    c2.exportSettings.encoder_settings.zstd.compression_level = 100;
+    c2.exportSettings.flattenHierarchy = 0;
+    c2.exportSettings.encoderSettings.zstd.compressionLevel = 100;
 
     ms::SceneCacheWriter writer0, writer1, writer2;
     writer0.Open("wave_c0.sc", c0);
@@ -79,7 +79,7 @@ TestCase(Test_SendMesh) {
 TestCase(Test_SceneCacheRead)
 {
     ms::SceneCacheInputSettings iscs;
-    iscs.enable_diff = false;
+    iscs.enableDiff = false;
     ms::SceneCacheInputFilePtr isc = ms::SceneCacheInputFile::Open("wave_c2.sc", iscs);
     Expect(isc);
     if (!isc)

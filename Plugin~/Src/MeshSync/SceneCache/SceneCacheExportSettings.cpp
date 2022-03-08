@@ -8,14 +8,14 @@ namespace ms {
 SceneCacheExportSettings::SceneCacheExportSettings()
 {
     encoding = SceneCacheEncoding::ZSTD;
-    encoder_settings.zstd.compression_level = EncodingUtility::GetZSTDDefaultCompressionLevel();
+    encoderSettings.zstd.compressionLevel = EncodingUtility::GetZSTDDefaultCompressionLevel();
 
-    strip_unchanged = 1;
-    apply_refinement = 1;
-    flatten_hierarchy = 0;
-    merge_meshes = 0;
-    strip_normals = 0;
-    strip_tangents = 0;
+    stripUnchanged = 1;
+    applyRefinement = 1;
+    flattenHierarchy = 0;
+    mergeMeshes = 0;
+    stripNormals = 0;
+    stripTangents = 0;
 }
 
 

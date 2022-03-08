@@ -36,7 +36,7 @@ SceneCacheInputFile* SceneCacheInputFile::OpenRaw(const char *path, const SceneC
 //----------------------------------------------------------------------------------------------------------------------
 
 float SceneCacheInputFile::GetSampleRateV() const {
-    return m_header.exportSettings.sample_rate;
+    return m_header.exportSettings.sampleRate;
 }
 
 size_t SceneCacheInputFile::GetNumScenesV() const
@@ -90,7 +90,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
     if (m_header.version != msProtocolVersion)
         return;
 
-    m_encoder = BufferEncoder::CreateEncoder(m_header.exportSettings.encoding, m_header.exportSettings.encoder_settings);
+    m_encoder = BufferEncoder::CreateEncoder(m_header.exportSettings.encoding, m_header.exportSettings.encoderSettings);
     if (!m_encoder) {
         // encoder associated with m_settings.encoding is not available
         return;
@@ -101,7 +101,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
         // enumerate all scene headers
         CacheFileSceneHeader sh;
         m_stream->read(reinterpret_cast<char*>(&sh), sizeof(sh));
-        if (sh.buffer_count == 0) {
+        if (sh.bufferCount == 0) {
             // empty header is a terminator
             break;
         }
@@ -109,7 +109,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
             SceneRecord rec;
             rec.time = sh.time;
 
-            rec.bufferSizes.resize_discard(sh.buffer_count);
+            rec.bufferSizes.resize_discard(sh.bufferCount);
             m_stream->read(reinterpret_cast<char*>(rec.bufferSizes.data()), rec.bufferSizes.size_in_byte());
             rec.pos = static_cast<uint64_t>(m_stream->tellg());
 
@@ -117,7 +117,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
             for (uint64_t s : rec.bufferSizes)
                 rec.bufferSizeTotal += s;
 
-            rec.segments.resize(sh.buffer_count);
+            rec.segments.resize(sh.bufferCount);
 
             m_records.emplace_back(std::move(rec));
             m_stream->seekg(rec.bufferSizeTotal, std::ios::cur);
@@ -149,7 +149,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
         tmp_buf.copy_to(reinterpret_cast<char*>(m_entityMeta.data()));
     }
 
-    if (m_header.exportSettings.strip_unchanged)
+    if (m_header.exportSettings.stripUnchanged)
         m_baseScene = LoadByIndexInternal(0);
 
     //PreloadAll(); // for test
@@ -277,14 +277,14 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
             msProfileScope("SceneCacheInputFile: [%d] merge & import", static_cast<int>(sceneIndex));
             mu::ScopedTimer timer;
 
-            if (m_header.exportSettings.strip_unchanged && m_baseScene) {
+            if (m_header.exportSettings.stripUnchanged && m_baseScene) {
                 // set cache flags
                 size_t n = ret->entities.size();
                 if (m_entityMeta.size() == n) {
-                    mu::enumerate(m_entityMeta, ret->entities, [](auto& meta, auto& e) {
+                    mu::enumerate(m_entityMeta, ret->entities, [](CacheFileEntityMeta& meta, auto& e) {
                         if (meta.id == e->id) {
                             e->cache_flags.constant = meta.constant;
-                            e->cache_flags.constant_topology = meta.constant_topology;
+                            e->cache_flags.constant_topology = meta.constantTopology;
                         }
                         });
                 }
@@ -295,7 +295,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
 
             // do import
             const SceneCacheInputSettings& settings = GetSettings();
-            ret->import(settings.sis);
+            ret->import(settings.importSettings);
 
             prof.setup_time = timer.elapsed();
         }
@@ -303,7 +303,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
     rec.segments.clear();
 
     // push & pop history
-    if (!m_header.exportSettings.strip_unchanged || sceneIndex != 0) {
+    if (!m_header.exportSettings.stripUnchanged || sceneIndex != 0) {
         m_history.push_back(sceneIndex);
         PopOverflowedSamples();
     }
@@ -320,7 +320,7 @@ ScenePtr SceneCacheInputFile::PostProcess(ScenePtr& sp, const size_t sceneIndex)
     // m_lastScene and m_lastDiff keep reference counts and keep scenes alive.
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
     const SceneCacheInputSettings& settings = GetSettings();
-    if (m_lastScene && (settings.enable_diff && m_header.exportSettings.strip_unchanged)) {
+    if (m_lastScene && (settings.enableDiff && m_header.exportSettings.stripUnchanged)) {
         msProfileScope("SceneCacheInputFile: [%d] diff", static_cast<int>(sceneIndex));
         m_lastDiff = Scene::create();
         m_lastDiff->diff(*sp, *m_lastScene);

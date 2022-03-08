@@ -37,7 +37,7 @@ SceneCacheOutputFile::~SceneCacheOutputFile()
             meta.id = rec.id;
             meta.type = static_cast<uint32_t>(rec.type);
             meta.constant = rec.unchangedCount == m_sceneCountWritten - 1;
-            meta.constant_topology = rec.topologyUnchangedCount == m_sceneCountWritten - 1;
+            meta.constantTopology = rec.topologyUnchangedCount == m_sceneCountWritten - 1;
             scene_buf.write(reinterpret_cast<char*>(&meta), sizeof(meta));
         }
         scene_buf.flush();
@@ -119,7 +119,7 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
 void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
 
     const SceneCacheExportSettings& scExportSettings = m_outputSettings.exportSettings;
-    while (m_sceneCountInQueue > 0 && ((scExportSettings.strip_unchanged && !m_baseScene) || m_sceneCountInQueue >= m_outputSettings.maxQueueSize)) {
+    while (m_sceneCountInQueue > 0 && ((scExportSettings.stripUnchanged && !m_baseScene) || m_sceneCountInQueue >= m_outputSettings.maxQueueSize)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
@@ -136,17 +136,17 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
             ScenePtr& scene = rec.scene;
             std::sort(scene->entities.begin(), scene->entities.end(), [](auto& a, auto& b) { return a->id < b->id; });
 
-            if (exportSettings.flatten_hierarchy)
+            if (exportSettings.flattenHierarchy)
                 scene->flatternHierarchy();
 
-            if (exportSettings.strip_normals) {
+            if (exportSettings.stripNormals) {
                 scene->eachEntity<Mesh>([](Mesh& mesh) {
                     mesh.normals.clear();
                     mesh.md_flags.Set(MESH_DATA_FLAG_HAS_NORMALS , false);
                     mesh.refine_settings.flags.Set(MESH_REFINE_FLAG_GEN_NORMALS, false );
                 });
             }
-            if (exportSettings.strip_tangents) {
+            if (exportSettings.stripTangents) {
                 scene->eachEntity<Mesh>([](Mesh& mesh) {
                     mesh.tangents.clear();
                     mesh.md_flags.Set(MESH_DATA_FLAG_HAS_TANGENTS,false);
@@ -154,22 +154,22 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
                 });
             }
 
-            if (exportSettings.apply_refinement)
+            if (exportSettings.applyRefinement)
                 scene->import(m_outputSettings);
 
-            if (exportSettings.strip_normals) {
+            if (exportSettings.stripNormals) {
                 scene->eachEntity<Mesh>([](Mesh& mesh) {
                     mesh.refine_settings.flags.Set(MESH_REFINE_FLAG_GEN_NORMALS, true);
                 });
             }
-            if (exportSettings.strip_tangents) {
+            if (exportSettings.stripTangents) {
                 scene->eachEntity<Mesh>([](Mesh& mesh) {
                     mesh.refine_settings.flags.Set(MESH_REFINE_FLAG_GEN_TANGENTS, true);
                 });
             }
 
             // strip unchanged
-            if (exportSettings.strip_unchanged) {
+            if (exportSettings.stripUnchanged) {
                 if (!m_baseScene)
                     m_baseScene = scene;
                 else
@@ -288,7 +288,7 @@ void SceneCacheOutputFile::DoWrite()
                 msProfileScope("SceneCacheOutputFile: [%d] write (%u byte)", rec.index, (uint32_t)total_buffer_size);
 
                 CacheFileSceneHeader header;
-                header.buffer_count = static_cast<uint32_t>(buffer_sizes.size());
+                header.bufferCount = static_cast<uint32_t>(buffer_sizes.size());
                 header.time = rec.time;
                 m_stream->write(reinterpret_cast<char*>(&header), sizeof(header));
                 m_stream->write((char*)buffer_sizes.cdata(), buffer_sizes.size_in_byte());
@@ -316,10 +316,10 @@ void SceneCacheOutputFile::Init(const StreamPtr ost, const SceneCacheOutputSetti
         return;
 
     SceneCacheExportSettings* exportSettings = &m_outputSettings.exportSettings;
-    m_encoder = BufferEncoder::CreateEncoder(exportSettings->encoding, exportSettings->encoder_settings);
+    m_encoder = BufferEncoder::CreateEncoder(exportSettings->encoding, exportSettings->encoderSettings);
     if (!m_encoder) {
         exportSettings->encoding = SceneCacheEncoding::Plain;
-        m_encoder = BufferEncoder::CreateEncoder(SceneCacheEncoding::Plain, exportSettings->encoder_settings);
+        m_encoder = BufferEncoder::CreateEncoder(SceneCacheEncoding::Plain, exportSettings->encoderSettings);
     }
 
     CacheFileHeader header;
