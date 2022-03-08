@@ -37,7 +37,6 @@ public class MeshSyncServer : BaseMeshSync {
 #endif
     
     protected override void InitInternalV() {
-        m_instanceRenderer.Clear();
     }
 
 
