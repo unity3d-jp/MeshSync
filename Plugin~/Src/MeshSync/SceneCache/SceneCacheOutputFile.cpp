@@ -42,13 +42,13 @@ SceneCacheOutputFile::~SceneCacheOutputFile()
         }
         scene_buf.flush();
 
-        RawVector<char> encoded_buf;
-        m_encoder->EncodeV(encoded_buf, scene_buf.getBuffer());
+        RawVector<char> encodedBuf;
+        m_encoder->EncodeV(encodedBuf, scene_buf.getBuffer());
 
         CacheFileMetaHeader header;
-        header.size = encoded_buf.size();
+        header.size = encodedBuf.size();
         m_stream->write(reinterpret_cast<char*>(&header), sizeof(header));
-        m_stream->write(encoded_buf.data(), encoded_buf.size());
+        m_stream->write(encodedBuf.data(), encodedBuf.size());
     }
 }
 
