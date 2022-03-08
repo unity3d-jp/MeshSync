@@ -37,7 +37,7 @@ public class MeshSyncServer : BaseMeshSync {
 #endif
     
     protected override void InitInternalV() {
-        
+        m_instanceRenderer.Clear();
     }
 
 
@@ -167,7 +167,6 @@ public class MeshSyncServer : BaseMeshSync {
         if (string.IsNullOrEmpty(GetAssetsFolder())) {
             SetAssetsFolder(MeshSyncConstants.DEFAULT_ASSETS_PATH);
         }
-        
     }   
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -496,9 +495,9 @@ public class MeshSyncServer : BaseMeshSync {
         }
         
 #if UNITY_EDITOR
-        m_instanceRenderer.Init(this, m_cameraMode);
+        m_instanceRenderer.Init(this, m_cameraMode, m_clientInstances);
 #else
-         m_instanceRenderer.Init(this);
+        m_instanceRenderer.Init(this, records:m_clientInstances);
 #endif
     }
 
@@ -581,7 +580,7 @@ public class MeshSyncServer : BaseMeshSync {
     [SerializeField]
     private MeshSyncInstanceRenderer.CameraMode m_cameraMode = MeshSyncInstanceRenderer.CameraMode.GameCameras;
     
-    public MeshSyncInstanceRenderer.CameraMode cameraMode
+    internal MeshSyncInstanceRenderer.CameraMode cameraMode
     {
         get => m_cameraMode;
         set

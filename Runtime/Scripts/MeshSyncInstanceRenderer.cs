@@ -8,7 +8,7 @@ using UnityEditor;
 
 namespace Unity.MeshSync{
     
-    public class MeshSyncInstanceRenderer
+    internal class MeshSyncInstanceRenderer
     {
         private BaseMeshSync m_server;
 
@@ -17,7 +17,6 @@ namespace Unity.MeshSync{
         private Dictionary<string, MeshInstanceInfo> m_instanceInfo = new Dictionary<string, MeshInstanceInfo>();
 
         private bool m_isDirty = false;
-
 
         public enum CameraMode
         {
@@ -29,7 +28,10 @@ namespace Unity.MeshSync{
 
         private CameraMode m_cameraMode = CameraMode.GameCameras;
 
-        public void Init(BaseMeshSync ms, CameraMode cameraMode = CameraMode.GameCameras)
+        public void Init(
+            BaseMeshSync ms, 
+            CameraMode cameraMode = CameraMode.GameCameras, 
+            Dictionary<string, InstanceInfoRecord> records = null)
         {
             m_server = ms;
             m_cameraMode = cameraMode;
@@ -58,6 +60,24 @@ namespace Unity.MeshSync{
             ms.onDeleteEntity -= OnDeleteEntity;
             ms.onSceneUpdateEnd -= OnSceneUpdateEnd;
             ms.onSceneUpdateEnd += OnSceneUpdateEnd;
+            
+            LoadData(records);
+        }
+
+        private void LoadData(Dictionary<string, InstanceInfoRecord> records)
+        {
+            if (records == null)
+                return;
+            
+            m_instanceInfo.Clear();
+            
+            foreach (var record in records)
+            {
+                var key = record.Key;
+                var value = record.Value;
+                
+                OnUpdateInstanceInfo(key, value.go, value.transforms);
+            }
         }
 
         private void OnSceneUpdateEnd()
@@ -258,7 +278,6 @@ namespace Unity.MeshSync{
                 {
                     var batch = matrixBatches[j];
                     
-                    
                     DrawOnCameras(
                         mesh, 
                         i,
@@ -341,7 +360,9 @@ namespace Unity.MeshSync{
             m_cameras = null;
             m_server = null;
             m_cameraMode = CameraMode.None;
+            m_instanceInfo.Clear();
         }
+        
         #endregion
     }
 
