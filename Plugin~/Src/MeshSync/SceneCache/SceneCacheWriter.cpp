@@ -13,45 +13,45 @@ namespace ms {
 
 SceneCacheWriter::~SceneCacheWriter()
 {
-    close();
+    Close();
 }
 
-bool SceneCacheWriter::open(const char *path, const SceneCacheOutputSettings& oscs)
+bool SceneCacheWriter::Open(const char *path, const SceneCacheOutputSettings& oscs)
 {
-    m_osc = OpenOSceneCacheFile(path, oscs);
-    return m_osc != nullptr;
+    m_scOutputFile = OpenOSceneCacheFile(path, oscs);
+    return m_scOutputFile != nullptr;
 }
 
-void SceneCacheWriter::close()
+void SceneCacheWriter::Close()
 {
-    if (valid()) {
+    if (IsValid()) {
         wait();
-        m_osc.reset();
+        m_scOutputFile.reset();
     }
 }
 
-bool SceneCacheWriter::valid() const
+bool SceneCacheWriter::IsValid() const
 {
-    return m_osc != nullptr;
+    return m_scOutputFile != nullptr;
 }
 
 bool SceneCacheWriter::isExporting()
 {
-    if (!valid())
+    if (!IsValid())
         return false;
-    return m_osc->IsWriting();
+    return m_scOutputFile->IsWriting();
 }
 
 void SceneCacheWriter::wait()
 {
-    if (!valid())
+    if (!IsValid())
         return;
-    m_osc->Flush();
+    m_scOutputFile->Flush();
 }
 
 void SceneCacheWriter::kick()
 {
-    if (!valid())
+    if (!IsValid())
         return;
 
     write();
@@ -85,7 +85,7 @@ void SceneCacheWriter::write()
 
         scene->entities = transforms;
         append(scene->entities, geometries);
-        m_osc->AddScene(scene, time);
+        m_scOutputFile->AddScene(scene, time);
     }
 
     if (succeeded) {

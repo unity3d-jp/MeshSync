@@ -25,30 +25,30 @@ SceneCacheOutputFile::~SceneCacheOutputFile()
 
     {
         // add terminator
-        auto terminator = CacheFileSceneHeader::terminator();
-        m_ost->write((char*)&terminator, sizeof(terminator));
+        CacheFileSceneHeader terminator = CacheFileSceneHeader::terminator();
+        m_stream->write(reinterpret_cast<char*>(&terminator), sizeof(terminator));
     }
 
     {
         // add meta data
         mu::MemoryStream scene_buf;
-        for (auto& rec : m_entity_records) {
+        for (std::vector<EntityRecord>::value_type& rec : m_entityRecords) {
             CacheFileEntityMeta meta{};
             meta.id = rec.id;
-            meta.type = (uint32_t)rec.type;
-            meta.constant = rec.unchanged_count == m_scene_count_written - 1;
-            meta.constant_topology = rec.topology_unchanged_count == m_scene_count_written - 1;
-            scene_buf.write((char*)&meta, sizeof(meta));
+            meta.type = static_cast<uint32_t>(rec.type);
+            meta.constant = rec.unchangedCount == m_sceneCountWritten - 1;
+            meta.constant_topology = rec.topologyUnchangedCount == m_sceneCountWritten - 1;
+            scene_buf.write(reinterpret_cast<char*>(&meta), sizeof(meta));
         }
         scene_buf.flush();
 
-        RawVector<char> encoded_buf;
-        m_encoder->EncodeV(encoded_buf, scene_buf.getBuffer());
+        RawVector<char> encodedBuf;
+        m_encoder->EncodeV(encodedBuf, scene_buf.getBuffer());
 
         CacheFileMetaHeader header;
-        header.size = encoded_buf.size();
-        m_ost->write((char*)&header, sizeof(header));
-        m_ost->write(encoded_buf.data(), encoded_buf.size());
+        header.size = encodedBuf.size();
+        m_stream->write(reinterpret_cast<char*>(&header), sizeof(header));
+        m_stream->write(encodedBuf.data(), encodedBuf.size());
     }
 }
 
@@ -56,23 +56,23 @@ SceneCacheOutputFile::~SceneCacheOutputFile()
 
 bool SceneCacheOutputFile::IsValid() const
 {
-    return m_ost && (*m_ost);
+    return m_stream && (*m_stream);
 }
 
 static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments)
 {
-    const auto scene_settings = base->settings;
+    const SceneSettings scene_settings = base->settings;
 
     std::vector<uint64_t> vertex_counts;
     std::vector<ScenePtr> segments;
 
     // materials and non-geometry objects
     {
-        auto segment = Scene::create();
+        std::shared_ptr<Scene> segment = Scene::create();
         segments.push_back(segment);
 
         segment->assets = std::move(base->assets);
-        for (auto& e : base->entities) {
+        for (std::vector<std::shared_ptr<Transform>>::value_type& e : base->entities) {
             if (!e->isGeometry())
                 segment->entities.push_back(e);
         }
@@ -81,13 +81,13 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
     // geometries
     {
         while (segments.size() < max_segments) {
-            auto s = Scene::create();
+            std::shared_ptr<Scene> s = Scene::create();
             s->settings = scene_settings;
             segments.push_back(s);
         }
         vertex_counts.resize(segments.size());
 
-        int segment_count = (int)segments.size();
+        int segment_count = static_cast<int>(segments.size());
         const auto add_geometry = [&](TransformPtr& entity) {
             // add entity to the scene with lowest vertex count. this can improve encode & decode time.
             int idx = 0;
@@ -104,7 +104,7 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
 
         std::vector<TransformPtr> geometries;
         geometries.reserve(base->entities.size());
-        for (auto& e : base->entities) {
+        for (std::vector<std::shared_ptr<Transform>>::value_type& e : base->entities) {
             if (e->isGeometry())
                 geometries.push_back(e);
         }
@@ -118,21 +118,21 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
 
 void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
 
-    const SceneCacheExportSettings& scExportSettings = m_oscs.exportSettings;
-    while (m_scene_count_in_queue > 0 && ((scExportSettings.strip_unchanged && !m_base_scene) || m_scene_count_in_queue >= m_oscs.max_queue_size)) {
+    const SceneCacheExportSettings& scExportSettings = m_outputSettings.exportSettings;
+    while (m_sceneCountInQueue > 0 && ((scExportSettings.strip_unchanged && !m_baseScene) || m_sceneCountInQueue >= m_outputSettings.maxQueueSize)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     std::shared_ptr<SceneRecord> rec_ptr = std::make_shared<SceneRecord>();
     SceneRecord& rec = *rec_ptr;
-    rec.index = m_scene_count_queued++;
+    rec.index = m_sceneCountQueued++;
     rec.time = time;
     rec.scene = scene;
 
     rec.task = std::async(std::launch::async, [this, &rec]() {
         {
             msProfileScope("SceneCacheOutputFile: [%d] scene optimization", rec.index);
-            const SceneCacheExportSettings& exportSettings = m_oscs.exportSettings;
+            const SceneCacheExportSettings& exportSettings = m_outputSettings.exportSettings;
             ScenePtr& scene = rec.scene;
             std::sort(scene->entities.begin(), scene->entities.end(), [](auto& a, auto& b) { return a->id < b->id; });
 
@@ -155,7 +155,7 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
             }
 
             if (exportSettings.apply_refinement)
-                scene->import(m_oscs);
+                scene->import(m_outputSettings);
 
             if (exportSettings.strip_normals) {
                 scene->eachEntity<Mesh>([](Mesh& mesh) {
@@ -170,32 +170,32 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
 
             // strip unchanged
             if (exportSettings.strip_unchanged) {
-                if (!m_base_scene)
-                    m_base_scene = scene;
+                if (!m_baseScene)
+                    m_baseScene = scene;
                 else
-                    scene->strip(*m_base_scene);
+                    scene->strip(*m_baseScene);
             }
 
             // split into segments
-            std::vector<ScenePtr> scene_segments = LoadBalancing(rec.scene, m_oscs.max_scene_segments);
+            std::vector<ScenePtr> scene_segments = LoadBalancing(rec.scene, m_outputSettings.maxSceneSegments);
             const size_t seg_count = scene_segments.size();
             rec.segments.resize(seg_count);
             for (size_t si = 0; si < seg_count; ++si) {
-                auto& seg = rec.segments[si];
+                SceneSegment& seg = rec.segments[si];
                 seg.index = static_cast<int>(si);
                 seg.segment = scene_segments[si];
                 seg.segment->settings = {};
             }
         }
 
-        for (auto& seg : rec.segments) {
+        for (std::vector<SceneSegment>::value_type& seg : rec.segments) {
             seg.task = std::async(std::launch::async, [this, &rec, &seg]() {
                 msProfileScope("SceneCacheOutputFile: [%d] serialize & encode segment (%d)", rec.index, seg.index);
 
                 mu::MemoryStream scene_buf;
                 seg.segment->serialize(scene_buf);
                 scene_buf.flush();
-                m_encoder->EncodeV(seg.encoded_buf, scene_buf.getBuffer());
+                m_encoder->EncodeV(seg.encodedBuf, scene_buf.getBuffer());
             });
         }
     });
@@ -203,14 +203,14 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
     {
         std::unique_lock<std::mutex> l(m_mutex);
         m_queue.emplace_back(std::move(rec_ptr));
-        m_scene_count_in_queue = static_cast<int>(m_queue.size());
+        m_sceneCountInQueue = static_cast<int>(m_queue.size());
     }
-    doWrite();
+    DoWrite();
 }
 
 void SceneCacheOutputFile::Flush()
 {
-    doWrite();
+    DoWrite();
     if (m_task.valid())
         m_task.wait();
 }
@@ -222,15 +222,15 @@ bool SceneCacheOutputFile::IsWriting() const
 
 int SceneCacheOutputFile::GetSceneCountWritten() const
 {
-    return m_scene_count_written;
+    return m_sceneCountWritten;
 }
 
 int SceneCacheOutputFile::GetSceneCountInQueue() const
 {
-    return m_scene_count_in_queue;
+    return m_sceneCountInQueue;
 }
 
-void SceneCacheOutputFile::doWrite()
+void SceneCacheOutputFile::DoWrite()
 {
     auto body = [this]() {
         for (;;) {
@@ -243,7 +243,7 @@ void SceneCacheOutputFile::doWrite()
                 else {
                     rec_ptr = std::move(m_queue.back());
                     m_queue.pop_back();
-                    m_scene_count_in_queue = static_cast<int>(m_queue.size());
+                    m_sceneCountInQueue = static_cast<int>(m_queue.size());
                 }
             }
             if (!rec_ptr)
@@ -256,10 +256,10 @@ void SceneCacheOutputFile::doWrite()
                 // update entity record
                 Scene& scene = *rec.scene;
                 const size_t n = scene.entities.size();
-                m_entity_records.resize(n);
+                m_entityRecords.resize(n);
                 for (size_t i = 0; i < n; ++i) {
-                    auto& e = scene.entities[i];
-                    auto& er = m_entity_records[i];
+                    std::shared_ptr<Transform>& e = scene.entities[i];
+                    EntityRecord& er = m_entityRecords[i];
                     if (er.type == EntityType::Unknown) {
                         er.type = e->getType();
                         er.id = e->id;
@@ -268,9 +268,9 @@ void SceneCacheOutputFile::doWrite()
                         continue;
 
                     if (e->isUnchanged())
-                        er.unchanged_count++;
+                        er.unchangedCount++;
                     if (e->isTopologyUnchanged())
-                        er.topology_unchanged_count++;
+                        er.topologyUnchangedCount++;
                 }
             }
 
@@ -281,8 +281,8 @@ void SceneCacheOutputFile::doWrite()
                 for (std::vector<SceneSegment>::value_type& seg : rec.segments) {
                     if (seg.task.valid())
                         seg.task.wait();
-                    buffer_sizes.push_back(seg.encoded_buf.size());
-                    total_buffer_size += seg.encoded_buf.size();
+                    buffer_sizes.push_back(seg.encodedBuf.size());
+                    total_buffer_size += seg.encodedBuf.size();
                 }
 
                 msProfileScope("SceneCacheOutputFile: [%d] write (%u byte)", rec.index, (uint32_t)total_buffer_size);
@@ -290,12 +290,12 @@ void SceneCacheOutputFile::doWrite()
                 CacheFileSceneHeader header;
                 header.buffer_count = static_cast<uint32_t>(buffer_sizes.size());
                 header.time = rec.time;
-                m_ost->write(reinterpret_cast<char*>(&header), sizeof(header));
-                m_ost->write((char*)buffer_sizes.cdata(), buffer_sizes.size_in_byte());
-                for (auto& seg : rec.segments)
-                    m_ost->write(seg.encoded_buf.cdata(), seg.encoded_buf.size());
+                m_stream->write(reinterpret_cast<char*>(&header), sizeof(header));
+                m_stream->write((char*)buffer_sizes.cdata(), buffer_sizes.size_in_byte());
+                for (std::vector<SceneSegment>::value_type& seg : rec.segments)
+                    m_stream->write(seg.encodedBuf.cdata(), seg.encodedBuf.size());
             }
-            ++m_scene_count_written;
+            ++m_sceneCountWritten;
         }
     };
 
@@ -310,12 +310,12 @@ void SceneCacheOutputFile::doWrite()
 //----------------------------------------------------------------------------------------------------------------------
 
 void SceneCacheOutputFile::Init(const StreamPtr ost, const SceneCacheOutputSettings& oscs) {
-    m_ost = ost;
-    m_oscs = oscs;
-    if (!m_ost || !(*m_ost))
+    m_stream = ost;
+    m_outputSettings = oscs;
+    if (!m_stream || !(*m_stream))
         return;
 
-    SceneCacheExportSettings* exportSettings = &m_oscs.exportSettings;
+    SceneCacheExportSettings* exportSettings = &m_outputSettings.exportSettings;
     m_encoder = BufferEncoder::CreateEncoder(exportSettings->encoding, exportSettings->encoder_settings);
     if (!m_encoder) {
         exportSettings->encoding = SceneCacheEncoding::Plain;
@@ -323,8 +323,8 @@ void SceneCacheOutputFile::Init(const StreamPtr ost, const SceneCacheOutputSetti
     }
 
     CacheFileHeader header;
-    header.exportSettings = m_oscs.exportSettings;
-    m_ost->write(reinterpret_cast<char*>(&header), sizeof(header));
+    header.exportSettings = m_outputSettings.exportSettings;
+    m_stream->write(reinterpret_cast<char*>(&header), sizeof(header));
 }
 
 

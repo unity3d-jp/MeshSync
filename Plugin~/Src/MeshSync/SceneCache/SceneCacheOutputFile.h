@@ -27,7 +27,7 @@ public:
     int GetSceneCountInQueue() const ;
 
 protected:
-    void doWrite();
+    void DoWrite();
 
 private:
     void Init(StreamPtr ost, const SceneCacheOutputSettings& oscs);
@@ -38,7 +38,7 @@ private:
     {
         int index = 0;
         ScenePtr segment;
-        RawVector<char> encoded_buf;
+        RawVector<char> encodedBuf;
         std::future<void> task;
     };
 
@@ -56,22 +56,22 @@ private:
     {
         EntityType type = EntityType::Unknown;
         int id = 0;
-        int unchanged_count = 0;
-        int topology_unchanged_count = 0;
+        int unchangedCount = 0;
+        int topologyUnchangedCount = 0;
     };
 
-    StreamPtr m_ost = nullptr;
-    SceneCacheOutputSettings m_oscs;
+    StreamPtr m_stream = nullptr;
+    SceneCacheOutputSettings m_outputSettings;
 
     std::mutex m_mutex;
     std::list<SceneRecordPtr> m_queue;
     std::future<void> m_task;
 
-    ScenePtr m_base_scene;
-    int m_scene_count_queued = 0;
-    int m_scene_count_written = 0;
-    int m_scene_count_in_queue = 0;
-    std::vector<EntityRecord> m_entity_records;
+    ScenePtr m_baseScene;
+    int m_sceneCountQueued = 0;
+    int m_sceneCountWritten = 0;
+    int m_sceneCountInQueue = 0;
+    std::vector<EntityRecord> m_entityRecords;
 
     BufferEncoderPtr m_encoder;
 };

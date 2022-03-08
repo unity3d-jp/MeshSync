@@ -20,9 +20,9 @@ public:
     SceneCacheWriter() = default;
     ~SceneCacheWriter() override;
 
-    bool open(const char *path, const SceneCacheOutputSettings& oscs);
-    void close();
-    bool valid() const;
+    bool Open(const char *path, const SceneCacheOutputSettings& oscs);
+    void Close();
+    bool IsValid() const;
 
     bool isExporting() override;
     void wait() override;
@@ -34,8 +34,8 @@ private:
 
     void write();
 
-    SceneCacheOutputFilePtr m_osc;
-    std::string m_error_message;
+    SceneCacheOutputFilePtr m_scOutputFile;
+    std::string m_errorMessage;
 };
 
 } // namespace ms
