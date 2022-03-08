@@ -67,11 +67,11 @@ private:
     std::list<SceneRecordPtr> m_queue;
     std::future<void> m_task;
 
-    ScenePtr m_base_scene;
-    int m_scene_count_queued = 0;
-    int m_scene_count_written = 0;
-    int m_scene_count_in_queue = 0;
-    std::vector<EntityRecord> m_entity_records;
+    ScenePtr m_baseScene;
+    int m_sceneCountQueued = 0;
+    int m_sceneCountWritten = 0;
+    int m_sceneCountInQueue = 0;
+    std::vector<EntityRecord> m_entityRecords;
 
     BufferEncoderPtr m_encoder;
 };

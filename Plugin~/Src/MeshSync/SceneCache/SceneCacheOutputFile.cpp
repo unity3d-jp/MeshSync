@@ -26,19 +26,19 @@ SceneCacheOutputFile::~SceneCacheOutputFile()
     {
         // add terminator
         auto terminator = CacheFileSceneHeader::terminator();
-        m_ost->write((char*)&terminator, sizeof(terminator));
+        m_ost->write(reinterpret_cast<char*>(&terminator), sizeof(terminator));
     }
 
     {
         // add meta data
         mu::MemoryStream scene_buf;
-        for (auto& rec : m_entity_records) {
+        for (std::vector<EntityRecord>::value_type& rec : m_entityRecords) {
             CacheFileEntityMeta meta{};
             meta.id = rec.id;
-            meta.type = (uint32_t)rec.type;
-            meta.constant = rec.unchanged_count == m_scene_count_written - 1;
-            meta.constant_topology = rec.topology_unchanged_count == m_scene_count_written - 1;
-            scene_buf.write((char*)&meta, sizeof(meta));
+            meta.type = static_cast<uint32_t>(rec.type);
+            meta.constant = rec.unchanged_count == m_sceneCountWritten - 1;
+            meta.constant_topology = rec.topology_unchanged_count == m_sceneCountWritten - 1;
+            scene_buf.write(reinterpret_cast<char*>(&meta), sizeof(meta));
         }
         scene_buf.flush();
 
@@ -47,7 +47,7 @@ SceneCacheOutputFile::~SceneCacheOutputFile()
 
         CacheFileMetaHeader header;
         header.size = encoded_buf.size();
-        m_ost->write((char*)&header, sizeof(header));
+        m_ost->write(reinterpret_cast<char*>(&header), sizeof(header));
         m_ost->write(encoded_buf.data(), encoded_buf.size());
     }
 }
@@ -81,13 +81,13 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
     // geometries
     {
         while (segments.size() < max_segments) {
-            auto s = Scene::create();
+            std::shared_ptr<Scene> s = Scene::create();
             s->settings = scene_settings;
             segments.push_back(s);
         }
         vertex_counts.resize(segments.size());
 
-        int segment_count = (int)segments.size();
+        int segment_count = static_cast<int>(segments.size());
         const auto add_geometry = [&](TransformPtr& entity) {
             // add entity to the scene with lowest vertex count. this can improve encode & decode time.
             int idx = 0;
@@ -119,13 +119,13 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
 void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
 
     const SceneCacheExportSettings& scExportSettings = m_oscs.exportSettings;
-    while (m_scene_count_in_queue > 0 && ((scExportSettings.strip_unchanged && !m_base_scene) || m_scene_count_in_queue >= m_oscs.max_queue_size)) {
+    while (m_sceneCountInQueue > 0 && ((scExportSettings.strip_unchanged && !m_baseScene) || m_sceneCountInQueue >= m_oscs.max_queue_size)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     std::shared_ptr<SceneRecord> rec_ptr = std::make_shared<SceneRecord>();
     SceneRecord& rec = *rec_ptr;
-    rec.index = m_scene_count_queued++;
+    rec.index = m_sceneCountQueued++;
     rec.time = time;
     rec.scene = scene;
 
@@ -170,10 +170,10 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
 
             // strip unchanged
             if (exportSettings.strip_unchanged) {
-                if (!m_base_scene)
-                    m_base_scene = scene;
+                if (!m_baseScene)
+                    m_baseScene = scene;
                 else
-                    scene->strip(*m_base_scene);
+                    scene->strip(*m_baseScene);
             }
 
             // split into segments
@@ -203,7 +203,7 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
     {
         std::unique_lock<std::mutex> l(m_mutex);
         m_queue.emplace_back(std::move(rec_ptr));
-        m_scene_count_in_queue = static_cast<int>(m_queue.size());
+        m_sceneCountInQueue = static_cast<int>(m_queue.size());
     }
     doWrite();
 }
@@ -222,12 +222,12 @@ bool SceneCacheOutputFile::IsWriting() const
 
 int SceneCacheOutputFile::GetSceneCountWritten() const
 {
-    return m_scene_count_written;
+    return m_sceneCountWritten;
 }
 
 int SceneCacheOutputFile::GetSceneCountInQueue() const
 {
-    return m_scene_count_in_queue;
+    return m_sceneCountInQueue;
 }
 
 void SceneCacheOutputFile::doWrite()
@@ -243,7 +243,7 @@ void SceneCacheOutputFile::doWrite()
                 else {
                     rec_ptr = std::move(m_queue.back());
                     m_queue.pop_back();
-                    m_scene_count_in_queue = static_cast<int>(m_queue.size());
+                    m_sceneCountInQueue = static_cast<int>(m_queue.size());
                 }
             }
             if (!rec_ptr)
@@ -256,10 +256,10 @@ void SceneCacheOutputFile::doWrite()
                 // update entity record
                 Scene& scene = *rec.scene;
                 const size_t n = scene.entities.size();
-                m_entity_records.resize(n);
+                m_entityRecords.resize(n);
                 for (size_t i = 0; i < n; ++i) {
                     auto& e = scene.entities[i];
-                    auto& er = m_entity_records[i];
+                    auto& er = m_entityRecords[i];
                     if (er.type == EntityType::Unknown) {
                         er.type = e->getType();
                         er.id = e->id;
@@ -295,7 +295,7 @@ void SceneCacheOutputFile::doWrite()
                 for (auto& seg : rec.segments)
                     m_ost->write(seg.encoded_buf.cdata(), seg.encoded_buf.size());
             }
-            ++m_scene_count_written;
+            ++m_sceneCountWritten;
         }
     };
 
