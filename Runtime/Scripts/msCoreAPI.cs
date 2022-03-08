@@ -3022,6 +3022,7 @@ internal struct SceneCacheData {
     [DllImport(Lib.name)]
     static extern AnimationCurveData msISceneCacheGetTimeCurve(IntPtr self);
 
+    //[TODO-sin: 2022-3-8] Remove baseFrame parameter
     [DllImport(Lib.name)]
     static extern AnimationCurveData msISceneCacheGetFrameCurve(IntPtr self, int baseFrame);
 
@@ -3094,8 +3095,8 @@ internal struct SceneCacheData {
         return CreateAnimationCurveFromData(data, im);
     }
 
-    public AnimationCurve GetFrameCurve(int baseFrame) {
-        AnimationCurveData data = msISceneCacheGetFrameCurve(self, baseFrame);
+    public AnimationCurve GetFrameCurve() {
+        AnimationCurveData data = msISceneCacheGetFrameCurve(self, 0);
         if (!data)
             return null;
 

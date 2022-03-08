@@ -25,13 +25,7 @@ public class SceneCachePlayer : BaseMeshSync {
     internal enum TimeUnit {
         Seconds,
         Frames,
-    }
-
-    internal enum BaseFrame {
-        Zero = 0,
-        One = 1,
-    }
-    
+    }    
     #endregion
 
 
@@ -105,8 +99,6 @@ public class SceneCachePlayer : BaseMeshSync {
     internal bool GetInterpolation() { return m_interpolation; }
     internal void SetInterpolation(bool interpolation) { m_interpolation = interpolation;}
 
-    internal BaseFrame GetBaseFrame() { return m_baseFrame; }
-    internal void SetBaseFrame(BaseFrame baseFrame) { m_baseFrame = baseFrame; }
 
     internal int GetFrame() { return m_frame; }
     internal void SetFrame(int frame) { m_frame = frame;}
@@ -306,7 +298,7 @@ public class SceneCachePlayer : BaseMeshSync {
             AnimationCurve curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
             clip.SetCurve("", tPlayer, "m_time", curve);
         } else if (m_timeUnit == TimeUnit.Frames) {
-            AnimationCurve curve = m_sceneCache.GetFrameCurve((int)m_baseFrame);
+            AnimationCurve curve = m_sceneCache.GetFrameCurve();
             clip.SetCurve("", tPlayer, "m_frame", curve);
         }
         
@@ -321,9 +313,8 @@ public class SceneCachePlayer : BaseMeshSync {
 
 
         if (m_timeUnit == TimeUnit.Frames) {
-            int offset = (int)m_baseFrame;
-            m_frame = Mathf.Clamp(m_frame, offset, frameCount + offset);
-            m_time = m_sceneCache.GetTime(m_frame - offset);
+            m_frame = Mathf.Clamp(m_frame, 0, frameCount);
+            m_time = m_sceneCache.GetTime(m_frame);
         }
 
         if (!m_sceneCache) {
@@ -503,7 +494,6 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] TimeUnit  m_timeUnit      = TimeUnit.Seconds;
     [SerializeField] float     m_time;
     [SerializeField] bool      m_interpolation = false;
-    [SerializeField] BaseFrame m_baseFrame     = BaseFrame.One;
     [SerializeField] int       m_frame         = 1;
     [SerializeField] int       m_preloadLength = 1;
 

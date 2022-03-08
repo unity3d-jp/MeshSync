@@ -125,13 +125,6 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
                 
             } else if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Frames) {
 
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Base Frame",
-                    guiFunc: () => ((SceneCachePlayer.BaseFrame) EditorGUILayout.Popup("Base Frame", (int)t.GetBaseFrame(), BASE_FRAME_ENUMS)),                   
-                    updateFunc: (SceneCachePlayer.BaseFrame baseFrame) => {
-                        t.SetBaseFrame(baseFrame);                    
-                        t.ResetTimeAnimation();
-                    });
-
                 changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Frame",
                     guiFunc: () => (EditorGUILayout.IntField("Frame", t.GetFrame())),
                     updateFunc: (int frame) => { t.SetFrame(frame); });
@@ -279,7 +272,6 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
 
 
     private static readonly string[] TIME_UNIT_ENUMS = System.Enum.GetNames( typeof( SceneCachePlayer.TimeUnit ) );
-    private static readonly string[] BASE_FRAME_ENUMS = System.Enum.GetNames( typeof( SceneCachePlayer.BaseFrame ) );
     
 
 }
