@@ -25,7 +25,7 @@ SceneCacheOutputFile::~SceneCacheOutputFile()
 
     {
         // add terminator
-        auto terminator = CacheFileSceneHeader::terminator();
+        CacheFileSceneHeader terminator = CacheFileSceneHeader::terminator();
         m_stream->write(reinterpret_cast<char*>(&terminator), sizeof(terminator));
     }
 
@@ -61,14 +61,14 @@ bool SceneCacheOutputFile::IsValid() const
 
 static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments)
 {
-    const auto scene_settings = base->settings;
+    const SceneSettings scene_settings = base->settings;
 
     std::vector<uint64_t> vertex_counts;
     std::vector<ScenePtr> segments;
 
     // materials and non-geometry objects
     {
-        auto segment = Scene::create();
+        std::shared_ptr<Scene> segment = Scene::create();
         segments.push_back(segment);
 
         segment->assets = std::move(base->assets);
@@ -104,7 +104,7 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
 
         std::vector<TransformPtr> geometries;
         geometries.reserve(base->entities.size());
-        for (auto& e : base->entities) {
+        for (std::vector<std::shared_ptr<Transform>>::value_type& e : base->entities) {
             if (e->isGeometry())
                 geometries.push_back(e);
         }
@@ -181,14 +181,14 @@ void SceneCacheOutputFile::AddScene(const ScenePtr scene, const float time) {
             const size_t seg_count = scene_segments.size();
             rec.segments.resize(seg_count);
             for (size_t si = 0; si < seg_count; ++si) {
-                auto& seg = rec.segments[si];
+                SceneSegment& seg = rec.segments[si];
                 seg.index = static_cast<int>(si);
                 seg.segment = scene_segments[si];
                 seg.segment->settings = {};
             }
         }
 
-        for (auto& seg : rec.segments) {
+        for (std::vector<SceneSegment>::value_type& seg : rec.segments) {
             seg.task = std::async(std::launch::async, [this, &rec, &seg]() {
                 msProfileScope("SceneCacheOutputFile: [%d] serialize & encode segment (%d)", rec.index, seg.index);
 
@@ -258,8 +258,8 @@ void SceneCacheOutputFile::doWrite()
                 const size_t n = scene.entities.size();
                 m_entityRecords.resize(n);
                 for (size_t i = 0; i < n; ++i) {
-                    auto& e = scene.entities[i];
-                    auto& er = m_entityRecords[i];
+                    std::shared_ptr<Transform>& e = scene.entities[i];
+                    EntityRecord& er = m_entityRecords[i];
                     if (er.type == EntityType::Unknown) {
                         er.type = e->getType();
                         er.id = e->id;
@@ -292,7 +292,7 @@ void SceneCacheOutputFile::doWrite()
                 header.time = rec.time;
                 m_stream->write(reinterpret_cast<char*>(&header), sizeof(header));
                 m_stream->write((char*)buffer_sizes.cdata(), buffer_sizes.size_in_byte());
-                for (auto& seg : rec.segments)
+                for (std::vector<SceneSegment>::value_type& seg : rec.segments)
                     m_stream->write(seg.encoded_buf.cdata(), seg.encoded_buf.size());
             }
             ++m_sceneCountWritten;
