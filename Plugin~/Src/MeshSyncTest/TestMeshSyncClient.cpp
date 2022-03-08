@@ -60,7 +60,10 @@ TestCase(Test_SendMesh) {
         mesh->setupDataFlags();
 
 
-        writer0.time = writer1.time = writer2.time = 0.5f * i;
+        const float writerTime = 0.5f * i;
+        writer0.SetTime(writerTime);
+        writer1.SetTime(writerTime);
+        writer2.SetTime(writerTime);
 
         writer0.geometries.emplace_back(std::static_pointer_cast<ms::Transform>(mesh->clone(true)));
         writer0.kick();

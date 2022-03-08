@@ -14,15 +14,14 @@ class SceneCacheOutputFile;
 class SceneCacheWriter : public SceneExporter
 {
 public:
-    float time = 0.0f;
-
-public:
     SceneCacheWriter() = default;
     ~SceneCacheWriter() override;
 
     bool Open(const char *path, const SceneCacheOutputSettings& oscs);
     void Close();
     bool IsValid() const;
+    inline void SetTime(float time);
+    inline float GetTime() const;
 
     bool isExporting() override;
     void wait() override;
@@ -36,7 +35,14 @@ private:
 
     SceneCacheOutputFilePtr m_scOutputFile;
     std::string m_errorMessage;
+    float m_time = 0.0f;
+
 };
+//----------------------------------------------------------------------------------------------------------------------
+
+void SceneCacheWriter::SetTime(const float time) { m_time = time; }
+float SceneCacheWriter::GetTime() const { return m_time;}
+
 
 } // namespace ms
 
