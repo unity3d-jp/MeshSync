@@ -21,6 +21,7 @@ public:
     void Close();
     bool IsValid() const;
     inline void SetTime(float time);
+    inline float GetTime() const;
 
     bool isExporting() override;
     void wait() override;
@@ -37,8 +38,11 @@ private:
     float m_time = 0.0f;
 
 };
+//----------------------------------------------------------------------------------------------------------------------
 
 void SceneCacheWriter::SetTime(const float time) { m_time = time; }
+float SceneCacheWriter::GetTime() const { return m_time;}
+
 
 } // namespace ms
 
