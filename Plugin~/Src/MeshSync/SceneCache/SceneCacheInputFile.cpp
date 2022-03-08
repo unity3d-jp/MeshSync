@@ -101,7 +101,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
         // enumerate all scene headers
         CacheFileSceneHeader sh;
         m_stream->read(reinterpret_cast<char*>(&sh), sizeof(sh));
-        if (sh.buffer_count == 0) {
+        if (sh.bufferCount == 0) {
             // empty header is a terminator
             break;
         }
@@ -109,7 +109,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
             SceneRecord rec;
             rec.time = sh.time;
 
-            rec.bufferSizes.resize_discard(sh.buffer_count);
+            rec.bufferSizes.resize_discard(sh.bufferCount);
             m_stream->read(reinterpret_cast<char*>(rec.bufferSizes.data()), rec.bufferSizes.size_in_byte());
             rec.pos = static_cast<uint64_t>(m_stream->tellg());
 
@@ -117,7 +117,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
             for (uint64_t s : rec.bufferSizes)
                 rec.bufferSizeTotal += s;
 
-            rec.segments.resize(sh.buffer_count);
+            rec.segments.resize(sh.bufferCount);
 
             m_records.emplace_back(std::move(rec));
             m_stream->seekg(rec.bufferSizeTotal, std::ios::cur);

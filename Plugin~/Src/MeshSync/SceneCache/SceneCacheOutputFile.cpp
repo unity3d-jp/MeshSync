@@ -37,7 +37,7 @@ SceneCacheOutputFile::~SceneCacheOutputFile()
             meta.id = rec.id;
             meta.type = static_cast<uint32_t>(rec.type);
             meta.constant = rec.unchangedCount == m_sceneCountWritten - 1;
-            meta.constant_topology = rec.topologyUnchangedCount == m_sceneCountWritten - 1;
+            meta.constantTopology = rec.topologyUnchangedCount == m_sceneCountWritten - 1;
             scene_buf.write(reinterpret_cast<char*>(&meta), sizeof(meta));
         }
         scene_buf.flush();
@@ -288,7 +288,7 @@ void SceneCacheOutputFile::DoWrite()
                 msProfileScope("SceneCacheOutputFile: [%d] write (%u byte)", rec.index, (uint32_t)total_buffer_size);
 
                 CacheFileSceneHeader header;
-                header.buffer_count = static_cast<uint32_t>(buffer_sizes.size());
+                header.bufferCount = static_cast<uint32_t>(buffer_sizes.size());
                 header.time = rec.time;
                 m_stream->write(reinterpret_cast<char*>(&header), sizeof(header));
                 m_stream->write((char*)buffer_sizes.cdata(), buffer_sizes.size_in_byte());
