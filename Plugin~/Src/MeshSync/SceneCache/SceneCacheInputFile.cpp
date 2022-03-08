@@ -295,7 +295,7 @@ ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPr
 
             // do import
             const SceneCacheInputSettings& settings = GetSettings();
-            ret->import(settings.sis);
+            ret->import(settings.importSettings);
 
             prof.setup_time = timer.elapsed();
         }
@@ -320,7 +320,7 @@ ScenePtr SceneCacheInputFile::PostProcess(ScenePtr& sp, const size_t sceneIndex)
     // m_lastScene and m_lastDiff keep reference counts and keep scenes alive.
     // (plugin APIs return raw scene pointers. someone needs to keep its reference counts)
     const SceneCacheInputSettings& settings = GetSettings();
-    if (m_lastScene && (settings.enable_diff && m_header.exportSettings.stripUnchanged)) {
+    if (m_lastScene && (settings.enableDiff && m_header.exportSettings.stripUnchanged)) {
         msProfileScope("SceneCacheInputFile: [%d] diff", static_cast<int>(sceneIndex));
         m_lastDiff = Scene::create();
         m_lastDiff->diff(*sp, *m_lastScene);
