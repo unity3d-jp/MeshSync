@@ -94,6 +94,7 @@ public class SceneCachePlayer : BaseMeshSync {
         if (!m_sceneCache)
             return;
 
+        frame = Mathf.Clamp(frame, 0, m_sceneCache.sceneCount);        
         m_time = (float) frame / m_sceneCache.sampleRate;
     }
     
