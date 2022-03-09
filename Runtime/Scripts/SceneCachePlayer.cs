@@ -343,24 +343,7 @@ public class SceneCachePlayer : BaseMeshSync {
         ulong sceneGetBegin = Misc.GetTimeNS();
 #endif
 
-        SceneData scene = default(SceneData);
-        switch (m_playbackMode) {
-            case SceneCachePlaybackMode.SnapToPreviousFrame: {
-                int frame = Mathf.FloorToInt(time * m_sceneCache.sampleRate);
-                scene = m_sceneCache.GetSceneByIndex(frame);
-                break;
-            }
-
-            case SceneCachePlaybackMode.SnapToNearestFrame: {
-                int frame = Mathf.RoundToInt(time * m_sceneCache.sampleRate);
-                scene = m_sceneCache.GetSceneByIndex(frame);
-                break;
-            }
-            case SceneCachePlaybackMode.Interpolate: {
-                scene = m_sceneCache.GetSceneByTime(m_time, lerp: true);
-                break;
-            } 
-        }        
+        SceneData scene = LoadSceneData(time);
         
         // get scene
 #if UNITY_EDITOR
@@ -384,7 +367,28 @@ public class SceneCachePlayer : BaseMeshSync {
             }
 #endif
         }
-        
+    }
+
+    private SceneData LoadSceneData(float time) {
+        SceneData scene = default(SceneData);
+        switch (m_playbackMode) {
+            case SceneCachePlaybackMode.SnapToPreviousFrame: {
+                int frame = Mathf.FloorToInt(time * m_sceneCache.sampleRate);
+                scene = m_sceneCache.GetSceneByIndex(frame);
+                break;
+            }
+
+            case SceneCachePlaybackMode.SnapToNearestFrame: {
+                int frame = Mathf.RoundToInt(time * m_sceneCache.sampleRate);
+                scene = m_sceneCache.GetSceneByIndex(frame);
+                break;
+            }
+            case SceneCachePlaybackMode.Interpolate: {
+                scene = m_sceneCache.GetSceneByTime(m_time, lerp: true);
+                break;
+            }
+        }
+        return scene;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
