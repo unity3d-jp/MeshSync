@@ -84,12 +84,6 @@ public class SceneCachePlayer : BaseMeshSync {
 
     internal float GetRequestedNormalizedTime() { return m_reqNormalizedTime;}
 
-    internal TimeUnit GetTimeUnit() { return m_timeUnit; }
-
-    internal void SetTimeUnit(TimeUnit timeUnit) {
-        m_timeUnit = timeUnit;
-    }
-
     internal SceneCachePlaybackMode GetPlaybackMode()                             { return m_playbackMode; }
     internal void                   SetPlaybackMode(SceneCachePlaybackMode mode ) { m_playbackMode = mode; }
 
@@ -492,7 +486,6 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] private string                 m_sceneCacheFilePath = null; //The full path of the file. Use '/'
     [SerializeField] private SceneCachePlaybackMode m_playbackMode = SceneCachePlaybackMode.SnapToNearestFrame;
     
-    [SerializeField] TimeUnit  m_timeUnit      = TimeUnit.Seconds;
     [SerializeField] float     m_time;
     [SerializeField] int       m_frame         = 1;
     [SerializeField] int       m_preloadLength = 1;

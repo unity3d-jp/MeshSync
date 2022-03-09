@@ -107,21 +107,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
                     t.SetPlaybackMode(mode);
                 }
             );
-            
-            
-            
-            //Time Unit
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"SceneCache: Time Unit",
-                guiFunc: () => (SceneCachePlayer.TimeUnit) EditorGUILayout.Popup("Time Unit", 
-                    (int) t.GetTimeUnit(), TIME_UNIT_ENUMS), 
-                updateFunc: (SceneCachePlayer.TimeUnit timeUnit) => {
-                    t.SetTimeUnit(timeUnit);
-                    t.ResetTimeAnimation();                    
-                }
-            );
 
-
-            SceneCachePlayer.TimeUnit selectedTimeUnit = t.GetTimeUnit();
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Time",
                 guiFunc: () => (EditorGUILayout.FloatField("Time", t.GetTime())),
                 updateFunc: (float time) => { t.SetTime(time); });
