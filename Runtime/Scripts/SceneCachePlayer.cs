@@ -116,8 +116,7 @@ public class SceneCachePlayer : BaseMeshSync {
         
         switch (m_timeUnit) {
             case TimeUnit.Seconds: {
-                m_time = time;
-                ClampTime();
+                m_time = ClampTime(time);
                 break;
             }
             case TimeUnit.Frames: {
@@ -446,8 +445,8 @@ public class SceneCachePlayer : BaseMeshSync {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    void ClampTime() {
-        m_time = Mathf.Clamp(m_time, m_timeRange.start, m_timeRange.end);
+    float ClampTime(float time) {
+        return Mathf.Clamp(time, m_timeRange.start, m_timeRange.end);
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -463,7 +462,7 @@ public class SceneCachePlayer : BaseMeshSync {
         if (!m_sceneCache)
             return;
         
-        ClampTime();
+        m_time = ClampTime(m_time);
     }
 #endif
 
@@ -483,8 +482,7 @@ public class SceneCachePlayer : BaseMeshSync {
         if (!m_sceneCache)
             return;
         
-        ClampTime();
-        
+        m_time = ClampTime(m_time);        
     }
 
     protected override void OnDisable() {
