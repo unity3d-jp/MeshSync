@@ -295,12 +295,6 @@ public class SceneCachePlayer : BaseMeshSync {
 
     private void UpdatePlayer(bool updateNonMaterialAssets) {
 
-
-        if (m_timeUnit == TimeUnit.Frames) {
-            m_frame = Mathf.Clamp(m_frame, 0, frameCount);
-            m_time = m_sceneCache.GetTime(m_frame);
-        }
-
         if (!m_sceneCache) {
             return;
         }
@@ -353,14 +347,14 @@ public class SceneCachePlayer : BaseMeshSync {
         SceneData scene = default(SceneData);
         switch (m_playbackMode) {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
-                int frame = Mathf.FloorToInt(time * m_sceneCache.sampleRate);
-                scene = m_sceneCache.GetSceneByIndex(frame);
+                m_frame = Mathf.Clamp(Mathf.FloorToInt(time * m_sceneCache.sampleRate), 0, frameCount);
+                scene   = m_sceneCache.GetSceneByIndex(m_frame);
                 break;
             }
 
             case SceneCachePlaybackMode.SnapToNearestFrame: {
-                int frame = Mathf.RoundToInt(time * m_sceneCache.sampleRate);
-                scene = m_sceneCache.GetSceneByIndex(frame);
+                m_frame = Mathf.Clamp(Mathf.RoundToInt(time * m_sceneCache.sampleRate), 0, frameCount);
+                scene   = m_sceneCache.GetSceneByIndex(m_frame);
                 break;
             }
             case SceneCachePlaybackMode.Interpolate: {

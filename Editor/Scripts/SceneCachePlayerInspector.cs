@@ -122,20 +122,12 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
 
 
             SceneCachePlayer.TimeUnit selectedTimeUnit = t.GetTimeUnit();
-            
-            if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Seconds) {
-
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Time",
-                    guiFunc: () => (EditorGUILayout.FloatField("Time", t.GetTime())),
-                    updateFunc: (float time) => { t.SetTime(time); });
-                
-            } else if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Frames) {
-
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Frame",
-                    guiFunc: () => (EditorGUILayout.IntField("Frame", t.GetFrame())),
-                    updateFunc: (int frame) => { t.SetFrame(frame); });
-                
-            }
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Time",
+                guiFunc: () => (EditorGUILayout.FloatField("Time", t.GetTime())),
+                updateFunc: (float time) => { t.SetTime(time); });
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Frame",
+                guiFunc: () => (EditorGUILayout.IntField("Frame", t.GetFrame())),
+                updateFunc: (int frame) => { t.SetFrame(frame); });
 
             // preload
             {                
