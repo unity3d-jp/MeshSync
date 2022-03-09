@@ -100,6 +100,17 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             }
             EditorGUILayout.Space();
 
+            //Playback Mode
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"SceneCache: Playback Mode",
+                guiFunc: () => 
+                    (SceneCachePlaybackMode)EditorGUILayout.EnumPopup("Primitive to create:", t.GetPlaybackMode()), 
+                updateFunc: (SceneCachePlaybackMode mode) => {
+                    t.SetPlaybackMode(mode);
+                }
+            );
+            
+            
+            
             //Time Unit
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"SceneCache: Time Unit",
                 guiFunc: () => (SceneCachePlayer.TimeUnit) EditorGUILayout.Popup("Time Unit", 
