@@ -91,7 +91,14 @@ public class SceneCachePlayer : BaseMeshSync {
     internal void SetTime(float time) { m_time = time; }
 
     internal int GetFrame() { return m_frame; }
-    internal void SetFrame(int frame) { m_frame = frame;}
+
+    internal void SetTimeByFrame(int frame) {
+        if (!m_sceneCache)
+            return;
+
+        m_time = (float) frame / m_sceneCache.sampleRate; 
+        
+    }
 
     internal int GetPreloadLength() { return m_preloadLength;}
     internal void SetPreloadLength(int preloadLength) { m_preloadLength = preloadLength;}
@@ -487,7 +494,6 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] private SceneCachePlaybackMode m_playbackMode = SceneCachePlaybackMode.SnapToNearestFrame;
     
     [SerializeField] float     m_time;
-    [SerializeField] int       m_frame         = 1;
     [SerializeField] int       m_preloadLength = 1;
 
     [SerializeField] private SceneCachePlayerConfig m_config;
@@ -501,6 +507,7 @@ public class SceneCachePlayer : BaseMeshSync {
         
     SceneCacheData m_sceneCache;
     TimeRange      m_timeRange;
+    int            m_frame = 0;
     float          m_timePrev          = -1;
     Animator       m_animator          = null;
     private float  m_reqNormalizedTime = 0;

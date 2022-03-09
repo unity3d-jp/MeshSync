@@ -102,18 +102,20 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             //Playback Mode
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"SceneCache: Playback Mode",
                 guiFunc: () => 
-                    (SceneCachePlaybackMode)EditorGUILayout.EnumPopup("Primitive to create:", t.GetPlaybackMode()), 
+                    (SceneCachePlaybackMode)EditorGUILayout.EnumPopup("Playback Mode", t.GetPlaybackMode()), 
                 updateFunc: (SceneCachePlaybackMode mode) => {
                     t.SetPlaybackMode(mode);
                 }
             );
 
+            ++EditorGUI.indentLevel;
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Time",
                 guiFunc: () => (EditorGUILayout.FloatField("Time", t.GetTime())),
                 updateFunc: (float time) => { t.SetTime(time); });
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Frame",
                 guiFunc: () => (EditorGUILayout.IntField("Frame", t.GetFrame())),
-                updateFunc: (int frame) => { t.SetFrame(frame); });
+                updateFunc: (int frame) => { t.SetTimeByFrame(frame); });
+            --EditorGUI.indentLevel;
 
             // preload
             {                
