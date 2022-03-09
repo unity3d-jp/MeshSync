@@ -182,6 +182,8 @@ public class SceneCachePlayer : BaseMeshSync {
         ResetTimeAnimation();
         
         SceneData scene = GetLastScene();
+        //[TODO-sin: 2022-3-9] Review if this code is necessary.
+        //Was added in commit  b60337aff38e55febf81a9b7c741458eff34a919 on August 18, 2019.
         if (!scene.submeshesHaveUniqueMaterial) {
             m_config.SyncMaterialList = false;
         }
