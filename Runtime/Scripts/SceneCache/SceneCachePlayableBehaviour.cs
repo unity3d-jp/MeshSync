@@ -50,6 +50,7 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
             }            
         }
               
+        m_sceneCachePlayer.SetAutoplay(false);
         m_sceneCachePlayer.RequestNormalizedTime(normalizedTime);
 
     }

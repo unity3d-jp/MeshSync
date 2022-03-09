@@ -111,9 +111,7 @@ public class SceneCachePlayer : BaseMeshSync {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    //[TODO-sin: 2022-3-9] This should be direct time
     internal void RequestNormalizedTime(float normalizedTime) {
-        SetAutoplay(false);
         m_reqNormalizedTime = normalizedTime;
         float time = normalizedTime * m_timeRange.end;
         m_time = ClampTime(time);        
