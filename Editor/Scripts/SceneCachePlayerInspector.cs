@@ -128,10 +128,6 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
                 changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Time",
                     guiFunc: () => (EditorGUILayout.FloatField("Time", t.GetTime())),
                     updateFunc: (float time) => { t.SetTime(time); });
-
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Interpolation",
-                    guiFunc: () => (EditorGUILayout.Toggle("Interpolation", t.GetInterpolation())),
-                    updateFunc: (bool toggle) => { t.SetInterpolation(toggle); });
                 
             } else if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Frames) {
 

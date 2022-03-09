@@ -88,8 +88,6 @@ public class SceneCachePlayer : BaseMeshSync {
 
     internal void SetTimeUnit(TimeUnit timeUnit) {
         m_timeUnit = timeUnit;
-        if (m_timeUnit == TimeUnit.Frames)
-            m_interpolation = false;        
     }
 
     internal SceneCachePlaybackMode GetPlaybackMode()                             { return m_playbackMode; }
@@ -97,10 +95,6 @@ public class SceneCachePlayer : BaseMeshSync {
 
     internal float GetTime() { return m_time;}
     internal void SetTime(float time) { m_time = time; }
-
-    internal bool GetInterpolation() { return m_interpolation; }
-    internal void SetInterpolation(bool interpolation) { m_interpolation = interpolation;}
-
 
     internal int GetFrame() { return m_frame; }
     internal void SetFrame(int frame) { m_frame = frame;}
@@ -517,7 +511,6 @@ public class SceneCachePlayer : BaseMeshSync {
     
     [SerializeField] TimeUnit  m_timeUnit      = TimeUnit.Seconds;
     [SerializeField] float     m_time;
-    [SerializeField] bool      m_interpolation = false;
     [SerializeField] int       m_frame         = 1;
     [SerializeField] int       m_preloadLength = 1;
 
