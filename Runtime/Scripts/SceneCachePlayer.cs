@@ -94,9 +94,15 @@ public class SceneCachePlayer : BaseMeshSync {
         if (!m_sceneCache)
             return;
 
-        m_time = (float) frame / m_sceneCache.sampleRate; 
-        
+        m_time = (float) frame / m_sceneCache.sampleRate;
     }
+    
+    //NormalizedTime: (0.0 .. 1.0)
+    internal void SetTimeByNormalizedTime(float normalizedTime) {
+        float time = normalizedTime * m_timeRange.end;
+        m_time = ClampTime(time);
+    }
+    
 
     internal int GetPreloadLength() { return m_preloadLength;}
     internal void SetPreloadLength(int preloadLength) { m_preloadLength = preloadLength;}
@@ -109,11 +115,6 @@ public class SceneCachePlayer : BaseMeshSync {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    internal void RequestNormalizedTime(float normalizedTime) {
-        float time = normalizedTime * m_timeRange.end;
-        m_time = ClampTime(time);        
-    }
-
     [CanBeNull]
     internal AnimationCurve GetTimeCurve() {
         if (!IsSceneCacheOpened())
@@ -123,8 +124,6 @@ public class SceneCachePlayer : BaseMeshSync {
     }
 
     internal TimeRange GetTimeRange() { return m_timeRange;}
-    
-    
 
 //----------------------------------------------------------------------------------------------------------------------
     #region Properties
