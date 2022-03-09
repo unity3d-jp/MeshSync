@@ -341,7 +341,7 @@ public class SceneCachePlayer : BaseMeshSync {
         ulong sceneGetBegin = Misc.GetTimeNS();
 #endif
 
-        SceneData scene = new SceneData();
+        SceneData scene = default(SceneData);
         switch (m_playbackMode) {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
                 int frame = Mathf.FloorToInt(time * m_sceneCache.sampleRate);
@@ -355,13 +355,11 @@ public class SceneCachePlayer : BaseMeshSync {
                 break;
             }
             case SceneCachePlaybackMode.Interpolate: {
-                scene = m_sceneCache.GetSceneByTime(m_time, m_interpolation);
+                scene = m_sceneCache.GetSceneByTime(m_time, lerp: true);
                 break;
             } 
-        }
+        }        
         
-        
-//        Debug.Log("SampleRate: " + m_sceneCache.sampleRate);
         // get scene
 #if UNITY_EDITOR
         m_dbgSceneGetTime = Misc.NS2MS(Misc.GetTimeNS() - sceneGetBegin);
