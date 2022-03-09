@@ -180,23 +180,18 @@ public class SceneCachePlayer : BaseMeshSync {
         UpdatePlayer(/* updateNonMaterialAssets = */ true);
         ExportMaterials(false, true);
         ResetTimeAnimation();
-        
-        SceneData scene = GetLastScene();
-        //[TODO-sin: 2022-3-9] Review if this code is necessary.
-        //Was added in commit  b60337aff38e55febf81a9b7c741458eff34a919 on August 18, 2019.
-        if (!scene.submeshesHaveUniqueMaterial) {
-            m_config.SyncMaterialList = false;
+
+        if (m_sceneCache) {
+            SceneData scene = LoadSceneData(m_timePrev);
+            //[TODO-sin: 2022-3-9] Review if this code is necessary.
+            //Was added in commit  b60337aff38e55febf81a9b7c741458eff34a919 on August 18, 2019.
+            if (!scene.submeshesHaveUniqueMaterial) {
+                m_config.SyncMaterialList = false;
+            }
         }
         
         return true;
-    }
-    
-
-    private SceneData GetLastScene() {
-        if (m_sceneCache)
-            return m_sceneCache.GetSceneByTime(m_timePrev, m_interpolation);
-        return default(SceneData);
-    }
+    }   
 
     void SavePrefabInEditor() {
         PrefabUtility.RecordPrefabInstancePropertyModifications(this);
