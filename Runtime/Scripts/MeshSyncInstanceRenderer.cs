@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-
+using Object = UnityEngine.Object;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -86,6 +87,13 @@ namespace Unity.MeshSync{
             {
                 RenderAndDraw();
                 m_isDirty = false;
+                
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                
+                #if UNITY_EDITOR
+                EditorUtility.UnloadUnusedAssetsImmediate();
+                #endif
             }
         }
 
