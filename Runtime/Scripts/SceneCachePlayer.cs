@@ -284,16 +284,8 @@ public class SceneCachePlayer : BaseMeshSync {
             clip.frameRate = sampleRate;
 
         Type tPlayer = typeof(SceneCachePlayer);
-        clip.SetCurve("", tPlayer, "m_time", null);
-        clip.SetCurve("", tPlayer, "m_frame", null);
-        if (m_timeUnit == TimeUnit.Seconds) {
-            AnimationCurve curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
-            clip.SetCurve("", tPlayer, "m_time", curve);
-        } else if (m_timeUnit == TimeUnit.Frames) {
-            AnimationCurve curve = m_sceneCache.GetFrameCurve();
-            clip.SetCurve("", tPlayer, "m_frame", curve);
-        }
-        
+        AnimationCurve curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
+        clip.SetCurve("", tPlayer, "m_time", curve);
 
         AssetDatabase.SaveAssets();
         UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
@@ -394,7 +386,10 @@ public class SceneCachePlayer : BaseMeshSync {
         if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.NORMALIZED_PATH_0_9_2) {
             m_sceneCacheFilePath = AssetEditorUtility.NormalizePath(m_sceneCacheFilePath);
         } 
-#endif        
+        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.PLAYBACK_MODE_0_12_0) {
+            m_resetTimeAnimationOnEnable = true;
+        }
+#endif
         
         m_sceneCachePlayerVersion = CUR_SCENE_CACHE_PLAYER_VERSION;
     }
@@ -478,6 +473,13 @@ public class SceneCachePlayer : BaseMeshSync {
         if (!string.IsNullOrEmpty(m_sceneCacheFilePath)) {
             OpenCacheInternal(m_sceneCacheFilePath);
         }
+
+        //required one time reset after version upgrade to 0.12.x
+        if (m_resetTimeAnimationOnEnable) {
+            ResetTimeAnimation();
+            m_resetTimeAnimationOnEnable = false;
+        }
+        
         
         if (!m_sceneCache)
             return;
@@ -519,13 +521,15 @@ public class SceneCachePlayer : BaseMeshSync {
     
     //Renamed in 0.10.x-preview
     [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_sceneCachePlayerVersion = (int) CUR_SCENE_CACHE_PLAYER_VERSION;
-    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.NORMALIZED_PATH_0_9_2;
+    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.PLAYBACK_MODE_0_12_0;
         
     SceneCacheData m_sceneCache;
     TimeRange      m_timeRange;
-    float          m_timePrev = -1;
-    Animator       m_animator = null;
-    private float m_reqNormalizedTime = 0;
+    float          m_timePrev          = -1;
+    Animator       m_animator          = null;
+    private float  m_reqNormalizedTime = 0;
+    
+    private bool   m_resetTimeAnimationOnEnable = false;
 
 #if UNITY_EDITOR
     [SerializeField] bool m_foldCacheSettings = true;
@@ -537,9 +541,10 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------    
     
     enum SceneCachePlayerVersion {
-        NO_VERSIONING     = 0, //Didn't have versioning in earlier versions
-        STRING_PATH_0_4_0 = 2, //0.4.0-preview: the path is declared as a string 
+        NO_VERSIONING         = 0, //Didn't have versioning in earlier versions
+        STRING_PATH_0_4_0     = 2, //0.4.0-preview: the path is declared as a string 
         NORMALIZED_PATH_0_9_2 = 3, //0.9.2-preview: Path must be normalized by default 
+        PLAYBACK_MODE_0_12_0 = 4, //0.12.0-preview: integrate frame/time unit and interpolation into playback mode  
     
     }
     
