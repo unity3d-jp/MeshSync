@@ -82,8 +82,6 @@ public class SceneCachePlayer : BaseMeshSync {
         m_animator.enabled = autoPlay;
     }
 
-    internal float GetRequestedNormalizedTime() { return m_reqNormalizedTime;}
-
     internal SceneCachePlaybackMode GetPlaybackMode()                             { return m_playbackMode; }
     internal void                   SetPlaybackMode(SceneCachePlaybackMode mode ) { m_playbackMode = mode; }
 
@@ -112,7 +110,6 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------
     
     internal void RequestNormalizedTime(float normalizedTime) {
-        m_reqNormalizedTime = normalizedTime;
         float time = normalizedTime * m_timeRange.end;
         m_time = ClampTime(time);        
     }
@@ -508,7 +505,6 @@ public class SceneCachePlayer : BaseMeshSync {
     int            m_frame = 0;
     float          m_timePrev          = -1;
     Animator       m_animator          = null;
-    private float  m_reqNormalizedTime = 0;
     
     private bool   m_resetTimeAnimationOnEnable = false;
 
