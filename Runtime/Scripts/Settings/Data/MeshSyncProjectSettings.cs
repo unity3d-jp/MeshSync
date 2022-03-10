@@ -32,7 +32,7 @@ internal class MeshSyncProjectSettings : BaseJsonSingleton<MeshSyncProjectSettin
     internal void   SetSceneCacheOutputPath(string path) { m_sceneCacheOutputPath = path;}
     
     internal bool   GetServerPublicAccess()            { return m_serverPublicAccess; }
-    internal void   SetServerPublicAccess(bool access) { m_serverPublicAccess = access;}    
+    internal void   SetServerPublicAccess(bool access) { m_serverPublicAccess = access;}
     
     internal MeshSyncServerConfig   GetDefaultServerConfig() { return m_defaultServerConfig; }
     internal SceneCachePlayerConfig GetDefaultSceneCachePlayerConfig() { return m_defaultSceneCachePlayerConfig; }

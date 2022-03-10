@@ -436,7 +436,7 @@ public class SceneCachePlayer : BaseMeshSync {
     #region Events
 #if UNITY_EDITOR
     void Reset() {
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings(); 
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance(); 
         m_config = new SceneCachePlayerConfig(projectSettings.GetDefaultSceneCachePlayerConfig());            
     }
 
