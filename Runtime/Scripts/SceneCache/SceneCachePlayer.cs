@@ -151,7 +151,7 @@ public class SceneCachePlayer : BaseMeshSync {
         string normalizedPath = System.IO.Path.GetFullPath(path).Replace('\\','/');
         normalizedPath = AssetEditorUtility.NormalizePath(normalizedPath);
 
-        if (!OpenCacheInternal(normalizedPath, true)) {
+        if (!OpenCacheInternal(normalizedPath, updateNonMaterialAssets: true)) {
             return false;
         }
         
@@ -458,7 +458,7 @@ public class SceneCachePlayer : BaseMeshSync {
         
         m_animator = GetComponent<Animator>();
         if (!string.IsNullOrEmpty(m_sceneCacheFilePath)) {
-            OpenCacheInternal(m_sceneCacheFilePath, false);
+            OpenCacheInternal(m_sceneCacheFilePath, updateNonMaterialAssets: false);
         }
 
         //required one time reset after version upgrade to 0.12.x
