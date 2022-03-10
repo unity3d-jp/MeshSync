@@ -41,7 +41,11 @@ endif()
 # Custom scripts
 include(AddPlugin)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+if(APPLE)
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+elseif(WIN32)
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+endif()
 
 # Force Unicode character set
 add_definitions(-DUNICODE -D_UNICODE)
