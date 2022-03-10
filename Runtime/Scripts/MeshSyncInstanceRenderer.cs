@@ -87,13 +87,6 @@ namespace Unity.MeshSync{
             {
                 RenderAndDraw();
                 m_isDirty = false;
-                
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                
-                #if UNITY_EDITOR
-                EditorUtility.UnloadUnusedAssetsImmediate();
-                #endif
             }
         }
 
