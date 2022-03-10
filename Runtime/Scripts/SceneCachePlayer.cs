@@ -160,7 +160,7 @@ public class SceneCachePlayer : BaseMeshSync {
         ResetTimeAnimation();
 
         if (m_sceneCache) {
-            SceneData scene = LoadSceneData(m_timePrev);
+            SceneData scene = LoadSceneData(m_timePrev, out _);
             //[TODO-sin: 2022-3-9] Review if this code is necessary.
             //Was added in commit  b60337aff38e55febf81a9b7c741458eff34a919 on August 18, 2019.
             if (!scene.submeshesHaveUniqueMaterial) {
@@ -302,7 +302,7 @@ public class SceneCachePlayer : BaseMeshSync {
         ulong sceneGetBegin = Misc.GetTimeNS();
 #endif
 
-        SceneData scene = LoadSceneData(time);
+        SceneData scene = LoadSceneData(time, out m_frame);
         
         // get scene
 #if UNITY_EDITOR
@@ -328,18 +328,20 @@ public class SceneCachePlayer : BaseMeshSync {
         }
     }
 
-    private SceneData LoadSceneData(float time) {
+    //frame: the frame that corresponds to the time parameter, if applicable
+    private SceneData LoadSceneData(float time, out int frame) {
         SceneData scene = default(SceneData);
+        frame = m_frame; //no change by default        
         switch (m_playbackMode) {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
-                m_frame = Mathf.Clamp(Mathf.FloorToInt(time * m_sceneCache.sampleRate), 0, frameCount);
-                scene   = m_sceneCache.GetSceneByIndex(m_frame);
+                frame = Mathf.Clamp(Mathf.FloorToInt(time * m_sceneCache.sampleRate), 0, frameCount);
+                scene = m_sceneCache.GetSceneByIndex(frame);
                 break;
             }
 
             case SceneCachePlaybackMode.SnapToNearestFrame: {
-                m_frame = Mathf.Clamp(Mathf.RoundToInt(time * m_sceneCache.sampleRate), 0, frameCount);
-                scene   = m_sceneCache.GetSceneByIndex(m_frame);
+                frame = Mathf.Clamp(Mathf.RoundToInt(time * m_sceneCache.sampleRate), 0, frameCount);
+                scene = m_sceneCache.GetSceneByIndex(frame);
                 break;
             }
             case SceneCachePlaybackMode.Interpolate: {
