@@ -62,7 +62,7 @@ msAPI int msSceneCacheGetNumScenes(ms::BaseSceneCacheInput *self)
         return 0;
     return static_cast<int>(self->GetNumScenesV());
 }
-msAPI float msISceneCacheGetTime(ms::BaseSceneCacheInput *self, const int index)
+msAPI float msSceneCacheGetTime(ms::BaseSceneCacheInput *self, const int index)
 {
     msDbgBreadcrumb();
     if (!self)

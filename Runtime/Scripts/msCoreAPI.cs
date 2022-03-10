@@ -3001,7 +3001,7 @@ internal struct SceneCacheData {
     static extern int msSceneCacheGetNumScenes(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern float msISceneCacheGetTime(IntPtr self, int i);
+    static extern float msSceneCacheGetTime(IntPtr self, int i);
 
     [DllImport(Lib.name)]
     static extern int msSceneCacheGetFrameByTime(IntPtr self, float time);
@@ -3064,7 +3064,7 @@ internal struct SceneCacheData {
     }
 
     public float GetTime(int i) {
-        return msISceneCacheGetTime(self, i);
+        return msSceneCacheGetTime(self, i);
     }
 
     public int GetFrame(float time) {
