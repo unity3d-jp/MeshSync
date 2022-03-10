@@ -4,7 +4,6 @@ using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEngine;
 
-//[TODO-sin: 2022-3-9] Move these files under SceneCache folder
 namespace Unity.MeshSync.Editor  {
 
 [CustomEditor(typeof(SceneCachePlayer))]
