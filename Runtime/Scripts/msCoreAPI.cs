@@ -3009,11 +3009,9 @@ internal struct SceneCacheData {
     [DllImport(Lib.name)]
     static extern SceneData msSceneCacheLoadByFrame(IntPtr self, int i);
 
-    //[TODO-sin: 2022-3-9] Rename function
     [DllImport(Lib.name)]
     static extern SceneData msSceneCacheLoadByTime(IntPtr self, float time, bool lerp);
 
-    //[TODO-sin: 2022-2-28] Rename
     [DllImport(Lib.name)]
     static extern void msSceneCacheRefresh(IntPtr self);
 
@@ -3071,13 +3069,11 @@ internal struct SceneCacheData {
         return msSceneCacheGetFrameByTime(self, time);
     }
 
-    //[TODO-sin: 2022-3-9] Rename function
-    internal SceneData GetSceneByIndex(int i) {
+    internal SceneData LoadByFrame(int i) {
         return msSceneCacheLoadByFrame(self, i);
     }
 
-    //[TODO-sin: 2022-3-9] Rename function
-    internal SceneData GetSceneByTime(float t, bool lerp) {
+    internal SceneData LoadByTime(float t, bool lerp) {
         return msSceneCacheLoadByTime(self, t, lerp);
     }
 

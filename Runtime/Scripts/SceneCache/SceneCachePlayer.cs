@@ -335,17 +335,17 @@ public class SceneCachePlayer : BaseMeshSync {
         switch (m_playbackMode) {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
                 frame = Mathf.Clamp(Mathf.FloorToInt(time * m_sceneCache.sampleRate), 0, frameCount);
-                scene = m_sceneCache.GetSceneByIndex(frame);
+                scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
 
             case SceneCachePlaybackMode.SnapToNearestFrame: {
                 frame = Mathf.Clamp(Mathf.RoundToInt(time * m_sceneCache.sampleRate), 0, frameCount);
-                scene = m_sceneCache.GetSceneByIndex(frame);
+                scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
             case SceneCachePlaybackMode.Interpolate: {
-                scene = m_sceneCache.GetSceneByTime(m_time, lerp: true);
+                scene = m_sceneCache.LoadByTime(m_time, lerp: true);
                 break;
             }
         }
