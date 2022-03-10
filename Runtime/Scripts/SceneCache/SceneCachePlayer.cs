@@ -151,11 +151,10 @@ public class SceneCachePlayer : BaseMeshSync {
         string normalizedPath = System.IO.Path.GetFullPath(path).Replace('\\','/');
         normalizedPath = AssetEditorUtility.NormalizePath(normalizedPath);
 
-        if (!OpenCacheInternal(normalizedPath)) {
+        if (!OpenCacheInternal(normalizedPath, true)) {
             return false;
         }
         
-        UpdatePlayer(/* updateNonMaterialAssets = */ true);
         ExportMaterials(false, true);
         ResetTimeAnimation();
 
@@ -179,7 +178,7 @@ public class SceneCachePlayer : BaseMeshSync {
 
 //----------------------------------------------------------------------------------------------------------------------    
 
-    private bool OpenCacheInternal(string path) {
+    private bool OpenCacheInternal(string path, bool updateNonMaterialAssets) {
         CloseCache();
 
         m_sceneCache = SceneCacheData.Open(path);
@@ -197,7 +196,7 @@ public class SceneCachePlayer : BaseMeshSync {
         LogDebug($"SceneCachePlayer: cache opened ({path})");
 
         //[Note-sin: 2021-7-19] Time/Frame 0 must be loaded first, because the data of other frames might contain "No change from frame 0" 
-        LoadSceneCacheToScene(0, updateNonMaterialAssets: false);
+        LoadSceneCacheToScene(0, updateNonMaterialAssets);
         
         return true;
     }
@@ -313,6 +312,7 @@ public class SceneCachePlayer : BaseMeshSync {
 #if UNITY_EDITOR
             ulong sceneUpdateBegin = Misc.GetTimeNS();
 #endif
+            
             // update scene
             this.BeforeUpdateScene();
             this.UpdateScene(scene, updateNonMaterialAssets);
@@ -458,7 +458,7 @@ public class SceneCachePlayer : BaseMeshSync {
         
         m_animator = GetComponent<Animator>();
         if (!string.IsNullOrEmpty(m_sceneCacheFilePath)) {
-            OpenCacheInternal(m_sceneCacheFilePath);
+            OpenCacheInternal(m_sceneCacheFilePath, false);
         }
 
         //required one time reset after version upgrade to 0.12.x
