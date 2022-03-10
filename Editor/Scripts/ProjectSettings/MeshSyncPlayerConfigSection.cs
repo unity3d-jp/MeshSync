@@ -186,15 +186,6 @@ internal class MeshSyncPlayerConfigSection {
         if (!isSceneCachePlayerConfig) 
             return;
         
-        //Additional UI for SceneCache
-        SceneCachePlayerConfig scPlayerConfig = config as SceneCachePlayerConfig;
-        Assert.IsNotNull(scPlayerConfig);
-        Foldout timelineSettingsFoldout = containerInstance.Query<Foldout>("TimelineSettingsFoldout").First();
-        AddPlayerConfigPopupField(timelineSettingsFoldout, 
-            Contents.TimelineSnapToFrame, m_snapToFrameEnums,m_snapToFrameEnums[scPlayerConfig.TimelineSnapToFrame],
-            (int newValue) => { scPlayerConfig.TimelineSnapToFrame = newValue;}
-        );
-
     }
 
     
@@ -305,8 +296,6 @@ internal class MeshSyncPlayerConfigSection {
     private readonly List<string> m_animationInterpolationEnums = new List<string>(Enum.GetNames( typeof( InterpolationMode )));
     private readonly List<string> m_zUpCorrectionEnums = new List<string>(Enum.GetNames( typeof( ZUpCorrectionMode )));
     private readonly List<string> m_assetSearchModeEnums = EnumUtility.ToInspectorNames(typeof(AssetSearchMode));
-
-    private readonly List<string> m_snapToFrameEnums = EnumUtility.ToInspectorNames(typeof(SnapToFrame));
     
 }
 
