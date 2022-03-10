@@ -4,6 +4,7 @@ using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEngine;
 
+//[TODO-sin: 2022-3-9] Move these files under SceneCache folder
 namespace Unity.MeshSync.Editor  {
 
 [CustomEditor(typeof(SceneCachePlayer))]
@@ -23,9 +24,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
     }
 
 
-//----------------------------------------------------------------------------------------------------------------------
-    
-    
+//----------------------------------------------------------------------------------------------------------------------        
     
     public override void OnInspectorGUI() {
 
@@ -100,36 +99,26 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             }
             EditorGUILayout.Space();
 
-            //Time Unit
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"SceneCache: Time Unit",
-                guiFunc: () => (SceneCachePlayer.TimeUnit) EditorGUILayout.Popup("Time Unit", 
-                    (int) t.GetTimeUnit(), TIME_UNIT_ENUMS), 
-                updateFunc: (SceneCachePlayer.TimeUnit timeUnit) => {
-                    t.SetTimeUnit(timeUnit);
-                    t.ResetTimeAnimation();                    
+            //Playback Mode
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"SceneCache: Playback Mode",
+                guiFunc: () => 
+                    (SceneCachePlaybackMode)EditorGUILayout.EnumPopup("Playback Mode", t.GetPlaybackMode()), 
+                updateFunc: (SceneCachePlaybackMode mode) => {
+                    t.SetPlaybackMode(mode);
                 }
             );
 
-
-            SceneCachePlayer.TimeUnit selectedTimeUnit = t.GetTimeUnit();
+            ++EditorGUI.indentLevel;
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Time",
+                guiFunc: () => (EditorGUILayout.FloatField("Time", t.GetTime())),
+                updateFunc: (float time) => { t.SetTime(Mathf.Max(0,time)); });
             
-            if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Seconds) {
-
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Time",
-                    guiFunc: () => (EditorGUILayout.FloatField("Time", t.GetTime())),
-                    updateFunc: (float time) => { t.SetTime(time); });
-
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Interpolation",
-                    guiFunc: () => (EditorGUILayout.Toggle("Interpolation", t.GetInterpolation())),
-                    updateFunc: (bool toggle) => { t.SetInterpolation(toggle); });
-                
-            } else if (selectedTimeUnit == SceneCachePlayer.TimeUnit.Frames) {
-
+            using (new EditorGUI.DisabledScope(t.GetPlaybackMode() == SceneCachePlaybackMode.Interpolate)) {
                 changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Frame",
                     guiFunc: () => (EditorGUILayout.IntField("Frame", t.GetFrame())),
-                    updateFunc: (int frame) => { t.SetFrame(frame); });
-                
+                    updateFunc: (int frame) => { t.SetTimeByFrame(Mathf.Max(0,frame)); });
             }
+            --EditorGUI.indentLevel;
 
             // preload
             {                
