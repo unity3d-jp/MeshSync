@@ -32,8 +32,7 @@ internal class MeshSyncProjectSettings : BaseJsonSingleton<MeshSyncProjectSettin
     internal void   SetSceneCacheOutputPath(string path) { m_sceneCacheOutputPath = path;}
     
     internal bool   GetServerPublicAccess()            { return m_serverPublicAccess; }
-    internal void   SetServerPublicAccess(bool access) { m_serverPublicAccess = access;}
-    
+    internal void   SetServerPublicAccess(bool access) { m_serverPublicAccess = access;}    
     
     internal MeshSyncServerConfig   GetDefaultServerConfig() { return m_defaultServerConfig; }
     internal SceneCachePlayerConfig GetDefaultSceneCachePlayerConfig() { return m_defaultSceneCachePlayerConfig; }
@@ -80,10 +79,10 @@ internal class MeshSyncProjectSettings : BaseJsonSingleton<MeshSyncProjectSettin
 
 
 
-    private const int LATEST_VERSION = (int) Version.SEPARATE_SCENE_CACHE_PLAYER_CONFIG; 
+    private const int LATEST_VERSION = (int) Version.SeparateSceneCachePlayerConfig; 
     enum Version {
-        LEGACY = 3,
-        SEPARATE_SCENE_CACHE_PLAYER_CONFIG = 4,
+        Legacy = 3,
+        SeparateSceneCachePlayerConfig = 4,
     };
 
 
