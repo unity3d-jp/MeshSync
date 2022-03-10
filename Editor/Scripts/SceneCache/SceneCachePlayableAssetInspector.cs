@@ -23,14 +23,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         
         SerializedObject so = serializedObject;
         EditorGUILayout.PropertyField(so.FindProperty("m_sceneCachePlayerRef"), SCENE_CACHE_PLAYER);
-        
-        EditorGUIDrawerUtility.DrawUndoableGUI(m_scPlayableAsset, "SceneCache: Snap",            
-            guiFunc: () => {
-                SnapToFrame snap = m_scPlayableAsset.GetSnapToFrame();
-                return (SnapToFrame)EditorGUILayout.EnumPopup(Contents.SnapToFrame, snap);
-            }, 
-            updateFunc: (SnapToFrame snap) => { m_scPlayableAsset.SetSnapToFrame(snap); });
-                
+                        
         {
             // Curve Operations
             GUILayout.BeginVertical("Box");
