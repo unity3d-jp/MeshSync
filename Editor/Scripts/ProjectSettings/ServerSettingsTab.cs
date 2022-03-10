@@ -27,8 +27,8 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
         TemplateContainer tabInstance = tab.CloneTree();
       
         VisualElement content = tabInstance.Query<VisualElement>("Content").First();
-        
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
         
         //Add server port
         m_serverPortField = AddField<IntegerField,int>(content, Contents.ServerPort,
@@ -48,7 +48,7 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
         Button resetButton = tabInstance.Query<Button>("ResetButton").First();
         resetButton.clicked += () => {
             projectSettings.ResetDefaultServerConfig();
-            projectSettings.Save();
+            projectSettings.SaveInEditor();
             Setup(root);
         };
         
@@ -64,7 +64,7 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
     {
         F field = UIElementsEditorUtility.AddField<F, V>(parent, content, initialValue, (ChangeEvent<V> changeEvent) => {
             onValueChanged(changeEvent.newValue);
-            MeshSyncProjectSettings.GetOrCreateSettings().Save();
+            MeshSyncProjectSettings.GetOrCreateInstance().SaveInEditor();
         });
 
         field.AddToClassList("project-settings-field");

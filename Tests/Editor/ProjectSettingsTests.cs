@@ -12,11 +12,11 @@ internal class ProjectSettingsTests {
    
 //----------------------------------------------------------------------------------------------------------------------    
     [Test]
-    public void CreateRuntimeSettings() {
+    public void CreateProjectSettings() {
 
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
         Assert.NotNull(projectSettings);
-        Assert.True(File.Exists(projectSettings.GetSettingsPath()));           
+        Assert.True(File.Exists(projectSettings.GetJsonPath()));           
     }    
 
 
