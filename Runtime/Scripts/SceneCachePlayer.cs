@@ -365,9 +365,15 @@ public class SceneCachePlayer : BaseMeshSync {
         if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.NORMALIZED_PATH_0_9_2) {
             m_sceneCacheFilePath = AssetEditorUtility.NormalizePath(m_sceneCacheFilePath);
         } 
-        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.PLAYBACK_MODE_0_12_0) {
+#pragma warning disable 612 
+        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.PLAYBACK_MODE_0_12_0 
+            && m_timeUnit == TimeUnit.Frames) 
+        {
+            m_timeUnit                   = TimeUnit.Seconds;
             m_resetTimeAnimationOnEnable = true;
         }
+#pragma warning restore 612
+        
 #endif
         
         m_sceneCachePlayerVersion = CUR_SCENE_CACHE_PLAYER_VERSION;
@@ -485,7 +491,11 @@ public class SceneCachePlayer : BaseMeshSync {
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    [SerializeField] private string                 m_sceneCacheFilePath = null; //The full path of the file. Use '/'
+    [SerializeField] private string   m_sceneCacheFilePath = null; //The full path of the file. Use '/'
+    
+    [Obsolete]
+    [SerializeField] private TimeUnit m_timeUnit = TimeUnit.Seconds;
+    
     [SerializeField] private SceneCachePlaybackMode m_playbackMode = SceneCachePlaybackMode.SnapToNearestFrame;
     
     [SerializeField] float     m_time;
