@@ -81,7 +81,7 @@ msAPI ms::Scene* msSceneCacheLoadByFrame(ms::BaseSceneCacheInput *self, const in
     msDbgBreadcrumb();
     if (!self)
         return nullptr;
-    return self->LoadByIndexV(index).get();
+    return self->LoadByFrameV(index).get();
 }
 msAPI ms::Scene* msSceneCacheLoadByTime(ms::BaseSceneCacheInput *self, const float time, const bool lerp)
 {
