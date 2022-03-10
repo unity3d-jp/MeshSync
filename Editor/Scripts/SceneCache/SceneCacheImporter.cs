@@ -14,7 +14,7 @@ namespace Unity.MeshSync.Editor {
 internal class SceneCacheImporter : ScriptedImporter, IHasModelImporterSettings
 {
     private void Reset() {
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings(); 
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance(); 
         m_importerSettings = projectSettings.GetDefaultSceneCachePlayerConfig().GetModelImporterSettings();
     }
 

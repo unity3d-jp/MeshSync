@@ -23,7 +23,7 @@ internal class SecurityTests {
     public IEnumerator SetServerPublicAccess() {
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
 
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
         MeshSyncServer mss = MeshSyncMenu.CreateMeshSyncServer(true);
         Assert.IsTrue(mss.IsServerStarted());       
         yield return null;

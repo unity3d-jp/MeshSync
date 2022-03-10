@@ -25,7 +25,7 @@ internal struct ServerSettings {
 
     public static ServerSettings defaultValue {
         get {
-            MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+            MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateInstance();
             ServerSettings ret = new ServerSettings {
                 maxQueue             = 512,
                 maxThreads           = 8,

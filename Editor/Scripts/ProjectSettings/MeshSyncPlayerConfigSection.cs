@@ -64,15 +64,14 @@ internal class MeshSyncPlayerConfigSection {
 //----------------------------------------------------------------------------------------------------------------------        
     internal void Setup(VisualElement parent) {
         
-        bool isSceneCachePlayerConfig = (m_playerType == MeshSyncPlayerType.CACHE_PLAYER);
-        MeshSyncPlayerConfig config   = null;
-        if (isSceneCachePlayerConfig) {
-            config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultSceneCachePlayerConfig();
-        } else {
-            config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultServerConfig();
-        }
-            
-        
+        bool                    isSceneCachePlayerConfig = (m_playerType == MeshSyncPlayerType.CACHE_PLAYER);
+        MeshSyncProjectSettings projectSettings          = MeshSyncProjectSettings.GetOrCreateInstance(); 
+        MeshSyncPlayerConfig    config                   = null;
+        config = isSceneCachePlayerConfig
+            ? (MeshSyncPlayerConfig)projectSettings.GetDefaultSceneCachePlayerConfig()
+            : projectSettings.GetDefaultServerConfig();
+
+
         TemplateContainer containerInstance = InstantiateContainer(m_playerType);
         parent.Add(containerInstance);
             
@@ -202,7 +201,7 @@ internal class MeshSyncPlayerConfigSection {
                 return;
                                         
             onValueChanged(changeEvent.newValue);
-            MeshSyncProjectSettings.GetOrCreateSettings().Save();
+            MeshSyncProjectSettings.GetOrCreateInstance().SaveInEditor();
         });
 
         field.AddToClassList("general-settings-field");
@@ -226,7 +225,7 @@ internal class MeshSyncPlayerConfigSection {
                     return;
             
                 onValueChanged(targetField.index);
-                MeshSyncProjectSettings.GetOrCreateSettings().Save();                
+                MeshSyncProjectSettings.GetOrCreateInstance().SaveInEditor();                
             }
         );        
         popupField.AddToClassList("general-settings-field");

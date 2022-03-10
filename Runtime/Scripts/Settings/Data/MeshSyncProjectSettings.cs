@@ -7,52 +7,23 @@ using UnityEngine;
 namespace Unity.MeshSync {
 
 [Serializable]
-internal class MeshSyncProjectSettings : BaseJsonSettings {
+[Json(MESHSYNC_RUNTIME_SETTINGS_PATH)]
+internal class MeshSyncProjectSettings : BaseJsonSingleton<MeshSyncProjectSettings> {
 
-    internal static MeshSyncProjectSettings GetOrCreateSettings() {
-        
-        if (null != m_instance) {
-            return m_instance;
-        }
 
-        lock (m_instanceLock) {           
-        
-#if UNITY_EDITOR
-            const string PATH = MESHSYNC_RUNTIME_SETTINGS_PATH;
-            if (File.Exists(PATH)) {
-                m_instance = FileUtility.DeserializeFromJson<MeshSyncProjectSettings>(PATH);
-                m_instance.UpgradeVersionToLatest();
-                m_instance.ValidatePlayerConfigs();
-            }
-            if (null != m_instance) {
-                return m_instance;
-            }            
-#endif
-            
-            m_instance = new MeshSyncProjectSettings();
-        }        
-
-#if UNITY_EDITOR
-        m_instance.Save();
-#endif
-        return m_instance;
-        
-    }
-
-    
-//----------------------------------------------------------------------------------------------------------------------
-
-    //Constructor
-    private MeshSyncProjectSettings() : base(MESHSYNC_RUNTIME_SETTINGS_PATH) {
+    public MeshSyncProjectSettings() : base() {
         ValidatePlayerConfigs();
-        
     }
-   
-//----------------------------------------------------------------------------------------------------------------------
-    protected override object GetLockV() { return m_instanceLock; }
-    
-    protected override void OnDeserializeV() {}
 
+    protected override int GetLatestVersionV() {
+        return LATEST_VERSION;
+    }
+
+    protected override void UpgradeToLatestVersionV(int prevVersion, int curVersion) { }
+
+    protected override void OnAfterDeserializeInternalV() { }
+    
+//----------------------------------------------------------------------------------------------------------------------
     
     internal ushort GetDefaultServerPort() { return m_defaultServerPort;}
     internal void SetDefaultServerPort(ushort port) { m_defaultServerPort = port;}
@@ -62,7 +33,6 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
     
     internal bool   GetServerPublicAccess()            { return m_serverPublicAccess; }
     internal void   SetServerPublicAccess(bool access) { m_serverPublicAccess = access;}
-    
     
     internal MeshSyncServerConfig   GetDefaultServerConfig() { return m_defaultServerConfig; }
     internal SceneCachePlayerConfig GetDefaultSceneCachePlayerConfig() { return m_defaultSceneCachePlayerConfig; }
@@ -90,17 +60,6 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
             ResetDefaultSceneCachePlayerConfig();
         }         
     }
-
-//----------------------------------------------------------------------------------------------------------------------
-    private void UpgradeVersionToLatest() {
-        if (m_meshSyncProjectSettingsVersion == LATEST_VERSION) {
-            return;            
-        }
-        
-        m_meshSyncProjectSettingsVersion = LATEST_VERSION;
-        Save();
-    }
-    
     
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -114,22 +73,16 @@ internal class MeshSyncProjectSettings : BaseJsonSettings {
     [SerializeField] private MeshSyncServerConfig   m_defaultServerConfig   = null;
     [SerializeField] private SceneCachePlayerConfig m_defaultSceneCachePlayerConfig = null;
     
-
-    [SerializeField] private int m_meshSyncProjectSettingsVersion = LATEST_VERSION;
-       
 //----------------------------------------------------------------------------------------------------------------------
-
-    private static MeshSyncProjectSettings m_instance = null;
-    private static readonly object m_instanceLock = new object();
 
     private const string MESHSYNC_RUNTIME_SETTINGS_PATH = "ProjectSettings/MeshSyncSettings.asset";
 
 
 
-    private const int LATEST_VERSION = (int) Version.SEPARATE_SCENE_CACHE_PLAYER_CONFIG; 
+    private const int LATEST_VERSION = (int) Version.SeparateSceneCachePlayerConfig; 
     enum Version {
-        LEGACY = 3,
-        SEPARATE_SCENE_CACHE_PLAYER_CONFIG = 4,
+        Legacy = 3,
+        SeparateSceneCachePlayerConfig = 4,
     };
 
 
