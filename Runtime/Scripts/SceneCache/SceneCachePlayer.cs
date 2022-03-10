@@ -94,8 +94,8 @@ public class SceneCachePlayer : BaseMeshSync {
         if (!m_sceneCache)
             return;
 
-        frame = Mathf.Clamp(frame, 0, m_sceneCache.sceneCount);        
-        m_time = (float) frame / m_sceneCache.sampleRate;
+        frame = Mathf.Clamp(frame, 0, m_sceneCache.GetNumScenes());
+        m_time = (float) frame / m_sceneCache.GetSampleRate();
     }
     
     //NormalizedTime: (0.0 .. 1.0)
@@ -129,7 +129,7 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------
     #region Properties
     internal int frameCount {
-        get { return m_sceneCache.sceneCount; }
+        get { return m_sceneCache.GetNumScenes(); }
     }
 
 #if UNITY_EDITOR
@@ -188,7 +188,7 @@ public class SceneCachePlayer : BaseMeshSync {
         }
 
         m_sceneCacheFilePath = path;
-        m_timeRange= m_sceneCache.timeRange;
+        m_timeRange= m_sceneCache.GetTimeRange();
         
 #if UNITY_EDITOR
         SetSortEntities(true);
@@ -248,10 +248,10 @@ public class SceneCachePlayer : BaseMeshSync {
 
         return animatorController;
     }
-    
-    
-    internal bool ResetTimeAnimation() {
-        if (m_sceneCache.sceneCount < 2)
+
+
+    private bool ResetTimeAnimation() {
+        if (m_sceneCache.GetNumScenes() < 2)
             return false;
 
         RuntimeAnimatorController animatorController = GetOrCreateAnimatorControllerWithClip();
@@ -263,7 +263,7 @@ public class SceneCachePlayer : BaseMeshSync {
 
         Undo.RegisterCompleteObjectUndo(clip, "SceneCachePlayer");
         
-        float sampleRate = m_sceneCache.sampleRate;
+        float sampleRate = m_sceneCache.GetSampleRate();
         if (sampleRate > 0.0f)
             clip.frameRate = sampleRate;
 
@@ -285,8 +285,8 @@ public class SceneCachePlayer : BaseMeshSync {
         
         if (m_time != m_timePrev) {
             LoadSceneCacheToScene(m_time, updateNonMaterialAssets);
-        } else if(m_sceneCache.preloadLength != m_preloadLength) {
-            m_sceneCache.preloadLength = m_preloadLength;
+        } else if(m_sceneCache.GetPreloadLength() != m_preloadLength) {
+            m_sceneCache.SetPreloadLength(m_preloadLength);
             m_sceneCache.Preload(m_sceneCache.GetFrame(m_time));
         }
 
@@ -296,7 +296,7 @@ public class SceneCachePlayer : BaseMeshSync {
 
     void LoadSceneCacheToScene(float time, bool updateNonMaterialAssets) {
         m_timePrev = m_time = time;
-        m_sceneCache.preloadLength = m_preloadLength;
+        m_sceneCache.SetPreloadLength(m_preloadLength);
 #if UNITY_EDITOR
         ulong sceneGetBegin = Misc.GetTimeNS();
 #endif
@@ -334,13 +334,13 @@ public class SceneCachePlayer : BaseMeshSync {
         frame = m_frame; //no change by default        
         switch (m_playbackMode) {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
-                frame = Mathf.Clamp(Mathf.FloorToInt(time * m_sceneCache.sampleRate), 0, frameCount);
+                frame = Mathf.Clamp(Mathf.FloorToInt(time * m_sceneCache.GetSampleRate()), 0, frameCount);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
 
             case SceneCachePlaybackMode.SnapToNearestFrame: {
-                frame = Mathf.Clamp(Mathf.RoundToInt(time * m_sceneCache.sampleRate), 0, frameCount);
+                frame = Mathf.Clamp(Mathf.RoundToInt(time * m_sceneCache.GetSampleRate()), 0, frameCount);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }

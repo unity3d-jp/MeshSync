@@ -3040,25 +3040,26 @@ internal struct SceneCacheData {
         self = IntPtr.Zero;
     }
 
-    public int preloadLength {
-        get { return msSceneCacheGetPreloadLength(self); }
-        set { msSceneCacheSetPreloadLength(self, value); }
+    public int GetPreloadLength() {
+        return msSceneCacheGetPreloadLength(self);
+    }
+    
+    public void SetPreloadLength(int preload) {
+        msSceneCacheSetPreloadLength(self, preload);
     }
 
-    public float sampleRate {
-        get { return msSceneCacheGetSampleRate(self); }
+    public float GetSampleRate() {
+        return msSceneCacheGetSampleRate(self);
     }
 
-    public int sceneCount {
-        get { return msSceneCacheGetNumScenes(self); }
+    public int GetNumScenes() {
+        return msSceneCacheGetNumScenes(self);
     }
 
-    internal TimeRange timeRange {
-        get {
-            var ret = default(TimeRange);
-            msSceneCacheGetTimeRange(self, ref ret.start, ref ret.end);
-            return ret;
-        }
+    internal TimeRange GetTimeRange() {
+        TimeRange ret = default(TimeRange);
+        msSceneCacheGetTimeRange(self, ref ret.start, ref ret.end);
+        return ret;
     }
 
     public float GetTime(int i) {
@@ -3088,18 +3089,12 @@ internal struct SceneCacheData {
 //----------------------------------------------------------------------------------------------------------------------        
     internal AnimationCurve GetTimeCurve(InterpolationMode im) {
         AnimationCurveData data = msSceneCacheGetTimeCurve(self);
-        if (!data)
-            return null;
-
-        return CreateAnimationCurveFromData(data, im);
+        return !data ? null : CreateAnimationCurveFromData(data, im);
     }
 
     public AnimationCurve GetFrameCurve() {
-        AnimationCurveData data = msSceneCacheGetFrameCurve(self);
-        if (!data)
-            return null;
-
-        return CreateAnimationCurveFromData(data, InterpolationMode.Constant);
+        AnimationCurveData data = msSceneCacheGetFrameCurve(self,0);
+        return !data ? null : CreateAnimationCurveFromData(data, InterpolationMode.Constant);
     }
 
 //----------------------------------------------------------------------------------------------------------------------        
