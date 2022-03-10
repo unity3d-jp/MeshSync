@@ -159,7 +159,7 @@ public class SceneCachePlayer : BaseMeshSync {
         ResetTimeAnimation();
 
         if (m_sceneCache) {
-            SceneData scene = LoadSceneData(m_timePrev, out _);
+            SceneData scene = LoadSceneData(m_loadedTime, out _);
             //[TODO-sin: 2022-3-9] Review if this code is necessary.
             //Was added in commit  b60337aff38e55febf81a9b7c741458eff34a919 on August 18, 2019.
             if (!scene.submeshesHaveUniqueMaterial) {
@@ -206,7 +206,7 @@ public class SceneCachePlayer : BaseMeshSync {
             m_sceneCache.Close();
             LogDebug($"SceneCachePlayer: cache closed ({m_sceneCacheFilePath})");
         }
-        m_timePrev = -1;
+        m_loadedTime = -1;
         m_time     = 0;
     }
 
@@ -284,7 +284,7 @@ public class SceneCachePlayer : BaseMeshSync {
             return;
         }
         
-        if (m_time != m_timePrev) {
+        if (m_time != m_loadedTime) {
             LoadSceneCacheToScene(m_time, updateNonMaterialAssets);
         } else if(m_sceneCache.GetPreloadLength() != m_preloadLength) {
             m_sceneCache.SetPreloadLength(m_preloadLength);
@@ -296,7 +296,7 @@ public class SceneCachePlayer : BaseMeshSync {
 
 
     void LoadSceneCacheToScene(float time, bool updateNonMaterialAssets) {
-        m_timePrev = m_time = time;
+        m_loadedTime = m_time = time;
         m_sceneCache.SetPreloadLength(m_preloadLength);
 #if UNITY_EDITOR
         ulong sceneGetBegin = Misc.GetTimeNS();
@@ -515,9 +515,9 @@ public class SceneCachePlayer : BaseMeshSync {
         
     SceneCacheData m_sceneCache;
     TimeRange      m_timeRange;
-    int            m_frame = 0;
-    float          m_timePrev          = -1;
-    Animator       m_animator          = null;
+    int            m_frame      = 0;
+    float          m_loadedTime = -1;
+    Animator       m_animator   = null;
     
     private bool   m_resetTimeAnimationOnEnable = false;
 
