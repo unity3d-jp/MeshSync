@@ -27,9 +27,11 @@ namespace Unity.MeshSync{
             AllCameras = 3
         }
 
-        private CameraMode m_cameraMode = CameraMode.GameCameras;
+        public const CameraMode defaultCameraMode = CameraMode.AllCameras;
 
-        public void Init(BaseMeshSync ms, CameraMode cameraMode = CameraMode.GameCameras)
+        private CameraMode m_cameraMode = defaultCameraMode;
+
+        public void Init(BaseMeshSync ms, CameraMode cameraMode = defaultCameraMode)
         {
             m_server = ms;
             m_cameraMode = cameraMode;

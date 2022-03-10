@@ -240,18 +240,42 @@ msAPI void msServerNotifyPoll(ms::Server *server, ms::PollMessage::PollType t)
     if (!server) { return; }
     server->notifyPoll(t);
 }
-msAPI void msServerSendPropertyInt(ms::Server* server, ms::PropertyInfo* prop, int newValue)
-{
-    if (!server) { return; }
-    prop->set(newValue, prop->min, prop->max);
-    server->receivedProperty(prop);
+
+
+#define EachType(Body)\
+Body(int, Int)\
+Body(float, Float)
+
+#define Body(A, B)\
+msAPI void msServerSendProperty##B(ms::Server* server, const char* name, const char* path, const char* modifierName, const char* propertyName, A newValue)\
+{\
+    if (!server) { return; }\
+    auto prop = ms::PropertyInfo::create(); \
+    prop->name = name; \
+    prop->path = path; \
+    prop->modifierName = modifierName; \
+    prop->propertyName = propertyName; \
+    prop->type = ms::PropertyInfo::B;\
+    prop->set(newValue, 0, 0);\
+    server->receivedProperty(prop);\
+}\
+msAPI void msServerSendProperty##B##Array(ms::Server* server, const char* name, const char* path, const char* modifierName, const char* propertyName, A* newValue, int arrayLength)\
+{\
+    if (!server) { return; }\
+    auto prop = ms::PropertyInfo::create(); \
+    prop->name = name; \
+    prop->path = path; \
+    prop->modifierName = modifierName; \
+    prop->propertyName = propertyName; \
+    prop->type = ms::PropertyInfo::##B##Array;\
+    prop->set(newValue, 0, 0, arrayLength);\
+    server->receivedProperty(prop);\
 }
-msAPI void msServerSendPropertyFloat(ms::Server* server, ms::PropertyInfo* prop, float newValue)
-{
-    if (!server) { return; }
-    prop->set(newValue, prop->min, prop->max);
-    server->receivedProperty(prop);
-}
+
+EachType(Body)
+
+#undef Body
+#undef EachType
 
 msAPI void msServerPropertiesReady(ms::Server* server)
 {

@@ -100,10 +100,16 @@ internal struct Server {
     static extern void msServerNotifyPoll(IntPtr self, PollMessage.PollType t);
 
     [DllImport(Lib.name)]
-    static extern void msServerSendPropertyInt(IntPtr self, IntPtr propertyInfo, int newValue);
+    static extern void msServerSendPropertyInt(IntPtr self, string name, string path, string modifierName, string propertyName, int newValue);
 
     [DllImport(Lib.name)]
-    static extern void msServerSendPropertyFloat(IntPtr self, IntPtr propertyInfo, float newValue);
+    static extern void msServerSendPropertyFloat(IntPtr self, string name, string path, string modifierName, string propertyName, float newValue);
+
+    [DllImport(Lib.name)]
+    static extern void msServerSendPropertyIntArray(IntPtr self, string name, string path, string modifierName, string propertyName, int[] newValue, int arrayLength);
+
+    [DllImport(Lib.name)]
+    static extern void msServerSendPropertyFloatArray(IntPtr self, string name, string path, string modifierName, string propertyName, float[] newValue, int arrayLength);
 
     [DllImport(Lib.name)]
     static extern void msServerPropertiesReady(IntPtr self);
@@ -155,19 +161,27 @@ internal struct Server {
         set { msServerSetScreenshotFilePath(self, value); }
     }
 
-    public void SendProperty(PropertyInfoDataWrapper prop)
-    {
-        switch (prop.type)
+        public void SendProperty(PropertyInfoDataWrapper prop)
         {
-            case PropertyInfoData.Type.Int:
-                msServerSendPropertyInt(self, prop.propertyPointer, prop.ValueInt);
-                break;
+            switch (prop.type)
+            {
+                case PropertyInfoData.Type.Int:
+                    msServerSendPropertyInt(self, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<int>());
+                    break;
 
-            case PropertyInfoData.Type.Float:
-                msServerSendPropertyFloat(self, prop.propertyPointer, prop.ValueFloat);
-                break;
+                case PropertyInfoData.Type.Float:
+                    msServerSendPropertyFloat(self, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<float>());
+                    break;
+
+                case PropertyInfoData.Type.IntArray:
+                    msServerSendPropertyIntArray(self, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<int[]>(), prop.arrayLength);
+                    break;
+
+                case PropertyInfoData.Type.FloatArray:
+                    msServerSendPropertyFloatArray(self, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<float[]>(), prop.arrayLength);
+                    break;
+            }
         }
-    }
 
     public void SendChangedProperties()
     {

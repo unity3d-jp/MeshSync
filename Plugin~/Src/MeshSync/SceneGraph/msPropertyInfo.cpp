@@ -20,7 +20,6 @@ namespace ms {
 
 	void PropertyInfo::clear()
 	{
-		this->path = "";
 	}
 
 	shared_ptr<PropertyInfo> PropertyInfo::create(istream& is)
@@ -46,6 +45,15 @@ namespace ms {
 		data.copy_to((char*)dst);
 	}
 
+	bool PropertyInfo::matches(const PropertyInfoPtr other) const {
+		return
+			path == other->path &&
+			type == other->type &&
+			name == other->name &&
+			modifierName == other->modifierName &&
+			propertyName == other->propertyName;
+	}
+
 	template<class T>
 	static inline void set_impl(SharedVector<char>& dst, const T& v)
 	{
@@ -62,26 +70,29 @@ namespace ms {
 
 #define EachType(Body)\
 Body(int, Int)\
-Body(float, Float)\
-Body(mu::float3, Vector)
+Body(float, Float)
 
 
 #define Body(A, B)\
     template<> void PropertyInfo::set(const A& v, const float& min, const float& max) { type = Type::B; this->min = min; this->max = max; set_impl(data, v); }\
-    /*template<> void PropertyInfo::set(const A *v, size_t n)\
-    {\
-        type = Type::B;\
-        set_impl(data, v, n);\
-    }\*/\
-    template<> A& PropertyInfo::get() const { return *(A*)data.cdata(); }\
-    //template<> const A* PropertyInfo::getArray() const { return (A*)data.cdata(); }
+	template<> void PropertyInfo::set(const A* v, const float& min, const float& max, size_t length)\
+	{\
+		type = Type::B##Array; this->min = min; this->max = max;\
+		set_impl(data, v, length);\
+	}\
+	template<> A& PropertyInfo::get() const { return *(A*)data.cdata(); }\
+	template<> A* PropertyInfo::getArray() const { return (A*)data.cdata(); }
 
 	EachType(Body)
 #undef Body
 
-		//	template<> void PropertyInfo::set(const char* v, size_t n)
-		//{
-		//	type = Type::String;
-		//	set_impl(data, v, n);
-		//}
+	size_t PropertyInfo::getArrayLength() const
+	{
+		switch (type) {
+#define Body(A, B) case Type::B##Array: return data.size() / sizeof(A);
+			EachType(Body)
+#undef Body
+		default: return 0;
+		}
+	}
 }

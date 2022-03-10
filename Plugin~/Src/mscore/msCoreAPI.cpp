@@ -570,8 +570,10 @@ msAPI ms::InstanceInfo::ReferenceType msInstanceInfoGetType(const ms::InstanceIn
 msAPI const char* msPropertyInfoGetPath(const ms::PropertyInfo* self) { return self->path.c_str(); }
 msAPI const char* msPropertyInfoGetName(const ms::PropertyInfo* self) { return self->name.c_str(); }
 msAPI const char* msPropertyInfoGetModifierName(const ms::PropertyInfo* self) { return self->modifierName.c_str(); }
+msAPI const char* msPropertyInfoGetPropertyName(const ms::PropertyInfo* self) { return self->propertyName.c_str(); }
 msAPI int msPropertyInfoGetType(const ms::PropertyInfo* self) { return self->type; }
 msAPI void msPropertyInfoCopyData(const ms::PropertyInfo* self, void* dst) { self->copy(dst); }
+msAPI int msPropertyInfoGetArrayLength(const ms::PropertyInfo* self) { return self->getArrayLength(); }
 msAPI float msPropertyInfoGetMin(const ms::PropertyInfo* self) { return self->min; }
 msAPI float msPropertyInfoGetMax(const ms::PropertyInfo* self) { return self->max; }
 #pragma endregion

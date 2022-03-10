@@ -4,7 +4,9 @@
 #include "MeshSync/SceneGraph/msIdentifier.h"
 
 #include "MeshSync/SceneGraph/msVariant.h"
+#include "MeshSync/MeshSync.h"
 
+msDeclClassPtr(PropertyInfo)
 
 namespace ms {
 	using namespace std;
@@ -18,7 +20,8 @@ namespace ms {
 		enum Type {
 			Int,
 			Float,
-			Vector
+			IntArray,
+			FloatArray
 		};
 
 		/// <summary>
@@ -48,14 +51,22 @@ namespace ms {
 
 		Identifier getIdentifier();
 
-		template<class T> 
+		template<class T>
 		void set(const T& v, const float& min, const float& max);
 
+		template<class T>
+		void set(const T* v, const float& min, const float& max, size_t length);
+
 		template<class T> T& get() const;
+		template<class T> T* getArray() const;
+		size_t getArrayLength() const;
 
 		void copy(void* dst) const;
+
+		bool matches(const PropertyInfoPtr other) const;
 	};
 
 	msSerializable(PropertyInfo)
 }
+
 

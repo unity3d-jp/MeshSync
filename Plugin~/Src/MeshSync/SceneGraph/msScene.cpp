@@ -199,6 +199,7 @@ void Scene::clear()
     constraints.clear();
     instanceInfos.clear();
     instanceMeshes.clear();
+    propertyInfos.clear();
 
     scene_buffers.clear();
     data_sources.clear();

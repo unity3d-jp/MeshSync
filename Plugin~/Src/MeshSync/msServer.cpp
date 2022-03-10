@@ -145,6 +145,9 @@ int Server::processMessages(const MessageHandler& handler)
             handler(Message::Type::Query, *mes);
         }
         else if (auto req = std::dynamic_pointer_cast<RequestPropertiesMessage>(mes)) {
+            if (m_current_properties_request) {
+                m_current_properties_request->cancelled = true;
+            }
             m_current_properties_request = req;
             handler(Message::Type::RequestProperties, *mes);
         }
@@ -621,6 +624,9 @@ void Server::recvRequestProperties(HTTPServerRequest& request, HTTPServerRespons
     for (int i = 0; ; ++i) {
         if (mes->ready)
             break;
+        if (mes->cancelled)
+            return;
+
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
@@ -631,7 +637,7 @@ void Server::recvRequestProperties(HTTPServerRequest& request, HTTPServerRespons
 
     for (auto prop : m_pending_properties)
     {
-        PropertyInfo p = PropertyInfo(*prop);
+        auto p = PropertyInfo(*prop);
         reqResponse.properties.push_back(p);
     }
     m_pending_properties.clear();
@@ -653,7 +659,17 @@ void Server::notifyPoll(PollMessage::PollType t)
     m_polls.erase(std::remove(m_polls.begin(), m_polls.end(), PollMessagePtr()), m_polls.end());
 }
 
-void Server::receivedProperty(PropertyInfo* prop) {    
+void Server::receivedProperty(PropertyInfoPtr prop) {
+    // If the same property is already prepared to be sent, replace it with the updated data:
+    if (m_pending_properties.size() > 0) {
+        for (size_t i = 0; i < m_pending_properties.size(); ++i) {
+            if (m_pending_properties[i]->matches(prop)) {
+                m_pending_properties[i] = prop;
+                return;
+            }
+        }
+    }
+
     m_pending_properties.push_back(prop);
 }
 

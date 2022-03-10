@@ -2962,6 +2962,9 @@ internal struct InstanceInfoData
         [DllImport((Lib.name))]
         static extern IntPtr msPropertyInfoGetModifierName(IntPtr self);
 
+        [DllImport((Lib.name))]
+        static extern IntPtr msPropertyInfoGetPropertyName(IntPtr self);
+        
         [DllImport(Lib.name)]
         static extern int msPropertyInfoGetType(IntPtr self);
 
@@ -2975,8 +2978,9 @@ internal struct InstanceInfoData
         public enum Type
         {
             Int,
-            Float,
-            Vector
+			Float,
+			IntArray,
+			FloatArray
         };
 
         public float min => msPropertyInfoGetMin(self);
@@ -2986,6 +2990,8 @@ internal struct InstanceInfoData
 
         public string modifierName => Misc.S(msPropertyInfoGetModifierName(self));
 
+        public string propertyName => Misc.S(msPropertyInfoGetPropertyName(self));
+        
         public string name => Misc.S(msPropertyInfoGetName(self));
 
         public Type type => (Type)msPropertyInfoGetType(self);

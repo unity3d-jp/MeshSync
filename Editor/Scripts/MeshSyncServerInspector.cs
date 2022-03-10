@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Unity.MeshSync.Editor  {
 [CustomEditor(typeof(MeshSyncServer))]
-internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
+internal partial class MeshSyncServerInspector : BaseMeshSyncInspector   {
     
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -28,8 +28,8 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
         DrawAnimationTweak(m_meshSyncServer);
         DrawExportAssets(m_meshSyncServer);
         DrawInstanceSettings(m_meshSyncServer);
+        DrawSliders(m_meshSyncServer);
         DrawPluginVersion();
-        
 
         PrefabUtility.RecordPrefabInstancePropertyModifications(m_meshSyncServer);
         

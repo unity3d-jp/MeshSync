@@ -224,6 +224,7 @@ public:
 
     // non-serializable fields
     std::atomic_bool ready{ false };
+    std::atomic_bool cancelled { false };
 
 public:
     RequestPropertiesMessage();

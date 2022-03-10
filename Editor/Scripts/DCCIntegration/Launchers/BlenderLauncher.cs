@@ -150,60 +150,53 @@ namespace Unity.MeshSync.Editor
 
         public void DrawDCCToolVersion(BaseMeshSync player)
         {
-            var styleFold = EditorStyles.foldout;
-            styleFold.fontStyle = FontStyle.Bold;
-            player.foldBlenderSettings = EditorGUILayout.Foldout(player.foldBlenderSettings, "Blender settings", true, styleFold);
+            GUILayout.BeginVertical("Box");
 
-            if (player.foldBlenderSettings)
+            var blenderPath = GetBlenderPath();
+
+            var newBlenderPath = EditorGUILayout.TextField("Blender path:", blenderPath);
+            if (newBlenderPath != blenderPath)
             {
-                GUILayout.BeginVertical("Box");
+                SetBlenderPath(newBlenderPath);
+                OpenBlender();
+            }
 
-                var blenderPath = GetBlenderPath();
-
-                var newBlenderPath = EditorGUILayout.TextField("Blender path:", blenderPath);
-                if (newBlenderPath != blenderPath)
+            if (player is MeshSyncServer server)
+            {
+                if (m_blenderProcess == null)
                 {
-                    SetBlenderPath(newBlenderPath);
-                    OpenBlender();
-                }
-
-                if (player is MeshSyncServer server)
-                {
-                    if (m_blenderProcess == null)
-                    {
-                        if (GUILayout.Button("Open Blender"))
-                        {
-                            server.m_DCCInterop.OpenDCCTool(server.m_DCCAsset);
-                        }
-                    }
-                    else if (GUILayout.Button("Restart Blender"))
+                    if (GUILayout.Button("Open Blender"))
                     {
                         server.m_DCCInterop.OpenDCCTool(server.m_DCCAsset);
                     }
+                }
+                else if (GUILayout.Button("Restart Blender"))
+                {
+                    server.m_DCCInterop.OpenDCCTool(server.m_DCCAsset);
+                }
 
-                    var runMode = (RunMode)EditorGUILayout.EnumPopup("Run mode:", m_runMode);
-                    if (runMode != m_runMode)
+                var runMode = (RunMode)EditorGUILayout.EnumPopup("Run mode:", m_runMode);
+                if (runMode != m_runMode)
+                {
+                    m_runMode = runMode;
+                    if (m_blenderProcess != null)
                     {
-                        m_runMode = runMode;
-                        if (m_blenderProcess != null)
-                        {
-                            OpenDCCTool(server.m_DCCAsset);
-                        }
-                    }
-
-                    var newRedirect = EditorGUILayout.Toggle("Redirect Blender to Unity Console:", m_redirectBlenderToUnityConsole);
-                    if (newRedirect != m_redirectBlenderToUnityConsole)
-                    {
-                        m_redirectBlenderToUnityConsole = newRedirect;
-                        if (m_blenderProcess != null)
-                        {
-                            OpenDCCTool(server.m_DCCAsset);
-                        }
+                        OpenDCCTool(server.m_DCCAsset);
                     }
                 }
 
-                GUILayout.EndVertical();
+                var newRedirect = EditorGUILayout.Toggle("Redirect Blender to Unity Console:", m_redirectBlenderToUnityConsole);
+                if (newRedirect != m_redirectBlenderToUnityConsole)
+                {
+                    m_redirectBlenderToUnityConsole = newRedirect;
+                    if (m_blenderProcess != null)
+                    {
+                        OpenDCCTool(server.m_DCCAsset);
+                    }
+                }
             }
+
+            GUILayout.EndVertical();
 
             EditorGUILayout.Space();
         }

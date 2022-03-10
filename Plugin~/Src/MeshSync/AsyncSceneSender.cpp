@@ -70,31 +70,30 @@ void AsyncSceneSender::requestProperties()
     if (m_request_properties_future.valid() && m_request_properties_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
         return;
 
-    m_request_properties_future = std::async(std::launch::async, [this]() { requestPropertiesImpl(); });
+    m_request_properties_future = std::async(std::launch::async, [this]() {
+        while (!propertyInfos.empty()) {           
+            requestPropertiesImpl();
+        }
+    });
 }
 
 void AsyncSceneSender::requestPropertiesImpl() {
-    if (!propertyInfos.empty()) {
-        auto setup_message = [this](ms::Message& mes) {
-            mes.session_id = session_id;
-            mes.message_id = message_count++;
-            mes.timestamp_send = mu::Now();
-        };
+    auto setup_message = [this](ms::Message& mes) {
+        mes.session_id = session_id;
+        mes.message_id = message_count++;
+        mes.timestamp_send = mu::Now();
+    };
 
-        bool succeeded = true;
-        ms::Client client(client_settings);
+    bool succeeded = true;
+    ms::Client client(client_settings);
 
-        ms::RequestPropertiesMessage mes;
-        setup_message(mes);
+    ms::RequestPropertiesMessage mes;
+    setup_message(mes);
 
-        client.send(mes);
+    client.send(mes);
 
-        if (on_properties_received) {
-            on_properties_received(client.properties);
-        }
-
-        // Request again for next change:
-        requestPropertiesImpl();
+    if (on_properties_received) {
+        on_properties_received(client.properties);
     }
 }
 

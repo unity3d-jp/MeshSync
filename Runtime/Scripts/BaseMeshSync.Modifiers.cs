@@ -19,27 +19,81 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)]
         static extern void msPropertyInfoCopyData(IntPtr self, ref float dst);
 
+        [DllImport(Lib.name)]
+        static extern void msPropertyInfoCopyData(IntPtr self, float[] dst);
+
+        [DllImport(Lib.name)]
+        static extern void msPropertyInfoCopyData(IntPtr self, int[] dst);
+
+        [DllImport(Lib.name)]
+        static extern int msPropertyInfoGetArrayLength(IntPtr self);
 
         public PropertyInfoDataWrapper(PropertyInfoData propertyInfoData)
         {
-            this.propertyInfoData = propertyInfoData;
+            type = propertyInfoData.type;
+
+            name = propertyInfoData.name;
+            min = propertyInfoData.min;
+            max = propertyInfoData.max;
+            path = propertyInfoData.path;
+            modifierName = propertyInfoData.modifierName;
+            propertyName = propertyInfoData.propertyName;
+
+            arrayLength = msPropertyInfoGetArrayLength(propertyInfoData.self);
+
+            switch (type)
+            {
+                case PropertyInfoData.Type.Int:
+                    {
+                        int r = 0;
+                        msPropertyInfoCopyData(propertyInfoData.self, ref r);
+                        propertyValue = r;
+                        break;
+                    }
+                case PropertyInfoData.Type.Float:
+                    {
+                        float r = 0;
+                        msPropertyInfoCopyData(propertyInfoData.self, ref r);
+                        propertyValue = r;
+                        break;
+                    }
+                case PropertyInfoData.Type.IntArray:
+                    {
+                        int[] r = new int[arrayLength];
+                        msPropertyInfoCopyData(propertyInfoData.self, r);
+                        propertyValue = r;
+                        break;
+                    }
+                case PropertyInfoData.Type.FloatArray:
+                    {
+                        float[] r = new float[arrayLength];
+                        msPropertyInfoCopyData(propertyInfoData.self, r);
+                        propertyValue = r;
+                        break;
+                    }
+            }
         }
 
-        private PropertyInfoData propertyInfoData;
+        public PropertyInfoData.Type type;
 
-        public PropertyInfoData.Type type => propertyInfoData.type;
+        public string name { get; private set; }
 
-        public IntPtr propertyPointer => propertyInfoData.self;
+        public float min { get; private set; }
+        public float max { get; private set; }
+        public string path { get; private set; }
 
-        public string name => propertyInfoData.name;
-        public float min => propertyInfoData.min;
-        public float max => propertyInfoData.max;
-        public string path => propertyInfoData.path;
+        public string modifierName { get; private set; }
 
+        public string propertyName { get; private set; }
+
+        public int arrayLength { get; private set; }
+
+        private object propertyValue;
 
         public object NewValue
         {
-            get => newValue; set
+            get => newValue;
+            set
             {
                 newValue = value;
                 IsDirty = true;
@@ -54,34 +108,14 @@ namespace Unity.MeshSync
             set;
         }
 
-        public int ValueInt
+        public T GetValue<T>()
         {
-            get
+            if (NewValue is T x)
             {
-                if (NewValue is int x)
-                {
-                    return x;
-                }
-
-                int r = 0;
-                msPropertyInfoCopyData(propertyInfoData.self, ref r);
-                return r;
+                return x;
             }
-        }
 
-        public float ValueFloat
-        {
-            get
-            {
-                if (NewValue is float x)
-                {
-                    return x;
-                }
-
-                float r = 0;
-                msPropertyInfoCopyData(propertyInfoData.self, ref r);
-                return r;
-            }
+            return (T)propertyValue;
         }
     }
 
@@ -103,15 +137,17 @@ namespace Unity.MeshSync
             // handle properties
             Try(() =>
             {
-                propertyInfos.Clear();
                 var numProperties = scene.numPropertyInfos;
-                for (var i = 0; i < numProperties; ++i)
+                if (numProperties > 0)
                 {
-                    var data = scene.GetPropertyInfo(i);
-                    propertyInfos.Add(new PropertyInfoDataWrapper(data));
+                    propertyInfos.Clear();
+                    for (var i = 0; i < numProperties; ++i)
+                    {
+                        var data = scene.GetPropertyInfo(i);
+                        propertyInfos.Add(new PropertyInfoDataWrapper(data));
+                    }
                 }
             });
-
         }
     }
 }

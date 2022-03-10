@@ -91,7 +91,7 @@ public:
     void recvPoll(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void recvRequestProperties(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     
-    void receivedProperty(PropertyInfo* prop);
+    void receivedProperty(PropertyInfoPtr prop);
     void propertiesReady();
 
     static void sanitizeHierarchyPath(std::string& path);
@@ -129,7 +129,7 @@ private:
     GetMessagePtr m_current_get_request;
     ScreenshotMessagePtr m_current_screenshot_request;
     RequestPropertiesMessagePtr m_current_properties_request;
-    std::vector<PropertyInfo*> m_pending_properties;
+    std::vector<PropertyInfoPtr> m_pending_properties;
     std::string m_screenshot_file_path;
     std::string m_file_root_path;
 };
