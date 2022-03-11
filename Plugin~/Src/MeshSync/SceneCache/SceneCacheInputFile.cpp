@@ -389,70 +389,41 @@ ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpola
 
     const TimeRange time_range = GetTimeRangeV();
 
-    if (!interpolation){
-        if (time <= time_range.start) {
-            return LoadByFrameV(0);
-        } else if (time >= time_range.end) {
-            return LoadByFrameV(scene_count - 1);
-        } else {
-            const int frame= GetFrameByTimeV(time);
-            return LoadByFrameV(frame);
-        }
-    }
-
-    ///
     if (time <= time_range.start) {
-        const int si = 0;
-        if ((!interpolation && m_loadedFrame0 == si) ||
-            (m_loadedFrame0 == si && m_loadedFrame1 == si))
-            return nullptr;
-
-        m_loadedFrame0 = m_loadedFrame1 = si;
-        ret = LoadByIndexInternal(si);
+        return LoadByFrameV(0);
+    } else if (time >= time_range.end) {
+        return LoadByFrameV(scene_count - 1);
     }
-    else if (time >= time_range.end) {
-        const int si =  scene_count - 1;
-        if ((!interpolation && m_loadedFrame0 == si) ||
-            (m_loadedFrame0 == si && m_loadedFrame1 == si))
-            return nullptr;
 
-        m_loadedFrame0 = m_loadedFrame1 = si;
-        ret = LoadByIndexInternal(si);
+
+    const int frame= GetFrameByTimeV(time);
+    if (!interpolation){
+        return LoadByFrameV(frame);
+    } 
+    
+    const float t1 = m_records[frame + 0].time;
+    const float t2 = m_records[frame + 1].time;
+
+    KickPreload(frame + 1);
+    const ScenePtr s1 = LoadByIndexInternal(frame + 0);
+    const ScenePtr s2 = LoadByIndexInternal(frame + 1);
+
+    {
+        msProfileScope("SceneCacheInputFile: [%d] lerp", (int)si);
+        mu::ScopedTimer timer;
+
+        const float t = (time - t1) / (t2 - t1);
+        ret = Scene::create();
+        ret->lerp(*s1, *s2, t);
+        // keep a reference for s1 (s2 is not needed)
+        ret->data_sources.push_back(s1);
+
+        ret->profile_data.lerp_time = timer.elapsed();
     }
-    else {
-        const int si = GetFrameByTimeV(time);
-        if (interpolation) {
-            const float t1 = m_records[si + 0].time;
-            const float t2 = m_records[si + 1].time;
 
-            KickPreload(si + 1);
-            const ScenePtr s1 = LoadByIndexInternal(si + 0);
-            const ScenePtr s2 = LoadByIndexInternal(si + 1);
+    m_loadedFrame0 = frame;
+    m_loadedFrame1 = frame + 1;
 
-            {
-                msProfileScope("SceneCacheInputFile: [%d] lerp", (int)si);
-                mu::ScopedTimer timer;
-
-                float t = (time - t1) / (t2 - t1);
-                ret = Scene::create();
-                ret->lerp(*s1, *s2, t);
-                // keep a reference for s1 (s2 is not needed)
-                ret->data_sources.push_back(s1);
-
-                ret->profile_data.lerp_time = timer.elapsed();
-            }
-
-            m_loadedFrame0 = si;
-            m_loadedFrame1 = si + 1;
-        }
-        else {
-            if (si == m_loadedFrame0)
-                return nullptr;
-            ret = LoadByIndexInternal(si);
-
-            m_loadedFrame0 = m_loadedFrame1 = si;
-        }
-    }
     m_lastTime = time;
     return PostProcess(ret, m_loadedFrame1);
 }
