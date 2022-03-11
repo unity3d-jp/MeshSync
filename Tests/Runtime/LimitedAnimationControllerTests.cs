@@ -2,7 +2,7 @@ using NUnit.Framework;
 
 namespace Unity.MeshSync.Tests {
 
-internal class LimitedAnimationConfigTests {
+internal class LimitedAnimationControllerTests {
    
 //----------------------------------------------------------------------------------------------------------------------    
     [Test]
