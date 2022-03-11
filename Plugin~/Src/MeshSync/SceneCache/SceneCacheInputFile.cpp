@@ -365,12 +365,12 @@ ScenePtr SceneCacheInputFile::LoadByFrameV(const size_t frame)
         return nullptr;
 
     //already loaded
-    if (m_loadedFrame0 == i && m_loadedFrame1 == i)
+    if (m_loadedFrame0 == frame && m_loadedFrame1 == frame)
         return nullptr;
 
-    m_loadedFrame0 = m_loadedFrame1 = i;
-    ScenePtr ret = LoadByIndexInternal(i);
-    return PostProcess(ret, i);
+    m_loadedFrame0 = m_loadedFrame1 = frame;
+    ScenePtr ret = LoadByIndexInternal(frame);
+    return PostProcess(ret, frame);
 }
 
 ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpolation)
