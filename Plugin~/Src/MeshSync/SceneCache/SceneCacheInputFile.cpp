@@ -377,30 +377,29 @@ ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpola
 {
     if (!IsValid())
         return nullptr;
+
     if (time == m_lastTime) {
-        if (m_lastDiff)
-            return m_lastDiff;
-        else if (m_lastScene)
-            return m_lastScene;
+        return nullptr;
     }
 
     ScenePtr ret;
-    const int scene_count = static_cast<int>(m_records.size());
 
     const TimeRange time_range = GetTimeRangeV();
 
+    //start/end check
     if (time <= time_range.start) {
         return LoadByFrameV(0);
     } else if (time >= time_range.end) {
-        return LoadByFrameV(scene_count - 1);
+        const int sceneCount = static_cast<int>(m_records.size());
+        return LoadByFrameV(sceneCount - 1);
     }
-
 
     const int frame= GetFrameByTimeV(time);
     if (!interpolation){
         return LoadByFrameV(frame);
     } 
-    
+
+    //interpolation
     const float t1 = m_records[frame + 0].time;
     const float t2 = m_records[frame + 1].time;
 
