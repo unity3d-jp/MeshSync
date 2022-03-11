@@ -121,7 +121,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             --EditorGUI.indentLevel;
             
             //Limited Animation
-            LimitedAnimationController limitedAnimationController = t.GetLimitedAnimationConfig();
+            LimitedAnimationController limitedAnimationController = t.GetLimitedAnimationController();
             using (new EditorGUI.DisabledScope(t.GetPlaybackMode() == SceneCachePlaybackMode.Interpolate)) {
                 changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Limited Animation",
                     guiFunc: () => (EditorGUILayout.Toggle("Limited Animation", limitedAnimationController.IsEnabled())),

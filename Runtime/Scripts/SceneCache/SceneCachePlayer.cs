@@ -89,7 +89,7 @@ public class SceneCachePlayer : BaseMeshSync {
         LoadSceneCacheToScene(m_time, updateNonMaterialAssets: false);
     }
 
-    internal LimitedAnimationController GetLimitedAnimationConfig() { return m_limitedAnimationController; }
+    internal LimitedAnimationController GetLimitedAnimationController() { return m_limitedAnimationController; }
     
     internal float GetTime() { return m_time;}
     internal void SetTime(float time) { m_time = time; }
