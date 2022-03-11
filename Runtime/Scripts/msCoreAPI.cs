@@ -3092,7 +3092,7 @@ internal struct SceneCacheData {
     }
 
     public AnimationCurve GetFrameCurve() {
-        AnimationCurveData data = msSceneCacheGetFrameCurve(self,0);
+        AnimationCurveData data = msSceneCacheGetFrameCurve(self);
         return !data ? null : CreateAnimationCurveFromData(data, InterpolationMode.Constant);
     }
 
