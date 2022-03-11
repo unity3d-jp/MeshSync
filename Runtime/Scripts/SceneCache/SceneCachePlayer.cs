@@ -83,13 +83,25 @@ public class SceneCachePlayer : BaseMeshSync {
     }
 
     internal SceneCachePlaybackMode GetPlaybackMode()                             { return m_playbackMode; }
-    internal void                   SetPlaybackMode(SceneCachePlaybackMode mode ) { m_playbackMode = mode; }
+
+    internal void SetPlaybackMode(SceneCachePlaybackMode mode) {
+        m_playbackMode = mode;
+        LoadSceneCacheToScene(m_time, updateNonMaterialAssets: false);
+    }
 
     internal bool IsLimitedAnimation() { return m_isLimitedAnimation; }
-    internal void SetLimitedAnimation(bool limitedAnimation) { m_isLimitedAnimation = limitedAnimation;}
 
-    internal int  GetLimitedAnimationFrames()           { return m_limitedAnimationFrames; }
-    internal void SetLimitedAnimationFrames(int frames) { m_limitedAnimationFrames = frames;}
+    internal void SetLimitedAnimation(bool limitedAnimation) {
+        m_isLimitedAnimation = limitedAnimation;
+        LoadSceneCacheToScene(m_time, updateNonMaterialAssets: false);
+    }
+
+    internal int  GetLimitedAnimationFrames() { return m_limitedAnimationFrames; }
+
+    internal void SetLimitedAnimationFrames(int frames) {
+        m_limitedAnimationFrames = frames;
+        LoadSceneCacheToScene(m_time, updateNonMaterialAssets: false);
+    }
     
     internal float GetTime() { return m_time;}
     internal void SetTime(float time) { m_time = time; }
@@ -341,12 +353,14 @@ public class SceneCachePlayer : BaseMeshSync {
         switch (m_playbackMode) {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
                 frame = Mathf.Clamp(Mathf.FloorToInt(time * m_sceneCache.GetSampleRate()), 0, frameCount);
+                frame = ApplyLimitedAnimation(frame);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
 
             case SceneCachePlaybackMode.SnapToNearestFrame: {
                 frame = Mathf.Clamp(Mathf.RoundToInt(time * m_sceneCache.GetSampleRate()), 0, frameCount);
+                frame = ApplyLimitedAnimation(frame);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
@@ -356,6 +370,19 @@ public class SceneCachePlayer : BaseMeshSync {
             }
         }
         return scene;
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
+    
+    int ApplyLimitedAnimation(int frame) {
+        if (!m_isLimitedAnimation) {
+            return frame;
+        }
+
+        m_limitedAnimationFrames = Mathf.Max(1, m_limitedAnimationFrames);
+        int multiplier = Mathf.FloorToInt((float) frame / m_limitedAnimationFrames);
+        frame = multiplier * m_limitedAnimationFrames;
+        return frame;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -507,8 +534,8 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] private SceneCachePlaybackMode m_playbackMode = SceneCachePlaybackMode.SnapToNearestFrame;
     
     //Limited animation
-    [SerializeField] private bool m_isLimitedAnimation;
-    [SerializeField] private int  m_limitedAnimationFrames; //hold one data for several frames.
+    [SerializeField] private bool m_isLimitedAnimation = false;
+    [SerializeField] private int  m_limitedAnimationFrames = 1; //hold one data for several frames.
     
     [SerializeField] float     m_time;
     [SerializeField] int       m_preloadLength = 1;
