@@ -589,7 +589,9 @@ public class MeshSyncServer : BaseMeshSync {
             
             m_cameraMode = value;
             
+#if UNITY_STANDALONE
             m_instanceRenderer.Init(this, m_cameraMode);
+#endif
         }
     }
 #endif    
