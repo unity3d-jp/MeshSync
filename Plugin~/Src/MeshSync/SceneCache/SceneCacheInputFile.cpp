@@ -68,9 +68,19 @@ int SceneCacheInputFile::GetFrameByTimeV(const float time) const
 {
     if (!IsValid())
         return 0;
-    auto p = std::lower_bound(m_records.begin(), m_records.end(), time, [](auto& a, float t) { return a.time < t; });
+
+    const float sampleRate = m_header.exportSettings.sampleRate;
+    if (sampleRate > 0.0f) {
+        return std::floor(time * sampleRate);
+    } 
+
+    //variable sample rate
+    const auto p = std::lower_bound(m_records.begin(), m_records.end(), time, [](const SceneRecord& a, const float t){
+        return a.time < t;
+    });
+
     if (p != m_records.end()) {
-        int d = static_cast<int>(std::distance(m_records.begin(), p));
+        const int d = static_cast<int>(std::distance(m_records.begin(), p));
         return p->time == time ? d : d - 1;
     }
     return 0;
