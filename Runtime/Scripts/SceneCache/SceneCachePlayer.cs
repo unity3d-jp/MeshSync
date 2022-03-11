@@ -96,10 +96,10 @@ public class SceneCachePlayer : BaseMeshSync {
         LoadSceneCacheToScene(m_time, updateNonMaterialAssets: false);
     }
 
-    internal int  GetLimitedAnimationFrames() { return m_limitedAnimationFrames; }
+    internal int  GetLimitedAnimationNumFramesToHold() { return m_limitedAnimationNumFramesToHold; }
 
-    internal void SetLimitedAnimationFrames(int frames) {
-        m_limitedAnimationFrames = frames;
+    internal void SetLimitedAnimationNumFramesToHold(int frames) {
+        m_limitedAnimationNumFramesToHold = frames;
         LoadSceneCacheToScene(m_time, updateNonMaterialAssets: false);
     }
     
@@ -379,9 +379,9 @@ public class SceneCachePlayer : BaseMeshSync {
             return frame;
         }
 
-        m_limitedAnimationFrames = Mathf.Max(1, m_limitedAnimationFrames);
-        int multiplier = Mathf.FloorToInt((float) frame / m_limitedAnimationFrames);
-        frame = multiplier * m_limitedAnimationFrames;
+        m_limitedAnimationNumFramesToHold = Mathf.Max(1, m_limitedAnimationNumFramesToHold);
+        int multiplier = Mathf.FloorToInt((float) frame / m_limitedAnimationNumFramesToHold);
+        frame = multiplier * m_limitedAnimationNumFramesToHold;
         return frame;
     }
     
@@ -535,7 +535,7 @@ public class SceneCachePlayer : BaseMeshSync {
     
     //Limited animation
     [SerializeField] private bool m_isLimitedAnimation = false;
-    [SerializeField] private int  m_limitedAnimationFrames = 1; //hold one data for several frames.
+    [SerializeField] private int  m_limitedAnimationNumFramesToHold = 1; //hold one data for several frames.
     
     [SerializeField] float     m_time;
     [SerializeField] int       m_preloadLength = 1;
