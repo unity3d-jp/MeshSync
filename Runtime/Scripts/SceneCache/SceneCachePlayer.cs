@@ -165,7 +165,7 @@ public class SceneCachePlayer : BaseMeshSync {
             SceneData scene = LoadSceneData(m_loadedTime, out _);
             //[TODO-sin: 2022-3-9] Review if this code is necessary.
             //Was added in commit  b60337aff38e55febf81a9b7c741458eff34a919 on August 18, 2019.
-            if (!scene.submeshesHaveUniqueMaterial) {
+            if (scene && !scene.submeshesHaveUniqueMaterial) {
                 m_config.SyncMaterialList = false;
             }
         }
