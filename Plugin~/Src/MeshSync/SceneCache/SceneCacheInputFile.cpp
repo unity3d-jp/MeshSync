@@ -364,6 +364,8 @@ ScenePtr SceneCacheInputFile::LoadByFrameV(size_t i)
     if (!IsValid())
         return nullptr;
 
+    m_loadedFrame0 = m_loadedFrame1 = i;
+
     ScenePtr ret = LoadByIndexInternal(i);
     return PostProcess(ret, i);
 }
@@ -380,10 +382,22 @@ ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpola
     }
 
     ScenePtr ret;
-
     const int scene_count = static_cast<int>(m_records.size());
 
     const TimeRange time_range = GetTimeRangeV();
+
+    if (!interpolation){
+        if (time <= time_range.start) {
+            return LoadByFrameV(0);
+        } else if (time >= time_range.end) {
+            return LoadByFrameV(scene_count - 1);
+        } else {
+            const int frame= GetFrameByTimeV(time);
+            return LoadByFrameV(frame);
+        }
+    }
+
+    ///
     if (time <= time_range.start) {
         const int si = 0;
         if ((!interpolation && m_loadedFrame0 == si) ||
