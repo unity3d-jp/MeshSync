@@ -104,6 +104,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
                     (SceneCachePlaybackMode)EditorGUILayout.EnumPopup("Playback Mode", t.GetPlaybackMode()), 
                 updateFunc: (SceneCachePlaybackMode mode) => {
                     t.SetPlaybackMode(mode);
+                    SceneView.RepaintAll();
                 }
             );
 
