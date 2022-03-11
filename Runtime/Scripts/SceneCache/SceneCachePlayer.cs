@@ -340,15 +340,17 @@ public class SceneCachePlayer : BaseMeshSync {
         frame = m_frame; //no change by default        
         switch (m_playbackMode) {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
-                frame = Mathf.Clamp(Mathf.FloorToInt(time * m_sceneCache.GetSampleRate()), 0, frameCount);
+                frame = Mathf.FloorToInt(time * m_sceneCache.GetSampleRate());
                 frame = m_limitedAnimationConfig.Apply(frame);
+                frame = Mathf.Clamp(frame, 0, frameCount-1);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
 
             case SceneCachePlaybackMode.SnapToNearestFrame: {
-                frame = Mathf.Clamp(Mathf.RoundToInt(time * m_sceneCache.GetSampleRate()), 0, frameCount);
+                frame = Mathf.RoundToInt(time * m_sceneCache.GetSampleRate());
                 frame = m_limitedAnimationConfig.Apply(frame);
+                frame = Mathf.Clamp(frame, 0, frameCount-1);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
