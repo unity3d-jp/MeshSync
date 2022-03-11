@@ -124,13 +124,19 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             using (new EditorGUI.DisabledScope(t.GetPlaybackMode() == SceneCachePlaybackMode.Interpolate)) {
                 changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Limited Animation",
                     guiFunc: () => (EditorGUILayout.Toggle("Limited Animation", t.IsLimitedAnimation())),
-                    updateFunc: (bool limitedAnimation) => { t.SetLimitedAnimation(limitedAnimation); });
+                    updateFunc: (bool limitedAnimation) => {
+                        t.SetLimitedAnimation(limitedAnimation);
+                        SceneView.RepaintAll();
+                    });
 
                 ++EditorGUI.indentLevel;
                 using (new EditorGUI.DisabledScope(!t.IsLimitedAnimation())) {
                     changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Limited Animation",
-                        guiFunc: () => (EditorGUILayout.IntField("Frames", t.GetLimitedAnimationFrames())),
-                        updateFunc: (int frames) => { t.SetLimitedAnimationFrames(frames); });
+                        guiFunc: () => (EditorGUILayout.IntField("Num Frames to Hold", t.GetLimitedAnimationFrames())),
+                        updateFunc: (int frames) => {
+                            t.SetLimitedAnimationFrames(frames);
+                            SceneView.RepaintAll();
+                        });
                 }
 
                 --EditorGUI.indentLevel;
