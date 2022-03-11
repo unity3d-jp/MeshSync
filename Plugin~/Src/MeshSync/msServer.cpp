@@ -145,6 +145,7 @@ int Server::processMessages(const MessageHandler& handler)
             handler(Message::Type::Query, *mes);
         }
         else if (auto req = std::dynamic_pointer_cast<RequestPropertiesMessage>(mes)) {
+            lock_t lock(m_properties_mutex);
             if (m_current_properties_request) {
                 m_current_properties_request->cancelled = true;
             }

@@ -128,6 +128,7 @@ private:
     ScenePtr m_host_scene;
     GetMessagePtr m_current_get_request;
     ScreenshotMessagePtr m_current_screenshot_request;
+    std::mutex m_properties_mutex;
     RequestPropertiesMessagePtr m_current_properties_request;
     std::vector<PropertyInfoPtr> m_pending_properties;
     std::string m_screenshot_file_path;
