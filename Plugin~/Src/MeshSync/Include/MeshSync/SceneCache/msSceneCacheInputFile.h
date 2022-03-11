@@ -32,7 +32,7 @@ public:
     TimeRange GetTimeRangeV() const override;
     float GetTimeV(int i) const override;
     int GetFrameByTimeV(float time) const override;
-    ScenePtr LoadByFrameV(size_t i) override;
+    ScenePtr LoadByFrameV(size_t frame) override;
     ScenePtr LoadByTimeV(float time, bool interpolation) override;
     void RefreshV() override;
     void PreloadV(int frame) override;
