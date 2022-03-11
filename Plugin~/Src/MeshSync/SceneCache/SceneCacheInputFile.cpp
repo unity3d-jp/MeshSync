@@ -150,7 +150,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
     }
 
     if (m_header.exportSettings.stripUnchanged)
-        m_baseScene = LoadByIndexInternal(0);
+        m_baseScene = LoadByFrameInternal(0);
 
     //PreloadAll(); // for test
 }
@@ -169,7 +169,7 @@ SceneCacheInputFile::StreamPtr SceneCacheInputFile::CreateStream(const char *pat
 //----------------------------------------------------------------------------------------------------------------------
 
 // thread safe
-ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPreload)
+ScenePtr SceneCacheInputFile::LoadByFrameInternal(const size_t sceneIndex, const bool waitPreload)
 {
     if (!IsValid() || sceneIndex >= m_records.size())
         return nullptr;
@@ -345,7 +345,7 @@ bool SceneCacheInputFile::KickPreload(size_t i)
     if (rec.scene || rec.preload.valid())
         return false; // already loaded or loading
 
-    rec.preload = std::async(std::launch::async, [this, i]() { LoadByIndexInternal(i, false); });
+    rec.preload = std::async(std::launch::async, [this, i]() { LoadByFrameInternal(i, false); });
     return true;
 }
 
@@ -369,7 +369,7 @@ ScenePtr SceneCacheInputFile::LoadByFrameV(const int32_t frame)
         return nullptr;
 
     m_loadedFrame0 = m_loadedFrame1 = frame;
-    ScenePtr ret = LoadByIndexInternal(frame);
+    ScenePtr ret = LoadByFrameInternal(frame);
     return PostProcess(ret, frame);
 }
 
@@ -404,8 +404,8 @@ ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpola
     const float t2 = m_records[frame + 1].time;
 
     KickPreload(frame + 1);
-    const ScenePtr s1 = LoadByIndexInternal(frame + 0);
-    const ScenePtr s2 = LoadByIndexInternal(frame + 1);
+    const ScenePtr s1 = LoadByFrameInternal(frame + 0);
+    const ScenePtr s2 = LoadByFrameInternal(frame + 1);
 
     {
         msProfileScope("SceneCacheInputFile: [%d] lerp", (int)si);
