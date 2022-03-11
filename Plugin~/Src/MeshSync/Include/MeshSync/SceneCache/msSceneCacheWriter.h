@@ -31,7 +31,7 @@ private:
     static SceneCacheOutputFilePtr OpenOSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs);
     static SceneCacheOutputFile* OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs);
 
-    void write();
+    void Write();
 
     SceneCacheOutputFilePtr m_scOutputFile;
     std::string m_errorMessage;

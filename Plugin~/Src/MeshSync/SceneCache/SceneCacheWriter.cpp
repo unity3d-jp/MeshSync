@@ -54,10 +54,10 @@ void SceneCacheWriter::kick()
     if (!IsValid())
         return;
 
-    write();
+    Write();
 }
 
-void SceneCacheWriter::write()
+void SceneCacheWriter::Write()
 {
     if (on_prepare)
         on_prepare();
