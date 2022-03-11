@@ -121,23 +121,32 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             --EditorGUI.indentLevel;
             
             //Limited Animation
+            LimitedAnimationConfig limitedAnimationConfig = t.GetLimitedAnimationConfig();
             using (new EditorGUI.DisabledScope(t.GetPlaybackMode() == SceneCachePlaybackMode.Interpolate)) {
                 changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Limited Animation",
-                    guiFunc: () => (EditorGUILayout.Toggle("Limited Animation", t.IsLimitedAnimation())),
+                    guiFunc: () => (EditorGUILayout.Toggle("Limited Animation", limitedAnimationConfig.IsEnabled())),
                     updateFunc: (bool limitedAnimation) => {
-                        t.SetLimitedAnimation(limitedAnimation);
-                        SceneView.RepaintAll();
+                        limitedAnimationConfig.SetEnabled(limitedAnimation);
+                        RefreshSceneCache(t);
                     });
 
                 ++EditorGUI.indentLevel;
-                using (new EditorGUI.DisabledScope(!t.IsLimitedAnimation())) {
+                using (new EditorGUI.DisabledScope(!limitedAnimationConfig.IsEnabled())) {
                     changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Limited Animation",
                         guiFunc: () => (
-                            EditorGUILayout.IntField("Num Frames to Hold", t.GetLimitedAnimationNumFramesToHold())
+                            EditorGUILayout.IntField("Num Frames to Hold", limitedAnimationConfig.GetNumFramesToHold())
                         ),
                         updateFunc: (int frames) => {
-                            t.SetLimitedAnimationNumFramesToHold(frames);
-                            SceneView.RepaintAll();
+                            limitedAnimationConfig.SetNumFramesToHold(frames);
+                            RefreshSceneCache(t);
+                        });
+                    changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Limited Animation",
+                        guiFunc: () => (
+                            EditorGUILayout.IntField("Frame Offset", limitedAnimationConfig.GetFrameOffset())
+                        ),
+                        updateFunc: (int offset) => {
+                            limitedAnimationConfig.SetFrameOffset(offset);
+                            RefreshSceneCache(t);
                         });
                 }
 
@@ -155,6 +164,11 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         }
 
         return changed;
+    }
+
+    private static void RefreshSceneCache(SceneCachePlayer t) {
+        t.ForceUpdate();
+        SceneView.RepaintAll();
     }
 
 //----------------------------------------------------------------------------------------------------------------------
