@@ -114,12 +114,12 @@ msAPI const ms::AnimationCurve* msSceneCacheGetTimeCurve(const ms::BaseSceneCach
         return nullptr;
     return self->GetTimeCurve().get();
 }
-msAPI const ms::AnimationCurve* msSceneCacheGetFrameCurve(ms::BaseSceneCacheInput *self, int baseFrame)
+msAPI const ms::AnimationCurve* msSceneCacheGetFrameCurve(ms::BaseSceneCacheInput *self)
 {
     msDbgBreadcrumb();
     if (!self)
         return nullptr;
-    return self->GetFrameCurveV(baseFrame).get();
+    return self->GetFrameCurveV(0).get();
 }
 
 #undef msDbgBreadcrumb
