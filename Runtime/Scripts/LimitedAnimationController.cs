@@ -4,8 +4,17 @@ using UnityEngine;
 namespace Unity.MeshSync {
 
 [Serializable]
-internal class LimitedAnimationConfig {
+internal class LimitedAnimationController {
 
+    internal LimitedAnimationController() { }
+
+    internal LimitedAnimationController(bool enabled, int numFramesToHold, int frameOffset) {
+        m_enabled         = enabled;
+        m_numFramesToHold = numFramesToHold;
+        m_frameOffset     = frameOffset;
+    }    
+    
+//----------------------------------------------------------------------------------------------------------------------
     internal void SetEnabled(bool enabled) { m_enabled = enabled;}
     internal bool IsEnabled()              { return m_enabled;}
 
