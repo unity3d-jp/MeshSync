@@ -63,7 +63,7 @@ public class SceneCachePlayer : BaseMeshSync {
     /// Force SceneCache to be updated and loaded to scene.
     /// </summary>
     public void ForceUpdate() {
-        UpdatePlayer( updateNonMaterialAssets: false);        
+        LoadSceneCacheToScene(m_time, updateNonMaterialAssets: false);
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -82,9 +82,12 @@ public class SceneCachePlayer : BaseMeshSync {
         m_animator.enabled = autoPlay;
     }
 
-    internal SceneCachePlaybackMode GetPlaybackMode()                             { return m_playbackMode; }
-    internal void                   SetPlaybackMode(SceneCachePlaybackMode mode ) { m_playbackMode = mode; }
+    internal SceneCachePlaybackMode GetPlaybackMode() { return m_playbackMode; }
 
+    internal void SetPlaybackMode(SceneCachePlaybackMode mode) { m_playbackMode = mode; }
+
+    internal LimitedAnimationController GetLimitedAnimationController() { return m_limitedAnimationController; }
+    
     internal float GetTime() { return m_time;}
     internal void SetTime(float time) { m_time = time; }
 
@@ -334,13 +337,17 @@ public class SceneCachePlayer : BaseMeshSync {
         frame = m_frame; //no change by default        
         switch (m_playbackMode) {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
-                frame = Mathf.Clamp(Mathf.FloorToInt(time * m_sceneCache.GetSampleRate()), 0, frameCount);
+                frame = Mathf.FloorToInt(time * m_sceneCache.GetSampleRate());
+                frame = m_limitedAnimationController.Apply(frame);
+                frame = Mathf.Clamp(frame, 0, frameCount-1);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
 
             case SceneCachePlaybackMode.SnapToNearestFrame: {
-                frame = Mathf.Clamp(Mathf.RoundToInt(time * m_sceneCache.GetSampleRate()), 0, frameCount);
+                frame = Mathf.RoundToInt(time * m_sceneCache.GetSampleRate());
+                frame = m_limitedAnimationController.Apply(frame);
+                frame = Mathf.Clamp(frame, 0, frameCount-1);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
@@ -351,6 +358,8 @@ public class SceneCachePlayer : BaseMeshSync {
         }
         return scene;
     }
+
+   
     
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -499,6 +508,8 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] private TimeUnit m_timeUnit = TimeUnit.Seconds;
     
     [SerializeField] private SceneCachePlaybackMode m_playbackMode = SceneCachePlaybackMode.SnapToNearestFrame;
+
+    [SerializeField] private LimitedAnimationController m_limitedAnimationController = new LimitedAnimationController();
     
     [SerializeField] float     m_time;
     [SerializeField] int       m_preloadLength = 1;
