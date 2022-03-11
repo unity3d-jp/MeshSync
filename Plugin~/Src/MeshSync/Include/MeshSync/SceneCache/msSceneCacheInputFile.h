@@ -88,7 +88,7 @@ private:
     AnimationCurvePtr m_frameCurve;
 
     float m_lastTime = -1.0f;
-    int m_lastIndex = -1, m_lastIndex2 = -1;
+    int m_loadedFrame0 = -1, m_loadedFrame1 = -1;
     ScenePtr m_baseScene, m_lastScene, m_lastDiff;
     std::deque<size_t> m_history;
 

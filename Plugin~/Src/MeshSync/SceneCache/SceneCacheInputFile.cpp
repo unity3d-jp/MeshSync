@@ -386,20 +386,20 @@ ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpola
     const TimeRange time_range = GetTimeRangeV();
     if (time <= time_range.start) {
         const int si = 0;
-        if ((!interpolation && m_lastIndex == si) ||
-            (m_lastIndex == si && m_lastIndex2 == si))
+        if ((!interpolation && m_loadedFrame0 == si) ||
+            (m_loadedFrame0 == si && m_loadedFrame1 == si))
             return nullptr;
 
-        m_lastIndex = m_lastIndex2 = si;
+        m_loadedFrame0 = m_loadedFrame1 = si;
         ret = LoadByIndexInternal(si);
     }
     else if (time >= time_range.end) {
         const int si =  scene_count - 1;
-        if ((!interpolation && m_lastIndex == si) ||
-            (m_lastIndex == si && m_lastIndex2 == si))
+        if ((!interpolation && m_loadedFrame0 == si) ||
+            (m_loadedFrame0 == si && m_loadedFrame1 == si))
             return nullptr;
 
-        m_lastIndex = m_lastIndex2 = si;
+        m_loadedFrame0 = m_loadedFrame1 = si;
         ret = LoadByIndexInternal(si);
     }
     else {
@@ -425,24 +425,24 @@ ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpola
                 ret->profile_data.lerp_time = timer.elapsed();
             }
 
-            m_lastIndex = si;
-            m_lastIndex2 = si + 1;
+            m_loadedFrame0 = si;
+            m_loadedFrame1 = si + 1;
         }
         else {
-            if (si == m_lastIndex)
+            if (si == m_loadedFrame0)
                 return nullptr;
             ret = LoadByIndexInternal(si);
 
-            m_lastIndex = m_lastIndex2 = si;
+            m_loadedFrame0 = m_loadedFrame1 = si;
         }
     }
     m_lastTime = time;
-    return PostProcess(ret, m_lastIndex2);
+    return PostProcess(ret, m_loadedFrame1);
 }
 
 void SceneCacheInputFile::RefreshV()
 {
-    m_lastIndex = m_lastIndex2  = -1;
+    m_loadedFrame0 = m_loadedFrame1  = -1;
     m_lastTime = -1.0f;
     m_lastScene = nullptr;
     m_lastDiff = nullptr;
