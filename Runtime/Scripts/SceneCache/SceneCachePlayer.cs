@@ -296,13 +296,13 @@ public class SceneCachePlayer : BaseMeshSync {
 
 
     void LoadSceneCacheToScene(float time, bool updateNonMaterialAssets) {
-        m_loadedTime = m_time = time;
         m_sceneCache.SetPreloadLength(m_preloadLength);
 #if UNITY_EDITOR
         ulong sceneGetBegin = Misc.GetTimeNS();
 #endif
 
         SceneData scene = LoadSceneData(time, out m_frame);
+        m_loadedTime = time;
         
         // get scene
 #if UNITY_EDITOR
