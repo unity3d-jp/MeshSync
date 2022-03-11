@@ -82,12 +82,9 @@ public class SceneCachePlayer : BaseMeshSync {
         m_animator.enabled = autoPlay;
     }
 
-    internal SceneCachePlaybackMode GetPlaybackMode()                             { return m_playbackMode; }
+    internal SceneCachePlaybackMode GetPlaybackMode() { return m_playbackMode; }
 
-    internal void SetPlaybackMode(SceneCachePlaybackMode mode) {
-        m_playbackMode = mode;
-        LoadSceneCacheToScene(m_time, updateNonMaterialAssets: false);
-    }
+    internal void SetPlaybackMode(SceneCachePlaybackMode mode) { m_playbackMode = mode; }
 
     internal LimitedAnimationController GetLimitedAnimationController() { return m_limitedAnimationController; }
     
