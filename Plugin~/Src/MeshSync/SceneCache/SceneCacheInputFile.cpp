@@ -364,8 +364,11 @@ ScenePtr SceneCacheInputFile::LoadByFrameV(size_t i)
     if (!IsValid())
         return nullptr;
 
-    m_loadedFrame0 = m_loadedFrame1 = i;
+    //already loaded
+    if (m_loadedFrame0 == i && m_loadedFrame1 == i)
+        return nullptr;
 
+    m_loadedFrame0 = m_loadedFrame1 = i;
     ScenePtr ret = LoadByIndexInternal(i);
     return PostProcess(ret, i);
 }
