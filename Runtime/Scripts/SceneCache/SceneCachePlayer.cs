@@ -207,7 +207,6 @@ public class SceneCachePlayer : BaseMeshSync {
             LogDebug($"SceneCachePlayer: cache closed ({m_sceneCacheFilePath})");
         }
         m_loadedTime = -1;
-        m_time     = 0;
     }
 
     
