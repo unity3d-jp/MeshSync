@@ -85,6 +85,12 @@ public class SceneCachePlayer : BaseMeshSync {
     internal SceneCachePlaybackMode GetPlaybackMode()                             { return m_playbackMode; }
     internal void                   SetPlaybackMode(SceneCachePlaybackMode mode ) { m_playbackMode = mode; }
 
+    internal bool IsLimitedAnimation() { return m_isLimitedAnimation; }
+    internal void SetLimitedAnimation(bool limitedAnimation) { m_isLimitedAnimation = limitedAnimation;}
+
+    internal int  GetLimitedAnimationFrames()           { return m_limitedAnimationFrames; }
+    internal void SetLimitedAnimationFrames(int frames) { m_limitedAnimationFrames = frames;}
+    
     internal float GetTime() { return m_time;}
     internal void SetTime(float time) { m_time = time; }
 
@@ -499,6 +505,10 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] private TimeUnit m_timeUnit = TimeUnit.Seconds;
     
     [SerializeField] private SceneCachePlaybackMode m_playbackMode = SceneCachePlaybackMode.SnapToNearestFrame;
+    
+    //Limited animation
+    [SerializeField] private bool m_isLimitedAnimation;
+    [SerializeField] private int  m_limitedAnimationFrames; //hold one data for several frames.
     
     [SerializeField] float     m_time;
     [SerializeField] int       m_preloadLength = 1;
