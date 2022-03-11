@@ -359,7 +359,7 @@ void SceneCacheInputFile::WaitAllPreloads()
     }
 }
 
-ScenePtr SceneCacheInputFile::LoadByFrameV(const size_t frame)
+ScenePtr SceneCacheInputFile::LoadByFrameV(const int32_t frame)
 {
     if (!IsValid())
         return nullptr;
