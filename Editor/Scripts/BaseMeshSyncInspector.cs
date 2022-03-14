@@ -480,7 +480,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
     }
 
 
-    public static void DrawExportAssets(BaseMeshSync t)
+    protected static void DrawExportAssets(BaseMeshSync t)
     {
         var style = EditorStyles.foldout;
         style.fontStyle = FontStyle.Bold;
