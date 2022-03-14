@@ -3057,49 +3057,50 @@ internal struct SceneCacheData {
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern SceneCacheData msISceneCacheOpen(string path);
+    static extern SceneCacheData msSceneCacheOpen(string path);
 
     [DllImport(Lib.name)]
-    static extern void msISceneCacheClose(IntPtr self);
+    static extern void msSceneCacheClose(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msISceneCacheGetPreloadLength(IntPtr self);
+    static extern int msSceneCacheGetPreloadLength(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msISceneCacheSetPreloadLength(IntPtr self, int v);
+    static extern void msSceneCacheSetPreloadLength(IntPtr self, int v);
 
     [DllImport(Lib.name)]
-    static extern float msISceneCacheGetSampleRate(IntPtr self);
+    static extern float msSceneCacheGetSampleRate(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msISceneCacheGetTimeRange(IntPtr self, ref float start, ref float end);
+    static extern void msSceneCacheGetTimeRange(IntPtr self, ref float start, ref float end);
 
     [DllImport(Lib.name)]
-    static extern int msISceneCacheGetNumScenes(IntPtr self);
+    static extern int msSceneCacheGetNumScenes(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern float msISceneCacheGetTime(IntPtr self, int i);
+    static extern float msSceneCacheGetTime(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern int msISceneCacheGetFrameByTime(IntPtr self, float time);
+    static extern int msSceneCacheGetFrameByTime(IntPtr self, float time);
 
     [DllImport(Lib.name)]
-    static extern SceneData msISceneCacheGetSceneByIndex(IntPtr self, int i);
+    static extern SceneData msSceneCacheLoadByFrame(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern SceneData msISceneCacheGetSceneByTime(IntPtr self, float time, bool lerp);
+    static extern SceneData msSceneCacheLoadByTime(IntPtr self, float time, bool lerp);
 
     [DllImport(Lib.name)]
-    static extern void msISceneCacheRefesh(IntPtr self);
+    static extern void msSceneCacheRefresh(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msISceneCachePreload(IntPtr self, int frame);
+    static extern void msSceneCachePreload(IntPtr self, int frame);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msISceneCacheGetTimeCurve(IntPtr self);
+    static extern AnimationCurveData msSceneCacheGetTimeCurve(IntPtr self);
 
+    //[TODO-sin: 2022-3-8] Remove baseFrame parameter
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msISceneCacheGetFrameCurve(IntPtr self, int baseFrame);
+    static extern AnimationCurveData msSceneCacheGetFrameCurve(IntPtr self, int baseFrame);
 
     #endregion
 
@@ -3108,74 +3109,69 @@ internal struct SceneCacheData {
     }
 
     public static SceneCacheData Open(string path) {
-        return msISceneCacheOpen(path);
+        return msSceneCacheOpen(path);
     }
 
     public void Close() {
-        msISceneCacheClose(self);
+        msSceneCacheClose(self);
         self = IntPtr.Zero;
     }
 
-    public int preloadLength {
-        get { return msISceneCacheGetPreloadLength(self); }
-        set { msISceneCacheSetPreloadLength(self, value); }
+    public int GetPreloadLength() {
+        return msSceneCacheGetPreloadLength(self);
+    }
+    
+    public void SetPreloadLength(int preload) {
+        msSceneCacheSetPreloadLength(self, preload);
     }
 
-    public float sampleRate {
-        get { return msISceneCacheGetSampleRate(self); }
+    public float GetSampleRate() {
+        return msSceneCacheGetSampleRate(self);
     }
 
-    public int sceneCount {
-        get { return msISceneCacheGetNumScenes(self); }
+    public int GetNumScenes() {
+        return msSceneCacheGetNumScenes(self);
     }
 
-    internal TimeRange timeRange {
-        get {
-            var ret = default(TimeRange);
-            msISceneCacheGetTimeRange(self, ref ret.start, ref ret.end);
-            return ret;
-        }
+    internal TimeRange GetTimeRange() {
+        TimeRange ret = default(TimeRange);
+        msSceneCacheGetTimeRange(self, ref ret.start, ref ret.end);
+        return ret;
     }
 
     public float GetTime(int i) {
-        return msISceneCacheGetTime(self, i);
+        return msSceneCacheGetTime(self, i);
     }
 
     public int GetFrame(float time) {
-        return msISceneCacheGetFrameByTime(self, time);
+        return msSceneCacheGetFrameByTime(self, time);
     }
 
-    internal SceneData GetSceneByIndex(int i) {
-        return msISceneCacheGetSceneByIndex(self, i);
+    internal SceneData LoadByFrame(int i) {
+        return msSceneCacheLoadByFrame(self, i);
     }
 
-    internal SceneData GetSceneByTime(float t, bool lerp) {
-        return msISceneCacheGetSceneByTime(self, t, lerp);
+    internal SceneData LoadByTime(float t, bool lerp) {
+        return msSceneCacheLoadByTime(self, t, lerp);
     }
 
     public void Refresh() {
-        msISceneCacheRefesh(self);
+        msSceneCacheRefresh(self);
     }
 
     public void Preload(int frame) {
-        msISceneCachePreload(self, frame);
+        msSceneCachePreload(self, frame);
     }
 
 //----------------------------------------------------------------------------------------------------------------------        
     internal AnimationCurve GetTimeCurve(InterpolationMode im) {
-        AnimationCurveData data = msISceneCacheGetTimeCurve(self);
-        if (!data)
-            return null;
-
-        return CreateAnimationCurveFromData(data, im);
+        AnimationCurveData data = msSceneCacheGetTimeCurve(self);
+        return !data ? null : CreateAnimationCurveFromData(data, im);
     }
 
-    public AnimationCurve GetFrameCurve(int baseFrame) {
-        AnimationCurveData data = msISceneCacheGetFrameCurve(self, baseFrame);
-        if (!data)
-            return null;
-
-        return CreateAnimationCurveFromData(data, InterpolationMode.Constant);
+    public AnimationCurve GetFrameCurve() {
+        AnimationCurveData data = msSceneCacheGetFrameCurve(self,0);
+        return !data ? null : CreateAnimationCurveFromData(data, InterpolationMode.Constant);
     }
 
 //----------------------------------------------------------------------------------------------------------------------        

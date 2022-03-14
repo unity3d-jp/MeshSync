@@ -3,6 +3,7 @@
 
 #ifndef msRuntime
 
+#include "MeshSync/SceneGraph/msAnimation.h"
 #include "MeshSync/SceneGraph/msMaterial.h"
 #include "MeshSync/SceneGraph/msTexture.h"
 

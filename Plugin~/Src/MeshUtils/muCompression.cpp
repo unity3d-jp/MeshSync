@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "muCompression.h"
-#include "muSIMD.h"
+#include "MeshUtils/muCompression.h"
+#include "MeshUtils/muSIMD.h"
 
 namespace mu {
 

@@ -1,8 +1,7 @@
-#include "muDebugTimer.h"
 #include "pch.h"
-#include "muDebugTimer.h"
 
-#include "muLog.h"
+#include "MeshUtils/muDebugTimer.h"
+#include "MeshUtils/muLog.h"
 
 namespace mu {
 

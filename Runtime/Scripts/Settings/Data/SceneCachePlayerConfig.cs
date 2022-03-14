@@ -8,10 +8,7 @@ internal class SceneCachePlayerConfig : MeshSyncPlayerConfig{
     internal SceneCachePlayerConfig() { }
     internal SceneCachePlayerConfig(MeshSyncPlayerConfig meshSyncPlayerConfig) : base(meshSyncPlayerConfig) { }
     
-//----------------------------------------------------------------------------------------------------------------------       
-    
-    //Timeline
-    [SerializeField] internal int TimelineSnapToFrame = (int) SnapToFrame.NEAREST; 
+//----------------------------------------------------------------------------------------------------------------------          
     
 //----------------------------------------------------------------------------------------------------------------------    
     
