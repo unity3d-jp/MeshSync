@@ -71,7 +71,9 @@ internal static class Misc {
     }
 
 #if UNITY_EDITOR
-    public static Keyframe[] KeyframeReduction(Keyframe[] keys, float threshold, bool eraseFlatCurves) {
+    
+    //[TODO-sin: 2022-3-14] Check if msKeyframeReduction is used
+    private static Keyframe[] KeyframeReduction(Keyframe[] keys, float threshold, bool eraseFlatCurves) {
         AnimationClipData.Prepare();
         int newCount = msKeyframeReduction(keys, keys.Length, threshold, ToByte(eraseFlatCurves));
         var newKeys  = new Keyframe[newCount];
