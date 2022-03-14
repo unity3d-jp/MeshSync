@@ -22,11 +22,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
 //----------------------------------------------------------------------------------------------------------------------
     public ClipCaps clipCaps {
-#if AT_USE_TIMELINE_GE_1_4_0            
-        get { return ClipCaps.ClipIn | ClipCaps.AutoScale; }
-#else            
         get { return ClipCaps.ClipIn | ClipCaps.SpeedMultiplier; }
-#endif           
     }
 
     public override Playable CreatePlayable(PlayableGraph graph, GameObject go) {
@@ -38,7 +34,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         SceneCachePlayer scPlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
         m_sceneCachePlayableBehaviour.SetSceneCachePlayer(scPlayer);
         m_sceneCachePlayableBehaviour.SetClipData(scClipData);
-        m_sceneCachePlayableBehaviour.SetSnapToFrame(m_snapToFrame);
         
         //Initialize or clear curve
         if (scPlayer) {
@@ -98,10 +93,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
 
-    internal void SetSnapToFrame(SnapToFrame snap) { m_snapToFrame = snap;}
-    internal SnapToFrame GetSnapToFrame() { return m_snapToFrame; }
-
-
 #if UNITY_EDITOR    
     internal static EditorCurveBinding GetTimeCurveBinding() {return m_timeCurveBinding; }
     
@@ -118,7 +109,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     [SerializeField] private ExposedReference<SceneCachePlayer> m_sceneCachePlayerRef;
     
     [SerializeField] private double      m_time;
-    [SerializeField] private SnapToFrame m_snapToFrame = SnapToFrame.NEAREST;
 
     
     SceneCachePlayableBehaviour m_sceneCachePlayableBehaviour = null;

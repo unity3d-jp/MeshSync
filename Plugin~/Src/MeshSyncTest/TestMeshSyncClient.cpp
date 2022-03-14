@@ -10,31 +10,33 @@
 #include "MeshSync/SceneGraph/msPoints.h"
 #include "MeshSync/SceneGraph/msScene.h"
 
-#include "MeshSync/SceneCache/msSceneCache.h"
-#include "MeshSync/SceneCache/msSceneCacheSettings.h"
-#include "MeshSync/SceneCache/SceneCacheWriter.h" //SceneCacheWriter
+#include "MeshSync/SceneCache/msSceneCacheInputSettings.h"
+#include "MeshSync/SceneCache/msSceneCacheOutputSettings.h"
+#include "MeshSync/SceneCache/msSceneCacheEncoding.h"
+#include "MeshSync/SceneCache/msSceneCacheWriter.h" //SceneCacheWriter
 
 #include "MeshSync/Utility/msMaterialExt.h"     //standardMaterial
+#include "MeshSync/SceneCache/msSceneCacheInputFile.h"
 
 using namespace mu;
 
 TestCase(Test_SendMesh) {
-    ms::OSceneCacheSettings c0;
-    c0.strip_unchanged = 0;
-    c0.flatten_hierarchy = 0;
-    c0.encoding = ms::SceneCacheEncoding::Plain;
+    ms::SceneCacheOutputSettings c0;
+    c0.exportSettings.stripUnchanged = 0;
+    c0.exportSettings.flattenHierarchy = 0;
+    c0.exportSettings.encoding = ms::SceneCacheEncoding::Plain;
 
-    ms::OSceneCacheSettings c1;
-    c1.flatten_hierarchy = 0;
+    ms::SceneCacheOutputSettings c1;
+    c1.exportSettings.flattenHierarchy = 0;
 
-    ms::OSceneCacheSettings c2;
-    c2.flatten_hierarchy = 0;
-    c2.encoder_settings.zstd.compression_level = 100;
+    ms::SceneCacheOutputSettings c2;
+    c2.exportSettings.flattenHierarchy = 0;
+    c2.exportSettings.encoderSettings.zstd.compressionLevel = 100;
 
     ms::SceneCacheWriter writer0, writer1, writer2;
-    writer0.open("wave_c0.sc", c0);
-    writer1.open("wave_c1.sc", c1);
-    writer2.open("wave_c2.sc", c2);
+    writer0.Open("wave_c0.sc", c0);
+    writer1.Open("wave_c1.sc", c1);
+    writer2.Open("wave_c2.sc", c2);
 
     for (int i = 0; i < 8; ++i) {
         std::shared_ptr<ms::Scene> scene = ms::Scene::create();
@@ -58,7 +60,10 @@ TestCase(Test_SendMesh) {
         mesh->setupDataFlags();
 
 
-        writer0.time = writer1.time = writer2.time = 0.5f * i;
+        const float writerTime = 0.5f * i;
+        writer0.SetTime(writerTime);
+        writer1.SetTime(writerTime);
+        writer2.SetTime(writerTime);
 
         writer0.geometries.emplace_back(std::static_pointer_cast<ms::Transform>(mesh->clone(true)));
         writer0.kick();
@@ -76,17 +81,17 @@ TestCase(Test_SendMesh) {
 
 TestCase(Test_SceneCacheRead)
 {
-    ms::ISceneCacheSettings iscs;
-    iscs.enable_diff = false;
-    ms::ISceneCachePtr isc = ms::OpenISceneCacheFile("wave_c2.sc", iscs);
+    ms::SceneCacheInputSettings iscs;
+    iscs.enableDiff = false;
+    ms::SceneCacheInputFilePtr isc = ms::SceneCacheInputFile::Open("wave_c2.sc", iscs);
     Expect(isc);
     if (!isc)
         return;
 
-    const auto range = isc->getTimeRange();
+    const ms::TimeRange range = isc->GetTimeRangeV();
     const float step = 0.1f;
     for (float t = range.start; t < range.end; t += step) {
-        const ms::ScenePtr scene = isc->getByTime(t, true);
+        const ms::ScenePtr scene = isc->LoadByTimeV(t, true);
         if (!scene)
             break;
         TestUtility::Send(scene);

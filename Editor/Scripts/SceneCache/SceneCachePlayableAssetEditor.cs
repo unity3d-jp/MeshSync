@@ -37,9 +37,6 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
             return;
         }
         
-        SceneCachePlayerConfig config = MeshSyncProjectSettings.GetOrCreateSettings().GetDefaultSceneCachePlayerConfig();        
-        asset.SetSnapToFrame((SnapToFrame) config.TimelineSnapToFrame);
-
         //OnCreate() is called before the clip is assigned to the track, but we need the track for creating curves.
         clip.TryMoveToTrack(track);
                        

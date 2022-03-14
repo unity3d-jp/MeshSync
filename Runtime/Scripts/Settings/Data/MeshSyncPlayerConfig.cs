@@ -8,7 +8,6 @@ namespace Unity.MeshSync {
 internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
 
     internal MeshSyncPlayerConfig() {
-        m_animationTweakSettings = new AnimationTweakSettings();
         InitComponentSyncSettings();
     }
 
@@ -50,7 +49,6 @@ internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
         Logging            = other.Logging;
         Profiling          = other.Profiling;
         
-        m_animationTweakSettings = new AnimationTweakSettings(other.GetAnimationTweakSettings());
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
@@ -82,8 +80,6 @@ internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     
     
 //----------------------------------------------------------------------------------------------------------------------    
-    internal AnimationTweakSettings GetAnimationTweakSettings() { return m_animationTweakSettings;}
-
     internal ModelImporterSettings GetModelImporterSettings() => m_importerSettings;
 
     internal void SetComponentSyncSettings(int index, ComponentSyncSettings settings) {
@@ -133,9 +129,7 @@ internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     public bool Profiling          = false;
     
 //----------------------------------------------------------------------------------------------------------------------    
-    
-    [SerializeField] AnimationTweakSettings m_animationTweakSettings;
-    
+        
 #pragma warning disable 414           
     [SerializeField] private int m_meshSyncPlayerConfigVersion = (int)MeshSyncPlayerConfigVersion.NO_VERSIONING;
 #pragma warning restore 414

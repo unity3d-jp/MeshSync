@@ -25,9 +25,9 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
         
         m_generatedSCResPathTextField	 = tabInstance.Query<TextField>("GeneratedSCResPathText").First();
         m_generatedSCResPathTextField.RegisterValueChangedCallback((ChangeEvent<string> changeEvent) => {
-            MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+            MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateInstance();
             settings.SetSceneCacheOutputPath(changeEvent.newValue);
-            settings.Save();
+            settings.SaveInEditor();
         });        
         
         m_outputPathSelectButton = tabInstance.Query<Button>("OutputPathSelectButton").First();
@@ -40,9 +40,9 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
 
         Button resetButton = tabInstance.Query<Button>("ResetButton").First();
         resetButton.clicked += () => {
-            MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+            MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
             projectSettings.ResetDefaultSceneCachePlayerConfig();
-            projectSettings.Save();
+            projectSettings.SaveInEditor();
             Setup(root);
         };
        
@@ -67,18 +67,18 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
             return;            
         }        
 
-        MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+        MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateInstance();
         
         path = AssetEditorUtility.NormalizePath(path);
         settings.SetSceneCacheOutputPath(path);
-        settings.Save();
+        settings.SaveInEditor();
 
         RefreshSettings();
     }
 //----------------------------------------------------------------------------------------------------------------------
 
     void RefreshSettings() {
-        MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateSettings();
+        MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateInstance();
         m_generatedSCResPathTextField.value = settings.GetSceneCacheOutputPath();		
     }
 

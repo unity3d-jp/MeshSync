@@ -1,66 +1,63 @@
 #include "pch.h"
-#include "MeshSync/SceneCache/SceneCacheWriter.h"
+#include "MeshSync/SceneCache/msSceneCacheWriter.h"
 
 #ifndef msRuntime
 
-#include "SceneCache/msOSceneCacheImpl.h"
-#include "MeshSync/SceneGraph/msMaterial.h"
-#include "MeshSync/SceneGraph/msTexture.h"
+#include "SceneCache/SceneCacheOutputFile.h"
+#include "MeshSync/SceneGraph/msAnimation.h" //AnimationClipPtr
+#include "MeshSync/SceneGraph/msMaterial.h" //MaterialPtr
+#include "MeshSync/SceneGraph/msTexture.h" //TexturePtr
 #include "Utils/EntityUtility.h"
 
 namespace ms {
 
-SceneCacheWriter::SceneCacheWriter()
-{
-}
-
 SceneCacheWriter::~SceneCacheWriter()
 {
-    close();
+    Close();
 }
 
-bool SceneCacheWriter::open(const char *path, const OSceneCacheSettings& oscs)
+bool SceneCacheWriter::Open(const char *path, const SceneCacheOutputSettings& oscs)
 {
-    m_osc = OpenOSceneCacheFile(path, oscs);
-    return m_osc != nullptr;
+    m_scOutputFile = OpenOSceneCacheFile(path, oscs);
+    return m_scOutputFile != nullptr;
 }
 
-void SceneCacheWriter::close()
+void SceneCacheWriter::Close()
 {
-    if (valid()) {
+    if (IsValid()) {
         wait();
-        m_osc.reset();
+        m_scOutputFile.reset();
     }
 }
 
-bool SceneCacheWriter::valid() const
+bool SceneCacheWriter::IsValid() const
 {
-    return m_osc != nullptr;
+    return m_scOutputFile != nullptr;
 }
 
 bool SceneCacheWriter::isExporting()
 {
-    if (!valid())
+    if (!IsValid())
         return false;
-    return m_osc->isWriting();
+    return m_scOutputFile->IsWriting();
 }
 
 void SceneCacheWriter::wait()
 {
-    if (!valid())
+    if (!IsValid())
         return;
-    m_osc->flush();
+    m_scOutputFile->Flush();
 }
 
 void SceneCacheWriter::kick()
 {
-    if (!valid())
+    if (!IsValid())
         return;
 
-    write();
+    Write();
 }
 
-void SceneCacheWriter::write()
+void SceneCacheWriter::Write()
 {
     if (on_prepare)
         on_prepare();
@@ -88,7 +85,7 @@ void SceneCacheWriter::write()
 
         scene->entities = transforms;
         append(scene->entities, geometries);
-        m_osc->addScene(scene, time);
+        m_scOutputFile->AddScene(scene, m_time);
     }
 
     if (succeeded) {
@@ -104,6 +101,25 @@ void SceneCacheWriter::write()
 
     clear();
 }
+
+//----------------------------------------------------------------------------------------------------------------------
+
+SceneCacheOutputFile* SceneCacheWriter::OpenOSceneCacheFileRaw(const char *path, const SceneCacheOutputSettings& oscs) {
+    SceneCacheOutputFile* ret = new SceneCacheOutputFile(path, oscs);
+    if (ret->IsValid()) {
+        return ret;
+    } else {
+        delete ret;
+        return nullptr;
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+SceneCacheOutputFilePtr SceneCacheWriter::OpenOSceneCacheFile(const char *path, const SceneCacheOutputSettings& oscs) {
+    return SceneCacheOutputFilePtr(OpenOSceneCacheFileRaw(path, oscs));
+}
+
 
 } // namespace ms
 #endif // msRuntime

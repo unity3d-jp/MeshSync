@@ -104,7 +104,7 @@ public class MeshSyncServer : BaseMeshSync {
         //Deploy HTTP assets to StreamingAssets
         DeployStreamingAssets.Deploy();
 #endif
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
         
         
         m_serverSettings.port = (ushort)m_serverPort;
@@ -479,7 +479,7 @@ public class MeshSyncServer : BaseMeshSync {
     }
 
     void Reset() {
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
         m_config = new MeshSyncServerConfig(projectSettings.GetDefaultServerConfig());
         m_serverPort = projectSettings.GetDefaultServerPort();
         

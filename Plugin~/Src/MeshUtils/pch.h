@@ -22,6 +22,6 @@
 #include <locale>
 #include <type_traits>
 
-#include "muConfig.h"
+#include "MeshUtils/muConfig.h"
 
 #define muImpl

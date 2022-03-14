@@ -17,7 +17,6 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
     }
 
     internal void SetClipData(SceneCacheClipData clipData) { m_clipData = clipData; } 
-    internal void SetSnapToFrame(SnapToFrame snap) { m_snapToFrame = snap; } 
     
 //----------------------------------------------------------------------------------------------------------------------        
     
@@ -27,30 +26,10 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
             return;
         }
         AnimationCurve curve = m_clipData.GetAnimationCurve();
-
-        float normalizedTime = 0;
-        switch (m_snapToFrame) {
-            case SnapToFrame.NONE: {
-                normalizedTime = curve.Evaluate((float) playable.GetTime());
-                break;                 
-            }
-            case SnapToFrame.NEAREST: {
-
-                TrackAsset trackAsset = m_clipData.GetOwner().GetParentTrack();
-                if (null == trackAsset) {
-                    return;
-                }
-                     
-                float fps = (float) trackAsset.timelineAsset.editorSettings.GetFPS();
-                
-                float timePerFrame = 1.0f / fps;
-                int   frame        = Mathf.RoundToInt((float)playable.GetTime() * fps);
-                normalizedTime = curve.Evaluate(frame * timePerFrame);
-                break;
-            }            
-        }
+        float normalizedTime = curve.Evaluate((float) playable.GetTime());
               
-        m_sceneCachePlayer.RequestNormalizedTime(normalizedTime);
+        m_sceneCachePlayer.SetAutoplay(false);
+        m_sceneCachePlayer.SetTimeByNormalizedTime(normalizedTime);
 
     }
 
@@ -60,7 +39,6 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
     private SceneCachePlayer m_sceneCachePlayer = null;
     
     private SceneCacheClipData m_clipData = null;
-    private SnapToFrame        m_snapToFrame;
 }
 
 } //end namespace
