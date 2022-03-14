@@ -316,6 +316,34 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                 GUILayout.EndVertical();                    
             }
 
+            // Keyframe Reduction
+            {
+                GUILayout.BeginVertical("Box");
+                EditorGUILayout.LabelField("Keyframe Reduction", EditorStyles.boldLabel);
+                EditorGUI.indentLevel++;
+                float prevReductionThreshold = animationTweakSettings.ReductionThreshold;
+                bool  prevEraseFlatCurves    = animationTweakSettings.EraseFlatCurves;
+                
+                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Threshold",
+                    guiFunc: () => EditorGUILayout.FloatField("Threshold", animationTweakSettings.ReductionThreshold), 
+                    updateFunc: (float val) => {
+                        animationTweakSettings.ReductionThreshold = val;
+                        ApplyKeyframeReduction(clips, val, animationTweakSettings.EraseFlatCurves);                                        
+                    }
+                );                   
+                
+                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Erase Flat Curves",
+                    guiFunc: () => EditorGUILayout.Toggle("Erase Flat Curves", animationTweakSettings.EraseFlatCurves), 
+                    updateFunc: (bool toggle) => {
+                        animationTweakSettings.EraseFlatCurves = toggle; 
+                        ApplyKeyframeReduction(clips, animationTweakSettings.ReductionThreshold, toggle);                                                                    
+                    }
+                );
+                
+                EditorGUI.indentLevel--;
+                GUILayout.EndVertical();                    
+            }
+
             EditorGUILayout.Space();
         }
 
@@ -337,7 +365,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    //Remove
     private static void ApplyTimeScale(IEnumerable<AnimationClip> clips, float timeScale, float timeOffset) {
         foreach (AnimationClip clip in clips) {
             List<AnimationCurve>     curves   = new List<AnimationCurve>();
@@ -380,8 +407,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
     }
 
 //----------------------------------------------------------------------------------------------------------------------        
-    
-    //Remove
     private static void ApplyDropKeyframes(IEnumerable<AnimationClip> clips, int step) {
         Assert.IsTrue(step > 1);
 
