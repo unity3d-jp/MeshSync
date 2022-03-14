@@ -263,39 +263,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                 EditorGUI.indentLevel--;
                 GUILayout.EndVertical();                    
             }
-            
-            
-
-            // Time Scale
-            {
-                GUILayout.BeginVertical("Box");
-                EditorGUILayout.LabelField("Time Scale", EditorStyles.boldLabel);
-                EditorGUI.indentLevel++;
-                float prevTimeScale  = animationTweakSettings.TimeScale;
-                float prevTimeOffset = animationTweakSettings.TimeOffset;
-                
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Scale",
-                    guiFunc: () => EditorGUILayout.FloatField("Scale", animationTweakSettings.TimeScale), 
-                    updateFunc: (float val) => { animationTweakSettings.TimeScale = val; }
-                );
-                
-                
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Offset",
-                    guiFunc: () => EditorGUILayout.FloatField("Offset", animationTweakSettings.TimeOffset), 
-                    updateFunc: (float val) => { animationTweakSettings.TimeOffset = val; }
-                );                    
-                if (!Mathf.Approximately(prevTimeScale, animationTweakSettings.TimeScale) ||
-                    !Mathf.Approximately(prevTimeOffset, animationTweakSettings.TimeOffset)
-                ) 
-                {                    
-                    ApplyTimeScale(clips, animationTweakSettings.TimeScale, 
-                        animationTweakSettings.TimeOffset
-                    );                   
-                
-                }                    
-                EditorGUI.indentLevel--;
-                GUILayout.EndVertical();                    
-            }
 
             EditorGUILayout.Space();
         }
@@ -316,50 +283,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
         UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
     }
 
-//----------------------------------------------------------------------------------------------------------------------
-
-    //Remove
-    private static void ApplyTimeScale(IEnumerable<AnimationClip> clips, float timeScale, float timeOffset) {
-        foreach (AnimationClip clip in clips) {
-            List<AnimationCurve>     curves   = new List<AnimationCurve>();
-            List<EditorCurveBinding> bindings = new List<EditorCurveBinding>();
-            AnimationEvent[]         events   = AnimationUtility.GetAnimationEvents(clip);
-
-            // gather curves
-            bindings.AddRange(AnimationUtility.GetCurveBindings(clip));
-            bindings.AddRange(AnimationUtility.GetObjectReferenceCurveBindings(clip));
-            foreach (var b in bindings)
-                curves.Add(AnimationUtility.GetEditorCurve(clip, b));
-
-            int eventCount = events.Length;
-            int curveCount = curves.Count;
-
-            // transform keys/events
-            foreach (AnimationCurve curve in curves)
-            {
-                Keyframe[] keys = curve.keys;
-                int keyCount = keys.Length;
-                for (int ki = 0; ki < keyCount; ++ki)
-                    keys[ki].time = keys[ki].time * timeScale + timeOffset;
-                curve.keys = keys;
-            }
-            for (int ei = 0; ei < eventCount; ++ei)
-                events[ei].time = events[ei].time * timeScale + timeOffset;
-
-            // apply changes to clip
-            Undo.RegisterCompleteObjectUndo(clip, "ApplyTimeScale");
-            clip.frameRate = clip.frameRate / timeScale;
-            clip.events = events;
-            for (int ci = 0; ci < curveCount; ++ci)
-                Misc.SetCurve(clip, bindings[ci], curves[ci]);
-
-            //Debug.Log("Applied time scale to " + AssetDatabase.GetAssetPath(clip));
-        }
-
-        // repaint animation window
-        UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
-    }
-   
+  
     
 //----------------------------------------------------------------------------------------------------------------------        
 
