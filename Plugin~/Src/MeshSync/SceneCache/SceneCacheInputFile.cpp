@@ -68,9 +68,19 @@ int SceneCacheInputFile::GetFrameByTimeV(const float time) const
 {
     if (!IsValid())
         return 0;
-    auto p = std::lower_bound(m_records.begin(), m_records.end(), time, [](auto& a, float t) { return a.time < t; });
+
+    const float sampleRate = m_header.exportSettings.sampleRate;
+    if (sampleRate > 0.0f) {
+        return std::floor(time * sampleRate);
+    } 
+
+    //variable sample rate
+    const auto p = std::lower_bound(m_records.begin(), m_records.end(), time, [](const SceneRecord& a, const float t){
+        return a.time < t;
+    });
+
     if (p != m_records.end()) {
-        int d = static_cast<int>(std::distance(m_records.begin(), p));
+        const int d = static_cast<int>(std::distance(m_records.begin(), p));
         return p->time == time ? d : d - 1;
     }
     return 0;
@@ -150,7 +160,7 @@ void SceneCacheInputFile::Init(const char *path, const SceneCacheInputSettings& 
     }
 
     if (m_header.exportSettings.stripUnchanged)
-        m_baseScene = LoadByIndexInternal(0);
+        m_baseScene = LoadByFrameInternal(0);
 
     //PreloadAll(); // for test
 }
@@ -169,7 +179,7 @@ SceneCacheInputFile::StreamPtr SceneCacheInputFile::CreateStream(const char *pat
 //----------------------------------------------------------------------------------------------------------------------
 
 // thread safe
-ScenePtr SceneCacheInputFile::LoadByIndexInternal(size_t sceneIndex, bool waitPreload)
+ScenePtr SceneCacheInputFile::LoadByFrameInternal(const size_t sceneIndex, const bool waitPreload)
 {
     if (!IsValid() || sceneIndex >= m_records.size())
         return nullptr;
@@ -345,7 +355,7 @@ bool SceneCacheInputFile::KickPreload(size_t i)
     if (rec.scene || rec.preload.valid())
         return false; // already loaded or loading
 
-    rec.preload = std::async(std::launch::async, [this, i]() { LoadByIndexInternal(i, false); });
+    rec.preload = std::async(std::launch::async, [this, i]() { LoadByFrameInternal(i, false); });
     return true;
 }
 
@@ -359,90 +369,77 @@ void SceneCacheInputFile::WaitAllPreloads()
     }
 }
 
-ScenePtr SceneCacheInputFile::LoadByFrameV(size_t i)
+ScenePtr SceneCacheInputFile::LoadByFrameV(const int32_t frame)
 {
     if (!IsValid())
         return nullptr;
 
-    ScenePtr ret = LoadByIndexInternal(i);
-    return PostProcess(ret, i);
+    //already loaded
+    if (m_loadedFrame0 == frame && m_loadedFrame1 == frame)
+        return nullptr;
+
+    m_loadedFrame0 = m_loadedFrame1 = frame;
+    ScenePtr ret = LoadByFrameInternal(frame);
+    return PostProcess(ret, frame);
 }
 
 ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpolation)
 {
     if (!IsValid())
         return nullptr;
+
     if (time == m_lastTime) {
-        if (m_lastDiff)
-            return m_lastDiff;
-        else if (m_lastScene)
-            return m_lastScene;
+        return nullptr;
     }
 
     ScenePtr ret;
 
-    const int scene_count = static_cast<int>(m_records.size());
-
     const TimeRange time_range = GetTimeRangeV();
+
+    //start/end check
     if (time <= time_range.start) {
-        const int si = 0;
-        if ((!interpolation && m_lastIndex == si) ||
-            (m_lastIndex == si && m_lastIndex2 == si))
-            return nullptr;
-
-        m_lastIndex = m_lastIndex2 = si;
-        ret = LoadByIndexInternal(si);
+        return LoadByFrameV(0);
+    } else if (time >= time_range.end) {
+        const int sceneCount = static_cast<int>(m_records.size());
+        return LoadByFrameV(sceneCount - 1);
     }
-    else if (time >= time_range.end) {
-        const int si =  scene_count - 1;
-        if ((!interpolation && m_lastIndex == si) ||
-            (m_lastIndex == si && m_lastIndex2 == si))
-            return nullptr;
 
-        m_lastIndex = m_lastIndex2 = si;
-        ret = LoadByIndexInternal(si);
+    const int frame= GetFrameByTimeV(time);
+    if (!interpolation){
+        return LoadByFrameV(frame);
+    } 
+
+    //interpolation
+    const float t1 = m_records[frame + 0].time;
+    const float t2 = m_records[frame + 1].time;
+
+    KickPreload(frame + 1);
+    const ScenePtr s1 = LoadByFrameInternal(frame + 0);
+    const ScenePtr s2 = LoadByFrameInternal(frame + 1);
+
+    {
+        msProfileScope("SceneCacheInputFile: [%d] lerp", (int)si);
+        mu::ScopedTimer timer;
+
+        const float t = (time - t1) / (t2 - t1);
+        ret = Scene::create();
+        ret->lerp(*s1, *s2, t);
+        // keep a reference for s1 (s2 is not needed)
+        ret->data_sources.push_back(s1);
+
+        ret->profile_data.lerp_time = timer.elapsed();
     }
-    else {
-        const int si = GetFrameByTimeV(time);
-        if (interpolation) {
-            const float t1 = m_records[si + 0].time;
-            const float t2 = m_records[si + 1].time;
 
-            KickPreload(si + 1);
-            const ScenePtr s1 = LoadByIndexInternal(si + 0);
-            const ScenePtr s2 = LoadByIndexInternal(si + 1);
+    m_loadedFrame0 = frame;
+    m_loadedFrame1 = frame + 1;
 
-            {
-                msProfileScope("SceneCacheInputFile: [%d] lerp", (int)si);
-                mu::ScopedTimer timer;
-
-                float t = (time - t1) / (t2 - t1);
-                ret = Scene::create();
-                ret->lerp(*s1, *s2, t);
-                // keep a reference for s1 (s2 is not needed)
-                ret->data_sources.push_back(s1);
-
-                ret->profile_data.lerp_time = timer.elapsed();
-            }
-
-            m_lastIndex = si;
-            m_lastIndex2 = si + 1;
-        }
-        else {
-            if (si == m_lastIndex)
-                return nullptr;
-            ret = LoadByIndexInternal(si);
-
-            m_lastIndex = m_lastIndex2 = si;
-        }
-    }
     m_lastTime = time;
-    return PostProcess(ret, m_lastIndex2);
+    return PostProcess(ret, m_loadedFrame1);
 }
 
 void SceneCacheInputFile::RefreshV()
 {
-    m_lastIndex = m_lastIndex2  = -1;
+    m_loadedFrame0 = m_loadedFrame1  = -1;
     m_lastTime = -1.0f;
     m_lastScene = nullptr;
     m_lastDiff = nullptr;
