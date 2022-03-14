@@ -227,63 +227,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
         return changed;
     }
-
-//----------------------------------------------------------------------------------------------------------------------        
-
-    protected static bool DrawAnimationTweak(BaseMeshSync player) {
-        bool changed = false;
-        
-        GUIStyle styleFold = EditorStyles.foldout;
-        styleFold.fontStyle = FontStyle.Bold;
-        player.foldAnimationTweak = EditorGUILayout.Foldout(player.foldAnimationTweak, "Animation Tweak", true, styleFold);
-        if (player.foldAnimationTweak) {
-            MeshSyncPlayerConfig config = player.GetConfigV();
-            AnimationTweakSettings animationTweakSettings = config.GetAnimationTweakSettings();
-            
-            float               frameRate = 30.0f;
-            List<AnimationClip> clips     = player.GetAnimationClips();
-            if (clips.Count > 0) {
-                frameRate = clips[0].frameRate;                    
-            }
-
-            {
-                // Override Frame Rate
-                GUILayout.BeginVertical("Box");
-                EditorGUILayout.LabelField("Override Frame Rate", EditorStyles.boldLabel);
-                EditorGUI.indentLevel++;
-                
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(player,"MeshSync: Frame Rate",
-                    guiFunc: () => EditorGUILayout.FloatField("Frame Rate", frameRate), 
-                    updateFunc: (float val) => {
-                        if (val > 0) {
-                            ApplyFrameRate(clips, val);                                                    
-                        }
-                    }
-                );                                       
-                EditorGUI.indentLevel--;
-                GUILayout.EndVertical();                    
-            }
-
-            EditorGUILayout.Space();
-        }
-
-        return changed;
-    }
-
-//----------------------------------------------------------------------------------------------------------------------
-    
-    private static void ApplyFrameRate(IEnumerable<AnimationClip> clips, float frameRate) {
-        foreach (AnimationClip clip in clips) {
-            Undo.RegisterCompleteObjectUndo(clip, "ApplyFrameRate");
-            clip.frameRate = frameRate;
-
-            //Debug.Log("Applied frame rate to " + AssetDatabase.GetAssetPath(clip));
-        }
-        // repaint animation window
-        UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
-    }
-
-  
     
 //----------------------------------------------------------------------------------------------------------------------        
 
