@@ -152,11 +152,12 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
                 --EditorGUI.indentLevel;
             }
 
+            //[TODO-sin: 2022-3-14] This may cause crash when sliding the values back and forth. Find out why
             // preload
             {                
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Preload",
-                    guiFunc: () => (EditorGUILayout.IntSlider("Preload Length", t.GetPreloadLength(), 0, t.frameCount)),
-                    updateFunc: (int preloadLength) => { t.SetPreloadLength(preloadLength); });
+                // changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Preload",
+                //     guiFunc: () => (EditorGUILayout.IntSlider("Preload Length", t.GetPreloadLength(), 0, t.frameCount)),
+                //     updateFunc: (int preloadLength) => { t.SetPreloadLength(preloadLength); });
             }
 
             EditorGUILayout.Space();
