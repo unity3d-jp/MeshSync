@@ -163,24 +163,6 @@ internal class MeshSyncPlayerConfigSection {
             (bool newValue) => { config.Profiling = newValue; }
         );
         
-        //Animation Tweak
-        Foldout atsFoldout = containerInstance.Query<Foldout>("AnimationTweakSettingsFoldout").First();
-        AnimationTweakSettings ats = config.GetAnimationTweakSettings();
-        AddPlayerConfigField<FloatField, float>(atsFoldout, Contents.TweakTimeScale,ats.TimeScale,
-            (float newValue) => { ats.TimeScale = newValue; }
-        );
-        AddPlayerConfigField<FloatField, float>(atsFoldout, Contents.TweakTimeOffset,ats.TimeOffset,
-            (float newValue) => { ats.TimeOffset = newValue; }
-        );
-        AddPlayerConfigField<IntegerField, int>(atsFoldout, Contents.TweakDropStep,ats.DropStep,
-            (int newValue) => { ats.DropStep = newValue; }
-        );
-        AddPlayerConfigField<FloatField, float>(atsFoldout, Contents.TweakReductionThreshold,ats.ReductionThreshold,
-            (float newValue) => { ats.ReductionThreshold = newValue; }
-        );
-        AddPlayerConfigField<Toggle, bool>(atsFoldout, Contents.TweakEraseFlatCurves,ats.EraseFlatCurves,
-            (bool newValue) => { ats.EraseFlatCurves = newValue; }
-        );
                 
         if (!isSceneCachePlayerConfig) 
             return;

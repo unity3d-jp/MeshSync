@@ -51,7 +51,6 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         }
 
         changed |= DrawDefaultMaterialList(m_sceneCachePlayer);
-        changed |= DrawAnimationTweak(m_sceneCachePlayer);
         DrawExportAssets(m_sceneCachePlayer);
         DrawPluginVersion();
 
