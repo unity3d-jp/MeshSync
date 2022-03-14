@@ -423,36 +423,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
     
 //----------------------------------------------------------------------------------------------------------------------        
 
-    private static void ApplyKeyframeReduction(IEnumerable<AnimationClip> clips, float threshold, bool eraseFlatCurves)
-    {
-        foreach (var clip in clips)
-        {
-            List<AnimationCurve>     curves   = new List<AnimationCurve>();
-            List<EditorCurveBinding> bindings = new List<EditorCurveBinding>();
-
-            // gather curves
-            bindings.AddRange(AnimationUtility.GetCurveBindings(clip));
-            bindings.AddRange(AnimationUtility.GetObjectReferenceCurveBindings(clip));
-            foreach (var b in bindings)
-                curves.Add(AnimationUtility.GetEditorCurve(clip, b));
-
-            int curveCount = curves.Count;
-
-            // transform keys/events
-            foreach (var curve in curves)
-                Misc.KeyframeReduction(curve, threshold, eraseFlatCurves);
-
-            // apply changes to clip
-            Undo.RegisterCompleteObjectUndo(clip, "ApplyKeyframeReduction");
-            for (int ci = 0; ci < curveCount; ++ci)
-                Misc.SetCurve(clip, bindings[ci], curves[ci]);
-
-            //Debug.Log("Applied keyframe reduction to " + AssetDatabase.GetAssetPath(clip));
-        }
-
-        // repaint animation window
-        UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
-    }
 
 
     protected static void DrawExportAssets(BaseMeshSync t)
