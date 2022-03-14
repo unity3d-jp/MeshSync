@@ -44,6 +44,7 @@ namespace Unity.MeshSync{
             //To cover cases where the user adds cameras to the scene manually
             EditorApplication.hierarchyChanged -= OnHierarchyChanged;
             EditorApplication.hierarchyChanged += OnHierarchyChanged;
+            Undo.undoRedoPerformed += UndoRedoPerformed;
 #endif
             
             RefreshCameraList();
@@ -137,6 +138,13 @@ namespace Unity.MeshSync{
         }
 
         #region Events
+        
+#if UNITY_EDITOR
+        private void UndoRedoPerformed()
+        {
+            RenderAndDraw();
+        }
+#endif
 
         private void OnDeleteEntity(GameObject obj)
         {
