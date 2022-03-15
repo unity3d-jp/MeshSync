@@ -11,7 +11,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 find_package(Poco REQUIRED COMPONENTS Net)
 find_package(ZSTD)  # Use ZSTD for scene cache compression
 
-if(${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+if(WIN32 OR ${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64")
     include(ISPC)       # Use Intel ISPC to generate SIMDified code. Will define "ENABLE_ISPC"
 endif() 
 
