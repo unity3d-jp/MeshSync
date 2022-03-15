@@ -58,6 +58,9 @@ inline void ForceWrite(void *dst, const T &src)
 
 
 #ifdef _WIN32
+
+#include <windows.h> //HMODULE
+
 // F: [](const char *dllname, const char *funcname, DWORD ordinal, void *import_address) -> void
 template<class F>
 inline void EnumerateDLLImports(HMODULE module, const F &f)
