@@ -27,11 +27,14 @@ $ msbuild zstd.sln /p:Configuration=Release /p:Platform=x64
 
 ## Linux
 
-1. Download [zstd v1.4.4](https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz) and extract to a folder.
+1. Download [zstd v1.5.2](https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz) and extract to a folder.
 1. Go to where zstd was extracted and execute the following:
 ```
 $ cd build/cmake
 $ cmake . -DCMAKE_POSITION_INDEPENDENT_CODE=ON && cmake --build .
 ```
+
+`libzstd.a` will be generated under `build/cmake/lib` folder
+
 
 
