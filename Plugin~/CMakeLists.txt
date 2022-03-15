@@ -15,6 +15,14 @@ if(${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64")
     include(ISPC)       # Use Intel ISPC to generate SIMDified code. Will define "ENABLE_ISPC"
 endif() 
 
+if(ENABLE_ISPC)
+    message("ISPC: ${ENABLE_ISPC}")
+else()    
+    message("ISPC Off")
+endif()
+
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 if(APPLE)
