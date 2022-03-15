@@ -247,10 +247,11 @@ Body(int, Int)\
 Body(float, Float)
 
 #define Body(A, B)\
-msAPI void msServerSendProperty##B(ms::Server* server, const char* name, const char* path, const char* modifierName, const char* propertyName, A newValue)\
+msAPI void msServerSendProperty##B(ms::Server* server, int sourceType, const char* name, const char* path, const char* modifierName, const char* propertyName, A newValue)\
 {\
     if (!server) { return; }\
     auto prop = ms::PropertyInfo::create(); \
+    prop->sourceType = (ms::PropertyInfo::SourceType)sourceType; \
     prop->name = name; \
     prop->path = path; \
     prop->modifierName = modifierName; \
@@ -259,10 +260,11 @@ msAPI void msServerSendProperty##B(ms::Server* server, const char* name, const c
     prop->set(newValue, 0, 0);\
     server->receivedProperty(prop);\
 }\
-msAPI void msServerSendProperty##B##Array(ms::Server* server, const char* name, const char* path, const char* modifierName, const char* propertyName, A* newValue, int arrayLength)\
+msAPI void msServerSendProperty##B##Array(ms::Server* server, int sourceType, const char* name, const char* path, const char* modifierName, const char* propertyName, A* newValue, int arrayLength)\
 {\
     if (!server) { return; }\
     auto prop = ms::PropertyInfo::create(); \
+    prop->sourceType = (ms::PropertyInfo::SourceType)sourceType; \
     prop->name = name; \
     prop->path = path; \
     prop->modifierName = modifierName; \
@@ -276,6 +278,20 @@ EachType(Body)
 
 #undef Body
 #undef EachType
+
+msAPI void msServerSendPropertyString(ms::Server* server, int sourceType, const char* name, const char* path, const char* modifierName, const char* propertyName, const char* newValue, int length)
+{
+if (!server) { return; }
+auto prop = ms::PropertyInfo::create(); 
+prop->sourceType = (ms::PropertyInfo::SourceType)sourceType; 
+prop->name = name; 
+prop->path = path; 
+prop->modifierName = modifierName; 
+prop->propertyName = propertyName; 
+prop->type = ms::PropertyInfo::String; 
+prop->set(newValue, length); 
+server->receivedProperty(prop); 
+}
 
 msAPI void msServerPropertiesReady(ms::Server* server)
 {

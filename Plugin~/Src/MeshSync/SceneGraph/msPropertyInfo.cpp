@@ -4,7 +4,7 @@
 
 namespace ms {
 
-#define EachMember(F) F(type) F(name) F(path) F(min) F(max) F(data) F(modifierName) F(propertyName)
+#define EachMember(F) F(type) F(sourceType) F(name) F(path) F(min) F(max) F(data) F(modifierName) F(propertyName) 
 
 	void PropertyInfo::serialize(ostream& os) const
 	{
@@ -43,12 +43,17 @@ namespace ms {
 	void PropertyInfo::copy(void* dst) const
 	{
 		data.copy_to((char*)dst);
+
+		if (type == Type::String) {
+			((char*)dst)[getArrayLength()] = 0;
+		}
 	}
 
 	bool PropertyInfo::matches(const PropertyInfoPtr other) const {
 		return
 			path == other->path &&
 			type == other->type &&
+			sourceType == other->sourceType &&
 			name == other->name &&
 			modifierName == other->modifierName &&
 			propertyName == other->propertyName;
@@ -86,9 +91,16 @@ Body(float, Float)
 	EachType(Body)
 #undef Body
 
+	void PropertyInfo::set(const char* v, size_t length)
+	{
+		type = Type::String;
+		set_impl(data, v, length);
+	}
+
 	size_t PropertyInfo::getArrayLength() const
 	{
 		switch (type) {
+		case Type::String: return data.size();
 #define Body(A, B) case Type::B##Array: return data.size() / sizeof(A);
 			EachType(Body)
 #undef Body

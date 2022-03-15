@@ -37,11 +37,15 @@ namespace Unity.MeshSync.Editor
                 switch (prop.type)
                 {
                     case PropertyInfoData.Type.Int:
-                        newValue = (int)EditorGUILayout.Slider(prop.name, prop.GetValue<int>(), prop.min, prop.max);
+                        newValue = EditorGUILayout.IntSlider(prop.name, prop.GetValue<int>(), (int)prop.min, (int)prop.max);
                         break;
 
                     case PropertyInfoData.Type.Float:
                         newValue = EditorGUILayout.Slider(prop.name, prop.GetValue<float>(), prop.min, prop.max);
+                        break;
+
+                    case PropertyInfoData.Type.String:
+                        EditorGUILayout.LabelField(prop.name, prop.GetValue<string>());
                         break;
 
                     case PropertyInfoData.Type.IntArray:
@@ -91,6 +95,7 @@ namespace Unity.MeshSync.Editor
                                 break;
                             }
                     }
+
 
                     prop.NewValue = newValue;
                 }

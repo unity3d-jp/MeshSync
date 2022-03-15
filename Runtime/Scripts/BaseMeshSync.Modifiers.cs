@@ -20,6 +20,9 @@ namespace Unity.MeshSync
         static extern void msPropertyInfoCopyData(IntPtr self, ref float dst);
 
         [DllImport(Lib.name)]
+        static extern void msPropertyInfoCopyData(IntPtr self, StringBuilder dst);
+
+        [DllImport(Lib.name)]
         static extern void msPropertyInfoCopyData(IntPtr self, float[] dst);
 
         [DllImport(Lib.name)]
@@ -31,7 +34,7 @@ namespace Unity.MeshSync
         public PropertyInfoDataWrapper(PropertyInfoData propertyInfoData)
         {
             type = propertyInfoData.type;
-
+            sourceType = propertyInfoData.sourceType;
             name = propertyInfoData.name;
             min = propertyInfoData.min;
             max = propertyInfoData.max;
@@ -71,10 +74,23 @@ namespace Unity.MeshSync
                         propertyValue = r;
                         break;
                     }
+
+                case PropertyInfoData.Type.String:
+                    {
+                        var s = new StringBuilder(arrayLength + 1); // +1 for string terminator
+                        msPropertyInfoCopyData(propertyInfoData.self, s);
+                        propertyValue = s.ToString();
+                        break;
+                    }
+
+                default:
+                    Debug.LogError($"Type {propertyInfoData.type} not implemented");
+                    break;
             }
         }
 
         public PropertyInfoData.Type type;
+        public PropertyInfoData.SourceType sourceType;
 
         public string name { get; private set; }
 
@@ -95,6 +111,18 @@ namespace Unity.MeshSync
             get => newValue;
             set
             {
+                if (newValue != null)
+                {
+                    if (newValue.Equals(value))
+                    {
+                        return;
+                    }
+                }
+                else if (propertyValue != null && propertyValue.Equals(value))
+                {
+                    return;
+                }
+
                 newValue = value;
                 IsDirty = true;
             }

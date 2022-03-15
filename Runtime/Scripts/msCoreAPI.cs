@@ -2969,6 +2969,9 @@ internal struct InstanceInfoData
         static extern int msPropertyInfoGetType(IntPtr self);
 
         [DllImport(Lib.name)]
+        static extern int msPropertyInfoGetSourceType(IntPtr self);
+
+        [DllImport(Lib.name)]
         static extern float msPropertyInfoGetMin(IntPtr self);
 
         [DllImport(Lib.name)]
@@ -2980,8 +2983,14 @@ internal struct InstanceInfoData
             Int,
 			Float,
 			IntArray,
-			FloatArray
+			FloatArray,
+            String
         };
+
+        public enum SourceType {
+			GEO_NODES,
+			CUSTOM_PROPERTY
+		};
 
         public float min => msPropertyInfoGetMin(self);
         public float max => msPropertyInfoGetMax(self);
@@ -2995,6 +3004,8 @@ internal struct InstanceInfoData
         public string name => Misc.S(msPropertyInfoGetName(self));
 
         public Type type => (Type)msPropertyInfoGetType(self);
+
+        public SourceType sourceType => (SourceType)msPropertyInfoGetSourceType(self);
     }
 
     #endregion PropertyInfo

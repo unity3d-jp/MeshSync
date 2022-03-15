@@ -572,6 +572,7 @@ msAPI const char* msPropertyInfoGetName(const ms::PropertyInfo* self) { return s
 msAPI const char* msPropertyInfoGetModifierName(const ms::PropertyInfo* self) { return self->modifierName.c_str(); }
 msAPI const char* msPropertyInfoGetPropertyName(const ms::PropertyInfo* self) { return self->propertyName.c_str(); }
 msAPI int msPropertyInfoGetType(const ms::PropertyInfo* self) { return self->type; }
+msAPI int msPropertyInfoGetSourceType(const ms::PropertyInfo* self) { return self->sourceType; }
 msAPI void msPropertyInfoCopyData(const ms::PropertyInfo* self, void* dst) { self->copy(dst); }
 msAPI int msPropertyInfoGetArrayLength(const ms::PropertyInfo* self) { return self->getArrayLength(); }
 msAPI float msPropertyInfoGetMin(const ms::PropertyInfo* self) { return self->min; }

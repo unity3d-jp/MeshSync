@@ -21,7 +21,13 @@ namespace ms {
 			Int,
 			Float,
 			IntArray,
-			FloatArray
+			FloatArray,
+			String
+		};
+
+		enum SourceType {
+			GEO_NODES,
+			CUSTOM_PROPERTY
 		};
 
 		/// <summary>
@@ -35,6 +41,7 @@ namespace ms {
 		string propertyName;
 		
 		Type type;
+		SourceType sourceType;
 		float min, max;
 
 		SharedVector<char> data;
@@ -53,6 +60,8 @@ namespace ms {
 
 		template<class T>
 		void set(const T& v, const float& min, const float& max);
+		
+		void set(const char* v, size_t length);
 
 		template<class T>
 		void set(const T* v, const float& min, const float& max, size_t length);

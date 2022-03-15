@@ -621,7 +621,7 @@ void Server::recvRequestProperties(HTTPServerRequest& request, HTTPServerRespons
     auto mes = std::make_shared<RequestPropertiesMessage>();
     queueMessage(mes);
 
-    // wait for data arrive (or timeout)
+    // wait for data arrive
     for (int i = 0; ; ++i) {
         if (mes->ready)
             break;
