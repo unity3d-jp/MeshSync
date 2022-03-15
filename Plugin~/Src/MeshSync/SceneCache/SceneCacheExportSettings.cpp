@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "MeshSync/SceneCache/msSceneCacheExportSettings.h"
-
-#include "Utils/EncodingUtility.h"
+#include "MeshSync/Utility/msEncodingUtility.h"
 
 namespace ms {
 
