@@ -25,7 +25,7 @@ $ msbuild zstd.sln /p:Configuration=Release /p:Platform=x64
     $ zstd --version
     ```  
 	
-`libzstd.a` will be installed under `/opt/homebrew/lib` folder by default.
+`libzstd.a` will be installed under `/opt/homebrew/Cellar/zstd/1.5.2/lib` folder by default.
 
 ## Linux
 
