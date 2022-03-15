@@ -1,11 +1,12 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
-## [0.12.0-preview] - 2022-03-15
+## [0.12.0-preview] - 2022-03-16
 
 ### Added
 * feat: limited animation settings for SceneCachePlayer
 * feat: add plugin installation support for Blender 3.1
+* feat: Mac Silicon support (experimental)
 
 ### Fixed
 * fix: prevent setting time to 0 during OnEnable() for SceneCachePlayer
