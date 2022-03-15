@@ -19,11 +19,13 @@ $ msbuild zstd.sln /p:Configuration=Release /p:Platform=x64
 ## Mac 
 
 1. Install [Homebrew](https://brew.sh/)
-1. Install zstd via Homebrew and confirm that its version is 1.4.4.
+1. Install zstd via Homebrew and confirm that its version is 1.5.2.
     ``` 
     $ brew install zstd
     $ zstd --version
     ```  
+	
+`libzstd.a` will be installed under `/opt/homebrew/lib` folder by default.
 
 ## Linux
 
