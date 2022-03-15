@@ -16,7 +16,6 @@
 #include "MeshUtils/muRawVector.h"
 #include "MeshUtils/muSIMD.h"
 #include "MeshUtils/muStream.h"
-#include "MeshUtils/muTLS.h"
 #include "MeshUtils/muVertex.h"
 
 namespace mu {
