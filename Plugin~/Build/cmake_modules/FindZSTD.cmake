@@ -16,8 +16,10 @@ if(WIN32)
     set(zstd_lib_filename "libzstd_static.lib")
     set(zstd_external_path_suffix "External/zstd/lib/win64")
 elseif(APPLE)
+    
     set(zstd_lib_filename "libzstd.a")
-    set(zstd_external_path_suffix "External/zstd/lib/osx")
+    set(zstd_external_path_suffix "External/zstd/lib/osx/${CMAKE_HOST_SYSTEM_PROCESSOR}/")
+    
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     set(zstd_lib_filename "libzstd.a")
     set(zstd_external_path_suffix "External/zstd/lib/linux64")
