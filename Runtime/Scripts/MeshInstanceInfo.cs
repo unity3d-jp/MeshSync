@@ -65,7 +65,7 @@ namespace Unity.MeshSync
         }
         
 
-        public MeshRenderer Renderer;
+        public Renderer Renderer;
         public int Layer
         {
             get

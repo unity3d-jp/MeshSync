@@ -214,7 +214,10 @@ namespace Unity.MeshSync{
                 m_instanceInfo.Add(path, entry);
             }
 
-            UpdateEntryMeshMaterials(path, go, entry);
+            if (!UpdateEntryMeshMaterials(path, go, entry))
+            {
+                return;
+            }
 
             entry.Instances = transforms;
             
@@ -226,16 +229,29 @@ namespace Unity.MeshSync{
             SetDirty();
         }
 
-        private void UpdateEntryMeshMaterials(string path, GameObject go, MeshInstanceInfo entry)
+        private bool UpdateEntryMeshMaterials(string path, GameObject go, MeshInstanceInfo entry)
         {
+            if (go.TryGetComponent(out SkinnedMeshRenderer skinnedMeshRenderer))
+            {
+                entry.Mesh = skinnedMeshRenderer.sharedMesh;
+                entry.Materials = skinnedMeshRenderer.sharedMaterials;
+                entry.GameObject = go;
+                entry.Renderer = skinnedMeshRenderer;
+                entry.Root = m_server.transform;
+
+                return true;
+            }
+            
             if (!go.TryGetComponent(out MeshFilter filter))
             {
                 Debug.LogWarningFormat("[MeshSync] No Mesh Filter for {0}", path);
+                return false;
             }
 
             if (!go.TryGetComponent(out MeshRenderer renderer))
             {
                 Debug.LogWarningFormat("[MeshSync] No renderer for {0}", path);
+                return false;
             }
 
             entry.Mesh = filter.sharedMesh;
@@ -243,6 +259,8 @@ namespace Unity.MeshSync{
             entry.GameObject = go;
             entry.Renderer = renderer;
             entry.Root = m_server.transform;
+            
+            return true;
         }
         #endregion
         
