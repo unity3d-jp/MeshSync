@@ -21,11 +21,15 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
 //----------------------------------------------------------------------------------------------------------------------        
     
     public override void OnBehaviourPlay(Playable playable, FrameData info) {
+        if (null == m_sceneCachePlayer)
+            return;
         m_sceneCachePlayer.gameObject.SetActive(true);
     }
     
 
     public override void OnBehaviourPause(Playable playable, FrameData info) {
+        if (null == m_sceneCachePlayer)
+            return;
         m_sceneCachePlayer.gameObject.SetActive(false);
     }
 
