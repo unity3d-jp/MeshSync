@@ -116,7 +116,7 @@ internal class SceneCacheClipData : BaseClipData {
 //----------------------------------------------------------------------------------------------------------------------
     [CanBeNull]
     private static AnimationCurve ExtractNormalizedTimeCurve(SceneCachePlayer scPlayer, out float endTime) {
-        AnimationCurve origTimeCurve = scPlayer.GetTimeCurve();
+        AnimationCurve origTimeCurve = scPlayer.ExtractTimeCurve();
 
         if (null == origTimeCurve) {
             endTime = 0;
