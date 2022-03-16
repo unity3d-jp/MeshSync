@@ -157,7 +157,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         styleFold.fontStyle = FontStyle.Bold;
 
         t.ShowPlaybackInInspector(EditorGUILayout.Foldout(t.IsPlaybackInInspectorShown(), "Playback", true, styleFold));
-        if (t.IsPlaybackInInspectorShown()) 
+        if (!t.IsPlaybackInInspectorShown()) 
             return false;
         
         bool changed = false;
