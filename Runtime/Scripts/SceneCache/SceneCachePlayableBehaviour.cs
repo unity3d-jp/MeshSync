@@ -45,8 +45,6 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
               
         m_sceneCachePlayer.SetAutoplay(false);
         m_sceneCachePlayer.SetTimeByNormalizedTime(normalizedTime);
-        m_sceneCachePlayer.gameObject.SetActive(true);
-
     }
 
 //----------------------------------------------------------------------------------------------------------------------
