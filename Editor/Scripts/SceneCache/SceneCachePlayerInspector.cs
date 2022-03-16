@@ -39,7 +39,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
 
         
         EditorGUILayout.Space();
-        bool changed = DrawCacheSettings(m_sceneCachePlayer);
+        bool changed = DrawCacheFile(m_sceneCachePlayer);
         DrawCacheInfo(m_sceneCachePlayer);
         changed |= DrawPlaybackMode(m_sceneCachePlayer);
         changed |= DrawAssetSyncSettings(m_sceneCachePlayer);
@@ -65,7 +65,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    bool DrawCacheSettings(SceneCachePlayer t) {
+    bool DrawCacheFile(SceneCachePlayer t) {
         t.ShowCacheFileInInspector(EditorGUILayout.Foldout(t.IsCacheFileShownInInspector(), "File", true, GetDefaultFoldoutStyle()));
         if (!t.IsCacheFileShownInInspector()) 
             return false;
