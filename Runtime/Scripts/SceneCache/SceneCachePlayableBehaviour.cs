@@ -29,7 +29,7 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
     }
 
     public override void ProcessFrame(Playable playable, FrameData info, object playerData) {
-        if (m_sceneCachePlayer.IsNullRef()) {
+        if (null == m_sceneCachePlayer) {
             return;
         }
         AnimationCurve curve = m_clipData.GetAnimationCurve();
