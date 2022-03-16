@@ -118,36 +118,37 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
     protected static bool DrawMiscSettings(BaseMeshSync t) {
 
-        bool changed   = false;
         MeshSyncPlayerConfig playerConfig = t.GetConfigV();
         
         // Misc
         t.foldMisc = EditorGUILayout.Foldout(t.foldMisc, "Misc", true, GetBoldFoldoutStyle());
-        if (t.foldMisc)
-        {
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Sync Material List",
-                guiFunc: () => EditorGUILayout.Toggle("Sync Material List", playerConfig.SyncMaterialList), 
-                updateFunc: (bool toggle) => { playerConfig.SyncMaterialList = toggle; }
-            );
+        if (!t.foldMisc) 
+            return false;
+        
+        bool changed = false;
+        
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Sync Material List",
+            guiFunc: () => EditorGUILayout.Toggle("Sync Material List", playerConfig.SyncMaterialList), 
+            updateFunc: (bool toggle) => { playerConfig.SyncMaterialList = toggle; }
+        );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Progressive Display",
-                guiFunc: () => EditorGUILayout.Toggle("Progressive Display", playerConfig.ProgressiveDisplay), 
-                updateFunc: (bool toggle) => { playerConfig.ProgressiveDisplay = toggle; }
-            );
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Progressive Display",
+            guiFunc: () => EditorGUILayout.Toggle("Progressive Display", playerConfig.ProgressiveDisplay), 
+            updateFunc: (bool toggle) => { playerConfig.ProgressiveDisplay = toggle; }
+        );
             
             
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Logging",
-                guiFunc: () => EditorGUILayout.Toggle("Logging", playerConfig.Logging), 
-                updateFunc: (bool toggle) => { playerConfig.Logging = toggle; }
-            );
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Logging",
+            guiFunc: () => EditorGUILayout.Toggle("Logging", playerConfig.Logging), 
+            updateFunc: (bool toggle) => { playerConfig.Logging = toggle; }
+        );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Profiling",
-                guiFunc: () => EditorGUILayout.Toggle("Profiling", playerConfig.Profiling), 
-                updateFunc: (bool toggle) => { playerConfig.Profiling = toggle; }
-            );
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Profiling",
+            guiFunc: () => EditorGUILayout.Toggle("Profiling", playerConfig.Profiling), 
+            updateFunc: (bool toggle) => { playerConfig.Profiling = toggle; }
+        );
             
-            EditorGUILayout.Space();
-        }
+        EditorGUILayout.Space();
 
         return changed;
     }
