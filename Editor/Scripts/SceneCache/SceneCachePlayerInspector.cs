@@ -119,14 +119,12 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
     }
 
     private static void DrawCacheInfo(SceneCachePlayer t) {
-        GUIStyle styleFold = EditorStyles.foldout;
-        styleFold.fontStyle = FontStyle.Bold;
 
         SceneCacheData sc = t.GetSceneCacheData();
         if (!sc)
             return;
         
-        t.ShowInfoInInspector(EditorGUILayout.Foldout(t.IsInfoInInspectorShown(), "Info", true, styleFold));
+        t.ShowInfoInInspector(EditorGUILayout.Foldout(t.IsInfoInInspectorShown(), "Info", true, GetDefaultFoldoutStyle()));
         if (!t.IsInfoInInspectorShown()) 
             return;
 
@@ -145,18 +143,17 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         GUILayout.Label($"Frame Rate: {sc.GetSampleRate()}",GUILayout.MaxWidth(leftWidth));
         GUILayout.Label($"End Time  : {timeRange.end,15:N4}");
         EditorGUILayout.EndHorizontal();
-        
-        
+               
         --EditorGUI.indentLevel;
+        
+        EditorGUILayout.Space();
         EditorGUILayout.Space();
     }
 
 //----------------------------------------------------------------------------------------------------------------------
     private static bool DrawPlaybackMode(SceneCachePlayer t) {
-        GUIStyle styleFold = EditorStyles.foldout;
-        styleFold.fontStyle = FontStyle.Bold;
 
-        t.ShowPlaybackInInspector(EditorGUILayout.Foldout(t.IsPlaybackInInspectorShown(), "Playback", true, styleFold));
+        t.ShowPlaybackInInspector(EditorGUILayout.Foldout(t.IsPlaybackInInspectorShown(), "Playback", true, GetDefaultFoldoutStyle()));
         if (!t.IsPlaybackInInspectorShown()) 
             return false;
         
@@ -215,6 +212,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             --EditorGUI.indentLevel;
         }
 
+        EditorGUILayout.Space();
         EditorGUILayout.Space();
 
         return changed;
@@ -342,6 +340,15 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         }
         
     }
+
+//----------------------------------------------------------------------------------------------------------------------
+    
+    static GUIStyle GetDefaultFoldoutStyle() {
+        GUIStyle foldStyle = EditorStyles.foldout;
+        foldStyle.fontStyle = FontStyle.Bold;
+        return foldStyle;
+    }
+    
 //----------------------------------------------------------------------------------------------------------------------
 
     private SceneCachePlayer       m_sceneCachePlayer = null;
