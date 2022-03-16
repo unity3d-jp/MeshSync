@@ -95,6 +95,7 @@ internal class SceneCachePlayableAssetTests {
         int    numFrames    = scData.GetNumScenes();
         double timePerFrame = 1.0f / scData.GetSampleRate();
         
+        //Use (numFrames-1) because when it becomes invisible when Timeline reaches the last frame
         for(int i=0;i<numFrames-1;++i) {
             
             double directorTime = clip.start + i * timePerFrame;
