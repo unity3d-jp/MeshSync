@@ -225,11 +225,15 @@ internal class SceneCacheClipData : BaseClipData {
     internal AnimationCurve GetAnimationCurve()                     {  return m_animationCurve; }
 
     internal SceneCachePlayer GetSceneCachePlayer() =>m_scPlayer;
+
+    internal LimitedAnimationController GetOverrideLimitedAnimationController() { return m_overrideLimitedAnimationController; }    
     
 //----------------------------------------------------------------------------------------------------------------------
    
     [SerializeField] private AnimationCurve   m_animationCurve;
     [SerializeField] private bool             m_initialized = false;
+
+    [SerializeField] private LimitedAnimationController m_overrideLimitedAnimationController;
 
 #pragma warning disable 414    
     [HideInInspector][SerializeField] private int m_sceneCacheClipDataVersion = CUR_SCENE_CACHE_CLIP_DATA_VERSION; 

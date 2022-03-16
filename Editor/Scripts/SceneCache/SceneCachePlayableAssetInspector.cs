@@ -78,7 +78,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         }
 
         using (new EditorGUI.DisabledScope(disableScope)) {
-            SceneCachePlayerEditorUtility.DrawLimitedAnimationGUI(m_scPlayableAsset.GetOverrideLimitedAnimationController(),
+            SceneCachePlayerEditorUtility.DrawLimitedAnimationGUI(clipData.GetOverrideLimitedAnimationController(),
                 m_scPlayableAsset, scPlayer);
         }
         
