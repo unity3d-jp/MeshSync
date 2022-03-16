@@ -98,9 +98,10 @@ internal class SceneCachePlayableAssetTests {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
+    [UnityTest]
     public IEnumerator EnsureMatchingFramesAreLoadedToScene() {
 
-        InitTest(out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
+        InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
         yield return null;
         SceneCacheData scData = sceneCachePlayer.GetSceneCacheData();
         
