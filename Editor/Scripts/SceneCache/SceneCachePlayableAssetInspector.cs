@@ -79,7 +79,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
 
         using (new EditorGUI.DisabledScope(disableScope)) {
             SceneCachePlayerEditorUtility.DrawLimitedAnimationGUI(m_scPlayableAsset.GetOverrideLimitedAnimationController(),
-                m_scPlayableAsset, scPlayer, "Force Limited Animation");
+                m_scPlayableAsset, scPlayer);
         }
         
     }
