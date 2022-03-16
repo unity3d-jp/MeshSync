@@ -32,10 +32,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         if (null == scPlayer)
             return;
 
-        using (new EditorGUI.DisabledScope(null == scPlayer)) {
-           SceneCachePlayerEditorUtility.DrawLimitedAnimationGUI(m_scPlayableAsset.GetOverrideLimitedAnimationController(),
-               m_scPlayableAsset, scPlayer, "Force Limited Animation");
-        }
+        DrawLimitedAnimationGUI(clipData);
         
         {
             // Curve Operations
@@ -56,6 +53,35 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         }
         
         so.ApplyModifiedProperties();       
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
+    private void DrawLimitedAnimationGUI(SceneCacheClipData clipData) {
+        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
+        
+        bool disableScope = null == scPlayer;
+        
+        if (null != scPlayer) {
+            LimitedAnimationController scLimitedAnimationController = scPlayer.GetLimitedAnimationController();
+            bool                       limitedAnimationEnabled      = scLimitedAnimationController.IsEnabled(); 
+            if (limitedAnimationEnabled) {
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.HelpBox("Disable Limited Animation on the SceneCache GameObject to control Limited Animation via Timeline", MessageType.Warning);
+                if (GUILayout.Button("Fix", GUILayout.Width(64), GUILayout.Height(36))) {
+                    scLimitedAnimationController.SetEnabled(false);
+                    Repaint();
+                }
+                EditorGUILayout.EndHorizontal();
+            }
+
+            disableScope |= limitedAnimationEnabled;
+        }
+
+        using (new EditorGUI.DisabledScope(disableScope)) {
+            SceneCachePlayerEditorUtility.DrawLimitedAnimationGUI(m_scPlayableAsset.GetOverrideLimitedAnimationController(),
+                m_scPlayableAsset, scPlayer, "Force Limited Animation");
+        }
+        
     }
 
 //----------------------------------------------------------------------------------------------------------------------
