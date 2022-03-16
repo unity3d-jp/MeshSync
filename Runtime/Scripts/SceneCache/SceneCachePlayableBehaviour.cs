@@ -21,16 +21,12 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
 //----------------------------------------------------------------------------------------------------------------------        
     
     public override void OnBehaviourPlay(Playable playable, FrameData info) {
-        if (null == m_sceneCachePlayer)
-            return;
-        m_sceneCachePlayer.gameObject.SetActive(true);
+        ActivateGameObject(true);
     }
     
 
     public override void OnBehaviourPause(Playable playable, FrameData info) {
-        if (null == m_sceneCachePlayer)
-            return;
-        m_sceneCachePlayer.gameObject.SetActive(false);
+        ActivateGameObject(false);
     }
 
     public override void ProcessFrame(Playable playable, FrameData info, object playerData) {
@@ -45,7 +41,14 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
         m_sceneCachePlayer.gameObject.SetActive(true);
 
     }
-    
+
+//----------------------------------------------------------------------------------------------------------------------
+
+    private void ActivateGameObject(bool active) {
+        if (null == m_sceneCachePlayer)
+            return;
+        m_sceneCachePlayer.gameObject.SetActive(active);
+    }
 //----------------------------------------------------------------------------------------------------------------------
     
     private SceneCachePlayer m_sceneCachePlayer = null;
