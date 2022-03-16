@@ -1,7 +1,6 @@
 ﻿using Unity.FilmInternalUtilities;
 using UnityEngine;
 using UnityEngine.Playables;
-using UnityEngine.Timeline;
 
 namespace Unity.MeshSync
 {
