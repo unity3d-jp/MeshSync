@@ -126,8 +126,8 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         if (!sc)
             return;
         
-        t.FoldInfoInInspector(EditorGUILayout.Foldout(t.IsInfoInInspectorFolded(), "Info", true, styleFold));
-        if (t.IsInfoInInspectorFolded()) 
+        t.ShowInfoInInspector(EditorGUILayout.Foldout(t.IsInfoInInspectorShown(), "Info", true, styleFold));
+        if (!t.IsInfoInInspectorShown()) 
             return;
 
         TimeRange timeRange = sc.GetTimeRange();
@@ -156,8 +156,8 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         GUIStyle styleFold = EditorStyles.foldout;
         styleFold.fontStyle = FontStyle.Bold;
 
-        t.FoldPlaybackInInspector(EditorGUILayout.Foldout(t.IsPlaybackInInspectorFolded(), "Playback", true, styleFold));
-        if (t.IsPlaybackInInspectorFolded()) 
+        t.ShowPlaybackInInspector(EditorGUILayout.Foldout(t.IsPlaybackInInspectorShown(), "Playback", true, styleFold));
+        if (t.IsPlaybackInInspectorShown()) 
             return false;
         
         bool changed = false;

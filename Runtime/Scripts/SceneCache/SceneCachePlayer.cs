@@ -143,11 +143,11 @@ public class SceneCachePlayer : BaseMeshSync {
 
     internal SceneCacheData GetSceneCacheData() => m_sceneCache;
 
-    internal bool IsPlaybackInInspectorFolded() => m_foldPlaybackInInspector;
-    internal void FoldPlaybackInInspector(bool fold) { m_foldPlaybackInInspector = fold; }
+    internal bool IsPlaybackInInspectorShown() => m_showPlaybackInInspector;
+    internal void ShowPlaybackInInspector(bool fold) { m_showPlaybackInInspector = fold; }
 
-    internal bool IsInfoInInspectorFolded()      => m_foldInfoInInspector;
-    internal void FoldInfoInInspector(bool fold) { m_foldInfoInInspector = fold; }
+    internal bool IsInfoInInspectorShown()      => m_showInfoInInspector;
+    internal void ShowInfoInInspector(bool fold) { m_showInfoInInspector = fold; }
     
 
     internal string dbgProfileReport {
@@ -528,8 +528,8 @@ public class SceneCachePlayer : BaseMeshSync {
 
     //Foldout settings
     [SerializeField] bool m_foldCacheSettings = true; //[TODO-sin:2022-3-16] Fold means hidden. Not the other way around
-    [SerializeField] bool m_foldPlaybackInInspector = false;
-    [SerializeField] bool m_foldInfoInInspector = false;
+    [SerializeField] bool m_showPlaybackInInspector = false;
+    [SerializeField] bool m_showInfoInInspector = false;
     
     //only used when the sceneCacheFilePath has a valid importer (under Assets)
     [SerializeField] bool m_overrideModelImporterSettings = false;
