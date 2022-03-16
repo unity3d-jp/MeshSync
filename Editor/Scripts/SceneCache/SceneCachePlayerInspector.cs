@@ -40,6 +40,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         
         EditorGUILayout.Space();
         bool changed = DrawCacheSettings(m_sceneCachePlayer);
+        changed |= DrawPlaybackMode(m_sceneCachePlayer);
         changed |= DrawAssetSyncSettings(m_sceneCachePlayer);
         changed |= DrawSceneCacheImportSettings(m_sceneCachePlayer);
         changed |= DrawMiscSettings(m_sceneCachePlayer);
@@ -100,6 +101,36 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         }
         EditorGUILayout.Space();
 
+        //[TODO-sin: 2022-3-14] This may cause crash when sliding the values back and forth. Find out why
+        // preload
+        {                
+            // changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Preload",
+            //     guiFunc: () => (EditorGUILayout.IntSlider("Preload Length", t.GetPreloadLength(), 0, t.frameCount)),
+            //     updateFunc: (int preloadLength) => { t.SetPreloadLength(preloadLength); });
+        }
+
+        EditorGUILayout.Space();
+
+        return changed;
+    }
+
+    private static void RefreshSceneCache(SceneCachePlayer t) {
+        t.ForceUpdate();
+        SceneView.RepaintAll();
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
+    private static bool DrawPlaybackMode(SceneCachePlayer t) {
+        GUIStyle styleFold = EditorStyles.foldout;
+        styleFold.fontStyle = FontStyle.Bold;
+
+        t.foldCacheSettings = EditorGUILayout.Foldout(t.foldCacheSettings, "Player", true, styleFold);
+        if (!t.foldCacheSettings) 
+
+            return false;
+        
+        bool changed = false;
+        
         //Playback Mode
         changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"SceneCache: Playback Mode",
             guiFunc: () => 
@@ -155,22 +186,9 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             --EditorGUI.indentLevel;
         }
 
-        //[TODO-sin: 2022-3-14] This may cause crash when sliding the values back and forth. Find out why
-        // preload
-        {                
-            // changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Preload",
-            //     guiFunc: () => (EditorGUILayout.IntSlider("Preload Length", t.GetPreloadLength(), 0, t.frameCount)),
-            //     updateFunc: (int preloadLength) => { t.SetPreloadLength(preloadLength); });
-        }
-
         EditorGUILayout.Space();
 
         return changed;
-    }
-
-    private static void RefreshSceneCache(SceneCachePlayer t) {
-        t.ForceUpdate();
-        SceneView.RepaintAll();
     }
 
 //----------------------------------------------------------------------------------------------------------------------
