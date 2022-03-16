@@ -2,6 +2,7 @@
 using System.Collections;
 using System.IO;
 using Unity.FilmInternalUtilities;
+using Unity.FilmInternalUtilities.Editor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Playables;
@@ -41,9 +42,8 @@ internal class SceneCachePlayableAssetTests {
         director.SetReferenceValue(playableAsset.GetSceneCachePlayerRef().exposedName, sceneCachePlayer );
 
 
-        //Select gameObject and open Timeline Window. This will trigger the TimelineWindow's update etc.
-        EditorApplication.ExecuteMenuItem("Window/Sequencing/Timeline");
-        Selection.activeTransform = directorGo.transform;
+        //Selecting director in Timeline Window will trigger the TimelineWindow's update etc.
+        TimelineEditorUtility.SelectDirectorInTimelineWindow(director);
         yield return null;
 
         director.time = 0;
