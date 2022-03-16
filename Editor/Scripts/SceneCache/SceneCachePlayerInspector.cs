@@ -177,79 +177,80 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
 
     private static bool DrawSceneCacheImportSettings(SceneCachePlayer t) {
 
-        bool changed   = false;
         MeshSyncPlayerConfig playerConfig = t.GetConfigV();
         
         t.foldImportSettings = EditorGUILayout.Foldout(t.foldImportSettings, "Import Settings", true, GetBoldFoldoutStyle());
-        if (t.foldImportSettings) {
+        if (!t.foldImportSettings) 
+            return false;
 
-            IHasModelImporterSettings importer = AssetImporter.GetAtPath(t.GetSceneCacheFilePath()) as IHasModelImporterSettings;
-            ModelImporterSettings importerSettings = playerConfig.GetModelImporterSettings();
+        bool changed = false;
+        
+        IHasModelImporterSettings importer = AssetImporter.GetAtPath(t.GetSceneCacheFilePath()) as IHasModelImporterSettings;
+        ModelImporterSettings importerSettings = playerConfig.GetModelImporterSettings();
                 
-            if (null == importer) {
-                MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(t, importerSettings);
-            } else {
+        if (null == importer) {
+            MeshSyncInspectorUtility.DrawModelImporterSettingsGUI(t, importerSettings);
+        } else {
 
-                bool isOverride = t.IsModelImporterSettingsOverridden();
+            bool isOverride = t.IsModelImporterSettingsOverridden();
                 
-                EditorGUILayout.BeginHorizontal();
-                EditorGUIDrawerUtility.DrawUndoableGUI(t, "Override",
-                    guiFunc: () => GUILayout.Toggle(isOverride, "", GUILayout.MaxWidth(15.0f)), 
-                    updateFunc: (bool overrideValue) => { t.OverrideModelImporterSettings(overrideValue); });
+            EditorGUILayout.BeginHorizontal();
+            EditorGUIDrawerUtility.DrawUndoableGUI(t, "Override",
+                guiFunc: () => GUILayout.Toggle(isOverride, "", GUILayout.MaxWidth(15.0f)), 
+                updateFunc: (bool overrideValue) => { t.OverrideModelImporterSettings(overrideValue); });
 
-                using (new EditorGUI.DisabledScope(!isOverride)) {
-                    EditorGUIDrawerUtility.DrawUndoableGUI(t, "Create Materials",
-                        guiFunc: () => (bool)EditorGUILayout.Toggle("Create Materials", importerSettings.CreateMaterials),
-                        updateFunc: (bool createMat) => { importerSettings.CreateMaterials = createMat; });
-                }
-                
-                EditorGUILayout.EndHorizontal();
-
-                using (new EditorGUI.DisabledScope(!isOverride)) {
-                    ++EditorGUI.indentLevel;
-                    MeshSyncInspectorUtility.DrawModelImporterMaterialSearchMode(t, importerSettings);
-                    --EditorGUI.indentLevel;
-                }
-                
+            using (new EditorGUI.DisabledScope(!isOverride)) {
+                EditorGUIDrawerUtility.DrawUndoableGUI(t, "Create Materials",
+                    guiFunc: () => (bool)EditorGUILayout.Toggle("Create Materials", importerSettings.CreateMaterials),
+                    updateFunc: (bool createMat) => { importerSettings.CreateMaterials = createMat; });
             }
-            
-            
+                
+            EditorGUILayout.EndHorizontal();
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Animation Interpolation",
-                guiFunc: () => EditorGUILayout.Popup(new GUIContent("Animation Interpolation"),
-                    playerConfig.AnimationInterpolation, MeshSyncEditorConstants.ANIMATION_INTERPOLATION_ENUMS),
-                updateFunc: (int val) => { playerConfig.AnimationInterpolation = val; }
-            );
-
-
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Keyframe Reduction",
-                guiFunc: () => EditorGUILayout.Toggle("Keyframe Reduction", playerConfig.KeyframeReduction),
-                updateFunc: (bool toggle) => { playerConfig.KeyframeReduction = toggle; }
-            );
-
-            if (playerConfig.KeyframeReduction) {
-                EditorGUI.indentLevel++;
-
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Threshold",
-                    guiFunc: () => EditorGUILayout.FloatField("Threshold", playerConfig.ReductionThreshold),
-                    updateFunc: (float val) => { playerConfig.ReductionThreshold = val; }
-                );
-
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Erase Flat Curves",
-                    guiFunc: () => EditorGUILayout.Toggle("Erase Flat Curves", playerConfig.ReductionEraseFlatCurves),
-                    updateFunc: (bool toggle) => { playerConfig.ReductionEraseFlatCurves = toggle; }
-                );
-                EditorGUI.indentLevel--;
+            using (new EditorGUI.DisabledScope(!isOverride)) {
+                ++EditorGUI.indentLevel;
+                MeshSyncInspectorUtility.DrawModelImporterMaterialSearchMode(t, importerSettings);
+                --EditorGUI.indentLevel;
             }
-
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Z-Up Correction",
-                guiFunc: () => EditorGUILayout.Popup(new GUIContent("Z-Up Correction"), playerConfig.ZUpCorrection,
-                    MeshSyncEditorConstants.Z_UP_CORRECTION_ENUMS),
-                updateFunc: (int val) => { playerConfig.ZUpCorrection = val; }
-            );
-
-            EditorGUILayout.Space();
+                
         }
+            
+            
+
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Animation Interpolation",
+            guiFunc: () => EditorGUILayout.Popup(new GUIContent("Animation Interpolation"),
+                playerConfig.AnimationInterpolation, MeshSyncEditorConstants.ANIMATION_INTERPOLATION_ENUMS),
+            updateFunc: (int val) => { playerConfig.AnimationInterpolation = val; }
+        );
+
+
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Keyframe Reduction",
+            guiFunc: () => EditorGUILayout.Toggle("Keyframe Reduction", playerConfig.KeyframeReduction),
+            updateFunc: (bool toggle) => { playerConfig.KeyframeReduction = toggle; }
+        );
+
+        if (playerConfig.KeyframeReduction) {
+            EditorGUI.indentLevel++;
+
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Threshold",
+                guiFunc: () => EditorGUILayout.FloatField("Threshold", playerConfig.ReductionThreshold),
+                updateFunc: (float val) => { playerConfig.ReductionThreshold = val; }
+            );
+
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Erase Flat Curves",
+                guiFunc: () => EditorGUILayout.Toggle("Erase Flat Curves", playerConfig.ReductionEraseFlatCurves),
+                updateFunc: (bool toggle) => { playerConfig.ReductionEraseFlatCurves = toggle; }
+            );
+            EditorGUI.indentLevel--;
+        }
+
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Z-Up Correction",
+            guiFunc: () => EditorGUILayout.Popup(new GUIContent("Z-Up Correction"), playerConfig.ZUpCorrection,
+                MeshSyncEditorConstants.Z_UP_CORRECTION_ENUMS),
+            updateFunc: (int val) => { playerConfig.ZUpCorrection = val; }
+        );
+
+        EditorGUILayout.Space();
 
         return changed;
     }
