@@ -66,7 +66,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
             bool                       limitedAnimationEnabled      = scLimitedAnimationController.IsEnabled(); 
             if (limitedAnimationEnabled) {
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.HelpBox("Disable Limited Animation on the SceneCache GameObject to control Limited Animation via Timeline", MessageType.Warning);
+                EditorGUILayout.HelpBox("Disable Limited Animation settings on the SceneCache GameObject to control them via Timeline", MessageType.Warning);
                 if (GUILayout.Button("Fix", GUILayout.Width(64), GUILayout.Height(36))) {
                     scLimitedAnimationController.SetEnabled(false);
                     Repaint();
