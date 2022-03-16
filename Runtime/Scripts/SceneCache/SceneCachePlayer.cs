@@ -136,18 +136,17 @@ public class SceneCachePlayer : BaseMeshSync {
     }
     
 #if UNITY_EDITOR
-    internal bool foldCacheSettings {
-        get { return m_foldCacheSettings; }
-        set { m_foldCacheSettings = value; }
-    }
 
     internal SceneCacheData GetSceneCacheData() => m_sceneCache;
 
-    internal bool IsPlaybackInInspectorShown() => m_showPlaybackInInspector;
-    internal void ShowPlaybackInInspector(bool fold) { m_showPlaybackInInspector = fold; }
+    internal bool IsCacheFileShownInInspector()       => m_showCacheFileInInspector;
+    internal void ShowCacheFileInInspector(bool show) { m_showCacheFileInInspector = show; }
+
+    internal bool IsPlaybackInInspectorShown()       => m_showPlaybackInInspector;
+    internal void ShowPlaybackInInspector(bool show) { m_showPlaybackInInspector = show; }
 
     internal bool IsInfoInInspectorShown()      => m_showInfoInInspector;
-    internal void ShowInfoInInspector(bool fold) { m_showInfoInInspector = fold; }
+    internal void ShowInfoInInspector(bool show) { m_showInfoInInspector = show; }
     
 
     internal string dbgProfileReport {
@@ -527,7 +526,7 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] private SceneCachePlayerConfig m_config;
 
     //Foldout settings
-    [SerializeField] bool m_foldCacheSettings = true; 
+    [SerializeField] bool m_showCacheFileInInspector = true; 
     [SerializeField] bool m_showPlaybackInInspector = true;
     [SerializeField] bool m_showInfoInInspector = false;
     
