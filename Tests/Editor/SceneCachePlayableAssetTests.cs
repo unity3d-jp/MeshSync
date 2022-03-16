@@ -84,6 +84,26 @@ internal class SceneCachePlayableAssetTests {
         yield return null;
         Assert.IsFalse(scGameObject.activeSelf);
     }
+
+//----------------------------------------------------------------------------------------------------------------------
+    public IEnumerator EnsureMatchingFramesAreLoadedToScene() {
+
+        InitTest(out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
+        yield return null;
+        SceneCacheData scData = sceneCachePlayer.GetSceneCacheData();
+        
+        int    numFrames    = scData.GetNumScenes();
+        double timePerFrame = 1.0f / scData.GetSampleRate();
+        
+        for(int i=0;i<numFrames-1;++i) {
+            
+            double directorTime = clip.start + i * timePerFrame;
+            SetDirectorTime(director, directorTime); //this will trigger change in the time of the SceneCachePlayable
+            yield return null;
+                       
+            Assert.AreEqual(i, sceneCachePlayer.GetFrame());
+        }
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
 
