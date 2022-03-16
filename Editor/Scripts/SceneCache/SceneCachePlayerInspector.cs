@@ -172,7 +172,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         --EditorGUI.indentLevel;
 
         using (new EditorGUI.DisabledScope(t.GetPlaybackMode() == SceneCachePlaybackMode.Interpolate)) {
-            changed |= SceneCachePlayerEditorUtility.DrawLimitedAnimationGUI(t.GetLimitedAnimationController(), t, t, "Limited Animation");
+            changed |= SceneCachePlayerEditorUtility.DrawLimitedAnimationGUI(t.GetLimitedAnimationController(), t, t);
         }
 
         EditorGUILayout.Space();

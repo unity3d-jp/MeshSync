@@ -175,13 +175,13 @@ internal static class SceneCachePlayerEditorUtility {
 //----------------------------------------------------------------------------------------------------------------------    
     
     internal static bool DrawLimitedAnimationGUI(LimitedAnimationController ctrl, 
-        Object target, SceneCachePlayer sc, string header ) 
+        Object target, SceneCachePlayer sc) 
     {
         bool changed = false;
         
         //Limited Animation
-        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, header,
-            guiFunc: () => (EditorGUILayout.Toggle(header, ctrl.IsEnabled())),
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "Limited Animation",
+            guiFunc: () => (EditorGUILayout.Toggle("Limited Animation", ctrl.IsEnabled())),
             updateFunc: (bool limitedAnimation) => {
                 ctrl.SetEnabled(limitedAnimation);
                 SceneCachePlayerEditorUtility.RefreshSceneCache(sc);
@@ -189,7 +189,7 @@ internal static class SceneCachePlayerEditorUtility {
 
         ++EditorGUI.indentLevel;
         using (new EditorGUI.DisabledScope(!ctrl.IsEnabled())) {
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "SceneCache: Limited Animation",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "Limited Animation",
                 guiFunc: () => (
                     EditorGUILayout.IntField("Num Frames to Hold", ctrl.GetNumFramesToHold())
                 ),
@@ -197,7 +197,7 @@ internal static class SceneCachePlayerEditorUtility {
                     ctrl.SetNumFramesToHold(frames);
                     SceneCachePlayerEditorUtility.RefreshSceneCache(sc);
                 });
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "SceneCache: Limited Animation",
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "Limited Animation",
                 guiFunc: () => (
                     EditorGUILayout.IntField("Frame Offset", ctrl.GetFrameOffset())
                 ),
