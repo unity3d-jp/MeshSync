@@ -66,10 +66,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
 //----------------------------------------------------------------------------------------------------------------------
     
     bool DrawCacheSettings(SceneCachePlayer t) {
-        GUIStyle styleFold = EditorStyles.foldout;
-        styleFold.fontStyle = FontStyle.Bold;
-
-        t.foldCacheSettings = EditorGUILayout.Foldout(t.foldCacheSettings, "Player", true, styleFold);
+        t.foldCacheSettings = EditorGUILayout.Foldout(t.foldCacheSettings, "Player", true, GetDefaultFoldoutStyle());
         if (!t.foldCacheSettings) 
             return false;
         
