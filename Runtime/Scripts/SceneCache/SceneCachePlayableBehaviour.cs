@@ -20,6 +20,14 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
     
 //----------------------------------------------------------------------------------------------------------------------        
     
+    public override void OnBehaviourPlay(Playable playable, FrameData info) {
+        m_sceneCachePlayer.gameObject.SetActive(true);
+    }
+    
+
+    public override void OnBehaviourPause(Playable playable, FrameData info) {
+        m_sceneCachePlayer.gameObject.SetActive(false);
+    }
 
     public override void ProcessFrame(Playable playable, FrameData info, object playerData) {
         if (m_sceneCachePlayer.IsNullRef()) {
@@ -30,9 +38,9 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
               
         m_sceneCachePlayer.SetAutoplay(false);
         m_sceneCachePlayer.SetTimeByNormalizedTime(normalizedTime);
+        m_sceneCachePlayer.gameObject.SetActive(true);
 
     }
-
     
 //----------------------------------------------------------------------------------------------------------------------
     
