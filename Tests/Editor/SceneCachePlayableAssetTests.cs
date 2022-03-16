@@ -6,7 +6,6 @@ using Unity.FilmInternalUtilities.Editor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Playables;
-using UnityEditor;
 using UnityEditor.Timeline;
 using UnityEngine.TestTools;
 using UnityEngine.Timeline;
@@ -17,20 +16,8 @@ internal class SceneCachePlayableAssetTests {
 
     [UnityTest]
     public IEnumerator CreatePlayableAsset() {
-        EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
 
-        //Add director
-        PlayableDirector director = new GameObject("Director").AddComponent<PlayableDirector>();
-        
-        //Setup scene cache
-        SceneCachePlayer sceneCachePlayer = CreateTestSceneCachePlayer();
-
-        //Create timeline asset
-        TimelineAsset asset = ScriptableObject.CreateInstance<TimelineAsset>();
-        director.playableAsset = asset;
-
-        //Create PlayableAsset/Track/ etc
-        TimelineClip clip = SceneCachePlayerEditorUtility.AddSceneCacheTrackAndClip(director, "TestSceneCacheTrack", sceneCachePlayer);
+        InitTest(out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
 
         //Selecting director in Timeline Window will trigger the TimelineWindow's update etc.
         TimelineEditorUtility.SelectDirectorInTimelineWindow(director);
@@ -42,7 +29,7 @@ internal class SceneCachePlayableAssetTests {
         Assert.AreEqual(0, sceneCachePlayer.GetTime());
         SceneCacheTrack sceneCacheTrack = clip.GetParentTrack() as SceneCacheTrack;
         Assert.IsNotNull(sceneCacheTrack);
-        double          timePerFrame    = 1.0f / sceneCacheTrack.timelineAsset.editorSettings.GetFPS();
+        double timePerFrame = 1.0f / sceneCacheTrack.timelineAsset.editorSettings.GetFPS();
 
         double directorTime = clip.start + clip.duration - timePerFrame;
         SetDirectorTime(director, directorTime); //this will trigger change in the time of the SceneCachePlayable
@@ -63,6 +50,16 @@ internal class SceneCachePlayableAssetTests {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+    private static void InitTest(out PlayableDirector director, 
+        out SceneCachePlayer sceneCachePlayer, out TimelineClip clip) 
+    {
+        EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
+
+        director = CreateTestDirector();
+        sceneCachePlayer = CreateTestSceneCachePlayer();
+        clip = SceneCachePlayerEditorUtility.AddSceneCacheTrackAndClip(director, "TestSceneCacheTrack", sceneCachePlayer);        
+    }
+    
     private static SceneCachePlayer CreateTestSceneCachePlayer() {
         GameObject       sceneCacheGo     = new GameObject();
         SceneCachePlayer sceneCachePlayer = sceneCacheGo.AddComponent<SceneCachePlayer>();
@@ -70,6 +67,12 @@ internal class SceneCachePlayableAssetTests {
         return sceneCachePlayer;
     }
 
+    private static PlayableDirector CreateTestDirector() {
+        PlayableDirector director = new GameObject("Director").AddComponent<PlayableDirector>();
+        TimelineAsset    asset    = ScriptableObject.CreateInstance<TimelineAsset>();
+        director.playableAsset = asset;
+        return director;
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
     private static void SetDirectorTime(PlayableDirector director, double time) {
