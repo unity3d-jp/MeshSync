@@ -5,6 +5,9 @@ using Unity.FilmInternalUtilities;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
+using UnityEngine.Assertions;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
 
 #if AT_USE_HDRP
 using UnityEngine.Rendering.HighDefinition;
@@ -151,7 +154,23 @@ internal static class SceneCachePlayerEditorUtility {
         ChangeSceneCacheFile(cachePlayer, sceneCacheFilePath);
         
     }
+    
+//----------------------------------------------------------------------------------------------------------------------    
 
+    internal static TimelineClip AddSceneCacheTrackAndClip(PlayableDirector director, string trackName, 
+        SceneCachePlayer sceneCachePlayer) 
+    {
+        TimelineAsset timelineAsset = director.playableAsset as TimelineAsset;
+        Assert.IsNotNull(timelineAsset);
+    
+        SceneCachePlayableAsset playableAsset   = ScriptableObject.CreateInstance<SceneCachePlayableAsset>();
+        SceneCacheTrack         sceneCacheTrack = timelineAsset.CreateTrack<SceneCacheTrack>(null, trackName);
+        TimelineClip            clip            = sceneCacheTrack.CreateDefaultClip();
+        clip.asset = playableAsset;        
+        director.SetReferenceValue(playableAsset.GetSceneCachePlayerRef().exposedName, sceneCachePlayer );
+        return clip;
+    }
+   
 //----------------------------------------------------------------------------------------------------------------------    
     private static void DestroyIrrelevantComponents(GameObject obj, EntityType curEntityType) {
 
