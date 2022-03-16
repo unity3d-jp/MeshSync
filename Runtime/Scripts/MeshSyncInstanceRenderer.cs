@@ -19,6 +19,8 @@ namespace Unity.MeshSync{
 
         private bool m_isDirty = false;
 
+        private bool m_isUpdating = false;
+
         public enum CameraMode
         {
             None = 0,
@@ -62,8 +64,15 @@ namespace Unity.MeshSync{
             ms.onDeleteEntity -= OnDeleteEntity;
             ms.onSceneUpdateEnd -= OnSceneUpdateEnd;
             ms.onSceneUpdateEnd += OnSceneUpdateEnd;
+            ms.onSceneUpdateBegin -= OnSceneUpdateBegin;
+            ms.onSceneUpdateBegin += OnSceneUpdateBegin;
             
             LoadData(records);
+        }
+
+        private void OnSceneUpdateBegin()
+        {
+            m_isUpdating = true;
         }
 
         private void LoadData(Dictionary<string, InstanceInfoRecord> records)
@@ -84,6 +93,8 @@ namespace Unity.MeshSync{
 
         private void OnSceneUpdateEnd()
         {
+            m_isUpdating = false;
+            
             if (m_isDirty)
             {
                 RenderAndDraw();
@@ -273,6 +284,9 @@ namespace Unity.MeshSync{
         
         public void Draw()
         {
+            if (m_isUpdating)
+                return;
+            
             foreach (var entry in m_instanceInfo)
             {
                 DrawInstances(entry.Value);
