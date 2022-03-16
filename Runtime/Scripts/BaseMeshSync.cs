@@ -567,6 +567,12 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             {
                 var src = scene.GetInstanceMesh(i);
                 var dst = UpdateInstanceMesh(src);
+                
+                if (dst == null)
+                {
+                    return;
+                }
+                
                 if (onUpdateInstanceMesh != null)
                     onUpdateInstanceMesh(src.path, dst.go);
             }
@@ -1634,7 +1640,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     {
         var config = GetConfigV();
         var rec = UpdateMeshEntity((MeshData)data, config);
-        if (!this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord meshRecord))
+
+        if (!this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord _))
         {
             this.m_clientInstanceMeshes.Add(data.path, null);
         }
@@ -1672,7 +1679,10 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             
             if (this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord entityRecord))
             {
-                rec.go = entityRecord.go;
+                if (entityRecord != null)
+                {
+                    rec.go = entityRecord.go;
+                }
             }
             else
             {
