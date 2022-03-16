@@ -64,104 +64,106 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
 //----------------------------------------------------------------------------------------------------------------------
     
     bool DrawCacheSettings(SceneCachePlayer t) {
-        bool changed = false;
         GUIStyle styleFold = EditorStyles.foldout;
         styleFold.fontStyle = FontStyle.Bold;
 
         t.foldCacheSettings = EditorGUILayout.Foldout(t.foldCacheSettings, "Player", true, styleFold);
-        if (t.foldCacheSettings) {
-            //Show Selector GUI. Check if we should reopen
-            string fullPath           = t.GetSceneCacheFilePath();
-            string prevNormalizedPath = AssetEditorUtility.NormalizePath(fullPath);
+        if (!t.foldCacheSettings) 
+            return false;
+        
+        bool changed = false;
+        
+        //Show Selector GUI. Check if we should reopen
+        string fullPath           = t.GetSceneCacheFilePath();
+        string prevNormalizedPath = AssetEditorUtility.NormalizePath(fullPath);
 
-            string newNormalizedPath = EditorGUIDrawerUtility.DrawFileSelectorGUI("Cache File Path", "MeshSync", 
-                prevNormalizedPath, "sc", OnSceneCacheFileReload);
-            newNormalizedPath = AssetEditorUtility.NormalizePath(newNormalizedPath);            
+        string newNormalizedPath = EditorGUIDrawerUtility.DrawFileSelectorGUI("Cache File Path", "MeshSync", 
+            prevNormalizedPath, "sc", OnSceneCacheFileReload);
+        newNormalizedPath = AssetEditorUtility.NormalizePath(newNormalizedPath);            
 
-            if (newNormalizedPath != prevNormalizedPath) {
-                ChangeSceneCacheFileInInspector(t, newNormalizedPath);
-            }
+        if (newNormalizedPath != prevNormalizedPath) {
+            ChangeSceneCacheFileInInspector(t, newNormalizedPath);
+        }
             
-            if (!string.IsNullOrEmpty(fullPath) && !fullPath.StartsWith(Application.streamingAssetsPath)) {
-                GUILayout.BeginHorizontal();
-                const float BUTTON_WIDTH = 50.0f;
-                if (GUILayout.Button("Copy", GUILayout.Width(BUTTON_WIDTH))) {
-                    string dstPath = Misc.CopyFileToStreamingAssets(fullPath);
-                    ChangeSceneCacheFileInInspector(t, dstPath);
-                }
-                GUILayout.Label("Scene Cache file to StreamingAssets");
-                EditorGUILayout.LabelField("(RECOMMENDED)", EditorStyles.boldLabel);
-                GUILayout.FlexibleSpace();
-                GUILayout.EndHorizontal();
-                GUILayout.Space(15);
+        if (!string.IsNullOrEmpty(fullPath) && !fullPath.StartsWith(Application.streamingAssetsPath)) {
+            GUILayout.BeginHorizontal();
+            const float BUTTON_WIDTH = 50.0f;
+            if (GUILayout.Button("Copy", GUILayout.Width(BUTTON_WIDTH))) {
+                string dstPath = Misc.CopyFileToStreamingAssets(fullPath);
+                ChangeSceneCacheFileInInspector(t, dstPath);
             }
-            EditorGUILayout.Space();
+            GUILayout.Label("Scene Cache file to StreamingAssets");
+            EditorGUILayout.LabelField("(RECOMMENDED)", EditorStyles.boldLabel);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.Space(15);
+        }
+        EditorGUILayout.Space();
 
-            //Playback Mode
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"SceneCache: Playback Mode",
-                guiFunc: () => 
-                    (SceneCachePlaybackMode)EditorGUILayout.EnumPopup("Playback Mode", t.GetPlaybackMode()), 
-                updateFunc: (SceneCachePlaybackMode mode) => {
-                    t.SetPlaybackMode(mode);
+        //Playback Mode
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"SceneCache: Playback Mode",
+            guiFunc: () => 
+                (SceneCachePlaybackMode)EditorGUILayout.EnumPopup("Playback Mode", t.GetPlaybackMode()), 
+            updateFunc: (SceneCachePlaybackMode mode) => {
+                t.SetPlaybackMode(mode);
+                RefreshSceneCache(t);
+            }
+        );
+
+        ++EditorGUI.indentLevel;
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Time",
+            guiFunc: () => (EditorGUILayout.FloatField("Time", t.GetTime())),
+            updateFunc: (float time) => { t.SetTime(Mathf.Max(0,time)); });
+            
+        using (new EditorGUI.DisabledScope(t.GetPlaybackMode() == SceneCachePlaybackMode.Interpolate)) {
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Frame",
+                guiFunc: () => (EditorGUILayout.IntField("Frame", t.GetFrame())),
+                updateFunc: (int frame) => { t.SetTimeByFrame(Mathf.Max(0,frame)); });
+        }
+        --EditorGUI.indentLevel;
+            
+        //Limited Animation
+        LimitedAnimationController limitedAnimationController = t.GetLimitedAnimationController();
+        using (new EditorGUI.DisabledScope(t.GetPlaybackMode() == SceneCachePlaybackMode.Interpolate)) {
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Limited Animation",
+                guiFunc: () => (EditorGUILayout.Toggle("Limited Animation", limitedAnimationController.IsEnabled())),
+                updateFunc: (bool limitedAnimation) => {
+                    limitedAnimationController.SetEnabled(limitedAnimation);
                     RefreshSceneCache(t);
-                }
-            );
+                });
 
             ++EditorGUI.indentLevel;
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Time",
-                guiFunc: () => (EditorGUILayout.FloatField("Time", t.GetTime())),
-                updateFunc: (float time) => { t.SetTime(Mathf.Max(0,time)); });
-            
-            using (new EditorGUI.DisabledScope(t.GetPlaybackMode() == SceneCachePlaybackMode.Interpolate)) {
-                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Frame",
-                    guiFunc: () => (EditorGUILayout.IntField("Frame", t.GetFrame())),
-                    updateFunc: (int frame) => { t.SetTimeByFrame(Mathf.Max(0,frame)); });
-            }
-            --EditorGUI.indentLevel;
-            
-            //Limited Animation
-            LimitedAnimationController limitedAnimationController = t.GetLimitedAnimationController();
-            using (new EditorGUI.DisabledScope(t.GetPlaybackMode() == SceneCachePlaybackMode.Interpolate)) {
+            using (new EditorGUI.DisabledScope(!limitedAnimationController.IsEnabled())) {
                 changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Limited Animation",
-                    guiFunc: () => (EditorGUILayout.Toggle("Limited Animation", limitedAnimationController.IsEnabled())),
-                    updateFunc: (bool limitedAnimation) => {
-                        limitedAnimationController.SetEnabled(limitedAnimation);
+                    guiFunc: () => (
+                        EditorGUILayout.IntField("Num Frames to Hold", limitedAnimationController.GetNumFramesToHold())
+                    ),
+                    updateFunc: (int frames) => {
+                        limitedAnimationController.SetNumFramesToHold(frames);
                         RefreshSceneCache(t);
                     });
-
-                ++EditorGUI.indentLevel;
-                using (new EditorGUI.DisabledScope(!limitedAnimationController.IsEnabled())) {
-                    changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Limited Animation",
-                        guiFunc: () => (
-                            EditorGUILayout.IntField("Num Frames to Hold", limitedAnimationController.GetNumFramesToHold())
-                        ),
-                        updateFunc: (int frames) => {
-                            limitedAnimationController.SetNumFramesToHold(frames);
-                            RefreshSceneCache(t);
-                        });
-                    changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Limited Animation",
-                        guiFunc: () => (
-                            EditorGUILayout.IntField("Frame Offset", limitedAnimationController.GetFrameOffset())
-                        ),
-                        updateFunc: (int offset) => {
-                            limitedAnimationController.SetFrameOffset(offset);
-                            RefreshSceneCache(t);
-                        });
-                }
-
-                --EditorGUI.indentLevel;
+                changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Limited Animation",
+                    guiFunc: () => (
+                        EditorGUILayout.IntField("Frame Offset", limitedAnimationController.GetFrameOffset())
+                    ),
+                    updateFunc: (int offset) => {
+                        limitedAnimationController.SetFrameOffset(offset);
+                        RefreshSceneCache(t);
+                    });
             }
 
-            //[TODO-sin: 2022-3-14] This may cause crash when sliding the values back and forth. Find out why
-            // preload
-            {                
-                // changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Preload",
-                //     guiFunc: () => (EditorGUILayout.IntSlider("Preload Length", t.GetPreloadLength(), 0, t.frameCount)),
-                //     updateFunc: (int preloadLength) => { t.SetPreloadLength(preloadLength); });
-            }
-
-            EditorGUILayout.Space();
+            --EditorGUI.indentLevel;
         }
+
+        //[TODO-sin: 2022-3-14] This may cause crash when sliding the values back and forth. Find out why
+        // preload
+        {                
+            // changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Preload",
+            //     guiFunc: () => (EditorGUILayout.IntSlider("Preload Length", t.GetPreloadLength(), 0, t.frameCount)),
+            //     updateFunc: (int preloadLength) => { t.SetPreloadLength(preloadLength); });
+        }
+
+        EditorGUILayout.Space();
 
         return changed;
     }
