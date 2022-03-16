@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using System.Collections;
 using System.IO;
+using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor.SceneManagement;
@@ -17,31 +18,30 @@ internal class SceneCachePlayableAssetTests {
     [UnityTest]
     public IEnumerator CreatePlayableAsset() {
 
-        InitTest(out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
+        InitTest(out PlayableDirector _, out SceneCachePlayer _, out TimelineClip clip);
+        yield return null;
+        
+        AnimationCurve curve = VerifyAnimationCurve(clip);
+        Assert.IsNotNull(curve);
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------    
+    [UnityTest]
+    public IEnumerator SetTimeInTimelineWindow() {
 
-        //Selecting director in Timeline Window will trigger the TimelineWindow's update etc.
-        TimelineEditorUtility.SelectDirectorInTimelineWindow(director);
+        InitTest(out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
         yield return null;
 
         director.time = 0;
         yield return null;
-        
-        Assert.AreEqual(0, sceneCachePlayer.GetTime());
-        SceneCacheTrack sceneCacheTrack = clip.GetParentTrack() as SceneCacheTrack;
-        Assert.IsNotNull(sceneCacheTrack);
-        double timePerFrame = 1.0f / sceneCacheTrack.timelineAsset.editorSettings.GetFPS();
-
+                
+        double timePerFrame = TimelineUtility.CalculateTimePerFrame(clip); 
         double directorTime = clip.start + clip.duration - timePerFrame;
         SetDirectorTime(director, directorTime); //this will trigger change in the time of the SceneCachePlayable
         yield return null;
 
         //Check clipData and curve
-        SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
-        Assert.IsNotNull(playableAsset);
-        SceneCacheClipData clipData = playableAsset.GetBoundClipData();
-        Assert.IsNotNull(clipData);        
-        AnimationCurve curve = clipData.GetAnimationCurve();
-        Assert.IsNotNull(curve);
+        AnimationCurve curve = VerifyAnimationCurve(clip);
         float normalizedTime = curve.Evaluate((float)directorTime);
                 
         Assert.IsTrue(Mathf.Approximately((float)(normalizedTime * clip.duration), sceneCachePlayer.GetTime()));
@@ -57,7 +57,9 @@ internal class SceneCachePlayableAssetTests {
 
         director = CreateTestDirector();
         sceneCachePlayer = CreateTestSceneCachePlayer();
-        clip = SceneCachePlayerEditorUtility.AddSceneCacheTrackAndClip(director, "TestSceneCacheTrack", sceneCachePlayer);        
+        clip = SceneCachePlayerEditorUtility.AddSceneCacheTrackAndClip(director, "TestSceneCacheTrack", sceneCachePlayer);
+        
+        TimelineEditorUtility.SelectDirectorInTimelineWindow(director); //trigger the TimelineWindow's update etc.        
     }
     
     private static SceneCachePlayer CreateTestSceneCachePlayer() {
@@ -72,6 +74,18 @@ internal class SceneCachePlayableAssetTests {
         TimelineAsset    asset    = ScriptableObject.CreateInstance<TimelineAsset>();
         director.playableAsset = asset;
         return director;
+    }
+
+    [NotNull]
+    private static AnimationCurve VerifyAnimationCurve(TimelineClip clip) {
+        SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
+        Assert.IsNotNull(playableAsset);
+        SceneCacheClipData clipData = playableAsset.GetBoundClipData();
+        Assert.IsNotNull(clipData);        
+        AnimationCurve curve = clipData.GetAnimationCurve();
+        Assert.IsNotNull(curve);
+        return curve;
+
     }
     
 //----------------------------------------------------------------------------------------------------------------------
