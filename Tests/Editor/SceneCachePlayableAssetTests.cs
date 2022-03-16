@@ -33,6 +33,7 @@ internal class SceneCachePlayableAssetTests {
         
         AnimationCurve curve = VerifyAnimationCurve(clip);
         Assert.Greater(curve.keys.Length,2);
+        Assert.Greater(clip.duration,0);
     }
     
     
