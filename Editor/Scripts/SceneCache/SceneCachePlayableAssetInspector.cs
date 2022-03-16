@@ -62,19 +62,21 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         bool disableScope = null == scPlayer;
         
         if (null != scPlayer) {
-            LimitedAnimationController scLimitedAnimationController = scPlayer.GetLimitedAnimationController();
-            bool                       limitedAnimationEnabled      = scLimitedAnimationController.IsEnabled(); 
-            if (limitedAnimationEnabled) {
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.HelpBox("Disable Limited Animation settings on the SceneCache GameObject to control them via Timeline", MessageType.Warning);
-                if (GUILayout.Button("Fix", GUILayout.Width(64), GUILayout.Height(36))) {
-                    scLimitedAnimationController.SetEnabled(false);
-                    Repaint();
-                }
-                EditorGUILayout.EndHorizontal();
-            }
+            disableScope |= (!scPlayer.IsLimitedAnimationOverrideable());
+        }
 
-            disableScope |= limitedAnimationEnabled;
+        if (disableScope) {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.HelpBox(
+                "Disabled because Limited Animation settings on the SceneCache GameObject is enabled, or the playback mode is set to interpolate", 
+                MessageType.Warning
+            );
+            if (GUILayout.Button("Fix", GUILayout.Width(64), GUILayout.Height(36))) {
+                scPlayer.AllowLimitedAnimationOverride();
+                Repaint();
+            }
+            EditorGUILayout.EndHorizontal();
+            
         }
 
         using (new EditorGUI.DisabledScope(disableScope)) {

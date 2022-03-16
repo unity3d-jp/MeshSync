@@ -385,7 +385,24 @@ public class SceneCachePlayer : BaseMeshSync {
         return scene;
     }
 
-   
+//----------------------------------------------------------------------------------------------------------------------
+    internal bool IsLimitedAnimationOverrideable() {
+        if (m_limitedAnimationController.IsEnabled())
+            return false;
+
+        if (m_playbackMode == SceneCachePlaybackMode.Interpolate)
+            return false;
+
+        return true;
+    }
+
+    internal void AllowLimitedAnimationOverride() {
+        m_limitedAnimationController.SetEnabled(false);
+
+        if (m_playbackMode == SceneCachePlaybackMode.Interpolate)
+            m_playbackMode = SceneCachePlaybackMode.SnapToNearestFrame;
+
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
 
