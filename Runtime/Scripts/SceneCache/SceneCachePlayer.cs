@@ -522,7 +522,7 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] private SceneCachePlayerConfig m_config;
 
     //Foldout settings
-    [SerializeField] bool m_foldCacheSettings = true;
+    [SerializeField] bool m_foldCacheSettings = true; //[TODO-sin:2022-3-16] Fold means hidden. Not the other way around
     [SerializeField] bool m_foldPlaybackInInspector = false;
     
     //only used when the sceneCacheFilePath has a valid importer (under Assets)
