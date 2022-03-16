@@ -172,7 +172,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         --EditorGUI.indentLevel;
 
         using (new EditorGUI.DisabledScope(t.GetPlaybackMode() == SceneCachePlaybackMode.Interpolate)) {
-            changed |= DrawLimitedAnimationGUI(t.GetLimitedAnimationController(), t, t, "Limited Animation");
+            changed |= SceneCachePlayerEditorUtility.DrawLimitedAnimationGUI(t.GetLimitedAnimationController(), t, t, "Limited Animation");
         }
 
         EditorGUILayout.Space();
@@ -180,47 +180,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         return changed;
     }
     
-//----------------------------------------------------------------------------------------------------------------------
-
-    internal static bool DrawLimitedAnimationGUI(LimitedAnimationController ctrl, 
-        Object target, SceneCachePlayer sc, string header ) 
-    {
-        bool changed = false;
-        
-        //Limited Animation
-        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, header,
-            guiFunc: () => (EditorGUILayout.Toggle(header, ctrl.IsEnabled())),
-            updateFunc: (bool limitedAnimation) => {
-                ctrl.SetEnabled(limitedAnimation);
-                SceneCachePlayerEditorUtility.RefreshSceneCache(sc);
-            });
-
-        ++EditorGUI.indentLevel;
-        using (new EditorGUI.DisabledScope(!ctrl.IsEnabled())) {
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "SceneCache: Limited Animation",
-                guiFunc: () => (
-                    EditorGUILayout.IntField("Num Frames to Hold", ctrl.GetNumFramesToHold())
-                ),
-                updateFunc: (int frames) => {
-                    ctrl.SetNumFramesToHold(frames);
-                    SceneCachePlayerEditorUtility.RefreshSceneCache(sc);
-                });
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, "SceneCache: Limited Animation",
-                guiFunc: () => (
-                    EditorGUILayout.IntField("Frame Offset", ctrl.GetFrameOffset())
-                ),
-                updateFunc: (int offset) => {
-                    ctrl.SetFrameOffset(offset);
-                    SceneCachePlayerEditorUtility.RefreshSceneCache(sc);
-                });
-        }
-
-        --EditorGUI.indentLevel;
-
-        EditorGUILayout.Space();
-        return changed;
-    }
-    
+   
 
 //----------------------------------------------------------------------------------------------------------------------
 
