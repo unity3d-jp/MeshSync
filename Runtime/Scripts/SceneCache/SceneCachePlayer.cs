@@ -140,6 +140,11 @@ public class SceneCachePlayer : BaseMeshSync {
         get { return m_foldCacheSettings; }
         set { m_foldCacheSettings = value; }
     }
+
+    internal bool IsPlaybackInInspectorFolded() => m_foldPlaybackInInspector;
+    internal void FoldPlaybackInInspector(bool fold) { m_foldPlaybackInInspector = fold; }
+
+
     internal string dbgProfileReport {
         get { return m_dbgProfileReport; }
     }
@@ -515,6 +520,10 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] int       m_preloadLength = 1;
 
     [SerializeField] private SceneCachePlayerConfig m_config;
+
+    //Foldout settings
+    [SerializeField] bool m_foldCacheSettings = true;
+    [SerializeField] bool m_foldPlaybackInInspector = false;
     
     //only used when the sceneCacheFilePath has a valid importer (under Assets)
     [SerializeField] bool m_overrideModelImporterSettings = false;
@@ -532,7 +541,6 @@ public class SceneCachePlayer : BaseMeshSync {
     private bool   m_resetTimeAnimationOnEnable = false;
 
 #if UNITY_EDITOR
-    [SerializeField] bool m_foldCacheSettings = true;
     float                 m_dbgSceneGetTime;
     float                 m_dbgSceneUpdateTime;
     string                m_dbgProfileReport;

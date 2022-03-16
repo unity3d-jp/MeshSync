@@ -124,14 +124,11 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         GUIStyle styleFold = EditorStyles.foldout;
         styleFold.fontStyle = FontStyle.Bold;
 
-        t.foldCacheSettings = EditorGUILayout.Foldout(t.foldCacheSettings, "Player", true, styleFold);
-        if (!t.foldCacheSettings) 
-
+        t.FoldPlaybackInInspector(EditorGUILayout.Foldout(t.IsPlaybackInInspectorFolded(), "Playback", true, styleFold));
+        if (t.IsPlaybackInInspectorFolded()) 
             return false;
         
         bool changed = false;
-        
-        //Playback Mode
         changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"SceneCache: Playback Mode",
             guiFunc: () => 
                 (SceneCachePlaybackMode)EditorGUILayout.EnumPopup("Playback Mode", t.GetPlaybackMode()), 
