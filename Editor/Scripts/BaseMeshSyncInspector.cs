@@ -156,7 +156,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 //----------------------------------------------------------------------------------------------------------------------
     internal static bool DrawDefaultMaterialList(BaseMeshSync t) {
 
-        var styleFold = EditorStyles.foldout;
+        GUIStyle styleFold = EditorStyles.foldout;
         styleFold.fontStyle = FontStyle.Bold;
         t.foldMaterialList = EditorGUILayout.Foldout(t.foldMaterialList, "Materials", true, styleFold);
         if (!t.foldMaterialList) 
@@ -233,11 +233,10 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
     protected static void DrawExportAssets(BaseMeshSync t)
     {
-        var style = EditorStyles.foldout;
+        GUIStyle style = EditorStyles.foldout;
         style.fontStyle = FontStyle.Bold;
         t.foldExportAssets = EditorGUILayout.Foldout(t.foldExportAssets, "Export Assets", true, style);
-        if (t.foldExportAssets)
-        {
+        if (t.foldExportAssets) {
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Export Meshes", GUILayout.Width(160.0f)))
                 t.ExportMeshes();
