@@ -92,6 +92,8 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 //----------------------------------------------------------------------------------------------------------------------
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
+    
+    internal LimitedAnimationController GetOverrideLimitedAnimationController() { return m_overrideLimitedAnimationController; }    
 
 #if UNITY_EDITOR    
     internal static EditorCurveBinding GetTimeCurveBinding() {return m_timeCurveBinding; }
@@ -108,8 +110,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     [SerializeField] private ExposedReference<SceneCachePlayer> m_sceneCachePlayerRef;
     
-    [SerializeField] private double      m_time;
-
+    [SerializeField] private double m_time;
+    
+    [SerializeField] private LimitedAnimationController m_overrideLimitedAnimationController;
     
     SceneCachePlayableBehaviour m_sceneCachePlayableBehaviour = null;
    

@@ -27,11 +27,16 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         SceneCacheClipData clipData = m_scPlayableAsset.GetBoundClipData();
         if (null == clipData)
             return;
-        
+
         SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
         if (null == scPlayer)
             return;
 
+        using (new EditorGUI.DisabledScope(null == scPlayer)) {
+           SceneCachePlayerEditorUtility.DrawLimitedAnimationGUI(m_scPlayableAsset.GetOverrideLimitedAnimationController(),
+               m_scPlayableAsset, scPlayer, "Force Limited Animation");
+        }
+        
         {
             // Curve Operations
             GUILayout.BeginVertical("Box");
