@@ -1,9 +1,10 @@
 #pragma once
+#include "SceneGraph/msSceneSettings.h"
 
 #ifndef msRuntime
 
 #include "MeshSync/msIDGenerator.h" //PathToID
-#include "MeshSync/SceneCache/msSceneCacheSettings.h"
+#include "MeshSync/SceneGraph/msScene.h" //AssetPtr
 
 #include "MeshSync/SceneGraph/msPropertyInfo.h"
 #include "MeshSync/SceneGraph/msInstanceInfo.h"

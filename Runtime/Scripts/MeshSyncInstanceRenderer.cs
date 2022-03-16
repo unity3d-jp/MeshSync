@@ -1,14 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-
+using Object = UnityEngine.Object;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 namespace Unity.MeshSync{
     
-    public class MeshSyncInstanceRenderer
+    internal class MeshSyncInstanceRenderer
     {
         private BaseMeshSync m_server;
 
@@ -18,7 +19,6 @@ namespace Unity.MeshSync{
 
         private bool m_isDirty = false;
 
-
         public enum CameraMode
         {
             None = 0,
@@ -27,11 +27,12 @@ namespace Unity.MeshSync{
             AllCameras = 3
         }
 
-        public const CameraMode defaultCameraMode = CameraMode.AllCameras;
+        private CameraMode m_cameraMode = CameraMode.GameCameras;
 
-        private CameraMode m_cameraMode = defaultCameraMode;
-
-        public void Init(BaseMeshSync ms, CameraMode cameraMode = defaultCameraMode)
+        public void Init(
+            BaseMeshSync ms, 
+            CameraMode cameraMode = CameraMode.GameCameras, 
+            Dictionary<string, InstanceInfoRecord> records = null)
         {
             m_server = ms;
             m_cameraMode = cameraMode;
@@ -43,6 +44,7 @@ namespace Unity.MeshSync{
             //To cover cases where the user adds cameras to the scene manually
             EditorApplication.hierarchyChanged -= OnHierarchyChanged;
             EditorApplication.hierarchyChanged += OnHierarchyChanged;
+            Undo.undoRedoPerformed += UndoRedoPerformed;
 #endif
             
             RefreshCameraList();
@@ -60,6 +62,24 @@ namespace Unity.MeshSync{
             ms.onDeleteEntity -= OnDeleteEntity;
             ms.onSceneUpdateEnd -= OnSceneUpdateEnd;
             ms.onSceneUpdateEnd += OnSceneUpdateEnd;
+            
+            LoadData(records);
+        }
+
+        private void LoadData(Dictionary<string, InstanceInfoRecord> records)
+        {
+            if (records == null)
+                return;
+            
+            m_instanceInfo.Clear();
+            
+            foreach (var record in records)
+            {
+                var key = record.Key;
+                var value = record.Value;
+                
+                OnUpdateInstanceInfo(key, value.go, value.transforms);
+            }
         }
 
         private void OnSceneUpdateEnd()
@@ -118,6 +138,13 @@ namespace Unity.MeshSync{
         }
 
         #region Events
+        
+#if UNITY_EDITOR
+        private void UndoRedoPerformed()
+        {
+            RenderAndDraw();
+        }
+#endif
 
         private void OnDeleteEntity(GameObject obj)
         {
@@ -187,7 +214,10 @@ namespace Unity.MeshSync{
                 m_instanceInfo.Add(path, entry);
             }
 
-            UpdateEntryMeshMaterials(path, go, entry);
+            if (!UpdateEntryMeshMaterials(path, go, entry))
+            {
+                return;
+            }
 
             entry.Instances = transforms;
             
@@ -199,16 +229,29 @@ namespace Unity.MeshSync{
             SetDirty();
         }
 
-        private void UpdateEntryMeshMaterials(string path, GameObject go, MeshInstanceInfo entry)
+        private bool UpdateEntryMeshMaterials(string path, GameObject go, MeshInstanceInfo entry)
         {
+            if (go.TryGetComponent(out SkinnedMeshRenderer skinnedMeshRenderer))
+            {
+                entry.Mesh = skinnedMeshRenderer.sharedMesh;
+                entry.Materials = skinnedMeshRenderer.sharedMaterials;
+                entry.GameObject = go;
+                entry.Renderer = skinnedMeshRenderer;
+                entry.Root = m_server.transform;
+
+                return true;
+            }
+            
             if (!go.TryGetComponent(out MeshFilter filter))
             {
                 Debug.LogWarningFormat("[MeshSync] No Mesh Filter for {0}", path);
+                return false;
             }
 
             if (!go.TryGetComponent(out MeshRenderer renderer))
             {
                 Debug.LogWarningFormat("[MeshSync] No renderer for {0}", path);
+                return false;
             }
 
             entry.Mesh = filter.sharedMesh;
@@ -216,6 +259,8 @@ namespace Unity.MeshSync{
             entry.GameObject = go;
             entry.Renderer = renderer;
             entry.Root = m_server.transform;
+            
+            return true;
         }
         #endregion
         
@@ -259,7 +304,6 @@ namespace Unity.MeshSync{
                 for (var j = 0; j < matrixBatches.Count; j++)
                 {
                     var batch = matrixBatches[j];
-                    
                     
                     DrawOnCameras(
                         mesh, 
@@ -343,7 +387,9 @@ namespace Unity.MeshSync{
             m_cameras = null;
             m_server = null;
             m_cameraMode = CameraMode.None;
+            m_instanceInfo.Clear();
         }
+        
         #endregion
     }
 

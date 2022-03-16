@@ -31,11 +31,9 @@ target_compile_definitions(MeshUtils
         muEnableISPC
 )
 
-set(src_root "${CMAKE_CURRENT_SOURCE_DIR}/..")
 target_include_directories(MeshUtils 
     PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/Include"
-        "${src_root}"        
     PRIVATE 
         ${MUISPC_OUTDIR}
 )

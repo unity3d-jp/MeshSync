@@ -10,7 +10,7 @@ using UnityEngine.Assertions;
 using System.IO;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
-
+using UnityEngine.Rendering;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -154,6 +154,9 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         m_hostObjects.Clear();
         m_objIDTable.Clear();
         
+        m_clientInstances.Clear();
+        m_clientInstanceMeshes.Clear();
+        
         InitInternalV();
     }
 
@@ -276,7 +279,9 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         SerializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
         SerializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
         SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
-
+        SerializeDictionary(m_clientInstanceMeshes, ref m_clientInstanceMeshes_keys, ref m_clientInstanceMeshes_values);
+        SerializeDictionary(m_clientInstances, ref m_clientInstances_keys, ref m_clientInstances_values);
+        
         m_baseMeshSyncVersion = CUR_BASE_MESHSYNC_VERSION;
     }
 
@@ -288,6 +293,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         DeserializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
         DeserializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
         DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
+        DeserializeDictionary(m_clientInstanceMeshes, ref m_clientInstanceMeshes_keys, ref m_clientInstanceMeshes_values);
+        DeserializeDictionary(m_clientInstances, ref m_clientInstances_keys, ref m_clientInstances_values);
         
         OnAfterDeserializeMeshSyncPlayerV();
 
@@ -560,6 +567,12 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
             {
                 var src = scene.GetInstanceMesh(i);
                 var dst = UpdateInstanceMesh(src);
+                
+                if (dst == null)
+                {
+                    return;
+                }
+                
                 if (onUpdateInstanceMesh != null)
                     onUpdateInstanceMesh(src.path, dst.go);
             }
@@ -574,7 +587,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
                 var src = scene.GetInstanceInfo(i);
                 var dst = UpdateInstanceInfo(src);
                 if (onUpdateInstanceInfo != null)
-                    onUpdateInstanceInfo.Invoke(src.path, dst.go, src.transforms);
+                    onUpdateInstanceInfo.Invoke(src.path, dst.go, dst.transforms);
             }
         });
         
@@ -1629,7 +1642,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
     {
         var config = GetConfigV();
         var rec = UpdateMeshEntity((MeshData)data, config);
-        if (!this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord meshRecord))
+
+        if (!this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord _))
         {
             this.m_clientInstanceMeshes.Add(data.path, null);
         }
@@ -1641,8 +1655,6 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
     
     InstanceInfoRecord UpdateInstanceInfo(InstanceInfoData data)
     {
-        var path = data.path;
-        var transforms = data.transforms;
         InstanceInfoRecord rec = null;
         
         if (!this.m_clientInstances.TryGetValue(data.path, out rec))
@@ -1650,6 +1662,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
             rec = new InstanceInfoRecord();
             m_clientInstances.Add(data.path, rec);
         }
+
+        rec.transforms = data.transforms;
 
         if (data.type == InstanceInfoData.ReferenceType.EntityPath)
         {
@@ -1667,7 +1681,10 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
             
             if (this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord entityRecord))
             {
-                rec.go = entityRecord.go;
+                if (entityRecord != null)
+                {
+                    rec.go = entityRecord.go;
+                }
             }
             else
             {
@@ -1993,6 +2010,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         primitive.SetActive(false);
         m_cachedDefaultMaterial = primitive.GetComponent<MeshRenderer>().sharedMaterial;
         DestroyImmediate(primitive);
+
         return m_cachedDefaultMaterial;
     }
     
@@ -2320,6 +2338,13 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
     [SerializeField] int[]          m_objIDTable_values;
     [SerializeField] int            m_objIDSeed = 0;
 
+    [SerializeField] string[] m_clientInstanceMeshes_keys;
+    [SerializeField] EntityRecord[] m_clientInstanceMeshes_values;
+
+    [SerializeField] string[] m_clientInstances_keys;
+    [SerializeField] InstanceInfoRecord[] m_clientInstances_values;
+    
+
 #pragma warning disable 414
     [HideInInspector][SerializeField] private int m_baseMeshSyncVersion = (int) BaseMeshSyncVersion.NO_VERSIONING;
 #pragma warning restore 414
@@ -2346,7 +2371,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
     private protected readonly Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
     private readonly           Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
     
-    private readonly Dictionary<string, InstanceInfoRecord> m_clientInstances =  new Dictionary<string, InstanceInfoRecord>();
+    private protected readonly Dictionary<string, InstanceInfoRecord> m_clientInstances =  new Dictionary<string, InstanceInfoRecord>();
     private readonly Dictionary<string, EntityRecord> m_clientInstanceMeshes = new Dictionary<string, EntityRecord>();
 
 

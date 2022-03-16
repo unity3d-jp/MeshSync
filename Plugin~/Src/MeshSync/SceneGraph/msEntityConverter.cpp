@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "msEntityConverter.h"
+#include "MeshSync/SceneGraph/msEntityConverter.h"
 
 #include "MeshSync/SceneGraph/msAnimation.h"
 #include "MeshSync/SceneGraph/msCamera.h"

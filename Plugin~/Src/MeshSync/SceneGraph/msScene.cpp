@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "MeshSync/SceneGraph/msScene.h"
-#include "msEntityConverter.h"
+#include "MeshSync/SceneGraph/msEntityConverter.h"
 
 #include "MeshUtils/muLog.h"
 

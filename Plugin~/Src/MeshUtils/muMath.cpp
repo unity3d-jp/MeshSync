@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "muMath.h"
-#include "muSIMD.h"
-#include "muRawVector.h"
+#include "MeshUtils/muMath.h"
+#include "MeshUtils/muSIMD.h"
+#include "MeshUtils/muRawVector.h"
 
 namespace mu {
 

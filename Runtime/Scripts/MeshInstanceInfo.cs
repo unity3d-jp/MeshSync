@@ -65,7 +65,7 @@ namespace Unity.MeshSync
         }
         
 
-        public MeshRenderer Renderer;
+        public Renderer Renderer;
         public int Layer
         {
             get
@@ -176,7 +176,7 @@ namespace Unity.MeshSync
 
                 for (var j = 0; j < array.Length; j++)
                 {
-                    array[j] =  Instances[i * maxSize + j] * worldMatrix;
+                    array[j] = worldMatrix * Instances[i * maxSize + j];
                 }
                 
                 DividedInstances.Add(array);

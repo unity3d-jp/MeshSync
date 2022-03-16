@@ -37,7 +37,6 @@ public partial class MeshSyncServer : BaseMeshSync {
 #endif
     
     protected override void InitInternalV() {
-        
     }
 
 
@@ -105,7 +104,7 @@ public partial class MeshSyncServer : BaseMeshSync {
         //Deploy HTTP assets to StreamingAssets
         DeployStreamingAssets.Deploy();
 #endif
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
         
         
         m_serverSettings.port = (ushort)m_serverPort;
@@ -167,7 +166,6 @@ public partial class MeshSyncServer : BaseMeshSync {
         if (string.IsNullOrEmpty(GetAssetsFolder())) {
             SetAssetsFolder(MeshSyncConstants.DEFAULT_ASSETS_PATH);
         }
-        
     }   
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -487,7 +485,7 @@ public partial class MeshSyncServer : BaseMeshSync {
     }
 
     void Reset() {
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateSettings();
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
         m_config = new MeshSyncServerConfig(projectSettings.GetDefaultServerConfig());
         m_serverPort = projectSettings.GetDefaultServerPort();
         
@@ -502,9 +500,9 @@ public partial class MeshSyncServer : BaseMeshSync {
         }
         
 #if UNITY_EDITOR
-        m_instanceRenderer.Init(this, m_cameraMode);
+        m_instanceRenderer.Init(this, m_cameraMode, m_clientInstances);
 #else
-         m_instanceRenderer.Init(this);
+        m_instanceRenderer.Init(this, records:m_clientInstances);
 #endif
     }
 
@@ -591,9 +589,9 @@ public partial class MeshSyncServer : BaseMeshSync {
     }
     
     [SerializeField]
-    private MeshSyncInstanceRenderer.CameraMode m_cameraMode = MeshSyncInstanceRenderer.defaultCameraMode;
-    
-    public MeshSyncInstanceRenderer.CameraMode cameraMode
+    private MeshSyncInstanceRenderer.CameraMode m_cameraMode = MeshSyncInstanceRenderer.CameraMode.AllCameras;
+
+    internal MeshSyncInstanceRenderer.CameraMode cameraMode
     {
         get => m_cameraMode;
         set
@@ -603,7 +601,9 @@ public partial class MeshSyncServer : BaseMeshSync {
             
             m_cameraMode = value;
             
+#if UNITY_STANDALONE
             m_instanceRenderer.Init(this, m_cameraMode);
+#endif
         }
     }
 #endif    
