@@ -40,13 +40,29 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
             return;
         }
         AnimationCurve curve = m_clipData.GetAnimationCurve();
-        float normalizedTime = curve.Evaluate((float) playable.GetTime());
+        
+        double t = CalculateTimeForLimitedAnimation((float) playable.GetTime());        
+        float normalizedTime = curve.Evaluate((float)t);
               
         m_sceneCachePlayer.SetAutoplay(false);
         m_sceneCachePlayer.SetTimeByNormalizedTime(normalizedTime);
         
         //Might have been deactivated if there is another clip with the same SceneCache in the same track
         ActivateGameObject(true); 
+    }
+
+    private double CalculateTimeForLimitedAnimation(double time) {
+        LimitedAnimationController origLimitedAnimationController = m_sceneCachePlayer.GetLimitedAnimationController();
+        if (origLimitedAnimationController.IsEnabled()) //do nothing if LA is set on the target SceneCache
+            return time;
+        
+        LimitedAnimationController clipLimitedAnimationController = m_clipData.GetOverrideLimitedAnimationController();
+        if (!clipLimitedAnimationController.IsEnabled())
+            return time;
+
+        SceneCacheData scData = m_sceneCachePlayer.GetSceneCacheData();
+        int            frame  = m_sceneCachePlayer.CalculateFrame((float)time,clipLimitedAnimationController);
+        return frame / scData.GetSampleRate();
     }
 
 //----------------------------------------------------------------------------------------------------------------------
