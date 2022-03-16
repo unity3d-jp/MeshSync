@@ -39,4 +39,33 @@ namespace ms {
 	{
 		return Identifier{ path, InvalidID};
 	}
+
+	InstanceInfo::InstanceInfo() {}
+
+	InstanceInfo::InstanceInfo(const InstanceInfo& v)
+	{
+		*this = v;
+	}
+
+	InstanceInfo& InstanceInfo::operator=(const InstanceInfo& v)
+	{
+		type = v.type;
+		path = v.path;
+		transforms = v.transforms;
+		return *this;
+	}
+
+	InstanceInfo::InstanceInfo(InstanceInfo&& v) noexcept
+	{
+		*this = std::move(v);
+	}
+
+	InstanceInfo& InstanceInfo::operator=(InstanceInfo&& v)
+	{
+		type = std::move(v.type);
+		path = std::move(v.path);
+		transforms = std::move(v.transforms);
+		return *this;
+	}
+
 }

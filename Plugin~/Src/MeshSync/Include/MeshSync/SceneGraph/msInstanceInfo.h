@@ -32,10 +32,16 @@ namespace ms {
 		/// <summary>
 		/// World transforms of the instances
 		/// </summary>
-		vector<float4x4> transforms;
+		SharedVector<float4x4> transforms;
 
 		void serialize(ostream& os);
 		void deserialize(istream& is);
+
+		InstanceInfo();
+		InstanceInfo(const InstanceInfo& v);
+		InstanceInfo& operator=(const InstanceInfo& v);
+		InstanceInfo(InstanceInfo&& v) noexcept; // noexcept to enforce std::vector to use move constructor
+		InstanceInfo& operator=(InstanceInfo&& v);
 
 		msDefinePool(InstanceInfo);
 
