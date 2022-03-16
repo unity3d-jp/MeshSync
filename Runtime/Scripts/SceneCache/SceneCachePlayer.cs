@@ -134,16 +134,21 @@ public class SceneCachePlayer : BaseMeshSync {
     internal int frameCount {
         get { return m_sceneCache.GetNumScenes(); }
     }
-
+    
 #if UNITY_EDITOR
     internal bool foldCacheSettings {
         get { return m_foldCacheSettings; }
         set { m_foldCacheSettings = value; }
     }
 
+    internal SceneCacheData GetSceneCacheData() => m_sceneCache;
+
     internal bool IsPlaybackInInspectorFolded() => m_foldPlaybackInInspector;
     internal void FoldPlaybackInInspector(bool fold) { m_foldPlaybackInInspector = fold; }
 
+    internal bool IsInfoInInspectorFolded()      => m_foldInfoInInspector;
+    internal void FoldInfoInInspector(bool fold) { m_foldInfoInInspector = fold; }
+    
 
     internal string dbgProfileReport {
         get { return m_dbgProfileReport; }
@@ -524,6 +529,7 @@ public class SceneCachePlayer : BaseMeshSync {
     //Foldout settings
     [SerializeField] bool m_foldCacheSettings = true; //[TODO-sin:2022-3-16] Fold means hidden. Not the other way around
     [SerializeField] bool m_foldPlaybackInInspector = false;
+    [SerializeField] bool m_foldInfoInInspector = false;
     
     //only used when the sceneCacheFilePath has a valid importer (under Assets)
     [SerializeField] bool m_overrideModelImporterSettings = false;

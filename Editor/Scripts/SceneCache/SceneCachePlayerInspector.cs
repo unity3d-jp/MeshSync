@@ -40,6 +40,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         
         EditorGUILayout.Space();
         bool changed = DrawCacheSettings(m_sceneCachePlayer);
+        DrawCacheInfo(m_sceneCachePlayer);
         changed |= DrawPlaybackMode(m_sceneCachePlayer);
         changed |= DrawAssetSyncSettings(m_sceneCachePlayer);
         changed |= DrawSceneCacheImportSettings(m_sceneCachePlayer);
@@ -109,8 +110,6 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
             //     updateFunc: (int preloadLength) => { t.SetPreloadLength(preloadLength); });
         }
 
-        EditorGUILayout.Space();
-
         return changed;
     }
 
@@ -118,7 +117,40 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         t.ForceUpdate();
         SceneView.RepaintAll();
     }
-    
+
+    private static void DrawCacheInfo(SceneCachePlayer t) {
+        GUIStyle styleFold = EditorStyles.foldout;
+        styleFold.fontStyle = FontStyle.Bold;
+
+        SceneCacheData sc = t.GetSceneCacheData();
+        if (!sc)
+            return;
+        
+        t.FoldInfoInInspector(EditorGUILayout.Foldout(t.IsInfoInInspectorFolded(), "Info", true, styleFold));
+        if (t.IsInfoInInspectorFolded()) 
+            return;
+
+        TimeRange timeRange = sc.GetTimeRange();
+        
+        ++EditorGUI.indentLevel;
+
+        const int leftWidth = 160;
+
+        EditorGUILayout.BeginHorizontal();
+        GUILayout.Label($"Num Frames: {sc.GetNumScenes()}",GUILayout.MaxWidth(leftWidth));
+        GUILayout.Label($"Start Time: {timeRange.start,15:N4}");
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.BeginHorizontal();
+        GUILayout.Label($"Frame Rate: {sc.GetSampleRate()}",GUILayout.MaxWidth(leftWidth));
+        GUILayout.Label($"End Time  : {timeRange.end,15:N4}");
+        EditorGUILayout.EndHorizontal();
+        
+        
+        --EditorGUI.indentLevel;
+        EditorGUILayout.Space();
+    }
+
 //----------------------------------------------------------------------------------------------------------------------
     private static bool DrawPlaybackMode(SceneCachePlayer t) {
         GUIStyle styleFold = EditorStyles.foldout;
