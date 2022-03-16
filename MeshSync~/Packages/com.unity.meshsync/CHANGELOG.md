@@ -1,9 +1,26 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
-## [0.12.0-preview] - 2022-03-01
+## [0.12.0-preview] - 2022-03-16
 
-TBD
+### Added
+* feat: limited animation settings for SceneCachePlayer
+* feat: add plugin installation support for Blender 3.1
+* feat: Mac Silicon support (experimental)
+
+### Fixed
+* fix: prevent setting time to 0 during OnEnable() for SceneCachePlayer
+* fix: non-material assets of SceneCachePlayer were not imported properly 
+
+### Changed
+* turn the time/frame/interpolation settings in SceneCachePlayer into PlaybackMode
+* replace SnapToFrame property in SceneCachePlayableAsset with PlaybackMode in SceneCachePlayer directly
+* change the behaviour of resizing SceneCachePlayableAsset to maintain scale by default 
+
+### Removed
+* remove: preload setting in SceneCachePlayer
+* remove: Animation Tweak Settings in MeshSyncServer and SceneCachePlayer
+* remove: BaseFrame property in SceneCachePlayer 
 
 ## [0.11.0-preview] - 2022-02-01
 
