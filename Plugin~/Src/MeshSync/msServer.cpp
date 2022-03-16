@@ -662,12 +662,10 @@ void Server::notifyPoll(PollMessage::PollType t)
 
 void Server::receivedProperty(PropertyInfoPtr prop) {
     // If the same property is already prepared to be sent, replace it with the updated data:
-    if (m_pending_properties.size() > 0) {
-        for (size_t i = 0; i < m_pending_properties.size(); ++i) {
-            if (m_pending_properties[i]->matches(prop)) {
-                m_pending_properties[i] = prop;
-                return;
-            }
+    for (size_t i = 0; i < m_pending_properties.size(); ++i) {
+        if (m_pending_properties[i]->matches(prop)) {
+            m_pending_properties[i] = prop;
+            return;
         }
     }
 

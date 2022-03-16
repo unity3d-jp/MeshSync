@@ -1,13 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Unity.MeshSync
+﻿namespace Unity.MeshSync
 {
     partial class MeshSyncServer
     {
+        public enum PropertiesState
+        {
+            None,
+            Sending,
+            Received
+        };
+
+        public PropertiesState CurrentPropertiesState { get; private set; }
+
         void SendUpdatedProperties()
         {
             bool sendProps = false;
@@ -24,8 +27,20 @@ namespace Unity.MeshSync
 
             if (sendProps)
             {
+                CurrentPropertiesState = PropertiesState.Sending;
+                onSceneUpdateEnd += SceneUpdated;
                 m_server.SendChangedProperties();
             }
+        }
+        void OnRecvPropertyRequest()
+        {
+        }
+
+        void SceneUpdated()
+        {
+            onSceneUpdateEnd -= SceneUpdated;
+
+            CurrentPropertiesState = PropertiesState.Received;
         }
     }
 }

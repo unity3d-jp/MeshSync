@@ -11,7 +11,7 @@ namespace Unity.MeshSync
 {
     // Wrapper with additional data on PropertyInfoData
     // that cannot be stored in the shared data structure:
-    class PropertyInfoDataWrapper
+    public class PropertyInfoDataWrapper
     {
         [DllImport(Lib.name)]
         static extern void msPropertyInfoCopyData(IntPtr self, ref int dst);
@@ -158,7 +158,7 @@ namespace Unity.MeshSync
             set { m_foldBlenderSettings = value; }
         }
 
-        internal List<PropertyInfoDataWrapper> propertyInfos = new List<PropertyInfoDataWrapper>();
+        public List<PropertyInfoDataWrapper> propertyInfos = new List<PropertyInfoDataWrapper>();
 
         void UpdateProperties(SceneData scene)
         {

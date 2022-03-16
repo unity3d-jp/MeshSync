@@ -227,6 +227,7 @@ public partial class MeshSyncServer : BaseMeshSync {
                     OnRecvQuery((QueryMessage)data);
                     break;
                 case NetworkMessageType.RequestProperties:
+                    OnRecvPropertyRequest();
                     break;
                 default:
                     break;

@@ -2948,7 +2948,7 @@ internal struct InstanceInfoData
 
     #region PropertyInfo
 
-    internal struct PropertyInfoData
+    public struct PropertyInfoData
     {
         public IntPtr self;
 
