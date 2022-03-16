@@ -19,22 +19,14 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
     
 //----------------------------------------------------------------------------------------------------------------------        
     
-    public override void OnPlayableDestroy(Playable playable) {
-        //Check if OnBehaviourPause() was disabling the gameobject when the playable is deleted
-        if (!m_isGameObjectActive && m_lastActiveChangedTime == Time.frameCount) {
-            ActivateGameObject(true);
-        }
-    }
-    
     public override void OnBehaviourPlay(Playable playable, FrameData info) {
         ActivateGameObject(true);
     }
     
 
-    public override void OnBehaviourPause(Playable playable, FrameData info) {        
+    public override void OnBehaviourPause(Playable playable, FrameData info) {
         ActivateGameObject(false);
     }
-    
 
     public override void ProcessFrame(Playable playable, FrameData info, object playerData) {
         if (null == m_sceneCachePlayer) {
@@ -54,25 +46,13 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
     private void ActivateGameObject(bool active) {
         if (null == m_sceneCachePlayer)
             return;
-
-        GameObject go = m_sceneCachePlayer.gameObject;
-        if (go.activeSelf == active)
-            return;
-        
-        go.SetActive(active);
-        
-        m_isGameObjectActive    = go.activeSelf;
-        m_lastActiveChangedTime = Time.frameCount;
+        m_sceneCachePlayer.gameObject.SetActive(active);
     }
 //----------------------------------------------------------------------------------------------------------------------
-
-    private SceneCachePlayer m_sceneCachePlayer  = null;
+    
+    private SceneCachePlayer m_sceneCachePlayer = null;
     
     private SceneCacheClipData m_clipData = null;
-    
-    private int m_lastActiveChangedTime = 0;
-    private bool  m_isGameObjectActive = false;
-    
 }
 
 } //end namespace
