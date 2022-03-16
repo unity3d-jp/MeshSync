@@ -175,7 +175,18 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
                 updateFunc: (int frame) => { t.SetTimeByFrame(Mathf.Max(0,frame)); });
         }
         --EditorGUI.indentLevel;
-            
+
+        changed |= DrawLimitedAnimationGUI(t);
+        EditorGUILayout.Space();
+
+        return changed;
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
+
+    internal static bool DrawLimitedAnimationGUI(SceneCachePlayer t) {
+        bool changed = false;
+        
         //Limited Animation
         LimitedAnimationController limitedAnimationController = t.GetLimitedAnimationController();
         using (new EditorGUI.DisabledScope(t.GetPlaybackMode() == SceneCachePlaybackMode.Interpolate)) {
@@ -210,10 +221,9 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         }
 
         EditorGUILayout.Space();
-        EditorGUILayout.Space();
-
         return changed;
     }
+    
 
 //----------------------------------------------------------------------------------------------------------------------
 
