@@ -134,12 +134,21 @@ public class SceneCachePlayer : BaseMeshSync {
     internal int frameCount {
         get { return m_sceneCache.GetNumScenes(); }
     }
-
+    
 #if UNITY_EDITOR
-    internal bool foldCacheSettings {
-        get { return m_foldCacheSettings; }
-        set { m_foldCacheSettings = value; }
-    }
+
+    internal SceneCacheData GetSceneCacheData() => m_sceneCache;
+
+    internal bool IsCacheFileShownInInspector()       => m_showCacheFileInInspector;
+    internal void ShowCacheFileInInspector(bool show) { m_showCacheFileInInspector = show; }
+
+    internal bool IsPlaybackInInspectorShown()       => m_showPlaybackInInspector;
+    internal void ShowPlaybackInInspector(bool show) { m_showPlaybackInInspector = show; }
+
+    internal bool IsInfoInInspectorShown()      => m_showInfoInInspector;
+    internal void ShowInfoInInspector(bool show) { m_showInfoInInspector = show; }
+    
+
     internal string dbgProfileReport {
         get { return m_dbgProfileReport; }
     }
@@ -515,6 +524,11 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] int       m_preloadLength = 1;
 
     [SerializeField] private SceneCachePlayerConfig m_config;
+
+    //Foldout settings
+    [SerializeField] bool m_showCacheFileInInspector = true; 
+    [SerializeField] bool m_showPlaybackInInspector = true;
+    [SerializeField] bool m_showInfoInInspector = false;
     
     //only used when the sceneCacheFilePath has a valid importer (under Assets)
     [SerializeField] bool m_overrideModelImporterSettings = false;
@@ -532,7 +546,6 @@ public class SceneCachePlayer : BaseMeshSync {
     private bool   m_resetTimeAnimationOnEnable = false;
 
 #if UNITY_EDITOR
-    [SerializeField] bool m_foldCacheSettings = true;
     float                 m_dbgSceneGetTime;
     float                 m_dbgSceneUpdateTime;
     string                m_dbgProfileReport;
