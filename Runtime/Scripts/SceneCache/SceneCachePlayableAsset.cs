@@ -22,7 +22,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
 //----------------------------------------------------------------------------------------------------------------------
     public ClipCaps clipCaps {
-        get { return ClipCaps.ClipIn | ClipCaps.SpeedMultiplier; }
+        get { return ClipCaps.ClipIn | ClipCaps.SpeedMultiplier | ClipCaps.Extrapolation; }
     }
 
     public override Playable CreatePlayable(PlayableGraph graph, GameObject go) {
