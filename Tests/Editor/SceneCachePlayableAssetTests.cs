@@ -79,7 +79,7 @@ internal class SceneCachePlayableAssetTests {
         yield return null;
         Assert.IsTrue(scGameObject.activeSelf);
 
-        //before clip
+        //after clip
         SetDirectorTime(director, clip.start + clip.duration + 1.0f);
         yield return null;
         Assert.IsFalse(scGameObject.activeSelf);
