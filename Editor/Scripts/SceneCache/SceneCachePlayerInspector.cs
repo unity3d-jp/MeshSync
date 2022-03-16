@@ -110,11 +110,6 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
         return changed;
     }
 
-    private static void RefreshSceneCache(SceneCachePlayer t) {
-        t.ForceUpdate();
-        SceneView.RepaintAll();
-    }
-
     private static void DrawCacheInfo(SceneCachePlayer t) {
 
         SceneCacheData sc = t.GetSceneCacheData();
@@ -160,7 +155,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
                 (SceneCachePlaybackMode)EditorGUILayout.EnumPopup("Playback Mode", t.GetPlaybackMode()), 
             updateFunc: (SceneCachePlaybackMode mode) => {
                 t.SetPlaybackMode(mode);
-                RefreshSceneCache(t);
+                SceneCachePlayerEditorUtility.RefreshSceneCache(t);
             }
         );
 
@@ -194,7 +189,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
                 guiFunc: () => (EditorGUILayout.Toggle(header, limitedAnimationController.IsEnabled())),
                 updateFunc: (bool limitedAnimation) => {
                     limitedAnimationController.SetEnabled(limitedAnimation);
-                    RefreshSceneCache(t);
+                    SceneCachePlayerEditorUtility.RefreshSceneCache(t);
                 });
 
             ++EditorGUI.indentLevel;
@@ -205,7 +200,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
                     ),
                     updateFunc: (int frames) => {
                         limitedAnimationController.SetNumFramesToHold(frames);
-                        RefreshSceneCache(t);
+                        SceneCachePlayerEditorUtility.RefreshSceneCache(t);
                     });
                 changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "SceneCache: Limited Animation",
                     guiFunc: () => (
@@ -213,7 +208,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
                     ),
                     updateFunc: (int offset) => {
                         limitedAnimationController.SetFrameOffset(offset);
-                        RefreshSceneCache(t);
+                        SceneCachePlayerEditorUtility.RefreshSceneCache(t);
                     });
             }
 

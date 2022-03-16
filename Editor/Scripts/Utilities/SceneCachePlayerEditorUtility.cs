@@ -170,7 +170,14 @@ internal static class SceneCachePlayerEditorUtility {
         director.SetReferenceValue(playableAsset.GetSceneCachePlayerRef().exposedName, sceneCachePlayer );
         return clip;
     }
-   
+
+//----------------------------------------------------------------------------------------------------------------------    
+    
+    internal static void RefreshSceneCache(SceneCachePlayer t) {
+        t.ForceUpdate();
+        SceneView.RepaintAll();
+    }
+    
 //----------------------------------------------------------------------------------------------------------------------    
     private static void DestroyIrrelevantComponents(GameObject obj, EntityType curEntityType) {
 
