@@ -47,7 +47,44 @@ internal class SceneCachePlayableAssetTests {
         Assert.IsTrue(Mathf.Approximately((float)(normalizedTime * clip.duration), sceneCachePlayer.GetTime()));
     }
 
+//----------------------------------------------------------------------------------------------------------------------    
+    [UnityTest]
+    public IEnumerator CheckGameObjectActiveStateInExtrapolatedClip() {
 
+        InitTest(out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
+        yield return null;
+
+        Assert.AreEqual(TimelineClip.ClipExtrapolation.None, clip.preExtrapolationMode);
+        Assert.AreEqual(TimelineClip.ClipExtrapolation.None, clip.postExtrapolationMode);
+        
+        director.time = 0;
+        yield return null;
+
+        clip.start = 1.0f;
+        GameObject scGameObject = sceneCachePlayer.gameObject;
+        
+        
+        //start
+        SetDirectorTime(director, 1.0f);
+        yield return null;
+        Assert.IsTrue(scGameObject.activeSelf);
+
+        //before clip
+        SetDirectorTime(director, 0.0f);
+        yield return null;
+        Assert.IsFalse(scGameObject.activeSelf);
+
+        //half
+        SetDirectorTime(director, clip.start + (clip.duration * 0.5f));
+        yield return null;
+        Assert.IsTrue(scGameObject.activeSelf);
+
+        //after clip
+        SetDirectorTime(director, clip.start + clip.duration + 1.0f);
+        yield return null;
+        Assert.IsFalse(scGameObject.activeSelf);
+    }
+    
 //----------------------------------------------------------------------------------------------------------------------
 
     private static void InitTest(out PlayableDirector director, 
