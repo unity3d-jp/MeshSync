@@ -120,11 +120,27 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------
     
     [CanBeNull]
-    internal AnimationCurve GetTimeCurve() {
-        if (!IsSceneCacheOpened())
-            return null;
+    internal bool ExtractTimeCurveAndRange(out AnimationCurve curve, out TimeRange timeRange) {
+        const InterpolationMode INTERPOLATION_MODE = InterpolationMode.Constant;
+        if (IsSceneCacheOpened()) {
+            curve     = m_sceneCache.GetTimeCurve(INTERPOLATION_MODE);
+            timeRange = m_timeRange;
+            return true;
+        }
         
-        return m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
+        SceneCacheData tempSceneCache = SceneCacheData.Open(m_sceneCacheFilePath);
+        if (!tempSceneCache) {
+            curve     = null;
+            timeRange = default(TimeRange);
+            return false;
+        }
+
+        curve     = tempSceneCache.GetTimeCurve(INTERPOLATION_MODE);
+        timeRange = tempSceneCache.GetTimeRange();
+        tempSceneCache.Close();
+        
+        return true;
+
     }
 
     internal TimeRange GetTimeRange() { return m_timeRange;}

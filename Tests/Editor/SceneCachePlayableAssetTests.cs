@@ -18,18 +18,30 @@ internal class SceneCachePlayableAssetTests {
     [UnityTest]
     public IEnumerator CreatePlayableAsset() {
 
-        InitTest(out PlayableDirector _, out SceneCachePlayer _, out TimelineClip clip);
+        InitTest(true, out PlayableDirector _, out SceneCachePlayer _, out TimelineClip clip);
         yield return null;
         
         AnimationCurve curve = VerifyAnimationCurve(clip);
         Assert.IsNotNull(curve);
     }
+
+    [UnityTest]
+    public IEnumerator CreatePlayableAssetUsingDisabledGameObject() {
+
+        InitTest(false, out PlayableDirector _, out SceneCachePlayer _, out TimelineClip clip);
+        yield return null;
+        
+        AnimationCurve curve = VerifyAnimationCurve(clip);
+        Assert.Greater(curve.keys.Length,2);
+        Assert.Greater(clip.duration,0);
+    }
+    
     
 //----------------------------------------------------------------------------------------------------------------------    
     [UnityTest]
     public IEnumerator SetTimeInTimelineWindow() {
 
-        InitTest(out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
+        InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
         yield return null;
 
         director.time = 0;
@@ -51,7 +63,7 @@ internal class SceneCachePlayableAssetTests {
     [UnityTest]
     public IEnumerator CheckGameObjectActiveStateInExtrapolatedClip() {
 
-        InitTest(out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
+        InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
         yield return null;
 
         Assert.AreEqual(TimelineClip.ClipExtrapolation.None, clip.preExtrapolationMode);
@@ -86,9 +98,10 @@ internal class SceneCachePlayableAssetTests {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
+    [UnityTest]
     public IEnumerator EnsureMatchingFramesAreLoadedToScene() {
 
-        InitTest(out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
+        InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
         yield return null;
         SceneCacheData scData = sceneCachePlayer.GetSceneCacheData();
         
@@ -108,13 +121,14 @@ internal class SceneCachePlayableAssetTests {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    private static void InitTest(out PlayableDirector director, 
+    private static void InitTest(bool enableSceneCacheGo, out PlayableDirector director, 
         out SceneCachePlayer sceneCachePlayer, out TimelineClip clip) 
     {
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
 
         director = CreateTestDirector();
         sceneCachePlayer = CreateTestSceneCachePlayer();
+        sceneCachePlayer.gameObject.SetActive(enableSceneCacheGo);
         clip = SceneCachePlayerEditorUtility.AddSceneCacheTrackAndClip(director, "TestSceneCacheTrack", sceneCachePlayer);
         
         TimelineEditorUtility.SelectDirectorInTimelineWindow(director); //trigger the TimelineWindow's update etc.        
