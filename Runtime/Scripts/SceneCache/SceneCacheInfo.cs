@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Unity.MeshSync {
 
-internal class SceneCacheInfo {
+internal class SceneCacheInfo : ISceneCacheInfo {
 
     internal void Reset() {
         numFrames  = 0;
@@ -11,6 +11,13 @@ internal class SceneCacheInfo {
         timeRange  = default(TimeRange);
         timeCurve  = null;
     }
+
+//----------------------------------------------------------------------------------------------------------------------
+    
+    public int            GetNumFrames()  => numFrames;
+    public float          GetSampleRate() => sampleRate;
+    public TimeRange      GetTimeRange() => timeRange;
+    public AnimationCurve GetTimeCurve() => timeCurve;
     
 //----------------------------------------------------------------------------------------------------------------------
     
