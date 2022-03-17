@@ -1,6 +1,4 @@
 ﻿using JetBrains.Annotations;
-using NUnit.Framework;
-using Unity.FilmInternalUtilities;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.Timeline;
@@ -12,8 +10,6 @@ namespace Unity.MeshSync.Editor {
 
 [CustomTimelineEditor(typeof(SceneCachePlayableAsset)), UsedImplicitly]
 internal class SceneCachePlayableAssetEditor : ClipEditor {
-
-    
 
     [InitializeOnLoadMethod]
     static void SceneCachePlayableAssetEditor_OnEditorLoad() {
@@ -76,10 +72,6 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
     /// <inheritdoc/>
     public override void DrawBackground(TimelineClip clip, ClipBackgroundRegion region) {
         base.DrawBackground(clip, region);
-
-        Rect rect = region.position;
-        if (rect.width <= 100)
-            return;
         
         SceneCachePlayableAsset asset = clip.asset as SceneCachePlayableAsset;
         if (null == asset) {
@@ -95,10 +87,26 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         if (!limitedAnimationController.IsEnabled()) {
             return;
         }
-        
-        EditorGUI.LabelField(rect,$"Limited On. Hold: " +
-            $"{limitedAnimationController.GetNumFramesToHold()} Offset:{limitedAnimationController.GetFrameOffset()}");
 
+        int numFrames = limitedAnimationController.GetNumFramesToHold();
+        int offset    = limitedAnimationController.GetFrameOffset();
+            
+        GUIStyle style = new GUIStyle(GUI.skin.label) {
+            alignment = TextAnchor.LowerRight,
+            normal    = {
+                textColor = Color.green
+            }
+        };
+        GUIContent laContent = new GUIContent($"Limited On: {numFrames}, {offset}");
+        
+        Vector2 laContentSize = style.CalcSize(laContent);
+        Rect rect = region.position;
+        if (rect.width <= laContentSize.x)
+            return;
+        
+        EditorGUI.LabelField(rect, laContent, style);
+
+        
     }
     
     
