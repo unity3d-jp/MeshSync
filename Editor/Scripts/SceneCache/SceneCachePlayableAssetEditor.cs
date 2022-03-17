@@ -5,6 +5,8 @@ using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Timeline;
+using Unity.FilmInternalUtilities; //Required for TryMoveToTrack() in Timeline 1.4 and earlier 
+
 
 namespace Unity.MeshSync.Editor {
 
