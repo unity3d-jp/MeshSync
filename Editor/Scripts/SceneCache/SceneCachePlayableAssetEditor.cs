@@ -126,14 +126,14 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         GUIStyle style = new GUIStyle(GUI.skin.label) {
             alignment = TextAnchor.LowerRight,
             normal    = {
-                textColor = Color.green
+                textColor = new Color(0.3f,0.9f,0.3f),
             }
         };
-        GUIContent laContent = new GUIContent($"Limited On: {numFrames}, {offset}");
+        GUIContent laContent = new GUIContent($"Limited: {numFrames}, {offset}");
         
         Vector2 laContentSize = style.CalcSize(laContent);
         Rect rect = region.position;
-        if (rect.width <= laContentSize.x)
+        if (rect.width <= laContentSize.x * 2) //2: arbitrary
             return;
         
         EditorGUI.LabelField(rect, laContent, style);
