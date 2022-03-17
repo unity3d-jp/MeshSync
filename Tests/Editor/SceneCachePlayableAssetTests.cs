@@ -154,13 +154,13 @@ internal class SceneCachePlayableAssetTests {
     private IEnumerator IterateAllSceneCacheFrames(PlayableDirector director, TimelineClip clip, SceneCachePlayer scPlayer, 
         Action<int> afterUpdateFunc) 
     {
-        SceneCacheInfo scInfo = scPlayer.ExtractSceneCacheInfo(forceOpen:true);
+        ISceneCacheInfo scInfo = scPlayer.ExtractSceneCacheInfo(forceOpen:true);
         Assert.IsNotNull(scInfo);
         
-        double timePerFrame = 1.0f / scInfo.sampleRate;
+        double timePerFrame = 1.0f / scInfo.GetSampleRate();
         
         //Use (numFrames-1) because when it becomes invisible when Timeline reaches the last frame
-        for(int i=0;i<scInfo.numFrames-1;++i) {
+        for(int i=0;i<scInfo.GetNumFrames()-1;++i) {
             double elapsedTime = i * timePerFrame;
             if (elapsedTime >= clip.duration)
                 yield break;
