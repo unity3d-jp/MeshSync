@@ -143,9 +143,6 @@ public class SceneCachePlayer : BaseMeshSync {
     
 //----------------------------------------------------------------------------------------------------------------------
     #region Properties
-    internal int frameCount {
-        get { return m_sceneCache.GetNumScenes(); }
-    }
     
 #if UNITY_EDITOR
 
@@ -368,7 +365,7 @@ public class SceneCachePlayer : BaseMeshSync {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
                 frame = Mathf.FloorToInt(time * m_sceneCache.GetSampleRate());
                 frame = m_limitedAnimationController.Apply(frame);
-                frame = Mathf.Clamp(frame, 0, frameCount-1);
+                frame = Mathf.Clamp(frame, 0, m_sceneCacheInfo.numFrames-1);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
@@ -376,7 +373,7 @@ public class SceneCachePlayer : BaseMeshSync {
             case SceneCachePlaybackMode.SnapToNearestFrame: {
                 frame = Mathf.RoundToInt(time * m_sceneCache.GetSampleRate());
                 frame = m_limitedAnimationController.Apply(frame);
-                frame = Mathf.Clamp(frame, 0, frameCount-1);
+                frame = Mathf.Clamp(frame, 0, m_sceneCacheInfo.numFrames-1);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
