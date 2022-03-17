@@ -72,6 +72,37 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
     }    
 
 //----------------------------------------------------------------------------------------------------------------------
+    
+    /// <inheritdoc/>
+    public override void DrawBackground(TimelineClip clip, ClipBackgroundRegion region) {
+        base.DrawBackground(clip, region);
+
+        Rect rect = region.position;
+        if (rect.width <= 100)
+            return;
+        
+        SceneCachePlayableAsset asset = clip.asset as SceneCachePlayableAsset;
+        if (null == asset) {
+            Debug.LogError("Asset is not a SceneCachePlayableAsset: " + clip.asset);
+            return;
+        }
+        
+        SceneCacheClipData clipData = asset.GetBoundClipData();
+        if (null == clipData)
+            return;
+
+        LimitedAnimationController limitedAnimationController = clipData.GetOverrideLimitedAnimationController();
+        if (!limitedAnimationController.IsEnabled()) {
+            return;
+        }
+        
+        EditorGUI.LabelField(rect,$"Limited On. Hold: " +
+            $"{limitedAnimationController.GetNumFramesToHold()} Offset:{limitedAnimationController.GetFrameOffset()}");
+
+    }
+    
+    
+//----------------------------------------------------------------------------------------------------------------------
 
     private void CreateClipCurve(TimelineClip clip) {        
         clip.CreateCurves("Curves: " + clip.displayName);
