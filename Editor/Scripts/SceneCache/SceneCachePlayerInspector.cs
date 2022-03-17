@@ -112,7 +112,7 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
 
     private static void DrawCacheInfo(SceneCachePlayer t) {
 
-        SceneCacheInfo scInfo = t.ExtractSceneCacheInfo();
+        SceneCacheInfo scInfo = t.ExtractSceneCacheInfo(forceOpen:false);
         if (null == scInfo)
             return;
         

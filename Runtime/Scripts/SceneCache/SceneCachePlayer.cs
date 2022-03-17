@@ -120,11 +120,14 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------
     
     [CanBeNull]
-    internal SceneCacheInfo ExtractSceneCacheInfo() {
+    internal SceneCacheInfo ExtractSceneCacheInfo(bool forceOpen) {
         
         if (IsSceneCacheOpened()) {
             return m_sceneCacheInfo;
         }
+        
+        if (!forceOpen)
+            return null;
         
         SceneCacheData tempSceneCache = SceneCacheData.Open(m_sceneCacheFilePath);
         if (!tempSceneCache) {

@@ -104,7 +104,7 @@ internal class SceneCachePlayableAssetTests {
         InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
         yield return null;
 
-        SceneCacheInfo scInfo = sceneCachePlayer.ExtractSceneCacheInfo();
+        SceneCacheInfo scInfo = sceneCachePlayer.ExtractSceneCacheInfo(forceOpen:true);
         Assert.IsNotNull(scInfo);
         
         double timePerFrame = 1.0f / scInfo.sampleRate;
