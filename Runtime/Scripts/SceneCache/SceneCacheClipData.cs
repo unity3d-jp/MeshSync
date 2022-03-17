@@ -54,6 +54,9 @@ internal class SceneCacheClipData : BaseClipData {
 
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
+        if (null == clip.curves) {
+            clip.CreateCurves("Curves: " + clip.displayName);
+        }
        
         //Bind for the first time
         m_scPlayer         = sceneCachePlayer;
