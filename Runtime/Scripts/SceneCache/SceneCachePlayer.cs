@@ -233,6 +233,7 @@ public class SceneCachePlayer : BaseMeshSync {
     internal void CloseCache() {
         if (m_sceneCache) {
             m_sceneCache.Close();
+            m_sceneCacheInfo.Reset();
             LogDebug($"SceneCachePlayer: cache closed ({m_sceneCacheFilePath})");
         }
         m_loadedTime = -1;
