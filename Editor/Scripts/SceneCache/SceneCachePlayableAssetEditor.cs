@@ -25,6 +25,38 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
     
 //----------------------------------------------------------------------------------------------------------------------    
     /// <inheritdoc/>
+    public override ClipDrawOptions GetClipOptions(TimelineClip clip) {
+        ClipDrawOptions         clipOptions = base.GetClipOptions(clip);
+        SceneCachePlayableAsset asset       = clip.asset as SceneCachePlayableAsset;
+        if (null == asset) {
+            Debug.LogError("Asset is not a SceneCachePlayableAsset: " + clip.asset);
+            return clipOptions;
+        }
+        
+        SceneCacheClipData clipData = asset.GetBoundClipData();
+        if (null == clipData) 
+            return clipOptions;
+
+        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
+        if (null == scPlayer) {
+            clipOptions.errorText = NO_SCENE_CACHE_ASSIGNED_ERROR;
+            return clipOptions;
+        }
+
+        LimitedAnimationController overrideLimitedAnimationController =clipData.GetOverrideLimitedAnimationController();
+        
+        if (!scPlayer.IsLimitedAnimationOverrideable() && overrideLimitedAnimationController.IsEnabled()) {
+            clipOptions.errorText = UNABLE_TO_OVERRIDE_LIMITED_ANIMATION_ERROR;
+            return clipOptions;
+        }
+
+        clipOptions.tooltip = scPlayer.GetSceneCacheFilePath();
+
+        return clipOptions;
+    } 
+       
+//----------------------------------------------------------------------------------------------------------------------    
+    /// <inheritdoc/>
     public override void OnCreate(TimelineClip clip, TrackAsset track, TimelineClip clonedFrom) {
         
         SceneCachePlayableAsset asset = clip.asset as SceneCachePlayableAsset;
@@ -124,6 +156,9 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
-
+    
+    private const string NO_SCENE_CACHE_ASSIGNED_ERROR              = "No Scene Cache Assigned";
+    private const string UNABLE_TO_OVERRIDE_LIMITED_ANIMATION_ERROR = "Unable to override Limited Animation";
+    
 }
 } //end namespace
