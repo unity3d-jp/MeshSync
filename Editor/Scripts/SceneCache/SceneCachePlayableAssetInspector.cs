@@ -23,7 +23,15 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         
         SerializedObject so = serializedObject;
         EditorGUILayout.PropertyField(so.FindProperty("m_sceneCachePlayerRef"), SCENE_CACHE_PLAYER);
-                        
+
+        SceneCacheClipData clipData = m_scPlayableAsset.GetBoundClipData();
+        if (null == clipData)
+            return;
+        
+        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
+        if (null == scPlayer)
+            return;
+
         {
             // Curve Operations
             GUILayout.BeginVertical("Box");
@@ -32,13 +40,11 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
             const float BUTTON_X     = 30;
             const float BUTTON_WIDTH = 160f;
             if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"To Linear")) {
-                SceneCacheClipData clipData = m_scPlayableAsset.GetBoundClipData();
-                clipData?.SetCurveToLinear();
+                clipData.SetCurveToLinear();
             }
             
             if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"Apply Original")) {
-                SceneCacheClipData clipData = m_scPlayableAsset.GetBoundClipData();
-                clipData?.ApplyOriginalSceneCacheCurve();                
+                clipData.ApplyOriginalSceneCacheCurve();
             }
             
             GUILayout.EndVertical();                    
