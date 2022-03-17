@@ -162,8 +162,6 @@ public class SceneCachePlayer : BaseMeshSync {
     
 #if UNITY_EDITOR
 
-    internal SceneCacheData GetSceneCacheData() => m_sceneCache;
-
     internal bool IsCacheFileShownInInspector()       => m_showCacheFileInInspector;
     internal void ShowCacheFileInInspector(bool show) { m_showCacheFileInInspector = show; }
 
