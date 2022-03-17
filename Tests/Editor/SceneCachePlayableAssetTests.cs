@@ -108,15 +108,15 @@ internal class SceneCachePlayableAssetTests {
         yield return IterateAllSceneCacheFrames(director, clip, sceneCachePlayer, (int timelineFrame) => {
             Assert.AreEqual(timelineFrame, sceneCachePlayer.GetFrame());            
         });
+        
     }
 
 //----------------------------------------------------------------------------------------------------------------------
     [UnityTest]
-    public IEnumerator OverrideLimitedAnimation() {
+    public IEnumerator EnsureLimitedFramesAreLoadedToScene() {
 
         InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
         yield return null;
-        SceneCacheData scData = sceneCachePlayer.GetSceneCacheData();
 
         //Setup Limited Animation
         const int NUM_FRAMES_TO_HOLD = 3;
@@ -125,21 +125,12 @@ internal class SceneCachePlayableAssetTests {
         SceneCacheClipData         clipData                   = VerifyClipData(clip);
         LimitedAnimationController limitedAnimationController = clipData.GetOverrideLimitedAnimationController();
         limitedAnimationController.Enable(NUM_FRAMES_TO_HOLD,OFFSET);
-        
-        int    numFrames    = scData.GetNumScenes();
-        double timePerFrame = 1.0f / scData.GetSampleRate();
-        
-        //Use (numFrames-1) because when it becomes invisible when Timeline reaches the last frame
-        for(int i=0;i<numFrames-1;++i) {
-            
-            double directorTime = clip.start + i * timePerFrame;
-            SetDirectorTime(director, directorTime); //this will trigger change in the time of the SceneCachePlayable
-            yield return null;
 
+        yield return IterateAllSceneCacheFrames(director, clip, sceneCachePlayer, (int timelineFrame) => {
             int shownFrame = sceneCachePlayer.GetFrame();
-            Assert.Zero(shownFrame % NUM_FRAMES_TO_HOLD - OFFSET);
-        }
-        
+            Assert.Zero(shownFrame % NUM_FRAMES_TO_HOLD - OFFSET);            
+        });
+
     }
 
     
@@ -187,6 +178,24 @@ internal class SceneCachePlayableAssetTests {
         SceneCacheClipData clipData = playableAsset.GetBoundClipData();
         Assert.IsNotNull(clipData);
         return clipData;
+    }
+
+    private IEnumerator IterateAllSceneCacheFrames(PlayableDirector director, TimelineClip clip, SceneCacheData scData, 
+        Action<int> afterUpdateFunc) 
+    {
+        int    numFrames    = scData.GetNumScenes();
+        double timePerFrame = 1.0f / scData.GetSampleRate();
+        
+        //Use (numFrames-1) because when it becomes invisible when Timeline reaches the last frame
+        for(int i=0;i<numFrames-1;++i) {
+            
+            double directorTime = clip.start + i * timePerFrame;
+            SetDirectorTime(director, directorTime); //this will trigger change in the time of the SceneCachePlayable
+            yield return null;
+
+            afterUpdateFunc(i);
+        }
+        
     }
     
     private IEnumerator IterateAllSceneCacheFrames(PlayableDirector director, TimelineClip clip, SceneCachePlayer scPlayer, 

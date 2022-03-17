@@ -60,9 +60,12 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
         if (!clipLimitedAnimationController.IsEnabled())
             return time;
 
-        SceneCacheData scData = m_sceneCachePlayer.GetSceneCacheData();
-        int            frame  = m_sceneCachePlayer.CalculateFrame((float)time,clipLimitedAnimationController);
-        return frame / scData.GetSampleRate();
+        SceneCacheInfo scInfo = m_sceneCachePlayer.ExtractSceneCacheInfo(forceOpen: true);
+        if (null == scInfo)
+            return time;
+            
+        int frame = m_sceneCachePlayer.CalculateFrame((float)time,clipLimitedAnimationController);
+        return frame / scInfo.sampleRate;
     }
 
 //----------------------------------------------------------------------------------------------------------------------
