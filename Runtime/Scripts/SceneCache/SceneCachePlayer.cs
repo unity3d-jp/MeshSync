@@ -103,7 +103,7 @@ public class SceneCachePlayer : BaseMeshSync {
     
     //NormalizedTime: (0.0 .. 1.0)
     internal void SetTimeByNormalizedTime(float normalizedTime) {
-        float time = normalizedTime * m_timeRange.end;
+        float time = normalizedTime * m_sceneCacheInfo.timeRange.end;
         m_time = ClampTime(time);
     }
     
@@ -122,38 +122,22 @@ public class SceneCachePlayer : BaseMeshSync {
     [CanBeNull]
     internal SceneCacheInfo ExtractSceneCacheInfo() {
         
-        SceneCacheData scData;
-        bool           needToClose = false;
         if (IsSceneCacheOpened()) {
-            scData = m_sceneCache;
-        } else {
-            SceneCacheData tempSceneCache = SceneCacheData.Open(m_sceneCacheFilePath);
-            if (!tempSceneCache) {
-                return null;
-            }
-            scData      = tempSceneCache;
-            needToClose = true;
+            return m_sceneCacheInfo;
+        }
+        
+        SceneCacheData tempSceneCache = SceneCacheData.Open(m_sceneCacheFilePath);
+        if (!tempSceneCache) {
+            return null;
         }
 
-
-        const InterpolationMode INTERPOLATION_MODE = InterpolationMode.Constant;
-        SceneCacheInfo ret = new SceneCacheInfo() {
-            numFrames = scData.GetNumScenes(),
-            sampleRate = scData.GetSampleRate(),
-            timeCurve = scData.GetTimeCurve(INTERPOLATION_MODE),
-            timeRange = scData.GetTimeRange(),
-        };
-
-        if (needToClose) {
-            scData.Close();
-        }
+        SceneCacheInfo ret = new SceneCacheInfo();
+        UpdateSceneCacheInfo(ret, tempSceneCache);
+        tempSceneCache.Close();
 
         return ret;
     }
     
-
-    internal TimeRange GetTimeRange() { return m_timeRange;}
-
 //----------------------------------------------------------------------------------------------------------------------
     #region Properties
     internal int frameCount {
@@ -223,7 +207,8 @@ public class SceneCachePlayer : BaseMeshSync {
         }
 
         m_sceneCacheFilePath = path;
-        m_timeRange= m_sceneCache.GetTimeRange();
+        
+        UpdateSceneCacheInfo(m_sceneCacheInfo, m_sceneCache);
         
 #if UNITY_EDITOR
         SetSortEntities(true);
@@ -234,6 +219,15 @@ public class SceneCachePlayer : BaseMeshSync {
         LoadSceneCacheToScene(0, updateNonMaterialAssets);
         
         return true;
+    }
+
+    private static void UpdateSceneCacheInfo( SceneCacheInfo scInfo, SceneCacheData scData) {
+        Assert.IsTrue(scData);
+        
+        scInfo.numFrames  = scData.GetNumScenes();
+        scInfo.sampleRate = scData.GetSampleRate();
+        scInfo.timeCurve  = scData.GetTimeCurve(InterpolationMode.Constant);
+        scInfo.timeRange  = scData.GetTimeRange();
     }
     
     internal void CloseCache() {
@@ -310,7 +304,7 @@ public class SceneCachePlayer : BaseMeshSync {
         UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         return true;
     }
-#endif
+#endif //UNITY_EDITOR
 
     private void UpdatePlayer(bool updateNonMaterialAssets) {
 
@@ -455,7 +449,7 @@ public class SceneCachePlayer : BaseMeshSync {
     }
 
     
-#endif
+#endif //UNITY_EDITOR
     
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -469,7 +463,7 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------
     
     float ClampTime(float time) {
-        return Mathf.Clamp(time, m_timeRange.start, m_timeRange.end);
+        return Mathf.Clamp(time, m_sceneCacheInfo.timeRange.start, m_sceneCacheInfo.timeRange.end);
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -561,7 +555,9 @@ public class SceneCachePlayer : BaseMeshSync {
     private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.PLAYBACK_MODE_0_12_0;
         
     SceneCacheData m_sceneCache;
-    TimeRange      m_timeRange;
+
+    private SceneCacheInfo m_sceneCacheInfo = new SceneCacheInfo(); 
+        
     int            m_frame      = 0;
     float          m_loadedTime = -1;
     Animator       m_animator   = null;
