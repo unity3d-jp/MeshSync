@@ -103,7 +103,7 @@ public class SceneCachePlayer : BaseMeshSync {
     
     //NormalizedTime: (0.0 .. 1.0)
     internal void SetTimeByNormalizedTime(float normalizedTime) {
-        float time = normalizedTime * m_timeRange.end;
+        float time = normalizedTime * m_sceneCacheInfo.timeRange.end;
         m_time = ClampTime(time);
     }
     
@@ -120,40 +120,31 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------
     
     [CanBeNull]
-    internal bool ExtractTimeCurveAndRange(out AnimationCurve curve, out TimeRange timeRange) {
-        const InterpolationMode INTERPOLATION_MODE = InterpolationMode.Constant;
+    internal SceneCacheInfo ExtractSceneCacheInfo(bool forceOpen) {
+        
         if (IsSceneCacheOpened()) {
-            curve     = m_sceneCache.GetTimeCurve(INTERPOLATION_MODE);
-            timeRange = m_timeRange;
-            return true;
+            return m_sceneCacheInfo;
         }
+        
+        if (!forceOpen)
+            return null;
         
         SceneCacheData tempSceneCache = SceneCacheData.Open(m_sceneCacheFilePath);
         if (!tempSceneCache) {
-            curve     = null;
-            timeRange = default(TimeRange);
-            return false;
+            return null;
         }
 
-        curve     = tempSceneCache.GetTimeCurve(INTERPOLATION_MODE);
-        timeRange = tempSceneCache.GetTimeRange();
+        SceneCacheInfo ret = new SceneCacheInfo();
+        UpdateSceneCacheInfo(ret, tempSceneCache);
         tempSceneCache.Close();
-        
-        return true;
 
-    }
-
-    internal TimeRange GetTimeRange() { return m_timeRange;}
-
-//----------------------------------------------------------------------------------------------------------------------
-    #region Properties
-    internal int frameCount {
-        get { return m_sceneCache.GetNumScenes(); }
+        return ret;
     }
     
+//----------------------------------------------------------------------------------------------------------------------
+    #region Properties
+    
 #if UNITY_EDITOR
-
-    internal SceneCacheData GetSceneCacheData() => m_sceneCache;
 
     internal bool IsCacheFileShownInInspector()       => m_showCacheFileInInspector;
     internal void ShowCacheFileInInspector(bool show) { m_showCacheFileInInspector = show; }
@@ -216,7 +207,8 @@ public class SceneCachePlayer : BaseMeshSync {
         }
 
         m_sceneCacheFilePath = path;
-        m_timeRange= m_sceneCache.GetTimeRange();
+        
+        UpdateSceneCacheInfo(m_sceneCacheInfo, m_sceneCache);
         
 #if UNITY_EDITOR
         SetSortEntities(true);
@@ -228,10 +220,20 @@ public class SceneCachePlayer : BaseMeshSync {
         
         return true;
     }
+
+    private static void UpdateSceneCacheInfo( SceneCacheInfo scInfo, SceneCacheData scData) {
+        Assert.IsTrue(scData);
+        
+        scInfo.numFrames  = scData.GetNumScenes();
+        scInfo.sampleRate = scData.GetSampleRate();
+        scInfo.timeCurve  = scData.GetTimeCurve(InterpolationMode.Constant);
+        scInfo.timeRange  = scData.GetTimeRange();
+    }
     
     internal void CloseCache() {
         if (m_sceneCache) {
             m_sceneCache.Close();
+            m_sceneCacheInfo.Reset();
             LogDebug($"SceneCachePlayer: cache closed ({m_sceneCacheFilePath})");
         }
         m_loadedTime = -1;
@@ -279,7 +281,7 @@ public class SceneCachePlayer : BaseMeshSync {
 
 
     private bool ResetTimeAnimation() {
-        if (m_sceneCache.GetNumScenes() < 2)
+        if (m_sceneCacheInfo.numFrames < 2)
             return false;
 
         RuntimeAnimatorController animatorController = GetOrCreateAnimatorControllerWithClip();
@@ -291,19 +293,18 @@ public class SceneCachePlayer : BaseMeshSync {
 
         Undo.RegisterCompleteObjectUndo(clip, "SceneCachePlayer");
         
-        float sampleRate = m_sceneCache.GetSampleRate();
+        float sampleRate = m_sceneCacheInfo.sampleRate;
         if (sampleRate > 0.0f)
             clip.frameRate = sampleRate;
 
         Type tPlayer = typeof(SceneCachePlayer);
-        AnimationCurve curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
-        clip.SetCurve("", tPlayer, "m_time", curve);
+        clip.SetCurve("", tPlayer, "m_time", m_sceneCacheInfo.timeCurve);
 
         AssetDatabase.SaveAssets();
         UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         return true;
     }
-#endif
+#endif //UNITY_EDITOR
 
     private void UpdatePlayer(bool updateNonMaterialAssets) {
 
@@ -364,7 +365,7 @@ public class SceneCachePlayer : BaseMeshSync {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
                 frame = Mathf.FloorToInt(time * m_sceneCache.GetSampleRate());
                 frame = m_limitedAnimationController.Apply(frame);
-                frame = Mathf.Clamp(frame, 0, frameCount-1);
+                frame = Mathf.Clamp(frame, 0, m_sceneCacheInfo.numFrames-1);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
@@ -372,7 +373,7 @@ public class SceneCachePlayer : BaseMeshSync {
             case SceneCachePlaybackMode.SnapToNearestFrame: {
                 frame = Mathf.RoundToInt(time * m_sceneCache.GetSampleRate());
                 frame = m_limitedAnimationController.Apply(frame);
-                frame = Mathf.Clamp(frame, 0, frameCount-1);
+                frame = Mathf.Clamp(frame, 0, m_sceneCacheInfo.numFrames-1);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
@@ -448,7 +449,7 @@ public class SceneCachePlayer : BaseMeshSync {
     }
 
     
-#endif
+#endif //UNITY_EDITOR
     
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -462,7 +463,7 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------
     
     float ClampTime(float time) {
-        return Mathf.Clamp(time, m_timeRange.start, m_timeRange.end);
+        return Mathf.Clamp(time, m_sceneCacheInfo.timeRange.start, m_sceneCacheInfo.timeRange.end);
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -554,7 +555,9 @@ public class SceneCachePlayer : BaseMeshSync {
     private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.PLAYBACK_MODE_0_12_0;
         
     SceneCacheData m_sceneCache;
-    TimeRange      m_timeRange;
+
+    private readonly SceneCacheInfo m_sceneCacheInfo = new SceneCacheInfo(); 
+        
     int            m_frame      = 0;
     float          m_loadedTime = -1;
     Animator       m_animator   = null;
