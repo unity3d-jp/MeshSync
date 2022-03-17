@@ -28,6 +28,12 @@ internal class LimitedAnimationController {
         m_frameOffset = Mathf.Clamp(offset,0,m_numFramesToHold-1);
     }
     internal int  GetFrameOffset()            { return m_frameOffset;}
+
+    internal void Enable(int numFrames, int offset) {
+        m_enabled         = true;
+        m_numFramesToHold = numFrames;
+        m_frameOffset     = offset;
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
     
