@@ -120,7 +120,7 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------
     
     [CanBeNull]
-    internal SceneCacheInfo ExtractSceneCacheInfo(bool forceOpen) {
+    internal ISceneCacheInfo ExtractSceneCacheInfo(bool forceOpen) {
         
         if (IsSceneCacheOpened()) {
             return m_sceneCacheInfo;
