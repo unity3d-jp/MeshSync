@@ -280,7 +280,7 @@ public class SceneCachePlayer : BaseMeshSync {
 
 
     private bool ResetTimeAnimation() {
-        if (m_sceneCache.GetNumScenes() < 2)
+        if (m_sceneCacheInfo.numFrames < 2)
             return false;
 
         RuntimeAnimatorController animatorController = GetOrCreateAnimatorControllerWithClip();
@@ -292,13 +292,12 @@ public class SceneCachePlayer : BaseMeshSync {
 
         Undo.RegisterCompleteObjectUndo(clip, "SceneCachePlayer");
         
-        float sampleRate = m_sceneCache.GetSampleRate();
+        float sampleRate = m_sceneCacheInfo.sampleRate;
         if (sampleRate > 0.0f)
             clip.frameRate = sampleRate;
 
         Type tPlayer = typeof(SceneCachePlayer);
-        AnimationCurve curve = m_sceneCache.GetTimeCurve(InterpolationMode.Constant);
-        clip.SetCurve("", tPlayer, "m_time", curve);
+        clip.SetCurve("", tPlayer, "m_time", m_sceneCacheInfo.timeCurve);
 
         AssetDatabase.SaveAssets();
         UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
@@ -556,7 +555,7 @@ public class SceneCachePlayer : BaseMeshSync {
         
     SceneCacheData m_sceneCache;
 
-    private SceneCacheInfo m_sceneCacheInfo = new SceneCacheInfo(); 
+    private readonly SceneCacheInfo m_sceneCacheInfo = new SceneCacheInfo(); 
         
     int            m_frame      = 0;
     float          m_loadedTime = -1;
