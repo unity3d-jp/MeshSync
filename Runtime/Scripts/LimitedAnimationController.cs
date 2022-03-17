@@ -42,7 +42,7 @@ internal class LimitedAnimationController {
     
 //----------------------------------------------------------------------------------------------------------------------    
     [SerializeField] private bool m_enabled         = false;
-    [SerializeField] private int  m_numFramesToHold = 1; //hold one data for several frames.    
+    [SerializeField] private int  m_numFramesToHold = 2; //hold one data for several frames (default: 2).    
     [SerializeField] private int  m_frameOffset = 0; 
     
 }    
