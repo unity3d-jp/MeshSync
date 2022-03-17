@@ -142,10 +142,10 @@ internal class SceneCachePlayableAssetTests {
         yield return null;
 
         
-        SceneCacheInfo scInfo = sceneCachePlayer.ExtractSceneCacheInfo(forceOpen:true);
+        ISceneCacheInfo scInfo = sceneCachePlayer.ExtractSceneCacheInfo(forceOpen:true);
         Assert.IsNotNull(scInfo);
-        int    numFrames    = scInfo.numFrames;
-        double timePerFrame = 1.0f / scInfo.sampleRate;
+        int    numFrames    = scInfo.GetNumFrames();
+        double timePerFrame = 1.0f / scInfo.GetSampleRate();
 
         //Setup clip0 duration
         int halfFrames = Mathf.FloorToInt(numFrames * 0.5f);
