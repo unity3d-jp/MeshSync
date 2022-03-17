@@ -223,7 +223,9 @@ internal class SceneCacheClipData : BaseClipData {
 //----------------------------------------------------------------------------------------------------------------------
     internal void           SetAnimationCurve(AnimationCurve curve) { m_animationCurve = curve; }
     internal AnimationCurve GetAnimationCurve()                     {  return m_animationCurve; }
-        
+
+    internal SceneCachePlayer GetSceneCachePlayer() =>m_scPlayer;
+    
 //----------------------------------------------------------------------------------------------------------------------
    
     [SerializeField] private AnimationCurve   m_animationCurve;
