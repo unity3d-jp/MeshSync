@@ -103,13 +103,14 @@ internal class SceneCachePlayableAssetTests {
 
         InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
         yield return null;
-        SceneCacheData scData = sceneCachePlayer.GetSceneCacheData();
+
+        SceneCacheInfo scInfo = sceneCachePlayer.ExtractSceneCacheInfo();
+        Assert.IsNotNull(scInfo);
         
-        int    numFrames    = scData.GetNumScenes();
-        double timePerFrame = 1.0f / scData.GetSampleRate();
+        double timePerFrame = 1.0f / scInfo.sampleRate;
         
         //Use (numFrames-1) because when it becomes invisible when Timeline reaches the last frame
-        for(int i=0;i<numFrames-1;++i) {
+        for(int i=0;i<scInfo.numFrames-1;++i) {
             
             double directorTime = clip.start + i * timePerFrame;
             SetDirectorTime(director, directorTime); //this will trigger change in the time of the SceneCachePlayable
