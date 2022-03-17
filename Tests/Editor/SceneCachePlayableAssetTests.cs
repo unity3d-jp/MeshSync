@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System;
+using NUnit.Framework;
 using System.Collections;
 using System.IO;
 using JetBrains.Annotations;
@@ -104,20 +105,9 @@ internal class SceneCachePlayableAssetTests {
         InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
         yield return null;
 
-        SceneCacheInfo scInfo = sceneCachePlayer.ExtractSceneCacheInfo(forceOpen:true);
-        Assert.IsNotNull(scInfo);
-        
-        double timePerFrame = 1.0f / scInfo.sampleRate;
-        
-        //Use (numFrames-1) because when it becomes invisible when Timeline reaches the last frame
-        for(int i=0;i<scInfo.numFrames-1;++i) {
-            
-            double directorTime = clip.start + i * timePerFrame;
-            SetDirectorTime(director, directorTime); //this will trigger change in the time of the SceneCachePlayable
-            yield return null;
-                       
-            Assert.AreEqual(i, sceneCachePlayer.GetFrame());
-        }
+        yield return IterateAllSceneCacheFrames(director, clip, sceneCachePlayer, (int timelineFrame) => {
+            Assert.AreEqual(timelineFrame, sceneCachePlayer.GetFrame());            
+        });
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -160,6 +150,29 @@ internal class SceneCachePlayableAssetTests {
         return curve;
 
     }
+    
+    private IEnumerator IterateAllSceneCacheFrames(PlayableDirector director, TimelineClip clip, SceneCachePlayer scPlayer, 
+        Action<int> afterUpdateFunc) 
+    {
+        SceneCacheInfo scInfo = scPlayer.ExtractSceneCacheInfo(forceOpen:true);
+        Assert.IsNotNull(scInfo);
+        
+        double timePerFrame = 1.0f / scInfo.sampleRate;
+        
+        //Use (numFrames-1) because when it becomes invisible when Timeline reaches the last frame
+        for(int i=0;i<scInfo.numFrames-1;++i) {
+            double elapsedTime = i * timePerFrame;
+            if (elapsedTime >= clip.duration)
+                yield break;
+            
+            double directorTime = clip.start + i * timePerFrame;
+            SetDirectorTime(director, directorTime); //this will trigger change in the time of the SceneCachePlayable
+            yield return null;
+
+            afterUpdateFunc(i);
+        }
+        
+    }    
     
 //----------------------------------------------------------------------------------------------------------------------
     private static void SetDirectorTime(PlayableDirector director, double time) {
