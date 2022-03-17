@@ -120,28 +120,37 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------
     
     [CanBeNull]
-    internal bool ExtractTimeCurveAndRange(out AnimationCurve curve, out TimeRange timeRange) {
-        const InterpolationMode INTERPOLATION_MODE = InterpolationMode.Constant;
+    internal SceneCacheInfo ExtractSceneCacheInfo() {
+        
+        SceneCacheData scData;
+        bool           needToClose = false;
         if (IsSceneCacheOpened()) {
-            curve     = m_sceneCache.GetTimeCurve(INTERPOLATION_MODE);
-            timeRange = m_timeRange;
-            return true;
-        }
-        
-        SceneCacheData tempSceneCache = SceneCacheData.Open(m_sceneCacheFilePath);
-        if (!tempSceneCache) {
-            curve     = null;
-            timeRange = default(TimeRange);
-            return false;
+            scData = m_sceneCache;
+        } else {
+            SceneCacheData tempSceneCache = SceneCacheData.Open(m_sceneCacheFilePath);
+            if (!tempSceneCache) {
+                return null;
+            }
+            scData      = tempSceneCache;
+            needToClose = true;
         }
 
-        curve     = tempSceneCache.GetTimeCurve(INTERPOLATION_MODE);
-        timeRange = tempSceneCache.GetTimeRange();
-        tempSceneCache.Close();
-        
-        return true;
 
+        const InterpolationMode INTERPOLATION_MODE = InterpolationMode.Constant;
+        SceneCacheInfo ret = new SceneCacheInfo() {
+            numFrames = scData.GetNumScenes(),
+            sampleRate = scData.GetSampleRate(),
+            timeCurve = scData.GetTimeCurve(INTERPOLATION_MODE),
+            timeRange = scData.GetTimeRange(),
+        };
+
+        if (needToClose) {
+            scData.Close();
+        }
+
+        return ret;
     }
+    
 
     internal TimeRange GetTimeRange() { return m_timeRange;}
 
