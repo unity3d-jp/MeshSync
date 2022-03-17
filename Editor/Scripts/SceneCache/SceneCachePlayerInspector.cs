@@ -112,28 +112,26 @@ internal class SceneCachePlayerInspector : BaseMeshSyncInspector {
 
     private static void DrawCacheInfo(SceneCachePlayer t) {
 
-        SceneCacheData sc = t.GetSceneCacheData();
-        if (!sc)
+        SceneCacheInfo scInfo = t.ExtractSceneCacheInfo();
+        if (null == scInfo)
             return;
         
         t.ShowInfoInInspector(EditorGUILayout.Foldout(t.IsInfoInInspectorShown(), "Info", true, GetDefaultFoldoutStyle()));
         if (!t.IsInfoInInspectorShown()) 
             return;
-
-        TimeRange timeRange = sc.GetTimeRange();
         
         ++EditorGUI.indentLevel;
 
         const int leftWidth = 160;
 
         EditorGUILayout.BeginHorizontal();
-        GUILayout.Label($"Num Frames: {sc.GetNumScenes()}",GUILayout.MaxWidth(leftWidth));
-        GUILayout.Label($"Start Time: {timeRange.start,15:N4}");
+        GUILayout.Label($"Num Frames: {scInfo.numFrames}",GUILayout.MaxWidth(leftWidth));
+        GUILayout.Label($"Start Time: {scInfo.timeRange.start,15:N4}");
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.BeginHorizontal();
-        GUILayout.Label($"Frame Rate: {sc.GetSampleRate()}",GUILayout.MaxWidth(leftWidth));
-        GUILayout.Label($"End Time  : {timeRange.end,15:N4}");
+        GUILayout.Label($"Frame Rate: {scInfo.sampleRate}",GUILayout.MaxWidth(leftWidth));
+        GUILayout.Label($"End Time  : {scInfo.timeRange.end,15:N4}");
         EditorGUILayout.EndHorizontal();
                
         --EditorGUI.indentLevel;
