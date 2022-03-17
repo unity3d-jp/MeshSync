@@ -109,6 +109,39 @@ internal class SceneCachePlayableAssetTests {
             Assert.AreEqual(timelineFrame, sceneCachePlayer.GetFrame());            
         });
     }
+
+//----------------------------------------------------------------------------------------------------------------------
+    [UnityTest]
+    public IEnumerator OverrideLimitedAnimation() {
+
+        InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
+        yield return null;
+        SceneCacheData scData = sceneCachePlayer.GetSceneCacheData();
+
+        //Setup Limited Animation
+        const int NUM_FRAMES_TO_HOLD = 3;
+        const int OFFSET = 1;
+        
+        SceneCacheClipData         clipData                   = VerifyClipData(clip);
+        LimitedAnimationController limitedAnimationController = clipData.GetOverrideLimitedAnimationController();
+        limitedAnimationController.Enable(NUM_FRAMES_TO_HOLD,OFFSET);
+        
+        int    numFrames    = scData.GetNumScenes();
+        double timePerFrame = 1.0f / scData.GetSampleRate();
+        
+        //Use (numFrames-1) because when it becomes invisible when Timeline reaches the last frame
+        for(int i=0;i<numFrames-1;++i) {
+            
+            double directorTime = clip.start + i * timePerFrame;
+            SetDirectorTime(director, directorTime); //this will trigger change in the time of the SceneCachePlayable
+            yield return null;
+
+            int shownFrame = sceneCachePlayer.GetFrame();
+            Assert.Zero(shownFrame % NUM_FRAMES_TO_HOLD - OFFSET);
+        }
+        
+    }
+
     
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -141,14 +174,19 @@ internal class SceneCachePlayableAssetTests {
 
     [NotNull]
     private static AnimationCurve VerifyAnimationCurve(TimelineClip clip) {
-        SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
-        Assert.IsNotNull(playableAsset);
-        SceneCacheClipData clipData = playableAsset.GetBoundClipData();
-        Assert.IsNotNull(clipData);        
+        SceneCacheClipData clipData = VerifyClipData(clip);
         AnimationCurve curve = clipData.GetAnimationCurve();
         Assert.IsNotNull(curve);
         return curve;
+    }
 
+    [NotNull]
+    private static SceneCacheClipData VerifyClipData(TimelineClip clip) {
+        SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
+        Assert.IsNotNull(playableAsset);
+        SceneCacheClipData clipData = playableAsset.GetBoundClipData();
+        Assert.IsNotNull(clipData);
+        return clipData;
     }
     
     private IEnumerator IterateAllSceneCacheFrames(PlayableDirector director, TimelineClip clip, SceneCachePlayer scPlayer, 
