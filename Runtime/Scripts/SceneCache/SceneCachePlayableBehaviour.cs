@@ -45,8 +45,8 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
         m_sceneCachePlayer.SetAutoplay(false);
         m_sceneCachePlayer.SetTimeByNormalizedTime(normalizedTime);
         
-        //Might be deactivated if there is another clip with the same SceneCache in the same track
-        m_sceneCachePlayer.gameObject.SetActive(true); 
+        //Might have been deactivated if there is another clip with the same SceneCache in the same track
+        ActivateGameObject(true); 
     }
 
 //----------------------------------------------------------------------------------------------------------------------
