@@ -168,7 +168,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
             
         int frame = scPlayer.CalculateFrame((float)time,clipLimitedAnimationController);
         return frame / scInfo.GetSampleRate();
-    }        
+    }
     
 //----------------------------------------------------------------------------------------------------------------------    
 
