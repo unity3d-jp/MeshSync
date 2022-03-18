@@ -1,19 +1,17 @@
 ﻿using JetBrains.Annotations;
-using NUnit.Framework;
-using Unity.FilmInternalUtilities;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Timeline;
+using Unity.FilmInternalUtilities; //Required for TryMoveToTrack() in Timeline 1.4 and earlier 
+
 
 namespace Unity.MeshSync.Editor {
 
 [CustomTimelineEditor(typeof(SceneCachePlayableAsset)), UsedImplicitly]
 internal class SceneCachePlayableAssetEditor : ClipEditor {
-
-    
 
     [InitializeOnLoadMethod]
     static void SceneCachePlayableAssetEditor_OnEditorLoad() {
@@ -27,6 +25,38 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved);    
     }
     
+//----------------------------------------------------------------------------------------------------------------------    
+    /// <inheritdoc/>
+    public override ClipDrawOptions GetClipOptions(TimelineClip clip) {
+        ClipDrawOptions         clipOptions = base.GetClipOptions(clip);
+        SceneCachePlayableAsset asset       = clip.asset as SceneCachePlayableAsset;
+        if (null == asset) {
+            Debug.LogError("Asset is not a SceneCachePlayableAsset: " + clip.asset);
+            return clipOptions;
+        }
+        
+        SceneCacheClipData clipData = asset.GetBoundClipData();
+        if (null == clipData) 
+            return clipOptions;
+
+        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
+        if (null == scPlayer) {
+            clipOptions.errorText = NO_SCENE_CACHE_ASSIGNED_ERROR;
+            return clipOptions;
+        }
+
+        LimitedAnimationController overrideLimitedAnimationController =clipData.GetOverrideLimitedAnimationController();
+        
+        if (!scPlayer.IsLimitedAnimationOverrideable() && overrideLimitedAnimationController.IsEnabled()) {
+            clipOptions.errorText = UNABLE_TO_OVERRIDE_LIMITED_ANIMATION_ERROR;
+            return clipOptions;
+        }
+
+        clipOptions.tooltip = scPlayer.GetSceneCacheFilePath();
+
+        return clipOptions;
+    } 
+       
 //----------------------------------------------------------------------------------------------------------------------    
     /// <inheritdoc/>
     public override void OnCreate(TimelineClip clip, TrackAsset track, TimelineClip clonedFrom) {
@@ -72,6 +102,49 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
     }    
 
 //----------------------------------------------------------------------------------------------------------------------
+    
+    /// <inheritdoc/>
+    public override void DrawBackground(TimelineClip clip, ClipBackgroundRegion region) {
+        base.DrawBackground(clip, region);
+        
+        SceneCachePlayableAsset asset = clip.asset as SceneCachePlayableAsset;
+        if (null == asset) {
+            Debug.LogError("Asset is not a SceneCachePlayableAsset: " + clip.asset);
+            return;
+        }
+        
+        SceneCacheClipData clipData = asset.GetBoundClipData();
+        if (null == clipData)
+            return;
+
+        LimitedAnimationController limitedAnimationController = clipData.GetOverrideLimitedAnimationController();
+        if (!limitedAnimationController.IsEnabled()) {
+            return;
+        }
+
+        int numFrames = limitedAnimationController.GetNumFramesToHold();
+        int offset    = limitedAnimationController.GetFrameOffset();
+            
+        GUIStyle style = new GUIStyle(GUI.skin.label) {
+            alignment = TextAnchor.LowerRight,
+            normal    = {
+                textColor = new Color(0.3f,0.9f,0.3f),
+            }
+        };
+        GUIContent laContent = new GUIContent($"Limited: {numFrames}, {offset}");
+        
+        Vector2 laContentSize = style.CalcSize(laContent);
+        Rect rect = region.position;
+        if (rect.width <= laContentSize.x * 2) //2: arbitrary
+            return;
+        
+        EditorGUI.LabelField(rect, laContent, style);
+
+        
+    }
+    
+    
+//----------------------------------------------------------------------------------------------------------------------
 
     private void CreateClipCurve(TimelineClip clip) {        
         clip.CreateCurves("Curves: " + clip.displayName);
@@ -85,6 +158,9 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
-
+    
+    private const string NO_SCENE_CACHE_ASSIGNED_ERROR              = "No Scene Cache Assigned";
+    private const string UNABLE_TO_OVERRIDE_LIMITED_ANIMATION_ERROR = "Unable to override Limited Animation";
+    
 }
 } //end namespace

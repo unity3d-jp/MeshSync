@@ -5,6 +5,7 @@ using System.IO;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
 using Unity.FilmInternalUtilities.Editor;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Playables;
@@ -108,7 +109,80 @@ internal class SceneCachePlayableAssetTests {
         yield return IterateAllSceneCacheFrames(director, clip, sceneCachePlayer, (int timelineFrame) => {
             Assert.AreEqual(timelineFrame, sceneCachePlayer.GetFrame());            
         });
+        
     }
+
+//----------------------------------------------------------------------------------------------------------------------
+    [UnityTest]
+    public IEnumerator EnsureLimitedFramesAreLoadedToScene() {
+
+        InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
+        yield return null;
+
+        //Setup Limited Animation
+        const int NUM_FRAMES_TO_HOLD = 3;
+        const int OFFSET = 1;
+        
+        SceneCacheClipData         clipData                   = VerifyClipData(clip);
+        LimitedAnimationController limitedAnimationController = clipData.GetOverrideLimitedAnimationController();
+        limitedAnimationController.Enable(NUM_FRAMES_TO_HOLD,OFFSET);
+
+        yield return IterateAllSceneCacheFrames(director, clip, sceneCachePlayer, (int timelineFrame) => {
+            int shownFrame = sceneCachePlayer.GetFrame();
+            Assert.Zero(shownFrame % NUM_FRAMES_TO_HOLD - OFFSET);            
+        });
+
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
+    [UnityTest]
+    public IEnumerator EnsureMatchingAndLimitedFramesAreLoadedToScene() {
+
+        InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip0);
+        yield return null;
+
+        
+        ISceneCacheInfo scInfo = sceneCachePlayer.ExtractSceneCacheInfo(forceOpen:true);
+        Assert.IsNotNull(scInfo);
+        int    numFrames    = scInfo.GetNumFrames();
+        double timePerFrame = 1.0f / scInfo.GetSampleRate();
+
+        //Setup clip0 duration
+        int halfFrames = Mathf.FloorToInt(numFrames * 0.5f);
+        clip0.duration = halfFrames * timePerFrame;  
+        
+        //Setup clip1         
+        TimelineClip clip1 = clip0.GetParentTrack().CreateClip<SceneCachePlayableAsset>();
+        clip1.start    = clip0.start + clip0.duration;
+        clip1.clipIn   = clip0.duration;
+        clip1.duration = clip0.duration;
+        SceneCachePlayableAsset playableAsset1 = clip1.asset as SceneCachePlayableAsset;
+        Assert.IsNotNull(playableAsset1);
+        director.SetReferenceValue(playableAsset1.GetSceneCachePlayerRef().exposedName, sceneCachePlayer );
+        
+        TimelineEditorUtility.RefreshTimelineEditor( RefreshReason.ContentsAddedOrRemoved | RefreshReason.WindowNeedsRedraw | RefreshReason.ContentsModified);
+        yield return null;
+        
+        //Setup Limited Animation
+        const int NUM_FRAMES_TO_HOLD = 3;
+        const int OFFSET             = 1;
+        
+        SceneCacheClipData         clipData1                  = VerifyClipData(clip1);
+        LimitedAnimationController limitedAnimationController1 = clipData1.GetOverrideLimitedAnimationController();
+        limitedAnimationController1.Enable(NUM_FRAMES_TO_HOLD,OFFSET);
+        
+        yield return IterateAllSceneCacheFrames(director, clip0, sceneCachePlayer, (int timelineFrame) => {
+            EditorApplication.isPaused = true;
+            Assert.AreEqual(timelineFrame, sceneCachePlayer.GetFrame());
+        });
+
+        yield return IterateAllSceneCacheFrames(director, clip1, sceneCachePlayer, (int frame) => {
+            int shownFrame = sceneCachePlayer.GetFrame();
+            Assert.Zero(shownFrame % NUM_FRAMES_TO_HOLD - OFFSET);
+        });
+        
+    }
+    
     
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -141,14 +215,19 @@ internal class SceneCachePlayableAssetTests {
 
     [NotNull]
     private static AnimationCurve VerifyAnimationCurve(TimelineClip clip) {
-        SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
-        Assert.IsNotNull(playableAsset);
-        SceneCacheClipData clipData = playableAsset.GetBoundClipData();
-        Assert.IsNotNull(clipData);        
+        SceneCacheClipData clipData = VerifyClipData(clip);
         AnimationCurve curve = clipData.GetAnimationCurve();
         Assert.IsNotNull(curve);
         return curve;
+    }
 
+    [NotNull]
+    private static SceneCacheClipData VerifyClipData(TimelineClip clip) {
+        SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
+        Assert.IsNotNull(playableAsset);
+        SceneCacheClipData clipData = playableAsset.GetBoundClipData();
+        Assert.IsNotNull(clipData);
+        return clipData;
     }
     
     private IEnumerator IterateAllSceneCacheFrames(PlayableDirector director, TimelineClip clip, SceneCachePlayer scPlayer, 
@@ -178,8 +257,7 @@ internal class SceneCachePlayableAssetTests {
     private static void SetDirectorTime(PlayableDirector director, double time) {
         director.time = time;
         TimelineEditor.Refresh(RefreshReason.SceneNeedsUpdate); 
-    }        
-    
+    }            
 }
 
 } //end namespace

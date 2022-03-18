@@ -164,10 +164,10 @@ internal static class SceneCachePlayerEditorUtility {
         TimelineAsset timelineAsset = director.playableAsset as TimelineAsset;
         Assert.IsNotNull(timelineAsset);
     
-        SceneCachePlayableAsset playableAsset   = ScriptableObject.CreateInstance<SceneCachePlayableAsset>();
         SceneCacheTrack         sceneCacheTrack = timelineAsset.CreateTrack<SceneCacheTrack>(null, trackName);
         TimelineClip            clip            = sceneCacheTrack.CreateDefaultClip();
-        clip.asset = playableAsset;        
+        SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
+        Assert.IsNotNull(playableAsset);
         director.SetReferenceValue(playableAsset.GetSceneCachePlayerRef().exposedName, sceneCachePlayer );
         return clip;
     }

@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Text;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -363,17 +364,13 @@ public class SceneCachePlayer : BaseMeshSync {
         frame = m_frame; //no change by default        
         switch (m_playbackMode) {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
-                frame = Mathf.FloorToInt(time * m_sceneCache.GetSampleRate());
-                frame = m_limitedAnimationController.Apply(frame);
-                frame = Mathf.Clamp(frame, 0, m_sceneCacheInfo.numFrames-1);
+                frame = CalculateFrameByFloor(time, m_sceneCacheInfo, m_limitedAnimationController);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
 
             case SceneCachePlaybackMode.SnapToNearestFrame: {
-                frame = Mathf.RoundToInt(time * m_sceneCache.GetSampleRate());
-                frame = m_limitedAnimationController.Apply(frame);
-                frame = Mathf.Clamp(frame, 0, m_sceneCacheInfo.numFrames-1);
+                frame = CalculateFrameByRound(time, m_sceneCacheInfo, m_limitedAnimationController);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
@@ -385,7 +382,60 @@ public class SceneCachePlayer : BaseMeshSync {
         return scene;
     }
 
-   
+    internal int CalculateFrame(float time, LimitedAnimationController limitedAnimationController) {
+        int frame = 0;
+        switch (m_playbackMode) {
+            case SceneCachePlaybackMode.SnapToPreviousFrame: {
+                frame = CalculateFrameByFloor(time, m_sceneCacheInfo, limitedAnimationController);
+                break;
+            }
+
+            case SceneCachePlaybackMode.SnapToNearestFrame: {
+                frame = CalculateFrameByRound(time, m_sceneCacheInfo, limitedAnimationController);
+                break;
+            }
+            default: {
+                Assert.IsTrue(false); //invalid call
+                break;
+            }
+        }
+
+        return frame;
+    }
+
+
+    private static int CalculateFrameByFloor(float time, SceneCacheInfo scInfo, LimitedAnimationController controller) {
+        int frame = Mathf.FloorToInt(time * scInfo.sampleRate);
+        frame = controller.Apply(frame);
+        frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
+        return frame;
+    }
+
+    private static int CalculateFrameByRound(float time, SceneCacheInfo scInfo, LimitedAnimationController controller) {
+        int frame = Mathf.RoundToInt(time * scInfo.sampleRate);
+        frame = controller.Apply(frame);
+        frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
+        return frame;
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
+    internal bool IsLimitedAnimationOverrideable() {
+        if (m_limitedAnimationController.IsEnabled())
+            return false;
+
+        if (m_playbackMode == SceneCachePlaybackMode.Interpolate)
+            return false;
+
+        return true;
+    }
+
+    internal void AllowLimitedAnimationOverride() {
+        m_limitedAnimationController.SetEnabled(false);
+
+        if (m_playbackMode == SceneCachePlaybackMode.Interpolate)
+            m_playbackMode = SceneCachePlaybackMode.SnapToNearestFrame;
+
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
 

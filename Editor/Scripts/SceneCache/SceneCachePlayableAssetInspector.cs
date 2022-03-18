@@ -27,11 +27,13 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         SceneCacheClipData clipData = m_scPlayableAsset.GetBoundClipData();
         if (null == clipData)
             return;
-        
+
         SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
         if (null == scPlayer)
             return;
 
+        DrawLimitedAnimationGUI(clipData);
+        
         {
             // Curve Operations
             GUILayout.BeginVertical("Box");
@@ -51,6 +53,37 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         }
         
         so.ApplyModifiedProperties();       
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
+    private void DrawLimitedAnimationGUI(SceneCacheClipData clipData) {
+        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
+        
+        bool disableScope = null == scPlayer;
+        
+        if (null != scPlayer) {
+            disableScope |= (!scPlayer.IsLimitedAnimationOverrideable());
+        }
+
+        if (disableScope) {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.HelpBox(
+                "Disabled because Limited Animation settings on the SceneCache GameObject is enabled, or the playback mode is set to interpolate", 
+                MessageType.Warning
+            );
+            if (GUILayout.Button("Fix", GUILayout.Width(64), GUILayout.Height(36))) {
+                scPlayer.AllowLimitedAnimationOverride();
+                Repaint();
+            }
+            EditorGUILayout.EndHorizontal();
+            
+        }
+
+        using (new EditorGUI.DisabledScope(disableScope)) {
+            SceneCachePlayerEditorUtility.DrawLimitedAnimationGUI(clipData.GetOverrideLimitedAnimationController(),
+                m_scPlayableAsset, scPlayer);
+        }
+        
     }
 
 //----------------------------------------------------------------------------------------------------------------------
