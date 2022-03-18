@@ -106,7 +106,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
                 continue;
             }
 
-            if (clip.end < directorTime) {
+            if (clip.end <= directorTime) {
                 //store prev direct clip which has PostExtrapolation
                 prevClipWithPostExtrapolation = clip.hasPostExtrapolation ? clip : null;
                 continue;                
