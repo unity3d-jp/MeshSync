@@ -65,6 +65,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
         if (null == scPlayer)
             return;
         
+        //Show the active SceneCache object
         scPlayer.gameObject.SetActive(true);
         
         AnimationCurve curve = clipData.GetAnimationCurve();
@@ -140,9 +141,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
     private static double CalculateTimeForLimitedAnimation(SceneCacheClipData clipData, double time) {
 
         SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
-        if (null == scPlayer)
-            return time;
-        
+        Assert.IsNotNull(scPlayer);
         
         LimitedAnimationController origLimitedAnimationController = scPlayer.GetLimitedAnimationController();
         if (origLimitedAnimationController.IsEnabled()) //do nothing if LA is set on the target SceneCache
