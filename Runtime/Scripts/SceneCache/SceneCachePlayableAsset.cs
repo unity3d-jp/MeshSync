@@ -27,13 +27,10 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     public override Playable CreatePlayable(PlayableGraph graph, GameObject go) {
         
-        m_sceneCachePlayableBehaviour = new SceneCachePlayableBehaviour();
         SceneCacheClipData scClipData = GetBoundClipData() as SceneCacheClipData;        
         Assert.IsNotNull(scClipData);        
         
         SceneCachePlayer scPlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
-        m_sceneCachePlayableBehaviour.SetSceneCachePlayer(scPlayer);
-        m_sceneCachePlayableBehaviour.SetClipData(scClipData);
         
         //Initialize or clear curve
         if (scPlayer) {
@@ -42,8 +39,8 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         } else {
             scClipData.UnbindSceneCachePlayer();
         }
-        
-        return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, m_sceneCachePlayableBehaviour);
+
+        return Playable.Create(graph);        
     }
    
 //----------------------------------------------------------------------------------------------------------------------
@@ -109,9 +106,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     [SerializeField] private ExposedReference<SceneCachePlayer> m_sceneCachePlayerRef;
     
     [SerializeField] private double      m_time;
-
-    
-    SceneCachePlayableBehaviour m_sceneCachePlayableBehaviour = null;
    
 }
 
