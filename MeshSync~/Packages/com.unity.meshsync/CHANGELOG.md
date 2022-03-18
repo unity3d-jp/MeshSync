@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.12.2-preview] - 2022-03-19
+
+### Fixed
+* fix: keep SceneCache objects active when clicking pause in TimelineWindow
+
 ## [0.12.1-preview] - 2022-03-18
 
 ### Added
