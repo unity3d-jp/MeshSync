@@ -198,7 +198,9 @@ internal class SceneCachePlayableAssetTests {
         sceneCachePlayer.gameObject.SetActive(enableSceneCacheGo);
         clip = SceneCachePlayerEditorUtility.AddSceneCacheTrackAndClip(director, "TestSceneCacheTrack", sceneCachePlayer);
         
-        TimelineEditorUtility.SelectDirectorInTimelineWindow(director); //trigger the TimelineWindow's update etc.        
+        TimelineEditorUtility.SelectDirectorInTimelineWindow(director); //trigger the TimelineWindow's update etc.
+        TimelineEditorUtility.RefreshTimelineEditor();
+        
     }
     
     private static SceneCachePlayer CreateTestSceneCachePlayer() {
@@ -250,7 +252,7 @@ internal class SceneCachePlayableAssetTests {
 //----------------------------------------------------------------------------------------------------------------------
     private static void SetDirectorTime(PlayableDirector director, double time) {
         director.time = time;
-        TimelineEditor.Refresh(RefreshReason.SceneNeedsUpdate); 
+        TimelineEditor.Refresh(RefreshReason.SceneNeedsUpdate);
     }            
 }
 
