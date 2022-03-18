@@ -50,9 +50,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
         }
     }
 
-    // Called each frame while the state is set to Play
     public override void ProcessFrame(Playable playable, FrameData info, object playerData) {
-        Debug.Log("MixerProcessFrame: " + Time.frameCount);
         
         int inputCount = playable.GetInputCount<Playable>();
         if (inputCount == 0 ) {
