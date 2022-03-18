@@ -177,9 +177,12 @@ internal class SceneCachePlayableAssetTests {
             EditorApplication.isPaused = true;
             Assert.AreEqual(timelineFrame, sceneCachePlayer.GetFrame());
         });
-
-        yield return IterateAllSceneCacheFrames(director, clip1, sceneCachePlayer, (int frame) => {
+        
+        yield return IterateAllSceneCacheFrames(director, clip1, sceneCachePlayer, (int timelineFrame) => {
             int shownFrame = sceneCachePlayer.GetFrame();
+            if (shownFrame == (scInfo.GetNumFrames() - 1)) //clamped to the end frame
+                return;
+                
             Assert.Zero(shownFrame % NUM_FRAMES_TO_HOLD - OFFSET);
         });
         
