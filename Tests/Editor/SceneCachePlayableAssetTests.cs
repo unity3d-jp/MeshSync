@@ -123,7 +123,8 @@ internal class SceneCachePlayableAssetTests {
         const int NUM_FRAMES_TO_HOLD = 3;
         const int OFFSET = 1;
         
-        SceneCacheClipData         clipData                   = VerifyClipData(clip);
+        SceneCacheClipData clipData = clip.GetClipData<SceneCacheClipData>();
+        Assert.IsNotNull(clipData);
         LimitedAnimationController limitedAnimationController = clipData.GetOverrideLimitedAnimationController();
         limitedAnimationController.Enable(NUM_FRAMES_TO_HOLD,OFFSET);
 
@@ -167,7 +168,8 @@ internal class SceneCachePlayableAssetTests {
         const int NUM_FRAMES_TO_HOLD = 3;
         const int OFFSET             = 1;
         
-        SceneCacheClipData         clipData1                  = VerifyClipData(clip1);
+        SceneCacheClipData clipData1 = clip1.GetClipData<SceneCacheClipData>();
+        Assert.IsNotNull(clipData1);
         LimitedAnimationController limitedAnimationController1 = clipData1.GetOverrideLimitedAnimationController();
         limitedAnimationController1.Enable(NUM_FRAMES_TO_HOLD,OFFSET);
         
@@ -215,21 +217,13 @@ internal class SceneCachePlayableAssetTests {
 
     [NotNull]
     private static AnimationCurve VerifyAnimationCurve(TimelineClip clip) {
-        SceneCacheClipData clipData = VerifyClipData(clip);
+        SceneCacheClipData clipData = clip.GetClipData<SceneCacheClipData>();
+        Assert.IsNotNull(clipData);
         AnimationCurve curve = clipData.GetAnimationCurve();
         Assert.IsNotNull(curve);
         return curve;
     }
-
-    [NotNull]
-    private static SceneCacheClipData VerifyClipData(TimelineClip clip) {
-        SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
-        Assert.IsNotNull(playableAsset);
-        SceneCacheClipData clipData = playableAsset.GetBoundClipData();
-        Assert.IsNotNull(clipData);
-        return clipData;
-    }
-    
+   
     private IEnumerator IterateAllSceneCacheFrames(PlayableDirector director, TimelineClip clip, SceneCachePlayer scPlayer, 
         Action<int> afterUpdateFunc) 
     {

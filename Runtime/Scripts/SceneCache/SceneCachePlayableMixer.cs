@@ -15,10 +15,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
         m_clips      = new List<TimelineClip>(clips);
         m_clipDataDictionary = new Dictionary<TimelineClip, SceneCacheClipData>();
         foreach (TimelineClip clip in m_clips) {
-            //[TODO-sin: 2022-3-18] Turn into a function
-            SceneCachePlayableAsset clipAsset = clip.asset as SceneCachePlayableAsset;
-            Assert.IsNotNull(clipAsset);
-            SceneCacheClipData clipData = clipAsset.GetBoundClipData();
+            SceneCacheClipData clipData = clip.GetClipData<SceneCacheClipData>();
             Assert.IsNotNull(clipData);
             m_clipDataDictionary.Add(clip, clipData);
         }
