@@ -19,16 +19,17 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
 //----------------------------------------------------------------------------------------------------------------------        
     
     public override void ProcessFrame(Playable playable, FrameData info, object playerData) {
-        if (null == m_sceneCachePlayer) {
-            return;
-        }
-        AnimationCurve curve = m_clipData.GetAnimationCurve();
-        
-        double t = CalculateTimeForLimitedAnimation((float) playable.GetTime());        
-        float normalizedTime = curve.Evaluate((float)t);
-              
-        m_sceneCachePlayer.SetAutoplay(false);
-        m_sceneCachePlayer.SetTimeByNormalizedTime(normalizedTime);        
+        // Debug.Log("ClipProcessFrame: " + Time.frameCount);
+        // if (null == m_sceneCachePlayer) {
+        //     return;
+        // }
+        // AnimationCurve curve = m_clipData.GetAnimationCurve();
+        //
+        // double t = CalculateTimeForLimitedAnimation((float) playable.GetTime());        
+        // float normalizedTime = curve.Evaluate((float)t);
+        //       
+        // m_sceneCachePlayer.SetAutoplay(false);
+        // m_sceneCachePlayer.SetTimeByNormalizedTime(normalizedTime);        
     }
 
     private double CalculateTimeForLimitedAnimation(double time) {
