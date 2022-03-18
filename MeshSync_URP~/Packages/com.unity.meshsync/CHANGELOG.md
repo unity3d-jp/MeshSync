@@ -1,6 +1,22 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.12.1-preview] - 2022-03-18
+
+### Added
+* feat: show SceneCachePlayer basic info in the inspector
+* feat: add extrapolation capabilities for SceneCachePlayableAsset
+* feat: override LimitedAnimation in SceneCachePlayableAsset
+
+### Changed
+* change: the default frames to hold for Limited Animation to 2
+
+### Fixed
+* fix: set the in and out tangent of the keys of SceneCachePlayableAsset
+* fix: properly create SceneCachePlayableAsset clips when the SceneCachePlayer object is disabled 
+* fix: clamp frameOffset after setting num frames to hold for limited animatio
+* fix: hide fields in the inspector SceneCachePlayableAsset for invalid SceneCache
+
 ## [0.12.0-preview] - 2022-03-16
 
 ### Added
