@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.12.3-preview] - 2022-03-19
+
+### Fixed
+* fix: the performance of SceneCache in Timeline by not reloading every time
+
 ## [0.12.2-preview] - 2022-03-19
 
 ### Fixed
