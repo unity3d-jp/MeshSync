@@ -37,36 +37,40 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
     public override void PrepareFrame(Playable playable, FrameData info) {
         base.PrepareFrame(playable, info);
 
-        //Hide all SceneCache objects
+        m_inactiveSceneCacheObjects.Clear();
+        
+        //Register all SceneCache objects as inactive
         foreach (var clipData in m_clipDataDictionary.Values) {
             SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
             if (null == scPlayer)
                 continue;
-            scPlayer.gameObject.SetActive(false);
 
+            m_inactiveSceneCacheObjects.Add(scPlayer.gameObject);
         }
     }
 
     public override void ProcessFrame(Playable playable, FrameData info, object playerData) {
         
-        int inputCount = playable.GetInputCount<Playable>();
-        if (inputCount == 0 ) {
-            return; // it doesn't work as mixer.
-        }
-
-        GetActiveTimelineClipInto(m_clips, m_playableDirector.time, out TimelineClip clip, out SceneCachePlayableAsset activePlayableAsset);        
-        if (null == clip)
+        GetActiveTimelineClipInto(m_clips, m_playableDirector.time, out TimelineClip clip, out SceneCachePlayableAsset activePlayableAsset);
+        if (null == clip) {
+            DisableInactiveSceneCacheObjects();
             return;
+        }
 
         SceneCacheClipData clipData = activePlayableAsset.GetBoundClipData();
         Assert.IsNotNull(clipData);
 
         SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
-        if (null == scPlayer)
+        if (null == scPlayer) {
+            DisableInactiveSceneCacheObjects();
             return;
+        }
+
+        m_inactiveSceneCacheObjects.Remove(scPlayer.gameObject);
         
-        //Show the active SceneCache object
+        //Show the active SceneCache object, and disable the rest
         scPlayer.gameObject.SetActive(true);
+        DisableInactiveSceneCacheObjects();
         
         AnimationCurve curve = clipData.GetAnimationCurve();
         
@@ -80,6 +84,13 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
 
     #endregion PlayableBehaviour interfaces
 
+
+    void DisableInactiveSceneCacheObjects() {
+        foreach (GameObject go in m_inactiveSceneCacheObjects) {
+            go.SetActive(false);
+        }
+        
+    }
 
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -165,8 +176,10 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
     private List<TimelineClip> m_clips;
     
     private Dictionary<TimelineClip, SceneCacheClipData> m_clipDataDictionary;
-    
-    
+
+    private HashSet<GameObject> m_inactiveSceneCacheObjects = new HashSet<GameObject>();
+
+
 }
 
 } //end namespace
