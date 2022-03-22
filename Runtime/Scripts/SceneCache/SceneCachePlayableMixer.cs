@@ -72,9 +72,10 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
         scPlayer.gameObject.SetActive(true);
         DisableInactiveSceneCacheObjects();
         
-        AnimationCurve curve = clipData.GetAnimationCurve();
+        AnimationCurve curve            = clipData.GetAnimationCurve();
+        double         relativeClipTime = (float)playable.GetTime() - clip.start;
         
-        double t              = CalculateTimeForLimitedAnimation(clipData,(float) playable.GetTime());        
+        double t              = CalculateTimeForLimitedAnimation(clipData,relativeClipTime);
         float  normalizedTime = curve.Evaluate((float)t);
               
         scPlayer.SetAutoplay(false);
