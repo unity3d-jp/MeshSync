@@ -178,7 +178,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
     
     private Dictionary<TimelineClip, SceneCacheClipData> m_clipDataDictionary;
 
-    private HashSet<GameObject> m_inactiveSceneCacheObjects = new HashSet<GameObject>();
+    private readonly HashSet<GameObject> m_inactiveSceneCacheObjects = new HashSet<GameObject>();
 
 
 }
