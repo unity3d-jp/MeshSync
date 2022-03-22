@@ -80,11 +80,16 @@ void AsyncSceneSender::send()
 
     SetupDataFlags(transforms);
     SetupDataFlags(geometries);
+    SetupDataFlags(instanceMeshes);
+
     AssignIDs(transforms, id_table);
     AssignIDs(geometries, id_table);
+    AssignIDs(instanceMeshes, id_table);
+
     // sort by order. not id.
     std::sort(transforms.begin(), transforms.end(), [](auto& a, auto& b) { return a->order < b->order; });
     std::sort(geometries.begin(), geometries.end(), [](auto& a, auto& b) { return a->order < b->order; });
+    std::sort(instanceMeshes.begin(), instanceMeshes.end(), [](auto& a, auto& b) { return a->order < b->order; });
 
     auto append = [](auto& dst, auto& src) { dst.insert(dst.end(), src.begin(), src.end()); };
 
@@ -171,15 +176,13 @@ void AsyncSceneSender::send()
 
     // instance infos
     if (!instanceInfos.empty()) {
-        for (auto& instanceInfo : instanceInfos) {
-            ms::SetMessage mes;
-            setup_message(mes);
-            mes.scene->settings = scene_settings;
-            mes.scene->instanceInfos = { instanceInfo };
-            succeeded = succeeded && client.send(mes);
-            if (!succeeded)
-                goto cleanup;
-        }
+        ms::SetMessage mes;
+        setup_message(mes);
+        mes.scene->settings = scene_settings;
+        mes.scene->instanceInfos = instanceInfos;
+        succeeded = succeeded && client.send(mes);
+        if (!succeeded)
+            goto cleanup;
     }
 
     // animations

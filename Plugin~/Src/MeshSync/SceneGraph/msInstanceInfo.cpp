@@ -5,7 +5,6 @@
 namespace ms {
 	void InstanceInfo::serialize(ostream& os)
 	{
-		write(os, type);
 		write(os, path);
 		write(os, transforms);
 		
@@ -13,7 +12,6 @@ namespace ms {
 
 	void InstanceInfo::deserialize(istream& is)
 	{
-		read(is, type);
 		read(is, path);
 		read(is, transforms);
 	}
@@ -21,7 +19,6 @@ namespace ms {
 	{
 		this->path = "";
 		this->transforms.clear();
-		this->type = ReferenceType::NONE;
 	}
 
 	shared_ptr<InstanceInfo> InstanceInfo::create(istream& is)
@@ -49,7 +46,6 @@ namespace ms {
 
 	InstanceInfo& InstanceInfo::operator=(const InstanceInfo& v)
 	{
-		type = v.type;
 		path = v.path;
 		transforms = v.transforms;
 		return *this;
@@ -62,7 +58,6 @@ namespace ms {
 
 	InstanceInfo& InstanceInfo::operator=(InstanceInfo&& v)
 	{
-		type = std::move(v.type);
 		path = std::move(v.path);
 		transforms = std::move(v.transforms);
 		return *this;

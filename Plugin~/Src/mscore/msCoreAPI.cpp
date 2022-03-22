@@ -560,8 +560,6 @@ msAPI int msInstanceInfoPropGetArrayLength(const ms::InstanceInfo* self) { retur
 msAPI void msInstanceInfoCopyTransforms(const ms::InstanceInfo* self, float4x4* dst) {
     memcpy(dst, self->transforms.data(), self->transforms.size() * sizeof(float4x4));
 }
-
-msAPI ms::InstanceInfo::ReferenceType msInstanceInfoGetType(const ms::InstanceInfo* self) { return self->type; };
 #pragma endregion
 
 #pragma region Misc
