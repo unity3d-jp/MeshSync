@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.12.4-preview] - 2022-03-22
+
+### Fixed
+* fix: use the local time of SceneCachePlayableAsset clip instead of director time
+
 ## [0.12.3-preview] - 2022-03-19
 
 ### Fixed
