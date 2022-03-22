@@ -41,24 +41,22 @@ internal class SceneCachePlayableAssetTests {
     
 //----------------------------------------------------------------------------------------------------------------------    
     [UnityTest]
-    public IEnumerator SetTimeInTimelineWindow() {
+    public IEnumerator SetTimeToHalfClipDuration() {
 
         InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
         yield return null;
 
+        double halfDuration = clip.duration * 0.5; 
+        clip.start    = clip.duration * 0.5;
         director.time = 0;
         yield return null;
                 
-        double timePerFrame = TimelineUtility.CalculateTimePerFrame(clip); 
-        double directorTime = clip.start + clip.duration - timePerFrame;
+        double directorTime = clip.start + halfDuration;
         SetDirectorTime(director, directorTime); //this will trigger change in the time of the SceneCachePlayable
         yield return null;
 
-        //Check clipData and curve
-        AnimationCurve curve = VerifyAnimationCurve(clip);
-        float normalizedTime = curve.Evaluate((float)directorTime);
-                
-        Assert.IsTrue(Mathf.Approximately((float)(normalizedTime * clip.duration), sceneCachePlayer.GetTime()));
+        float scTime = sceneCachePlayer.GetTime();
+        Assert.IsTrue(Mathf.Approximately((float)(halfDuration), scTime), $"Time: {scTime}. Expected: {halfDuration}");
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
