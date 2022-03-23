@@ -29,15 +29,10 @@ internal class SceneCacheClipData : BaseClipData {
 //----------------------------------------------------------------------------------------------------------------------
 
     internal override void DestroyV() { }
-
-//----------------------------------------------------------------------------------------------------------------------
-    internal void SetInitialized(bool init) {
-        m_initialized = init;
-    }
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    internal void BindSceneCachePlayer(SceneCachePlayer sceneCachePlayer) {        
+    internal void BindSceneCachePlayer(SceneCachePlayer sceneCachePlayer, bool wasCloned) {       
         //update data structure if clipData has already been flagged as initialized.
         //m_scPlayer can initially be null after deserializing.
         if (m_initialized && (null == m_scPlayer || sceneCachePlayer == m_scPlayer)) {
@@ -52,7 +47,9 @@ internal class SceneCacheClipData : BaseClipData {
         m_scPlayer       = sceneCachePlayer;
         m_animationCurve = ExtractNormalizedTimeCurve(m_scPlayer, out float duration);
         if (null != m_animationCurve) {
-            clip.duration = duration;
+            if (!wasCloned) {
+                clip.duration = duration;                
+            }
         } else {
             m_animationCurve = CreateLinearAnimationCurve(clip);            
         }
