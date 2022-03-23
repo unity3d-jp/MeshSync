@@ -39,13 +39,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
         base.PrepareFrame(playable, info);
 
         m_inactiveSceneCacheObjects.Clear();
-
-        int curFrame = Time.frameCount;
-        if (m_lastPrepareGlobalTime != curFrame) {
-            m_activatedSceneCacheObjectsInFrame.Clear();
-            m_lastPrepareGlobalTime = curFrame;
-        }
-
+        
         //Register all SceneCache objects as inactive
         foreach (var clipData in m_clipDataDictionary.Values) {
             SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
@@ -93,14 +87,9 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
 
         if (!m_sceneCacheTrack.IsAutoActivateObject())
             return;
-
-        //Previously activated objects should stay active
-        foreach (GameObject go in m_activatedSceneCacheObjectsInFrame)
-            m_inactiveSceneCacheObjects.Remove(go);
         
         if (null != activeObject) {
             activeObject.SetActive(true);
-            m_activatedSceneCacheObjectsInFrame.Add(activeObject);
             m_inactiveSceneCacheObjects.Remove(activeObject);
         }
         foreach (GameObject go in m_inactiveSceneCacheObjects) {
@@ -196,9 +185,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
     private Dictionary<TimelineClip, SceneCacheClipData> m_clipDataDictionary;
 
     private readonly HashSet<GameObject> m_inactiveSceneCacheObjects = new HashSet<GameObject>();
-    
-    private static readonly HashSet<GameObject> m_activatedSceneCacheObjectsInFrame = new HashSet<GameObject>();
-    private static          int                 m_lastPrepareGlobalTime             = 0;
+
 
 }
 
