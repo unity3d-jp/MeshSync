@@ -99,7 +99,7 @@ internal class SceneCachePlayableAssetTests {
     
 //----------------------------------------------------------------------------------------------------------------------    
     [UnityTest]
-    public IEnumerator CheckGameObjectActiveStateReferredByMultipleTracks() {
+    public IEnumerator CheckGameObjectActiveStateReferredInMultipleTracks() {
 
         InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip0);
         yield return null;
