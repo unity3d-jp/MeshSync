@@ -508,8 +508,14 @@ public class MeshSyncServer : BaseMeshSync {
 
     private void OnCameraPreCull(Camera cam)
     {
+        // Avoid rendering on the preview window
+        if (cam.name == "Preview Scene Camera")
+        {
+            return;
+        }
+        
         Camera[] cams = {cam};
-       m_instanceRenderer.Draw(cams);
+        m_instanceRenderer.Draw(cams);
     }
 
     private void OnBeginFrameRendering(ScriptableRenderContext arg1, Camera[] cameras)

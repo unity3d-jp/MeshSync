@@ -15,8 +15,6 @@ namespace Unity.MeshSync{
         
         private Dictionary<string, MeshInstanceInfo> m_instanceInfo = new Dictionary<string, MeshInstanceInfo>();
 
-        private bool m_isDirty = false;
-
         private bool m_isUpdating = false;
         
         
@@ -76,8 +74,6 @@ namespace Unity.MeshSync{
                 return;
 
             m_instanceInfo.Remove(path);
-            
-            SetDirty();
         }
 
         private void OnUpdateInstanceMesh(string path, GameObject go)
@@ -98,8 +94,6 @@ namespace Unity.MeshSync{
                 return;
             
             m_instanceInfo.Remove(path);
-            
-            SetDirty();
         }
 
 
@@ -133,8 +127,6 @@ namespace Unity.MeshSync{
             {
                 mat.enableInstancing = true;
             }
-
-            SetDirty();
         }
 
         private bool UpdateEntryMeshMaterials(string path, GameObject go, MeshInstanceInfo entry)
@@ -173,11 +165,7 @@ namespace Unity.MeshSync{
         #endregion
         
         #region Rendering
-
-        private void SetDirty()
-        {
-            m_isDirty = true;
-        }
+        
         
         public void Draw(Camera[] cameras)
         {
