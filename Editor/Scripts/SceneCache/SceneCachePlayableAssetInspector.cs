@@ -100,11 +100,6 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
     
     private SceneCachePlayableAsset m_scPlayableAsset;        
     
-//----------------------------------------------------------------------------------------------------------------------
-    private static class Contents {
-        public static readonly GUIContent SnapToFrame = EditorGUIUtility.TrTextContent("Snap To Frame");
-    }
-    
 
 }
 } //end namespace
