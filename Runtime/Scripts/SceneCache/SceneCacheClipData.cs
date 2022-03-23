@@ -34,54 +34,34 @@ internal class SceneCacheClipData : BaseClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    internal void BindSceneCachePlayer(SceneCachePlayer sceneCachePlayer) {
-        
-        if (m_initialized) {
-            if (null == m_scPlayer) {
-                //Assuming that BindSceneCachePlayer() will be called() during "deserialization", we initialize scPlayer
-                //at first if this clipData has already been initialized.
-                //SceneCachePlayer can't be deserialized as usual, because SceneCacheClip belongs to a track, which is an asset.
-                m_scPlayer = sceneCachePlayer;
-                return;
-            } else if (m_scPlayer == sceneCachePlayer) {
-                return;
-            }
+    internal void BindSceneCachePlayer(SceneCachePlayer sceneCachePlayer) {        
+        //update data structure if clipData has already been flagged as initialized.
+        //m_scPlayer can initially be null after deserializing.
+        if (m_initialized && (null == m_scPlayer || sceneCachePlayer == m_scPlayer)) {
+            m_scPlayer = sceneCachePlayer;
+            return;
         }
-
-        m_scPlayer    = sceneCachePlayer;
-        m_initialized = true;
-        
 
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
        
         //Bind for the first time
-        m_scPlayer         = sceneCachePlayer;
-        m_animationCurve = ExtractNormalizedTimeCurve(m_scPlayer, out float endTime);
+        m_scPlayer       = sceneCachePlayer;
+        m_animationCurve = ExtractNormalizedTimeCurve(m_scPlayer, out float duration);
         if (null != m_animationCurve) {
-            clip.duration = endTime;
+            clip.duration = duration;
         } else {
             m_animationCurve = CreateLinearAnimationCurve(clip);            
         }
 
-        ResetClip(clip);
         UpdateClipCurve(clip, m_animationCurve);
+        m_initialized = true;
         
     }
 
     internal void UnbindSceneCachePlayer() {
-        if (null == m_scPlayer)
-            return;
-        
         m_scPlayer    = null;
         m_initialized = false;
-        
-        TimelineClip clip = GetOwner();
-        Assert.IsNotNull(clip);
-        
-        m_animationCurve = CreateLinearAnimationCurve(clip);        
-        ResetClip(clip);        
-        UpdateClipCurve(clip, m_animationCurve);
     }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -103,7 +83,7 @@ internal class SceneCacheClipData : BaseClipData {
         Assert.IsNotNull(clip);
         clip.clipIn = 0;
         
-        AnimationCurve origCurve =ExtractNormalizedTimeCurve(m_scPlayer, out float endTime);
+        AnimationCurve origCurve = ExtractNormalizedTimeCurve(m_scPlayer, out float _);
         if (null == origCurve) {
             Debug.LogWarning("Scene Cache doesn't have curve: " + m_scPlayer.gameObject.ToString());
             return;
@@ -115,23 +95,24 @@ internal class SceneCacheClipData : BaseClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
     [CanBeNull]
-    private static AnimationCurve ExtractNormalizedTimeCurve(SceneCachePlayer scPlayer, out float endTime) {
+    private static AnimationCurve ExtractNormalizedTimeCurve(SceneCachePlayer scPlayer, out float duration) {
 
         ISceneCacheInfo sceneCacheInfo = scPlayer.ExtractSceneCacheInfo(forceOpen:true);
         if (null == sceneCacheInfo) {
-            endTime = 0;
+            duration = 0;
             return null;
         }
-        
-        endTime = sceneCacheInfo.GetTimeRange().end;
-        if (endTime <= 0f) {
-            endTime = Mathf.Epsilon;
+
+        TimeRange timeRange = sceneCacheInfo.GetTimeRange(); 
+        duration = timeRange.GetDuration(); 
+        if (duration <= 0f) {
+            duration = Mathf.Epsilon;
         }
 
         Keyframe[] keyframes = sceneCacheInfo.GetTimeCurve().keys;
         int numKeyframes = keyframes.Length;
         for (int i = 0; i < numKeyframes; ++i) {
-            keyframes[i].value /= endTime;
+            keyframes[i].value /= timeRange.end;
         }
         
         //outTangent
@@ -157,13 +138,6 @@ internal class SceneCacheClipData : BaseClipData {
     
     private static AnimationCurve CreateLinearAnimationCurve(TimelineClip clip) {
         return AnimationCurve.Linear(0f, 0f,(float) (clip.duration * clip.timeScale), 1f );        
-    }
-
-
-    private static void ResetClip(TimelineClip clip) {
-        clip.clipIn    = 0;
-        clip.timeScale = 1;
-        
     }
     
     private static void UpdateClipCurve(TimelineClip clip, AnimationCurve animationCurveToApply) {
@@ -240,8 +214,9 @@ internal class SceneCacheClipData : BaseClipData {
 #pragma warning restore 414    
     
 //----------------------------------------------------------------------------------------------------------------------
-    
-    SceneCachePlayer m_scPlayer    = null;
+
+    //Can't use SerializeField, because SceneCacheClipData is an asset which belongs to a track.  
+    SceneCachePlayer m_scPlayer = null;
     
     private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = 1;
     
