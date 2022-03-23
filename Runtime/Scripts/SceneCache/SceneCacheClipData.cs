@@ -103,7 +103,7 @@ internal class SceneCacheClipData : BaseClipData {
         Assert.IsNotNull(clip);
         clip.clipIn = 0;
         
-        AnimationCurve origCurve =ExtractNormalizedTimeCurve(m_scPlayer, out float endTime);
+        AnimationCurve origCurve = ExtractNormalizedTimeCurve(m_scPlayer, out float _);
         if (null == origCurve) {
             Debug.LogWarning("Scene Cache doesn't have curve: " + m_scPlayer.gameObject.ToString());
             return;
