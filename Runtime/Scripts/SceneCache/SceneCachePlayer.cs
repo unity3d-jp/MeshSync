@@ -546,11 +546,13 @@ public class SceneCachePlayer : BaseMeshSync {
             OpenCacheInternal(m_sceneCacheFilePath, updateNonMaterialAssets: false);
         }
 
+#if UNITY_EDITOR
         //required one time reset after version upgrade to 0.12.x
         if (m_resetTimeAnimationOnEnable) {
             ResetTimeAnimationInEditor();
             m_resetTimeAnimationOnEnable = false;
         }
+#endif
         
         
         if (!m_sceneCache)
