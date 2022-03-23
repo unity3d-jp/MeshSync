@@ -2,9 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using Unity.FilmInternalUtilities;
+using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
+using UnityEngine.Assertions;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
 
 #if AT_USE_HDRP
 using UnityEngine.Rendering.HighDefinition;
@@ -151,7 +155,70 @@ internal static class SceneCachePlayerEditorUtility {
         ChangeSceneCacheFile(cachePlayer, sceneCacheFilePath);
         
     }
+    
+//----------------------------------------------------------------------------------------------------------------------    
 
+    internal static TimelineClip AddSceneCacheTrackAndClip(PlayableDirector director, string trackName, 
+        SceneCachePlayer sceneCachePlayer) 
+    {
+        TimelineAsset timelineAsset = director.playableAsset as TimelineAsset;
+        Assert.IsNotNull(timelineAsset);
+    
+        SceneCacheTrack         sceneCacheTrack = timelineAsset.CreateTrack<SceneCacheTrack>(null, trackName);
+        TimelineClip            clip            = sceneCacheTrack.CreateDefaultClip();
+        SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
+        Assert.IsNotNull(playableAsset);
+        director.SetReferenceValue(playableAsset.GetSceneCachePlayerRef().exposedName, sceneCachePlayer );
+        return clip;
+    }
+
+//----------------------------------------------------------------------------------------------------------------------    
+    
+    internal static bool DrawLimitedAnimationGUI(LimitedAnimationController ctrl, 
+        Object target, SceneCachePlayer sc) 
+    {
+        bool         changed   = false;
+        const string UNDO_TEXT = "SceneCache: Limited Animation";
+        
+        //Limited Animation
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, UNDO_TEXT,
+            guiFunc: () => (EditorGUILayout.Toggle("Limited Animation", ctrl.IsEnabled())),
+            updateFunc: (bool limitedAnimation) => {
+                ctrl.SetEnabled(limitedAnimation);
+                SceneCachePlayerEditorUtility.RefreshSceneCache(sc);
+            });
+
+        ++EditorGUI.indentLevel;
+        using (new EditorGUI.DisabledScope(!ctrl.IsEnabled())) {
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, UNDO_TEXT,
+                guiFunc: () => (
+                    EditorGUILayout.IntField("Num Frames to Hold", ctrl.GetNumFramesToHold())
+                ),
+                updateFunc: (int frames) => {
+                    ctrl.SetNumFramesToHold(frames);
+                    SceneCachePlayerEditorUtility.RefreshSceneCache(sc);
+                });
+            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, UNDO_TEXT,
+                guiFunc: () => (
+                    EditorGUILayout.IntField("Frame Offset", ctrl.GetFrameOffset())
+                ),
+                updateFunc: (int offset) => {
+                    ctrl.SetFrameOffset(offset);
+                    SceneCachePlayerEditorUtility.RefreshSceneCache(sc);
+                });
+        }
+
+        --EditorGUI.indentLevel;
+
+        EditorGUILayout.Space();
+        return changed;
+    }
+    
+    internal static void RefreshSceneCache(SceneCachePlayer t) {
+        t.ForceUpdate();
+        SceneView.RepaintAll();
+    }
+    
 //----------------------------------------------------------------------------------------------------------------------    
     private static void DestroyIrrelevantComponents(GameObject obj, EntityType curEntityType) {
 

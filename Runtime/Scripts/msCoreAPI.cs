@@ -790,6 +790,11 @@ internal struct MaterialData {
 #region Animations
 
 internal struct TimeRange {
+
+    internal float GetDuration() {
+        return (end - start);
+    }
+    
     public float start, end;
 }
 
