@@ -4,6 +4,7 @@ using System;
 using AOT;
 using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
 #if UNITY_EDITOR
@@ -492,22 +493,41 @@ public class MeshSyncServer : BaseMeshSync {
         if (m_autoStartServer) {
             m_requestRestartServer = true;
         }
-        
-#if UNITY_EDITOR
-        m_instanceRenderer.Init(this, m_cameraMode, m_clientInstances);
-#else
-        m_instanceRenderer.Init(this, records:m_clientInstances);
-#endif
+
+        if (RenderPipelineManager.currentPipeline == null)
+        {
+            Camera.onPreCull += OnCameraPreCull;
+        }
+        else
+        {
+            RenderPipelineManager.beginFrameRendering += OnBeginFrameRendering;
+        }
+
+        m_instanceRenderer.Init(this, m_clientInstances);
+    }
+
+    private void OnCameraPreCull(Camera cam)
+    {
+        Camera[] cams = {cam};
+       m_instanceRenderer.Draw(cams);
+    }
+
+    private void OnBeginFrameRendering(ScriptableRenderContext arg1, Camera[] cameras)
+    {
+        m_instanceRenderer.Draw(cameras);
     }
 
     protected override void OnDisable() {
         base.OnDisable();
         StopServer();
-    }
-
-    void Update()
-    {
-        m_instanceRenderer.Draw();
+        if (RenderPipelineManager.currentPipeline == null)
+        {
+            Camera.onPreCull -= OnCameraPreCull;
+        }
+        else
+        {
+            RenderPipelineManager.beginFrameRendering -= OnBeginFrameRendering;
+        }
     }
 
     void Start()
@@ -574,25 +594,6 @@ public class MeshSyncServer : BaseMeshSync {
     {
         get => m_foldInstanceSettings;
         set => m_foldInstanceSettings = value;
-    }
-    
-    [SerializeField]
-    private MeshSyncInstanceRenderer.CameraMode m_cameraMode = MeshSyncInstanceRenderer.CameraMode.AllCameras;
-
-    internal MeshSyncInstanceRenderer.CameraMode cameraMode
-    {
-        get => m_cameraMode;
-        set
-        {
-            if (m_cameraMode == value)
-                return;
-            
-            m_cameraMode = value;
-            
-#if UNITY_STANDALONE
-            m_instanceRenderer.Init(this, m_cameraMode);
-#endif
-        }
     }
 #endif    
     

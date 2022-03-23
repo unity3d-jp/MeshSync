@@ -94,12 +94,6 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
         t.foldInstanceSettings = EditorGUILayout.Foldout(t.foldInstanceSettings, "Instances", true, style);
         if (t.foldInstanceSettings)
         { 
-            EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Instance Camera mode",
-                guiFunc: () => EditorGUILayout.Popup(new GUIContent("Camera mode"),
-                    (int)t.cameraMode, MeshSyncEditorConstants.INSTANCE_CAMERA_MODE_ENUMS),
-                updateFunc: (int val) => { t.cameraMode = (MeshSyncInstanceRenderer.CameraMode)val; }
-            );
-
         }
         
     }

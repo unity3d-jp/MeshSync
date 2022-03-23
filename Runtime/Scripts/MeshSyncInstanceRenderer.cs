@@ -12,45 +12,20 @@ namespace Unity.MeshSync{
     internal class MeshSyncInstanceRenderer
     {
         private BaseMeshSync m_server;
-
-        private Camera[] m_cameras;
         
         private Dictionary<string, MeshInstanceInfo> m_instanceInfo = new Dictionary<string, MeshInstanceInfo>();
 
         private bool m_isDirty = false;
 
         private bool m_isUpdating = false;
-
-        public enum CameraMode
-        {
-            None = 0,
-            SceneCameras = 1,
-            GameCameras = 2,
-            AllCameras = 3
-        }
-
-        private CameraMode m_cameraMode = CameraMode.GameCameras;
-
+        
+        
         public void Init(
             BaseMeshSync ms, 
-            CameraMode cameraMode = CameraMode.GameCameras, 
             Dictionary<string, InstanceInfoRecord> records = null)
         {
             m_server = ms;
-            m_cameraMode = cameraMode;
 
-#if UNITY_EDITOR
-            EditorApplication.update -= Draw;
-            EditorApplication.update += Draw;
-            
-            //To cover cases where the user adds cameras to the scene manually
-            EditorApplication.hierarchyChanged -= OnHierarchyChanged;
-            EditorApplication.hierarchyChanged += OnHierarchyChanged;
-            Undo.undoRedoPerformed += UndoRedoPerformed;
-#endif
-            
-            RefreshCameraList();
-            
             ms.onUpdateInstanceInfo -= OnUpdateInstanceInfo;
             ms.onUpdateInstanceInfo += OnUpdateInstanceInfo;
             ms.onDeleteInstanceInfo -= OnDeleteInstanceInfo;
@@ -59,9 +34,6 @@ namespace Unity.MeshSync{
             ms.onUpdateInstanceMesh += OnUpdateInstanceMesh;
             ms.onDeleteInstanceMesh -= OnDeleteInstanceMesh;
             ms.onDeleteInstanceMesh += OnDeleteInstanceMesh;
-            ms.onUpdateEntity -= OnUpdateEntity;
-            ms.onUpdateEntity += OnUpdateEntity;
-            ms.onDeleteEntity -= OnDeleteEntity;
             ms.onSceneUpdateEnd -= OnSceneUpdateEnd;
             ms.onSceneUpdateEnd += OnSceneUpdateEnd;
             ms.onSceneUpdateBegin -= OnSceneUpdateBegin;
@@ -94,84 +66,9 @@ namespace Unity.MeshSync{
         private void OnSceneUpdateEnd()
         {
             m_isUpdating = false;
-            
-            if (m_isDirty)
-            {
-                RenderAndDraw();
-                m_isDirty = false;
-            }
-        }
-
-#if UNITY_EDITOR
-        private void RefreshCameraListWithGameAndSceneCameras()
-        {
-            var gameViewCameras = Object.FindObjectsOfType<Camera>();
-            var sceneViewCameras = SceneView.GetAllSceneCameras();
-            m_cameras = new Camera[gameViewCameras.Length + sceneViewCameras.Length];
-
-            for (var i = 0; i < gameViewCameras.Length; i++)
-            {
-                m_cameras[i] = gameViewCameras[i];
-            }
-
-            for (var i = 0; i < sceneViewCameras.Length; i++)
-            {
-                m_cameras[i + gameViewCameras.Length] = sceneViewCameras[i];
-            }
-        }
-        
-        private void OnHierarchyChanged()
-        {
-            RefreshCameraList();
-        }
-#endif
-
-        private void RefreshCameraList()
-        {
-            RenderAllCameras();
-            m_cameras = null;
-#if UNITY_EDITOR
-            if (m_cameraMode == CameraMode.AllCameras)
-            {
-                RefreshCameraListWithGameAndSceneCameras();
-            }
-            else if (m_cameraMode == CameraMode.GameCameras)
-            {
-                m_cameras = Object.FindObjectsOfType<Camera>();
-            }
-            else if (m_cameraMode == CameraMode.SceneCameras)
-            {
-                m_cameras = SceneView.GetAllSceneCameras();
-            }
-#else
-            m_cameras = GameObject.FindObjectsOfType<Camera>();
-#endif
         }
 
         #region Events
-        
-#if UNITY_EDITOR
-        private void UndoRedoPerformed()
-        {
-            RenderAndDraw();
-        }
-#endif
-
-        private void OnDeleteEntity(GameObject obj)
-        {
-            if (obj.TryGetComponent(out Camera _))
-            {
-                RefreshCameraList();
-            }
-        }
-
-        private void OnUpdateEntity(GameObject obj, TransformData data)
-        {
-            if (data.entityType  == EntityType.Camera)
-            {
-                RefreshCameraList();
-            }
-        }
 
         private void OnDeleteInstanceMesh(string path)
         {
@@ -282,18 +179,18 @@ namespace Unity.MeshSync{
             m_isDirty = true;
         }
         
-        public void Draw()
+        public void Draw(Camera[] cameras)
         {
             if (m_isUpdating)
                 return;
             
             foreach (var entry in m_instanceInfo)
             {
-                DrawInstances(entry.Value);
+                DrawInstances(entry.Value, cameras);
             }
         }
 
-        private void DrawInstances(MeshInstanceInfo entry)
+        private void DrawInstances(MeshInstanceInfo entry, Camera[] cameras)
         {
             if (entry.Mesh == null || entry.DividedInstances == null || entry.Materials == null)
             {
@@ -320,6 +217,7 @@ namespace Unity.MeshSync{
                     var batch = matrixBatches[j];
                     
                     DrawOnCameras(
+                        cameras,
                         mesh, 
                         i,
                         material,
@@ -334,6 +232,7 @@ namespace Unity.MeshSync{
         }
         
         private void DrawOnCameras(
+            Camera[] cameras,
             Mesh mesh,
             int submeshIndex,
             Material material,
@@ -344,12 +243,12 @@ namespace Unity.MeshSync{
             LightProbeUsage lightProbeUsage, 
             LightProbeProxyVolume lightProbeProxyVolume)
         {
-            if (m_cameras == null)
+            if (cameras == null)
                 return;
             
-            for (var i = 0; i < m_cameras.Length; i++)
+            for (var i = 0; i < cameras.Length; i++)
             {
-                var camera = m_cameras[i];
+                var camera = cameras[i];
                 if (camera == null)
                     continue;
                 
@@ -368,39 +267,11 @@ namespace Unity.MeshSync{
                     lightProbeProxyVolume:lightProbeProxyVolume);
             }
         }
-
-        private void RenderAllCameras()
-        {
-            if (m_cameras == null)
-                return;
-            
-            for (var i = 0; i < m_cameras.Length; i++)
-            {
-                var camera = m_cameras[i];
-                if (camera == null)
-                    continue;
-                
-                camera.Render();
-            }
-        }
         
         
-        private void RenderAndDraw()
-        {
-            if (Application.isEditor && !Application.isPlaying)
-            {
-                RenderAllCameras();
-            }
-
-            Draw();
-        }
-
         public void Clear()
         {
-            RenderAllCameras();
-            m_cameras = null;
             m_server = null;
-            m_cameraMode = CameraMode.None;
             m_instanceInfo.Clear();
         }
         
