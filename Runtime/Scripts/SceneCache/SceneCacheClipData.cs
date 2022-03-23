@@ -42,14 +42,11 @@ internal class SceneCacheClipData : BaseClipData {
             return;
         }
 
-        m_scPlayer    = sceneCachePlayer;
-        m_initialized = true;
-
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
        
         //Bind for the first time
-        m_scPlayer         = sceneCachePlayer;
+        m_scPlayer       = sceneCachePlayer;
         m_animationCurve = ExtractNormalizedTimeCurve(m_scPlayer, out float duration);
         if (null != m_animationCurve) {
             clip.duration = duration;
@@ -58,6 +55,7 @@ internal class SceneCacheClipData : BaseClipData {
         }
 
         UpdateClipCurve(clip, m_animationCurve);
+        m_initialized = true;
         
     }
 
