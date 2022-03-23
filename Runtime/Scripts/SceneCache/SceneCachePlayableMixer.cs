@@ -9,8 +9,9 @@ namespace Unity.MeshSync {
 // A behaviour that is attached to a playable
 internal class SceneCachePlayableMixer : PlayableBehaviour {
     
-    internal void Init(PlayableDirector director, IEnumerable<TimelineClip> clips) {
+    internal void Init(PlayableDirector director, SceneCacheTrack track, IEnumerable<TimelineClip> clips) {
         m_playableDirector = director;
+        m_sceneCacheTrack  = track;
         
         m_clips      = new List<TimelineClip>(clips);
         m_clipDataDictionary = new Dictionary<TimelineClip, SceneCacheClipData>();
@@ -83,6 +84,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
 
 
     void UpdateObjectActiveStates(GameObject activeObject = null) {
+        
         if (null != activeObject) {
             activeObject.SetActive(true);
             m_inactiveSceneCacheObjects.Remove(activeObject);
@@ -172,8 +174,9 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
     }
     
 //----------------------------------------------------------------------------------------------------------------------    
-
+    
     private PlayableDirector   m_playableDirector;
+    private SceneCacheTrack    m_sceneCacheTrack;
     private List<TimelineClip> m_clips;
     
     private Dictionary<TimelineClip, SceneCacheClipData> m_clipDataDictionary;

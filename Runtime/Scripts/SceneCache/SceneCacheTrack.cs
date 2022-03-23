@@ -20,7 +20,7 @@ internal class SceneCacheTrack : BaseExtendedClipTrack<SceneCacheClipData> {
             return playable;
 
 
-        m_trackMixer.Init(director, GetClips());
+        m_trackMixer.Init(director, this, GetClips());
 
         return playable;
     }
