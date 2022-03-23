@@ -34,9 +34,7 @@ internal class SceneCacheClipData : BaseClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    internal void BindSceneCachePlayer(SceneCachePlayer sceneCachePlayer) {
-        //Debug.Log("Initialized: " + m_initialized);
-        
+    internal void BindSceneCachePlayer(SceneCachePlayer sceneCachePlayer) {        
         //update data structure if clipData has already been flagged as initialized.
         //m_scPlayer can initially be null after deserializing.
         if (m_initialized && (null == m_scPlayer || sceneCachePlayer == m_scPlayer)) {
