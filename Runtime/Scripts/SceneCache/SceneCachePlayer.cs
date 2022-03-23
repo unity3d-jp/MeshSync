@@ -176,7 +176,7 @@ public class SceneCachePlayer : BaseMeshSync {
         }
         
         ExportMaterials(false, true);
-        ResetTimeAnimation();
+        ResetTimeAnimationInEditor();
 
         if (m_sceneCache) {
             SceneData scene = LoadSceneData(m_loadedTime, out _);
@@ -281,7 +281,7 @@ public class SceneCachePlayer : BaseMeshSync {
     }
 
 
-    private bool ResetTimeAnimation() {
+    private bool ResetTimeAnimationInEditor() {
         if (m_sceneCacheInfo.numFrames < 2)
             return false;
 
@@ -546,11 +546,13 @@ public class SceneCachePlayer : BaseMeshSync {
             OpenCacheInternal(m_sceneCacheFilePath, updateNonMaterialAssets: false);
         }
 
+#if UNITY_EDITOR
         //required one time reset after version upgrade to 0.12.x
         if (m_resetTimeAnimationOnEnable) {
-            ResetTimeAnimation();
+            ResetTimeAnimationInEditor();
             m_resetTimeAnimationOnEnable = false;
         }
+#endif
         
         
         if (!m_sceneCache)
