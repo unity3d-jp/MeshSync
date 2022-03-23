@@ -7,6 +7,7 @@ All notable changes to the MeshSync package will be documented in this file.
 * feat: add an option in SceneCacheTrack to activate SceneCachePlayer objects automatically
 
 ### Fixed
+* fix: build error caused by resetting the animation time of SceneCaache
 * fix: null check before moving SceneCachePlayableAsset to a track
 * fix: prevent cloning a SceneCachePlayableAsset from reinitializing the clip
 * fix: keep active SceneCache object to active when it is referred in multiple tracks
