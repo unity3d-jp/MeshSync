@@ -35,31 +35,26 @@ internal class SceneCacheClipData : BaseClipData {
 //----------------------------------------------------------------------------------------------------------------------
     
     internal void BindSceneCachePlayer(SceneCachePlayer sceneCachePlayer) {
+        //Debug.Log("Initialized: " + m_initialized);
         
-        if (m_initialized) {
-            if (null == m_scPlayer) {
-                //Assuming that BindSceneCachePlayer() will be called() during "deserialization", we initialize scPlayer
-                //at first if this clipData has already been initialized.
-                //SceneCachePlayer can't be deserialized as usual, because SceneCacheClip belongs to a track, which is an asset.
-                m_scPlayer = sceneCachePlayer;
-                return;
-            } else if (m_scPlayer == sceneCachePlayer) {
-                return;
-            }
+        //update data structure if clipData has already been flagged as initialized.
+        //m_scPlayer can initially be null after deserializing.
+        if (m_initialized && (null == m_scPlayer || sceneCachePlayer == m_scPlayer)) {
+            m_scPlayer = sceneCachePlayer;
+            return;
         }
 
         m_scPlayer    = sceneCachePlayer;
         m_initialized = true;
-        
 
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
        
         //Bind for the first time
         m_scPlayer         = sceneCachePlayer;
-        m_animationCurve = ExtractNormalizedTimeCurve(m_scPlayer, out float endTime);
+        m_animationCurve = ExtractNormalizedTimeCurve(m_scPlayer, out float duration);
         if (null != m_animationCurve) {
-            clip.duration = endTime;
+            clip.duration = duration;
         } else {
             m_animationCurve = CreateLinearAnimationCurve(clip);            
         }
@@ -69,17 +64,8 @@ internal class SceneCacheClipData : BaseClipData {
     }
 
     internal void UnbindSceneCachePlayer() {
-        if (null == m_scPlayer)
-            return;
-        
         m_scPlayer    = null;
         m_initialized = false;
-        
-        TimelineClip clip = GetOwner();
-        Assert.IsNotNull(clip);
-        
-        m_animationCurve = CreateLinearAnimationCurve(clip);        
-        UpdateClipCurve(clip, m_animationCurve);
     }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -232,8 +218,9 @@ internal class SceneCacheClipData : BaseClipData {
 #pragma warning restore 414    
     
 //----------------------------------------------------------------------------------------------------------------------
-    
-    SceneCachePlayer m_scPlayer    = null;
+
+    //Can't use SerializeField, because SceneCacheClipData is an asset which belongs to a track.  
+    SceneCachePlayer m_scPlayer = null;
     
     private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = 1;
     
