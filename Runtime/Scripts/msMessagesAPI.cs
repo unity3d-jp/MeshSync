@@ -69,12 +69,10 @@ internal struct DeleteMessage {
     [DllImport(Lib.name)] static extern Identifier msDeleteGetEntity(IntPtr self, int i);
     [DllImport(Lib.name)] static extern int msDeleteGetNumMaterials(IntPtr self);
     [DllImport(Lib.name)] static extern Identifier msDeleteGetMaterial(IntPtr self, int i);
-    [DllImport(Lib.name)] static extern int msDeleteGetNumInstanceInfos(IntPtr self);
-    [DllImport(Lib.name)] static extern Identifier msDeleteGetInstanceInfo(IntPtr self, int i);
-
-    [DllImport(Lib.name)] static extern int msDeleteGetNumInstanceMeshes(IntPtr self);
-
-    [DllImport(Lib.name)] static extern Identifier msDeleteGetInstanceMesh(IntPtr self, int i);
+    
+    [DllImport(Lib.name)] static extern int msDeleteGetNumInstances(IntPtr self);
+    
+    [DllImport(Lib.name)] static extern Identifier msDeleteGetInstance(IntPtr self, int i);
     #endregion
 
     public static explicit operator DeleteMessage(IntPtr v) {
@@ -89,24 +87,14 @@ internal struct DeleteMessage {
     public int numMaterials { get { return msDeleteGetNumMaterials(self); } }
     internal Identifier GetMaterial(int i) { return msDeleteGetMaterial(self, i); }
     
-    public int numInstanceInfos
+    public int numInstances
     {
-        get { return msDeleteGetNumInstanceInfos((self)); }
+        get { return msDeleteGetNumInstances((self)); }
     }
 
-    internal Identifier GetInstanceInfo(int i)
+    internal Identifier GetInstance(int i)
     {
-        return msDeleteGetInstanceInfo(self, i);
-    }
-    
-    public int numInstanceMeshes
-    {
-        get { return msDeleteGetNumInstanceMeshes(self); }
-    }
-
-    public Identifier GetInstanceMesh(int i)
-    {
-        return msDeleteGetInstanceMesh(self, i);
+        return msDeleteGetInstance(self, i);
     }
 }
 //----------------------------------------------------------------------------------------------------------------------

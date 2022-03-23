@@ -1663,8 +1663,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
         rec.transforms = data.transforms;
 
-        if (data.type == InstanceInfoData.ReferenceType.EntityPath)
-        {
+       // if (data.type == InstanceInfoData.ReferenceType.EntityPath)
+       /* {
             if (this.m_clientObjects.TryGetValue(data.path, out EntityRecord entityRecord))
             {
                 rec.go = entityRecord.go;
@@ -1673,8 +1673,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             {
                 Debug.LogWarningFormat("[MeshSync] Could not locate entity record for path {0}", data.path);
             }
-        }
-        else if (data.type == InstanceInfoData.ReferenceType.MeshPath)
+        }*/
+       // else if (data.type == InstanceInfoData.ReferenceType.MeshPath)
         {
             
             if (this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord entityRecord))
@@ -1688,10 +1688,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             {
                 Debug.LogWarningFormat("[MeshSync] No Mesh found for path {0}", data.path);
             }
-        }
-        else
-        {
-            Debug.LogWarningFormat("[MeshSync] Unknown instance info type {0}", data.type);
         }
 
         return rec;

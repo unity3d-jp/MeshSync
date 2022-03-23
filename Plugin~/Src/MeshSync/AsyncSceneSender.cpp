@@ -75,7 +75,7 @@ void AsyncSceneSender::send()
         transforms.empty() && geometries.empty() && animations.empty() &&
         instanceInfos.empty() && instanceMeshes.empty() &&
         deleted_entities.empty() && deleted_materials.empty() && 
-        deleted_instanceInfos.empty() && deleted_instanceMeshes.empty())
+        deleted_instances.empty())
         return;
 
     SetupDataFlags(transforms);
@@ -199,15 +199,13 @@ void AsyncSceneSender::send()
     // deleted
     if (!deleted_entities.empty() || 
         !deleted_materials.empty() || 
-        !deleted_instanceInfos.empty() || 
-        !deleted_instanceMeshes.empty()) {
+        !deleted_instances.empty()) {
 
         ms::DeleteMessage mes;
         setup_message(mes);
         mes.entities = deleted_entities;
         mes.materials = deleted_materials;
-        mes.instanceInfos = deleted_instanceInfos;
-        mes.instanceMeshes = deleted_instanceMeshes;
+        mes.instances = deleted_instances;
 
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
