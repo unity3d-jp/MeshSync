@@ -29,9 +29,15 @@ internal class SceneCacheTrack : BaseExtendedClipTrack<SceneCacheClipData> {
         m_trackMixer?.Destroy();
         m_trackMixer = null;
     }
+    
 
+//----------------------------------------------------------------------------------------------------------------------
+    
+    internal bool IsAutoActivateObject() => m_autoActivateObject;
 
 //----------------------------------------------------------------------------------------------------------------------    
+    
+    [SerializeField] private bool m_autoActivateObject = true;
     
     private SceneCachePlayableMixer m_trackMixer = null;   
     
