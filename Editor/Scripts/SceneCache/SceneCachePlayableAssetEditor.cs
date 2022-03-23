@@ -72,7 +72,8 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
             //This callback occurs before the clip is assigned to the track, but we need the track for creating curves.
             clip.TryMoveToTrack(track);
         }
-       
+
+        asset.Init(null != clonedFrom);
     }
 
 //----------------------------------------------------------------------------------------------------------------------    

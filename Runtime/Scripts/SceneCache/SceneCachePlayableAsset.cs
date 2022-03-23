@@ -19,6 +19,10 @@ namespace Unity.MeshSync {
 
 [System.Serializable] 
 internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCacheClipData>, ITimelineClipAsset, IPlayableBehaviour {
+
+    internal void Init(bool wasCloned) {
+        m_wasCloned = wasCloned;
+    } 
     
 //----------------------------------------------------------------------------------------------------------------------
     public ClipCaps clipCaps {
@@ -31,6 +35,13 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         Assert.IsNotNull(scClipData);        
         
         SceneCachePlayer scPlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
+
+        if (m_wasCloned) {
+            scClipData.SetInitialized(true);
+            m_wasCloned = false;
+        }
+        
+        
         
         //Initialize or clear curve
         if (scPlayer) {
@@ -106,7 +117,10 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     [SerializeField] private ExposedReference<SceneCachePlayer> m_sceneCachePlayerRef;
     
     [SerializeField] private double      m_time;
-   
+
+
+    private bool m_wasCloned = false;
+
 }
 
 
