@@ -123,7 +123,8 @@ internal class SceneCacheClipData : BaseClipData {
             return null;
         }
 
-        duration = sceneCacheInfo.GetTimeRange().GetDuration(); 
+        TimeRange timeRange = sceneCacheInfo.GetTimeRange(); 
+        duration = timeRange.GetDuration(); 
         if (duration <= 0f) {
             duration = Mathf.Epsilon;
         }
@@ -131,7 +132,7 @@ internal class SceneCacheClipData : BaseClipData {
         Keyframe[] keyframes = sceneCacheInfo.GetTimeCurve().keys;
         int numKeyframes = keyframes.Length;
         for (int i = 0; i < numKeyframes; ++i) {
-            keyframes[i].value /= duration;
+            keyframes[i].value /= timeRange.end;
         }
         
         //outTangent
