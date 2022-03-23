@@ -84,6 +84,9 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
 
 
     void UpdateObjectActiveStates(GameObject activeObject = null) {
+
+        if (!m_sceneCacheTrack.IsAutoActivateObject())
+            return;
         
         if (null != activeObject) {
             activeObject.SetActive(true);
