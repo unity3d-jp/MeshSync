@@ -144,10 +144,15 @@ internal class SceneCacheClipData : BaseClipData {
 
 #if UNITY_EDITOR        
         
-        bool shouldRefresh = false;
+        bool shouldRefresh = (null == clip.curves);
         
-        AnimationCurve shownCurve = AnimationUtility.GetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding());
-        shouldRefresh = !CurveApproximately(shownCurve, animationCurveToApply); 
+        if (!shouldRefresh) {
+            AnimationCurve shownCurve = AnimationUtility.GetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding());
+            shouldRefresh = !CurveApproximately(shownCurve, animationCurveToApply);
+        } else {
+            clip.CreateCurves("Curves: " + clip.displayName);
+        }
+        
         
         AnimationUtility.SetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding(),animationCurveToApply);
         
