@@ -207,8 +207,8 @@ internal class SceneCacheClipData : BaseClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
    
-    [SerializeField] private AnimationCurve   m_animationCurve;
-    [SerializeField] private bool             m_initialized = false;
+    [SerializeField] private AnimationCurve m_animationCurve = AnimationCurve.Constant(0,0,0);
+    [SerializeField] private bool           m_initialized    = false;
 
     [SerializeField] private LimitedAnimationController m_overrideLimitedAnimationController = new LimitedAnimationController();
 
