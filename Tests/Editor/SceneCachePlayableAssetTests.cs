@@ -96,7 +96,32 @@ internal class SceneCachePlayableAssetTests {
         yield return null;
         Assert.IsFalse(scGameObject.activeSelf);
     }
+    
+//----------------------------------------------------------------------------------------------------------------------    
+    [UnityTest]
+    public IEnumerator CheckGameObjectActiveStateReferredInMultipleTracks() {
 
+        InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip0);
+        yield return null;
+        
+        TimelineClip clip1 = SceneCachePlayerEditorUtility.AddSceneCacheTrackAndClip(director, "TestSceneCacheTrack 1", sceneCachePlayer);
+        clip1.start = clip0.end;
+        TimelineEditorUtility.RefreshTimelineEditor( RefreshReason.ContentsAddedOrRemoved );
+        yield return null;
+       
+        GameObject scGameObject = sceneCachePlayer.gameObject;
+        
+        SetDirectorTime(director, clip0.start);
+        yield return null;
+        Assert.IsTrue(scGameObject.activeSelf);
+        
+        SetDirectorTime(director, clip1.start + clip1.duration * 0.5f);
+        yield return null;
+        Assert.IsTrue(scGameObject.activeSelf);
+        
+    }
+
+    
 //----------------------------------------------------------------------------------------------------------------------
     [UnityTest]
     public IEnumerator EnsureMatchingFramesAreLoadedToScene() {
