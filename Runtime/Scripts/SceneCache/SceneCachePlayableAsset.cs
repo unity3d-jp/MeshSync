@@ -67,41 +67,30 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     #region IPlayableBehaviour interfaces
     /// <inheritdoc/>
-    public void OnBehaviourPause(Playable playable, FrameData info) {
-
-    }
+    public void OnBehaviourPause(Playable playable, FrameData info) { }
     
     /// <inheritdoc/>
-    public void OnBehaviourPlay(Playable playable, FrameData info) {
-
-    }
+    public void OnBehaviourPlay(Playable playable, FrameData info) { }
     
     
     /// <inheritdoc/>
-    public void OnGraphStart(Playable playable) {       
-    }
+    public void OnGraphStart(Playable playable) { }
     
     
     /// <inheritdoc/>
-    public void OnGraphStop(Playable playable) {
-    }
+    public void OnGraphStop(Playable playable) { }
     
     /// <inheritdoc/>
-    public void OnPlayableCreate(Playable playable) {
-
-    }
-    /// <inheritdoc/>
-    public void OnPlayableDestroy(Playable playable) {
-    }
+    public void OnPlayableCreate(Playable playable) { }
     
     /// <inheritdoc/>
-    public void PrepareFrame(Playable playable, FrameData info) {
-
-    }
+    public void OnPlayableDestroy(Playable playable) { }
+    
+    /// <inheritdoc/>
+    public void PrepareFrame(Playable playable, FrameData info) { }
 
     /// <inheritdoc/>
-    public void ProcessFrame(Playable playable, FrameData info, object playerData) {
-    }
+    public void ProcessFrame(Playable playable, FrameData info, object playerData) { }
 
     #endregion
     
