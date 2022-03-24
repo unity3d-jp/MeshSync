@@ -58,27 +58,29 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
 
     public override void ProcessFrame(Playable playable, FrameData info, object playerData) {
         
-        GetActiveTimelineClipInto(m_clips, m_playableDirector.time, out TimelineClip clip, out SceneCachePlayableAsset activePlayableAsset);
+        GetActiveTimelineClipInto(m_clips, m_playableDirector.time, out TimelineClip clip, out SceneCachePlayableAsset scPlayableAsset);
         if (null == clip) {
             UpdateObjectActiveStates();
             return;
         }
 
-        SceneCacheClipData clipData = activePlayableAsset.GetBoundClipData();
+        SceneCacheClipData clipData = scPlayableAsset.GetBoundClipData();
         Assert.IsNotNull(clipData);
 
-        SceneCachePlayer scPlayer = activePlayableAsset.GetSceneCachePlayer();
+        SceneCachePlayer scPlayer = scPlayableAsset.GetSceneCachePlayer();
         if (null == scPlayer) {
             UpdateObjectActiveStates();
             return;
         }
 
         UpdateObjectActiveStates(activeObject: scPlayer.gameObject);
+        LimitedAnimationController limitedAnimationController = scPlayableAsset.GetOverrideLimitedAnimationController(); 
+
         
         double localTime = clip.ToLocalTime(playable.GetTime());
-        double t         = CalculateTimeForLimitedAnimation(clipData,localTime);
+        double t         = CalculateTimeForLimitedAnimation(scPlayer,limitedAnimationController, localTime);
         
-        AnimationCurve curve          = activePlayableAsset.GetAnimationCurve();
+        AnimationCurve curve          = scPlayableAsset.GetAnimationCurve();
         float          normalizedTime = curve.Evaluate((float)t);
               
         scPlayer.SetAutoplay(false);
@@ -166,24 +168,21 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    private static double CalculateTimeForLimitedAnimation(SceneCacheClipData clipData, double time) {
-
-        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
-        Assert.IsNotNull(scPlayer);
-        
+    private static double CalculateTimeForLimitedAnimation(SceneCachePlayer scPlayer, 
+        LimitedAnimationController overrideLimitedAnimationController, double time)  
+    {
         LimitedAnimationController origLimitedAnimationController = scPlayer.GetLimitedAnimationController();
         if (origLimitedAnimationController.IsEnabled()) //do nothing if LA is set on the target SceneCache
             return time;
         
-        LimitedAnimationController clipLimitedAnimationController = clipData.GetOverrideLimitedAnimationController();
-        if (!clipLimitedAnimationController.IsEnabled())
+        if (!overrideLimitedAnimationController.IsEnabled())
             return time;
 
         ISceneCacheInfo scInfo = scPlayer.ExtractSceneCacheInfo(forceOpen: true);
         if (null == scInfo)
             return time;
             
-        int frame = scPlayer.CalculateFrame((float)time,clipLimitedAnimationController);
+        int frame = scPlayer.CalculateFrame((float)time,overrideLimitedAnimationController);
         return frame / scInfo.GetSampleRate();
     }
     
