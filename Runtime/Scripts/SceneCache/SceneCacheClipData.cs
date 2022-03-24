@@ -201,8 +201,6 @@ internal class SceneCacheClipData : BaseClipData {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    internal SceneCachePlayer GetSceneCachePlayer() =>m_scPlayer;
-
     internal LimitedAnimationController GetOverrideLimitedAnimationController() { return m_overrideLimitedAnimationController; }    
     
 //----------------------------------------------------------------------------------------------------------------------
