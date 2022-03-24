@@ -32,7 +32,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         if (null == scPlayer)
             return;
 
-        DrawLimitedAnimationGUI(clipData);
+        DrawLimitedAnimationGUI(clipData, m_scPlayableAsset);
         
         {
             // Curve Operations
@@ -56,8 +56,15 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
+<<<<<<< HEAD
     private void DrawLimitedAnimationGUI(SceneCacheClipData clipData) {
         SceneCachePlayer scPlayer = m_scPlayableAsset.GetSceneCachePlayer();
+=======
+    
+    //[TODO-sin: 2022-3-24] Only pass SceneCachePlayableAsset
+    private void DrawLimitedAnimationGUI(SceneCacheClipData clipData, SceneCachePlayableAsset scPlayableAsset) {
+        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
+>>>>>>> move LimitedAnimationController to SceneCachePlayableAsset instead of SceneCacheClipData
         
         bool disableScope = null == scPlayer;
         
@@ -80,7 +87,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         }
 
         using (new EditorGUI.DisabledScope(disableScope)) {
-            SceneCachePlayerEditorUtility.DrawLimitedAnimationGUI(clipData.GetOverrideLimitedAnimationController(),
+            SceneCachePlayerEditorUtility.DrawLimitedAnimationGUI(scPlayableAsset.GetOverrideLimitedAnimationController(),
                 m_scPlayableAsset, scPlayer);
         }
         

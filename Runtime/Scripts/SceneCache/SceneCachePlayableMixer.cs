@@ -64,6 +64,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
             return;
         }
 
+        
         SceneCacheClipData clipData = activePlayableAsset.GetBoundClipData();
         Assert.IsNotNull(clipData);
 
@@ -74,11 +75,10 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
         }
 
         UpdateObjectActiveStates(activeObject: scPlayer.gameObject);
-        LimitedAnimationController limitedAnimationController = clipData.GetOverrideLimitedAnimationController(); 
-
-        
+        LimitedAnimationController limitedAnimationController = activePlayableAsset.GetOverrideLimitedAnimationController(); 
+       
         double localTime = clip.ToLocalTime(playable.GetTime());
-        double t         = CalculateTimeForLimitedAnimation(scPlayer,limitedAnimationController, localTime);
+        double t         = CalculateTimeForLimitedAnimation(scPlayer,limitedAnimationController, localTime);        
         
         AnimationCurve curve          = clipData.GetAnimationCurve();
         float          normalizedTime = curve.Evaluate((float)t);

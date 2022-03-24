@@ -202,14 +202,16 @@ internal class SceneCacheClipData : BaseClipData {
     internal void           SetAnimationCurve(AnimationCurve curve) { m_animationCurve = curve; }
     internal AnimationCurve GetAnimationCurve()                     {  return m_animationCurve; }
 
-    internal LimitedAnimationController GetOverrideLimitedAnimationController() { return m_overrideLimitedAnimationController; }    
+    //[TODO-sin:2022-3-24] remove this in 0.13.x
+    [Obsolete]
+    internal LimitedAnimationController GetOverrideLimitedAnimationController() { return m_overrideLimitedAnimationController; }
     
 //----------------------------------------------------------------------------------------------------------------------
    
     [SerializeField] private AnimationCurve m_animationCurve = AnimationCurve.Constant(0,0,0);
     [SerializeField] private bool           m_initialized    = false;
 
-    [SerializeField] private LimitedAnimationController m_overrideLimitedAnimationController = new LimitedAnimationController();
+    [SerializeField] private LimitedAnimationController m_overrideLimitedAnimationController = null;
 
 #pragma warning disable 414    
     [HideInInspector][SerializeField] private int m_sceneCacheClipDataVersion = CUR_SCENE_CACHE_CLIP_DATA_VERSION; 

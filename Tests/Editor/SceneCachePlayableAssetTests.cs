@@ -171,7 +171,9 @@ internal class SceneCachePlayableAssetTests {
         
         SceneCacheClipData clipData = clip.GetClipData<SceneCacheClipData>();
         Assert.IsNotNull(clipData);
-        LimitedAnimationController limitedAnimationController = clipData.GetOverrideLimitedAnimationController();
+        SceneCachePlayableAsset sceneCachePlayableAsset = clip.asset as SceneCachePlayableAsset;
+        Assert.IsNotNull(sceneCachePlayableAsset);
+        LimitedAnimationController limitedAnimationController = sceneCachePlayableAsset.GetOverrideLimitedAnimationController();
         limitedAnimationController.Enable(NUM_FRAMES_TO_HOLD,OFFSET);
 
         yield return IterateAllSceneCacheFrames(director, clip, sceneCachePlayer, (int timelineFrame) => {
@@ -214,9 +216,7 @@ internal class SceneCachePlayableAssetTests {
         const int NUM_FRAMES_TO_HOLD = 3;
         const int OFFSET             = 1;
         
-        SceneCacheClipData clipData1 = clip1.GetClipData<SceneCacheClipData>();
-        Assert.IsNotNull(clipData1);
-        LimitedAnimationController limitedAnimationController1 = clipData1.GetOverrideLimitedAnimationController();
+        LimitedAnimationController limitedAnimationController1 = playableAsset1.GetOverrideLimitedAnimationController();
         limitedAnimationController1.Enable(NUM_FRAMES_TO_HOLD,OFFSET);
         
         yield return IterateAllSceneCacheFrames(director, clip0, sceneCachePlayer, (int timelineFrame) => {

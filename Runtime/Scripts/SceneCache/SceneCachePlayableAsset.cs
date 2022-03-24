@@ -32,7 +32,15 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     public override Playable CreatePlayable(PlayableGraph graph, GameObject go) {
         
         SceneCacheClipData scClipData = GetBoundClipData() as SceneCacheClipData;        
-        Assert.IsNotNull(scClipData);        
+        Assert.IsNotNull(scClipData);
+        
+        //import old data
+        LimitedAnimationController clipDataController = scClipData.GetOverrideLimitedAnimationController();
+        if (null != clipDataController) {
+            m_overrideLimitedAnimationController = new LimitedAnimationController(clipDataController);
+            scClipData.SetLimitedAnimationController(null);
+        }
+        
         
         m_propertyTable = graph.GetResolver();
         m_sceneCachePlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
@@ -99,6 +107,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 //----------------------------------------------------------------------------------------------------------------------
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
+    
+    internal LimitedAnimationController GetOverrideLimitedAnimationController() { return m_overrideLimitedAnimationController; }    
+    
 
 #if UNITY_EDITOR
     
@@ -124,6 +135,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 //----------------------------------------------------------------------------------------------------------------------
     
     [SerializeField] private ExposedReference<SceneCachePlayer> m_sceneCachePlayerRef;
+    [SerializeField] private LimitedAnimationController m_overrideLimitedAnimationController = new LimitedAnimationController();
     
     [SerializeField] private double      m_time;
 
@@ -131,7 +143,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     private IExposedPropertyTable m_propertyTable;
     private SceneCachePlayer m_sceneCachePlayer;    
-
 }
 
 
