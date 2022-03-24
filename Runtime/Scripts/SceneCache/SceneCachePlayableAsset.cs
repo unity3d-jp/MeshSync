@@ -125,7 +125,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     [SerializeField] private double      m_time;
 
 
-    [SerializeField] private AnimationCurve m_animationCurve;
+    [SerializeField] private AnimationCurve m_animationCurve = AnimationCurve.Constant(0,0,0);
 
 
     private SceneCachePlayer m_sceneCachePlayer;    
