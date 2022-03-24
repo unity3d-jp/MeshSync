@@ -211,7 +211,7 @@ internal class SceneCacheClipData : BaseClipData {
     internal AnimationCurve GetAnimationCurve()                     {  return m_animationCurve; }
 
     //[TODO-sin:2022-3-24] remove this in 0.13.x
-    internal void CopyLegacyLimitedAnimationControllerToAsset(SceneCachePlayableAsset sceneCachePlayableAsset) {
+    internal void CopyLegacyClipDataToAsset(SceneCachePlayableAsset sceneCachePlayableAsset) {
         if (!m_copyLimitedAnimationControllerToAsset) {
             return;
         }

@@ -38,7 +38,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         
 #pragma warning disable 612
         //import old data. [TODO-sin: 2022-3-24] Remove in 0.13.x
-        scClipData.CopyLegacyLimitedAnimationControllerToAsset(this);
+        scClipData.CopyLegacyClipDataToAsset(this);
 #pragma warning restore 612
         
         
