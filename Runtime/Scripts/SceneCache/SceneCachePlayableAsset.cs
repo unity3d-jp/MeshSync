@@ -34,12 +34,14 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         SceneCacheClipData scClipData = GetBoundClipData() as SceneCacheClipData;        
         Assert.IsNotNull(scClipData);
         
-        //import old data
+        //import old data. [TODO-sin: 2022-3-24] Remove in 0.13.x
+#pragma warning disable 612
         LimitedAnimationController clipDataController = scClipData.GetOverrideLimitedAnimationController();
         if (null != clipDataController) {
             m_overrideLimitedAnimationController = new LimitedAnimationController(clipDataController);
             scClipData.SetLimitedAnimationController(null);
         }
+#pragma warning restore 612
         
         
         m_propertyTable = graph.GetResolver();
