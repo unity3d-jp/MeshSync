@@ -37,6 +37,29 @@ internal class SceneCachePlayableAssetTests {
         Assert.Greater(curve.keys.Length,2);
         Assert.Greater(clip.duration,0);
     }
+
+//----------------------------------------------------------------------------------------------------------------------    
+    [UnityTest]
+    public IEnumerator ChangeSceneCache() {
+
+        InitTest(true, out PlayableDirector _, out SceneCachePlayer scPlayer, out TimelineClip clip);
+        yield return null;
+        
+        SceneCachePlayableAsset sceneCachePlayableAsset = clip.asset as SceneCachePlayableAsset;
+        Assert.IsNotNull(sceneCachePlayableAsset);
+
+        sceneCachePlayableAsset.SetSceneCachePlayerInEditor(null);
+        double halfDuration = clip.duration * 0.5f;
+        clip.duration = halfDuration;
+        TimelineEditor.Refresh(RefreshReason.ContentsModified);
+        yield return null;
+        
+        sceneCachePlayableAsset.SetSceneCachePlayerInEditor(scPlayer);
+        TimelineEditor.Refresh(RefreshReason.ContentsModified);
+        yield return null;
+        
+        Assert.IsTrue(Mathf.Approximately((float)halfDuration, (float)clip.duration),"Clip Duration has been reset.");
+    }
     
     
 //----------------------------------------------------------------------------------------------------------------------    

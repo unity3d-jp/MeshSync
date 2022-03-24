@@ -32,12 +32,14 @@ internal class SceneCacheClipData : BaseClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    internal void BindSceneCachePlayer(SceneCachePlayer sceneCachePlayer, bool allowClipDurationChange) {
+    //returns if updated or not
+    internal bool BindSceneCachePlayer(SceneCachePlayer sceneCachePlayer, out float updatedCurveDuration) {
         //update data structure if clipData has already been flagged as initialized.
         //m_scPlayer can initially be null after deserializing.
         if (m_initialized && (null == m_scPlayer || sceneCachePlayer == m_scPlayer)) {
-            m_scPlayer = sceneCachePlayer;
-            return;
+            m_scPlayer           = sceneCachePlayer;
+            updatedCurveDuration = 0;
+            return false;
         }
 
         TimelineClip clip = GetOwner();
@@ -45,18 +47,15 @@ internal class SceneCacheClipData : BaseClipData {
        
         //Bind for the first time
         m_scPlayer       = sceneCachePlayer;
-        m_animationCurve = ExtractNormalizedTimeCurve(m_scPlayer, out float duration);
-        if (null != m_animationCurve) {
-            if (allowClipDurationChange) {
-                clip.duration = duration;
-            }
-        } else {
+        m_animationCurve = ExtractNormalizedTimeCurve(m_scPlayer, out updatedCurveDuration);
+        if (null == m_animationCurve) {
             m_animationCurve = CreateLinearAnimationCurve(clip);
+            updatedCurveDuration    = (float) clip.duration;
         }
 
         UpdateClipCurve(clip, m_animationCurve);
         m_initialized = true;
-        
+        return true;
     }
 
     internal void UnbindSceneCachePlayer() {
@@ -224,7 +223,7 @@ internal class SceneCacheClipData : BaseClipData {
     SceneCachePlayer m_scPlayer = null;
     
     private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = 1;
-    
+
 }
 
 

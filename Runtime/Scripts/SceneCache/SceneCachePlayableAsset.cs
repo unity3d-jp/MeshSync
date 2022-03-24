@@ -20,8 +20,8 @@ namespace Unity.MeshSync {
 [System.Serializable] 
 internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCacheClipData>, ITimelineClipAsset, IPlayableBehaviour {
 
-    internal void Init(bool wasCloned) {
-        m_wasCloned = wasCloned;
+    internal void Init(bool updateClipDurationOnCreatePlayable) {
+        m_updateClipDurationOnCreatePlayable = updateClipDurationOnCreatePlayable;
     } 
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -34,18 +34,23 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         SceneCacheClipData scClipData = GetBoundClipData() as SceneCacheClipData;        
         Assert.IsNotNull(scClipData);        
         
-        SceneCachePlayer scPlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
+        m_propertyTable = graph.GetResolver();
+        SceneCachePlayer scPlayer = m_sceneCachePlayerRef.Resolve(m_propertyTable);
 
-        //Initialize or clear curve
-        if (scPlayer) {
-            scPlayer.SetAutoplay(false);
-            scClipData.BindSceneCachePlayer(scPlayer, allowClipDurationChange: !m_wasCloned);
-            m_wasCloned = false;
-        } else {
-            scClipData.UnbindSceneCachePlayer();
+        if (!scPlayer) {
+            scClipData.UnbindSceneCachePlayer(); //clear curve
+            return Playable.Create(graph);
         }
-
-        return Playable.Create(graph);        
+        
+        //Initialize curve
+        scPlayer.SetAutoplay(false);
+        bool updated = scClipData.BindSceneCachePlayer(scPlayer, out float updatedCurveDuration);
+        if (m_updateClipDurationOnCreatePlayable && updated) {
+            scClipData.GetOwner().duration = updatedCurveDuration;
+        }
+        
+        m_updateClipDurationOnCreatePlayable = false;
+        return Playable.Create(graph);
     }
    
 //----------------------------------------------------------------------------------------------------------------------
@@ -95,7 +100,17 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
 
-#if UNITY_EDITOR    
+
+#if UNITY_EDITOR
+    
+    internal void SetSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
+        //check if exposedName hasn't been initialized
+        if (m_sceneCachePlayerRef.exposedName.ToString() == ":0") {
+            m_sceneCachePlayerRef.exposedName = GUID.Generate().ToString();
+        }
+        m_propertyTable.SetReferenceValue(m_sceneCachePlayerRef.exposedName, scPlayer);
+    }
+    
     internal static EditorCurveBinding GetTimeCurveBinding() {return m_timeCurveBinding; }
     
     private static EditorCurveBinding m_timeCurveBinding =  
@@ -113,7 +128,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     [SerializeField] private double      m_time;
 
 
-    private bool m_wasCloned = false;
+    private bool m_updateClipDurationOnCreatePlayable = false;
+    
+    private IExposedPropertyTable m_propertyTable;
 
 }
 
