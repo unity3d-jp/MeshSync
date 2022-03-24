@@ -37,20 +37,20 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         m_propertyTable = graph.GetResolver();
         SceneCachePlayer scPlayer = m_sceneCachePlayerRef.Resolve(m_propertyTable);
 
-        //Initialize or clear curve
-        if (scPlayer) {
-            scPlayer.SetAutoplay(false);
-            bool updated = scClipData.BindSceneCachePlayer(scPlayer, out float updatedCurveDuration);
-            if (m_updateClipDurationOnCreatePlayable && updated) {
-                scClipData.GetOwner().duration = updatedCurveDuration;
-            }
-            
-            m_updateClipDurationOnCreatePlayable = false;
-        } else {
-            scClipData.UnbindSceneCachePlayer();
+        if (!scPlayer) {
+            scClipData.UnbindSceneCachePlayer(); //clear curve
+            return Playable.Create(graph);
         }
-
-        return Playable.Create(graph);        
+        
+        //Initialize curve
+        scPlayer.SetAutoplay(false);
+        bool updated = scClipData.BindSceneCachePlayer(scPlayer, out float updatedCurveDuration);
+        if (m_updateClipDurationOnCreatePlayable && updated) {
+            scClipData.GetOwner().duration = updatedCurveDuration;
+        }
+        
+        m_updateClipDurationOnCreatePlayable = false;
+        return Playable.Create(graph);
     }
    
 //----------------------------------------------------------------------------------------------------------------------
