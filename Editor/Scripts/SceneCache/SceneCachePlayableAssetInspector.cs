@@ -28,7 +28,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         if (null == clipData)
             return;
 
-        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
+        SceneCachePlayer scPlayer = m_scPlayableAsset.GetSceneCachePlayer();
         if (null == scPlayer)
             return;
 
@@ -57,7 +57,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------
     private void DrawLimitedAnimationGUI(SceneCacheClipData clipData) {
-        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
+        SceneCachePlayer scPlayer = m_scPlayableAsset.GetSceneCachePlayer();
         
         bool disableScope = null == scPlayer;
         
