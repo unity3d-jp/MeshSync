@@ -1,25 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
-using UnityEditor;
+
 #endif
 
 namespace Unity.MeshSync{
     
     [ExecuteInEditMode]
-    internal class MeshSyncInstanceRenderer : MonoBehaviour
+    internal partial class MeshSyncInstanceRenderer : MonoBehaviour
     {
-        private BaseMeshSync m_server;
-
-        private InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
+        internal BaseMeshSync m_server;
+        internal InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
 
         [SerializeField] private Matrix4x4[] m_transforms;
-        [SerializeField] private Material[] m_materials;
-        [SerializeField] private Mesh m_mesh;
-        
+
         private bool m_isUpdating = false;
 
         public void Init(BaseMeshSync ms)
@@ -58,7 +56,7 @@ namespace Unity.MeshSync{
                 RenderPipelineManager.beginFrameRendering -= OnBeginFrameRendering;
             }
         }
-
+        
         private void OnBeginFrameRendering(ScriptableRenderContext arg1, Camera[] cameras)
         {
             Draw(cameras);
@@ -119,7 +117,8 @@ namespace Unity.MeshSync{
             info.GameObject = gameObject;
             info.Renderer = renderer;
         }
-        
+
+       
         private void UpdateRenderingInfo(InstanceRenderingInfo info)
         {
             // Transforms
@@ -127,9 +126,6 @@ namespace Unity.MeshSync{
 
             // Renderer related info
             UpdateInfoFromRenderer(info);
-
-            m_materials = info.Materials;
-            m_mesh = info.Mesh;
             
             // Enable instancing in materials
             for (var i = 0; i < info.Materials.Length; i++)
@@ -237,7 +233,6 @@ namespace Unity.MeshSync{
         
         #endregion
     }
-
 
 }
 

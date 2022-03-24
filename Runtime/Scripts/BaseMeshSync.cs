@@ -1653,6 +1653,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         this.m_clientInstanceMeshes[data.path] = rec;
 
         return rec;
+        
+        
     }
     
     InstanceInfoRecord UpdateInstanceInfo(InstanceInfoData data)
@@ -2089,7 +2091,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 mesh = Misc.OverwriteOrCreateAsset(mesh, dstPath);
                 kvp.Value.mesh = mesh; // mesh maybe updated by SaveAsset()
                 if (config.Logging)
-                    Debug.Log("exported material " + dstPath);
+                    Debug.Log("exported mesh " + dstPath);
             }
             else if (useExistingOnes && existing != null)
                 kvp.Value.mesh = existing;
