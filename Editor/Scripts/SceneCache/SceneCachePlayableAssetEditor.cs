@@ -45,7 +45,7 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
             return clipOptions;
         }
 
-        LimitedAnimationController overrideLimitedAnimationController =clipData.GetOverrideLimitedAnimationController();
+        LimitedAnimationController overrideLimitedAnimationController =asset.GetOverrideLimitedAnimationController();
         
         if (!scPlayer.IsLimitedAnimationOverrideable() && overrideLimitedAnimationController.IsEnabled()) {
             clipOptions.errorText = UNABLE_TO_OVERRIDE_LIMITED_ANIMATION_ERROR;
@@ -121,7 +121,7 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         if (null == clipData)
             return;
 
-        LimitedAnimationController limitedAnimationController = clipData.GetOverrideLimitedAnimationController();
+        LimitedAnimationController limitedAnimationController = asset.GetOverrideLimitedAnimationController();
         if (!limitedAnimationController.IsEnabled()) {
             return;
         }

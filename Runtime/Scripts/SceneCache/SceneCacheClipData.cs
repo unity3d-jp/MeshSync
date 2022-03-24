@@ -202,7 +202,9 @@ internal class SceneCacheClipData : BaseClipData {
     internal void           SetAnimationCurve(AnimationCurve curve) { m_animationCurve = curve; }
     internal AnimationCurve GetAnimationCurve()                     {  return m_animationCurve; }
 
-    internal LimitedAnimationController GetOverrideLimitedAnimationController() { return m_overrideLimitedAnimationController; }    
+    //[TODO-sin:2022-3-24] remove this in 0.13.x
+    [Obsolete]
+    internal LimitedAnimationController GetOverrideLimitedAnimationController() { return m_overrideLimitedAnimationController; }
     
 //----------------------------------------------------------------------------------------------------------------------
    

@@ -8,6 +8,12 @@ internal class LimitedAnimationController {
 
     internal LimitedAnimationController() { }
 
+    internal LimitedAnimationController(LimitedAnimationController otherController) {
+        m_enabled         = otherController.IsEnabled();
+        m_frameOffset     = otherController.GetFrameOffset();
+        m_numFramesToHold = otherController.GetNumFramesToHold();
+    }
+    
     internal LimitedAnimationController(bool enabled, int numFramesToHold, int frameOffset) {
         m_enabled         = enabled;
         SetNumFramesToHold(numFramesToHold);
