@@ -95,7 +95,17 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
 
-#if UNITY_EDITOR    
+
+#if UNITY_EDITOR
+    
+    internal void SetSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
+        //check if exposedName hasn't been initialized
+        if (m_sceneCachePlayerRef.exposedName.ToString() == ":0") {
+            m_sceneCachePlayerRef.exposedName = GUID.Generate().ToString();
+        }
+        m_propertyTable.SetReferenceValue(m_sceneCachePlayerRef.exposedName, scPlayer);
+    }
+    
     internal static EditorCurveBinding GetTimeCurveBinding() {return m_timeCurveBinding; }
     
     private static EditorCurveBinding m_timeCurveBinding =  
@@ -113,7 +123,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     [SerializeField] private double      m_time;
 
 
-    private bool m_wasCloned = false;
+    private IExposedPropertyTable m_propertyTable;
 
 }
 
