@@ -36,17 +36,11 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         
         SceneCachePlayer scPlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
 
-        if (m_wasCloned) {
-            scClipData.SetInitialized(true);
-            m_wasCloned = false;
-        }
-        
-        
-        
         //Initialize or clear curve
         if (scPlayer) {
             scPlayer.SetAutoplay(false);
-            scClipData.BindSceneCachePlayer(scPlayer);
+            scClipData.BindSceneCachePlayer(scPlayer, allowClipDurationChange: !m_wasCloned);
+            m_wasCloned = false;
         } else {
             scClipData.UnbindSceneCachePlayer();
         }
