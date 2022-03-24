@@ -8,5 +8,6 @@ namespace Unity.MeshSync
     {
         public GameObject go;
         public Matrix4x4[] transforms;
+        public Material[] materials;
     }
 }

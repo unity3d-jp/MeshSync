@@ -11,7 +11,8 @@ namespace Unity.MeshSync
 {
     // Wrapper with additional data on PropertyInfoData
     // that cannot be stored in the shared data structure:
-    public class PropertyInfoDataWrapper
+    [Serializable]
+    public class PropertyInfoDataWrapper : ISerializationCallbackReceiver
     {
         [DllImport(Lib.name)]
         static extern void msPropertyInfoCopyData(IntPtr self, ref int dst);
@@ -92,19 +93,98 @@ namespace Unity.MeshSync
         public PropertyInfoData.Type type;
         public PropertyInfoData.SourceType sourceType;
 
+        [field: SerializeField]
         public string name { get; private set; }
 
+        [field: SerializeField]
         public float min { get; private set; }
+
+        [field: SerializeField]
         public float max { get; private set; }
+
+        [field: SerializeField]
         public string path { get; private set; }
 
+        [field: SerializeField]
         public string modifierName { get; private set; }
 
+        [field: SerializeField]
         public string propertyName { get; private set; }
 
+        [field: SerializeField]
         public int arrayLength { get; private set; }
 
-        private object propertyValue;
+        // object cannot be serialized by unity, save a string representation of it:
+        public object propertyValue;
+        [SerializeField, HideInInspector]
+        private string propertyValueSerialized;
+
+        static T[] ParseArray<T>(string propertyValueSerialized, Func<string, T> parse)
+        {
+            string[] v = propertyValueSerialized.Substring(2).Split('|');
+            var array = new T[v.Length];
+            for (int i = 0; i < v.Length; i++)
+            {
+                array[i] = parse(v[i]);
+            }
+
+            return array;
+        }
+
+        static string SaveArray<T>(string prefix, T[] array)
+        {
+            StringBuilder sb = new StringBuilder(prefix);
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (i < array.Length)
+                {
+                    sb.Append("|");
+                }
+
+                sb.Append(array[i]);
+            }
+
+            return sb.ToString();
+        }
+
+        public void OnBeforeSerialize()
+        {
+            if (propertyValue == null)
+                propertyValueSerialized = "n";
+            else if (propertyValue is int)
+                propertyValueSerialized = "i" + propertyValue.ToString();
+            else if (propertyValue is float)
+                propertyValueSerialized = "f" + propertyValue.ToString();
+            else if (propertyValue is string)
+                propertyValueSerialized = "s" + propertyValue.ToString();
+            else if (propertyValue is int[] intArray)
+                propertyValueSerialized = SaveArray("a", intArray);
+            else if (propertyValue is float[] floatArray)
+                propertyValueSerialized = SaveArray("b", floatArray);
+            else
+                throw new NotImplementedException($"propertyValue: {propertyValue.GetType()} cannot be serialized!");
+        }
+
+        public void OnAfterDeserialize()
+        {
+            if (propertyValueSerialized.Length == 0)
+                return;
+            char type = propertyValueSerialized[0];
+            if (type == 'n')
+                propertyValue = null;
+            else if (type == 'i')
+                propertyValue = int.Parse(propertyValueSerialized.Substring(1));
+            else if (type == 'f')
+                propertyValue = float.Parse(propertyValueSerialized.Substring(1));
+            else if (type == 's')
+                propertyValue = propertyValueSerialized.Substring(1);
+            else if (type == 'a')
+                propertyValue = ParseArray(propertyValueSerialized, int.Parse);
+            else if (type == 'b')
+                propertyValue = ParseArray(propertyValueSerialized, float.Parse);
+            else
+                throw new NotImplementedException($"propertyValue: {type} cannot be deserialized!");
+        }
 
         public object NewValue
         {
@@ -143,11 +223,22 @@ namespace Unity.MeshSync
                 return x;
             }
 
+            if (propertyValue == null)
+            {
+                return default(T);
+            }
+
             return (T)propertyValue;
+        }
+
+        public override string ToString()
+        {
+            return $"PropertyInfoDataWrapper: {name}: {GetValue<object>()}";
         }
     }
 
     // Partial class for now to make merging code easier later.
+    [Serializable]
     partial class BaseMeshSync
     {
         bool m_foldBlenderSettings;
@@ -158,6 +249,7 @@ namespace Unity.MeshSync
             set { m_foldBlenderSettings = value; }
         }
 
+        [SerializeField]
         public List<PropertyInfoDataWrapper> propertyInfos = new List<PropertyInfoDataWrapper>();
 
         void UpdateProperties(SceneData scene)
@@ -176,6 +268,15 @@ namespace Unity.MeshSync
                     }
                 }
             });
+        }
+
+        public string DebugLabel()
+        {
+            return m_clientObjects.Count.ToString();
+        }
+
+        public BaseMeshSync()
+        {
         }
     }
 }

@@ -204,15 +204,16 @@ void AsyncSceneSender::send()
 
     // instance infos
     if (!instanceInfos.empty()) {
-        for (auto& instanceInfo : instanceInfos) {
+        //for (auto& instanceInfo : instanceInfos) {
             ms::SetMessage mes;
             setup_message(mes);
             mes.scene->settings = scene_settings;
-            mes.scene->instanceInfos = { instanceInfo };
+            /*mes.scene->instanceInfos = { instanceInfo };*/
+            mes.scene->instanceInfos = instanceInfos;
             succeeded = succeeded && client.send(mes);
             if (!succeeded)
                 goto cleanup;
-        }
+        //}
     }
 
     // property infos

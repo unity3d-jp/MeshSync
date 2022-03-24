@@ -275,6 +275,10 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
 
         if (!m_keyValuesSerializationEnabled)
             return;
+
+        //TypedReference tr = __makeref((object)m_clientObjects);
+        //IntPtr ptr = **(IntPtr**)(&tr);
+        //Debug.LogError($"OnBeforeSerialize: {GetInstanceID()} {m_clientObjects}");
         
         SerializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
         SerializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
@@ -290,6 +294,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
     /// Called during serialization as an implementation of ISerializationCallbackReceiver
     /// </summary>
     public void OnAfterDeserialize() {
+        //Debug.LogError($"OnAfterDeserialize: {GetInstanceID()} {m_clientObjects}");
+
         DeserializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
         DeserializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
         DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
@@ -440,7 +446,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
 
 //----------------------------------------------------------------------------------------------------------------------    
 
-    private static Material CreateDefaultMaterial(string shaderName =null) {
+    public static Material CreateDefaultMaterial(string shaderName =null) {
         
         Shader shader = null;
         if (!string.IsNullOrEmpty(shaderName)) {

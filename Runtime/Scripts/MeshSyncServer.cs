@@ -8,6 +8,7 @@ using UnityEngine.Serialization;
 
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEngine.Rendering;
 #endif
 
 namespace Unity.MeshSync {
@@ -15,7 +16,7 @@ namespace Unity.MeshSync {
 /// <summary>
 /// A component to sync meshes/models editing in DCC tools into Unity in real time.
 /// </summary>
-[ExecuteInEditMode]
+[ExecuteAlways]
 public partial class MeshSyncServer : BaseMeshSync {
 
     /// <summary>
@@ -504,9 +505,19 @@ public partial class MeshSyncServer : BaseMeshSync {
 #else
         m_instanceRenderer.Init(this, records:m_clientInstances);
 #endif
+
+            RenderPipelineManager.beginFrameRendering += RenderPipelineManager_beginFrameRendering;
     }
 
+        private void RenderPipelineManager_beginFrameRendering(ScriptableRenderContext arg1, Camera[] arg2)
+        {
+            m_instanceRenderer.Draw();
+        }
+
+
     protected override void OnDisable() {
+               RenderPipelineManager.beginFrameRendering -= RenderPipelineManager_beginFrameRendering;
+
         base.OnDisable();
         StopServer();
     }
@@ -517,11 +528,6 @@ public partial class MeshSyncServer : BaseMeshSync {
         m_DCCInterop?.Cleanup();
 
         m_instanceRenderer.Clear();
-    }
- 
-    void Update()
-    {
-        m_instanceRenderer.Draw();
     }
 
     void Start()

@@ -22,12 +22,15 @@ internal static class Lib {
     [DllImport(name)]
     static extern int msGetProtocolVersion();
 
-    #endregion
+        #endregion
 
-
+        static string version;
     internal static string GetPluginVersion() {
-        IntPtr nativeStr = msGetPluginVersionStr(); //Not direct marshalling because there is no free on C# side.
-        return Marshal.PtrToStringAnsi(nativeStr);
+            if (version == null)
+            {        IntPtr nativeStr = msGetPluginVersionStr(); //Not direct marshalling because there is no free on C# side.
+        version= Marshal.PtrToStringAnsi(nativeStr);
+            }
+            return version;
     }
 
     internal static int GetProtocolVersion() {

@@ -7,14 +7,14 @@ using Object = UnityEngine.Object;
 using UnityEditor;
 #endif
 
-namespace Unity.MeshSync{
-    
+namespace Unity.MeshSync
+{
     internal class MeshSyncInstanceRenderer
     {
         private BaseMeshSync m_server;
 
         private Camera[] m_cameras;
-        
+
         private Dictionary<string, MeshInstanceInfo> m_instanceInfo = new Dictionary<string, MeshInstanceInfo>();
 
         private bool m_isDirty = false;
@@ -30,25 +30,22 @@ namespace Unity.MeshSync{
         private CameraMode m_cameraMode = CameraMode.GameCameras;
 
         public void Init(
-            BaseMeshSync ms, 
-            CameraMode cameraMode = CameraMode.GameCameras, 
+            BaseMeshSync ms,
+            CameraMode cameraMode = CameraMode.GameCameras,
             Dictionary<string, InstanceInfoRecord> records = null)
         {
             m_server = ms;
             m_cameraMode = cameraMode;
 
 #if UNITY_EDITOR
-            EditorApplication.update -= Draw;
-            EditorApplication.update += Draw;
-            
             //To cover cases where the user adds cameras to the scene manually
             EditorApplication.hierarchyChanged -= OnHierarchyChanged;
             EditorApplication.hierarchyChanged += OnHierarchyChanged;
             Undo.undoRedoPerformed += UndoRedoPerformed;
 #endif
-            
+
             RefreshCameraList();
-            
+
             ms.onUpdateInstanceInfo -= OnUpdateInstanceInfo;
             ms.onUpdateInstanceInfo += OnUpdateInstanceInfo;
             ms.onDeleteInstanceInfo -= OnDeleteInstanceInfo;
@@ -62,7 +59,7 @@ namespace Unity.MeshSync{
             ms.onDeleteEntity -= OnDeleteEntity;
             ms.onSceneUpdateEnd -= OnSceneUpdateEnd;
             ms.onSceneUpdateEnd += OnSceneUpdateEnd;
-            
+
             LoadData(records);
         }
 
@@ -70,14 +67,14 @@ namespace Unity.MeshSync{
         {
             if (records == null)
                 return;
-            
+
             m_instanceInfo.Clear();
-            
+
             foreach (var record in records)
             {
                 var key = record.Key;
                 var value = record.Value;
-                
+
                 OnUpdateInstanceInfo(key, value.go, value.transforms);
             }
         }
@@ -108,7 +105,7 @@ namespace Unity.MeshSync{
                 m_cameras[i + gameViewCameras.Length] = sceneViewCameras[i];
             }
         }
-        
+
         private void OnHierarchyChanged()
         {
             RefreshCameraList();
@@ -138,7 +135,7 @@ namespace Unity.MeshSync{
         }
 
         #region Events
-        
+
 #if UNITY_EDITOR
         private void UndoRedoPerformed()
         {
@@ -156,7 +153,7 @@ namespace Unity.MeshSync{
 
         private void OnUpdateEntity(GameObject obj, TransformData data)
         {
-            if (data.entityType  == EntityType.Camera)
+            if (data.entityType == EntityType.Camera)
             {
                 RefreshCameraList();
             }
@@ -168,7 +165,7 @@ namespace Unity.MeshSync{
                 return;
 
             m_instanceInfo.Remove(path);
-            
+
             SetDirty();
         }
 
@@ -179,7 +176,7 @@ namespace Unity.MeshSync{
                 entry = new MeshInstanceInfo();
                 this.m_instanceInfo.Add(path, entry);
             }
-            
+
             UpdateEntryMeshMaterials(path, go, entry);
         }
 
@@ -188,9 +185,9 @@ namespace Unity.MeshSync{
 
             if (path == null)
                 return;
-            
+
             m_instanceInfo.Remove(path);
-            
+
             SetDirty();
         }
 
@@ -205,12 +202,12 @@ namespace Unity.MeshSync{
                 Debug.LogWarningFormat("[MeshSync] No Gameobject found: {0}", path);
                 return;
             }
-            
+
 
             if (!m_instanceInfo.TryGetValue(path, out MeshInstanceInfo entry))
             {
                 entry = new MeshInstanceInfo();
-                
+
                 m_instanceInfo.Add(path, entry);
             }
 
@@ -220,9 +217,15 @@ namespace Unity.MeshSync{
             }
 
             entry.Instances = transforms;
-            
-            foreach (var mat in entry.Materials)
+
+            for (int i = 0; i < entry.Materials.Length; i++)
             {
+                Material mat = entry.Materials[i];
+                if (mat == null)
+                {
+                    mat = BaseMeshSync.CreateDefaultMaterial();
+                    entry.Materials[i] = mat;
+                }
                 mat.enableInstancing = true;
             }
 
@@ -241,7 +244,7 @@ namespace Unity.MeshSync{
 
                 return true;
             }
-            
+
             if (!go.TryGetComponent(out MeshFilter filter))
             {
                 Debug.LogWarningFormat("[MeshSync] No Mesh Filter for {0}", path);
@@ -255,22 +258,35 @@ namespace Unity.MeshSync{
             }
 
             entry.Mesh = filter.sharedMesh;
+
+            bool haveSharedMats = true;
+
+            // If there are shared mats, use them:
+            foreach (var item in renderer.sharedMaterials)
+            {
+                if (item == null)
+                {
+                    haveSharedMats = false;
+                    break;
+                }
+            }
+
             entry.Materials = renderer.sharedMaterials;
             entry.GameObject = go;
             entry.Renderer = renderer;
             entry.Root = m_server.transform;
-            
+
             return true;
         }
         #endregion
-        
+
         #region Rendering
 
         private void SetDirty()
         {
             m_isDirty = true;
         }
-        
+
         public void Draw()
         {
             foreach (var entry in m_instanceInfo)
@@ -285,40 +301,41 @@ namespace Unity.MeshSync{
             {
                 return;
             }
-            
+
             var mesh = entry.Mesh;
-            
+
             entry.UpdateDividedInstances();
             var matrixBatches = entry.DividedInstances;
 
             if (entry.Materials.Length == 0)
                 return;
-            
+
             for (var i = 0; i < mesh.subMeshCount; i++)
             {
                 // Try to get the material in the same index position as the mesh
                 // or the last material.
-                var materialIndex = Mathf.Clamp(i, 0, entry.Materials.Length -1);
-                
+                var materialIndex = Mathf.Clamp(i, 0, entry.Materials.Length - 1);
+
                 var material = entry.Materials[materialIndex];
+                
                 for (var j = 0; j < matrixBatches.Count; j++)
                 {
                     var batch = matrixBatches[j];
-                    
+
                     DrawOnCameras(
-                        mesh, 
+                        mesh,
                         i,
                         material,
-                        batch, 
-                        entry.Layer, 
-                        entry.ReceiveShadows, 
-                        entry.ShadowCastingMode, 
-                        entry.LightProbeUsage, 
+                        batch,
+                        entry.Layer,
+                        entry.ReceiveShadows,
+                        entry.ShadowCastingMode,
+                        entry.LightProbeUsage,
                         entry.LightProbeProxyVolume);
                 }
             }
         }
-        
+
         private void DrawOnCameras(
             Mesh mesh,
             int submeshIndex,
@@ -327,31 +344,31 @@ namespace Unity.MeshSync{
             int layer,
             bool receiveShadows,
             ShadowCastingMode shadowCastingMode,
-            LightProbeUsage lightProbeUsage, 
+            LightProbeUsage lightProbeUsage,
             LightProbeProxyVolume lightProbeProxyVolume)
         {
             if (m_cameras == null)
                 return;
-            
+
             for (var i = 0; i < m_cameras.Length; i++)
             {
                 var camera = m_cameras[i];
                 if (camera == null)
                     continue;
-                
+
                 Graphics.DrawMeshInstanced(
-                    mesh:mesh,
-                    submeshIndex:submeshIndex, 
-                    material:material, 
-                    matrices:matrices, 
-                    count:matrices.Length, 
-                    properties:null, 
-                    castShadows:shadowCastingMode, 
-                    receiveShadows:receiveShadows,
-                    layer:layer, 
-                    camera:camera,
-                    lightProbeUsage:lightProbeUsage, 
-                    lightProbeProxyVolume:lightProbeProxyVolume);
+                    mesh: mesh,
+                    submeshIndex: submeshIndex,
+                    material: material,
+                    matrices: matrices,
+                    count: matrices.Length,
+                    properties: null,
+                    castShadows: shadowCastingMode,
+                    receiveShadows: receiveShadows,
+                    layer: layer,
+                    camera: camera,
+                    lightProbeUsage: lightProbeUsage,
+                    lightProbeProxyVolume: lightProbeProxyVolume);
             }
         }
 
@@ -359,18 +376,18 @@ namespace Unity.MeshSync{
         {
             if (m_cameras == null)
                 return;
-            
+
             for (var i = 0; i < m_cameras.Length; i++)
             {
                 var camera = m_cameras[i];
                 if (camera == null)
                     continue;
-                
+
                 camera.Render();
             }
         }
-        
-        
+
+
         private void RenderAndDraw()
         {
             if (Application.isEditor && !Application.isPlaying)
@@ -389,7 +406,7 @@ namespace Unity.MeshSync{
             m_cameraMode = CameraMode.None;
             m_instanceInfo.Clear();
         }
-        
+
         #endregion
     }
 

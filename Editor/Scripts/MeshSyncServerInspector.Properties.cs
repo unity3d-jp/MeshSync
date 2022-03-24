@@ -16,6 +16,8 @@ namespace Unity.MeshSync.Editor
         }
         void DrawSliders(MeshSyncServer server)
         {
+            EditorGUILayout.LabelField(server.DebugLabel());
+
             var style = EditorStyles.foldout;
             style.fontStyle = FontStyle.Bold;
             server.foldBlenderSettings = EditorGUILayout.Foldout(server.foldBlenderSettings, "Blender settings", true, style);
@@ -52,15 +54,21 @@ namespace Unity.MeshSync.Editor
                         {
                             // TODO: Use custom IntVector here maybe:
                             var a = prop.GetValue<int[]>();
-                            var v = new Vector3(a[0], a[1], a[2]);
-                            newValue = EditorGUILayout.Vector3Field(prop.name, v);
+                            if (prop.arrayLength == 3)
+                            {
+                                var v = new Vector3(a[0], a[1], a[2]);
+                                newValue = EditorGUILayout.Vector3Field(prop.name, v);
+                            }
                             break;
                         }
                     case PropertyInfoData.Type.FloatArray:
                         {
                             var a = prop.GetValue<float[]>();
-                            var v = new Vector3(a[0], a[1], a[2]);
-                            newValue = EditorGUILayout.Vector3Field(prop.name, v);
+                            if (prop.arrayLength == 3)
+                            {
+                                var v = new Vector3(a[0], a[1], a[2]);
+                                newValue = EditorGUILayout.Vector3Field(prop.name, v);
+                            }
                             break;
                         }
                 }
