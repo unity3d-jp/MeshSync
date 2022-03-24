@@ -42,11 +42,11 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
             const float BUTTON_X     = 30;
             const float BUTTON_WIDTH = 160f;
             if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"To Linear")) {
-                clipData.SetCurveToLinear();
+                m_scPlayableAsset.SetCurveToLinear();
             }
             
             if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"Apply Original")) {
-                clipData.ApplyOriginalSceneCacheCurve();
+                m_scPlayableAsset.ApplyOriginalSceneCacheCurve();
             }
             
             GUILayout.EndVertical();                    
