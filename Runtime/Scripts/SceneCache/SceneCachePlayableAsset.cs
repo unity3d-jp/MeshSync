@@ -85,7 +85,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     //returns curve duration
     private float ExtractSceneCacheCurve(TimelineClip clip) {
-
        
         //Bind for the first time
         m_animationCurve = ExtractNormalizedTimeCurve(m_sceneCachePlayer, out float updatedCurveDuration);
@@ -131,7 +130,23 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     #endregion
     
 //----------------------------------------------------------------------------------------------------------------------
-    
+        
+    internal void SetCurveToLinear() {
+        TimelineClip clip = GetBoundClipData()?.GetOwner();
+        Assert.IsNotNull(clip);
+       
+        m_animationCurve = CreateLinearAnimationCurve(clip);
+        UpdateClipCurve(clip, m_animationCurve);        
+    }
+
+    internal void ApplyOriginalSceneCacheCurve() {
+        if (null == m_sceneCachePlayer)
+            return;
+
+        TimelineClip clip = GetBoundClipData()?.GetOwner();
+        Assert.IsNotNull(clip);
+        ExtractSceneCacheCurve(clip);
+    }    
 //----------------------------------------------------------------------------------------------------------------------
     [CanBeNull]
     private static AnimationCurve ExtractNormalizedTimeCurve(SceneCachePlayer scPlayer, out float duration) {
