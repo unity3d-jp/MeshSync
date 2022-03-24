@@ -39,7 +39,7 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         if (null == clipData) 
             return clipOptions;
 
-        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
+        SceneCachePlayer scPlayer = asset.GetSceneCachePlayer();
         if (null == scPlayer) {
             clipOptions.errorText = NO_SCENE_CACHE_ASSIGNED_ERROR;
             return clipOptions;
