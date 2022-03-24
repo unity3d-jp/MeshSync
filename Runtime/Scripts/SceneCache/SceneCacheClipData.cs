@@ -1,16 +1,6 @@
 ﻿using System;
-using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
 using UnityEngine;
-using UnityEngine.Assertions;
-using UnityEngine.Timeline;
-using System.Collections.Generic; //HashSet
-
-#if UNITY_EDITOR
-using UnityEditor;
-using UnityEditor.Timeline;
-#endif
-
 
 namespace Unity.MeshSync {
 
