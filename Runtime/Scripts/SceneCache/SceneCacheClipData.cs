@@ -23,7 +23,15 @@ internal class SceneCacheClipData : BaseClipData {
     }
 
     protected override void OnAfterDeserializeInternalV() {
+        if (m_sceneCacheClipDataVersion == CUR_SCENE_CACHE_CLIP_DATA_VERSION) {
+            return;
+        }
+
+        if (m_sceneCacheClipDataVersion < (int) SceneCacheClipDataVersion.MovedLimitedAnimationController_0_12_6) {
+            m_copyLimitedAnimationControllerToAsset = true;
+        }
         
+        m_sceneCacheClipDataVersion = CUR_SCENE_CACHE_CLIP_DATA_VERSION;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -202,7 +210,18 @@ internal class SceneCacheClipData : BaseClipData {
     internal void           SetAnimationCurve(AnimationCurve curve) { m_animationCurve = curve; }
     internal AnimationCurve GetAnimationCurve()                     {  return m_animationCurve; }
 
-    internal int GetVersion() => m_sceneCacheClipDataVersion;
+    //[TODO-sin:2022-3-24] remove this in 0.13.x
+    internal void CopyLegacyLimitedAnimationControllerToAsset(SceneCachePlayableAsset sceneCachePlayableAsset) {
+        if (!m_copyLimitedAnimationControllerToAsset) {
+            return;
+        }
+        
+        LimitedAnimationController assetController = sceneCachePlayableAsset.GetOverrideLimitedAnimationController();
+        assetController.SetEnabled(m_overrideLimitedAnimationController.IsEnabled());
+        assetController.SetFrameOffset(m_overrideLimitedAnimationController.GetFrameOffset());
+        assetController.SetNumFramesToHold(m_overrideLimitedAnimationController.GetNumFramesToHold());
+        m_copyLimitedAnimationControllerToAsset = true;
+    }
 
     //[TODO-sin:2022-3-24] remove this in 0.13.x
     [Obsolete]
@@ -225,6 +244,8 @@ internal class SceneCacheClipData : BaseClipData {
     SceneCachePlayer m_scPlayer = null;
     
     private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = (int) SceneCacheClipDataVersion.MovedLimitedAnimationController_0_12_6;
+
+    private bool m_copyLimitedAnimationControllerToAsset = false;
 
 //----------------------------------------------------------------------------------------------------------------------
 
