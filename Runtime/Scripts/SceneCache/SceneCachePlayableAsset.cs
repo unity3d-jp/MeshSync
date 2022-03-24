@@ -64,9 +64,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             if (m_updateClipDurationOnCreatePlayable) {
                 clip.duration = updatedCurveDuration;
             }
+            m_updateClipDurationOnCreatePlayable = false;
         }
         
-        m_updateClipDurationOnCreatePlayable = false;
         return Playable.Create(graph);
     }
 
