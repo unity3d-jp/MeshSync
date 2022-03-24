@@ -41,39 +41,7 @@ internal class SceneCacheClipData : BaseClipData {
 //----------------------------------------------------------------------------------------------------------------------
 
     internal override void DestroyV() { }
-    
-//----------------------------------------------------------------------------------------------------------------------
-    
-    //returns if updated or not
-    internal bool BindSceneCachePlayer(SceneCachePlayer sceneCachePlayer, out float updatedCurveDuration) {
-        //update data structure if clipData has already been flagged as initialized.
-        //m_scPlayer can initially be null after deserializing.
-        if (m_initialized && (null == m_scPlayer || sceneCachePlayer == m_scPlayer)) {
-            m_scPlayer           = sceneCachePlayer;
-            updatedCurveDuration = 0;
-            return false;
-        }
-
-        TimelineClip clip = GetOwner();
-        Assert.IsNotNull(clip);
        
-        //Bind for the first time
-        m_scPlayer       = sceneCachePlayer;
-        m_animationCurve = ExtractNormalizedTimeCurve(m_scPlayer, out updatedCurveDuration);
-        if (null == m_animationCurve) {
-            m_animationCurve = CreateLinearAnimationCurve(clip);
-            updatedCurveDuration    = (float) clip.duration;
-        }
-
-        UpdateClipCurve(clip, m_animationCurve);
-        m_initialized = true;
-        return true;
-    }
-
-    internal void UnbindSceneCachePlayer() {
-        m_scPlayer    = null;
-        m_initialized = false;
-    }
 
 //----------------------------------------------------------------------------------------------------------------------
     

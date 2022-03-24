@@ -51,7 +51,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             
         if (!m_sceneCachePlayer) {
             m_isSceneCacheCurveExtracted = false;
-            scClipData.UnbindSceneCachePlayer(); //clear curve
             return Playable.Create(graph);
         }
 
