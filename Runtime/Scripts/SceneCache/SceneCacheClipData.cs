@@ -220,7 +220,7 @@ internal class SceneCacheClipData : BaseClipData {
         assetController.SetEnabled(m_overrideLimitedAnimationController.IsEnabled());
         assetController.SetFrameOffset(m_overrideLimitedAnimationController.GetFrameOffset());
         assetController.SetNumFramesToHold(m_overrideLimitedAnimationController.GetNumFramesToHold());
-        m_copyLimitedAnimationControllerToAsset = true;
+        m_copyLimitedAnimationControllerToAsset = false;
     }
 //----------------------------------------------------------------------------------------------------------------------
    
