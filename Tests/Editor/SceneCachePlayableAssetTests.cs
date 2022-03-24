@@ -169,8 +169,6 @@ internal class SceneCachePlayableAssetTests {
         const int NUM_FRAMES_TO_HOLD = 3;
         const int OFFSET = 1;
         
-        SceneCacheClipData clipData = clip.GetClipData<SceneCacheClipData>();
-        Assert.IsNotNull(clipData);
         SceneCachePlayableAsset sceneCachePlayableAsset = clip.asset as SceneCachePlayableAsset;
         Assert.IsNotNull(sceneCachePlayableAsset);
         LimitedAnimationController limitedAnimationController = sceneCachePlayableAsset.GetOverrideLimitedAnimationController();
