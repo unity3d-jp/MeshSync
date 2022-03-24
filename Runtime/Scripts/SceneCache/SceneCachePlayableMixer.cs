@@ -74,9 +74,11 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
         }
 
         UpdateObjectActiveStates(activeObject: scPlayer.gameObject);
+        LimitedAnimationController limitedAnimationController = clipData.GetOverrideLimitedAnimationController(); 
+
         
         double localTime = clip.ToLocalTime(playable.GetTime());
-        double t         = CalculateTimeForLimitedAnimation(clipData,localTime);
+        double t         = CalculateTimeForLimitedAnimation(scPlayer,limitedAnimationController, localTime);
         
         AnimationCurve curve          = clipData.GetAnimationCurve();
         float          normalizedTime = curve.Evaluate((float)t);
@@ -166,24 +168,21 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    private static double CalculateTimeForLimitedAnimation(SceneCacheClipData clipData, double time) {
-
-        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
-        Assert.IsNotNull(scPlayer);
-        
+    private static double CalculateTimeForLimitedAnimation(SceneCachePlayer scPlayer, 
+        LimitedAnimationController overrideLimitedAnimationController, double time)  
+    {
         LimitedAnimationController origLimitedAnimationController = scPlayer.GetLimitedAnimationController();
         if (origLimitedAnimationController.IsEnabled()) //do nothing if LA is set on the target SceneCache
             return time;
         
-        LimitedAnimationController clipLimitedAnimationController = clipData.GetOverrideLimitedAnimationController();
-        if (!clipLimitedAnimationController.IsEnabled())
+        if (!overrideLimitedAnimationController.IsEnabled())
             return time;
 
         ISceneCacheInfo scInfo = scPlayer.ExtractSceneCacheInfo(forceOpen: true);
         if (null == scInfo)
             return time;
             
-        int frame = scPlayer.CalculateFrame((float)time,clipLimitedAnimationController);
+        int frame = scPlayer.CalculateFrame((float)time,overrideLimitedAnimationController);
         return frame / scInfo.GetSampleRate();
     }
     
