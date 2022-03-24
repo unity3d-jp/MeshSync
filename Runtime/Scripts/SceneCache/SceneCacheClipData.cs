@@ -202,6 +202,8 @@ internal class SceneCacheClipData : BaseClipData {
     internal void           SetAnimationCurve(AnimationCurve curve) { m_animationCurve = curve; }
     internal AnimationCurve GetAnimationCurve()                     {  return m_animationCurve; }
 
+    internal int GetVersion() => m_sceneCacheClipDataVersion;
+
     //[TODO-sin:2022-3-24] remove this in 0.13.x
     [Obsolete]
     internal LimitedAnimationController GetOverrideLimitedAnimationController() { return m_overrideLimitedAnimationController; }
@@ -222,8 +224,16 @@ internal class SceneCacheClipData : BaseClipData {
     //Can't use SerializeField, because SceneCacheClipData is an asset which belongs to a track.  
     SceneCachePlayer m_scPlayer = null;
     
-    private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = 1;
+    private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = (int) SceneCacheClipDataVersion.MovedLimitedAnimationController_0_12_6;
 
+//----------------------------------------------------------------------------------------------------------------------
+
+    internal enum SceneCacheClipDataVersion {
+        Initial = 1, 
+        MovedLimitedAnimationController_0_12_6, //Moved LimitedAnimationController to SceneCachePlayableAsset in 0.12.6
+        
+    } 
+    
 }
 
 
