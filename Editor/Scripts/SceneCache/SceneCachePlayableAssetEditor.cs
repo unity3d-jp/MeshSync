@@ -91,12 +91,6 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         if (null == clip.curves) {
             CreateClipCurve(clip);
         }        
-        
-        SceneCacheClipData clipData = playableAsset.GetBoundClipData() as SceneCacheClipData;
-        if (null == clipData) {
-            //The clip is not ready. Not deserialized yet
-            return;
-        }
                        
         //Always apply clipCurves to playableAsset
         AnimationCurve curve = AnimationUtility.GetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding());        
