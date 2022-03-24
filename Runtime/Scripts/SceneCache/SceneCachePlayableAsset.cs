@@ -47,7 +47,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         if (m_sceneCachePlayer) {
             m_sceneCachePlayer.SetAutoplay(false);
             scClipData.BindSceneCachePlayer(m_sceneCachePlayer, allowClipDurationChange: !m_wasCloned);
-            m_wasCloned = false;
+
+            m_animationCurve = new AnimationCurve(scClipData.m_animationCurve));
+            m_wasCloned      = false;
         } else {
             scClipData.UnbindSceneCachePlayer();
         }
