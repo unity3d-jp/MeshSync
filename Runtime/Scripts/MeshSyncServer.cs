@@ -493,47 +493,12 @@ public class MeshSyncServer : BaseMeshSync {
         if (m_autoStartServer) {
             m_requestRestartServer = true;
         }
-
-        if (RenderPipelineManager.currentPipeline == null)
-        {
-            Camera.onPreCull += OnCameraPreCull;
-        }
-        else
-        {
-            RenderPipelineManager.beginFrameRendering += OnBeginFrameRendering;
-        }
-
-        m_instanceRenderer.Init(this, m_clientInstances);
     }
 
-    private void OnCameraPreCull(Camera cam)
-    {
-        // Avoid rendering on the preview window
-        if (cam.name == "Preview Scene Camera")
-        {
-            return;
-        }
-        
-        Camera[] cams = {cam};
-        m_instanceRenderer.Draw(cams);
-    }
-
-    private void OnBeginFrameRendering(ScriptableRenderContext arg1, Camera[] cameras)
-    {
-        m_instanceRenderer.Draw(cameras);
-    }
 
     protected override void OnDisable() {
         base.OnDisable();
         StopServer();
-        if (RenderPipelineManager.currentPipeline == null)
-        {
-            Camera.onPreCull -= OnCameraPreCull;
-        }
-        else
-        {
-            RenderPipelineManager.beginFrameRendering -= OnBeginFrameRendering;
-        }
     }
 
     void Start()
@@ -546,7 +511,6 @@ public class MeshSyncServer : BaseMeshSync {
     void OnDestroy()
     {
         base.OnDestroy();
-        m_instanceRenderer.Clear();
     }
     
     void LateUpdate() {
@@ -563,8 +527,6 @@ public class MeshSyncServer : BaseMeshSync {
     bool m_requestRestartServer = false;
     bool m_captureScreenshotInProgress = false;
     
-    MeshSyncInstanceRenderer m_instanceRenderer = new MeshSyncInstanceRenderer();
-
 #endif // UNITY_STANDALONE
     
     [SerializeField] private bool m_autoStartServer = false;

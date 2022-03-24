@@ -9,56 +9,73 @@ using UnityEditor;
 
 namespace Unity.MeshSync{
     
-    internal class MeshSyncInstanceRenderer
+    [ExecuteInEditMode]
+    internal class MeshSyncInstanceRenderer : MonoBehaviour
     {
         private BaseMeshSync m_server;
-        
-        private Dictionary<string, MeshInstanceInfo> m_instanceInfo = new Dictionary<string, MeshInstanceInfo>();
 
+        private InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
+
+        [SerializeField] private Matrix4x4[] m_transforms;
+        [SerializeField] private Material[] m_materials;
+        [SerializeField] private Mesh m_mesh;
+        
         private bool m_isUpdating = false;
-        
-        
-        public void Init(
-            BaseMeshSync ms, 
-            Dictionary<string, InstanceInfoRecord> records = null)
+
+        public void Init(BaseMeshSync ms)
         {
             m_server = ms;
-
-            ms.onUpdateInstanceInfo -= OnUpdateInstanceInfo;
-            ms.onUpdateInstanceInfo += OnUpdateInstanceInfo;
-            ms.onDeleteInstanceInfo -= OnDeleteInstanceInfo;
-            ms.onDeleteInstanceInfo += OnDeleteInstanceInfo;
-            ms.onUpdateInstanceMesh -= OnUpdateInstanceMesh;
-            ms.onUpdateInstanceMesh += OnUpdateInstanceMesh;
-            ms.onDeleteInstanceMesh -= OnDeleteInstanceMesh;
-            ms.onDeleteInstanceMesh += OnDeleteInstanceMesh;
+            
             ms.onSceneUpdateEnd -= OnSceneUpdateEnd;
             ms.onSceneUpdateEnd += OnSceneUpdateEnd;
+            
             ms.onSceneUpdateBegin -= OnSceneUpdateBegin;
             ms.onSceneUpdateBegin += OnSceneUpdateBegin;
+        }
+
+        void OnEnable()
+        {
+            if (RenderPipelineManager.currentPipeline == null)
+            {
+                Camera.onPreCull += OnCameraPreCull;
+            }
+            else
+            {
+                RenderPipelineManager.beginFrameRendering += OnBeginFrameRendering;
+            }
+
+            UpdateRenderingInfo(m_renderingInfo);
+        }
+
+        void OnDisable()
+        {
+            if (RenderPipelineManager.currentPipeline == null)
+            {
+                Camera.onPreCull -= OnCameraPreCull;
+            }
+            else
+            {
+                RenderPipelineManager.beginFrameRendering -= OnBeginFrameRendering;
+            }
+        }
+
+        private void OnBeginFrameRendering(ScriptableRenderContext arg1, Camera[] cameras)
+        {
+            Draw(cameras);
+        }
+
+        private void OnCameraPreCull(Camera cam)
+        {
+            if (cam.name == "Preview Scene Camera")
+                return;
             
-            LoadData(records);
+            Camera[] cameras = {cam};
+            Draw(cameras);
         }
 
         private void OnSceneUpdateBegin()
         {
             m_isUpdating = true;
-        }
-
-        private void LoadData(Dictionary<string, InstanceInfoRecord> records)
-        {
-            if (records == null)
-                return;
-            
-            m_instanceInfo.Clear();
-            
-            foreach (var record in records)
-            {
-                var key = record.Key;
-                var value = record.Value;
-                
-                OnUpdateInstanceInfo(key, value.go, value.transforms);
-            }
         }
 
         private void OnSceneUpdateEnd()
@@ -68,99 +85,57 @@ namespace Unity.MeshSync{
 
         #region Events
 
-        private void OnDeleteInstanceMesh(string path)
+        public void UpdateTransforms(Matrix4x4[] transforms)
         {
-            if (path == null)
-                return;
-
-            m_instanceInfo.Remove(path);
+            m_transforms = transforms;
+            m_renderingInfo.Instances = m_transforms;
         }
 
-        private void OnUpdateInstanceMesh(string path, GameObject go)
+        private void UpdateInfoFromRenderer(InstanceRenderingInfo info)
         {
-            if (!this.m_instanceInfo.TryGetValue(path, out MeshInstanceInfo entry))
+            if (TryGetComponent(out SkinnedMeshRenderer skinnedMeshRenderer))
             {
-                entry = new MeshInstanceInfo();
-                this.m_instanceInfo.Add(path, entry);
-            }
-            
-            UpdateEntryMeshMaterials(path, go, entry);
-        }
-
-        private void OnDeleteInstanceInfo(string path)
-        {
-
-            if (path == null)
-                return;
-            
-            m_instanceInfo.Remove(path);
-        }
-
-
-        private void OnUpdateInstanceInfo(
-            string path,
-            GameObject go,
-            Matrix4x4[] transforms)
-        {
-            if (go == null)
-            {
-                Debug.LogWarningFormat("[MeshSync] No Gameobject found: {0}", path);
+                info.Mesh = skinnedMeshRenderer.sharedMesh;
+                info.Materials = skinnedMeshRenderer.sharedMaterials;
+                info.GameObject = gameObject;
+                info.Renderer = skinnedMeshRenderer;
                 return;
             }
             
-
-            if (!m_instanceInfo.TryGetValue(path, out MeshInstanceInfo entry))
+            if (!TryGetComponent(out MeshFilter filter))
             {
-                entry = new MeshInstanceInfo();
-                
-                m_instanceInfo.Add(path, entry);
-            }
-
-            if (!UpdateEntryMeshMaterials(path, go, entry))
-            {
+                Debug.LogWarningFormat("[MeshSync] No Mesh Filter for {0}", name);
                 return;
             }
 
-            entry.Instances = transforms;
-            
-            foreach (var mat in entry.Materials)
+            if (!TryGetComponent(out MeshRenderer renderer))
             {
-                mat.enableInstancing = true;
+                Debug.LogWarningFormat("[MeshSync] No renderer for {0}", name);
+                return;
             }
+            
+            info.Mesh = filter.sharedMesh;
+            info.Materials = renderer.sharedMaterials;
+            info.GameObject = gameObject;
+            info.Renderer = renderer;
         }
-
-        private bool UpdateEntryMeshMaterials(string path, GameObject go, MeshInstanceInfo entry)
+        
+        private void UpdateRenderingInfo(InstanceRenderingInfo info)
         {
-            if (go.TryGetComponent(out SkinnedMeshRenderer skinnedMeshRenderer))
-            {
-                entry.Mesh = skinnedMeshRenderer.sharedMesh;
-                entry.Materials = skinnedMeshRenderer.sharedMaterials;
-                entry.GameObject = go;
-                entry.Renderer = skinnedMeshRenderer;
-                entry.Root = m_server.transform;
+            // Transforms
+            info.Instances = m_transforms;
 
-                return true;
-            }
+            // Renderer related info
+            UpdateInfoFromRenderer(info);
+
+            m_materials = info.Materials;
+            m_mesh = info.Mesh;
             
-            if (!go.TryGetComponent(out MeshFilter filter))
+            // Enable instancing in materials
+            for (var i = 0; i < info.Materials.Length; i++)
             {
-                Debug.LogWarningFormat("[MeshSync] No Mesh Filter for {0}", path);
-                return false;
+                info.Materials[i].enableInstancing = true;
             }
-
-            if (!go.TryGetComponent(out MeshRenderer renderer))
-            {
-                Debug.LogWarningFormat("[MeshSync] No renderer for {0}", path);
-                return false;
-            }
-
-            entry.Mesh = filter.sharedMesh;
-            entry.Materials = renderer.sharedMaterials;
-            entry.GameObject = go;
-            entry.Renderer = renderer;
-            entry.Root = m_server.transform;
-            
-            return true;
         }
         #endregion
         
@@ -172,13 +147,10 @@ namespace Unity.MeshSync{
             if (m_isUpdating)
                 return;
             
-            foreach (var entry in m_instanceInfo)
-            {
-                DrawInstances(entry.Value, cameras);
-            }
+            DoDraw(m_renderingInfo, cameras);
         }
 
-        private void DrawInstances(MeshInstanceInfo entry, Camera[] cameras)
+        private void DoDraw(InstanceRenderingInfo entry, Camera[] cameras)
         {
             if (entry.Mesh == null || entry.DividedInstances == null || entry.Materials == null)
             {
@@ -260,7 +232,7 @@ namespace Unity.MeshSync{
         public void Clear()
         {
             m_server = null;
-            m_instanceInfo.Clear();
+            m_renderingInfo = null;
         }
         
         #endregion

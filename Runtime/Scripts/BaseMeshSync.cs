@@ -587,7 +587,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 var src = scene.GetInstanceInfo(i);
                 var dst = UpdateInstanceInfo(src);
                 if (onUpdateInstanceInfo != null)
-                    onUpdateInstanceInfo.Invoke(src.path, dst.go, dst.transforms);
+                    onUpdateInstanceInfo.Invoke(src.path, dst.go, src.transforms);
             }
         });
         
@@ -1639,7 +1639,11 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     EntityRecord UpdateInstanceMesh(TransformData data)
     {
         var config = GetConfigV();
+        
         var rec = UpdateMeshEntity((MeshData)data, config);
+        var renderer = rec.go.GetOrAddComponent<MeshSyncInstanceRenderer>();
+        
+        renderer.Init(this);
 
         if (!this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord _))
         {
@@ -1660,35 +1664,21 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             rec = new InstanceInfoRecord();
             m_clientInstances.Add(data.path, rec);
         }
-
-        rec.transforms = data.transforms;
-
-       // if (data.type == InstanceInfoData.ReferenceType.EntityPath)
-       /* {
-            if (this.m_clientObjects.TryGetValue(data.path, out EntityRecord entityRecord))
+        
+        if (this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord entityRecord))
+        {
+            if (entityRecord != null)
             {
                 rec.go = entityRecord.go;
             }
-            else
-            {
-                Debug.LogWarningFormat("[MeshSync] Could not locate entity record for path {0}", data.path);
-            }
-        }*/
-       // else if (data.type == InstanceInfoData.ReferenceType.MeshPath)
-        {
-            
-            if (this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord entityRecord))
-            {
-                if (entityRecord != null)
-                {
-                    rec.go = entityRecord.go;
-                }
-            }
-            else
-            {
-                Debug.LogWarningFormat("[MeshSync] No Mesh found for path {0}", data.path);
-            }
         }
+        else
+        {
+            Debug.LogWarningFormat("[MeshSync] No Mesh found for path {0}", data.path);
+        }
+        
+        var instanceRenderer= rec.go.GetOrAddComponent<MeshSyncInstanceRenderer>();
+        instanceRenderer.UpdateTransforms(data.transforms);
 
         return rec;
     }

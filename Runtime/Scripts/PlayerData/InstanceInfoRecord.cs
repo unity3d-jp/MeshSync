@@ -7,6 +7,5 @@ namespace Unity.MeshSync
     internal class InstanceInfoRecord
     {
         public GameObject go;
-        public Matrix4x4[] transforms;
     }
 }
