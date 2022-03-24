@@ -113,7 +113,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
     
-    internal LimitedAnimationController GetOverrideLimitedAnimationController() { return m_overrideLimitedAnimationController; }    
+    internal LimitedAnimationController GetOverrideLimitedAnimationController() => m_overrideLimitedAnimationController;     
     
 
 #if UNITY_EDITOR
