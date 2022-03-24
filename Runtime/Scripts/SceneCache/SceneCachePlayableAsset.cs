@@ -35,16 +35,16 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         Assert.IsNotNull(scClipData);        
         
         m_propertyTable = graph.GetResolver();
-        SceneCachePlayer scPlayer = m_sceneCachePlayerRef.Resolve(m_propertyTable);
+        m_sceneCachePlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
 
-        if (!scPlayer) {
+        if (!m_sceneCachePlayer) {
             scClipData.UnbindSceneCachePlayer(); //clear curve
             return Playable.Create(graph);
         }
         
         //Initialize curve
-        scPlayer.SetAutoplay(false);
-        bool updated = scClipData.BindSceneCachePlayer(scPlayer, out float updatedCurveDuration);
+        m_sceneCachePlayer.SetAutoplay(false);
+        bool updated = scClipData.BindSceneCachePlayer(m_sceneCachePlayer, out float updatedCurveDuration);
         if (m_updateClipDurationOnCreatePlayable && updated) {
             scClipData.GetOwner().duration = updatedCurveDuration;
         }
@@ -100,7 +100,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
 
-
 #if UNITY_EDITOR
     
     internal void SetSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
@@ -110,6 +109,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         }
         m_propertyTable.SetReferenceValue(m_sceneCachePlayerRef.exposedName, scPlayer);
     }
+    internal SceneCachePlayer GetSceneCachePlayer() => m_sceneCachePlayer;
     
     internal static EditorCurveBinding GetTimeCurveBinding() {return m_timeCurveBinding; }
     
@@ -127,10 +127,10 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     [SerializeField] private double      m_time;
 
-
     private bool m_updateClipDurationOnCreatePlayable = false;
     
     private IExposedPropertyTable m_propertyTable;
+    private SceneCachePlayer m_sceneCachePlayer;    
 
 }
 
