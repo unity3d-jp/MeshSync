@@ -40,7 +40,11 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         //Initialize or clear curve
         if (scPlayer) {
             scPlayer.SetAutoplay(false);
-            scClipData.BindSceneCachePlayer(scPlayer, allowClipDurationChange: m_updateClipDurationOnCreatePlayable);
+            bool updated = scClipData.BindSceneCachePlayer(scPlayer, out float updatedCurveDuration);
+            if (m_updateClipDurationOnCreatePlayable && updated) {
+                scClipData.GetOwner().duration = updatedCurveDuration;
+            }
+            
             m_updateClipDurationOnCreatePlayable = false;
         } else {
             scClipData.UnbindSceneCachePlayer();
