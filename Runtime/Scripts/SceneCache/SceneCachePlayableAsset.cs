@@ -19,12 +19,11 @@ namespace Unity.MeshSync {
 
 [System.Serializable] 
 internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCacheClipData>
-    , ITimelineClipAsset, IPlayableBehaviour, ISerializationCallbackReceiver 
+    , ITimelineClipAsset, IPlayableBehaviour 
 {
 
     internal void Init(bool updateClipDurationOnCreatePlayable) {
         m_updateClipDurationOnCreatePlayable = updateClipDurationOnCreatePlayable;
-        m_sceneCachePlayableAssetVersion     = CUR_VERSION;
     } 
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -39,12 +38,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         
 #pragma warning disable 612
         //import old data. [TODO-sin: 2022-3-24] Remove in 0.13.x
-        if (m_sceneCachePlayableAssetVersion < (int) SceneCachePlayableAssetVersion.HasLimitedAnimationController_0_12_6) {
-            LimitedAnimationController clipDataController = scClipData.GetOverrideLimitedAnimationController();
-            m_overrideLimitedAnimationController = new LimitedAnimationController(clipDataController);
-            m_sceneCachePlayableAssetVersion     = CUR_VERSION;
-
-        } 
+        scClipData.CopyLegacyLimitedAnimationControllerToAsset(this);
 #pragma warning restore 612
         
         
@@ -99,17 +93,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     #endregion
     
 //----------------------------------------------------------------------------------------------------------------------
-    
-#region ISerializationCallbackReceiver
-    public void OnBeforeSerialize() {
-        m_sceneCachePlayableAssetVersion = CUR_VERSION;
-    }
-
-    public void OnAfterDeserialize() { }
-#endregion ISerializationCallbackReceiver
-    
-    
-//----------------------------------------------------------------------------------------------------------------------
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
     
@@ -144,27 +127,12 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     [SerializeField] private double      m_time;
 
-    
-    [HideInInspector][SerializeField] 
-    private int m_sceneCachePlayableAssetVersion = (int) SceneCachePlayableAssetVersion.NoVersioning;
-
 //----------------------------------------------------------------------------------------------------------------------
 
     private bool m_updateClipDurationOnCreatePlayable = false;
     
     private IExposedPropertyTable m_propertyTable;
     private SceneCachePlayer      m_sceneCachePlayer;
-
-    
-    private const int CUR_VERSION = (int) SceneCachePlayableAssetVersion.HasLimitedAnimationController_0_12_6;
-    
-//----------------------------------------------------------------------------------------------------------------------
-
-    enum SceneCachePlayableAssetVersion {
-        NoVersioning = 0, //No versioning at the beginning
-        HasLimitedAnimationController_0_12_6, //Moved LimitedAnimationController from SceneCacheClipData in 0.12.6
-        
-    } 
     
 }
 

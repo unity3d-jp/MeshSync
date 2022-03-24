@@ -23,7 +23,15 @@ internal class SceneCacheClipData : BaseClipData {
     }
 
     protected override void OnAfterDeserializeInternalV() {
+        if (m_sceneCacheClipDataVersion == CUR_SCENE_CACHE_CLIP_DATA_VERSION) {
+            return;
+        }
+
+        if (m_sceneCacheClipDataVersion < (int) SceneCacheClipDataVersion.MovedLimitedAnimationController_0_12_6) {
+            m_copyLimitedAnimationControllerToAsset = true;
+        }
         
+        m_sceneCacheClipDataVersion = CUR_SCENE_CACHE_CLIP_DATA_VERSION;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -203,9 +211,17 @@ internal class SceneCacheClipData : BaseClipData {
     internal AnimationCurve GetAnimationCurve()                     {  return m_animationCurve; }
 
     //[TODO-sin:2022-3-24] remove this in 0.13.x
-    [Obsolete]
-    internal LimitedAnimationController GetOverrideLimitedAnimationController() { return m_overrideLimitedAnimationController; }
-    
+    internal void CopyLegacyLimitedAnimationControllerToAsset(SceneCachePlayableAsset sceneCachePlayableAsset) {
+        if (!m_copyLimitedAnimationControllerToAsset) {
+            return;
+        }
+        
+        LimitedAnimationController assetController = sceneCachePlayableAsset.GetOverrideLimitedAnimationController();
+        assetController.SetEnabled(m_overrideLimitedAnimationController.IsEnabled());
+        assetController.SetFrameOffset(m_overrideLimitedAnimationController.GetFrameOffset());
+        assetController.SetNumFramesToHold(m_overrideLimitedAnimationController.GetNumFramesToHold());
+        m_copyLimitedAnimationControllerToAsset = false;
+    }
 //----------------------------------------------------------------------------------------------------------------------
    
     [SerializeField] private AnimationCurve m_animationCurve = AnimationCurve.Constant(0,0,0);
@@ -222,8 +238,18 @@ internal class SceneCacheClipData : BaseClipData {
     //Can't use SerializeField, because SceneCacheClipData is an asset which belongs to a track.  
     SceneCachePlayer m_scPlayer = null;
     
-    private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = 1;
+    private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = (int) SceneCacheClipDataVersion.MovedLimitedAnimationController_0_12_6;
 
+    private bool m_copyLimitedAnimationControllerToAsset = false;
+
+//----------------------------------------------------------------------------------------------------------------------
+
+    internal enum SceneCacheClipDataVersion {
+        Initial = 1, 
+        MovedLimitedAnimationController_0_12_6, //Moved LimitedAnimationController to SceneCachePlayableAsset in 0.12.6
+        
+    } 
+    
 }
 
 
