@@ -73,7 +73,7 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
             clip.TryMoveToTrack(track);
         }
 
-        asset.Init(null != clonedFrom);
+        asset.Init(updateClipDurationOnCreatePlayable: null == clonedFrom);
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
