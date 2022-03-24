@@ -34,9 +34,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         SceneCacheClipData scClipData = GetBoundClipData() as SceneCacheClipData;        
         Assert.IsNotNull(scClipData);        
         
-        SceneCachePlayer scPlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
+        m_sceneCachePlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
 
-#if UNITY_EDITOR        
+#if UNITY_EDITOR
         if (null == m_animationCurve) {
             AnimationCurve curve = AnimationUtility.GetEditorCurve(scClipData.GetOwner().curves, GetTimeCurveBinding());        
             SetAnimationCurve(curve);
@@ -44,9 +44,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 #endif
 
         //Initialize or clear curve
-        if (scPlayer) {
-            scPlayer.SetAutoplay(false);
-            scClipData.BindSceneCachePlayer(scPlayer, allowClipDurationChange: !m_wasCloned);
+        if (m_sceneCachePlayer) {
+            m_sceneCachePlayer.SetAutoplay(false);
+            scClipData.BindSceneCachePlayer(m_sceneCachePlayer, allowClipDurationChange: !m_wasCloned);
             m_wasCloned = false;
         } else {
             scClipData.UnbindSceneCachePlayer();
@@ -105,6 +105,8 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
 
+    internal SceneCachePlayer GetSceneCachePlayer() => m_sceneCachePlayer;
+    
 #if UNITY_EDITOR    
     internal static EditorCurveBinding GetTimeCurveBinding() {return m_timeCurveBinding; }
     
@@ -126,6 +128,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     [SerializeField] private AnimationCurve m_animationCurve;
 
 
+    private SceneCachePlayer m_sceneCachePlayer;    
     private bool m_wasCloned = false;
 
 }

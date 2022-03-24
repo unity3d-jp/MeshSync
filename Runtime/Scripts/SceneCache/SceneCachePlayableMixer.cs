@@ -14,17 +14,17 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
         m_sceneCacheTrack  = track;
         
         m_clips      = new List<TimelineClip>(clips);
-        m_clipDataDictionary = new Dictionary<TimelineClip, SceneCacheClipData>();
+        m_clipAssets = new Dictionary<TimelineClip, SceneCachePlayableAsset>();
         foreach (TimelineClip clip in m_clips) {
-            SceneCacheClipData clipData = clip.GetClipData<SceneCacheClipData>();
-            Assert.IsNotNull(clipData);
-            m_clipDataDictionary.Add(clip, clipData);
+            SceneCachePlayableAsset sceneCachePlayableAsset = clip.asset as SceneCachePlayableAsset;
+            Assert.IsNotNull(sceneCachePlayableAsset);
+            m_clipAssets.Add(clip, sceneCachePlayableAsset);
         }
     }
     
     internal void Destroy() {
         m_clips.Clear();
-        m_clipDataDictionary.Clear();        
+        m_clipAssets.Clear();
     }    
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -47,7 +47,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
         }
 
         //Register all SceneCache objects as inactive
-        foreach (var clipData in m_clipDataDictionary.Values) {
+        foreach (var clipData in m_clipAssets.Values) {
             SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
             if (null == scPlayer)
                 continue;
@@ -67,7 +67,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
         SceneCacheClipData clipData = activePlayableAsset.GetBoundClipData();
         Assert.IsNotNull(clipData);
 
-        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
+        SceneCachePlayer scPlayer = activePlayableAsset.GetSceneCachePlayer();
         if (null == scPlayer) {
             UpdateObjectActiveStates();
             return;
@@ -193,7 +193,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
     private SceneCacheTrack    m_sceneCacheTrack;
     private List<TimelineClip> m_clips;
     
-    private Dictionary<TimelineClip, SceneCacheClipData> m_clipDataDictionary;
+    private Dictionary<TimelineClip, SceneCachePlayableAsset> m_clipAssets;
 
     private readonly HashSet<GameObject> m_inactiveSceneCacheObjects = new HashSet<GameObject>();
     
