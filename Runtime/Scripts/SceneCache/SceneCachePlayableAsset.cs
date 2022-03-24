@@ -36,6 +36,13 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         
         SceneCachePlayer scPlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
 
+#if UNITY_EDITOR        
+        if (null == m_animationCurve) {
+            AnimationCurve curve = AnimationUtility.GetEditorCurve(scClipData.GetOwner().curves, GetTimeCurveBinding());        
+            SetAnimationCurve(curve);
+        }
+#endif
+
         //Initialize or clear curve
         if (scPlayer) {
             scPlayer.SetAutoplay(false);
