@@ -227,7 +227,7 @@ internal class SceneCacheClipData : BaseClipData {
 
         if (m_copyAnimationCurveToAsset) {
             sceneCachePlayableAsset.SetAnimationCurve(m_animationCurve);
-            sceneCachePlayableAsset.SetSceneCacheCurveExtracted(m_initialized);
+            sceneCachePlayableAsset.SetIsSceneCacheCurveExtracted(m_initialized);
             m_copyAnimationCurveToAsset = false;
         }
     }

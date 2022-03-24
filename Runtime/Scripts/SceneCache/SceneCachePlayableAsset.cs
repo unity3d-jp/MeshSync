@@ -45,25 +45,61 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 #pragma warning restore 612
         
         
-        m_propertyTable = graph.GetResolver();
-        m_sceneCachePlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
-
+        m_propertyTable             = graph.GetResolver();
+        m_sceneCachePlayer          = m_sceneCachePlayerRef.Resolve(m_propertyTable);
+        m_extractedSceneCachePlayer = m_extractedSceneCachePlayerRef.Resolve(m_propertyTable);
+            
         if (!m_sceneCachePlayer) {
+            m_isSceneCacheCurveExtracted = false;
             scClipData.UnbindSceneCachePlayer(); //clear curve
             return Playable.Create(graph);
         }
+
+        m_sceneCachePlayer.SetAutoplay(false);
         
         //Initialize curve
-        m_sceneCachePlayer.SetAutoplay(false);
-        bool updated = scClipData.BindSceneCachePlayer(m_sceneCachePlayer, out float updatedCurveDuration);
-        if (m_updateClipDurationOnCreatePlayable && updated) {
-            scClipData.GetOwner().duration = updatedCurveDuration;
+        if (ShouldExtractCurve()) {
+            TimelineClip clip = scClipData.GetOwner();
+            Assert.IsNotNull(clip);
+            float updatedCurveDuration = ExtractSceneCacheCurve(clip);
+            if (m_updateClipDurationOnCreatePlayable) {
+                clip.duration = updatedCurveDuration;
+            }
         }
         
         m_updateClipDurationOnCreatePlayable = false;
         return Playable.Create(graph);
     }
-   
+
+    bool ShouldExtractCurve() {
+        if (null == m_sceneCachePlayer) {
+            return false;
+        }
+        
+        //no need to update if the curve has been extracted
+        if (m_isSceneCacheCurveExtracted && (m_extractedSceneCachePlayer == m_sceneCachePlayer)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    //returns curve duration
+    private float ExtractSceneCacheCurve(TimelineClip clip) {
+
+       
+        //Bind for the first time
+        m_animationCurve = ExtractNormalizedTimeCurve(m_sceneCachePlayer, out float updatedCurveDuration);
+        if (null == m_animationCurve) {
+            m_animationCurve     = CreateLinearAnimationCurve(clip);
+            updatedCurveDuration = (float) clip.duration; //no change
+        }
+
+        UpdateClipCurve(clip, m_animationCurve);
+        m_isSceneCacheCurveExtracted = true;
+        SetExtractedSceneCachePlayerInEditor(m_sceneCachePlayer);
+        return updatedCurveDuration;
+    }    
 //----------------------------------------------------------------------------------------------------------------------
     
     #region IPlayableBehaviour interfaces
@@ -215,17 +251,28 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     
     //import old data. [TODO-sin: 2022-3-24] Remove in 0.13.x
-    internal void SetSceneCacheCurveExtracted(bool extracted) { m_sceneCacheCurveExtracted = extracted; }
+    internal void SetIsSceneCacheCurveExtracted(bool extracted) { m_isSceneCacheCurveExtracted = extracted; }
     
 #if UNITY_EDITOR
     
     internal void SetSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
-        //check if exposedName hasn't been initialized
-        if (m_sceneCachePlayerRef.exposedName.ToString() == ":0") {
-            m_sceneCachePlayerRef.exposedName = GUID.Generate().ToString();
-        }
-        m_propertyTable.SetReferenceValue(m_sceneCachePlayerRef.exposedName, scPlayer);
+        SetExposedRefInEditor(m_sceneCachePlayerRef, m_propertyTable, scPlayer);
     }
+    
+    private void SetExtractedSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
+        SetExposedRefInEditor(m_extractedSceneCachePlayerRef, m_propertyTable, scPlayer);
+    }
+
+    private static void SetExposedRefInEditor<T>(ExposedReference<T> exposedRef, 
+        IExposedPropertyTable propertyTable, T obj) where T: Object 
+    {
+        //check if exposedName hasn't been initialized
+        if (exposedRef.exposedName.ToString() == ":0") {
+            exposedRef.exposedName = GUID.Generate().ToString();
+        }
+        propertyTable.SetReferenceValue(exposedRef.exposedName, obj);
+    }
+    
     internal SceneCachePlayer GetSceneCachePlayer() => m_sceneCachePlayer;
     
     internal static EditorCurveBinding GetTimeCurveBinding() {return m_timeCurveBinding; }
@@ -241,13 +288,15 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 //----------------------------------------------------------------------------------------------------------------------
     
     [SerializeField] private ExposedReference<SceneCachePlayer> m_sceneCachePlayerRef;
+    [HideInInspector][SerializeField] private ExposedReference<SceneCachePlayer> m_extractedSceneCachePlayerRef;
+    
     [SerializeField] private LimitedAnimationController m_overrideLimitedAnimationController = new LimitedAnimationController();
     
     [SerializeField] private double      m_time;
 
     [HideInInspector][SerializeField] private AnimationCurve m_animationCurve = AnimationCurve.Constant(0,0,0);
 
-    [HideInInspector][SerializeField] private bool m_sceneCacheCurveExtracted = false;
+    [HideInInspector][SerializeField] private bool m_isSceneCacheCurveExtracted = false;
     
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -255,7 +304,8 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     private IExposedPropertyTable m_propertyTable;
     private SceneCachePlayer      m_sceneCachePlayer;
-    
+    private SceneCachePlayer      m_extractedSceneCachePlayer;
+
 }
 
 
