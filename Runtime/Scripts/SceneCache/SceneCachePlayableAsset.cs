@@ -30,7 +30,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     }
 
     public override Playable CreatePlayable(PlayableGraph graph, GameObject go) {
-        
+               
         SceneCacheClipData scClipData = GetBoundClipData() as SceneCacheClipData;        
         Assert.IsNotNull(scClipData);        
         
@@ -91,6 +91,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     #endregion
     
     
+    internal void           SetAnimationCurve(AnimationCurve curve) { m_animationCurve = curve; }
+    internal AnimationCurve GetAnimationCurve()                     {  return m_animationCurve; }
+    
 //----------------------------------------------------------------------------------------------------------------------
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
@@ -111,6 +114,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     [SerializeField] private ExposedReference<SceneCachePlayer> m_sceneCachePlayerRef;
     
     [SerializeField] private double      m_time;
+
+
+    [SerializeField] private AnimationCurve m_animationCurve;
 
 
     private bool m_wasCloned = false;
