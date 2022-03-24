@@ -20,14 +20,6 @@ internal class LimitedAnimationController {
         SetFrameOffset(frameOffset);
     }    
     
-    internal bool IsDefault() {
-
-        return (m_enabled == false
-            && m_numFramesToHold == DEFAULT_NUM_FRAMES_TO_HOLD
-            && m_frameOffset == DEFAULT_FRAME_OFFSET);
-    }
-    
-    
 //----------------------------------------------------------------------------------------------------------------------
     internal void SetEnabled(bool enabled) { m_enabled = enabled;}
     internal bool IsEnabled()              { return m_enabled;}
