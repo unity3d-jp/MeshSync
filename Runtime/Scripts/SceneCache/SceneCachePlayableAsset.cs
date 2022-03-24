@@ -3,9 +3,12 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
+using System.Collections.Generic;
+using JetBrains.Annotations;
 
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.Timeline;
 #endif
 
 namespace Unity.MeshSync {
@@ -93,6 +96,114 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     #endregion
     
 //----------------------------------------------------------------------------------------------------------------------
+    
+//----------------------------------------------------------------------------------------------------------------------
+    [CanBeNull]
+    private static AnimationCurve ExtractNormalizedTimeCurve(SceneCachePlayer scPlayer, out float duration) {
+
+        ISceneCacheInfo sceneCacheInfo = scPlayer.ExtractSceneCacheInfo(forceOpen:true);
+        if (null == sceneCacheInfo) {
+            duration = 0;
+            return null;
+        }
+
+        TimeRange timeRange = sceneCacheInfo.GetTimeRange(); 
+        duration = timeRange.GetDuration(); 
+        if (duration <= 0f) {
+            duration = Mathf.Epsilon;
+        }
+
+        Keyframe[] keyframes = sceneCacheInfo.GetTimeCurve().keys;
+        int numKeyframes = keyframes.Length;
+        for (int i = 0; i < numKeyframes; ++i) {
+            keyframes[i].value /= timeRange.end;
+        }
+        
+        //outTangent
+        for (int i = 0; i < numKeyframes-1; ++i) {
+            keyframes[i].outTangent = CalculateLinearTangent(keyframes, i, i+1);
+        }
+        
+        //inTangent
+        for (int i = 1; i < numKeyframes; ++i) {
+            keyframes[i].inTangent = CalculateLinearTangent(keyframes, i-1, i);
+        }
+        
+        AnimationCurve curve = new AnimationCurve(keyframes);
+        return curve;
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
+
+    private static float CalculateLinearTangent(Keyframe[] keyFrames, int index, int toIndex) {
+        return (float) (((double) keyFrames[index].value - (double) keyFrames[toIndex].value) 
+            / ((double) keyFrames[index].time - (double) keyFrames[toIndex].time));
+    }
+    
+    private static AnimationCurve CreateLinearAnimationCurve(TimelineClip clip) {
+        return AnimationCurve.Linear(0f, 0f,(float) (clip.duration * clip.timeScale), 1f );
+    }
+    
+    private static void UpdateClipCurve(TimelineClip clip, AnimationCurve animationCurveToApply) {
+
+#if UNITY_EDITOR        
+        
+        bool shouldRefresh = (null == clip.curves);
+        
+        if (!shouldRefresh) {
+            AnimationCurve shownCurve = AnimationUtility.GetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding());
+            shouldRefresh = !CurveApproximately(shownCurve, animationCurveToApply);
+        } else {
+            clip.CreateCurves("Curves: " + clip.displayName);
+        }
+        
+        
+        AnimationUtility.SetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding(),animationCurveToApply);
+        
+        if (shouldRefresh) {
+            TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved );
+        }
+#endif
+        
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
+
+#if UNITY_EDITOR
+    static bool CurveApproximately(AnimationCurve x, AnimationCurve y) {
+        if (null == x && null == y)
+            return true;
+        
+        if (null == x || null == y)
+            return false;
+
+        Keyframe[] xKeys = x.keys;
+        Keyframe[] yKeys = y.keys;
+
+        if (xKeys.Length != yKeys.Length)
+            return false;
+
+        HashSet<int> framesToCheck = new HashSet<int>() {
+            0, 
+            xKeys.Length - 1
+        };
+
+        foreach (int frame in framesToCheck) {
+            if (!KeyframeApproximately(xKeys[frame], yKeys[frame]))
+                return false;
+        }
+
+        return true;
+    }
+
+    static bool KeyframeApproximately(Keyframe k0, Keyframe k1) {
+        //only check time and value
+        return Mathf.Approximately(k0.time, k1.time) && Mathf.Approximately(k0.value, k1.value);
+    }
+    
+#endif //UNITY_EDITOR    
+
+//----------------------------------------------------------------------------------------------------------------------    
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
     
