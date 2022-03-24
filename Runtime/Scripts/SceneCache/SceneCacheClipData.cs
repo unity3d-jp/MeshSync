@@ -222,11 +222,6 @@ internal class SceneCacheClipData : BaseClipData {
         assetController.SetNumFramesToHold(m_overrideLimitedAnimationController.GetNumFramesToHold());
         m_copyLimitedAnimationControllerToAsset = true;
     }
-
-    //[TODO-sin:2022-3-24] remove this in 0.13.x
-    [Obsolete]
-    internal LimitedAnimationController GetOverrideLimitedAnimationController() { return m_overrideLimitedAnimationController; }
-    
 //----------------------------------------------------------------------------------------------------------------------
    
     [SerializeField] private AnimationCurve m_animationCurve = AnimationCurve.Constant(0,0,0);
