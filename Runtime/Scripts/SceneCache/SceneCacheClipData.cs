@@ -66,9 +66,6 @@ internal class SceneCacheClipData : BaseClipData {
 #pragma warning restore 414    
     
 //----------------------------------------------------------------------------------------------------------------------
-
-    //Can't use SerializeField, because SceneCacheClipData is an asset which belongs to a track.  
-    SceneCachePlayer m_scPlayer = null;
     
     private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = (int) SceneCacheClipDataVersion.MovedAnimationCurve_0_12_6;
 
