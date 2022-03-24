@@ -246,6 +246,7 @@ internal class SceneCachePlayableAssetTests {
     [NotNull]
     private static AnimationCurve VerifyAnimationCurve(TimelineClip clip) {
         SceneCachePlayableAsset asset = clip.asset as SceneCachePlayableAsset;
+        Assert.IsNotNull(asset);
         AnimationCurve curve = asset.GetAnimationCurve();
         Assert.IsNotNull(curve);
         return curve;
