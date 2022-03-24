@@ -99,6 +99,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     internal LimitedAnimationController GetOverrideLimitedAnimationController() => m_overrideLimitedAnimationController;     
     
 
+    internal void           SetAnimationCurve(AnimationCurve curve) { m_animationCurve = curve; }
+    internal AnimationCurve GetAnimationCurve()                     => m_animationCurve; 
+    
 #if UNITY_EDITOR
     
     internal void SetSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
