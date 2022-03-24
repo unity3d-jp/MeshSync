@@ -247,7 +247,7 @@ internal class SceneCacheClipData : BaseClipData {
     //Can't use SerializeField, because SceneCacheClipData is an asset which belongs to a track.  
     SceneCachePlayer m_scPlayer = null;
     
-    private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = (int) SceneCacheClipDataVersion.MovedLimitedAnimationController_0_12_6;
+    private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = (int) SceneCacheClipDataVersion.MovedAnimationCurve_0_12_6;
 
     private bool m_copyLimitedAnimationControllerToAsset = false;
     private bool m_copyAnimationCurveToAsset = false;
