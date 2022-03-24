@@ -24,6 +24,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     internal void Init(bool updateClipDurationOnCreatePlayable) {
         m_updateClipDurationOnCreatePlayable = updateClipDurationOnCreatePlayable;
+        m_sceneCachePlayableAssetVersion     = CUR_VERSION;
     } 
     
 //----------------------------------------------------------------------------------------------------------------------
