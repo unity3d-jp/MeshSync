@@ -20,14 +20,6 @@ internal class LimitedAnimationController {
         SetFrameOffset(frameOffset);
     }    
     
-    internal bool IsDefault() {
-
-        return (m_enabled == false
-            && m_numFramesToHold == DEFAULT_NUM_FRAMES_TO_HOLD
-            && m_frameOffset == DEFAULT_FRAME_OFFSET);
-    }
-    
-    
 //----------------------------------------------------------------------------------------------------------------------
     internal void SetEnabled(bool enabled) { m_enabled = enabled;}
     internal bool IsEnabled()              { return m_enabled;}
@@ -65,12 +57,9 @@ internal class LimitedAnimationController {
     
 //----------------------------------------------------------------------------------------------------------------------    
     [SerializeField] private bool m_enabled         = false;
-    [SerializeField] private int  m_numFramesToHold = DEFAULT_NUM_FRAMES_TO_HOLD; //hold one data for several frames (default: 2).    
-    [SerializeField] private int  m_frameOffset = DEFAULT_FRAME_OFFSET;
-
-
-    private const int DEFAULT_NUM_FRAMES_TO_HOLD = 2;
-    const         int DEFAULT_FRAME_OFFSET       = 0;
+    [SerializeField] private int  m_numFramesToHold = 2; //hold one data for several frames (default: 2).    
+    [SerializeField] private int  m_frameOffset = 0; 
+    
 }    
     
 } //end namespace
