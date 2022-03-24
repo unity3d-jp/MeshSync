@@ -74,7 +74,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
         }
 
         UpdateObjectActiveStates(activeObject: scPlayer.gameObject);
-        LimitedAnimationController limitedAnimationController = scPlayableAsset.GetOverrideLimitedAnimationController(); 
+        LimitedAnimationController limitedAnimationController = clipData.GetOverrideLimitedAnimationController(); 
 
         
         double localTime = clip.ToLocalTime(playable.GetTime());
