@@ -100,7 +100,11 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
 
     internal void           SetAnimationCurve(AnimationCurve curve) { m_animationCurve = curve; }
-    internal AnimationCurve GetAnimationCurve()                     => m_animationCurve; 
+    internal AnimationCurve GetAnimationCurve()                     => m_animationCurve;
+    
+    
+    //import old data. [TODO-sin: 2022-3-24] Remove in 0.13.x
+    internal void SetSceneCacheCurveExtracted(bool extracted) { m_sceneCacheCurveExtracted = extracted; }
     
 #if UNITY_EDITOR
     
@@ -131,6 +135,8 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     [SerializeField] private double      m_time;
 
     [HideInInspector][SerializeField] private AnimationCurve m_animationCurve = AnimationCurve.Constant(0,0,0);
+
+    [HideInInspector][SerializeField] private bool m_sceneCacheCurveExtracted = false;
     
 //----------------------------------------------------------------------------------------------------------------------
 
