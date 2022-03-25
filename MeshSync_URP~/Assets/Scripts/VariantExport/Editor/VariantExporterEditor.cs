@@ -1,5 +1,7 @@
-﻿using UnityEditor;
+﻿using Unity.MeshSync.VariantExport;
+using UnityEditor;
 using UnityEngine;
+
 
 namespace Unity.MeshSync.Editor
 {
@@ -8,8 +10,6 @@ namespace Unity.MeshSync.Editor
     {
         public override void OnInspectorGUI()
         {
-            //base.OnInspectorGUI();
-
             var exporter = (VariantExporter)target;
 
             exporter.Server = (MeshSyncServer)EditorGUILayout.ObjectField("Server", exporter.Server, typeof(MeshSyncServer), true);
