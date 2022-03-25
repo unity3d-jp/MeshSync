@@ -66,7 +66,7 @@ public partial class MeshSyncServer : BaseMeshSync {
         m_autoStartServer = autoStart; 
 
 #if UNITY_STANDALONE        
-        if (m_autoStartServer && !m_serverStarted) {
+        if (m_autoStartServer && !m_serverStarted && gameObject.scene.IsValid() && !IsInPrefabView) {
             StartServer();
         }
 #endif
@@ -500,14 +500,23 @@ public partial class MeshSyncServer : BaseMeshSync {
             m_requestRestartServer = true;
         }
         
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
+//        m_instanceRenderer.Init(this, m_cameraMode, m_clientInstances);
+//#else
+//        m_instanceRenderer.Init(this, records:m_clientInstances);
+//#endif
+
+            RenderPipelineManager.beginFrameRendering += RenderPipelineManager_beginFrameRendering;
+    }
+
+        void Awake()
+        {
+            #if UNITY_EDITOR
         m_instanceRenderer.Init(this, m_cameraMode, m_clientInstances);
 #else
         m_instanceRenderer.Init(this, records:m_clientInstances);
 #endif
-
-            RenderPipelineManager.beginFrameRendering += RenderPipelineManager_beginFrameRendering;
-    }
+        }
 
         private void RenderPipelineManager_beginFrameRendering(ScriptableRenderContext arg1, Camera[] arg2)
         {
@@ -537,9 +546,20 @@ public partial class MeshSyncServer : BaseMeshSync {
 #endif
     }
             
-    void LateUpdate() {
-        PollServerEvents();
-    }
+        bool IsInPrefabView
+        {
+            get
+            {
+                return UnityEditor.Experimental.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
+            }
+        }
+
+        void LateUpdate()
+        {
+            if (IsInPrefabView)
+                return;
+            PollServerEvents();
+        }
     #endregion
 
 //----------------------------------------------------------------------------------------------------------------------

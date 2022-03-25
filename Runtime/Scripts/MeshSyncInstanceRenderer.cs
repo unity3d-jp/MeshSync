@@ -258,19 +258,6 @@ namespace Unity.MeshSync
             }
 
             entry.Mesh = filter.sharedMesh;
-
-            bool haveSharedMats = true;
-
-            // If there are shared mats, use them:
-            foreach (var item in renderer.sharedMaterials)
-            {
-                if (item == null)
-                {
-                    haveSharedMats = false;
-                    break;
-                }
-            }
-
             entry.Materials = renderer.sharedMaterials;
             entry.GameObject = go;
             entry.Renderer = renderer;
