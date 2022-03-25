@@ -1693,7 +1693,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             if (infoRecord.renderer == null)
             {
                 infoRecord.renderer = parentRecord.go.AddComponent<MeshSyncInstanceRenderer>();
-                infoRecord.renderer.Init(this);
             }
             
             infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go, path);

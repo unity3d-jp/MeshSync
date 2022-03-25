@@ -36,7 +36,7 @@ namespace Unity.MeshSync
                     if (instancePrefab != asset)
                         continue;
 
-                    var server = renderer.m_server;
+                    var server = renderer.GetComponentInParent<MeshSyncServer>();
                     var basePath = server.GetAssetsFolder();
                     
                     var instanceChildren = 

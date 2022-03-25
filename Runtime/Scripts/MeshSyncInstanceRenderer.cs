@@ -14,27 +14,12 @@ namespace Unity.MeshSync{
     [ExecuteInEditMode]
     internal class MeshSyncInstanceRenderer : MonoBehaviour
     {
-        internal BaseMeshSync m_server;
-        
         internal InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
 
         [SerializeField] private Matrix4x4[] m_transforms;
         [SerializeField] internal GameObject m_reference; 
         [SerializeField] internal string m_id;
         
-        private bool m_isUpdating = false;
-
-        public void Init(BaseMeshSync ms)
-        {
-            m_server = ms;
-            
-            ms.onSceneUpdateEnd -= OnSceneUpdateEnd;
-            ms.onSceneUpdateEnd += OnSceneUpdateEnd;
-            
-            ms.onSceneUpdateBegin -= OnSceneUpdateBegin;
-            ms.onSceneUpdateBegin += OnSceneUpdateBegin;
-        }
-
         void OnEnable()
         {
             if (RenderPipelineManager.currentPipeline == null)
@@ -75,16 +60,6 @@ namespace Unity.MeshSync{
             Draw(cameras);
         }
 
-        private void OnSceneUpdateBegin()
-        {
-            m_isUpdating = true;
-        }
-
-        private void OnSceneUpdateEnd()
-        {
-            m_isUpdating = false;
-        }
-
         #region Events
 
         public void UpdateAll(Matrix4x4[] transforms, GameObject go, string id)
@@ -119,9 +94,6 @@ namespace Unity.MeshSync{
         
         public void Draw(Camera[] cameras)
         {
-            if (m_isUpdating)
-                return;
-            
             DoDraw(m_renderingInfo, cameras);
         }
 
@@ -201,13 +173,6 @@ namespace Unity.MeshSync{
                     lightProbeUsage:lightProbeUsage, 
                     lightProbeProxyVolume:lightProbeProxyVolume);
             }
-        }
-        
-        
-        public void Clear()
-        {
-            m_server = null;
-            m_renderingInfo = null;
         }
         
         #endregion
