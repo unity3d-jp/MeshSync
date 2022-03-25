@@ -11,10 +11,36 @@ internal class SceneCacheTrack : BaseExtendedClipTrack<SceneCacheClipData> {
 
     protected override Playable CreateTrackMixerInternal(PlayableGraph graph, GameObject go, int inputCount) {
         
-        return ScriptPlayable<SceneCachePlayableMixer>.Create(graph, inputCount);
         
-    }
+        ScriptPlayable<SceneCachePlayableMixer> playable = ScriptPlayable<SceneCachePlayableMixer>.Create(graph, inputCount);
+        PlayableDirector director = go.GetComponent<PlayableDirector>();
+        m_trackMixer = playable.GetBehaviour();
+        
+        if (null == director)
+            return playable;
 
+
+        m_trackMixer.Init(director, this, GetClips());
+
+        return playable;
+    }
+    
+    private void OnDestroy() {
+        m_trackMixer?.Destroy();
+        m_trackMixer = null;
+    }
+    
+
+//----------------------------------------------------------------------------------------------------------------------
+    
+    internal bool IsAutoActivateObject() => m_autoActivateObject;
+
+//----------------------------------------------------------------------------------------------------------------------    
+    
+    [SerializeField] private bool m_autoActivateObject = true;
+    
+    private SceneCachePlayableMixer m_trackMixer = null;   
+    
 }
 
 }

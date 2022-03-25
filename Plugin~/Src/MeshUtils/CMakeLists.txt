@@ -13,6 +13,7 @@ if(ENABLE_ISPC)
     file(GLOB MUISPC_SOURCES *.ispc)
     add_ispc_targets(SOURCES ${MUISPC_SOURCES} HEADERS ${MUISPC_HEADERS} OUTDIR ${MUISPC_OUTDIR})
     set(MUISPC_OUTPUTS ${_ispc_outputs})
+
 endif()
 
 file(GLOB_RECURSE sources *.cpp *.c *.h)
@@ -26,10 +27,10 @@ list(APPEND MeshUtils_include
     "${CMAKE_CURRENT_SOURCE_DIR}/Include"
 )
 
-target_compile_definitions(MeshUtils
-    PRIVATE
-        muEnableISPC
-)
+if(ENABLE_ISPC)
+    target_compile_definitions(MeshUtils PRIVATE muEnableISPC)
+endif()    
+
 
 target_include_directories(MeshUtils 
     PUBLIC

@@ -47,20 +47,12 @@ msAPI ms::Identifier* msDeleteGetMaterial(ms::DeleteMessage *self, int i)
     return &self->materials[i];
 }
 
-msAPI int msDeleteGetNumInstanceInfos(ms::DeleteMessage* self) {
-    return (int)self->instanceInfos.size();
+msAPI int msDeleteGetNumInstances(ms::DeleteMessage* self) {
+    return (int)self->instances.size();
 }
 
-msAPI ms::Identifier* msDeleteGetInstanceInfo(ms::DeleteMessage* self, int i) {
-    return &self->instanceInfos[i];
-}
-
-msAPI int msDeleteGetNumInstanceMeshes(ms::DeleteMessage* self) {
-    return (int)self->instanceMeshes.size();
-}
-
-msAPI ms::Identifier* msDeleteGetInstanceMesh(ms::DeleteMessage* self, int i) {
-    return &self->instanceMeshes[i];
+msAPI ms::Identifier* msDeleteGetInstance(ms::DeleteMessage* self, int i) {
+    return &self->instances[i];
 }
 
 msAPI ms::FenceMessage::FenceType msFenceGetType(ms::FenceMessage *self)

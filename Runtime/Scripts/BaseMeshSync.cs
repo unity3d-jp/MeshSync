@@ -593,7 +593,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
                 var src = scene.GetInstanceInfo(i);
                 var dst = UpdateInstanceInfo(src);
                 if (onUpdateInstanceInfo != null)
-                    onUpdateInstanceInfo.Invoke(src.path, dst.go, dst.transforms);
+                    onUpdateInstanceInfo.Invoke(src.path, dst.go, src.transforms);
             }
         });
         
@@ -1647,7 +1647,11 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
     EntityRecord UpdateInstanceMesh(TransformData data)
     {
         var config = GetConfigV();
+        
         var rec = UpdateMeshEntity((MeshData)data, config);
+        var renderer = rec.go.GetOrAddComponent<MeshSyncInstanceRenderer>();
+        
+        renderer.Init(this);
 
         if (!this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord _))
         {
@@ -1657,6 +1661,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         this.m_clientInstanceMeshes[data.path] = rec;
 
         return rec;
+        
+        
     }
     
     InstanceInfoRecord UpdateInstanceInfo(InstanceInfoData data)
@@ -1668,39 +1674,21 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
             rec = new InstanceInfoRecord();
             m_clientInstances.Add(data.path, rec);
         }
-
-        rec.transforms = data.transforms;
-
-        if (data.type == InstanceInfoData.ReferenceType.EntityPath)
+        
+        if (this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord entityRecord))
         {
-            if (this.m_clientObjects.TryGetValue(data.path, out EntityRecord entityRecord))
+            if (entityRecord != null)
             {
                 rec.go = entityRecord.go;
-            }
-            else
-            {
-                Debug.LogWarningFormat("[MeshSync] Could not locate entity record for path {0}", data.path);
-            }
-        }
-        else if (data.type == InstanceInfoData.ReferenceType.MeshPath)
-        {
-            
-            if (this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord entityRecord))
-            {
-                if (entityRecord != null)
-                {
-                    rec.go = entityRecord.go;
-                }
-            }
-            else
-            {
-                Debug.LogWarningFormat("[MeshSync] No Mesh found for path {0}", data.path);
             }
         }
         else
         {
-            Debug.LogWarningFormat("[MeshSync] Unknown instance info type {0}", data.type);
+            Debug.LogWarningFormat("[MeshSync] No Mesh found for path {0}", data.path);
         }
+        
+        var instanceRenderer= rec.go.GetOrAddComponent<MeshSyncInstanceRenderer>();
+        instanceRenderer.UpdateTransforms(data.transforms);
 
         return rec;
     }
@@ -2111,7 +2099,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
                 mesh = Misc.OverwriteOrCreateAsset(mesh, dstPath);
                 kvp.Value.mesh = mesh; // mesh maybe updated by SaveAsset()
                 if (config.Logging)
-                    Debug.Log("exported material " + dstPath);
+                    Debug.Log("exported mesh " + dstPath);
             }
             else if (useExistingOnes && existing != null)
                 kvp.Value.mesh = existing;

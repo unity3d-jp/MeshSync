@@ -23,6 +23,7 @@ msDeclClassPtr(Scene);
 msDeclStructPtr(SceneImportSettings);
 msDeclStructPtr(InstanceInfo)
 msDeclStructPtr(PropertyInfo)
+msDeclClassPtr(EntityConverter)
 
 namespace ms {
 
@@ -116,6 +117,10 @@ public:
     bool submeshesHaveUniqueMaterial() const;
 
     void dbgDump() const;
+
+private:
+    void updateEntities(const ms::SceneImportSettings& cv, const std::vector<ms::EntityConverterPtr>& converters, std::vector<ms::TransformPtr> entities);
+
 };
 msSerializable(Scene);
 

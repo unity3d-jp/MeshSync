@@ -13,17 +13,6 @@ namespace ms {
 
 	public:
 
-		enum ReferenceType {
-			NONE = 0,
-			ENTITY_PATH = 1,
-			MESH_PATH = 2
-		};
-
-		/// <summary>
-		/// The type of mesh reference.
-		/// </summary>
-		ReferenceType type;
-
 		/// <summary>
 		/// /// Path on the hierachy tree to the mesh that the instances refer to.
 		/// /// </summary>

@@ -108,16 +108,21 @@ void AsyncSceneSender::send()
         transforms.empty() && geometries.empty() && animations.empty() &&
         instanceInfos.empty() && instanceMeshes.empty() &&
         deleted_entities.empty() && deleted_materials.empty() && 
-        deleted_instanceInfos.empty() && deleted_instanceMeshes.empty())
+        deleted_instances.empty())
         return;
 
     SetupDataFlags(transforms);
     SetupDataFlags(geometries);
+    SetupDataFlags(instanceMeshes);
+
     AssignIDs(transforms, id_table);
     AssignIDs(geometries, id_table);
+    AssignIDs(instanceMeshes, id_table);
+
     // sort by order. not id.
     std::sort(transforms.begin(), transforms.end(), [](auto& a, auto& b) { return a->order < b->order; });
     std::sort(geometries.begin(), geometries.end(), [](auto& a, auto& b) { return a->order < b->order; });
+    std::sort(instanceMeshes.begin(), instanceMeshes.end(), [](auto& a, auto& b) { return a->order < b->order; });
 
     auto append = [](auto& dst, auto& src) { dst.insert(dst.end(), src.begin(), src.end()); };
 
@@ -204,16 +209,13 @@ void AsyncSceneSender::send()
 
     // instance infos
     if (!instanceInfos.empty()) {
-        //for (auto& instanceInfo : instanceInfos) {
-            ms::SetMessage mes;
-            setup_message(mes);
-            mes.scene->settings = scene_settings;
-            /*mes.scene->instanceInfos = { instanceInfo };*/
-            mes.scene->instanceInfos = instanceInfos;
-            succeeded = succeeded && client.send(mes);
-            if (!succeeded)
-                goto cleanup;
-        //}
+        ms::SetMessage mes;
+        setup_message(mes);
+        mes.scene->settings = scene_settings;
+        mes.scene->instanceInfos = instanceInfos;
+        succeeded = succeeded && client.send(mes);
+        if (!succeeded)
+            goto cleanup;
     }
 
     // property infos
@@ -241,15 +243,13 @@ void AsyncSceneSender::send()
     // deleted
     if (!deleted_entities.empty() || 
         !deleted_materials.empty() || 
-        !deleted_instanceInfos.empty() || 
-        !deleted_instanceMeshes.empty()) {
+        !deleted_instances.empty()) {
 
         ms::DeleteMessage mes;
         setup_message(mes);
         mes.entities = deleted_entities;
         mes.materials = deleted_materials;
-        mes.instanceInfos = deleted_instanceInfos;
-        mes.instanceMeshes = deleted_instanceMeshes;
+        mes.instances = deleted_instances;
 
         succeeded = succeeded && client.send(mes);
         if (!succeeded)

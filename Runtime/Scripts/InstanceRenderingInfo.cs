@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace Unity.MeshSync
 {
-    public class MeshInstanceInfo
+    public class InstanceRenderingInfo
     {
         public Mesh Mesh;
         
@@ -14,24 +14,12 @@ namespace Unity.MeshSync
 
         private GameObject m_gameObject;
         private Matrix4x4 m_inverse = Matrix4x4.identity;
-
-        private Transform m_root;
-
+        
         private bool m_dirtyInstances = true;
         
         private Matrix4x4 m_cachedWorldMatrix = Matrix4x4.zero;
         
         private Matrix4x4[] m_instances;
-        
-        public Transform Root
-        {
-            get => m_root;
-            set
-            {
-                m_root = value;
-                UpdateInverse();
-            }
-        }
 
         public Matrix4x4[] Instances
         {
@@ -48,6 +36,9 @@ namespace Unity.MeshSync
             get => m_gameObject;
             set
             {
+                if (m_gameObject == value)
+                    return;
+                
                 m_gameObject = value;
                UpdateInverse();
             }
@@ -55,13 +46,13 @@ namespace Unity.MeshSync
 
         private void UpdateInverse()
         {
-            if (m_gameObject == null || Root == null)
+            if (m_gameObject == null)
             {
                 m_inverse = Matrix4x4.identity;
             }
             else
             {
-                m_inverse = m_gameObject.transform.localToWorldMatrix.inverse * Root.localToWorldMatrix;
+                m_inverse = m_gameObject.transform.localToWorldMatrix.inverse;
             }
         }
         

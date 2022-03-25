@@ -254,11 +254,33 @@ void Scene::import(const SceneImportSettings& cv)
             converters.push_back(RotateX_ZUpCorrector::create());
     }
 
-    auto convert = [&converters](auto& obj) {
-        for (auto& cv : converters)
-            cv->convert(obj);
-    };
+    updateEntities(cv, converters, entities);
+    updateEntities(cv, converters, instanceMeshes);
 
+    for (auto& asset : assets) {
+        sanitizeObjectName(asset->name);
+
+        if (asset->getAssetType() == AssetType::Animation) {
+            auto& clip = static_cast<AnimationClip&>(*asset);
+            mu::parallel_for_each(clip.animations.begin(), clip.animations.end(), [&](AnimationPtr& anim) {
+                sanitizeHierarchyPath(anim->path);
+                Animation::validate(anim);
+                for (auto& cv : converters) {
+                    cv->convert(*anim);
+                }
+            });
+        }
+    }
+
+    settings.handedness = Handedness::Left;
+    settings.scale_factor = 1.0f;
+}
+
+void Scene::updateEntities(
+    const ms::SceneImportSettings& cv, 
+    const std::vector<ms::EntityConverterPtr>& converters, 
+    std::vector<ms::TransformPtr> entities)
+{
     mu::parallel_for_each(entities.begin(), entities.end(), [&](TransformPtr& obj) {
         sanitizeHierarchyPath(obj->path);
         sanitizeHierarchyPath(obj->reference);
@@ -274,26 +296,14 @@ void Scene::import(const SceneImportSettings& cv)
             mesh.refine();
         }
 
-        if (!converters.empty())
-            convert(*obj);
-        obj->updateBounds();
-    });
-
-    for (auto& asset : assets) {
-        sanitizeObjectName(asset->name);
-
-        if (asset->getAssetType() == AssetType::Animation) {
-            auto& clip = static_cast<AnimationClip&>(*asset);
-            mu::parallel_for_each(clip.animations.begin(), clip.animations.end(), [&](AnimationPtr& anim) {
-                sanitizeHierarchyPath(anim->path);
-                Animation::validate(anim);
-                convert(*anim);
-            });
+        if (!converters.empty()) {
+            for (auto& cv : converters) {
+                cv->convert(*obj);
+            }
         }
-    }
 
-    settings.handedness = Handedness::Left;
-    settings.scale_factor = 1.0f;
+        obj->updateBounds();
+        });
 }
 
 TransformPtr Scene::findEntity(const std::string& path) const

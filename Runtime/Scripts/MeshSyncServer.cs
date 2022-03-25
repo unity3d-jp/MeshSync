@@ -4,6 +4,7 @@ using System;
 using AOT;
 using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
 #if UNITY_EDITOR
@@ -249,15 +250,15 @@ public partial class MeshSyncServer : BaseMeshSync {
     }
 
     void OnRecvDelete(DeleteMessage mes) {
-        
-        int numInstanceInfos = mes.numInstanceInfos;
-        for (int i = 0; i < numInstanceInfos; ++i)
-            EraseInstanceInfoRecord(mes.GetInstanceInfo(i));
 
-        int numInstanceMeshes = mes.numInstanceMeshes;
+        int numInstanceMeshes = mes.numInstances;
         for (int i = 0; i < numInstanceMeshes; i++)
-            EraseInstanceMeshRecord(mes.GetInstanceMesh(i));
-        
+        {
+            var instance = mes.GetInstance(i);
+            EraseInstanceInfoRecord(instance);
+            EraseInstanceMeshRecord(instance);
+        }
+
         int numEntities = mes.numEntities;
         for (int i = 0; i < numEntities; ++i)
             EraseEntityRecord(mes.GetEntity(i));
@@ -499,44 +500,12 @@ public partial class MeshSyncServer : BaseMeshSync {
         if (m_autoStartServer) {
             m_requestRestartServer = true;
         }
-        
-//#if UNITY_EDITOR
-//        m_instanceRenderer.Init(this, m_cameraMode, m_clientInstances);
-//#else
-//        m_instanceRenderer.Init(this, records:m_clientInstances);
-//#endif
-
-            RenderPipelineManager.beginFrameRendering += RenderPipelineManager_beginFrameRendering;
-    }
-
-        void Awake()
-        {
-            #if UNITY_EDITOR
-        m_instanceRenderer.Init(this, m_cameraMode, m_clientInstances);
-#else
-        m_instanceRenderer.Init(this, records:m_clientInstances);
-#endif
-        }
-
-        private void RenderPipelineManager_beginFrameRendering(ScriptableRenderContext arg1, Camera[] arg2)
-        {
-            m_instanceRenderer.Draw();
         }
 
 
     protected override void OnDisable() {
-               RenderPipelineManager.beginFrameRendering -= RenderPipelineManager_beginFrameRendering;
-
         base.OnDisable();
         StopServer();
-    }
-
-    protected override void OnDestroy()
-    {
-        base.OnDestroy();
-        m_DCCInterop?.Cleanup();
-
-        m_instanceRenderer.Clear();
     }
 
     void Start()
@@ -560,6 +529,13 @@ public partial class MeshSyncServer : BaseMeshSync {
                 return;
             PollServerEvents();
         }
+        void OnDestroy()
+        {
+            base.OnDestroy();
+
+            m_DCCInterop?.Cleanup();
+        }
+    
     #endregion
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -571,8 +547,6 @@ public partial class MeshSyncServer : BaseMeshSync {
     bool m_requestRestartServer = false;
     bool m_captureScreenshotInProgress = false;
     
-    MeshSyncInstanceRenderer m_instanceRenderer = new MeshSyncInstanceRenderer();
-
 #endif // UNITY_STANDALONE
     
     [SerializeField] private bool m_autoStartServer = false;
@@ -612,25 +586,6 @@ public partial class MeshSyncServer : BaseMeshSync {
     {
         get => m_foldInstanceSettings;
         set => m_foldInstanceSettings = value;
-    }
-    
-    [SerializeField]
-    private MeshSyncInstanceRenderer.CameraMode m_cameraMode = MeshSyncInstanceRenderer.CameraMode.AllCameras;
-
-    internal MeshSyncInstanceRenderer.CameraMode cameraMode
-    {
-        get => m_cameraMode;
-        set
-        {
-            if (m_cameraMode == value)
-                return;
-            
-            m_cameraMode = value;
-            
-#if UNITY_STANDALONE
-            m_instanceRenderer.Init(this, m_cameraMode);
-#endif
-        }
     }
 #endif    
     

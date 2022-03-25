@@ -19,21 +19,29 @@ namespace Unity.MeshSync {
 
 [System.Serializable] 
 internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCacheClipData>, ITimelineClipAsset, IPlayableBehaviour {
+
+    internal void Init(bool wasCloned) {
+        m_wasCloned = wasCloned;
+    } 
     
 //----------------------------------------------------------------------------------------------------------------------
     public ClipCaps clipCaps {
-        get { return ClipCaps.ClipIn | ClipCaps.SpeedMultiplier; }
+        get { return ClipCaps.ClipIn | ClipCaps.SpeedMultiplier | ClipCaps.Extrapolation; }
     }
 
     public override Playable CreatePlayable(PlayableGraph graph, GameObject go) {
         
-        m_sceneCachePlayableBehaviour = new SceneCachePlayableBehaviour();
         SceneCacheClipData scClipData = GetBoundClipData() as SceneCacheClipData;        
         Assert.IsNotNull(scClipData);        
         
         SceneCachePlayer scPlayer = m_sceneCachePlayerRef.Resolve(graph.GetResolver());
-        m_sceneCachePlayableBehaviour.SetSceneCachePlayer(scPlayer);
-        m_sceneCachePlayableBehaviour.SetClipData(scClipData);
+
+        if (m_wasCloned) {
+            scClipData.SetInitialized(true);
+            m_wasCloned = false;
+        }
+        
+        
         
         //Initialize or clear curve
         if (scPlayer) {
@@ -42,8 +50,8 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         } else {
             scClipData.UnbindSceneCachePlayer();
         }
-        
-        return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, m_sceneCachePlayableBehaviour);
+
+        return Playable.Create(graph);        
     }
    
 //----------------------------------------------------------------------------------------------------------------------
@@ -110,9 +118,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     [SerializeField] private double      m_time;
 
-    
-    SceneCachePlayableBehaviour m_sceneCachePlayableBehaviour = null;
-   
+
+    private bool m_wasCloned = false;
+
 }
 
 

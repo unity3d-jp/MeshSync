@@ -1,329 +1,200 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
-using UnityEditor;
+
 #endif
 
-namespace Unity.MeshSync
-{
-    internal class MeshSyncInstanceRenderer
+namespace Unity.MeshSync{
+    
+    [ExecuteInEditMode]
+    internal partial class MeshSyncInstanceRenderer : MonoBehaviour
     {
-        private BaseMeshSync m_server;
+        internal BaseMeshSync m_server;
+        internal InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
 
-        private Camera[] m_cameras;
+        [SerializeField] private Matrix4x4[] m_transforms;
 
-        private Dictionary<string, MeshInstanceInfo> m_instanceInfo = new Dictionary<string, MeshInstanceInfo>();
+        private bool m_isUpdating = false;
 
-        private bool m_isDirty = false;
-
-        public enum CameraMode
-        {
-            None = 0,
-            SceneCameras = 1,
-            GameCameras = 2,
-            AllCameras = 3
-        }
-
-        private CameraMode m_cameraMode = CameraMode.GameCameras;
-
-        public void Init(
-            BaseMeshSync ms,
-            CameraMode cameraMode = CameraMode.GameCameras,
-            Dictionary<string, InstanceInfoRecord> records = null)
+        public void Init(BaseMeshSync ms)
         {
             m_server = ms;
-            m_cameraMode = cameraMode;
-
-#if UNITY_EDITOR
-            //To cover cases where the user adds cameras to the scene manually
-            EditorApplication.hierarchyChanged -= OnHierarchyChanged;
-            EditorApplication.hierarchyChanged += OnHierarchyChanged;
-            Undo.undoRedoPerformed += UndoRedoPerformed;
-#endif
-
-            RefreshCameraList();
-
-            ms.onUpdateInstanceInfo -= OnUpdateInstanceInfo;
-            ms.onUpdateInstanceInfo += OnUpdateInstanceInfo;
-            ms.onDeleteInstanceInfo -= OnDeleteInstanceInfo;
-            ms.onDeleteInstanceInfo += OnDeleteInstanceInfo;
-            ms.onUpdateInstanceMesh -= OnUpdateInstanceMesh;
-            ms.onUpdateInstanceMesh += OnUpdateInstanceMesh;
-            ms.onDeleteInstanceMesh -= OnDeleteInstanceMesh;
-            ms.onDeleteInstanceMesh += OnDeleteInstanceMesh;
-            ms.onUpdateEntity -= OnUpdateEntity;
-            ms.onUpdateEntity += OnUpdateEntity;
-            ms.onDeleteEntity -= OnDeleteEntity;
+            
             ms.onSceneUpdateEnd -= OnSceneUpdateEnd;
             ms.onSceneUpdateEnd += OnSceneUpdateEnd;
-
-            LoadData(records);
+            
+            ms.onSceneUpdateBegin -= OnSceneUpdateBegin;
+            ms.onSceneUpdateBegin += OnSceneUpdateBegin;
         }
 
-        private void LoadData(Dictionary<string, InstanceInfoRecord> records)
+        void OnEnable()
         {
-            if (records == null)
-                return;
-
-            m_instanceInfo.Clear();
-
-            foreach (var record in records)
+            if (RenderPipelineManager.currentPipeline == null)
             {
-                var key = record.Key;
-                var value = record.Value;
-
-                OnUpdateInstanceInfo(key, value.go, value.transforms);
+                Camera.onPreCull += OnCameraPreCull;
             }
+            else
+            {
+                RenderPipelineManager.beginFrameRendering += OnBeginFrameRendering;
+            }
+
+            UpdateRenderingInfo(m_renderingInfo);
+
+            var meshRenderer = GetComponent<MeshRenderer>();
+            if (meshRenderer)
+            {
+                meshRenderer.enabled = false;
+            }
+        }
+
+        void OnDisable()
+        {
+            if (RenderPipelineManager.currentPipeline == null)
+            {
+                Camera.onPreCull -= OnCameraPreCull;
+            }
+            else
+            {
+                RenderPipelineManager.beginFrameRendering -= OnBeginFrameRendering;
+            }
+        }
+        
+        private void OnBeginFrameRendering(ScriptableRenderContext arg1, Camera[] cameras)
+        {
+            Draw(cameras);
+        }
+
+        private void OnCameraPreCull(Camera cam)
+        {
+            if (cam.name == "Preview Scene Camera")
+                return;
+            
+            Camera[] cameras = {cam};
+            Draw(cameras);
+        }
+
+        private void OnSceneUpdateBegin()
+        {
+            m_isUpdating = true;
         }
 
         private void OnSceneUpdateEnd()
         {
-            if (m_isDirty)
-            {
-                RenderAndDraw();
-                m_isDirty = false;
-            }
-        }
-
-#if UNITY_EDITOR
-        private void RefreshCameraListWithGameAndSceneCameras()
-        {
-            var gameViewCameras = Object.FindObjectsOfType<Camera>();
-            var sceneViewCameras = SceneView.GetAllSceneCameras();
-            m_cameras = new Camera[gameViewCameras.Length + sceneViewCameras.Length];
-
-            for (var i = 0; i < gameViewCameras.Length; i++)
-            {
-                m_cameras[i] = gameViewCameras[i];
-            }
-
-            for (var i = 0; i < sceneViewCameras.Length; i++)
-            {
-                m_cameras[i + gameViewCameras.Length] = sceneViewCameras[i];
-            }
-        }
-
-        private void OnHierarchyChanged()
-        {
-            RefreshCameraList();
-        }
-#endif
-
-        private void RefreshCameraList()
-        {
-            RenderAllCameras();
-            m_cameras = null;
-#if UNITY_EDITOR
-            if (m_cameraMode == CameraMode.AllCameras)
-            {
-                RefreshCameraListWithGameAndSceneCameras();
-            }
-            else if (m_cameraMode == CameraMode.GameCameras)
-            {
-                m_cameras = Object.FindObjectsOfType<Camera>();
-            }
-            else if (m_cameraMode == CameraMode.SceneCameras)
-            {
-                m_cameras = SceneView.GetAllSceneCameras();
-            }
-#else
-            m_cameras = GameObject.FindObjectsOfType<Camera>();
-#endif
+            m_isUpdating = false;
         }
 
         #region Events
 
-#if UNITY_EDITOR
-        private void UndoRedoPerformed()
+        public void UpdateTransforms(Matrix4x4[] transforms)
         {
-            RenderAndDraw();
+            m_transforms = transforms;
+            m_renderingInfo.Instances = m_transforms;
         }
-#endif
 
-        private void OnDeleteEntity(GameObject obj)
+        private void UpdateInfoFromRenderer(InstanceRenderingInfo info)
         {
-            if (obj.TryGetComponent(out Camera _))
+            if (TryGetComponent(out SkinnedMeshRenderer skinnedMeshRenderer))
             {
-                RefreshCameraList();
-            }
-        }
-
-        private void OnUpdateEntity(GameObject obj, TransformData data)
-        {
-            if (data.entityType == EntityType.Camera)
-            {
-                RefreshCameraList();
-            }
-        }
-
-        private void OnDeleteInstanceMesh(string path)
-        {
-            if (path == null)
+                info.Mesh = skinnedMeshRenderer.sharedMesh;
+                info.Materials = skinnedMeshRenderer.sharedMaterials;
+                info.GameObject = gameObject;
+                info.Renderer = skinnedMeshRenderer;
                 return;
-
-            m_instanceInfo.Remove(path);
-
-            SetDirty();
-        }
-
-        private void OnUpdateInstanceMesh(string path, GameObject go)
-        {
-            if (!this.m_instanceInfo.TryGetValue(path, out MeshInstanceInfo entry))
-            {
-                entry = new MeshInstanceInfo();
-                this.m_instanceInfo.Add(path, entry);
             }
-
-            UpdateEntryMeshMaterials(path, go, entry);
-        }
-
-        private void OnDeleteInstanceInfo(string path)
-        {
-
-            if (path == null)
-                return;
-
-            m_instanceInfo.Remove(path);
-
-            SetDirty();
-        }
-
-
-        private void OnUpdateInstanceInfo(
-            string path,
-            GameObject go,
-            Matrix4x4[] transforms)
-        {
-            if (go == null)
+            
+            if (!TryGetComponent(out MeshFilter filter))
             {
-                Debug.LogWarningFormat("[MeshSync] No Gameobject found: {0}", path);
+                Debug.LogWarningFormat("[MeshSync] No Mesh Filter for {0}", name);
                 return;
             }
 
-
-            if (!m_instanceInfo.TryGetValue(path, out MeshInstanceInfo entry))
+            if (!TryGetComponent(out MeshRenderer renderer))
             {
-                entry = new MeshInstanceInfo();
-
-                m_instanceInfo.Add(path, entry);
-            }
-
-            if (!UpdateEntryMeshMaterials(path, go, entry))
-            {
+                Debug.LogWarningFormat("[MeshSync] No renderer for {0}", name);
                 return;
             }
-
-            entry.Instances = transforms;
-
-            for (int i = 0; i < entry.Materials.Length; i++)
-            {
-                Material mat = entry.Materials[i];
-                if (mat == null)
-                {
-                    mat = BaseMeshSync.CreateDefaultMaterial();
-                    entry.Materials[i] = mat;
-                }
-                mat.enableInstancing = true;
-            }
-
-            SetDirty();
+            
+            info.Mesh = filter.sharedMesh;
+            info.Materials = renderer.sharedMaterials;
+            info.GameObject = gameObject;
+            info.Renderer = renderer;
         }
 
-        private bool UpdateEntryMeshMaterials(string path, GameObject go, MeshInstanceInfo entry)
+       
+        private void UpdateRenderingInfo(InstanceRenderingInfo info)
         {
-            if (go.TryGetComponent(out SkinnedMeshRenderer skinnedMeshRenderer))
+            // Transforms
+            info.Instances = m_transforms;
+
+            // Renderer related info
+            UpdateInfoFromRenderer(info);
+            
+            // Enable instancing in materials
+            for (var i = 0; i < info.Materials.Length; i++)
             {
-                entry.Mesh = skinnedMeshRenderer.sharedMesh;
-                entry.Materials = skinnedMeshRenderer.sharedMaterials;
-                entry.GameObject = go;
-                entry.Renderer = skinnedMeshRenderer;
-                entry.Root = m_server.transform;
-
-                return true;
+                info.Materials[i].enableInstancing = true;
             }
-
-            if (!go.TryGetComponent(out MeshFilter filter))
-            {
-                Debug.LogWarningFormat("[MeshSync] No Mesh Filter for {0}", path);
-                return false;
-            }
-
-            if (!go.TryGetComponent(out MeshRenderer renderer))
-            {
-                Debug.LogWarningFormat("[MeshSync] No renderer for {0}", path);
-                return false;
-            }
-
-            entry.Mesh = filter.sharedMesh;
-            entry.Materials = renderer.sharedMaterials;
-            entry.GameObject = go;
-            entry.Renderer = renderer;
-            entry.Root = m_server.transform;
-
-            return true;
         }
         #endregion
-
+        
         #region Rendering
-
-        private void SetDirty()
+        
+        
+        public void Draw(Camera[] cameras)
         {
-            m_isDirty = true;
+            if (m_isUpdating)
+                return;
+            
+            DoDraw(m_renderingInfo, cameras);
         }
 
-        public void Draw()
-        {
-            foreach (var entry in m_instanceInfo)
-            {
-                DrawInstances(entry.Value);
-            }
-        }
-
-        private void DrawInstances(MeshInstanceInfo entry)
+        private void DoDraw(InstanceRenderingInfo entry, Camera[] cameras)
         {
             if (entry.Mesh == null || entry.DividedInstances == null || entry.Materials == null)
             {
                 return;
             }
-
+            
             var mesh = entry.Mesh;
-
+            
             entry.UpdateDividedInstances();
             var matrixBatches = entry.DividedInstances;
 
             if (entry.Materials.Length == 0)
                 return;
-
+            
             for (var i = 0; i < mesh.subMeshCount; i++)
             {
                 // Try to get the material in the same index position as the mesh
                 // or the last material.
-                var materialIndex = Mathf.Clamp(i, 0, entry.Materials.Length - 1);
-
-                var material = entry.Materials[materialIndex];
+                var materialIndex = Mathf.Clamp(i, 0, entry.Materials.Length -1);
                 
+                var material = entry.Materials[materialIndex];
                 for (var j = 0; j < matrixBatches.Count; j++)
                 {
                     var batch = matrixBatches[j];
-
+                    
                     DrawOnCameras(
-                        mesh,
+                        cameras,
+                        mesh, 
                         i,
                         material,
-                        batch,
-                        entry.Layer,
-                        entry.ReceiveShadows,
-                        entry.ShadowCastingMode,
-                        entry.LightProbeUsage,
+                        batch, 
+                        entry.Layer, 
+                        entry.ReceiveShadows, 
+                        entry.ShadowCastingMode, 
+                        entry.LightProbeUsage, 
                         entry.LightProbeProxyVolume);
                 }
             }
         }
-
+        
         private void DrawOnCameras(
+            Camera[] cameras,
             Mesh mesh,
             int submeshIndex,
             Material material,
@@ -331,72 +202,43 @@ namespace Unity.MeshSync
             int layer,
             bool receiveShadows,
             ShadowCastingMode shadowCastingMode,
-            LightProbeUsage lightProbeUsage,
+            LightProbeUsage lightProbeUsage, 
             LightProbeProxyVolume lightProbeProxyVolume)
         {
-            if (m_cameras == null)
+            if (cameras == null)
                 return;
-
-            for (var i = 0; i < m_cameras.Length; i++)
+            
+            for (var i = 0; i < cameras.Length; i++)
             {
-                var camera = m_cameras[i];
+                var camera = cameras[i];
                 if (camera == null)
                     continue;
-
+                
                 Graphics.DrawMeshInstanced(
-                    mesh: mesh,
-                    submeshIndex: submeshIndex,
-                    material: material,
-                    matrices: matrices,
-                    count: matrices.Length,
-                    properties: null,
-                    castShadows: shadowCastingMode,
-                    receiveShadows: receiveShadows,
-                    layer: layer,
-                    camera: camera,
-                    lightProbeUsage: lightProbeUsage,
-                    lightProbeProxyVolume: lightProbeProxyVolume);
+                    mesh:mesh,
+                    submeshIndex:submeshIndex, 
+                    material:material, 
+                    matrices:matrices, 
+                    count:matrices.Length, 
+                    properties:null, 
+                    castShadows:shadowCastingMode, 
+                    receiveShadows:receiveShadows,
+                    layer:layer, 
+                    camera:camera,
+                    lightProbeUsage:lightProbeUsage, 
+                    lightProbeProxyVolume:lightProbeProxyVolume);
             }
         }
-
-        private void RenderAllCameras()
-        {
-            if (m_cameras == null)
-                return;
-
-            for (var i = 0; i < m_cameras.Length; i++)
-            {
-                var camera = m_cameras[i];
-                if (camera == null)
-                    continue;
-
-                camera.Render();
-            }
-        }
-
-
-        private void RenderAndDraw()
-        {
-            if (Application.isEditor && !Application.isPlaying)
-            {
-                RenderAllCameras();
-            }
-
-            Draw();
-        }
-
+        
+        
         public void Clear()
         {
-            RenderAllCameras();
-            m_cameras = null;
             m_server = null;
-            m_cameraMode = CameraMode.None;
-            m_instanceInfo.Clear();
+            m_renderingInfo = null;
         }
-
+        
         #endregion
     }
-
 
 }
 

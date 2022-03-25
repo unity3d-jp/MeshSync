@@ -793,6 +793,11 @@ internal struct MaterialData {
 #region Animations
 
 internal struct TimeRange {
+
+    internal float GetDuration() {
+        return (end - start);
+    }
+    
     public float start, end;
 }
 
@@ -2908,12 +2913,6 @@ internal struct SceneProfileData {
 
 internal struct InstanceInfoData
 {
-    public enum ReferenceType
-    {
-        EntityPath = 1,
-        MeshPath = 2
-    }
-    
     public IntPtr self;
 
     [DllImport((Lib.name))]
@@ -2925,12 +2924,7 @@ internal struct InstanceInfoData
     [DllImport(Lib.name)]
     static extern void msInstanceInfoCopyTransforms(IntPtr self, IntPtr matrices);
 
-    [DllImport(Lib.name)]
-    static extern ReferenceType msInstanceInfoGetType(IntPtr self);
-
     public string path => Misc.S(msInstanceInfoGetPath(self));
-
-    public ReferenceType type => msInstanceInfoGetType(self);
 
     public int arrayLength => msInstanceInfoPropGetArrayLength(self);
 

@@ -118,36 +118,37 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
     protected static bool DrawMiscSettings(BaseMeshSync t) {
 
-        bool changed   = false;
         MeshSyncPlayerConfig playerConfig = t.GetConfigV();
         
         // Misc
         t.foldMisc = EditorGUILayout.Foldout(t.foldMisc, "Misc", true, GetBoldFoldoutStyle());
-        if (t.foldMisc)
-        {
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Sync Material List",
-                guiFunc: () => EditorGUILayout.Toggle("Sync Material List", playerConfig.SyncMaterialList), 
-                updateFunc: (bool toggle) => { playerConfig.SyncMaterialList = toggle; }
-            );
+        if (!t.foldMisc) 
+            return false;
+        
+        bool changed = false;
+        
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Sync Material List",
+            guiFunc: () => EditorGUILayout.Toggle("Sync Material List", playerConfig.SyncMaterialList), 
+            updateFunc: (bool toggle) => { playerConfig.SyncMaterialList = toggle; }
+        );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Progressive Display",
-                guiFunc: () => EditorGUILayout.Toggle("Progressive Display", playerConfig.ProgressiveDisplay), 
-                updateFunc: (bool toggle) => { playerConfig.ProgressiveDisplay = toggle; }
-            );
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Progressive Display",
+            guiFunc: () => EditorGUILayout.Toggle("Progressive Display", playerConfig.ProgressiveDisplay), 
+            updateFunc: (bool toggle) => { playerConfig.ProgressiveDisplay = toggle; }
+        );
             
             
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Logging",
-                guiFunc: () => EditorGUILayout.Toggle("Logging", playerConfig.Logging), 
-                updateFunc: (bool toggle) => { playerConfig.Logging = toggle; }
-            );
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Logging",
+            guiFunc: () => EditorGUILayout.Toggle("Logging", playerConfig.Logging), 
+            updateFunc: (bool toggle) => { playerConfig.Logging = toggle; }
+        );
 
-            changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Profiling",
-                guiFunc: () => EditorGUILayout.Toggle("Profiling", playerConfig.Profiling), 
-                updateFunc: (bool toggle) => { playerConfig.Profiling = toggle; }
-            );
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t,"MeshSync: Profiling",
+            guiFunc: () => EditorGUILayout.Toggle("Profiling", playerConfig.Profiling), 
+            updateFunc: (bool toggle) => { playerConfig.Profiling = toggle; }
+        );
             
-            EditorGUILayout.Space();
-        }
+        EditorGUILayout.Space();
 
         return changed;
     }
@@ -155,7 +156,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 //----------------------------------------------------------------------------------------------------------------------
     internal static bool DrawDefaultMaterialList(BaseMeshSync t) {
 
-        var styleFold = EditorStyles.foldout;
+        GUIStyle styleFold = EditorStyles.foldout;
         styleFold.fontStyle = FontStyle.Bold;
         t.foldMaterialList = EditorGUILayout.Foldout(t.foldMaterialList, "Materials", true, styleFold);
         if (!t.foldMaterialList) 
@@ -232,11 +233,10 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
     protected static void DrawExportAssets(BaseMeshSync t)
     {
-        var style = EditorStyles.foldout;
+        GUIStyle style = EditorStyles.foldout;
         style.fontStyle = FontStyle.Bold;
         t.foldExportAssets = EditorGUILayout.Foldout(t.foldExportAssets, "Export Assets", true, style);
-        if (t.foldExportAssets)
-        {
+        if (t.foldExportAssets) {
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Export Meshes", GUILayout.Width(160.0f)))
                 t.ExportMeshes();

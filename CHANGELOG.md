@@ -1,9 +1,57 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
-## [0.12.0-preview] - 2022-03-01
+## [0.12.4-preview] - 2022-03-22
 
-TBD
+### Fixed
+* fix: use the local time of SceneCachePlayableAsset clip instead of director time
+
+## [0.12.3-preview] - 2022-03-19
+
+### Fixed
+* fix: the performance of SceneCache in Timeline by not reloading every time
+
+## [0.12.2-preview] - 2022-03-19
+
+### Fixed
+* fix: keep SceneCache objects active when clicking pause in TimelineWindow
+
+## [0.12.1-preview] - 2022-03-18
+
+### Added
+* feat: show SceneCachePlayer basic info in the inspector
+* feat: add extrapolation capabilities for SceneCachePlayableAsset
+* feat: override LimitedAnimation in SceneCachePlayableAsset
+
+### Changed
+* change: the default frames to hold for Limited Animation to 2
+
+### Fixed
+* fix: set the in and out tangent of the keys of SceneCachePlayableAsset
+* fix: properly create SceneCachePlayableAsset clips when the SceneCachePlayer object is disabled 
+* fix: clamp frameOffset after setting num frames to hold for limited animatio
+* fix: hide fields in the inspector SceneCachePlayableAsset for invalid SceneCache
+
+## [0.12.0-preview] - 2022-03-16
+
+### Added
+* feat: limited animation settings for SceneCachePlayer
+* feat: add plugin installation support for Blender 3.1
+* feat: Mac Silicon support (experimental)
+
+### Fixed
+* fix: prevent setting time to 0 during OnEnable() for SceneCachePlayer
+* fix: non-material assets of SceneCachePlayer were not imported properly 
+
+### Changed
+* turn the time/frame/interpolation settings in SceneCachePlayer into PlaybackMode
+* replace SnapToFrame property in SceneCachePlayableAsset with PlaybackMode in SceneCachePlayer directly
+* change the behaviour of resizing SceneCachePlayableAsset to maintain scale by default 
+
+### Removed
+* remove: preload setting in SceneCachePlayer
+* remove: Animation Tweak Settings in MeshSyncServer and SceneCachePlayer
+* remove: BaseFrame property in SceneCachePlayer 
 
 ## [0.11.0-preview] - 2022-02-01
 
