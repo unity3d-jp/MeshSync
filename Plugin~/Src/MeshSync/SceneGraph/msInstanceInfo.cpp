@@ -6,6 +6,7 @@ namespace ms {
 	void InstanceInfo::serialize(ostream& os)
 	{
 		write(os, path);
+		write(os, parent_path);
 		write(os, transforms);
 		
 	}
@@ -13,11 +14,13 @@ namespace ms {
 	void InstanceInfo::deserialize(istream& is)
 	{
 		read(is, path);
+		read(is, parent_path);
 		read(is, transforms);
 	}
 	void InstanceInfo::clear()
 	{
 		this->path = "";
+		this->parent_path = "";
 		this->transforms.clear();
 	}
 

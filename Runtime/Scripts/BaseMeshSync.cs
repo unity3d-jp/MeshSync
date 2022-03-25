@@ -155,7 +155,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         m_objIDTable.Clear();
         
         m_clientInstances.Clear();
-        m_clientInstanceMeshes.Clear();
+        m_clientInstancedObjects.Clear();
         
         InitInternalV();
     }
@@ -279,7 +279,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         SerializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
         SerializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
         SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
-        SerializeDictionary(m_clientInstanceMeshes, ref m_clientInstanceMeshes_keys, ref m_clientInstanceMeshes_values);
+        SerializeDictionary(m_clientInstancedObjects, ref m_clientInstanceMeshes_keys, ref m_clientInstanceMeshes_values);
         SerializeDictionary(m_clientInstances, ref m_clientInstances_keys, ref m_clientInstances_values);
         
         m_baseMeshSyncVersion = CUR_BASE_MESHSYNC_VERSION;
@@ -293,7 +293,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         DeserializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
         DeserializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
         DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
-        DeserializeDictionary(m_clientInstanceMeshes, ref m_clientInstanceMeshes_keys, ref m_clientInstanceMeshes_values);
+        DeserializeDictionary(m_clientInstancedObjects, ref m_clientInstanceMeshes_keys, ref m_clientInstanceMeshes_values);
         DeserializeDictionary(m_clientInstances, ref m_clientInstances_keys, ref m_clientInstances_values);
         
         OnAfterDeserializeMeshSyncPlayerV();
@@ -1641,33 +1641,44 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         var config = GetConfigV();
         
         var rec = UpdateMeshEntity((MeshData)data, config);
-        var renderer = rec.go.GetOrAddComponent<MeshSyncInstanceRenderer>();
         
-        renderer.Init(this);
-
-        if (!this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord _))
+        if (!this.m_clientInstancedObjects.TryGetValue(data.path, out EntityRecord _))
         {
-            this.m_clientInstanceMeshes.Add(data.path, null);
+            this.m_clientInstancedObjects.Add(data.path, null);
         }
 
-        this.m_clientInstanceMeshes[data.path] = rec;
+        this.m_clientInstancedObjects[data.path] = rec;
 
         return rec;
-        
-        
     }
     
     InstanceInfoRecord UpdateInstanceInfo(InstanceInfoData data)
     {
         InstanceInfoRecord rec = null;
         
-        if (!this.m_clientInstances.TryGetValue(data.path, out rec))
+        var path = data.path;
+        
+        if (!this.m_clientInstances.TryGetValue(path, out rec))
         {
             rec = new InstanceInfoRecord();
-            m_clientInstances.Add(data.path, rec);
+            m_clientInstances.Add(path, rec);
         }
         
-        if (this.m_clientInstanceMeshes.TryGetValue(data.path, out EntityRecord entityRecord))
+        // Look for parent in client objects
+        if (this.m_clientObjects.TryGetValue(data.parentPath, out EntityRecord parentRecord))
+        {
+            if (parentRecord != null)
+            {
+                rec.parent = parentRecord.go;
+            }
+        }
+        else
+        {
+            Debug.LogWarningFormat("[MeshSync] No Gameobject found for parent path {0}", data.parentPath );
+        }
+        
+        // Look for reference in client instanced objects
+        if (this.m_clientInstancedObjects.TryGetValue(path, out EntityRecord entityRecord))
         {
             if (entityRecord != null)
             {
@@ -1676,11 +1687,30 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         }
         else
         {
-            Debug.LogWarningFormat("[MeshSync] No Mesh found for path {0}", data.path);
+            Debug.LogWarningFormat("[MeshSync] No Gameobject found for path {0}", data.path);
+        } 
+        
+        // Find the renderer on the parent for the specific instanced object
+        MeshSyncInstanceRenderer renderer = null;
+        var renderers = rec.parent.GetComponents<MeshSyncInstanceRenderer>();
+        for (var i = 0; i < renderers.Length; i++)
+        {
+            var entry = renderers[i];
+            if (entry.m_id == path)
+            {
+                renderer = entry;
+                break;
+            }
+        }
+
+        if (renderer == null)
+        {
+            renderer = rec.parent.AddComponent<MeshSyncInstanceRenderer>();
+            renderer.Init(this);
         }
         
-        var instanceRenderer= rec.go.GetOrAddComponent<MeshSyncInstanceRenderer>();
-        instanceRenderer.UpdateTransforms(data.transforms);
+        // Update it with the transform data, reference and path
+        renderer.UpdateReference(data.transforms, rec.go, path);
 
         return rec;
     }
@@ -1903,9 +1933,9 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     {
         var path = identifier.name;
         var ret = false;
-        if (this.m_clientInstanceMeshes.TryGetValue(path, out EntityRecord rec))
+        if (this.m_clientInstancedObjects.TryGetValue(path, out EntityRecord rec))
         {
-            ret = this.m_clientInstanceMeshes.Remove(path);
+            ret = this.m_clientInstancedObjects.Remove(path);
             if (onDeleteInstanceMesh != null)
                 onDeleteInstanceMesh(identifier.name);
             
@@ -2358,7 +2388,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     private readonly           Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
     
     private protected readonly Dictionary<string, InstanceInfoRecord> m_clientInstances =  new Dictionary<string, InstanceInfoRecord>();
-    private readonly Dictionary<string, EntityRecord> m_clientInstanceMeshes = new Dictionary<string, EntityRecord>();
+    private readonly Dictionary<string, EntityRecord> m_clientInstancedObjects = new Dictionary<string, EntityRecord>();
 
 
     protected Action m_onMaterialChangedInSceneViewCB = null;

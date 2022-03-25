@@ -20,32 +20,36 @@ namespace Unity.MeshSync
         
         private void DelayCall()
         {
-            var gos = GameObject.FindObjectsOfType<MeshSyncInstanceRenderer>();
+            var renderers = GameObject.FindObjectsOfType<MeshSyncInstanceRenderer>();
             foreach (var path in m_added)
             {
                 // Get the added asset
-                var asset = AssetDatabase.LoadAssetAtPath<MeshSyncInstanceRenderer>(path);
+                var asset = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 if (asset == null)
                     continue;
-                    
+
                 // Find the instance of the asset.
-                foreach (var instance in gos)
+                foreach (var renderer in renderers)
                 {
-                    var instancePrefab = PrefabUtility.GetCorrespondingObjectFromSourceAtPath(instance, path);
+                    var reference = renderer.m_reference;
+                    var instancePrefab = PrefabUtility.GetCorrespondingObjectFromSourceAtPath(reference, path);
                     if (instancePrefab != asset)
                         continue;
 
+                    var server = renderer.m_server;
+                    var basePath = server.GetAssetsFolder();
+                    
                     var instanceChildren = 
-                        instance.GetComponentsInChildren<MeshSyncInstanceRenderer>();
-                    var assetChildren = asset.GetComponentsInChildren<MeshSyncInstanceRenderer>();
+                        reference.GetComponentsInChildren<Renderer>();
+                    var assetChildren = asset.GetComponentsInChildren<Renderer>();
 
                     for (var i = 0; i < instanceChildren.Length; i++)
                     {
                         var instanceChild = instanceChildren[i];
                         var assetChild = assetChildren[i];
                         
-                        UpdateMesh(instanceChild, assetChild);
-                        UpdateMaterial(instanceChild, assetChild);
+                        UpdateMesh(instanceChild, assetChild, basePath);
+                        UpdateMaterial(instanceChild, assetChild, basePath);
                     }
                     
                     // Only need to do this once per prefab
@@ -58,66 +62,82 @@ namespace Unity.MeshSync
             AssetDatabase.SaveAssets();
         }
 
-        private void UpdateMaterial(MeshSyncInstanceRenderer instance, MeshSyncInstanceRenderer asset)
+        private void UpdateMaterial(Renderer instance, Renderer asset, string basePath)
         {
             // save the material referenced in the instance
-            var savedMaterials = SaveMaterials(instance);
-
-            if (asset.TryGetComponent(out Renderer r))
-            {
-                r.sharedMaterials = savedMaterials;
-            }
+            var savedMaterials = SaveMaterials(instance, basePath);
+            asset.sharedMaterials = savedMaterials;
         }
         
-        private void UpdateMesh(MeshSyncInstanceRenderer instance, MeshSyncInstanceRenderer asset)
+        private void UpdateMesh(Renderer instance, Renderer asset, string basePath)
         {
             // save the mesh referenced in the instance
-            var savedMesh = SaveMesh(instance);
+            var savedMesh = SaveMesh(instance, basePath);
+            SetMesh(asset, savedMesh);
+        }
 
-            // assign the saved mesh to the asset
-            if (asset.TryGetComponent(out SkinnedMeshRenderer smr))
+        private Mesh GetMesh(Renderer renderer)
+        {
+            if (renderer is MeshRenderer meshRenderer)
             {
-                smr.sharedMesh = savedMesh;
+                var filter = renderer.gameObject.GetComponent<MeshFilter>();
+                return filter.sharedMesh;
             }
-            else if (asset.TryGetComponent(out MeshFilter mf))
+
+            if (renderer is SkinnedMeshRenderer skinnedMeshRenderer)
             {
-                mf.sharedMesh = savedMesh;
+                return skinnedMeshRenderer.sharedMesh;
+            }
+
+            return null;
+        }
+
+        private void SetMesh(Renderer renderer, Mesh mesh)
+        {
+            if (renderer is MeshRenderer meshRenderer)
+            {
+                var filter = renderer.gameObject.GetComponent<MeshFilter>();
+                filter.sharedMesh = mesh;
+                return;
+            }
+
+            if (renderer is SkinnedMeshRenderer skinnedMeshRenderer)
+            {
+                skinnedMeshRenderer.sharedMesh = mesh;
+                return;
             }
         }
         
-        private Material[] SaveMaterials(MeshSyncInstanceRenderer renderer)
+        private Material[] SaveMaterials(Renderer renderer, string basePath)
         {
-            var materials = renderer.m_renderingInfo.Materials;
+            var materials = renderer.sharedMaterials;
             var result = new Material[materials.Length];
             for (var i = 0; i < materials.Length; i++)
             {
-                var server = renderer.m_server;
-                var basePath = server.GetAssetsFolder();
-
                 CreateDirectoryIfNotExists(basePath);
                 
                 var nameGenerator = new Misc.UniqueNameGenerator();
 
                 var material = materials[i];
                 var dstPath = $"{basePath}/{nameGenerator.Gen(material.name)}.mat";
+                
                  result[i] = Misc.OverwriteOrCreateAsset(material, dstPath);
             }
 
+            
             return result;
         }
 
-        private Mesh SaveMesh(MeshSyncInstanceRenderer renderer)
+        private Mesh SaveMesh(Renderer renderer, string basePath)
         {
-            var mesh = renderer.m_renderingInfo.Mesh;
-            var server = renderer.m_server;
-            var basePath = server.GetAssetsFolder();
-            
+            var mesh = GetMesh(renderer);
 
             CreateDirectoryIfNotExists(basePath);
 
             var nameGenerator = new Misc.UniqueNameGenerator();
             
             var dstPath = $"{basePath}/{nameGenerator.Gen(mesh.name)}.asset";
+            
             return Misc.OverwriteOrCreateAsset(mesh, dstPath);
         }
         

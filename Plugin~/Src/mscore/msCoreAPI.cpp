@@ -556,6 +556,7 @@ msAPI ms::SceneProfileData msSceneGetProfileData(const ms::Scene *self) { return
 
 #pragma region InstanceInfo
 msAPI const char* msInstanceInfoGetPath(const ms::InstanceInfo* self) { return self->path.c_str(); }
+msAPI const char* msInstanceInfoGetParentPath(const ms::InstanceInfo* self) { return self->parent_path.c_str(); }
 msAPI int msInstanceInfoPropGetArrayLength(const ms::InstanceInfo* self) { return self->transforms.size(); }
 msAPI void msInstanceInfoCopyTransforms(const ms::InstanceInfo* self, float4x4* dst) {
     memcpy(dst, self->transforms.data(), self->transforms.size() * sizeof(float4x4));
