@@ -18,6 +18,8 @@ namespace ms {
 		/// /// </summary>
 		string path;
 
+		string parent_path;
+
 		/// <summary>
 		/// World transforms of the instances
 		/// </summary>

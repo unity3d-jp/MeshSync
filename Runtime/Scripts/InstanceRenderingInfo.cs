@@ -10,7 +10,33 @@ namespace Unity.MeshSync
         public Mesh Mesh;
         
         public List<Matrix4x4[]> DividedInstances { get; private set; } = new List<Matrix4x4[]>();
-        public Material[] Materials;
+
+        private Material[] m_materials;
+
+        public Material[] Materials
+        {
+            get => m_materials;
+            set
+            {
+                if (value == m_materials)
+                {
+                    return;
+                }
+
+                m_materials = value;
+                
+                OnMaterialsUpdated();
+            }
+        }
+
+        private void OnMaterialsUpdated()
+        {
+            // Enable instancing in materials
+            for (var i = 0; i < m_materials.Length; i++)
+            {
+                m_materials[i].enableInstancing = true;
+            }
+        }
 
         private GameObject m_gameObject;
         private Matrix4x4 m_inverse = Matrix4x4.identity;
@@ -40,7 +66,9 @@ namespace Unity.MeshSync
                     return;
                 
                 m_gameObject = value;
-               UpdateInverse();
+                
+                OnGameObjectUpdated();
+                UpdateInverse();
             }
         }
 
@@ -186,6 +214,38 @@ namespace Unity.MeshSync
                 
                 DividedInstances.Add(array);
             }
+        }
+
+        public void OnGameObjectUpdated()
+        {
+            var go = GameObject;
+
+            if (go == null)
+                return;
+            
+            if (go.TryGetComponent(out SkinnedMeshRenderer skinnedMeshRenderer))
+            {
+                Mesh = skinnedMeshRenderer.sharedMesh;
+                Materials = skinnedMeshRenderer.sharedMaterials;
+                Renderer = skinnedMeshRenderer;
+                return;
+            }
+            
+            if (!go.TryGetComponent(out MeshFilter filter))
+            {
+                Debug.LogWarningFormat("[MeshSync] No Mesh Filter for {0}", go.name);
+                return;
+            }
+
+            if (!go.TryGetComponent(out MeshRenderer renderer))
+            {
+                Debug.LogWarningFormat("[MeshSync] No renderer for {0}", go.name);
+                return;
+            }
+            
+            Mesh = filter.sharedMesh;
+            Materials = renderer.sharedMaterials;
+            Renderer = renderer;
         }
     }
 }

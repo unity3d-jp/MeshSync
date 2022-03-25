@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -11,13 +12,16 @@ using Object = UnityEngine.Object;
 namespace Unity.MeshSync{
     
     [ExecuteInEditMode]
-    internal partial class MeshSyncInstanceRenderer : MonoBehaviour
+    internal class MeshSyncInstanceRenderer : MonoBehaviour
     {
         internal BaseMeshSync m_server;
+        
         internal InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
 
         [SerializeField] private Matrix4x4[] m_transforms;
-
+        [SerializeField] internal GameObject m_reference; 
+        [SerializeField] internal string m_id;
+        
         private bool m_isUpdating = false;
 
         public void Init(BaseMeshSync ms)
@@ -89,39 +93,15 @@ namespace Unity.MeshSync{
 
         #region Events
 
-        public void UpdateTransforms(Matrix4x4[] transforms)
+        public void UpdateReference(Matrix4x4[] transforms, GameObject go, string id)
         {
+      
             m_transforms = transforms;
+            m_reference = go;
+            m_id = id;
+            
             m_renderingInfo.Instances = m_transforms;
-        }
-
-        private void UpdateInfoFromRenderer(InstanceRenderingInfo info)
-        {
-            if (TryGetComponent(out SkinnedMeshRenderer skinnedMeshRenderer))
-            {
-                info.Mesh = skinnedMeshRenderer.sharedMesh;
-                info.Materials = skinnedMeshRenderer.sharedMaterials;
-                info.GameObject = gameObject;
-                info.Renderer = skinnedMeshRenderer;
-                return;
-            }
-            
-            if (!TryGetComponent(out MeshFilter filter))
-            {
-                Debug.LogWarningFormat("[MeshSync] No Mesh Filter for {0}", name);
-                return;
-            }
-
-            if (!TryGetComponent(out MeshRenderer renderer))
-            {
-                Debug.LogWarningFormat("[MeshSync] No renderer for {0}", name);
-                return;
-            }
-            
-            info.Mesh = filter.sharedMesh;
-            info.Materials = renderer.sharedMaterials;
-            info.GameObject = gameObject;
-            info.Renderer = renderer;
+            m_renderingInfo.GameObject = m_reference;
         }
 
        
@@ -129,15 +109,9 @@ namespace Unity.MeshSync{
         {
             // Transforms
             info.Instances = m_transforms;
-
-            // Renderer related info
-            UpdateInfoFromRenderer(info);
             
-            // Enable instancing in materials
-            for (var i = 0; i < info.Materials.Length; i++)
-            {
-                info.Materials[i].enableInstancing = true;
-            }
+            // Reference
+            info.GameObject = m_reference;
         }
         #endregion
         

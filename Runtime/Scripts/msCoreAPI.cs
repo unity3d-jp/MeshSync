@@ -2919,12 +2919,17 @@ internal struct InstanceInfoData
     static extern IntPtr msInstanceInfoGetPath(IntPtr self);
 
     [DllImport(Lib.name)]
+    static extern IntPtr msInstanceInfoGetParentPath(IntPtr self);
+
+    [DllImport(Lib.name)]
     static extern int msInstanceInfoPropGetArrayLength(IntPtr self);
 
     [DllImport(Lib.name)]
     static extern void msInstanceInfoCopyTransforms(IntPtr self, IntPtr matrices);
 
     public string path => Misc.S(msInstanceInfoGetPath(self));
+
+    public string parentPath => Misc.S(msInstanceInfoGetParentPath(self));
 
     public int arrayLength => msInstanceInfoPropGetArrayLength(self);
 
