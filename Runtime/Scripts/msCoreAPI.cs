@@ -3009,7 +3009,7 @@ internal struct SceneData {
         get { return msSceneGetNumInstanceInfos(self); }
     }
 
-    public int numInstanceMeshes
+    public int numInstancedEntities
     {
         get { return msSceneGetNumInstanceMeshes(self); }
     }
@@ -3039,7 +3039,7 @@ internal struct SceneData {
         return msSceneGetInstanceInfo(self, i);
     }
 
-    public TransformData GetInstanceMesh(int i)
+    public TransformData GetInstancedEntity(int i)
     {
         return msSceneGetInstanceMesh(self, i);
     }

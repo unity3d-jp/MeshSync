@@ -87,15 +87,20 @@ namespace Unity.MeshSync{
 
         #region Events
 
-        public void UpdateReference(Matrix4x4[] transforms, GameObject go, string id)
+        public void UpdateAll(Matrix4x4[] transforms, GameObject go, string id)
         {
       
             m_transforms = transforms;
             m_reference = go;
             m_id = id;
             
-            m_renderingInfo.Instances = m_transforms;
-            m_renderingInfo.GameObject = m_reference;
+            UpdateRenderingInfo(m_renderingInfo);
+        }
+
+        public void UpdateReference(GameObject go)
+        {
+            m_reference = go;
+            UpdateRenderingInfo(m_renderingInfo);
         }
 
        
