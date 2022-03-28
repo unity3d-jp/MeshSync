@@ -3085,14 +3085,14 @@ internal struct InstanceInfoData
         get { return msSceneGetNumInstanceInfos(self); }
     }
 
-    public int numPropertyInfos
-    {
-        get { return msSceneGetNumPropertyInfos(self); }
-    }
-
-    public int numInstanceMeshes
+    public int numInstancedEntities
     {
         get { return msSceneGetNumInstanceMeshes(self); }
+    }
+
+   public int numPropertyInfos
+    {
+        get { return msSceneGetNumPropertyInfos(self); }
     }
 
     public bool submeshesHaveUniqueMaterial {
@@ -3119,20 +3119,19 @@ internal struct InstanceInfoData
     {
         return msSceneGetInstanceInfo(self, i);
     }
+        
+    public TransformData GetInstancedEntity(int i)
+    {
+        return msSceneGetInstanceMesh(self, i);
+    }
 
     public PropertyInfoData GetPropertyInfo(int i)
     {
         return msSceneGetPropertyInfo(self, i);
-    }
-
-    public TransformData GetInstanceMesh(int i)
-    {
-        return msSceneGetInstanceMesh(self, i);
-    }
+    }  
 }
 
-#endregion Scene
-
+    #endregion Scene
 
 #region SceneCache
 

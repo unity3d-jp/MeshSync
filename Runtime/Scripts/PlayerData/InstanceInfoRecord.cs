@@ -7,6 +7,6 @@ namespace Unity.MeshSync
     internal class InstanceInfoRecord
     {
         public GameObject go;
-        public GameObject parent;
+        public MeshSyncInstanceRenderer renderer;
     }
 }

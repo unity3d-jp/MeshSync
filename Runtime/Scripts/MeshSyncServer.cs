@@ -254,7 +254,7 @@ public partial class MeshSyncServer : BaseMeshSync {
         {
             var instance = mes.GetInstance(i);
             EraseInstanceInfoRecord(instance);
-            EraseInstanceMeshRecord(instance);
+            EraseInstancedEntityRecord(instance);
         }
 
         int numEntities = mes.numEntities;
