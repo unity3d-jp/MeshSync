@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.SceneManagement;
-using Object = UnityEngine.Object;
-#if UNITY_EDITOR
-
-#endif
 
 namespace Unity.MeshSync{
     
@@ -22,7 +14,7 @@ namespace Unity.MeshSync{
         
         void OnEnable()
         {
-            if (RenderPipelineManager.currentPipeline == null)
+            if (GraphicsSettings.currentRenderPipeline == null)
             {
                 Camera.onPreCull += OnCameraPreCull;
             }
@@ -36,7 +28,7 @@ namespace Unity.MeshSync{
 
         void OnDisable()
         {
-            if (RenderPipelineManager.currentPipeline == null)
+            if (GraphicsSettings.currentRenderPipeline == null)
             {
                 Camera.onPreCull -= OnCameraPreCull;
             }
