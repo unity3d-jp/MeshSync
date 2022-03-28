@@ -121,6 +121,7 @@ public partial class MeshSyncServer : BaseMeshSync {
 #endif
 
 #if UNITY_EDITOR
+        EditorApplication.update -= PollServerEvents;
         EditorApplication.update += PollServerEvents;
 #endif
         if (m_config.Logging)
@@ -132,16 +133,18 @@ public partial class MeshSyncServer : BaseMeshSync {
 #endif //UNITY_STANDALONE
     }
 
-//----------------------------------------------------------------------------------------------------------------------        
+        //----------------------------------------------------------------------------------------------------------------------        
 
-    internal void StopServer() {
-#if UNITY_STANDALONE            
-        if (!m_server) 
-            return;
-        
+    internal void StopServer()
+    {
+#if UNITY_STANDALONE
 #if UNITY_EDITOR
         EditorApplication.update -= PollServerEvents;
 #endif
+
+        if (!m_server)
+            return;
+
         m_server.Stop();
         m_server = default(Server);
 
@@ -150,7 +153,7 @@ public partial class MeshSyncServer : BaseMeshSync {
 
         m_serverStarted = false;
 #else
-        Debug.LogWarning("[MeshSync] Server functions are not supported in non-Standalone platform");
+    Debug.LogWarning("[MeshSync] Server functions are not supported in non-Standalone platform");
 #endif //UNITY_STANDALONE
     }
 

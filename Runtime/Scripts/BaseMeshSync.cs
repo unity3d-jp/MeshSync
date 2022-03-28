@@ -169,7 +169,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
 
     internal string GetAssetsFolder() { return m_assetsFolder;}   
 
-    internal void SetAssetsFolder(string folder) { m_assetsFolder = folder;}   
+    public void SetAssetsFolder(string folder) { m_assetsFolder = folder;}   
 
     internal Transform GetRootObject() { return m_rootObject;}   
 
@@ -347,7 +347,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
-    private void MakeSureAssetDirectoryExists() {        
+    private void MakeSureAssetDirectoryExists() {
 #if UNITY_EDITOR
         Directory.CreateDirectory(m_assetsFolder);
         AssetDatabase.Refresh();
@@ -2065,7 +2065,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
     }
 
 
-    internal void ExportMaterials(bool overwrite = true, bool useExistingOnes = false)
+    public void ExportMaterials(bool overwrite = true, bool useExistingOnes = false)
     {
         MakeSureAssetDirectoryExists();
 
@@ -2098,7 +2098,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         ReassignMaterials(recordUndo:false);
     }
 
-    internal void ExportMeshes(bool overwrite = true, bool useExistingOnes = false)
+    public void ExportMeshes(bool overwrite = true, bool useExistingOnes = false)
     {
         MakeSureAssetDirectoryExists();
 
@@ -2154,7 +2154,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         if (n > 0)
             AssetDatabase.SaveAssets();
     }
-
+        
     internal bool ExportMaterialList(string path)
     {
         if (string.IsNullOrEmpty(path))

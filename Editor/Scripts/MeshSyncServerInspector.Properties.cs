@@ -16,8 +16,6 @@ namespace Unity.MeshSync.Editor
         }
         void DrawSliders(MeshSyncServer server)
         {
-            EditorGUILayout.LabelField(server.DebugLabel());
-
             var style = EditorStyles.foldout;
             style.fontStyle = FontStyle.Bold;
             server.foldBlenderSettings = EditorGUILayout.Foldout(server.foldBlenderSettings, "Blender settings", true, style);

@@ -1,4 +1,6 @@
-﻿using Unity.MeshSync.VariantExport;
+﻿using System.Collections.Generic;
+using System.IO;
+using Unity.MeshSync.VariantExport;
 using UnityEditor;
 using UnityEngine;
 
@@ -8,6 +10,8 @@ namespace Unity.MeshSync.Editor
     [CustomEditor(typeof(VariantExporter))]
     internal class VariantExporterEditor : UnityEditor.Editor
     {
+        List<GameObject> variants = new List<GameObject>();
+
         public override void OnInspectorGUI()
         {
             var exporter = (VariantExporter)target;
@@ -61,6 +65,50 @@ namespace Unity.MeshSync.Editor
             }
 
             EditorGUILayout.LabelField("Number of permutations", exporter.PermutationCount.ToString());
+
+            if (Directory.Exists(exporter.SavePath))
+            {
+                if (GUILayout.Button("Show variants"))
+                {
+                    HideVariants();
+
+                    Vector3 position = new Vector3(10, 0, 0);
+
+                    foreach (var prefab in Directory.EnumerateFiles(exporter.SavePath, "*.prefab"))
+                    {
+                        var instance = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(prefab));
+                        var renderers = instance.GetComponentsInChildren<Renderer>(true);
+
+                        float offset = 0;
+
+                        foreach (var renderer in renderers)
+                        {
+                            offset = Mathf.Max(offset, renderer.bounds.size.x / 2);
+                        }
+
+                        offset += 1;
+
+                        position.x += offset;
+
+                        instance.transform.position = position;
+                        variants.Add(instance);
+                    }
+                }
+
+                if (variants.Count > 0 && GUILayout.Button("Hide variants"))
+                {
+                    HideVariants();
+                }
+            }
+        }
+
+        void HideVariants()
+        {
+            foreach (var variant in variants)
+            {
+                DestroyImmediate(variant);
+            }
+            variants.Clear();
         }
     }
 }

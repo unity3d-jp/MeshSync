@@ -19,7 +19,6 @@ namespace Unity.MeshSync.VariantExport
         }
 
         MeshSyncServer server => variantExporter.Server;
-        string SavePath => Path.Combine("Assets", variantExporter.SaveFile);
 
         protected VariantExporter variantExporter;
 
@@ -31,7 +30,7 @@ namespace Unity.MeshSync.VariantExport
 
         public ReadOnlyCollection<PropertyInfoDataWrapper> propertyInfos => variantExporter.EnabledProperties;
 
-        
+
         public abstract int PermutationCount
         {
             get;
@@ -101,109 +100,46 @@ namespace Unity.MeshSync.VariantExport
 
         IEnumerator SavePrefab()
         {
-            var outputFilePath = SavePath;
+            var outputFilePath = variantExporter.SavePath;
 
             if (!Directory.Exists(outputFilePath))
             {
                 Directory.CreateDirectory(outputFilePath);
             }
 
-            var prefabSave = server.gameObject; // Instantiate(server.gameObject);
+            variantExporter.Server.ExportMeshes();
 
-            var commonAssetStorePath = Path.Combine(outputFilePath, $"{variantExporter.SaveFile}_assets.asset");
+            var prefabSave = UnityEngine.Object.Instantiate(server.gameObject);
+
+            prefabSave.GetComponent<MeshSyncServer>().enabled = false;
 
             outputFilePath = Path.Combine(outputFilePath, $"{variantExporter.SaveFile}_{counter}.prefab");
-            PrefabUtility.SaveAsPrefabAsset(prefabSave, outputFilePath);
+            var prefab = PrefabUtility.SaveAsPrefabAsset(prefabSave, outputFilePath);
 
-            var sharedAssets = new List<UnityEngine.Object>(AssetDatabase.LoadAllAssetsAtPath(commonAssetStorePath));
-
-            var meshFilters = prefabSave.GetComponentsInChildren<MeshFilter>(true);
-            foreach (var child in meshFilters)
-            {
-                try
-                {
-                    bool useSubAsset = true;
-
-                    if (useSubAsset)
-                    {
-                        bool alreadySaved = false;
-                        foreach (var sharedAsset in sharedAssets)
-                        {
-                            if (sharedAsset.name == child.sharedMesh.name)
-                            {
-                                alreadySaved = true;
-                                break;
-                            }
-                        }
-
-                        if (alreadySaved)
-                        {
-                            continue;
-                        }
-
-                        //var asset = child.sharedMesh;
-                        var asset = UnityEngine.Object.Instantiate(child.sharedMesh);
-                        asset.name = child.sharedMesh.name;
-
-                        if (!File.Exists(commonAssetStorePath))
-                        {
-                            AssetDatabase.CreateAsset(asset, commonAssetStorePath);
-                        }
-                        else
-                        {
-                            AssetDatabase.AddObjectToAsset(asset, commonAssetStorePath);
-                        }
-
-                        sharedAssets.Add(asset);
-                    }
-                    else
-                    {
-                        AssetDatabase.AddObjectToAsset(child.sharedMesh, outputFilePath);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogException(ex);
-                }
-
-                // Probably don't need this:
-                AssetDatabase.SaveAssets();
-
-
-                //var renderers = prefabSave.GetComponentsInChildren<Renderer>(true);
-                //foreach (var child in renderers)
-                //{
-                //    try
-                //    {
-                //        foreach (var mat in child.sharedMaterials)
-                //        {
-                //            AssetDatabase.AddObjectToAsset(mat, outputFilePath);
-                //        }
-                //    }
-                //    catch (Exception ex)
-                //    {
-                //        Debug.LogException(ex);
-                //        //baker.StopBake();
-                //    }
-                //}
-            }
-
-            //DestroyImmediate(prefabSave); 
+            UnityEngine.Object.DestroyImmediate(prefabSave);
 
             yield break;
         }
 
         public IEnumerator Start()
         {
-            var outputFilePath = SavePath;
+            var outputFilePath = variantExporter.SavePath;
 
-            // For now delete the folder if it exists, maybe we'd want to resume where we left off if there are files in there?
             if (Directory.Exists(outputFilePath))
             {
-                Directory.Delete(outputFilePath, true);
+                foreach (var prefabFile in Directory.EnumerateFiles(outputFilePath, "*.prefab"))
+                {
+                    File.Delete(prefabFile);
+                }
 
                 AssetDatabase.Refresh();
             }
+
+            var commonAssetStorePath = Path.Combine(outputFilePath, $"{variantExporter.SaveFile}_assets");
+
+            variantExporter.Server.SetAssetsFolder(commonAssetStorePath);
+            variantExporter.Server.ExportMeshes();
+            variantExporter.Server.ExportMaterials();
 
             yield return Next(-1);
         }

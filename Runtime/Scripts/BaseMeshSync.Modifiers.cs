@@ -269,14 +269,5 @@ namespace Unity.MeshSync
                 }
             });
         }
-
-        public string DebugLabel()
-        {
-            return m_clientObjects.Count.ToString();
-        }
-
-        public BaseMeshSync()
-        {
-        }
     }
 }

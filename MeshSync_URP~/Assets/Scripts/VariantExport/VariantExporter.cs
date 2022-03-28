@@ -56,13 +56,15 @@ namespace Unity.MeshSync.VariantExport
 
         public int PermutationCount => runner.PermutationCount;
 
+        public string SavePath => Path.Combine("Assets", SaveFile);
+
         public ReadOnlyCollection<PropertyInfoDataWrapper> EnabledProperties
         {
             get
             {
                 enabledProperties.Clear();
 
-                if (Server.propertyInfos != null)
+                if (Server?.propertyInfos != null)
                 {
                     foreach (var prop in Server.propertyInfos)
                     {
@@ -79,24 +81,8 @@ namespace Unity.MeshSync.VariantExport
 
         public MeshSyncServer Server
         {
-            get { return server; }
-            set
-            {
-                if (server != value)
-                {
-                    server = value;
-
-                    EnabledSettingNames.Clear();
-
-                    if (server != null)
-                    {
-                        foreach (var prop in server.propertyInfos)
-                        {
-                            EnabledSettingNames.Add(prop.name);
-                        }
-                    }
-                }
-            }
+            get => server;
+            set => server = value;
         }
 
         public bool IsEnabled(PropertyInfoDataWrapper property)
@@ -145,6 +131,8 @@ namespace Unity.MeshSync.VariantExport
             }
 
             AssetDatabase.StopAssetEditing();
+
+            currentRunner = null;
         }
     }
 }
