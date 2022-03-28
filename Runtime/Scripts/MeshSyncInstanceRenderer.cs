@@ -22,7 +22,7 @@ namespace Unity.MeshSync{
         
         void OnEnable()
         {
-            if (RenderPipelineManager.currentPipeline == null)
+            if (GraphicsSettings.currentRenderPipeline == null)
             {
                 Camera.onPreCull += OnCameraPreCull;
             }
@@ -36,7 +36,7 @@ namespace Unity.MeshSync{
 
         void OnDisable()
         {
-            if (RenderPipelineManager.currentPipeline == null)
+            if (GraphicsSettings.currentRenderPipeline == null)
             {
                 Camera.onPreCull -= OnCameraPreCull;
             }
