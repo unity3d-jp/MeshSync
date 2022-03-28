@@ -47,12 +47,6 @@ namespace Unity.MeshSync{
             }
 
             UpdateRenderingInfo(m_renderingInfo);
-
-            var meshRenderer = GetComponent<MeshRenderer>();
-            if (meshRenderer)
-            {
-                meshRenderer.enabled = false;
-            }
         }
 
         void OnDisable()

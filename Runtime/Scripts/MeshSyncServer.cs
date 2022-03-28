@@ -4,12 +4,10 @@ using System;
 using AOT;
 using Unity.Collections;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
 #if UNITY_EDITOR
 using UnityEditor;
-using UnityEngine.Rendering;
 #endif
 
 namespace Unity.MeshSync {
@@ -529,7 +527,7 @@ public partial class MeshSyncServer : BaseMeshSync {
                 return;
             PollServerEvents();
         }
-        void OnDestroy()
+        protected override void OnDestroy()
         {
             base.OnDestroy();
 
