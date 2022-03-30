@@ -6,6 +6,8 @@ namespace Unity.MeshSync{
     [ExecuteInEditMode]
     internal class MeshSyncInstanceRenderer : MonoBehaviour
     {
+        [HideInInspector]
+        [SerializeField]
         internal InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
 
         [HideInInspector]
