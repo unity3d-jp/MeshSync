@@ -8,6 +8,7 @@ namespace Unity.MeshSync{
     {
         internal InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
 
+        [HideInInspector]
         [SerializeField] private Matrix4x4[] m_transforms;
         [SerializeField] internal GameObject m_reference; 
         [SerializeField] internal string m_id;

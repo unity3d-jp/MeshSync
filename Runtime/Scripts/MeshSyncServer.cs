@@ -135,14 +135,16 @@ public class MeshSyncServer : BaseMeshSync {
 
 //----------------------------------------------------------------------------------------------------------------------        
 
-    internal void StopServer() {
-#if UNITY_STANDALONE            
-        if (!m_server) 
-            return;
-        
+    internal void StopServer()
+    {
+#if UNITY_STANDALONE
 #if UNITY_EDITOR
         EditorApplication.update -= PollServerEvents;
 #endif
+
+        if (!m_server)
+            return;
+
         m_server.Stop();
         m_server = default(Server);
 
