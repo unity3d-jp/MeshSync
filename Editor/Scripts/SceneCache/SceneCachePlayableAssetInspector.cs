@@ -89,7 +89,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------
     private bool DrawGUIButton(float leftX, float width, string buttonText) {
-        Rect rect = GUILayoutUtility.GetRect(new GUIContent("Button"),GUI.skin.button, GUILayout.Width(width));
+        Rect rect = UnityEngine.GUILayoutUtility.GetRect(new GUIContent("Button"),GUI.skin.button, GUILayout.Width(width));
         rect.x += leftX;
         return (GUI.Button(rect, buttonText, GUI.skin.button));        
     }
