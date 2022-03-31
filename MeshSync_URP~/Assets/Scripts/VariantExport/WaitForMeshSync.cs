@@ -2,7 +2,6 @@
 
 namespace Unity.MeshSync.VariantExport
 {
-
     class WaitForMeshSync : CustomYieldInstruction
     {
         MeshSyncServer server;
@@ -12,7 +11,19 @@ namespace Unity.MeshSync.VariantExport
             this.server = server;
         }
 
-        public override bool keepWaiting => server.CurrentPropertiesState != MeshSyncServer.PropertiesState.Received;
-    }
+        public override bool keepWaiting
+        {
+            get
+            {
+                if (server.CurrentPropertiesState != MeshSyncServer.PropertiesState.Received)
+                {
+                    return true;
+                }
 
+                server.ResetPropertiesState();
+
+                return false;
+            }
+        }
+    }
 }

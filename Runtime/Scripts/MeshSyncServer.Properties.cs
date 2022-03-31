@@ -10,6 +10,10 @@
         };
 
         public PropertiesState CurrentPropertiesState { get; private set; }
+        public void ResetPropertiesState()
+        {
+            CurrentPropertiesState = PropertiesState.None;
+        }
 
         void SendUpdatedProperties()
         {

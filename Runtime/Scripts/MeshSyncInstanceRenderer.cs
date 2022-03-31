@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.Experimental.SceneManagement;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
@@ -45,10 +47,14 @@ namespace Unity.MeshSync{
                 RenderPipelineManager.beginFrameRendering -= OnBeginFrameRendering;
             }
         }
-        
+
         private void OnBeginFrameRendering(ScriptableRenderContext arg1, Camera[] cameras)
         {
-            Draw(cameras);
+            var stage = PrefabStageUtility.GetCurrentPrefabStage();
+            if (stage == null || stage.IsPartOfPrefabContents(gameObject))
+            {
+                Draw(cameras);
+            }
         }
 
         private void OnCameraPreCull(Camera cam)
@@ -98,7 +104,7 @@ namespace Unity.MeshSync{
         }
 
         private void DoDraw(InstanceRenderingInfo entry, Camera[] cameras)
-        {
+        {         
             if (entry.Mesh == null || entry.DividedInstances == null || entry.Materials == null)
             {
                 return;

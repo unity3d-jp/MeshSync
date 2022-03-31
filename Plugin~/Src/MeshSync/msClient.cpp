@@ -172,7 +172,10 @@ bool Client::send(const RequestPropertiesMessage& mes)
 {
     try {
         HTTPClientSession session{ m_settings.server, m_settings.port };
-        session.setTimeout(m_settings.timeout_ms * 1000);
+
+        // This request is only answered if the user makes changes in Unity.
+        // It needs a short timeout so it doesn't block blender from shutting down.
+        session.setTimeout(1000 * 1000);
 
         HTTPRequest request{ HTTPRequest::HTTP_POST, "request_properties" };
         request.setContentType("application/octet-stream");
@@ -183,9 +186,8 @@ bool Client::send(const RequestPropertiesMessage& mes)
         os.flush();
 
         HTTPResponse response;
+
         auto& rs = session.receiveResponse(response);
-        //std::ostringstream ostr;
-        //StreamCopier::copyStream(rs, ostr);
 
         auto reqResponse = RequestPropertiesResponse();
         reqResponse.deserialize(rs);

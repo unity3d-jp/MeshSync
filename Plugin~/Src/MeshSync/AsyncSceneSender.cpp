@@ -29,6 +29,7 @@ AsyncSceneSender::AsyncSceneSender(int sid)
 
 AsyncSceneSender::~AsyncSceneSender()
 {
+    destroyed = true;
     wait();
 }
 
@@ -73,7 +74,7 @@ void AsyncSceneSender::requestProperties()
         return;
 
     m_request_properties_future = std::async(std::launch::async, [this]() {
-        while (!propertyInfos.empty()) {           
+        while (!destroyed && !propertyInfos.empty()) {
             requestPropertiesImpl();
         }
     });
@@ -86,13 +87,16 @@ void AsyncSceneSender::requestPropertiesImpl() {
         mes.timestamp_send = mu::Now();
     };
 
-    bool succeeded = true;
     ms::Client client(client_settings);
 
     ms::RequestPropertiesMessage mes;
     setup_message(mes);
 
-    client.send(mes);
+    bool succeeded = client.send(mes);
+
+    if (!succeeded) {
+        return;
+    }
 
     if (on_properties_received) {
         on_properties_received(client.properties);

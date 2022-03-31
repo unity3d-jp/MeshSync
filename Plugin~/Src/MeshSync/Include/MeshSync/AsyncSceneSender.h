@@ -36,6 +36,7 @@ private:
     std::future<void> m_future;
     std::future<void> m_request_properties_future;
     std::string m_error_message;
+    std::atomic_bool destroyed{ false };
 };
 
 } // namespace ms

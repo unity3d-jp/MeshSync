@@ -535,6 +535,7 @@ public partial class MeshSyncServer : BaseMeshSync {
             base.OnDestroy();
 
             m_DCCInterop?.Cleanup();
+            StopServer();
         }
     
     #endregion

@@ -147,6 +147,38 @@ namespace Unity.MeshSync
             return sb.ToString();
         }
 
+        public string GetSerializedValue()
+        {
+            OnBeforeSerialize();
+            return propertyValueSerialized;
+        }
+
+        public void SetSerializedValue(string serializedValue)
+        {
+            NewValue = DeserializeString(serializedValue);
+        }
+
+        static object DeserializeString(string serializedValue)
+        {
+            if (serializedValue.Length == 0)
+                return null;
+            char type = serializedValue[0];
+            if (type == 'n')
+                return null;
+            else if (type == 'i')
+                return int.Parse(serializedValue.Substring(1));
+            else if (type == 'f')
+                return float.Parse(serializedValue.Substring(1));
+            else if (type == 's')
+                return serializedValue.Substring(1);
+            else if (type == 'a')
+                return ParseArray(serializedValue, int.Parse);
+            else if (type == 'b')
+                return ParseArray(serializedValue, float.Parse);
+            else
+                throw new NotImplementedException($"propertyValue: {type} cannot be deserialized!");
+        }
+
         public void OnBeforeSerialize()
         {
             if (propertyValue == null)
@@ -167,23 +199,7 @@ namespace Unity.MeshSync
 
         public void OnAfterDeserialize()
         {
-            if (propertyValueSerialized.Length == 0)
-                return;
-            char type = propertyValueSerialized[0];
-            if (type == 'n')
-                propertyValue = null;
-            else if (type == 'i')
-                propertyValue = int.Parse(propertyValueSerialized.Substring(1));
-            else if (type == 'f')
-                propertyValue = float.Parse(propertyValueSerialized.Substring(1));
-            else if (type == 's')
-                propertyValue = propertyValueSerialized.Substring(1);
-            else if (type == 'a')
-                propertyValue = ParseArray(propertyValueSerialized, int.Parse);
-            else if (type == 'b')
-                propertyValue = ParseArray(propertyValueSerialized, float.Parse);
-            else
-                throw new NotImplementedException($"propertyValue: {type} cannot be deserialized!");
+            propertyValue = DeserializeString(propertyValueSerialized);
         }
 
         public object NewValue
@@ -191,6 +207,35 @@ namespace Unity.MeshSync
             get => newValue;
             set
             {
+                switch (type)
+                {
+                    case PropertyInfoData.Type.IntArray:
+                        {
+                            // TODO: Use custom IntVector here maybe:
+                            var newValueAsArray = new int[arrayLength];
+                            Vector3 newValueAsVector = (Vector3)value;
+
+                            newValueAsArray[0] = (int)newValueAsVector.x;
+                            newValueAsArray[1] = (int)newValueAsVector.y;
+                            newValueAsArray[2] = (int)newValueAsVector.z;
+
+                            value = newValueAsArray;
+                            break;
+                        }
+                    case PropertyInfoData.Type.FloatArray:
+                        {
+                            var newValueAsArray = new float[arrayLength];
+                            Vector3 newValueAsVector = (Vector3)value;
+
+                            newValueAsArray[0] = newValueAsVector.x;
+                            newValueAsArray[1] = newValueAsVector.y;
+                            newValueAsArray[2] = newValueAsVector.z;
+
+                            value = newValueAsArray;
+                            break;
+                        }
+                }
+
                 if (newValue != null)
                 {
                     if (newValue.Equals(value))
@@ -198,6 +243,7 @@ namespace Unity.MeshSync
                         return;
                     }
                 }
+
                 else if (propertyValue != null && propertyValue.Equals(value))
                 {
                     return;

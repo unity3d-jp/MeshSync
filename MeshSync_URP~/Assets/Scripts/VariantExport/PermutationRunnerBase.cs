@@ -18,7 +18,7 @@ namespace Unity.MeshSync.VariantExport
             SaveAsPrefab
         }
 
-        MeshSyncServer server => variantExporter.Server;
+        protected MeshSyncServer server => variantExporter.Server;
 
         protected VariantExporter variantExporter;
 
@@ -45,7 +45,7 @@ namespace Unity.MeshSync.VariantExport
 
         protected abstract IEnumerator ExecutePermutations(int propIdx);
 
-        IEnumerator Save()
+        protected IEnumerator Save()
         {
             var permutationCount = variantExporter.PermutationCount;
             if (EditorUtility.DisplayCancelableProgressBar("Exporting", $"Variant {counter + 1}/{permutationCount}", (float)counter / permutationCount))
@@ -95,6 +95,9 @@ namespace Unity.MeshSync.VariantExport
                 variantExporter.StopExport();
             }
 
+            // test:
+            //variantExporter.StopExport();
+
             yield break;
         }
 
@@ -106,6 +109,10 @@ namespace Unity.MeshSync.VariantExport
             {
                 Directory.CreateDirectory(outputFilePath);
             }
+
+            // test:
+            //var commonAssetStorePath = Path.Combine(outputFilePath, $"{variantExporter.SaveFile}_{counter}_assets");
+            //variantExporter.Server.SetAssetsFolder(commonAssetStorePath);
 
             variantExporter.Server.ExportMeshes();
 
