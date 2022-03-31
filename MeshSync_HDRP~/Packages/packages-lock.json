@@ -22,12 +22,12 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.film-internal-utilities": {
-      "version": "0.13.0-preview",
+      "version": "0.14.0-preview",
       "depth": 1,
       "source": "registry",
       "dependencies": {
         "com.unity.modules.uielements": "1.0.0",
-        "com.unity.timeline": "1.2.14"
+        "com.unity.timeline": "1.2.18"
       },
       "url": "https://packages.unity.com"
     },
@@ -61,7 +61,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.unity.film-internal-utilities": "0.13.0-preview",
+        "com.unity.film-internal-utilities": "0.14.0-preview",
         "com.unity.editorcoroutines": "1.0.0",
         "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.animation": "1.0.0",
