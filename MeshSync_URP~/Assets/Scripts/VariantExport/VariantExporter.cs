@@ -58,7 +58,9 @@ namespace Unity.MeshSync.VariantExport
 
         public int CurrentExport => runner.counter;
 
-        public int PermutationCount => runner.PermutationCount;
+        public int VariantCount => runner.VariantCount;
+
+        public int TotalPermutationCount => runner.TotalPermutationCount;
 
         public string SavePath => Path.Combine("Assets", SaveFile);
 
@@ -104,18 +106,43 @@ namespace Unity.MeshSync.VariantExport
 
         public void Shuffle()
         {
-            foreach (var prop in EnabledProperties)
+            try
             {
-                switch (prop.type)
+                var newPropertyValues = new object[server.propertyInfos.Count];
+
+                for (int i = 0; i < server.propertyInfos.Count; i++)
                 {
-                    case PropertyInfoData.Type.Int:
-                        prop.NewValue = UnityEngine.Random.Range((int)prop.min, (int)prop.max + 1);
-                        break;
+                    var prop = server.propertyInfos[i];
+                    newPropertyValues[i] = prop.propertyValue;
                 }
+
+                for (int tries = 0; tries < 1000; tries++)
+                {
+                    foreach (var prop in EnabledProperties)
+                    {
+                        switch (prop.type)
+                        {
+                            case PropertyInfoData.Type.Int:
+                                prop.NewValue = UnityEngine.Random.Range((int)prop.min, (int)prop.max + 1);
+                                break;
+                        }
+                    }
+
+                    // Try to ensure this variant is not already blocked or kept:
+                    var props = SerializeCurrentVariant(true);
+                    if (!Whitelist.Contains(props) && !Blacklist.Contains(props))
+                    {
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
             }
         }
 
-        string SerializeCurrentVariant()
+        string SerializeCurrentVariant(bool useNewValues = false)
         {
             if (Server?.propertyInfos == null)
             {
@@ -137,7 +164,7 @@ namespace Unity.MeshSync.VariantExport
                 switch (prop.type)
                 {
                     case PropertyInfoData.Type.Int:
-                        serializedValue += prop.GetSerializedValue();
+                        serializedValue += prop.GetSerializedValue(useNewValues);
                         break;
                 }
 
@@ -187,6 +214,11 @@ namespace Unity.MeshSync.VariantExport
             }
 
             var current = Whitelist.IndexOf(SerializeCurrentVariant());
+            if (current == -1)
+            {
+                current = 0;
+            }
+
             var previous = current - 1;
             if (previous < 0)
             {
@@ -232,6 +264,14 @@ namespace Unity.MeshSync.VariantExport
             }
         }
 
+        public bool IsCurrentVariantKept
+        {
+            get
+            {
+                return Whitelist.Contains(SerializeCurrentVariant());
+            }
+        }
+
         public void BlockVariant()
         {
             var serialisedProps = SerializeCurrentVariant();
@@ -247,6 +287,11 @@ namespace Unity.MeshSync.VariantExport
             }
         }
 
+        public void DoNotKeepVariant()
+        {
+            Whitelist.Remove(SerializeCurrentVariant());
+        }
+
         public void UnblockVariant()
         {
             Blacklist.Remove(SerializeCurrentVariant());
@@ -260,7 +305,7 @@ namespace Unity.MeshSync.VariantExport
             }
 
             var current = Blacklist.IndexOf(SerializeCurrentVariant());
-            if(current == -1)
+            if (current == -1)
             {
                 current = 0;
             }
@@ -289,24 +334,27 @@ namespace Unity.MeshSync.VariantExport
 
         public void Export()
         {
-            //if (ExportMode == ExportModeSetting.RegenerateEverything)
-            //{
-            //    if (!EditorUtility.DisplayDialog("Warning", $"This will delete all previously exported assets in the \"{SaveFile}\" folder. Are you sure?", "Yes", "No"))
-            //    {
-            //        return;
-            //    }
-            //}
-            //else if (ExportMode == ExportModeSetting.RegenerateOnlyExisting)
-            //{
-            //    if (!EditorUtility.DisplayDialog("Warning", $"This will overwrite all previously exported assets in the \"{SaveFile}\" folder. Are you sure?", "Yes", "No"))
-            //    {
-            //        return;
-            //    }
-            //}
-
-            if (!EditorUtility.DisplayDialog("Warning", $"This will delete all previously exported prefabs in the \"{SaveFile}\" folder. Are you sure?", "Yes", "No"))
+            if (Directory.Exists(SavePath))
             {
-                return;
+                //if (ExportMode == ExportModeSetting.RegenerateEverything)
+                //{
+                //    if (!EditorUtility.DisplayDialog("Warning", $"This will delete all previously exported assets in the \"{SaveFile}\" folder. Are you sure?", "Yes", "No"))
+                //    {
+                //        return;
+                //    }
+                //}
+                //else if (ExportMode == ExportModeSetting.RegenerateOnlyExisting)
+                //{
+                //    if (!EditorUtility.DisplayDialog("Warning", $"This will overwrite all previously exported assets in the \"{SaveFile}\" folder. Are you sure?", "Yes", "No"))
+                //    {
+                //        return;
+                //    }
+                //}
+
+                if (!EditorUtility.DisplayDialog("Warning", $"This will delete all previously exported prefabs in the \"{SaveFile}\" folder. Are you sure?", "Yes", "No"))
+                {
+                    return;
+                }
             }
 
             AssetDatabase.StartAssetEditing();

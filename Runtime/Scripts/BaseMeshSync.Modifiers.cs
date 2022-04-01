@@ -147,10 +147,29 @@ namespace Unity.MeshSync
             return sb.ToString();
         }
 
-        public string GetSerializedValue()
+        public string GetSerializedValue(bool useNewValues = false)
         {
-            OnBeforeSerialize();
-            return propertyValueSerialized;
+            var valueToSerialize = propertyValue;
+
+            if (useNewValues && newValue != null)
+            {
+                valueToSerialize = newValue;
+            }
+
+            if (valueToSerialize == null)
+                return "n";
+            else if (valueToSerialize is int)
+                return "i" + valueToSerialize.ToString();
+            else if (valueToSerialize is float)
+                return "f" + valueToSerialize.ToString();
+            else if (valueToSerialize is string)
+                return "s" + valueToSerialize.ToString();
+            else if (valueToSerialize is int[] intArray)
+                return SaveArray("a", intArray);
+            else if (valueToSerialize is float[] floatArray)
+                return SaveArray("b", floatArray);
+            else
+                throw new NotImplementedException($"propertyValue: {valueToSerialize.GetType()} cannot be serialized!");
         }
 
         public void SetSerializedValue(string serializedValue)
@@ -181,20 +200,7 @@ namespace Unity.MeshSync
 
         public void OnBeforeSerialize()
         {
-            if (propertyValue == null)
-                propertyValueSerialized = "n";
-            else if (propertyValue is int)
-                propertyValueSerialized = "i" + propertyValue.ToString();
-            else if (propertyValue is float)
-                propertyValueSerialized = "f" + propertyValue.ToString();
-            else if (propertyValue is string)
-                propertyValueSerialized = "s" + propertyValue.ToString();
-            else if (propertyValue is int[] intArray)
-                propertyValueSerialized = SaveArray("a", intArray);
-            else if (propertyValue is float[] floatArray)
-                propertyValueSerialized = SaveArray("b", floatArray);
-            else
-                throw new NotImplementedException($"propertyValue: {propertyValue.GetType()} cannot be serialized!");
+            propertyValueSerialized = GetSerializedValue();
         }
 
         public void OnAfterDeserialize()

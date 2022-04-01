@@ -36,8 +36,9 @@
                 m_server.SendChangedProperties();
             }
         }
+
         void OnRecvPropertyRequest()
-        { 
+        {
 
         }
 

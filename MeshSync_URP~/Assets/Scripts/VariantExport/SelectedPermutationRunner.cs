@@ -9,7 +9,7 @@ namespace Unity.MeshSync.VariantExport
 {
     internal class SelectedPermutationRunner : PermutationRunnerBase
     {
-        public override int PermutationCount
+        public override int VariantCount
         {
             get
             {
@@ -30,8 +30,6 @@ namespace Unity.MeshSync.VariantExport
                 yield return new WaitForMeshSync(server);
 
                 yield return Save();
-
-                //yield break;
             }
 
             yield break;

@@ -12,30 +12,7 @@ namespace Unity.MeshSync.VariantExport
     /// </summary>
     class AllPermutationRunner : PermutationRunnerBase
     {
-        public override int PermutationCount
-        {
-            get
-            {
-                int total = 1;
-
-                foreach (var prop in variantExporter.EnabledProperties)
-                {
-                    int range = 1;
-
-                    // TODO: Make this work with float ranges:
-                    switch (prop.type)
-                    {
-                        case PropertyInfoData.Type.Int:
-                            range = (int)(prop.max - prop.min) + 1;
-                            break;
-                    }
-
-                    total *= range;
-                }
-
-                return total;
-            }
-        }
+        public override int VariantCount => TotalPermutationCount;
 
         public AllPermutationRunner(VariantExporter variantExporter) : base(variantExporter)
         {

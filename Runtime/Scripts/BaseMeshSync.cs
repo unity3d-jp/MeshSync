@@ -1690,6 +1690,10 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         { 
             infoRecord.go = instancedEntityRecord.go;
         }
+        else if (this.m_clientObjects.TryGetValue(path, out EntityRecord entityRecord))
+        {
+            infoRecord.go = entityRecord.go;
+        }
         else
         {
             throw new Exception($"[MeshSync] No instanced entity found for path {data.path}");
@@ -1707,7 +1711,14 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         }
         else
         {
-            throw new Exception($"[MeshSync] No entity found for parent path {data.parentPath}");
+            if (infoRecord.renderer == null)
+            {
+                infoRecord.renderer = m_rootObject.gameObject.AddComponent<MeshSyncInstanceRenderer>();
+            }
+            
+            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go, path);
+            Debug.LogWarningFormat(
+                "[MeshSync] No entity found for parent path {0}, using root as parent", data.parentPath);
         }
 
         return infoRecord;

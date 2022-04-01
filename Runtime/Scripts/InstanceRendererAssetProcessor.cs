@@ -20,7 +20,7 @@ namespace Unity.MeshSync
         
         private void DelayCall()
         {
-            var renderers = GameObject.FindObjectsOfType<MeshSyncInstanceRenderer>();
+            var servers = GameObject.FindObjectsOfType<MeshSyncServer>();
             foreach (var path in m_added)
             {
                 // Get the added asset
@@ -29,31 +29,35 @@ namespace Unity.MeshSync
                     continue;
 
                 // Find the instance of the asset.
-                foreach (var renderer in renderers)
+                foreach (var server in servers)
                 {
-                    var reference = renderer.m_reference;
-                    var instancePrefab = PrefabUtility.GetCorrespondingObjectFromSourceAtPath(reference, path);
-                    if (instancePrefab != asset)
-                        continue;
-
-                    var server = renderer.GetComponentInParent<MeshSyncServer>();
-                    var basePath = server.GetAssetsFolder();
-                    
-                    var instanceChildren = 
-                        reference.GetComponentsInChildren<Renderer>();
-                    var assetChildren = asset.GetComponentsInChildren<Renderer>();
-
-                    for (var i = 0; i < instanceChildren.Length; i++)
+                    var children = server.transform.GetComponentsInChildren<Transform>();
+                    foreach(var child in children)
                     {
-                        var instanceChild = instanceChildren[i];
-                        var assetChild = assetChildren[i];
-                        
-                        UpdateMesh(instanceChild, assetChild, basePath);
-                        UpdateMaterial(instanceChild, assetChild, basePath);
-                    }
+                        var instancePrefab = PrefabUtility.GetCorrespondingObjectFromSourceAtPath(child, path);
+                        if (instancePrefab == null)
+                            continue;
+
+                        var basePath = server.GetAssetsFolder();
                     
-                    // Only need to do this once per prefab
-                    break;
+                        var instanceChildren = 
+                            child.GetComponentsInChildren<Renderer>();
+                        
+                        var assetChildren = asset.GetComponentsInChildren<Renderer>();
+
+                        for (var i = 0; i < instanceChildren.Length; i++)
+                        {
+                            var instanceChild = instanceChildren[i];
+                            var assetChild = assetChildren[i];
+                        
+                            UpdateMesh(instanceChild, assetChild, basePath);
+                            UpdateMaterial(instanceChild, assetChild, basePath);
+                        }
+                    
+                        // Only need to do this once per prefab
+                        break;
+                    }
+                   
                 }
             }
             

@@ -1,23 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEditor.Experimental.SceneManagement;
-using UnityEditor.SceneManagement;
+﻿using UnityEditor.Experimental.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.SceneManagement;
-using Object = UnityEngine.Object;
-#if UNITY_EDITOR
-
-#endif
 
 namespace Unity.MeshSync{
     
     [ExecuteInEditMode]
     internal class MeshSyncInstanceRenderer : MonoBehaviour
     {
+        [HideInInspector]
+        [SerializeField]
         internal InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
 
+        [HideInInspector]
         [SerializeField] private Matrix4x4[] m_transforms;
         [SerializeField] internal GameObject m_reference; 
         [SerializeField] internal string m_id;

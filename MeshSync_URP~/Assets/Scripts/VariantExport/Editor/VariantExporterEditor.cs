@@ -10,6 +10,9 @@ namespace Unity.MeshSync.Editor
     [CustomEditor(typeof(VariantExporter))]
     internal class VariantExporterEditor : UnityEditor.Editor
     {
+        const int BUTTON_WIDTH = 90;
+        const int LABEL_WIDTH = 120;
+
         Transform VariantsHolder
         {
             get
@@ -60,7 +63,9 @@ namespace Unity.MeshSync.Editor
                     }
                 }
 
-                EditorGUILayout.LabelField("Number of permutations", exporter.PermutationCount.ToString());
+                EditorGUILayout.LabelField($"Number of exported variants: {exporter.VariantCount}");
+
+                EditorGUILayout.LabelField(new GUIContent($"Number of possible variants: {exporter.TotalPermutationCount}", "Number of possible permutations with all properties"));
 
                 if (Directory.Exists(exporter.SavePath))
                 {
@@ -115,7 +120,7 @@ namespace Unity.MeshSync.Editor
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
 
-            GUILayout.Label($"Blocked variants: {exporter.Blacklist.Count}");
+            GUILayout.Label($"Blocked variants: {exporter.Blacklist.Count}", GUILayout.Width(LABEL_WIDTH));
 
             if (exporter.Blacklist.Count > 0 && GUILayout.Button("<", GUILayout.ExpandWidth(false)))
             {
@@ -124,14 +129,14 @@ namespace Unity.MeshSync.Editor
 
             if (!exporter.IsCurrentVariantBlocked)
             {
-                if (GUILayout.Button("Block"))
+                if (GUILayout.Button("Block", GUILayout.Width(BUTTON_WIDTH)))
                 {
                     exporter.BlockVariant();
                 }
             }
             else
             {
-                if (GUILayout.Button("Unblock"))
+                if (GUILayout.Button("Unblock", GUILayout.Width(BUTTON_WIDTH)))
                 {
                     exporter.UnblockVariant();
                 }
@@ -151,16 +156,26 @@ namespace Unity.MeshSync.Editor
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
 
-            GUILayout.Label($"Kept variants: {exporter.Whitelist.Count}");
+            GUILayout.Label($"Kept variants: {exporter.Whitelist.Count}", GUILayout.Width(LABEL_WIDTH));
 
             if (exporter.Whitelist.Count > 0 && GUILayout.Button("<", GUILayout.ExpandWidth(false)))
             {
                 exporter.PreviousKeptVariant();
             }
 
-            if (GUILayout.Button("Keep", GUILayout.ExpandWidth(false)))
+            if (exporter.IsCurrentVariantKept)
             {
-                exporter.KeepVariant();
+                if (GUILayout.Button("Don't keep", GUILayout.Width(BUTTON_WIDTH)))
+                {
+                    exporter.DoNotKeepVariant();
+                }
+            }
+            else
+            {
+                if (GUILayout.Button("Keep", GUILayout.Width(BUTTON_WIDTH)))
+                {
+                    exporter.KeepVariant();
+                }
             }
 
             if (exporter.Whitelist.Count > 0 && GUILayout.Button(">", GUILayout.ExpandWidth(false)))

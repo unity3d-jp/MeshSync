@@ -5,12 +5,15 @@ using UnityEngine.Rendering;
 
 namespace Unity.MeshSync
 {
+    [Serializable]
     public class InstanceRenderingInfo
     {
+        [SerializeField]
         public Mesh Mesh;
         
         public List<Matrix4x4[]> DividedInstances { get; private set; } = new List<Matrix4x4[]>();
 
+        [SerializeField]
         private Material[] m_materials;
 
         public Material[] Materials
@@ -38,7 +41,10 @@ namespace Unity.MeshSync
             }
         }
 
+        [SerializeField]
         private GameObject m_gameObject;
+        
+        [SerializeField]
         private Matrix4x4 m_inverse = Matrix4x4.identity;
         
         private bool m_dirtyInstances = true;

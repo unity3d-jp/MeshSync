@@ -31,9 +31,34 @@ namespace Unity.MeshSync.VariantExport
         public ReadOnlyCollection<PropertyInfoDataWrapper> propertyInfos => variantExporter.EnabledProperties;
 
 
-        public abstract int PermutationCount
+        public abstract int VariantCount
         {
             get;
+        }
+
+        public int TotalPermutationCount
+        {
+            get
+            {
+                int total = 1;
+
+                foreach (var prop in server.propertyInfos)
+                {
+                    int range = 1;
+
+                    // TODO: Make this work with float ranges:
+                    switch (prop.type)
+                    {
+                        case PropertyInfoData.Type.Int:
+                            range = (int)(prop.max - prop.min) + 1;
+                            break;
+                    }
+
+                    total *= range;
+                }
+
+                return total;
+            }
         }
 
         public PermutationRunnerBase(VariantExporter variantExporter)
@@ -47,10 +72,11 @@ namespace Unity.MeshSync.VariantExport
 
         protected IEnumerator Save()
         {
-            var permutationCount = variantExporter.PermutationCount;
+            var permutationCount = variantExporter.VariantCount;
             if (EditorUtility.DisplayCancelableProgressBar("Exporting", $"Variant {counter + 1}/{permutationCount}", (float)counter / permutationCount))
             {
                 variantExporter.StopExport();
+                yield break;
             }
 
             if (saveMode != SaveMode.DryRunWithoutSyncAndSave)
