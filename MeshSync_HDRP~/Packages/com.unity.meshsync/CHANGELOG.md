@@ -1,6 +1,17 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.12.6-preview] - 2022-04-01
+
+### Changed
+* change: only update the duration of SceneCachePlayableAsset when creating a new clip
+
+### Fixed
+* fix: the left SceneCachePlayableAsset clip after split was not updated 
+* fix: copy LimitedAnimation values properly to duplicated SceneCachePlayableAsset
+* fix: importing previous version of LimitedAnimation did not work
+
+
 ## [0.12.5-preview] - 2022-03-23
 
 ### Added
