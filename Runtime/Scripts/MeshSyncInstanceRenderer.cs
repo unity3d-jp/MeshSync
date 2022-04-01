@@ -1,4 +1,7 @@
-﻿using UnityEditor.Experimental.SceneManagement;
+﻿#if UNITY_EDITOR
+using UnityEditor.Experimental.SceneManagement;
+#endif
+
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -7,7 +10,7 @@ namespace Unity.MeshSync{
     [ExecuteInEditMode]
     internal class MeshSyncInstanceRenderer : MonoBehaviour
     {
-        internal InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
+        private InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
 
         [HideInInspector]
         [SerializeField] private Matrix4x4[] m_transforms;
@@ -42,7 +45,6 @@ namespace Unity.MeshSync{
         
         private void OnBeginFrameRendering(ScriptableRenderContext arg1, Camera[] cameras)
         {
-            var stage = PrefabStageUtility.GetCurrentPrefabStage();
             if (!IsInPrefabStage())
                 return;
             
@@ -68,8 +70,12 @@ namespace Unity.MeshSync{
         
         private bool IsInPrefabStage()
         {
+#if UNITY_EDITOR
             var stage = PrefabStageUtility.GetCurrentPrefabStage();
             return stage == null || stage.IsPartOfPrefabContents(gameObject);
+#else
+            return true;
+#endif
         }
 
         #region Events

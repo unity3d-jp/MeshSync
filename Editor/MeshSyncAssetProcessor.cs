@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Unity.MeshSync
 {
-    public class InstanceRendererAssetProcessor : AssetsModifiedProcessor
+    public class MeshSyncAssetProcessor : AssetsModifiedProcessor
     {
         private List<string> m_added = new List<string>();
             
@@ -31,7 +31,7 @@ namespace Unity.MeshSync
                 // Find the instance of the asset.
                 foreach (var server in servers)
                 {
-                    var children = server.transform.GetComponentsInChildren<Transform>();
+                    var children = server.transform.GetComponentsInChildren<Transform>(true);
                     foreach(var child in children)
                     {
                         var instancePrefab = PrefabUtility.GetCorrespondingObjectFromSourceAtPath(child, path);
