@@ -1699,7 +1699,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 infoRecord.renderer = parentRecord.go.AddComponent<MeshSyncInstanceRenderer>();
             }
             
-            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go, path);
+            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
         }
         else
         {
@@ -1708,7 +1708,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 infoRecord.renderer = m_rootObject.gameObject.AddComponent<MeshSyncInstanceRenderer>();
             }
             
-            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go, path);
+            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
             Debug.LogWarningFormat(
                 "[MeshSync] No entity found for parent path {0}, using root as parent", data.parentPath);
         }

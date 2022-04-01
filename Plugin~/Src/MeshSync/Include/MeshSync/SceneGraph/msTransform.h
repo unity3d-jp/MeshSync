@@ -54,6 +54,7 @@ public:
     mu::float4x4 toMatrix() const;
     void assignMatrix(const mu::float4x4& v);
     void applyMatrix(const mu::float4x4& v);
+    void reset();
 
     void addUserProperty(const Variant& v);
     void addUserProperty(Variant&& v);

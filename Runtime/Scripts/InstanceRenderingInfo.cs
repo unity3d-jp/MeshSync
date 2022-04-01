@@ -5,17 +5,15 @@ using UnityEngine.Rendering;
 
 namespace Unity.MeshSync
 {
-    [Serializable]
     public class InstanceRenderingInfo
     {
-        [SerializeField]
         public Mesh Mesh;
         
         public List<Matrix4x4[]> DividedInstances { get; private set; } = new List<Matrix4x4[]>();
 
-        [SerializeField]
         private Material[] m_materials;
 
+        [SerializeField]
         public Material[] Materials
         {
             get => m_materials;
@@ -41,11 +39,7 @@ namespace Unity.MeshSync
             }
         }
 
-        [SerializeField]
         private GameObject m_gameObject;
-        
-        [SerializeField]
-        private Matrix4x4 m_inverse = Matrix4x4.identity;
         
         private bool m_dirtyInstances = true;
         
@@ -62,7 +56,7 @@ namespace Unity.MeshSync
                 m_dirtyInstances = true;
             }
         }
-        
+
         public GameObject GameObject
         {
             get => m_gameObject;
@@ -74,23 +68,10 @@ namespace Unity.MeshSync
                 m_gameObject = value;
                 
                 OnGameObjectUpdated();
-                UpdateInverse();
             }
         }
 
-        private void UpdateInverse()
-        {
-            if (m_gameObject == null)
-            {
-                m_inverse = Matrix4x4.identity;
-            }
-            else
-            {
-                m_inverse = m_gameObject.transform.localToWorldMatrix.inverse;
-            }
-        }
-        
-
+        [SerializeField]
         public Renderer Renderer;
         public int Layer
         {
@@ -174,7 +155,7 @@ namespace Unity.MeshSync
                 if (GameObject == null)
                     return Matrix4x4.identity;
                     
-                return GameObject.transform.localToWorldMatrix * m_inverse;
+                return GameObject.transform.localToWorldMatrix;
             }
         }
             
