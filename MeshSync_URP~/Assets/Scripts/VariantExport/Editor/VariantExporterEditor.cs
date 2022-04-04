@@ -308,7 +308,7 @@ namespace Unity.MeshSync.Editor
             }
         }
 
-        [MenuItem("GameObject/MeshSync/Create Variant exporter", false, 10)]
+        [MenuItem("GameObject/MeshSync/Create Variant exporter", false, 20)]
         internal static void CreateMeshSyncServerMenu(MenuCommand menuCommand)
         {
             var go = new GameObject("VariantExporter");

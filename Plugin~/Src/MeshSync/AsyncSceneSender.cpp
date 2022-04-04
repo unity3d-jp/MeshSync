@@ -31,6 +31,10 @@ AsyncSceneSender::~AsyncSceneSender()
 {
     destroyed = true;
     wait();
+
+    if (m_properties_client) {
+        m_properties_client->abortPropertiesRequest();
+    }
 }
 
 const std::string& AsyncSceneSender::getErrorMessage() const
@@ -89,6 +93,8 @@ void AsyncSceneSender::requestPropertiesImpl() {
 
     ms::Client client(client_settings);
 
+    m_properties_client = &client;
+
     ms::RequestPropertiesMessage mes;
     setup_message(mes);
 
@@ -101,6 +107,8 @@ void AsyncSceneSender::requestPropertiesImpl() {
     if (on_properties_received) {
         on_properties_received(client.properties);
     }
+
+    m_properties_client = nullptr;
 }
 
 void AsyncSceneSender::send()
