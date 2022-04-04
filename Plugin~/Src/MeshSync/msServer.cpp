@@ -673,6 +673,8 @@ void Server::receivedProperty(PropertyInfoPtr prop) {
 }
 
 void Server::propertiesReady() {
+    lock_t lock(m_properties_mutex);
+
     if (m_current_properties_request) {
         m_current_properties_request->ready = true;
     }

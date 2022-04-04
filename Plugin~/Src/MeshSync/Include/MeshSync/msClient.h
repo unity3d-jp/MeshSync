@@ -3,8 +3,11 @@
 #include "msProtocol.h"
 #include "msClientSettings.h" //ClientSettings
 
-namespace ms {
+#include "pch.h"
+#include "MeshSync/msClient.h"
+#include "MeshSync/SceneGraph/msScene.h" //Scene
 
+namespace ms {
 
 class Client
 {
@@ -26,6 +29,8 @@ public:
     ResponseMessagePtr send(const QueryMessage& mes, int timeout_ms);
 
     std::vector<PropertyInfo> properties;
+
+    void abortPropertiesRequest();
 private:
     ClientSettings m_settings;
     std::string m_error_message;

@@ -4,6 +4,7 @@
 
 #include "MeshSync/SceneExporter.h"
 #include "MeshSync/msClientSettings.h" //ClientSettings
+#include "MeshSync/msClient.h"
 
 namespace ms {
 
@@ -37,6 +38,8 @@ private:
     std::future<void> m_request_properties_future;
     std::string m_error_message;
     std::atomic_bool destroyed{ false };
+
+    ms::Client* m_properties_client;
 };
 
 } // namespace ms

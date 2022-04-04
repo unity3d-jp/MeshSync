@@ -7,6 +7,8 @@ namespace ms {
 using namespace Poco;
 using namespace Poco::Net;
 
+HTTPClientSession* m_properties_session;
+
 Client::Client(const ClientSettings & settings)
     : m_settings(settings)
 {
@@ -168,15 +170,23 @@ bool Client::send(const FenceMessage& mes)
     }
 }
 
+void Client::abortPropertiesRequest() {
+    if (m_properties_session) {
+        m_properties_session->abort();
+        m_properties_session = nullptr;
+    }
+}
+
 bool Client::send(const RequestPropertiesMessage& mes)
 {
     try {
+        
         HTTPClientSession session{ m_settings.server, m_settings.port };
 
-        // This request is only answered if the user makes changes in Unity.
-        // It needs a short timeout so it doesn't block blender from shutting down.
-        session.setTimeout(1000 * 1000);
+        m_properties_session = &session;
 
+        session.setTimeout(Poco::Timespan()); // infinite timeout, this is cancelled manually.
+         
         HTTPRequest request{ HTTPRequest::HTTP_POST, "request_properties" };
         request.setContentType("application/octet-stream");
         request.setExpectContinue(true);
@@ -186,7 +196,6 @@ bool Client::send(const RequestPropertiesMessage& mes)
         os.flush();
 
         HTTPResponse response;
-
         auto& rs = session.receiveResponse(response);
 
         auto reqResponse = RequestPropertiesResponse();
@@ -199,6 +208,8 @@ bool Client::send(const RequestPropertiesMessage& mes)
             reqResponse.properties[i].data.share(prop.data);
             properties.push_back(prop);
         }
+
+        m_properties_session = nullptr;
 
         return response.getStatus() == HTTPResponse::HTTP_OK;
     }
