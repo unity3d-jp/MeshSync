@@ -37,6 +37,29 @@ internal class SceneCachePlayableAssetTests {
         Assert.Greater(curve.keys.Length,2);
         Assert.Greater(clip.duration,0);
     }
+
+//----------------------------------------------------------------------------------------------------------------------    
+    [UnityTest]
+    public IEnumerator ChangeSceneCache() {
+
+        InitTest(true, out PlayableDirector _, out SceneCachePlayer scPlayer, out TimelineClip clip);
+        yield return null;
+        
+        SceneCachePlayableAsset sceneCachePlayableAsset = clip.asset as SceneCachePlayableAsset;
+        Assert.IsNotNull(sceneCachePlayableAsset);
+
+        sceneCachePlayableAsset.SetSceneCachePlayerInEditor(null);
+        double halfDuration = clip.duration * 0.5f;
+        clip.duration = halfDuration;
+        TimelineEditor.Refresh(RefreshReason.ContentsModified);
+        yield return null;
+        
+        sceneCachePlayableAsset.SetSceneCachePlayerInEditor(scPlayer);
+        TimelineEditor.Refresh(RefreshReason.ContentsModified);
+        yield return null;
+        
+        Assert.IsTrue(Mathf.Approximately((float)halfDuration, (float)clip.duration),"Clip Duration has been reset.");
+    }
     
     
 //----------------------------------------------------------------------------------------------------------------------    
@@ -146,9 +169,9 @@ internal class SceneCachePlayableAssetTests {
         const int NUM_FRAMES_TO_HOLD = 3;
         const int OFFSET = 1;
         
-        SceneCacheClipData clipData = clip.GetClipData<SceneCacheClipData>();
-        Assert.IsNotNull(clipData);
-        LimitedAnimationController limitedAnimationController = clipData.GetOverrideLimitedAnimationController();
+        SceneCachePlayableAsset sceneCachePlayableAsset = clip.asset as SceneCachePlayableAsset;
+        Assert.IsNotNull(sceneCachePlayableAsset);
+        LimitedAnimationController limitedAnimationController = sceneCachePlayableAsset.GetOverrideLimitedAnimationController();
         limitedAnimationController.Enable(NUM_FRAMES_TO_HOLD,OFFSET);
 
         yield return IterateAllSceneCacheFrames(director, clip, sceneCachePlayer, (int timelineFrame) => {
@@ -191,9 +214,7 @@ internal class SceneCachePlayableAssetTests {
         const int NUM_FRAMES_TO_HOLD = 3;
         const int OFFSET             = 1;
         
-        SceneCacheClipData clipData1 = clip1.GetClipData<SceneCacheClipData>();
-        Assert.IsNotNull(clipData1);
-        LimitedAnimationController limitedAnimationController1 = clipData1.GetOverrideLimitedAnimationController();
+        LimitedAnimationController limitedAnimationController1 = playableAsset1.GetOverrideLimitedAnimationController();
         limitedAnimationController1.Enable(NUM_FRAMES_TO_HOLD,OFFSET);
         
         yield return IterateAllSceneCacheFrames(director, clip0, sceneCachePlayer, (int timelineFrame) => {
@@ -245,9 +266,9 @@ internal class SceneCachePlayableAssetTests {
 
     [NotNull]
     private static AnimationCurve VerifyAnimationCurve(TimelineClip clip) {
-        SceneCacheClipData clipData = clip.GetClipData<SceneCacheClipData>();
-        Assert.IsNotNull(clipData);
-        AnimationCurve curve = clipData.GetAnimationCurve();
+        SceneCachePlayableAsset sceneCachePlayableAsset = clip.asset as SceneCachePlayableAsset;
+        Assert.IsNotNull(sceneCachePlayableAsset);
+        AnimationCurve curve = sceneCachePlayableAsset.GetAnimationCurve();
         Assert.IsNotNull(curve);
         return curve;
     }

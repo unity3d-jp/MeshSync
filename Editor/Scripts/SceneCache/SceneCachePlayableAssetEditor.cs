@@ -39,13 +39,13 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         if (null == clipData) 
             return clipOptions;
 
-        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
+        SceneCachePlayer scPlayer = asset.GetSceneCachePlayer();
         if (null == scPlayer) {
             clipOptions.errorText = NO_SCENE_CACHE_ASSIGNED_ERROR;
             return clipOptions;
         }
 
-        LimitedAnimationController overrideLimitedAnimationController =clipData.GetOverrideLimitedAnimationController();
+        LimitedAnimationController overrideLimitedAnimationController =asset.GetOverrideLimitedAnimationController();
         
         if (!scPlayer.IsLimitedAnimationOverrideable() && overrideLimitedAnimationController.IsEnabled()) {
             clipOptions.errorText = UNABLE_TO_OVERRIDE_LIMITED_ANIMATION_ERROR;
@@ -73,7 +73,7 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
             clip.TryMoveToTrack(track);
         }
 
-        asset.Init(null != clonedFrom);
+        asset.Init(updateClipDurationOnCreatePlayable: null == clonedFrom);
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
@@ -92,16 +92,9 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
             CreateClipCurve(clip);
         }        
         
-        SceneCacheClipData clipData = playableAsset.GetBoundClipData() as SceneCacheClipData;
-        if (null == clipData) {
-            //The clip is not ready. Not deserialized yet
-            return;
-        }
-        
-               
         //Always apply clipCurves to clipData
         AnimationCurve curve = AnimationUtility.GetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding());        
-        clipData.SetAnimationCurve(curve);
+        playableAsset.SetAnimationCurve(curve);
         
     }    
 
@@ -121,7 +114,7 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         if (null == clipData)
             return;
 
-        LimitedAnimationController limitedAnimationController = clipData.GetOverrideLimitedAnimationController();
+        LimitedAnimationController limitedAnimationController = asset.GetOverrideLimitedAnimationController();
         if (!limitedAnimationController.IsEnabled()) {
             return;
         }
