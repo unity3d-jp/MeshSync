@@ -217,27 +217,32 @@ namespace Unity.MeshSync
                 {
                     case PropertyInfoData.Type.IntArray:
                         {
-                            // TODO: Use custom IntVector here maybe:
-                            var newValueAsArray = new int[arrayLength];
-                            Vector3 newValueAsVector = (Vector3)value;
+                            if (value is Vector3 newValueAsVector)
+                            {
+                                // TODO: Use custom IntVector here maybe:
+                                var newValueAsArray = new int[arrayLength];
 
-                            newValueAsArray[0] = (int)newValueAsVector.x;
-                            newValueAsArray[1] = (int)newValueAsVector.y;
-                            newValueAsArray[2] = (int)newValueAsVector.z;
+                                newValueAsArray[0] = (int)newValueAsVector.x;
+                                newValueAsArray[1] = (int)newValueAsVector.y;
+                                newValueAsArray[2] = (int)newValueAsVector.z;
 
-                            value = newValueAsArray;
+                                value = newValueAsArray;
+                            }
+
                             break;
                         }
                     case PropertyInfoData.Type.FloatArray:
                         {
-                            var newValueAsArray = new float[arrayLength];
-                            Vector3 newValueAsVector = (Vector3)value;
+                            if (value is Vector3 newValueAsVector)
+                            {
+                                float[] newValueAsArray = new float[arrayLength];
 
-                            newValueAsArray[0] = newValueAsVector.x;
-                            newValueAsArray[1] = newValueAsVector.y;
-                            newValueAsArray[2] = newValueAsVector.z;
+                                newValueAsArray[0] = newValueAsVector.x;
+                                newValueAsArray[1] = newValueAsVector.y;
+                                newValueAsArray[2] = newValueAsVector.z;
 
-                            value = newValueAsArray;
+                                value = newValueAsArray;
+                            }
                             break;
                         }
                 }
@@ -287,6 +292,8 @@ namespace Unity.MeshSync
         {
             return $"PropertyInfoDataWrapper: {name}: {GetValue<object>()}";
         }
+
+        public bool CanBeModified => type != PropertyInfoData.Type.String; 
     }
 
     // Partial class for now to make merging code easier later.

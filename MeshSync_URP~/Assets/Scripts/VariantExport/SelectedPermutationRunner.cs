@@ -25,7 +25,7 @@ namespace Unity.MeshSync.VariantExport
         {
             foreach (var setting in variantExporter.Whitelist)
             {
-                variantExporter.DeserializeProps(setting);
+                variantExporter.ApplySerializedProperties(setting);
 
                 yield return new WaitForMeshSync(server);
 

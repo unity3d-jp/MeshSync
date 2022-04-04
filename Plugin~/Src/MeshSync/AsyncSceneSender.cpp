@@ -74,7 +74,7 @@ void AsyncSceneSender::requestProperties()
         return;
 
     m_request_properties_future = std::async(std::launch::async, [this]() {
-        while (!destroyed && !propertyInfos.empty()) {
+        if (!destroyed && !propertyInfos.empty()) {
             requestPropertiesImpl();
         }
     });

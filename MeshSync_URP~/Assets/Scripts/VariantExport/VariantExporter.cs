@@ -39,8 +39,7 @@ namespace Unity.MeshSync.VariantExport
             }
         }
 
-        [SerializeField]
-        private MeshSyncServer server;
+        public MeshSyncServer Server;
 
         public List<string> Whitelist = new List<string>();
         public List<string> Blacklist = new List<string>();
@@ -85,12 +84,6 @@ namespace Unity.MeshSync.VariantExport
             }
         }
 
-        public MeshSyncServer Server
-        {
-            get => server;
-            set => server = value;
-        }
-
         public bool IsEnabled(PropertyInfoDataWrapper property)
         {
             return EnabledSettingNames.Contains(property.name);
@@ -108,14 +101,6 @@ namespace Unity.MeshSync.VariantExport
         {
             try
             {
-                var newPropertyValues = new object[server.propertyInfos.Count];
-
-                for (int i = 0; i < server.propertyInfos.Count; i++)
-                {
-                    var prop = server.propertyInfos[i];
-                    newPropertyValues[i] = prop.propertyValue;
-                }
-
                 for (int tries = 0; tries < 1000; tries++)
                 {
                     foreach (var prop in EnabledProperties)
@@ -125,6 +110,34 @@ namespace Unity.MeshSync.VariantExport
                             case PropertyInfoData.Type.Int:
                                 prop.NewValue = UnityEngine.Random.Range((int)prop.min, (int)prop.max + 1);
                                 break;
+
+                            case PropertyInfoData.Type.Float:
+                                prop.NewValue = UnityEngine.Random.Range(prop.min, prop.max);
+                                break;
+
+                            case PropertyInfoData.Type.FloatArray:
+                                {
+                                    var array = new float[prop.arrayLength];
+                                    for (int i = 0; i < array.Length; i++)
+                                    {
+                                        array[i] = UnityEngine.Random.Range(prop.min, prop.max);
+                                    }
+
+                                    prop.NewValue = array;
+                                    break;
+                                }
+
+                            case PropertyInfoData.Type.IntArray:
+                                {
+                                    var array = new int[prop.arrayLength];
+                                    for (int i = 0; i < array.Length; i++)
+                                    {
+                                        array[i] = UnityEngine.Random.Range((int)prop.min, (int)prop.max + 1);
+                                    }
+
+                                    prop.NewValue = array;
+                                    break;
+                                }
                         }
                     }
 
@@ -142,7 +155,7 @@ namespace Unity.MeshSync.VariantExport
             }
         }
 
-        string SerializeCurrentVariant(bool useNewValues = false)
+        public string SerializeCurrentVariant(bool useNewValues = false)
         {
             if (Server?.propertyInfos == null)
             {
@@ -153,20 +166,14 @@ namespace Unity.MeshSync.VariantExport
 
             foreach (var prop in Server.propertyInfos)
             {
-                // Ignore strings, they don't change:
-                if (prop.type == PropertyInfoData.Type.String)
+                if (!prop.CanBeModified)
                 {
                     continue;
                 }
 
                 string serializedValue = $"#{prop.name}:";
 
-                switch (prop.type)
-                {
-                    case PropertyInfoData.Type.Int:
-                        serializedValue += prop.GetSerializedValue(useNewValues);
-                        break;
-                }
+                serializedValue += prop.GetSerializedValue(useNewValues);
 
                 sb.Append(serializedValue);
             }
@@ -174,7 +181,7 @@ namespace Unity.MeshSync.VariantExport
             return sb.ToString();
         }
 
-        public void DeserializeProps(string serializedPropString)
+        public void ApplySerializedProperties(string serializedPropString)
         {
             if (Server?.propertyInfos == null)
             {
@@ -183,7 +190,7 @@ namespace Unity.MeshSync.VariantExport
 
             var propStrings = serializedPropString.Split('#');
 
-            var properties = server.propertyInfos;
+            var properties = Server.propertyInfos;
 
             foreach (var propString in propStrings)
             {
@@ -206,39 +213,20 @@ namespace Unity.MeshSync.VariantExport
             }
         }
 
+        public void Clear()
+        {
+            Whitelist.Clear();
+            Blacklist.Clear();
+        }
+
         public void PreviousKeptVariant()
         {
-            if (Whitelist.Count == 0)
-            {
-                return;
-            }
-
-            var current = Whitelist.IndexOf(SerializeCurrentVariant());
-            if (current == -1)
-            {
-                current = 0;
-            }
-
-            var previous = current - 1;
-            if (previous < 0)
-            {
-                previous += Whitelist.Count;
-            }
-
-            DeserializeProps(Whitelist[previous]);
+            MoveInList(Whitelist, -1);
         }
 
         public void NextKeptVariant()
         {
-            if (Whitelist.Count == 0)
-            {
-                return;
-            }
-
-            var current = Whitelist.IndexOf(SerializeCurrentVariant());
-            var next = (current + 1) % Whitelist.Count;
-
-            DeserializeProps(Whitelist[next]);
+            MoveInList(Whitelist, +1);
         }
 
         public void KeepVariant()
@@ -256,21 +244,9 @@ namespace Unity.MeshSync.VariantExport
             }
         }
 
-        public bool IsCurrentVariantBlocked
-        {
-            get
-            {
-                return Blacklist.Contains(SerializeCurrentVariant());
-            }
-        }
+        public bool IsCurrentVariantBlocked => Blacklist.Contains(SerializeCurrentVariant());
 
-        public bool IsCurrentVariantKept
-        {
-            get
-            {
-                return Whitelist.Contains(SerializeCurrentVariant());
-            }
-        }
+        public bool IsCurrentVariantKept => Whitelist.Contains(SerializeCurrentVariant());
 
         public void BlockVariant()
         {
@@ -299,41 +275,44 @@ namespace Unity.MeshSync.VariantExport
 
         public void PreviousBlockedVariant()
         {
-            if (Blacklist.Count == 0)
-            {
-                return;
-            }
-
-            var current = Blacklist.IndexOf(SerializeCurrentVariant());
-            if (current == -1)
-            {
-                current = 0;
-            }
-
-            var previous = current - 1;
-            if (previous < 0)
-            {
-                previous += Blacklist.Count;
-            }
-
-            DeserializeProps(Blacklist[previous]);
+            MoveInList(Blacklist, -1);
         }
 
         public void NextBlockedVariant()
         {
-            if (Blacklist.Count == 0)
+            MoveInList(Blacklist, +1);
+        }
+
+        void MoveInList(List<string> list, int move)
+        {
+            if (list.Count == 0)
             {
                 return;
             }
 
-            var current = Blacklist.IndexOf(SerializeCurrentVariant());
-            var next = (current + 1) % Blacklist.Count;
+            int newIndex = 0;
+            var current = list.IndexOf(SerializeCurrentVariant());
+            if (current != -1)
+            {
+                newIndex = (current + move) % list.Count;
 
-            DeserializeProps(Blacklist[next]);
+                if (newIndex < 0)
+                {
+                    newIndex += list.Count;
+                }
+            }
+
+            ApplySerializedProperties(list[newIndex]);
         }
 
         public void Export()
         {
+            if (SaveFile.Length == 0)
+            {
+                EditorUtility.DisplayDialog("Warning", "Cannot export. SaveFile is not set.", "OK");
+                return;
+            }
+
             if (Directory.Exists(SavePath))
             {
                 //if (ExportMode == ExportModeSetting.RegenerateEverything)
@@ -364,8 +343,6 @@ namespace Unity.MeshSync.VariantExport
 
         public void StopExport()
         {
-            EditorUtility.ClearProgressBar();
-
             if (coroutine != null)
             {
                 EditorCoroutineUtility.StopCoroutine(coroutine);
@@ -373,6 +350,8 @@ namespace Unity.MeshSync.VariantExport
             }
 
             AssetDatabase.StopAssetEditing();
+
+            EditorUtility.ClearProgressBar();
 
             currentRunner = null;
         }

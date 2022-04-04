@@ -164,35 +164,35 @@ internal struct Server {
         set { msServerSetScreenshotFilePath(self, value); }
     }
 
-        public void SendProperty(PropertyInfoDataWrapper prop)
+    public void SendProperty(PropertyInfoDataWrapper prop)
+    {
+        switch (prop.type)
         {
-            switch (prop.type)
-            {
-                case PropertyInfoData.Type.Int:
-                    msServerSendPropertyInt(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<int>());
-                    break;
+            case PropertyInfoData.Type.Int:
+                msServerSendPropertyInt(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<int>());
+                break;
 
-                case PropertyInfoData.Type.Float:
-                    msServerSendPropertyFloat(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<float>());
-                    break;
+            case PropertyInfoData.Type.Float:
+                msServerSendPropertyFloat(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<float>());
+                break;
 
-                case PropertyInfoData.Type.IntArray:
-                    msServerSendPropertyIntArray(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<int[]>(), prop.arrayLength);
-                    break;
+            case PropertyInfoData.Type.IntArray:
+                msServerSendPropertyIntArray(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<int[]>(), prop.arrayLength);
+                break;
 
-                case PropertyInfoData.Type.FloatArray:
-                    msServerSendPropertyFloatArray(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<float[]>(), prop.arrayLength);
-                    break;
+            case PropertyInfoData.Type.FloatArray:
+                msServerSendPropertyFloatArray(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<float[]>(), prop.arrayLength);
+                break;
 
-                case PropertyInfoData.Type.String:
-                    var s = prop.GetValue<string>();
-                    msServerSendPropertyString(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, s, s.Length);
-                    break;
+            case PropertyInfoData.Type.String:
+                var s = prop.GetValue<string>();
+                msServerSendPropertyString(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, s, s.Length);
+                break;
 
-                default:
-                    throw new NotImplementedException($"Type {prop.type} not implemented");
-            }
+            default:
+                throw new NotImplementedException($"Type {prop.type} not implemented");
         }
+    }
 
     public void SendChangedProperties()
     {

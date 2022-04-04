@@ -64,15 +64,13 @@ namespace Unity.MeshSync.VariantExport
         public PermutationRunnerBase(VariantExporter variantExporter)
         {
             this.variantExporter = variantExporter;
-
-            currentSettings = new object[variantExporter.enabledProperties.Count];
         }
 
         protected abstract IEnumerator ExecutePermutations(int propIdx);
 
         protected IEnumerator Save()
         {
-            var permutationCount = variantExporter.VariantCount;
+            var permutationCount = VariantCount;
             if (EditorUtility.DisplayCancelableProgressBar("Exporting", $"Variant {counter + 1}/{permutationCount}", (float)counter / permutationCount))
             {
                 variantExporter.StopExport();
@@ -156,13 +154,22 @@ namespace Unity.MeshSync.VariantExport
 
         public IEnumerator Start()
         {
+            if (EditorUtility.DisplayCancelableProgressBar("Exporting", $"Variant 1/{VariantCount}", 0))
+            {
+                variantExporter.StopExport();
+                yield break;
+            }
+
+            currentSettings = new object[variantExporter.enabledProperties.Count];
+
             var outputFilePath = variantExporter.SavePath;
 
             if (Directory.Exists(outputFilePath))
             {
                 foreach (var prefabFile in Directory.EnumerateFiles(outputFilePath, "*.prefab"))
                 {
-                    File.Delete(prefabFile);
+                    AssetDatabase.DeleteAsset(prefabFile);
+                    //File.Delete(prefabFile);
                 }
 
                 AssetDatabase.Refresh();
