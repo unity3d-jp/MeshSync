@@ -9,9 +9,7 @@ using Unity.Collections;
 using UnityEngine.Assertions;
 using System.IO;
 using JetBrains.Annotations;
-using PlasticGui;
 using Unity.FilmInternalUtilities;
-using UnityEngine.Rendering;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -1112,26 +1110,40 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
 
         string path = dtrans.path;
         GameObject go = rec.go;
-        Transform trans = go.transform;
         bool activeInHierarchy = go.activeInHierarchy;
         if (!activeInHierarchy && !dflags.hasPoints)
             return null;
 
 
+        return UpdateMeshEntity(data, config, rec);
+    }
+
+    private EntityRecord UpdateMeshEntity(MeshData data, MeshSyncPlayerConfig config, EntityRecord rec)
+    {
+        TransformData dtrans = data.transform;
+        MeshDataFlags dflags = data.dataFlags;
+        GameObject go = rec.go;
+        Transform trans = go.transform;
+        
         // allocate material list
         bool materialsUpdated = rec.BuildMaterialData(data);
         bool meshUpdated = false;
 
-        if (dflags.hasPoints && dflags.hasIndices) {
+        if (dflags.hasPoints && dflags.hasIndices)
+        {
             // note:
             // assume there is always only 1 mesh split.
             // old versions supported multiple splits because vertex index was 16 bit (pre-Unity 2017.3),
             // but that code path was removed for simplicity and my sanity.
-            if (data.numIndices == 0) {
+            if (data.numIndices == 0)
+            {
                 if (rec.mesh != null)
                     rec.mesh.Clear();
-            } else {
-                if (rec.mesh == null) {
+            }
+            else
+            {
+                if (rec.mesh == null)
+                {
                     rec.mesh = new Mesh();
                     rec.mesh.name = trans.name;
                     if (m_markMeshesDynamic)
@@ -1140,21 +1152,28 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
                         rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
                     rec.mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
                 }
+
                 UpdateMeshEntity(ref rec.mesh, data);
             }
+
             meshUpdated = true;
         }
 
-        if (dflags.hasBones || dflags.hasBlendshapes) {
+        if (dflags.hasBones || dflags.hasBlendshapes)
+        {
             SkinnedMeshRenderer smr = rec.skinnedMeshRenderer;
-            if (smr == null) {
+            if (smr == null)
+            {
                 materialsUpdated = true;
                 smr = rec.skinnedMeshRenderer = Misc.GetOrAddComponent<SkinnedMeshRenderer>(trans.gameObject);
-                if (rec.meshRenderer != null) {
+                if (rec.meshRenderer != null)
+                {
                     DestroyImmediate(rec.meshRenderer);
                     rec.meshRenderer = null;
                 }
-                if (rec.meshFilter != null) {
+
+                if (rec.meshFilter != null)
+                {
                     DestroyImmediate(rec.meshFilter);
                     rec.meshFilter = null;
                 }
@@ -1170,32 +1189,41 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
             smr.sharedMesh = rec.mesh;
 
             // update bones
-            if (dflags.hasBones) {
+            if (dflags.hasBones)
+            {
                 if (dflags.hasRootBone)
                     rec.rootBonePath = data.rootBonePath;
                 rec.bonePaths = data.bonePaths;
                 // bones will be resolved in AfterUpdateScene()
-            } else {
+            }
+            else
+            {
                 smr.localBounds = rec.mesh.bounds;
                 smr.updateWhenOffscreen = false;
             }
 
             // update blendshape weights
-            if (dflags.hasBlendshapes) {
+            if (dflags.hasBlendshapes)
+            {
                 int numBlendShapes = Math.Min(data.numBlendShapes, rec.mesh.blendShapeCount);
-                for (int bi = 0; bi < numBlendShapes; ++bi) {
+                for (int bi = 0; bi < numBlendShapes; ++bi)
+                {
                     BlendShapeData bsd = data.GetBlendShapeData(bi);
                     smr.SetBlendShapeWeight(bi, bsd.weight);
                 }
             }
-        } else if (meshUpdated) {
+        }
+        else if (meshUpdated)
+        {
             MeshFilter mf = rec.meshFilter;
             MeshRenderer mr = rec.meshRenderer;
-            if (mf == null) {
+            if (mf == null)
+            {
                 materialsUpdated = true;
                 mf = rec.meshFilter = Misc.GetOrAddComponent<MeshFilter>(trans.gameObject);
                 mr = rec.meshRenderer = Misc.GetOrAddComponent<MeshRenderer>(trans.gameObject);
-                if (rec.skinnedMeshRenderer != null) {
+                if (rec.skinnedMeshRenderer != null)
+                {
                     mr.sharedMaterials = rec.skinnedMeshRenderer.sharedMaterials;
                     DestroyImmediate(rec.skinnedMeshRenderer);
                     rec.skinnedMeshRenderer = null;
@@ -1208,7 +1236,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
             rec.smrEnabled = false;
         }
 
-        if (meshUpdated) {
+        if (meshUpdated)
+        {
             MeshCollider collider = config.UpdateMeshColliders ? trans.GetComponent<MeshCollider>() : null;
             if (collider != null &&
                 (collider.sharedMesh == null || collider.sharedMesh == rec.mesh))
@@ -1219,13 +1248,13 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
 
         // assign materials if needed
         if (materialsUpdated)
-            AssignMaterials(rec,recordUndo:false);
+            AssignMaterials(rec, recordUndo: false);
 
         return rec;
     }
-    
-   
-//----------------------------------------------------------------------------------------------------------------------
+
+
+    //----------------------------------------------------------------------------------------------------------------------
 
     void UpdateMeshEntity(ref Mesh mesh, MeshData data)
     {
@@ -1378,7 +1407,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         return rec;
     }
 
-    EntityRecord UpdateTransformEntity(TransformData data,MeshSyncPlayerConfig config)
+    EntityRecord UpdateTransformEntity(TransformData data, MeshSyncPlayerConfig config)
     {
         string path = data.path;
         int hostID = data.hostID;
@@ -1416,7 +1445,13 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
             }
         }
 
-        trans = rec.trans;
+        return UpdateTransformEntity(data, config, rec);
+    }
+
+    private static EntityRecord UpdateTransformEntity(TransformData data, MeshSyncPlayerConfig config,
+        EntityRecord rec)
+    {
+        var trans = rec.trans;
         if (trans == null)
             trans = rec.trans = rec.go.transform;
 
@@ -1453,6 +1488,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
             else
                 rec.reference = null;
         }
+
         return rec;
     }
 
@@ -1649,12 +1685,22 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
     {
         var config = GetConfigV();
         
-        var rec = UpdateMeshEntity((MeshData)data, config);
-
-        if (!this.m_clientInstancedEntities.TryGetValue(data.path, out EntityRecord _))
+        if (!this.m_clientInstancedEntities.TryGetValue(data.path, out EntityRecord rec))
         {
-            this.m_clientInstancedEntities.Add(data.path, null);
+            var trans = 
+                FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, data.path, false);
+            
+            rec = new EntityRecord {
+                go = trans.gameObject,
+                trans = trans,
+                recved = true,
+            };
+            
+            this.m_clientInstancedEntities.Add(data.path, rec);
         }
+        
+        UpdateTransformEntity(data, config, rec);
+        UpdateMeshEntity((MeshData)data, config, rec);
 
         this.m_clientInstancedEntities[data.path] = rec;
         
@@ -1707,7 +1753,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
                 infoRecord.renderer = parentRecord.go.AddComponent<MeshSyncInstanceRenderer>();
             }
             
-            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go, path);
+            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
         }
         else
         {
@@ -1716,7 +1762,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
                 infoRecord.renderer = m_rootObject.gameObject.AddComponent<MeshSyncInstanceRenderer>();
             }
             
-            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go, path);
+            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
             Debug.LogWarningFormat(
                 "[MeshSync] No entity found for parent path {0}, using root as parent", data.parentPath);
         }

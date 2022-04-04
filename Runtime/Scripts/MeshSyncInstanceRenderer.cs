@@ -1,4 +1,7 @@
-﻿using UnityEditor.Experimental.SceneManagement;
+﻿#if UNITY_EDITOR
+using UnityEditor.Experimental.SceneManagement;
+#endif
+
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -7,17 +10,15 @@ namespace Unity.MeshSync{
     [ExecuteInEditMode]
     internal class MeshSyncInstanceRenderer : MonoBehaviour
     {
-        [HideInInspector]
-        [SerializeField]
-        internal InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
+        private InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
 
         [HideInInspector]
         [SerializeField] private Matrix4x4[] m_transforms;
         [SerializeField] internal GameObject m_reference; 
-        [SerializeField] internal string m_id;
         
         void OnEnable()
         {
+        
             if (GraphicsSettings.currentRenderPipeline == null)
             {
                 Camera.onPreCull += OnCameraPreCull;
@@ -44,30 +45,45 @@ namespace Unity.MeshSync{
 
         private void OnBeginFrameRendering(ScriptableRenderContext arg1, Camera[] cameras)
         {
-            var stage = PrefabStageUtility.GetCurrentPrefabStage();
-            if (stage == null || stage.IsPartOfPrefabContents(gameObject))
-            {
-                Draw(cameras);
-            }
+            if (!IsInPrefabStage())
+                return;
+            
+            Draw(cameras);
         }
 
         private void OnCameraPreCull(Camera cam)
         {
-            if (cam.name == "Preview Scene Camera")
+            if (IsPreviewCamera(cam))
+                return;
+            
+            if (!IsInPrefabStage())
                 return;
             
             Camera[] cameras = {cam};
             Draw(cameras);
         }
 
+        private bool IsPreviewCamera(Camera camera)
+        {
+            return camera.name == "Preview Scene Camera";
+        }
+        
+        private bool IsInPrefabStage()
+        {
+#if UNITY_EDITOR
+            var stage = PrefabStageUtility.GetCurrentPrefabStage();
+            return stage == null || stage.IsPartOfPrefabContents(gameObject);
+#else
+            return true;
+#endif
+        }
+
         #region Events
 
-        public void UpdateAll(Matrix4x4[] transforms, GameObject go, string id)
+        public void UpdateAll(Matrix4x4[] transforms, GameObject go)
         {
-      
             m_transforms = transforms;
             m_reference = go;
-            m_id = id;
             
             UpdateRenderingInfo(m_renderingInfo);
         }
