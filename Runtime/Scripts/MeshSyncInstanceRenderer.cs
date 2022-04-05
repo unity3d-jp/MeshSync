@@ -53,7 +53,7 @@ namespace Unity.MeshSync{
 
         private void OnCameraPreCull(Camera cam)
         {
-            if (IsPreviewCamera(cam))
+            if (cam.cameraType == CameraType.Preview)
                 return;
             
             if (!IsInPrefabStage())
@@ -62,11 +62,7 @@ namespace Unity.MeshSync{
             Camera[] cameras = {cam};
             Draw(cameras);
         }
-
-        private bool IsPreviewCamera(Camera camera)
-        {
-            return camera.name == "Preview Scene Camera";
-        }
+        
         
         private bool IsInPrefabStage()
         {
