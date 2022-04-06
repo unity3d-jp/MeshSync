@@ -77,6 +77,8 @@ internal class SceneCachePlayableAssetTests {
         double directorTime = clip.start + halfDuration;
         SetDirectorTime(director, directorTime); //this will trigger change in the time of the SceneCachePlayable
         yield return null;
+        TimelineEditor.Refresh(RefreshReason.SceneNeedsUpdate);
+        yield return null;
 
         float scTime = sceneCachePlayer.GetTime();
         Assert.IsTrue(Mathf.Approximately((float)(halfDuration), scTime), $"Time: {scTime}. Expected: {halfDuration}");

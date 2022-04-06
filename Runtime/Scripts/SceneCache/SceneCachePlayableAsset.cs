@@ -36,6 +36,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     public override Playable CreatePlayable(PlayableGraph graph, GameObject go) {
         
+        SceneCachePlayableBehaviour behaviour = new SceneCachePlayableBehaviour();
         SceneCacheClipData scClipData = GetBoundClipData() as SceneCacheClipData;        
         Assert.IsNotNull(scClipData);
         
@@ -48,10 +49,14 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         m_propertyTable             = graph.GetResolver();
         m_sceneCachePlayer          = m_sceneCachePlayerRef.Resolve(m_propertyTable);
         m_extractedSceneCachePlayer = m_extractedSceneCachePlayerRef.Resolve(m_propertyTable);
+        
+        behaviour.SetSceneCachePlayer(m_sceneCachePlayer);
+        behaviour.SetPlayableAsset(this);
+
             
         if (!m_sceneCachePlayer) {
             m_isSceneCacheCurveExtracted = false;
-            return Playable.Create(graph);
+            return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, behaviour);
         }
 
         m_sceneCachePlayer.SetAutoplay(false);
@@ -67,7 +72,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             m_updateClipDurationOnCreatePlayable = false;
         }
         
-        return Playable.Create(graph);
+        return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, behaviour);
     }
 
     bool ShouldExtractCurve() {
