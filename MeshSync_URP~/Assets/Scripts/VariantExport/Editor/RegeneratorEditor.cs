@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using Unity.MeshSync.VariantExport;
 using UnityEditor;
 using UnityEngine;
@@ -284,6 +286,28 @@ namespace Unity.MeshSync.Editor
             GUILayout.EndHorizontal();
         }
 
+        public class AssetNameComparer : IComparer<string>
+        {
+            static string GetNumber(string assetName)
+            {
+                int index1 = assetName.LastIndexOf("_") + 1;
+                int index2 = assetName.IndexOf(".prefab");
+                return assetName.Substring(index1, index2 - index1);
+            }
+
+            public int Compare(string x, string y)
+            {
+                try
+                {
+                    return int.Parse(GetNumber(x)).CompareTo(int.Parse(GetNumber(y)));
+                }
+                catch
+                {
+                    return x.CompareTo(y);
+                }
+            }
+        }
+
         private void ShowVariants()
         {
             var exporter = (Regenerator)target;
@@ -296,7 +320,10 @@ namespace Unity.MeshSync.Editor
 
             Vector3 position = Vector3.zero;
 
-            foreach (var prefab in Directory.EnumerateFiles(exporter.SavePath, "*.prefab"))
+            var prefabFiles = Directory.GetFiles(exporter.SavePath, "*.prefab");
+            Array.Sort(prefabFiles, new AssetNameComparer());
+
+            foreach (var prefab in prefabFiles)
             {
                 var instance = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(prefab));
                 var renderers = instance.GetComponentsInChildren<Renderer>(true);
