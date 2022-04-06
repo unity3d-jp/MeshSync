@@ -6,7 +6,6 @@ using UnityEngine.Timeline;
 
 namespace Unity.MeshSync {
 
-// A behaviour that is attached to a playable
 internal class SceneCachePlayableMixer : PlayableBehaviour {
     
     internal void Init(PlayableDirector director, SceneCacheTrack track, IEnumerable<TimelineClip> clips) {
@@ -75,16 +74,6 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
         }
 
         UpdateObjectActiveStates(activeObject: scPlayer.gameObject);
-        LimitedAnimationController limitedAnimationController = activePlayableAsset.GetOverrideLimitedAnimationController(); 
-       
-        double localTime = clip.ToLocalTime(playable.GetTime());
-        double t         = CalculateTimeForLimitedAnimation(scPlayer,limitedAnimationController, localTime);
-        
-        AnimationCurve curve          = activePlayableAsset.GetAnimationCurve();
-        float          normalizedTime = curve.Evaluate((float)t);
-              
-        scPlayer.SetAutoplay(false);
-        scPlayer.SetTimeByNormalizedTime(normalizedTime);
         
     }
 
@@ -165,26 +154,6 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
         outAsset = null;
     }
     
-    
-//----------------------------------------------------------------------------------------------------------------------
-    
-    private static double CalculateTimeForLimitedAnimation(SceneCachePlayer scPlayer, 
-        LimitedAnimationController overrideLimitedAnimationController, double time)  
-    {
-        LimitedAnimationController origLimitedAnimationController = scPlayer.GetLimitedAnimationController();
-        if (origLimitedAnimationController.IsEnabled()) //do nothing if LA is set on the target SceneCache
-            return time;
-        
-        if (!overrideLimitedAnimationController.IsEnabled())
-            return time;
-
-        ISceneCacheInfo scInfo = scPlayer.ExtractSceneCacheInfo(forceOpen: true);
-        if (null == scInfo)
-            return time;
-            
-        int frame = scPlayer.CalculateFrame((float)time,overrideLimitedAnimationController);
-        return frame / scInfo.GetSampleRate();
-    }
     
 //----------------------------------------------------------------------------------------------------------------------    
     
