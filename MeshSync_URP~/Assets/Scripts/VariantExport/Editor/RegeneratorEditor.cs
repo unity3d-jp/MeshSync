@@ -7,9 +7,10 @@ using UnityEngine;
 
 namespace Unity.MeshSync.Editor
 {
-    [CustomEditor(typeof(VariantExporter))]
-    internal class VariantExporterEditor : UnityEditor.Editor
+    [CustomEditor(typeof(Regenerator))]
+    internal class RegeneratorEditor : UnityEditor.Editor
     {
+        const int TOGGLE_WIDTH = 20;
         const int BUTTON_WIDTH = 90;
         const int LABEL_WIDTH = 120;
 
@@ -17,7 +18,12 @@ namespace Unity.MeshSync.Editor
         {
             get
             {
-                var exporter = (VariantExporter)target;
+                var exporter = (Regenerator)target;
+
+                if (string.IsNullOrEmpty(exporter.SaveFile))
+                {
+                    return null;
+                }
 
                 var holder = exporter.transform.Find(exporter.SaveFile);
 
@@ -27,7 +33,7 @@ namespace Unity.MeshSync.Editor
 
         public override void OnInspectorGUI()
         {
-            var exporter = (VariantExporter)target;
+            var exporter = (Regenerator)target;
 
             exporter.Server = (MeshSyncServer)EditorGUILayout.ObjectField("Server", exporter.Server, typeof(MeshSyncServer), true);
             exporter.SaveFile = EditorGUILayout.TextField("Save File", exporter.SaveFile);
@@ -53,16 +59,13 @@ namespace Unity.MeshSync.Editor
                 {
                     DrawProperties(exporter);
 
-                    if (GUILayout.Button("Shuffle"))
-                    {
-                        exporter.Shuffle();
-                    }
+                    DrawShuffleSection(exporter);
 
                     DrawKeepSection(exporter);
 
                     DrawBlockSection(exporter);
 
-                    if (GUILayout.Button("Clear"))
+                    if (GUILayout.Button("Clear kept and blocked"))
                     {
                         if (EditorUtility.DisplayDialog("Warning", $"This will clear all kept and blocked variant settings. Are you sure?", "Yes", "No"))
                         {
@@ -72,12 +75,17 @@ namespace Unity.MeshSync.Editor
 
                     if (!exporter.IsBaking)
                     {
-                        // exporter.ExportMode = (VariantExporter.ExportModeSetting)EditorGUILayout.EnumPopup(exporter.ExportMode);
-
-                        if (GUILayout.Button("Export!"))
+                        if (string.IsNullOrEmpty(exporter.SaveFile))
                         {
-                            HideVariants();
-                            exporter.Export();
+                            EditorGUILayout.LabelField("Save file is not set, cannot export.");
+                        }
+                        else
+                        {
+                            if (GUILayout.Button("Regenerate!"))
+                            {
+                                HideVariants();
+                                exporter.Regenerate();
+                            }
                         }
                     }
                     else
@@ -92,7 +100,7 @@ namespace Unity.MeshSync.Editor
 
                     EditorGUILayout.LabelField(new GUIContent($"Number of possible variants: {exporter.TotalPermutationCount}", "Number of possible permutations with all properties enabled."));
 
-                    if (Directory.Exists(exporter.SavePath))
+                    if (!string.IsNullOrEmpty(exporter.SaveFile) && Directory.Exists(exporter.SavePath))
                     {
                         if (GUILayout.Button("Show created variants"))
                         {
@@ -113,7 +121,19 @@ namespace Unity.MeshSync.Editor
             }
         }
 
-        private static void DrawProperties(VariantExporter exporter)
+        private static void DrawShuffleSection(Regenerator exporter)
+        {
+            EditorGUILayout.Space();
+
+            exporter.AutoShuffle = EditorGUILayout.ToggleLeft("Auto shuffle", exporter.AutoShuffle);
+
+            if (GUILayout.Button("Shuffle"))
+            {
+                exporter.Shuffle();
+            }
+        }
+
+        private static void DrawProperties(Regenerator exporter)
         {
             EditorGUILayout.LabelField("Properties to permutate:");
 
@@ -132,7 +152,7 @@ namespace Unity.MeshSync.Editor
                 }
             }
 
-            bool newAllEnabled = EditorGUILayout.Toggle(allEnabled, GUILayout.MaxWidth(20));
+            bool newAllEnabled = EditorGUILayout.Toggle(allEnabled, GUILayout.MaxWidth(TOGGLE_WIDTH));
             if (allEnabled != newAllEnabled)
             {
                 if (newAllEnabled)
@@ -157,7 +177,7 @@ namespace Unity.MeshSync.Editor
 
                 GUILayout.BeginHorizontal();
                 bool enabled = exporter.IsEnabled(prop);
-                bool newEnabled = EditorGUILayout.Toggle(enabled, GUILayout.MaxWidth(20));
+                bool newEnabled = EditorGUILayout.Toggle(enabled, GUILayout.MaxWidth(TOGGLE_WIDTH));
                 if (newEnabled != enabled)
                 {
                     if (newEnabled)
@@ -176,7 +196,7 @@ namespace Unity.MeshSync.Editor
             }
         }
 
-        private static void DrawBlockSection(VariantExporter exporter)
+        private static void DrawBlockSection(Regenerator exporter)
         {
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
@@ -220,7 +240,7 @@ namespace Unity.MeshSync.Editor
             GUILayout.EndHorizontal();
         }
 
-        private static void DrawKeepSection(VariantExporter exporter)
+        private static void DrawKeepSection(Regenerator exporter)
         {
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
@@ -266,7 +286,7 @@ namespace Unity.MeshSync.Editor
 
         private void ShowVariants()
         {
-            var exporter = (VariantExporter)target;
+            var exporter = (Regenerator)target;
 
             HideVariants();
 
@@ -308,14 +328,14 @@ namespace Unity.MeshSync.Editor
             }
         }
 
-        [MenuItem("GameObject/MeshSync/Create Variant exporter", false, 20)]
-        internal static void CreateMeshSyncServerMenu(MenuCommand menuCommand)
+        [MenuItem("GameObject/MeshSync/Create Regenerator", false, 20)]
+        internal static void CreateRegeneratorMenu()
         {
-            var go = new GameObject("VariantExporter");
-            var exporter = go.AddComponent<VariantExporter>();
+            var go = new GameObject("Regenerator");
+            var exporter = go.AddComponent<Regenerator>();
             exporter.Server = FindObjectOfType<MeshSyncServer>();
 
-            Undo.RegisterCreatedObjectUndo(go, "VariantExporter");
+            Undo.RegisterCreatedObjectUndo(go, "Regenerator");
         }
     }
 }

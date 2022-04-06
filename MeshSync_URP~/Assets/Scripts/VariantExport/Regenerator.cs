@@ -13,14 +13,8 @@ using System.Collections.ObjectModel;
 namespace Unity.MeshSync.VariantExport
 {
     [ExecuteAlways]
-    public class VariantExporter : MonoBehaviour
+    public class Regenerator : MonoBehaviour
     {
-        public enum ExportModeSetting
-        {
-            RegenerateEverything,
-            RegenerateOnlyExisting,
-        }
-
         EditorCoroutine coroutine;
 
         SelectedPermutationRunner currentRunner;
@@ -46,7 +40,7 @@ namespace Unity.MeshSync.VariantExport
 
         public string SaveFile;
 
-        //public ExportModeSetting ExportMode;
+        public bool AutoShuffle;
 
         public bool IsBaking => coroutine != null;
 
@@ -61,7 +55,23 @@ namespace Unity.MeshSync.VariantExport
 
         public int TotalPermutationCount => runner.TotalPermutationCount;
 
-        public string SavePath => Path.Combine("Assets", SaveFile);
+        public bool CheckForCancellation()
+        {
+            return runner.CheckForCancellation();
+        }
+
+        public string SavePath
+        {
+            get
+            {
+                if (SaveFile == null)
+                {
+                    return null;
+                }
+
+                return Path.Combine("Assets", SaveFile);
+            }
+        }
 
         public ReadOnlyCollection<PropertyInfoDataWrapper> EnabledProperties
         {
@@ -101,51 +111,54 @@ namespace Unity.MeshSync.VariantExport
         {
             try
             {
-                for (int tries = 0; tries < 1000; tries++)
+                lock (PropertyInfoDataWrapper.PropertyUpdateLock)
                 {
-                    foreach (var prop in EnabledProperties)
+                    for (int tries = 0; tries < 1000; tries++)
                     {
-                        switch (prop.type)
+                        foreach (var prop in EnabledProperties)
                         {
-                            case PropertyInfoData.Type.Int:
-                                prop.NewValue = UnityEngine.Random.Range((int)prop.min, (int)prop.max + 1);
-                                break;
+                            switch (prop.type)
+                            {
+                                case PropertyInfoData.Type.Int:
+                                    prop.NewValue = UnityEngine.Random.Range((int)prop.min, (int)prop.max + 1);
+                                    break;
 
-                            case PropertyInfoData.Type.Float:
-                                prop.NewValue = UnityEngine.Random.Range(prop.min, prop.max);
-                                break;
+                                case PropertyInfoData.Type.Float:
+                                    prop.NewValue = UnityEngine.Random.Range(prop.min, prop.max);
+                                    break;
 
-                            case PropertyInfoData.Type.FloatArray:
-                                {
-                                    var array = new float[prop.arrayLength];
-                                    for (int i = 0; i < array.Length; i++)
+                                case PropertyInfoData.Type.FloatArray:
                                     {
-                                        array[i] = UnityEngine.Random.Range(prop.min, prop.max);
+                                        var array = new float[prop.arrayLength];
+                                        for (int i = 0; i < array.Length; i++)
+                                        {
+                                            array[i] = UnityEngine.Random.Range(prop.min, prop.max);
+                                        }
+
+                                        prop.NewValue = array;
+                                        break;
                                     }
 
-                                    prop.NewValue = array;
-                                    break;
-                                }
-
-                            case PropertyInfoData.Type.IntArray:
-                                {
-                                    var array = new int[prop.arrayLength];
-                                    for (int i = 0; i < array.Length; i++)
+                                case PropertyInfoData.Type.IntArray:
                                     {
-                                        array[i] = UnityEngine.Random.Range((int)prop.min, (int)prop.max + 1);
-                                    }
+                                        var array = new int[prop.arrayLength];
+                                        for (int i = 0; i < array.Length; i++)
+                                        {
+                                            array[i] = UnityEngine.Random.Range((int)prop.min, (int)prop.max + 1);
+                                        }
 
-                                    prop.NewValue = array;
-                                    break;
-                                }
+                                        prop.NewValue = array;
+                                        break;
+                                    }
+                            }
                         }
-                    }
 
-                    // Try to ensure this variant is not already blocked or kept:
-                    var props = SerializeCurrentVariant(true);
-                    if (!Whitelist.Contains(props) && !Blacklist.Contains(props))
-                    {
-                        break;
+                        // Try to ensure this variant is not already blocked or kept:
+                        var props = SerializeCurrentVariant(true);
+                        if (!Whitelist.Contains(props) && !Blacklist.Contains(props))
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -188,26 +201,32 @@ namespace Unity.MeshSync.VariantExport
                 return;
             }
 
-            var propStrings = serializedPropString.Split('#');
-
-            var properties = Server.propertyInfos;
-
-            foreach (var propString in propStrings)
+            lock (PropertyInfoDataWrapper.PropertyUpdateLock)
             {
-                if (propString.Length == 0)
-                {
-                    continue;
-                }
+                var propStrings = serializedPropString.Split('#');
 
-                var propName = propString.Substring(0, propString.IndexOf(":"));
+                var properties = Server.propertyInfos;
 
-                foreach (var serverProp in properties)
+                foreach (var propString in propStrings)
                 {
-                    if (serverProp.name == propName)
+                    if (propString.Length == 0)
                     {
-                        serverProp.SetSerializedValue(propString.Substring(propString.IndexOf(":") + 1));
+                        continue;
+                    }
 
-                        break;
+                    var propName = propString.Substring(0, propString.IndexOf(":"));
+
+                    foreach (var serverProp in properties)
+                    {
+                        if (serverProp.name == propName)
+                        {
+                            serverProp.SetSerializedValue(propString.Substring(propString.IndexOf(":") + 1));
+                            
+                            // Force sync to make sure the sync state changes:
+                            serverProp.IsDirty = true;
+
+                            break;
+                        }
                     }
                 }
             }
@@ -241,6 +260,11 @@ namespace Unity.MeshSync.VariantExport
                 {
                     Whitelist.Add(serialisedProps);
                 }
+
+                if (AutoShuffle)
+                {
+                    Shuffle();
+                }
             }
         }
 
@@ -259,6 +283,11 @@ namespace Unity.MeshSync.VariantExport
                 if (!Blacklist.Contains(serialisedProps))
                 {
                     Blacklist.Add(serialisedProps);
+                }
+
+                if (AutoShuffle)
+                {
+                    Shuffle();
                 }
             }
         }
@@ -305,9 +334,9 @@ namespace Unity.MeshSync.VariantExport
             ApplySerializedProperties(list[newIndex]);
         }
 
-        public void Export()
+        public void Regenerate()
         {
-            if (SaveFile.Length == 0)
+            if (SaveFile?.Length == 0)
             {
                 EditorUtility.DisplayDialog("Warning", "Cannot export. SaveFile is not set.", "OK");
                 return;
@@ -315,21 +344,6 @@ namespace Unity.MeshSync.VariantExport
 
             if (Directory.Exists(SavePath))
             {
-                //if (ExportMode == ExportModeSetting.RegenerateEverything)
-                //{
-                //    if (!EditorUtility.DisplayDialog("Warning", $"This will delete all previously exported assets in the \"{SaveFile}\" folder. Are you sure?", "Yes", "No"))
-                //    {
-                //        return;
-                //    }
-                //}
-                //else if (ExportMode == ExportModeSetting.RegenerateOnlyExisting)
-                //{
-                //    if (!EditorUtility.DisplayDialog("Warning", $"This will overwrite all previously exported assets in the \"{SaveFile}\" folder. Are you sure?", "Yes", "No"))
-                //    {
-                //        return;
-                //    }
-                //}
-
                 if (!EditorUtility.DisplayDialog("Warning", $"This will delete all previously exported prefabs in the \"{SaveFile}\" folder. Are you sure?", "Yes", "No"))
                 {
                     return;

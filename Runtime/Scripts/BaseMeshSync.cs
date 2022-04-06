@@ -1366,6 +1366,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
 
         mesh.bounds = data.bounds;
         mesh.UploadMeshData(false);
+
+        EditorUtility.SetDirty(mesh);
     }
 
 //----------------------------------------------------------------------------------------------------------------------        
@@ -2168,8 +2170,19 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
         {
             Mesh mesh = kvp.Value.mesh;
-            if (mesh == null || IsAsset(mesh))
+
+            if (mesh == null)
+            {
                 continue;
+            }
+
+            if(IsAsset(mesh) && !EditorUtility.IsDirty(mesh))
+            {
+                continue;
+            }
+
+            //if (mesh == null || IsAsset(mesh))
+            //    continue;
 
             string dstPath = string.Format("{0}/{1}.asset", basePath, nameGenerator.Gen(mesh.name));
             Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(dstPath);
@@ -2177,6 +2190,17 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
             {
                 mesh = Misc.OverwriteOrCreateAsset(mesh, dstPath);
                 kvp.Value.mesh = mesh; // mesh maybe updated by SaveAsset()
+
+                // Ensure the saved mesh is also linked on the meshfilter:
+                if (kvp.Value.meshFilter != null)
+                {
+                    kvp.Value.meshFilter.sharedMesh = mesh;
+                }
+                if (kvp.Value.skinnedMeshRenderer != null)
+                {
+                    kvp.Value.skinnedMeshRenderer.sharedMesh = mesh;
+                }
+
                 if (config.Logging)
                     Debug.Log("exported mesh " + dstPath);
             }

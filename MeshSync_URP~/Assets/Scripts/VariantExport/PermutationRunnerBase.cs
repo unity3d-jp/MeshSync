@@ -13,22 +13,18 @@ namespace Unity.MeshSync.VariantExport
     {
         enum SaveMode
         {
-            DryRunWithoutSyncAndSave,
-            SyncButDoNotSave,
             SaveAsPrefab
         }
 
-        protected MeshSyncServer server => variantExporter.Server;
+        protected MeshSyncServer server => regenerator.Server;
 
-        protected VariantExporter variantExporter;
-
-        protected object[] currentSettings;
+        protected Regenerator regenerator;
 
         public int counter;
 
         SaveMode saveMode = SaveMode.SaveAsPrefab;
 
-        public ReadOnlyCollection<PropertyInfoDataWrapper> propertyInfos => variantExporter.EnabledProperties;
+        public ReadOnlyCollection<PropertyInfoDataWrapper> propertyInfos => regenerator.EnabledProperties;
 
 
         public abstract int VariantCount
@@ -61,90 +57,97 @@ namespace Unity.MeshSync.VariantExport
             }
         }
 
-        public PermutationRunnerBase(VariantExporter variantExporter)
+        public PermutationRunnerBase(Regenerator regenerator)
         {
-            this.variantExporter = variantExporter;
+            this.regenerator = regenerator;
+        }
+
+        public bool CheckForCancellation()
+        {
+            var permutationCount = VariantCount;
+
+            if (EditorUtility.DisplayCancelableProgressBar("Exporting", $"Variant {counter + 1}/{permutationCount}", (float)counter / permutationCount))
+            {
+                regenerator.StopExport();
+                return true;
+            }
+
+            return false;
         }
 
         protected abstract IEnumerator ExecutePermutations(int propIdx);
 
         protected IEnumerator Save()
         {
-            var permutationCount = VariantCount;
-            if (EditorUtility.DisplayCancelableProgressBar("Exporting", $"Variant {counter + 1}/{permutationCount}", (float)counter / permutationCount))
+            if (CheckForCancellation())
             {
-                variantExporter.StopExport();
                 yield break;
             }
 
-            if (saveMode != SaveMode.DryRunWithoutSyncAndSave)
+            var s = new StringBuilder();
+            foreach (var prop in propertyInfos)
             {
-                // Set all properties here at once so they can be sent to blender together:
-                for (int i = 0; i < propertyInfos.Count; i++)
-                {
-                    var prop = propertyInfos[i];
-                    prop.NewValue = currentSettings[i];
-                }
+                s.AppendLine(prop.ToString());
+            }
 
-                var s = new StringBuilder();
-                foreach (var prop in propertyInfos)
-                {
-                    s.AppendLine(prop.ToString());
-                }
+            Debug.Log(s);
 
-                Debug.Log(s);
+            yield return new WaitForMeshSync(regenerator);
 
-                yield return new WaitForMeshSync(server);
+            switch (saveMode)
+            {
+                case SaveMode.SaveAsPrefab:
+                    yield return SavePrefab();
+                    break;
 
-                switch (saveMode)
-                {
-                    case SaveMode.SaveAsPrefab:
-                        yield return SavePrefab();
-                        break;
-
-                    case SaveMode.SyncButDoNotSave:
-                        break;
-
-                    default:
-                        throw new NotImplementedException($"save mode {saveMode} not implemented");
-                }
+                default:
+                    throw new NotImplementedException($"save mode {saveMode} not implemented");
             }
 
             counter++;
 
-            if (counter >= permutationCount)
+            if (counter >= VariantCount)
             {
-                Debug.Log($"Finished exporting {variantExporter.SaveFile}.");
+                Debug.Log($"Finished exporting {regenerator.SaveFile}.");
 
-                variantExporter.StopExport();
+                regenerator.StopExport();
+                yield break;
             }
-
-            // test:
-            //variantExporter.StopExport();
 
             yield break;
         }
 
         IEnumerator SavePrefab()
         {
-            var outputFilePath = variantExporter.SavePath;
+            var outputFilePath = regenerator.SavePath;
 
             if (!Directory.Exists(outputFilePath))
             {
                 Directory.CreateDirectory(outputFilePath);
             }
 
-            // test:
-            //var commonAssetStorePath = Path.Combine(outputFilePath, $"{variantExporter.SaveFile}_{counter}_assets");
-            //variantExporter.Server.SetAssetsFolder(commonAssetStorePath);
+            var prefabAssetStorePath = Path.Combine(outputFilePath, $"{regenerator.SaveFile}_{counter}_assets");
 
-            variantExporter.Server.ExportMeshes();
+            if (Directory.Exists(prefabAssetStorePath))
+            {
+                AssetDatabase.DeleteAsset(prefabAssetStorePath);
+            }
+
+            regenerator.Server.SetAssetsFolder(prefabAssetStorePath);
+
+            regenerator.Server.ExportMeshes();
+
+            // If there are no assets specific to this prefab, delete the empty folder:
+            if (Directory.GetFiles(prefabAssetStorePath).Length == 0)
+            {
+                AssetDatabase.DeleteAsset(prefabAssetStorePath);
+            }
 
             var prefabSave = UnityEngine.Object.Instantiate(server.gameObject);
 
             prefabSave.GetComponent<MeshSyncServer>().enabled = false;
 
-            outputFilePath = Path.Combine(outputFilePath, $"{variantExporter.SaveFile}_{counter}.prefab");
+            outputFilePath = Path.Combine(outputFilePath, $"{regenerator.SaveFile}_{counter}.prefab");
             var prefab = PrefabUtility.SaveAsPrefabAsset(prefabSave, outputFilePath);
 
             UnityEngine.Object.DestroyImmediate(prefabSave);
@@ -154,15 +157,12 @@ namespace Unity.MeshSync.VariantExport
 
         public IEnumerator Start()
         {
-            if (EditorUtility.DisplayCancelableProgressBar("Exporting", $"Variant 1/{VariantCount}", 0))
+            if (CheckForCancellation())
             {
-                variantExporter.StopExport();
                 yield break;
             }
 
-            currentSettings = new object[variantExporter.enabledProperties.Count];
-
-            var outputFilePath = variantExporter.SavePath;
+            var outputFilePath = regenerator.SavePath;
 
             if (Directory.Exists(outputFilePath))
             {
@@ -175,11 +175,11 @@ namespace Unity.MeshSync.VariantExport
                 AssetDatabase.Refresh();
             }
 
-            var commonAssetStorePath = Path.Combine(outputFilePath, $"{variantExporter.SaveFile}_assets");
+            var commonAssetStorePath = Path.Combine(outputFilePath, $"{regenerator.SaveFile}_assets");
 
-            variantExporter.Server.SetAssetsFolder(commonAssetStorePath);
-            variantExporter.Server.ExportMeshes();
-            variantExporter.Server.ExportMaterials();
+            regenerator.Server.SetAssetsFolder(commonAssetStorePath);
+            regenerator.Server.ExportMeshes();
+            regenerator.Server.ExportMaterials();
 
             yield return Next(-1);
         }

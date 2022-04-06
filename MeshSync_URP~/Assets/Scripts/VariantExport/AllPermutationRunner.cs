@@ -13,8 +13,8 @@ namespace Unity.MeshSync.VariantExport
     class AllPermutationRunner : PermutationRunnerBase
     {
         public override int VariantCount => TotalPermutationCount;
-
-        public AllPermutationRunner(VariantExporter variantExporter) : base(variantExporter)
+        
+        public AllPermutationRunner(Regenerator regenerator) : base(regenerator)
         {
         }
 
@@ -27,7 +27,7 @@ namespace Unity.MeshSync.VariantExport
                 case PropertyInfoData.Type.Int:
                     for (int i = (int)property.min; i <= property.max; i++)
                     {
-                        currentSettings[propIdx] = i;
+                        property.NewValue = i;
 
                         yield return Next(propIdx);
                     }

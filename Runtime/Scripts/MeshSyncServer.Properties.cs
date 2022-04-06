@@ -17,23 +17,27 @@
 
         void SendUpdatedProperties()
         {
-            bool sendProps = false;
-
-            foreach (var prop in propertyInfos)
+            lock (PropertyInfoDataWrapper.PropertyUpdateLock)
             {
-                if (prop.IsDirty)
+                bool sendProps = false;
+
+                foreach (var prop in propertyInfos)
                 {
-                    m_server.SendProperty(prop);
-                    prop.IsDirty = false;
-                    sendProps = true;
+                    if (prop.IsDirty)
+                    {
+                        m_server.SendProperty(prop);
+                        prop.IsDirty = false;
+                        sendProps = true;
+                    }
                 }
-            }
 
-            if (sendProps)
-            {
-                CurrentPropertiesState = PropertiesState.Sending;
-                onSceneUpdateEnd += SceneUpdated;
-                m_server.SendChangedProperties();
+                if (sendProps)
+                {
+                    CurrentPropertiesState = PropertiesState.Sending;
+                    onSceneUpdateEnd -= SceneUpdated;
+                    onSceneUpdateEnd += SceneUpdated;
+                    m_server.SendChangedProperties();
+                }
             }
         }
 

@@ -13,21 +13,19 @@ namespace Unity.MeshSync.VariantExport
         {
             get
             {
-                return variantExporter.Whitelist.Count;
+                return regenerator.Whitelist.Count;
             }
         }
 
-        public SelectedPermutationRunner(VariantExporter variantExporter) : base(variantExporter)
+        public SelectedPermutationRunner(Regenerator regenerator) : base(regenerator)
         {
         }
 
         protected override IEnumerator ExecutePermutations(int propIdx)
         {
-            foreach (var setting in variantExporter.Whitelist)
+            foreach (var setting in regenerator.Whitelist)
             {
-                variantExporter.ApplySerializedProperties(setting);
-
-                yield return new WaitForMeshSync(server);
+                regenerator.ApplySerializedProperties(setting);
 
                 yield return Save();
             }

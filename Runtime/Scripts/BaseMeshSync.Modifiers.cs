@@ -32,6 +32,8 @@ namespace Unity.MeshSync
         [DllImport(Lib.name)]
         static extern int msPropertyInfoGetArrayLength(IntPtr self);
 
+        public static object PropertyUpdateLock = new object();
+
         public PropertyInfoDataWrapper(PropertyInfoData propertyInfoData)
         {
             type = propertyInfoData.type;
@@ -229,6 +231,12 @@ namespace Unity.MeshSync
                                 value = newValueAsArray;
                             }
 
+                            int[] array = value as int[];
+                            for (int i = 0; i < array.Length; i++)
+                            {
+                                array[i] = Mathf.Clamp(array[i], (int)min, (int)max);
+                            }
+
                             break;
                         }
                     case PropertyInfoData.Type.FloatArray:
@@ -243,6 +251,12 @@ namespace Unity.MeshSync
 
                                 value = newValueAsArray;
                             }
+
+                            float[] array = value as float[];
+                            for (int i = 0; i < array.Length; i++)
+                            {
+                                array[i] = Mathf.Clamp(array[i], min, max);
+                            }
                             break;
                         }
                 }
@@ -254,7 +268,6 @@ namespace Unity.MeshSync
                         return;
                     }
                 }
-
                 else if (propertyValue != null && propertyValue.Equals(value))
                 {
                     return;
@@ -293,7 +306,7 @@ namespace Unity.MeshSync
             return $"PropertyInfoDataWrapper: {name}: {GetValue<object>()}";
         }
 
-        public bool CanBeModified => type != PropertyInfoData.Type.String; 
+        public bool CanBeModified => type != PropertyInfoData.Type.String;
     }
 
     // Partial class for now to make merging code easier later.
@@ -319,11 +332,29 @@ namespace Unity.MeshSync
                 var numProperties = scene.numPropertyInfos;
                 if (numProperties > 0)
                 {
-                    propertyInfos.Clear();
-                    for (var i = 0; i < numProperties; ++i)
+                    lock (PropertyInfoDataWrapper.PropertyUpdateLock)
                     {
-                        var data = scene.GetPropertyInfo(i);
-                        propertyInfos.Add(new PropertyInfoDataWrapper(data));
+                        bool valid = true;
+
+                        // If there are pending properties, ignore this, we will send new ones:
+                        foreach (var prop in propertyInfos)
+                        {
+                            if (prop.IsDirty)
+                            {
+                                valid = false;
+                                break;
+                            }
+                        }
+
+                        if (valid)
+                        {
+                            propertyInfos.Clear();
+                            for (var i = 0; i < numProperties; ++i)
+                            {
+                                var data = scene.GetPropertyInfo(i);
+                                propertyInfos.Add(new PropertyInfoDataWrapper(data));
+                            }
+                        }
                     }
                 }
             });

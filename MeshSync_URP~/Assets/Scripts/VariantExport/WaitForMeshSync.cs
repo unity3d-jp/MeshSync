@@ -6,12 +6,12 @@ namespace Unity.MeshSync.VariantExport
 {
     class WaitForMeshSync : CustomYieldInstruction
     {
-        MeshSyncServer server;
+        Regenerator regenerator;
         DateTime startTime;
 
-        public WaitForMeshSync(MeshSyncServer server)
+        public WaitForMeshSync(Regenerator regenerator)
         {
-            this.server = server;
+            this.regenerator = regenerator;
             startTime = DateTime.Now;
         }
 
@@ -20,19 +20,25 @@ namespace Unity.MeshSync.VariantExport
             get
             {
                 // Check if server is actually responding:
-                if ((DateTime.Now - startTime).TotalSeconds > 10)
+                //if ((DateTime.Now - startTime).TotalSeconds > 10)
+                //{
+                //    EditorUtility.DisplayDialog("Blender is not responding", "Please ensure 'Auto-Sync' is enabled in the MeshSync plugin in blender!", "Ok");
+                //    startTime = DateTime.Now;
+
+                //    return true;
+                //}
+
+                if (regenerator.CheckForCancellation())
                 {
-                    EditorUtility.DisplayDialog("Blender is not responding", "Please ensure 'Auto-Sync' is enabled in the MeshSync plugin in blender!", "Ok");
-                    startTime = DateTime.Now;
+                    return false;
+                }
+
+                if (regenerator.Server.CurrentPropertiesState != MeshSyncServer.PropertiesState.Received)
+                {
                     return true;
                 }
 
-                if (server.CurrentPropertiesState != MeshSyncServer.PropertiesState.Received)
-                {
-                    return true;
-                }
-
-                server.ResetPropertiesState();
+                regenerator.Server.ResetPropertiesState();
 
                 return false;
             }
