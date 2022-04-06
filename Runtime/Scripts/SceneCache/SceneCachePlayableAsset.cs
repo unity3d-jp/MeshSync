@@ -95,7 +95,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
         UpdateClipCurve(clip, m_animationCurve);
         m_isSceneCacheCurveExtracted = true;
+#if UNITY_EDITOR
         SetExtractedSceneCachePlayerInEditor(m_sceneCachePlayer);
+#endif
         return updatedCurveDuration;
     }    
 //----------------------------------------------------------------------------------------------------------------------
@@ -286,9 +288,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         }
         propertyTable.SetReferenceValue(exposedRef.exposedName, obj);
     }
-    
-    internal SceneCachePlayer GetSceneCachePlayer() => m_sceneCachePlayer;
-    
+
     internal static EditorCurveBinding GetTimeCurveBinding() {return m_timeCurveBinding; }
     
     private static EditorCurveBinding m_timeCurveBinding =  
@@ -298,6 +298,8 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             propertyName = "m_time"
         };
 #endif 
+    
+    internal SceneCachePlayer GetSceneCachePlayer() => m_sceneCachePlayer;
     
 //----------------------------------------------------------------------------------------------------------------------
     
