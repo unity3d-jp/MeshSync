@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.12.7-preview] - 2022-04-06
+
+### Changed
+* deps: use com.unity.film-internal-utilities@0.14.1-preview 
+
+### Fixed
+* fix: ensure the correct clip is the one setting SceneCache timing 
+
 ## [0.12.6-preview] - 2022-04-01
 
 ### Changed
