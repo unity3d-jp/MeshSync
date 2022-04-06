@@ -359,5 +359,13 @@ namespace Unity.MeshSync
                 }
             });
         }
+
+
+        HashSet<Mesh> changedMeshes = new HashSet<Mesh>();
+
+        public void CopySettingsFrom(BaseMeshSync other)
+        {
+            changedMeshes = other.changedMeshes;
+        }
     }
 }

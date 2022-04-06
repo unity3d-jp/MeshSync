@@ -308,6 +308,20 @@ namespace Unity.MeshSync.Editor
             }
         }
 
+        Vector3 GetMaxBounds(GameObject obj)
+        {
+            var renderers = obj.GetComponentsInChildren<Renderer>(true);
+
+            Vector3 maxBounds = Vector3.zero;
+
+            foreach (var renderer in renderers)
+            {
+                maxBounds = Vector3.Max(maxBounds, renderer.bounds.max);
+            }
+
+            return maxBounds;
+        }
+
         private void ShowVariants()
         {
             var exporter = (Regenerator)target;
@@ -316,28 +330,26 @@ namespace Unity.MeshSync.Editor
 
             var holder = new GameObject(exporter.SaveFile).transform;
             holder.SetParent(exporter.transform, false);
-            holder.position = new Vector3(10, 0, 0);
+            var bounds = GetMaxBounds(exporter.Server.gameObject);
+            holder.position = new Vector3(bounds.x + 10, 0, 0);
 
             Vector3 position = Vector3.zero;
 
             var prefabFiles = Directory.GetFiles(exporter.SavePath, "*.prefab");
             Array.Sort(prefabFiles, new AssetNameComparer());
 
+            Vector3 lastMax = position;
+
             foreach (var prefab in prefabFiles)
             {
                 var instance = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(prefab));
-                var renderers = instance.GetComponentsInChildren<Renderer>(true);
 
-                float offset = 0;
+                Vector3 max = GetMaxBounds(instance);
 
-                foreach (var renderer in renderers)
-                {
-                    offset = Mathf.Max(offset, renderer.bounds.size.x / 2);
-                }
+                // Position prefabs based on their size and add spacing relative to that:
+                position.x += (lastMax.x + max.x) * 1.5f;
 
-                offset += 1;
-
-                position.x += offset;
+                lastMax = max;
 
                 instance.transform.SetParent(holder, true);
                 instance.transform.localPosition = position;

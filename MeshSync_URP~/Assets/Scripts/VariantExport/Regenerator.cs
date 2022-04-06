@@ -221,7 +221,7 @@ namespace Unity.MeshSync.VariantExport
                         if (serverProp.name == propName)
                         {
                             serverProp.SetSerializedValue(propString.Substring(propString.IndexOf(":") + 1));
-                            
+
                             // Force sync to make sure the sync state changes:
                             serverProp.IsDirty = true;
 
@@ -350,8 +350,6 @@ namespace Unity.MeshSync.VariantExport
                 }
             }
 
-            AssetDatabase.StartAssetEditing();
-
             coroutine = EditorCoroutineUtility.StartCoroutine(runner.Start(), this);
         }
 
@@ -362,8 +360,6 @@ namespace Unity.MeshSync.VariantExport
                 EditorCoroutineUtility.StopCoroutine(coroutine);
                 coroutine = null;
             }
-
-            AssetDatabase.StopAssetEditing();
 
             EditorUtility.ClearProgressBar();
 

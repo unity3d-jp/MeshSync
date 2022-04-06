@@ -1367,7 +1367,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         mesh.bounds = data.bounds;
         mesh.UploadMeshData(false);
 
-        EditorUtility.SetDirty(mesh);
+        changedMeshes.Add(mesh);
     }
 
 //----------------------------------------------------------------------------------------------------------------------        
@@ -2157,6 +2157,21 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
         ReassignMaterials(recordUndo:false);
     }
 
+    bool IsSubfolder(string parentPath, string childPath)
+    {
+        var parentUri = new Uri(parentPath);
+        var childUri = new DirectoryInfo(childPath).Parent;
+        while (childUri != null)
+        {
+            if (new Uri(childUri.FullName) == parentUri)
+            {
+                return true;
+            }
+            childUri = childUri.Parent;
+        }
+        return false;
+    }
+
     public void ExportMeshes(bool overwrite = true, bool useExistingOnes = false)
     {
         MakeSureAssetDirectoryExists();
@@ -2176,10 +2191,33 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
                 continue;
             }
 
-            if(IsAsset(mesh) && !EditorUtility.IsDirty(mesh))
+            // If this is an asset but in another folder, still save it, if it changed:
+            if (IsAsset(mesh))
             {
-                continue;
+                if (!changedMeshes.Contains(mesh))
+                {
+                    continue;
+                }
+
+                var currentPath = Path.GetFullPath(GetAssetsFolder());
+                var existingPath = Path.GetFullPath(AssetDatabase.GetAssetPath(mesh));
+                if (IsSubfolder(currentPath, existingPath))
+                {
+                    continue;
+                }
             }
+
+            //if(IsAsset(mesh) && !changedMeshes.Contains(mesh))
+            //{
+            //    continue;
+            //}
+            
+            changedMeshes.Remove(mesh);
+
+            //if(IsAsset(mesh) && !EditorUtility.IsDirty(mesh))
+            //{
+            //    continue;
+            //}
 
             //if (mesh == null || IsAsset(mesh))
             //    continue;

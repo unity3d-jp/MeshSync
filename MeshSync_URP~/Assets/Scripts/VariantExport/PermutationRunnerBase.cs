@@ -126,6 +126,11 @@ namespace Unity.MeshSync.VariantExport
                 Directory.CreateDirectory(outputFilePath);
             }
 
+            // Make a copy, apply the prefab-specific save location and save any changed assets to that:
+            var prefabSave = UnityEngine.Object.Instantiate(server.gameObject);
+            var prefabServer = prefabSave.GetComponent<MeshSyncServer>();
+            prefabServer.enabled = false;
+
             var prefabAssetStorePath = Path.Combine(outputFilePath, $"{regenerator.SaveFile}_{counter}_assets");
 
             if (Directory.Exists(prefabAssetStorePath))
@@ -133,22 +138,23 @@ namespace Unity.MeshSync.VariantExport
                 AssetDatabase.DeleteAsset(prefabAssetStorePath);
             }
 
-            regenerator.Server.SetAssetsFolder(prefabAssetStorePath);
+            prefabServer.CopySettingsFrom(server);
+            prefabServer.SetAssetsFolder(prefabAssetStorePath);
 
-            regenerator.Server.ExportMeshes();
+            prefabServer.ExportMeshes();
 
             // If there are no assets specific to this prefab, delete the empty folder:
             if (Directory.GetFiles(prefabAssetStorePath).Length == 0)
             {
                 AssetDatabase.DeleteAsset(prefabAssetStorePath);
             }
-
-            var prefabSave = UnityEngine.Object.Instantiate(server.gameObject);
-
-            prefabSave.GetComponent<MeshSyncServer>().enabled = false;
+            else
+            {
+                AssetDatabase.SaveAssets();
+            }
 
             outputFilePath = Path.Combine(outputFilePath, $"{regenerator.SaveFile}_{counter}.prefab");
-            var prefab = PrefabUtility.SaveAsPrefabAsset(prefabSave, outputFilePath);
+            PrefabUtility.SaveAsPrefabAsset(prefabSave, outputFilePath);
 
             UnityEngine.Object.DestroyImmediate(prefabSave);
 
