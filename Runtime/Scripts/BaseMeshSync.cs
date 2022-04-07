@@ -1140,7 +1140,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                     DestroyImmediate(rec.meshRenderer);
                     rec.meshRenderer = null;
                 }
-
                 if (rec.meshFilter != null) {
                     DestroyImmediate(rec.meshFilter);
                     rec.meshFilter = null;
@@ -1211,7 +1210,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return rec;
     }
     
-    //----------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
     void UpdateMeshEntity(ref Mesh mesh, MeshData data)
     {
@@ -2384,7 +2383,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     private readonly           Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
     private protected readonly Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
     private readonly           Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
-    
 
     [SerializeField] private InstanceInfoRecordDictionary m_clientInstances = new InstanceInfoRecordDictionary();
     [SerializeField] private EntityRecordDictionary m_clientInstancedEntities = new EntityRecordDictionary();
