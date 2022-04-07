@@ -477,7 +477,6 @@ public class MeshSyncServer : BaseMeshSync {
         }
     }
 
-
     protected override void OnDisable() {
         base.OnDisable();
         StopServer();

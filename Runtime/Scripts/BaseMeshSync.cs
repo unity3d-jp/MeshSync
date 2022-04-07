@@ -18,7 +18,7 @@ using Unity.FilmInternalUtilities.Editor;
 
 namespace Unity.MeshSync
 {
-    /// <summary>
+/// <summary>
 /// A delegate to handle scene updates
 /// </summary>
 internal delegate void SceneHandler();
@@ -271,7 +271,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         SerializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
         SerializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
         SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
-        
+
         m_baseMeshSyncVersion = CUR_BASE_MESHSYNC_VERSION;
     }
 
@@ -551,8 +551,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         Try(() =>
         {
             var numMeshes = scene.numInstancedEntities;
-            for (var i = 0; i < numMeshes; ++i)
-            {
+            for (var i = 0; i < numMeshes; ++i) {
                 var src = scene.GetInstancedEntity(i);
                 var dst = UpdateInstancedEntity(src);
                 
@@ -570,8 +569,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         Try(() =>
         {
             var numInstances = scene.numInstanceInfos;
-            for (var i = 0; i < numInstances; ++i)
-            {
+            for (var i = 0; i < numInstances; ++i) {
                 var src = scene.GetInstanceInfo(i);
                 var dst = UpdateInstanceInfo(src);
                 if (onUpdateInstanceInfo != null)
@@ -1132,7 +1130,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             }
             meshUpdated = true;
         }
-        
+
         if (dflags.hasBones || dflags.hasBlendshapes) {
             SkinnedMeshRenderer smr = rec.skinnedMeshRenderer;
             if (smr == null) {
@@ -1769,7 +1767,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 break;
         }
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------   
     
     void UpdateAnimationAsset(AnimationClipData clipData,MeshSyncPlayerConfig config) {
@@ -2360,7 +2358,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [SerializeField] GameObject[]   m_objIDTable_keys;
     [SerializeField] int[]          m_objIDTable_values;
     [SerializeField] int            m_objIDSeed = 0;
-    
+
 #pragma warning disable 414
     [HideInInspector][SerializeField] private int m_baseMeshSyncVersion = (int) BaseMeshSyncVersion.NO_VERSIONING;
 #pragma warning restore 414
