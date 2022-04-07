@@ -18,7 +18,7 @@ using Unity.FilmInternalUtilities.Editor;
 
 namespace Unity.MeshSync
 {
-/// <summary>
+    /// <summary>
 /// A delegate to handle scene updates
 /// </summary>
 internal delegate void SceneHandler();
@@ -65,16 +65,9 @@ internal delegate void UpdateInstanceInfoHandler(string path, GameObject go, Mat
 internal delegate void UpdateInstancedEntityHandler(string path, GameObject go);
 
 /// <summary>
-/// A delegate to handle instance info deletions
+/// A delegate to handle instance deletions
 /// </summary>
-/// <param name="data"></param>
-internal delegate void DeleteInstanceInfoHandler(string path);
-
-/// <summary>
-/// A delegate to handle instance mesh deletions
-/// </summary>
-/// <param name="path"></param>
-internal delegate void DeleteInstanceMeshHandler(string path);
+internal delegate void DeleteInstanceHandler(string path);
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -132,9 +125,9 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
     internal event UpdateInstancedEntityHandler onUpdateInstancedEntity;
 
-    internal event DeleteInstanceInfoHandler onDeleteInstanceInfo;
+    internal event DeleteInstanceHandler onDeleteInstanceInfo;
 
-    internal event DeleteInstanceInfoHandler onDeleteInstancedEntity; 
+    internal event DeleteInstanceHandler onDeleteInstancedEntity; 
     
     #endregion EventHandler Declarations
 
@@ -278,8 +271,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         SerializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
         SerializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
         SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
-        SerializeDictionary(m_clientInstancedEntities, ref m_clientInstancedObjects_keys, ref m_clientInstancedObjects_values);
-        SerializeDictionary(m_clientInstances, ref m_clientInstances_keys, ref m_clientInstances_values);
         
         m_baseMeshSyncVersion = CUR_BASE_MESHSYNC_VERSION;
     }
@@ -292,8 +283,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         DeserializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
         DeserializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
         DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
-        DeserializeDictionary(m_clientInstancedEntities, ref m_clientInstancedObjects_keys, ref m_clientInstancedObjects_values);
-        DeserializeDictionary(m_clientInstances, ref m_clientInstances_keys, ref m_clientInstances_values);
         
         OnAfterDeserializeMeshSyncPlayerV();
 
@@ -2365,14 +2354,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [SerializeField] GameObject[]   m_objIDTable_keys;
     [SerializeField] int[]          m_objIDTable_values;
     [SerializeField] int            m_objIDSeed = 0;
-
-    [SerializeField] string[] m_clientInstancedObjects_keys;
-    [SerializeField] EntityRecord[] m_clientInstancedObjects_values;
-
-    [SerializeField] string[] m_clientInstances_keys;
-    [SerializeField] InstanceInfoRecord[] m_clientInstances_values;
     
-
 #pragma warning disable 414
     [HideInInspector][SerializeField] private int m_baseMeshSyncVersion = (int) BaseMeshSyncVersion.NO_VERSIONING;
 #pragma warning restore 414
@@ -2399,9 +2381,9 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     private protected readonly Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
     private readonly           Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
     
-    private protected readonly Dictionary<string, InstanceInfoRecord> m_clientInstances =  new Dictionary<string, InstanceInfoRecord>();
-    private readonly Dictionary<string, EntityRecord> m_clientInstancedEntities = new Dictionary<string, EntityRecord>();
 
+    [SerializeField] private InstanceInfoRecordDictionary m_clientInstances = new InstanceInfoRecordDictionary();
+    [SerializeField] private EntityRecordDictionary m_clientInstancedEntities = new EntityRecordDictionary();
 
     protected Action m_onMaterialChangedInSceneViewCB = null;
     
