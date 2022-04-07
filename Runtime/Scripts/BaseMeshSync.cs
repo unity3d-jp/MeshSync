@@ -1209,7 +1209,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
         return rec;
     }
-    
+
+
 //----------------------------------------------------------------------------------------------------------------------
 
     void UpdateMeshEntity(ref Mesh mesh, MeshData data)
