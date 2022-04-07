@@ -25,18 +25,6 @@ public class MeshSyncServer : BaseMeshSync {
     public ServerMessageCallback OnPostRecvMessageCallback = null;
     
 //----------------------------------------------------------------------------------------------------------------------
-
-#if ENABLE_IL2CPP
-    // When building with IL2CPP, we must use a static delegate
-    private static MeshSyncServer Instance;
-
-    [MonoPInvokeCallback(typeof(Server.MessageHandler))]
-    private static void HandleReceivedMessage(NetworkMessageType type, IntPtr data)
-    {
-        Instance.HandleRecvMessage(type, data);
-    }
-#endif
-    
     protected override void InitInternalV() {
     }
 
@@ -114,12 +102,6 @@ public class MeshSyncServer : BaseMeshSync {
         m_server = Server.Start(ref m_serverSettings);
         m_server.fileRootPath = GetServerDocRootPath();
         m_server.AllowPublicAccess(projectSettings.GetServerPublicAccess());
-        
-#if ENABLE_IL2CPP
-        m_handler = HandleReceivedMessage;
-#else
-        m_handler = HandleRecvMessage;
-#endif
 
 #if UNITY_EDITOR
         EditorApplication.update += PollServerEvents;
@@ -503,18 +485,6 @@ public class MeshSyncServer : BaseMeshSync {
         StopServer();
     }
 
-    void Start()
-    {
-#if ENABLE_IL2CPP
-        Instance = this;
-#endif
-    }
-
-    void OnDestroy()
-    {
-        base.OnDestroy();
-    }
-    
     void LateUpdate() {
         PollServerEvents();
     }
@@ -555,19 +525,6 @@ public class MeshSyncServer : BaseMeshSync {
         INITIAL_0_4_0 = 1, //initial for version 0.4.0-preview 
     
     }
-
-#if UNITY_EDITOR
-    [SerializeField]
-    private bool m_foldInstanceSettings = true;
-
-    internal bool foldInstanceSettings
-    {
-        get => m_foldInstanceSettings;
-        set => m_foldInstanceSettings = value;
-    }
-#endif    
-    
-    
 }
 
 } //end namespace

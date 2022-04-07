@@ -26,7 +26,6 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
         DrawMiscSettings(m_meshSyncServer);
         DrawDefaultMaterialList(m_meshSyncServer);
         DrawExportAssets(m_meshSyncServer);
-        DrawInstanceSettings(m_meshSyncServer);
         DrawPluginVersion();
         
 
@@ -85,17 +84,6 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
             
             EditorGUILayout.Space();
         }
-    }
-
-    private void DrawInstanceSettings(MeshSyncServer t)
-    {
-        var style = EditorStyles.foldout;
-        style.fontStyle = FontStyle.Bold;
-        t.foldInstanceSettings = EditorGUILayout.Foldout(t.foldInstanceSettings, "Instances", true, style);
-        if (t.foldInstanceSettings)
-        { 
-        }
-        
     }
 
 //----------------------------------------------------------------------------------------------------------------------                
