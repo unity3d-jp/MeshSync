@@ -262,6 +262,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     internal ExposedReference<SceneCachePlayer> GetSceneCachePlayerRef() { return m_sceneCachePlayerRef;}
     
+    internal SceneCachePlayer GetSceneCachePlayer() => m_sceneCachePlayer;
     internal LimitedAnimationController GetOverrideLimitedAnimationController() => m_overrideLimitedAnimationController;     
     
 
@@ -291,9 +292,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         }
         propertyTable.SetReferenceValue(exposedRef.exposedName, obj);
     }
-    
-    internal SceneCachePlayer GetSceneCachePlayer() => m_sceneCachePlayer;
-    
+       
     internal static EditorCurveBinding GetTimeCurveBinding() {return m_timeCurveBinding; }
     
     private static EditorCurveBinding m_timeCurveBinding =  
