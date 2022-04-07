@@ -1915,36 +1915,42 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         r.sharedMaterials = materials;
     }
 
-    internal bool EraseInstanceInfoRecord(Identifier identifier)
+    internal bool EraseInstanceRecord<R>(
+        Identifier identifier, 
+        Dictionary<string,R> records, 
+        Action<R> onErase)
     {
         var path = identifier.name;
 
         var ret = false;
-        if (m_clientInstances.TryGetValue(path, out InstanceInfoRecord rec)) {
-             ret = m_clientInstances.Remove(path);
-             
-             DestroyImmediate(rec.renderer);
-             
-            if (onDeleteInstanceInfo != null)
-                onDeleteInstanceInfo(identifier.name);
+        if (records.TryGetValue(path, out R rec)) {
+            ret = records.Remove(path);
+
+            onErase(rec);
         }
 
         return ret;
     }
+    
+    internal bool EraseInstanceInfoRecord(Identifier identifier)
+    {
+        return EraseInstanceRecord(identifier, m_clientInstances,
+            delegate(InstanceInfoRecord record) {
+                DestroyImmediate(record.renderer);
+                if (onDeleteInstanceInfo != null)
+                    onDeleteInstancedEntity(identifier.name);
+            });
+    }
 
     internal bool EraseInstancedEntityRecord(Identifier identifier)
     {
-        var path = identifier.name;
-        var ret = false;
-        if (m_clientInstancedEntities.TryGetValue(path, out EntityRecord rec)) {
-            ret = m_clientInstancedEntities.Remove(path);
-            DestroyImmediate(rec.go);
-            
-            if (onDeleteInstancedEntity != null)
-                onDeleteInstancedEntity(identifier.name);
-        }
-        
-        return ret;
+        return EraseInstanceRecord(identifier, m_clientInstancedEntities,
+            delegate(EntityRecord record)
+            {
+                DestroyImmediate(record.go);
+                if (onDeleteInstancedEntity != null)
+                    onDeleteInstancedEntity(identifier.name);
+            });
     }
     
     internal bool EraseEntityRecord(Identifier identifier)
