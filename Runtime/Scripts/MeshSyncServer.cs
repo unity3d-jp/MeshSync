@@ -23,10 +23,10 @@ public class MeshSyncServer : BaseMeshSync {
     public ServerMessageCallback OnPostRecvMessageCallback = null;
     
 //----------------------------------------------------------------------------------------------------------------------
-
-
+    
+    
     protected override void InitInternalV() {
-
+        
     }
 
 
@@ -152,7 +152,7 @@ public class MeshSyncServer : BaseMeshSync {
         if (string.IsNullOrEmpty(GetAssetsFolder())) {
             SetAssetsFolder(MeshSyncConstants.DEFAULT_ASSETS_PATH);
         }
-
+        
     }   
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -526,7 +526,7 @@ public class MeshSyncServer : BaseMeshSync {
         INITIAL_0_4_0 = 1, //initial for version 0.4.0-preview 
     
     }
-
+    
 }
 
 } //end namespace
