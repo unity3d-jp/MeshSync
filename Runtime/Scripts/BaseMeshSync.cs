@@ -10,6 +10,7 @@ using UnityEngine.Assertions;
 using System.IO;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
+
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -1209,7 +1210,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
         return rec;
     }
-
+    
+   
 
 //----------------------------------------------------------------------------------------------------------------------
 
