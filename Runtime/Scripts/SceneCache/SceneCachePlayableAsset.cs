@@ -98,7 +98,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             updatedCurveDuration = (float) clip.duration; //no change
         }
 
-        UpdateClipCurve(clip, m_animationCurve);
+        UpdateClipCurveInEditor(clip, m_animationCurve);
         m_isSceneCacheCurveExtracted = true;
         SetExtractedSceneCachePlayerInEditor(m_sceneCachePlayer);
         return updatedCurveDuration;
@@ -141,7 +141,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         Assert.IsNotNull(clip);
        
         m_animationCurve = CreateLinearAnimationCurve(clip);
-        UpdateClipCurve(clip, m_animationCurve);        
+        UpdateClipCurveInEditor(clip, m_animationCurve);        
     }
 
     internal void ApplyOriginalSceneCacheCurve() {
@@ -199,7 +199,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         return AnimationCurve.Linear(0f, 0f,(float) (clip.duration * clip.timeScale), 1f );
     }
     
-    private static void UpdateClipCurve(TimelineClip clip, AnimationCurve animationCurveToApply) {
+    private static void UpdateClipCurveInEditor(TimelineClip clip, AnimationCurve animationCurveToApply) {
 
 #if UNITY_EDITOR        
         
