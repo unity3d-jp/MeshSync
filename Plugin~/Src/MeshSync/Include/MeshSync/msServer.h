@@ -93,6 +93,7 @@ public:
     
     void receivedProperty(PropertyInfoPtr prop);
     void propertiesReady();
+    bool readyForProperties();
 
     static void sanitizeHierarchyPath(std::string& path);
 

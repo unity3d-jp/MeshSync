@@ -680,6 +680,14 @@ void Server::propertiesReady() {
     }
 }
 
+bool Server::readyForProperties() {
+    if (m_current_properties_request) {
+        return !m_current_properties_request->ready;
+    }
+
+    return false;
+}
+
 Server::MessageHolder::MessageHolder()
 {
 }

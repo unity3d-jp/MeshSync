@@ -42,7 +42,7 @@ namespace ms {
 		
 		Type type;
 		SourceType sourceType;
-		float min, max;
+		double min, max;
 
 		SharedVector<char> data;
 

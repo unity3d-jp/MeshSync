@@ -16,6 +16,15 @@ namespace Unity.MeshSync.Editor
         const int BUTTON_WIDTH = 90;
         const int LABEL_WIDTH = 120;
 
+        enum VariantPreviewAlignment
+        {
+            X,
+            Y,
+            Z
+        }
+
+        static VariantPreviewAlignment variantPreviewAlignment;
+
         Transform VariantsHolder
         {
             get
@@ -104,10 +113,19 @@ namespace Unity.MeshSync.Editor
 
                     if (!string.IsNullOrEmpty(exporter.SaveFile) && Directory.Exists(exporter.SavePath))
                     {
+                        GUILayout.BeginHorizontal();
+
                         if (GUILayout.Button("Show created variants"))
                         {
                             ShowVariants();
                         }
+
+                        var labelWidth = EditorGUIUtility.labelWidth;
+                        EditorGUIUtility.labelWidth = 100;
+                        variantPreviewAlignment = (VariantPreviewAlignment)EditorGUILayout.EnumPopup("Align in", variantPreviewAlignment, GUILayout.Width(200));
+                        GUILayout.EndHorizontal();
+
+                        EditorGUIUtility.labelWidth = labelWidth;
                     }
 
                     if (VariantsHolder != null && GUILayout.Button("Hide variants"))
@@ -331,7 +349,25 @@ namespace Unity.MeshSync.Editor
             var holder = new GameObject(exporter.SaveFile).transform;
             holder.SetParent(exporter.transform, false);
             var bounds = GetMaxBounds(exporter.Server.gameObject);
-            holder.position = new Vector3(bounds.x + 10, 0, 0);
+
+            Vector3 alignDirection = Vector3.zero;
+
+            switch (variantPreviewAlignment)
+            {
+                case VariantPreviewAlignment.X:
+                    alignDirection = new Vector3(1, 0, 0);
+                    break;
+                case VariantPreviewAlignment.Y:
+                    alignDirection = new Vector3(0, 1, 0);
+                    break;
+                case VariantPreviewAlignment.Z:
+                    alignDirection = new Vector3(0, 0, -1);
+                    break;
+                default:
+                    break;
+            }
+
+            holder.position = new Vector3(bounds.x, 0, 0) + 10 * alignDirection;
 
             Vector3 position = Vector3.zero;
 
@@ -347,16 +383,18 @@ namespace Unity.MeshSync.Editor
                 Vector3 max = GetMaxBounds(instance);
 
                 // Position prefabs based on their size and add spacing relative to that:
-                position.x += (lastMax.x + max.x) * 1.5f;
+                var newMax = lastMax + max;
+                newMax.x *= alignDirection.x;
+                newMax.y *= alignDirection.y;
+                newMax.z *= alignDirection.z;
+
+                position += newMax * 1.1f;
 
                 lastMax = max;
 
                 instance.transform.SetParent(holder, true);
                 instance.transform.localPosition = position;
             }
-
-            Selection.activeGameObject = holder.gameObject;
-            SceneView.FrameLastActiveSceneView();
         }
 
         void HideVariants()

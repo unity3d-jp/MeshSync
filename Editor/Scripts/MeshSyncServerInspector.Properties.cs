@@ -29,30 +29,141 @@ namespace Unity.MeshSync.Editor
                 case PropertyInfoData.Type.IntArray:
                     {
                         // TODO: Use custom IntVector here maybe:
-                        var a = prop.GetValue<int[]>();
-                        if (prop.arrayLength == 3)
-                        {
-                            var v = new Vector3(a[0], a[1], a[2]);
-                            newValue = EditorGUILayout.Vector3Field(prop.name, v);
-                        }
+                        //var a = prop.GetValue<int[]>();
+                        //if (prop.arrayLength == 3)
+                        //{
+                        //    var v = new Vector3(a[0], a[1], a[2]);
+                        //    newValue = EditorGUILayout.Vector3Field(prop.name, v);
+                        //}
+                        newValue = DrawArrayFieldsInt(prop, newValue);
                         break;
                     }
                 case PropertyInfoData.Type.FloatArray:
                     {
-                        var a = prop.GetValue<float[]>();
-                        if (prop.arrayLength == 3)
-                        {
-                            var v = new Vector3(a[0], a[1], a[2]);
-                            newValue = EditorGUILayout.Vector3Field(prop.name, v);
-                        }
+                        newValue = DrawArrayFieldsFloat(prop, newValue);
                         break;
                     }
+                default:
+                    break;
             }
 
             if (EditorGUI.EndChangeCheck())
             {
-                prop.NewValue = newValue;
+                lock (PropertyInfoDataWrapper.PropertyUpdateLock)
+                {
+                    prop.NewValue = newValue;
+                }
             }
+        }
+
+        private static object DrawArrayFieldsFloat(PropertyInfoDataWrapper prop, object newValue)
+        {
+            var a = prop.GetValue<float[]>();
+            switch (a.Length)
+            {
+                case 2:
+                    {
+                        newValue = EditorGUILayout.Vector2Field(prop.name, new Vector2(a[0], a[1]));
+                        break;
+                    }
+                case 3:
+                    {
+                        newValue = EditorGUILayout.Vector3Field(prop.name, new Vector3(a[0], a[1], a[2]));
+                        break;
+                    }
+                case 4:
+                    {
+                        newValue = EditorGUILayout.Vector4Field(prop.name, new Vector4(a[0], a[1], a[2], a[3]));
+                        break;
+                    }
+                default:
+                    {
+                        EditorGUILayout.BeginVertical();
+                        for (int i = 0; i < prop.arrayLength; i++)
+                        {
+                            EditorGUI.BeginChangeCheck();
+
+                            var newValueInArray = EditorGUILayout.FloatField($"{prop.name}[{i}]", a[i]);
+
+                            if (EditorGUI.EndChangeCheck())
+                            {
+                                var newValueAsArray = new float[prop.arrayLength];
+                                for (int j = 0; j < prop.arrayLength; j++)
+                                {
+                                    if (j == i)
+                                    {
+                                        newValueAsArray[j] = newValueInArray;
+                                    }
+                                    else
+                                    {
+                                        newValueAsArray[j] = a[j];
+                                    }
+                                }
+
+                                newValue = newValueAsArray;
+                            }
+                        }
+                        EditorGUILayout.EndVertical();
+                        break;
+                    }
+            }
+
+            return newValue;
+        }
+
+        private static object DrawArrayFieldsInt(PropertyInfoDataWrapper prop, object newValue)
+        {
+            var a = prop.GetValue<int[]>();
+            switch (a.Length)
+            {
+                case 2:
+                    {
+                        newValue = EditorGUILayout.Vector2Field(prop.name, new Vector2(a[0], a[1]));
+                        break;
+                    }
+                case 3:
+                    {
+                        newValue = EditorGUILayout.Vector3Field(prop.name, new Vector3(a[0], a[1], a[2]));
+                        break;
+                    }
+                case 4:
+                    {
+                        newValue = EditorGUILayout.Vector4Field(prop.name, new Vector4(a[0], a[1], a[2], a[3]));
+                        break;
+                    }
+                default:
+                    {
+                        EditorGUILayout.BeginVertical();
+                        for (int i = 0; i < prop.arrayLength; i++)
+                        {
+                            EditorGUI.BeginChangeCheck();
+
+                            var newValueInArray = EditorGUILayout.IntField($"{prop.name}[{i}]", a[i]);
+
+                            if (EditorGUI.EndChangeCheck())
+                            {
+                                var newValueAsArray = new int[prop.arrayLength];
+                                for (int j = 0; j < prop.arrayLength; j++)
+                                {
+                                    if (j == i)
+                                    {
+                                        newValueAsArray[j] = newValueInArray;
+                                    }
+                                    else
+                                    {
+                                        newValueAsArray[j] = a[j];
+                                    }
+                                }
+
+                                newValue = newValueAsArray;
+                            }
+                        }
+                        EditorGUILayout.EndVertical();
+                        break;
+                    }
+            }
+
+            return newValue;
         }
     }
 

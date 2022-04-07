@@ -121,6 +121,16 @@ namespace Unity.MeshSync
         [SerializeField, HideInInspector]
         private string propertyValueSerialized;
 
+        public bool Matches(PropertyInfoDataWrapper other)
+        {
+            return
+                name == other.name &&
+                type == other.type &&
+                sourceType == other.sourceType &&
+                propertyName == other.propertyName &&
+                arrayLength == other.arrayLength;
+        }
+
         static T[] ParseArray<T>(string propertyValueSerialized, Func<string, T> parse)
         {
             string[] v = propertyValueSerialized.Substring(2).Split('|');
@@ -174,11 +184,6 @@ namespace Unity.MeshSync
                 throw new NotImplementedException($"propertyValue: {valueToSerialize.GetType()} cannot be serialized!");
         }
 
-        public void SetSerializedValue(string serializedValue)
-        {
-            NewValue = DeserializeString(serializedValue);
-        }
-
         static object DeserializeString(string serializedValue)
         {
             if (serializedValue.Length == 0)
@@ -200,6 +205,11 @@ namespace Unity.MeshSync
                 throw new NotImplementedException($"propertyValue: {type} cannot be deserialized!");
         }
 
+        public void SetSerializedValue(string serializedValue)
+        {
+            NewValue = DeserializeString(serializedValue);
+        }
+
         public void OnBeforeSerialize()
         {
             propertyValueSerialized = GetSerializedValue();
@@ -219,43 +229,77 @@ namespace Unity.MeshSync
                 {
                     case PropertyInfoData.Type.IntArray:
                         {
-                            if (value is Vector3 newValueAsVector)
-                            {
-                                // TODO: Use custom IntVector here maybe:
-                                var newValueAsArray = new int[arrayLength];
+                            var newValueAsArray = new int[arrayLength];
 
-                                newValueAsArray[0] = (int)newValueAsVector.x;
-                                newValueAsArray[1] = (int)newValueAsVector.y;
-                                newValueAsArray[2] = (int)newValueAsVector.z;
+                            if (value is Vector2 newValueAsVector2)
+                            {
+                                newValueAsArray[0] = Mathf.Clamp((int)newValueAsVector2.x, (int)min, (int)max);
+                                newValueAsArray[1] = Mathf.Clamp((int)newValueAsVector2.y, (int)min, (int)max);
 
                                 value = newValueAsArray;
                             }
-
-                            int[] array = value as int[];
-                            for (int i = 0; i < array.Length; i++)
+                            else if (value is Vector3 newValueAsVector3)
                             {
-                                array[i] = Mathf.Clamp(array[i], (int)min, (int)max);
-                            }
+                                newValueAsArray[0] = Mathf.Clamp((int)newValueAsVector3.x, (int)min, (int)max);
+                                newValueAsArray[1] = Mathf.Clamp((int)newValueAsVector3.y, (int)min, (int)max);
+                                newValueAsArray[2] = Mathf.Clamp((int)newValueAsVector3.z, (int)min, (int)max);
 
+                                value = newValueAsArray;
+                            }
+                            else if (value is Vector4 newValueAsVector4)
+                            {
+                                newValueAsArray[0] = Mathf.Clamp((int)newValueAsVector4.x, (int)min, (int)max);
+                                newValueAsArray[1] = Mathf.Clamp((int)newValueAsVector4.y, (int)min, (int)max);
+                                newValueAsArray[2] = Mathf.Clamp((int)newValueAsVector4.z, (int)min, (int)max);
+                                newValueAsArray[3] = Mathf.Clamp((int)newValueAsVector4.w, (int)min, (int)max);
+
+                                value = newValueAsArray;
+                            }
+                            else
+                            {
+                                var array = value as int[];
+                                for (int i = 0; i < array.Length; i++)
+                                {
+                                    array[i] = Mathf.Clamp(array[i], (int)min, (int)max);
+                                }
+                            }
                             break;
                         }
                     case PropertyInfoData.Type.FloatArray:
                         {
-                            if (value is Vector3 newValueAsVector)
-                            {
-                                float[] newValueAsArray = new float[arrayLength];
+                            var newValueAsArray = new float[arrayLength];
 
-                                newValueAsArray[0] = newValueAsVector.x;
-                                newValueAsArray[1] = newValueAsVector.y;
-                                newValueAsArray[2] = newValueAsVector.z;
+                            if (value is Vector2 newValueAsVector2)
+                            {
+                                newValueAsArray[0] = Mathf.Clamp(newValueAsVector2.x, min, max);
+                                newValueAsArray[1] = Mathf.Clamp(newValueAsVector2.y, min, max);
 
                                 value = newValueAsArray;
                             }
-
-                            float[] array = value as float[];
-                            for (int i = 0; i < array.Length; i++)
+                            else if (value is Vector3 newValueAsVector3)
                             {
-                                array[i] = Mathf.Clamp(array[i], min, max);
+                                newValueAsArray[0] = Mathf.Clamp(newValueAsVector3.x, min, max);
+                                newValueAsArray[1] = Mathf.Clamp(newValueAsVector3.y, min, max);
+                                newValueAsArray[2] = Mathf.Clamp(newValueAsVector3.z, min, max);
+
+                                value = newValueAsArray;
+                            }
+                            else if (value is Vector4 newValueAsVector4)
+                            {
+                                newValueAsArray[0] = Mathf.Clamp(newValueAsVector4.x, min, max);
+                                newValueAsArray[1] = Mathf.Clamp(newValueAsVector4.y, min, max);
+                                newValueAsArray[2] = Mathf.Clamp(newValueAsVector4.z, min, max);
+                                newValueAsArray[3] = Mathf.Clamp(newValueAsVector4.w, min, max);
+
+                                value = newValueAsArray;
+                            }
+                            else
+                            {
+                                var array = value as float[];
+                                for (int i = 0; i < array.Length; i++)
+                                {
+                                    array[i] = Mathf.Clamp(array[i], min, max);
+                                }
                             }
                             break;
                         }
@@ -334,25 +378,39 @@ namespace Unity.MeshSync
                 {
                     lock (PropertyInfoDataWrapper.PropertyUpdateLock)
                     {
-                        bool valid = true;
+                        List<PropertyInfoDataWrapper> pendingProps = null;
 
-                        // If there are pending properties, ignore this, we will send new ones:
+                        // If there are dirty properties, make sure we set any updated values on the new ones:
                         foreach (var prop in propertyInfos)
                         {
                             if (prop.IsDirty)
                             {
-                                valid = false;
-                                break;
+                                if (pendingProps == null)
+                                {
+                                    pendingProps = new List<PropertyInfoDataWrapper>();
+                                }
+                                pendingProps.Add(prop);
                             }
                         }
 
-                        if (valid)
+                        propertyInfos.Clear();
+                        for (var i = 0; i < numProperties; ++i)
                         {
-                            propertyInfos.Clear();
-                            for (var i = 0; i < numProperties; ++i)
+                            var data = scene.GetPropertyInfo(i);
+                            propertyInfos.Add(new PropertyInfoDataWrapper(data));
+                        }
+
+                        if (pendingProps != null)
+                        {
+                            foreach (var pendingProp in pendingProps)
                             {
-                                var data = scene.GetPropertyInfo(i);
-                                propertyInfos.Add(new PropertyInfoDataWrapper(data));
+                                foreach (var prop in propertyInfos)
+                                {
+                                    if (prop.Matches(pendingProp))
+                                    {
+                                        prop.NewValue = pendingProp.NewValue;
+                                    }
+                                }
                             }
                         }
                     }

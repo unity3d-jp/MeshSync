@@ -292,6 +292,13 @@ msAPI void msServerPropertiesReady(ms::Server* server)
     server->propertiesReady();
 }
 
+msAPI bool msServerPropertiesCanReceiveProperties(ms::Server* server)
+{
+    if (!server) { return false; }
+
+    return server->readyForProperties();
+}
+
 msAPI int msGetGetBakeSkin(ms::GetMessage *self)
 {
     return self->refine_settings.flags.Get(ms::MESH_REFINE_FLAG_BAKE_SKIN);

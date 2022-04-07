@@ -17,6 +17,11 @@
 
         void SendUpdatedProperties()
         {
+            if (!m_server.CanServerReceiveProperties())
+            {
+                return;
+            }
+
             lock (PropertyInfoDataWrapper.PropertyUpdateLock)
             {
                 bool sendProps = false;

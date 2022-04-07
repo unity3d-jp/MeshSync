@@ -117,6 +117,9 @@ internal struct Server {
     [DllImport(Lib.name)]
     static extern void msServerPropertiesReady(IntPtr self);
 
+    [DllImport(Lib.name)]
+    static extern bool msServerPropertiesCanReceiveProperties(IntPtr self);        
+
     #endregion
 
     public delegate void MessageHandler(NetworkMessageType type, IntPtr data);
@@ -197,6 +200,11 @@ internal struct Server {
     public void SendChangedProperties()
     {
         msServerPropertiesReady(self);
+    }
+
+    public bool CanServerReceiveProperties()
+    {
+        return msServerPropertiesCanReceiveProperties(self);
     }
 
     public void BeginServe() {
