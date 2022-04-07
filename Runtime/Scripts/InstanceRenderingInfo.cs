@@ -9,11 +9,11 @@ namespace Unity.MeshSync
     {
         public Mesh Mesh;
         
-        public List<Matrix4x4[]> DividedInstances { get; private set; } = new List<Matrix4x4[]>();
+        public List<Matrix4x4[]> dividedInstances { get; private set; } = new List<Matrix4x4[]>();
 
         private Material[] m_materials;
 
-        public Material[] Materials
+        public Material[] materials
         {
             get => m_materials;
             set
@@ -46,7 +46,7 @@ namespace Unity.MeshSync
         
         private Matrix4x4[] m_instances;
 
-        public Matrix4x4[] Instances
+        public Matrix4x4[] instances
         {
             get => m_instances;
             set
@@ -56,7 +56,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public GameObject GameObject
+        public GameObject gameObject
         {
             get => m_gameObject;
             set
@@ -70,74 +70,74 @@ namespace Unity.MeshSync
             }
         }
 
-        private Renderer Renderer;
-        public int Layer
+        private Renderer m_renderer;
+        public int layer
         {
             get
             {
-                if (GameObject == null) 
+                if (gameObject == null) 
                     return 0;
                     
-                return GameObject.layer; 
+                return gameObject.layer; 
             } 
         }
 
-        public bool ReceiveShadows
+        public bool receiveShadows
         {
             get
             {
-                if (Renderer == null)
+                if (m_renderer == null)
                     return true;
                     
-                return Renderer.receiveShadows;
+                return m_renderer.receiveShadows;
             }
         }
 
-        public ShadowCastingMode ShadowCastingMode
+        public ShadowCastingMode shadowCastingMode
         {
             get
             {
-                if (Renderer == null)
+                if (m_renderer == null)
                 {
                     return ShadowCastingMode.On;
                 }
 
-                return Renderer.shadowCastingMode;
+                return m_renderer.shadowCastingMode;
             }
         }
 
-        public LightProbeUsage LightProbeUsage
+        public LightProbeUsage lightProbeUsage
         {
             get
             {
-                if (Renderer == null)
+                if (m_renderer == null)
                 {
                     return LightProbeUsage.BlendProbes;
                 }
 
-                return Renderer.lightProbeUsage;
+                return m_renderer.lightProbeUsage;
             }
         }
 
-        public LightProbeProxyVolume LightProbeProxyVolume
+        public LightProbeProxyVolume lightProbeProxyVolume
         {
             get
             {
-                if (Renderer == null)
+                if (m_renderer == null)
                     return null;
                 
-                if (Renderer.lightProbeUsage != LightProbeUsage.UseProxyVolume)
+                if (m_renderer.lightProbeUsage != LightProbeUsage.UseProxyVolume)
                     return null;
                 
                 // Look for component in override
-                var overrideGO = Renderer.lightProbeProxyVolumeOverride;
+                var overrideGO = m_renderer.lightProbeProxyVolumeOverride;
                 if (overrideGO != null && overrideGO.TryGetComponent(out LightProbeProxyVolume volumeOverride))
                 {
                     return volumeOverride;
                 }
                 
                 // Look for component in Renderer
-                if (Renderer.TryGetComponent(out LightProbeProxyVolume volume))
+                if (m_renderer.TryGetComponent(out LightProbeProxyVolume volume))
                 {
                     return volume;
                 }
@@ -146,14 +146,14 @@ namespace Unity.MeshSync
             }
         }
 
-        private Matrix4x4 WorldMatrix
+        private Matrix4x4 worldMatrix
         {
             get
             {
-                if (GameObject == null)
+                if (gameObject == null)
                     return Matrix4x4.identity;
                     
-                return GameObject.transform.localToWorldMatrix;
+                return gameObject.transform.localToWorldMatrix;
             }
         }
             
@@ -161,47 +161,46 @@ namespace Unity.MeshSync
         {
             // Avoid recalculation if the instances are the same
             // and the world matrix has not changed.
-            if (!m_dirtyInstances && m_cachedWorldMatrix == WorldMatrix)
+            if (!m_dirtyInstances && m_cachedWorldMatrix == this.worldMatrix)
                 return;
             
             m_dirtyInstances = false;
-            m_cachedWorldMatrix = WorldMatrix;
+            m_cachedWorldMatrix = this.worldMatrix;
             
-            DividedInstances.Clear();
+            dividedInstances.Clear();
             
-            if (Instances == null)
+            if (instances == null)
                 return;
                 
             var maxSize = 1023;
-            var iterations = Instances.Length / maxSize;
-            var worldMatrix = WorldMatrix;
+            var iterations = instances.Length / maxSize;
             for (var i = 0; i < iterations; i++)
             {
-                AddInstances(maxSize, worldMatrix, i, maxSize);
+                AddInstances(maxSize, i, maxSize);
             }
 
-            var remainder = Instances.Length % maxSize;
+            var remainder = instances.Length % maxSize;
             if (remainder > 0)
             {
-                AddInstances(remainder, worldMatrix, iterations, maxSize);
+                AddInstances(remainder, iterations, maxSize);
             }
         }
 
-        private void AddInstances(int size, Matrix4x4 worldMatrix, int iteration, int maxSize)
+        private void AddInstances(int size, int iteration, int maxSize)
         {
             var array = new Matrix4x4[size];
 
             for (var j = 0; j < array.Length; j++)
             {
-                array[j] = worldMatrix * Instances[iteration * maxSize + j];
+                array[j] = worldMatrix * instances[iteration * maxSize + j];
             }
 
-            DividedInstances.Add(array);
+            dividedInstances.Add(array);
         }
 
         private void OnGameObjectUpdated()
         {
-            var go = GameObject;
+            var go = gameObject;
 
             if (go == null)
                 return;
@@ -209,8 +208,8 @@ namespace Unity.MeshSync
             if (go.TryGetComponent(out SkinnedMeshRenderer skinnedMeshRenderer))
             {
                 Mesh = skinnedMeshRenderer.sharedMesh;
-                Materials = skinnedMeshRenderer.sharedMaterials;
-                Renderer = skinnedMeshRenderer;
+                materials = skinnedMeshRenderer.sharedMaterials;
+                m_renderer = skinnedMeshRenderer;
                 return;
             }
             
@@ -227,8 +226,8 @@ namespace Unity.MeshSync
             }
             
             Mesh = filter.sharedMesh;
-            Materials = renderer.sharedMaterials;
-            Renderer = renderer;
+            materials = renderer.sharedMaterials;
+            m_renderer = renderer;
         }
     }
 }

@@ -1121,21 +1121,17 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         bool materialsUpdated = rec.BuildMaterialData(data);
         bool meshUpdated = false;
 
-        if (dflags.hasPoints && dflags.hasIndices)
-        {
+        if (dflags.hasPoints && dflags.hasIndices){
             // note:
             // assume there is always only 1 mesh split.
             // old versions supported multiple splits because vertex index was 16 bit (pre-Unity 2017.3),
             // but that code path was removed for simplicity and my sanity.
-            if (data.numIndices == 0)
-            {
+            if (data.numIndices == 0){
                 if (rec.mesh != null)
                     rec.mesh.Clear();
             }
-            else
-            {
-                if (rec.mesh == null)
-                {
+            else {
+                if (rec.mesh == null){
                     rec.mesh = new Mesh();
                     rec.mesh.name = trans.name;
                     if (m_markMeshesDynamic)
@@ -1144,28 +1140,23 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                         rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
                     rec.mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
                 }
-
                 UpdateMeshEntity(ref rec.mesh, data);
             }
-
             meshUpdated = true;
         }
-
-        if (dflags.hasBones || dflags.hasBlendshapes)
-        {
+        
+        if (dflags.hasBones || dflags.hasBlendshapes){
             SkinnedMeshRenderer smr = rec.skinnedMeshRenderer;
             if (smr == null)
             {
                 materialsUpdated = true;
                 smr = rec.skinnedMeshRenderer = Misc.GetOrAddComponent<SkinnedMeshRenderer>(trans.gameObject);
-                if (rec.meshRenderer != null)
-                {
+                if (rec.meshRenderer != null){
                     DestroyImmediate(rec.meshRenderer);
                     rec.meshRenderer = null;
                 }
 
-                if (rec.meshFilter != null)
-                {
+                if (rec.meshFilter != null){
                     DestroyImmediate(rec.meshFilter);
                     rec.meshFilter = null;
                 }
@@ -1181,22 +1172,19 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             smr.sharedMesh = rec.mesh;
 
             // update bones
-            if (dflags.hasBones)
-            {
+            if (dflags.hasBones){
                 if (dflags.hasRootBone)
                     rec.rootBonePath = data.rootBonePath;
                 rec.bonePaths = data.bonePaths;
                 // bones will be resolved in AfterUpdateScene()
             }
-            else
-            {
+            else {
                 smr.localBounds = rec.mesh.bounds;
                 smr.updateWhenOffscreen = false;
             }
 
             // update blendshape weights
-            if (dflags.hasBlendshapes)
-            {
+            if (dflags.hasBlendshapes) {
                 int numBlendShapes = Math.Min(data.numBlendShapes, rec.mesh.blendShapeCount);
                 for (int bi = 0; bi < numBlendShapes; ++bi)
                 {
@@ -1205,17 +1193,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 }
             }
         }
-        else if (meshUpdated)
-        {
+        else if (meshUpdated) {
             MeshFilter mf = rec.meshFilter;
             MeshRenderer mr = rec.meshRenderer;
-            if (mf == null)
-            {
+            if (mf == null) {
                 materialsUpdated = true;
                 mf = rec.meshFilter = Misc.GetOrAddComponent<MeshFilter>(trans.gameObject);
                 mr = rec.meshRenderer = Misc.GetOrAddComponent<MeshRenderer>(trans.gameObject);
-                if (rec.skinnedMeshRenderer != null)
-                {
+                if (rec.skinnedMeshRenderer != null) {
                     mr.sharedMaterials = rec.skinnedMeshRenderer.sharedMaterials;
                     DestroyImmediate(rec.skinnedMeshRenderer);
                     rec.skinnedMeshRenderer = null;
@@ -1228,8 +1213,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             rec.smrEnabled = false;
         }
 
-        if (meshUpdated)
-        {
+        if (meshUpdated) {
             MeshCollider collider = config.UpdateMeshColliders ? trans.GetComponent<MeshCollider>() : null;
             if (collider != null &&
                 (collider.sharedMesh == null || collider.sharedMesh == rec.mesh))
@@ -1243,9 +1227,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             AssignMaterials(rec, recordUndo: false);
 
         return rec;
-    }
-
-
+    } 
+    
     //----------------------------------------------------------------------------------------------------------------------
 
     void UpdateMeshEntity(ref Mesh mesh, MeshData data)
@@ -1480,7 +1463,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             else
                 rec.reference = null;
         }
-
         return rec;
     }
 
@@ -1677,8 +1659,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     {
         var config = GetConfigV();
         
-        if (!this.m_clientInstancedEntities.TryGetValue(data.path, out EntityRecord rec))
-        {
+        if (!m_clientInstancedEntities.TryGetValue(data.path, out EntityRecord rec)) {
             var trans = 
                 FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, data.path, false);
             
@@ -1688,22 +1669,20 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 recved = true,
             };
             
-            this.m_clientInstancedEntities.Add(data.path, rec);
+            m_clientInstancedEntities.Add(data.path, rec);
         }
         
         UpdateTransformEntity(data, config, rec);
         UpdateMeshEntity((MeshData)data, config, rec);
 
-        this.m_clientInstancedEntities[data.path] = rec;
+        m_clientInstancedEntities[data.path] = rec;
         
         // If there is a instance info record that references the new object
-        if (this.m_clientInstances.TryGetValue(data.path, out InstanceInfoRecord infoRecord))
-        {
+        if (m_clientInstances.TryGetValue(data.path, out InstanceInfoRecord infoRecord)) {
             // Update the renderer reference
             infoRecord.go = rec.go;
             var renderer = infoRecord.renderer;
-            if (renderer != null)
-            {
+            if (renderer != null) {
                 renderer.UpdateReference(rec.go);
             }
         }
@@ -1717,40 +1696,32 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         
         var path = data.path;
         
-        if (!this.m_clientInstances.TryGetValue(path, out infoRecord))
-        {
+        if (!m_clientInstances.TryGetValue(path, out infoRecord)) {
             infoRecord = new InstanceInfoRecord();
             m_clientInstances.Add(path, infoRecord);
         }
         
         // Look for reference in client instanced objects
-        if (this.m_clientInstancedEntities.TryGetValue(path, out EntityRecord instancedEntityRecord))
-        { 
+        if (m_clientInstancedEntities.TryGetValue(path, out EntityRecord instancedEntityRecord)) { 
             infoRecord.go = instancedEntityRecord.go;
         }
-        else if (this.m_clientObjects.TryGetValue(path, out EntityRecord entityRecord))
-        {
+        else if (m_clientObjects.TryGetValue(path, out EntityRecord entityRecord)) {
             infoRecord.go = entityRecord.go;
         }
-        else
-        {
+        else {
             throw new Exception($"[MeshSync] No instanced entity found for path {data.path}");
         } 
         
         // Look for parent in client objects
-        if (this.m_clientObjects.TryGetValue(data.parentPath, out EntityRecord parentRecord))
-        {
-            if (infoRecord.renderer == null)
-            {
+        if (m_clientObjects.TryGetValue(data.parentPath, out EntityRecord parentRecord)) {
+            if (infoRecord.renderer == null) {
                 infoRecord.renderer = parentRecord.go.AddComponent<MeshSyncInstanceRenderer>();
             }
             
             infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
         }
-        else
-        {
-            if (infoRecord.renderer == null)
-            {
+        else {
+            if (infoRecord.renderer == null) {
                 infoRecord.renderer = m_rootObject.gameObject.AddComponent<MeshSyncInstanceRenderer>();
             }
             
@@ -1965,9 +1936,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         var path = identifier.name;
 
         var ret = false;
-        if (this.m_clientInstances.TryGetValue(path, out InstanceInfoRecord rec))
-        {
-             ret = this.m_clientInstances.Remove(path);
+        if (m_clientInstances.TryGetValue(path, out InstanceInfoRecord rec)) {
+             ret = m_clientInstances.Remove(path);
              
              DestroyImmediate(rec.renderer);
              
@@ -1982,9 +1952,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     {
         var path = identifier.name;
         var ret = false;
-        if (this.m_clientInstancedEntities.TryGetValue(path, out EntityRecord rec))
-        {
-            ret = this.m_clientInstancedEntities.Remove(path);
+        if (m_clientInstancedEntities.TryGetValue(path, out EntityRecord rec)) {
+            ret = m_clientInstancedEntities.Remove(path);
             DestroyImmediate(rec.go);
             
             if (onDeleteInstancedEntity != null)
@@ -2002,21 +1971,18 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         GameObject target = null;
         EntityRecord rec = null;
         bool ret = false;
-        if (id != 0 && m_hostObjects.TryGetValue(id, out rec))
-        {
+        if (id != 0 && m_hostObjects.TryGetValue(id, out rec)) {
             if (rec.go != null)
                 target = rec.go;
             m_hostObjects.Remove(id);
         }
-        else if (m_clientObjects.TryGetValue(path, out rec))
-        {
+        else if (m_clientObjects.TryGetValue(path, out rec)) {
             if (rec.go != null)
                 target = rec.go;
             ret = m_clientObjects.Remove(path);
         }
 
-        if (target != null && !IsAsset(target))
-        {
+        if (target != null && !IsAsset(target)) {
             if (onDeleteEntity != null)
                 onDeleteEntity.Invoke(target);
             DestroyImmediate(target);
@@ -2075,7 +2041,6 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         primitive.SetActive(false);
         m_cachedDefaultMaterial = primitive.GetComponent<MeshRenderer>().sharedMaterial;
         DestroyImmediate(primitive);
-
         return m_cachedDefaultMaterial;
     }
     

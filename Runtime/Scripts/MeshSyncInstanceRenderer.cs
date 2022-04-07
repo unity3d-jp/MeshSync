@@ -10,11 +10,11 @@ namespace Unity.MeshSync{
     [ExecuteInEditMode]
     internal class MeshSyncInstanceRenderer : MonoBehaviour
     {
-        private InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
+        private readonly InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
 
         [HideInInspector]
-        [SerializeField] private Matrix4x4[] m_transforms;
-        [SerializeField] internal GameObject m_reference; 
+        [SerializeField] private Matrix4x4[] transforms;
+        [SerializeField] private GameObject reference; 
         
         void OnEnable()
         {
@@ -78,15 +78,15 @@ namespace Unity.MeshSync{
 
         public void UpdateAll(Matrix4x4[] transforms, GameObject go)
         {
-            m_transforms = transforms;
-            m_reference = go;
+            this.transforms = transforms;
+            reference = go;
             
             UpdateRenderingInfo(m_renderingInfo);
         }
 
         public void UpdateReference(GameObject go)
         {
-            m_reference = go;
+            reference = go;
             UpdateRenderingInfo(m_renderingInfo);
         }
 
@@ -94,10 +94,10 @@ namespace Unity.MeshSync{
         private void UpdateRenderingInfo(InstanceRenderingInfo info)
         {
             // Transforms
-            info.Instances = m_transforms;
+            info.instances = transforms;
             
             // Reference
-            info.GameObject = m_reference;
+            info.gameObject = reference;
         }
         #endregion
         
@@ -110,15 +110,15 @@ namespace Unity.MeshSync{
 
         private void DoDraw(InstanceRenderingInfo entry, Camera[] cameras)
         {
-            if (entry.Mesh == null || entry.DividedInstances == null || entry.Materials == null)
+            if (entry.Mesh == null || entry.dividedInstances == null || entry.materials == null)
             {
                 return;
             }
             
             entry.UpdateDividedInstances();
-            var matrixBatches = entry.DividedInstances;
+            var matrixBatches = entry.dividedInstances;
 
-            if (entry.Materials.Length == 0)
+            if (entry.materials.Length == 0)
                 return;
 
             if (cameras == null)
@@ -140,12 +140,12 @@ namespace Unity.MeshSync{
             {
                 // Try to get the material in the same index position as the mesh
                 // or the last material.
-                var materialIndex = Mathf.Clamp(submeshIndex, 0, entry.Materials.Length - 1);
+                var materialIndex = Mathf.Clamp(submeshIndex, 0, entry.materials.Length - 1);
 
-                var material = entry.Materials[materialIndex];
-                for (var matrixIndex = 0; matrixIndex < entry.DividedInstances.Count; matrixIndex++)
+                var material = entry.materials[materialIndex];
+                for (var matrixIndex = 0; matrixIndex < entry.dividedInstances.Count; matrixIndex++)
                 {
-                    var matrices = entry.DividedInstances[matrixIndex];
+                    var matrices = entry.dividedInstances[matrixIndex];
 
                     DrawOnCamera(
                         targetCamera,
@@ -153,11 +153,11 @@ namespace Unity.MeshSync{
                         submeshIndex,
                         material,
                         matrices,
-                        entry.Layer,
-                        entry.ReceiveShadows,
-                        entry.ShadowCastingMode,
-                        entry.LightProbeUsage,
-                        entry.LightProbeProxyVolume);
+                        entry.layer,
+                        entry.receiveShadows,
+                        entry.shadowCastingMode,
+                        entry.lightProbeUsage,
+                        entry.lightProbeProxyVolume);
                 }
             }
         }
