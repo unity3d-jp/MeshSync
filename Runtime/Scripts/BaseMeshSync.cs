@@ -2423,8 +2423,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         INITIAL_0_10_0 = 1, //initial for version 0.10.0-preview 
     
     }
-
-
+    
+    
 }
 
 } //end namespace
