@@ -62,10 +62,10 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         m_sceneCachePlayer.SetAutoplay(false);
         
         //Initialize curve
-        if (ShouldExtractCurve()) {
+        if (ShouldExtractCurveInEditor()) {
             TimelineClip clip = scClipData.GetOwner();
             Assert.IsNotNull(clip);
-            float updatedCurveDuration = ExtractSceneCacheCurve(clip);
+            float updatedCurveDuration = ExtractSceneCacheCurveInEditor(clip);
             if (m_updateClipDurationOnCreatePlayable) {
                 clip.duration = updatedCurveDuration;
             }
@@ -75,7 +75,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, behaviour);
     }
 
-    bool ShouldExtractCurve() {
+    bool ShouldExtractCurveInEditor() {
         if (null == m_sceneCachePlayer) {
             return false;
         }
@@ -89,7 +89,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     }
 
     //returns curve duration
-    private float ExtractSceneCacheCurve(TimelineClip clip) {
+    private float ExtractSceneCacheCurveInEditor(TimelineClip clip) {
        
         //Bind for the first time
         m_animationCurve = ExtractNormalizedTimeCurve(m_sceneCachePlayer, out float updatedCurveDuration);
@@ -136,7 +136,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
 //----------------------------------------------------------------------------------------------------------------------
         
-    internal void SetCurveToLinear() {
+    internal void SetCurveToLinearInEditor() {
         TimelineClip clip = GetBoundClipData()?.GetOwner();
         Assert.IsNotNull(clip);
        
@@ -144,13 +144,13 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         UpdateClipCurveInEditor(clip, m_animationCurve);        
     }
 
-    internal void ApplyOriginalSceneCacheCurve() {
+    internal void ApplyOriginalSceneCacheCurveInEditor() {
         if (null == m_sceneCachePlayer)
             return;
 
         TimelineClip clip = GetBoundClipData()?.GetOwner();
         Assert.IsNotNull(clip);
-        ExtractSceneCacheCurve(clip);
+        ExtractSceneCacheCurveInEditor(clip);
     }    
 //----------------------------------------------------------------------------------------------------------------------
     [CanBeNull]
