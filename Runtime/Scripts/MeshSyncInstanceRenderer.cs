@@ -1,7 +1,7 @@
 ﻿#if UNITY_EDITOR
 using UnityEditor.Experimental.SceneManagement;
 #endif
-
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -103,8 +103,7 @@ namespace Unity.MeshSync{
         
         #region Rendering
         
-        
-        public void Draw(Camera[] cameras)
+        private void Draw(Camera[] cameras)
         {
             DoDraw(m_renderingInfo, cameras);
         }
@@ -116,42 +115,55 @@ namespace Unity.MeshSync{
                 return;
             }
             
-            var mesh = entry.Mesh;
-            
             entry.UpdateDividedInstances();
             var matrixBatches = entry.DividedInstances;
 
             if (entry.Materials.Length == 0)
                 return;
+
+            if (cameras == null)
+                return;
             
-            for (var i = 0; i < mesh.subMeshCount; i++)
+            for (var i = 0; i < cameras.Length; i++)
+            {
+                var targetCamera = cameras[i];
+                if (targetCamera == null)
+                    continue;
+                
+                DrawOnCamera(entry, targetCamera);
+            }
+        }
+
+        private void DrawOnCamera(InstanceRenderingInfo entry, Camera targetCamera)
+        {
+            for (var submeshIndex = 0; submeshIndex < entry.Mesh.subMeshCount; submeshIndex++)
             {
                 // Try to get the material in the same index position as the mesh
                 // or the last material.
-                var materialIndex = Mathf.Clamp(i, 0, entry.Materials.Length -1);
-                
+                var materialIndex = Mathf.Clamp(submeshIndex, 0, entry.Materials.Length - 1);
+
                 var material = entry.Materials[materialIndex];
-                for (var j = 0; j < matrixBatches.Count; j++)
+                for (var matrixIndex = 0; matrixIndex < entry.DividedInstances.Count; matrixIndex++)
                 {
-                    var batch = matrixBatches[j];
-                    
-                    DrawOnCameras(
-                        cameras,
-                        mesh, 
-                        i,
+                    var matrices = entry.DividedInstances[matrixIndex];
+
+                    DrawOnCamera(
+                        targetCamera,
+                        entry.Mesh,
+                        submeshIndex,
                         material,
-                        batch, 
-                        entry.Layer, 
-                        entry.ReceiveShadows, 
-                        entry.ShadowCastingMode, 
-                        entry.LightProbeUsage, 
+                        matrices,
+                        entry.Layer,
+                        entry.ReceiveShadows,
+                        entry.ShadowCastingMode,
+                        entry.LightProbeUsage,
                         entry.LightProbeProxyVolume);
                 }
             }
         }
-        
-        private void DrawOnCameras(
-            Camera[] cameras,
+
+        private void DrawOnCamera(
+            Camera targetCamera,
             Mesh mesh,
             int submeshIndex,
             Material material,
@@ -162,29 +174,22 @@ namespace Unity.MeshSync{
             LightProbeUsage lightProbeUsage, 
             LightProbeProxyVolume lightProbeProxyVolume)
         {
-            if (cameras == null)
+            if (targetCamera == null)
                 return;
             
-            for (var i = 0; i < cameras.Length; i++)
-            {
-                var camera = cameras[i];
-                if (camera == null)
-                    continue;
-                
-                Graphics.DrawMeshInstanced(
-                    mesh:mesh,
-                    submeshIndex:submeshIndex, 
-                    material:material, 
-                    matrices:matrices, 
-                    count:matrices.Length, 
-                    properties:null, 
-                    castShadows:shadowCastingMode, 
-                    receiveShadows:receiveShadows,
-                    layer:layer, 
-                    camera:camera,
-                    lightProbeUsage:lightProbeUsage, 
-                    lightProbeProxyVolume:lightProbeProxyVolume);
-            }
+            Graphics.DrawMeshInstanced(
+                mesh:mesh,
+                submeshIndex:submeshIndex, 
+                material:material, 
+                matrices:matrices, 
+                count:matrices.Length, 
+                properties:null, 
+                castShadows:shadowCastingMode, 
+                receiveShadows:receiveShadows,
+                layer:layer, 
+                camera:targetCamera,
+                lightProbeUsage:lightProbeUsage, 
+                lightProbeProxyVolume:lightProbeProxyVolume);
         }
         
         #endregion
