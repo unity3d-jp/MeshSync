@@ -32,8 +32,7 @@ namespace Unity.MeshSync
         private void OnMaterialsUpdated()
         {
             // Enable instancing in materials
-            for (var i = 0; i < m_materials.Length; i++)
-            {
+            for (var i = 0; i < m_materials.Length; i++) {
                 m_materials[i].enableInstancing = true;
             }
         }
@@ -97,8 +96,7 @@ namespace Unity.MeshSync
         {
             get
             {
-                if (m_renderer == null)
-                {
+                if (m_renderer == null) {
                     return ShadowCastingMode.On;
                 }
 
@@ -110,8 +108,7 @@ namespace Unity.MeshSync
         {
             get
             {
-                if (m_renderer == null)
-                {
+                if (m_renderer == null) {
                     return LightProbeUsage.BlendProbes;
                 }
 
@@ -131,14 +128,12 @@ namespace Unity.MeshSync
                 
                 // Look for component in override
                 var overrideGO = m_renderer.lightProbeProxyVolumeOverride;
-                if (overrideGO != null && overrideGO.TryGetComponent(out LightProbeProxyVolume volumeOverride))
-                {
+                if (overrideGO != null && overrideGO.TryGetComponent(out LightProbeProxyVolume volumeOverride)) {
                     return volumeOverride;
                 }
                 
                 // Look for component in Renderer
-                if (m_renderer.TryGetComponent(out LightProbeProxyVolume volume))
-                {
+                if (m_renderer.TryGetComponent(out LightProbeProxyVolume volume)) {
                     return volume;
                 }
 
@@ -174,14 +169,12 @@ namespace Unity.MeshSync
                 
             var maxSize = 1023;
             var iterations = instances.Length / maxSize;
-            for (var i = 0; i < iterations; i++)
-            {
+            for (var i = 0; i < iterations; i++) {
                 AddInstances(maxSize, i, maxSize);
             }
 
             var remainder = instances.Length % maxSize;
-            if (remainder > 0)
-            {
+            if (remainder > 0) {
                 AddInstances(remainder, iterations, maxSize);
             }
         }
@@ -190,8 +183,7 @@ namespace Unity.MeshSync
         {
             var array = new Matrix4x4[size];
 
-            for (var j = 0; j < array.Length; j++)
-            {
+            for (var j = 0; j < array.Length; j++) {
                 array[j] = worldMatrix * instances[iteration * maxSize + j];
             }
 
@@ -205,22 +197,19 @@ namespace Unity.MeshSync
             if (go == null)
                 return;
             
-            if (go.TryGetComponent(out SkinnedMeshRenderer skinnedMeshRenderer))
-            {
+            if (go.TryGetComponent(out SkinnedMeshRenderer skinnedMeshRenderer)) {
                 Mesh = skinnedMeshRenderer.sharedMesh;
                 materials = skinnedMeshRenderer.sharedMaterials;
                 m_renderer = skinnedMeshRenderer;
                 return;
             }
             
-            if (!go.TryGetComponent(out MeshFilter filter))
-            {
+            if (!go.TryGetComponent(out MeshFilter filter)) {
                 Debug.LogWarningFormat("[MeshSync] No Mesh Filter for {0}", go.name);
                 return;
             }
 
-            if (!go.TryGetComponent(out MeshRenderer renderer))
-            {
+            if (!go.TryGetComponent(out MeshRenderer renderer)) {
                 Debug.LogWarningFormat("[MeshSync] No renderer for {0}", go.name);
                 return;
             }
