@@ -1121,7 +1121,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         bool materialsUpdated = rec.BuildMaterialData(data);
         bool meshUpdated = false;
 
-        if (dflags.hasPoints && dflags.hasIndices){
+        if (dflags.hasPoints && dflags.hasIndices) {
             // note:
             // assume there is always only 1 mesh split.
             // old versions supported multiple splits because vertex index was 16 bit (pre-Unity 2017.3),
@@ -1131,7 +1131,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                     rec.mesh.Clear();
             }
             else {
-                if (rec.mesh == null){
+                if (rec.mesh == null) {
                     rec.mesh = new Mesh();
                     rec.mesh.name = trans.name;
                     if (m_markMeshesDynamic)
@@ -1145,7 +1145,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             meshUpdated = true;
         }
         
-        if (dflags.hasBones || dflags.hasBlendshapes){
+        if (dflags.hasBones || dflags.hasBlendshapes) {
             SkinnedMeshRenderer smr = rec.skinnedMeshRenderer;
             if (smr == null)
             {
@@ -1172,7 +1172,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             smr.sharedMesh = rec.mesh;
 
             // update bones
-            if (dflags.hasBones){
+            if (dflags.hasBones) {
                 if (dflags.hasRootBone)
                     rec.rootBonePath = data.rootBonePath;
                 rec.bonePaths = data.bonePaths;
@@ -1971,18 +1971,21 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         GameObject target = null;
         EntityRecord rec = null;
         bool ret = false;
-        if (id != 0 && m_hostObjects.TryGetValue(id, out rec)) {
+        if (id != 0 && m_hostObjects.TryGetValue(id, out rec))
+        {
             if (rec.go != null)
                 target = rec.go;
             m_hostObjects.Remove(id);
         }
-        else if (m_clientObjects.TryGetValue(path, out rec)) {
+        else if (m_clientObjects.TryGetValue(path, out rec))
+        {
             if (rec.go != null)
                 target = rec.go;
             ret = m_clientObjects.Remove(path);
         }
 
-        if (target != null && !IsAsset(target)) {
+        if (target != null && !IsAsset(target))
+        {
             if (onDeleteEntity != null)
                 onDeleteEntity.Invoke(target);
             DestroyImmediate(target);

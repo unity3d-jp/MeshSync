@@ -27,7 +27,6 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
         DrawDefaultMaterialList(m_meshSyncServer);
         DrawExportAssets(m_meshSyncServer);
         DrawPluginVersion();
-        
 
         PrefabUtility.RecordPrefabInstancePropertyModifications(m_meshSyncServer);
         
