@@ -103,6 +103,8 @@ public class MeshSyncServer : BaseMeshSync {
         m_server.fileRootPath = GetServerDocRootPath();
         m_server.AllowPublicAccess(projectSettings.GetServerPublicAccess());
 
+        m_handler = HandleRecvMessage;
+
 #if UNITY_EDITOR
         EditorApplication.update += PollServerEvents;
 #endif
