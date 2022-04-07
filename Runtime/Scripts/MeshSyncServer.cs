@@ -23,7 +23,10 @@ public class MeshSyncServer : BaseMeshSync {
     public ServerMessageCallback OnPostRecvMessageCallback = null;
     
 //----------------------------------------------------------------------------------------------------------------------
+
+
     protected override void InitInternalV() {
+
     }
 
 
@@ -100,7 +103,7 @@ public class MeshSyncServer : BaseMeshSync {
         m_server = Server.Start(ref m_serverSettings);
         m_server.fileRootPath = GetServerDocRootPath();
         m_server.AllowPublicAccess(projectSettings.GetServerPublicAccess());
-
+        
         m_handler = HandleRecvMessage;
 
 #if UNITY_EDITOR
@@ -118,8 +121,8 @@ public class MeshSyncServer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------        
 
     internal void StopServer() {
-#if UNITY_STANDALONE
-        if (!m_server)
+#if UNITY_STANDALONE            
+        if (!m_server) 
             return;
         
 #if UNITY_EDITOR
@@ -149,6 +152,7 @@ public class MeshSyncServer : BaseMeshSync {
         if (string.IsNullOrEmpty(GetAssetsFolder())) {
             SetAssetsFolder(MeshSyncConstants.DEFAULT_ASSETS_PATH);
         }
+
     }   
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -522,6 +526,7 @@ public class MeshSyncServer : BaseMeshSync {
         INITIAL_0_4_0 = 1, //initial for version 0.4.0-preview 
     
     }
+
 }
 
 } //end namespace
