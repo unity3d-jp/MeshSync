@@ -374,42 +374,40 @@ namespace Unity.MeshSync
             Try(() =>
             {
                 var numProperties = scene.numPropertyInfos;
-                if (numProperties > 0)
+
+                lock (PropertyInfoDataWrapper.PropertyUpdateLock)
                 {
-                    lock (PropertyInfoDataWrapper.PropertyUpdateLock)
+                    List<PropertyInfoDataWrapper> pendingProps = null;
+
+                    // If there are dirty properties, make sure we set any updated values on the new ones:
+                    foreach (var prop in propertyInfos)
                     {
-                        List<PropertyInfoDataWrapper> pendingProps = null;
-
-                        // If there are dirty properties, make sure we set any updated values on the new ones:
-                        foreach (var prop in propertyInfos)
+                        if (prop.IsDirty)
                         {
-                            if (prop.IsDirty)
+                            if (pendingProps == null)
                             {
-                                if (pendingProps == null)
-                                {
-                                    pendingProps = new List<PropertyInfoDataWrapper>();
-                                }
-                                pendingProps.Add(prop);
+                                pendingProps = new List<PropertyInfoDataWrapper>();
                             }
+                            pendingProps.Add(prop);
                         }
+                    }
 
-                        propertyInfos.Clear();
-                        for (var i = 0; i < numProperties; ++i)
-                        {
-                            var data = scene.GetPropertyInfo(i);
-                            propertyInfos.Add(new PropertyInfoDataWrapper(data));
-                        }
+                    propertyInfos.Clear();
+                    for (var i = 0; i < numProperties; ++i)
+                    {
+                        var data = scene.GetPropertyInfo(i);
+                        propertyInfos.Add(new PropertyInfoDataWrapper(data));
+                    }
 
-                        if (pendingProps != null)
+                    if (pendingProps != null)
+                    {
+                        foreach (var pendingProp in pendingProps)
                         {
-                            foreach (var pendingProp in pendingProps)
+                            foreach (var prop in propertyInfos)
                             {
-                                foreach (var prop in propertyInfos)
+                                if (prop.Matches(pendingProp))
                                 {
-                                    if (prop.Matches(pendingProp))
-                                    {
-                                        prop.NewValue = pendingProp.NewValue;
-                                    }
+                                    prop.NewValue = pendingProp.NewValue;
                                 }
                             }
                         }
