@@ -1126,11 +1126,10 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             // assume there is always only 1 mesh split.
             // old versions supported multiple splits because vertex index was 16 bit (pre-Unity 2017.3),
             // but that code path was removed for simplicity and my sanity.
-            if (data.numIndices == 0){
+            if (data.numIndices == 0) {
                 if (rec.mesh != null)
                     rec.mesh.Clear();
-            }
-            else {
+            } else {
                 if (rec.mesh == null) {
                     rec.mesh = new Mesh();
                     rec.mesh.name = trans.name;
@@ -1147,16 +1146,15 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         
         if (dflags.hasBones || dflags.hasBlendshapes) {
             SkinnedMeshRenderer smr = rec.skinnedMeshRenderer;
-            if (smr == null)
-            {
+            if (smr == null) {
                 materialsUpdated = true;
                 smr = rec.skinnedMeshRenderer = Misc.GetOrAddComponent<SkinnedMeshRenderer>(trans.gameObject);
-                if (rec.meshRenderer != null){
+                if (rec.meshRenderer != null) {
                     DestroyImmediate(rec.meshRenderer);
                     rec.meshRenderer = null;
                 }
 
-                if (rec.meshFilter != null){
+                if (rec.meshFilter != null) {
                     DestroyImmediate(rec.meshFilter);
                     rec.meshFilter = null;
                 }
@@ -1177,8 +1175,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                     rec.rootBonePath = data.rootBonePath;
                 rec.bonePaths = data.bonePaths;
                 // bones will be resolved in AfterUpdateScene()
-            }
-            else {
+            } else {
                 smr.localBounds = rec.mesh.bounds;
                 smr.updateWhenOffscreen = false;
             }
@@ -1186,14 +1183,12 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             // update blendshape weights
             if (dflags.hasBlendshapes) {
                 int numBlendShapes = Math.Min(data.numBlendShapes, rec.mesh.blendShapeCount);
-                for (int bi = 0; bi < numBlendShapes; ++bi)
-                {
+                for (int bi = 0; bi < numBlendShapes; ++bi) {
                     BlendShapeData bsd = data.GetBlendShapeData(bi);
                     smr.SetBlendShapeWeight(bi, bsd.weight);
                 }
             }
-        }
-        else if (meshUpdated) {
+        } else if (meshUpdated) {
             MeshFilter mf = rec.meshFilter;
             MeshRenderer mr = rec.meshRenderer;
             if (mf == null) {
@@ -1227,7 +1222,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             AssignMaterials(rec, recordUndo: false);
 
         return rec;
-    } 
+    }
     
     //----------------------------------------------------------------------------------------------------------------------
 
