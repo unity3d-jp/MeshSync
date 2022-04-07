@@ -199,9 +199,12 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         return AnimationCurve.Linear(0f, 0f,(float) (clip.duration * clip.timeScale), 1f );
     }
     
-    private static void UpdateClipCurveInEditor(TimelineClip clip, AnimationCurve animationCurveToApply) {
 
-#if UNITY_EDITOR        
+//----------------------------------------------------------------------------------------------------------------------
+
+#if UNITY_EDITOR
+    
+    private static void UpdateClipCurveInEditor(TimelineClip clip, AnimationCurve animationCurveToApply) {
         
         bool shouldRefresh = (null == clip.curves);
         
@@ -218,13 +221,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         if (shouldRefresh) {
             TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved );
         }
-#endif
         
     }
-
-//----------------------------------------------------------------------------------------------------------------------
-
-#if UNITY_EDITOR
+    
     static bool CurveApproximately(AnimationCurve x, AnimationCurve y) {
         if (null == x && null == y)
             return true;
