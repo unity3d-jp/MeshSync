@@ -1,10 +1,8 @@
 #if UNITY_STANDALONE
 using System;
 #endif
-using AOT;
 using Unity.Collections;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
 #if UNITY_EDITOR
@@ -119,16 +117,14 @@ public class MeshSyncServer : BaseMeshSync {
 
 //----------------------------------------------------------------------------------------------------------------------        
 
-    internal void StopServer()
-    {
+    internal void StopServer() {
 #if UNITY_STANDALONE
+        if (!m_server)
+            return;
+        
 #if UNITY_EDITOR
         EditorApplication.update -= PollServerEvents;
 #endif
-
-        if (!m_server)
-            return;
-
         m_server.Stop();
         m_server = default(Server);
 
