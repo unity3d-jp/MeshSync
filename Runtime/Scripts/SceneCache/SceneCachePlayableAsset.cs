@@ -75,34 +75,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, behaviour);
     }
 
-    bool ShouldExtractCurveInEditor() {
-        if (null == m_sceneCachePlayer) {
-            return false;
-        }
-        
-        //no need to update if the curve has been extracted
-        if (m_isSceneCacheCurveExtracted && (m_extractedSceneCachePlayer == m_sceneCachePlayer)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    //returns curve duration
-    private float ExtractSceneCacheCurveInEditor(TimelineClip clip) {
-       
-        //Bind for the first time
-        m_animationCurve = ExtractNormalizedTimeCurve(m_sceneCachePlayer, out float updatedCurveDuration);
-        if (null == m_animationCurve) {
-            m_animationCurve     = CreateLinearAnimationCurve(clip);
-            updatedCurveDuration = (float) clip.duration; //no change
-        }
-
-        UpdateClipCurveInEditor(clip, m_animationCurve);
-        m_isSceneCacheCurveExtracted = true;
-        SetExtractedSceneCachePlayerInEditor(m_sceneCachePlayer);
-        return updatedCurveDuration;
-    }    
 //----------------------------------------------------------------------------------------------------------------------
     
     #region IPlayableBehaviour interfaces
@@ -134,24 +106,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     #endregion
     
-//----------------------------------------------------------------------------------------------------------------------
-        
-    internal void SetCurveToLinearInEditor() {
-        TimelineClip clip = GetBoundClipData()?.GetOwner();
-        Assert.IsNotNull(clip);
-       
-        m_animationCurve = CreateLinearAnimationCurve(clip);
-        UpdateClipCurveInEditor(clip, m_animationCurve);        
-    }
-
-    internal void ApplyOriginalSceneCacheCurveInEditor() {
-        if (null == m_sceneCachePlayer)
-            return;
-
-        TimelineClip clip = GetBoundClipData()?.GetOwner();
-        Assert.IsNotNull(clip);
-        ExtractSceneCacheCurveInEditor(clip);
-    }    
 //----------------------------------------------------------------------------------------------------------------------
     [CanBeNull]
     private static AnimationCurve ExtractNormalizedTimeCurve(SceneCachePlayer scPlayer, out float duration) {
@@ -203,7 +157,16 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 //----------------------------------------------------------------------------------------------------------------------
 
 #if UNITY_EDITOR
-    
+   
+        
+    internal void SetCurveToLinearInEditor() {
+        TimelineClip clip = GetBoundClipData()?.GetOwner();
+        Assert.IsNotNull(clip);
+       
+        m_animationCurve = CreateLinearAnimationCurve(clip);
+        UpdateClipCurveInEditor(clip, m_animationCurve);        
+    }
+
     private static void UpdateClipCurveInEditor(TimelineClip clip, AnimationCurve animationCurveToApply) {
         
         bool shouldRefresh = (null == clip.curves);
@@ -223,6 +186,45 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         }
         
     }
+
+    internal void ApplyOriginalSceneCacheCurveInEditor() {
+        if (null == m_sceneCachePlayer)
+            return;
+
+        TimelineClip clip = GetBoundClipData()?.GetOwner();
+        Assert.IsNotNull(clip);
+        ExtractSceneCacheCurveInEditor(clip);
+    }    
+    
+    bool ShouldExtractCurveInEditor() {
+        if (null == m_sceneCachePlayer) {
+            return false;
+        }
+        
+        //no need to update if the curve has been extracted
+        if (m_isSceneCacheCurveExtracted && (m_extractedSceneCachePlayer == m_sceneCachePlayer)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    //returns curve duration
+    private float ExtractSceneCacheCurveInEditor(TimelineClip clip) {
+       
+        //Bind for the first time
+        m_animationCurve = ExtractNormalizedTimeCurve(m_sceneCachePlayer, out float updatedCurveDuration);
+        if (null == m_animationCurve) {
+            m_animationCurve     = CreateLinearAnimationCurve(clip);
+            updatedCurveDuration = (float) clip.duration; //no change
+        }
+
+        UpdateClipCurveInEditor(clip, m_animationCurve);
+        m_isSceneCacheCurveExtracted = true;
+        SetExtractedSceneCachePlayerInEditor(m_sceneCachePlayer);
+        return updatedCurveDuration;
+    }    
+    
     
     static bool CurveApproximately(AnimationCurve x, AnimationCurve y) {
         if (null == x && null == y)
