@@ -61,6 +61,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
         m_sceneCachePlayer.SetAutoplay(false);
         
+#if UNITY_EDITOR        
         //Initialize curve
         if (ShouldExtractCurveInEditor()) {
             TimelineClip clip = scClipData.GetOwner();
@@ -71,6 +72,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             }
             m_updateClipDurationOnCreatePlayable = false;
         }
+#endif        
         
         return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, behaviour);
     }
