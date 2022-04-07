@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace Unity.MeshSync
 {
-    public class InstanceRenderingInfo
+    internal class InstanceRenderingInfo
     {
         public Mesh Mesh;
         
@@ -13,7 +13,6 @@ namespace Unity.MeshSync
 
         private Material[] m_materials;
 
-        [SerializeField]
         public Material[] Materials
         {
             get => m_materials;
@@ -71,8 +70,7 @@ namespace Unity.MeshSync
             }
         }
 
-        [SerializeField]
-        public Renderer Renderer;
+        private Renderer Renderer;
         public int Layer
         {
             get
@@ -147,8 +145,8 @@ namespace Unity.MeshSync
                 return null;
             }
         }
-        
-        public Matrix4x4 WorldMatrix
+
+        private Matrix4x4 WorldMatrix
         {
             get
             {
@@ -179,31 +177,29 @@ namespace Unity.MeshSync
             var worldMatrix = WorldMatrix;
             for (var i = 0; i < iterations; i++)
             {
-                var array = new Matrix4x4[maxSize];
-
-                for (var j = 0; j < array.Length; j++)
-                {
-                    array[j] = worldMatrix * Instances[i * maxSize + j];
-                }
-                
-                DividedInstances.Add(array);
+                AddInstances(maxSize, worldMatrix, i, maxSize);
             }
 
             var remainder = Instances.Length % maxSize;
             if (remainder > 0)
             {
-                var array = new Matrix4x4[remainder];
-                
-                for (var j = 0; j < array.Length; j++)
-                {
-                    array[j] = worldMatrix * Instances[iterations * maxSize + j];
-                }
-                
-                DividedInstances.Add(array);
+                AddInstances(remainder, worldMatrix, iterations, maxSize);
             }
         }
 
-        public void OnGameObjectUpdated()
+        private void AddInstances(int size, Matrix4x4 worldMatrix, int iteration, int maxSize)
+        {
+            var array = new Matrix4x4[size];
+
+            for (var j = 0; j < array.Length; j++)
+            {
+                array[j] = worldMatrix * Instances[iteration * maxSize + j];
+            }
+
+            DividedInstances.Add(array);
+        }
+
+        private void OnGameObjectUpdated()
         {
             var go = GameObject;
 

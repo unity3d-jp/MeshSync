@@ -554,6 +554,7 @@ public class SceneCachePlayer : BaseMeshSync {
         }
 #endif
         
+        
         if (!m_sceneCache)
             return;
         
