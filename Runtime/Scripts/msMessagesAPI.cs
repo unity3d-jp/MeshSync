@@ -69,6 +69,10 @@ internal struct DeleteMessage {
     [DllImport(Lib.name)] static extern Identifier msDeleteGetEntity(IntPtr self, int i);
     [DllImport(Lib.name)] static extern int msDeleteGetNumMaterials(IntPtr self);
     [DllImport(Lib.name)] static extern Identifier msDeleteGetMaterial(IntPtr self, int i);
+    
+    [DllImport(Lib.name)] static extern int msDeleteGetNumInstances(IntPtr self);
+    
+    [DllImport(Lib.name)] static extern Identifier msDeleteGetInstance(IntPtr self, int i);
     #endregion
 
     public static explicit operator DeleteMessage(IntPtr v) {
@@ -82,6 +86,16 @@ internal struct DeleteMessage {
 
     public int numMaterials { get { return msDeleteGetNumMaterials(self); } }
     internal Identifier GetMaterial(int i) { return msDeleteGetMaterial(self, i); }
+    
+    public int numInstances
+    {
+        get { return msDeleteGetNumInstances((self)); }
+    }
+
+    internal Identifier GetInstance(int i)
+    {
+        return msDeleteGetInstance(self, i);
+    }
 }
 //----------------------------------------------------------------------------------------------------------------------
 

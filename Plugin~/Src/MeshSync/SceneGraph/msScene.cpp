@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "MeshSync/SceneGraph/msScene.h"
+#include "MeshSync/SceneGraph/msEntityConverter.h"
 
 #include "MeshUtils/muLog.h"
 
@@ -7,13 +8,14 @@
 #include "MeshSync/SceneGraph/msAudio.h"
 #include "MeshSync/SceneGraph/msCamera.h"
 #include "MeshSync/SceneGraph/msConstraints.h"
-#include "MeshSync/SceneGraph/msEntityConverter.h"
 #include "MeshSync/SceneGraph/msMaterial.h"
 #include "MeshSync/SceneGraph/msMesh.h"
 #include "MeshSync/SceneGraph/msPoints.h"
 #include "MeshSync/SceneGraph/msLight.h"
 #include "MeshSync/SceneGraph/msTexture.h"
 #include "MeshSync/SceneGraph/msSceneImportSettings.h"
+
+#include "MeshSync/SceneGraph/msInstanceInfo.h"
 
 
 //Forward declaration
@@ -30,7 +32,7 @@ SceneDataFlags::SceneDataFlags()
 
 
 #define EachMember(F)\
-    F(settings) F(assets) F(entities) F(constraints)
+    F(settings) F(assets) F(entities) F(constraints) F(instanceInfos) F(instanceMeshes)
 
 Scene::Scene()
 {
@@ -63,6 +65,8 @@ void Scene::serialize(std::ostream& os) const
     data_flags.has_assets = !assets.empty();
     data_flags.has_entities = !entities.empty();
     data_flags.has_constraints = !constraints.empty();
+    data_flags.has_instanceInfos = !instanceInfos.empty();
+    data_flags.has_instanceMeshes = !instanceMeshes.empty();
 
     const uint64_t validation_hash = hash();
     write(os, validation_hash);
@@ -94,6 +98,8 @@ void Scene::concat(Scene& src, bool move_buffer)
     assets.insert(assets.end(), src.assets.begin(), src.assets.end());
     entities.insert(entities.end(), src.entities.begin(), src.entities.end());
     constraints.insert(constraints.end(), src.constraints.begin(), src.constraints.end());
+    instanceInfos.insert(instanceInfos.end(), src.instanceInfos.begin(), src.instanceInfos.end());
+    instanceMeshes.insert(instanceMeshes.end(), src.instanceMeshes.begin(), src.instanceMeshes.end());
 
     if (move_buffer) {
         for (auto& buf : src.scene_buffers)
@@ -190,6 +196,8 @@ void Scene::clear()
     assets.clear();
     entities.clear();
     constraints.clear();
+    instanceInfos.clear();
+    instanceMeshes.clear();
 
     scene_buffers.clear();
     data_sources.clear();
@@ -203,6 +211,10 @@ uint64_t Scene::hash() const
         ret += a->hash();
     for (auto& e : entities)
         ret += e->hash();
+    for (auto& i : instanceInfos)
+        ret += i->hash();
+    for (auto& i : instanceMeshes)
+        ret += i->hash();
     return ret;
 }
 
@@ -240,11 +252,33 @@ void Scene::import(const SceneImportSettings& cv)
             converters.push_back(RotateX_ZUpCorrector::create());
     }
 
-    auto convert = [&converters](auto& obj) {
-        for (auto& cv : converters)
-            cv->convert(obj);
-    };
+    updateEntities(cv, converters, entities);
+    updateEntities(cv, converters, instanceMeshes);
 
+    for (auto& asset : assets) {
+        sanitizeObjectName(asset->name);
+
+        if (asset->getAssetType() == AssetType::Animation) {
+            auto& clip = static_cast<AnimationClip&>(*asset);
+            mu::parallel_for_each(clip.animations.begin(), clip.animations.end(), [&](AnimationPtr& anim) {
+                sanitizeHierarchyPath(anim->path);
+                Animation::validate(anim);
+                for (auto& cv : converters) {
+                    cv->convert(*anim);
+                }
+            });
+        }
+    }
+
+    settings.handedness = Handedness::Left;
+    settings.scale_factor = 1.0f;
+}
+
+void Scene::updateEntities(
+    const ms::SceneImportSettings& cv, 
+    const std::vector<ms::EntityConverterPtr>& converters, 
+    std::vector<ms::TransformPtr> entities)
+{
     mu::parallel_for_each(entities.begin(), entities.end(), [&](TransformPtr& obj) {
         sanitizeHierarchyPath(obj->path);
         sanitizeHierarchyPath(obj->reference);
@@ -260,26 +294,14 @@ void Scene::import(const SceneImportSettings& cv)
             mesh.refine();
         }
 
-        if (!converters.empty())
-            convert(*obj);
-        obj->updateBounds();
-    });
-
-    for (auto& asset : assets) {
-        sanitizeObjectName(asset->name);
-
-        if (asset->getAssetType() == AssetType::Animation) {
-            auto& clip = static_cast<AnimationClip&>(*asset);
-            mu::parallel_for_each(clip.animations.begin(), clip.animations.end(), [&](AnimationPtr& anim) {
-                sanitizeHierarchyPath(anim->path);
-                Animation::validate(anim);
-                convert(*anim);
-            });
+        if (!converters.empty()) {
+            for (auto& cv : converters) {
+                cv->convert(*obj);
+            }
         }
-    }
 
-    settings.handedness = Handedness::Left;
-    settings.scale_factor = 1.0f;
+        obj->updateBounds();
+        });
 }
 
 TransformPtr Scene::findEntity(const std::string& path) const
