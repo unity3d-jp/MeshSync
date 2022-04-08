@@ -59,7 +59,7 @@ namespace Unity.MeshSync.Editor
         [MenuItem(menuItem_OpenInBlender, priority = 0)]
         static void OpenBlender()
         {
-            var selectedAsset = Selection.objects[0] as GameObject;
+            var selectedAsset = Selection.objects[0];
             if (selectedAsset == null)
                 return;
 
@@ -97,7 +97,7 @@ namespace Unity.MeshSync.Editor
 
         #region IDCCLauncher
 
-        public void OpenDCCTool(GameObject asset)
+        public void OpenDCCTool(UnityEngine.Object asset)
         {
             Cleanup();
 

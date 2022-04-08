@@ -557,7 +557,7 @@ public partial class MeshSyncServer : BaseMeshSync {
     [SerializeField] bool m_foldServerSettings = true;
 
     public IDCCLauncher m_DCCInterop;
-    public GameObject m_DCCAsset;
+    public UnityEngine.Object m_DCCAsset;
       
 #endif
     

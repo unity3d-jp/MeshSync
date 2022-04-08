@@ -12,7 +12,7 @@ namespace Unity.MeshSync
     /// </summary>
     public interface IDCCLauncher
     {
-        void OpenDCCTool(GameObject asset);
+        void OpenDCCTool(UnityEngine.Object asset);
 
         void DrawDCCToolVersion(BaseMeshSync player);
 

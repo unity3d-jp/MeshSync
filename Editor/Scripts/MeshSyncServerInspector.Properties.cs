@@ -179,7 +179,7 @@ namespace Unity.MeshSync.Editor
     // Partial class for now to make merging code easier later.
     partial class MeshSyncServerInspector
     {
-        public static IDCCLauncher GetLauncherForAsset(GameObject asset)
+        public static IDCCLauncher GetLauncherForAsset(UnityEngine.Object asset)
         {
             // TODO: Check asset path here and choose IDCCLauncher implementation for the given type.
             // var assetPath = AssetDatabase.GetAssetPath(asset).Replace("Assets/", string.Empty);
