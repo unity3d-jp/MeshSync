@@ -86,6 +86,7 @@ using super = Message;
 public:
     std::vector<Identifier> entities;
     std::vector<Identifier> materials;
+    std::vector<Identifier> instances;
 
     DeleteMessage();
     void serialize(std::ostream& os) const override;

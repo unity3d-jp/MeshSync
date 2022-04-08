@@ -230,6 +230,15 @@ public class MeshSyncServer : BaseMeshSync {
     }
 
     void OnRecvDelete(DeleteMessage mes) {
+
+        int numInstanceMeshes = mes.numInstances;
+        for (int i = 0; i < numInstanceMeshes; i++)
+        {
+            var instance = mes.GetInstance(i);
+            EraseInstanceInfoRecord(instance);
+            EraseInstancedEntityRecord(instance);
+        }
+
         int numEntities = mes.numEntities;
         for (int i = 0; i < numEntities; ++i)
             EraseEntityRecord(mes.GetEntity(i));

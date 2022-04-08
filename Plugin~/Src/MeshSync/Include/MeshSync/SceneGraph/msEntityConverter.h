@@ -1,19 +1,17 @@
 #pragma once
 
 #include "MeshSync/MeshSync.h"
+#include "MeshSync/SceneGraph/msEntity.h"
+#include "MeshSync/SceneGraph/msTransform.h"
+#include "MeshSync/SceneGraph/msCamera.h"
+#include "MeshSync/SceneGraph/msLight.h"
+#include "MeshSync/SceneGraph/msMesh.h"
+#include "MeshSync/SceneGraph/msPoints.h"
+#include "MeshSync/SceneGraph/msAnimation.h"
 
 msDeclClassPtr(AnimationClip)
 
 namespace ms {
-
-class Entity;
-class Transform;
-class Camera;
-class Light;
-class Mesh;
-class Points;
-class Animation;
-class AnimationCurve;
 
 class EntityConverter
 {
