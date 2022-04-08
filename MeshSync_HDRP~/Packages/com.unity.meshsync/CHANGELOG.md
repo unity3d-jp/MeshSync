@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.12.8-preview] - 2022-04-08
+
+### Fixed
+* fix: build errors 
+
 ## [0.12.7-preview] - 2022-04-06
 
 ### Changed
