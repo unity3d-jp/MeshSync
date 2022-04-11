@@ -11,20 +11,14 @@ namespace Unity.MeshSync.Editor
 {
     internal class BlenderLauncher : IDCCLauncher
     {
-        enum RunMode
-        {
-            Background,
-            Console,
-            GUI
-        }
-
         const string menuItem_OpenInBlender = "Assets/MeshSync/Open in blender";
 
         const string editorSettingPath = "MESHSYNC_BLENDER_PATH";
 
         System.Diagnostics.Process m_blenderProcess;
         bool m_redirectBlenderToUnityConsole;
-        RunMode m_runMode = RunMode.GUI;
+
+        public IDCCLauncher.RunMode runMode { get; set; }
 
         ~BlenderLauncher()
         {
@@ -56,6 +50,16 @@ namespace Unity.MeshSync.Editor
             EditorPrefs.SetString(editorSettingPath, blenderPath);
         }
 
+        public static void OpenBlendFile(MeshSyncServer server, UnityEngine.Object asset)
+        {
+            var previousRunMode = server.m_DCCInterop != null ? server.m_DCCInterop.runMode : IDCCLauncher.RunMode.GUI;
+
+            server.m_DCCInterop?.Cleanup();
+            server.m_DCCInterop = MeshSyncServerInspector.GetLauncherForAsset(asset);
+            server.m_DCCInterop.runMode = previousRunMode;
+            server.m_DCCInterop.OpenDCCTool(asset);
+        }
+
         [MenuItem(menuItem_OpenInBlender, priority = 0)]
         static void OpenBlender()
         {
@@ -63,12 +67,27 @@ namespace Unity.MeshSync.Editor
             if (selectedAsset == null)
                 return;
 
-            var server = MeshSyncMenu.CreateMeshSyncServerMenu(null);
+            var servers = UnityEngine.Object.FindObjectsOfType<MeshSyncServer>();
+
+            MeshSyncServer server = null;
+
+            foreach (var serverInScene in servers)
+            {
+                if (serverInScene.enabled)
+                {
+                    server = serverInScene;
+                    break;
+                }
+            }
+
+            if (server == null)
+            {
+                server = MeshSyncMenu.CreateMeshSyncServerMenu(null);
+            }
 
             server.m_DCCAsset = selectedAsset;
-            server.m_DCCInterop = MeshSyncServerInspector.GetLauncherForAsset(selectedAsset);
 
-            server.m_DCCInterop.OpenDCCTool(selectedAsset);
+            OpenBlendFile(server, selectedAsset);
         }
 
         [MenuItem(menuItem_OpenInBlender, validate = true, priority = 0)]
@@ -95,6 +114,11 @@ namespace Unity.MeshSync.Editor
             Debug.LogErrorFormat("[BLENDER]\n{0}", e.Data);
         }
 
+        private void M_blenderProcess_Exited(object sender, EventArgs e)
+        {
+            m_blenderProcess = null;
+        }
+
         #region IDCCLauncher
 
         public void OpenDCCTool(UnityEngine.Object asset)
@@ -112,10 +136,10 @@ namespace Unity.MeshSync.Editor
             startInfo.Arguments = $"\"{absoluteAssetPath}\" -P \"{scriptPath}\"";
 
             //startInfo.Arguments = $"-P \"{s_ScriptPath}\" -- {port}";
-            if (m_runMode != RunMode.GUI)
+            if (runMode != IDCCLauncher.RunMode.GUI)
                 startInfo.Arguments = "-b " + startInfo.Arguments;
 
-            if (m_runMode == RunMode.Background)
+            if (runMode == IDCCLauncher.RunMode.Background)
             {
                 startInfo.UseShellExecute = false;
                 startInfo.CreateNoWindow = true;
@@ -140,6 +164,8 @@ namespace Unity.MeshSync.Editor
 
             m_blenderProcess.StartInfo = startInfo;
             m_blenderProcess.Start();
+            m_blenderProcess.EnableRaisingEvents = true;
+            m_blenderProcess.Exited += M_blenderProcess_Exited;
 
             if (m_redirectBlenderToUnityConsole)
             {
@@ -152,38 +178,40 @@ namespace Unity.MeshSync.Editor
         {
             GUILayout.BeginVertical("Box");
 
-            var blenderPath = GetBlenderPath();
-
-            var newBlenderPath = EditorGUILayout.TextField("Blender path:", blenderPath);
-            if (newBlenderPath != blenderPath)
-            {
-                SetBlenderPath(newBlenderPath);
-                OpenBlender();
-            }
-
             if (player is MeshSyncServer server)
             {
-                if (m_blenderProcess == null)
+                var blenderPath = GetBlenderPath();
+
+                GUILayout.BeginHorizontal();
+                var style = new GUIStyle(GUI.skin.label) { wordWrap = true };
+                EditorGUILayout.LabelField("Blender path:", blenderPath, style);
+                if (GUILayout.Button("...", GUILayout.Width(30)))
                 {
-                    if (GUILayout.Button("Open Blender"))
+                    var newBlenderPath = EditorUtility.OpenFilePanel("Blender path", Path.GetDirectoryName(blenderPath), "exe");
+
+                    if (!string.IsNullOrEmpty(newBlenderPath) && newBlenderPath != blenderPath)
                     {
-                        server.m_DCCInterop.OpenDCCTool(server.m_DCCAsset);
+                        SetBlenderPath(newBlenderPath);
+                        OpenBlendFile(server, server.m_DCCAsset);
                     }
-                }
-                else if (GUILayout.Button("Restart Blender"))
-                {
-                    server.m_DCCInterop.OpenDCCTool(server.m_DCCAsset);
+                    return;
                 }
 
-                var runMode = (RunMode)EditorGUILayout.EnumPopup("Run mode:", m_runMode);
-                if (runMode != m_runMode)
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+
+                var newRunMode = (IDCCLauncher.RunMode)EditorGUILayout.EnumPopup("Run mode:", runMode);
+                if (newRunMode != runMode)
                 {
-                    m_runMode = runMode;
+                    runMode = newRunMode;
                     if (m_blenderProcess != null)
                     {
                         OpenDCCTool(server.m_DCCAsset);
                     }
                 }
+
+                GUILayout.EndHorizontal();
 
                 var newRedirect = EditorGUILayout.Toggle("Redirect Blender to Unity Console:", m_redirectBlenderToUnityConsole);
                 if (newRedirect != m_redirectBlenderToUnityConsole)
@@ -207,7 +235,10 @@ namespace Unity.MeshSync.Editor
             {
                 try
                 {
-                    m_blenderProcess.Kill();
+                    if (!m_blenderProcess.HasExited)
+                    {
+                        m_blenderProcess.Kill();
+                    }
                 }
                 catch { }
 

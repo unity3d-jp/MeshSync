@@ -12,6 +12,15 @@ namespace Unity.MeshSync
     /// </summary>
     public interface IDCCLauncher
     {
+        enum RunMode
+        {
+            GUI,
+            Background,
+            Console
+        }
+
+        RunMode runMode { get; set; }
+
         void OpenDCCTool(UnityEngine.Object asset);
 
         void DrawDCCToolVersion(BaseMeshSync player);

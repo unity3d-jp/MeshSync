@@ -395,6 +395,8 @@ namespace Unity.MeshSync.Editor
                 instance.transform.SetParent(holder, true);
                 instance.transform.localPosition = position;
             }
+
+            Undo.RegisterCreatedObjectUndo(holder.gameObject, "Show created variants");
         }
 
         void HideVariants()

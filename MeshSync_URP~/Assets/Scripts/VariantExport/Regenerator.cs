@@ -350,6 +350,8 @@ namespace Unity.MeshSync.VariantExport
                 }
             }
 
+            AssetDatabase.StartAssetEditing();
+
             coroutine = EditorCoroutineUtility.StartCoroutine(runner.Start(), this);
         }
 
@@ -362,6 +364,8 @@ namespace Unity.MeshSync.VariantExport
             }
 
             EditorUtility.ClearProgressBar();
+
+            AssetDatabase.StopAssetEditing();
 
             currentRunner = null;
         }

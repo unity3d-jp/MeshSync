@@ -196,6 +196,17 @@ namespace Unity.MeshSync.Editor
                 return;
             }
 
+            GUILayout.BeginHorizontal();
+            server.m_DCCAsset = EditorGUILayout.ObjectField("Blend file:", server.m_DCCAsset, typeof(UnityEngine.Object), true);
+            if (server.m_DCCAsset != null)
+            {
+                if (GUILayout.Button("Open"))
+                {
+                    BlenderLauncher.OpenBlendFile(server, server.m_DCCAsset);
+                }
+            }
+            GUILayout.EndHorizontal();
+
             server.m_DCCInterop?.DrawDCCToolVersion(server);
 
             var properties = server.propertyInfos;

@@ -516,27 +516,33 @@ public partial class MeshSyncServer : BaseMeshSync {
 #endif
     }
             
-        bool IsInPrefabView
+    bool IsInPrefabView
+    {
+        get
         {
-            get
-            {
-                return UnityEditor.Experimental.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
-            }
+            return UnityEditor.Experimental.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
         }
+    }
 
-        void LateUpdate()
-        {
-            if (IsInPrefabView)
-                return;
-            PollServerEvents();
-        }
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
+    void LateUpdate()
+    {
+        if (IsInPrefabView)
+            return;
+        PollServerEvents();
+    }
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
 
-            m_DCCInterop?.Cleanup();
-            StopServer();
-        }
+        m_DCCInterop?.Cleanup();
+        StopServer();
+    }
+
+    ~MeshSyncServer()
+    {
+        m_DCCInterop?.Cleanup();
+        m_DCCInterop = null;
+    }
     
     #endregion
 

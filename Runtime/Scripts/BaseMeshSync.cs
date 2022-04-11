@@ -2199,6 +2199,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
                     continue;
                 }
 
+                changedMeshes.Remove(mesh);
+
                 var currentPath = Path.GetFullPath(GetAssetsFolder());
                 var existingPath = Path.GetFullPath(AssetDatabase.GetAssetPath(mesh));
                 if (IsSubfolder(currentPath, existingPath))
