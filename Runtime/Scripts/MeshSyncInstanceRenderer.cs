@@ -48,7 +48,7 @@ namespace Unity.MeshSync{
             if (!IsInPrefabStage())
                 return;
             
-            Draw(cameras);
+            Draw(m_renderingInfo, cameras);
         }
 
         private void OnCameraPreCull(Camera cam)
@@ -60,7 +60,7 @@ namespace Unity.MeshSync{
                 return;
             
             Camera[] cameras = {cam};
-            Draw(cameras);
+            Draw(m_renderingInfo, cameras);
         }
         
         
@@ -102,13 +102,8 @@ namespace Unity.MeshSync{
         #endregion
         
         #region Rendering
-        
-        private void Draw(Camera[] cameras)
-        {
-            DoDraw(m_renderingInfo, cameras);
-        }
 
-        private void DoDraw(InstanceRenderingInfo entry, Camera[] cameras)
+        private void Draw(InstanceRenderingInfo entry, Camera[] cameras)
         {
             if (entry.Mesh == null || entry.dividedInstances == null || entry.materials == null)
             {
@@ -116,7 +111,6 @@ namespace Unity.MeshSync{
             }
             
             entry.UpdateDividedInstances();
-            var matrixBatches = entry.dividedInstances;
 
             if (entry.materials.Length == 0)
                 return;
