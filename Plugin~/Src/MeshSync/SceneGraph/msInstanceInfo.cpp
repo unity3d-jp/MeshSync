@@ -8,7 +8,6 @@ void InstanceInfo::serialize(ostream& os)
 	write(os, path);
 	write(os, parent_path);
 	write(os, transforms);
-		
 }
 
 void InstanceInfo::deserialize(istream& is)
@@ -65,5 +64,4 @@ InstanceInfo& InstanceInfo::operator=(InstanceInfo&& v)
 	transforms = std::move(v.transforms);
 	return *this;
 }
-
 }
