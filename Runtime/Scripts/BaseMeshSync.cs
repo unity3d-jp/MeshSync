@@ -1097,13 +1097,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 rec.bonePaths = data.bonePaths;
                 // bones will be resolved in AfterUpdateScene()
             } else {
-                smr.localBounds = rec.mesh.bounds;
+                smr.localBounds = (null != rec.mesh) ? rec.mesh.bounds : new Bounds();
                 smr.updateWhenOffscreen = false;
             }
 
             // update blendshape weights
             if (dflags.hasBlendshapes) {
-                int numBlendShapes = Math.Min(data.numBlendShapes, rec.mesh.blendShapeCount);
+                int meshBlendShapeCount = (null != rec.mesh) ? rec.mesh.blendShapeCount : 0;
+                int numBlendShapes      = Math.Min(data.numBlendShapes, meshBlendShapeCount);
                 for (int bi = 0; bi < numBlendShapes; ++bi) {
                     BlendShapeData bsd = data.GetBlendShapeData(bi);
                     smr.SetBlendShapeWeight(bi, bsd.weight);
