@@ -48,19 +48,18 @@ namespace Unity.MeshSync{
             if (!IsInPrefabStage())
                 return;
             
-            Draw(cameras);
+            Draw(m_renderingInfo, cameras);
         }
 
-        private void OnCameraPreCull(Camera cam)
+        private void OnCameraPreCull(Camera targetCamera)
         {
-            if (cam.cameraType == CameraType.Preview)
+            if (targetCamera.cameraType == CameraType.Preview)
                 return;
             
             if (!IsInPrefabStage())
                 return;
             
-            Camera[] cameras = {cam};
-            Draw(cameras);
+            Draw(m_renderingInfo, targetCamera);
         }
         
         
@@ -102,24 +101,26 @@ namespace Unity.MeshSync{
         #endregion
         
         #region Rendering
-        
-        private void Draw(Camera[] cameras)
-        {
-            DoDraw(m_renderingInfo, cameras);
-        }
 
-        private void DoDraw(InstanceRenderingInfo entry, Camera[] cameras)
+        private void Draw(InstanceRenderingInfo info, Camera targetCamera)
         {
-            if (entry.Mesh == null || entry.dividedInstances == null || entry.materials == null)
-            {
+            if (targetCamera == null)
                 return;
-            }
+            
+            if (!info.canRender)
+                return;
+            
+            info.UpdateDividedInstances();
+            
+            DrawOnCamera(info, targetCamera);
+        }
+        
+        private void Draw(InstanceRenderingInfo entry, Camera[] cameras)
+        {
+            if (!entry.canRender)
+                return;
             
             entry.UpdateDividedInstances();
-            var matrixBatches = entry.dividedInstances;
-
-            if (entry.materials.Length == 0)
-                return;
 
             if (cameras == null)
                 return;
@@ -136,7 +137,7 @@ namespace Unity.MeshSync{
 
         private void DrawOnCamera(InstanceRenderingInfo entry, Camera targetCamera)
         {
-            for (var submeshIndex = 0; submeshIndex < entry.Mesh.subMeshCount; submeshIndex++)
+            for (var submeshIndex = 0; submeshIndex < entry.mesh.subMeshCount; submeshIndex++)
             {
                 // Try to get the material in the same index position as the mesh
                 // or the last material.
@@ -149,7 +150,7 @@ namespace Unity.MeshSync{
 
                     DrawOnCamera(
                         targetCamera,
-                        entry.Mesh,
+                        entry.mesh,
                         submeshIndex,
                         material,
                         matrices,

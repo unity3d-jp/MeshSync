@@ -7,7 +7,9 @@ namespace Unity.MeshSync
 {
     internal class InstanceRenderingInfo
     {
-        public Mesh Mesh;
+        public bool canRender => mesh != null && dividedInstances != null && materials != null && materials.Length > 0;
+        
+        public Mesh mesh { get; private set; }
         
         public List<Matrix4x4[]> dividedInstances { get; private set; } = new List<Matrix4x4[]>();
 
@@ -198,7 +200,7 @@ namespace Unity.MeshSync
                 return;
             
             if (go.TryGetComponent(out SkinnedMeshRenderer skinnedMeshRenderer)) {
-                Mesh = skinnedMeshRenderer.sharedMesh;
+                mesh = skinnedMeshRenderer.sharedMesh;
                 materials = skinnedMeshRenderer.sharedMaterials;
                 m_renderer = skinnedMeshRenderer;
                 return;
@@ -214,7 +216,7 @@ namespace Unity.MeshSync
                 return;
             }
             
-            Mesh = filter.sharedMesh;
+            mesh = filter.sharedMesh;
             materials = renderer.sharedMaterials;
             m_renderer = renderer;
         }
