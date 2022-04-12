@@ -25,9 +25,10 @@ This object has [MeshSyncServer](MeshSyncServer.md) component that handles the s
 * Components:
     * [MeshSyncServer](MeshSyncServer.md): to sync meshes/models editing in DCC tools into Unity in real time.
     * [SceneCache](SceneCache.md): to playback all frames of an *.sc* file exported using [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
-      * [SceneCache in Timeline](SceneCacheInTimeline.md)
+      * [SceneCache in Timeline](SceneCacheInTimeline.md) 
 * [Project Settings](ProjectSettings.md): to configure default settings for MeshSync components. 
 * [Preferences](Preferences.md): to configure DCC Tools integration.
+* [Geometry Nodes](GeometryNodes.md) : to sync geometry nodes from Blender to Unity in real time.
 
 <img src="images/Preferences.png" height="360">
 
