@@ -53,17 +53,17 @@ This component handles the playback of an *.sc* file.
 
   |**Playback Mode**           |**Description** |
   |:----------------------- |:---|
-  | **Snap to Previous Frame** | Selects the frame which has been passed by the playback time. |
+  | **Snap to Previous Frame** | Selects the last frame which has been passed by the playback time. |
   | **Snap to Nearest Frame**  | Selects the frame which is nearest to the playback time. |
-  | **Interpolation**          | Smoothens animations by interpolating the meshes and transforms between neighboring frames. <br/> Note that meshes are only interpolated if the topologies match (the vertex indexes remain unchanged). |
+  | **Interpolation**          | Smoothens animations by interpolating meshes and transforms between nearest neighboring frames. <br/> Note that meshes are only interpolated if the topologies match (the vertex indexes remain unchanged). |
 
   - **Time**: the playback time. 
-  - **Frame**: the selected frame of Scene Cache.   
+  - **Frame**: the selected frame of the *.sc* file.   
     Disabled if the **Playback Mode** is set to **Interpolation**.
 
-- **Limited Animation**: skips frames if enabled.
-  - **Num Frames to Hold**: the number of frames that a certain Scene Cache frame will be hold.
-  - **Frame Offset**: an offset value to change which Scene Cache frames get selected in **Limited Animation** is enabled.
+- **Limited Animation**: skips *.sc* frames during playback if enabled.
+  - **Num Frames to Hold**: the duration in number of frames that a selected frame will be hold.
+  - **Frame Offset**: an offset value to change which frames get selected.
 
 Please refer to [common properties](CommonMeshSyncProperties.md) for details on the other properties.
 
