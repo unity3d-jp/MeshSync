@@ -1,36 +1,37 @@
 # Blender Geometry Nodes
 
-## Enabling geometry nodes
-Geometry nodes support is active by default. There are no additional steps required to sync them.
-
-## Controlling instances
-You can control the rendering and world transform of instances by modifying the gameobject that is instantiated.
-![Menu](images/GeometryNodesMove.gif)
-
-Changes in the following properties are automatically reflected on instances:
-Transform: 
-Position,
- Rotation, 
-Scale
-Layer
-MeshRenderer:
-	Cast Shadows
-	Receive Shadows
-	Light Probes
-	Proxy Volume Override
-SkinnedMeshRenderer:
-	Cast Shadows
-	Receive Shadows
-	Light Probes
-	Proxy Volume Override
-
+## Enabling Geometry Node
+Geometry node instances are synched by default.
 
 ## Disabling instances
-To stop rendering instances of an object, click on the gameobject corresponding to the Blender object that has the geometry node modifier. Find the MeshSyncInstanceRenderer component  that has a reference to the instanced object and disable it. The instances will stop rendering. Enable the component to render the instances again.
+To stop rendering instances of an object, click on the gameobject corresponding to the Blender object that has the geometry node modifier that generates the instances. Find the MeshSyncInstanceRenderer component  that has a reference to the instanced object. Disable the component to disable the instances.
+
 ![Menu](images/GeometryNodesDisable.gif)
 
+## Controlling instances
+You can control the rendering and world transform of instances by modifying the gameobject that is being instantiated.
+
+![Menu](images/GeometryNodesMove.gif)
+
+Changes in the following properties are automatically applied on instances:
+* Transform: 
+    * Position
+    * Rotation
+    * Scale
+    * Layer
+* MeshRenderer:
+    * Cast Shadows
+    * Receive Shadows
+    * Light Probes
+    * Proxy Volume Override
+* SkinnedMeshRenderer: 
+    * Cast Shadows
+    * Receive Shadows
+    * Light Probes
+    * Proxy Volume Override
+
 ## Runtime-builds
-You can create Runtime builds that render instances from Geometry Nodes. Before building, you must ensure that the required instancing variants are not stripped by selecting the Keep All or Strip Unused option on Project Settings > Graphics > Shader Stripping > Instancing Variants
+You can create Runtime builds that render instances from Geometry Nodes. Before building, make sure that the required instancing variants are not stripped by selecting the _Keep All_ or _Strip Unused_ option in _Project Settings_ &rarr; _Graphics_ &rarr; _Shader Stripping_ &rarr; _Instancing Variants_.
 
 ## Limitations
 
@@ -38,7 +39,7 @@ You can create Runtime builds that render instances from Geometry Nodes. Before 
 Exportation of instances to a Scene Cache file is not supported.
 
 ### Preview Window
-We do not support rendering instances on the inspector preview window.
+Rendering instances on the inspector preview window is not supported.
 
 ### Creating prefabs
-We do not support creating prefabs for instances.
+Creating prefabs for instances is not supported.
