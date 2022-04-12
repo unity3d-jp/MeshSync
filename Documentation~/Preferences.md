@@ -23,7 +23,7 @@ displays them inside the window.
 
 1. Maya 2018 - 2022
 2. 3ds Max 2018 - 2021
-3. Blender 2.83, 2.90, 2.91, 2.92, 2.93
+3. Blender 2.83, 2.90, 2.91, 2.92, 2.93, 3.0, 3.1
 
 ## Notes
 
