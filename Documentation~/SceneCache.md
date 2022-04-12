@@ -49,6 +49,7 @@ This component handles the playback of an *.sc* file.
   > Playing *.sc* files located in folders outside the active Unity project is supported, 
   > but keep in mind that only the computer which stores those *.sc* files can play them.
 
+- **Info**: basic information of the *.sc* file.
 - **Playback Mode**  
 
   |**Playback Mode**           |**Description** |
