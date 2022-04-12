@@ -44,7 +44,7 @@ using one of the following options:
 |**Properties**           |**Description** |
 |:----------------------- |:---|
 | **Scene Cache Player**  | The [SceneCachePlayer](SceneCache.md#scene-cache-player) to be played in Timeline. |
-| **Snap To Frame**       | Sets if the playback time should snap to a frame and how. |
+| **Limited Animation**   | Overrides the [**Limited Animation**](SceneCache.md#limited-animation) properties of SceneCachePlayer. |
 
 ### Curve buttons
 
