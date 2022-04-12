@@ -44,7 +44,7 @@ using one of the following options:
 |**Properties**           |**Description** |
 |:----------------------- |:---|
 | **Scene Cache Player**  | The [SceneCachePlayer](SceneCache.md#scene-cache-player) to be played in Timeline. |
-| **Limited Animation**   | Overrides the [**Limited Animation**](SceneCache.md#limited-animation) properties of SceneCachePlayer. |
+| **Limited Animation**   | Overrides the [Limited Animation](SceneCache.md#limited-animation) properties of the SceneCachePlayer. |
 
 ### Curve buttons
 
