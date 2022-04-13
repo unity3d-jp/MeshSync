@@ -8,7 +8,7 @@ by performing the following steps:
 
 1. Open the Timeline window.
 1. In the Timeline Window, click **Unity.MeshSync > Scene Cache Track** 
-   to add a [SceneCacheTrack](scene-cache-track).
+   to add a [SceneCacheTrack](#scene-cache-track).
 1. Drag and drop the SceneCachePlayer **GameObject** to the newly added track, 
    which will automatically create a [SceneCachePlayableAsset](#scene-cache-playable-asset).
 
@@ -26,7 +26,7 @@ To view animation curves of Scene Cache clips, click the **Curves** icon next to
 
 ![](images/SceneCachePlayableAssetExtrapolation.png)
 
-When **Auto Activate Object** setting in [SceneCacheTrack](scene-cache-track) 
+When **Auto Activate Object** setting in [SceneCacheTrack](#scene-cache-track) 
 is turned off, then we can control the SceneCache playback in gaps 
 before or after SceneCache clips in a similar way to 
 [setting gap extrapolation for Animation clips](https://docs.unity3d.com/Packages/com.unity.timeline@1.7/manual/clp_gap_extrap.html)
