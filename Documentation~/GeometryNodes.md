@@ -11,7 +11,7 @@ To stop rendering instances of an object, click on the gameobject corresponding 
 ## Controlling instances
 You can control the rendering and world transform of instances by modifying the gameobject that is being instantiated.
 
-![Menu](images/GeometryNodesMove.gif)
+![Menu](images/LightProbesInstances.gif)
 
 Changes in the following properties are automatically applied on instances:
 * Transform: 
@@ -23,11 +23,15 @@ Changes in the following properties are automatically applied on instances:
     * Cast Shadows
     * Receive Shadows
     * Light Probes
+        * LightProbeUsage.Off is mapped to LightProbeUsage.Off
+        * Everything else is mapped to LightProbeUsage.CustomProvided
     * Proxy Volume Override
 * SkinnedMeshRenderer: 
     * Cast Shadows
     * Receive Shadows
     * Light Probes
+        * LightProbeUsage.Off is mapped to LightProbeUsage.Off
+        * Everything else is mapped to LightProbeUsage.CustomProvided
     * Proxy Volume Override
 
 ## Runtime-builds
