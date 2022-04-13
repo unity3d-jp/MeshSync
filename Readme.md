@@ -22,7 +22,7 @@ This allows developers to immediately see how things will look in-game while mod
 ## Supported Platforms
 
 - Windows 64 bit
-- Mac
+- Mac (Intel/Silicon)
 - Linux
 
 Please refer to the [installation](Documentation~/Installation.md) page to install MeshSync package.
