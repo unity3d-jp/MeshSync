@@ -17,7 +17,7 @@ by performing the following steps:
 1. In the Timeline Window, click **Unity.MeshSync > Scene Cache Track** 
    to add a [SceneCacheTrack](#scene-cache-track).
 1. Drag and drop the SceneCachePlayer **GameObject** to the newly added track, 
-   which will automatically create a [SceneCachePlayableAsset](#scene-cache-playable-asset).
+   which will automatically create a [SceneCachePlayableAsset](#scenecacheplayableasset).
 
 To view animation curves of Scene Cache clips, click the **Curves** icon next to the Track name.
  
@@ -44,7 +44,7 @@ using one of the following options:
 1. **Ping Pong**: loop the [Scene Cache](SceneCache.md) backwards, then forwards, and so forth, with the same clip duration.
 1. **Continue**: undefined.
 
-## Scene Cache Playable Asset
+## SceneCachePlayableAsset
 
 ![](images/SceneCachePlayableAsset.png)
 
