@@ -7,15 +7,17 @@ namespace Unity.MeshSync
 {
     internal class InstanceRenderingInfo
     {
-        public bool canRender => mesh != null && dividedInstances != null && materials != null && materials.Length > 0;
+        internal bool canRender => mesh != null && dividedInstances != null && materials != null && materials.Length > 0;
         
-        public Mesh mesh { get; private set; }
+        internal Mesh mesh { get; private set; }
         
-        public List<Matrix4x4[]> dividedInstances { get; private set; } = new List<Matrix4x4[]>();
+        internal MaterialPropertyBlock properties { get; private set; } = new MaterialPropertyBlock();
+        
+        internal List<Matrix4x4[]> dividedInstances { get; private set; } = new List<Matrix4x4[]>();
 
         private Material[] m_materials;
 
-        public Material[] materials
+        internal Material[] materials
         {
             get => m_materials;
             set
@@ -47,7 +49,7 @@ namespace Unity.MeshSync
         
         private Matrix4x4[] m_instances;
 
-        public Matrix4x4[] instances
+        internal Matrix4x4[] instances
         {
             get => m_instances;
             set
@@ -57,7 +59,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public GameObject gameObject
+        internal GameObject gameObject
         {
             get => m_gameObject;
             set
@@ -72,7 +74,7 @@ namespace Unity.MeshSync
         }
 
         private Renderer m_renderer;
-        public int layer
+        internal int layer
         {
             get
             {
@@ -83,7 +85,7 @@ namespace Unity.MeshSync
             } 
         }
 
-        public bool receiveShadows
+        internal bool receiveShadows
         {
             get
             {
@@ -94,7 +96,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public ShadowCastingMode shadowCastingMode
+        internal ShadowCastingMode shadowCastingMode
         {
             get
             {
@@ -106,19 +108,19 @@ namespace Unity.MeshSync
             }
         }
 
-        public LightProbeUsage lightProbeUsage
+        internal LightProbeUsage lightProbeUsage
         {
             get
             {
-                if (m_renderer == null) {
-                    return LightProbeUsage.BlendProbes;
+                if (m_renderer == null || m_renderer.lightProbeUsage == LightProbeUsage.Off) {
+                    return LightProbeUsage.Off;
                 }
 
-                return m_renderer.lightProbeUsage;
+                return LightProbeUsage.CustomProvided;
             }
         }
 
-        public LightProbeProxyVolume lightProbeProxyVolume
+        internal LightProbeProxyVolume lightProbeProxyVolume
         {
             get
             {
@@ -153,17 +155,23 @@ namespace Unity.MeshSync
                 return gameObject.transform.localToWorldMatrix;
             }
         }
-            
-        public void UpdateDividedInstances()
+
+        private bool positionsChanged => m_dirtyInstances || m_cachedWorldMatrix != this.worldMatrix;
+
+        internal void PrepareForDrawing()
         {
-            // Avoid recalculation if the instances are the same
-            // and the world matrix has not changed.
-            if (!m_dirtyInstances && m_cachedWorldMatrix == this.worldMatrix)
+            if (!positionsChanged)
                 return;
+            
+            UpdateDividedInstances();
+            UpdateMaterialProperties();
             
             m_dirtyInstances = false;
             m_cachedWorldMatrix = this.worldMatrix;
-            
+        }
+        
+        private void UpdateDividedInstances()
+        {
             dividedInstances.Clear();
             
             if (instances == null)
@@ -179,6 +187,30 @@ namespace Unity.MeshSync
             if (remainder > 0) {
                 AddInstances(remainder, iterations, maxSize);
             }
+        }
+
+        private void UpdateMaterialProperties()
+        {
+            var count = instances.Length;
+            var lightProbes = new SphericalHarmonicsL2[count];
+            var occlusionProbes = new Vector4[count];
+            var positions = new Vector3[count];
+
+            var positionIndex = 0;
+            for (var batchIndex = 0; batchIndex < dividedInstances.Count; batchIndex++)
+            {
+                var batch = dividedInstances[batchIndex];
+                for (var i = 0; i < batch.Length; i++)
+                {
+                    var instance = batch[i];
+                    positions[positionIndex++] = instance.GetColumn(3);
+                }
+            }
+
+            LightProbes.CalculateInterpolatedLightAndOcclusionProbes(positions, lightProbes, occlusionProbes);
+            
+            properties.CopySHCoefficientArraysFrom(lightProbes);
+            properties.CopyProbeOcclusionArrayFrom(occlusionProbes);
         }
 
         private void AddInstances(int size, int iteration, int maxSize)

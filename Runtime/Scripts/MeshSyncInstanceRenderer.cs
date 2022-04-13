@@ -10,7 +10,7 @@ namespace Unity.MeshSync{
     [ExecuteInEditMode]
     internal class MeshSyncInstanceRenderer : MonoBehaviour
     {
-        private readonly InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
+        private InstanceRenderingInfo m_renderingInfo;
 
         [HideInInspector]
         [SerializeField] private Matrix4x4[] transforms;
@@ -18,6 +18,10 @@ namespace Unity.MeshSync{
         
         void OnEnable()
         {
+            if (m_renderingInfo == null)
+            {
+                m_renderingInfo = new InstanceRenderingInfo();
+            }
         
             if (GraphicsSettings.currentRenderPipeline == null)
             {
@@ -110,17 +114,17 @@ namespace Unity.MeshSync{
             if (!info.canRender)
                 return;
             
-            info.UpdateDividedInstances();
+            info.PrepareForDrawing();
             
             DrawOnCamera(info, targetCamera);
         }
         
-        private void Draw(InstanceRenderingInfo entry, Camera[] cameras)
+        private void Draw(InstanceRenderingInfo info, Camera[] cameras)
         {
-            if (!entry.canRender)
+            if (!info.canRender)
                 return;
             
-            entry.UpdateDividedInstances();
+            info.PrepareForDrawing();
 
             if (cameras == null)
                 return;
@@ -131,7 +135,7 @@ namespace Unity.MeshSync{
                 if (targetCamera == null)
                     continue;
                 
-                DrawOnCamera(entry, targetCamera);
+                DrawOnCamera(info, targetCamera);
             }
         }
 
@@ -158,7 +162,8 @@ namespace Unity.MeshSync{
                         entry.receiveShadows,
                         entry.shadowCastingMode,
                         entry.lightProbeUsage,
-                        entry.lightProbeProxyVolume);
+                        entry.lightProbeProxyVolume,
+                        entry.properties);
                 }
             }
         }
@@ -173,7 +178,8 @@ namespace Unity.MeshSync{
             bool receiveShadows,
             ShadowCastingMode shadowCastingMode,
             LightProbeUsage lightProbeUsage, 
-            LightProbeProxyVolume lightProbeProxyVolume)
+            LightProbeProxyVolume lightProbeProxyVolume,
+            MaterialPropertyBlock properties)
         {
             if (targetCamera == null)
                 return;
@@ -184,7 +190,7 @@ namespace Unity.MeshSync{
                 material:material, 
                 matrices:matrices, 
                 count:matrices.Length, 
-                properties:null, 
+                properties:properties, 
                 castShadows:shadowCastingMode, 
                 receiveShadows:receiveShadows,
                 layer:layer, 
