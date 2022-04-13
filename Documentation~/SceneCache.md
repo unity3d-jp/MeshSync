@@ -49,13 +49,22 @@ This component handles the playback of an *.sc* file.
   > Playing *.sc* files located in folders outside the active Unity project is supported, 
   > but keep in mind that only the computer which stores those *.sc* files can play them.
 
-- **Time**: shows the playback time.  
-  Editing this property will update the animation, and it will also be updated automatically by 
-  AnimationClip or Timeline.  
+- **Info**: basic information of the *.sc* file.
+- **Playback Mode**  
 
-- **Interpolation**  
-  Smoothens animations by interpolating the meshes and transforms between neighboring frames.   
-  Note that meshes are only interpolated if the topologies match (the vertex indexes remain unchanged).
+  |**Playback Mode**           |**Description** |
+  |:----------------------- |:---|
+  | **Snap to Previous Frame** | Selects the last frame which has been passed by the playback time. |
+  | **Snap to Nearest Frame** (Default) | Selects the frame which is nearest to the playback time. |
+  | **Interpolation**          | Smoothens animations by interpolating meshes and transforms between nearest neighboring frames. <br/> Note that meshes are only interpolated if the topologies match (the vertex indexes remain unchanged). |
+
+  - **Time**: the playback time. 
+  - **Frame**: the selected frame of the *.sc* file.   
+    Disabled if the **Playback Mode** is set to **Interpolation**.
+
+- **Limited Animation**: skips *.sc* frames during playback if enabled.
+  - **Num Frames to Hold**: the duration in number of frames that a selected frame will be hold.
+  - **Frame Offset**: an offset value to change which frames get selected when applying **Limited Animation**.
 
 Please refer to [common properties](CommonMeshSyncProperties.md) for details on the other properties.
 
