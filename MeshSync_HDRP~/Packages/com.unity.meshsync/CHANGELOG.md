@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+
+## [0.12.9-preview] - 2022-04-14
+
+### Added
+* doc: mention support for installing Blender 3.0 and 3.1 plugins
+* doc: mention support for Mac Silicon 
+* doc: remove the section on Animation Tweaks
+* doc: update the documentation of SceneCachePlayer
+* doc: update the documentation of SceneCache in Timeline
+
+### Fixed
+* fix: check if a record doesn't have Mesh before assigning bounds/blendShape 
+* fix: curves of SceneCache were always extracted
+
 ## [0.12.8-preview] - 2022-04-08
 
 ### Fixed
