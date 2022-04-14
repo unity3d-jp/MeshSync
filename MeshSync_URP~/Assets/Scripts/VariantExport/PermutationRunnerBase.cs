@@ -129,7 +129,7 @@ namespace Unity.MeshSync.VariantExport
             // Make a copy, apply the prefab-specific save location and save any changed assets to that:
             var prefabSave = UnityEngine.Object.Instantiate(server.gameObject);
             var prefabServer = prefabSave.GetComponent<MeshSyncServer>();
-            prefabServer.enabled = false;
+            UnityEngine.Object.DestroyImmediate(prefabServer);
 
             var prefabAssetStorePath = Path.Combine(outputFilePath, $"{regenerator.SaveFile}_{counter}_assets");
 

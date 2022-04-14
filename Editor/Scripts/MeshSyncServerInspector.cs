@@ -27,7 +27,6 @@ internal partial class MeshSyncServerInspector : BaseMeshSyncInspector   {
         DrawDefaultMaterialList(m_meshSyncServer);
         DrawExportAssets(m_meshSyncServer);
         DrawInstanceSettings(m_meshSyncServer);
-        DrawSliders(m_meshSyncServer);
         DrawPluginVersion();
 
         PrefabUtility.RecordPrefabInstancePropertyModifications(m_meshSyncServer);
@@ -93,9 +92,9 @@ internal partial class MeshSyncServerInspector : BaseMeshSyncInspector   {
         style.fontStyle = FontStyle.Bold;
         t.foldInstanceSettings = EditorGUILayout.Foldout(t.foldInstanceSettings, "Instances", true, style);
         if (t.foldInstanceSettings)
-        { 
+        {
+            t.InstanceHandling = (BaseMeshSync.InstanceHandlingType)EditorGUILayout.EnumPopup("Instance handling", t.InstanceHandling);
         }
-        
     }
 
 //----------------------------------------------------------------------------------------------------------------------                

@@ -357,16 +357,23 @@ namespace Unity.MeshSync
     [Serializable]
     partial class BaseMeshSync
     {
-        bool m_foldBlenderSettings;
-
-        internal bool foldBlenderSettings
+        public enum InstanceHandlingType
         {
-            get { return m_foldBlenderSettings; }
-            set { m_foldBlenderSettings = value; }
+            InstanceRenderer,
+            Prefabs
         }
 
-        [SerializeField]
-        public List<PropertyInfoDataWrapper> propertyInfos = new List<PropertyInfoDataWrapper>();
+        public InstanceHandlingType InstanceHandling = InstanceHandlingType.InstanceRenderer;
+
+        public List<PropertyInfoDataWrapper> propertyInfos
+        {
+            get
+            {
+                var propertyComponent = Misc.GetOrAddComponent<MeshSyncServerProperties>(gameObject);
+
+                return propertyComponent.propertyInfos;
+            }
+        }
 
         void UpdateProperties(SceneData scene)
         {

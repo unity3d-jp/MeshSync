@@ -55,7 +55,7 @@ namespace Unity.MeshSync.Editor
             var previousRunMode = server.m_DCCInterop != null ? server.m_DCCInterop.runMode : IDCCLauncher.RunMode.GUI;
 
             server.m_DCCInterop?.Cleanup();
-            server.m_DCCInterop = MeshSyncServerInspector.GetLauncherForAsset(asset);
+            server.m_DCCInterop = MeshSyncServerPropertiesInspector.GetLauncherForAsset(asset);
             server.m_DCCInterop.runMode = previousRunMode;
             server.m_DCCInterop.OpenDCCTool(asset);
         }

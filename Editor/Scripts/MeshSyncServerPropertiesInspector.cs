@@ -37,13 +37,6 @@ namespace Unity.MeshSync.Editor
 
                 case PropertyInfoData.Type.IntArray:
                     {
-                        // TODO: Use custom IntVector here maybe:
-                        //var a = prop.GetValue<int[]>();
-                        //if (prop.arrayLength == 3)
-                        //{
-                        //    var v = new Vector3(a[0], a[1], a[2]);
-                        //    newValue = EditorGUILayout.Vector3Field(prop.name, v);
-                        //}
                         newValue = DrawArrayFieldsInt(prop, newValue);
                         break;
                     }
@@ -127,12 +120,12 @@ namespace Unity.MeshSync.Editor
             {
                 case 2:
                     {
-                        newValue = EditorGUILayout.Vector2Field(prop.name, new Vector2(a[0], a[1]));
+                        newValue = EditorGUILayout.Vector2IntField(prop.name, new Vector2Int(a[0], a[1]));
                         break;
                     }
                 case 3:
                     {
-                        newValue = EditorGUILayout.Vector3Field(prop.name, new Vector3(a[0], a[1], a[2]));
+                        newValue = EditorGUILayout.Vector3IntField(prop.name, new Vector3Int(a[0], a[1], a[2]));
                         break;
                     }
                 case 4:
@@ -177,7 +170,8 @@ namespace Unity.MeshSync.Editor
     }
 
     // Partial class for now to make merging code easier later.
-    partial class MeshSyncServerInspector
+    [CustomEditor(typeof(MeshSyncServerProperties))]
+    class MeshSyncServerPropertiesInspector : UnityEditor.Editor
     {
         public static IDCCLauncher GetLauncherForAsset(UnityEngine.Object asset)
         {
@@ -186,30 +180,31 @@ namespace Unity.MeshSync.Editor
             return new BlenderLauncher();
         }
 
-        void DrawSliders(MeshSyncServer server)
+        public override void OnInspectorGUI()
         {
-            var style = EditorStyles.foldout;
-            style.fontStyle = FontStyle.Bold;
-            server.foldBlenderSettings = EditorGUILayout.Foldout(server.foldBlenderSettings, "Blender settings", true, style);
-            if (!server.foldBlenderSettings)
-            {
-                return;
-            }
+            var propertiesHolder = (MeshSyncServerProperties)target;
 
-            GUILayout.BeginHorizontal();
-            server.m_DCCAsset = EditorGUILayout.ObjectField("Blend file:", server.m_DCCAsset, typeof(UnityEngine.Object), true);
-            if (server.m_DCCAsset != null)
+            var server = propertiesHolder.Server;
+
+            if (server != null)
             {
-                if (GUILayout.Button("Open"))
+                GUILayout.BeginHorizontal();
+
+                server.m_DCCAsset = EditorGUILayout.ObjectField("Blend file:", server.m_DCCAsset, typeof(UnityEngine.Object), true);
+                if (server.m_DCCAsset != null)
                 {
-                    BlenderLauncher.OpenBlendFile(server, server.m_DCCAsset);
+                    if (GUILayout.Button("Open"))
+                    {
+                        BlenderLauncher.OpenBlendFile(server, server.m_DCCAsset);
+                    }
                 }
+
+                GUILayout.EndHorizontal();
+
+                server.m_DCCInterop?.DrawDCCToolVersion(server);
             }
-            GUILayout.EndHorizontal();
 
-            server.m_DCCInterop?.DrawDCCToolVersion(server);
-
-            var properties = server.propertyInfos;
+            var properties = propertiesHolder.propertyInfos;
 
             for (int i = 0; i < properties.Count; i++)
             {

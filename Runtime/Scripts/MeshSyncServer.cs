@@ -536,14 +536,13 @@ public partial class MeshSyncServer : BaseMeshSync {
 
         m_DCCInterop?.Cleanup();
 
-        if (enabled)
-        {
-            StopServer();
-        }
+        StopServer();
     }
 
     ~MeshSyncServer()
     {
+        StopServer();
+
         m_DCCInterop?.Cleanup();
         m_DCCInterop = null;
     }

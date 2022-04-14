@@ -32,6 +32,7 @@ namespace Unity.MeshSync
         [SerializeField]
         Vector3[] handles_right;
 
+        [SerializeField]
         public int NumPoints { get; private set; }
 
         public void Deserialize(CurvesData data, int index, PinnedList<Vector3> m_tmpV3)
