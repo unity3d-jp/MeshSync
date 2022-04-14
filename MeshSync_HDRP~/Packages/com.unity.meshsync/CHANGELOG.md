@@ -1,6 +1,36 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.12.7-preview] - 2022-04-06
+
+### Changed
+* deps: use com.unity.film-internal-utilities@0.14.1-preview 
+
+### Fixed
+* fix: ensure the correct clip is the one setting SceneCache timing 
+
+## [0.12.6-preview] - 2022-04-01
+
+### Changed
+* change: only update the duration of SceneCachePlayableAsset when creating a new clip
+
+### Fixed
+* fix: the left SceneCachePlayableAsset clip after split was not updated 
+* fix: copy LimitedAnimation values properly to duplicated SceneCachePlayableAsset
+* fix: importing previous version of LimitedAnimation did not work
+
+
+## [0.12.5-preview] - 2022-03-23
+
+### Added
+* feat: add an option in SceneCacheTrack to activate SceneCachePlayer objects automatically
+
+### Fixed
+* fix: build error caused by resetting the animation time of SceneCaache
+* fix: null check before moving SceneCachePlayableAsset to a track
+* fix: prevent cloning a SceneCachePlayableAsset from reinitializing the clip
+* fix: keep active SceneCache object to active when it is referred in multiple tracks
+ 
 ## [0.12.4-preview] - 2022-03-22
 
 ### Fixed

@@ -43,6 +43,7 @@ This object has [MeshSyncServer](Documentation~/MeshSyncServer.md) component tha
       * [SceneCache in Timeline](Documentation~/SceneCacheInTimeline.md)
 * [Project Settings](Documentation~/ProjectSettings.md): to configure default settings for MeshSync components. 
 * [Preferences](Documentation~/Preferences.md): to configure DCC Tools integration.
+* [Geometry Nodes](Documentation~/GeometryNodes.md) : to sync geometry nodes from Blender to Unity in real time.
 
 <img src="Documentation~/images/Preferences.png" height=360>
 

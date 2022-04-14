@@ -28,11 +28,11 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         if (null == clipData)
             return;
 
-        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
+        SceneCachePlayer scPlayer = m_scPlayableAsset.GetSceneCachePlayer();
         if (null == scPlayer)
             return;
 
-        DrawLimitedAnimationGUI(clipData);
+        DrawLimitedAnimationGUI(m_scPlayableAsset);
         
         {
             // Curve Operations
@@ -42,11 +42,11 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
             const float BUTTON_X     = 30;
             const float BUTTON_WIDTH = 160f;
             if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"To Linear")) {
-                clipData.SetCurveToLinear();
+                m_scPlayableAsset.SetCurveToLinearInEditor();
             }
             
             if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"Apply Original")) {
-                clipData.ApplyOriginalSceneCacheCurve();
+                m_scPlayableAsset.ApplyOriginalSceneCacheCurveInEditor();
             }
             
             GUILayout.EndVertical();                    
@@ -56,8 +56,9 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    private void DrawLimitedAnimationGUI(SceneCacheClipData clipData) {
-        SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
+    
+    private void DrawLimitedAnimationGUI(SceneCachePlayableAsset scPlayableAsset) {
+        SceneCachePlayer scPlayer = scPlayableAsset.GetSceneCachePlayer();
         
         bool disableScope = null == scPlayer;
         
@@ -80,7 +81,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         }
 
         using (new EditorGUI.DisabledScope(disableScope)) {
-            SceneCachePlayerEditorUtility.DrawLimitedAnimationGUI(clipData.GetOverrideLimitedAnimationController(),
+            SceneCachePlayerEditorUtility.DrawLimitedAnimationGUI(scPlayableAsset.GetOverrideLimitedAnimationController(),
                 m_scPlayableAsset, scPlayer);
         }
         
@@ -88,7 +89,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------
     private bool DrawGUIButton(float leftX, float width, string buttonText) {
-        Rect rect = GUILayoutUtility.GetRect(new GUIContent("Button"),GUI.skin.button, GUILayout.Width(width));
+        Rect rect = UnityEngine.GUILayoutUtility.GetRect(new GUIContent("Button"),GUI.skin.button, GUILayout.Width(width));
         rect.x += leftX;
         return (GUI.Button(rect, buttonText, GUI.skin.button));        
     }
