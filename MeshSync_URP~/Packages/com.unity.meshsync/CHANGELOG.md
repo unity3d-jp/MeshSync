@@ -11,6 +11,9 @@ All notable changes to the MeshSync package will be documented in this file.
 * doc: update the documentation of SceneCachePlayer
 * doc: update the documentation of SceneCache in Timeline
 
+### Changed
+* deps: use com.unity.film-internal-utilities@0.14.2-preview
+
 ### Fixed
 * fix: check if a record doesn't have Mesh before assigning bounds/blendShape 
 * fix: curves of SceneCache were always extracted
