@@ -227,7 +227,7 @@ public partial class MeshSyncServer : BaseMeshSync {
                 case NetworkMessageType.Query:
                     OnRecvQuery((QueryMessage)data);
                     break;
-                case NetworkMessageType.RequestProperties:
+                case NetworkMessageType.RequestServerInitiatedMessage:
                     OnRecvPropertyRequest();
                     break;
                 default:
@@ -535,7 +535,11 @@ public partial class MeshSyncServer : BaseMeshSync {
         base.OnDestroy();
 
         m_DCCInterop?.Cleanup();
-        StopServer();
+
+        if (enabled)
+        {
+            StopServer();
+        }
     }
 
     ~MeshSyncServer()

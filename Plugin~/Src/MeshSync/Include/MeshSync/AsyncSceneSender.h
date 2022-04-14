@@ -28,11 +28,11 @@ public:
     bool isExporting() override;
     void wait() override;
     void kick() override;
-    void requestProperties();
+    void requestServerInitiatedMessage();
 
 private:
     void send();
-    void requestPropertiesImpl();
+    void requestServerInitiatedMessageImpl();
 
     std::future<void> m_future;
     std::future<void> m_request_properties_future;

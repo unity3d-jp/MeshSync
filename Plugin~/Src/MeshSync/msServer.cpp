@@ -144,13 +144,13 @@ int Server::processMessages(const MessageHandler& handler)
         else if (auto q = std::dynamic_pointer_cast<QueryMessage>(mes)) {
             handler(Message::Type::Query, *mes);
         }
-        else if (auto req = std::dynamic_pointer_cast<RequestPropertiesMessage>(mes)) {
+        else if (auto req = std::dynamic_pointer_cast<ServerInitiatedMessage>(mes)) {
             lock_t lock(m_properties_mutex);
             if (m_current_properties_request) {
                 m_current_properties_request->cancelled = true;
             }
             m_current_properties_request = req;
-            handler(Message::Type::RequestProperties, *mes);
+            handler(Message::Type::RequestServerInitiatedMessage, *mes);
         }
 
     next:
@@ -616,9 +616,9 @@ void Server::recvPoll(HTTPServerRequest& request, HTTPServerResponse& response)
     }
 }
 
-void Server::recvRequestProperties(HTTPServerRequest& request, HTTPServerResponse& response)
+void Server::recvServerInitiatedRequest(HTTPServerRequest& request, HTTPServerResponse& response)
 {
-    auto mes = std::make_shared<RequestPropertiesMessage>();
+    auto mes = std::make_shared<ServerInitiatedMessage>();
     queueMessage(mes);
 
     // wait for data arrive
@@ -634,7 +634,7 @@ void Server::recvRequestProperties(HTTPServerRequest& request, HTTPServerRespons
     // serve data
     response.set("Cache-Control", "no-store, must-revalidate");
     
-    auto reqResponse = RequestPropertiesResponse();
+    auto reqResponse = ServerInitiatedMessageResponse();
 
     for (auto prop : m_pending_properties)
     {

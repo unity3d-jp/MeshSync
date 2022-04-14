@@ -425,5 +425,44 @@ namespace Unity.MeshSync
         {
             changedMeshes = other.changedMeshes;
         }
+
+        private EntityRecord UpdateCurveEntity(CurvesData data, MeshSyncPlayerConfig config)
+        {
+            TransformData dtrans = data.transform;
+            EntityRecord rec = UpdateTransformEntity(dtrans, config);
+
+            GameObject go = rec.go;
+            Transform trans = go.transform;
+
+            var curve = rec.curve;
+
+            if (curve == null)
+            {
+                curve = rec.curve = Misc.GetOrAddComponent<Curve>(trans.gameObject);
+                rec.curveRenderer = Misc.GetOrAddComponent<CurveRenderer>(trans.gameObject);
+            }
+
+            var numSplines = data.numSplines;
+
+            if (curve.splines == null ||
+                curve.splines.Length != numSplines)
+            {
+                Array.Resize(ref curve.splines, numSplines);
+            }
+
+            for (int i = 0; i < numSplines; i++)
+            {
+                var spline = curve.splines[i];
+                if (spline == null)
+                {
+                    spline = new CurveSpline();
+                    curve.splines[i] = spline;
+                }
+
+                spline.Deserialize(data, i, m_tmpV3);
+            }
+
+            return rec;
+        }
     }
 }

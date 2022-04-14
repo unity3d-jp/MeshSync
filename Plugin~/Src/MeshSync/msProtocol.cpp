@@ -166,17 +166,17 @@ void PollMessage::deserialize(std::istream& is)
     read(is, poll_type);
 }
 
-RequestPropertiesMessage::RequestPropertiesMessage() {}
-void RequestPropertiesMessage::serialize(std::ostream& os) const { super::serialize(os); }
-void RequestPropertiesMessage::deserialize(std::istream& is) { super::deserialize(is); }
+ServerInitiatedMessage::ServerInitiatedMessage() {}
+void ServerInitiatedMessage::serialize(std::ostream& os) const { super::serialize(os); }
+void ServerInitiatedMessage::deserialize(std::istream& is) { super::deserialize(is); }
 
 
-void RequestPropertiesResponse::serialize(std::ostream& os) const
+void ServerInitiatedMessageResponse::serialize(std::ostream& os) const
 {
     write(os, properties);
 }
 
-void RequestPropertiesResponse::deserialize(std::istream& is)
+void ServerInitiatedMessageResponse::deserialize(std::istream& is)
 {
     read(is, properties);
 }

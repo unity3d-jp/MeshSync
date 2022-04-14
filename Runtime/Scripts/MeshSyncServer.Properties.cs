@@ -24,19 +24,37 @@
 
             lock (PropertyInfoDataWrapper.PropertyUpdateLock)
             {
-                bool sendProps = false;
+                bool sendChanges = false;
 
+                // Send updated properties:
                 foreach (var prop in propertyInfos)
                 {
                     if (prop.IsDirty)
                     {
                         m_server.SendProperty(prop);
                         prop.IsDirty = false;
-                        sendProps = true;
+                        sendChanges = true;
                     }
                 }
 
-                if (sendProps)
+                // Send updated curves:
+                foreach (var kvp in GetClientObjects())
+                {
+                    var entity = kvp.Value;
+                    if (entity.dataType != EntityType.Curve)
+                    {
+                        continue;
+                    }
+
+                    if (entity.curve.IsDirty)
+                    {
+                        m_server.SendCurve(entity);
+                        entity.curve.IsDirty = false;
+                        sendChanges = true;
+                    }
+                }
+
+                if (sendChanges)
                 {
                     CurrentPropertiesState = PropertiesState.Sending;
                     onSceneUpdateEnd -= SceneUpdated;

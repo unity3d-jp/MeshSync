@@ -81,7 +81,7 @@ void ServerRequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerR
         m_server->serveText(response, msPluginVersionStr);
     }
     else if (StartsWith(uri, "request_properties")) {
-        m_server->recvRequestProperties(request, response);
+        m_server->recvServerInitiatedRequest(request, response);
     }
     else {
         // note: Poco handles commas in URI

@@ -6,6 +6,7 @@
 #include "MeshSync/SceneGraph/msLight.h"
 #include "MeshSync/SceneGraph/msMesh.h"
 #include "MeshSync/SceneGraph/msPoints.h"
+#include "MeshSync/SceneGraph/msCurve.h"
 
 namespace ms {
 
@@ -26,6 +27,9 @@ void EntityConverter::convert(Entity &e)
         break;
     case EntityType::Points:
         convertPoints(dynamic_cast<Points&>(e));
+        break;
+    case EntityType::Curve:
+        convertCurve(dynamic_cast<Curve&>(e));
         break;
     default:
         break;
@@ -92,6 +96,16 @@ void ScaleConverter::convertMesh(Mesh &e)
             mu::Scale(frame->points.data(), m_scale, frame->points.size());
         }
     }
+}
+
+void ScaleConverter::convertCurve(Curve& e){
+    convertTransform(e);
+ 
+    for (auto& spline : e.splines) {
+        mu::Scale(spline->cos.data(), m_scale, spline->cos.size());
+        mu::Scale(spline->handles_left.data(), m_scale, spline->handles_left.size());
+        mu::Scale(spline->handles_right.data(), m_scale, spline->handles_right.size());
+    } 
 }
 
 void ScaleConverter::convertPoints(Points &e)
@@ -165,6 +179,16 @@ void FlipX_HandednessCorrector::convertMesh(Mesh &e)
             for (auto& v : frame->normals) { v = flip_x(v); }
             for (auto& v : frame->tangents) { v = flip_x(v); }
         }
+    }
+}
+
+void FlipX_HandednessCorrector::convertCurve(Curve& e) {
+    convertTransform(e);
+
+    for (auto& spline : e.splines) {
+        mu::InvertX(spline->cos.data(), spline->cos.size());
+        mu::InvertX(spline->handles_left.data(), spline->handles_left.size());
+        mu::InvertX(spline->handles_right.data(), spline->handles_right.size());
     }
 }
 
@@ -258,6 +282,18 @@ void FlipYZ_ZUpCorrector::convertMesh(Mesh &e)
     }
 }
 
+void FlipYZ_ZUpCorrector::convertCurve(Curve& e) {
+    convertTransform(e);
+
+    auto convert = [this](auto& v) { return flip_z(swap_yz(v)); };
+    
+    for (auto& spline : e.splines) {
+        for (auto& v : spline->cos) v = convert(v);
+        for (auto& v : spline->handles_left) v = convert(v);
+        for (auto& v : spline->handles_right) v = convert(v); 
+    }
+}
+
 void FlipYZ_ZUpCorrector::convertPoints(Points &e)
 {
     convertTransform(e);
@@ -333,6 +369,11 @@ void RotateX_ZUpCorrector::convertLight(Light &e)
 }
 
 void RotateX_ZUpCorrector::convertMesh(Mesh &e)
+{
+    convertTransform(e);
+}
+
+void RotateX_ZUpCorrector::convertCurve(Curve& e)
 {
     convertTransform(e);
 }

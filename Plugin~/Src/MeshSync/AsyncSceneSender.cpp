@@ -71,20 +71,20 @@ void AsyncSceneSender::kick()
     m_future = std::async(std::launch::async, [this]() { send(); });
 }
 
-void AsyncSceneSender::requestProperties()
+void AsyncSceneSender::requestServerInitiatedMessage()
 {
     // If we're already requesting properties, don't run it again:
     if (m_request_properties_future.valid() && m_request_properties_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
         return;
 
     m_request_properties_future = std::async(std::launch::async, [this]() {
-        if (!destroyed && !propertyInfos.empty()) {
-            requestPropertiesImpl();
+        if (!destroyed) {// && !propertyInfos.empty()) {
+            requestServerInitiatedMessageImpl();
         }
     });
 }
 
-void AsyncSceneSender::requestPropertiesImpl() {
+void AsyncSceneSender::requestServerInitiatedMessageImpl() {
     auto setup_message = [this](ms::Message& mes) {
         mes.session_id = session_id;
         mes.message_id = message_count++;
@@ -95,7 +95,7 @@ void AsyncSceneSender::requestPropertiesImpl() {
 
     m_properties_client = &client;
 
-    ms::RequestPropertiesMessage mes;
+    ms::ServerInitiatedMessage mes;
     setup_message(mes);
 
     bool succeeded = client.send(mes);

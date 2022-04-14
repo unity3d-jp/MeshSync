@@ -1508,6 +1508,7 @@ internal enum EntityType {
     Light,
     Mesh,
     Points,
+    Curve,
 };
 
 internal struct TransformDataFlags {
@@ -1681,6 +1682,15 @@ internal struct TransformData {
     /// <returns>The newly created PointsData</returns>
     public static explicit operator PointsData(TransformData v) {
         return new PointsData { self = v.self };
+    }
+
+    /// <summary>
+    /// Creates a new CurvesData and assign the parameter to it
+    /// </summary>
+    /// <param name="v"></param>
+    /// <returns>The newly created MeshData</returns>
+    public static explicit operator CurvesData(TransformData v) {
+        return new CurvesData { self = v.self };
     }
 
     internal static TransformData Create() {
@@ -2739,14 +2749,72 @@ internal struct PointsData {
     }
 }
 
+    #endregion
+
+    #region Curve
+    /// <summary>
+    /// CurvesData
+    /// </summary>
+    [StructLayout(LayoutKind.Explicit)]
+    internal struct CurvesData
+    {
+        #region internal
+
+        [FieldOffset(0)] public IntPtr self;
+        [FieldOffset(0)] public TransformData transform;
+
+        [DllImport(Lib.name)]
+        static extern int msCurveGetNumSplines(IntPtr self);
+
+        [DllImport(Lib.name)]
+        static extern int msCurveGetNumSplinePoints(IntPtr self, int index);
+
+        [DllImport(Lib.name)]
+        static extern int msCurveReadSplineCos(IntPtr self, int index, IntPtr dst);
+
+        [DllImport(Lib.name)]
+        static extern int msCurveReadSplineHandlesLeft(IntPtr self, int index, IntPtr dst);
+
+        [DllImport(Lib.name)]
+        static extern int msCurveReadSplineHandlesRight(IntPtr self, int index, IntPtr dst);
+
+        #endregion
+
+
+        public int numSplines
+        {
+            get { return msCurveGetNumSplines(self); }
+        }
+
+        public int GetNumSplinePoints(int index)
+        {
+            return msCurveGetNumSplinePoints(self, index);
+        }
+
+        public void ReadSplineCos(int index, PinnedList<Vector3> dst)
+        {
+            msCurveReadSplineCos(self, index, dst);
+        }
+
+        public void ReadSplineHandlesLeft(int index, PinnedList<Vector3> dst)
+        {
+            msCurveReadSplineHandlesLeft(self, index, dst);
+        }
+
+        public void ReadSplineHandlesRight(int index, PinnedList<Vector3> dst)
+        {
+            msCurveReadSplineHandlesRight(self, index, dst);
+        }
+    }
+    
 #endregion
 
 #endregion
 
 
-#region Constraints
+    #region Constraints
 
-internal struct ConstraintData {
+    internal struct ConstraintData {
     #region internal
 
     public IntPtr self;

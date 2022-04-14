@@ -23,6 +23,7 @@ public:
     virtual void convertLight(Light& v) = 0;
     virtual void convertMesh(Mesh& v) = 0;
     virtual void convertPoints(Points& v) = 0;
+    virtual void convertCurve(Curve& v) = 0;
 
     virtual void convert(AnimationClip& v);
     virtual void convert(Animation& v);
@@ -43,6 +44,7 @@ public:
     void convertLight(Light& v) override;
     void convertMesh(Mesh& v) override;
     void convertPoints(Points& v) override;
+    void convertCurve(Curve& v) override;
 
     void convertAnimationCurve(AnimationCurve& v) override;
 
@@ -62,6 +64,7 @@ public:
     void convertLight(Light& v) override;
     void convertMesh(Mesh& v) override;
     void convertPoints(Points& v) override;
+    void convertCurve(Curve& v) override;
 
     void convertAnimationCurve(AnimationCurve& v) override;
 };
@@ -78,6 +81,7 @@ public:
     void convertLight(Light& v) override;
     void convertMesh(Mesh& v) override;
     void convertPoints(Points& v) override;
+    void convertCurve(Curve& v) override;
 
     void convert(Animation &anim) override;
 };
@@ -96,6 +100,7 @@ public:
     void convertLight(Light& v) override;
     void convertMesh(Mesh& v) override;
     void convertPoints(Points& v) override;
+    void convertCurve(Curve& v) override;
 
     void convert(Animation& v)override;
     void convertAnimationCurve(AnimationCurve& v) override;

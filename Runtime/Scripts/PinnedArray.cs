@@ -249,6 +249,18 @@ internal class PinnedList<T> : IDisposable, IEnumerable<T> where T : struct {
         System.Array.Copy(sourceData, m_data, count);
     }
 
+    public void CopyTo(ref T[] dest)
+    {
+        int count = Array.Length;
+
+        if (dest == null || dest.Length != count)
+        {
+            dest = new T[count];
+        }
+
+        System.Array.Copy(Array, dest, count);
+    }
+
     public void Dispose() {
         Dispose(true);
         GC.SuppressFinalize(this);

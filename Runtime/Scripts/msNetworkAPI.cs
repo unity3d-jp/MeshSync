@@ -115,7 +115,10 @@ internal struct Server {
     static extern void msServerSendPropertyString(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, string newValue, int length);
 
     [DllImport(Lib.name)]
-    static extern void msServerPropertiesReady(IntPtr self);
+    static extern void msServerSendCurve(IntPtr self, int hostID);        
+
+    [DllImport(Lib.name)]
+    static extern void msServerInitiatedResponseReady(IntPtr self);
 
     [DllImport(Lib.name)]
     static extern bool msServerPropertiesCanReceiveProperties(IntPtr self);        
@@ -167,6 +170,14 @@ internal struct Server {
         set { msServerSetScreenshotFilePath(self, value); }
     }
 
+
+        public void SendCurve(EntityRecord entity)
+        {
+            Debug.Assert(entity.dataType == EntityType.Curve);
+            // TODO:
+            //msServerSendCurve(self, entity.tra)
+        }
+
     public void SendProperty(PropertyInfoDataWrapper prop)
     {
         switch (prop.type)
@@ -199,7 +210,7 @@ internal struct Server {
 
     public void SendChangedProperties()
     {
-        msServerPropertiesReady(self);
+        msServerInitiatedResponseReady(self);
     }
 
     public bool CanServerReceiveProperties()

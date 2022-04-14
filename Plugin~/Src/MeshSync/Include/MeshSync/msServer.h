@@ -22,7 +22,7 @@ msDeclClassPtr(PollMessage)
 msDeclClassPtr(SetMessage)
 msDeclClassPtr(GetMessage)
 msDeclClassPtr(ScreenshotMessage)
-msDeclClassPtr(RequestPropertiesMessage)
+msDeclClassPtr(ServerInitiatedMessage)
 msDeclClassPtr(PropertyInfo)
 
 namespace ms {
@@ -89,7 +89,7 @@ public:
     void recvText(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void recvScreenshot(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void recvPoll(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
-    void recvRequestProperties(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvServerInitiatedRequest(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     
     void receivedProperty(PropertyInfoPtr prop);
     void propertiesReady();
@@ -130,7 +130,7 @@ private:
     GetMessagePtr m_current_get_request;
     ScreenshotMessagePtr m_current_screenshot_request;
     std::mutex m_properties_mutex;
-    RequestPropertiesMessagePtr m_current_properties_request;
+    ServerInitiatedMessagePtr m_current_properties_request;
     std::vector<PropertyInfoPtr> m_pending_properties;
     std::string m_screenshot_file_path;
     std::string m_file_root_path;

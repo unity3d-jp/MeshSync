@@ -20,7 +20,7 @@ namespace Unity.MeshSync.VariantExport
 
         protected override IEnumerator ExecutePermutations(int propIdx)
         {
-            PropertyInfoDataWrapper property = propertyInfos[propIdx];
+            PropertyInfoDataWrapper property = regenerator.EnabledProperties[propIdx];
 
             switch (property.type)
             {

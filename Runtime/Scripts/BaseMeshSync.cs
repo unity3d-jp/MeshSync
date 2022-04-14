@@ -550,6 +550,12 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
                     case EntityType.Points:
                         dst = UpdatePointsEntity((PointsData)src, config);
                         break;
+                    case EntityType.Curve:
+                        dst = UpdateCurveEntity((CurvesData)src, config);
+                        break;
+                    default:
+                        Debug.LogError($"Unhandled entity type: {src.entityType}"); 
+                        break;
                 }
 
                 if (dst != null && onUpdateEntity != null)
@@ -603,6 +609,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallba
             ForceRepaint();
 #endif
     }
+
 
     internal void AfterUpdateScene()
     {

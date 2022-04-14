@@ -18,7 +18,7 @@ public enum NetworkMessageType {
     Screenshot,
     Query,
     Response,
-    RequestProperties
+    RequestServerInitiatedMessage
 }
 
 //----------------------------------------------------------------------------------------------------------------------

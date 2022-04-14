@@ -170,6 +170,8 @@ internal class EntityRecord {
     public PointCacheRenderer  pointCacheRenderer;
     public Mesh                origMesh;
     public Mesh                mesh;
+    public Curve               curve;
+    public CurveRenderer       curveRenderer;
 
     public int[]           materialIDs;
     public string          reference;

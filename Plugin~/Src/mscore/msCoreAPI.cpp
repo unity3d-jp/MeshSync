@@ -13,6 +13,7 @@
 #include "MeshSync/SceneGraph/msPoints.h"
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msTexture.h"
+#include "MeshSync/SceneGraph/msCurve.h"
 
 #include "msCoreAPI.h"
 
@@ -506,6 +507,21 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *self, float weight, int num,
     if (v) frame.points.assign(v, v + num);
     if (n) frame.normals.assign(n, n + num);
     if (t) frame.tangents.assign(t, t + num);
+}
+#pragma endregion
+
+
+#pragma region Curves
+msAPI int msCurveGetNumSplines(ms::Curve* self) { return self->splines.size(); }
+msAPI int msCurveGetNumSplinePoints(ms::Curve* self, int index) { return self->splines[index]->cos.size(); }
+msAPI void msCurveReadSplineCos(ms::Curve* self, int index, float3* dst) {
+    self->splines[index]->cos.copy_to(dst);
+}
+msAPI void msCurveReadSplineHandlesLeft(ms::Curve* self, int index, float3* dst) {
+    self->splines[index]->handles_left.copy_to(dst);
+}
+msAPI void msCurveReadSplineHandlesRight(ms::Curve* self, int index, float3* dst) {
+    self->splines[index]->handles_right.copy_to(dst);
 }
 #pragma endregion
 

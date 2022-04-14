@@ -24,7 +24,7 @@ namespace Unity.MeshSync.VariantExport
 
         SaveMode saveMode = SaveMode.SaveAsPrefab;
 
-        public ReadOnlyCollection<PropertyInfoDataWrapper> propertyInfos => regenerator.EnabledProperties;
+        //public ReadOnlyCollection<PropertyInfoDataWrapper> propertyInfos => .EnabledProperties;
 
 
         public abstract int VariantCount
@@ -85,7 +85,7 @@ namespace Unity.MeshSync.VariantExport
             }
 
             var s = new StringBuilder();
-            foreach (var prop in propertyInfos)
+            foreach (var prop in server.propertyInfos)
             {
                 s.AppendLine(prop.ToString());
             }
@@ -194,7 +194,7 @@ namespace Unity.MeshSync.VariantExport
         {
             propIdx++;
 
-            if (propIdx == propertyInfos.Count)
+            if (propIdx == server.propertyInfos.Count)
             {
                 yield return Save();
             }
