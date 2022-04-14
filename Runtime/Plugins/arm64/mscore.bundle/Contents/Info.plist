@@ -39,7 +39,7 @@
 	<key>DTXcodeBuild</key>
 	<string>13E113</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>12.3</string>
+	<string>10.12</string>
 	<key>NSHumanReadableCopyright</key>
 	<string></string>
 </dict>
