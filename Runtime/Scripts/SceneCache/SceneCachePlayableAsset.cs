@@ -279,22 +279,13 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 #if UNITY_EDITOR
     
     internal void SetSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
-        SetExposedRefInEditor(m_sceneCachePlayerRef, m_propertyTable, scPlayer);
+        ExposedReferenceUtility.SetReferenceValueInEditor(ref m_sceneCachePlayerRef, m_propertyTable, scPlayer);
     }
     
     private void SetExtractedSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
-        SetExposedRefInEditor(m_extractedSceneCachePlayerRef, m_propertyTable, scPlayer);
+        ExposedReferenceUtility.SetReferenceValueInEditor(ref m_extractedSceneCachePlayerRef, m_propertyTable, scPlayer);
     }
 
-    private static void SetExposedRefInEditor<T>(ExposedReference<T> exposedRef, 
-        IExposedPropertyTable propertyTable, T obj) where T: Object 
-    {
-        //check if exposedName hasn't been initialized
-        if (exposedRef.exposedName.ToString() == ":0") {
-            exposedRef.exposedName = GUID.Generate().ToString();
-        }
-        propertyTable.SetReferenceValue(exposedRef.exposedName, obj);
-    }
        
     internal static EditorCurveBinding GetTimeCurveBinding() {return m_timeCurveBinding; }
     
