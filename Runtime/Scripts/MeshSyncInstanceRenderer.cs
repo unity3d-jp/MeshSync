@@ -1,5 +1,7 @@
 ﻿#if UNITY_EDITOR
+#if !UNITY_2021_2_OR_NEWER
 using UnityEditor.Experimental.SceneManagement;
+#endif
 #endif
 using System.Collections.Generic;
 using UnityEngine;
@@ -66,7 +68,12 @@ namespace Unity.MeshSync{
         private bool IsInPrefabStage()
         {
 #if UNITY_EDITOR
+            
+#if UNITY_2021_2_OR_NEWER
+            var stage = UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage();
+#else            
             var stage = PrefabStageUtility.GetCurrentPrefabStage();
+#endif            
             return stage == null || stage.IsPartOfPrefabContents(gameObject);
 #else
             return true;
