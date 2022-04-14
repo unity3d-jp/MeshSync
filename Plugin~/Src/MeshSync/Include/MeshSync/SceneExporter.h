@@ -6,6 +6,8 @@
 #include "MeshSync/msIDGenerator.h" //PathToID
 #include "MeshSync/SceneGraph/msScene.h" //AssetPtr
 
+msDeclClassPtr(InstanceInfo)
+
 namespace ms {
 
 class SceneExporter
@@ -18,9 +20,12 @@ public:
     std::vector<TransformPtr> transforms;
     std::vector<TransformPtr> geometries;
     std::vector<AnimationClipPtr> animations;
+    std::vector<InstanceInfoPtr> instanceInfos;
+    std::vector<TransformPtr> instanceMeshes;
 
     std::vector<Identifier> deleted_entities;
     std::vector<Identifier> deleted_materials;
+    std::vector<Identifier> deleted_instances;
 
     std::function<void()> on_prepare, on_success, on_error, on_complete;
     PathToID id_table;

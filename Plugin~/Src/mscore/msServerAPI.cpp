@@ -47,6 +47,14 @@ msAPI ms::Identifier* msDeleteGetMaterial(ms::DeleteMessage *self, int i)
     return &self->materials[i];
 }
 
+msAPI int msDeleteGetNumInstances(ms::DeleteMessage* self) {
+    return (int)self->instances.size();
+}
+
+msAPI ms::Identifier* msDeleteGetInstance(ms::DeleteMessage* self, int i) {
+    return &self->instances[i];
+}
+
 msAPI ms::FenceMessage::FenceType msFenceGetType(ms::FenceMessage *self)
 {
     return self->type;

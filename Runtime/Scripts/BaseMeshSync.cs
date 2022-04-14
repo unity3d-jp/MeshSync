@@ -54,6 +54,22 @@ internal delegate void UpdateAnimationHandler(AnimationClip anim, AnimationClipD
 /// </summary>
 internal delegate void DeleteEntityHandler(GameObject obj);
 
+/// <summary>
+/// A delegate to handle instance info updates
+/// </summary>
+/// <param name="data"></param>
+internal delegate void UpdateInstanceInfoHandler(string path, GameObject go, Matrix4x4[] transforms);
+
+/// <summary>
+/// A delegate to handle instance meshes.
+/// </summary>
+internal delegate void UpdateInstancedEntityHandler(string path, GameObject go);
+
+/// <summary>
+/// A delegate to handle instance deletions
+/// </summary>
+internal delegate void DeleteInstanceHandler(string path);
+
 //----------------------------------------------------------------------------------------------------------------------
 
 /// <summary>
@@ -105,6 +121,14 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     /// An event that is executed when the scene update is finished
     /// </summary>
     internal event SceneHandler onSceneUpdateEnd;
+
+    internal event UpdateInstanceInfoHandler onUpdateInstanceInfo;
+
+    internal event UpdateInstancedEntityHandler onUpdateInstancedEntity;
+
+    internal event DeleteInstanceHandler onDeleteInstanceInfo;
+
+    internal event DeleteInstanceHandler onDeleteInstancedEntity; 
     
     #endregion EventHandler Declarations
 
@@ -122,6 +146,9 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         m_clientObjects.Clear();
         m_hostObjects.Clear();
         m_objIDTable.Clear();
+        
+        m_clientInstances.Clear();
+        m_clientInstancedEntities.Clear();
         
         InitInternalV();
     }
@@ -519,6 +546,36 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             int numConstraints = scene.numConstraints;
             for (int i = 0; i < numConstraints; ++i)
                 UpdateConstraint(scene.GetConstraint(i));
+        });
+        
+        // handle instance meshes
+        Try(() =>
+        {
+            var numMeshes = scene.numInstancedEntities;
+            for (var i = 0; i < numMeshes; ++i) {
+                var src = scene.GetInstancedEntity(i);
+                var dst = UpdateInstancedEntity(src);
+                
+                if (dst == null)
+                {
+                    return;
+                }
+                
+                if (onUpdateInstancedEntity != null)
+                    onUpdateInstancedEntity(src.path, dst.go);
+            }
+        });
+        
+        // handle instances
+        Try(() =>
+        {
+            var numInstances = scene.numInstanceInfos;
+            for (var i = 0; i < numInstances; ++i) {
+                var src = scene.GetInstanceInfo(i);
+                var dst = UpdateInstanceInfo(src);
+                if (onUpdateInstanceInfo != null)
+                    onUpdateInstanceInfo.Invoke(src.path, dst.go, src.transforms);
+            }
         });
         
 #if UNITY_EDITOR
@@ -1033,12 +1090,21 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
         string path = dtrans.path;
         GameObject go = rec.go;
-        Transform trans = go.transform;
         bool activeInHierarchy = go.activeInHierarchy;
         if (!activeInHierarchy && !dflags.hasPoints)
             return null;
 
 
+        return UpdateMeshEntity(data, config, rec);
+    }
+
+    private EntityRecord UpdateMeshEntity(MeshData data, MeshSyncPlayerConfig config, EntityRecord rec)
+    {
+        TransformData dtrans = data.transform;
+        MeshDataFlags dflags = data.dataFlags;
+        GameObject go = rec.go;
+        Transform trans = go.transform;
+        
         // allocate material list
         bool materialsUpdated = rec.BuildMaterialData(data);
         bool meshUpdated = false;
@@ -1141,12 +1207,13 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
         // assign materials if needed
         if (materialsUpdated)
-            AssignMaterials(rec,recordUndo:false);
+            AssignMaterials(rec, recordUndo: false);
 
         return rec;
     }
     
    
+
 //----------------------------------------------------------------------------------------------------------------------
 
     void UpdateMeshEntity(ref Mesh mesh, MeshData data)
@@ -1300,7 +1367,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return rec;
     }
 
-    EntityRecord UpdateTransformEntity(TransformData data,MeshSyncPlayerConfig config)
+    EntityRecord UpdateTransformEntity(TransformData data, MeshSyncPlayerConfig config)
     {
         string path = data.path;
         int hostID = data.hostID;
@@ -1338,7 +1405,13 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
             }
         }
 
-        trans = rec.trans;
+        return UpdateTransformEntity(data, config, rec);
+    }
+
+    private static EntityRecord UpdateTransformEntity(TransformData data, MeshSyncPlayerConfig config,
+        EntityRecord rec)
+    {
+        var trans = rec.trans;
         if (trans == null)
             trans = rec.trans = rec.go.transform;
 
@@ -1567,6 +1640,84 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         }
     }
 
+    EntityRecord UpdateInstancedEntity(TransformData data)
+    {
+        var config = GetConfigV();
+        
+        if (!m_clientInstancedEntities.TryGetValue(data.path, out EntityRecord rec)) {
+            var trans = 
+                FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, data.path, false);
+            
+            rec = new EntityRecord {
+                go = trans.gameObject,
+                trans = trans,
+                recved = true,
+            };
+            
+            m_clientInstancedEntities.Add(data.path, rec);
+        }
+        
+        UpdateTransformEntity(data, config, rec);
+        UpdateMeshEntity((MeshData)data, config, rec);
+
+        m_clientInstancedEntities[data.path] = rec;
+        
+        // If there is a instance info record that references the new object
+        if (m_clientInstances.TryGetValue(data.path, out InstanceInfoRecord infoRecord)) {
+            // Update the renderer reference
+            infoRecord.go = rec.go;
+            var renderer = infoRecord.renderer;
+            if (renderer != null) {
+                renderer.UpdateReference(rec.go);
+            }
+        }
+
+        return rec;
+    }
+    
+    InstanceInfoRecord UpdateInstanceInfo(InstanceInfoData data)
+    {
+        InstanceInfoRecord infoRecord = null;
+        
+        var path = data.path;
+        
+        if (!m_clientInstances.TryGetValue(path, out infoRecord)) {
+            infoRecord = new InstanceInfoRecord();
+            m_clientInstances.Add(path, infoRecord);
+        }
+        
+        // Look for reference in client instanced objects
+        if (m_clientInstancedEntities.TryGetValue(path, out EntityRecord instancedEntityRecord)) { 
+            infoRecord.go = instancedEntityRecord.go;
+        }
+        else if (m_clientObjects.TryGetValue(path, out EntityRecord entityRecord)) {
+            infoRecord.go = entityRecord.go;
+        }
+        else {
+            throw new Exception($"[MeshSync] No instanced entity found for path {data.path}");
+        } 
+        
+        // Look for parent in client objects
+        if (m_clientObjects.TryGetValue(data.parentPath, out EntityRecord parentRecord)) {
+            if (infoRecord.renderer == null) {
+                infoRecord.renderer = parentRecord.go.AddComponent<MeshSyncInstanceRenderer>();
+            }
+            
+            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
+        }
+        else {
+            if (infoRecord.renderer == null) {
+                infoRecord.renderer = m_rootObject.gameObject.AddComponent<MeshSyncInstanceRenderer>();
+            }
+            
+            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
+            Debug.LogWarningFormat(
+                "[MeshSync] No entity found for parent path {0}, using root as parent", data.parentPath);
+        }
+
+        return infoRecord;
+    }
+    
     void UpdateConstraint(ConstraintData data)
     {
         Transform trans = FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, data.path, false);
@@ -1765,6 +1916,44 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         r.sharedMaterials = materials;
     }
 
+    internal bool EraseInstanceRecord<R>(
+        Identifier identifier, 
+        Dictionary<string,R> records, 
+        Action<R> onErase)
+    {
+        var path = identifier.name;
+
+        var ret = false;
+        if (records.TryGetValue(path, out R rec)) {
+            ret = records.Remove(path);
+
+            onErase(rec);
+        }
+
+        return ret;
+    }
+    
+    internal bool EraseInstanceInfoRecord(Identifier identifier)
+    {
+        return EraseInstanceRecord(identifier, m_clientInstances,
+            delegate(InstanceInfoRecord record) {
+                DestroyImmediate(record.renderer);
+                if (onDeleteInstanceInfo != null)
+                    onDeleteInstancedEntity(identifier.name);
+            });
+    }
+
+    internal bool EraseInstancedEntityRecord(Identifier identifier)
+    {
+        return EraseInstanceRecord(identifier, m_clientInstancedEntities,
+            delegate(EntityRecord record)
+            {
+                DestroyImmediate(record.go);
+                if (onDeleteInstancedEntity != null)
+                    onDeleteInstancedEntity(identifier.name);
+            });
+    }
+    
     internal bool EraseEntityRecord(Identifier identifier)
     {
         int id = identifier.id;
@@ -1940,7 +2129,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
                 mesh = Misc.OverwriteOrCreateAsset(mesh, dstPath);
                 kvp.Value.mesh = mesh; // mesh maybe updated by SaveAsset()
                 if (config.Logging)
-                    Debug.Log("exported material " + dstPath);
+                    Debug.Log("exported mesh " + dstPath);
             }
             else if (useExistingOnes && existing != null)
                 kvp.Value.mesh = existing;
@@ -2199,6 +2388,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     private protected readonly Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
     private readonly           Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
 
+    [SerializeField] private InstanceInfoRecordDictionary m_clientInstances = new InstanceInfoRecordDictionary();
+    [SerializeField] private EntityRecordDictionary m_clientInstancedEntities = new EntityRecordDictionary();
 
     protected Action m_onMaterialChangedInSceneViewCB = null;
     

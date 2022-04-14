@@ -112,7 +112,7 @@ $ xcodebuild -scheme mscore -configuration Release build
 
 ### Prerequisites (Linux)
 
-1. Make sure C++14 development is supported, and define `CC` and `CXX` environment variables to point to C++14 dev tools.  
+1. Make sure C++17 development is supported, and define `CC` and `CXX` environment variables to point to C++17 dev tools.  
    For example, by installing [devtoolset-7](https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/) in in CentOS 7, 
    and then defining `CC` and `CXX` environment variables as follows:
    ``` 
