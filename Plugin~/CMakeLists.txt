@@ -1,4 +1,9 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.18)
+
+if(APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version")    
+endif()
+
 PROJECT(MeshSyncPlugin)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/Build/cmake_modules)
