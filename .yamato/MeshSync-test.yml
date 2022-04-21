@@ -19,8 +19,6 @@ test_{{ platform.name }}_{{ editor.version }}:
         - "upm-ci~/test-results/**/*"
   dependencies:
     - .yamato/{{ yamato_name }}-pack.yml#pack
-{% endfor %}
-{% endfor %}
 
 test_standalone_{{ platform.name }}_{{ editor.version }}:
   name : Test StandAlone {{ yamato_name }} using {{ editor.version }} on {{ platform.name }}
@@ -38,6 +36,8 @@ test_standalone_{{ platform.name }}_{{ editor.version }}:
   dependencies:
     - .yamato/{{ yamato_name }}-pack.yml#pack
 
+{% endfor %}
+{% endfor %}
 
 
 test_trigger:
