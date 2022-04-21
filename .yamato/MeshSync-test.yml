@@ -22,6 +22,24 @@ test_{{ platform.name }}_{{ editor.version }}:
 {% endfor %}
 {% endfor %}
 
+test_standalone_{{ platform.name }}_{{ editor.version }}:
+  name : Test StandAlone {{ yamato_name }} using {{ editor.version }} on {{ platform.name }}
+  agent:
+    type: {{ platform.type }}
+    image: {{ platform.image }}
+    flavor: {{ platform.flavor}}
+  commands:
+    - npm install upm-ci-utils@stable -g --registry https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-npm
+    - upm-ci package test --unity-version {{ editor.version }} --platform=standalone --enable-code-coverage --code-coverage-options 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+Unity.{{yamato_name}},+Unity.{{yamato_name}}.Editor,-Unity.{{yamato_name}}.Tests,-Unity.{{yamato_name}}.EditorTests'         
+  artifacts:
+    {{ yamato_name }}_test_artifacts:
+      paths:
+        - "upm-ci~/test-results/**/*"
+  dependencies:
+    - .yamato/{{ yamato_name }}-pack.yml#pack
+
+
+
 test_trigger:
   name: Tests Trigger for {{ yamato_name }}
   agent:
@@ -47,5 +65,6 @@ test_trigger:
     {% for editor in test_editors %}
     {% for platform in test_platforms %}
     - .yamato/{{ yamato_name }}-test.yml#test_{{platform.name}}_{{editor.version}}
+    - .yamato/{{ yamato_name }}-test.yml#test_standalone_{{platform.name}}_{{editor.version}}
     {% endfor %}
     {% endfor %}
