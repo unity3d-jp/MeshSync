@@ -73,16 +73,23 @@ void AsyncSceneSender::send()
 
     if (assets.empty() && textures.empty() && materials.empty() &&
         transforms.empty() && geometries.empty() && animations.empty() &&
-        deleted_entities.empty() && deleted_materials.empty())
+        instanceInfos.empty() && instanceMeshes.empty() &&
+        deleted_entities.empty() && deleted_materials.empty() && 
+        deleted_instances.empty())
         return;
 
     SetupDataFlags(transforms);
     SetupDataFlags(geometries);
+    SetupDataFlags(instanceMeshes);
+
     AssignIDs(transforms, id_table);
     AssignIDs(geometries, id_table);
+    AssignIDs(instanceMeshes, id_table);
+
     // sort by order. not id.
     std::sort(transforms.begin(), transforms.end(), [](auto& a, auto& b) { return a->order < b->order; });
     std::sort(geometries.begin(), geometries.end(), [](auto& a, auto& b) { return a->order < b->order; });
+    std::sort(instanceMeshes.begin(), instanceMeshes.end(), [](auto& a, auto& b) { return a->order < b->order; });
 
     auto append = [](auto& dst, auto& src) { dst.insert(dst.end(), src.begin(), src.end()); };
 
@@ -154,6 +161,30 @@ void AsyncSceneSender::send()
         };
     }
 
+    //instance meshes
+    if (!instanceMeshes.empty()) {
+        for (auto& mesh : instanceMeshes) {
+            ms::SetMessage mes;
+            setup_message(mes);
+            mes.scene->settings = scene_settings;
+            mes.scene->instanceMeshes = { mesh };
+            succeeded = succeeded && client.send(mes);
+            if (!succeeded)
+                goto cleanup;
+        }
+    }
+
+    // instance infos
+    if (!instanceInfos.empty()) {
+        ms::SetMessage mes;
+        setup_message(mes);
+        mes.scene->settings = scene_settings;
+        mes.scene->instanceInfos = instanceInfos;
+        succeeded = succeeded && client.send(mes);
+        if (!succeeded)
+            goto cleanup;
+    }
+
     // animations
     if (!animations.empty()) {
         ms::SetMessage mes;
@@ -166,11 +197,16 @@ void AsyncSceneSender::send()
     }
 
     // deleted
-    if (!deleted_entities.empty() || !deleted_materials.empty()) {
+    if (!deleted_entities.empty() || 
+        !deleted_materials.empty() || 
+        !deleted_instances.empty()) {
+
         ms::DeleteMessage mes;
         setup_message(mes);
         mes.entities = deleted_entities;
         mes.materials = deleted_materials;
+        mes.instances = deleted_instances;
+
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
             goto cleanup;

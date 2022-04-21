@@ -1371,15 +1371,15 @@ internal struct VariantData {
         Float4x4,
     }
 
-    string name {
+    internal string name {
         get { return Misc.S(msVariantGetName(self)); }
     }
 
-    Type type {
+    internal Type type {
         get { return msVariantGetType(self); }
     }
 
-    int arrayLength {
+    internal int arrayLength {
         get { return msVariantGetArrayLength(self); }
     }
 
@@ -1740,7 +1740,7 @@ internal struct TransformData {
         return msTransformGetUserProperty(self, i);
     }
 
-    VariantData FindUserProperty(int i, string name) {
+    internal VariantData FindUserProperty(string name) {
         return msTransformFindUserProperty(self, name);
     }
 }
@@ -2906,6 +2906,45 @@ internal struct SceneProfileData {
     public float lerpTime; // in ms
 };
 
+#region InstanceInfo
+
+internal struct InstanceInfoData
+{
+    public IntPtr self;
+
+    [DllImport((Lib.name))]
+    static extern IntPtr msInstanceInfoGetPath(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern IntPtr msInstanceInfoGetParentPath(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern int msInstanceInfoPropGetArrayLength(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern void msInstanceInfoCopyTransforms(IntPtr self, IntPtr matrices);
+
+    public string path => Misc.S(msInstanceInfoGetPath(self));
+
+    public string parentPath => Misc.S(msInstanceInfoGetParentPath(self));
+
+    public int arrayLength => msInstanceInfoPropGetArrayLength(self);
+
+    public Matrix4x4[] transforms
+    {
+        get
+        {
+            using (var pinnedData = new PinnedList<Matrix4x4>(arrayLength))
+            {
+                msInstanceInfoCopyTransforms(self, pinnedData.Pointer);
+                return pinnedData.Array;
+            }
+        }
+    }
+}
+
+#endregion
+
 internal struct SceneData {
     #region internal
 
@@ -2935,6 +2974,18 @@ internal struct SceneData {
     [DllImport(Lib.name)]
     static extern SceneProfileData msSceneGetProfileData(IntPtr self);
 
+    [DllImport(Lib.name)]
+    static extern int msSceneGetNumInstanceInfos(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern InstanceInfoData msSceneGetInstanceInfo(IntPtr self, int i);
+
+    [DllImport(Lib.name)]
+    static extern int msSceneGetNumInstanceMeshes(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern TransformData msSceneGetInstanceMesh(IntPtr self, int i);
+
     #endregion
 
     public static implicit operator bool(SceneData v) {
@@ -2953,6 +3004,16 @@ internal struct SceneData {
         get { return msSceneGetNumConstraints(self); }
     }
 
+    public int numInstanceInfos
+    {
+        get { return msSceneGetNumInstanceInfos(self); }
+    }
+
+    public int numInstancedEntities
+    {
+        get { return msSceneGetNumInstanceMeshes(self); }
+    }
+    
     public bool submeshesHaveUniqueMaterial {
         get { return msSceneSubmeshesHaveUniqueMaterial(self) != 0; }
     }
@@ -2971,6 +3032,16 @@ internal struct SceneData {
 
     public ConstraintData GetConstraint(int i) {
         return msSceneGetConstraint(self, i);
+    }
+
+    public InstanceInfoData GetInstanceInfo(int i)
+    {
+        return msSceneGetInstanceInfo(self, i);
+    }
+
+    public TransformData GetInstancedEntity(int i)
+    {
+        return msSceneGetInstanceMesh(self, i);
     }
 }
 

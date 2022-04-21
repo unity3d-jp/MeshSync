@@ -187,6 +187,14 @@ void Transform::applyMatrix(const mu::float4x4& v) {
         assignMatrix(v * toMatrix());
 }
 
+void Transform::reset()
+{
+    auto identity = float4x4::identity();
+    world_matrix = identity;
+    local_matrix = identity;
+    assignMatrix(identity);
+}
+
 void Transform::addUserProperty(const Variant& v) {
     user_properties.push_back(v);
     std::sort(user_properties.begin(), user_properties.end(),
