@@ -317,7 +317,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
 
     #region Misc
     //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected bool Try(Action act) {
+    private protected bool Try(Action act) {
         try {
             act.Invoke();
             return true;
@@ -387,7 +387,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return m_materialList.RemoveAll(v => v.id == id) != 0;
     }
 
-    protected int GetMaterialIndex(Material mat)
+    private protected int GetMaterialIndex(Material mat)
     {
         if (mat == null)
             return Lib.invalidID;
@@ -2391,7 +2391,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [SerializeField] private InstanceInfoRecordDictionary m_clientInstances = new InstanceInfoRecordDictionary();
     [SerializeField] private EntityRecordDictionary m_clientInstancedEntities = new EntityRecordDictionary();
 
-    protected Action m_onMaterialChangedInSceneViewCB = null;
+    private protected Action m_onMaterialChangedInSceneViewCB = null;
     
 //----------------------------------------------------------------------------------------------------------------------
 
