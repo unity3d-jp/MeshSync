@@ -8,7 +8,7 @@ namespace Unity.MeshSync
 /// <summary>
 /// The type of messages that can be sent to MeshSyncServer 
 /// </summary>
-public enum NetworkMessageType {
+internal enum NetworkMessageType {
     Unknown,
     Get,
     Set,
