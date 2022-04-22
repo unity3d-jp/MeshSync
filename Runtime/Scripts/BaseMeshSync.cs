@@ -177,11 +177,11 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     #region Properties
     
     
-    protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
+    private protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
 
-    protected void SetSaveAssetsInScene(bool saveAssetsInScene) { m_saveAssetsInScene = saveAssetsInScene; }
+    private protected void SetSaveAssetsInScene(bool saveAssetsInScene) { m_saveAssetsInScene = saveAssetsInScene; }
 
-    protected void MarkMeshesDynamic(bool markMeshesDynamic) { m_markMeshesDynamic = markMeshesDynamic; }
+    private protected void MarkMeshesDynamic(bool markMeshesDynamic) { m_markMeshesDynamic = markMeshesDynamic; }
 
     internal void EnableKeyValuesSerialization(bool kvEnabled) { m_keyValuesSerializationEnabled = kvEnabled;}
 
