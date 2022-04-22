@@ -534,7 +534,7 @@ public class SceneCachePlayer : BaseMeshSync {
 #endif
 
 //----------------------------------------------------------------------------------------------------------------------    
-    protected override void OnEnable() {
+    private protected override void OnEnable() {
         base.OnEnable();
         
 #if UNITY_EDITOR
@@ -561,7 +561,7 @@ public class SceneCachePlayer : BaseMeshSync {
         m_time = ClampTime(m_time);        
     }
 
-    protected override void OnDisable() {
+    private protected override void OnDisable() {
         base.OnDisable();
 #if UNITY_EDITOR
         m_onMaterialChangedInSceneViewCB -= SavePrefabInEditor; 
