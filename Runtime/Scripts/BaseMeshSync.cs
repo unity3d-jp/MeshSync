@@ -309,8 +309,8 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         
     }
     
-    protected abstract void OnBeforeSerializeMeshSyncPlayerV();
-    protected abstract void OnAfterDeserializeMeshSyncPlayerV();
+    private protected abstract void OnBeforeSerializeMeshSyncPlayerV();
+    private protected abstract void OnAfterDeserializeMeshSyncPlayerV();
     
 //----------------------------------------------------------------------------------------------------------------------
     #endregion

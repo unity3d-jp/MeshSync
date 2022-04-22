@@ -142,11 +142,11 @@ public class MeshSyncServer : BaseMeshSync {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    protected override void OnBeforeSerializeMeshSyncPlayerV() {
+    private protected override void OnBeforeSerializeMeshSyncPlayerV() {
         
     }
 
-    protected override void OnAfterDeserializeMeshSyncPlayerV() {
+    private protected override void OnAfterDeserializeMeshSyncPlayerV() {
         m_serverVersion = CUR_SERVER_VERSION;
         
         if (string.IsNullOrEmpty(GetAssetsFolder())) {

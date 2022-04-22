@@ -439,11 +439,11 @@ public class SceneCachePlayer : BaseMeshSync {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    protected override void OnBeforeSerializeMeshSyncPlayerV() {
+    private protected override void OnBeforeSerializeMeshSyncPlayerV() {
         
     }
 
-    protected override void OnAfterDeserializeMeshSyncPlayerV() {
+    private protected override void OnAfterDeserializeMeshSyncPlayerV() {
 
         if (m_sceneCachePlayerVersion == CUR_SCENE_CACHE_PLAYER_VERSION)
             return;
