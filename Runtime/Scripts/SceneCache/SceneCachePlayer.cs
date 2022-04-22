@@ -37,7 +37,7 @@ public class SceneCachePlayer : BaseMeshSync {
         MarkMeshesDynamic(true);
     }
 
-    protected override void InitInternalV() {
+    private protected override void InitInternalV() {
         
     }
 
