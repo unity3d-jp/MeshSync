@@ -474,14 +474,14 @@ public class MeshSyncServer : BaseMeshSync {
 #endif
 
 
-    protected override void OnEnable() {
+    private protected override void OnEnable() {
         base.OnEnable();
         if (m_autoStartServer) {
             m_requestRestartServer = true;
         }
     }
 
-    protected override void OnDisable() {
+    private protected override void OnDisable() {
         base.OnDisable();
         StopServer();
     }

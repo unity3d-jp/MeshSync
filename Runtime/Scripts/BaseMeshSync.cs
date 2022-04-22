@@ -2321,7 +2321,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     /// <summary>
     /// Monobehaviour's OnEnable(). Can be overridden
     /// </summary>
-    protected virtual void OnEnable() {
+    private protected virtual void OnEnable() {
 #if UNITY_EDITOR
         SceneView.duringSceneGui += OnSceneViewGUI;
 #endif
@@ -2330,7 +2330,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     /// <summary>
     /// Monobehaviour's OnDisable(). Can be overridden
     /// </summary>
-    protected virtual void OnDisable()
+    private protected virtual void OnDisable()
     {
 #if UNITY_EDITOR
         SceneView.duringSceneGui -= OnSceneViewGUI;
