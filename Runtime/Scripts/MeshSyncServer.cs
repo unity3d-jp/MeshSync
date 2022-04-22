@@ -25,7 +25,7 @@ public class MeshSyncServer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------
     
     
-    protected override void InitInternalV() {
+    private protected override void InitInternalV() {
         
     }
 

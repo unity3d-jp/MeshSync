@@ -153,7 +153,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         InitInternalV();
     }
 
-    protected abstract void InitInternalV();
+    private protected abstract void InitInternalV();
     
 //----------------------------------------------------------------------------------------------------------------------
     
