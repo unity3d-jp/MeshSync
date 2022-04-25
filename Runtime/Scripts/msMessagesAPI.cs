@@ -9,14 +9,42 @@ namespace Unity.MeshSync
 /// The type of messages that can be sent to MeshSyncServer 
 /// </summary>
 public enum NetworkMessageType {
+    /// <summary>
+    /// An unknown message
+    /// </summary>
     Unknown,
+    /// <summary>
+    /// A get message
+    /// </summary>
     Get,
+    /// <summary>
+    /// A Set message
+    /// </summary>
     Set,
+    /// <summary>
+    /// A delete message
+    /// </summary>
     Delete,
+    /// <summary>
+    /// A fence message
+    /// </summary>
     Fence,
+    
+    /// <summary>
+    /// A text message
+    /// </summary>
     Text,
+    /// <summary>
+    /// A screenshot message
+    /// </summary>
     Screenshot,
+    /// <summary>
+    /// A query message
+    /// </summary>
     Query,
+    /// <summary>
+    /// A response message
+    /// </summary>
     Response,
 }
 
