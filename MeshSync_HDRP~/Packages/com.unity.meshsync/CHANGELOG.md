@@ -1,10 +1,17 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
-## [0.13.0-preview] - 2022-04-25
+## [0.13.0-preview] - 2022-04-26
 
 ### Added
-* TBD
+* feat: Instance rendering 
+* doc: Geometry Nodes documentation
+
+### Changed
+* change: make some classes/functions/members to internal 
+
+### Fixed
+* plugin-fix: support Mac OSX starting from 10.12
 
 ## [0.12.9-preview] - 2022-04-14
 
