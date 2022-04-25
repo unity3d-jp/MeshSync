@@ -37,7 +37,7 @@ public class SceneCachePlayer : BaseMeshSync {
         MarkMeshesDynamic(true);
     }
 
-    protected override void InitInternalV() {
+    private protected override void InitInternalV() {
         
     }
 
@@ -439,11 +439,11 @@ public class SceneCachePlayer : BaseMeshSync {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    protected override void OnBeforeSerializeMeshSyncPlayerV() {
+    private protected override void OnBeforeSerializeMeshSyncPlayerV() {
         
     }
 
-    protected override void OnAfterDeserializeMeshSyncPlayerV() {
+    private protected override void OnAfterDeserializeMeshSyncPlayerV() {
 
         if (m_sceneCachePlayerVersion == CUR_SCENE_CACHE_PLAYER_VERSION)
             return;
@@ -534,7 +534,7 @@ public class SceneCachePlayer : BaseMeshSync {
 #endif
 
 //----------------------------------------------------------------------------------------------------------------------    
-    protected override void OnEnable() {
+    private protected override void OnEnable() {
         base.OnEnable();
         
 #if UNITY_EDITOR
@@ -561,7 +561,7 @@ public class SceneCachePlayer : BaseMeshSync {
         m_time = ClampTime(m_time);        
     }
 
-    protected override void OnDisable() {
+    private protected override void OnDisable() {
         base.OnDisable();
 #if UNITY_EDITOR
         m_onMaterialChangedInSceneViewCB -= SavePrefabInEditor; 

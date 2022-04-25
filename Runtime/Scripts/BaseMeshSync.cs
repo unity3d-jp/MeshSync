@@ -153,7 +153,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         InitInternalV();
     }
 
-    protected abstract void InitInternalV();
+    private protected abstract void InitInternalV();
     
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -177,11 +177,11 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     #region Properties
     
     
-    protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
+    private protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
 
-    protected void SetSaveAssetsInScene(bool saveAssetsInScene) { m_saveAssetsInScene = saveAssetsInScene; }
+    private protected void SetSaveAssetsInScene(bool saveAssetsInScene) { m_saveAssetsInScene = saveAssetsInScene; }
 
-    protected void MarkMeshesDynamic(bool markMeshesDynamic) { m_markMeshesDynamic = markMeshesDynamic; }
+    private protected void MarkMeshesDynamic(bool markMeshesDynamic) { m_markMeshesDynamic = markMeshesDynamic; }
 
     internal void EnableKeyValuesSerialization(bool kvEnabled) { m_keyValuesSerializationEnabled = kvEnabled;}
 
@@ -309,15 +309,15 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         
     }
     
-    protected abstract void OnBeforeSerializeMeshSyncPlayerV();
-    protected abstract void OnAfterDeserializeMeshSyncPlayerV();
+    private protected abstract void OnBeforeSerializeMeshSyncPlayerV();
+    private protected abstract void OnAfterDeserializeMeshSyncPlayerV();
     
 //----------------------------------------------------------------------------------------------------------------------
     #endregion
 
     #region Misc
     //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected bool Try(Action act) {
+    private protected bool Try(Action act) {
         try {
             act.Invoke();
             return true;
@@ -387,7 +387,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
         return m_materialList.RemoveAll(v => v.id == id) != 0;
     }
 
-    protected int GetMaterialIndex(Material mat)
+    private protected int GetMaterialIndex(Material mat)
     {
         if (mat == null)
             return Lib.invalidID;
@@ -2321,7 +2321,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     /// <summary>
     /// Monobehaviour's OnEnable(). Can be overridden
     /// </summary>
-    protected virtual void OnEnable() {
+    private protected virtual void OnEnable() {
 #if UNITY_EDITOR
         SceneView.duringSceneGui += OnSceneViewGUI;
 #endif
@@ -2330,7 +2330,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     /// <summary>
     /// Monobehaviour's OnDisable(). Can be overridden
     /// </summary>
-    protected virtual void OnDisable()
+    private protected virtual void OnDisable()
     {
 #if UNITY_EDITOR
         SceneView.duringSceneGui -= OnSceneViewGUI;
@@ -2391,7 +2391,7 @@ public abstract class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiv
     [SerializeField] private InstanceInfoRecordDictionary m_clientInstances = new InstanceInfoRecordDictionary();
     [SerializeField] private EntityRecordDictionary m_clientInstancedEntities = new EntityRecordDictionary();
 
-    protected Action m_onMaterialChangedInSceneViewCB = null;
+    private protected Action m_onMaterialChangedInSceneViewCB = null;
     
 //----------------------------------------------------------------------------------------------------------------------
 
