@@ -2,17 +2,20 @@
    
 ---
 
-{% for editor in test_editors %}
-{% for platform in test_platforms %}
-dependency_{{ platform.name }}_{{ editor.version }}:
-  name : Dependency Test {{ yamato_name }} using {{ editor.version }} on {{ platform.name }}
+{% for test_config in test_configs %}
+{% for test_platform in test_config.test_platforms %}
+{% assign platform_type = test_platform.platform_type %}
+{% assign editor_version= test_config.editor_version %}
+
+dependency_{{ platform_type.name }}_{{ editor_version }}:
+  name : Dependency Test {{ yamato_name }} using {{ test_config.editor_version }} on {{ platform_type.name }}
   agent:
-    type: {{ platform.type }}
-    image: {{ platform.image }}
-    flavor: {{ platform.flavor}}
+    type: {{ platform_type.type }}
+    image: {{ platform_type.image }}
+    flavor: {{ platform_type.flavor}}
   commands:
-    - npm install upm-ci-utils@stable -g --registry https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-npm
-    - upm-ci package test -u {{ editor.version }} --type updated-dependencies-tests 
+    - {{ platform_type.cmd_prefix}} npm install upm-ci-utils@stable -g --registry https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-npm
+    - {{ platform_type.cmd_prefix}} upm-ci package test -u {{ editor_version }} --type updated-dependencies-tests 
   artifacts:
     {{ yamato_name }}_dependency_artifacts:
       paths:
@@ -47,12 +50,12 @@ dependency_test_trigger:
     recurring:
       - branch: dev
         frequency: daily
-        rerun: on_new_revision        
+        rerun: on_new_revision
         
   dependencies:
     - .yamato/{{ yamato_name }}-pack.yml#pack
-    {% for editor in test_editors %}
-    {% for platform in test_platforms %}
-    - .yamato/{{ yamato_name }}-updated-dependencies-test.yml#dependency_{{platform.name}}_{{editor.version}}
+    {% for test_config in test_configs %}
+    {% for test_platform in test_config.test_platforms %}
+    - .yamato/{{ yamato_name }}-updated-dependencies-test.yml#dependency_{{ test_platform.platform_type.name }}_{{ test_config.editor_version }}
     {% endfor %}
     {% endfor %}
