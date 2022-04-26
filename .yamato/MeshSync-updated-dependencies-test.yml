@@ -46,7 +46,8 @@ dependency_test_trigger:
       only:
         - "/.*/"
       except:
-        - "dev"              
+        - "dev"
+        - "**/dev"
     recurring:
       - branch: dev
         frequency: daily
