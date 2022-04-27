@@ -15,6 +15,8 @@ namespace Unity.MeshSync.VariantExport
     [ExecuteAlways]
     public class Regenerator : MonoBehaviour
     {
+        public const bool StopAssetEditing = false;
+
         EditorCoroutine coroutine;
 
         SelectedPermutationRunner currentRunner;
@@ -350,7 +352,11 @@ namespace Unity.MeshSync.VariantExport
                 }
             }
 
-            AssetDatabase.StartAssetEditing();
+            if (StopAssetEditing)
+            {
+                AssetDatabase.StartAssetEditing();
+                BaseMeshSync.IsAssetEditing = true;
+            }
 
             coroutine = EditorCoroutineUtility.StartCoroutine(runner.Start(), this);
         }
@@ -365,7 +371,11 @@ namespace Unity.MeshSync.VariantExport
 
             EditorUtility.ClearProgressBar();
 
-            AssetDatabase.StopAssetEditing();
+            if (StopAssetEditing)
+            {
+                AssetDatabase.StopAssetEditing();
+                BaseMeshSync.IsAssetEditing = false;
+            }
 
             currentRunner = null;
         }

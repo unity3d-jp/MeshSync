@@ -118,6 +118,9 @@ internal struct Server {
     static extern void msServerSendCurve(IntPtr self, int hostID);        
 
     [DllImport(Lib.name)]
+    static extern void msServerRequestFullSync(IntPtr self);        
+
+    [DllImport(Lib.name)]
     static extern void msServerInitiatedResponseReady(IntPtr self);
 
     [DllImport(Lib.name)]
@@ -170,13 +173,12 @@ internal struct Server {
         set { msServerSetScreenshotFilePath(self, value); }
     }
 
-
-        public void SendCurve(EntityRecord entity)
-        {
-            Debug.Assert(entity.dataType == EntityType.Curve);
-            // TODO:
-            //msServerSendCurve(self, entity.tra)
-        }
+    public void SendCurve(EntityRecord entity)
+    {
+        Debug.Assert(entity.dataType == EntityType.Curve);
+        // TODO:
+        //msServerSendCurve(self, entity.tra)
+    }
 
     public void SendProperty(PropertyInfoDataWrapper prop)
     {
@@ -206,6 +208,11 @@ internal struct Server {
             default:
                 throw new NotImplementedException($"Type {prop.type} not implemented");
         }
+    }
+
+    public void RequestClientSync()
+    {
+        msServerRequestFullSync(self);
     }
 
     public void SendChangedProperties()

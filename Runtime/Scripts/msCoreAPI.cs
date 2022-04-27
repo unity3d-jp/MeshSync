@@ -1539,6 +1539,7 @@ internal struct TransformDataFlags {
     }
 }
 
+[Serializable]
 internal struct VisibilityFlags {
     public BitFlags flags;
 

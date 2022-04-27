@@ -104,8 +104,8 @@ void AsyncSceneSender::requestServerInitiatedMessageImpl() {
         return;
     }
 
-    if (on_properties_received) {
-        on_properties_received(client.properties);
+    if (on_server_initiated_response_received) {
+        on_server_initiated_response_received(client.properties, client.messageFromServer);
     }
 
     m_properties_client = nullptr;

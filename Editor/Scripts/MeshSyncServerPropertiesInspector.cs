@@ -195,7 +195,7 @@ namespace Unity.MeshSync.Editor
                 {
                     if (GUILayout.Button("Open"))
                     {
-                        BlenderLauncher.OpenBlendFile(server, server.m_DCCAsset);
+                        OpenDCCAsset(server);
                     }
                 }
 
@@ -210,6 +210,11 @@ namespace Unity.MeshSync.Editor
             {
                 MeshSyncServerInspectorUtils.DrawSliderForProperty(properties[i]);
             }
+        }
+
+        public static void OpenDCCAsset(MeshSyncServer server)
+        {
+            BlenderLauncher.OpenBlendFile(server, server.m_DCCAsset);
         }
     }
 }

@@ -16,7 +16,7 @@ public:
 
     ClientSettings client_settings;
 
-    std::function<void(std::vector<PropertyInfo>)> on_properties_received;
+    std::function<void(std::vector<PropertyInfo>, std::string)> on_server_initiated_response_received;
 
 public:
     AsyncSceneSender(int session_id = InvalidID);

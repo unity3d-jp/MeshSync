@@ -92,6 +92,7 @@ public:
     void recvServerInitiatedRequest(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     
     void receivedProperty(PropertyInfoPtr prop);
+    void syncRequested();
     void propertiesReady();
     bool readyForProperties();
 
@@ -132,6 +133,7 @@ private:
     std::mutex m_properties_mutex;
     ServerInitiatedMessagePtr m_current_properties_request;
     std::vector<PropertyInfoPtr> m_pending_properties;
+    std::atomic_bool m_syncRequested;
     std::string m_screenshot_file_path;
     std::string m_file_root_path;
 };

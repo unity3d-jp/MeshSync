@@ -9,10 +9,32 @@
             Received
         };
 
+        bool needsClientSync;
+
+        public override InstanceHandlingType InstanceHandling
+        {
+            get => base.InstanceHandling; set
+            {
+                if (InstanceHandling != value)
+                {
+                    base.InstanceHandling = value;
+
+                    ClearInstancePrefabs();
+                }
+            }
+        }
+
         public PropertiesState CurrentPropertiesState { get; private set; }
         public void ResetPropertiesState()
         {
             CurrentPropertiesState = PropertiesState.None;
+        }
+
+        public override void ClearInstancePrefabs()
+        {
+            base.ClearInstancePrefabs();
+
+            needsClientSync = true;
         }
 
         void SendUpdatedProperties()
@@ -52,6 +74,14 @@
                         entity.curve.IsDirty = false;
                         sendChanges = true;
                     }
+                }
+
+                if (needsClientSync)
+                {
+                    needsClientSync = false;
+                    sendChanges = true;
+
+                    m_server.RequestClientSync();
                 }
 
                 if (sendChanges)

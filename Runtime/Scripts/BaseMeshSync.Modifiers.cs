@@ -360,10 +360,14 @@ namespace Unity.MeshSync
         public enum InstanceHandlingType
         {
             InstanceRenderer,
+            Copies,
             Prefabs
         }
 
-        public InstanceHandlingType InstanceHandling = InstanceHandlingType.InstanceRenderer;
+        public static bool IsAssetEditing;
+
+        [SerializeField]
+        private InstanceHandlingType instanceHandling = InstanceHandlingType.InstanceRenderer;
 
         public List<PropertyInfoDataWrapper> propertyInfos
         {
@@ -373,6 +377,12 @@ namespace Unity.MeshSync
 
                 return propertyComponent.propertyInfos;
             }
+        }
+
+        public virtual InstanceHandlingType InstanceHandling
+        {
+            get => instanceHandling;
+            set => instanceHandling = value;
         }
 
         void UpdateProperties(SceneData scene)
@@ -431,6 +441,16 @@ namespace Unity.MeshSync
         public void CopySettingsFrom(BaseMeshSync other)
         {
             changedMeshes = other.changedMeshes;
+
+            foreach (var kvp in other.m_clientObjects)
+            {
+                m_clientObjects[kvp.Key].mesh = kvp.Value.mesh;
+            }
+
+            foreach (var kvp in other.m_clientInstancedEntities)
+            {
+                m_clientInstancedEntities[kvp.Key].mesh = kvp.Value.mesh;
+            }
         }
 
         private EntityRecord UpdateCurveEntity(CurvesData data, MeshSyncPlayerConfig config)

@@ -94,9 +94,34 @@ internal partial class MeshSyncServerInspector : BaseMeshSyncInspector   {
         if (t.foldInstanceSettings)
         {
             t.InstanceHandling = (BaseMeshSync.InstanceHandlingType)EditorGUILayout.EnumPopup("Instance handling", t.InstanceHandling);
+            
+            DrawPrefabListElement(t);
         }
     }
 
+    static void DrawPrefabListElement(MeshSyncServer t)
+    {
+        if (t.prefabList.Count > 0)
+        {
+            EditorGUILayout.LabelField("Instance prefabs:");
+
+            foreach (var prefabHolder in t.prefabList)
+            {
+                Rect rect = EditorGUILayout.BeginHorizontal();
+
+                EditorGUILayout.LabelField(prefabHolder.name);
+
+                EditorGUILayout.ObjectField(prefabHolder.prefab, typeof(GameObject), true);
+
+                EditorGUILayout.EndHorizontal();
+            }
+
+            if (GUILayout.Button("Clear prefabs"))
+            {
+                t.ClearInstancePrefabs();
+            }
+        }
+    }
 //----------------------------------------------------------------------------------------------------------------------                
     private MeshSyncServer m_meshSyncServer = null;        
 }

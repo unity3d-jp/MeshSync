@@ -209,6 +209,8 @@ bool Client::send(const ServerInitiatedMessage& mes)
             properties.push_back(prop);
         }
 
+        messageFromServer = reqResponse.message;
+
         m_properties_session = nullptr;
 
         return response.getStatus() == HTTPResponse::HTTP_OK;

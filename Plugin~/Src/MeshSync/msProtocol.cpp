@@ -174,11 +174,13 @@ void ServerInitiatedMessage::deserialize(std::istream& is) { super::deserialize(
 void ServerInitiatedMessageResponse::serialize(std::ostream& os) const
 {
     write(os, properties);
+    write(os, message);
 }
 
 void ServerInitiatedMessageResponse::deserialize(std::istream& is)
 {
     read(is, properties);
+    read(is, message);
 }
 
 } // namespace ms

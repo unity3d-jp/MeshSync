@@ -643,6 +643,11 @@ void Server::recvServerInitiatedRequest(HTTPServerRequest& request, HTTPServerRe
     }
     m_pending_properties.clear();
 
+    if (m_syncRequested) {
+        reqResponse.message = "sync";
+        m_syncRequested = false;
+    }
+
     auto& os = response.send();
     reqResponse.serialize(os);
     os.flush();
@@ -670,6 +675,10 @@ void Server::receivedProperty(PropertyInfoPtr prop) {
     }
 
     m_pending_properties.push_back(prop);
+}
+
+void Server::syncRequested() {
+    m_syncRequested = true;
 }
 
 void Server::propertiesReady() {

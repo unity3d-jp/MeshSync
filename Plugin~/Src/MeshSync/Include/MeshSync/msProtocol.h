@@ -239,6 +239,7 @@ msSerializable(ServerInitiatedMessage);
 class ServerInitiatedMessageResponse {
 public:
     std::vector<PropertyInfo> properties;
+    std::string message;
 
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);

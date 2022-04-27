@@ -26,7 +26,6 @@ namespace Unity.MeshSync.VariantExport
 
         //public ReadOnlyCollection<PropertyInfoDataWrapper> propertyInfos => .EnabledProperties;
 
-
         public abstract int VariantCount
         {
             get;
@@ -90,7 +89,7 @@ namespace Unity.MeshSync.VariantExport
                 s.AppendLine(prop.ToString());
             }
 
-            Debug.Log(s);
+            //Debug.Log(s);
 
             yield return new WaitForMeshSync(regenerator);
 
@@ -117,6 +116,66 @@ namespace Unity.MeshSync.VariantExport
             yield break;
         }
 
+        static T SaveAsset<T>(T asset, string path) where T : UnityEngine.Object
+        {
+            T loadedAsset = AssetDatabase.LoadAssetAtPath<T>(path);
+            if (loadedAsset != null)
+            {
+                EditorUtility.CopySerialized(asset, loadedAsset);
+                return loadedAsset;
+            }
+            else
+            {
+                if (AssetDatabase.Contains(asset))
+                {
+                    var assetPath = Path.GetFullPath(AssetDatabase.GetAssetPath(asset));
+                    var fullPath = Path.GetFullPath(path);
+
+                    if (assetPath != fullPath)
+                    {
+                        var newAsset = UnityEngine.Object.Instantiate(asset);
+                        newAsset.name = asset.name;
+                        asset = newAsset;
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        AssetDatabase.CreateAsset(asset, path);
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                }
+            }
+
+            return asset;
+        }
+
+        static GameObject SavePrefabAssets(GameObject prefab, string prefabAssetStorePath, string prefabSavePath)
+        {
+            var meshFilters = prefab.GetComponentsInChildren<MeshFilter>();
+            foreach (var meshFilter in meshFilters)
+            {
+                var mesh = meshFilter.sharedMesh;
+                if (mesh != null)
+                {
+                    string dstPath = Path.Combine(prefabAssetStorePath, $"{mesh.name}.asset");
+
+                    meshFilter.sharedMesh = SaveAsset(mesh, dstPath);
+                }
+            }
+
+            if (prefabSavePath != null)
+            {
+                return PrefabUtility.SaveAsPrefabAsset(prefab, prefabSavePath);
+            }
+
+            return null;
+        }
+
         IEnumerator SavePrefab()
         {
             var outputFilePath = regenerator.SavePath;
@@ -126,10 +185,13 @@ namespace Unity.MeshSync.VariantExport
                 Directory.CreateDirectory(outputFilePath);
             }
 
+            if (Regenerator.StopAssetEditing)
+            {
+                AssetDatabase.StopAssetEditing();
+            }
+
             // Make a copy, apply the prefab-specific save location and save any changed assets to that:
-            var prefabSave = UnityEngine.Object.Instantiate(server.gameObject);
-            var prefabServer = prefabSave.GetComponent<MeshSyncServer>();
-            UnityEngine.Object.DestroyImmediate(prefabServer);
+            var prefabSavePath = Path.Combine(outputFilePath, $"{regenerator.SaveFile}_{counter}.prefab");
 
             var prefabAssetStorePath = Path.Combine(outputFilePath, $"{regenerator.SaveFile}_{counter}_assets");
 
@@ -138,10 +200,35 @@ namespace Unity.MeshSync.VariantExport
                 AssetDatabase.DeleteAsset(prefabAssetStorePath);
             }
 
-            prefabServer.CopySettingsFrom(server);
-            prefabServer.SetAssetsFolder(prefabAssetStorePath);
+            Directory.CreateDirectory(prefabAssetStorePath);
 
-            prefabServer.ExportMeshes();
+            //var p = server.GetAssetsFolder();
+            //server.SetAssetsFolder(prefabAssetStorePath);
+
+            //server.ExportMeshes();
+
+            var prefabSave = SavePrefabAssets(server.gameObject, prefabAssetStorePath, prefabSavePath);
+
+            //var commonAssetStorePath = Path.Combine(outputFilePath, $"{regenerator.SaveFile}_assets");
+            //SavePrefabAssets(server.gameObject, commonAssetStorePath, null);
+
+            //server.SetAssetsFolder(p);
+
+            PurgePrefab(prefabSave);
+
+
+            var prefabServer = prefabSave.GetComponent<MeshSyncServer>();
+
+            if (false)
+            {
+                prefabServer.CopySettingsFrom(server);
+                prefabServer.SetAssetsFolder(prefabAssetStorePath);
+
+                prefabServer.ExportMeshes();
+            }
+            UnityEngine.Object.DestroyImmediate(prefabServer, true);
+
+            //AssetDatabase.SaveAssets();
 
             // If there are no assets specific to this prefab, delete the empty folder:
             if (Directory.GetFiles(prefabAssetStorePath).Length == 0)
@@ -150,15 +237,67 @@ namespace Unity.MeshSync.VariantExport
             }
             else
             {
-                AssetDatabase.SaveAssets();
+                //AssetDatabase.SaveAssets();
             }
 
-            outputFilePath = Path.Combine(outputFilePath, $"{regenerator.SaveFile}_{counter}.prefab");
-            PrefabUtility.SaveAsPrefabAsset(prefabSave, outputFilePath);
+            PrefabUtility.SavePrefabAsset(prefabSave);
 
-            UnityEngine.Object.DestroyImmediate(prefabSave);
+            //AssetDatabase.SaveAssets();
+
+            // Ensure the object is clean, delete children and update from blender:
+            regenerator.Server.ClearInstancePrefabs();
+
+            yield return new WaitForMeshSync(regenerator);
+
+            if (Regenerator.StopAssetEditing)
+            {
+                AssetDatabase.StartAssetEditing();
+            }
+
+            //regenerator.StopExport();
 
             yield break;
+        }
+
+        void PurgePrefab(GameObject prefab)
+        {
+            //return;
+            // Find disabled gameobjects and get rid of them.
+            // Build a list of them first so we don't get exceptions for things that were already destroyed.
+            var allChildren = prefab.GetComponentsInChildren<Transform>(true);
+            List<GameObject> childrenToDelete = new List<GameObject>();
+            foreach (var child in allChildren)
+            {
+                if (!child.gameObject.activeSelf &&
+                    server.InstanceHandling != BaseMeshSync.InstanceHandlingType.InstanceRenderer)
+                {
+                    childrenToDelete.Add(child.gameObject);
+                }
+                else
+                {
+                    // Check for empty gameobjects with all empty children:
+                    bool valid = false;
+                    var components = child.GetComponentsInChildren<Component>();
+                    foreach (var component in components)
+                    {
+                        if (!(component is Transform))
+                        {
+                            valid = true;
+                            break;
+                        }
+                    }
+
+                    if (!valid)
+                    {
+                        childrenToDelete.Add(child.gameObject);
+                    }
+                }
+            }
+
+            foreach (var child in childrenToDelete)
+            {
+                UnityEngine.Object.DestroyImmediate(child, true);
+            }
         }
 
         public IEnumerator Start()
@@ -181,11 +320,20 @@ namespace Unity.MeshSync.VariantExport
                 AssetDatabase.Refresh();
             }
 
+            // Make sure server is at origin so any saved prefabs are at origin too:
+            server.transform.localPosition = Vector3.zero;
+
             var commonAssetStorePath = Path.Combine(outputFilePath, $"{regenerator.SaveFile}_assets");
 
             regenerator.Server.SetAssetsFolder(commonAssetStorePath);
-            regenerator.Server.ExportMeshes();
+
+            //regenerator.Server.ExportMeshes();
             regenerator.Server.ExportMaterials();
+
+            // Ensure the object is clean, delete children and update from blender:
+            regenerator.Server.ClearInstancePrefabs();
+
+            yield return new WaitForMeshSync(regenerator);
 
             yield return Next(-1);
         }

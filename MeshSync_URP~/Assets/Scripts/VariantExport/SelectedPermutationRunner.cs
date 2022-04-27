@@ -25,6 +25,11 @@ namespace Unity.MeshSync.VariantExport
         {
             foreach (var setting in regenerator.Whitelist)
             {
+                if (!regenerator.IsBaking)
+                {
+                    yield break;
+                }
+
                 regenerator.ApplySerializedProperties(setting);
 
                 yield return Save();

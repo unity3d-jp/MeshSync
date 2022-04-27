@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Unity.MeshSync
 {
+#if DISABLED
     public class MeshSyncAssetProcessor : AssetsModifiedProcessor
     {
         private List<string> m_added = new List<string>();
@@ -153,4 +154,5 @@ namespace Unity.MeshSync
             AssetDatabase.Refresh();
         }
     }
+#endif
 }

@@ -288,8 +288,13 @@ msAPI void msServerSendPropertyString(ms::Server* server, int sourceType, const 
 msAPI void msServerSendCurve(ms::Server* server, int hostID)
 {
     if (!server) { return; }
+}
 
-   // server->propertiesReady();
+msAPI void msServerRequestFullSync(ms::Server* server)
+{
+    if (!server) { return; }
+
+    server->syncRequested();
 }
 
 msAPI void msServerInitiatedResponseReady(ms::Server* server)

@@ -29,6 +29,7 @@ public:
     ResponseMessagePtr send(const QueryMessage& mes, int timeout_ms);
 
     std::vector<PropertyInfo> properties;
+    std::string messageFromServer;
 
     void abortPropertiesRequest();
 private:
