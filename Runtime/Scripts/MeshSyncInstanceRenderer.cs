@@ -11,7 +11,7 @@ namespace Unity.MeshSync{
     [ExecuteInEditMode]
     internal class MeshSyncInstanceRenderer : MonoBehaviour
     {
-        private InstanceRenderingInfo m_renderingInfo;
+        private readonly InstanceRenderingInfo m_renderingInfo = new InstanceRenderingInfo();
 
         [HideInInspector]
         [SerializeField] private Matrix4x4[] transforms;
@@ -19,11 +19,6 @@ namespace Unity.MeshSync{
         
         void OnEnable()
         {
-            if (m_renderingInfo == null)
-            {
-                m_renderingInfo = new InstanceRenderingInfo();
-            }
-        
             if (GraphicsSettings.currentRenderPipeline == null)
             {
                 Camera.onPreCull += OnCameraPreCull;
