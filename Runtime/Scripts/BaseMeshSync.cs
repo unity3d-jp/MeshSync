@@ -1547,6 +1547,22 @@ namespace Unity.MeshSync
             return UpdateTransformEntity(data, config, rec);
         }
 
+        void SetVis(Behaviour c, VisibilityFlags visibility)
+        {
+            if (c != null)
+            {
+                c.enabled = visibility.visibleInRender;
+            }
+        }
+
+        void SetVis(Renderer c, VisibilityFlags visibility)
+        {
+            if (c != null)
+            {
+                c.enabled = visibility.visibleInRender;
+            }
+        }
+
         private EntityRecord UpdateTransformEntity(TransformData data, MeshSyncPlayerConfig config, EntityRecord rec)
         {
             var trans = rec.trans;
@@ -1592,6 +1608,10 @@ namespace Unity.MeshSync
                             }
                         }
                     }
+
+                    SetVis(rec.meshRenderer, visibility);
+                    SetVis(rec.camera, visibility);
+                    SetVis(rec.skinnedMeshRenderer, visibility);
                 }
 
                 // visibility for reference
