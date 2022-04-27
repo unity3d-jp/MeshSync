@@ -118,45 +118,35 @@ namespace Unity.MeshSync.VariantExport
 
         static T SaveAsset<T>(T asset, string path) where T : UnityEngine.Object
         {
+            // If it's an existing asset but the path doesn't match, make a copy of it for the new path:
+            if (AssetDatabase.Contains(asset))
+            {
+                var assetPath = Path.GetFullPath(AssetDatabase.GetAssetPath(asset));
+                var fullPath = Path.GetFullPath(path);
+
+                if (assetPath != fullPath)
+                {
+                    var newAsset = UnityEngine.Object.Instantiate(asset);
+                    newAsset.name = asset.name;
+                    asset = newAsset;
+                }
+            }
+
+            // to keep meta, rewrite the existing one if already exists.
             T loadedAsset = AssetDatabase.LoadAssetAtPath<T>(path);
             if (loadedAsset != null)
             {
                 EditorUtility.CopySerialized(asset, loadedAsset);
                 return loadedAsset;
             }
-            else
-            {
-                if (AssetDatabase.Contains(asset))
-                {
-                    var assetPath = Path.GetFullPath(AssetDatabase.GetAssetPath(asset));
-                    var fullPath = Path.GetFullPath(path);
 
-                    if (assetPath != fullPath)
-                    {
-                        var newAsset = UnityEngine.Object.Instantiate(asset);
-                        newAsset.name = asset.name;
-                        asset = newAsset;
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        AssetDatabase.CreateAsset(asset, path);
-                    }
-                    catch (Exception ex)
-                    {
-
-                    }
-                }
-            }
-
+            AssetDatabase.CreateAsset(asset, path);
             return asset;
         }
 
         static GameObject SavePrefabAssets(GameObject prefab, string prefabAssetStorePath, string prefabSavePath)
         {
-            var meshFilters = prefab.GetComponentsInChildren<MeshFilter>();
+            var meshFilters = prefab.GetComponentsInChildren<MeshFilter>(true);
             foreach (var meshFilter in meshFilters)
             {
                 var mesh = meshFilter.sharedMesh;
@@ -168,12 +158,39 @@ namespace Unity.MeshSync.VariantExport
                 }
             }
 
-            if (prefabSavePath != null)
+            var meshRenderers = prefab.GetComponentsInChildren<MeshRenderer>(true);
+            foreach (var meshRenderer in meshRenderers)
             {
-                return PrefabUtility.SaveAsPrefabAsset(prefab, prefabSavePath);
+                var material = meshRenderer.sharedMaterial;
+                if (material != null)
+                {
+                    string dstPath = Path.Combine(prefabAssetStorePath, $"{material.name}.mat");
+
+                    meshRenderer.sharedMaterial = SaveAsset(material, dstPath);
+                }
             }
 
-            return null;
+            var skinnedMeshRenderers = prefab.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            foreach (var skinnedMeshRenderer in skinnedMeshRenderers)
+            {
+                var material = skinnedMeshRenderer.sharedMaterial;
+                if (material != null)
+                {
+                    string dstPath = Path.Combine(prefabAssetStorePath, $"{material.name}.mat");
+
+                    skinnedMeshRenderer.sharedMaterial = SaveAsset(material, dstPath);
+                }
+
+                var mesh = skinnedMeshRenderer.sharedMesh;
+                if (mesh != null)
+                {
+                    string dstPath = Path.Combine(prefabAssetStorePath, $"{mesh.name}.asset");
+
+                    skinnedMeshRenderer.sharedMesh = SaveAsset(mesh, dstPath);
+                }
+            }
+
+            return PrefabUtility.SaveAsPrefabAsset(prefab, prefabSavePath);
         }
 
         IEnumerator SavePrefab()
