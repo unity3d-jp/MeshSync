@@ -1451,8 +1451,6 @@ namespace Unity.MeshSync
 
             mesh.bounds = data.bounds;
             mesh.UploadMeshData(false);
-
-            changedMeshes.Add(mesh);
         }
 
         //----------------------------------------------------------------------------------------------------------------------        
@@ -1973,11 +1971,6 @@ namespace Unity.MeshSync
 
                             if (instanceObject == null)
                             {
-                                if (IsAssetEditing)
-                                {
-                                    AssetDatabase.StopAssetEditing();
-                                }
-
                                 MakeSureAssetDirectoryExists();
                                 ExportMeshes();
                                 ExportMaterials();
@@ -1988,9 +1981,7 @@ namespace Unity.MeshSync
                                 bool wasActive = infoRecord.go.activeSelf;
                                 infoRecord.go.SetActive(true);
 
-                                var prefab = PrefabUtility.SaveAsPrefabAssetAndConnect(infoRecord.go, prefabLocation, InteractionMode.AutomatedAction, out bool success);
-
-                                //prefab.SetActive(visible);
+                                var prefab = PrefabUtility.SaveAsPrefabAssetAndConnect(infoRecord.go, prefabLocation, InteractionMode.AutomatedAction);
 
                                 AssetDatabase.SaveAssets();
 
@@ -1999,11 +1990,6 @@ namespace Unity.MeshSync
                                 instanceObject = prefab;
 
                                 infoRecord.go.SetActive(wasActive);
-
-                                if (IsAssetEditing)
-                                {
-                                    AssetDatabase.StartAssetEditing();
-                                }
                             }
                         }
 
@@ -2512,18 +2498,9 @@ namespace Unity.MeshSync
                 return;
             }
 
-            bool ignoreChanged = true;
-
             // If this is an asset but in another folder, still save it, if it changed:
             if (IsAsset(mesh))
             {
-                if (!ignoreChanged && !changedMeshes.Contains(mesh))
-                {
-                    return;
-                }
-
-                changedMeshes.Remove(mesh);
-
                 var currentPath = Path.GetFullPath(GetAssetsFolder());
                 var existingPath = Path.GetFullPath(AssetDatabase.GetAssetPath(mesh));
                 if (IsSubfolder(currentPath, existingPath))
@@ -2531,8 +2508,6 @@ namespace Unity.MeshSync
                     return;
                 }
             }
-
-            changedMeshes.Remove(mesh);
 
             string dstPath = string.Format("{0}/{1}.asset", basePath, nameGenerator.Gen(mesh.name));
             Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(dstPath);

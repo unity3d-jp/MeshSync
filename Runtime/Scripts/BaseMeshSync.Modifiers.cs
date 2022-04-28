@@ -364,8 +364,6 @@ namespace Unity.MeshSync
             Prefabs
         }
 
-        public static bool IsAssetEditing;
-
         [SerializeField]
         private InstanceHandlingType instanceHandling = InstanceHandlingType.InstanceRenderer;
 
@@ -433,24 +431,6 @@ namespace Unity.MeshSync
                     }
                 }
             });
-        }
-
-
-        HashSet<Mesh> changedMeshes = new HashSet<Mesh>();
-
-        public void CopySettingsFrom(BaseMeshSync other)
-        {
-            changedMeshes = other.changedMeshes;
-
-            foreach (var kvp in other.m_clientObjects)
-            {
-                m_clientObjects[kvp.Key].mesh = kvp.Value.mesh;
-            }
-
-            foreach (var kvp in other.m_clientInstancedEntities)
-            {
-                m_clientInstancedEntities[kvp.Key].mesh = kvp.Value.mesh;
-            }
         }
 
         private EntityRecord UpdateCurveEntity(CurvesData data, MeshSyncPlayerConfig config)

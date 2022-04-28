@@ -24,6 +24,18 @@ namespace Unity.MeshSync.VariantExport
 
         SaveMode saveMode = SaveMode.SaveAsPrefab;
 
+        List<string> savedAssets = new List<string>();
+        //Dictionary<string, string> savedAssetsReferences = new Dictionary<string, string>();
+
+
+        string CommonAssetStorePath
+        {
+            get
+            {
+                return Path.Combine(regenerator.SavePath, $"{regenerator.SaveFile}_assets");
+            }
+        }
+
         //public ReadOnlyCollection<PropertyInfoDataWrapper> propertyInfos => .EnabledProperties;
 
         public abstract int VariantCount
@@ -76,6 +88,58 @@ namespace Unity.MeshSync.VariantExport
 
         protected abstract IEnumerator ExecutePermutations(int propIdx);
 
+        public IEnumerator Start()
+        {
+            savedAssets.Clear();
+
+            if (CheckForCancellation())
+            {
+                yield break;
+            }
+
+            var outputFilePath = regenerator.SavePath;
+
+            if (Directory.Exists(outputFilePath))
+            {
+                foreach (var prefabFile in Directory.EnumerateFiles(outputFilePath, "*.prefab"))
+                {
+                    AssetDatabase.DeleteAsset(prefabFile);
+                    //File.Delete(prefabFile);
+                }
+
+                AssetDatabase.Refresh();
+            }
+
+            // Make sure server is at origin so any saved prefabs are at origin too:
+            server.transform.localPosition = Vector3.zero;
+
+            regenerator.Server.SetAssetsFolder(CommonAssetStorePath);
+
+            //regenerator.Server.ExportMeshes();
+            regenerator.Server.ExportMaterials();
+
+            // Ensure the object is clean, delete children and update from blender:
+            regenerator.Server.ClearInstancePrefabs();
+
+            yield return new WaitForMeshSync(regenerator);
+
+            yield return Next(-1);
+        }
+
+        protected IEnumerator Next(int propIdx)
+        {
+            propIdx++;
+
+            if (propIdx == server.propertyInfos.Count)
+            {
+                yield return Save();
+            }
+            else
+            {
+                yield return ExecutePermutations(propIdx);
+            }
+        }
+
         protected IEnumerator Save()
         {
             if (CheckForCancellation())
@@ -107,6 +171,8 @@ namespace Unity.MeshSync.VariantExport
 
             if (counter >= VariantCount)
             {
+                Finished();
+
                 Debug.Log($"Finished exporting {regenerator.SaveFile}.");
 
                 regenerator.StopExport();
@@ -116,8 +182,23 @@ namespace Unity.MeshSync.VariantExport
             yield break;
         }
 
-        static T SaveAsset<T>(T asset, string path) where T : UnityEngine.Object
+        T SaveAsset<T>(T asset, string path) where T : UnityEngine.Object
         {
+            if (savedAssets.Contains(path))
+            {
+                //Debug.LogError($"Already had {path}");
+
+                var existingAsset = AssetDatabase.LoadAssetAtPath<T>(path);
+                if (existingAsset == null)
+                {
+                    Debug.LogError("Asset not found!");
+                }
+
+                return existingAsset;
+            }
+
+            savedAssets.Add(path);
+
             // If it's an existing asset but the path doesn't match, make a copy of it for the new path:
             if (AssetDatabase.Contains(asset))
             {
@@ -136,17 +217,22 @@ namespace Unity.MeshSync.VariantExport
             T loadedAsset = AssetDatabase.LoadAssetAtPath<T>(path);
             if (loadedAsset != null)
             {
+                //Debug.LogError($"Existed {path}");
                 EditorUtility.CopySerialized(asset, loadedAsset);
                 return loadedAsset;
             }
 
             AssetDatabase.CreateAsset(asset, path);
+            //Debug.LogError($"Created {path}");
             return asset;
         }
 
-        static GameObject SavePrefabAssets(GameObject prefab, string prefabAssetStorePath, string prefabSavePath)
+        GameObject SavePrefabAssets(GameObject prefab, string prefabAssetStorePath, string prefabSavePath, bool exportHidden)
         {
-            var meshFilters = prefab.GetComponentsInChildren<MeshFilter>(true);
+            // TODO: Add material support:
+            bool saveMaterials = false;
+
+            var meshFilters = prefab.GetComponentsInChildren<MeshFilter>(exportHidden);
             foreach (var meshFilter in meshFilters)
             {
                 var mesh = meshFilter.sharedMesh;
@@ -158,27 +244,39 @@ namespace Unity.MeshSync.VariantExport
                 }
             }
 
-            var meshRenderers = prefab.GetComponentsInChildren<MeshRenderer>(true);
-            foreach (var meshRenderer in meshRenderers)
+            if (saveMaterials)
             {
-                var material = meshRenderer.sharedMaterial;
-                if (material != null)
+                var meshRenderers = prefab.GetComponentsInChildren<MeshRenderer>(exportHidden);
+                foreach (var meshRenderer in meshRenderers)
                 {
-                    string dstPath = Path.Combine(prefabAssetStorePath, $"{material.name}.mat");
+                    var material = meshRenderer.sharedMaterial;
+                    if (material != null)
+                    {
+                        string dstPath = Path.Combine(prefabAssetStorePath, $"{material.name}.mat");
 
-                    meshRenderer.sharedMaterial = SaveAsset(material, dstPath);
+                        meshRenderer.sharedMaterial = SaveAsset(material, dstPath);
+                    }
+                    else
+                    {
+                        Debug.LogError($"No material on {meshRenderer.name}");
+                        regenerator.StopExport();
+                        throw new Exception("");
+                    }
                 }
             }
 
-            var skinnedMeshRenderers = prefab.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            var skinnedMeshRenderers = prefab.GetComponentsInChildren<SkinnedMeshRenderer>(exportHidden);
             foreach (var skinnedMeshRenderer in skinnedMeshRenderers)
             {
-                var material = skinnedMeshRenderer.sharedMaterial;
-                if (material != null)
+                if (saveMaterials)
                 {
-                    string dstPath = Path.Combine(prefabAssetStorePath, $"{material.name}.mat");
+                    var material = skinnedMeshRenderer.sharedMaterial;
+                    if (material != null)
+                    {
+                        string dstPath = Path.Combine(prefabAssetStorePath, $"{material.name}.mat");
 
-                    skinnedMeshRenderer.sharedMaterial = SaveAsset(material, dstPath);
+                        skinnedMeshRenderer.sharedMaterial = SaveAsset(material, dstPath);
+                    }
                 }
 
                 var mesh = skinnedMeshRenderer.sharedMesh;
@@ -202,11 +300,6 @@ namespace Unity.MeshSync.VariantExport
                 Directory.CreateDirectory(outputFilePath);
             }
 
-            if (Regenerator.StopAssetEditing)
-            {
-                AssetDatabase.StopAssetEditing();
-            }
-
             // Make a copy, apply the prefab-specific save location and save any changed assets to that:
             var prefabSavePath = Path.Combine(outputFilePath, $"{regenerator.SaveFile}_{counter}.prefab");
 
@@ -219,33 +312,16 @@ namespace Unity.MeshSync.VariantExport
 
             Directory.CreateDirectory(prefabAssetStorePath);
 
-            //var p = server.GetAssetsFolder();
-            //server.SetAssetsFolder(prefabAssetStorePath);
-
-            //server.ExportMeshes();
-
-            var prefabSave = SavePrefabAssets(server.gameObject, prefabAssetStorePath, prefabSavePath);
-
-            //var commonAssetStorePath = Path.Combine(outputFilePath, $"{regenerator.SaveFile}_assets");
-            //SavePrefabAssets(server.gameObject, commonAssetStorePath, null);
-
-            //server.SetAssetsFolder(p);
+            var prefabSave = SavePrefabAssets(server.gameObject,
+                prefabAssetStorePath,
+                prefabSavePath,
+                exportHidden: server.InstanceHandling == BaseMeshSync.InstanceHandlingType.InstanceRenderer);
 
             PurgePrefab(prefabSave);
 
-
             var prefabServer = prefabSave.GetComponent<MeshSyncServer>();
 
-            if (false)
-            {
-                prefabServer.CopySettingsFrom(server);
-                prefabServer.SetAssetsFolder(prefabAssetStorePath);
-
-                prefabServer.ExportMeshes();
-            }
             UnityEngine.Object.DestroyImmediate(prefabServer, true);
-
-            //AssetDatabase.SaveAssets();
 
             // If there are no assets specific to this prefab, delete the empty folder:
             if (Directory.GetFiles(prefabAssetStorePath).Length == 0)
@@ -259,19 +335,10 @@ namespace Unity.MeshSync.VariantExport
 
             PrefabUtility.SavePrefabAsset(prefabSave);
 
-            //AssetDatabase.SaveAssets();
-
             // Ensure the object is clean, delete children and update from blender:
             regenerator.Server.ClearInstancePrefabs();
 
             yield return new WaitForMeshSync(regenerator);
-
-            if (Regenerator.StopAssetEditing)
-            {
-                AssetDatabase.StartAssetEditing();
-            }
-
-            //regenerator.StopExport();
 
             yield break;
         }
@@ -317,55 +384,126 @@ namespace Unity.MeshSync.VariantExport
             }
         }
 
-        public IEnumerator Start()
+        void Finished()
         {
-            if (CheckForCancellation())
-            {
-                yield break;
-            }
+            var matchingAssets = new Dictionary<string, List<string>>();
 
-            var outputFilePath = regenerator.SavePath;
+            var processedAssets = new HashSet<string>();
 
-            if (Directory.Exists(outputFilePath))
+            // Find duplicates:
+            for (int i = 0; i < savedAssets.Count; i++)
             {
-                foreach (var prefabFile in Directory.EnumerateFiles(outputFilePath, "*.prefab"))
+                string assetPath1 = savedAssets[i];
+
+                if (processedAssets.Contains(assetPath1))
                 {
-                    AssetDatabase.DeleteAsset(prefabFile);
-                    //File.Delete(prefabFile);
+                    continue;
                 }
 
+                var assetFilename1 = Path.GetFileName(assetPath1);
+
+                // Check if the same asset name exists somewhere else:
+                for (int j = i + 1; j < savedAssets.Count; j++)
+                {
+                    string assetPath2 = savedAssets[j];
+                    var assetFilename2 = Path.GetFileName(assetPath2);
+
+                    if (assetFilename1 == assetFilename2)
+                    {
+                        // Compare contents of the file:
+                        var assetContent1 = File.ReadAllText(assetPath1);
+                        var assetContent2 = File.ReadAllText(assetPath2);
+
+                        if (assetContent1 == assetContent2)
+                        {
+                            if (!matchingAssets.TryGetValue(assetPath1, out var assetList))
+                            {
+                                assetList = new List<string>() { assetPath1 };
+                                matchingAssets.Add(assetPath1, assetList);
+                            }
+
+                            assetList.Add(assetPath2);
+
+                            processedAssets.Add(assetPath2);
+                        }
+                    }
+                }
+            }
+
+            var allFilesInDir = Directory.GetFiles(regenerator.SavePath, "*.prefab");
+
+            try
+            {
+                int counter = 0;
+
+                void RemoveAsset(string assetPath)
+                {
+                    AssetDatabase.DeleteAsset(assetPath);
+                    var dir = Path.GetDirectoryName(assetPath);
+                    if (Directory.Exists(dir) && Directory.GetFiles(dir).Length == 0)
+                    {
+                        //AssetDatabase.Refresh();
+                        AssetDatabase.DeleteAsset(dir);
+                    }
+                }
+
+                foreach (var kvp in matchingAssets)
+                {
+                    EditorUtility.DisplayProgressBar("Making assets shared", kvp.Key, (float)counter / matchingAssets.Count);
+
+                    var assetPath = kvp.Key;
+
+                    // Save to shared folder:
+                    var newPath = Path.Combine(CommonAssetStorePath, Path.GetFileName(assetPath));
+
+                    if (Directory.Exists(newPath))
+                    {
+                        EditorUtility.CopySerialized(AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath), AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(newPath));
+                    }
+                    else
+                    {
+                        AssetDatabase.CopyAsset(assetPath, newPath);
+                    }
+
+                    RemoveAsset(assetPath);
+
+                    var sharedAssetGUID = $"guid: {AssetDatabase.GUIDFromAssetPath(newPath)}";
+
+                    foreach (var duplicateAsset in kvp.Value)
+                    {
+                        var duplicateAssetGUID = $"guid: {AssetDatabase.GUIDFromAssetPath(duplicateAsset)}";
+
+                        foreach (var file in allFilesInDir)
+                        {
+                            string contents = File.ReadAllText(file);
+
+                            var newContents = contents.Replace(duplicateAssetGUID, sharedAssetGUID);
+
+                            if (newContents != contents)
+                            {
+                                File.WriteAllText(file, newContents);
+
+                                Debug.Log($"Changed GUID in {file} from {duplicateAssetGUID} to {sharedAssetGUID} ({Path.GetFileName(assetPath)})");
+                            }
+                        }
+
+                        RemoveAsset(duplicateAsset);
+                    }
+
+                    counter++;
+                }
+
+                //AssetDatabase.Refresh();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+
                 AssetDatabase.Refresh();
-            }
-
-            // Make sure server is at origin so any saved prefabs are at origin too:
-            server.transform.localPosition = Vector3.zero;
-
-            var commonAssetStorePath = Path.Combine(outputFilePath, $"{regenerator.SaveFile}_assets");
-
-            regenerator.Server.SetAssetsFolder(commonAssetStorePath);
-
-            //regenerator.Server.ExportMeshes();
-            regenerator.Server.ExportMaterials();
-
-            // Ensure the object is clean, delete children and update from blender:
-            regenerator.Server.ClearInstancePrefabs();
-
-            yield return new WaitForMeshSync(regenerator);
-
-            yield return Next(-1);
-        }
-
-        protected IEnumerator Next(int propIdx)
-        {
-            propIdx++;
-
-            if (propIdx == server.propertyInfos.Count)
-            {
-                yield return Save();
-            }
-            else
-            {
-                yield return ExecutePermutations(propIdx);
             }
         }
     }
