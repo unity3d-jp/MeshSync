@@ -12,7 +12,7 @@ namespace Unity.MeshSync.Editor
     [CustomEditor(typeof(Regenerator))]
     internal class RegeneratorEditor : UnityEditor.Editor
     {
-        const int TOGGLE_WIDTH = 20;
+        public const int TOGGLE_WIDTH = 20;
         const int BUTTON_WIDTH = 90;
         const int LABEL_WIDTH = 120;
 
@@ -172,22 +172,6 @@ namespace Unity.MeshSync.Editor
                 }
             }
 
-            bool newAllEnabled = EditorGUILayout.Toggle(allEnabled, GUILayout.MaxWidth(TOGGLE_WIDTH));
-            if (allEnabled != newAllEnabled)
-            {
-                if (newAllEnabled)
-                {
-                    foreach (var prop in exporter.Server.propertyInfos)
-                    {
-                        exporter.EnabledSettingNames.Add(prop.ID);
-                    }
-                }
-                else
-                {
-                    exporter.EnabledSettingNames.Clear();
-                }
-            }
-
             MeshSyncServerInspectorUtils.DrawSliderForProperties(
                 exporter.Server.propertyInfos,
                  before: delegate (PropertyInfoDataWrapper prop)
@@ -210,6 +194,43 @@ namespace Unity.MeshSync.Editor
                 after: delegate (PropertyInfoDataWrapper prop)
                 {
                     GUILayout.EndHorizontal();
+                },
+                allEnabled: delegate (string path)
+                {
+                    foreach (var prop in exporter.Server.propertyInfos)
+                    {
+                        if (!prop.CanBeModified || prop.path != path)
+                        {
+                            continue;
+                        }
+
+                        if (!exporter.IsEnabled(prop))
+                        {
+                            return false;
+                        }
+                    }
+                    return true;
+                },
+                allEnabledChanged: delegate (string path, bool enabled)
+                {
+                    foreach (var prop in exporter.Server.propertyInfos)
+                    {
+                        if (!prop.CanBeModified || prop.path != path)
+                        {
+                            continue;
+                        }
+
+                        if (enabled)
+                        {
+
+                            exporter.EnabledSettingNames.Add(prop.ID);
+
+                        }
+                        else
+                        {
+                            exporter.EnabledSettingNames.Remove(prop.ID);
+                        }
+                    }
                 });
         }
 

@@ -16,8 +16,10 @@ namespace Unity.MeshSync.Editor
         }
 
         public static void DrawSliderForProperties(List<PropertyInfoDataWrapper> props,
-            Action<PropertyInfoDataWrapper> before,
-            Action<PropertyInfoDataWrapper> after)
+            Action<PropertyInfoDataWrapper> before = null,
+            Action<PropertyInfoDataWrapper> after = null,
+            Func<string, bool> allEnabled = null,
+            Action<string, bool> allEnabledChanged = null)
         {
             var lastPathDrawn = string.Empty;
             bool folded = false;
@@ -40,8 +42,19 @@ namespace Unity.MeshSync.Editor
                             foldouts.Add(prop.path);
                         }
                     }
-
+                     
                     lastPathDrawn = prop.path;
+
+                    if (!folded && allEnabled != null && allEnabledChanged != null)
+                    {
+                        var wasAllEnabled = allEnabled(lastPathDrawn);
+
+                        bool newAllEnabled = EditorGUILayout.ToggleLeft($"All properties in {lastPathDrawn}", wasAllEnabled);
+                        if (newAllEnabled != wasAllEnabled)
+                        {
+                            allEnabledChanged(lastPathDrawn, newAllEnabled);
+                        }
+                    }
                 }
 
                 if (folded)
@@ -49,10 +62,7 @@ namespace Unity.MeshSync.Editor
                     continue;
                 }
 
-                if (before != null)
-                {
-                    before(prop);
-                }
+                before?.Invoke(prop);
 
                 EditorGUI.BeginChangeCheck();
 
@@ -69,7 +79,6 @@ namespace Unity.MeshSync.Editor
                         }
 
                         newValue = EditorGUILayout.IntSlider(prop.name, prop.GetValue<int>(), (int)prop.min, max);
-
                         break;
 
                     case PropertyInfoData.Type.Float:
@@ -81,15 +90,13 @@ namespace Unity.MeshSync.Editor
                         break;
 
                     case PropertyInfoData.Type.IntArray:
-                        {
-                            newValue = DrawArrayFieldsInt(prop, newValue);
-                            break;
-                        }
+                        newValue = DrawArrayFieldsInt(prop, newValue);
+                        break;
+
                     case PropertyInfoData.Type.FloatArray:
-                        {
-                            newValue = DrawArrayFieldsFloat(prop, newValue);
-                            break;
-                        }
+                        newValue = DrawArrayFieldsFloat(prop, newValue);
+                        break;
+
                     default:
                         break;
                 }
@@ -102,10 +109,7 @@ namespace Unity.MeshSync.Editor
                     }
                 }
 
-                if (after != null)
-                {
-                    after(prop);
-                }
+                after?.Invoke(prop);
             }
         }
 
@@ -255,7 +259,7 @@ namespace Unity.MeshSync.Editor
                 server.m_DCCInterop?.DrawDCCToolVersion(server);
             }
 
-            MeshSyncServerInspectorUtils.DrawSliderForProperties(propertiesHolder.propertyInfos, null, null);
+            MeshSyncServerInspectorUtils.DrawSliderForProperties(propertiesHolder.propertyInfos);
         }
     }
 }

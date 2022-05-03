@@ -120,7 +120,6 @@
 
         void OnRecvPropertyRequest()
         {
-
         }
 
         void SceneUpdated()
