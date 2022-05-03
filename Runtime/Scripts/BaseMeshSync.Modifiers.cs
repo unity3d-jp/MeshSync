@@ -9,6 +9,19 @@ using UnityEngine;
 
 namespace Unity.MeshSync
 {
+    public class PropertyInfoDataWrapperComparer : IComparer<PropertyInfoDataWrapper>
+    {
+        public int Compare(PropertyInfoDataWrapper x, PropertyInfoDataWrapper y)
+        {
+            if(x.path == y.path)
+            {
+                return x.name.CompareTo(y.name);
+            }
+
+            return x.path.CompareTo(y.path);
+        }
+    }
+
     // Wrapper with additional data on PropertyInfoData
     // that cannot be stored in the shared data structure:
     [Serializable]
@@ -120,6 +133,14 @@ namespace Unity.MeshSync
         public object propertyValue;
         [SerializeField, HideInInspector]
         private string propertyValueSerialized;
+
+        public string ID
+        {
+            get
+            {
+                return $"{path}_{name}";
+            }
+        }
 
         public bool Matches(PropertyInfoDataWrapper other)
         {
@@ -414,6 +435,8 @@ namespace Unity.MeshSync
                             var data = scene.GetPropertyInfo(i);
                             propertyInfos.Add(new PropertyInfoDataWrapper(data));
                         }
+
+                        propertyInfos.Sort(new PropertyInfoDataWrapperComparer());
 
                         if (pendingProps != null)
                         {

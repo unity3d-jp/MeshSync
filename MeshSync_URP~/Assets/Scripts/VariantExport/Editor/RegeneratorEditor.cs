@@ -179,7 +179,7 @@ namespace Unity.MeshSync.Editor
                 {
                     foreach (var prop in exporter.Server.propertyInfos)
                     {
-                        exporter.EnabledSettingNames.Add(prop.name);
+                        exporter.EnabledSettingNames.Add(prop.ID);
                     }
                 }
                 else
@@ -188,32 +188,29 @@ namespace Unity.MeshSync.Editor
                 }
             }
 
-            foreach (var prop in exporter.Server.propertyInfos)
-            {
-                if (!prop.CanBeModified)
+            MeshSyncServerInspectorUtils.DrawSliderForProperties(
+                exporter.Server.propertyInfos,
+                 before: delegate (PropertyInfoDataWrapper prop)
+                 {
+                     GUILayout.BeginHorizontal();
+                     bool enabled = exporter.IsEnabled(prop);
+                     bool newEnabled = EditorGUILayout.Toggle(enabled, GUILayout.MaxWidth(TOGGLE_WIDTH));
+                     if (newEnabled != enabled)
+                     {
+                         if (newEnabled)
+                         {
+                             exporter.EnabledSettingNames.Add(prop.ID);
+                         }
+                         else
+                         {
+                             exporter.EnabledSettingNames.Remove(prop.ID);
+                         }
+                     }
+                 },
+                after: delegate (PropertyInfoDataWrapper prop)
                 {
-                    continue;
-                }
-
-                GUILayout.BeginHorizontal();
-                bool enabled = exporter.IsEnabled(prop);
-                bool newEnabled = EditorGUILayout.Toggle(enabled, GUILayout.MaxWidth(TOGGLE_WIDTH));
-                if (newEnabled != enabled)
-                {
-                    if (newEnabled)
-                    {
-                        exporter.EnabledSettingNames.Add(prop.name);
-                    }
-                    else
-                    {
-                        exporter.EnabledSettingNames.Remove(prop.name);
-                    }
-                }
-
-                MeshSyncServerInspectorUtils.DrawSliderForProperty(prop);
-
-                GUILayout.EndHorizontal();
-            }
+                    GUILayout.EndHorizontal();
+                });
         }
 
         private static void DrawBlockSection(Regenerator exporter)

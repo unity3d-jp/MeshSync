@@ -38,16 +38,16 @@ namespace Unity.MeshSync.VariantExport
 
         //public ReadOnlyCollection<PropertyInfoDataWrapper> propertyInfos => .EnabledProperties;
 
-        public abstract int VariantCount
+        public abstract long VariantCount
         {
             get;
         }
 
-        public int TotalPermutationCount
+        public long TotalPermutationCount
         {
             get
             {
-                int total = 1;
+                long total = 1;
 
                 foreach (var prop in server.propertyInfos)
                 {
@@ -96,6 +96,8 @@ namespace Unity.MeshSync.VariantExport
             {
                 yield break;
             }
+
+            yield return new WaitForBlender(regenerator);
 
             var outputFilePath = regenerator.SavePath;
 
@@ -328,11 +330,8 @@ namespace Unity.MeshSync.VariantExport
             {
                 AssetDatabase.DeleteAsset(prefabAssetStorePath);
             }
-            else
-            {
-                //AssetDatabase.SaveAssets();
-            }
 
+            AssetDatabase.SaveAssets();
             PrefabUtility.SavePrefabAsset(prefabSave);
 
             // Ensure the object is clean, delete children and update from blender:
@@ -345,7 +344,6 @@ namespace Unity.MeshSync.VariantExport
 
         void PurgePrefab(GameObject prefab)
         {
-            //return;
             // Find disabled gameobjects and get rid of them.
             // Build a list of them first so we don't get exceptions for things that were already destroyed.
             var allChildren = prefab.GetComponentsInChildren<Transform>(true);
@@ -386,6 +384,12 @@ namespace Unity.MeshSync.VariantExport
 
         void Finished()
         {
+            if (EditorSettings.serializationMode != SerializationMode.ForceText)
+            {
+                EditorUtility.DisplayDialog("Cannot make assets shared", "The serialization mode needs to be set to text for asset sharing to work.", "Ok");
+                return;
+            }
+
             var matchingAssets = new Dictionary<string, List<string>>();
 
             var processedAssets = new HashSet<string>();
@@ -401,7 +405,8 @@ namespace Unity.MeshSync.VariantExport
                 }
 
                 var assetFilename1 = Path.GetFileName(assetPath1);
-
+                var assetContent1 = File.ReadAllText(assetPath1);
+                                
                 // Check if the same asset name exists somewhere else:
                 for (int j = i + 1; j < savedAssets.Count; j++)
                 {
@@ -410,10 +415,9 @@ namespace Unity.MeshSync.VariantExport
 
                     if (assetFilename1 == assetFilename2)
                     {
-                        // Compare contents of the file:
-                        var assetContent1 = File.ReadAllText(assetPath1);
+                        // Compare contents of the file:                    
                         var assetContent2 = File.ReadAllText(assetPath2);
-
+                        
                         if (assetContent1 == assetContent2)
                         {
                             if (!matchingAssets.TryGetValue(assetPath1, out var assetList))
@@ -430,26 +434,15 @@ namespace Unity.MeshSync.VariantExport
                 }
             }
 
-            var allFilesInDir = Directory.GetFiles(regenerator.SavePath, "*.prefab");
-
             try
             {
                 int counter = 0;
 
-                void RemoveAsset(string assetPath)
-                {
-                    AssetDatabase.DeleteAsset(assetPath);
-                    var dir = Path.GetDirectoryName(assetPath);
-                    if (Directory.Exists(dir) && Directory.GetFiles(dir).Length == 0)
-                    {
-                        //AssetDatabase.Refresh();
-                        AssetDatabase.DeleteAsset(dir);
-                    }
-                }
+                var sharedAssetsMap = new Dictionary<string, List<string>>();
 
                 foreach (var kvp in matchingAssets)
                 {
-                    EditorUtility.DisplayProgressBar("Making assets shared", kvp.Key, (float)counter / matchingAssets.Count);
+                    EditorUtility.DisplayProgressBar("Creating shared assets", kvp.Key, (float)counter / matchingAssets.Count);
 
                     var assetPath = kvp.Key;
 
@@ -465,9 +458,21 @@ namespace Unity.MeshSync.VariantExport
                         AssetDatabase.CopyAsset(assetPath, newPath);
                     }
 
-                    RemoveAsset(assetPath);
-
                     var sharedAssetGUID = $"guid: {AssetDatabase.GUIDFromAssetPath(newPath)}";
+
+                    sharedAssetsMap.Add(sharedAssetGUID, kvp.Value);
+                }
+
+                counter = 0;
+                AssetDatabase.StartAssetEditing();
+
+                var allFilesInDir = Directory.GetFiles(regenerator.SavePath, "*.prefab", SearchOption.AllDirectories);
+
+                foreach (var kvp in sharedAssetsMap)
+                {
+                    var sharedAssetGUID = kvp.Key;
+
+                    EditorUtility.DisplayProgressBar("Applying shared assets", kvp.Key, (float)counter / sharedAssetsMap.Count);
 
                     foreach (var duplicateAsset in kvp.Value)
                     {
@@ -477,23 +482,28 @@ namespace Unity.MeshSync.VariantExport
                         {
                             string contents = File.ReadAllText(file);
 
+                            if (!contents.Contains(duplicateAssetGUID))
+                            {
+                                continue;
+                            }
+
                             var newContents = contents.Replace(duplicateAssetGUID, sharedAssetGUID);
 
-                            if (newContents != contents)
-                            {
-                                File.WriteAllText(file, newContents);
+                            File.WriteAllText(file, newContents);
 
-                                Debug.Log($"Changed GUID in {file} from {duplicateAssetGUID} to {sharedAssetGUID} ({Path.GetFileName(assetPath)})");
-                            }
+                            Debug.Log($"Changed GUID in {file} from {duplicateAssetGUID} to {sharedAssetGUID} ({Path.GetFileName(duplicateAsset)})");
                         }
 
-                        RemoveAsset(duplicateAsset);
+                        AssetDatabase.DeleteAsset(duplicateAsset);
+                        var dir = Path.GetDirectoryName(duplicateAsset);
+                        if (Directory.Exists(dir) && Directory.GetFiles(dir).Length == 0)
+                        {
+                            AssetDatabase.DeleteAsset(dir);
+                        }
                     }
 
                     counter++;
                 }
-
-                //AssetDatabase.Refresh();
             }
             catch (Exception ex)
             {
@@ -501,8 +511,8 @@ namespace Unity.MeshSync.VariantExport
             }
             finally
             {
+                AssetDatabase.StopAssetEditing();
                 EditorUtility.ClearProgressBar();
-
                 AssetDatabase.Refresh();
             }
         }

@@ -9,7 +9,7 @@ namespace Unity.MeshSync.VariantExport
 {
     internal class SelectedPermutationRunner : PermutationRunnerBase
     {
-        public override int VariantCount
+        public override long VariantCount
         {
             get
             {

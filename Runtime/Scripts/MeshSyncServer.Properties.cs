@@ -24,6 +24,25 @@
             }
         }
 
+        public int InstanceCount
+        {
+            get
+            {
+                int count = 0;
+
+                foreach (var inst in m_clientInstances)
+                {
+                    count += inst.Value.instanceObjects.Count;
+
+                    if (inst.Value.renderer != null)
+                    {
+                        count += inst.Value.renderer.TransformCount;
+                    }
+                }
+                return count;
+            }
+        }
+
         public PropertiesState CurrentPropertiesState { get; private set; }
         public void ResetPropertiesState()
         {
@@ -35,6 +54,11 @@
             base.ClearInstancePrefabs();
 
             needsClientSync = true;
+        }
+
+        public bool IsConnectionToBlenderActive()
+        {
+            return m_server.CanServerReceiveProperties();
         }
 
         void SendUpdatedProperties()

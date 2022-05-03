@@ -2,58 +2,109 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System;
 
 namespace Unity.MeshSync.Editor
 {
     public static class MeshSyncServerInspectorUtils
     {
-        public static void DrawSliderForProperty(PropertyInfoDataWrapper prop)
+        static List<string> foldouts = new List<string>();
+
+        public static void OpenDCCAsset(MeshSyncServer server)
         {
-            EditorGUI.BeginChangeCheck();
+            BlenderLauncher.OpenBlendFile(server, server.m_DCCAsset);
+        }
 
-            object newValue = null;
-            switch (prop.type)
+        public static void DrawSliderForProperties(List<PropertyInfoDataWrapper> props,
+            Action<PropertyInfoDataWrapper> before,
+            Action<PropertyInfoDataWrapper> after)
+        {
+            var lastPathDrawn = string.Empty;
+            bool folded = false;
+
+            foreach (var prop in props)
             {
-                case PropertyInfoData.Type.Int:
-                    int max = (int)prop.max;
-
-                    // Need to be careful with overflow here:
-                    if (prop.max == int.MaxValue)
-                    {
-                        max = int.MaxValue - 1;
-                    }
-
-                    newValue = EditorGUILayout.IntSlider(prop.name, prop.GetValue<int>(), (int)prop.min, max);
-
-                    break;
-
-                case PropertyInfoData.Type.Float:
-                    newValue = EditorGUILayout.Slider(prop.name, prop.GetValue<float>(), prop.min, prop.max);
-                    break;
-
-                case PropertyInfoData.Type.String:
-                    EditorGUILayout.LabelField(prop.name, prop.GetValue<string>());
-                    break;
-
-                case PropertyInfoData.Type.IntArray:
-                    {
-                        newValue = DrawArrayFieldsInt(prop, newValue);
-                        break;
-                    }
-                case PropertyInfoData.Type.FloatArray:
-                    {
-                        newValue = DrawArrayFieldsFloat(prop, newValue);
-                        break;
-                    }
-                default:
-                    break;
-            }
-
-            if (EditorGUI.EndChangeCheck())
-            {
-                lock (PropertyInfoDataWrapper.PropertyUpdateLock)
+                if (prop.path != lastPathDrawn)
                 {
-                    prop.NewValue = newValue;
+                    bool wasFolded = foldouts.Contains(prop.path);
+                    folded = EditorGUILayout.Foldout(wasFolded, prop.path);
+
+                    if (wasFolded != folded)
+                    {
+                        if (wasFolded)
+                        {
+                            foldouts.Remove(prop.path);
+                        }
+                        else
+                        {
+                            foldouts.Add(prop.path);
+                        }
+                    }
+
+                    lastPathDrawn = prop.path;
+                }
+
+                if (folded)
+                {
+                    continue;
+                }
+
+                if (before != null)
+                {
+                    before(prop);
+                }
+
+                EditorGUI.BeginChangeCheck();
+
+                object newValue = null;
+                switch (prop.type)
+                {
+                    case PropertyInfoData.Type.Int:
+                        int max = (int)prop.max;
+
+                        // Need to be careful with overflow here:
+                        if (prop.max == int.MaxValue)
+                        {
+                            max = int.MaxValue - 1;
+                        }
+
+                        newValue = EditorGUILayout.IntSlider(prop.name, prop.GetValue<int>(), (int)prop.min, max);
+
+                        break;
+
+                    case PropertyInfoData.Type.Float:
+                        newValue = EditorGUILayout.Slider(prop.name, prop.GetValue<float>(), prop.min, prop.max);
+                        break;
+
+                    case PropertyInfoData.Type.String:
+                        EditorGUILayout.LabelField(prop.name, prop.GetValue<string>());
+                        break;
+
+                    case PropertyInfoData.Type.IntArray:
+                        {
+                            newValue = DrawArrayFieldsInt(prop, newValue);
+                            break;
+                        }
+                    case PropertyInfoData.Type.FloatArray:
+                        {
+                            newValue = DrawArrayFieldsFloat(prop, newValue);
+                            break;
+                        }
+                    default:
+                        break;
+                }
+
+                if (EditorGUI.EndChangeCheck())
+                {
+                    lock (PropertyInfoDataWrapper.PropertyUpdateLock)
+                    {
+                        prop.NewValue = newValue;
+                    }
+                }
+
+                if (after != null)
+                {
+                    after(prop);
                 }
             }
         }
@@ -195,7 +246,7 @@ namespace Unity.MeshSync.Editor
                 {
                     if (GUILayout.Button("Open"))
                     {
-                        OpenDCCAsset(server);
+                        MeshSyncServerInspectorUtils.OpenDCCAsset(server);
                     }
                 }
 
@@ -204,17 +255,7 @@ namespace Unity.MeshSync.Editor
                 server.m_DCCInterop?.DrawDCCToolVersion(server);
             }
 
-            var properties = propertiesHolder.propertyInfos;
-
-            for (int i = 0; i < properties.Count; i++)
-            {
-                MeshSyncServerInspectorUtils.DrawSliderForProperty(properties[i]);
-            }
-        }
-
-        public static void OpenDCCAsset(MeshSyncServer server)
-        {
-            BlenderLauncher.OpenBlendFile(server, server.m_DCCAsset);
+            MeshSyncServerInspectorUtils.DrawSliderForProperties(propertiesHolder.propertyInfos, null, null);
         }
     }
 }

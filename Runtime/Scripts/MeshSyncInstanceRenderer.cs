@@ -16,6 +16,8 @@ namespace Unity.MeshSync{
         [SerializeField] private Matrix4x4[] m_transforms;
         [SerializeField] internal GameObject m_reference; 
         
+        public int TransformCount { get => m_transforms.Length; }
+
         void OnEnable()
         {
         

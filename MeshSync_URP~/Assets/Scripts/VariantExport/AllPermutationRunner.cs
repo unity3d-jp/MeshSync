@@ -12,7 +12,7 @@ namespace Unity.MeshSync.VariantExport
     /// </summary>
     class AllPermutationRunner : PermutationRunnerBase
     {
-        public override int VariantCount => TotalPermutationCount;
+        public override long VariantCount => TotalPermutationCount;
         
         public AllPermutationRunner(Regenerator regenerator) : base(regenerator)
         {

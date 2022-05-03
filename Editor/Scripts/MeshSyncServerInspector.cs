@@ -97,6 +97,8 @@ internal partial class MeshSyncServerInspector : BaseMeshSyncInspector   {
             
             DrawPrefabListElement(t);
         }
+
+            EditorGUILayout.LabelField($"Instance count: {t.InstanceCount}");
     }
 
     static void DrawPrefabListElement(MeshSyncServer t)

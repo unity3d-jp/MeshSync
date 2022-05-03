@@ -482,6 +482,7 @@ namespace Unity.MeshSync
 
             Assert.IsNotNull(shader);
             Material ret = new Material(shader);
+            ret.enableInstancing = true;
             return ret;
         }
 
@@ -2010,7 +2011,7 @@ namespace Unity.MeshSync
                             var newMat = instanceObject.transform.localToWorldMatrix * mat;
 
                             objTransform.localScale = newMat.lossyScale;
-                            objTransform.localPosition = newMat.MultiplyPoint(Vector3.zero);
+                            objTransform.position = newMat.MultiplyPoint(Vector3.zero);
 
                             // Calculate rotation here to avoid gimbal lock issue:
                             Vector3 forward;
@@ -2490,10 +2491,10 @@ namespace Unity.MeshSync
 
             if (mesh == null)
             {
-                if(kvp.Value.dataType == EntityType.Mesh)
-                {
-                    Debug.LogError($"Mesh was lost on {kvp.Key}");
-                }
+                //if(kvp.Value.dataType == EntityType.Mesh)
+                //{
+                //    Debug.LogError($"Mesh was lost on {kvp.Key}");
+                //}
 
                 return;
             }

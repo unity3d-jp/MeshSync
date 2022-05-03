@@ -51,9 +51,9 @@ namespace Unity.MeshSync.VariantExport
 
         public int CurrentExport => runner.counter;
 
-        public int VariantCount => runner.VariantCount;
+        public long VariantCount => runner.VariantCount;
 
-        public int TotalPermutationCount => runner.TotalPermutationCount;
+        public long TotalPermutationCount => runner.TotalPermutationCount;
 
         public bool CheckForCancellation()
         {
@@ -96,7 +96,7 @@ namespace Unity.MeshSync.VariantExport
 
         public bool IsEnabled(PropertyInfoDataWrapper property)
         {
-            return EnabledSettingNames.Contains(property.name);
+            return EnabledSettingNames.Contains(property.ID);
         }
 
         private void OnEnable()
@@ -184,7 +184,7 @@ namespace Unity.MeshSync.VariantExport
                     continue;
                 }
 
-                string serializedValue = $"#{prop.name}:";
+                string serializedValue = $"#{prop.ID}:";
 
                 serializedValue += prop.GetSerializedValue(useNewValues);
 
@@ -214,11 +214,11 @@ namespace Unity.MeshSync.VariantExport
                         continue;
                     }
 
-                    var propName = propString.Substring(0, propString.IndexOf(":"));
+                    var propID = propString.Substring(0, propString.IndexOf(":"));
 
                     foreach (var serverProp in properties)
                     {
-                        if (serverProp.name == propName)
+                        if (serverProp.ID == propID)
                         {
                             serverProp.SetSerializedValue(propString.Substring(propString.IndexOf(":") + 1));
 
