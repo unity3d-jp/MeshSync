@@ -118,6 +118,8 @@ public:
 
     void dbgDump() const;
 
+    static std::vector<EntityConverterPtr> getConverters(const SceneImportSettings& cv, const SceneSettings& settings, bool invert);
+
 private:
     void updateEntities(const ms::SceneImportSettings& cv, const std::vector<ms::EntityConverterPtr>& converters, std::vector<ms::TransformPtr> entities);
 

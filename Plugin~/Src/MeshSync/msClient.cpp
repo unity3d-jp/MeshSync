@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "MeshSync/msClient.h"
 #include "MeshSync/SceneGraph/msScene.h" //Scene
+#include "MeshSync/SceneGraph/msCurve.h"
 
 namespace ms {
 
@@ -207,6 +208,12 @@ bool Client::send(const ServerInitiatedMessage& mes)
             auto prop = PropertyInfo(reqResponse.properties[i]);
             reqResponse.properties[i].data.share(prop.data);
             properties.push_back(prop);
+        }
+
+        curves = std::vector<CurvePtr>();
+        for (int i = 0; i < reqResponse.curves.size(); i++)
+        {
+            curves.push_back(reqResponse.curves[i]);
         }
 
         messageFromServer = reqResponse.message;

@@ -41,6 +41,9 @@ namespace ms {
 		~Curve() override;
 	public:
 		msDefinePool(Curve);
+
+		static shared_ptr<Curve> create(std::istream& is);
+
 		Type getType() const override;
 		bool isGeometry() const override;
 		void serialize(std::ostream& os) const override;
@@ -63,5 +66,4 @@ namespace ms {
 		//EntityPtr clone(bool detach = false) override;
 	};
 	msSerializable(Curve);
-
 } // namespace ms

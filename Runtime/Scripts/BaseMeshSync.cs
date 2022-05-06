@@ -11,6 +11,7 @@ using System.IO;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
 using System.Threading;
+using Unity.Mathematics;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -1941,7 +1942,7 @@ namespace Unity.MeshSync
 
                     foreach (var obj in infoRecord.instanceObjects)
                     {
-                        DestroyImmediate(obj);
+                        DestroyImmediate(obj, true);
                     }
                     infoRecord.instanceObjects.Clear();
 
@@ -2842,6 +2843,7 @@ namespace Unity.MeshSync
         PinnedList<Vector3> m_tmpV3 = new PinnedList<Vector3>();
         PinnedList<Vector4> m_tmpV4 = new PinnedList<Vector4>();
         PinnedList<Color> m_tmpC = new PinnedList<Color>();
+        PinnedList<float3> m_tmpFloat3 = new PinnedList<float3>();
 
         //----------------------------------------------------------------------------------------------------------------------
 

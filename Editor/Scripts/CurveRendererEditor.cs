@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace Unity.MeshSync.Editor
 {
+    /*
     [CustomEditor(typeof(CurveRenderer))]
     internal class CurveRendererEditor : UnityEditor.Editor
     {
@@ -17,4 +18,5 @@ namespace Unity.MeshSync.Editor
             curveRenderer.Draw(true);
         }
     }
+    */
 }

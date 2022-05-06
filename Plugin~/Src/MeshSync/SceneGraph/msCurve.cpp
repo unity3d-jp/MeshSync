@@ -9,9 +9,23 @@ namespace ms {
 
 	EntityType Curve::getType() const { return Type::Curve; }
 
+	shared_ptr<Curve> Curve::create(istream& is)
+	{
+		auto ret = Curve::create();
+
+		// When not creating via Entity::Create, ensure the entity type is read:
+		EntityType type;
+		read(is, type);
+
+		ret->deserialize(is);
+		return ret;
+	}
+
 	void Curve::clear()
 	{
 		super::clear();
+
+		splines.clear();
 	}
 
 	bool Curve::isGeometry() const { return true; }

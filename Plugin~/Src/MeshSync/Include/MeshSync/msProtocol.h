@@ -224,6 +224,7 @@ class ServerInitiatedMessage : public Message
 {
     using super = Message;
 public:
+    SceneSettings scene_settings;
 
     // non-serializable fields
     std::atomic_bool ready{ false };
@@ -239,6 +240,7 @@ msSerializable(ServerInitiatedMessage);
 class ServerInitiatedMessageResponse {
 public:
     std::vector<PropertyInfo> properties;
+    std::vector<CurvePtr> curves;
     std::string message;
 
     void serialize(std::ostream& os) const;

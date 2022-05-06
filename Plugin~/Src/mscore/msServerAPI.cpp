@@ -7,6 +7,7 @@
 #include "MeshSync/SceneGraph/msMesh.h"
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msTexture.h"
+#include "MeshSync/SceneGraph/msCurve.h"
 
 #include "msCoreAPI.h"
 
@@ -285,9 +286,25 @@ msAPI void msServerSendPropertyString(ms::Server* server, int sourceType, const 
     server->receivedProperty(prop); 
 }
 
-msAPI void msServerSendCurve(ms::Server* server, int hostID)
+msAPI void msServerSendCurve(ms::Server* server, const char* path, int knotCount, float3* cos, float3* handlesLeft, float3* handlesRight)
 {
     if (!server) { return; }
+
+    auto curve = ms::Curve::create();
+    curve->path = path;
+
+    // TODO: support more than 1 spline per curve:
+    curve->splines.push_back(ms::CurveSpline::create());
+    auto spline = curve->splines.back();
+
+    for (size_t i = 0; i < knotCount; i++)
+    {
+        spline->cos.push_back(cos[i]);
+        spline->handles_left.push_back(handlesLeft[i]);
+        spline->handles_right.push_back(handlesRight[i]);
+    }
+
+    server->receivedCurve(curve);
 }
 
 msAPI void msServerRequestFullSync(ms::Server* server)

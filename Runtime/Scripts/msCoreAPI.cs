@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using Unity.Collections;
+using Unity.Mathematics;
 
 namespace Unity.MeshSync {
 internal static class Lib {
@@ -2792,17 +2793,17 @@ internal struct PointsData {
             return msCurveGetNumSplinePoints(self, index);
         }
 
-        public void ReadSplineCos(int index, PinnedList<Vector3> dst)
+        public void ReadSplineCos(int index, PinnedList<float3> dst)
         {
             msCurveReadSplineCos(self, index, dst);
         }
 
-        public void ReadSplineHandlesLeft(int index, PinnedList<Vector3> dst)
+        public void ReadSplineHandlesLeft(int index, PinnedList<float3> dst)
         {
             msCurveReadSplineHandlesLeft(self, index, dst);
         }
 
-        public void ReadSplineHandlesRight(int index, PinnedList<Vector3> dst)
+        public void ReadSplineHandlesRight(int index, PinnedList<float3> dst)
         {
             msCurveReadSplineHandlesRight(self, index, dst);
         }

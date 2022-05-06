@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -115,7 +116,7 @@ internal struct Server {
     static extern void msServerSendPropertyString(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, string newValue, int length);
 
     [DllImport(Lib.name)]
-    static extern void msServerSendCurve(IntPtr self, int hostID);        
+    static extern void msServerSendCurve(IntPtr self, string path, int knotCount, float3[] cos, float3[] handlesLeft, float3[] handlesRight);        
 
     [DllImport(Lib.name)]
     static extern void msServerRequestFullSync(IntPtr self);        
@@ -173,12 +174,28 @@ internal struct Server {
         set { msServerSetScreenshotFilePath(self, value); }
     }
 
-    public void SendCurve(EntityRecord entity)
-    {
-        Debug.Assert(entity.dataType == EntityType.Curve);
-        // TODO:
-        //msServerSendCurve(self, entity.tra)
-    }
+        public void SendCurve(EntityRecord entity, string path)
+        {
+            Debug.Assert(entity.dataType == EntityType.Curve);
+
+            var pointCount = entity.splineContainer.Spline.Count;
+            var cos = new float3[pointCount];
+            var handlesLeft = new float3[pointCount];
+            var handlesRight = new float3[pointCount];
+
+            for (int i = 0; i < pointCount; i++)
+            {
+                var knot = entity.splineContainer.Spline[i];
+
+                var co = knot.Position;
+
+                cos[i] = co;
+                handlesLeft[i] = knot.TangentIn + co;
+                handlesRight[i] = knot.TangentOut + co;
+            }
+            
+            msServerSendCurve(self, path, cos.Length, cos, handlesLeft, handlesRight);
+        }
 
     public void SendProperty(PropertyInfoDataWrapper prop)
     {

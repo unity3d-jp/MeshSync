@@ -1,4 +1,6 @@
-﻿namespace Unity.MeshSync
+﻿using Unity.Mathematics;
+
+namespace Unity.MeshSync
 {
     partial class MeshSyncServer
     {
@@ -10,6 +12,7 @@
         };
 
         bool needsClientSync;
+        bool splineChanged;
 
         public override InstanceHandlingType InstanceHandling
         {
@@ -84,18 +87,21 @@
                 }
 
                 // Send updated curves:
-                foreach (var kvp in GetClientObjects())
+                if (splineChanged)
                 {
-                    var entity = kvp.Value;
-                    if (entity.dataType != EntityType.Curve)
-                    {
-                        continue;
-                    }
+                    splineChanged = false;
 
-                    if (entity.curve.IsDirty)
+                    var floatList = new PinnedList<float3>();
+
+                    foreach (var kvp in GetClientObjects())
                     {
-                        m_server.SendCurve(entity);
-                        entity.curve.IsDirty = false;
+                        var entity = kvp.Value;
+                        if (entity.dataType != EntityType.Curve)
+                        {
+                            continue;
+                        }
+
+                        m_server.SendCurve(entity, kvp.Key);
                         sendChanges = true;
                     }
                 }
@@ -116,6 +122,11 @@
                     m_server.SendChangedProperties();
                 }
             }
+        }
+
+        protected override void SplineChanged()
+        {
+            splineChanged = true;
         }
 
         void OnRecvPropertyRequest()

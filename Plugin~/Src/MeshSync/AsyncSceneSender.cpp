@@ -98,6 +98,8 @@ void AsyncSceneSender::requestServerInitiatedMessageImpl() {
     ms::ServerInitiatedMessage mes;
     setup_message(mes);
 
+    mes.scene_settings = scene_settings;
+    
     bool succeeded = client.send(mes);
 
     if (!succeeded) {
@@ -105,7 +107,7 @@ void AsyncSceneSender::requestServerInitiatedMessageImpl() {
     }
 
     if (on_server_initiated_response_received) {
-        on_server_initiated_response_received(client.properties, client.messageFromServer);
+        on_server_initiated_response_received(client.properties, client.curves, client.messageFromServer);
     }
 
     m_properties_client = nullptr;

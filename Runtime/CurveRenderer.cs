@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace Unity.MeshSync
 {
+    /*
     [ExecuteInEditMode]
     [RequireComponent(typeof(Curve))]
     internal class CurveRenderer : MonoBehaviour
@@ -135,4 +136,5 @@ namespace Unity.MeshSync
             }
         }
     }
+    */
 }

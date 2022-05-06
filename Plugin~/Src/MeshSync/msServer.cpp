@@ -10,6 +10,9 @@
 #include "MeshSync/MeshSync.h" //TestMessagePtr
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msMesh.h"
+#include "MeshSync/SceneGraph/msCurve.h"
+
+#include "MeshSync/SceneGraph/msEntityConverter.h"
 
 namespace ms {
 
@@ -618,7 +621,8 @@ void Server::recvPoll(HTTPServerRequest& request, HTTPServerResponse& response)
 
 void Server::recvServerInitiatedRequest(HTTPServerRequest& request, HTTPServerResponse& response)
 {
-    auto mes = std::make_shared<ServerInitiatedMessage>();
+    auto mes = deserializeMessage<ServerInitiatedMessage>(request, response);
+
     queueMessage(mes);
 
     // wait for data arrive
@@ -642,6 +646,18 @@ void Server::recvServerInitiatedRequest(HTTPServerRequest& request, HTTPServerRe
         reqResponse.properties.push_back(p);
     }
     m_pending_properties.clear();
+
+    auto converters = Scene::getConverters(m_settings.import_settings, m_current_properties_request->scene_settings, true);
+
+    for (auto curve : m_pending_curves)
+    {
+        for (auto& cv : converters) {
+            cv->convertCurve(*curve);
+        }
+
+        reqResponse.curves.push_back(curve);
+    }
+    m_pending_curves.clear();
 
     if (m_syncRequested) {
         reqResponse.message = "sync";
@@ -675,6 +691,18 @@ void Server::receivedProperty(PropertyInfoPtr prop) {
     }
 
     m_pending_properties.push_back(prop);
+}
+
+void Server::receivedCurve(CurvePtr curve) {
+    // If the same curve is already prepared to be sent, replace it with the updated data:
+    for (size_t i = 0; i < m_pending_curves.size(); i++) {
+        if (m_pending_curves[i]->path == curve->path) {
+            m_pending_curves[i] = curve;
+            return;
+        }
+    }
+
+    m_pending_curves.push_back(curve);
 }
 
 void Server::syncRequested() {

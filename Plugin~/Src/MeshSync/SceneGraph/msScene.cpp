@@ -233,26 +233,61 @@ void Scene::sanitizeObjectName(std::string& name)
     }
 }
 
-void Scene::import(const SceneImportSettings& cv)
-{
+std::vector<EntityConverterPtr> Scene::getConverters(const SceneImportSettings& cv, const SceneSettings& settings, bool invert) {
     // receive and convert assets
     bool flip_x = settings.handedness == Handedness::Right || settings.handedness == Handedness::RightZUp;
     bool swap_yz = settings.handedness == Handedness::LeftZUp || settings.handedness == Handedness::RightZUp;
 
     std::vector<EntityConverterPtr> converters;
     if (settings.scale_factor != 1.0f) {
-        float scale = 1.0f / settings.scale_factor;
+        float scale;
+
+        if (invert) {
+            scale = settings.scale_factor;
+        }
+        else {
+            scale = 1.0f / settings.scale_factor;
+        }
+
         converters.push_back(ScaleConverter::create(scale));
     }
     if (flip_x) {
         converters.push_back(FlipX_HandednessCorrector::create());
     }
     if (swap_yz) {
-        if (cv.zup_correction_mode == ZUpCorrectionMode::FlipYZ)
-            converters.push_back(FlipYZ_ZUpCorrector::create());
-        else if (cv.zup_correction_mode == ZUpCorrectionMode::RotateX)
-            converters.push_back(RotateX_ZUpCorrector::create());
+        if (cv.zup_correction_mode == ZUpCorrectionMode::FlipYZ) {
+            if (invert) {
+                // TODO: Could write a new FlipYZ_ZUpCorrector that flips back, for now just rotate 3 more times to get back to original:
+                for (int i = 0; i < 3; i++)
+                {
+                    converters.push_back(FlipYZ_ZUpCorrector::create());
+                }
+            }
+            else {
+                converters.push_back(FlipYZ_ZUpCorrector::create());
+            }
+        }
+        else if (cv.zup_correction_mode == ZUpCorrectionMode::RotateX) {
+            if (invert) {
+                // TODO: Could write a new RotateX_ZUpCorrector that rotates back, for now just rotate 3 more times to get back to original:
+                for (int i = 0; i < 3; i++)
+                {
+                    converters.push_back(RotateX_ZUpCorrector::create());
+                }
+            }
+            else {
+                converters.push_back(RotateX_ZUpCorrector::create());
+            }
+        }
     }
+
+    return converters;
+}
+
+void Scene::import(const SceneImportSettings& cv)
+{
+    // receive and convert assets
+    std::vector<EntityConverterPtr> converters = getConverters(cv, settings, false);
 
     updateEntities(cv, converters, entities);
     updateEntities(cv, converters, instanceMeshes);

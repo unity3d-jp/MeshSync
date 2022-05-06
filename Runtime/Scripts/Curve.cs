@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace Unity.MeshSync
 {
+    /*
     [Serializable]
     internal class Curve : MonoBehaviour
     {
@@ -69,4 +70,5 @@ namespace Unity.MeshSync
         public Vector3 handle_left;
         public Vector3 handle_right;
     }
+    */
 }

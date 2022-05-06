@@ -4,8 +4,10 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.Mathematics;
 using Unity.MeshSync;
 using UnityEngine;
+using UnityEngine.Splines;
 
 namespace Unity.MeshSync
 {
@@ -13,7 +15,7 @@ namespace Unity.MeshSync
     {
         public int Compare(PropertyInfoDataWrapper x, PropertyInfoDataWrapper y)
         {
-            if(x.path == y.path)
+            if (x.path == y.path)
             {
                 return x.name.CompareTo(y.name);
             }
@@ -464,35 +466,58 @@ namespace Unity.MeshSync
             GameObject go = rec.go;
             Transform trans = go.transform;
 
-            var curve = rec.curve;
+            SplineContainer splineContainer = rec.splineContainer;
 
-            if (curve == null)
+            if (splineContainer == null)
             {
-                curve = rec.curve = Misc.GetOrAddComponent<Curve>(trans.gameObject);
-                rec.curveRenderer = Misc.GetOrAddComponent<CurveRenderer>(trans.gameObject);
+                splineContainer = rec.splineContainer = Misc.GetOrAddComponent<SplineContainer>(trans.gameObject);
             }
 
             var numSplines = data.numSplines;
 
-            if (curve.splines == null ||
-                curve.splines.Length != numSplines)
+            float3[] cos = null;
+            float3[] handles_left = null;
+            float3[] handles_right = null;
+
+            // Support for multiple splines?
+            if (numSplines > 1)
             {
-                Array.Resize(ref curve.splines, numSplines);
+                numSplines = 1;
             }
 
-            for (int i = 0; i < numSplines; i++)
+            splineContainer.Spline.changed -= SplineChanged;
+            splineContainer.Spline.Clear();
+            for (int index = 0; index < numSplines; index++)
             {
-                var spline = curve.splines[i];
-                if (spline == null)
+                var numPoints = data.GetNumSplinePoints(index);
+                m_tmpFloat3.Resize(numPoints);
+
+                data.ReadSplineCos(index, m_tmpFloat3);
+                m_tmpFloat3.CopyTo(ref cos);
+
+                data.ReadSplineHandlesLeft(index, m_tmpFloat3);
+                m_tmpFloat3.CopyTo(ref handles_left);
+
+                data.ReadSplineHandlesRight(index, m_tmpFloat3);
+                m_tmpFloat3.CopyTo(ref handles_right);
+
+                for (int pointIndex = 0; pointIndex < cos.Length; pointIndex++)
                 {
-                    spline = new CurveSpline();
-                    curve.splines[i] = spline;
-                }
+                    var co = cos[pointIndex];
 
-                spline.Deserialize(data, i, m_tmpV3);
+                    var knot = new BezierKnot(co, handles_left[pointIndex] - co, handles_right[pointIndex] - co, Quaternion.identity);
+
+                    splineContainer.Spline.Add(knot);
+                }
             }
+
+            splineContainer.Spline.changed += SplineChanged;
 
             return rec;
+        }
+
+        protected virtual void SplineChanged()
+        {
         }
     }
 }

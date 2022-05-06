@@ -170,8 +170,7 @@ internal class EntityRecord {
     public PointCacheRenderer  pointCacheRenderer;
     public Mesh                origMesh;
     public Mesh                mesh;
-    public Curve               curve;
-    public CurveRenderer       curveRenderer;
+    public UnityEngine.Splines.SplineContainer splineContainer;
 
     public int[]           materialIDs;
     public string          reference;

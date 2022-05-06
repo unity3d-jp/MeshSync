@@ -520,7 +520,11 @@ public partial class MeshSyncServer : BaseMeshSync {
     {
         get
         {
+#if UNITY_2021_2_OR_NEWER
+            return UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
+#else
             return UnityEditor.Experimental.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
+#endif
         }
     }
 
