@@ -20,7 +20,14 @@ platforms:
       flavor: b1.medium
       cmd_prefix: DISPLAY=:0.0
 
-pack_platform: *platform_win
+pack_platform: &pack_platform_linux
+  name: linux
+  type: Unity::VM
+  image: package-ci/ubuntu:v2.0.0
+  flavor: b1.medium
+
+publish_platform: *pack_platform_linux
+trigger_platform: *pack_platform_linux
 
 upm_ci_test_types:
   - test_type: &upm_ci_all
@@ -84,3 +91,15 @@ test_configs:
       - platform_type: *platform_linux
         test_type: *upm_ci_all
 
+
+promotion_types:
+  - job_key_prefix: promote
+    job_name: Promote MeshSync to Production
+    test_name_prefix: Test MeshSync Promotion
+    test_dependencies: 
+      - .yamato/MeshSync-pack.yml#pack
+  - job_key_prefix: prerelease_promote
+    job_name: Prerelease and promote MeshSync to Production
+    test_name_prefix: Prerelease and test MeshSync Promotion 
+    test_dependencies:
+      - .yamato/MeshSync-publish.yml#prerelease
