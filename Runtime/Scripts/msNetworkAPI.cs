@@ -116,7 +116,7 @@ internal struct Server {
     static extern void msServerSendPropertyString(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, string newValue, int length);
 
     [DllImport(Lib.name)]
-    static extern void msServerSendCurve(IntPtr self, string path, int knotCount, float3[] cos, float3[] handlesLeft, float3[] handlesRight);        
+    static extern void msServerSendCurve(IntPtr self, string path, int splineIndex, int knotCount, bool closed, float3[] cos, float3[] handlesLeft, float3[] handlesRight);        
 
     [DllImport(Lib.name)]
     static extern void msServerRequestFullSync(IntPtr self);        
@@ -174,28 +174,33 @@ internal struct Server {
         set { msServerSetScreenshotFilePath(self, value); }
     }
 
-        public void SendCurve(EntityRecord entity, string path)
-        {
-            Debug.Assert(entity.dataType == EntityType.Curve);
+    public void SendCurve(EntityRecord entity, string path)
+    {
+        Debug.Assert(entity.dataType == EntityType.Curve);
 
-            var pointCount = entity.splineContainer.Spline.Count;
+        for (int splineIdx = 0; splineIdx < entity.splineContainer.Branches.Count; splineIdx++)
+        {
+            var spline = entity.splineContainer.Branches[splineIdx];
+
+            var pointCount = spline.Count;
             var cos = new float3[pointCount];
             var handlesLeft = new float3[pointCount];
             var handlesRight = new float3[pointCount];
 
-            for (int i = 0; i < pointCount; i++)
+            for (int pointIdx = 0; pointIdx < pointCount; pointIdx++)
             {
-                var knot = entity.splineContainer.Spline[i];
+                var knot = spline[pointIdx];
 
                 var co = knot.Position;
 
-                cos[i] = co;
-                handlesLeft[i] = knot.TangentIn + co;
-                handlesRight[i] = knot.TangentOut + co;
+                cos[pointIdx] = co;
+                handlesLeft[pointIdx] = knot.TangentIn + co;
+                handlesRight[pointIdx] = knot.TangentOut + co;
             }
-            
-            msServerSendCurve(self, path, cos.Length, cos, handlesLeft, handlesRight);
+
+            msServerSendCurve(self, path, splineIdx, pointCount, spline.Closed, cos, handlesLeft, handlesRight);
         }
+    }
 
     public void SendProperty(PropertyInfoDataWrapper prop)
     {

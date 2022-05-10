@@ -1,4 +1,6 @@
-﻿using Unity.Mathematics;
+﻿using System.Collections.Generic;
+using Unity.Mathematics;
+using UnityEngine.Splines;
 
 namespace Unity.MeshSync
 {
@@ -12,7 +14,7 @@ namespace Unity.MeshSync
         };
 
         bool needsClientSync;
-        bool splineChanged;
+        List<string> changedSplines = new List<string>();
 
         public override InstanceHandlingType InstanceHandling
         {
@@ -87,10 +89,8 @@ namespace Unity.MeshSync
                 }
 
                 // Send updated curves:
-                if (splineChanged)
+                if (changedSplines.Count > 0)
                 {
-                    splineChanged = false;
-
                     var floatList = new PinnedList<float3>();
 
                     foreach (var kvp in GetClientObjects())
@@ -104,6 +104,8 @@ namespace Unity.MeshSync
                         m_server.SendCurve(entity, kvp.Key);
                         sendChanges = true;
                     }
+
+                    changedSplines.Clear();
                 }
 
                 if (needsClientSync)
@@ -124,9 +126,10 @@ namespace Unity.MeshSync
             }
         }
 
-        protected override void SplineChanged()
+        protected override void SplineChanged(Spline spline, int arg2, SplineModification arg3)
         {
-            splineChanged = true;
+            // TODO: Get the path here:
+            changedSplines.Add(spline.ToString());
         }
 
         void OnRecvPropertyRequest()

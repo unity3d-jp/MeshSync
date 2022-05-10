@@ -2769,6 +2769,9 @@ internal struct PointsData {
         static extern int msCurveGetNumSplines(IntPtr self);
 
         [DllImport(Lib.name)]
+        static extern bool msCurveReadSplineClosed(IntPtr self, int index);        
+
+        [DllImport(Lib.name)]
         static extern int msCurveGetNumSplinePoints(IntPtr self, int index);
 
         [DllImport(Lib.name)]
@@ -2787,6 +2790,11 @@ internal struct PointsData {
         {
             get { return msCurveGetNumSplines(self); }
         }
+
+        public bool IsSplineClosed(int index)
+        {
+            return msCurveReadSplineClosed(self, index);
+        }        
 
         public int GetNumSplinePoints(int index)
         {

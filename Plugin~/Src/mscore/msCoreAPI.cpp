@@ -514,6 +514,9 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *self, float weight, int num,
 #pragma region Curves
 msAPI int msCurveGetNumSplines(ms::Curve* self) { return self->splines.size(); }
 msAPI int msCurveGetNumSplinePoints(ms::Curve* self, int index) { return self->splines[index]->cos.size(); }
+msAPI bool msCurveReadSplineClosed(ms::Curve* self, int index) {
+    return self->splines[index]->closed;
+}
 msAPI void msCurveReadSplineCos(ms::Curve* self, int index, float3* dst) {
     self->splines[index]->cos.copy_to(dst);
 }

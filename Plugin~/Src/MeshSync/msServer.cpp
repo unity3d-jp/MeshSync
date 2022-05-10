@@ -694,14 +694,6 @@ void Server::receivedProperty(PropertyInfoPtr prop) {
 }
 
 void Server::receivedCurve(CurvePtr curve) {
-    // If the same curve is already prepared to be sent, replace it with the updated data:
-    for (size_t i = 0; i < m_pending_curves.size(); i++) {
-        if (m_pending_curves[i]->path == curve->path) {
-            m_pending_curves[i] = curve;
-            return;
-        }
-    }
-
     m_pending_curves.push_back(curve);
 }
 

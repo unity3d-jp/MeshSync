@@ -286,16 +286,32 @@ msAPI void msServerSendPropertyString(ms::Server* server, int sourceType, const 
     server->receivedProperty(prop); 
 }
 
-msAPI void msServerSendCurve(ms::Server* server, const char* path, int knotCount, float3* cos, float3* handlesLeft, float3* handlesRight)
+msAPI void msServerSendCurve(ms::Server* server, const char* path, int splineIndex, int knotCount, bool closed, float3* cos, float3* handlesLeft, float3* handlesRight)
 {
     if (!server) { return; }
 
-    auto curve = ms::Curve::create();
-    curve->path = path;
+    ms::CurvePtr curve = nullptr;
 
-    // TODO: support more than 1 spline per curve:
-    curve->splines.push_back(ms::CurveSpline::create());
-    auto spline = curve->splines.back();
+    // If the same curve is already prepared to be sent, update the data:
+    for (size_t i = 0; i < server->m_pending_curves.size(); i++) {
+        if (server->m_pending_curves[i]->path == path) {
+            curve = server->m_pending_curves[i];
+            break;
+        }
+    }
+
+    if (curve == nullptr) {
+        curve = ms::Curve::create();
+        curve->path = path;
+        server->receivedCurve(curve);
+    }
+
+    if (curve->splines.size() <= splineIndex) {
+        curve->splines.push_back(ms::CurveSpline::create());
+    }
+
+    auto spline = curve->splines[splineIndex];
+    spline->closed = closed;
 
     for (size_t i = 0; i < knotCount; i++)
     {
@@ -303,8 +319,6 @@ msAPI void msServerSendCurve(ms::Server* server, const char* path, int knotCount
         spline->handles_left.push_back(handlesLeft[i]);
         spline->handles_right.push_back(handlesRight[i]);
     }
-
-    server->receivedCurve(curve);
 }
 
 msAPI void msServerRequestFullSync(ms::Server* server)

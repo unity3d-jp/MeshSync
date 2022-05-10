@@ -250,15 +250,13 @@ internal class PinnedList<T> : IDisposable, IEnumerable<T> where T : struct {
     }
 
     public void CopyTo(ref T[] dest)
-    {
-        int count = Array.Length;
-
-        if (dest == null || dest.Length != count)
+    { 
+        if (dest == null || dest.Length != Count)
         {
-            dest = new T[count];
+            dest = new T[Count];
         }
 
-        System.Array.Copy(Array, dest, count);
+        System.Array.Copy(Array, dest, Count);
     }
 
     public void Dispose() {

@@ -35,6 +35,7 @@ namespace ms {
 		auto ret = super::hash();
 
 		for (auto spline : splines) {
+			ret += csum(spline->closed);
 			ret += vhash(spline->cos);
 			ret += vhash(spline->handles_left);
 			ret += vhash(spline->handles_right);
@@ -48,6 +49,7 @@ namespace ms {
 		auto ret = super::checksumGeom();
 		
 		for (auto spline : splines) {
+			ret += csum(spline->closed);
 			ret += csum(spline->cos);
 			ret += csum(spline->handles_left);
 			ret += csum(spline->handles_right);
@@ -80,7 +82,7 @@ namespace ms {
 		vdetach(splines);
 	}
 
-#define EachMember(F) F(cos) F(handles_left) F(handles_right)
+#define EachMember(F) F(cos) F(handles_left) F(handles_right) F(closed)
 
 	void CurveSpline::serialize(std::ostream& os) const
 	{

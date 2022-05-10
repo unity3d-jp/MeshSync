@@ -473,22 +473,23 @@ namespace Unity.MeshSync
                 splineContainer = rec.splineContainer = Misc.GetOrAddComponent<SplineContainer>(trans.gameObject);
             }
 
-            var numSplines = data.numSplines;
-
             float3[] cos = null;
             float3[] handles_left = null;
             float3[] handles_right = null;
 
-            // Support for multiple splines?
-            if (numSplines > 1)
-            {
-                numSplines = 1;
-            }
+            var numSplines = data.numSplines;
 
-            splineContainer.Spline.changed -= SplineChanged;
-            splineContainer.Spline.Clear();
+            Spline.Changed -= SplineChanged;
+
+            var newSplines = new List<Spline>();
+
             for (int index = 0; index < numSplines; index++)
             {
+                var spline = new Spline();
+                newSplines.Add(spline);
+
+                spline.Closed = data.IsSplineClosed(index);
+
                 var numPoints = data.GetNumSplinePoints(index);
                 m_tmpFloat3.Resize(numPoints);
 
@@ -507,16 +508,18 @@ namespace Unity.MeshSync
 
                     var knot = new BezierKnot(co, handles_left[pointIndex] - co, handles_right[pointIndex] - co, Quaternion.identity);
 
-                    splineContainer.Spline.Add(knot);
+                    spline.Add(knot);
                 }
             }
 
-            splineContainer.Spline.changed += SplineChanged;
+            splineContainer.Branches = newSplines;
+
+            Spline.Changed += SplineChanged;
 
             return rec;
         }
 
-        protected virtual void SplineChanged()
+        protected virtual void SplineChanged(Spline spline, int arg2, SplineModification arg3)
         {
         }
     }

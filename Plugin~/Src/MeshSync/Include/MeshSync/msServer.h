@@ -135,10 +135,12 @@ private:
     std::mutex m_properties_mutex;
     ServerInitiatedMessagePtr m_current_properties_request;
     std::vector<PropertyInfoPtr> m_pending_properties;
-    std::vector<CurvePtr> m_pending_curves;
     std::atomic_bool m_syncRequested;
     std::string m_screenshot_file_path;
     std::string m_file_root_path;
+
+    public:
+    std::vector<CurvePtr> m_pending_curves;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -17,6 +17,7 @@ namespace ms {
 		SharedVector<mu::float3> cos;
 		SharedVector<mu::float3> handles_left;
 		SharedVector<mu::float3> handles_right;
+		bool closed;
 
 		msDefinePool(CurveSpline);
 
