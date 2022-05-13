@@ -180,19 +180,16 @@ void ServerInitiatedMessage::deserialize(std::istream& is) {
     read(is, scene_settings);
 }
 
-
+#define EachMember(F) F(properties) F(entities) F(message)
 void ServerInitiatedMessageResponse::serialize(std::ostream& os) const
 {
-    write(os, properties);
-    write(os, curves);
-    write(os, message);
+    EachMember(msWrite);
 }
 
 void ServerInitiatedMessageResponse::deserialize(std::istream& is)
 {
-    read(is, properties);
-    read(is, curves);
-    read(is, message);
+    EachMember(msRead);
 }
+#undef EachMember(F)
 
 } // namespace ms

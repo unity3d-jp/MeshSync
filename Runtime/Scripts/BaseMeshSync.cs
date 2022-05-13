@@ -1289,10 +1289,13 @@ namespace Unity.MeshSync
             {
                 MeshFilter mf = rec.meshFilter;
                 MeshRenderer mr = rec.meshRenderer;
+
                 if (mf == null)
                 {
                     materialsUpdated = true;
+
                     mf = rec.meshFilter = Misc.GetOrAddComponent<MeshFilter>(trans.gameObject);
+
                     mr = rec.meshRenderer = Misc.GetOrAddComponent<MeshRenderer>(trans.gameObject);
                     if (rec.skinnedMeshRenderer != null)
                     {
@@ -1322,6 +1325,25 @@ namespace Unity.MeshSync
             if (materialsUpdated)
                 AssignMaterials(rec, recordUndo: false);
 
+#if MESHSYNC_PROBUILDER_SUPPORT
+            if (UseProBuilder)
+            {
+                if (rec.mesh != null && (meshUpdated || materialsUpdated))
+                {
+                    rec.proBuilderMeshFilter = Misc.GetOrAddComponent<UnityEngine.ProBuilder.ProBuilderMesh>(trans.gameObject);
+                    var importer = new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, rec.meshRenderer.sharedMaterials, rec.proBuilderMeshFilter);
+                    importer.Import();
+                }
+            }
+            else
+             {
+                if (rec.proBuilderMeshFilter != null)
+                {
+                    DestroyImmediate(rec.proBuilderMeshFilter);
+                    rec.proBuilderMeshFilter = null;
+                }
+            }
+#endif
             return rec;
         }
 
@@ -2329,9 +2351,9 @@ namespace Unity.MeshSync
             }
             return ret;
         }
-        #endregion
+#endregion
 
-        #region Tools
+#region Tools
 
         private bool ApplyMaterialList(MaterialList ml)
         {
@@ -2723,10 +2745,10 @@ namespace Unity.MeshSync
         }
 
 #endif //UNITY_EDITOR
-        #endregion
+#endregion
 
         //----------------------------------------------------------------------------------------------------------------------        
-        #region Events
+#region Events
 #if UNITY_EDITOR
         void Reset()
         {
@@ -2769,7 +2791,7 @@ namespace Unity.MeshSync
             SceneView.duringSceneGui -= OnSceneViewGUI;
 #endif
         }
-        #endregion
+#endregion
 
         //----------------------------------------------------------------------------------------------------------------------
 

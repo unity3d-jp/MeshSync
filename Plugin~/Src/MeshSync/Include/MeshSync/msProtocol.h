@@ -11,9 +11,11 @@
 #include "MeshSync/SceneGraph/msMeshRefineSettings.h"
 #include "MeshSync/SceneGraph/msSceneSettings.h"
 #include "MeshSync/SceneGraph/msPropertyInfo.h"
+#include "MeshSync/SceneGraph/msEntity.h"
 
 msDeclClassPtr(ResponseMessage)
 msDeclClassPtr(Scene)
+msDeclClassPtr(Entity)
 
 namespace ms {
 
@@ -240,7 +242,9 @@ msSerializable(ServerInitiatedMessage);
 class ServerInitiatedMessageResponse {
 public:
     std::vector<PropertyInfo> properties;
-    std::vector<CurvePtr> curves;
+    //std::vector<CurvePtr> curves;
+    //std::vector<MeshPtr> meshes;
+    std::vector<EntityPtr> entities;
     std::string message;
 
     void serialize(std::ostream& os) const;

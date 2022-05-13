@@ -22,18 +22,18 @@ namespace Unity.MeshSync.Editor
             Action<string, bool> allEnabledChanged = null)
         {
             var lastPathDrawn = string.Empty;
-            bool folded = false;
+            bool expanded = false;
 
             foreach (var prop in props)
             {
                 if (prop.path != lastPathDrawn)
                 {
-                    bool wasFolded = foldouts.Contains(prop.path);
-                    folded = EditorGUILayout.Foldout(wasFolded, prop.path);
+                    bool wasExpanded = foldouts.Contains(prop.path);
+                    expanded = EditorGUILayout.Foldout(wasExpanded, prop.path);
 
-                    if (wasFolded != folded)
+                    if (wasExpanded != expanded)
                     {
-                        if (wasFolded)
+                        if (wasExpanded)
                         {
                             foldouts.Remove(prop.path);
                         }
@@ -42,10 +42,10 @@ namespace Unity.MeshSync.Editor
                             foldouts.Add(prop.path);
                         }
                     }
-                     
+
                     lastPathDrawn = prop.path;
 
-                    if (!folded && allEnabled != null && allEnabledChanged != null)
+                    if (expanded && allEnabled != null && allEnabledChanged != null)
                     {
                         var wasAllEnabled = allEnabled(lastPathDrawn);
 
@@ -57,7 +57,7 @@ namespace Unity.MeshSync.Editor
                     }
                 }
 
-                if (folded)
+                if (!expanded)
                 {
                     continue;
                 }

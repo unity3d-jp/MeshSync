@@ -210,11 +210,20 @@ bool Client::send(const ServerInitiatedMessage& mes)
             properties.push_back(prop);
         }
 
-        curves = std::vector<CurvePtr>();
+        entities.clear();
+        entities.insert(entities.end(), reqResponse.entities.begin(), reqResponse.entities.end());
+       
+       /* curves = std::vector<CurvePtr>();
         for (int i = 0; i < reqResponse.curves.size(); i++)
         {
             curves.push_back(reqResponse.curves[i]);
         }
+
+        meshes = std::vector<MeshPtr>();
+        for (int i = 0; i < reqResponse.meshes.size(); i++)
+        {
+            meshes.push_back(reqResponse.meshes[i]);
+        }*/
 
         messageFromServer = reqResponse.message;
 

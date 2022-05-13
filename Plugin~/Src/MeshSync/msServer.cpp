@@ -649,7 +649,16 @@ void Server::recvServerInitiatedRequest(HTTPServerRequest& request, HTTPServerRe
 
     auto converters = Scene::getConverters(m_settings.import_settings, m_current_properties_request->scene_settings, true);
 
-    for (auto curve : m_pending_curves)
+    for (auto entity : m_pending_entities) {
+        for (auto& cv : converters) {
+            cv->convert(*entity);
+        }
+
+        reqResponse.entities.push_back(entity);
+    }
+
+    m_pending_entities.clear();
+    /*for (auto curve : m_pending_curves)
     {
         for (auto& cv : converters) {
             cv->convertCurve(*curve);
@@ -657,7 +666,7 @@ void Server::recvServerInitiatedRequest(HTTPServerRequest& request, HTTPServerRe
 
         reqResponse.curves.push_back(curve);
     }
-    m_pending_curves.clear();
+    m_pending_curves.clear();*/
 
     if (m_syncRequested) {
         reqResponse.message = "sync";
@@ -691,10 +700,6 @@ void Server::receivedProperty(PropertyInfoPtr prop) {
     }
 
     m_pending_properties.push_back(prop);
-}
-
-void Server::receivedCurve(CurvePtr curve) {
-    m_pending_curves.push_back(curve);
 }
 
 void Server::syncRequested() {

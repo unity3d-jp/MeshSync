@@ -1,12 +1,31 @@
-using Unity.FilmInternalUtilities;
+using System.Collections.Generic;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEngine;
 
 namespace Unity.MeshSync.Editor  {
 [CustomEditor(typeof(MeshSyncServer))]
-internal partial class MeshSyncServerInspector : BaseMeshSyncInspector   {
-    
+internal class MeshSyncServerInspector : BaseMeshSyncInspector {
+#if MESHSYNC_PROBUILDER_SUPPORT
+        static MeshSyncServerInspector()
+    {
+        // Init pro builder callbacks:
+        UnityEditor.ProBuilder.ProBuilderEditor.afterMeshModification += ProBuilderEditor_afterMeshModification;
+    }
+
+    private static void ProBuilderEditor_afterMeshModification(IEnumerable<UnityEngine.ProBuilder.ProBuilderMesh> meshes)
+    {
+        foreach (var mesh in meshes)
+        {
+            var server = mesh.GetComponentInParent<MeshSyncServer>();
+
+            if (server != null)
+            {
+                server.MeshChanged(mesh);
+            }
+        }
+    }
+#endif
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -94,11 +113,11 @@ internal partial class MeshSyncServerInspector : BaseMeshSyncInspector   {
         if (t.foldInstanceSettings)
         {
             t.InstanceHandling = (BaseMeshSync.InstanceHandlingType)EditorGUILayout.EnumPopup("Instance handling", t.InstanceHandling);
-            
+
             DrawPrefabListElement(t);
         }
 
-            EditorGUILayout.LabelField($"Instance count: {t.InstanceCount}");
+        EditorGUILayout.LabelField($"Instance count: {t.InstanceCount}");
     }
 
     static void DrawPrefabListElement(MeshSyncServer t)

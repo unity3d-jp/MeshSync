@@ -5,7 +5,7 @@ using UnityEngine.Assertions;
 #if AT_USE_HDRP
 using UnityEngine.Rendering.HighDefinition;
 #endif
-    
+
 namespace Unity.MeshSync {
 
 [Serializable]
@@ -170,7 +170,14 @@ internal class EntityRecord {
     public PointCacheRenderer  pointCacheRenderer;
     public Mesh                origMesh;
     public Mesh                mesh;
+
+#if MESHSYNC_SPLINE_SUPPORT
     public UnityEngine.Splines.SplineContainer splineContainer;
+#endif
+
+#if MESHSYNC_PROBUILDER_SUPPORT
+    public UnityEngine.ProBuilder.ProBuilderMesh proBuilderMeshFilter;
+#endif
 
     public int[]           materialIDs;
     public string          reference;

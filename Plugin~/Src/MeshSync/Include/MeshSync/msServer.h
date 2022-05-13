@@ -93,7 +93,6 @@ public:
     void recvServerInitiatedRequest(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     
     void receivedProperty(PropertyInfoPtr prop);
-    void receivedCurve(CurvePtr curve);
     void syncRequested();
     void propertiesReady();
     bool readyForProperties();
@@ -140,7 +139,23 @@ private:
     std::string m_file_root_path;
 
     public:
-    std::vector<CurvePtr> m_pending_curves;
+    std::vector<EntityPtr> m_pending_entities;
+
+    template<typename T>
+    T* getPendingEntity(const char* path) {
+        for (size_t i = 0; i < m_pending_entities.size(); i++) {
+            if (m_pending_entities[i]->path == path) {
+                return dynamic_cast<T*>(m_pending_entities[i].get());
+            }
+        }
+
+        // If it doesn't exist, add it:
+        shared_ptr<T> result = T::create();
+        result->path = path;
+        m_pending_entities.push_back(result);
+
+        return result.get();
+    }
 };
 
 //----------------------------------------------------------------------------------------------------------------------

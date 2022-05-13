@@ -286,25 +286,17 @@ msAPI void msServerSendPropertyString(ms::Server* server, int sourceType, const 
     server->receivedProperty(prop); 
 }
 
+msAPI void msServerSendTransform(ms::Server* server, const char* path, float3 position, float3 scale, float3 rotation) {
+    if (!server) { return; }
+
+    
+}
+
 msAPI void msServerSendCurve(ms::Server* server, const char* path, int splineIndex, int knotCount, bool closed, float3* cos, float3* handlesLeft, float3* handlesRight)
 {
     if (!server) { return; }
 
-    ms::CurvePtr curve = nullptr;
-
-    // If the same curve is already prepared to be sent, update the data:
-    for (size_t i = 0; i < server->m_pending_curves.size(); i++) {
-        if (server->m_pending_curves[i]->path == path) {
-            curve = server->m_pending_curves[i];
-            break;
-        }
-    }
-
-    if (curve == nullptr) {
-        curve = ms::Curve::create();
-        curve->path = path;
-        server->receivedCurve(curve);
-    }
+    auto curve = server->getPendingEntity<ms::Curve>(path);
 
     if (curve->splines.size() <= splineIndex) {
         curve->splines.push_back(ms::CurveSpline::create());
@@ -319,6 +311,18 @@ msAPI void msServerSendCurve(ms::Server* server, const char* path, int splineInd
         spline->handles_left.push_back(handlesLeft[i]);
         spline->handles_right.push_back(handlesRight[i]);
     }
+}
+
+msAPI void msServerSendMesh(ms::Server* server, const char* path, int vertexCount, float3* vertices)
+{
+    if (!server) { return; }
+
+    auto mesh = server->getPendingEntity<ms::Mesh>(path);
+
+    mesh->points.assign(vertices, vertices + vertexCount);
+
+    // Update flags:
+    mesh->refine();
 }
 
 msAPI void msServerRequestFullSync(ms::Server* server)
