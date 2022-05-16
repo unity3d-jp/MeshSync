@@ -31,9 +31,9 @@ publish:
 prerelease:
   name: Create a prerelease {{ yamato_name }}  
   agent:
-    type:   {{ publish_platform.type }}
-    image:  {{ publish_platform.image }}
-    flavor: {{ publish_platform.flavor }}
+    type:   {{ promote_platform.type }}
+    image:  {{ promote_platform.image }}
+    flavor: {{ promote_platform.flavor }}
   commands:
     - |
        echo off

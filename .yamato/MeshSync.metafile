@@ -26,7 +26,8 @@ pack_platform: &pack_platform_linux
   image: package-ci/ubuntu:v2.0.0
   flavor: b1.medium
 
-publish_platform: *pack_platform_linux
+publish_platform: *platform_win
+promote_platform: *pack_platform_linux
 trigger_platform: *pack_platform_linux
 
 upm_ci_test_types:
@@ -74,10 +75,10 @@ test_configs:
         test_type: *upm_ci_all
       - platform_type: *platform_linux
         test_type: *upm_ci_all
-  - editor_version: 2022.2
+  - editor_version: 2022.1  
     test_platforms:
       - platform_type: *platform_win
-        test_type: *upm_ci_all
+        test_type: *upm_ci_mono
       - platform_type: *platform_mac
         test_type: *upm_ci_all
       - platform_type: *platform_linux
