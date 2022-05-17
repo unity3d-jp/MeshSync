@@ -4,18 +4,19 @@
 
 {% for test_config in test_configs %}
 {% for test_platform in test_config.test_platforms %}
+{% for step in test_platform.test_type.steps %}
 {% assign platform_type = test_platform.platform_type %}
 {% assign editor_version= test_config.editor_version %}
 
-dependency_{{ platform_type.name }}_{{ editor_version }}:
-  name : Dependency Test {{ yamato_name }} using {{ test_config.editor_version }} on {{ platform_type.name }}
+dependency_{{ platform_type.name }}_{{ editor_version }}_{{step.name}}:
+  name : Dependency Test {{ yamato_name }} using {{ test_config.editor_version }} with {{step.name}} on {{ platform_type.name }}
   agent:
     type: {{ platform_type.type }}
     image: {{ platform_type.image }}
     flavor: {{ platform_type.flavor}}
   commands:
     - {{ platform_type.cmd_prefix}} npm install upm-ci-utils@stable -g --registry https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-npm
-    - {{ platform_type.cmd_prefix}} upm-ci package test -u {{ editor_version }} --type updated-dependencies-tests 
+    - {{ platform_type.cmd_prefix}} upm-ci package test -u {{ editor_version }} --type updated-dependencies-tests {{step.arguments}} 
   artifacts:
     {{ yamato_name }}_dependency_artifacts:
       paths:
@@ -24,13 +25,14 @@ dependency_{{ platform_type.name }}_{{ editor_version }}:
     - .yamato/{{ yamato_name }}-pack.yml#pack
 {% endfor %}
 {% endfor %}
+{% endfor %}
 
 dependency_test_trigger:
   name: Dependency Tests Trigger for {{ yamato_name }}
   agent:
-    type: Unity::VM
-    image: package-ci/ubuntu:stable
-    flavor: b1.large  
+    type: {{ trigger_platform.type }}
+    image: {{ trigger_platform.image }}
+    flavor: {{ trigger_platform.flavor}}
   commands:
     -  npm install upm-ci-utils@stable -g --registry https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-npm
     -  upm-ci package izon -d
@@ -55,8 +57,10 @@ dependency_test_trigger:
         
   dependencies:
     - .yamato/{{ yamato_name }}-pack.yml#pack
-    {% for test_config in test_configs %}
-    {% for test_platform in test_config.test_platforms %}
-    - .yamato/{{ yamato_name }}-updated-dependencies-test.yml#dependency_{{ test_platform.platform_type.name }}_{{ test_config.editor_version }}
-    {% endfor %}
-    {% endfor %}
+{% for test_config in test_configs %}
+{% for test_platform in test_config.test_platforms %}
+{% for step in test_platform.test_type.steps %}
+    - .yamato/{{ yamato_name }}-updated-dependencies-test.yml#dependency_{{ test_platform.platform_type.name }}_{{ test_config.editor_version }}_{{step.name}}
+{% endfor %}
+{% endfor %}
+{% endfor %}
