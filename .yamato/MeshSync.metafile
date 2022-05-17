@@ -103,4 +103,5 @@ promotion_types:
     job_name: Prerelease and promote MeshSync to Production
     test_name_prefix: Prerelease and test MeshSync Promotion 
     test_dependencies:
+      - .yamato/MeshSync-pack.yml#pack
       - .yamato/MeshSync-publish.yml#prerelease
