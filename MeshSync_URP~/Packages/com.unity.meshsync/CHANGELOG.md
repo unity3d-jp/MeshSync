@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.13.1-preview] - 2022-05-18
+
+### Added
+* feat: light probes support for instance rendering
+
+### Changed
+* deps: use com.unity.film-internal-utilities@0.15.1-preview 
+
 ## [0.13.0-preview] - 2022-04-26
 
 ### Added
