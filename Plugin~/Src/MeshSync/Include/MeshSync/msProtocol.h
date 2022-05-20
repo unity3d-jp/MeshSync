@@ -242,8 +242,6 @@ msSerializable(ServerInitiatedMessage);
 class ServerInitiatedMessageResponse {
 public:
     std::vector<PropertyInfo> properties;
-    //std::vector<CurvePtr> curves;
-    //std::vector<MeshPtr> meshes;
     std::vector<EntityPtr> entities;
     std::string message;
 

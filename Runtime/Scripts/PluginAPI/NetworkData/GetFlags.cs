@@ -20,7 +20,6 @@ namespace Unity.MeshSync
         public bool GetUV(int index) { return m_flags[UV_START_BIT_POS + index]; }
 
 
-        [Flags]
         public enum GetFlagsSetting
         {
             Transform = 0,
@@ -34,17 +33,28 @@ namespace Unity.MeshSync
             BlendShapes = 10
         }
 
-        public GetFlags(GetFlagsSetting settings)
+        public static GetFlagsSetting[] AllGetFlagsSetting()
         {
-            var values = Enum.GetValues(typeof(GetFlagsSetting));
+            return new GetFlagsSetting[] {
+                GetFlagsSetting.Transform,
+                GetFlagsSetting.Points,
+                GetFlagsSetting.Normals,
+                GetFlagsSetting.Tangents,
+                GetFlagsSetting.Colors,
+                GetFlagsSetting.Indices,
+                GetFlagsSetting.MaterialIDS,
+                GetFlagsSetting.Bones,
+                GetFlagsSetting.BlendShapes
+                };
+        }
 
+        public GetFlags(params GetFlagsSetting[] settings)
+        {
             m_flags = new BitFlags();
-            foreach (var val in values)
+
+            foreach (var setting in settings)
             {
-                if (((int)settings & (int)val) != 0)
-                {
-                    m_flags[(int)val] = true;
-                }
+                m_flags[(int)setting] = true;
             }
         }
     }

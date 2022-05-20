@@ -118,13 +118,17 @@ internal struct Server {
     [DllImport(Lib.name)]
     static extern void msServerSendTransform(IntPtr self, string path, float3 position, float3 scale, float3 rotation);  
 
+#if MESHSYNC_SPLINE_SUPPORT
     [DllImport(Lib.name)]
-    static extern void msServerSendCurve(IntPtr self, string path, int splineIndex, int knotCount, bool closed, float3[] cos, float3[] handlesLeft, float3[] handlesRight);      
-        
-    [DllImport(Lib.name)]
-    static extern void msServerSendMesh(IntPtr self, string path, int vertexCount, Vector3[] vertices);      
+    static extern void msServerSendCurve(IntPtr self, string path, int splineIndex, int knotCount, bool closed, float3[] cos, float3[] handlesLeft, float3[] handlesRight);
+#endif
 
-    [DllImport(Lib.name)]
+#if MESHSYNC_PROBUILDER_SUPPORT
+        [DllImport(Lib.name)]
+    static extern void msServerSendMesh(IntPtr self, MeshData data);
+#endif
+
+        [DllImport(Lib.name)]
     static extern void msServerRequestFullSync(IntPtr self);        
 
     [DllImport(Lib.name)]
@@ -180,15 +184,20 @@ internal struct Server {
         set { msServerSetScreenshotFilePath(self, value); }
     }
 
-    public void SendCurve(string path, int splineIndex, int knotCount, bool closed, float3[] cos, float3[] handlesLeft, float3[] handlesRight)
+
+#if MESHSYNC_SPLINE_SUPPORT
+        public void SendCurve(string path, int splineIndex, int knotCount, bool closed, float3[] cos, float3[] handlesLeft, float3[] handlesRight)
     {
         msServerSendCurve(self, path, splineIndex, knotCount, closed, cos, handlesLeft, handlesRight);
     }
+#endif
 
-    public void SendMesh(string path, Vector3[] vertices)
+#if MESHSYNC_PROBUILDER_SUPPORT
+    public void SendMesh(MeshData data)
     {
-        msServerSendMesh(self, path, vertices.Length, vertices);
+        msServerSendMesh(self, data);
     }
+#endif
 
     public void SendProperty(PropertyInfoDataWrapper prop)
     {
@@ -277,4 +286,4 @@ internal struct Server {
 
 #endif // UNITY_STANDALONE
 
-} //end namespace
+    } //end namespace

@@ -313,16 +313,18 @@ msAPI void msServerSendCurve(ms::Server* server, const char* path, int splineInd
     }
 }
 
-msAPI void msServerSendMesh(ms::Server* server, const char* path, int vertexCount, float3* vertices)
+msAPI void msServerSendMesh(ms::Server* server, ms::Mesh* data)
 {
     if (!server) { return; }
 
-    auto mesh = server->getPendingEntity<ms::Mesh>(path);
+    server->m_pending_entities.push_back(make_shared_ptr(data));
 
-    mesh->points.assign(vertices, vertices + vertexCount);
+    //auto mesh = server->getPendingEntity<ms::Mesh>(path);
 
-    // Update flags:
-    mesh->refine();
+    //mesh->points.assign(vertices, vertices + vertexCount);
+
+    //// Update flags:
+    //mesh->refine();
 }
 
 msAPI void msServerRequestFullSync(ms::Server* server)

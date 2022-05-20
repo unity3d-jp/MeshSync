@@ -122,6 +122,11 @@ namespace Unity.MeshSync
                     {
                         var entity = kvp.Value;
 
+                        if (entity.trans == null)
+                        {
+                            continue;
+                        }
+
                         if (!entityTransforms.TryGetValue(entity, out var matrix))
                         {
                             entityTransforms.Add(entity, entity.trans.localToWorldMatrix);
@@ -137,13 +142,16 @@ namespace Unity.MeshSync
                             }
                         }
 
-                        if (entity.dataType == EntityType.Curve)
+#if MESHSYNC_SPLINE_SUPPORT
+                        if (changedSplines.Count > 0 && entity.dataType == EntityType.Curve)
                         {
                             //m_server.SendCurve(entity, kvp.Key);
                             SendCurve(kvp.Key, entity);
                             sendChanges = true;
                         }
-                        else if (entity.dataType == EntityType.Mesh)
+#endif
+#if MESHSYNC_PROBUILDER_SUPPORT
+                        if (entity.dataType == EntityType.Mesh)
                         {
                             if (changedMeshes.Contains(entity.proBuilderMeshFilter))
                             {
@@ -151,6 +159,7 @@ namespace Unity.MeshSync
                                 sendChanges = true;
                             }
                         }
+#endif
                     }
 
 #if MESHSYNC_SPLINE_SUPPORT
@@ -185,7 +194,7 @@ namespace Unity.MeshSync
 
         }
 
-  
+
 #if MESHSYNC_PROBUILDER_SUPPORT
         public void MeshChanged(UnityEngine.ProBuilder.ProBuilderMesh mesh)
         {
@@ -200,14 +209,14 @@ namespace Unity.MeshSync
 
             var objRenderer = entity.meshRenderer;
 
-            bool ret = false;
-            Mesh origMesh = null;
+            //Mesh origMesh = null;
             MeshData dst = MeshData.Create();
 
             var mesh = entity.meshFilter.sharedMesh;
             var mr = entity.meshRenderer;
+
             CaptureMesh(ref dst, mesh, null,
-                new GetFlags(GetFlags.GetFlagsSetting.Points),
+                new GetFlags(GetFlags.AllGetFlagsSetting()),
                 mr.sharedMaterials);
 
             // TODO: Maybe support skinned mesh renderers too:
@@ -218,43 +227,33 @@ namespace Unity.MeshSync
             //    ret = CaptureSkinnedMeshRenderer(ref dst, objRenderer as SkinnedMeshRenderer, mes, ref origMesh);
             //}
 
-            if (ret)
-            {
-                TransformData dstTrans = dst.transform;
-                Transform rendererTransform = objRenderer.transform;
-                dstTrans.hostID = GetObjectlID(objRenderer.gameObject);
-                dstTrans.position = rendererTransform.localPosition;
-                dstTrans.rotation = rendererTransform.localRotation;
-                dstTrans.scale = rendererTransform.localScale;
-                dst.local2world = rendererTransform.localToWorldMatrix;
-                dst.world2local = rendererTransform.worldToLocalMatrix;
+            TransformData dstTrans = dst.transform;
+            Transform rendererTransform = objRenderer.transform;
+            dstTrans.hostID = GetObjectlID(objRenderer.gameObject);
+            dstTrans.position = rendererTransform.localPosition;
+            dstTrans.rotation = rendererTransform.localRotation;
+            dstTrans.scale = rendererTransform.localScale;
+            dst.local2world = rendererTransform.localToWorldMatrix;
+            dst.world2local = rendererTransform.worldToLocalMatrix;
 
-                EntityRecord rec;
-                if (!m_hostObjects.TryGetValue(dstTrans.hostID, out rec))
-                {
-                    rec = new EntityRecord();
-                    m_hostObjects.Add(dstTrans.hostID, rec);
-                }
-                rec.go = objRenderer.gameObject;
-                rec.origMesh = origMesh;
+            //EntityRecord rec;
+            //if (!m_hostObjects.TryGetValue(dstTrans.hostID, out rec))
+            //{
+            //    rec = new EntityRecord();
+            //    m_hostObjects.Add(dstTrans.hostID, rec);
+            //}
+            //entity.go = objRenderer.gameObject;
+            //entity.origMesh = origMesh;
 
-                dstTrans.path = BuildPath(rendererTransform);
-                m_server.ServeMesh(dst);
-            }
+            dstTrans.path = path;// BuildPath(rendererTransform);
+            //m_server.ServeMesh(dst);
 
-
-
-
-
-            for (int i = 0; i < entity.mesh.vertexCount; i++)
-            {
-                m_server.SendMesh(path, entity.mesh.vertices);
-            }
+            m_server.SendMesh(dst);
         }
 #endif
 
 #if MESHSYNC_SPLINE_SUPPORT
-        
+
         void SendCurve(string path, EntityRecord entity)
         {
             Debug.Assert(entity.dataType == EntityType.Curve);
@@ -264,6 +263,11 @@ namespace Unity.MeshSync
                 var spline = entity.splineContainer.Branches[splineIdx];
 
                 var pointCount = spline.Count;
+                if (pointCount == 0)
+                {
+                    continue;
+                }
+
                 var cos = new float3[pointCount];
                 var handlesLeft = new float3[pointCount];
                 var handlesRight = new float3[pointCount];
@@ -275,8 +279,9 @@ namespace Unity.MeshSync
                     var co = knot.Position;
 
                     cos[pointIdx] = co;
-                    handlesLeft[pointIdx] = knot.TangentIn + co;
-                    handlesRight[pointIdx] = knot.TangentOut + co;
+
+                    handlesLeft[pointIdx] = math.rotate(knot.Rotation, knot.TangentIn) + co;
+                    handlesRight[pointIdx] = math.rotate(knot.Rotation, knot.TangentOut) + co;
                 }
 
                 m_server.SendCurve(path, splineIdx, pointCount, spline.Closed, cos, handlesLeft, handlesRight);

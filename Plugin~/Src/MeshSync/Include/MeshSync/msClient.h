@@ -29,8 +29,6 @@ public:
     ResponseMessagePtr send(const QueryMessage& mes, int timeout_ms);
 
     std::vector<PropertyInfo> properties;
-    //std::vector<CurvePtr> curves;
-    //std::vector<MeshPtr> meshes;
     std::vector<EntityPtr> entities;
     std::string messageFromServer;
 

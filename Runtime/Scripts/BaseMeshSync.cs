@@ -1332,7 +1332,7 @@ namespace Unity.MeshSync
                 {
                     rec.proBuilderMeshFilter = Misc.GetOrAddComponent<UnityEngine.ProBuilder.ProBuilderMesh>(trans.gameObject);
                     var importer = new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, rec.meshRenderer.sharedMaterials, rec.proBuilderMeshFilter);
-                    importer.Import();
+                    importer.Import(new UnityEngine.ProBuilder.MeshOperations.MeshImportSettings() { quads = true });
                 }
             }
             else
@@ -2865,8 +2865,10 @@ namespace Unity.MeshSync
         PinnedList<Vector3> m_tmpV3 = new PinnedList<Vector3>();
         PinnedList<Vector4> m_tmpV4 = new PinnedList<Vector4>();
         PinnedList<Color> m_tmpC = new PinnedList<Color>();
+        
+#if MESHSYNC_SPLINE_SUPPORT
         PinnedList<float3> m_tmpFloat3 = new PinnedList<float3>();
-
+#endif
         //----------------------------------------------------------------------------------------------------------------------
 
         // keyword strings

@@ -406,6 +406,18 @@ void MeshRefiner::refine()
                 return ni;
             }
             else {
+                // Tried to use weld map to avoid duplicate vertices, this doesn't work in unity because the normals will be wrong then:
+                /* connection.eachWeldedVertices(vi, [&](int i) {           
+                    int& niTest = old2new_indices[connection.v2f_indices[i]];
+                    if (niTest != -1 && compare_all_attributes(niTest, ii)) {
+                        ni = niTest;
+                    }
+                });
+
+                if (ni != -1) {
+                    return ni;
+                }*/
+
                 ni = (int)new_points.size();
                 new_points.push_back(points[vi]);
                 new2old_points.push_back(vi);

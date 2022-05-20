@@ -157,21 +157,6 @@ namespace Unity.MeshSync.Editor
         {
             EditorGUILayout.LabelField("Properties to permutate:");
 
-            bool allEnabled = true;
-            foreach (var prop in exporter.Server.propertyInfos)
-            {
-                if (!prop.CanBeModified)
-                {
-                    continue;
-                }
-
-                if (!exporter.IsEnabled(prop))
-                {
-                    allEnabled = false;
-                    break;
-                }
-            }
-
             MeshSyncServerInspectorUtils.DrawSliderForProperties(
                 exporter.Server.propertyInfos,
                  before: delegate (PropertyInfoDataWrapper prop)
