@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using Unity.Mathematics;
 using UnityEngine;
 
 #if MESHSYNC_SPLINE_SUPPORT
 using UnityEngine.Splines;
+using Unity.Mathematics;
 #endif
 
 namespace Unity.MeshSync
@@ -116,8 +116,6 @@ namespace Unity.MeshSync
 
                 // Send updated entities:
                 {
-                    var floatList = new PinnedList<float3>();
-
                     foreach (var kvp in GetClientObjects())
                     {
                         var entity = kvp.Value;

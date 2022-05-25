@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using Unity.Collections;
+
+#if MESHSYNC_SPLINE_SUPPORT
 using Unity.Mathematics;
+#endif
 
 namespace Unity.MeshSync {
 internal static class Lib {
@@ -2753,7 +2756,8 @@ internal struct PointsData {
 
     #endregion
 
-    #region Curve
+#region Curve
+    
     /// <summary>
     /// CurvesData
     /// </summary>
@@ -2765,6 +2769,7 @@ internal struct PointsData {
         [FieldOffset(0)] public IntPtr self;
         [FieldOffset(0)] public TransformData transform;
 
+        
         [DllImport(Lib.name)]
         static extern int msCurveGetNumSplines(IntPtr self);
 
@@ -2784,8 +2789,8 @@ internal struct PointsData {
         static extern int msCurveReadSplineHandlesRight(IntPtr self, int index, IntPtr dst);
 
         #endregion
-
-
+        
+#if MESHSYNC_SPLINE_SUPPORT
         public int numSplines
         {
             get { return msCurveGetNumSplines(self); }
@@ -2815,17 +2820,18 @@ internal struct PointsData {
         {
             msCurveReadSplineHandlesRight(self, index, dst);
         }
+#endif
     }
     
-#endregion
+#endregion Curve
 
 #endregion
 
 
-    #region Constraints
+#region Constraints
 
     internal struct ConstraintData {
-    #region internal
+#region internal
 
     public IntPtr self;
 
@@ -2841,7 +2847,7 @@ internal struct PointsData {
     [DllImport(Lib.name)]
     static extern IntPtr msConstraintGetSource(IntPtr self, int i);
 
-    #endregion
+#endregion
 
     internal enum ConstraintType {
         Unknown,
@@ -2881,11 +2887,11 @@ internal struct PointsData {
 }
 
 internal struct AimConstraintData {
-    #region internal
+#region internal
 
     public IntPtr self;
 
-    #endregion
+#endregion
 
 
     public static explicit operator AimConstraintData(ConstraintData v) {
@@ -2896,7 +2902,7 @@ internal struct AimConstraintData {
 }
 
 internal struct ParentConstraintData {
-    #region internal
+#region internal
 
     public IntPtr self;
 
@@ -2906,7 +2912,7 @@ internal struct ParentConstraintData {
     [DllImport(Lib.name)]
     static extern Quaternion msParentConstraintGetRotationOffset(IntPtr self, int i);
 
-    #endregion
+#endregion
 
 
     public static explicit operator ParentConstraintData(ConstraintData v) {
@@ -2925,11 +2931,11 @@ internal struct ParentConstraintData {
 }
 
 internal struct PositionConstraintData {
-    #region internal
+#region internal
 
     public IntPtr self;
 
-    #endregion
+#endregion
 
     public static explicit operator PositionConstraintData(ConstraintData v) {
         PositionConstraintData ret;
@@ -2939,11 +2945,11 @@ internal struct PositionConstraintData {
 }
 
 internal struct RotationConstraintData {
-    #region internal
+#region internal
 
     public IntPtr self;
 
-    #endregion
+#endregion
 
     public static explicit operator RotationConstraintData(ConstraintData v) {
         RotationConstraintData ret;
@@ -2953,11 +2959,11 @@ internal struct RotationConstraintData {
 }
 
 internal struct ScaleConstrainData {
-    #region internal
+#region internal
 
     public IntPtr self;
 
-    #endregion
+#endregion
 
     public static explicit operator ScaleConstrainData(ConstraintData v) {
         ScaleConstrainData ret;
@@ -3024,17 +3030,17 @@ internal struct InstanceInfoData
     }
 }
 
-    #endregion
+#endregion
 
 
 
-    #region PropertyInfo
+#region PropertyInfo
 
     public struct PropertyInfoData
     {
         public IntPtr self;
 
-        #region DLL Imports
+#region DLL Imports
         [DllImport((Lib.name))]
         static extern IntPtr msPropertyInfoGetPath(IntPtr self);
 
@@ -3058,7 +3064,7 @@ internal struct InstanceInfoData
 
         [DllImport(Lib.name)]
         static extern float msPropertyInfoGetMax(IntPtr self);
-        #endregion DLL Imports
+#endregion DLL Imports
 
         public enum Type
         {
@@ -3090,11 +3096,11 @@ internal struct InstanceInfoData
         public SourceType sourceType => (SourceType)msPropertyInfoGetSourceType(self);
     }
 
-    #endregion PropertyInfo
+#endregion PropertyInfo
 
 
     internal struct SceneData {
-    #region internal
+#region internal
 
     public IntPtr self;
 
@@ -3140,7 +3146,7 @@ internal struct InstanceInfoData
     [DllImport(Lib.name)]
     static extern TransformData msSceneGetInstanceMesh(IntPtr self, int i);
 
-    #endregion
+#endregion
 
         public static implicit operator bool(SceneData v) {
         return v.self != IntPtr.Zero;
@@ -3209,12 +3215,12 @@ internal struct InstanceInfoData
     }  
 }
 
-    #endregion Scene
+#endregion Scene
 
 #region SceneCache
 
 internal struct SceneCacheData {
-    #region internal
+#region internal
 
     public IntPtr self;
 
@@ -3263,7 +3269,7 @@ internal struct SceneCacheData {
     [DllImport(Lib.name)]
     static extern AnimationCurveData msSceneCacheGetFrameCurve(IntPtr self);
 
-    #endregion
+#endregion
 
     public static implicit operator bool(SceneCacheData v) {
         return v.self != IntPtr.Zero;

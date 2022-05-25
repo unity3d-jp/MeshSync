@@ -4,12 +4,12 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using Unity.Mathematics;
 using Unity.MeshSync;
 using UnityEngine;
 
 #if MESHSYNC_SPLINE_SUPPORT
 using UnityEngine.Splines;
+using Unity.Mathematics;
 #endif
 
 namespace Unity.MeshSync

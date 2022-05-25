@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Assertions;
+
+#if MESHSYNC_SPLINE_SUPPORT
+using Unity.Mathematics;
+#endif
 
 namespace Unity.MeshSync {
 #if UNITY_STANDALONE
@@ -114,21 +117,21 @@ internal struct Server {
 
     [DllImport(Lib.name)]
     static extern void msServerSendPropertyString(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, string newValue, int length);
-
+        
+#if MESHSYNC_SPLINE_SUPPORT
     [DllImport(Lib.name)]
     static extern void msServerSendTransform(IntPtr self, string path, float3 position, float3 scale, float3 rotation);  
 
-#if MESHSYNC_SPLINE_SUPPORT
     [DllImport(Lib.name)]
     static extern void msServerSendCurve(IntPtr self, string path, int splineIndex, int knotCount, bool closed, float3[] cos, float3[] handlesLeft, float3[] handlesRight);
 #endif
 
 #if MESHSYNC_PROBUILDER_SUPPORT
-        [DllImport(Lib.name)]
+    [DllImport(Lib.name)]
     static extern void msServerSendMesh(IntPtr self, MeshData data);
 #endif
 
-        [DllImport(Lib.name)]
+    [DllImport(Lib.name)]
     static extern void msServerRequestFullSync(IntPtr self);        
 
     [DllImport(Lib.name)]
