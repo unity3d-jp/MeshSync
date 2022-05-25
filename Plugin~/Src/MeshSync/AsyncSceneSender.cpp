@@ -125,6 +125,9 @@ void AsyncSceneSender::send()
         deleted_instances.empty())
         return;
 
+    if(on_before_send)
+        on_before_send();
+
     SetupDataFlags(transforms);
     SetupDataFlags(geometries);
     SetupDataFlags(instanceMeshes);

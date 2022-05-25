@@ -32,7 +32,7 @@ public:
     std::vector<Identifier> deleted_materials;
     std::vector<Identifier> deleted_instances;
 
-    std::function<void()> on_prepare, on_success, on_error, on_complete;
+    std::function<void()> on_prepare, on_before_send, on_success, on_error, on_complete;
     PathToID id_table;
 
 public:
