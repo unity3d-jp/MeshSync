@@ -16,6 +16,8 @@ namespace Unity.MeshSync.Editor
         }
 
         public static void DrawSliderForProperties(List<PropertyInfoDataWrapper> props,
+            bool editableStrings,
+            string[] parentNameFilters = null,
             Action<PropertyInfoDataWrapper> before = null,
             Action<PropertyInfoDataWrapper> after = null,
             Func<string, bool> allEnabled = null,
@@ -26,6 +28,11 @@ namespace Unity.MeshSync.Editor
 
             foreach (var prop in props)
             {
+                if (parentNameFilters != null && Array.IndexOf(parentNameFilters, prop.path) == -1)
+                {
+                    continue;
+                }
+
                 if (prop.path != lastPathDrawn)
                 {
                     bool wasExpanded = foldouts.Contains(prop.path);
@@ -86,7 +93,14 @@ namespace Unity.MeshSync.Editor
                         break;
 
                     case PropertyInfoData.Type.String:
-                        EditorGUILayout.LabelField(prop.name, prop.GetValue<string>());
+                        if (editableStrings)
+                        {
+                            newValue = EditorGUILayout.TextField(prop.name, prop.GetValue<string>());
+                        }
+                        else
+                        {
+                            EditorGUILayout.LabelField(prop.name, prop.GetValue<string>());
+                        }
                         break;
 
                     case PropertyInfoData.Type.IntArray:
@@ -259,7 +273,7 @@ namespace Unity.MeshSync.Editor
                 server.m_DCCInterop?.DrawDCCToolVersion(server);
             }
 
-            MeshSyncServerInspectorUtils.DrawSliderForProperties(propertiesHolder.propertyInfos);
+            MeshSyncServerInspectorUtils.DrawSliderForProperties(propertiesHolder.propertyInfos, editableStrings: false);
         }
     }
 }

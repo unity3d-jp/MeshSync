@@ -168,6 +168,10 @@ namespace Unity.MeshSync.VariantExport
             }
         }
 
+        const string SEPARATOR_BEFORE = "#####";
+        const string SEPARATOR_AFTER = ":::::";
+        public const string CONTROLLER_NAME = "/_CONTROLLER";
+
         public string SerializeCurrentVariant(bool useNewValues = false)
         {
             if (Server?.propertyInfos == null)
@@ -179,12 +183,13 @@ namespace Unity.MeshSync.VariantExport
 
             foreach (var prop in Server.propertyInfos)
             {
-                if (!prop.CanBeModified)
+                // Only care about the controller:
+                if (prop.path != CONTROLLER_NAME)
                 {
                     continue;
                 }
 
-                string serializedValue = $"#{prop.ID}:";
+                string serializedValue = $"{SEPARATOR_BEFORE}{prop.ID}{SEPARATOR_AFTER}";
 
                 serializedValue += prop.GetSerializedValue(useNewValues);
 
@@ -203,7 +208,7 @@ namespace Unity.MeshSync.VariantExport
 
             lock (PropertyInfoDataWrapper.PropertyUpdateLock)
             {
-                var propStrings = serializedPropString.Split('#');
+                var propStrings = serializedPropString.Split(SEPARATOR_BEFORE);
 
                 var properties = Server.propertyInfos;
 
@@ -214,13 +219,13 @@ namespace Unity.MeshSync.VariantExport
                         continue;
                     }
 
-                    var propID = propString.Substring(0, propString.IndexOf(":"));
+                    var propID = propString.Substring(0, propString.IndexOf(SEPARATOR_AFTER));
 
                     foreach (var serverProp in properties)
                     {
                         if (serverProp.ID == propID)
                         {
-                            serverProp.SetSerializedValue(propString.Substring(propString.IndexOf(":") + 1));
+                            serverProp.SetSerializedValue(propString.Substring(propString.IndexOf(SEPARATOR_AFTER) + SEPARATOR_AFTER.Length));
 
                             // Force sync to make sure the sync state changes:
                             serverProp.IsDirty = true;
@@ -320,7 +325,8 @@ namespace Unity.MeshSync.VariantExport
             }
 
             int newIndex = 0;
-            var current = list.IndexOf(SerializeCurrentVariant());
+            var currentSerialized = SerializeCurrentVariant();
+            var current = list.IndexOf(currentSerialized);
             if (current != -1)
             {
                 newIndex = (current + move) % list.Count;

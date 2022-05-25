@@ -375,8 +375,6 @@ namespace Unity.MeshSync
         {
             return $"PropertyInfoDataWrapper: {name}: {GetValue<object>()}";
         }
-
-        public bool CanBeModified => type != PropertyInfoData.Type.String;
     }
 
     // Partial class for now to make merging code easier later.

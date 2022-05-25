@@ -58,7 +58,6 @@ namespace Unity.MeshSync.Editor
             }
             else
             {
-
                 if (exporter.Server.propertyInfos.Count == 0)
                 {
                     EditorGUILayout.Space();
@@ -159,6 +158,8 @@ namespace Unity.MeshSync.Editor
 
             MeshSyncServerInspectorUtils.DrawSliderForProperties(
                 exporter.Server.propertyInfos,
+                editableStrings: true,
+                parentNameFilters: new string[] { Regenerator.CONTROLLER_NAME },
                  before: delegate (PropertyInfoDataWrapper prop)
                  {
                      GUILayout.BeginHorizontal();
@@ -184,7 +185,7 @@ namespace Unity.MeshSync.Editor
                 {
                     foreach (var prop in exporter.Server.propertyInfos)
                     {
-                        if (!prop.CanBeModified || prop.path != path)
+                        if (prop.path != path)
                         {
                             continue;
                         }
@@ -200,16 +201,14 @@ namespace Unity.MeshSync.Editor
                 {
                     foreach (var prop in exporter.Server.propertyInfos)
                     {
-                        if (!prop.CanBeModified || prop.path != path)
+                        if (prop.path != path)
                         {
                             continue;
                         }
 
                         if (enabled)
                         {
-
                             exporter.EnabledSettingNames.Add(prop.ID);
-
                         }
                         else
                         {
