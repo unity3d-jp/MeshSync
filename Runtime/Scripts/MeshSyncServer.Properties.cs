@@ -41,6 +41,9 @@ namespace Unity.MeshSync
 #if MESHSYNC_PROBUILDER_SUPPORT
         HashSet<UnityEngine.ProBuilder.ProBuilderMesh> changedMeshes = new HashSet<UnityEngine.ProBuilder.ProBuilderMesh>();
         Dictionary<UnityEngine.ProBuilder.ProBuilderMesh, ushort> meshVersionIndices = new Dictionary<UnityEngine.ProBuilder.ProBuilderMesh, ushort>();
+        
+        // This field is not exposed but seems to be the only way to know when a mesh has changed:
+        FieldInfo versionIndexField = typeof(UnityEngine.ProBuilder.ProBuilderMesh).GetField("m_VersionIndex", BindingFlags.NonPublic | BindingFlags.Instance);
 
         public override bool UseProBuilder
         {
@@ -93,10 +96,6 @@ namespace Unity.MeshSync
         {
             return m_server.CanServerReceiveProperties();
         }
-
-#if MESHSYNC_PROBUILDER_SUPPORT
-        FieldInfo versionIndexField = typeof(UnityEngine.ProBuilder.ProBuilderMesh).GetField("m_VersionIndex", BindingFlags.NonPublic | BindingFlags.Instance);
-#endif
 
         void SendUpdatedProperties()
         {
