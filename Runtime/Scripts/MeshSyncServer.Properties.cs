@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using System.Reflection;
 
 #if MESHSYNC_SPLINE_SUPPORT
 using UnityEngine.Splines;
@@ -39,6 +40,7 @@ namespace Unity.MeshSync
 
 #if MESHSYNC_PROBUILDER_SUPPORT
         HashSet<UnityEngine.ProBuilder.ProBuilderMesh> changedMeshes = new HashSet<UnityEngine.ProBuilder.ProBuilderMesh>();
+        Dictionary<UnityEngine.ProBuilder.ProBuilderMesh, ushort> meshVersionIndices = new Dictionary<UnityEngine.ProBuilder.ProBuilderMesh, ushort>();
 
         public override bool UseProBuilder
         {
@@ -91,6 +93,10 @@ namespace Unity.MeshSync
         {
             return m_server.CanServerReceiveProperties();
         }
+
+#if MESHSYNC_PROBUILDER_SUPPORT
+        FieldInfo versionIndexField = typeof(UnityEngine.ProBuilder.ProBuilderMesh).GetField("m_VersionIndex", BindingFlags.NonPublic | BindingFlags.Instance);
+#endif
 
         void SendUpdatedProperties()
         {
@@ -149,10 +155,19 @@ namespace Unity.MeshSync
                         }
 #endif
 #if MESHSYNC_PROBUILDER_SUPPORT
-                        if (entity.dataType == EntityType.Mesh)
+                        if (entity.dataType == EntityType.Mesh && entity.proBuilderMeshFilter != null)
                         {
-                            if (changedMeshes.Contains(entity.proBuilderMeshFilter))
+                            var versionIndex = (ushort)versionIndexField.GetValue(entity.proBuilderMeshFilter);
+                            if (!meshVersionIndices.TryGetValue(entity.proBuilderMeshFilter, out var previousVersionIndex))
                             {
+                                meshVersionIndices.Add(entity.proBuilderMeshFilter, versionIndex);
+                            }
+
+                            if (changedMeshes.Contains(entity.proBuilderMeshFilter) ||
+                                versionIndex != previousVersionIndex)
+                            {
+                                meshVersionIndices[entity.proBuilderMeshFilter] = versionIndex;
+
                                 SendMesh(kvp.Key, entity);
                                 sendChanges = true;
                             }
@@ -199,11 +214,21 @@ namespace Unity.MeshSync
             changedMeshes.Add(mesh);
         }
 
+        static GetFlags sendMeshSettings = new GetFlags(new GetFlags.GetFlagsSetting[] {
+                                   GetFlags.GetFlagsSetting.Transform,
+                                   GetFlags.GetFlagsSetting.Points,
+                                   //GetFlags.GetFlagsSetting.Normals,
+                                   //GetFlags.GetFlagsSetting.Tangents,
+                                   //GetFlags.GetFlagsSetting.Colors,
+                                   GetFlags.GetFlagsSetting.Indices,
+                                   GetFlags.GetFlagsSetting.MaterialIDS,
+                                   //GetFlags.GetFlagsSetting.Bones,
+                                   //GetFlags.GetFlagsSetting.BlendShapes 
+            });
+
         void SendMesh(string path, EntityRecord entity)
         {
             Debug.Assert(entity.dataType == EntityType.Mesh);
-
-
 
             var objRenderer = entity.meshRenderer;
 
@@ -214,7 +239,7 @@ namespace Unity.MeshSync
             var mr = entity.meshRenderer;
 
             CaptureMesh(ref dst, mesh, null,
-                new GetFlags(GetFlags.AllGetFlagsSetting()),
+                sendMeshSettings,
                 mr.sharedMaterials);
 
             // TODO: Maybe support skinned mesh renderers too:
@@ -234,17 +259,7 @@ namespace Unity.MeshSync
             dst.local2world = rendererTransform.localToWorldMatrix;
             dst.world2local = rendererTransform.worldToLocalMatrix;
 
-            //EntityRecord rec;
-            //if (!m_hostObjects.TryGetValue(dstTrans.hostID, out rec))
-            //{
-            //    rec = new EntityRecord();
-            //    m_hostObjects.Add(dstTrans.hostID, rec);
-            //}
-            //entity.go = objRenderer.gameObject;
-            //entity.origMesh = origMesh;
-
-            dstTrans.path = path;// BuildPath(rendererTransform);
-            //m_server.ServeMesh(dst);
+            dstTrans.path = path;
 
             m_server.SendMesh(dst);
         }

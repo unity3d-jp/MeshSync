@@ -7,10 +7,11 @@ namespace Unity.MeshSync.Editor  {
 [CustomEditor(typeof(MeshSyncServer))]
 internal class MeshSyncServerInspector : BaseMeshSyncInspector {
 #if MESHSYNC_PROBUILDER_SUPPORT
-        static MeshSyncServerInspector()
+    static MeshSyncServerInspector()
     {
         // Init pro builder callbacks:
         UnityEditor.ProBuilder.ProBuilderEditor.afterMeshModification += ProBuilderEditor_afterMeshModification;
+        BaseMeshSync.ProBuilderUpdate += ProBuilderUpdate;
     }
 
     private static void ProBuilderEditor_afterMeshModification(IEnumerable<UnityEngine.ProBuilder.ProBuilderMesh> meshes)
@@ -24,6 +25,14 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
                 server.MeshChanged(mesh);
             }
         }
+    }
+
+    private static void ProBuilderUpdate()
+    {
+        // Change select mode back and forth to ensure probuilder invalidates its internal cache:
+        var t = UnityEditor.ProBuilder.ProBuilderEditor.selectMode;
+        UnityEditor.ProBuilder.ProBuilderEditor.selectMode = UnityEngine.ProBuilder.SelectMode.Object;
+        UnityEditor.ProBuilder.ProBuilderEditor.selectMode = t;
     }
 #endif
 

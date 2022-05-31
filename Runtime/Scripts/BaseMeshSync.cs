@@ -1331,8 +1331,34 @@ namespace Unity.MeshSync
                 if (rec.mesh != null && (meshUpdated || materialsUpdated))
                 {
                     rec.proBuilderMeshFilter = Misc.GetOrAddComponent<UnityEngine.ProBuilder.ProBuilderMesh>(trans.gameObject);
+                    
+                    // After importing, the vertex indices are likely to change, keep track of what was selected and reselect them based on their position:
+                    var selectedVerts = rec.proBuilderMeshFilter.GetVertices(rec.proBuilderMeshFilter.selectedVertices);
+                    
                     var importer = new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, rec.meshRenderer.sharedMaterials, rec.proBuilderMeshFilter);
-                    importer.Import(new UnityEngine.ProBuilder.MeshOperations.MeshImportSettings() { quads = true });
+                    importer.Import(new UnityEngine.ProBuilder.MeshOperations.MeshImportSettings());
+
+                    // To refresh the internal probuilder mesh:
+                    rec.proBuilderMeshFilter.ToMesh();
+                    rec.proBuilderMeshFilter.Refresh();
+                    ProBuilderUpdate();
+
+                    List<int> selection = new List<int>();
+
+                    for (int meshIdx = 0; meshIdx < rec.mesh.vertices.Length; meshIdx++)
+                    {
+                        Vector3 meshVert = rec.mesh.vertices[meshIdx];
+                        for (int selIdx = 0; selIdx < selectedVerts.Length; selIdx++)
+                        {
+                            UnityEngine.ProBuilder.Vertex selectedVert = selectedVerts[selIdx];
+                            if (meshVert == selectedVert.position)
+                            {
+                                selection.Add(meshIdx);
+                            }
+                        } 
+                    }
+
+                    rec.proBuilderMeshFilter.SetSelectedVertices(selection);
                 }
             }
             else
@@ -1347,6 +1373,7 @@ namespace Unity.MeshSync
             return rec;
         }
 
+        public static Action ProBuilderUpdate;
 
         //----------------------------------------------------------------------------------------------------------------------
 

@@ -33,21 +33,6 @@ namespace Unity.MeshSync
             BlendShapes = 10
         }
 
-        public static GetFlagsSetting[] AllGetFlagsSetting()
-        {
-            return new GetFlagsSetting[] {
-                GetFlagsSetting.Transform,
-                GetFlagsSetting.Points,
-                GetFlagsSetting.Normals,
-                GetFlagsSetting.Tangents,
-                GetFlagsSetting.Colors,
-                GetFlagsSetting.Indices,
-                GetFlagsSetting.MaterialIDS,
-                GetFlagsSetting.Bones,
-                GetFlagsSetting.BlendShapes
-                };
-        }
-
         public GetFlags(params GetFlagsSetting[] settings)
         {
             m_flags = new BitFlags();
