@@ -1330,12 +1330,14 @@ namespace Unity.MeshSync
             {
                 if (rec.mesh != null && (meshUpdated || materialsUpdated))
                 {
+                    //Debug.LogError("Rebuilding");
                     ProBuilderBeforeRebuild?.Invoke();
 
                     rec.proBuilderMeshFilter = Misc.GetOrAddComponent<UnityEngine.ProBuilder.ProBuilderMesh>(trans.gameObject);
-                    
+
                     var importer = new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, rec.meshRenderer.sharedMaterials, rec.proBuilderMeshFilter);
-                    importer.Import(new UnityEngine.ProBuilder.MeshOperations.MeshImportSettings());
+                    // Disable quads, it is much slower:
+                    importer.Import(new UnityEngine.ProBuilder.MeshOperations.MeshImportSettings() { quads = false });
 
                     // To refresh the internal probuilder mesh:
                     rec.proBuilderMeshFilter.ToMesh();
@@ -1345,7 +1347,7 @@ namespace Unity.MeshSync
                 }
             }
             else
-             {
+            {
                 if (rec.proBuilderMeshFilter != null)
                 {
                     DestroyImmediate(rec.proBuilderMeshFilter);

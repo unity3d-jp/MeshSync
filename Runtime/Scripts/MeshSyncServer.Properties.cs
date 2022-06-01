@@ -213,7 +213,6 @@ namespace Unity.MeshSync
 
             var objRenderer = entity.meshRenderer;
 
-            //Mesh origMesh = null;
             MeshData dst = MeshData.Create();
 
             var mesh = entity.meshFilter.sharedMesh;
