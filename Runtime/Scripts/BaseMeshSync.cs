@@ -1330,6 +1330,8 @@ namespace Unity.MeshSync
             {
                 if (rec.mesh != null && (meshUpdated || materialsUpdated))
                 {
+                    ProBuilderBeforeRebuild?.Invoke();
+
                     rec.proBuilderMeshFilter = Misc.GetOrAddComponent<UnityEngine.ProBuilder.ProBuilderMesh>(trans.gameObject);
                     
                     var importer = new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, rec.meshRenderer.sharedMaterials, rec.proBuilderMeshFilter);
@@ -1338,7 +1340,8 @@ namespace Unity.MeshSync
                     // To refresh the internal probuilder mesh:
                     rec.proBuilderMeshFilter.ToMesh();
                     rec.proBuilderMeshFilter.Refresh();
-                    ProBuilderUpdate();
+
+                    ProBuilderAfterRebuild?.Invoke();
                 }
             }
             else
@@ -1353,7 +1356,8 @@ namespace Unity.MeshSync
             return rec;
         }
 
-        public static Action ProBuilderUpdate;
+        public static Action ProBuilderBeforeRebuild;
+        public static Action ProBuilderAfterRebuild;
 
         //----------------------------------------------------------------------------------------------------------------------
 

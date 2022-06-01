@@ -5,34 +5,75 @@ using UnityEngine;
 
 namespace Unity.MeshSync.Editor  {
 [CustomEditor(typeof(MeshSyncServer))]
+[InitializeOnLoad]
 internal class MeshSyncServerInspector : BaseMeshSyncInspector {
 #if MESHSYNC_PROBUILDER_SUPPORT
+    static System.Reflection.FieldInfo versionInfo = typeof(UnityEngine.ProBuilder.ProBuilderMesh).GetField("m_VersionIndex", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+    static Dictionary<UnityEngine.ProBuilder.ProBuilderMesh, ushort> versionIndices = new Dictionary<UnityEngine.ProBuilder.ProBuilderMesh, ushort>();
+
     static MeshSyncServerInspector()
     {
-        // Init pro builder callbacks:
-        UnityEditor.ProBuilder.ProBuilderEditor.afterMeshModification += ProBuilderEditor_afterMeshModification;
-        BaseMeshSync.ProBuilderUpdate += ProBuilderUpdate;
+        BaseMeshSync.ProBuilderBeforeRebuild += ProBuilderBeforeRebuild;
+        BaseMeshSync.ProBuilderAfterRebuild += ProBuilderAfterRebuild;
     }
 
-    private static void ProBuilderEditor_afterMeshModification(IEnumerable<UnityEngine.ProBuilder.ProBuilderMesh> meshes)
+    private static void MeshesChanged(IEnumerable<UnityEngine.ProBuilder.ProBuilderMesh> meshes)
     {
-        foreach (var mesh in meshes)
+        if (meshes != null)
         {
-            var server = mesh.GetComponentInParent<MeshSyncServer>();
-
-            if (server != null)
+            foreach (var mesh in meshes)
             {
-                server.MeshChanged(mesh);
+                var version = (ushort)versionInfo.GetValue(mesh);
+
+                if (!versionIndices.TryGetValue(mesh, out var storedVersion))
+                {
+                    versionIndices.Add(mesh, version);
+                }
+                else if (version != storedVersion)
+                {
+                    versionIndices[mesh] = version;
+
+                    var server = mesh.GetComponentInParent<MeshSyncServer>();
+
+                    server?.MeshChanged(mesh);
+                }
             }
         }
     }
 
-    private static void ProBuilderUpdate()
+    private static void ProBuilderEditor_afterMeshModification(IEnumerable<UnityEngine.ProBuilder.ProBuilderMesh> meshes)
+    {      
+        MeshesChanged(meshes);
+    }
+
+    private static void ProBuilderEditor_selectionUpdated(IEnumerable<UnityEngine.ProBuilder.ProBuilderMesh> meshes)
+    {
+        if (!UnityEditorInternal.InternalEditorUtility.isApplicationActive)
+        {
+            return;
+        }
+
+        MeshesChanged(meshes);
+    }
+
+    private static void ProBuilderBeforeRebuild()
     {
         // Change select mode back and forth to ensure probuilder invalidates its internal cache:
         var t = UnityEditor.ProBuilder.ProBuilderEditor.selectMode;
         UnityEditor.ProBuilder.ProBuilderEditor.selectMode = UnityEngine.ProBuilder.SelectMode.Object;
         UnityEditor.ProBuilder.ProBuilderEditor.selectMode = t;
+
+        // Init pro builder callbacks:
+        UnityEditor.ProBuilder.ProBuilderEditor.afterMeshModification -= ProBuilderEditor_afterMeshModification;
+        UnityEditor.ProBuilder.ProBuilderEditor.selectionUpdated -= ProBuilderEditor_selectionUpdated;
+    }
+
+    private static void ProBuilderAfterRebuild()
+    {
+        // Init pro builder callbacks:
+        UnityEditor.ProBuilder.ProBuilderEditor.afterMeshModification += ProBuilderEditor_afterMeshModification;
+        UnityEditor.ProBuilder.ProBuilderEditor.selectionUpdated += ProBuilderEditor_selectionUpdated;
     }
 #endif
 

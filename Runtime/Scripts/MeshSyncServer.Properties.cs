@@ -40,11 +40,7 @@ namespace Unity.MeshSync
 
 #if MESHSYNC_PROBUILDER_SUPPORT
         HashSet<UnityEngine.ProBuilder.ProBuilderMesh> changedMeshes = new HashSet<UnityEngine.ProBuilder.ProBuilderMesh>();
-        Dictionary<UnityEngine.ProBuilder.ProBuilderMesh, ushort> meshVersionIndices = new Dictionary<UnityEngine.ProBuilder.ProBuilderMesh, ushort>();
         
-        // This field is not exposed but seems to be the only way to know when a mesh has changed:
-        FieldInfo versionIndexField = typeof(UnityEngine.ProBuilder.ProBuilderMesh).GetField("m_VersionIndex", BindingFlags.NonPublic | BindingFlags.Instance);
-
         public override bool UseProBuilder
         {
             get => base.UseProBuilder;
@@ -156,17 +152,8 @@ namespace Unity.MeshSync
 #if MESHSYNC_PROBUILDER_SUPPORT
                         if (entity.dataType == EntityType.Mesh && entity.proBuilderMeshFilter != null)
                         {
-                            var versionIndex = (ushort)versionIndexField.GetValue(entity.proBuilderMeshFilter);
-                            if (!meshVersionIndices.TryGetValue(entity.proBuilderMeshFilter, out var previousVersionIndex))
+                            if (changedMeshes.Contains(entity.proBuilderMeshFilter))
                             {
-                                meshVersionIndices.Add(entity.proBuilderMeshFilter, versionIndex);
-                            }
-
-                            if (changedMeshes.Contains(entity.proBuilderMeshFilter) ||
-                                versionIndex != previousVersionIndex)
-                            {
-                                meshVersionIndices[entity.proBuilderMeshFilter] = versionIndex;
-
                                 SendMesh(kvp.Key, entity);
                                 sendChanges = true;
                             }
@@ -216,13 +203,8 @@ namespace Unity.MeshSync
         static GetFlags sendMeshSettings = new GetFlags(new GetFlags.GetFlagsSetting[] {
                                    GetFlags.GetFlagsSetting.Transform,
                                    GetFlags.GetFlagsSetting.Points,
-                                   //GetFlags.GetFlagsSetting.Normals,
-                                   //GetFlags.GetFlagsSetting.Tangents,
-                                   //GetFlags.GetFlagsSetting.Colors,
                                    GetFlags.GetFlagsSetting.Indices,
                                    GetFlags.GetFlagsSetting.MaterialIDS,
-                                   //GetFlags.GetFlagsSetting.Bones,
-                                   //GetFlags.GetFlagsSetting.BlendShapes 
             });
 
         void SendMesh(string path, EntityRecord entity)
