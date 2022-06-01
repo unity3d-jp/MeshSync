@@ -99,6 +99,17 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.unity.probuilder": {
+      "version": "5.0.4",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.settings-manager": "1.0.3",
+        "com.unity.modules.physics": "1.0.0",
+        "com.unity.modules.imgui": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.render-pipelines.core": {
       "version": "12.1.3",
       "depth": 1,
@@ -160,15 +171,15 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.splines": {
-      "version": "1.0.0-pre.8",
+      "version": "git@github.cds.internal.unity3d.com:unity/com.unity.splines.git",
       "depth": 0,
-      "source": "registry",
+      "source": "git",
       "dependencies": {
         "com.unity.settings-manager": "1.0.3",
         "com.unity.mathematics": "1.2.1",
         "com.unity.burst": "1.6.0-pre.2"
       },
-      "url": "https://packages.unity.com"
+      "hash": "86d1e556fa1b8717bad2a4ca4d7f5dfe568996d9"
     },
     "com.unity.test-framework": {
       "version": "1.1.31",

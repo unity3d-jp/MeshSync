@@ -12,7 +12,9 @@
         "GUID:457756d89b35d2941b3e7b37b4ece6f1",
         "GUID:15fc0a57446b3144c949da3e2b9737a9",
         "GUID:e43142fc3fec6554980dde6126631f1d",
-        "GUID:d8b63aba1907145bea998dd612889d6b"
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:03ca3ee4acaf74592bc6d299ca86aa27",
+        "GUID:1826c0224c0d048b88112c79bbb0cd85"
     ],
     "includePlatforms": [
         "Editor"
@@ -33,6 +35,16 @@
             "name": "com.unity.render-pipelines.universal",
             "expression": "",
             "define": "AT_USE_URP"
+        },
+        {
+            "name": "com.unity.splines",
+            "expression": "2.0.0-pre",
+            "define": "MESHSYNC_SPLINE_SUPPORT"
+        },
+        {
+            "name": "com.unity.probuilder",
+            "expression": "",
+            "define": "MESHSYNC_PROBUILDER_SUPPORT"
         }
     ],
     "noEngineReferences": false
