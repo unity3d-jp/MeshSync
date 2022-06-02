@@ -1,6 +1,49 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.13.1-preview] - 2022-05-18
+
+### Added
+* feat: light probes support for instance rendering
+
+### Changed
+* deps: use com.unity.film-internal-utilities@0.15.1-preview 
+
+## [0.13.0-preview] - 2022-04-26
+
+### Added
+* feat: Instance rendering 
+* doc: Geometry Nodes documentation
+
+### Changed
+* change: make some classes/functions/members to internal 
+
+### Fixed
+* plugin-fix: support Mac OSX starting from 10.12
+
+## [0.12.9-preview] - 2022-04-14
+
+### Added
+* doc: mention support for installing Blender 3.0 and 3.1 plugins
+* doc: mention support for Mac Silicon 
+
+### Changed
+* deps: use com.unity.film-internal-utilities@0.14.2-preview
+* doc: update the documentation of SceneCachePlayer
+* doc: update the documentation of SceneCache in Timeline
+
+### Fixed
+* fix: check if a record doesn't have Mesh before assigning bounds/blendShape 
+* fix: curves of SceneCache were always extracted
+
+### Removed
+* doc: remove the section on Animation Tweaks
+
+## [0.12.8-preview] - 2022-04-08
+
+### Fixed
+* fix: build errors 
+
 ## [0.12.7-preview] - 2022-04-06
 
 ### Changed

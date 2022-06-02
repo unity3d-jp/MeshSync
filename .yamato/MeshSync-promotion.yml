@@ -1,34 +1,45 @@
 {% metadata_file .yamato/MeshSync.metafile %}
    
 ---
-{% for editor in test_editors %}
-{% for platform in test_platforms %}
-promotion_test_{{ platform.name }}_{{ editor.version }}:
-  name : {{ yamato_name }} Promotion Test {{ editor.version }} on {{ platform.name }}
+
+{% for promotion_type in promotion_types %}
+
+{% for test_config in test_configs %}
+{% for test_platform in test_config.test_platforms %}
+{% for step in test_platform.test_type.steps %}
+{% assign platform_type = test_platform.platform_type %}
+{% assign editor_version= test_config.editor_version %}
+
+{{promotion_type.job_key_prefix}}_test_{{ platform_type.name }}_{{ editor_version }}_{{step.name}}:
+  name : {{promotion_type.test_name_prefix}} {{ editor_version }} with {{step.name}} on {{ platform_type.name }}
   agent:
-    type: {{ platform.type }}
-    image: {{ platform.image }}
-    flavor: {{ platform.flavor}}
+    type: {{ platform_type.type }}
+    image: {{ platform_type.image }}
+    flavor: {{ platform_type.flavor}}
   variables:
     UPMCI_PROMOTION: 1
   commands:
     - npm install upm-ci-utils@stable -g --registry https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-npm
-    - upm-ci package test --unity-version {{ editor.version }} 
+    - upm-ci package test --unity-version {{ editor_version }} {{step.arguments}} 
   artifacts:
-    {{ yamato_name }}_promotion_test_artifacts:
+    {{ yamato_name }}_{{promotion_type.job_key_prefix}}_test_artifacts:
       paths:
         - "upm-ci~/test-results/**/*"
   dependencies:
-    - .yamato/{{ yamato_name }}-pack.yml#pack
+{% for test_dependency in promotion_type.test_dependencies %}
+    - {{test_dependency}}
+{% endfor %}
+ 
+{% endfor %}
 {% endfor %}
 {% endfor %}
 
-promote:
-  name: Promote {{ yamato_name }} to Production
+{{promotion_type.job_key_prefix}}:
+  name: {{promotion_type.job_name}} 
   agent:
-    type: Unity::VM
-    image: package-ci/win10:stable
-    flavor: b1.large
+    type:   {{ promote_platform.type }}
+    image:  {{ promote_platform.image }}
+    flavor: {{ promote_platform.flavor }}
   variables:
     UPMCI_PROMOTION: 1
   commands:
@@ -39,13 +50,18 @@ promote:
       only:
         - /^(r|R)elease-\d+\.\d+\.\d+(-preview(\.\d+)?)?$/
   artifacts:
-    {{ yamato_name }}_promote_artifacts:
+    {{ yamato_name }}_{{promotion_type.job_key_prefix}}_artifacts:
       paths:
         - "upm-ci~/packages/*.tgz"
   dependencies:
     - .yamato/{{ yamato_name }}-pack.yml#pack
-{% for editor in test_editors %}
-{% for platform in test_platforms %}
-    - .yamato/{{ yamato_name }}-promotion.yml#promotion_test_{{ platform.name }}_{{ editor.version }}
+{% for test_config in test_configs %}
+{% for test_platform in test_config.test_platforms %}
+{% for step in test_platform.test_type.steps %}
+    - .yamato/{{ yamato_name }}-promotion.yml#{{promotion_type.job_key_prefix}}_test_{{ test_platform.platform_type.name }}_{{ test_config.editor_version }}_{{step.name}}
 {% endfor %}
 {% endfor %}
+{% endfor %}
+{% endfor %}
+
+

@@ -5,16 +5,24 @@ using UnityEngine.Rendering;
 
 namespace Unity.MeshSync
 {
-    public class InstanceRenderingInfo
+    internal class InstancesBatch
     {
-        public Mesh Mesh;
+        public Matrix4x4[] Matrices { get; set; }
+        public MaterialPropertyBlock PropertyBlock { get; set; }
+    }
+    
+    internal class InstanceRenderingInfo
+    {
+        internal bool canRender => mesh != null && materials != null && materials.Length > 0;
         
-        public List<Matrix4x4[]> DividedInstances { get; private set; } = new List<Matrix4x4[]>();
+        internal Mesh mesh { get; private set; }
+
+
+        internal List<InstancesBatch> batches = new List<InstancesBatch>();
 
         private Material[] m_materials;
 
-        [SerializeField]
-        public Material[] Materials
+        internal Material[] materials
         {
             get => m_materials;
             set
@@ -33,8 +41,7 @@ namespace Unity.MeshSync
         private void OnMaterialsUpdated()
         {
             // Enable instancing in materials
-            for (var i = 0; i < m_materials.Length; i++)
-            {
+            for (var i = 0; i < m_materials.Length; i++) {
                 m_materials[i].enableInstancing = true;
             }
         }
@@ -47,7 +54,7 @@ namespace Unity.MeshSync
         
         private Matrix4x4[] m_instances;
 
-        public Matrix4x4[] Instances
+        internal Matrix4x4[] instances
         {
             get => m_instances;
             set
@@ -57,7 +64,7 @@ namespace Unity.MeshSync
             }
         }
 
-        public GameObject GameObject
+        internal GameObject gameObject
         {
             get => m_gameObject;
             set
@@ -71,168 +78,188 @@ namespace Unity.MeshSync
             }
         }
 
-        [SerializeField]
-        public Renderer Renderer;
-        public int Layer
+        private Renderer m_renderer;
+        internal int layer
         {
             get
             {
-                if (GameObject == null) 
+                if (gameObject == null) 
                     return 0;
                     
-                return GameObject.layer; 
+                return gameObject.layer; 
             } 
         }
 
-        public bool ReceiveShadows
+        internal bool receiveShadows
         {
             get
             {
-                if (Renderer == null)
+                if (m_renderer == null)
                     return true;
                     
-                return Renderer.receiveShadows;
+                return m_renderer.receiveShadows;
             }
         }
 
-        public ShadowCastingMode ShadowCastingMode
+        internal ShadowCastingMode shadowCastingMode
         {
             get
             {
-                if (Renderer == null)
-                {
+                if (m_renderer == null) {
                     return ShadowCastingMode.On;
                 }
 
-                return Renderer.shadowCastingMode;
+                return m_renderer.shadowCastingMode;
             }
         }
 
-        public LightProbeUsage LightProbeUsage
+        internal LightProbeUsage lightProbeUsage
         {
             get
             {
-                if (Renderer == null)
-                {
-                    return LightProbeUsage.BlendProbes;
+                if (m_renderer == null || m_renderer.lightProbeUsage == LightProbeUsage.Off) {
+                    return LightProbeUsage.Off;
                 }
 
-                return Renderer.lightProbeUsage;
+                return LightProbeUsage.CustomProvided;
             }
         }
 
-        public LightProbeProxyVolume LightProbeProxyVolume
+        internal LightProbeProxyVolume lightProbeProxyVolume
         {
             get
             {
-                if (Renderer == null)
+                if (m_renderer == null)
                     return null;
                 
-                if (Renderer.lightProbeUsage != LightProbeUsage.UseProxyVolume)
+                if (m_renderer.lightProbeUsage != LightProbeUsage.UseProxyVolume)
                     return null;
                 
                 // Look for component in override
-                var overrideGO = Renderer.lightProbeProxyVolumeOverride;
-                if (overrideGO != null && overrideGO.TryGetComponent(out LightProbeProxyVolume volumeOverride))
-                {
+                var overrideGO = m_renderer.lightProbeProxyVolumeOverride;
+                if (overrideGO != null && overrideGO.TryGetComponent(out LightProbeProxyVolume volumeOverride)) {
                     return volumeOverride;
                 }
                 
                 // Look for component in Renderer
-                if (Renderer.TryGetComponent(out LightProbeProxyVolume volume))
-                {
+                if (m_renderer.TryGetComponent(out LightProbeProxyVolume volume)) {
                     return volume;
                 }
 
                 return null;
             }
         }
-        
-        public Matrix4x4 WorldMatrix
+
+        private Matrix4x4 worldMatrix
         {
             get
             {
-                if (GameObject == null)
+                if (gameObject == null)
                     return Matrix4x4.identity;
                     
-                return GameObject.transform.localToWorldMatrix;
+                return gameObject.transform.localToWorldMatrix;
             }
         }
-            
-        public void UpdateDividedInstances()
+
+        private bool positionsChanged => m_dirtyInstances || m_cachedWorldMatrix != this.worldMatrix;
+
+        internal void PrepareForDrawing()
         {
-            // Avoid recalculation if the instances are the same
-            // and the world matrix has not changed.
-            if (!m_dirtyInstances && m_cachedWorldMatrix == WorldMatrix)
+            if (!positionsChanged)
                 return;
             
+            batches.Clear();
+            
+            UpdateDividedInstances();
+            UpdateMaterialProperties();
+            
             m_dirtyInstances = false;
-            m_cachedWorldMatrix = WorldMatrix;
-            
-            DividedInstances.Clear();
-            
-            if (Instances == null)
+            m_cachedWorldMatrix = this.worldMatrix;
+        }
+        
+        private void UpdateDividedInstances()
+        {
+            if (instances == null)
                 return;
                 
             var maxSize = 1023;
-            var iterations = Instances.Length / maxSize;
-            var worldMatrix = WorldMatrix;
-            for (var i = 0; i < iterations; i++)
-            {
-                var array = new Matrix4x4[maxSize];
-
-                for (var j = 0; j < array.Length; j++)
-                {
-                    array[j] = worldMatrix * Instances[i * maxSize + j];
-                }
-                
-                DividedInstances.Add(array);
+            var iterations = instances.Length / maxSize;
+            for (var i = 0; i < iterations; i++) {
+                AddInstances(maxSize, i, maxSize);
             }
 
-            var remainder = Instances.Length % maxSize;
-            if (remainder > 0)
-            {
-                var array = new Matrix4x4[remainder];
-                
-                for (var j = 0; j < array.Length; j++)
-                {
-                    array[j] = worldMatrix * Instances[iterations * maxSize + j];
-                }
-                
-                DividedInstances.Add(array);
+            var remainder = instances.Length % maxSize;
+            if (remainder > 0) {
+                AddInstances(remainder, iterations, maxSize);
             }
         }
 
-        public void OnGameObjectUpdated()
+        private void UpdateMaterialProperties()
         {
-            var go = GameObject;
+            for (var batchIndex = 0; batchIndex < batches.Count; batchIndex++){
+                
+                var batch = batches[batchIndex];
+                var count = batch.Matrices.Length;
+                
+                var lightProbes = new SphericalHarmonicsL2[count];
+                var occlusionProbes = new Vector4[count];
+                var positions = new Vector3[count];
+                
+                var matrices = batch.Matrices;
+                for (var i = 0; i < matrices.Length; i++)
+                {
+                    var instance = matrices[i];
+                    positions[i] = instance.GetColumn(3);
+                }
+                
+                LightProbes.CalculateInterpolatedLightAndOcclusionProbes(positions, lightProbes, occlusionProbes);
+
+                batch.PropertyBlock = new MaterialPropertyBlock();
+                batch.PropertyBlock.CopyProbeOcclusionArrayFrom(occlusionProbes);
+                batch.PropertyBlock.CopySHCoefficientArraysFrom(lightProbes);
+            }
+        }
+
+        private void AddInstances(int size, int iteration, int maxSize)
+        {
+            var array = new Matrix4x4[size];
+
+            for (var j = 0; j < array.Length; j++) {
+                array[j] = worldMatrix * instances[iteration * maxSize + j];
+            }
+
+            var batch = new InstancesBatch();
+            batch.Matrices = array;
+            batches.Add(batch);
+        }
+
+        private void OnGameObjectUpdated()
+        {
+            var go = gameObject;
 
             if (go == null)
                 return;
             
-            if (go.TryGetComponent(out SkinnedMeshRenderer skinnedMeshRenderer))
-            {
-                Mesh = skinnedMeshRenderer.sharedMesh;
-                Materials = skinnedMeshRenderer.sharedMaterials;
-                Renderer = skinnedMeshRenderer;
+            if (go.TryGetComponent(out SkinnedMeshRenderer skinnedMeshRenderer)) {
+                mesh = skinnedMeshRenderer.sharedMesh;
+                materials = skinnedMeshRenderer.sharedMaterials;
+                m_renderer = skinnedMeshRenderer;
                 return;
             }
             
-            if (!go.TryGetComponent(out MeshFilter filter))
-            {
+            if (!go.TryGetComponent(out MeshFilter filter)) {
                 Debug.LogWarningFormat("[MeshSync] No Mesh Filter for {0}", go.name);
                 return;
             }
 
-            if (!go.TryGetComponent(out MeshRenderer renderer))
-            {
+            if (!go.TryGetComponent(out MeshRenderer renderer)) {
                 Debug.LogWarningFormat("[MeshSync] No renderer for {0}", go.name);
                 return;
             }
             
-            Mesh = filter.sharedMesh;
-            Materials = renderer.sharedMaterials;
-            Renderer = renderer;
+            mesh = filter.sharedMesh;
+            materials = renderer.sharedMaterials;
+            m_renderer = renderer;
         }
     }
 }

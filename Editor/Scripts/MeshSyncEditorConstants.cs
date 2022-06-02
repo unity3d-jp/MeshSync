@@ -42,6 +42,8 @@ internal static class MeshSyncEditorConstants {
         { "3ds Max 2019", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2019" ) },
         { "3ds Max 2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020" ) },
         { "3ds Max 2021", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2021" ) },
+        { "3ds Max 2022", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2022" ) },
+        { "3ds Max 2023", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2023" ) },
 
 #if UNITY_EDITOR_WIN        
         { "Blender 2.83", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },

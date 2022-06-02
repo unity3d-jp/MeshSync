@@ -36,7 +36,8 @@ public partial class MeshSyncServer : BaseMeshSync {
     }
 #endif
     
-    protected override void InitInternalV() {
+    private protected override void InitInternalV() {
+        
     }
 
 
@@ -159,11 +160,11 @@ public partial class MeshSyncServer : BaseMeshSync {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    protected override void OnBeforeSerializeMeshSyncPlayerV() {
+    private protected override void OnBeforeSerializeMeshSyncPlayerV() {
         
     }
 
-    protected override void OnAfterDeserializeMeshSyncPlayerV() {
+    private protected override void OnAfterDeserializeMeshSyncPlayerV() {
         m_serverVersion = CUR_SERVER_VERSION;
         
         if (string.IsNullOrEmpty(GetAssetsFolder())) {
@@ -496,15 +497,14 @@ public partial class MeshSyncServer : BaseMeshSync {
 #endif
 
 
-    protected override void OnEnable() {
+    private protected override void OnEnable() {
         base.OnEnable();
         if (m_autoStartServer) {
             m_requestRestartServer = true;
         }
         }
 
-
-    protected override void OnDisable() {
+    private protected override void OnDisable() {
         base.OnDisable();
         StopServer();
     }

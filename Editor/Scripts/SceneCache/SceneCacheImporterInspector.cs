@@ -10,7 +10,7 @@ using UnityEditor;
 namespace Unity.MeshSync.Editor {
 
 [CustomEditor(typeof(SceneCacheImporter))]
-public class SceneCacheImporterInspector: ScriptedImporterEditor
+internal class SceneCacheImporterInspector: ScriptedImporterEditor
 {
     public override void OnInspectorGUI() {
 

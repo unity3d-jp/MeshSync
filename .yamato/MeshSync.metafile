@@ -1,20 +1,107 @@
 yamato_name: MeshSync
 
-test_editors:
-  - version: 2019.4
-  - version: 2020.3
-  - version: 2021.2
-  - version: trunk
-test_platforms:
-  - name: win
-    type: Unity::VM
-    image: package-ci/win10:stable
-    flavor: b1.medium
-  - name: mac
-    type: Unity::VM::osx
-    image: package-ci/mac:stable       
-    flavor: m1.mac
-  - name: linux
-    type: Unity::VM
-    image: package-ci/ubuntu:stable
-    flavor: b1.medium
+platforms:
+  - platform_type: &platform_win
+      name: win
+      type: Unity::VM
+      image: package-ci/win10:v1.20.1
+      flavor: b1.medium
+      cmd_prefix: 
+  - platform_type: &platform_mac
+      name: mac
+      type: Unity::VM::osx
+      image: package-ci/mac:v1.20.0-1079282
+      flavor: m1.mac
+      cmd_prefix: 
+  - platform_type: &platform_linux
+      name: linux
+      type: Unity::VM::GPU
+      image: package-ci/ubuntu:v2.0.0
+      flavor: b1.medium
+      cmd_prefix: DISPLAY=:0.0
+
+pack_platform: &pack_platform_linux
+  name: linux
+  type: Unity::VM
+  image: package-ci/ubuntu:v2.0.0
+  flavor: b1.medium
+
+publish_platform: *platform_win
+promote_platform: *pack_platform_linux
+trigger_platform: *pack_platform_linux
+
+upm_ci_test_types:
+  - test_type: &upm_ci_all
+      steps:
+        - name: standalone_il2cpp
+          arguments: --platform standalone --backend il2cpp
+        - name: standalone_mono
+          arguments: --platform standalone --backend mono
+        - name: playedit_editor
+          arguments: --enable-code-coverage --code-coverage-options 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+Unity.MeshSync,+Unity.MeshSync.Editor,-Unity.MeshSync.Tests,-Unity.MeshSync.EditorTests'
+  - test_type: &upm_ci_mono
+      steps:
+        - name: standalone_mono
+          arguments: --platform standalone --backend mono
+        - name: playedit_editor
+          arguments: --enable-code-coverage --code-coverage-options 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+Unity.MeshSync,+Unity.MeshSync.Editor,-Unity.MeshSync.Tests,-Unity.MeshSync.EditorTests'
+  - test_type: &upm_ci_playedit
+      steps:
+        - name: playedit_editor
+          arguments: --enable-code-coverage --code-coverage-options 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+Unity.MeshSync,+Unity.MeshSync.Editor,-Unity.MeshSync.Tests,-Unity.MeshSync.EditorTests'
+
+test_configs:
+  - editor_version: 2019.4
+    test_platforms:
+      - platform_type: *platform_win
+        test_type: *upm_ci_all
+      - platform_type: *platform_mac
+        test_type: *upm_ci_all
+      - platform_type: *platform_linux
+        test_type: *upm_ci_all
+  - editor_version: 2020.3
+    test_platforms:
+      - platform_type: *platform_win
+        test_type: *upm_ci_all
+      - platform_type: *platform_mac
+        test_type: *upm_ci_all
+      - platform_type: *platform_linux
+        test_type: *upm_ci_all
+  - editor_version: 2021.3  
+    test_platforms:
+      - platform_type: *platform_win
+        test_type: *upm_ci_mono
+      - platform_type: *platform_mac
+        test_type: *upm_ci_all
+      - platform_type: *platform_linux
+        test_type: *upm_ci_all
+  - editor_version: 2022.1  
+    test_platforms:
+      - platform_type: *platform_win
+        test_type: *upm_ci_mono
+      - platform_type: *platform_mac
+        test_type: *upm_ci_all
+      - platform_type: *platform_linux
+        test_type: *upm_ci_all
+  - editor_version: trunk
+    test_platforms:
+      - platform_type: *platform_win
+        test_type: *upm_ci_all
+      - platform_type: *platform_mac
+        test_type: *upm_ci_all
+      - platform_type: *platform_linux
+        test_type: *upm_ci_all
+
+
+promotion_types:
+  - job_key_prefix: promote
+    job_name: Promote MeshSync to Production
+    test_name_prefix: Test MeshSync Promotion
+    test_dependencies: 
+      - .yamato/MeshSync-pack.yml#pack
+  - job_key_prefix: prerelease_promote
+    job_name: Prerelease and promote MeshSync to Production
+    test_name_prefix: Prerelease and test MeshSync Promotion 
+    test_dependencies:
+      - .yamato/MeshSync-pack.yml#pack
+      - .yamato/MeshSync-publish.yml#prerelease

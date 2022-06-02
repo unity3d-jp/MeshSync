@@ -95,28 +95,6 @@ to use the new material.
 
 **Import List** and **Export List** buttons are used to load and save material lists.    
 
-
-## Animation Tweaks 
-
-![](images/MeshSyncAnimationTweakProperties.png)
-
-Properties to tweak animations.
-
-- **Override Frame Rate**    
-  Changes the frame rate while keeping the key time or the animation length.    
-
-  > Tips: playing a 24 FPS animation without interpolation when targetting 60 FPS will cause jittery movements.  
-  > Changing the animation to 120 FPS is one possible approach to mitigate it. 
-     
-- **Time Scale**       
-  - **Scale**: applies time scaling.   
-    For example, applying 0.5 will double the speed.  
-  - **Offset**: adds an offset for the specified seconds.    
-    For example, applying a scale of -1 and an offset of -5 to a 5 second animation will result in reverse playback.    
-- **Drop Keyframes**: drops keyframes.   
-  For example, if we apply **Step=2** to an animation with 30 keystrokes, then the odd frames will be removed and the animation will become 15 frames.   
-  Similarly, if **Step=3**, then the animation will become 10 frames.
-
 ## Export Assets 
 
 ![](images/MeshSyncExportAssetsProperties.png)

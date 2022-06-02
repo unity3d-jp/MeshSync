@@ -2,17 +2,23 @@
    
 ---
 
-{% for editor in test_editors %}
-{% for platform in test_platforms %}
-test_{{ platform.name }}_{{ editor.version }}:
-  name : Test {{ yamato_name }} using {{ editor.version }} on {{ platform.name }}
+
+{% for test_config in test_configs %}
+{% for test_platform in test_config.test_platforms %}
+{% for step in test_platform.test_type.steps %}
+{% assign platform_type = test_platform.platform_type %}
+{% assign editor_version= test_config.editor_version %}
+
+test_{{ platform_type.name }}_{{ editor_version }}_{{step.name}}:
+  name : Test {{ yamato_name }} using {{ editor_version }} with {{step.name}} on {{ platform_type.name }}
   agent:
-    type: {{ platform.type }}
-    image: {{ platform.image }}
-    flavor: {{ platform.flavor}}
+    type: {{ platform_type.type }}
+    image: {{ platform_type.image }}
+    flavor: {{ platform_type.flavor}}
   commands:
-    - npm install upm-ci-utils@stable -g --registry https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-npm
-    - upm-ci package test --unity-version {{ editor.version }} --enable-code-coverage --code-coverage-options 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+Unity.{{yamato_name}},+Unity.{{yamato_name}}.Editor,-Unity.{{yamato_name}}.Tests,-Unity.{{yamato_name}}.EditorTests'         
+    - {{ platform_type.cmd_prefix}} npm install upm-ci-utils@stable -g --registry https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-npm
+    - {{ platform_type.cmd_prefix}} upm-ci package test --unity-version {{ editor_version }} {{step.arguments}} 
+
   artifacts:
     {{ yamato_name }}_test_artifacts:
       paths:
@@ -21,13 +27,14 @@ test_{{ platform.name }}_{{ editor.version }}:
     - .yamato/{{ yamato_name }}-pack.yml#pack
 {% endfor %}
 {% endfor %}
+{% endfor %}
 
 test_trigger:
   name: Tests Trigger for {{ yamato_name }}
   agent:
-    type: Unity::VM
-    image: package-ci/ubuntu:stable
-    flavor: b1.large
+    type: {{ trigger_platform.type }}
+    image: {{ trigger_platform.image }}
+    flavor: {{ trigger_platform.flavor}}
   commands:
     -  npm install upm-ci-utils@stable -g --registry https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-npm
     -  upm-ci package izon -t  
@@ -36,16 +43,19 @@ test_trigger:
       only:
         - "/.*/"
       except:
-        - "dev"              
+        - "dev"
+        - "**/dev"
     recurring:
       - branch: dev
         frequency: daily
-        rerun: on_new_revision        
+        rerun: on_new_revision
         
   dependencies:
     - .yamato/{{ yamato_name }}-pack.yml#pack
-    {% for editor in test_editors %}
-    {% for platform in test_platforms %}
-    - .yamato/{{ yamato_name }}-test.yml#test_{{platform.name}}_{{editor.version}}
+    {% for test_config in test_configs %}
+    {% for test_platform in test_config.test_platforms %}
+    {% for step in test_platform.test_type.steps %}
+    - .yamato/{{ yamato_name }}-test.yml#test_{{ test_platform.platform_type.name }}_{{ test_config.editor_version }}_{{step.name}}
+    {% endfor %}
     {% endfor %}
     {% endfor %}

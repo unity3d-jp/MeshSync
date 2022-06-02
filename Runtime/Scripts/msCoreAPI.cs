@@ -3132,19 +3132,19 @@ internal struct InstanceInfoData
     static extern int msSceneGetNumInstanceInfos(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msSceneGetNumPropertyInfos(IntPtr self);
-
-    [DllImport(Lib.name)]
     static extern InstanceInfoData msSceneGetInstanceInfo(IntPtr self, int i);
-
-    [DllImport(Lib.name)]
-    static extern PropertyInfoData msSceneGetPropertyInfo(IntPtr self, int i);
 
     [DllImport(Lib.name)]
     static extern int msSceneGetNumInstanceMeshes(IntPtr self);
 
     [DllImport(Lib.name)]
     static extern TransformData msSceneGetInstanceMesh(IntPtr self, int i);
+
+    [DllImport(Lib.name)]
+    static extern int msSceneGetNumPropertyInfos(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern PropertyInfoData msSceneGetPropertyInfo(IntPtr self, int i);
 
 #endregion
 
@@ -3174,11 +3174,12 @@ internal struct InstanceInfoData
         get { return msSceneGetNumInstanceMeshes(self); }
     }
 
-   public int numPropertyInfos
+    public int numPropertyInfos
     {
         get { return msSceneGetNumPropertyInfos(self); }
     }
 
+    
     public bool submeshesHaveUniqueMaterial {
     get { return msSceneSubmeshesHaveUniqueMaterial(self) != 0; }
     }
@@ -3203,7 +3204,7 @@ internal struct InstanceInfoData
     {
         return msSceneGetInstanceInfo(self, i);
     }
-        
+
     public TransformData GetInstancedEntity(int i)
     {
         return msSceneGetInstanceMesh(self, i);
