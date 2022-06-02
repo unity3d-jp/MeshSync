@@ -478,14 +478,24 @@ public partial class MeshSyncServer : BaseMeshSync {
 
         // bones & blendshapes are handled by CaptureSkinnedMeshRenderer()
     }
-    #endregion //ServeScene
+        #endregion //ServeScene
 
 
-    #region Events
+        #region Events
 
 #if UNITY_EDITOR
-    void OnValidate() {
+    void OnValidate()
+    {
         CheckParamsUpdated();
+
+        if (m_DCCAsset != null)
+        {
+            var path = AssetDatabase.GetAssetPath(m_DCCAsset);
+            if (System.IO.Path.GetExtension(path) != ".blend")
+            {
+                Debug.LogError($"The DCC asset must be a .blend file! ({this})");
+            }
+        }
     }
 
     void Reset() {
@@ -571,7 +581,7 @@ public partial class MeshSyncServer : BaseMeshSync {
 
     public IDCCLauncher m_DCCInterop;
     public UnityEngine.Object m_DCCAsset;
-      
+
 #endif
     
     [SerializeField] private MeshSyncServerConfig m_config;
