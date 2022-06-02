@@ -16,7 +16,7 @@ namespace Unity.MeshSync.Editor
         const string editorSettingPath = "MESHSYNC_BLENDER_PATH";
 
         System.Diagnostics.Process m_blenderProcess;
-        bool m_redirectBlenderToUnityConsole;
+        static bool redirectBlenderToUnityConsole;
 
         public IDCCLauncher.RunMode runMode { get; set; }
 
@@ -148,7 +148,7 @@ namespace Unity.MeshSync.Editor
 
             m_blenderProcess = new System.Diagnostics.Process();
 
-            if (m_redirectBlenderToUnityConsole)
+            if (redirectBlenderToUnityConsole)
             {
                 startInfo.RedirectStandardOutput = true;
                 startInfo.RedirectStandardError = true;
@@ -163,11 +163,13 @@ namespace Unity.MeshSync.Editor
             }
 
             m_blenderProcess.StartInfo = startInfo;
-            m_blenderProcess.Start();
+            //m_blenderProcess.Start();
             m_blenderProcess.EnableRaisingEvents = true;
             m_blenderProcess.Exited += M_blenderProcess_Exited;
 
-            if (m_redirectBlenderToUnityConsole)
+            m_blenderProcess.Start();
+
+            if (redirectBlenderToUnityConsole)
             {
                 m_blenderProcess.BeginOutputReadLine();
                 m_blenderProcess.BeginErrorReadLine();
@@ -213,10 +215,10 @@ namespace Unity.MeshSync.Editor
 
                 GUILayout.EndHorizontal();
 
-                var newRedirect = EditorGUILayout.Toggle("Redirect Blender to Unity Console:", m_redirectBlenderToUnityConsole);
-                if (newRedirect != m_redirectBlenderToUnityConsole)
+                var newRedirect = EditorGUILayout.Toggle("Redirect Blender to Unity Console:", redirectBlenderToUnityConsole);
+                if (newRedirect != redirectBlenderToUnityConsole)
                 {
-                    m_redirectBlenderToUnityConsole = newRedirect;
+                    redirectBlenderToUnityConsole = newRedirect;
                     if (m_blenderProcess != null)
                     {
                         OpenDCCTool(server.m_DCCAsset);

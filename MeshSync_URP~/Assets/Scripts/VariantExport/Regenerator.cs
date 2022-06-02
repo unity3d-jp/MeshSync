@@ -219,7 +219,16 @@ namespace Unity.MeshSync.VariantExport
                         continue;
                     }
 
-                    var propID = propString.Substring(0, propString.IndexOf(SEPARATOR_AFTER));
+                    int separatorIndex = propString.IndexOf(SEPARATOR_AFTER);
+                    if (separatorIndex == -1)
+                    {
+                        StopExport();
+                        var error = new Exception("The data format has changed, the variant list needs to be created again.");
+                        Debug.LogException(error);
+                        throw error;
+                    }
+
+                    var propID = propString.Substring(0, separatorIndex);
 
                     foreach (var serverProp in properties)
                     {
