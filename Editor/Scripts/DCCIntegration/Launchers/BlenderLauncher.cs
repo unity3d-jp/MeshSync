@@ -135,7 +135,6 @@ namespace Unity.MeshSync.Editor
 
             startInfo.Arguments = $"\"{absoluteAssetPath}\" -P \"{scriptPath}\"";
 
-            //startInfo.Arguments = $"-P \"{s_ScriptPath}\" -- {port}";
             if (runMode != RunMode.GUI)
                 startInfo.Arguments = "-b " + startInfo.Arguments;
 
@@ -163,7 +162,7 @@ namespace Unity.MeshSync.Editor
             }
 
             m_blenderProcess.StartInfo = startInfo;
-            //m_blenderProcess.Start();
+            
             m_blenderProcess.EnableRaisingEvents = true;
             m_blenderProcess.Exited += M_blenderProcess_Exited;
 

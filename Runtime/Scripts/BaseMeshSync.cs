@@ -2687,8 +2687,8 @@ internal delegate void DeleteInstanceHandler(string path);
     private protected readonly Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
     private readonly           Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
 
-    [SerializeField] private protected readonly InstanceInfoRecordDictionary m_clientInstances = new InstanceInfoRecordDictionary();
-    [SerializeField] private readonly EntityRecordDictionary m_clientInstancedEntities = new EntityRecordDictionary();
+    [SerializeField] private protected InstanceInfoRecordDictionary m_clientInstances = new InstanceInfoRecordDictionary();
+    [SerializeField] private EntityRecordDictionary m_clientInstancedEntities = new EntityRecordDictionary();
 
     private protected Action m_onMaterialChangedInSceneViewCB = null;
     
