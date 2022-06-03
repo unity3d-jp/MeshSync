@@ -8,7 +8,6 @@ internal class MeshSyncServerConfig : MeshSyncPlayerConfig {
 
     internal MeshSyncServerConfig(MeshSyncServerConfig other) : base(other)
     {
-        SyncInstances        = other.SyncInstances;
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -21,10 +20,6 @@ internal class MeshSyncServerConfig : MeshSyncPlayerConfig {
 
     enum MeshSyncServerConfigVersion {
         INITIAL = 1,
-    }
-    
-    public bool SyncInstances = false; 
-   
-
+    }  
 }
 } //end namespace
