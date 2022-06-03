@@ -18,7 +18,7 @@ namespace Unity.MeshSync.Editor
         System.Diagnostics.Process m_blenderProcess;
         static bool redirectBlenderToUnityConsole;
 
-        public IDCCLauncher.RunMode runMode { get; set; }
+        public RunMode runMode { get; set; }
 
         ~BlenderLauncher()
         {
@@ -52,7 +52,7 @@ namespace Unity.MeshSync.Editor
 
         public static void OpenBlendFile(MeshSyncServer server, UnityEngine.Object asset)
         {
-            var previousRunMode = server.m_DCCInterop != null ? server.m_DCCInterop.runMode : IDCCLauncher.RunMode.GUI;
+            var previousRunMode = server.m_DCCInterop != null ? server.m_DCCInterop.runMode : RunMode.GUI;
 
             server.m_DCCInterop?.Cleanup();
             server.m_DCCInterop = MeshSyncServerPropertiesInspector.GetLauncherForAsset(asset);
@@ -136,10 +136,10 @@ namespace Unity.MeshSync.Editor
             startInfo.Arguments = $"\"{absoluteAssetPath}\" -P \"{scriptPath}\"";
 
             //startInfo.Arguments = $"-P \"{s_ScriptPath}\" -- {port}";
-            if (runMode != IDCCLauncher.RunMode.GUI)
+            if (runMode != RunMode.GUI)
                 startInfo.Arguments = "-b " + startInfo.Arguments;
 
-            if (runMode == IDCCLauncher.RunMode.Background)
+            if (runMode == RunMode.Background)
             {
                 startInfo.UseShellExecute = false;
                 startInfo.CreateNoWindow = true;
@@ -203,7 +203,7 @@ namespace Unity.MeshSync.Editor
 
                 GUILayout.BeginHorizontal();
 
-                var newRunMode = (IDCCLauncher.RunMode)EditorGUILayout.EnumPopup("Run mode:", runMode);
+                var newRunMode = (RunMode)EditorGUILayout.EnumPopup("Run mode:", runMode);
                 if (newRunMode != runMode)
                 {
                     runMode = newRunMode;
