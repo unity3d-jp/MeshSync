@@ -78,7 +78,7 @@ void AsyncSceneSender::requestServerInitiatedMessage()
         return;
 
     m_request_properties_future = std::async(std::launch::async, [this]() {
-        if (!destroyed) {// && !propertyInfos.empty()) {
+        if (!destroyed) {
             requestServerInitiatedMessageImpl();
         }
     });

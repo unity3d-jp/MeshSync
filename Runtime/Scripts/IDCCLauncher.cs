@@ -1,6 +1,6 @@
 ﻿namespace Unity.MeshSync
 {
-    public enum RunMode
+    internal enum RunMode
     {
         GUI,
         Background,
@@ -10,7 +10,7 @@
     /// <summary>
     /// Interface for classes that handle DCC tool control from inside Unity.
     /// </summary>
-    public interface IDCCLauncher
+    internal interface IDCCLauncher
     {
         RunMode runMode { get; set; }
 

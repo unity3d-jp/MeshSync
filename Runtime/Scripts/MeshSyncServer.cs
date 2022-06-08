@@ -579,7 +579,7 @@ public partial class MeshSyncServer : BaseMeshSync {
 #if UNITY_EDITOR
     [SerializeField] bool m_foldServerSettings = true;
 
-    public IDCCLauncher m_DCCInterop;
+    internal IDCCLauncher m_DCCInterop;
     public UnityEngine.Object m_DCCAsset;
 
 #endif

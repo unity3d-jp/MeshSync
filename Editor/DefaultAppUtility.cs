@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using Microsoft.Win32;
 
-public static class DefaultAppUtility
+internal static class DefaultAppUtility
 {
     public static bool TryGetRegisteredApplication(string extension, out string registeredApp)
     {
