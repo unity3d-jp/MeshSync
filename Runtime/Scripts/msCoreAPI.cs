@@ -3071,9 +3071,9 @@ internal struct InstanceInfoData
         public enum Type
         {
             Int,
-			Float,
-			IntArray,
-			FloatArray,
+            Float,
+            IntArray,
+            FloatArray,
             String
         };
 
