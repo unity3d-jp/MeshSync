@@ -28,13 +28,15 @@ internal static class Lib {
 
         #endregion
 
-        static string version;
-    internal static string GetPluginVersion() {
-            if (version == null)
-            {        IntPtr nativeStr = msGetPluginVersionStr(); //Not direct marshalling because there is no free on C# side.
-        version= Marshal.PtrToStringAnsi(nativeStr);
-            }
-            return version;
+    static string version;
+    internal static string GetPluginVersion()
+    {
+        if (version == null)
+        {
+            IntPtr nativeStr = msGetPluginVersionStr(); //Not direct marshalling because there is no free on C# side.
+            version = Marshal.PtrToStringAnsi(nativeStr);
+        }
+        return version;
     }
 
     internal static int GetProtocolVersion() {
