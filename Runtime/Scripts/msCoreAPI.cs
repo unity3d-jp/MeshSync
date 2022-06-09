@@ -1695,7 +1695,7 @@ internal struct TransformData {
     /// Creates a new CurvesData and assign the parameter to it
     /// </summary>
     /// <param name="v"></param>
-    /// <returns>The newly created MeshData</returns>
+    /// <returns>The newly created CurvesData</returns>
     public static explicit operator CurvesData(TransformData v) {
         return new CurvesData { self = v.self };
     }
