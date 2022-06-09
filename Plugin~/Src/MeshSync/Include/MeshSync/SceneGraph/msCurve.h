@@ -50,21 +50,12 @@ namespace ms {
 		void serialize(std::ostream& os) const override;
 		void deserialize(std::istream& is) override;
 		void detach() override;
-		//void setupDataFlags() override;
 
 		bool isUnchanged() const override;
-		//bool isTopologyUnchanged() const override;
-		//bool strip(const Entity& base) override;
-		//bool merge(const Entity& base) override;
-		//bool diff(const Entity& e1, const Entity& e2) override;
-		//bool lerp(const Entity& e1, const Entity& e2, float t) override;
-		//void updateBounds() override;
 
 		void clear() override;
 		uint64_t hash() const override;
 		uint64_t checksumGeom() const override;
-		//uint64_t vertexCount() const override;
-		//EntityPtr clone(bool detach = false) override;
 	};
 	msSerializable(Curve);
 } // namespace ms
