@@ -6,7 +6,7 @@ using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 
 namespace Unity.MeshSync.Editor.Tests {
-internal class PluginTests {
+internal class PluginEditorTests {
     
     [UnityTest]
     public IEnumerator CheckPluginVersionCompatibility() {
