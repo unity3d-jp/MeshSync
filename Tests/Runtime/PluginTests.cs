@@ -1,18 +1,14 @@
-﻿using System.Collections;
-using NUnit.Framework;
-using UnityEngine.TestTools;
-using UnityEditor.PackageManager;
-using UnityEditor.PackageManager.Requests;
+﻿using NUnit.Framework;
 
 namespace Unity.MeshSync.Tests {
 internal class PluginTests {
     
     [Test]
-    public void CheckVersion() {
+    public void CheckVersionValidity() {
 
         string version = Lib.GetPluginVersion();
-        Assert.IsFalse(string.IsNullOrEmpty(version));
-        
+        Assert.IsTrue(PackageVersion.TryParse(version, out _));
+
     }
     
 //----------------------------------------------------------------------------------------------------------------------
