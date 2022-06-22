@@ -2357,6 +2357,14 @@ internal delegate void DeleteInstanceHandler(string path);
         {
             var path = AssetDatabase.GetAssetPath(prefabHolder.prefab);
 
+            // Also delete its asset:
+            var deps = AssetDatabase.GetDependencies(path);
+            var assetName = Path.ChangeExtension(path, "asset");
+            if (deps.Contains(assetName))
+            {
+                AssetDatabase.DeleteAsset(assetName);
+            }
+
             AssetDatabase.DeleteAsset(path);
         }
 
