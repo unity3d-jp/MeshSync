@@ -669,7 +669,7 @@ void Server::recvServerInitiatedRequest(HTTPServerRequest& request, HTTPServerRe
     m_pending_curves.clear();*/
 
     if (m_syncRequested) {
-        reqResponse.message = "sync";
+        reqResponse.message = REQUEST_SYNC;
         m_syncRequested = false;
     }
 

@@ -19,6 +19,8 @@ msDeclClassPtr(Entity)
 
 namespace ms {
 
+    const std::string REQUEST_SYNC = "sync";
+
 class Message
 {
 public:
