@@ -55,7 +55,7 @@ public class MeshSyncServer : BaseMeshSync {
         m_autoStartServer = autoStart; 
 
 #if UNITY_STANDALONE        
-        if (m_autoStartServer && !m_serverStarted) {
+        if (m_autoStartServer && !m_serverStarted && enabled && gameObject.activeInHierarchy) {
             StartServer();
         }
 #endif
