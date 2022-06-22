@@ -39,6 +39,14 @@ upm_ci_test_types:
           arguments: --platform standalone --backend mono
         - name: playedit_editor
           arguments: --enable-code-coverage --code-coverage-options 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+Unity.MeshSync,+Unity.MeshSync.Editor,-Unity.MeshSync.Tests,-Unity.MeshSync.EditorTests'
+  - test_type: &upm_ci_all_x64
+      steps:
+        - name: standalone_il2cpp_x64
+          arguments: --platform standalone --backend il2cpp --architecture x64
+        - name: standalone_mono_x64
+          arguments: --platform standalone --backend mono --architecture x64
+        - name: playedit_editor
+          arguments: --enable-code-coverage --code-coverage-options 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+Unity.MeshSync,+Unity.MeshSync.Editor,-Unity.MeshSync.Tests,-Unity.MeshSync.EditorTests'
   - test_type: &upm_ci_mono
       steps:
         - name: standalone_mono
@@ -64,7 +72,7 @@ test_configs:
       - platform_type: *platform_win
         test_type: *upm_ci_all
       - platform_type: *platform_mac
-        test_type: *upm_ci_all
+        test_type: *upm_ci_all_x64
       - platform_type: *platform_linux
         test_type: *upm_ci_all
   - editor_version: 2021.3  
@@ -72,7 +80,7 @@ test_configs:
       - platform_type: *platform_win
         test_type: *upm_ci_mono
       - platform_type: *platform_mac
-        test_type: *upm_ci_all
+        test_type: *upm_ci_all_x64
       - platform_type: *platform_linux
         test_type: *upm_ci_all
   - editor_version: 2022.1  
@@ -80,7 +88,7 @@ test_configs:
       - platform_type: *platform_win
         test_type: *upm_ci_mono
       - platform_type: *platform_mac
-        test_type: *upm_ci_all
+        test_type: *upm_ci_all_x64
       - platform_type: *platform_linux
         test_type: *upm_ci_all
   - editor_version: trunk
@@ -88,7 +96,7 @@ test_configs:
       - platform_type: *platform_win
         test_type: *upm_ci_all
       - platform_type: *platform_mac
-        test_type: *upm_ci_all
+        test_type: *upm_ci_all_x64
       - platform_type: *platform_linux
         test_type: *upm_ci_all
 
