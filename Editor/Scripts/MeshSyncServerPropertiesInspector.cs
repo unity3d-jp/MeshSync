@@ -18,7 +18,7 @@ namespace Unity.MeshSync.Editor
             var asset = server.m_DCCAsset;
 
             server.m_DCCInterop?.Cleanup();
-            server.m_DCCInterop = MeshSyncServerPropertiesInspector.GetLauncherForAsset(asset);
+            server.m_DCCInterop = GetLauncherForAsset(asset);
 
             if (server.m_DCCInterop != null)
             {
@@ -254,13 +254,7 @@ namespace Unity.MeshSync.Editor
 
             return newValue;
         }
-    }
-
-    // Partial class for now to make merging code easier later.
-    [CustomEditor(typeof(MeshSyncServerProperties))]
-    class MeshSyncServerPropertiesInspector : UnityEditor.Editor
-    {
-        public static IDCCLauncher GetLauncherForAsset(UnityEngine.Object asset)
+        internal static IDCCLauncher GetLauncherForAsset(UnityEngine.Object asset)
         {
             var assetPath = AssetDatabase.GetAssetPath(asset).Replace("Assets/", string.Empty);
 
@@ -273,30 +267,14 @@ namespace Unity.MeshSync.Editor
 
             return null;
         }
+    }
 
+    [CustomEditor(typeof(MeshSyncServerProperties))]
+    internal class MeshSyncServerPropertiesInspector : UnityEditor.Editor
+    {
         public override void OnInspectorGUI()
         {
             var propertiesHolder = (MeshSyncServerProperties)target;
-
-            var server = propertiesHolder.Server;
-
-            if (server != null)
-            {
-                GUILayout.BeginHorizontal();
-
-                server.m_DCCAsset = EditorGUILayout.ObjectField("DCC asset file:", server.m_DCCAsset, typeof(UnityEngine.Object), true);
-                if (server.m_DCCAsset != null)
-                {
-                    if (GUILayout.Button("Open"))
-                    {
-                        MeshSyncServerInspectorUtils.OpenDCCAsset(server);
-                    }
-                }
-
-                GUILayout.EndHorizontal();
-
-                server.m_DCCInterop?.DrawDCCToolVersion(server);
-            }
 
             MeshSyncServerInspectorUtils.DrawSliderForProperties(propertiesHolder.propertyInfos, editableStrings: false);
         }

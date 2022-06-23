@@ -96,6 +96,7 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
         DrawDefaultMaterialList(m_meshSyncServer);
         DrawExportAssets(m_meshSyncServer);
         DrawInstanceSettings(m_meshSyncServer);
+        DrawDCCToolInfo(m_meshSyncServer);
         DrawPluginVersion();
 
         PrefabUtility.RecordPrefabInstancePropertyModifications(m_meshSyncServer);
@@ -187,6 +188,26 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
             {
                 t.ClearInstancePrefabs();
             }
+        }
+    }
+    static void DrawDCCToolInfo(MeshSyncServer server)
+    {
+        if (server != null)
+        {
+            GUILayout.BeginHorizontal();
+
+            server.m_DCCAsset = EditorGUILayout.ObjectField("DCC asset file:", server.m_DCCAsset, typeof(UnityEngine.Object), true);
+            if (server.m_DCCAsset != null)
+            {
+                if (GUILayout.Button("Open"))
+                {
+                    MeshSyncServerInspectorUtils.OpenDCCAsset(server);
+                }
+            }
+
+            GUILayout.EndHorizontal();
+
+            server.m_DCCInterop?.DrawDCCToolVersion(server);
         }
     }
 //----------------------------------------------------------------------------------------------------------------------                
