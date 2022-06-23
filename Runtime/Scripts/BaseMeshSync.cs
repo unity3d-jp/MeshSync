@@ -10,7 +10,10 @@ using UnityEngine.Assertions;
 using System.IO;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
+
+#if AT_USE_SPLINES
 using Unity.Mathematics;
+#endif
 
 #if UNITY_EDITOR
 using UnityEditor;
