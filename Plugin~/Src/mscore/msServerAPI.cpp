@@ -240,7 +240,7 @@ Body(int, Int)\
 Body(float, Float)
 
 #define Body(A, B)\
-msAPI void msServerSendProperty##B(ms::Server* server, int sourceType, const char* name, const char* path, const char* modifierName, const char* propertyName, A newValue)\
+msAPI void msServerSendProperty ## B(ms::Server* server, int sourceType, const char* name, const char* path, const char* modifierName, const char* propertyName, A newValue)\
 {\
     if (!server) { return; }\
     auto prop = ms::PropertyInfo::create(); \
@@ -253,7 +253,7 @@ msAPI void msServerSendProperty##B(ms::Server* server, int sourceType, const cha
     prop->set(newValue, 0, 0);\
     server->receivedProperty(prop);\
 }\
-msAPI void msServerSendProperty##B##Array(ms::Server* server, int sourceType, const char* name, const char* path, const char* modifierName, const char* propertyName, A* newValue, int arrayLength)\
+msAPI void msServerSendProperty ## B ## Array(ms::Server* server, int sourceType, const char* name, const char* path, const char* modifierName, const char* propertyName, A* newValue, int arrayLength)\
 {\
     if (!server) { return; }\
     auto prop = ms::PropertyInfo::create(); \
