@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
 using Unity.Mathematics;
 #endif
 
@@ -118,7 +118,7 @@ internal struct Server {
     [DllImport(Lib.name)]
     static extern void msServerSendPropertyString(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, string newValue, int length);
         
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
     [DllImport(Lib.name)]
     static extern void msServerSendTransform(IntPtr self, string path, float3 position, float3 scale, float3 rotation);  
 
@@ -126,7 +126,7 @@ internal struct Server {
     static extern void msServerSendCurve(IntPtr self, string path, int splineIndex, int knotCount, bool closed, float3[] cos, float3[] handlesLeft, float3[] handlesRight);
 #endif
 
-#if MESHSYNC_PROBUILDER_SUPPORT
+#if AT_USE_PROBUILDER
     [DllImport(Lib.name)]
     static extern void msServerSendMesh(IntPtr self, MeshData data);
 #endif
@@ -188,14 +188,14 @@ internal struct Server {
     }
 
 
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
         public void SendCurve(string path, int splineIndex, int knotCount, bool closed, float3[] cos, float3[] handlesLeft, float3[] handlesRight)
     {
         msServerSendCurve(self, path, splineIndex, knotCount, closed, cos, handlesLeft, handlesRight);
     }
 #endif
 
-#if MESHSYNC_PROBUILDER_SUPPORT
+#if AT_USE_PROBUILDER
     public void SendMesh(MeshData data)
     {
         msServerSendMesh(self, data);

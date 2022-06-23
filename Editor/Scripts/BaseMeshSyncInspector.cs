@@ -56,7 +56,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
             updateFunc: (bool toggle) => { config.UpdateMeshColliders = toggle; }
         );
 
-#if MESHSYNC_PROBUILDER_SUPPORT
+#if AT_USE_PROBUILDER
         changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Use Pro Builder",
             guiFunc: () => EditorGUILayout.Toggle("Use Pro Builder", t.UseProBuilder),
             updateFunc: (bool toggle) => { t.UseProBuilder = toggle; }

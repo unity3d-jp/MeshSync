@@ -39,12 +39,12 @@
         {
             "name": "com.unity.splines",
             "expression": "2.0.0-pre",
-            "define": "MESHSYNC_SPLINE_SUPPORT"
+            "define": "AT_USE_SPLINES"
         },
         {
             "name": "com.unity.probuilder",
             "expression": "",
-            "define": "MESHSYNC_PROBUILDER_SUPPORT"
+            "define": "AT_USE_PROBUILDER"
         }
     ],
     "noEngineReferences": false

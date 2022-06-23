@@ -7,7 +7,7 @@ namespace Unity.MeshSync.Editor  {
 [CustomEditor(typeof(MeshSyncServer))]
 [InitializeOnLoad]
 internal class MeshSyncServerInspector : BaseMeshSyncInspector {
-#if MESHSYNC_PROBUILDER_SUPPORT
+#if AT_USE_PROBUILDER
     static System.Reflection.FieldInfo versionInfo = typeof(UnityEngine.ProBuilder.ProBuilderMesh).GetField("m_VersionIndex", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
     static Dictionary<UnityEngine.ProBuilder.ProBuilderMesh, ushort> versionIndices = new Dictionary<UnityEngine.ProBuilder.ProBuilderMesh, ushort>();

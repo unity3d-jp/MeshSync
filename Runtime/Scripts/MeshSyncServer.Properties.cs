@@ -2,7 +2,7 @@
 using UnityEngine;
 using System.Reflection;
 
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
 using UnityEngine.Splines;
 using Unity.Mathematics;
 #endif
@@ -34,11 +34,11 @@ namespace Unity.MeshSync
             }
         }
 
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
         List<string> changedSplines = new List<string>();
 #endif
 
-#if MESHSYNC_PROBUILDER_SUPPORT
+#if AT_USE_PROBUILDER
         HashSet<UnityEngine.ProBuilder.ProBuilderMesh> changedMeshes = new HashSet<UnityEngine.ProBuilder.ProBuilderMesh>();
         
         public override bool UseProBuilder
@@ -141,7 +141,7 @@ namespace Unity.MeshSync
                             }
                         }
 
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
                         if (changedSplines.Count > 0 && entity.dataType == EntityType.Curve)
                         {
                             //m_server.SendCurve(entity, kvp.Key);
@@ -149,7 +149,7 @@ namespace Unity.MeshSync
                             sendChanges = true;
                         }
 #endif
-#if MESHSYNC_PROBUILDER_SUPPORT
+#if AT_USE_PROBUILDER
                         if (entity.dataType == EntityType.Mesh && entity.proBuilderMeshFilter != null)
                         {
                             if (changedMeshes.Contains(entity.proBuilderMeshFilter))
@@ -161,11 +161,11 @@ namespace Unity.MeshSync
 #endif
                     }
 
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
                     changedSplines.Clear();
 #endif
 
-#if MESHSYNC_PROBUILDER_SUPPORT
+#if AT_USE_PROBUILDER
                     changedMeshes.Clear();
 #endif
                 }
@@ -194,7 +194,7 @@ namespace Unity.MeshSync
         }
 
 
-#if MESHSYNC_PROBUILDER_SUPPORT
+#if AT_USE_PROBUILDER
         public void MeshChanged(UnityEngine.ProBuilder.ProBuilderMesh mesh)
         {
             changedMeshes.Add(mesh);
@@ -245,7 +245,7 @@ namespace Unity.MeshSync
         }
 #endif
 
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
 
         void SendCurve(string path, EntityRecord entity)
         {

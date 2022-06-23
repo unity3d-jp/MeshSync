@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Unity.MeshSync;
 using UnityEngine;
 
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
 using UnityEngine.Splines;
 using Unity.Mathematics;
 #endif
@@ -407,7 +407,7 @@ namespace Unity.MeshSync
             set => instanceHandling = value;
         }
 
-#if MESHSYNC_PROBUILDER_SUPPORT
+#if AT_USE_PROBUILDER
         [SerializeField]
         private bool useProBuilder;
 
@@ -472,7 +472,7 @@ namespace Unity.MeshSync
 
         private EntityRecord UpdateCurveEntity(CurvesData data, MeshSyncPlayerConfig config)
         {
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
             TransformData dtrans = data.transform;
             EntityRecord rec = UpdateTransformEntity(dtrans, config);
 
@@ -535,7 +535,7 @@ namespace Unity.MeshSync
 #endif
         }
 
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
         protected virtual void SplineChanged(Spline spline, int arg2, SplineModification arg3)
         {
         }

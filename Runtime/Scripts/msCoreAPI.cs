@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using Unity.Collections;
 
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
 using Unity.Mathematics;
 #endif
 
@@ -2792,7 +2792,7 @@ internal struct PointsData {
 
         #endregion
         
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
         public int numSplines
         {
             get { return msCurveGetNumSplines(self); }

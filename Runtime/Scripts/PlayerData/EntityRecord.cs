@@ -171,11 +171,11 @@ internal class EntityRecord {
     public Mesh                origMesh;
     public Mesh                mesh;
 
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
     public UnityEngine.Splines.SplineContainer splineContainer;
 #endif
 
-#if MESHSYNC_PROBUILDER_SUPPORT
+#if AT_USE_PROBUILDER
     public UnityEngine.ProBuilder.ProBuilderMesh proBuilderMeshFilter;
 #endif
 

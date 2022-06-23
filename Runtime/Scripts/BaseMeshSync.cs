@@ -1245,7 +1245,7 @@ internal delegate void DeleteInstanceHandler(string path);
             if (materialsUpdated)
                 AssignMaterials(rec, recordUndo: false);
 
-#if MESHSYNC_PROBUILDER_SUPPORT
+#if AT_USE_PROBUILDER
             if (UseProBuilder)
             {
                 if (rec.mesh != null && (meshUpdated || materialsUpdated))
@@ -1278,7 +1278,7 @@ internal delegate void DeleteInstanceHandler(string path);
             return rec;
         }
 
-#if MESHSYNC_PROBUILDER_SUPPORT
+#if AT_USE_PROBUILDER
         public static Action ProBuilderBeforeRebuild;
         public static Action ProBuilderAfterRebuild;
 #endif
@@ -2708,7 +2708,7 @@ internal delegate void DeleteInstanceHandler(string path);
     PinnedList<Vector4> m_tmpV4 = new PinnedList<Vector4>();
     PinnedList<Color>   m_tmpC  = new PinnedList<Color>();
     
-#if MESHSYNC_SPLINE_SUPPORT
+#if AT_USE_SPLINES
     PinnedList<float3> m_tmpFloat3 = new PinnedList<float3>();
 #endif
 
