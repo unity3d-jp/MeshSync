@@ -32,6 +32,11 @@ namespace Unity.MeshSync.Editor
 
         internal static IDCCLauncher GetLauncherForAsset(UnityEngine.Object asset)
         {
+            if(asset == null)
+            {
+                return null;
+            }
+
             var assetPath = AssetDatabase.GetAssetPath(asset).Replace("Assets/", string.Empty);
 
             if (Path.GetExtension(assetPath) == ".blend")

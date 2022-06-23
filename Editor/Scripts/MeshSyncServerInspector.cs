@@ -92,6 +92,8 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
         {
             GUILayout.BeginHorizontal();
 
+            EditorGUI.BeginChangeCheck();
+
             server.m_DCCAsset = EditorGUILayout.ObjectField("DCC asset file:", server.m_DCCAsset, typeof(UnityEngine.Object), true);
             if (server.m_DCCAsset != null)
             {
@@ -99,6 +101,11 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
                 {
                     MeshSyncServerInspectorUtils.OpenDCCAsset(server);
                 }
+            }
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                server.m_DCCInterop = MeshSyncServerInspectorUtils.GetLauncherForAsset(server.m_DCCAsset);
             }
 
             GUILayout.EndHorizontal();
