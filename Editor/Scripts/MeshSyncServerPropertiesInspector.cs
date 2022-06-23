@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System;
+using System.IO;
 
 namespace Unity.MeshSync.Editor
 {
@@ -12,7 +13,24 @@ namespace Unity.MeshSync.Editor
 
         public static void OpenDCCAsset(MeshSyncServer server)
         {
-            BlenderLauncher.OpenBlendFile(server, server.m_DCCAsset);
+            var previousRunMode = server.m_DCCInterop != null ? server.m_DCCInterop.runMode : RunMode.GUI;
+
+            var asset = server.m_DCCAsset;
+
+            server.m_DCCInterop?.Cleanup();
+            server.m_DCCInterop = MeshSyncServerPropertiesInspector.GetLauncherForAsset(asset);
+
+            if (server.m_DCCInterop != null)
+            {
+                server.m_DCCInterop.runMode = previousRunMode;
+                server.m_DCCInterop.OpenDCCTool(asset);
+            }
+            else
+            {
+                var assetPath = AssetDatabase.GetAssetPath(asset).Replace("Assets/", string.Empty);
+                var extension = Path.GetExtension(assetPath);
+                Debug.LogError($"No DCC handler for {extension} files is implemented.");
+            }
         }
 
         public static void DrawSliderForProperties(List<PropertyInfoDataWrapper> props,
@@ -244,9 +262,16 @@ namespace Unity.MeshSync.Editor
     {
         public static IDCCLauncher GetLauncherForAsset(UnityEngine.Object asset)
         {
-            // TODO: Check asset path here and choose IDCCLauncher implementation for the given type.
-            // var assetPath = AssetDatabase.GetAssetPath(asset).Replace("Assets/", string.Empty);
-            return new BlenderLauncher();
+            var assetPath = AssetDatabase.GetAssetPath(asset).Replace("Assets/", string.Empty);
+
+            if (Path.GetExtension(assetPath) == ".blend")
+            {
+                return new BlenderLauncher();
+            }
+
+            // TODO: Implement and return launchers for other DCC file types here:
+
+            return null;
         }
 
         public override void OnInspectorGUI()
@@ -259,7 +284,7 @@ namespace Unity.MeshSync.Editor
             {
                 GUILayout.BeginHorizontal();
 
-                server.m_DCCAsset = EditorGUILayout.ObjectField("Blend file:", server.m_DCCAsset, typeof(UnityEngine.Object), true);
+                server.m_DCCAsset = EditorGUILayout.ObjectField("DCC asset file:", server.m_DCCAsset, typeof(UnityEngine.Object), true);
                 if (server.m_DCCAsset != null)
                 {
                     if (GUILayout.Button("Open"))

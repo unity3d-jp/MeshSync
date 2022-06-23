@@ -487,15 +487,6 @@ public partial class MeshSyncServer : BaseMeshSync {
     void OnValidate()
     {
         CheckParamsUpdated();
-
-        if (m_DCCAsset != null)
-        {
-            var path = AssetDatabase.GetAssetPath(m_DCCAsset);
-            if (System.IO.Path.GetExtension(path) != ".blend")
-            {
-                Debug.LogError($"The DCC asset must be a .blend file! ({this})");
-            }
-        }
     }
 
     void Reset() {

@@ -50,16 +50,6 @@ namespace Unity.MeshSync.Editor
             EditorPrefs.SetString(editorSettingPath, blenderPath);
         }
 
-        public static void OpenBlendFile(MeshSyncServer server, UnityEngine.Object asset)
-        {
-            var previousRunMode = server.m_DCCInterop != null ? server.m_DCCInterop.runMode : RunMode.GUI;
-
-            server.m_DCCInterop?.Cleanup();
-            server.m_DCCInterop = MeshSyncServerPropertiesInspector.GetLauncherForAsset(asset);
-            server.m_DCCInterop.runMode = previousRunMode;
-            server.m_DCCInterop.OpenDCCTool(asset);
-        }
-
         [MenuItem(menuItem_OpenInBlender, priority = 0)]
         static void OpenBlender()
         {
@@ -87,7 +77,7 @@ namespace Unity.MeshSync.Editor
 
             server.m_DCCAsset = selectedAsset;
 
-            OpenBlendFile(server, selectedAsset);
+            MeshSyncServerInspectorUtils.OpenDCCAsset(server);
         }
 
         [MenuItem(menuItem_OpenInBlender, validate = true, priority = 0)]
@@ -162,7 +152,7 @@ namespace Unity.MeshSync.Editor
             }
 
             m_blenderProcess.StartInfo = startInfo;
-            
+
             m_blenderProcess.EnableRaisingEvents = true;
             m_blenderProcess.Exited += M_blenderProcess_Exited;
 
@@ -193,8 +183,9 @@ namespace Unity.MeshSync.Editor
                     if (!string.IsNullOrEmpty(newBlenderPath) && newBlenderPath != blenderPath)
                     {
                         SetBlenderPath(newBlenderPath);
-                        OpenBlendFile(server, server.m_DCCAsset);
+                        OpenDCCTool(server.m_DCCAsset);
                     }
+                    GUILayout.EndVertical();
                     return;
                 }
 
