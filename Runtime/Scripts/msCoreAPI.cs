@@ -2832,8 +2832,8 @@ internal struct PointsData {
 
 #region Constraints
 
-    internal struct ConstraintData {
-#region internal
+internal struct ConstraintData {
+    #region internal
 
     public IntPtr self;
 
