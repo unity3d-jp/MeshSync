@@ -176,16 +176,12 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
         {
             EditorGUILayout.LabelField("Instance prefabs:");
 
+            EditorGUI.indentLevel++;
             foreach (var prefabHolder in t.prefabList)
             {
-                Rect rect = EditorGUILayout.BeginHorizontal();
-
-                EditorGUILayout.LabelField(prefabHolder.name);
-
-                EditorGUILayout.ObjectField(prefabHolder.prefab, typeof(GameObject), true);
-
-                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.ObjectField(prefabHolder.name, prefabHolder.prefab, typeof(GameObject), true);
             }
+            EditorGUI.indentLevel--;
 
             if (GUILayout.Button("Clear prefabs"))
             {
