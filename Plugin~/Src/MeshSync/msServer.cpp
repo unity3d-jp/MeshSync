@@ -658,16 +658,7 @@ void Server::recvServerInitiatedRequest(HTTPServerRequest& request, HTTPServerRe
     }
 
     m_pending_entities.clear();
-    /*for (auto curve : m_pending_curves)
-    {
-        for (auto& cv : converters) {
-            cv->convertCurve(*curve);
-        }
-
-        reqResponse.curves.push_back(curve);
-    }
-    m_pending_curves.clear();*/
-
+    
     if (m_syncRequested) {
         reqResponse.message = REQUEST_SYNC;
         m_syncRequested = false;
