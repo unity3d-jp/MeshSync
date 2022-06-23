@@ -206,23 +206,23 @@ internal struct Server {
     {
         switch (prop.type)
         {
-            case PropertyInfoData.Type.Int:
+            case PropertyInfoDataType.Int:
                 msServerSendPropertyInt(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<int>());
                 break;
 
-            case PropertyInfoData.Type.Float:
+            case PropertyInfoDataType.Float:
                 msServerSendPropertyFloat(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<float>());
                 break;
 
-            case PropertyInfoData.Type.IntArray:
+            case PropertyInfoDataType.IntArray:
                 msServerSendPropertyIntArray(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<int[]>(), prop.arrayLength);
                 break;
 
-            case PropertyInfoData.Type.FloatArray:
+            case PropertyInfoDataType.FloatArray:
                 msServerSendPropertyFloatArray(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<float[]>(), prop.arrayLength);
                 break;
 
-            case PropertyInfoData.Type.String:
+            case PropertyInfoDataType.String:
                 var s = prop.GetValue<string>();
                 msServerSendPropertyString(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, s, s.Length);
                 break;

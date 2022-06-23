@@ -94,7 +94,7 @@ namespace Unity.MeshSync.Editor
                 object newValue = null;
                 switch (prop.type)
                 {
-                    case PropertyInfoData.Type.Int:
+                    case PropertyInfoDataType.Int:
                         int max = (int)prop.max;
 
                         // Need to be careful with overflow here:
@@ -106,11 +106,11 @@ namespace Unity.MeshSync.Editor
                         newValue = EditorGUILayout.IntSlider(prop.name, prop.GetValue<int>(), (int)prop.min, max);
                         break;
 
-                    case PropertyInfoData.Type.Float:
+                    case PropertyInfoDataType.Float:
                         newValue = EditorGUILayout.Slider(prop.name, prop.GetValue<float>(), prop.min, prop.max);
                         break;
 
-                    case PropertyInfoData.Type.String:
+                    case PropertyInfoDataType.String:
                         if (editableStrings)
                         {
                             newValue = EditorGUILayout.TextField(prop.name, prop.GetValue<string>());
@@ -121,11 +121,11 @@ namespace Unity.MeshSync.Editor
                         }
                         break;
 
-                    case PropertyInfoData.Type.IntArray:
+                    case PropertyInfoDataType.IntArray:
                         newValue = DrawArrayFieldsInt(prop, newValue);
                         break;
 
-                    case PropertyInfoData.Type.FloatArray:
+                    case PropertyInfoDataType.FloatArray:
                         newValue = DrawArrayFieldsFloat(prop, newValue);
                         break;
 

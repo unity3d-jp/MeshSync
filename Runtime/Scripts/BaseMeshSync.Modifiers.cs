@@ -52,7 +52,7 @@ namespace Unity.MeshSync
 
         public static object PropertyUpdateLock = new object();
 
-        public PropertyInfoDataWrapper(PropertyInfoData propertyInfoData)
+        internal PropertyInfoDataWrapper(PropertyInfoData propertyInfoData)
         {
             type = propertyInfoData.type;
             sourceType = propertyInfoData.sourceType;
@@ -67,28 +67,28 @@ namespace Unity.MeshSync
 
             switch (type)
             {
-                case PropertyInfoData.Type.Int:
+                case PropertyInfoDataType.Int:
                     {
                         int r = 0;
                         msPropertyInfoCopyData(propertyInfoData.self, ref r);
                         propertyValue = r;
                         break;
                     }
-                case PropertyInfoData.Type.Float:
+                case PropertyInfoDataType.Float:
                     {
                         float r = 0;
                         msPropertyInfoCopyData(propertyInfoData.self, ref r);
                         propertyValue = r;
                         break;
                     }
-                case PropertyInfoData.Type.IntArray:
+                case PropertyInfoDataType.IntArray:
                     {
                         int[] r = new int[arrayLength];
                         msPropertyInfoCopyData(propertyInfoData.self, r);
                         propertyValue = r;
                         break;
                     }
-                case PropertyInfoData.Type.FloatArray:
+                case PropertyInfoDataType.FloatArray:
                     {
                         float[] r = new float[arrayLength];
                         msPropertyInfoCopyData(propertyInfoData.self, r);
@@ -96,7 +96,7 @@ namespace Unity.MeshSync
                         break;
                     }
 
-                case PropertyInfoData.Type.String:
+                case PropertyInfoDataType.String:
                     {
                         var s = new StringBuilder(arrayLength + 1); // +1 for string terminator
                         msPropertyInfoCopyData(propertyInfoData.self, s);
@@ -110,8 +110,8 @@ namespace Unity.MeshSync
             }
         }
 
-        public PropertyInfoData.Type type;
-        public PropertyInfoData.SourceType sourceType;
+        public PropertyInfoDataType type;
+        public PropertyInfoDataSourceType sourceType;
 
         [field: SerializeField]
         public string name { get; private set; }
@@ -253,7 +253,7 @@ namespace Unity.MeshSync
             {
                 switch (type)
                 {
-                    case PropertyInfoData.Type.IntArray:
+                    case PropertyInfoDataType.IntArray:
                         {
                             var newValueAsArray = new int[arrayLength];
 
@@ -291,7 +291,7 @@ namespace Unity.MeshSync
                             }
                             break;
                         }
-                    case PropertyInfoData.Type.FloatArray:
+                    case PropertyInfoDataType.FloatArray:
                         {
                             var newValueAsArray = new float[arrayLength];
 

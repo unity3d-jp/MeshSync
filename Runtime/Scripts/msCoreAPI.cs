@@ -3038,7 +3038,20 @@ internal struct InstanceInfoData
 
 #region PropertyInfo
 
-    public struct PropertyInfoData
+    public enum PropertyInfoDataType
+    {
+        Int,
+        Float,
+        IntArray,
+        FloatArray,
+        String
+    };
+    public enum PropertyInfoDataSourceType {
+		GEO_NODES,
+		CUSTOM_PROPERTY
+	};
+
+    internal struct PropertyInfoData
     {
         public IntPtr self;
 
@@ -3068,20 +3081,6 @@ internal struct InstanceInfoData
         static extern float msPropertyInfoGetMax(IntPtr self);
 #endregion DLL Imports
 
-        public enum Type
-        {
-            Int,
-            Float,
-            IntArray,
-            FloatArray,
-            String
-        };
-
-        public enum SourceType {
-			GEO_NODES,
-			CUSTOM_PROPERTY
-		};
-
         public float min => msPropertyInfoGetMin(self);
         public float max => msPropertyInfoGetMax(self);
 
@@ -3093,9 +3092,9 @@ internal struct InstanceInfoData
         
         public string name => Misc.S(msPropertyInfoGetName(self));
 
-        public Type type => (Type)msPropertyInfoGetType(self);
+        public PropertyInfoDataType type => (PropertyInfoDataType)msPropertyInfoGetType(self);
 
-        public SourceType sourceType => (SourceType)msPropertyInfoGetSourceType(self);
+        public PropertyInfoDataSourceType sourceType => (PropertyInfoDataSourceType)msPropertyInfoGetSourceType(self);
     }
 
 #endregion PropertyInfo
