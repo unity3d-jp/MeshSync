@@ -66,7 +66,7 @@ public partial class MeshSyncServer : BaseMeshSync {
         m_autoStartServer = autoStart; 
 
 #if UNITY_STANDALONE        
-        if (m_autoStartServer && !m_serverStarted && gameObject.scene.IsValid() && !IsInPrefabView) {
+        if (m_autoStartServer && !m_serverStarted && gameObject.scene.IsValid() && !IsInPrefabView && enabled && gameObject.activeInHierarchy) {
             StartServer();
         }
 #endif
