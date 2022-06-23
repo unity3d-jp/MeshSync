@@ -3150,7 +3150,7 @@ internal struct InstanceInfoData
 
 #endregion
 
-        public static implicit operator bool(SceneData v) {
+    public static implicit operator bool(SceneData v) {
         return v.self != IntPtr.Zero;
     }
 
