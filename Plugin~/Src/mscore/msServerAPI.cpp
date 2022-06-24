@@ -262,7 +262,7 @@ msAPI void msServerSendProperty ## B ## Array(ms::Server* server, int sourceType
     prop->path = path; \
     prop->modifierName = modifierName; \
     prop->propertyName = propertyName; \
-    prop->type = ms::PropertyInfo::##B##Array;\
+    prop->type = ms::PropertyInfo::B ## Array;\
     prop->set(newValue, 0, 0, arrayLength);\
     server->receivedProperty(prop);\
 }
