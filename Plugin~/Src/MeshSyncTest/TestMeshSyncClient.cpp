@@ -21,17 +21,24 @@
 using namespace mu;
 
 TestCase(Test_SendMesh) {
+
+    const float FRAME_RATE = 2.0f;
+    const float TIME_PER_FRAME = 1.0f / FRAME_RATE;
+
     ms::SceneCacheOutputSettings c0;
     c0.exportSettings.stripUnchanged = 0;
     c0.exportSettings.flattenHierarchy = 0;
     c0.exportSettings.encoding = ms::SceneCacheEncoding::Plain;
+    c0.exportSettings.sampleRate = FRAME_RATE;
 
     ms::SceneCacheOutputSettings c1;
     c1.exportSettings.flattenHierarchy = 0;
+    c1.exportSettings.sampleRate = FRAME_RATE;
 
     ms::SceneCacheOutputSettings c2;
     c2.exportSettings.flattenHierarchy = 0;
     c2.exportSettings.encoderSettings.zstd.compressionLevel = 100;
+    c2.exportSettings.sampleRate = FRAME_RATE;
 
     ms::SceneCacheWriter writer0, writer1, writer2;
     writer0.Open("wave_c0.sc", c0);
@@ -60,7 +67,7 @@ TestCase(Test_SendMesh) {
         mesh->setupDataFlags();
 
 
-        const float writerTime = 0.5f * i;
+        const float writerTime = TIME_PER_FRAME * i;
         writer0.SetTime(writerTime);
         writer1.SetTime(writerTime);
         writer2.SetTime(writerTime);
