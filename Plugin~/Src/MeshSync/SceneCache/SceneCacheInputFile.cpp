@@ -410,13 +410,19 @@ ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpola
         return LoadByFrameV(frame);
     } 
 
-    //interpolation
-    const float t1 = m_records[frame + 0].time;
-    const float t2 = m_records[frame + 1].time;
+    //frame end check
+    const int nextFrame = frame + 1;
+    if (nextFrame>= m_records.size()) {
+        return LoadByFrameV(frame);
+    }
 
-    KickPreload(frame + 1);
-    const ScenePtr s1 = LoadByFrameInternal(frame + 0);
-    const ScenePtr s2 = LoadByFrameInternal(frame + 1);
+    //interpolation
+    const float t1 = m_records[frame].time;
+    const float t2 = m_records[nextFrame].time;
+
+    KickPreload(nextFrame);
+    const ScenePtr s1 = LoadByFrameInternal(frame);
+    const ScenePtr s2 = LoadByFrameInternal(nextFrame);
 
     {
         msProfileScope("SceneCacheInputFile: [%d] lerp", (int)si);
@@ -432,7 +438,7 @@ ScenePtr SceneCacheInputFile::LoadByTimeV(const float time, const bool interpola
     }
 
     m_loadedFrame0 = frame;
-    m_loadedFrame1 = frame + 1;
+    m_loadedFrame1 = nextFrame;
 
     m_lastTime = time;
     return PostProcess(ret, m_loadedFrame1);
