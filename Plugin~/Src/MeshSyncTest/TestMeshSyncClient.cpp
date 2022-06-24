@@ -18,7 +18,64 @@
 #include "MeshSync/Utility/msMaterialExt.h"     //standardMaterial
 #include "MeshSync/SceneCache/msSceneCacheInputFile.h"
 
+#include "MeshSync/AsyncSceneSender.h" //ms::AsyncSceneSender
+
 using namespace mu;
+
+TestCase(Test_SendProperties) {
+    std::shared_ptr<ms::Scene> scene = ms::Scene::create();
+    {
+        std::shared_ptr<ms::Mesh> node = ms::Mesh::create();
+        scene->entities.push_back(node);
+
+        node->path = "/Test/PropertiesHolder";
+        node->position = { 0.0f, 0.0f, 0.0f };
+        node->rotation = quatf::identity();
+        node->scale = { 1.0f, 1.0f, 1.0f };
+        node->visibility = { false, true, true };
+        MeshGenerator::GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->m_uv[0], 0.1f, 1);
+        node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
+        node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
+
+        scene->propertyInfos.clear();
+        {
+            auto prop = ms::PropertyInfo::create();
+            prop->path = node->path;
+            prop->name = "Test int";
+            prop->set(10, 0, 100);
+            assert(prop->type == ms::PropertyInfo::Type::Int && "type is not correct");
+            scene->propertyInfos.push_back(prop);
+        }
+        {
+            auto prop = ms::PropertyInfo::create();
+            prop->path = node->path;
+            prop->name = "Test float";
+            prop->set(10.0f, 0, 100);
+            assert(prop->type == ms::PropertyInfo::Type::Float && "type is not correct");
+            scene->propertyInfos.push_back(prop);
+        }
+        {
+            auto prop = ms::PropertyInfo::create();
+            prop->path = node->path;
+            prop->name = "Test string";
+            const char* testString = "Test123";
+            prop->set(testString, strlen(testString));
+            assert(prop->type == ms::PropertyInfo::Type::String && "type is not correct");
+            scene->propertyInfos.push_back(prop);
+        }
+    }
+
+    TestUtility::Send(scene);
+}
+
+TestCase(Test_ServerInitiatedMessage) {
+    ms::AsyncSceneSender sender;
+    sender.requestServerInitiatedMessage();
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
+    // AsyncSceneSender should be blocking now until the client responds. Otherwise the destructor of AsyncSceneSender aborts the call.
+}
 
 TestCase(Test_SendMesh) {
 
