@@ -71,7 +71,8 @@ int SceneCacheInputFile::GetFrameByTimeV(const float time) const
 
     const float sampleRate = m_header.exportSettings.sampleRate;
     if (sampleRate > 0.0f) {
-        return std::floor(time * sampleRate);
+        const int frame = std::floor(time * sampleRate);
+        return std::clamp(static_cast<int>(frame), 0,static_cast<int>(m_records.size()-1));
     } 
 
     //variable sample rate
