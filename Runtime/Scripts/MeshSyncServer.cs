@@ -508,7 +508,12 @@ public class MeshSyncServer : BaseMeshSync {
     [SerializeField] bool m_foldServerSettings = true;
 
     internal IDCCLauncher m_DCCInterop;
-    public UnityEngine.Object m_DCCAsset;
+    internal UnityEngine.Object m_DCCAsset;
+
+    public UnityEngine.Object DCCAsset
+    {
+        get { return m_DCCAsset; }
+    }
 #endif
     
     [SerializeField] private MeshSyncServerConfig m_config;
