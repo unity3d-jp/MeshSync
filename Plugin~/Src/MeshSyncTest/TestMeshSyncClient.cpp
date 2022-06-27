@@ -7,6 +7,7 @@
 #include "MeshSync/SceneGraph/msAnimation.h"
 #include "MeshSync/SceneGraph/msMaterial.h"
 #include "MeshSync/SceneGraph/msMesh.h"
+#include "MeshSync/SceneGraph/msCurve.h"
 #include "MeshSync/SceneGraph/msPoints.h"
 #include "MeshSync/SceneGraph/msScene.h"
 
@@ -19,6 +20,7 @@
 #include "MeshSync/SceneCache/msSceneCacheInputFile.h"
 
 #include "MeshSync/AsyncSceneSender.h" //ms::AsyncSceneSender
+#include "MeshSync/msServer.h"
 
 using namespace mu;
 
@@ -72,9 +74,44 @@ TestCase(Test_ServerInitiatedMessage) {
     ms::AsyncSceneSender sender;
     sender.requestServerInitiatedMessage();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
-
     // AsyncSceneSender should be blocking now until the client responds. Otherwise the destructor of AsyncSceneSender aborts the call.
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+}
+
+TestCase(Test_ServerPropertyHandling) {
+    auto server = ms::Server(ms::ServerSettings());
+
+    auto prop1 = ms::PropertyInfo::create();
+    prop1->path = "TestPath";
+    prop1->name = "Test string";
+    const char* testString1 = "Test123";
+    prop1->set(testString1, strlen(testString1));
+    server.receivedProperty(prop1);
+
+    auto prop2 = ms::PropertyInfo::create();
+    prop2->path = "TestPath";
+    prop2->name = "Test string";
+    const char* testString2 = "Test456";
+    prop2->set(testString2, strlen(testString2));
+    server.receivedProperty(prop2);
+
+    // 2 properties with the same path should be merged into 1:
+    assert(server.m_pending_properties.size() == 1);
+    assert(server.m_pending_properties[0] == prop2);
+}
+
+TestCase(Test_ServerEntityHandling) {
+    auto server = ms::Server(ms::ServerSettings());
+
+    auto testMesh = server.getPendingEntity<ms::Mesh>("TestMesh");
+    assert(testMesh != nullptr);
+    assert(testMesh->path == "TestMesh" && "mesh was not created.");
+
+    auto testCurve = server.getPendingEntity<ms::Curve>("TestCurve");
+    assert(testCurve != nullptr);
+    assert(testCurve->path == "TestCurve" && "curve was not created.");
+
+    assert(server.m_pending_entities.size() == 2);
 }
 
 TestCase(Test_SendMesh) {

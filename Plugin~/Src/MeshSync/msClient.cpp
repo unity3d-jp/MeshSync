@@ -173,7 +173,11 @@ bool Client::send(const FenceMessage& mes)
 
 void Client::abortPropertiesRequest() {
     if (m_properties_session) {
-        m_properties_session->abort();
+        __try {
+            m_properties_session->abort();
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+        }
         m_properties_session = nullptr;
     }
 }
