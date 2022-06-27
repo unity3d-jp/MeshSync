@@ -24,7 +24,7 @@ namespace Unity.MeshSync.Editor
             }
             else
             {
-                var assetPath = AssetDatabase.GetAssetPath(asset).Replace("Assets/", string.Empty);
+                var assetPath = AssetDatabase.GetAssetPath(asset);
                 var extension = Path.GetExtension(assetPath);
                 Debug.LogError($"No DCC handler for {extension} files is implemented.");
             }
@@ -32,12 +32,12 @@ namespace Unity.MeshSync.Editor
 
         internal static IDCCLauncher GetLauncherForAsset(UnityEngine.Object asset)
         {
-            if(asset == null)
+            if (asset == null)
             {
                 return null;
             }
 
-            var assetPath = AssetDatabase.GetAssetPath(asset).Replace("Assets/", string.Empty);
+            var assetPath = AssetDatabase.GetAssetPath(asset);
 
             if (Path.GetExtension(assetPath) == ".blend")
             {
