@@ -118,9 +118,9 @@ namespace Unity.MeshSync.Editor
             var startInfo = new System.Diagnostics.ProcessStartInfo();
             startInfo.FileName = GetBlenderPath();
 
-            if (string.IsNullOrEmpty(startInfo.FileName))
+            if (string.IsNullOrEmpty(startInfo.FileName) || !File.Exists(startInfo.FileName))
             {
-                Debug.LogError("The blender path is not set.");
+                Debug.LogError("The blender path is not set or blender cannot be found.");
                 return;
             }
 
