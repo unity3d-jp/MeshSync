@@ -110,6 +110,10 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
 
             GUILayout.EndHorizontal();
 
+            if (server.m_DCCInterop == null)
+            {
+                server.m_DCCInterop = MeshSyncServerInspectorUtils.GetLauncherForAsset(server.m_DCCAsset);
+            }
             server.m_DCCInterop?.DrawDCCToolVersion(server);
         }
     }

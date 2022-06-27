@@ -165,55 +165,79 @@ namespace Unity.MeshSync.Editor
             }
         }
 
+        bool HandleBlenderPath(MeshSyncServer server)
+        {
+            bool changed = false;
+
+            var blenderPath = GetBlenderPath();
+
+            GUILayout.BeginHorizontal();
+
+            var style = new GUIStyle(GUI.skin.label) { wordWrap = true };
+            EditorGUILayout.LabelField("Blender path:", blenderPath, style);
+            if (GUILayout.Button("...", GUILayout.Width(30)))
+            {
+                var newBlenderPath = EditorUtility.OpenFilePanel("Blender path", Path.GetDirectoryName(blenderPath), "exe");
+
+                if (!string.IsNullOrEmpty(newBlenderPath) && newBlenderPath != blenderPath)
+                {
+                    SetBlenderPath(newBlenderPath);
+                    OpenDCCTool(server.m_DCCAsset);
+                }
+
+                changed = true;
+            }
+
+            GUILayout.EndHorizontal();
+
+            return changed;
+        }
+
+        void HandleRunMmode(MeshSyncServer server)
+        {
+            GUILayout.BeginHorizontal();
+
+            var newRunMode = (RunMode)EditorGUILayout.EnumPopup("Run mode:", runMode);
+            if (newRunMode != runMode)
+            {
+                runMode = newRunMode;
+                if (m_blenderProcess != null)
+                {
+                    OpenDCCTool(server.m_DCCAsset);
+                }
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
+        void HandleRedirect(MeshSyncServer server)
+        {
+            var newRedirect = EditorGUILayout.Toggle("Redirect Blender to Unity Console:", redirectBlenderToUnityConsole);
+            if (newRedirect != redirectBlenderToUnityConsole)
+            {
+                redirectBlenderToUnityConsole = newRedirect;
+                if (m_blenderProcess != null)
+                {
+                    OpenDCCTool(server.m_DCCAsset);
+                }
+            }
+        }
+
         public void DrawDCCToolVersion(BaseMeshSync player)
         {
             GUILayout.BeginVertical("Box");
 
             if (player is MeshSyncServer server)
             {
-                var blenderPath = GetBlenderPath();
-
-                GUILayout.BeginHorizontal();
-                var style = new GUIStyle(GUI.skin.label) { wordWrap = true };
-                EditorGUILayout.LabelField("Blender path:", blenderPath, style);
-                if (GUILayout.Button("...", GUILayout.Width(30)))
+                if (HandleBlenderPath(server))
                 {
-                    var newBlenderPath = EditorUtility.OpenFilePanel("Blender path", Path.GetDirectoryName(blenderPath), "exe");
-
-                    if (!string.IsNullOrEmpty(newBlenderPath) && newBlenderPath != blenderPath)
-                    {
-                        SetBlenderPath(newBlenderPath);
-                        OpenDCCTool(server.m_DCCAsset);
-                    }
                     GUILayout.EndVertical();
                     return;
                 }
 
-                GUILayout.EndHorizontal();
+                HandleRunMmode(server);
 
-                GUILayout.BeginHorizontal();
-
-                var newRunMode = (RunMode)EditorGUILayout.EnumPopup("Run mode:", runMode);
-                if (newRunMode != runMode)
-                {
-                    runMode = newRunMode;
-                    if (m_blenderProcess != null)
-                    {
-                        OpenDCCTool(server.m_DCCAsset);
-                    }
-                }
-
-                GUILayout.EndHorizontal();
-
-                var newRedirect = EditorGUILayout.Toggle("Redirect Blender to Unity Console:", redirectBlenderToUnityConsole);
-                if (newRedirect != redirectBlenderToUnityConsole)
-                {
-                    redirectBlenderToUnityConsole = newRedirect;
-                    if (m_blenderProcess != null)
-                    {
-                        OpenDCCTool(server.m_DCCAsset);
-                    }
-                }
+                HandleRedirect(server);
             }
 
             GUILayout.EndVertical();
