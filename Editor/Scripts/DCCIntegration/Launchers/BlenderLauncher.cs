@@ -35,7 +35,7 @@ namespace Unity.MeshSync.Editor
                 {
                     if (Application.platform == RuntimePlatform.OSXEditor)
                     {
-                        blenderPath = "/Applications/Blender.app/Contents/MacOS/Blender";
+                        blenderPath = Path.Combine(new[] { "Applications", "Blender.app", "Contents", "MacOS", "Blender" });
                     }
                 }
 
