@@ -6,8 +6,8 @@ namespace Unity.MeshSync.Editor {
 
 
 internal static class MeshSyncMenu  {
-
-    
+    // Menu strings:
+    const string menuItem_OpenInBlender = "Assets/MeshSync/Open in blender";
 
 //----------------------------------------------------------------------------------------------------------------------    
     #region Server
@@ -29,6 +29,49 @@ internal static class MeshSyncMenu  {
         mss.SetAutoStartServer(autoStart);
         return mss;
     }
+      
+    [MenuItem(menuItem_OpenInBlender)]
+    static void OpenBlender()
+    {
+        var selectedAsset = Selection.objects[0];
+
+        var servers = UnityEngine.Object.FindObjectsOfType<MeshSyncServer>();
+
+        MeshSyncServer server = null;
+
+        foreach (var serverInScene in servers)
+        {
+            if (serverInScene.enabled)
+            {
+                server = serverInScene;
+                break;
+            }
+        }
+
+        if (server == null)
+        {
+            server = CreateMeshSyncServerMenu(null);
+        }
+
+        server.m_DCCAsset = selectedAsset;
+
+        MeshSyncServerInspectorUtils.OpenDCCAsset(server);
+    }
+
+    [MenuItem(menuItem_OpenInBlender, validate = true)]
+    static bool CanOpenBlender()
+    {
+        if (Selection.objects.Length == 1)
+        {
+            string assetPath = AssetDatabase.GetAssetPath(Selection.objects[0]);
+            if (assetPath != null && assetPath.EndsWith(BlenderLauncher.FileFormat))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     #endregion
     
 //----------------------------------------------------------------------------------------------------------------------

@@ -13,8 +13,6 @@ namespace Unity.MeshSync.Editor
     {
         public const string FileFormat = ".blend";
 
-        const string menuItem_OpenInBlender = "Assets/MeshSync/Open in blender";
-
         const string editorSettingPath = "MESHSYNC_BLENDER_PATH";
 
         System.Diagnostics.Process m_blenderProcess;
@@ -50,48 +48,6 @@ namespace Unity.MeshSync.Editor
         public static void SetBlenderPath(string blenderPath)
         {
             EditorPrefs.SetString(editorSettingPath, blenderPath);
-        }
-
-        [MenuItem(menuItem_OpenInBlender)]
-        static void OpenBlender()
-        {
-            var selectedAsset = Selection.objects[0];
-
-            var servers = UnityEngine.Object.FindObjectsOfType<MeshSyncServer>();
-
-            MeshSyncServer server = null;
-
-            foreach (var serverInScene in servers)
-            {
-                if (serverInScene.enabled)
-                {
-                    server = serverInScene;
-                    break;
-                }
-            }
-
-            if (server == null)
-            {
-                server = MeshSyncMenu.CreateMeshSyncServerMenu(null);
-            }
-
-            server.m_DCCAsset = selectedAsset;
-
-            MeshSyncServerInspectorUtils.OpenDCCAsset(server);
-        }
-
-        [MenuItem(menuItem_OpenInBlender, validate = true)]
-        static bool CanOpenBlender()
-        {
-            if (Selection.objects.Length == 1)
-            {
-                string assetPath = AssetDatabase.GetAssetPath(Selection.objects[0]);
-                if (assetPath != null && assetPath.EndsWith(BlenderLauncher.FileFormat))
-                {
-                    return true;
-                }
-            }
-            return false;
         }
 
         private void M_ProcessOnOutputDataReceived(object sender, System.Diagnostics.DataReceivedEventArgs e)
