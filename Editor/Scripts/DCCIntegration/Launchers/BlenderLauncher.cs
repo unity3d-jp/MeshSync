@@ -229,20 +229,24 @@ namespace Unity.MeshSync.Editor
 
         public void DrawDCCMenu(BaseMeshSync player)
         {
+            var server = player as MeshSyncServer;
+
+            if (server == null)
+            {
+                return;
+            }
+
             GUILayout.BeginVertical("Box");
 
-            if (player is MeshSyncServer server)
+            if (HandleBlenderPath(server))
             {
-                if (HandleBlenderPath(server))
-                {
-                    GUILayout.EndVertical();
-                    return;
-                }
-
-                HandleRunMmode(server);
-
-                HandleRedirect(server);
+                GUILayout.EndVertical();
+                return;
             }
+
+            HandleRunMmode(server);
+
+            HandleRedirect(server);
 
             GUILayout.EndVertical();
 
