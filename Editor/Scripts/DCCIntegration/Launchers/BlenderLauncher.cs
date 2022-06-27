@@ -22,7 +22,7 @@ namespace Unity.MeshSync.Editor
 
         ~BlenderLauncher()
         {
-            Cleanup();
+            Dispose();
         }
 
         static string GetBlenderPath()
@@ -113,7 +113,7 @@ namespace Unity.MeshSync.Editor
 
         public void OpenDCCTool(UnityEngine.Object asset)
         {
-            Cleanup();
+            Dispose();
 
             var startInfo = new System.Diagnostics.ProcessStartInfo();
             startInfo.FileName = GetBlenderPath();
@@ -221,7 +221,7 @@ namespace Unity.MeshSync.Editor
             EditorGUILayout.Space();
         }
 
-        public void Cleanup()
+        public void Dispose()
         {
             if (m_blenderProcess != null)
             {

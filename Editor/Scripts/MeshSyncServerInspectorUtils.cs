@@ -14,7 +14,7 @@ namespace Unity.MeshSync.Editor
 
             var asset = server.m_DCCAsset;
 
-            server.m_DCCInterop?.Cleanup();
+            server.m_DCCInterop?.Dispose();
             server.m_DCCInterop = GetLauncherForAsset(asset);
 
             if (server.m_DCCInterop != null)
