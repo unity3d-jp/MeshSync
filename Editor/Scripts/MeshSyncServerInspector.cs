@@ -114,7 +114,7 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
             {
                 server.m_DCCInterop = MeshSyncServerInspectorUtils.GetLauncherForAsset(server.m_DCCAsset);
             }
-            server.m_DCCInterop?.DrawDCCToolVersion(server);
+            server.m_DCCInterop?.DrawDCCMenu(server);
         }
     }
 

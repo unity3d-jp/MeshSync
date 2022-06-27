@@ -227,7 +227,7 @@ namespace Unity.MeshSync.Editor
             }
         }
 
-        public void DrawDCCToolVersion(BaseMeshSync player)
+        public void DrawDCCMenu(BaseMeshSync player)
         {
             GUILayout.BeginVertical("Box");
 
