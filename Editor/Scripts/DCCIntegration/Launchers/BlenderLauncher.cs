@@ -84,7 +84,7 @@ namespace Unity.MeshSync.Editor
             if (Selection.objects.Length == 1)
             {
                 string assetPath = AssetDatabase.GetAssetPath(Selection.objects[0]);
-                if (assetPath.EndsWith(".blend"))
+                if (assetPath != null && assetPath.EndsWith(".blend"))
                 {
                     return true;
                 }
