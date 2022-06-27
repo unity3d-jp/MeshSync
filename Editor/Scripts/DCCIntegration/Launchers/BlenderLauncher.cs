@@ -124,7 +124,8 @@ namespace Unity.MeshSync.Editor
                 return;
             }
 
-            var assetPath = AssetDatabase.GetAssetPath(asset).Replace("Assets/", string.Empty);
+            var assetPath = FilmInternalUtilities.AssetUtility.ToAssetRelativePath(AssetDatabase.GetAssetPath(asset));
+
             var absoluteAssetPath = Path.Combine(Application.dataPath, assetPath).Replace('\\', '/');
 
             var scriptPath = Path.GetFullPath("Packages/com.unity.meshsync/Editor/Scripts/DCCIntegration/Launchers/blender_interop.py");
