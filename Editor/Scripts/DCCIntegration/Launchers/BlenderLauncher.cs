@@ -52,7 +52,7 @@ namespace Unity.MeshSync.Editor
             EditorPrefs.SetString(editorSettingPath, blenderPath);
         }
 
-        [MenuItem(menuItem_OpenInBlender, priority = 0)]
+        [MenuItem(menuItem_OpenInBlender)]
         static void OpenBlender()
         {
             var selectedAsset = Selection.objects[0];
@@ -80,7 +80,7 @@ namespace Unity.MeshSync.Editor
             MeshSyncServerInspectorUtils.OpenDCCAsset(server);
         }
 
-        [MenuItem(menuItem_OpenInBlender, validate = true, priority = 0)]
+        [MenuItem(menuItem_OpenInBlender, validate = true)]
         static bool CanOpenBlender()
         {
             if (Selection.objects.Length == 1)
