@@ -11,6 +11,8 @@ namespace Unity.MeshSync.Editor
 {
     internal class BlenderLauncher : IDCCLauncher
     {
+        public const string FileFormat = ".blend";
+
         const string menuItem_OpenInBlender = "Assets/MeshSync/Open in blender";
 
         const string editorSettingPath = "MESHSYNC_BLENDER_PATH";
@@ -31,7 +33,7 @@ namespace Unity.MeshSync.Editor
 
             if (string.IsNullOrEmpty(blenderPath))
             {
-                if (!DefaultAppUtility.TryGetRegisteredApplication(".blend", out blenderPath))
+                if (!DefaultAppUtility.TryGetRegisteredApplication(BlenderLauncher.FileFormat, out blenderPath))
                 {
                     if (Application.platform == RuntimePlatform.OSXEditor)
                     {
@@ -84,7 +86,7 @@ namespace Unity.MeshSync.Editor
             if (Selection.objects.Length == 1)
             {
                 string assetPath = AssetDatabase.GetAssetPath(Selection.objects[0]);
-                if (assetPath != null && assetPath.EndsWith(".blend"))
+                if (assetPath != null && assetPath.EndsWith(BlenderLauncher.FileFormat))
                 {
                     return true;
                 }

@@ -39,7 +39,7 @@ namespace Unity.MeshSync.Editor
 
             var assetPath = AssetDatabase.GetAssetPath(asset);
 
-            if (Path.GetExtension(assetPath) == ".blend")
+            if (Path.GetExtension(assetPath) == BlenderLauncher.FileFormat)
             {
                 return new BlenderLauncher();
             }
