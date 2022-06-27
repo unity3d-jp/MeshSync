@@ -118,6 +118,12 @@ namespace Unity.MeshSync.Editor
             var startInfo = new System.Diagnostics.ProcessStartInfo();
             startInfo.FileName = GetBlenderPath();
 
+            if (string.IsNullOrEmpty(startInfo.FileName))
+            {
+                Debug.LogError("The blender path is not set.");
+                return;
+            }
+
             var assetPath = AssetDatabase.GetAssetPath(asset).Replace("Assets/", string.Empty);
             var absoluteAssetPath = Path.Combine(Application.dataPath, assetPath).Replace('\\', '/');
 
