@@ -54,8 +54,6 @@ namespace Unity.MeshSync.Editor
         static void OpenBlender()
         {
             var selectedAsset = Selection.objects[0];
-            if (selectedAsset == null)
-                return;
 
             var servers = UnityEngine.Object.FindObjectsOfType<MeshSyncServer>();
 
