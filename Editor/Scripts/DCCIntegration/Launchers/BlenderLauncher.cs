@@ -214,19 +214,21 @@ namespace Unity.MeshSync.Editor
 
         public void Dispose()
         {
-            if (m_blenderProcess != null)
+            if (m_blenderProcess == null)
             {
-                try
-                {
-                    if (!m_blenderProcess.HasExited)
-                    {
-                        m_blenderProcess.Kill();
-                    }
-                }
-                catch { }
-
-                m_blenderProcess = null;
+                return;
             }
+
+            try
+            {
+                if (!m_blenderProcess.HasExited)
+                {
+                    m_blenderProcess.Kill();
+                }
+            }
+            catch { }
+
+            m_blenderProcess = null;
         }
 
         #endregion // IDCCLauncher
