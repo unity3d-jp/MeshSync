@@ -470,66 +470,71 @@ namespace Unity.MeshSync
             });
         }
 
+        object splineLock = new object();
+
         private EntityRecord UpdateCurveEntity(CurvesData data, MeshSyncPlayerConfig config)
         {
 #if AT_USE_SPLINES
-            TransformData dtrans = data.transform;
-            EntityRecord rec = UpdateTransformEntity(dtrans, config);
-
-            GameObject go = rec.go;
-            Transform trans = go.transform;
-
-            SplineContainer splineContainer = rec.splineContainer;
-
-            if (splineContainer == null)
+            lock (splineLock)
             {
-                splineContainer = rec.splineContainer = Misc.GetOrAddComponent<SplineContainer>(trans.gameObject);
-            }
+                TransformData dtrans = data.transform;
+                EntityRecord rec = UpdateTransformEntity(dtrans, config);
 
-            float3[] cos = null;
-            float3[] handles_left = null;
-            float3[] handles_right = null;
+                GameObject go = rec.go;
+                Transform trans = go.transform;
 
-            var numSplines = data.numSplines;
+                SplineContainer splineContainer = rec.splineContainer;
 
-            Spline.Changed -= SplineChanged;
-
-            var newSplines = new List<Spline>();
-
-            for (int index = 0; index < numSplines; index++)
-            {
-                var spline = new Spline();
-                newSplines.Add(spline);
-
-                spline.Closed = data.IsSplineClosed(index);
-
-                var numPoints = data.GetNumSplinePoints(index);
-                m_tmpFloat3.Resize(numPoints);
-
-                data.ReadSplineCos(index, m_tmpFloat3);
-                m_tmpFloat3.CopyTo(ref cos);
-
-                data.ReadSplineHandlesLeft(index, m_tmpFloat3);
-                m_tmpFloat3.CopyTo(ref handles_left);
-
-                data.ReadSplineHandlesRight(index, m_tmpFloat3);
-                m_tmpFloat3.CopyTo(ref handles_right);
-
-                for (int pointIndex = 0; pointIndex < cos.Length; pointIndex++)
+                if (splineContainer == null)
                 {
-                    var co = cos[pointIndex];
-
-                    var knot = new BezierKnot(co, handles_left[pointIndex] - co, handles_right[pointIndex] - co, Quaternion.identity);
-
-                    spline.Add(knot);
+                    splineContainer = rec.splineContainer = Misc.GetOrAddComponent<SplineContainer>(trans.gameObject);
                 }
+
+                float3[] cos = null;
+                float3[] handles_left = null;
+                float3[] handles_right = null;
+
+                var numSplines = data.numSplines;
+
+                Spline.Changed -= SplineChanged;
+
+                var newSplines = new List<Spline>();
+
+                for (int index = 0; index < numSplines; index++)
+                {
+                    var spline = new Spline();
+                    newSplines.Add(spline);
+
+                    spline.Closed = data.IsSplineClosed(index);
+
+                    var numPoints = data.GetNumSplinePoints(index);
+                    m_tmpFloat3.Resize(numPoints);
+
+                    data.ReadSplineCos(index, m_tmpFloat3);
+                    m_tmpFloat3.CopyTo(ref cos);
+
+                    data.ReadSplineHandlesLeft(index, m_tmpFloat3);
+                    m_tmpFloat3.CopyTo(ref handles_left);
+
+                    data.ReadSplineHandlesRight(index, m_tmpFloat3);
+                    m_tmpFloat3.CopyTo(ref handles_right);
+
+                    for (int pointIndex = 0; pointIndex < cos.Length; pointIndex++)
+                    {
+                        var co = cos[pointIndex];
+
+                        var knot = new BezierKnot(co, handles_left[pointIndex] - co, handles_right[pointIndex] - co, Quaternion.identity);
+
+                        spline.Add(knot);
+                    }
+                }
+
+                splineContainer.Splines = newSplines;
+
+                Spline.Changed += SplineChanged;
+
+                return rec;
             }
-
-            splineContainer.Branches = newSplines;
-
-            Spline.Changed += SplineChanged;
-
-            return rec;
 #else
             return null;
 #endif

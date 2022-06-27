@@ -250,10 +250,10 @@ namespace Unity.MeshSync
         void SendCurve(string path, EntityRecord entity)
         {
             Debug.Assert(entity.dataType == EntityType.Curve);
-
-            for (int splineIdx = 0; splineIdx < entity.splineContainer.Branches.Count; splineIdx++)
+            
+            for (int splineIdx = 0; splineIdx < entity.splineContainer.Splines.Count; splineIdx++)
             {
-                var spline = entity.splineContainer.Branches[splineIdx];
+                var spline = entity.splineContainer.Splines[splineIdx];
 
                 var pointCount = spline.Count;
                 if (pointCount == 0)
