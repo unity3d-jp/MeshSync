@@ -460,22 +460,26 @@ public class MeshSyncServer : BaseMeshSync {
 
     #region Events
 
-#if UNITY_EDITOR
     void OnValidate() {
         CheckParamsUpdated();
     }
 
-    void Reset() {
+    void ResetServerConfig() {
         MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
-        m_config = new MeshSyncServerConfig(projectSettings.GetDefaultServerConfig());
+        m_config     = new MeshSyncServerConfig(projectSettings.GetDefaultServerConfig());
         m_serverPort = projectSettings.GetDefaultServerPort();
         
     }
-#endif
 
+    void Reset() {
+        ResetServerConfig();
+    }
 
     private protected override void OnEnable() {
         base.OnEnable();
+        if (null == m_config) {
+            ResetServerConfig();
+        } 
         if (m_autoStartServer) {
             m_requestRestartServer = true;
         }
