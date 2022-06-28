@@ -1,5 +1,4 @@
 These Components are Licensed under GPL:
-* MeshSyncClientBlender
 * InstallBlenderPlugin.py
 * UninstallBlenderPlugin.py
 * blender_interop.py
