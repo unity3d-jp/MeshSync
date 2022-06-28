@@ -113,8 +113,9 @@ internal struct Server {
         return msServerIsStarted(port);
     }
     
-    public static Server Start(ref ServerSettings settings) {
-        return msServerStart(ref settings);
+    public static bool Start(ref ServerSettings settings, out Server server) {
+        server = msServerStart(ref settings);
+        return server;
     }
 
     public void Stop() {
