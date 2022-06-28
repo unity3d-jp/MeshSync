@@ -98,6 +98,16 @@ msAPI int msGetProtocolVersion() {
     return msProtocolVersion;
 }
 
+msAPI bool msServerIsStarted(const int port) {
+    std::map<uint16_t, ServerPtr>::iterator it = g_servers.find(port);
+    if (it == g_servers.end())
+        return false;
+
+    ServerPtr& server = it->second;
+    return server->isServing();
+}
+
+
 msAPI ms::Server* msServerStart(const ms::ServerSettings *settings)
 {
     if (!settings)
