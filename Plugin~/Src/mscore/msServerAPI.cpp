@@ -103,16 +103,20 @@ msAPI ms::Server* msServerStart(const ms::ServerSettings *settings)
     if (!settings)
         return nullptr;
 
-    ServerPtr& server = g_servers[settings->port];
-    if (!server) {
-        server.reset(new ms::Server(*settings));
-        server->start();
-    }
-    else {
+    std::map<uint16_t, ServerPtr>::iterator it = g_servers.find(settings->port);
+    if (it == g_servers.end()){
+        ServerPtr server(new ms::Server(*settings));
+        if (!server.start())
+            return nullptr;
+        
+        g_servers[settings->port] = server;
+        return server.get();
+    } else{
+        ServerPtr& server = *it;
         server->setServe(true);
         server->getSettings() = *settings;
+        return server.get();
     }
-    return server.get();
 }
 
 msAPI void  msServerStop(ms::Server *server)
