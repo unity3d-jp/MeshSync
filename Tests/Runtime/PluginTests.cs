@@ -1,11 +1,12 @@
-﻿using NUnit.Framework;
+﻿using System.Collections;
+using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
+//Skip OSX because we don't have a OSXUniversal bundle for mscore 
 namespace Unity.MeshSync.Tests {
 internal class PluginTests {
     
-    //Skip OSX because we don't have a OSXUniversal bundle for mscore 
     [Test]
     [UnityPlatform(RuntimePlatform.WindowsPlayer, RuntimePlatform.LinuxPlayer)]
     public void CheckVersionValidity() {
@@ -14,6 +15,19 @@ internal class PluginTests {
     }
     
 //----------------------------------------------------------------------------------------------------------------------
+    
+    [UnityTest]
+    [UnityPlatform(RuntimePlatform.WindowsPlayer, RuntimePlatform.LinuxPlayer)]
+    public IEnumerator StartTestServer() {
+        MeshSyncServer goServer  = new GameObject("Server").AddComponent<MeshSyncServer>();
+        goServer.SetAutoStartServer(true);
+        yield return null;
+
+        Assert.IsTrue(Server.IsStarted(goServer.GetServerPort()));
+        yield return null;
+    }
+    
+    
     
     
 }
