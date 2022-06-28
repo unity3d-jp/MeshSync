@@ -103,7 +103,7 @@ msAPI ms::Server* msServerStart(const ms::ServerSettings *settings)
     if (!settings)
         return nullptr;
 
-    auto& server = g_servers[settings->port];
+    ServerPtr& server = g_servers[settings->port];
     if (!server) {
         server.reset(new ms::Server(*settings));
         server->start();
