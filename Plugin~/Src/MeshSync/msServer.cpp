@@ -62,7 +62,7 @@ void Server::clear()
     m_host_scene.reset();
 }
 
-ServerSettings& Server::getSettings()
+const ServerSettings& Server::getSettings() const
 {
     return m_settings;
 }

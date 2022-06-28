@@ -42,7 +42,7 @@ public:
     bool start();
     void stop();
     void clear();
-    ServerSettings& getSettings();
+    const ServerSettings& getSettings() const;
 
     inline const bool IsPublicAccessAllowed();
     inline void AllowPublicAccess(const bool access);
