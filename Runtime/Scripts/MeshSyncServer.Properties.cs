@@ -183,7 +183,7 @@ namespace Unity.MeshSync
                     CurrentPropertiesState = PropertiesState.Sending;
                     onSceneUpdateEnd -= SceneUpdated;
                     onSceneUpdateEnd += SceneUpdated;
-                    m_server.SendChangedProperties();
+                    m_server.MarkServerInitiatedResponseReady();
                 }
             }
         }

@@ -237,7 +237,7 @@ internal struct Server {
         msServerRequestFullSync(self);
     }
 
-    public void SendChangedProperties()
+    public void MarkServerInitiatedResponseReady()
     {
         msServerInitiatedResponseReady(self);
     }
