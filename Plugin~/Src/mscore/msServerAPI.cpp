@@ -106,13 +106,13 @@ msAPI ms::Server* msServerStart(const ms::ServerSettings *settings)
     std::map<uint16_t, ServerPtr>::iterator it = g_servers.find(settings->port);
     if (it == g_servers.end()){
         ServerPtr server(new ms::Server(*settings));
-        if (!server.start())
+        if (!server->start())
             return nullptr;
         
         g_servers[settings->port] = server;
         return server.get();
     } else{
-        ServerPtr& server = *it;
+        ServerPtr& server = it->second;
         server->setServe(true);
         server->getSettings() = *settings;
         return server.get();
