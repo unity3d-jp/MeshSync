@@ -45,6 +45,9 @@ internal struct Server {
     public IntPtr self;
 
     [DllImport(Lib.name)]
+    static extern Server msServerIsStarted(int port);
+
+    [DllImport(Lib.name)]
     static extern Server msServerStart(ref ServerSettings settings);
 
     [DllImport(Lib.name)]
@@ -106,6 +109,10 @@ internal struct Server {
         return v.self != IntPtr.Zero;
     }
 
+    internal static bool IsStarted(int port) {
+        return msServerIsStarted(port);
+    }
+    
     public static Server Start(ref ServerSettings settings) {
         return msServerStart(ref settings);
     }
