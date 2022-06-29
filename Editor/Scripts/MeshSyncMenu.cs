@@ -7,7 +7,7 @@ namespace Unity.MeshSync.Editor {
 
 internal static class MeshSyncMenu  {
     // Menu strings:
-    const string menuItem_OpenInBlender = "Assets/MeshSync/Open in blender";
+    const string menuItem_OpenInBlender = "Assets/MeshSync/Live-edit in blender";
 
 //----------------------------------------------------------------------------------------------------------------------    
     #region Server
