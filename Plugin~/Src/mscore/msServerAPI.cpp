@@ -99,21 +99,35 @@ msAPI int msGetProtocolVersion() {
     return msProtocolVersion;
 }
 
+msAPI bool msServerIsStarted(const int port) {
+    std::map<uint16_t, ServerPtr>::iterator it = g_servers.find(port);
+    if (it == g_servers.end())
+        return false;
+
+    ServerPtr& server = it->second;
+    return server->isServing();
+}
+
+
 msAPI ms::Server* msServerStart(const ms::ServerSettings *settings)
 {
     if (!settings)
         return nullptr;
 
-    auto& server = g_servers[settings->port];
-    if (!server) {
-        server.reset(new ms::Server(*settings));
-        server->start();
-    }
-    else {
+    std::map<uint16_t, ServerPtr>::iterator it = g_servers.find(settings->port);
+    if (it == g_servers.end()){
+        ServerPtr server(new ms::Server(*settings));
+        if (!server->start())
+            return nullptr;
+        
+        g_servers[settings->port] = server;
+        return server.get();
+    } else{
+        ServerPtr& server = it->second;
         server->setServe(true);
         server->getSettings() = *settings;
+        return server.get();
     }
-    return server.get();
 }
 
 msAPI void  msServerStop(ms::Server *server)
