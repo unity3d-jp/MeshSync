@@ -100,7 +100,10 @@ public class MeshSyncServer : BaseMeshSync {
         m_serverSettings.port = (ushort)m_serverPort;
         m_serverSettings.zUpCorrectionMode = (ZUpCorrectionMode) m_config.ZUpCorrection;
 
-        m_server = Server.Start(ref m_serverSettings);
+        m_serverStarted = Server.Start(ref m_serverSettings, out m_server);
+        if (!m_serverStarted)
+            return;
+        
         m_server.fileRootPath = GetServerDocRootPath();
         m_server.AllowPublicAccess(projectSettings.GetServerPublicAccess());
         
@@ -112,7 +115,6 @@ public class MeshSyncServer : BaseMeshSync {
         if (m_config.Logging)
             Debug.Log("[MeshSync] Server started (port: " + m_serverSettings.port + ")");
 
-        m_serverStarted = true;
 #else
         Debug.LogWarning("[MeshSync] Server functions are not supported in non-Standalone platform");
 #endif //UNITY_STANDALONE
@@ -460,22 +462,26 @@ public class MeshSyncServer : BaseMeshSync {
 
     #region Events
 
-#if UNITY_EDITOR
     void OnValidate() {
         CheckParamsUpdated();
     }
 
-    void Reset() {
+    void ResetServerConfig() {
         MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
-        m_config = new MeshSyncServerConfig(projectSettings.GetDefaultServerConfig());
+        m_config     = new MeshSyncServerConfig(projectSettings.GetDefaultServerConfig());
         m_serverPort = projectSettings.GetDefaultServerPort();
         
     }
-#endif
 
+    void Reset() {
+        ResetServerConfig();
+    }
 
     private protected override void OnEnable() {
         base.OnEnable();
+        if (null == m_config) {
+            ResetServerConfig();
+        } 
         if (m_autoStartServer) {
             m_requestRestartServer = true;
         }
