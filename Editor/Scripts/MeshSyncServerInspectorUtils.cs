@@ -26,7 +26,7 @@ namespace Unity.MeshSync.Editor
             {
                 var assetPath = AssetDatabase.GetAssetPath(asset);
                 var extension = Path.GetExtension(assetPath);
-                Debug.LogError($"No DCC handler for {extension} files is implemented.");
+                EditorUtility.DisplayDialog("Error", $"No DCC handler for {extension} files is implemented.", "OK");
             }
         }
 
