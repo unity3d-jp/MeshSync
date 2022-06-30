@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace Unity.MeshSync {
@@ -6,9 +6,7 @@ namespace Unity.MeshSync {
 internal class MeshSyncServerConfig : MeshSyncPlayerConfig {
     internal MeshSyncServerConfig() { }
 
-    internal MeshSyncServerConfig(MeshSyncServerConfig other) : base(other)
-    {
-    }
+    internal MeshSyncServerConfig(MeshSyncServerConfig other) : base(other) { }
     
 //----------------------------------------------------------------------------------------------------------------------
     
