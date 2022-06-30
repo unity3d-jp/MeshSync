@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace Unity.MeshSync.Editor
 {
@@ -15,7 +13,7 @@ namespace Unity.MeshSync.Editor
 
         const string editorSettingPath = "MESHSYNC_BLENDER_PATH";
 
-        System.Diagnostics.Process m_blenderProcess;
+        Process m_blenderProcess;
         static bool redirectBlenderToUnityConsole;
 
         public RunMode runMode { get; set; }
@@ -209,6 +207,26 @@ namespace Unity.MeshSync.Editor
 
         public void Dispose()
         {
+            if (m_blenderProcess == null)
+            {
+                return;
+            }
+            
+            // Only force close blender process if it was running in
+            // background mode and the user has no way to close it
+            // themselves and have no pending changes:
+            try
+            {
+                if (m_blenderProcess.StartInfo.WindowStyle == ProcessWindowStyle.Hidden)
+                {
+                    if (!m_blenderProcess.HasExited)
+                    {
+                        m_blenderProcess.Kill();
+                    }
+                }
+            }
+            catch { }
+
             m_blenderProcess = null;
         }
 

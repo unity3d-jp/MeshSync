@@ -92,20 +92,24 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
         {
             GUILayout.BeginHorizontal();
 
-            EditorGUI.BeginChangeCheck();
+            var newAsset = EditorGUILayout.ObjectField("DCC asset file:",
+                server.m_DCCAsset,
+                typeof(UnityEngine.Object), true);
 
-            server.m_DCCAsset = EditorGUILayout.ObjectField("DCC asset file:", server.m_DCCAsset, typeof(UnityEngine.Object), true);
+            if (newAsset != server.m_DCCAsset)
+            {
+                server.m_DCCAsset = newAsset;
+                server.m_DCCInterop = MeshSyncServerInspectorUtils.GetLauncherForAsset(server.m_DCCAsset);
+            }
+
             if (server.m_DCCAsset != null)
             {
                 if (GUILayout.Button("Live Edit"))
                 {
+                    GUILayout.EndHorizontal();
                     MeshSyncServerInspectorUtils.OpenDCCAsset(server);
+                    return;
                 }
-            }
-
-            if (EditorGUI.EndChangeCheck())
-            {
-                server.m_DCCInterop = MeshSyncServerInspectorUtils.GetLauncherForAsset(server.m_DCCAsset);
             }
 
             GUILayout.EndHorizontal();
@@ -114,6 +118,7 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
             {
                 server.m_DCCInterop = MeshSyncServerInspectorUtils.GetLauncherForAsset(server.m_DCCAsset);
             }
+
             server.m_DCCInterop?.DrawDCCMenu(server);
         }
     }
