@@ -7,7 +7,7 @@ namespace Unity.MeshSync.Editor {
 
 internal static class MeshSyncMenu  {
     // Menu strings:
-    const string menuItem_OpenInBlender = "Assets/MeshSync/Live-edit in blender";
+    const string menuItem_LiveEditInBlender = "Assets/MeshSync/Live-edit in blender";
 
 //----------------------------------------------------------------------------------------------------------------------    
     #region Server
@@ -30,8 +30,8 @@ internal static class MeshSyncMenu  {
         return mss;
     }
       
-    [MenuItem(menuItem_OpenInBlender)]
-    static void OpenBlender()
+    [MenuItem(menuItem_LiveEditInBlender)]
+    static void LiveEditInBlender()
     {
         var selectedAsset = Selection.objects[0];
 
@@ -58,8 +58,8 @@ internal static class MeshSyncMenu  {
         MeshSyncServerInspectorUtils.OpenDCCAsset(server);
     }
 
-    [MenuItem(menuItem_OpenInBlender, validate = true)]
-    static bool CanOpenBlender()
+    [MenuItem(menuItem_LiveEditInBlender, validate = true)]
+    static bool CanLiveEditInBlender()
     {
         if (Selection.objects.Length == 1)
         {
