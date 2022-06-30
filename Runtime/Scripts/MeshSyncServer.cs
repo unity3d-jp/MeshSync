@@ -527,12 +527,16 @@ public partial class MeshSyncServer : BaseMeshSync {
     {
         get
         {
+#if UNITY_EDITOR
 #if UNITY_2021_2_OR_NEWER
             return UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
 #else
-            return UnityEditor.Experimental.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
+                return UnityEditor.Experimental.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
 #endif
-        }
+#else // UNITY_EDITOR
+            return false;
+#endif
+            }
     }
 
     void LateUpdate()
@@ -545,7 +549,9 @@ public partial class MeshSyncServer : BaseMeshSync {
     {
         base.OnDestroy();
 
+#if UNITY_EDITOR
         m_DCCInterop?.Cleanup();
+#endif
 
         StopServer();
     }
@@ -554,9 +560,11 @@ public partial class MeshSyncServer : BaseMeshSync {
     {
         StopServer();
 
+#if UNITY_EDITOR
         m_DCCInterop?.Cleanup();
         m_DCCInterop = null;
-    }
+#endif
+        }
     
     #endregion
 

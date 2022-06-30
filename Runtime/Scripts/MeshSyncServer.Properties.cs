@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using System.Reflection;
 
@@ -21,6 +21,8 @@ namespace Unity.MeshSync
         bool needsClientSync;
 
         Dictionary<EntityRecord, Matrix4x4> entityTransforms = new Dictionary<EntityRecord, Matrix4x4>();
+
+#if UNITY_EDITOR
         public override InstanceHandlingType InstanceHandling
         {
             get => base.InstanceHandling; set
@@ -33,12 +35,14 @@ namespace Unity.MeshSync
                 }
             }
         }
+#endif
 
 #if AT_USE_SPLINES
         List<string> changedSplines = new List<string>();
 #endif
 
-#if AT_USE_PROBUILDER
+#if AT_USE_PROBUILDER && UNITY_EDITOR
+
         HashSet<UnityEngine.ProBuilder.ProBuilderMesh> changedMeshes = new HashSet<UnityEngine.ProBuilder.ProBuilderMesh>();
         
         public override bool UseProBuilder
@@ -79,13 +83,6 @@ namespace Unity.MeshSync
         public void ResetPropertiesState()
         {
             CurrentPropertiesState = PropertiesState.None;
-        }
-
-        public override void ClearInstancePrefabs()
-        {
-            base.ClearInstancePrefabs();
-
-            needsClientSync = true;
         }
 
         public bool IsConnectionToBlenderActive()
@@ -149,7 +146,7 @@ namespace Unity.MeshSync
                             sendChanges = true;
                         }
 #endif
-#if AT_USE_PROBUILDER
+#if AT_USE_PROBUILDER && UNITY_EDITOR
                         if (entity.dataType == EntityType.Mesh && entity.proBuilderMeshFilter != null)
                         {
                             if (changedMeshes.Contains(entity.proBuilderMeshFilter))
@@ -165,7 +162,7 @@ namespace Unity.MeshSync
                     changedSplines.Clear();
 #endif
 
-#if AT_USE_PROBUILDER
+#if AT_USE_PROBUILDER && UNITY_EDITOR
                     changedMeshes.Clear();
 #endif
                 }
@@ -194,7 +191,7 @@ namespace Unity.MeshSync
         }
 
 
-#if AT_USE_PROBUILDER
+#if AT_USE_PROBUILDER && UNITY_EDITOR
         public void MeshChanged(UnityEngine.ProBuilder.ProBuilderMesh mesh)
         {
             changedMeshes.Add(mesh);
@@ -298,5 +295,14 @@ namespace Unity.MeshSync
 
             CurrentPropertiesState = PropertiesState.Received;
         }
+
+#if UNITY_EDITOR
+        public override void ClearInstancePrefabs()
+        {
+            base.ClearInstancePrefabs();
+
+            needsClientSync = true;
+        }
+#endif
     }
 }

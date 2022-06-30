@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
@@ -1875,6 +1875,7 @@ internal delegate void DeleteInstanceHandler(string path);
 
                             if (instanceObject == null)
                             {
+#if UNITY_EDITOR
                                 ExportMeshes();
                                 ExportMaterials();
 
@@ -1893,6 +1894,10 @@ internal delegate void DeleteInstanceHandler(string path);
                                 instanceObject = prefab;
 
                                 infoRecord.go.SetActive(wasActive);
+#else
+                                // Cannot create prefabs when not in editor.
+                                return null;
+#endif
                             }
                         }
 
@@ -1905,7 +1910,11 @@ internal delegate void DeleteInstanceHandler(string path);
                             }
                             else
                             {
+#if UNITY_EDITOR
                                 obj = (GameObject)PrefabUtility.InstantiatePrefab(instanceObject, instanceRendererParent.transform);
+#else
+                                obj = Instantiate(instanceObject, instanceRendererParent.transform);
+#endif
                             }
 
                             Transform objTransform = obj.transform;
@@ -2215,9 +2224,9 @@ internal delegate void DeleteInstanceHandler(string path);
             }
             return ret;
         }
-        #endregion
+#endregion
 
-        #region Tools
+#region Tools
 
         private bool ApplyMaterialList(MaterialList ml)
         {
@@ -2602,10 +2611,10 @@ internal delegate void DeleteInstanceHandler(string path);
     }            
     
 #endif //UNITY_EDITOR
-    #endregion
+#endregion
 
 //----------------------------------------------------------------------------------------------------------------------        
-    #region Events
+#region Events
 #if UNITY_EDITOR
     void Reset() {
         // force disable batching for export
@@ -2645,7 +2654,7 @@ internal delegate void DeleteInstanceHandler(string path);
         SceneView.duringSceneGui -= OnSceneViewGUI;
 #endif
     }
-    #endregion
+#endregion
 
 //----------------------------------------------------------------------------------------------------------------------
     

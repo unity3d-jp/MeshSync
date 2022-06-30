@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -401,10 +401,13 @@ namespace Unity.MeshSync
             }
         }
 
+
         public virtual InstanceHandlingType InstanceHandling
         {
             get => instanceHandling;
+#if UNITY_EDITOR
             set => instanceHandling = value;
+#endif
         }
 
 #if AT_USE_PROBUILDER
