@@ -97,7 +97,7 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
             server.m_DCCAsset = EditorGUILayout.ObjectField("DCC asset file:", server.m_DCCAsset, typeof(UnityEngine.Object), true);
             if (server.m_DCCAsset != null)
             {
-                if (GUILayout.Button("Open"))
+                if (GUILayout.Button("Live Edit"))
                 {
                     MeshSyncServerInspectorUtils.OpenDCCAsset(server);
                 }
