@@ -90,7 +90,7 @@ test_configs:
       - platform_type: *platform_mac
         test_type: *upm_ci_all
       - platform_type: *platform_linux
-        test_type: *upm_ci_all
+        test_type: *upm_ci_playedit
 
 
 promotion_types:
