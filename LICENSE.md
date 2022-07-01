@@ -1,3 +1,5 @@
+MeshSync copyright © 2022 Unity Technologies ApS
+
 These Components are Licensed under GPL:
 * InstallBlenderPlugin.py
 * UninstallBlenderPlugin.py
