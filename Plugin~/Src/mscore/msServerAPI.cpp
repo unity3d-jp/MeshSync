@@ -332,13 +332,6 @@ msAPI void msServerSendMesh(ms::Server* server, ms::Mesh* data)
     if (!server) { return; }
 
     server->m_pending_entities.push_back(make_shared_ptr(data));
-
-    //auto mesh = server->getPendingEntity<ms::Mesh>(path);
-
-    //mesh->points.assign(vertices, vertices + vertexCount);
-
-    //// Update flags:
-    //mesh->refine();
 }
 
 msAPI void msServerRequestFullSync(ms::Server* server)
