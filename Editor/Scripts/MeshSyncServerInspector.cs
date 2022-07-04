@@ -18,26 +18,23 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
         BaseMeshSync.ProBuilderAfterRebuild += ProBuilderAfterRebuild;
     }
 
-    private static void MeshesChanged(IEnumerable<UnityEngine.ProBuilder.ProBuilderMesh> meshes)
-    {
-        if (meshes != null)
-        {
-            foreach (var mesh in meshes)
-            {
-                var version = (ushort)versionInfo.GetValue(mesh);
+    private static void MeshesChanged(IEnumerable<UnityEngine.ProBuilder.ProBuilderMesh> meshes) {
+        if (meshes == null) {
+            return;
+        }
 
-                if (!versionIndices.TryGetValue(mesh, out var storedVersion))
-                {
-                    versionIndices.Add(mesh, version);
-                }
-                else if (version != storedVersion)
-                {
-                    versionIndices[mesh] = version;
+        foreach (var mesh in meshes) {
+            var version = (ushort)versionInfo.GetValue(mesh);
 
-                    var server = mesh.GetComponentInParent<MeshSyncServer>();
+            if (!versionIndices.TryGetValue(mesh, out var storedVersion)) {
+                versionIndices.Add(mesh, version);
+            }
+            else if (version != storedVersion) {
+                versionIndices[mesh] = version;
 
-                    server?.MeshChanged(mesh);
-                }
+                var server = mesh.GetComponentInParent<MeshSyncServer>();
+
+                server?.MeshChanged(mesh);
             }
         }
     }
