@@ -187,7 +187,7 @@ namespace Unity.MeshSync
 
         void SendTransform(string path, EntityRecord entity)
         {
-
+            // TODO: Implement this.
         }
 
 
