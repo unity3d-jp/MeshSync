@@ -451,12 +451,13 @@ namespace Unity.MeshSync
 
                     propertyInfos.Sort(new PropertyInfoDataWrapperComparer());
 
-                    if (pendingProps != null) {
-                        foreach (var pendingProp in pendingProps) {
-                            foreach (var prop in propertyInfos) {
-                                if (prop.Matches(pendingProp)) {
-                                    prop.NewValue = pendingProp.NewValue;
-                                }
+                    if (pendingProps == null) {
+                        return;
+                    }
+                    foreach (var pendingProp in pendingProps) {
+                        foreach (var prop in propertyInfos) {
+                            if (prop.Matches(pendingProp)) {
+                                prop.NewValue = pendingProp.NewValue;
                             }
                         }
                     }
