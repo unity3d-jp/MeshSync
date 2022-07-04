@@ -6,17 +6,20 @@ namespace Unity.MeshSync.Editor {
 
 
 internal static class MeshSyncMenu  {
-
-    
+    // Menu strings:
+    const string menuItem_LiveEditInBlender = "Assets/MeshSync/Live-edit in blender";
 
 //----------------------------------------------------------------------------------------------------------------------    
     #region Server
     [MenuItem("GameObject/MeshSync/Create Server", false, 10)]
-    internal static void CreateMeshSyncServerMenu(MenuCommand menuCommand) {
+    internal static MeshSyncServer CreateMeshSyncServerMenu(MenuCommand menuCommand)
+    {
         MeshSyncServer mss = CreateMeshSyncServer(true);
         if (mss != null)
             Undo.RegisterCreatedObjectUndo(mss.gameObject, "MeshSyncServer");
         Selection.activeTransform = mss.transform;
+
+        return mss;
     }
 
     internal static MeshSyncServer CreateMeshSyncServer(bool autoStart) {
@@ -26,6 +29,49 @@ internal static class MeshSyncMenu  {
         mss.SetAutoStartServer(autoStart);
         return mss;
     }
+      
+    [MenuItem(menuItem_LiveEditInBlender)]
+    static void LiveEditInBlender()
+    {
+        var selectedAsset = Selection.objects[0];
+
+        var servers = UnityEngine.Object.FindObjectsOfType<MeshSyncServer>();
+
+        MeshSyncServer server = null;
+
+        foreach (var serverInScene in servers)
+        {
+            if (serverInScene.enabled)
+            {
+                server = serverInScene;
+                break;
+            }
+        }
+
+        if (server == null)
+        {
+            server = CreateMeshSyncServerMenu(null);
+        }
+
+        server.m_DCCAsset = selectedAsset;
+
+        MeshSyncServerInspectorUtils.OpenDCCAsset(server);
+    }
+
+    [MenuItem(menuItem_LiveEditInBlender, validate = true)]
+    static bool CanLiveEditInBlender()
+    {
+        if (Selection.objects.Length == 1)
+        {
+            string assetPath = AssetDatabase.GetAssetPath(Selection.objects[0]);
+            if (assetPath != null && assetPath.EndsWith(BlenderLauncher.FileFormat))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     #endregion
     
 //----------------------------------------------------------------------------------------------------------------------
