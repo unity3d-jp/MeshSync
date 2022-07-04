@@ -421,50 +421,41 @@ namespace Unity.MeshSync
         }
 #endif
 
-        void UpdateProperties(SceneData scene)
-        {
+        void UpdateProperties(SceneData scene) {
             // handle properties
-            Try(() =>
-            {
+            Try(() => {
                 var numProperties = scene.numPropertyInfos;
-                if (numProperties > 0)
-                {
-                    lock (PropertyInfoDataWrapper.PropertyUpdateLock)
-                    {
-                        List<PropertyInfoDataWrapper> pendingProps = null;
+                if (numProperties == 0) {
+                    return;
+                }
 
-                        // If there are dirty properties, make sure we set any updated values on the new ones:
-                        foreach (var prop in propertyInfos)
-                        {
-                            if (prop.IsDirty)
-                            {
-                                if (pendingProps == null)
-                                {
-                                    pendingProps = new List<PropertyInfoDataWrapper>();
-                                }
-                                pendingProps.Add(prop);
+                lock (PropertyInfoDataWrapper.PropertyUpdateLock) {
+                    List<PropertyInfoDataWrapper> pendingProps = null;
+
+                    // If there are dirty properties, make sure we set any updated values on the new ones:
+                    foreach (var prop in propertyInfos) {
+                        if (prop.IsDirty) {
+                            if (pendingProps == null) {
+                                pendingProps = new List<PropertyInfoDataWrapper>();
                             }
+
+                            pendingProps.Add(prop);
                         }
+                    }
 
-                        propertyInfos.Clear();
-                        for (var i = 0; i < numProperties; ++i)
-                        {
-                            var data = scene.GetPropertyInfo(i);
-                            propertyInfos.Add(new PropertyInfoDataWrapper(data));
-                        }
+                    propertyInfos.Clear();
+                    for (var i = 0; i < numProperties; ++i) {
+                        var data = scene.GetPropertyInfo(i);
+                        propertyInfos.Add(new PropertyInfoDataWrapper(data));
+                    }
 
-                        propertyInfos.Sort(new PropertyInfoDataWrapperComparer());
+                    propertyInfos.Sort(new PropertyInfoDataWrapperComparer());
 
-                        if (pendingProps != null)
-                        {
-                            foreach (var pendingProp in pendingProps)
-                            {
-                                foreach (var prop in propertyInfos)
-                                {
-                                    if (prop.Matches(pendingProp))
-                                    {
-                                        prop.NewValue = pendingProp.NewValue;
-                                    }
+                    if (pendingProps != null) {
+                        foreach (var pendingProp in pendingProps) {
+                            foreach (var prop in propertyInfos) {
+                                if (prop.Matches(pendingProp)) {
+                                    prop.NewValue = pendingProp.NewValue;
                                 }
                             }
                         }
