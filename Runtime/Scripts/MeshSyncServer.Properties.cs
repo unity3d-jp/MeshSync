@@ -218,15 +218,7 @@ namespace Unity.MeshSync
             CaptureMesh(ref dst, mesh, null,
                 sendMeshSettings,
                 mr.sharedMaterials);
-
-            // TODO: Maybe support skinned mesh renderers too:
-            //if (objRenderer.GetType() == typeof(MeshRenderer)){
-            //    ret = CaptureMeshRenderer(ref dst, objRenderer as MeshRenderer, mes, ref origMesh);
-            //}
-            //else if (objRenderer.GetType() == typeof(SkinnedMeshRenderer)){
-            //    ret = CaptureSkinnedMeshRenderer(ref dst, objRenderer as SkinnedMeshRenderer, mes, ref origMesh);
-            //}
-
+            
             TransformData dstTrans = dst.transform;
             Transform rendererTransform = objRenderer.transform;
             dstTrans.hostID = GetObjectlID(objRenderer.gameObject);
