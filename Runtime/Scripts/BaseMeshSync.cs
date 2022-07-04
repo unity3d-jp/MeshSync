@@ -1830,133 +1830,153 @@ internal delegate void DeleteInstanceHandler(string path);
             switch (InstanceHandling)
             {
                 case InstanceHandlingType.InstanceRenderer:
-                    infoRecord.DeleteInstanceObjects();
-
-                    if (instanceRendererParent != null && infoRecord.renderer == null)
-                    {
-                        infoRecord.renderer = instanceRendererParent.AddComponent<MeshSyncInstanceRenderer>();
-                    }
-                    infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
+                    UpdateInstanceInfo_InstanceRenderer(data, infoRecord, instanceRendererParent);
                     break;
                 case InstanceHandlingType.Copies:
                 case InstanceHandlingType.Prefabs:
-                    if (infoRecord.renderer != null)
-                    {
-                        DestroyImmediate(infoRecord.renderer);
-                        infoRecord.renderer = null;
-                    }
-
-                    infoRecord.DeleteInstanceObjects();
-
-                    instanceNames.Add(infoRecord.go.name);
-
-                    MeshSyncPlayerConfig config = GetConfigV();
-
-                    if (!instanceNames.Contains(infoRecord.go.transform.parent.name))
-                    {
-                        bool visible = instancedEntityRecord.visibility.visibleInRender;
-
-                        GameObject instanceObject = null;
-                        if (InstanceHandling == InstanceHandlingType.Copies)
-                        {
-                            instanceObject = infoRecord.go;
-                        }
-                        else {
-                            // Look for prefab or create one:
-                            for (int prefabListIdx = 0; prefabListIdx < m_prefabList.Count; prefabListIdx++) {
-                                var prefab = m_prefabList[prefabListIdx];
-                                if (prefab.name == data.path) {
-                                    instanceObject = prefab.prefab;
-                                    if (instanceObject == null) {
-                                        m_prefabList.RemoveAt(prefabListIdx--);
-                                    }
-                                    else {
-                                        break;
-                                    }
-                                }
-                            }
-
-                            if (instanceObject == null)
-                            {
-#if UNITY_EDITOR
-                                ExportMeshes();
-                                ExportMaterials();
-
-                                var pathWithoutSlash = data.path.Trim('/');
-                                var prefabLocation = Path.Combine(m_assetsFolder, Misc.SanitizeFileName(pathWithoutSlash) + ".prefab");
-
-                                bool wasActive = infoRecord.go.activeSelf;
-                                infoRecord.go.SetActive(true);
-
-                                var prefab = PrefabUtility.SaveAsPrefabAssetAndConnect(infoRecord.go, prefabLocation, InteractionMode.AutomatedAction);
-
-                                AssetDatabase.SaveAssets();
-
-                                m_prefabList.Add(new PrefabHolder() { name = data.path, prefab = prefab });
-
-                                instanceObject = prefab;
-
-                                infoRecord.go.SetActive(wasActive);
-#else
-                                // Cannot create prefabs when not in editor.
-                                return null;
-#endif
-                            }
-                        }
-
-                        foreach (var mat in data.transforms)
-                        {
-                            GameObject obj;
-                            if (InstanceHandling == InstanceHandlingType.Copies)
-                            {
-                                obj = Instantiate(instanceObject, instanceRendererParent.transform);
-                            }
-                            else
-                            {
-#if UNITY_EDITOR
-                                obj = (GameObject)PrefabUtility.InstantiatePrefab(instanceObject, instanceRendererParent.transform);
-#else
-                                obj = Instantiate(instanceObject, instanceRendererParent.transform);
-#endif
-                            }
-
-                            Transform objTransform = obj.transform;
-
-                            var newMat = instanceObject.transform.localToWorldMatrix * mat;
-
-                            objTransform.localScale = newMat.lossyScale;
-                            objTransform.position = newMat.MultiplyPoint(Vector3.zero);
-
-                            // Calculate rotation here to avoid gimbal lock issue:
-                            Vector3 forward;
-                            forward.x = newMat.m02;
-                            forward.y = newMat.m12;
-                            forward.z = newMat.m22;
-
-                            Vector3 upwards;
-                            upwards.x = newMat.m01;
-                            upwards.y = newMat.m11;
-                            upwards.z = newMat.m21;
-
-                            objTransform.rotation = Quaternion.LookRotation(forward, upwards);
-
-                            Debug.Assert(objTransform.localToWorldMatrix == newMat, "Matrices don't match!");
-
-                            if (config.SyncVisibility &&
-                                instancedEntityRecord.hasVisibility)
-                            {
-                                obj.SetActive(visible);
-                            }
-
-                            infoRecord.instanceObjects.Add(obj);
-                        }
-                    }
+                    UpdateInstanceInfo_CopiesAndPrefabs(data, infoRecord, instancedEntityRecord, instanceRendererParent);
                     break;
                 default:
                     break;
             }
 
             return infoRecord;
+        }
+
+        private void UpdateInstanceInfo_CopiesAndPrefabs(
+            InstanceInfoData data,
+            InstanceInfoRecord infoRecord,
+            EntityRecord instancedEntityRecord,
+            GameObject instanceRendererParent) {
+            // Make sure the other renderer is removed if this was not a copy or prefab before:
+            if (infoRecord.renderer != null) {
+                DestroyImmediate(infoRecord.renderer);
+                infoRecord.renderer = null;
+            }
+            infoRecord.DeleteInstanceObjects();
+
+            instanceNames.Add(infoRecord.go.name);
+
+            MeshSyncPlayerConfig config = GetConfigV();
+
+            if (!instanceNames.Contains(infoRecord.go.transform.parent.name)) {
+                bool visible = instancedEntityRecord.visibility.visibleInRender;
+
+                GameObject instanceObjectOriginal;
+                if (InstanceHandling == InstanceHandlingType.Copies) {
+                    instanceObjectOriginal = infoRecord.go;
+                }
+                else {
+                    instanceObjectOriginal = GetOrCreatePrefab(data, infoRecord);
+                }
+
+                if (instanceObjectOriginal == null) {
+                    return;
+                }
+
+                foreach (var mat in data.transforms) {
+                    GameObject instancedCopy;
+                    if (InstanceHandling == InstanceHandlingType.Copies) {
+                        instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
+                    }
+                    else {
+#if UNITY_EDITOR
+                        instancedCopy = (GameObject)PrefabUtility.InstantiatePrefab(instanceObjectOriginal,
+                            instanceRendererParent.transform);
+#else
+                        instancedCopy = Instantiate(instanceObject, instanceRendererParent.transform);
+#endif
+                    }
+
+                    SetInstanceTransform(instancedCopy, instanceObjectOriginal, mat);
+
+                    if (config.SyncVisibility &&
+                        instancedEntityRecord.hasVisibility) {
+                        instancedCopy.SetActive(visible);
+                    }
+
+                    infoRecord.instanceObjects.Add(instancedCopy);
+                }
+            }
+        }
+
+        private static void SetInstanceTransform(GameObject instancedCopy, GameObject instanceObjectOriginal, Matrix4x4 mat) {
+            Transform objTransform = instancedCopy.transform;
+
+            var newMat = instanceObjectOriginal.transform.localToWorldMatrix * mat;
+
+            objTransform.localScale = newMat.lossyScale;
+            objTransform.position   = newMat.MultiplyPoint(Vector3.zero);
+
+            // Calculate rotation here to avoid gimbal lock issue:
+            Vector3 forward;
+            forward.x = newMat.m02;
+            forward.y = newMat.m12;
+            forward.z = newMat.m22;
+
+            Vector3 upwards;
+            upwards.x = newMat.m01;
+            upwards.y = newMat.m11;
+            upwards.z = newMat.m21;
+
+            objTransform.rotation = Quaternion.LookRotation(forward, upwards);
+
+            Debug.Assert(objTransform.localToWorldMatrix == newMat, "Matrices don't match!");
+        }
+
+        private GameObject GetOrCreatePrefab(InstanceInfoData data, InstanceInfoRecord infoRecord) {
+            GameObject instanceObject = null;
+
+            // Look for prefab or create one:
+            for (int prefabListIdx = 0; prefabListIdx < m_prefabList.Count; prefabListIdx++) {
+                var prefab = m_prefabList[prefabListIdx];
+                if (prefab.name == data.path) {
+                    instanceObject = prefab.prefab;
+                    if (instanceObject == null) {
+                        m_prefabList.RemoveAt(prefabListIdx--);
+                    }
+                    else {
+                        break;
+                    }
+                }
+            }
+
+            if (instanceObject == null) {
+#if UNITY_EDITOR // Cannot create prefabs when not in editor.
+                ExportMeshes();
+                ExportMaterials();
+
+                var pathWithoutSlash = data.path.Trim('/');
+                var prefabLocation = Path.Combine(m_assetsFolder, Misc.SanitizeFileName(pathWithoutSlash) + ".prefab");
+
+                bool wasActive = infoRecord.go.activeSelf;
+                infoRecord.go.SetActive(true);
+
+                var prefab = PrefabUtility.SaveAsPrefabAssetAndConnect(infoRecord.go, prefabLocation,
+                    InteractionMode.AutomatedAction);
+
+                AssetDatabase.SaveAssets();
+
+                m_prefabList.Add(new PrefabHolder() { name = data.path, prefab = prefab });
+
+                instanceObject = prefab;
+
+                infoRecord.go.SetActive(wasActive);
+#endif
+            }
+
+            return instanceObject;
+        }
+
+        private static void UpdateInstanceInfo_InstanceRenderer(InstanceInfoData data, InstanceInfoRecord infoRecord,
+            GameObject instanceRendererParent) {
+            infoRecord.DeleteInstanceObjects();
+
+            if (instanceRendererParent != null && infoRecord.renderer == null) {
+                infoRecord.renderer = instanceRendererParent.AddComponent<MeshSyncInstanceRenderer>();
+            }
+
+            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
         }
 
         void UpdateConstraint(ConstraintData data)
