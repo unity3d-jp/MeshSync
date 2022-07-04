@@ -1882,9 +1882,9 @@ internal delegate void DeleteInstanceHandler(string path);
                     else {
 #if UNITY_EDITOR
                         instancedCopy = (GameObject)PrefabUtility.InstantiatePrefab(instanceObjectOriginal,
-                            instanceRendererParent.transform);
+                        instanceRendererParent.transform);
 #else
-                        instancedCopy = Instantiate(instanceObject, instanceRendererParent.transform);
+                        instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
 #endif
                     }
 
