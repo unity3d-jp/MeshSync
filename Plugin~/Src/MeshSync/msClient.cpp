@@ -197,7 +197,7 @@ bool Client::send(const ServerInitiatedMessage& mes)
 
         session.setTimeout(Poco::Timespan()); // infinite timeout, this is cancelled manually.
          
-        HTTPRequest request{ HTTPRequest::HTTP_POST, "request_properties" };
+        HTTPRequest request{ HTTPRequest::HTTP_POST, "/request_properties" };
         request.setContentType("application/octet-stream");
         request.setExpectContinue(true);
         request.setContentLength(ssize(mes));

@@ -80,7 +80,7 @@ void ServerRequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerR
     else if (StartsWith(uri, "/plugin_version")) {
         m_server->serveText(response, msPluginVersionStr);
     }
-    else if (StartsWith(uri, "request_properties")) {
+    else if (StartsWith(uri, "/request_properties")) {
         m_server->recvServerInitiatedRequest(request, response);
     }
     else {

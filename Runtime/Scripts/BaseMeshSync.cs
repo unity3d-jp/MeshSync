@@ -1861,15 +1861,18 @@ internal delegate void DeleteInstanceHandler(string path);
                         {
                             instanceObject = infoRecord.go;
                         }
-                        else
-                        {
+                        else {
                             // Look for prefab or create one:
-                            foreach (var prefab in m_prefabList)
-                            {
-                                if (prefab.name == data.path)
-                                {
+                            for (int prefabListIdx = 0; prefabListIdx < m_prefabList.Count; prefabListIdx++) {
+                                var prefab = m_prefabList[prefabListIdx];
+                                if (prefab.name == data.path) {
                                     instanceObject = prefab.prefab;
-                                    break;
+                                    if (instanceObject == null) {
+                                        m_prefabList.RemoveAt(prefabListIdx--);
+                                    }
+                                    else {
+                                        break;
+                                    }
                                 }
                             }
 
