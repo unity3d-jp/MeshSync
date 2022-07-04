@@ -8,6 +8,9 @@
 #include "MeshSync/SceneGraph/msPoints.h"
 #include "MeshSync/SceneGraph/msCurve.h"
 
+#include "MeshSync/SceneGraph/msEntity.h"
+#include "MeshSync/SceneGraph/msTransform.h"
+
 namespace ms {
 
 void EntityConverter::convert(Entity &e)
