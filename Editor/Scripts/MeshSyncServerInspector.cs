@@ -56,10 +56,10 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
 
     private static void ProBuilderBeforeRebuild()
     {
-        // Change select mode back and forth to ensure probuilder invalidates its internal cache:
-        var t = UnityEditor.ProBuilder.ProBuilderEditor.selectMode;
+        // Change select mode back and forth to ensure ProBuilder invalidates its internal cache:
+        var lastSelectMode = UnityEditor.ProBuilder.ProBuilderEditor.selectMode;
         UnityEditor.ProBuilder.ProBuilderEditor.selectMode = UnityEngine.ProBuilder.SelectMode.Object;
-        UnityEditor.ProBuilder.ProBuilderEditor.selectMode = t;
+        UnityEditor.ProBuilder.ProBuilderEditor.selectMode = lastSelectMode;
 
         // Init pro builder callbacks:
         UnityEditor.ProBuilder.ProBuilderEditor.afterMeshModification -= ProBuilderEditor_afterMeshModification;
