@@ -171,6 +171,11 @@ bool Client::send(const FenceMessage& mes)
     }
 }
 
+#ifndef WIN32
+#define __try try
+#define __except(X) catch(...)
+#endif
+
 void Client::abortPropertiesRequest() {
     if (m_properties_session) {
         __try {
