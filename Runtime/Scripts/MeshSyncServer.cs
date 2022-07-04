@@ -24,17 +24,6 @@ public partial class MeshSyncServer : BaseMeshSync {
     public ServerMessageCallback OnPostRecvMessageCallback = null;
     
 //----------------------------------------------------------------------------------------------------------------------
-
-#if ENABLE_IL2CPP
-    // When building with IL2CPP, we must use a static delegate
-    private static MeshSyncServer Instance;
-
-    [MonoPInvokeCallback(typeof(Server.MessageHandler))]
-    private static void HandleReceivedMessage(NetworkMessageType type, IntPtr data)
-    {
-        Instance.HandleRecvMessage(type, data);
-    }
-#endif
     
     private protected override void InitInternalV() {
         
@@ -117,12 +106,8 @@ public partial class MeshSyncServer : BaseMeshSync {
         
         m_server.fileRootPath = GetServerDocRootPath();
         m_server.AllowPublicAccess(projectSettings.GetServerPublicAccess());
-        
-#if ENABLE_IL2CPP
-        m_handler = HandleReceivedMessage;
-#else
+
         m_handler = HandleRecvMessage;
-#endif
 
 #if UNITY_EDITOR
         EditorApplication.update -= PollServerEvents;
@@ -515,14 +500,7 @@ public partial class MeshSyncServer : BaseMeshSync {
         base.OnDisable();
         StopServer();
     }
-
-    void Start()
-    {
-#if ENABLE_IL2CPP
-        Instance = this;
-#endif
-    }
-            
+        
     bool IsInPrefabView
     {
         get
