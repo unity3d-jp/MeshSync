@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.13.2-preview] - 2022-07-04
+
+### Changed
+* opt: cache plugin version string
+
+### Fixed
+* fix: automatically restart server only if the component and gameobject is active
+* fix: exclude mscore from Android and iOS standalone target (#689)
+
 ## [0.13.1-preview] - 2022-05-18
 
 ### Added
