@@ -29,7 +29,7 @@ AsyncSceneSender::AsyncSceneSender(int sid)
 
 AsyncSceneSender::~AsyncSceneSender()
 {
-    destroyed = true;
+    m_destroyed = true;
     wait();
 
     if (m_properties_client) {
@@ -78,7 +78,7 @@ void AsyncSceneSender::requestServerInitiatedMessage()
         return;
 
     m_request_properties_future = std::async(std::launch::async, [this]() {
-        if (!destroyed) {
+        if (!m_destroyed) {
             requestServerInitiatedMessageImpl();
         }
     });
