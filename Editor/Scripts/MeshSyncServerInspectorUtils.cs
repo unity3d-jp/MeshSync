@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -9,28 +9,7 @@ namespace Unity.MeshSync.Editor
     public static class MeshSyncServerInspectorUtils
     {
         static List<string> foldouts = new List<string>();
-
-        public static void OpenDCCAsset(MeshSyncServer server)
-        {
-            var previousRunMode = server.m_DCCInterop != null ? server.m_DCCInterop.runMode : RunMode.GUI;
-
-            var asset = server.m_DCCAsset;
-
-            server.m_DCCInterop?.Cleanup();
-            server.m_DCCInterop = GetLauncherForAsset(asset);
-
-            if (server.m_DCCInterop != null)
-            {
-                server.m_DCCInterop.runMode = previousRunMode;
-                server.m_DCCInterop.OpenDCCTool(asset);
-            }
-            else
-            {
-                var assetPath = AssetDatabase.GetAssetPath(asset).Replace("Assets/", string.Empty);
-                var extension = Path.GetExtension(assetPath);
-                Debug.LogError($"No DCC handler for {extension} files is implemented.");
-            }
-        }
+        
 
         public static void DrawSliderForProperties(List<PropertyInfoDataWrapper> props,
             bool editableStrings,
@@ -253,11 +232,39 @@ namespace Unity.MeshSync.Editor
 
             return newValue;
         }
+        
+        public static void OpenDCCAsset(MeshSyncServer server)
+        {
+            var previousRunMode = server.m_DCCInterop != null ? server.m_DCCInterop.runMode : RunMode.GUI;
+
+            var asset = server.m_DCCAsset;
+
+            server.m_DCCInterop?.Dispose();
+            server.m_DCCInterop = GetLauncherForAsset(asset);
+
+            if (server.m_DCCInterop != null)
+            {
+                server.m_DCCInterop.runMode = previousRunMode;
+                server.m_DCCInterop.OpenDCCTool(asset);
+            }
+            else
+            {
+                var assetPath = AssetDatabase.GetAssetPath(asset);
+                var extension = Path.GetExtension(assetPath);
+                EditorUtility.DisplayDialog("Error", $"No DCC handler for {extension} files is implemented.", "OK");
+            }
+        }
+
         internal static IDCCLauncher GetLauncherForAsset(UnityEngine.Object asset)
         {
-            var assetPath = AssetDatabase.GetAssetPath(asset).Replace("Assets/", string.Empty);
+            if (asset == null)
+            {
+                return null;
+            }
 
-            if (Path.GetExtension(assetPath) == ".blend")
+            var assetPath = AssetDatabase.GetAssetPath(asset);
+
+            if (Path.GetExtension(assetPath) == BlenderLauncher.FileFormat)
             {
                 return new BlenderLauncher();
             }

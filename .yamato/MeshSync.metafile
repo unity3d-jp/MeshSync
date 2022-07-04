@@ -34,21 +34,21 @@ upm_ci_test_types:
   - test_type: &upm_ci_all
       steps:
         - name: standalone_il2cpp
-          arguments: --platform standalone --backend il2cpp
+          arguments: --platform standalone --backend il2cpp --extra-utr-arg=--timeout=1800
         - name: standalone_mono
-          arguments: --platform standalone --backend mono
+          arguments: --platform standalone --backend mono --extra-utr-arg=--timeout=1800
         - name: playedit_editor
-          arguments: --enable-code-coverage --code-coverage-options 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+Unity.MeshSync,+Unity.MeshSync.Editor,-Unity.MeshSync.Tests,-Unity.MeshSync.EditorTests'
+          arguments: --extra-utr-arg=--timeout=1800 --enable-code-coverage --code-coverage-options 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+Unity.MeshSync,+Unity.MeshSync.Editor,-Unity.MeshSync.Tests,-Unity.MeshSync.EditorTests'
   - test_type: &upm_ci_mono
       steps:
         - name: standalone_mono
-          arguments: --platform standalone --backend mono
+          arguments: --platform standalone --backend mono --extra-utr-arg=--timeout=1800
         - name: playedit_editor
-          arguments: --enable-code-coverage --code-coverage-options 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+Unity.MeshSync,+Unity.MeshSync.Editor,-Unity.MeshSync.Tests,-Unity.MeshSync.EditorTests'
+          arguments: --extra-utr-arg=--timeout=1800 --enable-code-coverage --code-coverage-options 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+Unity.MeshSync,+Unity.MeshSync.Editor,-Unity.MeshSync.Tests,-Unity.MeshSync.EditorTests'
   - test_type: &upm_ci_playedit
       steps:
         - name: playedit_editor
-          arguments: --enable-code-coverage --code-coverage-options 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+Unity.MeshSync,+Unity.MeshSync.Editor,-Unity.MeshSync.Tests,-Unity.MeshSync.EditorTests'
+          arguments: --extra-utr-arg=--timeout=1800 --enable-code-coverage --code-coverage-options 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+Unity.MeshSync,+Unity.MeshSync.Editor,-Unity.MeshSync.Tests,-Unity.MeshSync.EditorTests'
 
 test_configs:
   - editor_version: 2019.4
@@ -90,7 +90,7 @@ test_configs:
       - platform_type: *platform_mac
         test_type: *upm_ci_all
       - platform_type: *platform_linux
-        test_type: *upm_ci_all
+        test_type: *upm_ci_playedit
 
 
 promotion_types:

@@ -1,41 +1,34 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace Unity.MeshSync.Editor
 {
     internal class BlenderLauncher : IDCCLauncher
     {
-        const string menuItem_OpenInBlender = "Assets/MeshSync/Open in blender";
+        public const string FileFormat = ".blend";
 
         const string editorSettingPath = "MESHSYNC_BLENDER_PATH";
 
-        System.Diagnostics.Process m_blenderProcess;
+        Process m_blenderProcess;
         static bool redirectBlenderToUnityConsole;
 
         public RunMode runMode { get; set; }
-
-        ~BlenderLauncher()
-        {
-            Cleanup();
-        }
-
+        
         static string GetBlenderPath()
         {
             var blenderPath = EditorPrefs.GetString(editorSettingPath);
 
             if (string.IsNullOrEmpty(blenderPath))
             {
-                if (!DefaultAppUtility.TryGetRegisteredApplication(".blend", out blenderPath))
+                if (!DefaultAppUtility.TryGetRegisteredApplication(BlenderLauncher.FileFormat, out blenderPath))
                 {
                     if (Application.platform == RuntimePlatform.OSXEditor)
                     {
-                        blenderPath = "/Applications/Blender.app/Contents/MacOS/Blender";
+                        blenderPath = Path.Combine("Applications", "Blender.app", "Contents", "MacOS", "Blender");
                     }
                 }
 
@@ -48,50 +41,6 @@ namespace Unity.MeshSync.Editor
         public static void SetBlenderPath(string blenderPath)
         {
             EditorPrefs.SetString(editorSettingPath, blenderPath);
-        }
-
-        [MenuItem(menuItem_OpenInBlender, priority = 0)]
-        static void OpenBlender()
-        {
-            var selectedAsset = Selection.objects[0];
-            if (selectedAsset == null)
-                return;
-
-            var servers = UnityEngine.Object.FindObjectsOfType<MeshSyncServer>();
-
-            MeshSyncServer server = null;
-
-            foreach (var serverInScene in servers)
-            {
-                if (serverInScene.enabled)
-                {
-                    server = serverInScene;
-                    break;
-                }
-            }
-
-            if (server == null)
-            {
-                server = MeshSyncMenu.CreateMeshSyncServerMenu(null);
-            }
-
-            server.m_DCCAsset = selectedAsset;
-
-            MeshSyncServerInspectorUtils.OpenDCCAsset(server);
-        }
-
-        [MenuItem(menuItem_OpenInBlender, validate = true, priority = 0)]
-        static bool CanOpenBlender()
-        {
-            if (Selection.objects.Length == 1)
-            {
-                string assetPath = AssetDatabase.GetAssetPath(Selection.objects[0]);
-                if (assetPath.EndsWith(".blend"))
-                {
-                    return true;
-                }
-            }
-            return false;
         }
 
         private void M_ProcessOnOutputDataReceived(object sender, System.Diagnostics.DataReceivedEventArgs e)
@@ -113,12 +62,19 @@ namespace Unity.MeshSync.Editor
 
         public void OpenDCCTool(UnityEngine.Object asset)
         {
-            Cleanup();
+            Dispose();
 
             var startInfo = new System.Diagnostics.ProcessStartInfo();
             startInfo.FileName = GetBlenderPath();
 
-            var assetPath = AssetDatabase.GetAssetPath(asset).Replace("Assets/", string.Empty);
+            if (string.IsNullOrEmpty(startInfo.FileName) || !File.Exists(startInfo.FileName))
+            {
+                Debug.LogError("The blender path is not set or blender cannot be found.");
+                return;
+            }
+
+            var assetPath = FilmInternalUtilities.AssetUtility.ToAssetRelativePath(AssetDatabase.GetAssetPath(asset));
+
             var absoluteAssetPath = Path.Combine(Application.dataPath, assetPath).Replace('\\', '/');
 
             var scriptPath = Path.GetFullPath("Packages/com.unity.meshsync/Editor/Scripts/DCCIntegration/Launchers/blender_interop.py");
@@ -165,77 +121,113 @@ namespace Unity.MeshSync.Editor
             }
         }
 
-        public void DrawDCCToolVersion(BaseMeshSync player)
+        bool HandleBlenderPath(MeshSyncServer server)
         {
-            GUILayout.BeginVertical("Box");
+            bool changed = false;
 
-            if (player is MeshSyncServer server)
+            var blenderPath = GetBlenderPath();
+
+            GUILayout.BeginHorizontal();
+
+            var style = new GUIStyle(GUI.skin.label) { wordWrap = true };
+            EditorGUILayout.LabelField("Blender path:", blenderPath, style);
+            if (GUILayout.Button("...", GUILayout.Width(30)))
             {
-                var blenderPath = GetBlenderPath();
+                var newBlenderPath = EditorUtility.OpenFilePanel("Blender path", Path.GetDirectoryName(blenderPath), "exe");
 
-                GUILayout.BeginHorizontal();
-                var style = new GUIStyle(GUI.skin.label) { wordWrap = true };
-                EditorGUILayout.LabelField("Blender path:", blenderPath, style);
-                if (GUILayout.Button("...", GUILayout.Width(30)))
+                if (!string.IsNullOrEmpty(newBlenderPath) && newBlenderPath != blenderPath)
                 {
-                    var newBlenderPath = EditorUtility.OpenFilePanel("Blender path", Path.GetDirectoryName(blenderPath), "exe");
-
-                    if (!string.IsNullOrEmpty(newBlenderPath) && newBlenderPath != blenderPath)
-                    {
-                        SetBlenderPath(newBlenderPath);
-                        OpenDCCTool(server.m_DCCAsset);
-                    }
-                    GUILayout.EndVertical();
-                    return;
+                    SetBlenderPath(newBlenderPath);
+                    OpenDCCTool(server.m_DCCAsset);
                 }
 
-                GUILayout.EndHorizontal();
+                changed = true;
+            }
 
-                GUILayout.BeginHorizontal();
+            GUILayout.EndHorizontal();
 
-                var newRunMode = (RunMode)EditorGUILayout.EnumPopup("Run mode:", runMode);
-                if (newRunMode != runMode)
+            return changed;
+        }
+
+        void HandleRunMmode(MeshSyncServer server)
+        {
+            GUILayout.BeginHorizontal();
+
+            var newRunMode = (RunMode)EditorGUILayout.EnumPopup("Run mode:", runMode);
+            if (newRunMode != runMode)
+            {
+                runMode = newRunMode;
+                if (m_blenderProcess != null)
                 {
-                    runMode = newRunMode;
-                    if (m_blenderProcess != null)
-                    {
-                        OpenDCCTool(server.m_DCCAsset);
-                    }
-                }
-
-                GUILayout.EndHorizontal();
-
-                var newRedirect = EditorGUILayout.Toggle("Redirect Blender to Unity Console:", redirectBlenderToUnityConsole);
-                if (newRedirect != redirectBlenderToUnityConsole)
-                {
-                    redirectBlenderToUnityConsole = newRedirect;
-                    if (m_blenderProcess != null)
-                    {
-                        OpenDCCTool(server.m_DCCAsset);
-                    }
+                    OpenDCCTool(server.m_DCCAsset);
                 }
             }
+
+            GUILayout.EndHorizontal();
+        }
+
+        void HandleRedirect(MeshSyncServer server)
+        {
+            var newRedirect = EditorGUILayout.Toggle("Redirect Blender to Unity Console:", redirectBlenderToUnityConsole);
+            if (newRedirect != redirectBlenderToUnityConsole)
+            {
+                redirectBlenderToUnityConsole = newRedirect;
+                if (m_blenderProcess != null)
+                {
+                    OpenDCCTool(server.m_DCCAsset);
+                }
+            }
+        }
+
+        public void DrawDCCMenu(BaseMeshSync player)
+        {
+            var server = player as MeshSyncServer;
+
+            if (server == null)
+            {
+                return;
+            }
+
+            GUILayout.BeginVertical("Box");
+
+            if (HandleBlenderPath(server))
+            {
+                GUILayout.EndVertical();
+                return;
+            }
+
+            HandleRunMmode(server);
+
+            HandleRedirect(server);
 
             GUILayout.EndVertical();
 
             EditorGUILayout.Space();
         }
 
-        public void Cleanup()
+        public void Dispose()
         {
-            if (m_blenderProcess != null)
+            if (m_blenderProcess == null)
             {
-                try
+                return;
+            }
+            
+            // Only force close blender process if it was running in
+            // background mode and the user has no way to close it
+            // themselves and have no pending changes:
+            try
+            {
+                if (m_blenderProcess.StartInfo.WindowStyle == ProcessWindowStyle.Hidden)
                 {
                     if (!m_blenderProcess.HasExited)
                     {
                         m_blenderProcess.Kill();
                     }
                 }
-                catch { }
-
-                m_blenderProcess = null;
             }
+            catch { }
+
+            m_blenderProcess = null;
         }
 
         #endregion // IDCCLauncher

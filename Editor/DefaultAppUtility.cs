@@ -14,7 +14,7 @@ internal static class DefaultAppUtility
         }
 
         string openCommand = GetClassesRootKeyDefaultValue(
-            Path.Combine(new[] {extensionId, "shell", "open", "command"}));
+            Path.Combine(extensionId, "shell", "open", "command"));
 
         if (openCommand == null)
         {
