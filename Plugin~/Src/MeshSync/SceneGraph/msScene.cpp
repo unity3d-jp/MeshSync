@@ -269,8 +269,8 @@ std::vector<EntityConverterPtr> Scene::getConverters(const SceneImportSettings& 
         }
         else if (cv.zup_correction_mode == ZUpCorrectionMode::RotateX) {
             if (invert) {
-                // TODO: Could write a new RotateX_ZUpCorrector that rotates back, for now just rotate 3 more times to get back to original:
-                for (int i = 0; i < 3; i++)
+                // TODO: Could write a new RotateX_ZUpCorrector that rotates back, for now just rotate 7 more times to get back to original:
+                for (int i = 0; i < 7; i++)
                 {
                     converters.push_back(RotateX_ZUpCorrector::create());
                 }

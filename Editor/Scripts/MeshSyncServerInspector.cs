@@ -24,17 +24,23 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
         }
 
         foreach (var mesh in meshes) {
-            var version = (ushort)versionInfo.GetValue(mesh);
-
-            if (!versionIndices.TryGetValue(mesh, out var storedVersion)) {
-                versionIndices.Add(mesh, version);
-            }
-            else if (version != storedVersion) {
-                versionIndices[mesh] = version;
-
+            // Older versions don't have this optimization:
+            if (versionInfo == null) {
                 var server = mesh.GetComponentInParent<MeshSyncServer>();
-
                 server?.MeshChanged(mesh);
+            }
+            else {
+                var version = (ushort)versionInfo.GetValue(mesh);
+
+                if (!versionIndices.TryGetValue(mesh, out var storedVersion)) {
+                    versionIndices.Add(mesh, version);
+                }
+                else if (version != storedVersion) {
+                    versionIndices[mesh] = version;
+
+                    var server = mesh.GetComponentInParent<MeshSyncServer>();
+                    server?.MeshChanged(mesh);
+                }
             }
         }
     }
