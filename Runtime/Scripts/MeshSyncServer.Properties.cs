@@ -187,7 +187,7 @@ namespace Unity.MeshSync
 
         void SendTransform(string path, EntityRecord entity)
         {
-            // TODO: Implement this.
+            // TODO: Implement this. https://jira.unity3d.com/browse/BLENDER-478
         }
 
 
