@@ -237,7 +237,7 @@ namespace Unity.MeshSync.Editor
         {
             var previousRunMode = server.m_DCCInterop != null ? server.m_DCCInterop.runMode : RunMode.GUI;
 
-            var asset = server.m_DCCAsset;
+            var asset = server.DCCAsset;
 
             server.m_DCCInterop?.Dispose();
             server.m_DCCInterop = GetLauncherForAsset(asset);

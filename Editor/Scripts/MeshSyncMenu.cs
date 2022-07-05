@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -53,7 +53,7 @@ internal static class MeshSyncMenu  {
             server = CreateMeshSyncServerMenu(null);
         }
 
-        server.m_DCCAsset = selectedAsset;
+        server.DCCAsset = selectedAsset;
 
         MeshSyncServerInspectorUtils.OpenDCCAsset(server);
     }
