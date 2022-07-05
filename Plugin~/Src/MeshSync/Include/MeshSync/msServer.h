@@ -22,7 +22,7 @@ msDeclClassPtr(PollMessage)
 msDeclClassPtr(SetMessage)
 msDeclClassPtr(GetMessage)
 msDeclClassPtr(ScreenshotMessage)
-msDeclClassPtr(ServerInitiatedMessage)
+msDeclClassPtr(ServerLiveEditRequest)
 msDeclClassPtr(PropertyInfo)
 msDeclClassPtr(Curve)
 
@@ -132,7 +132,7 @@ private:
     GetMessagePtr m_current_get_request;
     ScreenshotMessagePtr m_current_screenshot_request;
     std::mutex m_properties_mutex;
-    ServerInitiatedMessagePtr m_current_properties_request;
+    ServerLiveEditRequestPtr m_current_live_edit_request;
     std::atomic_bool m_syncRequested;
     std::string m_screenshot_file_path;
     std::string m_file_root_path;

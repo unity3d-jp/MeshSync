@@ -95,7 +95,7 @@ void AsyncSceneSender::requestServerInitiatedMessageImpl() {
 
     m_properties_client = &client;
 
-    ms::ServerInitiatedMessage mes;
+    ms::ServerLiveEditRequest mes;
     setup_message(mes);
 
     mes.scene_settings = scene_settings;

@@ -167,26 +167,26 @@ void PollMessage::deserialize(std::istream& is)
     read(is, poll_type);
 }
 
-ServerInitiatedMessage::ServerInitiatedMessage() {}
-void ServerInitiatedMessage::serialize(std::ostream& os) const {
+ServerLiveEditRequest::ServerLiveEditRequest() {}
+void ServerLiveEditRequest::serialize(std::ostream& os) const {
     super::serialize(os);
 
     write(os, scene_settings);
 }
 
-void ServerInitiatedMessage::deserialize(std::istream& is) {
+void ServerLiveEditRequest::deserialize(std::istream& is) {
     super::deserialize(is);
 
     read(is, scene_settings);
 }
 
 #define EachMember(F) F(properties) F(entities) F(message)
-void ServerInitiatedMessageResponse::serialize(std::ostream& os) const
+void ServerLiveEditResponse::serialize(std::ostream& os) const
 {
     EachMember(msWrite);
 }
 
-void ServerInitiatedMessageResponse::deserialize(std::istream& is)
+void ServerLiveEditResponse::deserialize(std::istream& is)
 {
     EachMember(msRead);
 }

@@ -187,7 +187,7 @@ void Client::abortPropertiesRequest() {
     }
 }
 
-bool Client::send(const ServerInitiatedMessage& mes)
+bool Client::send(const ServerLiveEditRequest& mes)
 {
     try {
         
@@ -208,7 +208,7 @@ bool Client::send(const ServerInitiatedMessage& mes)
         HTTPResponse response;
         auto& rs = session.receiveResponse(response);
 
-        auto reqResponse = ServerInitiatedMessageResponse();
+        auto reqResponse = ServerLiveEditResponse();
         reqResponse.deserialize(rs);
 
         properties = std::vector<PropertyInfo>();

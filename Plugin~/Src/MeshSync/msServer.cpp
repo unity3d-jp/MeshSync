@@ -147,12 +147,12 @@ int Server::processMessages(const MessageHandler& handler)
         else if (auto q = std::dynamic_pointer_cast<QueryMessage>(mes)) {
             handler(Message::Type::Query, *mes);
         }
-        else if (auto req = std::dynamic_pointer_cast<ServerInitiatedMessage>(mes)) {
+        else if (auto req = std::dynamic_pointer_cast<ServerLiveEditRequest>(mes)) {
             lock_t lock(m_properties_mutex);
-            if (m_current_properties_request) {
-                m_current_properties_request->cancelled = true;
+            if (m_current_live_edit_request) {
+                m_current_live_edit_request->cancelled = true;
             }
-            m_current_properties_request = req;
+            m_current_live_edit_request = req;
             handler(Message::Type::RequestServerInitiatedMessage, *mes);
         }
 
@@ -621,7 +621,7 @@ void Server::recvPoll(HTTPServerRequest& request, HTTPServerResponse& response)
 
 void Server::recvServerInitiatedRequest(HTTPServerRequest& request, HTTPServerResponse& response)
 {
-    auto mes = deserializeMessage<ServerInitiatedMessage>(request, response);
+    auto mes = deserializeMessage<ServerLiveEditRequest>(request, response);
 
     queueMessage(mes);
 
@@ -638,7 +638,7 @@ void Server::recvServerInitiatedRequest(HTTPServerRequest& request, HTTPServerRe
     // serve data
     response.set("Cache-Control", "no-store, must-revalidate");
     
-    auto reqResponse = ServerInitiatedMessageResponse();
+    auto reqResponse = ServerLiveEditResponse();
 
     for (const auto& [key, prop] : m_pending_properties)
     {
@@ -647,7 +647,7 @@ void Server::recvServerInitiatedRequest(HTTPServerRequest& request, HTTPServerRe
     }
     m_pending_properties.clear();
 
-    auto converters = Scene::getConverters(m_settings.import_settings, m_current_properties_request->scene_settings, true);
+    auto converters = Scene::getConverters(m_settings.import_settings, m_current_live_edit_request->scene_settings, true);
 
     for (auto entity : m_pending_entities) {
         for (auto& cv : converters) {
@@ -692,14 +692,14 @@ void Server::syncRequested() {
 void Server::propertiesReady() {
     lock_t lock(m_properties_mutex);
 
-    if (m_current_properties_request) {
-        m_current_properties_request->ready = true;
+    if (m_current_live_edit_request) {
+        m_current_live_edit_request->ready = true;
     }
 }
 
 bool Server::readyForProperties() {
-    if (m_current_properties_request) {
-        return !m_current_properties_request->ready;
+    if (m_current_live_edit_request) {
+        return !m_current_live_edit_request->ready;
     }
 
     return false;

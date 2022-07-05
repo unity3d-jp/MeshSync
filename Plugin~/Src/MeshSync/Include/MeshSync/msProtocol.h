@@ -224,7 +224,7 @@ msSerializable(PollMessage);
 /// Message that doesn't time out and is only replied to by the server
 /// to send something back to the client.
 /// </summary>
-class ServerInitiatedMessage : public Message
+class ServerLiveEditRequest : public Message
 {
     using super = Message;
 public:
@@ -235,13 +235,13 @@ public:
     std::atomic_bool cancelled { false };
 
 public:
-    ServerInitiatedMessage();
+    ServerLiveEditRequest();
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
 };
-msSerializable(ServerInitiatedMessage);
+msSerializable(ServerLiveEditRequest);
 
-class ServerInitiatedMessageResponse {
+class ServerLiveEditResponse {
 public:
     std::vector<PropertyInfo> properties;
     std::vector<EntityPtr> entities;
@@ -250,6 +250,6 @@ public:
     void serialize(std::ostream& os) const;
     void deserialize(std::istream& is);
 };
-msSerializable(ServerInitiatedMessageResponse);
+msSerializable(ServerLiveEditResponse);
 
 } // namespace ms

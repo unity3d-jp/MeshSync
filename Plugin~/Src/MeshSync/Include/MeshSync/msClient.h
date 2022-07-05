@@ -24,7 +24,7 @@ public:
     bool send(const SetMessage& mes);
     bool send(const DeleteMessage& mes);
     bool send(const FenceMessage& mes);
-    bool send(const ServerInitiatedMessage& mes);
+    bool send(const ServerLiveEditRequest& mes);
     ResponseMessagePtr send(const QueryMessage& mes);
     ResponseMessagePtr send(const QueryMessage& mes, int timeout_ms);
 
