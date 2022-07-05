@@ -14,8 +14,6 @@ namespace ms {
 
 	class PropertyInfo
 	{
-		uint64_t m_hash = 0;
-
 	public:
 		enum Type {
 			Int,
@@ -31,7 +29,7 @@ namespace ms {
 		};
 
 		/// <summary>
-		/// Path on the hierachy tree to the object it refers to
+		/// Path on the hierarchy tree to the object it refers to
 		/// </summary>
 		string path;
 
@@ -54,7 +52,6 @@ namespace ms {
 		void clear();
 		
 		static shared_ptr<PropertyInfo> create(std::istream& is);
-		uint64_t hash();
 
 		Identifier getIdentifier();
 

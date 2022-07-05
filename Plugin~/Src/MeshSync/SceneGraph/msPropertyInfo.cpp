@@ -29,12 +29,7 @@ namespace ms {
 		ret->deserialize(is);
 		return ret;
 	}
-
-	uint64_t PropertyInfo::hash()
-	{
-		return m_hash;
-	}
-
+	
 	Identifier PropertyInfo::getIdentifier()
 	{
 		return Identifier{ path, InvalidID };
