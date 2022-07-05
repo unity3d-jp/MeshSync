@@ -25,7 +25,8 @@ namespace Unity.MeshSync
 #if UNITY_EDITOR
         public override InstanceHandlingType InstanceHandling
         {
-            get => base.InstanceHandling; set
+            get => base.InstanceHandling; 
+            set
             {
                 if (InstanceHandling != value)
                 {
