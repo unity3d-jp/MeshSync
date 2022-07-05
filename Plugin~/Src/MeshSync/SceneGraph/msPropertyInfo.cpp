@@ -60,17 +60,18 @@ namespace ms {
 	}
 
 	template<class T>
-	static inline void set_impl(SharedVector<char>& dst, const T& v)
+	static void set_impl(SharedVector<char>& dst, const T& v)
 	{
 		dst.resize_discard(sizeof(T));
 		(T&)dst[0] = v;
 	}
 
 	template<class T>
-	static inline void set_impl(SharedVector<char>& dst, const T* v, size_t n)
+	static void set_impl(SharedVector<char>& dst, const T* v, size_t n)
 	{
-		dst.resize_discard(sizeof(T) * n);
-		memcpy(dst.data(), v, dst.size());
+		size_t size = sizeof(T) * n;
+		dst.resize_discard(size);
+		memcpy(dst.data(), v, size);
 	}
 
 #define EachType(Body)\
