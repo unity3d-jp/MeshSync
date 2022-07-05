@@ -12,14 +12,10 @@ using UnityEngine.Splines;
 using Unity.Mathematics;
 #endif
 
-namespace Unity.MeshSync
-{
-    public class PropertyInfoDataWrapperComparer : IComparer<PropertyInfoDataWrapper>
-    {
-        public int Compare(PropertyInfoDataWrapper x, PropertyInfoDataWrapper y)
-        {
-            if (x.path == y.path)
-            {
+namespace Unity.MeshSync {
+    public class PropertyInfoDataWrapperComparer : IComparer<PropertyInfoDataWrapper> {
+        public int Compare(PropertyInfoDataWrapper x, PropertyInfoDataWrapper y) {
+            if (x.path == y.path) {
                 return x.name.CompareTo(y.name);
             }
 
@@ -30,8 +26,7 @@ namespace Unity.MeshSync
     // Wrapper with additional data on PropertyInfoData
     // that cannot be stored in the shared data structure:
     [Serializable]
-    public class PropertyInfoDataWrapper : ISerializationCallbackReceiver
-    {
+    public class PropertyInfoDataWrapper : ISerializationCallbackReceiver {
         [DllImport(Lib.name)]
         static extern void msPropertyInfoCopyData(IntPtr self, ref int dst);
 
@@ -52,8 +47,16 @@ namespace Unity.MeshSync
 
         public static object PropertyUpdateLock = new object();
 
-        internal PropertyInfoDataWrapper(PropertyInfoData propertyInfoData)
-        {
+        #region Serialization constants
+        private const char SERIALIZED_NULL        = 'n';
+        private const char SERIALIZED_INT         = 'i';
+        private const char SERIALIZED_FLOAT       = 'f';
+        private const char SERIALIZED_STRING      = 's';
+        private const char SERIALIZED_INT_ARRAY   = 'a';
+        private const char SERIALIZED_FLOAT_ARRAY = 'b';
+        #endregion
+
+        internal PropertyInfoDataWrapper(PropertyInfoData propertyInfoData) {
             type = propertyInfoData.type;
             sourceType = propertyInfoData.sourceType;
             name = propertyInfoData.name;
@@ -65,39 +68,33 @@ namespace Unity.MeshSync
 
             arrayLength = msPropertyInfoGetArrayLength(propertyInfoData.self);
 
-            switch (type)
-            {
-                case PropertyInfoDataType.Int:
-                    {
+            switch (type) {
+                case PropertyInfoDataType.Int: {
                         int r = 0;
                         msPropertyInfoCopyData(propertyInfoData.self, ref r);
                         propertyValue = r;
                         break;
                     }
-                case PropertyInfoDataType.Float:
-                    {
+                case PropertyInfoDataType.Float: {
                         float r = 0;
                         msPropertyInfoCopyData(propertyInfoData.self, ref r);
                         propertyValue = r;
                         break;
                     }
-                case PropertyInfoDataType.IntArray:
-                    {
+                case PropertyInfoDataType.IntArray: {
                         int[] r = new int[arrayLength];
                         msPropertyInfoCopyData(propertyInfoData.self, r);
                         propertyValue = r;
                         break;
                     }
-                case PropertyInfoDataType.FloatArray:
-                    {
+                case PropertyInfoDataType.FloatArray: {
                         float[] r = new float[arrayLength];
                         msPropertyInfoCopyData(propertyInfoData.self, r);
                         propertyValue = r;
                         break;
                     }
 
-                case PropertyInfoDataType.String:
-                    {
+                case PropertyInfoDataType.String: {
                         var s = new StringBuilder(arrayLength + 1); // +1 for string terminator
                         msPropertyInfoCopyData(propertyInfoData.self, s);
                         propertyValue = s.ToString();
@@ -139,16 +136,13 @@ namespace Unity.MeshSync
         [SerializeField, HideInInspector]
         private string propertyValueSerialized;
 
-        public string ID
-        {
-            get
-            {
+        public string ID {
+            get {
                 return $"{path}_{name}";
             }
         }
 
-        public bool Matches(PropertyInfoDataWrapper other)
-        {
+        public bool Matches(PropertyInfoDataWrapper other) {
             return
                 name == other.name &&
                 type == other.type &&
@@ -157,25 +151,20 @@ namespace Unity.MeshSync
                 arrayLength == other.arrayLength;
         }
 
-        static T[] ParseArray<T>(string propertyValueSerialized, Func<string, T> parse)
-        {
+        static T[] ParseArray<T>(string propertyValueSerialized, Func<string, T> parse) {
             string[] v = propertyValueSerialized.Substring(2).Split('|');
             var array = new T[v.Length];
-            for (int i = 0; i < v.Length; i++)
-            {
+            for (int i = 0; i < v.Length; i++) {
                 array[i] = parse(v[i]);
             }
 
             return array;
         }
 
-        static string SaveArray<T>(string prefix, T[] array)
-        {
+        static string SaveArray<T>(string prefix, T[] array) {
             StringBuilder sb = new StringBuilder(prefix);
-            for (int i = 0; i < array.Length; i++)
-            {
-                if (i < array.Length)
-                {
+            for (int i = 0; i < array.Length; i++) {
+                if (i < array.Length) {
                     sb.Append("|");
                 }
 
@@ -185,95 +174,82 @@ namespace Unity.MeshSync
             return sb.ToString();
         }
 
-        public string GetSerializedValue(bool useNewValues = false)
-        {
+        public string GetSerializedValue(bool useNewValues = false) {
             var valueToSerialize = propertyValue;
 
-            if (useNewValues && newValue != null)
-            {
+            if (useNewValues && newValue != null) {
                 valueToSerialize = newValue;
             }
 
-            if (valueToSerialize == null)
-                return "n";
-            else if (valueToSerialize is int)
-                return "i" + valueToSerialize.ToString();
-            else if (valueToSerialize is float)
-                return "f" + valueToSerialize.ToString();
-            else if (valueToSerialize is string)
-                return "s" + valueToSerialize.ToString();
-            else if (valueToSerialize is int[] intArray)
-                return SaveArray("a", intArray);
-            else if (valueToSerialize is float[] floatArray)
-                return SaveArray("b", floatArray);
-            else
-                throw new NotImplementedException($"propertyValue: {valueToSerialize.GetType()} cannot be serialized!");
+            if (valueToSerialize == null) {
+                return $"{SERIALIZED_NULL}";
+            }
+
+            if (valueToSerialize is int)
+                return $"{SERIALIZED_INT}{valueToSerialize}";
+            if (valueToSerialize is float)
+                return $"{SERIALIZED_FLOAT}{valueToSerialize}";
+            if (valueToSerialize is string)
+                return $"{SERIALIZED_STRING}{valueToSerialize}";
+            if (valueToSerialize is int[] intArray)
+                return SaveArray($"{SERIALIZED_INT_ARRAY}", intArray);
+            if (valueToSerialize is float[] floatArray)
+                return SaveArray($"{SERIALIZED_FLOAT_ARRAY}", floatArray);
+            throw new NotImplementedException($"propertyValue: {valueToSerialize.GetType()} cannot be serialized!");
         }
 
-        static object DeserializeString(string serializedValue)
-        {
+        static object DeserializeString(string serializedValue) {
             if (serializedValue.Length == 0)
                 return null;
             char type = serializedValue[0];
-            if (type == 'n')
+            if (type == SERIALIZED_NULL)
                 return null;
-            else if (type == 'i')
+            if (type == SERIALIZED_INT)
                 return int.Parse(serializedValue.Substring(1));
-            else if (type == 'f')
+            if (type == SERIALIZED_FLOAT)
                 return float.Parse(serializedValue.Substring(1));
-            else if (type == 's')
+            if (type == SERIALIZED_STRING)
                 return serializedValue.Substring(1);
-            else if (type == 'a')
+            if (type == SERIALIZED_INT_ARRAY)
                 return ParseArray(serializedValue, int.Parse);
-            else if (type == 'b')
+            if (type == SERIALIZED_FLOAT_ARRAY)
                 return ParseArray(serializedValue, float.Parse);
-            else
-                throw new NotImplementedException($"propertyValue: {type} cannot be deserialized!");
+            throw new NotImplementedException($"propertyValue: {type} cannot be deserialized!");
         }
 
-        public void SetSerializedValue(string serializedValue)
-        {
+        public void SetSerializedValue(string serializedValue) {
             NewValue = DeserializeString(serializedValue);
         }
 
-        public void OnBeforeSerialize()
-        {
+        public void OnBeforeSerialize() {
             propertyValueSerialized = GetSerializedValue();
         }
 
-        public void OnAfterDeserialize()
-        {
+        public void OnAfterDeserialize() {
             propertyValue = DeserializeString(propertyValueSerialized);
         }
 
-        public object NewValue
-        {
+        public object NewValue {
             get => newValue;
-            set
-            {
-                switch (type)
-                {
-                    case PropertyInfoDataType.IntArray:
-                        {
+            set {
+                switch (type) {
+                    case PropertyInfoDataType.IntArray: {
                             var newValueAsArray = new int[arrayLength];
 
-                            if (value is Vector2 newValueAsVector2)
-                            {
+                            if (value is Vector2 newValueAsVector2) {
                                 newValueAsArray[0] = Mathf.Clamp((int)newValueAsVector2.x, (int)min, (int)max);
                                 newValueAsArray[1] = Mathf.Clamp((int)newValueAsVector2.y, (int)min, (int)max);
 
                                 value = newValueAsArray;
                             }
-                            else if (value is Vector3 newValueAsVector3)
-                            {
+                            else if (value is Vector3 newValueAsVector3) {
                                 newValueAsArray[0] = Mathf.Clamp((int)newValueAsVector3.x, (int)min, (int)max);
                                 newValueAsArray[1] = Mathf.Clamp((int)newValueAsVector3.y, (int)min, (int)max);
                                 newValueAsArray[2] = Mathf.Clamp((int)newValueAsVector3.z, (int)min, (int)max);
 
                                 value = newValueAsArray;
                             }
-                            else if (value is Vector4 newValueAsVector4)
-                            {
+                            else if (value is Vector4 newValueAsVector4) {
                                 newValueAsArray[0] = Mathf.Clamp((int)newValueAsVector4.x, (int)min, (int)max);
                                 newValueAsArray[1] = Mathf.Clamp((int)newValueAsVector4.y, (int)min, (int)max);
                                 newValueAsArray[2] = Mathf.Clamp((int)newValueAsVector4.z, (int)min, (int)max);
@@ -281,37 +257,31 @@ namespace Unity.MeshSync
 
                                 value = newValueAsArray;
                             }
-                            else
-                            {
+                            else {
                                 var array = value as int[];
-                                for (int i = 0; i < array.Length; i++)
-                                {
+                                for (int i = 0; i < array.Length; i++) {
                                     array[i] = Mathf.Clamp(array[i], (int)min, (int)max);
                                 }
                             }
                             break;
                         }
-                    case PropertyInfoDataType.FloatArray:
-                        {
+                    case PropertyInfoDataType.FloatArray: {
                             var newValueAsArray = new float[arrayLength];
 
-                            if (value is Vector2 newValueAsVector2)
-                            {
+                            if (value is Vector2 newValueAsVector2) {
                                 newValueAsArray[0] = Mathf.Clamp(newValueAsVector2.x, min, max);
                                 newValueAsArray[1] = Mathf.Clamp(newValueAsVector2.y, min, max);
 
                                 value = newValueAsArray;
                             }
-                            else if (value is Vector3 newValueAsVector3)
-                            {
+                            else if (value is Vector3 newValueAsVector3) {
                                 newValueAsArray[0] = Mathf.Clamp(newValueAsVector3.x, min, max);
                                 newValueAsArray[1] = Mathf.Clamp(newValueAsVector3.y, min, max);
                                 newValueAsArray[2] = Mathf.Clamp(newValueAsVector3.z, min, max);
 
                                 value = newValueAsArray;
                             }
-                            else if (value is Vector4 newValueAsVector4)
-                            {
+                            else if (value is Vector4 newValueAsVector4) {
                                 newValueAsArray[0] = Mathf.Clamp(newValueAsVector4.x, min, max);
                                 newValueAsArray[1] = Mathf.Clamp(newValueAsVector4.y, min, max);
                                 newValueAsArray[2] = Mathf.Clamp(newValueAsVector4.z, min, max);
@@ -319,11 +289,9 @@ namespace Unity.MeshSync
 
                                 value = newValueAsArray;
                             }
-                            else
-                            {
+                            else {
                                 var array = value as float[];
-                                for (int i = 0; i < array.Length; i++)
-                                {
+                                for (int i = 0; i < array.Length; i++) {
                                     array[i] = Mathf.Clamp(array[i], min, max);
                                 }
                             }
@@ -331,15 +299,12 @@ namespace Unity.MeshSync
                         }
                 }
 
-                if (newValue != null)
-                {
-                    if (newValue.Equals(value))
-                    {
+                if (newValue != null) {
+                    if (newValue.Equals(value)) {
                         return;
                     }
                 }
-                else if (propertyValue != null && propertyValue.Equals(value))
-                {
+                else if (propertyValue != null && propertyValue.Equals(value)) {
                     return;
                 }
 
@@ -350,39 +315,32 @@ namespace Unity.MeshSync
 
         private object newValue;
 
-        public bool IsDirty
-        {
+        public bool IsDirty {
             get;
             set;
         }
 
-        public T GetValue<T>()
-        {
-            if (NewValue is T x)
-            {
+        public T GetValue<T>() {
+            if (NewValue is T x) {
                 return x;
             }
 
-            if (propertyValue == null)
-            {
+            if (propertyValue == null) {
                 return default(T);
             }
 
             return (T)propertyValue;
         }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             return $"PropertyInfoDataWrapper: {name}: {GetValue<object>()}";
         }
     }
 
     // Partial class for now to make merging code easier later.
     [Serializable]
-    partial class BaseMeshSync
-    {
-        public enum InstanceHandlingType
-        {
+    partial class BaseMeshSync {
+        public enum InstanceHandlingType {
             InstanceRenderer,
             Copies,
             Prefabs
@@ -391,10 +349,8 @@ namespace Unity.MeshSync
         [SerializeField]
         private InstanceHandlingType instanceHandling = InstanceHandlingType.InstanceRenderer;
 
-        public List<PropertyInfoDataWrapper> propertyInfos
-        {
-            get
-            {
+        public List<PropertyInfoDataWrapper> propertyInfos {
+            get {
                 var propertyComponent = Misc.GetOrAddComponent<MeshSyncServerLiveEditProperties>(gameObject);
 
                 return propertyComponent.propertyInfos;
@@ -402,8 +358,7 @@ namespace Unity.MeshSync
         }
 
 
-        public virtual InstanceHandlingType InstanceHandling
-        {
+        public virtual InstanceHandlingType InstanceHandling {
             get => instanceHandling;
 #if UNITY_EDITOR
             set => instanceHandling = value;
@@ -414,8 +369,7 @@ namespace Unity.MeshSync
         [SerializeField]
         private bool useProBuilder;
 
-        public virtual bool UseProBuilder
-        {
+        public virtual bool UseProBuilder {
             get => useProBuilder;
             set => useProBuilder = value;
         }
@@ -467,8 +421,7 @@ namespace Unity.MeshSync
 
         object splineLock = new object();
 
-        private EntityRecord UpdateCurveEntity(CurvesData data, MeshSyncPlayerConfig config)
-        {
+        private EntityRecord UpdateCurveEntity(CurvesData data, MeshSyncPlayerConfig config) {
 #if AT_USE_SPLINES
             lock (splineLock)
             {
