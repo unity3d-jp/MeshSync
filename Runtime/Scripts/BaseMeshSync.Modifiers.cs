@@ -395,7 +395,7 @@ namespace Unity.MeshSync
         {
             get
             {
-                var propertyComponent = Misc.GetOrAddComponent<MeshSyncServerProperties>(gameObject);
+                var propertyComponent = Misc.GetOrAddComponent<MeshSyncServerLiveEditProperties>(gameObject);
 
                 return propertyComponent.propertyInfos;
             }

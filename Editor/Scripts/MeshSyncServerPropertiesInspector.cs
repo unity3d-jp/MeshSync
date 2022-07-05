@@ -1,13 +1,13 @@
-﻿using UnityEditor;
+using UnityEditor;
 
 namespace Unity.MeshSync.Editor
 {
-    [CustomEditor(typeof(MeshSyncServerProperties))]
+    [CustomEditor(typeof(MeshSyncServerLiveEditProperties))]
     internal class MeshSyncServerPropertiesInspector : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
-            var propertiesHolder = (MeshSyncServerProperties)target;
+            var propertiesHolder = (MeshSyncServerLiveEditProperties)target;
 
             MeshSyncServerInspectorUtils.DrawSliderForProperties(propertiesHolder.propertyInfos, editableStrings: false);
         }
