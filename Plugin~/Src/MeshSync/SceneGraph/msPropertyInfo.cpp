@@ -16,7 +16,7 @@ namespace ms {
 		EachMember(msRead);
 	}
 
-#undef EachMember(F)
+#undef EachMember
 
 	void PropertyInfo::clear()
 	{

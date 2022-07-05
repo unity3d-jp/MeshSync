@@ -190,6 +190,7 @@ void ServerInitiatedMessageResponse::deserialize(std::istream& is)
 {
     EachMember(msRead);
 }
-#undef EachMember(F)
+
+#undef EachMember
 
 } // namespace ms
