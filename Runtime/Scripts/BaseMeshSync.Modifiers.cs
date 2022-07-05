@@ -48,11 +48,11 @@ namespace Unity.MeshSync {
         public static object PropertyUpdateLock = new object();
 
         #region Serialization constants
-        private const char SERIALIZED_NULL        = 'n';
-        private const char SERIALIZED_INT         = 'i';
-        private const char SERIALIZED_FLOAT       = 'f';
-        private const char SERIALIZED_STRING      = 's';
-        private const char SERIALIZED_INT_ARRAY   = 'a';
+        private const char SERIALIZED_NULL = 'n';
+        private const char SERIALIZED_INT = 'i';
+        private const char SERIALIZED_FLOAT = 'f';
+        private const char SERIALIZED_STRING = 's';
+        private const char SERIALIZED_INT_ARRAY = 'a';
         private const char SERIALIZED_FLOAT_ARRAY = 'b';
         #endregion
 
@@ -236,7 +236,20 @@ namespace Unity.MeshSync {
                     case PropertyInfoDataType.IntArray: {
                             var newValueAsArray = new int[arrayLength];
 
-                            if (value is Vector2 newValueAsVector2) {
+                            if (value is Vector2Int newValueAsVector2Int) {
+                                newValueAsArray[0] = Mathf.Clamp(newValueAsVector2Int.x, (int)min, (int)max);
+                                newValueAsArray[1] = Mathf.Clamp(newValueAsVector2Int.y, (int)min, (int)max);
+
+                                value = newValueAsArray;
+                            }
+                            else if (value is Vector3Int newValueAsVector3Int) {
+                                newValueAsArray[0] = Mathf.Clamp(newValueAsVector3Int.x, (int)min, (int)max);
+                                newValueAsArray[1] = Mathf.Clamp(newValueAsVector3Int.y, (int)min, (int)max);
+                                newValueAsArray[2] = Mathf.Clamp(newValueAsVector3Int.z, (int)min, (int)max);
+
+                                value = newValueAsArray;
+                            }
+                            else if (value is Vector2 newValueAsVector2) {
                                 newValueAsArray[0] = Mathf.Clamp((int)newValueAsVector2.x, (int)min, (int)max);
                                 newValueAsArray[1] = Mathf.Clamp((int)newValueAsVector2.y, (int)min, (int)max);
 
@@ -268,7 +281,20 @@ namespace Unity.MeshSync {
                     case PropertyInfoDataType.FloatArray: {
                             var newValueAsArray = new float[arrayLength];
 
-                            if (value is Vector2 newValueAsVector2) {
+                            if (value is Vector2Int newValueAsVector2Int) {
+                                newValueAsArray[0] = Mathf.Clamp(newValueAsVector2Int.x, min, max);
+                                newValueAsArray[1] = Mathf.Clamp(newValueAsVector2Int.y, min, max);
+
+                                value = newValueAsArray;
+                            }
+                            else if (value is Vector3Int newValueAsVector3Int) {
+                                newValueAsArray[0] = Mathf.Clamp(newValueAsVector3Int.x, min, max);
+                                newValueAsArray[1] = Mathf.Clamp(newValueAsVector3Int.y, min, max);
+                                newValueAsArray[2] = Mathf.Clamp(newValueAsVector3Int.z, min, max);
+
+                                value = newValueAsArray;
+                            }
+                            else if (value is Vector2 newValueAsVector2) {
                                 newValueAsArray[0] = Mathf.Clamp(newValueAsVector2.x, min, max);
                                 newValueAsArray[1] = Mathf.Clamp(newValueAsVector2.y, min, max);
 
