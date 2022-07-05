@@ -39,6 +39,16 @@ Instances of blender objects can be created in Unity in different ways, this is 
 	Prefabs are not overwritten when their blender source object changes. 
 	There is a "Clear prefabs" button to delete all prefabs for this server and regenerate them if blender is open and auto-sync is enabled.
 
+## DCC Asset setting
+The MeshSyncServer has a setting for an DCC asset file. This allows you to set a .blend file from the asset library, pressing 'Live Edit' beside it, opens the selected blender version and turns on MeshSync's Auto-Sync feature.
+There are multiplee options for the Run mode:
+* GUI
+	* Runs blender in normal window mode.
+* Background
+	* Runs blender in headless mode without any window.
+* Console
+	* Runs blender with the console window only.
+
 ## Tips
 For some files to sync correctly, the Bake Modifiers option must be selected.
 ![Menu](images/BakeModsTip.png)
