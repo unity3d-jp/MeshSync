@@ -139,7 +139,7 @@ private:
 
     public:
     std::vector<EntityPtr> m_pending_entities;
-    std::vector<PropertyInfoPtr> m_pending_properties;
+    std::map<uint64_t, PropertyInfoPtr> m_pending_properties;
 
     template<typename T>
     T* getPendingEntity(const char* path) {

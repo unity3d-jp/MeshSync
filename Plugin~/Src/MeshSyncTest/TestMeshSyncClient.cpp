@@ -97,7 +97,7 @@ TestCase(Test_ServerPropertyHandling) {
 
     // 2 properties with the same path should be merged into 1:
     assert(server.m_pending_properties.size() == 1);
-    assert(server.m_pending_properties[0] == prop2);
+    assert(server.m_pending_properties[prop2->hash()] == prop2);
 }
 
 TestCase(Test_ServerEntityHandling) {

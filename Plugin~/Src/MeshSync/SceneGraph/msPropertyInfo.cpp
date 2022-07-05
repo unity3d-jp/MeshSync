@@ -44,16 +44,17 @@ namespace ms {
 		}
 	}
 
-	bool PropertyInfo::matches(const PropertyInfoPtr other) const {
-		return
-			path == other->path &&
-			type == other->type &&
-			sourceType == other->sourceType &&
-			name == other->name &&
-			modifierName == other->modifierName &&
-			propertyName == other->propertyName;
+	uint64_t PropertyInfo::hash() const
+	{
+		uint64_t ret = csum(path);
+		ret += csum(type);
+		ret += csum(sourceType);
+		ret += csum(name);
+		ret += csum(modifierName);
+		ret += csum(propertyName);
+		return ret;
 	}
-
+	
 	template<class T>
 	static void set_impl(SharedVector<char>& dst, const T& v)
 	{

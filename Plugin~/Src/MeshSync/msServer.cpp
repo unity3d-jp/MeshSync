@@ -640,7 +640,7 @@ void Server::recvServerInitiatedRequest(HTTPServerRequest& request, HTTPServerRe
     
     auto reqResponse = ServerInitiatedMessageResponse();
 
-    for (auto prop : m_pending_properties)
+    for (const auto& [key, prop] : m_pending_properties)
     {
         auto p = PropertyInfo(*prop);
         reqResponse.properties.push_back(p);
@@ -682,15 +682,7 @@ void Server::notifyPoll(PollMessage::PollType t)
 }
 
 void Server::receivedProperty(PropertyInfoPtr prop) {
-    // If the same property is already prepared to be sent, replace it with the updated data:
-    for (size_t i = 0; i < m_pending_properties.size(); ++i) {
-        if (m_pending_properties[i]->matches(prop)) {
-            m_pending_properties[i] = prop;
-            return;
-        }
-    }
-
-    m_pending_properties.push_back(prop);
+    m_pending_properties[prop->hash()] = prop;
 }
 
 void Server::syncRequested() {

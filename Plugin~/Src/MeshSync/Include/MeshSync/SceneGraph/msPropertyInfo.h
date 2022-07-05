@@ -47,6 +47,8 @@ namespace ms {
 		void serialize(ostream& os) const;
 		void deserialize(istream& is);
 
+		uint64_t hash() const;
+
 		msDefinePool(PropertyInfo);
 
 		void clear();
@@ -68,8 +70,6 @@ namespace ms {
 		size_t getArrayLength() const;
 
 		void copy(void* dst) const;
-
-		bool matches(const PropertyInfoPtr other) const;
 	};
 
 	msSerializable(PropertyInfo)
