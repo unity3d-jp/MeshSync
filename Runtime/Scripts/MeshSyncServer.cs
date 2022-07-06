@@ -16,7 +16,7 @@ namespace Unity.MeshSync {
 /// A component to sync meshes/models editing in DCC tools into Unity in real time.
 /// </summary>
 [ExecuteAlways]
-public partial class MeshSyncServer : BaseMeshSync {
+public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 
     /// <summary>
     /// Callback which will be called after MeshSyncServer receives data and finishes processing it
@@ -215,7 +215,7 @@ public partial class MeshSyncServer : BaseMeshSync {
                 case NetworkMessageType.Query:
                     OnRecvQuery((QueryMessage)data);
                     break;
-                case NetworkMessageType.RequestServerInitiatedMessage:
+                case NetworkMessageType.RequestServerLiveEdit:
                     OnRecvPropertyRequest();
                     break;
                 default:
@@ -523,27 +523,22 @@ public partial class MeshSyncServer : BaseMeshSync {
             return;
         PollServerEvents();
     }
-    protected override void OnDestroy()
-    {
+
+    protected override void OnDestroy() {
         base.OnDestroy();
 
-#if UNITY_EDITOR
-        m_DCCInterop?.Dispose();
-#endif
-
-        StopServer();
+        Dispose();
     }
 
-    ~MeshSyncServer()
-    {
+    public void Dispose() {
         StopServer();
 
 #if UNITY_EDITOR
         m_DCCInterop?.Dispose();
         m_DCCInterop = null;
 #endif
-        }
-    
+    }
+
     #endregion
 
 //----------------------------------------------------------------------------------------------------------------------
