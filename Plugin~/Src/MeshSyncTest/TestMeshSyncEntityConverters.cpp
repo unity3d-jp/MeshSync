@@ -15,9 +15,14 @@ TestCase(Test_Undoing_FlipYZ_ZUpCorrector) {
     // Validate that applying the converter 4 times, gets back to the start transform:
     const auto transform = ms::Transform::create();
     transform->path = "/";
-    transform->position = { 1,2,3 };
-    transform->rotation = { 4,5,6, 7 };
-    transform->scale = { 8, 9, 10 };
+
+    float3 startingPosition = { 1, 2, 3 };
+    mu::quatf startingRotation = { 4,5,6, 7 };
+    float3 startingScale = { 1, 2, 3 };
+
+    transform->position = startingPosition;
+    transform->rotation = startingRotation;
+    transform->scale = startingScale;
 
     // 1
     converter->convertTransform(*transform);
@@ -43,18 +48,18 @@ TestCase(Test_Undoing_FlipYZ_ZUpCorrector) {
     // 4
     converter->convertTransform(*transform);
 
-    assert(transform->position[0] == 1 &&
-        transform->position[1] == 2 &&
-        transform->position[2] == 3);
+    assert(transform->position[0] == startingPosition[0] &&
+        transform->position[1] == startingPosition[1] &&
+        transform->position[2] == startingPosition[2]);
 
-    assert(transform->rotation[0] == 4 &&
-        transform->rotation[1] == 5 &&
-        transform->rotation[2] == 6 &&
-        transform->rotation[3] == 7);
+    assert(transform->rotation[0] == startingRotation[0] &&
+        transform->rotation[1] == startingRotation[1] &&
+        transform->rotation[2] == startingRotation[2] &&
+        transform->rotation[3] == startingRotation[3]);
 
-    assert(transform->scale[0] == 8 &&
-        transform->scale[1] == 9 &&
-        transform->scale[2] == 10);
+    assert(transform->scale[0] == startingScale[0] &&
+        transform->scale[1] == startingScale[1] &&
+        transform->scale[2] == startingScale[2]);
 }
 
 TestCase(Test_Undoing_RotateX_ZUpCorrector) {
@@ -63,24 +68,28 @@ TestCase(Test_Undoing_RotateX_ZUpCorrector) {
     // Validate that applying the converter 4 times, gets back to the start transform:
     const auto transform = ms::Transform::create();
     transform->path = "/";
-    transform->position = { 1,2,3 };
-    transform->rotation = { 4,5,6, 7 };
-    transform->scale = { 8, 9, 10 };
+    float3 startingPosition = { 1, 2, 3 };
+    mu::quatf startingRotation = { 4,5,6, 7 };
+    float3 startingScale = { 1, 2, 3 };
+
+    transform->position = startingPosition;
+    transform->rotation = startingRotation;
+    transform->scale = startingScale;
 
     for (int i = 0; i < 8; i++) {
         converter->convertTransform(*transform);
     }
 
-    assert(transform->position[0] == 1 &&
-        transform->position[1] == 2 &&
-        transform->position[2] == 3);
+    assert(transform->position[0] == startingPosition[0] &&
+        transform->position[1] == startingPosition[1] &&
+        transform->position[2] == startingPosition[2]);
 
-    assert(transform->rotation[0] == 4 &&
-        transform->rotation[1] == 5 &&
-        transform->rotation[2] == 6 &&
-        transform->rotation[3] == 7);
+    assert(transform->rotation[0] == startingRotation[0] &&
+        transform->rotation[1] == startingRotation[1] &&
+        transform->rotation[2] == startingRotation[2] &&
+        transform->rotation[3] == startingRotation[3]);
 
-    assert(transform->scale[0] == 8 &&
-        transform->scale[1] == 9 &&
-        transform->scale[2] == 10);
+    assert(transform->scale[0] == startingScale[0] &&
+        transform->scale[1] == startingScale[1] &&
+        transform->scale[2] == startingScale[2]);
 }
