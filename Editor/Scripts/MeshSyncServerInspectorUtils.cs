@@ -8,7 +8,7 @@ namespace Unity.MeshSync.Editor
 {
     public static class MeshSyncServerInspectorUtils
     {
-        static List<string> foldouts = new List<string>();
+        static HashSet<string> foldouts = new HashSet<string>();
         
 
         public static void DrawSliderForProperties(List<PropertyInfoDataWrapper> props,
