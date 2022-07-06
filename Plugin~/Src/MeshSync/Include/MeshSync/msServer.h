@@ -90,7 +90,7 @@ public:
     void recvText(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void recvScreenshot(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void recvPoll(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
-    void recvServerInitiatedRequest(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvServerLiveEditRequest(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     
     void receivedProperty(PropertyInfoPtr prop);
     void syncRequested();

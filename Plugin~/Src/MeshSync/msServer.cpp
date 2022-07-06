@@ -619,7 +619,7 @@ void Server::recvPoll(HTTPServerRequest& request, HTTPServerResponse& response)
     }
 }
 
-void Server::recvServerInitiatedRequest(HTTPServerRequest& request, HTTPServerResponse& response)
+void Server::recvServerLiveEditRequest(HTTPServerRequest& request, HTTPServerResponse& response)
 {
     auto mes = deserializeMessage<ServerLiveEditRequest>(request, response);
 
