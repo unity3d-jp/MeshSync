@@ -130,9 +130,14 @@ namespace Unity.MeshSync {
 
         [field: SerializeField]
         public int arrayLength { get; private set; }
+        
+        // This is the new value set in Unity, to be sent back to the DCC tool:
+        private object newValue;
 
-        // object cannot be serialized by unity, save a string representation of it:
+        // This is the value we get from the DCC tool:
         public object propertyValue;
+        
+        // object cannot be serialized by unity, save a string representation of it:
         [SerializeField, HideInInspector]
         private string propertyValueSerialized;
 
@@ -338,8 +343,6 @@ namespace Unity.MeshSync {
                 IsDirty = true;
             }
         }
-
-        private object newValue;
 
         public bool IsDirty {
             get;
