@@ -35,7 +35,7 @@ public:
         Screenshot,
         Query,
         Response,
-        RequestServerInitiatedMessage
+        RequestServerLiveEdit
     };
     int protocol_version = msProtocolVersion;
     int session_id = InvalidID;

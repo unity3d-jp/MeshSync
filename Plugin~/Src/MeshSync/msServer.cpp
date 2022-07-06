@@ -153,7 +153,7 @@ int Server::processMessages(const MessageHandler& handler)
                 m_current_live_edit_request->cancelled = true;
             }
             m_current_live_edit_request = req;
-            handler(Message::Type::RequestServerInitiatedMessage, *mes);
+            handler(Message::Type::RequestServerLiveEdit, *mes);
         }
 
     next:
