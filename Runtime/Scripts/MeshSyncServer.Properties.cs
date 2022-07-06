@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
-using System.Reflection;
-
 #if AT_USE_SPLINES
 using UnityEngine.Splines;
 using Unity.Mathematics;
+#endif
+
+#if AT_USE_PROBUILDER && UNITY_EDITOR
+using UnityEngine.ProBuilder;
 #endif
 
 namespace Unity.MeshSync
@@ -16,7 +18,7 @@ namespace Unity.MeshSync
             None,
             Sending,
             Received
-        };
+        }
 
         bool needsClientSync;
 
@@ -44,7 +46,7 @@ namespace Unity.MeshSync
 
 #if AT_USE_PROBUILDER && UNITY_EDITOR
 
-        HashSet<UnityEngine.ProBuilder.ProBuilderMesh> changedMeshes = new HashSet<UnityEngine.ProBuilder.ProBuilderMesh>();
+        HashSet<ProBuilderMesh> changedMeshes = new HashSet<ProBuilderMesh>();
         
         public override bool UseProBuilder
         {
@@ -193,17 +195,17 @@ namespace Unity.MeshSync
 
 
 #if AT_USE_PROBUILDER && UNITY_EDITOR
-        public void MeshChanged(UnityEngine.ProBuilder.ProBuilderMesh mesh)
-        {
-            changedMeshes.Add(mesh);
+        public void MeshChanged(ProBuilderMesh mesh) {
+            lock (PropertyInfoDataWrapper.PropertyUpdateLock) {
+                changedMeshes.Add(mesh);
+            }
         }
 
-        static GetFlags sendMeshSettings = new GetFlags(new GetFlags.GetFlagsSetting[] {
-                                   GetFlags.GetFlagsSetting.Transform,
-                                   GetFlags.GetFlagsSetting.Points,
-                                   GetFlags.GetFlagsSetting.Indices,
-                                   GetFlags.GetFlagsSetting.MaterialIDS,
-            });
+        static GetFlags sendMeshSettings = new GetFlags(
+            GetFlags.GetFlagsSetting.Transform, 
+            GetFlags.GetFlagsSetting.Points,
+            GetFlags.GetFlagsSetting.Indices, 
+            GetFlags.GetFlagsSetting.MaterialIDS);
 
         void SendMesh(string path, EntityRecord entity)
         {
@@ -219,7 +221,7 @@ namespace Unity.MeshSync
             CaptureMesh(ref dst, mesh, null,
                 sendMeshSettings,
                 mr.sharedMaterials);
-            
+
             TransformData dstTrans = dst.transform;
             Transform rendererTransform = objRenderer.transform;
             dstTrans.hostID = GetObjectlID(objRenderer.gameObject);
@@ -230,7 +232,7 @@ namespace Unity.MeshSync
             dst.world2local = rendererTransform.worldToLocalMatrix;
 
             dstTrans.path = path;
-
+            
             m_server.SendMesh(dst);
         }
 #endif
