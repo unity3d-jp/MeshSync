@@ -73,14 +73,9 @@ namespace Unity.MeshSync.Editor
                 switch (prop.type)
                 {
                     case PropertyInfoDataType.Int:
-                        int max = (int)prop.max;
-
                         // Need to be careful with overflow here:
-                        if (prop.max == int.MaxValue)
-                        {
-                            max = int.MaxValue - 1;
-                        }
-
+                        int max = Mathf.Min((int)prop.max, int.MaxValue - 1);
+                        
                         newValue = EditorGUILayout.IntSlider(prop.name, prop.GetValue<int>(), (int)prop.min, max);
                         break;
 
