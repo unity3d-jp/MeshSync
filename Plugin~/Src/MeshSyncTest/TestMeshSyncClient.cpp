@@ -24,6 +24,10 @@
 
 using namespace mu;
 
+//#define SKIP_CLIENT_TEST
+
+#ifndef SKIP_CLIENT_TEST
+
 TestCase(Test_SendProperties) {
     std::shared_ptr<ms::Scene> scene = ms::Scene::create();
     {
@@ -514,3 +518,4 @@ TestCase(Test_Query)
 #undef SendQuery
 }
 
+#endif
