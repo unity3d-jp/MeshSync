@@ -199,8 +199,8 @@ internal delegate void DeleteInstanceHandler(string path);
         }
 
         internal List<MaterialHolder> materialList { get { return m_materialList; } }
-        internal List<TextureHolder> textureList { get { return m_textureList; } }
-        internal List<PrefabHolder> prefabList { get { return m_prefabList; } }
+        internal List<TextureHolder>  textureList  { get { return m_textureList; } }
+        internal PrefabDictionary     prefabDict   { get { return m_prefabDict; } }
 
 
 #if UNITY_EDITOR
@@ -1927,20 +1927,15 @@ internal delegate void DeleteInstanceHandler(string path);
         private GameObject GetOrCreatePrefab(InstanceInfoData data, InstanceInfoRecord infoRecord) {
             GameObject instanceObject = null;
 
-            // Look for prefab or create one:
-            for (int prefabListIdx = 0; prefabListIdx < m_prefabList.Count; prefabListIdx++) {
-                var prefab = m_prefabList[prefabListIdx];
-                if (prefab.name == data.path) {
-                    instanceObject = prefab.prefab;
-                    if (instanceObject == null) {
-                        m_prefabList.RemoveAt(prefabListIdx--);
-                    }
-                    else {
-                        break;
-                    }
+            // Look for existing prefab and make sure the object exists:
+            if (m_prefabDict.TryGetValue(data.path, out var existingPrefab)) {
+                instanceObject = existingPrefab.prefab;
+                if (instanceObject == null) {
+                    m_prefabDict.Remove(data.path);
                 }
             }
 
+            // Create it if it doesn't exist:
             if (instanceObject == null) {
 #if UNITY_EDITOR // Cannot create prefabs when not in editor.
                 ExportMeshes();
@@ -1957,7 +1952,7 @@ internal delegate void DeleteInstanceHandler(string path);
 
                 AssetDatabase.SaveAssets();
 
-                m_prefabList.Add(new PrefabHolder() { name = data.path, prefab = prefab });
+                m_prefabDict[data.path] = new PrefabHolder { name = data.path, prefab = prefab };
 
                 instanceObject = prefab;
 
@@ -2384,26 +2379,23 @@ internal delegate void DeleteInstanceHandler(string path);
         return false;
     }
 
-    public virtual void ClearInstancePrefabs()
-    {
+    public virtual void ClearInstancePrefabs() {
         transform.DestroyChildrenImmediate();
 
-        foreach (var prefabHolder in m_prefabList)
-        {
+        foreach (var prefabHolder in m_prefabDict.Values) {
             var path = AssetDatabase.GetAssetPath(prefabHolder.prefab);
 
             // Also delete its asset:
             var deps = AssetDatabase.GetDependencies(path);
             var assetName = Path.ChangeExtension(path, "asset");
-            if (deps.Contains(assetName))
-            {
+            if (deps.Contains(assetName)) {
                 AssetDatabase.DeleteAsset(assetName);
             }
 
             AssetDatabase.DeleteAsset(path);
         }
 
-        m_prefabList.Clear();
+        m_prefabDict.Clear();
     }
 
     void Export(KeyValuePair<string, EntityRecord> kvp, bool overwrite, bool useExistingOnes, string basePath, MeshSyncPlayerConfig config, Misc.UniqueNameGenerator nameGenerator)
@@ -2694,7 +2686,7 @@ internal delegate void DeleteInstanceHandler(string path);
     [SerializeField] private protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
     [SerializeField] private           List<TextureHolder>  m_textureList  = new List<TextureHolder>();
     [SerializeField] private           List<AudioHolder>    m_audioList    = new List<AudioHolder>();
-    [SerializeField] private           List<PrefabHolder>   m_prefabList   = new List<PrefabHolder>();
+    [SerializeField] private           PrefabDictionary     m_prefabDict   = new PrefabDictionary();
 
     [SerializeField] string[]       m_clientObjects_keys;
     [SerializeField] EntityRecord[] m_clientObjects_values;

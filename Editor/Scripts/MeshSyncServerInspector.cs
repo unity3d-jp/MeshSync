@@ -104,12 +104,12 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
 
     static void DrawPrefabListElement(MeshSyncServer t)
     {
-        if (t.prefabList.Count > 0)
+        if (t.prefabDict.Count > 0)
         {
             EditorGUILayout.LabelField("Instance prefabs:");
 
             EditorGUI.indentLevel++;
-            foreach (var prefabHolder in t.prefabList)
+            foreach (var prefabHolder in t.prefabDict.Values)
             {
                 EditorGUILayout.ObjectField(prefabHolder.name, prefabHolder.prefab, typeof(GameObject), true);
             }
