@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Unity.Utilities.VariantExport")]
 
 namespace Unity.MeshSync.Editor
 {
-    public static class MeshSyncServerInspectorUtils
+    internal static class MeshSyncServerInspectorUtils
     {
         static HashSet<string> foldouts = new HashSet<string>();
         
