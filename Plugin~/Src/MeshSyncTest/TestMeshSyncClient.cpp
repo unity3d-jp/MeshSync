@@ -69,6 +69,27 @@ TestCase(Test_SendProperties) {
             assert(prop->type == ms::PropertyInfo::Type::String && "type is not correct");
             scene->propertyInfos.push_back(prop);
         }
+        {
+            auto prop = ms::PropertyInfo::create();
+            prop->path = node->path;
+            prop->name = "Test int array";
+            int testArray [] = {1, 2, 3};
+            prop->set(testArray, -100, 200, 3);
+            assert(prop->type == ms::PropertyInfo::Type::IntArray && "type is not correct");
+            assert(prop->min == -100 && "min is not correct");
+            assert(prop->max == 200 && "max is not correct");
+            scene->propertyInfos.push_back(prop);
+        }
+        {
+            auto prop = ms::PropertyInfo::create();
+            prop->name = "Test float array";
+            float testArray[] = { 1, 2, 3 };
+            prop->set(testArray, -100, 200, 3);
+            assert(prop->type == ms::PropertyInfo::Type::FloatArray && "type is not correct");
+            assert(prop->min == -100 && "min is not correct");
+            assert(prop->max == 200 && "max is not correct");
+            scene->propertyInfos.push_back(prop);
+        }
     }
 
     TestUtility::Send(scene);
