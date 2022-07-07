@@ -141,7 +141,7 @@ internal struct Server {
     static extern void msServerInitiatedResponseReady(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern bool msServerPropertiesCanReceiveProperties(IntPtr self);        
+    static extern bool msServerIsDCCLiveEditReady(IntPtr self);        
 
     #endregion
 
@@ -250,9 +250,9 @@ internal struct Server {
         msServerInitiatedResponseReady(self);
     }
 
-    public bool CanServerReceiveProperties()
+    public bool IsDCCLiveEditReady()
     {
-        return msServerPropertiesCanReceiveProperties(self);
+        return msServerIsDCCLiveEditReady(self);
     }
 
     public void BeginServe() {

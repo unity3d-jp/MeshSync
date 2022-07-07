@@ -88,14 +88,17 @@ namespace Unity.MeshSync
             CurrentPropertiesState = PropertiesState.None;
         }
 
-        public bool IsConnectionToBlenderActive()
+        /// <summary>
+        /// True when the connection to the DCC tool to send data is active.
+        /// </summary>
+        public bool IsDCCLiveEditReady()
         {
-            return m_server.CanServerReceiveProperties();
+            return m_server.IsDCCLiveEditReady();
         }
 
         void SendUpdatedProperties()
         {
-            if (!m_server.CanServerReceiveProperties())
+            if (!m_server.IsDCCLiveEditReady())
             {
                 return;
             }

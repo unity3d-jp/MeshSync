@@ -348,7 +348,7 @@ msAPI void msServerInitiatedResponseReady(ms::Server* server)
     server->propertiesReady();
 }
 
-msAPI bool msServerPropertiesCanReceiveProperties(ms::Server* server)
+msAPI bool msServerIsDCCLiveEditReady(ms::Server* server)
 {
     if (!server) { return false; }
 
