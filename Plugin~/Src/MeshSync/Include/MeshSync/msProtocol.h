@@ -221,7 +221,8 @@ msSerializable(PollMessage);
 
 
 /// <summary>
-/// Message that doesn't time out and is only replied to by the server
+/// A mechanism to initiate the sending of data from server to client.
+/// Message that does not time out and is only replied to by the server
 /// to send something back to the client.
 /// </summary>
 class ServerLiveEditRequest : public Message
