@@ -1853,13 +1853,15 @@ internal delegate void DeleteInstanceHandler(string path);
                 DestroyImmediate(infoRecord.renderer);
                 infoRecord.renderer = null;
             }
+
             infoRecord.DeleteInstanceObjects();
 
             instanceNames.Add(infoRecord.go.name);
 
             MeshSyncPlayerConfig config = GetConfigV();
 
-            if (!instanceNames.Contains(infoRecord.go.transform.parent.name)) {
+            if (infoRecord.go.transform.parent == null ||
+                !instanceNames.Contains(infoRecord.go.transform.parent.name)) {
                 bool visible = instancedEntityRecord.visibility.visibleInRender;
 
                 GameObject instanceObjectOriginal;
