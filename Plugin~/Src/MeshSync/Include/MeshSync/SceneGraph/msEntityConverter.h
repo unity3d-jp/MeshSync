@@ -75,6 +75,7 @@ class FlipYZ_ZUpCorrector : public EntityConverter
 {
 using super = EntityConverter;
 public:
+    static const int UndoIterations = 4;
     static std::shared_ptr<FlipYZ_ZUpCorrector> create();
 
     void convertTransform(Transform& v) override;
@@ -94,6 +95,7 @@ class RotateX_ZUpCorrector : public EntityConverter
 {
 using super = EntityConverter;
 public:
+    static const int UndoIterations = 8;
     static std::shared_ptr<RotateX_ZUpCorrector> create();
 
     void convertTransform(Transform& v) override;

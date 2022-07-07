@@ -50,9 +50,9 @@ void TestConverter(const int iterations)
 }
 
 TestCase(Test_Undoing_FlipYZ_ZUpCorrector) {
-	TestConverter<ms::FlipYZ_ZUpCorrector>(4);
+	TestConverter<ms::FlipYZ_ZUpCorrector>(ms::FlipYZ_ZUpCorrector::UndoIterations);
 }
 
 TestCase(Test_Undoing_RotateX_ZUpCorrector) {
-	TestConverter<ms::RotateX_ZUpCorrector>(8);
+	TestConverter<ms::RotateX_ZUpCorrector>(ms::RotateX_ZUpCorrector::UndoIterations);
 }

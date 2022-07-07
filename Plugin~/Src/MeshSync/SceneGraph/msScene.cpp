@@ -257,8 +257,8 @@ std::vector<EntityConverterPtr> Scene::getConverters(const SceneImportSettings& 
     if (swap_yz) {
         if (cv.zup_correction_mode == ZUpCorrectionMode::FlipYZ) {
             if (invert) {
-                // TODO: Could write a new FlipYZ_ZUpCorrector that flips back, for now just rotate 3 more times to get back to original:
-                for (int i = 0; i < 3; i++)
+                // TODO: Could write a new RotateX_ZUpCorrector that rotates back, UndoIterations (-1 because 1 was already applied when it was sent to Unity) to get back to original:
+                for (int i = 0; i < FlipYZ_ZUpCorrector::UndoIterations-1; i++)
                 {
                     converters.push_back(FlipYZ_ZUpCorrector::create());
                 }
@@ -269,8 +269,8 @@ std::vector<EntityConverterPtr> Scene::getConverters(const SceneImportSettings& 
         }
         else if (cv.zup_correction_mode == ZUpCorrectionMode::RotateX) {
             if (invert) {
-                // TODO: Could write a new RotateX_ZUpCorrector that rotates back, for now just rotate 7 more times to get back to original:
-                for (int i = 0; i < 7; i++)
+                // TODO: Could write a new RotateX_ZUpCorrector that rotates back, UndoIterations (-1 because 1 was already applied when it was sent to Unity) to get back to original:
+                for (int i = 0; i < RotateX_ZUpCorrector::UndoIterations-1; i++)
                 {
                     converters.push_back(RotateX_ZUpCorrector::create());
                 }
