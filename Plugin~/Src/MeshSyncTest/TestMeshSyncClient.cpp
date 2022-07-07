@@ -73,7 +73,7 @@ TestCase(Test_SendProperties) {
             auto prop = ms::PropertyInfo::create();
             prop->path = node->path;
             prop->name = "Test int array";
-            int testArray [] = {1, 2, 3};
+            int testArray[] = {1, 2, 3};
             prop->set(testArray, -100, 200, 3);
             assert(prop->type == ms::PropertyInfo::Type::IntArray && "type is not correct");
             assert(prop->min == -100 && "min is not correct");
