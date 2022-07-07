@@ -100,7 +100,7 @@ TestCase(Test_ServerInitiatedMessage) {
     sender.requestServerInitiatedMessage();
 
     // AsyncSceneSender should be blocking now until the client responds. Otherwise the destructor of AsyncSceneSender aborts the call.
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 }
 
 TestCase(Test_ServerPropertyHandling) {
