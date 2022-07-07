@@ -7,12 +7,10 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Unity.Utilities.VariantExport")]
 
-namespace Unity.MeshSync.Editor
-{
-    internal static class MeshSyncServerInspectorUtils
-    {
+namespace Unity.MeshSync.Editor {
+    internal static class MeshSyncServerInspectorUtils {
         static HashSet<string> foldouts = new HashSet<string>();
-        
+
 
         public static void DrawSliderForProperties(List<PropertyInfoDataWrapper> props,
             bool editableStrings,
@@ -20,51 +18,41 @@ namespace Unity.MeshSync.Editor
             Action<PropertyInfoDataWrapper> before = null,
             Action<PropertyInfoDataWrapper> after = null,
             Func<string, bool> allEnabled = null,
-            Action<string, bool> allEnabledChanged = null)
-        {
+            Action<string, bool> allEnabledChanged = null) {
             var lastPathDrawn = string.Empty;
             bool expanded = false;
 
-            foreach (var prop in props)
-            {
-                if (parentNameFilters != null && Array.IndexOf(parentNameFilters, prop.path) == -1)
-                {
+            foreach (var prop in props) {
+                if (parentNameFilters != null && Array.IndexOf(parentNameFilters, prop.path) == -1) {
                     continue;
                 }
 
-                if (prop.path != lastPathDrawn)
-                {
+                if (prop.path != lastPathDrawn) {
                     bool wasExpanded = foldouts.Contains(prop.path);
                     expanded = EditorGUILayout.Foldout(wasExpanded, prop.path);
 
-                    if (wasExpanded != expanded)
-                    {
-                        if (wasExpanded)
-                        {
+                    if (wasExpanded != expanded) {
+                        if (wasExpanded) {
                             foldouts.Remove(prop.path);
                         }
-                        else
-                        {
+                        else {
                             foldouts.Add(prop.path);
                         }
                     }
 
                     lastPathDrawn = prop.path;
 
-                    if (expanded && allEnabled != null && allEnabledChanged != null)
-                    {
+                    if (expanded && allEnabled != null && allEnabledChanged != null) {
                         var wasAllEnabled = allEnabled(lastPathDrawn);
 
                         bool newAllEnabled = EditorGUILayout.ToggleLeft($"All properties in {lastPathDrawn}", wasAllEnabled);
-                        if (newAllEnabled != wasAllEnabled)
-                        {
+                        if (newAllEnabled != wasAllEnabled) {
                             allEnabledChanged(lastPathDrawn, newAllEnabled);
                         }
                     }
                 }
 
-                if (!expanded)
-                {
+                if (!expanded) {
                     continue;
                 }
 
@@ -73,12 +61,11 @@ namespace Unity.MeshSync.Editor
                 EditorGUI.BeginChangeCheck();
 
                 object newValue = null;
-                switch (prop.type)
-                {
+                switch (prop.type) {
                     case PropertyInfoDataType.Int:
                         // Need to be careful with overflow here:
                         int max = Mathf.Min((int)prop.max, int.MaxValue - 1);
-                        
+
                         newValue = EditorGUILayout.IntSlider(prop.name, prop.GetValue<int>(), (int)prop.min, max);
                         break;
 
@@ -87,32 +74,28 @@ namespace Unity.MeshSync.Editor
                         break;
 
                     case PropertyInfoDataType.String:
-                        if (editableStrings)
-                        {
+                        if (editableStrings) {
                             newValue = EditorGUILayout.TextField(prop.name, prop.GetValue<string>());
                         }
-                        else
-                        {
+                        else {
                             EditorGUILayout.LabelField(prop.name, prop.GetValue<string>());
                         }
                         break;
 
                     case PropertyInfoDataType.IntArray:
-                        newValue = DrawArrayFieldsInt(prop, newValue);
+                        newValue = DrawArrayFieldsInt(prop);
                         break;
 
                     case PropertyInfoDataType.FloatArray:
-                        newValue = DrawArrayFieldsFloat(prop, newValue);
+                        newValue = DrawArrayFieldsFloat(prop);
                         break;
 
                     default:
                         break;
                 }
 
-                if (EditorGUI.EndChangeCheck())
-                {
-                    lock (PropertyInfoDataWrapper.PropertyUpdateLock)
-                    {
+                if (EditorGUI.EndChangeCheck()) {
+                    lock (PropertyInfoDataWrapper.PropertyUpdateLock) {
                         prop.NewValue = newValue;
                     }
                 }
@@ -121,46 +104,42 @@ namespace Unity.MeshSync.Editor
             }
         }
 
-        private static object DrawArrayFieldsFloat(PropertyInfoDataWrapper prop, object newValue)
-        {
-            var a = prop.GetValue<float[]>();
-            switch (a.Length)
-            {
-                case 2:
-                    {
-                        newValue = EditorGUILayout.Vector2Field(prop.name, new Vector2(a[0], a[1]));
+        static object DrawArrayFields<T>(PropertyInfoDataWrapper prop,
+            Func<string, T[], object> draw2Dimensional,
+            Func<string, T[], object> draw3Dimensional,
+            Func<string, T[], object> draw4Dimensional,
+            Func<string, T, T> fieldDrawMethodOther) {
+            object newValue = null;
+            var a = prop.GetValue<T[]>();
+
+            switch (a.Length) {
+                case 2: {
+                        newValue = draw2Dimensional(prop.name, a);
                         break;
                     }
-                case 3:
-                    {
-                        newValue = EditorGUILayout.Vector3Field(prop.name, new Vector3(a[0], a[1], a[2]));
+                case 3: {
+                        newValue = draw3Dimensional(prop.name, a);
                         break;
                     }
-                case 4:
-                    {
-                        newValue = EditorGUILayout.Vector4Field(prop.name, new Vector4(a[0], a[1], a[2], a[3]));
+                case 4: {
+                        newValue = draw4Dimensional(prop.name, a);
                         break;
                     }
-                default:
-                    {
+                default: {
                         EditorGUILayout.BeginVertical();
-                        for (int i = 0; i < prop.arrayLength; i++)
-                        {
+
+                        for (int i = 0; i < prop.arrayLength; i++) {
                             EditorGUI.BeginChangeCheck();
 
-                            var newValueInArray = EditorGUILayout.FloatField($"{prop.name}[{i}]", a[i]);
+                            T newValueInArray = fieldDrawMethodOther($"{prop.name}[{i}]", a[i]);
 
-                            if (EditorGUI.EndChangeCheck())
-                            {
-                                var newValueAsArray = new float[prop.arrayLength];
-                                for (int j = 0; j < prop.arrayLength; j++)
-                                {
-                                    if (j == i)
-                                    {
+                            if (EditorGUI.EndChangeCheck()) {
+                                var newValueAsArray = new T[prop.arrayLength];
+                                for (int j = 0; j < prop.arrayLength; j++) {
+                                    if (j == i) {
                                         newValueAsArray[j] = newValueInArray;
                                     }
-                                    else
-                                    {
+                                    else {
                                         newValueAsArray[j] = a[j];
                                     }
                                 }
@@ -176,63 +155,23 @@ namespace Unity.MeshSync.Editor
             return newValue;
         }
 
-        private static object DrawArrayFieldsInt(PropertyInfoDataWrapper prop, object newValue)
-        {
-            var a = prop.GetValue<int[]>();
-            switch (a.Length)
-            {
-                case 2:
-                    {
-                        newValue = EditorGUILayout.Vector2IntField(prop.name, new Vector2Int(a[0], a[1]));
-                        break;
-                    }
-                case 3:
-                    {
-                        newValue = EditorGUILayout.Vector3IntField(prop.name, new Vector3Int(a[0], a[1], a[2]));
-                        break;
-                    }
-                case 4:
-                    {
-                        newValue = EditorGUILayout.Vector4Field(prop.name, new Vector4(a[0], a[1], a[2], a[3]));
-                        break;
-                    }
-                default:
-                    {
-                        EditorGUILayout.BeginVertical();
-                        for (int i = 0; i < prop.arrayLength; i++)
-                        {
-                            EditorGUI.BeginChangeCheck();
-
-                            var newValueInArray = EditorGUILayout.IntField($"{prop.name}[{i}]", a[i]);
-
-                            if (EditorGUI.EndChangeCheck())
-                            {
-                                var newValueAsArray = new int[prop.arrayLength];
-                                for (int j = 0; j < prop.arrayLength; j++)
-                                {
-                                    if (j == i)
-                                    {
-                                        newValueAsArray[j] = newValueInArray;
-                                    }
-                                    else
-                                    {
-                                        newValueAsArray[j] = a[j];
-                                    }
-                                }
-
-                                newValue = newValueAsArray;
-                            }
-                        }
-                        EditorGUILayout.EndVertical();
-                        break;
-                    }
-            }
-
-            return newValue;
+        private static object DrawArrayFieldsFloat(PropertyInfoDataWrapper prop) {
+            return DrawArrayFields(prop,
+                (string name, float[] val) => EditorGUILayout.Vector2Field(name, new Vector2(val[0], val[1])),
+                (name, val) => EditorGUILayout.Vector3Field(name, new Vector3(val[0], val[1], val[2])),
+                (name, val) => EditorGUILayout.Vector4Field(name, new Vector4(val[0], val[1], val[2], val[3])),
+                (name, val) => EditorGUILayout.FloatField(name, val));
         }
-        
-        public static void OpenDCCAsset(MeshSyncServer server)
-        {
+
+        private static object DrawArrayFieldsInt(PropertyInfoDataWrapper prop) {
+            return DrawArrayFields(prop,
+                (name, val) => EditorGUILayout.Vector2IntField(name, new Vector2Int(val[0], val[1])),
+                (name, val) => EditorGUILayout.Vector3IntField(name, new Vector3Int(val[0], val[1], val[2])),
+                (name, val) => EditorGUILayout.Vector4Field(name, new Vector4(val[0], val[1], val[2], val[3])),
+                (string name, int val) => EditorGUILayout.IntField(name, val));
+        }
+
+        public static void OpenDCCAsset(MeshSyncServer server) {
             var previousRunMode = server.m_DCCInterop != null ? server.m_DCCInterop.runMode : RunMode.GUI;
 
             var asset = server.DCCAsset;
@@ -240,30 +179,25 @@ namespace Unity.MeshSync.Editor
             server.m_DCCInterop?.Dispose();
             server.m_DCCInterop = GetLauncherForAsset(asset);
 
-            if (server.m_DCCInterop != null)
-            {
+            if (server.m_DCCInterop != null) {
                 server.m_DCCInterop.runMode = previousRunMode;
                 server.m_DCCInterop.OpenDCCTool(asset);
             }
-            else
-            {
+            else {
                 var assetPath = AssetDatabase.GetAssetPath(asset);
                 var extension = Path.GetExtension(assetPath);
                 EditorUtility.DisplayDialog("Error", $"No DCC handler for {extension} files is implemented.", "OK");
             }
         }
 
-        internal static IDCCLauncher GetLauncherForAsset(UnityEngine.Object asset)
-        {
-            if (asset == null)
-            {
+        internal static IDCCLauncher GetLauncherForAsset(UnityEngine.Object asset) {
+            if (asset == null) {
                 return null;
             }
 
             var assetPath = AssetDatabase.GetAssetPath(asset);
 
-            if (Path.GetExtension(assetPath) == BlenderLauncher.FileFormat)
-            {
+            if (Path.GetExtension(assetPath) == BlenderLauncher.FileFormat) {
                 return new BlenderLauncher();
             }
 
