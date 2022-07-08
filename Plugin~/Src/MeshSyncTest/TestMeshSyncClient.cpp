@@ -128,11 +128,11 @@ TestCase(Test_ServerPropertyHandling) {
 TestCase(Test_ServerEntityHandling) {
     auto server = ms::Server(ms::ServerSettings());
 
-    auto testMesh = server.getPendingEntity<ms::Mesh>("TestMesh");
+    auto testMesh = server.getOrCreatePendingEntity<ms::Mesh>("TestMesh");
     assert(testMesh != nullptr);
     assert(testMesh->path == "TestMesh" && "mesh was not created.");
 
-    auto testCurve = server.getPendingEntity<ms::Curve>("TestCurve");
+    auto testCurve = server.getOrCreatePendingEntity<ms::Curve>("TestCurve");
     assert(testCurve != nullptr);
     assert(testCurve->path == "TestCurve" && "curve was not created.");
 

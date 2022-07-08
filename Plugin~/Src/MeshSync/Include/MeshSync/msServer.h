@@ -142,7 +142,7 @@ private:
     std::map<uint64_t, PropertyInfoPtr> m_pending_properties;
 
     template<typename T>
-    T* getPendingEntity(const char* path) {
+    T* getOrCreatePendingEntity(const char* path) {
         for (size_t i = 0; i < m_pending_entities.size(); i++) {
             if (m_pending_entities[i]->path == path) {
                 return dynamic_cast<T*>(m_pending_entities[i].get());
