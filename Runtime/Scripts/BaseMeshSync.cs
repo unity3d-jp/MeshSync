@@ -8,6 +8,7 @@ using UnityEngine.Animations;
 using Unity.Collections;
 using UnityEngine.Assertions;
 using System.IO;
+using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
 
@@ -20,6 +21,8 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using Unity.FilmInternalUtilities.Editor;
 #endif
+
+[assembly: InternalsVisibleTo("Unity.Utilities.VariantExport")]
 
 namespace Unity.MeshSync
 {
@@ -2381,7 +2384,7 @@ internal delegate void DeleteInstanceHandler(string path);
         return false;
     }
 
-    public virtual void ClearInstancePrefabs() {
+    internal virtual void ClearInstancePrefabs() {
         transform.DestroyChildrenImmediate();
 
         foreach (var prefabHolder in m_prefabDict.Values) {

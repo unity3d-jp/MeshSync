@@ -295,7 +295,7 @@ namespace Unity.MeshSync
         }
 
 #if UNITY_EDITOR
-        public override void ClearInstancePrefabs()
+        internal override void ClearInstancePrefabs()
         {
             base.ClearInstancePrefabs();
 
