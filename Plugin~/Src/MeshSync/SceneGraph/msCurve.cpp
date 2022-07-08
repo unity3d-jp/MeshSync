@@ -35,7 +35,7 @@ namespace ms {
 		auto ret = super::hash();
 
 		for (auto spline : splines) {
-			ret += csum(spline->closed);
+			ret += vhash(spline->closed);
 			ret += vhash(spline->cos);
 			ret += vhash(spline->handles_left);
 			ret += vhash(spline->handles_right);

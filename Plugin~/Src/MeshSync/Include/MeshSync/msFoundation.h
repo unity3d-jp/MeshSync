@@ -293,6 +293,8 @@ struct clear_impl<std::vector<T>>
 template<class T>
 struct vhash_impl;
 
+template<> struct vhash_impl<bool> { uint64_t operator()(bool v) const { return (uint32_t)v; } };
+
 template<class T>
 struct vhash_impl<SharedVector<T>>
 {
