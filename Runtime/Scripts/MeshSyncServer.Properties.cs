@@ -198,7 +198,7 @@ namespace Unity.MeshSync
 
 
 #if AT_USE_PROBUILDER && UNITY_EDITOR
-        public void MeshChanged(ProBuilderMesh mesh) {
+        internal void MeshChanged(ProBuilderMesh mesh) {
             lock (PropertyInfoDataWrapper.PropertyUpdateLock) {
                 changedMeshes.Add(mesh);
             }
