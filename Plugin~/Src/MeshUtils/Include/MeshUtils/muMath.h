@@ -1656,7 +1656,7 @@ template
 T roundToDecimals(T val, float decimalPlaces = 2) {
     assert(decimalPlaces >= 1);
     float roundingFactor = std::pow(10, decimalPlaces);
-    return round(val * roundingFactor) / roundingFactor;
+    return ceil(val * roundingFactor) / roundingFactor;
 }
 
 } // namespace mu
