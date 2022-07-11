@@ -63,7 +63,7 @@ namespace Unity.MeshSync
         }
 #endif
 
-        public int InstanceCount
+        internal int InstanceCount
         {
             get
             {
