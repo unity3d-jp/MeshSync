@@ -13,7 +13,7 @@ namespace Unity.MeshSync
 {
     partial class MeshSyncServer
     {
-        public enum PropertiesState
+        internal enum PropertiesState
         {
             None,
             Sending,
@@ -25,7 +25,7 @@ namespace Unity.MeshSync
         Dictionary<EntityRecord, Matrix4x4> entityTransforms = new Dictionary<EntityRecord, Matrix4x4>();
 
 #if UNITY_EDITOR
-        public override InstanceHandlingType InstanceHandling
+        internal override InstanceHandlingType InstanceHandling
         {
             get => base.InstanceHandling; 
             set
@@ -48,7 +48,7 @@ namespace Unity.MeshSync
 
         HashSet<ProBuilderMesh> changedMeshes = new HashSet<ProBuilderMesh>();
         
-        public override bool UseProBuilder
+        internal override bool UseProBuilder
         {
             get => base.UseProBuilder;
             set
@@ -82,8 +82,8 @@ namespace Unity.MeshSync
             }
         }
 
-        public PropertiesState CurrentPropertiesState { get; private set; }
-        public void ResetPropertiesState()
+        internal PropertiesState CurrentPropertiesState { get; private set; }
+        internal void ResetPropertiesState()
         {
             CurrentPropertiesState = PropertiesState.None;
         }
