@@ -24,6 +24,7 @@
 
 using namespace mu;
 
+// Skip tests locally to iterate fast, do not commit with this turned on:
 //#define SKIP_CLIENT_TEST
 
 #ifndef SKIP_CLIENT_TEST

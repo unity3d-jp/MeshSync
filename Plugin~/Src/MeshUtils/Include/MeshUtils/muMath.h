@@ -1651,4 +1651,12 @@ static inline void enumerate(A1& a1, A2& a2, A3& a3, const Body& body)
         body(a1[i], a2[i], a3[i]);
 }
 
+template
+<typename T>
+T roundToDecimals(T val, float decimalPlaces = 2) {
+    assert(decimalPlaces >= 1);
+    float roundingFactor = std::pow(10, decimalPlaces);
+    return round(val * roundingFactor) / roundingFactor;
+}
+
 } // namespace mu
