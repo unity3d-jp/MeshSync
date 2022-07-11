@@ -28,6 +28,62 @@ using namespace mu;
 
 #ifndef SKIP_CLIENT_TEST
 
+// We don't have tests for clients yet, using this to test some code:
+
+class ID
+{
+public:
+    std::string name;
+    unsigned int session_uuid;
+};
+
+class Object
+{
+public:
+    ID* data;
+};
+
+std::map<std::string, unsigned int> mappedNames;
+
+std::string msblenContextIntermediatePathProvider_append_id(std::string path, const Object* obj) {
+    auto data = (ID*)obj->data;
+
+    path += "_" + std::string(data->name);
+
+    // If we already have an object with this name but a different session_uuid, append the session_uuid as well
+    auto it = mappedNames.find(data->name);
+
+    if (it == mappedNames.end()) {
+        mappedNames.insert(std::make_pair(data->name, data->session_uuid));
+    }
+    else {
+        if(it->second != data->session_uuid)
+        {
+            path += "_" + std::to_string(data->session_uuid);
+        }
+    }
+
+    return path;
+}
+
+TestCase(Test_IntermediatePathProvider) {
+    Object cube1;
+    cube1.data = new ID();
+    cube1.data->name = "id";
+    cube1.data->session_uuid = 1;
+
+    Object cube2;
+    cube2.data = new ID();
+    cube2.data->name = "id";
+    cube2.data->session_uuid = 2;
+
+    // Ensure the returned path is consistent and the first object with the name has no uuid suffix:
+    for (int i = 0; i < 10; i++) {
+        assert(msblenContextIntermediatePathProvider_append_id("/cube", &cube1) == "/cube_id");
+        assert(msblenContextIntermediatePathProvider_append_id("/cube", &cube2) == "/cube_id_2");
+    }
+}
+
 TestCase(Test_SendProperties) {
     std::shared_ptr<ms::Scene> scene = ms::Scene::create();
     {
