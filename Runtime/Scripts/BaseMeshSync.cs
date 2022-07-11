@@ -1210,6 +1210,9 @@ internal delegate void DeleteInstanceHandler(string path);
 
                 meshUpdated = true;
             }
+            else {
+                rec.mesh.Clear();
+            }
 
             if (dflags.hasBones || dflags.hasBlendshapes)
             {
@@ -1941,8 +1944,7 @@ internal delegate void DeleteInstanceHandler(string path);
                     }
                     else {
 #if UNITY_EDITOR
-                        instancedCopy = (GameObject)PrefabUtility.InstantiatePrefab(instanceObjectOriginal,
-                        instanceRendererParent.transform);
+                        instancedCopy = (GameObject)PrefabUtility.InstantiatePrefab(instanceObjectOriginal, instanceRendererParent.transform);
 #else
                         instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
 #endif
