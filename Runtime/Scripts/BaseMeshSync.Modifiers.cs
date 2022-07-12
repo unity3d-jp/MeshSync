@@ -371,7 +371,7 @@ namespace Unity.MeshSync {
     // Partial class for now to make merging code easier later.
     [Serializable]
     partial class BaseMeshSync {
-        public enum InstanceHandlingType {
+        internal enum InstanceHandlingType {
             InstanceRenderer,
             Copies,
             Prefabs
