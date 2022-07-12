@@ -75,7 +75,11 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
     }
 
-    protected static bool DrawImportSettings(BaseMeshSync t) {
+    protected virtual bool DrawAdditionalImportSettings(BaseMeshSync t) {
+        return false;
+    }
+
+    protected bool DrawImportSettings(BaseMeshSync t) {
 
         bool changed   = false;
         MeshSyncPlayerConfig playerConfig = t.GetConfigV();
@@ -116,6 +120,8 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                     MeshSyncEditorConstants.Z_UP_CORRECTION_ENUMS),
                 updateFunc: (int val) => { playerConfig.ZUpCorrection = val; }
             );
+
+            changed |= DrawAdditionalImportSettings(t);
 
             EditorGUILayout.Space();
         }

@@ -404,6 +404,9 @@ namespace Unity.MeshSync {
         }
 #endif
 
+        [SerializeField]
+        internal bool GenerateLODGroup;
+
         void UpdateProperties(SceneData scene) {
             // handle properties
             Try(() => {

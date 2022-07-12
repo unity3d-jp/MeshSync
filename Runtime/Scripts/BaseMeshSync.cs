@@ -722,6 +722,10 @@ internal delegate void DeleteInstanceHandler(string path);
         }
 
         void UpdateLODGroups() {
+            if (!GenerateLODGroup) {
+                return;
+            }
+
             // Add an LOD group component if we have LODs:
 
             // Find out how many LODs we got:
