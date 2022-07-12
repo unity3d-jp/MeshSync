@@ -87,6 +87,21 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
         }
     }
 
+    protected override bool DrawAdditionalImportSettings(BaseMeshSync t) {
+        MeshSyncServer server = t as MeshSyncServer;
+        if (!server) {
+            return false;
+        }
+
+        bool changed = false;
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: LOD Group",
+            guiFunc: () => EditorGUILayout.Toggle("Generate LOD Group", server.GenerateLODGroup),
+            updateFunc: (bool val) => { server.GenerateLODGroup = val; }
+        );
+
+        return changed;
+    }
+
     private void DrawInstanceSettings(MeshSyncServer t)
     {
         var style = EditorStyles.foldout;
