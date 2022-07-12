@@ -3038,15 +3038,15 @@ internal struct InstanceInfoData
 
 #region PropertyInfo
 
-    public enum PropertyInfoDataType
+    internal enum PropertyInfoDataType
     {
         Int,
         Float,
         IntArray,
         FloatArray,
         String
-    };
-    public enum PropertyInfoDataSourceType {
+    }
+    internal enum PropertyInfoDataSourceType {
 		GEO_NODES,
 		CUSTOM_PROPERTY
 	};
