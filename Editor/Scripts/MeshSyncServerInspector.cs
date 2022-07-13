@@ -1,12 +1,12 @@
-using Unity.FilmInternalUtilities;
+using System.Collections.Generic;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEngine;
 
 namespace Unity.MeshSync.Editor  {
 [CustomEditor(typeof(MeshSyncServer))]
-internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
-    
+[InitializeOnLoad]
+internal class MeshSyncServerInspector : BaseMeshSyncInspector {
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -26,6 +26,7 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
         DrawMiscSettings(m_meshSyncServer);
         DrawDefaultMaterialList(m_meshSyncServer);
         DrawExportAssets(m_meshSyncServer);
+        DrawInstanceSettings(m_meshSyncServer);
         DrawDCCToolInfo(m_meshSyncServer);
         DrawPluginVersion();
 
@@ -86,6 +87,41 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
         }
     }
 
+    private void DrawInstanceSettings(MeshSyncServer t)
+    {
+        var style = EditorStyles.foldout;
+        style.fontStyle = FontStyle.Bold;
+        t.foldInstanceSettings = EditorGUILayout.Foldout(t.foldInstanceSettings, "Instances", true, style);
+        if (t.foldInstanceSettings)
+        {
+            t.InstanceHandling = (BaseMeshSync.InstanceHandlingType)EditorGUILayout.EnumPopup("Instance handling", t.InstanceHandling);
+
+            DrawPrefabListElement(t);
+        }
+
+        EditorGUILayout.LabelField($"Instance count: {t.InstanceCount}");
+    }
+
+    static void DrawPrefabListElement(MeshSyncServer t)
+    {
+        if (t.prefabDict.Count > 0)
+        {
+            EditorGUILayout.LabelField("Instance prefabs:");
+
+            EditorGUI.indentLevel++;
+            foreach (var prefabHolder in t.prefabDict.Values)
+            {
+                EditorGUILayout.ObjectField(prefabHolder.name, prefabHolder.prefab, typeof(GameObject), true);
+            }
+            EditorGUI.indentLevel--;
+
+            if (GUILayout.Button("Clear prefabs"))
+            {
+                t.ClearInstancePrefabs();
+            }
+        }
+    }
+
     static void DrawDCCToolInfo(MeshSyncServer server)
     {
         if (server != null)
@@ -93,16 +129,16 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
             GUILayout.BeginHorizontal();
 
             var newAsset = EditorGUILayout.ObjectField("DCC asset file:",
-                server.m_DCCAsset,
+                server.DCCAsset,
                 typeof(UnityEngine.Object), true);
 
-            if (newAsset != server.m_DCCAsset)
+            if (newAsset != server.DCCAsset)
             {
-                server.m_DCCAsset = newAsset;
-                server.m_DCCInterop = MeshSyncServerInspectorUtils.GetLauncherForAsset(server.m_DCCAsset);
+                server.DCCAsset = newAsset;
+                server.m_DCCInterop = MeshSyncServerInspectorUtils.GetLauncherForAsset(server.DCCAsset);
             }
 
-            if (server.m_DCCAsset != null)
+            if (server.DCCAsset != null)
             {
                 if (GUILayout.Button("Live Edit"))
                 {
@@ -116,7 +152,7 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector   {
 
             if (server.m_DCCInterop == null)
             {
-                server.m_DCCInterop = MeshSyncServerInspectorUtils.GetLauncherForAsset(server.m_DCCAsset);
+                server.m_DCCInterop = MeshSyncServerInspectorUtils.GetLauncherForAsset(server.DCCAsset);
             }
 
             server.m_DCCInterop?.DrawDCCMenu(server);

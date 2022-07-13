@@ -16,7 +16,8 @@ namespace Unity.MeshSync{
         [HideInInspector]
         [SerializeField] private Matrix4x4[] transforms;
         [SerializeField] private GameObject reference; 
-        
+        public int TransformCount { get => transforms.Length; }
+
         void OnEnable()
         {
             if (GraphicsSettings.currentRenderPipeline == null)

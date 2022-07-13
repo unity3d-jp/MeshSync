@@ -22,6 +22,9 @@ msDeclClassPtr(PollMessage)
 msDeclClassPtr(SetMessage)
 msDeclClassPtr(GetMessage)
 msDeclClassPtr(ScreenshotMessage)
+msDeclClassPtr(ServerLiveEditRequest)
+msDeclClassPtr(PropertyInfo)
+msDeclClassPtr(Curve)
 
 namespace ms {
 
@@ -87,6 +90,12 @@ public:
     void recvText(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void recvScreenshot(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void recvPoll(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvServerLiveEditRequest(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    
+    void receivedProperty(PropertyInfoPtr prop);
+    void syncRequested();
+    void propertiesReady();
+    bool readyForProperties();
 
     static void sanitizeHierarchyPath(std::string& path);
 
@@ -122,8 +131,31 @@ private:
     ScenePtr m_host_scene;
     GetMessagePtr m_current_get_request;
     ScreenshotMessagePtr m_current_screenshot_request;
+    std::mutex m_properties_mutex;
+    ServerLiveEditRequestPtr m_current_live_edit_request;
+    std::atomic_bool m_syncRequested;
     std::string m_screenshot_file_path;
     std::string m_file_root_path;
+
+    public:
+    std::vector<EntityPtr> m_pending_entities;
+    std::map<uint64_t, PropertyInfoPtr> m_pending_properties;
+
+    template<typename T>
+    T* getOrCreatePendingEntity(const char* path) {
+        for (size_t i = 0; i < m_pending_entities.size(); i++) {
+            if (m_pending_entities[i]->path == path) {
+                return dynamic_cast<T*>(m_pending_entities[i].get());
+            }
+        }
+
+        // If it doesn't exist, add it:
+        shared_ptr<T> result = T::create();
+        result->path = path;
+        m_pending_entities.push_back(result);
+
+        return result.get();
+    }
 };
 
 //----------------------------------------------------------------------------------------------------------------------

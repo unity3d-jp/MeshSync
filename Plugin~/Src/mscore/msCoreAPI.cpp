@@ -13,6 +13,7 @@
 #include "MeshSync/SceneGraph/msPoints.h"
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msTexture.h"
+#include "MeshSync/SceneGraph/msCurve.h"
 
 #include "msCoreAPI.h"
 
@@ -509,6 +510,24 @@ msAPI void msBlendShapeAddFrame(ms::BlendShapeData *self, float weight, int num,
 }
 #pragma endregion
 
+
+#pragma region Curves
+msAPI int msCurveGetNumSplines(ms::Curve* self) { return self->splines.size(); }
+msAPI int msCurveGetNumSplinePoints(ms::Curve* self, int index) { return self->splines[index]->cos.size(); }
+msAPI bool msCurveReadSplineClosed(ms::Curve* self, int index) {
+    return self->splines[index]->closed;
+}
+msAPI void msCurveReadSplineCos(ms::Curve* self, int index, float3* dst) {
+    self->splines[index]->cos.copy_to(dst);
+}
+msAPI void msCurveReadSplineHandlesLeft(ms::Curve* self, int index, float3* dst) {
+    self->splines[index]->handles_left.copy_to(dst);
+}
+msAPI void msCurveReadSplineHandlesRight(ms::Curve* self, int index, float3* dst) {
+    self->splines[index]->handles_right.copy_to(dst);
+}
+#pragma endregion
+
 #pragma region Points
 msAPI ms::Points* msPointsCreate() { return ms::Points::create_raw(); }
 msAPI uint32_t msPointsGetFlags(const ms::Points *self) { return (uint32_t&)self->pd_flags; }
@@ -543,12 +562,14 @@ msAPI quatf msParentConstraintGetRotationOffset(const ms::ParentConstraint *self
 msAPI int msSceneGetNumAssets(const ms::Scene *self) { return (int)self->assets.size(); }
 msAPI int msSceneGetNumEntities(const ms::Scene *self) { return (int)self->entities.size(); }
 msAPI int msSceneGetNumConstraints(const ms::Scene *self) { return (int)self->constraints.size(); }
-msAPI int msSceneGetNumInstanceInfos(const ms::Scene* self) { return (int)self->instanceInfos.size();}
+msAPI int msSceneGetNumInstanceInfos(const ms::Scene* self) { return (int)self->instanceInfos.size(); }
+msAPI int msSceneGetNumPropertyInfos(const ms::Scene* self) { return (int)self->propertyInfos.size(); }
 msAPI int msSceneGetNumInstanceMeshes(const ms::Scene* self) { return (int)self->instanceMeshes.size();}
 msAPI ms::Asset* msSceneGetAsset(const ms::Scene *self, int i) { return self->assets[i].get(); }
 msAPI ms::Transform* msSceneGetEntity(const ms::Scene *self, int i) { return self->entities[i].get(); }
 msAPI ms::Constraint* msSceneGetConstraint(const ms::Scene *self, int i) { return self->constraints[i].get(); }
 msAPI ms::InstanceInfo* msSceneGetInstanceInfo(const ms::Scene* self, int i) { return self->instanceInfos[i].get(); }
+msAPI ms::PropertyInfo* msSceneGetPropertyInfo(const ms::Scene* self, int i) { return self->propertyInfos[i].get(); }
 msAPI ms::Transform* msSceneGetInstanceMesh(const ms::Scene* self, int i) { return self->instanceMeshes[i].get(); }
 msAPI bool msSceneSubmeshesHaveUniqueMaterial(const ms::Scene *self) { return self->submeshesHaveUniqueMaterial(); }
 msAPI ms::SceneProfileData msSceneGetProfileData(const ms::Scene *self) { return self->profile_data; }
@@ -561,6 +582,19 @@ msAPI int msInstanceInfoPropGetArrayLength(const ms::InstanceInfo* self) { retur
 msAPI void msInstanceInfoCopyTransforms(const ms::InstanceInfo* self, float4x4* dst) {
     memcpy(dst, self->transforms.data(), self->transforms.size() * sizeof(float4x4));
 }
+#pragma endregion
+
+#pragma region PropertyInfo
+msAPI const char* msPropertyInfoGetPath(const ms::PropertyInfo* self) { return self->path.c_str(); }
+msAPI const char* msPropertyInfoGetName(const ms::PropertyInfo* self) { return self->name.c_str(); }
+msAPI const char* msPropertyInfoGetModifierName(const ms::PropertyInfo* self) { return self->modifierName.c_str(); }
+msAPI const char* msPropertyInfoGetPropertyName(const ms::PropertyInfo* self) { return self->propertyName.c_str(); }
+msAPI int msPropertyInfoGetType(const ms::PropertyInfo* self) { return self->type; }
+msAPI int msPropertyInfoGetSourceType(const ms::PropertyInfo* self) { return self->sourceType; }
+msAPI void msPropertyInfoCopyData(const ms::PropertyInfo* self, void* dst) { self->copy(dst); }
+msAPI int msPropertyInfoGetArrayLength(const ms::PropertyInfo* self) { return self->getArrayLength(); }
+msAPI float msPropertyInfoGetMin(const ms::PropertyInfo* self) { return self->min; }
+msAPI float msPropertyInfoGetMax(const ms::PropertyInfo* self) { return self->max; }
 #pragma endregion
 
 #pragma region Misc

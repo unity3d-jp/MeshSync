@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Unity.MeshSync
@@ -8,5 +9,16 @@ namespace Unity.MeshSync
     {
         public GameObject go;
         public MeshSyncInstanceRenderer renderer;
+        public List<GameObject> instanceObjects = new List<GameObject>();
+
+        public void DeleteInstanceObjects()
+        {
+            foreach (var obj in instanceObjects)
+            {
+                UnityEngine.Object.DestroyImmediate(obj);
+            }
+
+            instanceObjects.Clear();
+        }
     }
 }

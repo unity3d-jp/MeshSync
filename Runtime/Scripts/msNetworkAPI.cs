@@ -1,7 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Assertions;
+
+#if AT_USE_SPLINES
+using Unity.Mathematics;
+#endif
 
 namespace Unity.MeshSync {
 #if UNITY_STANDALONE
@@ -101,6 +106,43 @@ internal struct Server {
     [DllImport(Lib.name)]
     static extern void msServerNotifyPoll(IntPtr self, PollMessage.PollType t);
 
+    [DllImport(Lib.name)]
+    static extern void msServerSendPropertyInt(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, int newValue);
+
+    [DllImport(Lib.name)]
+    static extern void msServerSendPropertyFloat(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, float newValue);
+
+    [DllImport(Lib.name)]
+    static extern void msServerSendPropertyIntArray(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, int[] newValue, int arrayLength);
+
+    [DllImport(Lib.name)]
+    static extern void msServerSendPropertyFloatArray(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, float[] newValue, int arrayLength);
+
+    [DllImport(Lib.name)]
+    static extern void msServerSendPropertyString(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, string newValue, int length);
+        
+#if AT_USE_SPLINES
+    [DllImport(Lib.name)]
+    static extern void msServerSendTransform(IntPtr self, string path, float3 position, float3 scale, float3 rotation);  
+
+    [DllImport(Lib.name)]
+    static extern void msServerSendCurve(IntPtr self, string path, int splineIndex, int knotCount, bool closed, float3[] cos, float3[] handlesLeft, float3[] handlesRight);
+#endif
+
+#if AT_USE_PROBUILDER
+    [DllImport(Lib.name)]
+    static extern void msServerSendMesh(IntPtr self, MeshData data);
+#endif
+
+    [DllImport(Lib.name)]
+    static extern void msServerRequestFullSync(IntPtr self);        
+
+    [DllImport(Lib.name)]
+    static extern void msServerInitiatedResponseReady(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern bool msServerIsDCCLiveEditReady(IntPtr self);        
+
     #endregion
 
     public delegate void MessageHandler(NetworkMessageType type, IntPtr data);
@@ -153,6 +195,66 @@ internal struct Server {
         set { msServerSetScreenshotFilePath(self, value); }
     }
 
+
+#if AT_USE_SPLINES
+        public void SendCurve(string path, int splineIndex, int knotCount, bool closed, float3[] cos, float3[] handlesLeft, float3[] handlesRight)
+    {
+        msServerSendCurve(self, path, splineIndex, knotCount, closed, cos, handlesLeft, handlesRight);
+    }
+#endif
+
+#if AT_USE_PROBUILDER
+    public void SendMesh(MeshData data)
+    {
+        msServerSendMesh(self, data);
+    }
+#endif
+
+    public void SendProperty(PropertyInfoDataWrapper prop)
+    {
+        switch (prop.type)
+        {
+            case PropertyInfoDataType.Int:
+                msServerSendPropertyInt(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<int>());
+                break;
+
+            case PropertyInfoDataType.Float:
+                msServerSendPropertyFloat(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<float>());
+                break;
+
+            case PropertyInfoDataType.IntArray:
+                msServerSendPropertyIntArray(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<int[]>(), prop.arrayLength);
+                break;
+
+            case PropertyInfoDataType.FloatArray:
+                msServerSendPropertyFloatArray(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<float[]>(), prop.arrayLength);
+                break;
+
+            case PropertyInfoDataType.String:
+                var s = prop.GetValue<string>();
+                msServerSendPropertyString(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, s, s.Length);
+                break;
+
+            default:
+                throw new NotImplementedException($"Type {prop.type} not implemented");
+        }
+    }
+
+    public void RequestClientSync()
+    {
+        msServerRequestFullSync(self);
+    }
+
+    public void MarkServerInitiatedResponseReady()
+    {
+        msServerInitiatedResponseReady(self);
+    }
+
+    public bool IsDCCLiveEditReady()
+    {
+        return msServerIsDCCLiveEditReady(self);
+    }
+
     public void BeginServe() {
         msServerBeginServe(self);
     }
@@ -195,4 +297,4 @@ internal struct Server {
 
 #endif // UNITY_STANDALONE
 
-} //end namespace
+    } //end namespace

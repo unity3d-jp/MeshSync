@@ -13,6 +13,7 @@
 #include "MeshSync/SceneGraph/msTransform.h"
 
 #include "MeshSync/SceneGraph/msInstanceInfo.h"
+#include "MeshSync/SceneGraph/msPropertyInfo.h"
 
 //Forward declarations
 msDeclClassPtr(Asset);
@@ -21,6 +22,7 @@ msDeclClassPtr(Scene);
 
 msDeclStructPtr(SceneImportSettings);
 msDeclStructPtr(InstanceInfo)
+msDeclStructPtr(PropertyInfo)
 msDeclClassPtr(EntityConverter)
 
 namespace ms {
@@ -43,6 +45,7 @@ struct SceneDataFlags
     uint32_t has_entities : 1;
     uint32_t has_constraints : 1;
     uint32_t has_instanceInfos : 1;
+    uint32_t has_propertyInfos : 1;
     uint32_t has_instanceMeshes : 1;
 
     SceneDataFlags();
@@ -58,6 +61,7 @@ public:
     std::vector<TransformPtr> entities;
     std::vector<ConstraintPtr> constraints;
     std::vector<InstanceInfoPtr> instanceInfos;
+    std::vector<PropertyInfoPtr> propertyInfos;
     std::vector<TransformPtr> instanceMeshes;
 
     // non-serializable
@@ -113,6 +117,8 @@ public:
     bool submeshesHaveUniqueMaterial() const;
 
     void dbgDump() const;
+
+    static std::vector<EntityConverterPtr> getConverters(const SceneImportSettings& cv, const SceneSettings& settings, bool invert);
 
 private:
     void updateEntities(const ms::SceneImportSettings& cv, const std::vector<ms::EntityConverterPtr>& converters, std::vector<ms::TransformPtr> entities);

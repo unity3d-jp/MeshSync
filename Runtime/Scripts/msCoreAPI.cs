@@ -4,6 +4,10 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using Unity.Collections;
 
+#if AT_USE_SPLINES
+using Unity.Mathematics;
+#endif
+
 namespace Unity.MeshSync {
 internal static class Lib {
     #region internal
@@ -22,7 +26,7 @@ internal static class Lib {
     [DllImport(name)]
     static extern int msGetProtocolVersion();
 
-    #endregion
+        #endregion
 
     static string version;
     internal static string GetPluginVersion()
@@ -1510,6 +1514,7 @@ internal enum EntityType {
     Light,
     Mesh,
     Points,
+    Curve,
 };
 
 internal struct TransformDataFlags {
@@ -1540,6 +1545,7 @@ internal struct TransformDataFlags {
     }
 }
 
+[Serializable]
 internal struct VisibilityFlags {
     public BitFlags flags;
 
@@ -1683,6 +1689,15 @@ internal struct TransformData {
     /// <returns>The newly created PointsData</returns>
     public static explicit operator PointsData(TransformData v) {
         return new PointsData { self = v.self };
+    }
+
+    /// <summary>
+    /// Creates a new CurvesData and assign the parameter to it
+    /// </summary>
+    /// <param name="v"></param>
+    /// <returns>The newly created CurvesData</returns>
+    public static explicit operator CurvesData(TransformData v) {
+        return new CurvesData { self = v.self };
     }
 
     internal static TransformData Create() {
@@ -2741,7 +2756,76 @@ internal struct PointsData {
     }
 }
 
-#endregion
+    #endregion
+
+#region Curve
+    
+    /// <summary>
+    /// CurvesData
+    /// </summary>
+    [StructLayout(LayoutKind.Explicit)]
+    internal struct CurvesData
+    {
+        #region internal
+
+        [FieldOffset(0)] public IntPtr self;
+        [FieldOffset(0)] public TransformData transform;
+
+        
+        [DllImport(Lib.name)]
+        static extern int msCurveGetNumSplines(IntPtr self);
+
+        [DllImport(Lib.name)]
+        static extern bool msCurveReadSplineClosed(IntPtr self, int index);        
+
+        [DllImport(Lib.name)]
+        static extern int msCurveGetNumSplinePoints(IntPtr self, int index);
+
+        [DllImport(Lib.name)]
+        static extern int msCurveReadSplineCos(IntPtr self, int index, IntPtr dst);
+
+        [DllImport(Lib.name)]
+        static extern int msCurveReadSplineHandlesLeft(IntPtr self, int index, IntPtr dst);
+
+        [DllImport(Lib.name)]
+        static extern int msCurveReadSplineHandlesRight(IntPtr self, int index, IntPtr dst);
+
+        #endregion
+        
+#if AT_USE_SPLINES
+        public int numSplines
+        {
+            get { return msCurveGetNumSplines(self); }
+        }
+
+        public bool IsSplineClosed(int index)
+        {
+            return msCurveReadSplineClosed(self, index);
+        }        
+
+        public int GetNumSplinePoints(int index)
+        {
+            return msCurveGetNumSplinePoints(self, index);
+        }
+
+        public void ReadSplineCos(int index, PinnedList<float3> dst)
+        {
+            msCurveReadSplineCos(self, index, dst);
+        }
+
+        public void ReadSplineHandlesLeft(int index, PinnedList<float3> dst)
+        {
+            msCurveReadSplineHandlesLeft(self, index, dst);
+        }
+
+        public void ReadSplineHandlesRight(int index, PinnedList<float3> dst)
+        {
+            msCurveReadSplineHandlesRight(self, index, dst);
+        }
+#endif
+    }
+    
+#endregion Curve
 
 #endregion
 
@@ -2765,7 +2849,7 @@ internal struct ConstraintData {
     [DllImport(Lib.name)]
     static extern IntPtr msConstraintGetSource(IntPtr self, int i);
 
-    #endregion
+#endregion
 
     internal enum ConstraintType {
         Unknown,
@@ -2805,11 +2889,11 @@ internal struct ConstraintData {
 }
 
 internal struct AimConstraintData {
-    #region internal
+#region internal
 
     public IntPtr self;
 
-    #endregion
+#endregion
 
 
     public static explicit operator AimConstraintData(ConstraintData v) {
@@ -2820,7 +2904,7 @@ internal struct AimConstraintData {
 }
 
 internal struct ParentConstraintData {
-    #region internal
+#region internal
 
     public IntPtr self;
 
@@ -2830,7 +2914,7 @@ internal struct ParentConstraintData {
     [DllImport(Lib.name)]
     static extern Quaternion msParentConstraintGetRotationOffset(IntPtr self, int i);
 
-    #endregion
+#endregion
 
 
     public static explicit operator ParentConstraintData(ConstraintData v) {
@@ -2849,11 +2933,11 @@ internal struct ParentConstraintData {
 }
 
 internal struct PositionConstraintData {
-    #region internal
+#region internal
 
     public IntPtr self;
 
-    #endregion
+#endregion
 
     public static explicit operator PositionConstraintData(ConstraintData v) {
         PositionConstraintData ret;
@@ -2863,11 +2947,11 @@ internal struct PositionConstraintData {
 }
 
 internal struct RotationConstraintData {
-    #region internal
+#region internal
 
     public IntPtr self;
 
-    #endregion
+#endregion
 
     public static explicit operator RotationConstraintData(ConstraintData v) {
         RotationConstraintData ret;
@@ -2877,11 +2961,11 @@ internal struct RotationConstraintData {
 }
 
 internal struct ScaleConstrainData {
-    #region internal
+#region internal
 
     public IntPtr self;
 
-    #endregion
+#endregion
 
     public static explicit operator ScaleConstrainData(ConstraintData v) {
         ScaleConstrainData ret;
@@ -2950,8 +3034,74 @@ internal struct InstanceInfoData
 
 #endregion
 
-internal struct SceneData {
-    #region internal
+
+
+#region PropertyInfo
+
+    internal enum PropertyInfoDataType
+    {
+        Int,
+        Float,
+        IntArray,
+        FloatArray,
+        String
+    }
+    internal enum PropertyInfoDataSourceType {
+		GEO_NODES,
+		CUSTOM_PROPERTY
+	};
+
+    internal struct PropertyInfoData
+    {
+        public IntPtr self;
+
+#region DLL Imports
+        [DllImport((Lib.name))]
+        static extern IntPtr msPropertyInfoGetPath(IntPtr self);
+
+        [DllImport((Lib.name))]
+        static extern IntPtr msPropertyInfoGetName(IntPtr self);
+
+        [DllImport((Lib.name))]
+        static extern IntPtr msPropertyInfoGetModifierName(IntPtr self);
+
+        [DllImport((Lib.name))]
+        static extern IntPtr msPropertyInfoGetPropertyName(IntPtr self);
+        
+        [DllImport(Lib.name)]
+        static extern int msPropertyInfoGetType(IntPtr self);
+
+        [DllImport(Lib.name)]
+        static extern int msPropertyInfoGetSourceType(IntPtr self);
+
+        [DllImport(Lib.name)]
+        static extern float msPropertyInfoGetMin(IntPtr self);
+
+        [DllImport(Lib.name)]
+        static extern float msPropertyInfoGetMax(IntPtr self);
+#endregion DLL Imports
+
+        public float min => msPropertyInfoGetMin(self);
+        public float max => msPropertyInfoGetMax(self);
+
+        public string path => Misc.S(msPropertyInfoGetPath(self));
+
+        public string modifierName => Misc.S(msPropertyInfoGetModifierName(self));
+
+        public string propertyName => Misc.S(msPropertyInfoGetPropertyName(self));
+        
+        public string name => Misc.S(msPropertyInfoGetName(self));
+
+        public PropertyInfoDataType type => (PropertyInfoDataType)msPropertyInfoGetType(self);
+
+        public PropertyInfoDataSourceType sourceType => (PropertyInfoDataSourceType)msPropertyInfoGetSourceType(self);
+    }
+
+#endregion PropertyInfo
+
+
+    internal struct SceneData {
+#region internal
 
     public IntPtr self;
 
@@ -2991,7 +3141,13 @@ internal struct SceneData {
     [DllImport(Lib.name)]
     static extern TransformData msSceneGetInstanceMesh(IntPtr self, int i);
 
-    #endregion
+    [DllImport(Lib.name)]
+    static extern int msSceneGetNumPropertyInfos(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern PropertyInfoData msSceneGetPropertyInfo(IntPtr self, int i);
+
+#endregion
 
     public static implicit operator bool(SceneData v) {
         return v.self != IntPtr.Zero;
@@ -3018,9 +3174,15 @@ internal struct SceneData {
     {
         get { return msSceneGetNumInstanceMeshes(self); }
     }
+
+    public int numPropertyInfos
+    {
+        get { return msSceneGetNumPropertyInfos(self); }
+    }
+
     
     public bool submeshesHaveUniqueMaterial {
-        get { return msSceneSubmeshesHaveUniqueMaterial(self) != 0; }
+    get { return msSceneSubmeshesHaveUniqueMaterial(self) != 0; }
     }
 
     public SceneProfileData profileData {
@@ -3048,15 +3210,19 @@ internal struct SceneData {
     {
         return msSceneGetInstanceMesh(self, i);
     }
+
+    public PropertyInfoData GetPropertyInfo(int i)
+    {
+        return msSceneGetPropertyInfo(self, i);
+    }  
 }
 
 #endregion Scene
 
-
 #region SceneCache
 
 internal struct SceneCacheData {
-    #region internal
+#region internal
 
     public IntPtr self;
 
@@ -3105,7 +3271,7 @@ internal struct SceneCacheData {
     [DllImport(Lib.name)]
     static extern AnimationCurveData msSceneCacheGetFrameCurve(IntPtr self);
 
-    #endregion
+#endregion
 
     public static implicit operator bool(SceneCacheData v) {
         return v.self != IntPtr.Zero;

@@ -10,6 +10,9 @@
 #include "MeshSync/MeshSync.h" //TestMessagePtr
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msMesh.h"
+#include "MeshSync/SceneGraph/msCurve.h"
+
+#include "MeshSync/SceneGraph/msEntityConverter.h"
 
 namespace ms {
 
@@ -143,6 +146,14 @@ int Server::processMessages(const MessageHandler& handler)
         }
         else if (auto q = std::dynamic_pointer_cast<QueryMessage>(mes)) {
             handler(Message::Type::Query, *mes);
+        }
+        else if (auto req = std::dynamic_pointer_cast<ServerLiveEditRequest>(mes)) {
+            lock_t lock(m_properties_mutex);
+            if (m_current_live_edit_request) {
+                m_current_live_edit_request->cancelled = true;
+            }
+            m_current_live_edit_request = req;
+            handler(Message::Type::RequestServerLiveEdit, *mes);
         }
 
     next:
@@ -608,6 +619,56 @@ void Server::recvPoll(HTTPServerRequest& request, HTTPServerResponse& response)
     }
 }
 
+void Server::recvServerLiveEditRequest(HTTPServerRequest& request, HTTPServerResponse& response)
+{
+    auto mes = deserializeMessage<ServerLiveEditRequest>(request, response);
+
+    queueMessage(mes);
+
+    // wait for data arrive
+    for (int i = 0; ; ++i) {
+        if (mes->ready)
+            break;
+        if (mes->cancelled)
+            return;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    // serve data
+    response.set("Cache-Control", "no-store, must-revalidate");
+    
+    auto reqResponse = ServerLiveEditResponse();
+
+    for (const auto& [key, prop] : m_pending_properties)
+    {
+        auto p = PropertyInfo(*prop);
+        reqResponse.properties.push_back(p);
+    }
+    m_pending_properties.clear();
+
+    auto converters = Scene::getConverters(m_settings.import_settings, m_current_live_edit_request->scene_settings, true);
+
+    for (auto entity : m_pending_entities) {
+        for (auto& cv : converters) {
+            cv->convert(*entity);
+        }
+
+        reqResponse.entities.push_back(entity);
+    }
+
+    m_pending_entities.clear();
+    
+    if (m_syncRequested) {
+        reqResponse.message = REQUEST_SYNC;
+        m_syncRequested = false;
+    }
+
+    auto& os = response.send();
+    reqResponse.serialize(os);
+    os.flush();
+}
+
 void Server::notifyPoll(PollMessage::PollType t)
 {
     lock_t lock(m_poll_mutex);
@@ -618,6 +679,30 @@ void Server::notifyPoll(PollMessage::PollType t)
         }
     }
     m_polls.erase(std::remove(m_polls.begin(), m_polls.end(), PollMessagePtr()), m_polls.end());
+}
+
+void Server::receivedProperty(PropertyInfoPtr prop) {
+    m_pending_properties[prop->hash()] = prop;
+}
+
+void Server::syncRequested() {
+    m_syncRequested = true;
+}
+
+void Server::propertiesReady() {
+    lock_t lock(m_properties_mutex);
+
+    if (m_current_live_edit_request) {
+        m_current_live_edit_request->ready = true;
+    }
+}
+
+bool Server::readyForProperties() {
+    if (m_current_live_edit_request) {
+        return !m_current_live_edit_request->ready;
+    }
+
+    return false;
 }
 
 Server::MessageHolder::MessageHolder()

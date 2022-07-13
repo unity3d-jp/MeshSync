@@ -1,11 +1,14 @@
 #include "pch.h"
 #include "MeshSync/msClient.h"
 #include "MeshSync/SceneGraph/msScene.h" //Scene
+#include "MeshSync/SceneGraph/msCurve.h"
 
 namespace ms {
 
 using namespace Poco;
 using namespace Poco::Net;
+
+HTTPClientSession* m_properties_session;
 
 Client::Client(const ClientSettings & settings)
     : m_settings(settings)
@@ -161,6 +164,68 @@ bool Client::send(const FenceMessage& mes)
         auto& rs = session.receiveResponse(response);
         std::ostringstream ostr;
         StreamCopier::copyStream(rs, ostr);
+        return response.getStatus() == HTTPResponse::HTTP_OK;
+    }
+    catch (...) {
+        return false;
+    }
+}
+
+#ifndef WIN32
+#define __try try
+#define __except(X) catch(...)
+#endif
+
+void Client::abortPropertiesRequest() {
+    if (m_properties_session) {
+        __try {
+            m_properties_session->abort();
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        m_properties_session = nullptr;
+    }
+}
+
+bool Client::send(const ServerLiveEditRequest& mes)
+{
+    try {
+        
+        HTTPClientSession session{ m_settings.server, m_settings.port };
+
+        m_properties_session = &session;
+
+        session.setTimeout(Poco::Timespan()); // infinite timeout, this is cancelled manually.
+         
+        HTTPRequest request{ HTTPRequest::HTTP_POST, "/request_properties" };
+        request.setContentType("application/octet-stream");
+        request.setExpectContinue(true);
+        request.setContentLength(ssize(mes));
+        auto& os = session.sendRequest(request);
+        mes.serialize(os);
+        os.flush();
+
+        HTTPResponse response;
+        auto& rs = session.receiveResponse(response);
+
+        auto reqResponse = ServerLiveEditResponse();
+        reqResponse.deserialize(rs);
+
+        properties = std::vector<PropertyInfo>();
+        for (int i = 0; i < reqResponse.properties.size(); i++)
+        {
+            auto prop = PropertyInfo(reqResponse.properties[i]);
+            reqResponse.properties[i].data.share(prop.data);
+            properties.push_back(prop);
+        }
+
+        entities.clear();
+        entities.insert(entities.end(), reqResponse.entities.begin(), reqResponse.entities.end());
+        
+        messageFromServer = reqResponse.message;
+
+        m_properties_session = nullptr;
+
         return response.getStatus() == HTTPResponse::HTTP_OK;
     }
     catch (...) {

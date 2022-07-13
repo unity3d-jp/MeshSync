@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace Unity.MeshSync {
@@ -18,8 +18,6 @@ internal class MeshSyncServerConfig : MeshSyncPlayerConfig {
 
     enum MeshSyncServerConfigVersion {
         INITIAL = 1,
-    }
-   
-
+    }  
 }
 } //end namespace

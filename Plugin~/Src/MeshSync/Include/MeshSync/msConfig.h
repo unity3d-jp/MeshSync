@@ -3,7 +3,7 @@
 //Note: Every update to the plugin must increase the version number
 #define msPluginVersionStr "0.13.x-preview"
 #define msVendor "Unity Technologies"
-#define msProtocolVersion 123
+#define msProtocolVersion 124
 
 //#define msEnableProfiling
 //#define msRuntime
