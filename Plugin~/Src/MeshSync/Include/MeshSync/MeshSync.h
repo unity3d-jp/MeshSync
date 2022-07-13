@@ -19,6 +19,7 @@ namespace ms { \
 msDeclClassPtr(Camera)
 msDeclClassPtr(Light)
 msDeclClassPtr(Mesh)
+msDeclClassPtr(Curve)
 msDeclClassPtr(Transform)
 
 //Assets

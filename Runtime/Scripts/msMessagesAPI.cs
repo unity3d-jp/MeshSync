@@ -46,6 +46,10 @@ public enum NetworkMessageType {
     /// A response message
     /// </summary>
     Response,
+    /// <summary>
+    /// A message to send data from Unity back to a DCC tool
+    /// </summary>
+    RequestServerLiveEdit
 }
 
 //----------------------------------------------------------------------------------------------------------------------

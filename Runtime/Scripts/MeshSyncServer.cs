@@ -1,6 +1,7 @@
 #if UNITY_STANDALONE
 using System;
 #endif
+using AOT;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -14,8 +15,8 @@ namespace Unity.MeshSync {
 /// <summary>
 /// A component to sync meshes/models editing in DCC tools into Unity in real time.
 /// </summary>
-[ExecuteInEditMode]
-public class MeshSyncServer : BaseMeshSync {
+[ExecuteAlways]
+public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 
     /// <summary>
     /// Callback which will be called after MeshSyncServer receives data and finishes processing it
@@ -23,7 +24,6 @@ public class MeshSyncServer : BaseMeshSync {
     public ServerMessageCallback OnPostRecvMessageCallback = null;
     
 //----------------------------------------------------------------------------------------------------------------------
-    
     
     private protected override void InitInternalV() {
         
@@ -55,7 +55,7 @@ public class MeshSyncServer : BaseMeshSync {
         m_autoStartServer = autoStart; 
 
 #if UNITY_STANDALONE        
-        if (m_autoStartServer && !m_serverStarted && enabled && gameObject.activeInHierarchy) {
+        if (m_autoStartServer && !m_serverStarted && gameObject.scene.IsValid() && !IsInPrefabView && enabled && gameObject.activeInHierarchy) {
             StartServer();
         }
 #endif
@@ -106,10 +106,11 @@ public class MeshSyncServer : BaseMeshSync {
         
         m_server.fileRootPath = GetServerDocRootPath();
         m_server.AllowPublicAccess(projectSettings.GetServerPublicAccess());
-        
+
         m_handler = HandleRecvMessage;
 
 #if UNITY_EDITOR
+        EditorApplication.update -= PollServerEvents;
         EditorApplication.update += PollServerEvents;
 #endif
         if (m_config.Logging)
@@ -120,16 +121,18 @@ public class MeshSyncServer : BaseMeshSync {
 #endif //UNITY_STANDALONE
     }
 
-//----------------------------------------------------------------------------------------------------------------------        
+        //----------------------------------------------------------------------------------------------------------------------        
 
-    internal void StopServer() {
-#if UNITY_STANDALONE            
-        if (!m_server) 
-            return;
-        
+    internal void StopServer()
+    {
+#if UNITY_STANDALONE
 #if UNITY_EDITOR
         EditorApplication.update -= PollServerEvents;
 #endif
+
+        if (!m_server)
+            return;
+
         m_server.Stop();
         m_server = default(Server);
 
@@ -138,7 +141,7 @@ public class MeshSyncServer : BaseMeshSync {
 
         m_serverStarted = false;
 #else
-        Debug.LogWarning("[MeshSync] Server functions are not supported in non-Standalone platform");
+    Debug.LogWarning("[MeshSync] Server functions are not supported in non-Standalone platform");
 #endif //UNITY_STANDALONE
     }
 
@@ -154,7 +157,6 @@ public class MeshSyncServer : BaseMeshSync {
         if (string.IsNullOrEmpty(GetAssetsFolder())) {
             SetAssetsFolder(MeshSyncConstants.DEFAULT_ASSETS_PATH);
         }
-        
     }   
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -185,6 +187,8 @@ public class MeshSyncServer : BaseMeshSync {
 
         if (m_server.numMessages > 0)
             m_server.ProcessMessages(m_handler);
+
+        SendUpdatedProperties();
     }
 
     void HandleRecvMessage(NetworkMessageType type, IntPtr data) {
@@ -197,7 +201,7 @@ public class MeshSyncServer : BaseMeshSync {
                     OnRecvSet((SetMessage)data);
                     break;
                 case NetworkMessageType.Delete:
-                    OnRecvDelete((DeleteMessage)data);
+                    OnRecvDelete((DeleteMessage)data); 
                     break;
                 case NetworkMessageType.Fence:
                     OnRecvFence((FenceMessage)data);
@@ -210,6 +214,9 @@ public class MeshSyncServer : BaseMeshSync {
                     break;
                 case NetworkMessageType.Query:
                     OnRecvQuery((QueryMessage)data);
+                    break;
+                case NetworkMessageType.RequestServerLiveEdit:
+                    OnRecvPropertyRequest();
                     break;
                 default:
                     break;
@@ -305,6 +312,7 @@ public class MeshSyncServer : BaseMeshSync {
         }
         data.FinishRespond();
     }
+
     #endregion
 
     #region ServeScene
@@ -457,12 +465,13 @@ public class MeshSyncServer : BaseMeshSync {
 
         // bones & blendshapes are handled by CaptureSkinnedMeshRenderer()
     }
-    #endregion //ServeScene
+        #endregion //ServeScene
 
 
-    #region Events
+        #region Events
 
-    void OnValidate() {
+    void OnValidate()
+    {
         CheckParamsUpdated();
     }
 
@@ -485,16 +494,51 @@ public class MeshSyncServer : BaseMeshSync {
         if (m_autoStartServer) {
             m_requestRestartServer = true;
         }
-    }
+        }
 
     private protected override void OnDisable() {
         base.OnDisable();
         StopServer();
     }
+        
+    bool IsInPrefabView
+    {
+        get
+        {
+#if UNITY_EDITOR
+#if UNITY_2021_2_OR_NEWER
+            return UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
+#else
+            return UnityEditor.Experimental.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
+#endif
+#else // UNITY_EDITOR
+            return false;
+#endif
+            }
+    }
 
-    void LateUpdate() {
+    void LateUpdate()
+    {
+        if (IsInPrefabView)
+            return;
         PollServerEvents();
     }
+
+    protected override void OnDestroy() {
+        base.OnDestroy();
+
+        Dispose();
+    }
+
+    public void Dispose() {
+        StopServer();
+
+#if UNITY_EDITOR
+        m_DCCInterop?.Dispose();
+        m_DCCInterop = null;
+#endif
+    }
+
     #endregion
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -513,12 +557,13 @@ public class MeshSyncServer : BaseMeshSync {
 #if UNITY_EDITOR
     [SerializeField] bool m_foldServerSettings = true;
 
-    internal IDCCLauncher m_DCCInterop;
-    internal UnityEngine.Object m_DCCAsset;
+    internal         IDCCLauncher       m_DCCInterop;
+    [SerializeField] UnityEngine.Object m_DCCAsset;
 
     public UnityEngine.Object DCCAsset
     {
         get { return m_DCCAsset; }
+        internal set { m_DCCAsset = value; }
     }
 #endif
     
@@ -540,6 +585,18 @@ public class MeshSyncServer : BaseMeshSync {
         INITIAL_0_4_0 = 1, //initial for version 0.4.0-preview 
     
     }
+
+#if UNITY_EDITOR
+    [SerializeField]
+    private bool m_foldInstanceSettings = true;
+
+    internal bool foldInstanceSettings
+    {
+        get => m_foldInstanceSettings;
+        set => m_foldInstanceSettings = value;
+    }
+#endif    
+    
     
 }
 

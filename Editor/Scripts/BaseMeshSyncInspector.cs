@@ -55,7 +55,14 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
             guiFunc: () => EditorGUILayout.Toggle("Update Mesh Colliders", config.UpdateMeshColliders),
             updateFunc: (bool toggle) => { config.UpdateMeshColliders = toggle; }
         );
+
+#if AT_USE_PROBUILDER
+        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Use Pro Builder",
+            guiFunc: () => EditorGUILayout.Toggle("Use Pro Builder", t.UseProBuilder),
+            updateFunc: (bool toggle) => { t.UseProBuilder = toggle; }
+        );
         EditorGUI.indentLevel--;
+#endif
 
         changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Sync Visibility",
             guiFunc: () => EditorGUILayout.Toggle("Visibility", config.SyncVisibility),
@@ -257,8 +264,6 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
         boldFoldoutStyle.fontStyle = FontStyle.Bold;
         return boldFoldoutStyle;
     }
-
-    
-}
+    }
 
 } // end namespace

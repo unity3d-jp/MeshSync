@@ -192,6 +192,20 @@ internal static class Misc {
         try {
             path = Misc.SanitizeFileName(path);
 
+                // If it's an existing asset but the path doesn't match, make a copy of it for the new path:
+                if (AssetDatabase.Contains(asset))
+                {
+                    var assetPath = Path.GetFullPath(AssetDatabase.GetAssetPath(asset));
+                    var fullPath = Path.GetFullPath(path);
+
+                    if (assetPath != fullPath)
+                    {
+                        var newAsset = UnityEngine.Object.Instantiate(asset);
+                        newAsset.name = asset.name;
+                        asset = newAsset;
+                    }
+                }
+
             // to keep meta, rewrite the existing one if already exists.
             T loadedAsset = AssetDatabase.LoadAssetAtPath<T>(path);
             if (loadedAsset != null) {

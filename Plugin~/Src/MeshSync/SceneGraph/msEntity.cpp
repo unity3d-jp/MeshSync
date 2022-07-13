@@ -7,6 +7,7 @@
 #include "MeshSync/SceneGraph/msPoints.h"
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msTransform.h"
+#include "MeshSync/SceneGraph/msCurve.h"
 
 namespace ms {
 
@@ -29,6 +30,7 @@ std::shared_ptr<Entity> Entity::create(std::istream& is)
     case EntityType::Light: ret = Light::create(); break;
     case EntityType::Mesh: ret = Mesh::create(); break;
     case EntityType::Points: ret = Points::create(); break;
+    case EntityType::Curve: ret = Curve::create(); break;
     default:
         throw std::runtime_error("Entity::create() failed");
         break;

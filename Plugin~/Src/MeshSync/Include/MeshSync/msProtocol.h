@@ -10,12 +10,16 @@
 #include "MeshSync/SceneGraph/msIdentifier.h" //InvalidID
 #include "MeshSync/SceneGraph/msMeshRefineSettings.h"
 #include "MeshSync/SceneGraph/msSceneSettings.h"
-
+#include "MeshSync/SceneGraph/msPropertyInfo.h"
+#include "MeshSync/SceneGraph/msEntity.h"
 
 msDeclClassPtr(ResponseMessage)
 msDeclClassPtr(Scene)
+msDeclClassPtr(Entity)
 
 namespace ms {
+
+    const std::string REQUEST_SYNC = "sync";
 
 class Message
 {
@@ -31,6 +35,7 @@ public:
         Screenshot,
         Query,
         Response,
+        RequestServerLiveEdit
     };
     int protocol_version = msProtocolVersion;
     int session_id = InvalidID;
@@ -213,5 +218,39 @@ public:
     void deserialize(std::istream& is) override;
 };
 msSerializable(PollMessage);
+
+
+/// <summary>
+/// A mechanism to initiate the sending of data from server to client.
+/// Message that does not time out and is only replied to by the server
+/// to send something back to the client.
+/// </summary>
+class ServerLiveEditRequest : public Message
+{
+    using super = Message;
+public:
+    SceneSettings scene_settings;
+
+    // non-serializable fields
+    std::atomic_bool ready{ false };
+    std::atomic_bool cancelled { false };
+
+public:
+    ServerLiveEditRequest();
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+};
+msSerializable(ServerLiveEditRequest);
+
+class ServerLiveEditResponse {
+public:
+    std::vector<PropertyInfo> properties;
+    std::vector<EntityPtr> entities;
+    std::string message;
+
+    void serialize(std::ostream& os) const;
+    void deserialize(std::istream& is);
+};
+msSerializable(ServerLiveEditResponse);
 
 } // namespace ms

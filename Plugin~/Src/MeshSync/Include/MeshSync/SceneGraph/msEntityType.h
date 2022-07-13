@@ -10,6 +10,7 @@ enum class EntityType : int
     Light,
     Mesh,
     Points,
+    Curve,
 };
 
 

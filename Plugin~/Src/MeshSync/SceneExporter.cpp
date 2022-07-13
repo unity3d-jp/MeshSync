@@ -54,6 +54,10 @@ void SceneExporter::add(ScenePtr scene)
         else
             transforms.push_back(e);
     }
+
+    for (auto& prop : scene->propertyInfos) {
+        propertyInfos.push_back(prop);
+    }
 }
 
 } // namespace ms

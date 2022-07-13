@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using UnityEditor;
@@ -138,7 +138,7 @@ namespace Unity.MeshSync.Editor
                 if (!string.IsNullOrEmpty(newBlenderPath) && newBlenderPath != blenderPath)
                 {
                     SetBlenderPath(newBlenderPath);
-                    OpenDCCTool(server.m_DCCAsset);
+                    OpenDCCTool(server.DCCAsset);
                 }
 
                 changed = true;
@@ -159,7 +159,7 @@ namespace Unity.MeshSync.Editor
                 runMode = newRunMode;
                 if (m_blenderProcess != null)
                 {
-                    OpenDCCTool(server.m_DCCAsset);
+                    OpenDCCTool(server.DCCAsset);
                 }
             }
 
@@ -174,7 +174,7 @@ namespace Unity.MeshSync.Editor
                 redirectBlenderToUnityConsole = newRedirect;
                 if (m_blenderProcess != null)
                 {
-                    OpenDCCTool(server.m_DCCAsset);
+                    OpenDCCTool(server.DCCAsset);
                 }
             }
         }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
@@ -8,14 +8,21 @@ using UnityEngine.Animations;
 using Unity.Collections;
 using UnityEngine.Assertions;
 using System.IO;
+using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
+
+#if AT_USE_SPLINES
+using Unity.Mathematics;
+#endif
 
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using Unity.FilmInternalUtilities.Editor;
 #endif
+
+[assembly: InternalsVisibleTo("Unity.Utilities.VariantExport")]
 
 namespace Unity.MeshSync
 {
@@ -195,7 +202,9 @@ internal delegate void DeleteInstanceHandler(string path);
         }
 
         internal List<MaterialHolder> materialList { get { return m_materialList; } }
-        internal List<TextureHolder> textureList { get { return m_textureList; } }
+        internal List<TextureHolder>  textureList  { get { return m_textureList; } }
+        internal PrefabDictionary     prefabDict   { get { return m_prefabDict; } }
+
 
 #if UNITY_EDITOR
 
@@ -534,6 +543,9 @@ internal delegate void DeleteInstanceHandler(string path);
                         case EntityType.Points:
                             dst = UpdatePointsEntity((PointsData)src, config);
                             break;
+                        case EntityType.Curve:
+                            dst = UpdateCurveEntity((CurvesData)src, config);
+                            break;
                         default:
                             Debug.LogError($"Unhandled entity type: {src.entityType}");
                             break;
@@ -580,6 +592,8 @@ internal delegate void DeleteInstanceHandler(string path);
                         onUpdateInstanceInfo.Invoke(src.path, dst.go, src.transforms);
                 }
             });
+
+            UpdateProperties(scene);
 
 #if UNITY_EDITOR
             if (config.ProgressiveDisplay)
@@ -1775,47 +1789,194 @@ internal delegate void DeleteInstanceHandler(string path);
             return rec;
         }
 
+        HashSet<string> instanceNames = new HashSet<string>();
         InstanceInfoRecord UpdateInstanceInfo(InstanceInfoData data)
         {
-            InstanceInfoRecord infoRecord = null;
-        
             var path = data.path;
-        
-            if (!m_clientInstances.TryGetValue(path, out infoRecord)) {
+
+            InstanceInfoRecord infoRecord;
+            if (!m_clientInstances.TryGetValue(path, out infoRecord))
+            {
                 infoRecord = new InstanceInfoRecord();
                 m_clientInstances.Add(path, infoRecord);
             }
-        
+
+            EntityRecord instancedEntityRecord;
             // Look for reference in client instanced objects
-            if (m_clientInstancedEntities.TryGetValue(path, out EntityRecord instancedEntityRecord)) { 
+            if (m_clientInstancedEntities.TryGetValue(path, out instancedEntityRecord))
+            {
                 infoRecord.go = instancedEntityRecord.go;
             }
-            else if (m_clientObjects.TryGetValue(path, out EntityRecord entityRecord)) {
-                infoRecord.go = entityRecord.go;
+            else if (m_clientObjects.TryGetValue(path, out instancedEntityRecord))
+            {
+                infoRecord.go = instancedEntityRecord.go;
             }
-            else {
+            else
+            {
                 throw new Exception($"[MeshSync] No instanced entity found for path {data.path}");
-            } 
-        
-            // Look for parent in client objects
-            if (m_clientObjects.TryGetValue(data.parentPath, out EntityRecord parentRecord)) {
-                if (infoRecord.renderer == null) {
-                    infoRecord.renderer = parentRecord.go.AddComponent<MeshSyncInstanceRenderer>();
-                }
-            
-                infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
             }
-            else {
-                if (infoRecord.renderer == null) {
-                    infoRecord.renderer = m_rootObject.gameObject.AddComponent<MeshSyncInstanceRenderer>();
-                }
-            
-                infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
+
+            // Find parent for this instance:
+            GameObject instanceRendererParent;
+            if (m_clientObjects.TryGetValue(data.parentPath, out EntityRecord parentRecord))
+            {
+                instanceRendererParent = parentRecord.go;
+            }
+            else
+            {
+                instanceRendererParent = m_rootObject.gameObject;
+
                 Debug.LogWarningFormat(
                     "[MeshSync] No entity found for parent path {0}, using root as parent", data.parentPath);
             }
 
+            switch (InstanceHandling)
+            {
+                case InstanceHandlingType.InstanceRenderer:
+                    UpdateInstanceInfo_InstanceRenderer(data, infoRecord, instanceRendererParent);
+                    break;
+                case InstanceHandlingType.Copies:
+                case InstanceHandlingType.Prefabs:
+                    UpdateInstanceInfo_CopiesAndPrefabs(data, infoRecord, instancedEntityRecord, instanceRendererParent);
+                    break;
+                default:
+                    break;
+            }
+
             return infoRecord;
+        }
+
+        private void UpdateInstanceInfo_CopiesAndPrefabs(
+            InstanceInfoData data,
+            InstanceInfoRecord infoRecord,
+            EntityRecord instancedEntityRecord,
+            GameObject instanceRendererParent) {
+            // Make sure the other renderer is removed if this was not a copy or prefab before:
+            if (infoRecord.renderer != null) {
+                DestroyImmediate(infoRecord.renderer);
+                infoRecord.renderer = null;
+            }
+
+            infoRecord.DeleteInstanceObjects();
+
+            instanceNames.Add(infoRecord.go.name);
+
+            MeshSyncPlayerConfig config = GetConfigV();
+
+            if (infoRecord.go.transform.parent == null ||
+                !instanceNames.Contains(infoRecord.go.transform.parent.name)) {
+                bool visible = instancedEntityRecord.visibility.visibleInRender;
+
+                GameObject instanceObjectOriginal;
+                if (InstanceHandling == InstanceHandlingType.Copies) {
+                    instanceObjectOriginal = infoRecord.go;
+                }
+                else {
+                    instanceObjectOriginal = GetOrCreatePrefab(data, infoRecord);
+                }
+
+                if (instanceObjectOriginal == null) {
+                    return;
+                }
+
+                foreach (var mat in data.transforms) {
+                    GameObject instancedCopy;
+                    if (InstanceHandling == InstanceHandlingType.Copies) {
+                        instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
+                    }
+                    else {
+#if UNITY_EDITOR
+                        instancedCopy = (GameObject)PrefabUtility.InstantiatePrefab(instanceObjectOriginal,
+                        instanceRendererParent.transform);
+#else
+                        instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
+#endif
+                    }
+
+                    SetInstanceTransform(instancedCopy, instanceObjectOriginal, mat);
+
+                    if (config.SyncVisibility &&
+                        instancedEntityRecord.hasVisibility) {
+                        instancedCopy.SetActive(visible);
+                    }
+
+                    infoRecord.instanceObjects.Add(instancedCopy);
+                }
+            }
+        }
+
+        private static void SetInstanceTransform(GameObject instancedCopy, GameObject instanceObjectOriginal, Matrix4x4 mat) {
+            Transform objTransform = instancedCopy.transform;
+
+            var newMat = instanceObjectOriginal.transform.localToWorldMatrix * mat;
+
+            objTransform.localScale = newMat.lossyScale;
+            objTransform.position   = newMat.MultiplyPoint(Vector3.zero);
+
+            // Calculate rotation here to avoid gimbal lock issue:
+            Vector3 forward;
+            forward.x = newMat.m02;
+            forward.y = newMat.m12;
+            forward.z = newMat.m22;
+
+            Vector3 upwards;
+            upwards.x = newMat.m01;
+            upwards.y = newMat.m11;
+            upwards.z = newMat.m21;
+
+            objTransform.rotation = Quaternion.LookRotation(forward, upwards);
+
+            Debug.Assert(objTransform.localToWorldMatrix == newMat, "Matrices don't match!");
+        }
+
+        private GameObject GetOrCreatePrefab(InstanceInfoData data, InstanceInfoRecord infoRecord) {
+            GameObject instanceObject = null;
+
+            // Look for existing prefab and make sure the object exists:
+            if (m_prefabDict.TryGetValue(data.path, out var existingPrefab)) {
+                instanceObject = existingPrefab.prefab;
+                if (instanceObject == null) {
+                    m_prefabDict.Remove(data.path);
+                }
+            }
+
+            // Create it if it doesn't exist:
+            if (instanceObject == null) {
+#if UNITY_EDITOR // Cannot create prefabs when not in editor.
+                ExportMeshes();
+                ExportMaterials();
+
+                var pathWithoutSlash = data.path.Trim('/');
+                var prefabLocation = Path.Combine(m_assetsFolder, Misc.SanitizeFileName(pathWithoutSlash) + ".prefab");
+
+                bool wasActive = infoRecord.go.activeSelf;
+                infoRecord.go.SetActive(true);
+
+                var prefab = PrefabUtility.SaveAsPrefabAssetAndConnect(infoRecord.go, prefabLocation,
+                    InteractionMode.AutomatedAction);
+
+                AssetDatabase.SaveAssets();
+
+                m_prefabDict[data.path] = new PrefabHolder { name = data.path, prefab = prefab };
+
+                instanceObject = prefab;
+
+                infoRecord.go.SetActive(wasActive);
+#endif
+            }
+
+            return instanceObject;
+        }
+
+        private static void UpdateInstanceInfo_InstanceRenderer(InstanceInfoData data, InstanceInfoRecord infoRecord,
+            GameObject instanceRendererParent) {
+            infoRecord.DeleteInstanceObjects();
+
+            if (instanceRendererParent != null && infoRecord.renderer == null) {
+                infoRecord.renderer = instanceRendererParent.AddComponent<MeshSyncInstanceRenderer>();
+            }
+
+            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
         }
 
         void UpdateConstraint(ConstraintData data)
@@ -2036,9 +2197,11 @@ internal delegate void DeleteInstanceHandler(string path);
         internal bool EraseInstanceInfoRecord(Identifier identifier)
         {
             return EraseInstanceRecord(identifier, m_clientInstances,
-                delegate (InstanceInfoRecord record)
-                {
+                delegate (InstanceInfoRecord record) {
                     DestroyImmediate(record.renderer);
+
+                    record.DeleteInstanceObjects();
+
                     if (onDeleteInstanceInfo != null)
                         onDeleteInstancedEntity(identifier.name);
                 });
@@ -2084,9 +2247,9 @@ internal delegate void DeleteInstanceHandler(string path);
             }
             return ret;
         }
-        #endregion
+#endregion
 
-        #region Tools
+#region Tools
 
         private bool ApplyMaterialList(MaterialList ml)
         {
@@ -2219,6 +2382,25 @@ internal delegate void DeleteInstanceHandler(string path);
             childUri = childUri.Parent;
         }
         return false;
+    }
+
+    internal virtual void ClearInstancePrefabs() {
+        transform.DestroyChildrenImmediate();
+
+        foreach (var prefabHolder in m_prefabDict.Values) {
+            var path = AssetDatabase.GetAssetPath(prefabHolder.prefab);
+
+            // Also delete its asset:
+            var deps = AssetDatabase.GetDependencies(path);
+            var assetName = Path.ChangeExtension(path, "asset");
+            if (deps.Contains(assetName)) {
+                AssetDatabase.DeleteAsset(assetName);
+            }
+
+            AssetDatabase.DeleteAsset(path);
+        }
+
+        m_prefabDict.Clear();
     }
 
     void Export(KeyValuePair<string, EntityRecord> kvp, bool overwrite, bool useExistingOnes, string basePath, MeshSyncPlayerConfig config, Misc.UniqueNameGenerator nameGenerator)
@@ -2449,10 +2631,10 @@ internal delegate void DeleteInstanceHandler(string path);
     }            
     
 #endif //UNITY_EDITOR
-    #endregion
+#endregion
 
 //----------------------------------------------------------------------------------------------------------------------        
-    #region Events
+#region Events
 #if UNITY_EDITOR
     void Reset() {
         // force disable batching for export
@@ -2492,7 +2674,7 @@ internal delegate void DeleteInstanceHandler(string path);
         SceneView.duringSceneGui -= OnSceneViewGUI;
 #endif
     }
-    #endregion
+#endregion
 
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -2509,6 +2691,7 @@ internal delegate void DeleteInstanceHandler(string path);
     [SerializeField] private protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
     [SerializeField] private           List<TextureHolder>  m_textureList  = new List<TextureHolder>();
     [SerializeField] private           List<AudioHolder>    m_audioList    = new List<AudioHolder>();
+    [SerializeField] private           PrefabDictionary     m_prefabDict   = new PrefabDictionary();
 
     [SerializeField] string[]       m_clientObjects_keys;
     [SerializeField] EntityRecord[] m_clientObjects_values;

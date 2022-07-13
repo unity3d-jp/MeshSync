@@ -7,6 +7,7 @@
 #include "MeshSync/SceneGraph/msAnimation.h"
 #include "MeshSync/SceneGraph/msMaterial.h"
 #include "MeshSync/SceneGraph/msMesh.h"
+#include "MeshSync/SceneGraph/msCurve.h"
 #include "MeshSync/SceneGraph/msPoints.h"
 #include "MeshSync/SceneGraph/msScene.h"
 
@@ -18,7 +19,181 @@
 #include "MeshSync/Utility/msMaterialExt.h"     //standardMaterial
 #include "MeshSync/SceneCache/msSceneCacheInputFile.h"
 
+#include "MeshSync/AsyncSceneSender.h" //ms::AsyncSceneSender
+#include "MeshSync/msServer.h"
+
 using namespace mu;
+
+//#define SKIP_CLIENT_TEST
+
+#ifndef SKIP_CLIENT_TEST
+
+// We don't have tests for clients yet, using this to test some code:
+
+class ID
+{
+public:
+    std::string name;
+    unsigned int session_uuid;
+};
+
+class Object
+{
+public:
+    ID* data;
+};
+
+std::map<std::string, unsigned int> mappedNames;
+
+std::string msblenContextIntermediatePathProvider_append_id(std::string path, const Object* obj) {
+    auto data = (ID*)obj->data;
+
+    path += "_" + std::string(data->name);
+
+    // If we already have an object with this name but a different session_uuid, append the session_uuid as well
+    auto it = mappedNames.find(data->name);
+
+    if (it == mappedNames.end()) {
+        mappedNames.insert(std::make_pair(data->name, data->session_uuid));
+    }
+    else {
+        if(it->second != data->session_uuid)
+        {
+            path += "_" + std::to_string(data->session_uuid);
+        }
+    }
+
+    return path;
+}
+
+TestCase(Test_IntermediatePathProvider) {
+    Object cube1;
+    cube1.data = new ID();
+    cube1.data->name = "id";
+    cube1.data->session_uuid = 1;
+
+    Object cube2;
+    cube2.data = new ID();
+    cube2.data->name = "id";
+    cube2.data->session_uuid = 2;
+
+    // Ensure the returned path is consistent and the first object with the name has no uuid suffix:
+    for (int i = 0; i < 10; i++) {
+        assert(msblenContextIntermediatePathProvider_append_id("/cube", &cube1) == "/cube_id");
+        assert(msblenContextIntermediatePathProvider_append_id("/cube", &cube2) == "/cube_id_2");
+    }
+}
+
+TestCase(Test_SendProperties) {
+    std::shared_ptr<ms::Scene> scene = ms::Scene::create();
+    {
+        std::shared_ptr<ms::Mesh> node = ms::Mesh::create();
+        scene->entities.push_back(node);
+
+        node->path = "/Test/PropertiesHolder";
+        node->position = { 0.0f, 0.0f, 0.0f };
+        node->rotation = quatf::identity();
+        node->scale = { 1.0f, 1.0f, 1.0f };
+        node->visibility = { false, true, true };
+        MeshGenerator::GenerateIcoSphereMesh(node->counts, node->indices, node->points, node->m_uv[0], 0.1f, 1);
+        node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
+        node->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
+
+        scene->propertyInfos.clear();
+        {
+            auto prop = ms::PropertyInfo::create();
+            prop->path = node->path;
+            prop->name = "Test int";
+            prop->set(10, 0, 100);
+            assert(prop->type == ms::PropertyInfo::Type::Int && "type is not correct");
+            scene->propertyInfos.push_back(prop);
+        }
+        {
+            auto prop = ms::PropertyInfo::create();
+            prop->path = node->path;
+            prop->name = "Test float";
+            prop->set(10.0f, 0, 100);
+            assert(prop->type == ms::PropertyInfo::Type::Float && "type is not correct");
+            scene->propertyInfos.push_back(prop);
+        }
+        {
+            auto prop = ms::PropertyInfo::create();
+            prop->path = node->path;
+            prop->name = "Test string";
+            const char* testString = "Test123";
+            prop->set(testString, strlen(testString));
+            assert(prop->type == ms::PropertyInfo::Type::String && "type is not correct");
+            scene->propertyInfos.push_back(prop);
+        }
+        {
+            auto prop = ms::PropertyInfo::create();
+            prop->path = node->path;
+            prop->name = "Test int array";
+            int testArray[] = {1, 2, 3};
+            prop->set(testArray, -100, 200, 3);
+            assert(prop->type == ms::PropertyInfo::Type::IntArray && "type is not correct");
+            assert(prop->min == -100 && "min is not correct");
+            assert(prop->max == 200 && "max is not correct");
+            scene->propertyInfos.push_back(prop);
+        }
+        {
+            auto prop = ms::PropertyInfo::create();
+            prop->name = "Test float array";
+            float testArray[] = { 1, 2, 3 };
+            prop->set(testArray, -100, 200, 3);
+            assert(prop->type == ms::PropertyInfo::Type::FloatArray && "type is not correct");
+            assert(prop->min == -100 && "min is not correct");
+            assert(prop->max == 200 && "max is not correct");
+            scene->propertyInfos.push_back(prop);
+        }
+    }
+
+    TestUtility::Send(scene);
+}
+
+TestCase(Test_ServerInitiatedMessage) {
+    ms::AsyncSceneSender sender;
+    sender.requestServerInitiatedMessage();
+
+    // AsyncSceneSender should be blocking now until the client responds. Otherwise the destructor of AsyncSceneSender aborts the call.
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+}
+
+TestCase(Test_ServerPropertyHandling) {
+    auto server = ms::Server(ms::ServerSettings());
+
+    auto prop1 = ms::PropertyInfo::create();
+    prop1->path = "TestPath";
+    prop1->name = "Test string";
+    const char* testString1 = "Test123";
+    prop1->set(testString1, strlen(testString1));
+    server.receivedProperty(prop1);
+
+    auto prop2 = ms::PropertyInfo::create();
+    prop2->path = "TestPath";
+    prop2->name = "Test string";
+    const char* testString2 = "Test456";
+    prop2->set(testString2, strlen(testString2));
+    server.receivedProperty(prop2);
+
+    // 2 properties with the same path should be merged into 1:
+    assert(server.m_pending_properties.size() == 1);
+    assert(server.m_pending_properties[prop2->hash()] == prop2);
+}
+
+TestCase(Test_ServerEntityHandling) {
+    auto server = ms::Server(ms::ServerSettings());
+
+    auto testMesh = server.getOrCreatePendingEntity<ms::Mesh>("TestMesh");
+    assert(testMesh != nullptr);
+    assert(testMesh->path == "TestMesh" && "mesh was not created.");
+
+    auto testCurve = server.getOrCreatePendingEntity<ms::Curve>("TestCurve");
+    assert(testCurve != nullptr);
+    assert(testCurve->path == "TestCurve" && "curve was not created.");
+
+    assert(server.m_pending_entities.size() == 2);
+}
 
 TestCase(Test_SendMesh) {
 
@@ -420,3 +595,4 @@ TestCase(Test_Query)
 #undef SendQuery
 }
 
+#endif

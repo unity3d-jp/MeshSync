@@ -2,6 +2,7 @@
 #include "MeshSync/msProtocol.h"
 
 #include "MeshSync/SceneGraph/msScene.h" //Scene
+#include "MeshSync/SceneGraph/msCurve.h"
 
 namespace ms {
 
@@ -166,5 +167,30 @@ void PollMessage::deserialize(std::istream& is)
     read(is, poll_type);
 }
 
+ServerLiveEditRequest::ServerLiveEditRequest() {}
+void ServerLiveEditRequest::serialize(std::ostream& os) const {
+    super::serialize(os);
+
+    write(os, scene_settings);
+}
+
+void ServerLiveEditRequest::deserialize(std::istream& is) {
+    super::deserialize(is);
+
+    read(is, scene_settings);
+}
+
+#define EachMember(F) F(properties) F(entities) F(message)
+void ServerLiveEditResponse::serialize(std::ostream& os) const
+{
+    EachMember(msWrite);
+}
+
+void ServerLiveEditResponse::deserialize(std::istream& is)
+{
+    EachMember(msRead);
+}
+
+#undef EachMember
 
 } // namespace ms

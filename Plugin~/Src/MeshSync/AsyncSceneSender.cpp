@@ -29,7 +29,12 @@ AsyncSceneSender::AsyncSceneSender(int sid)
 
 AsyncSceneSender::~AsyncSceneSender()
 {
+    m_destroyed = true;
     wait();
+
+    if (m_properties_client) {
+        m_properties_client->abortPropertiesRequest();
+    }
 }
 
 const std::string& AsyncSceneSender::getErrorMessage() const
@@ -66,6 +71,48 @@ void AsyncSceneSender::kick()
     m_future = std::async(std::launch::async, [this]() { send(); });
 }
 
+void AsyncSceneSender::requestServerInitiatedMessage()
+{
+    // If we're already requesting properties, don't run it again:
+    if (m_request_properties_future.valid() && m_request_properties_future.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
+        return;
+
+    m_request_properties_future = std::async(std::launch::async, [this]() {
+        if (!m_destroyed) {
+            requestServerInitiatedMessageImpl();
+        }
+    });
+}
+
+void AsyncSceneSender::requestServerInitiatedMessageImpl() {
+    auto setup_message = [this](ms::Message& mes) {
+        mes.session_id = session_id;
+        mes.message_id = message_count++;
+        mes.timestamp_send = mu::Now();
+    };
+
+    ms::Client client(client_settings);
+
+    m_properties_client = &client;
+
+    ms::ServerLiveEditRequest mes;
+    setup_message(mes);
+
+    mes.scene_settings = scene_settings;
+    
+    bool succeeded = client.send(mes);
+
+    if (!succeeded) {
+        return;
+    }
+
+    if (on_server_initiated_response_received) {
+        on_server_initiated_response_received(client.properties, client.entities, client.messageFromServer);
+    }
+
+    m_properties_client = nullptr;
+}
+
 void AsyncSceneSender::send()
 {
     if (on_prepare)
@@ -77,6 +124,9 @@ void AsyncSceneSender::send()
         deleted_entities.empty() && deleted_materials.empty() && 
         deleted_instances.empty())
         return;
+
+    if(on_before_send)
+        on_before_send();
 
     SetupDataFlags(transforms);
     SetupDataFlags(geometries);
@@ -180,6 +230,17 @@ void AsyncSceneSender::send()
         setup_message(mes);
         mes.scene->settings = scene_settings;
         mes.scene->instanceInfos = instanceInfos;
+        succeeded = succeeded && client.send(mes);
+        if (!succeeded)
+            goto cleanup;
+    }
+
+    // property infos
+    if (!propertyInfos.empty()) {
+        ms::SetMessage mes;
+        setup_message(mes);
+        mes.scene->settings = scene_settings;
+        mes.scene->propertyInfos = propertyInfos;
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
             goto cleanup;

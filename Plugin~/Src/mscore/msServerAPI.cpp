@@ -7,6 +7,7 @@
 #include "MeshSync/SceneGraph/msMesh.h"
 #include "MeshSync/SceneGraph/msScene.h"
 #include "MeshSync/SceneGraph/msTexture.h"
+#include "MeshSync/SceneGraph/msCurve.h"
 
 #include "msCoreAPI.h"
 
@@ -245,6 +246,113 @@ msAPI void msServerNotifyPoll(ms::Server *server, ms::PollMessage::PollType t)
 {
     if (!server) { return; }
     server->notifyPoll(t);
+}
+
+
+#define EachType(Body)\
+Body(int, Int)\
+Body(float, Float)
+
+#define Body(A, B)\
+msAPI void msServerSendProperty ## B(ms::Server* server, int sourceType, const char* name, const char* path, const char* modifierName, const char* propertyName, A newValue)\
+{\
+    if (!server) { return; }\
+    auto prop = ms::PropertyInfo::create(); \
+    prop->sourceType = (ms::PropertyInfo::SourceType)sourceType; \
+    prop->name = name; \
+    prop->path = path; \
+    prop->modifierName = modifierName; \
+    prop->propertyName = propertyName; \
+    prop->type = ms::PropertyInfo::B;\
+    prop->set(newValue, 0, 0);\
+    server->receivedProperty(prop);\
+}\
+msAPI void msServerSendProperty ## B ## Array(ms::Server* server, int sourceType, const char* name, const char* path, const char* modifierName, const char* propertyName, A* newValue, int arrayLength)\
+{\
+    if (!server) { return; }\
+    auto prop = ms::PropertyInfo::create(); \
+    prop->sourceType = (ms::PropertyInfo::SourceType)sourceType; \
+    prop->name = name; \
+    prop->path = path; \
+    prop->modifierName = modifierName; \
+    prop->propertyName = propertyName; \
+    prop->type = ms::PropertyInfo::B ## Array;\
+    prop->set(newValue, 0, 0, arrayLength);\
+    server->receivedProperty(prop);\
+}
+
+EachType(Body)
+
+#undef Body
+#undef EachType
+
+msAPI void msServerSendPropertyString(ms::Server* server, int sourceType, const char* name, const char* path, const char* modifierName, const char* propertyName, const char* newValue, int length)
+{
+    if (!server) { return; }
+    auto prop = ms::PropertyInfo::create(); 
+    prop->sourceType = (ms::PropertyInfo::SourceType)sourceType; 
+    prop->name = name; 
+    prop->path = path; 
+    prop->modifierName = modifierName; 
+    prop->propertyName = propertyName; 
+    prop->type = ms::PropertyInfo::String; 
+    prop->set(newValue, length); 
+    server->receivedProperty(prop); 
+}
+
+msAPI void msServerSendTransform(ms::Server* server, const char* path, float3 position, float3 scale, float3 rotation) {
+    if (!server) { return; }
+
+    
+}
+
+msAPI void msServerSendCurve(ms::Server* server, const char* path, int splineIndex, int knotCount, bool closed, float3* cos, float3* handlesLeft, float3* handlesRight)
+{
+    if (!server) { return; }
+
+    auto curve = server->getOrCreatePendingEntity<ms::Curve>(path);
+
+    if (curve->splines.size() <= splineIndex) {
+        curve->splines.push_back(ms::CurveSpline::create());
+    }
+
+    auto spline = curve->splines[splineIndex];
+    spline->closed = closed;
+
+    for (size_t i = 0; i < knotCount; i++)
+    {
+        spline->cos.push_back(cos[i]);
+        spline->handles_left.push_back(handlesLeft[i]);
+        spline->handles_right.push_back(handlesRight[i]);
+    }
+}
+
+msAPI void msServerSendMesh(ms::Server* server, ms::Mesh* data)
+{
+    if (!server) { return; }
+
+    server->m_pending_entities.push_back(make_shared_ptr(data));
+}
+
+msAPI void msServerRequestFullSync(ms::Server* server)
+{
+    if (!server) { return; }
+
+    server->syncRequested();
+}
+
+msAPI void msServerInitiatedResponseReady(ms::Server* server)
+{
+    if (!server) { return; }
+
+    server->propertiesReady();
+}
+
+msAPI bool msServerIsDCCLiveEditReady(ms::Server* server)
+{
+    if (!server) { return false; }
+
+    return server->readyForProperties();
 }
 
 msAPI int msGetGetBakeSkin(ms::GetMessage *self)

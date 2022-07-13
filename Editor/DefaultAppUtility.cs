@@ -5,6 +5,7 @@ internal static class DefaultAppUtility
 {
     public static bool TryGetRegisteredApplication(string extension, out string registeredApp)
     {
+#if UNITY_EDITOR_WIN
         string extensionId = GetClassesRootKeyDefaultValue(extension);
         if (extensionId == null)
         {
@@ -26,6 +27,11 @@ internal static class DefaultAppUtility
             .Replace("\"", string.Empty)
             .Trim();
         return true;
+#else
+        // Don't do this when not on windows:
+        registeredApp = null;
+        return false;
+#endif
     }
 
     private static string GetClassesRootKeyDefaultValue(string keyPath)
