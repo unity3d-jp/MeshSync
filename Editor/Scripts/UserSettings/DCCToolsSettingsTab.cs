@@ -129,13 +129,21 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
     
     string GetFilePath() {
         var path = EditorUtility.OpenFilePanel(addDCCToolLabel, m_lastOpenedFolder, "");
-        m_lastOpenedFolder = Path.GetDirectoryName(path);
+        
+        if (!string.IsNullOrEmpty(path)) {
+            m_lastOpenedFolder = Path.GetDirectoryName(path);
+        }
+        
         return path;
     }
 
     string GetFolderPath() {
         var path = EditorUtility.OpenFolderPanel(addDCCToolLabel, m_lastOpenedFolder, "");
-        m_lastOpenedFolder = path;
+        
+        if (!string.IsNullOrEmpty(path)) {
+            m_lastOpenedFolder = path;
+        }
+
         return path;
     }
     
