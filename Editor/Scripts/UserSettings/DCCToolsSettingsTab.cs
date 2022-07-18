@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
 using Unity.FilmInternalUtilities;
@@ -9,6 +11,9 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor.PackageManager;
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
+using Debug = UnityEngine.Debug;
 
 namespace Unity.MeshSync.Editor {
 internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
@@ -55,7 +60,10 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         Button addDCCToolButton = containerInstance.Query<Button>("AddDCCToolButton").First();
         addDCCToolButton.userData                       =  scrollView;
         addDCCToolButton.clickable.clickedWithEventInfo += OnAddDCCToolButtonClicked;
-        
+
+        Button showBlenderZips = containerInstance.Query<Button>("ShowDCCZips").First();
+        showBlenderZips.clickable.clicked += OnShowDCCZipsClicked;
+
         //Label
         m_footerStatusLabel = containerInstance.Query<Label>("FooterStatusLabel").First();
 
@@ -67,10 +75,22 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         
         //Add the container of this tab to root
         root.Add(containerInstance);
-
     }
 
-//----------------------------------------------------------------------------------------------------------------------        
+    private void OnShowDCCZipsClicked() {
+        var path = Application.dataPath;
+        path = path.Replace("/Assets", "");
+        path = Path.Combine(path, "Packages","com.unity.meshsync.dcc-plugins", "Editor", "Plugins~");
+        path = Path.GetFullPath(path);
+        if (Application.platform == RuntimePlatform.OSXEditor) {
+            Process.Start("open", path);
+        }
+        else {
+            Process.Start("explorer.exe", $"\"{path}\"");
+        }
+    }
+
+    //----------------------------------------------------------------------------------------------------------------------        
 
     private void AddDCCToolSettingsContainer(DCCToolInfo dccToolInfo, VisualElement top, VisualTreeAsset dccToolInfoTemplate) {
         string desc = dccToolInfo.GetDescription();
