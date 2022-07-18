@@ -82,11 +82,17 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         path = path.Replace("/Assets", "");
         path = Path.Combine(path, "Packages","com.unity.meshsync.dcc-plugins", "Editor", "Plugins~");
         path = Path.GetFullPath(path);
-        if (Application.platform == RuntimePlatform.OSXEditor) {
-            Process.Start("open", path);
-        }
-        else {
-            Process.Start("explorer.exe", $"\"{path}\"");
+        
+        switch (Application.platform) {
+            case RuntimePlatform.OSXEditor:
+                Process.Start("open", path);
+                break;
+            case RuntimePlatform.WindowsEditor:
+                Process.Start("explorer.exe", $"\"{path}\"");
+                break;
+            default:
+                Debug.LogErrorFormat("[MeshSync] Show zip files: {0} not supported", Application.platform);
+                break;
         }
     }
 
