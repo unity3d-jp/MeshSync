@@ -11,13 +11,12 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor.PackageManager;
-using UnityEditor.UIElements;
-using UnityEngine.UIElements;
 using Debug = UnityEngine.Debug;
 
 namespace Unity.MeshSync.Editor {
-internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
-
+internal class DCCToolsSettingsTab : IMeshSyncSettingsTab {
+    
+    private IDccToolVersionVerifier m_blenderVersionVerifier = new BlenderVersionVerifier();
     
     public DCCToolsSettingsTab() {
         
@@ -121,33 +120,59 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         
         m_dccStatusLabels[dccToolInfo.AppPath] = statusLabel;
         m_dccContainers[dccToolInfo.AppPath]   = container; 
-            
-            
+        
+        SetupButtons(dccToolInfo, container, integrator, IsToolSupported(dccToolInfo));
+
+
+        top.Add(container);
+    }
+
+    private bool IsToolSupported(DCCToolInfo tool) {
         //Buttons
+        switch (tool.Type) {
+            case DCCToolType.BLENDER:
+                return m_blenderVersionVerifier.IsSupported(tool.DCCToolVersion);
+            default:
+                //TODO handle other DCC tools
+                return true;
+        }
+    }
+
+    private string GetLatestSupporterToolVersion(DCCToolInfo tool) {
+        switch (tool.Type) {
+            case DCCToolType.BLENDER:
+                return m_blenderVersionVerifier.LatestSupportedVersion;
+            default:
+                return "";
+        }
+    }
+
+
+    private void SetupButtons(DCCToolInfo dccToolInfo, TemplateContainer container,
+        BaseDCCIntegrator integrator, bool supportedVersion) {
         {
             Button button = container.Query<Button>("LaunchDCCToolButton").First();
             button.clickable.clickedWithEventInfo += OnLaunchDCCToolButtonClicked;
             button.userData                       =  dccToolInfo;
+            button.SetEnabled(supportedVersion);
         }
         {
             Button button = container.Query<Button>("InstallPluginButton").First();
             button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
             button.userData                       =  integrator;
-            button.SetEnabled(m_checkPluginUpdatesButton.enabledSelf);                
+            button.SetEnabled(m_checkPluginUpdatesButton.enabledSelf);
             m_installPluginButtons.Add(button);
+            button.SetEnabled(supportedVersion);
         }
         {
             Button button = container.Query<Button>("RemoveDCCToolButton").First();
             button.clickable.clickedWithEventInfo += OnRemoveDCCToolButtonClicked;
-            button.userData = dccToolInfo;
+            button.userData                       =  dccToolInfo;
+            button.SetEnabled(true);
         }
-
-        
-        
-        top.Add(container);
     }
-    
-//----------------------------------------------------------------------------------------------------------------------        
+
+    //----------------------------------------------------------------------------------------------------------------------        
 
     #region Button callbacks
 
@@ -338,9 +363,19 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
 
     private void FinalizeCheckPluginUpdates() {
         m_footerStatusLabel.text = "";
-        m_checkPluginUpdatesButton.SetEnabled(true);            
+        m_checkPluginUpdatesButton.SetEnabled(true);  
+        
         foreach (Button installPluginButton in m_installPluginButtons) {
-            installPluginButton.SetEnabled(true);
+            
+            var integrator  = installPluginButton.userData as BaseDCCIntegrator;
+            var isSupported = true;
+            if (integrator != null) {
+                var info        = integrator.GetDCCToolInfo();
+                isSupported = IsToolSupported(info);
+            }
+
+            installPluginButton.SetEnabled(isSupported);
+
         }           
         
     }
@@ -399,6 +434,17 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         
         BaseDCCIntegrator dccIntegrator = statusLabel.userData as BaseDCCIntegrator;
         Assert.IsNotNull(dccIntegrator);
+
+        var toolInfo = dccIntegrator.GetDCCToolInfo();
+        if(!IsToolSupported(toolInfo)) {
+            toolInfo.GetDescription();
+            string NOT_SUPPORTED = $"{toolInfo.GetDescription()} is not supported" +
+                $"- latest supported version is {GetLatestSupporterToolVersion(toolInfo)}";
+
+            statusLabel.text = NOT_SUPPORTED;
+            return;
+        }
+        
         DCCPluginInstallInfo installInfo = dccIntegrator.FindInstallInfo();
 
         const string NOT_INSTALLED = "MeshSync Plugin not installed";
