@@ -127,7 +127,7 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
 
     private const string addDCCToolLabel = "Add DCC Tool";
     
-    string GetFilePath() {
+    string OpenFilePanel() {
         var path = EditorUtility.OpenFilePanel(addDCCToolLabel, m_lastOpenedFolder, "");
         
         if (!string.IsNullOrEmpty(path)) {
@@ -137,7 +137,7 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         return path;
     }
 
-    string GetFolderPath() {
+    string OpenFolderPanel() {
         var path = EditorUtility.OpenFolderPanel(addDCCToolLabel, m_lastOpenedFolder, "");
         
         if (!string.IsNullOrEmpty(path)) {
@@ -150,10 +150,10 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
     void OnAddDCCToolButtonClicked(EventBase evt) {
         string path = null;
         if (Application.platform == RuntimePlatform.OSXEditor) {
-            path = GetFilePath();
+            path = OpenFilePanel();
         }
         else {
-            path = GetFolderPath();
+            path = OpenFolderPanel();
         }
         
         if (string.IsNullOrEmpty(path)) {
