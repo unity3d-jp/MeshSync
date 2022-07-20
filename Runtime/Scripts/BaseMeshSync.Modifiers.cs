@@ -13,7 +13,7 @@ using Unity.Mathematics;
 #endif
 
 namespace Unity.MeshSync {
-    public class PropertyInfoDataWrapperComparer : IComparer<PropertyInfoDataWrapper> {
+    internal class PropertyInfoDataWrapperComparer : IComparer<PropertyInfoDataWrapper> {
         public int Compare(PropertyInfoDataWrapper x, PropertyInfoDataWrapper y) {
             if (x.path == y.path) {
                 return x.name.CompareTo(y.name);
@@ -22,11 +22,13 @@ namespace Unity.MeshSync {
             return x.path.CompareTo(y.path);
         }
     }
-
-    // Wrapper with additional data on PropertyInfoData
-    // that cannot be stored in the shared data structure:
+    
+    /// <summary>
+    /// Wrapper with additional data on PropertyInfoData
+    /// that cannot be stored in PropertyInfoData:
+    /// </summary>
     [Serializable]
-    public class PropertyInfoDataWrapper : ISerializationCallbackReceiver {
+    internal class PropertyInfoDataWrapper : ISerializationCallbackReceiver {
         [DllImport(Lib.name)]
         static extern void msPropertyInfoCopyData(IntPtr self, ref int dst);
 
@@ -369,7 +371,7 @@ namespace Unity.MeshSync {
     // Partial class for now to make merging code easier later.
     [Serializable]
     partial class BaseMeshSync {
-        public enum InstanceHandlingType {
+        internal enum InstanceHandlingType {
             InstanceRenderer,
             Copies,
             Prefabs
@@ -378,7 +380,7 @@ namespace Unity.MeshSync {
         [SerializeField]
         private InstanceHandlingType instanceHandling = InstanceHandlingType.InstanceRenderer;
 
-        public List<PropertyInfoDataWrapper> propertyInfos {
+        internal List<PropertyInfoDataWrapper> propertyInfos {
             get {
                 var propertyComponent = Misc.GetOrAddComponent<MeshSyncServerLiveEditProperties>(gameObject);
 
@@ -387,7 +389,7 @@ namespace Unity.MeshSync {
         }
 
 
-        public virtual InstanceHandlingType InstanceHandling {
+        internal virtual InstanceHandlingType InstanceHandling {
             get => instanceHandling;
 #if UNITY_EDITOR
             set => instanceHandling = value;
@@ -398,7 +400,7 @@ namespace Unity.MeshSync {
         [SerializeField]
         private bool useProBuilder;
 
-        public virtual bool UseProBuilder {
+        internal virtual bool UseProBuilder {
             get => useProBuilder;
             set => useProBuilder = value;
         }
