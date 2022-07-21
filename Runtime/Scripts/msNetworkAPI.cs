@@ -295,6 +295,6 @@ internal struct Server {
 #endregion
 
 
-#endif // UNITY_STANDALONE
+#endif // UNITY_STANDALONE || UNITY_EDITOR
 
     } //end namespace
