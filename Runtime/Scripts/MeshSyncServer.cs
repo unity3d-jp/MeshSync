@@ -516,20 +516,12 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     #endregion //ServeScene
 
 
-    #region Events
-
-        
-
     void LateUpdate()
     {
         if (IsInPrefabView)
             return;
         PollServerEvents();
     }
-
-
-    #endregion
-
 
     Server m_server;
     Server.MessageHandler m_handler;
