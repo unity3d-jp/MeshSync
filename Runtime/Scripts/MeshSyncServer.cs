@@ -169,7 +169,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 
     internal void StopServer()
     {
-#if UNITY_STANDALONE
+#if UNITY_STANDALONE || UNITY_EDITOR
 #if UNITY_EDITOR
         EditorApplication.update -= PollServerEvents;
 #endif
@@ -186,7 +186,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         m_serverStarted = false;
 #else
     Debug.LogWarning("[MeshSync] Server functions are not supported in non-Standalone platform");
-#endif //UNITY_STANDALONE
+#endif //UNITY_STANDALONE || UNITY_EDITOR
     }
 
 //----------------------------------------------------------------------------------------------------------------------
