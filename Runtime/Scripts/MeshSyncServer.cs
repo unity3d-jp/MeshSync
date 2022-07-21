@@ -54,6 +54,23 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         StopServer();
     }
     
+    protected override void OnDestroy() {
+        base.OnDestroy();
+
+        Dispose();
+    }
+
+    public void Dispose() {
+        StopServer();
+
+#if UNITY_EDITOR
+        m_DCCInterop?.Dispose();
+        m_DCCInterop = null;
+#endif
+    }
+    
+    
+    
 //----------------------------------------------------------------------------------------------------------------------
     
     private protected override void InitInternalV() {
@@ -510,20 +527,6 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         PollServerEvents();
     }
 
-    protected override void OnDestroy() {
-        base.OnDestroy();
-
-        Dispose();
-    }
-
-    public void Dispose() {
-        StopServer();
-
-#if UNITY_EDITOR
-        m_DCCInterop?.Dispose();
-        m_DCCInterop = null;
-#endif
-    }
 
     #endregion
 
