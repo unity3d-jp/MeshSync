@@ -69,8 +69,6 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 #endif
     }
     
-    
-    
 //----------------------------------------------------------------------------------------------------------------------
     
     private protected override void InitInternalV() {
