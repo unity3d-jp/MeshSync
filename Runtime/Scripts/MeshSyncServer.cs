@@ -502,21 +502,6 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     #region Events
 
         
-    bool IsInPrefabView
-    {
-        get
-        {
-#if UNITY_EDITOR
-#if UNITY_2021_2_OR_NEWER
-            return UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
-#else
-            return UnityEditor.Experimental.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
-#endif
-#else // UNITY_EDITOR
-            return false;
-#endif
-            }
-    }
 
     void LateUpdate()
     {
@@ -542,12 +527,30 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 
     #endregion
 
-//----------------------------------------------------------------------------------------------------------------------
 
     Server m_server;
     Server.MessageHandler m_handler;
     
 #endif // UNITY_STANDALONE
+
+//----------------------------------------------------------------------------------------------------------------------    
+    bool IsInPrefabView
+    {
+        get
+        {
+#if UNITY_EDITOR
+#if UNITY_2021_2_OR_NEWER
+            return UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
+#else
+            return UnityEditor.Experimental.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
+#endif
+#else // UNITY_EDITOR
+            return false;
+#endif
+        }
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
     
     [SerializeField] private bool m_autoStartServer = false;
     [SerializeField] private int  m_serverPort      = MeshSyncConstants.DEFAULT_SERVER_PORT;
