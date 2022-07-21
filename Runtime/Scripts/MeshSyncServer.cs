@@ -344,7 +344,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         data.FinishRespond();
     }
 
-    #endregion
+    #endregion //MessageHandlers
 
     #region ServeScene
     bool ServeMesh(Renderer objRenderer, GetMessage mes) {
