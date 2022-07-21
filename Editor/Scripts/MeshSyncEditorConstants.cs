@@ -46,8 +46,7 @@ internal static class MeshSyncEditorConstants {
         { "3ds Max 2022", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2022" ) },
         { "3ds Max 2023", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2023" ) },
 
-#if UNITY_EDITOR_WIN        
-        { "Blender 2.83", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },
+#if UNITY_EDITOR_WIN
         { "Blender 2.90", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) },
         { "Blender 2.91", new DCCToolInfo(DCCToolType.BLENDER, "2.91" ) },
         { "Blender 2.92", new DCCToolInfo(DCCToolType.BLENDER, "2.92" ) },
@@ -56,7 +55,6 @@ internal static class MeshSyncEditorConstants {
         { "Blender 3.1", new DCCToolInfo(DCCToolType.BLENDER, "3.1" ) },
         { "Blender 3.2", new DCCToolInfo(DCCToolType.BLENDER, "3.2" ) },
 #elif UNITY_EDITOR_OSX
-        { "Blender/2.83", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) }, 
         { "Blender/2.90", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) }, 
         { "Blender/2.91", new DCCToolInfo(DCCToolType.BLENDER, "2.91" ) }, 
         { "Blender/2.92", new DCCToolInfo(DCCToolType.BLENDER, "2.92" ) }, 
@@ -66,22 +64,6 @@ internal static class MeshSyncEditorConstants {
         { "Blender/3.2", new DCCToolInfo(DCCToolType.BLENDER, "3.2" ) }, 
         { "Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },  //app directly
 #elif UNITY_EDITOR_LINUX
-        { "blender-2.83.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
-        { "blender-2.83.1-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
-        { "blender-2.83.2-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
-        { "blender-2.83.3-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
-        { "blender-2.83.4-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
-        { "blender-2.83.5-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },        
-        { "blender-2.83.6-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },
-        { "blender-2.83.7-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },
-        { "blender-2.83.8-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },
-        { "blender-2.83.9-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.83" ) },
-        { "blender-2.83.10-linux64", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
-        { "blender-2.83.12-linux64", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
-        { "blender-2.83.13-linux64", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
-        { "blender-2.83.14-stable+blender-v2-83-release.759fd9e4c204-linux.x86_64-release", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
-        { "blender-2.83.15-stable+blender-v283-release.fd3036520101-linux.x86_64-release", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
-        { "blender-2.83.16-linux-x64", new DCCToolInfo(DCCToolType.BLENDER,"2.83" ) },
         { "blender-2.90.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) },
         { "blender-2.90.1-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) },
         { "blender-2.91.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.91" ) },
