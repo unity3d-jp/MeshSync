@@ -1,6 +1,4 @@
-#if UNITY_STANDALONE
 using System;
-#endif
 using AOT;
 using Unity.Collections;
 using UnityEngine;
