@@ -208,8 +208,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 //----------------------------------------------------------------------------------------------------------------------
     
 
-#if UNITY_STANDALONE
-    #region Impl
+#if UNITY_STANDALONE || UNITY_EDITOR
     
     void CheckParamsUpdated()  {
 
@@ -217,7 +216,6 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
             m_server.zUpCorrectionMode = (ZUpCorrectionMode) m_config.ZUpCorrection;
         }
     }
-    #endregion
 
     #region MessageHandlers
 
@@ -524,8 +522,8 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     Server m_server;
     Server.MessageHandler m_handler;
     
-#endif // UNITY_STANDALONE
-
+#endif // UNITY_STANDALONE || UNITY_EDITOR
+    
 //----------------------------------------------------------------------------------------------------------------------    
     bool IsInPrefabView
     {
