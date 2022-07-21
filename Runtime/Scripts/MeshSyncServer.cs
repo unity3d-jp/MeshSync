@@ -541,12 +541,8 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-
-    ServerSettings m_serverSettings = ServerSettings.defaultValue;
     Server m_server;
     Server.MessageHandler m_handler;
-    bool m_requestRestartServer = false;
-    bool m_captureScreenshotInProgress = false;
     
 #endif // UNITY_STANDALONE
     
@@ -567,6 +563,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     
     [SerializeField] private MeshSyncServerConfig m_config;
 
+    
 #pragma warning disable 414
     //Renamed in 0.10.x-preview
     [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_serverVersion = (int) ServerVersion.NO_VERSIONING;
@@ -574,7 +571,10 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     private const int CUR_SERVER_VERSION = (int) ServerVersion.INITIAL_0_4_0;
     
     
-    private bool m_serverStarted = false;
+    ServerSettings m_serverSettings              = ServerSettings.defaultValue;
+    bool           m_requestRestartServer        = false;
+    bool           m_captureScreenshotInProgress = false;
+    private bool   m_serverStarted               = false;
     
 //----------------------------------------------------------------------------------------------------------------------    
     
