@@ -120,7 +120,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 
     internal bool DoesServerAllowPublicAccess() {
         bool ret = false;
-#if UNITY_STANDALONE            
+#if UNITY_STANDALONE || UNITY_EDITOR
         ret = m_server.IsPublicAccessAllowed();
 #endif
         return ret;
@@ -131,7 +131,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     /// </summary>
     public void StartServer()
     {
-#if UNITY_STANDALONE            
+#if UNITY_STANDALONE || UNITY_EDITOR
         StopServer();
 
 #if UNITY_EDITOR 
@@ -162,7 +162,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 
 #else
         Debug.LogWarning("[MeshSync] Server functions are not supported in non-Standalone platform");
-#endif //UNITY_STANDALONE
+#endif //UNITY_STANDALONE || UNITY_EDITOR
     }
 
         //----------------------------------------------------------------------------------------------------------------------        
