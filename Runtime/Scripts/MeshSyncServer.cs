@@ -100,14 +100,12 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     public void SetAutoStartServer(bool autoStart) {
         m_autoStartServer = autoStart; 
 
-#if UNITY_STANDALONE        
         if (m_autoStartServer && !m_serverStarted && gameObject.scene.IsValid() && !IsInPrefabView && enabled && gameObject.activeInHierarchy) {
             StartServer();
         }
-#endif
     }
     
-//----------------------------------------------------------------------------------------------------------------------        
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------        
     
 #if UNITY_EDITOR
     internal bool foldServerSettings
