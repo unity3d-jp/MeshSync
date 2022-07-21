@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "com.unity.collab-proxy": "1.14.16",
+    "com.unity.collab-proxy": "1.15.18",
     "com.unity.ext.nunit": "1.0.6",
     "com.unity.formats.alembic": "1.0.7",
     "com.unity.formats.fbx": "4.1.2",
@@ -11,7 +11,7 @@
     "com.unity.package-validation-suite": "0.23.7-preview",
     "com.unity.quicksearch": "2.0.2",
     "com.unity.test-framework": "1.1.31",
-    "com.unity.textmeshpro": "2.1.6",
+    "com.unity.textmeshpro": "3.0.6",
     "com.unity.timeline": "1.6.4",
     "com.unity.ugui": "1.0.0",
     "com.unity.modules.ai": "1.0.0",

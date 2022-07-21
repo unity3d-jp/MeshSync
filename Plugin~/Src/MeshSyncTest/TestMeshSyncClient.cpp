@@ -24,7 +24,6 @@
 
 using namespace mu;
 
-// Skip tests locally to iterate fast, do not commit with this turned on:
 //#define SKIP_CLIENT_TEST
 
 #ifndef SKIP_CLIENT_TEST
@@ -57,11 +56,9 @@ std::string msblenContextIntermediatePathProvider_append_id(std::string path, co
     if (it == mappedNames.end()) {
         mappedNames.insert(std::make_pair(data->name, data->session_uuid));
     }
-    else {
-        if(it->second != data->session_uuid)
-        {
-            path += "_" + std::to_string(data->session_uuid);
-        }
+    else if (it->second != data->session_uuid)
+    {
+        path += "_" + std::to_string(data->session_uuid);
     }
 
     return path;
@@ -154,7 +151,7 @@ TestCase(Test_SendProperties) {
 
 TestCase(Test_ServerInitiatedMessage) {
     ms::AsyncSceneSender sender;
-    sender.requestServerInitiatedMessage();
+    sender.requestLiveEditMessage();
 
     // AsyncSceneSender should be blocking now until the client responds. Otherwise the destructor of AsyncSceneSender aborts the call.
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
