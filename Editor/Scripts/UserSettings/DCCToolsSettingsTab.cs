@@ -124,20 +124,48 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
 //----------------------------------------------------------------------------------------------------------------------        
 
     #region Button callbacks
-    void OnAddDCCToolButtonClicked(EventBase evt) {
-        string folder = EditorUtility.OpenFolderPanel("Add DCC Tool", m_lastOpenedFolder, "");
-        if (string.IsNullOrEmpty(folder)) {
-            return;
+
+    private const string addDCCToolLabel = "Add DCC Tool";
+    
+    string OpenFilePanel() {
+        var path = EditorUtility.OpenFilePanel(addDCCToolLabel, m_lastOpenedFolder, "");
+        
+        if (!string.IsNullOrEmpty(path)) {
+            m_lastOpenedFolder = Path.GetDirectoryName(path);
+        }
+        
+        return path;
+    }
+
+    string OpenFolderPanel() {
+        var path = EditorUtility.OpenFolderPanel(addDCCToolLabel, m_lastOpenedFolder, "");
+        
+        if (!string.IsNullOrEmpty(path)) {
+            m_lastOpenedFolder = path;
         }
 
-        m_lastOpenedFolder = folder;
+        return path;
+    }
+    
+    void OnAddDCCToolButtonClicked(EventBase evt) {
+        string path = null;
+        if (Application.platform == RuntimePlatform.OSXEditor) {
+            path = OpenFilePanel();
+        }
+        else {
+            path = OpenFolderPanel();
+        }
+        
+        if (string.IsNullOrEmpty(path)) {
+            return;
+        }
 
         //Find the path to the actual app
         DCCToolType lastDCCToolType = DCCToolType.AUTODESK_MAYA;
         DCCToolInfo dccToolInfo = null;
         for (int i = 0; i < (int) (DCCToolType.NUM_DCC_TOOL_TYPES) && null==dccToolInfo; ++i) {
             lastDCCToolType = (DCCToolType) (i);
-            dccToolInfo = DCCFinderUtility.FindDCCToolInDirectory(lastDCCToolType, null, m_lastOpenedFolder);
+            dccToolInfo = DCCFinderUtility.FindDCCToolInDirectory(lastDCCToolType, null, path);
         }
 
         if (null==dccToolInfo) {

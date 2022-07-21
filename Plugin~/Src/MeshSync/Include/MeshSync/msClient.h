@@ -32,7 +32,7 @@ public:
     std::vector<EntityPtr> entities;
     std::string messageFromServer;
 
-    void abortPropertiesRequest();
+    void abortLiveEditRequest();
 private:
     ClientSettings m_settings;
     std::string m_error_message;
