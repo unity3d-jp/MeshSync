@@ -22,6 +22,39 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     public ServerMessageCallback OnPostRecvMessageCallback = null;
     
 //----------------------------------------------------------------------------------------------------------------------
+
+    void OnValidate()
+    {
+        CheckParamsUpdated();
+    }
+
+    void ResetServerConfig() {
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
+        m_config     = new MeshSyncServerConfig(projectSettings.GetDefaultServerConfig());
+        m_serverPort = projectSettings.GetDefaultServerPort();
+        
+    }
+
+    void Reset() {
+        ResetServerConfig();
+    }
+
+    private protected override void OnEnable() {
+        base.OnEnable();
+        if (null == m_config) {
+            ResetServerConfig();
+        } 
+        if (m_autoStartServer) {
+            m_requestRestartServer = true;
+        }
+    }
+
+    private protected override void OnDisable() {
+        base.OnDisable();
+        StopServer();
+    }
+    
+//----------------------------------------------------------------------------------------------------------------------
     
     private protected override void InitInternalV() {
         
@@ -463,41 +496,11 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 
         // bones & blendshapes are handled by CaptureSkinnedMeshRenderer()
     }
-        #endregion //ServeScene
+    #endregion //ServeScene
 
 
-        #region Events
+    #region Events
 
-    void OnValidate()
-    {
-        CheckParamsUpdated();
-    }
-
-    void ResetServerConfig() {
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
-        m_config     = new MeshSyncServerConfig(projectSettings.GetDefaultServerConfig());
-        m_serverPort = projectSettings.GetDefaultServerPort();
-        
-    }
-
-    void Reset() {
-        ResetServerConfig();
-    }
-
-    private protected override void OnEnable() {
-        base.OnEnable();
-        if (null == m_config) {
-            ResetServerConfig();
-        } 
-        if (m_autoStartServer) {
-            m_requestRestartServer = true;
-        }
-        }
-
-    private protected override void OnDisable() {
-        base.OnDisable();
-        StopServer();
-    }
         
     bool IsInPrefabView
     {
