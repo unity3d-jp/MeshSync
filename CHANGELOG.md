@@ -1,10 +1,17 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
-## [0.14.0-preview] - 2022-07-19
+## [0.14.0-preview] - 2022-07-22
+
 
 TBD
-
+deps: use com.unity.sharp-zip-lib@1.3.2-preview
+fix: make MeshSyncServer work in both standalone platforms and editor 
+change: drop support for Blender 2.83
+fix: browse files instead of folders when adding DCC Tools on MacOS 
+feat: add plugin auto-installation support for Maya 2023 
+feat: preparation to add Unity->DCC Tools communication
+feat: add support to detect and install plugin for Blender 3.2 
 ## [0.13.2-preview] - 2022-07-04
 
 ### Changed
