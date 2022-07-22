@@ -182,7 +182,8 @@ internal delegate void DeleteInstanceHandler(string path);
         #endregion Simple Getter/Setter
 
         #region Properties
-
+        
+        private int currentSessionId = -1;
 
         private protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
 
@@ -473,8 +474,35 @@ internal delegate void DeleteInstanceHandler(string path);
         #endregion
 
         #region ReceiveScene
-        internal void BeforeUpdateScene() {
+
+        internal void BeforeUpdateScene(FenceMessage? mes = null) {
             onSceneUpdateBegin?.Invoke();
+
+            if (mes.HasValue && currentSessionId != mes.Value.SessionId) {
+                currentSessionId = mes.Value.SessionId;
+
+                int choice = EditorUtility.DisplayDialogComplex("A new session started.",
+                    "MeshSync detected that the DCC tool session has changed. To ensure that the sync state is correct you can delete previously synced objects, stash them and move them to another game object or ignore this and keep all children.",
+                    "Ignore and keep all children",
+                    "Stash",
+                    "Delete all children of the server");
+
+                switch (choice) {
+                    case 1:
+                        // Stash
+                        var stash = new GameObject($"{name}_stash").transform;
+                        for (int i = transform.childCount - 1; i >= 0; i--) {
+                            Transform child = transform.GetChild(i);
+                            child.SetParent(stash, true);
+                        }
+
+                        break;
+                    case 2:
+                        // Destroy
+                        transform.DestroyChildrenImmediate();
+                        break;
+                }
+            }
         }
 
         private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets) {
