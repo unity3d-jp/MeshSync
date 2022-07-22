@@ -1,6 +1,4 @@
-#if UNITY_STANDALONE
 using System;
-#endif
 using AOT;
 using Unity.Collections;
 using UnityEngine;
@@ -22,6 +20,54 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     /// Callback which will be called after MeshSyncServer receives data and finishes processing it
     /// </summary>
     public ServerMessageCallback OnPostRecvMessageCallback = null;
+    
+//----------------------------------------------------------------------------------------------------------------------
+
+    void OnValidate()
+    {
+        CheckParamsUpdated();
+    }
+
+    void ResetServerConfig() {
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
+        m_config     = new MeshSyncServerConfig(projectSettings.GetDefaultServerConfig());
+        m_serverPort = projectSettings.GetDefaultServerPort();
+        
+    }
+
+    void Reset() {
+        ResetServerConfig();
+    }
+
+    private protected override void OnEnable() {
+        base.OnEnable();
+        if (null == m_config) {
+            ResetServerConfig();
+        } 
+        if (m_autoStartServer) {
+            m_requestRestartServer = true;
+        }
+    }
+
+    private protected override void OnDisable() {
+        base.OnDisable();
+        StopServer();
+    }
+    
+    protected override void OnDestroy() {
+        base.OnDestroy();
+
+        Dispose();
+    }
+
+    public void Dispose() {
+        StopServer();
+
+#if UNITY_EDITOR
+        m_DCCInterop?.Dispose();
+        m_DCCInterop = null;
+#endif
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -54,14 +100,12 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     public void SetAutoStartServer(bool autoStart) {
         m_autoStartServer = autoStart; 
 
-#if UNITY_STANDALONE        
         if (m_autoStartServer && !m_serverStarted && gameObject.scene.IsValid() && !IsInPrefabView && enabled && gameObject.activeInHierarchy) {
             StartServer();
         }
-#endif
     }
     
-//----------------------------------------------------------------------------------------------------------------------        
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------        
     
 #if UNITY_EDITOR
     internal bool foldServerSettings
@@ -76,7 +120,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 
     internal bool DoesServerAllowPublicAccess() {
         bool ret = false;
-#if UNITY_STANDALONE            
+#if UNITY_STANDALONE || UNITY_EDITOR
         ret = m_server.IsPublicAccessAllowed();
 #endif
         return ret;
@@ -87,7 +131,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     /// </summary>
     public void StartServer()
     {
-#if UNITY_STANDALONE            
+#if UNITY_STANDALONE || UNITY_EDITOR
         StopServer();
 
 #if UNITY_EDITOR 
@@ -118,14 +162,14 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 
 #else
         Debug.LogWarning("[MeshSync] Server functions are not supported in non-Standalone platform");
-#endif //UNITY_STANDALONE
+#endif //UNITY_STANDALONE || UNITY_EDITOR
     }
 
         //----------------------------------------------------------------------------------------------------------------------        
 
     internal void StopServer()
     {
-#if UNITY_STANDALONE
+#if UNITY_STANDALONE || UNITY_EDITOR
 #if UNITY_EDITOR
         EditorApplication.update -= PollServerEvents;
 #endif
@@ -142,7 +186,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         m_serverStarted = false;
 #else
     Debug.LogWarning("[MeshSync] Server functions are not supported in non-Standalone platform");
-#endif //UNITY_STANDALONE
+#endif //UNITY_STANDALONE || UNITY_EDITOR
     }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -162,8 +206,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 //----------------------------------------------------------------------------------------------------------------------
     
 
-#if UNITY_STANDALONE
-    #region Impl
+#if UNITY_STANDALONE || UNITY_EDITOR
     
     void CheckParamsUpdated()  {
 
@@ -171,7 +214,6 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
             m_server.zUpCorrectionMode = (ZUpCorrectionMode) m_config.ZUpCorrection;
         }
     }
-    #endregion
 
     #region MessageHandlers
 
@@ -313,7 +355,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         data.FinishRespond();
     }
 
-    #endregion
+    #endregion //MessageHandlers
 
     #region ServeScene
     bool ServeMesh(Renderer objRenderer, GetMessage mes) {
@@ -465,42 +507,22 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 
         // bones & blendshapes are handled by CaptureSkinnedMeshRenderer()
     }
-        #endregion //ServeScene
+    #endregion //ServeScene
 
 
-        #region Events
-
-    void OnValidate()
+    void LateUpdate()
     {
-        CheckParamsUpdated();
+        if (IsInPrefabView)
+            return;
+        PollServerEvents();
     }
 
-    void ResetServerConfig() {
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
-        m_config     = new MeshSyncServerConfig(projectSettings.GetDefaultServerConfig());
-        m_serverPort = projectSettings.GetDefaultServerPort();
-        
-    }
-
-    void Reset() {
-        ResetServerConfig();
-    }
-
-    private protected override void OnEnable() {
-        base.OnEnable();
-        if (null == m_config) {
-            ResetServerConfig();
-        } 
-        if (m_autoStartServer) {
-            m_requestRestartServer = true;
-        }
-        }
-
-    private protected override void OnDisable() {
-        base.OnDisable();
-        StopServer();
-    }
-        
+    Server m_server;
+    Server.MessageHandler m_handler;
+    
+#endif // UNITY_STANDALONE || UNITY_EDITOR
+    
+//----------------------------------------------------------------------------------------------------------------------    
     bool IsInPrefabView
     {
         get
@@ -514,43 +536,10 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 #else // UNITY_EDITOR
             return false;
 #endif
-            }
+        }
     }
-
-    void LateUpdate()
-    {
-        if (IsInPrefabView)
-            return;
-        PollServerEvents();
-    }
-
-    protected override void OnDestroy() {
-        base.OnDestroy();
-
-        Dispose();
-    }
-
-    public void Dispose() {
-        StopServer();
-
-#if UNITY_EDITOR
-        m_DCCInterop?.Dispose();
-        m_DCCInterop = null;
-#endif
-    }
-
-    #endregion
-
-//----------------------------------------------------------------------------------------------------------------------
-
-
-    ServerSettings m_serverSettings = ServerSettings.defaultValue;
-    Server m_server;
-    Server.MessageHandler m_handler;
-    bool m_requestRestartServer = false;
-    bool m_captureScreenshotInProgress = false;
     
-#endif // UNITY_STANDALONE
+//----------------------------------------------------------------------------------------------------------------------
     
     [SerializeField] private bool m_autoStartServer = false;
     [SerializeField] private int  m_serverPort      = MeshSyncConstants.DEFAULT_SERVER_PORT;
@@ -569,6 +558,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     
     [SerializeField] private MeshSyncServerConfig m_config;
 
+    
 #pragma warning disable 414
     //Renamed in 0.10.x-preview
     [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_serverVersion = (int) ServerVersion.NO_VERSIONING;
@@ -576,7 +566,10 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     private const int CUR_SERVER_VERSION = (int) ServerVersion.INITIAL_0_4_0;
     
     
-    private bool m_serverStarted = false;
+    ServerSettings m_serverSettings              = ServerSettings.defaultValue;
+    bool           m_requestRestartServer        = false;
+    bool           m_captureScreenshotInProgress = false;
+    private bool   m_serverStarted               = false;
     
 //----------------------------------------------------------------------------------------------------------------------    
     
