@@ -8,9 +8,7 @@ internal static class MeshSyncConstants {
     internal const string PACKAGE_NAME = "com.unity.meshsync";
 
     internal const string DEFAULT_ASSETS_PATH = "Assets/MeshSyncAssets";
-
-    internal const string OPT_OUT_AUTO_CREATE_SERVER = "MeshSync.OptOut.AutoCreateServer";
-
+    
 }    
     
 } //end namespace
