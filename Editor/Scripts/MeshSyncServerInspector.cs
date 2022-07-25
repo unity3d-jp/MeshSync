@@ -87,14 +87,20 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
         }
     }
 
-    private void DrawInstanceSettings(MeshSyncServer t)
-    {
+    private void DrawInstanceSettings(MeshSyncServer t) {
         var style = EditorStyles.foldout;
-        style.fontStyle = FontStyle.Bold;
+        style.fontStyle        = FontStyle.Bold;
         t.foldInstanceSettings = EditorGUILayout.Foldout(t.foldInstanceSettings, "Instances", true, style);
-        if (t.foldInstanceSettings)
-        {
-            t.InstanceHandling = (BaseMeshSync.InstanceHandlingType)EditorGUILayout.EnumPopup("Instance handling", t.InstanceHandling);
+        if (t.foldInstanceSettings) {
+            var newInstanceHandling =
+                (BaseMeshSync.InstanceHandlingType)EditorGUILayout.EnumPopup("Instance handling", t.InstanceHandling);
+
+            if (t.InstanceHandling != newInstanceHandling &&
+                EditorUtility.DisplayDialog("Warning",
+                    "Changing the instance handling mode will delete any prefabs and previously synced objects for this server. Are you sure you want to do this?",
+                    "Yes", "No")) {
+                t.InstanceHandling = newInstanceHandling;
+            }
 
             DrawPrefabListElement(t);
         }
