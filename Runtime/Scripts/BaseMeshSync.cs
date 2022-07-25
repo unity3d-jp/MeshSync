@@ -156,6 +156,8 @@ internal delegate void DeleteInstanceHandler(string path);
 
             m_clientInstances.Clear();
             m_clientInstancedEntities.Clear();
+            
+            m_prefabDict.Clear();
 
             InitInternalV();
         }
@@ -478,30 +480,43 @@ internal delegate void DeleteInstanceHandler(string path);
         internal void BeforeUpdateScene(FenceMessage? mes = null) {
             onSceneUpdateBegin?.Invoke();
 
-            if (mes.HasValue && currentSessionId != mes.Value.SessionId) {
-                currentSessionId = mes.Value.SessionId;
+            CheckForNewSession(mes);
+        }
 
-                int choice = EditorUtility.DisplayDialogComplex("A new session started.",
-                    "MeshSync detected that the DCC tool session has changed. To ensure that the sync state is correct you can delete previously synced objects, stash them and move them to another game object or ignore this and keep all children.",
-                    "Ignore and keep all children",
-                    "Stash",
-                    "Delete all children of the server");
+        void CheckForNewSession(FenceMessage? mes) {
+            if (!mes.HasValue || currentSessionId == mes.Value.SessionId) {
+                return;
+            }
 
-                switch (choice) {
-                    case 1:
-                        // Stash
-                        var stash = new GameObject($"{name}_stash").transform;
-                        for (int i = transform.childCount - 1; i >= 0; i--) {
-                            Transform child = transform.GetChild(i);
-                            child.SetParent(stash, true);
-                        }
+            currentSessionId = mes.Value.SessionId;
 
-                        break;
-                    case 2:
-                        // Destroy
-                        transform.DestroyChildrenImmediate();
-                        break;
-                }
+            if (transform.childCount <= 0) {
+                return;
+            }
+
+            int choice = EditorUtility.DisplayDialogComplex("A new session started.",
+                "MeshSync detected that the DCC tool session has changed. To ensure that the sync state is correct you can delete previously synced objects, stash them and move them to another game object or ignore this and keep all children.",
+                "Ignore and keep all children",
+                "Stash",
+                "Delete all children of the server");
+
+            switch (choice) {
+                case 1:
+                    // Stash
+                    var stash = new GameObject($"{name}_stash").transform;
+                    for (int i = transform.childCount - 1; i >= 0; i--) {
+                        Transform child = transform.GetChild(i);
+                        child.SetParent(stash, true);
+                    }
+
+                    Init(GetAssetsFolder());
+                    break;
+                case 2:
+                    // Destroy
+                    transform.DestroyChildrenImmediate();
+
+                    Init(GetAssetsFolder());
+                    break;
             }
         }
 
