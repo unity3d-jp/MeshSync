@@ -1,7 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Unity.MeshSync.Editor {
 
@@ -11,22 +11,33 @@ public static class AutoServerCreation {
     private const string OPT_OUT               = "MeshSync.AutoServerCreation.OptOut";
     
     static AutoServerCreation() {
-
-        if (!SessionState.GetBool(IS_FIRST_SESSION_CALL, true))
+        
+        if(AutoServerCreationSettings.instance.HasPromptedUser)
             return;
         
-        SessionState.SetBool(IS_FIRST_SESSION_CALL, false);
-        
+        AutoServerCreationSettings.instance.HasPromptedUser = true;
+
+        EditorApplication.update += Update;
+    }
+
+    private static void Update() {
+        PromptUser();
+        EditorApplication.update -= Update;
+    }
+
+    private static void PromptUser() {
         if (Object.FindObjectOfType<MeshSyncServer>() != null)
             return;
 
-        if (!EditorUtility.DisplayDialog(
+        if (EditorUtility.DisplayDialog(
             "Create MeshSync Server",
             "The current scene does not have a MeshSync Server. Would you like to create one?",
             "No", "Yes", DialogOptOutDecisionType.ForThisMachine, OPT_OUT))
             return;
         
-        MeshSyncMenu.CreateMeshSyncServer(autoStart:true);
+        MeshSyncMenu.CreateMeshSyncServer(autoStart: true);
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
     }
+
 }
 }
