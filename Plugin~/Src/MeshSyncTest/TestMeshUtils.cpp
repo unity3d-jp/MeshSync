@@ -5,6 +5,11 @@
 
 using namespace mu;
 
+// Skip tests locally to iterate fast, do not commit with this turned on:
+//#define SKIP_UTILS_TEST
+
+#ifndef SKIP_UTILS_TEST
+
 #ifdef EnableFbxExport
 #include "FbxExporter/FbxExporter.h"
 #pragma comment(lib, "FbxExporterCore.lib")
@@ -55,7 +60,6 @@ TestCase(Test_IndexedArrays)
     for (auto& v : iia2) { Print("%.f ", v); }
     Print("\n");
 }
-
 
 TestCase(TestMeshRefiner)
 {
@@ -1165,3 +1169,5 @@ TestCase(Test_Quadify)
         Expect(dst_counts.size() == 4);
     }
 }
+
+#endif // SKIP_UTILS_TEST
