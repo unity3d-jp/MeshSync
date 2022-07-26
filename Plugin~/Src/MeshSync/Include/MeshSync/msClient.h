@@ -3,7 +3,6 @@
 #include "msProtocol.h"
 #include "msClientSettings.h" //ClientSettings
 
-#include "pch.h"
 #include "MeshSync/msClient.h"
 #include "MeshSync/SceneGraph/msScene.h" //Scene
 
@@ -32,7 +31,7 @@ public:
     std::vector<EntityPtr> entities;
     std::string messageFromServer;
 
-    void abortPropertiesRequest();
+    void abortLiveEditRequest();
 private:
     ClientSettings m_settings;
     std::string m_error_message;

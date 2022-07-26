@@ -8,7 +8,7 @@ namespace ms {
 using namespace Poco;
 using namespace Poco::Net;
 
-HTTPClientSession* m_properties_session;
+HTTPClientSession* m_live_edit_session;
 
 Client::Client(const ClientSettings & settings)
     : m_settings(settings)
@@ -176,14 +176,14 @@ bool Client::send(const FenceMessage& mes)
 #define __except(X) catch(...)
 #endif
 
-void Client::abortPropertiesRequest() {
-    if (m_properties_session) {
+void Client::abortLiveEditRequest() {
+    if (m_live_edit_session) {
         __try {
-            m_properties_session->abort();
+            m_live_edit_session->abort();
         }
         __except (EXCEPTION_EXECUTE_HANDLER) {
         }
-        m_properties_session = nullptr;
+        m_live_edit_session = nullptr;
     }
 }
 
@@ -193,7 +193,7 @@ bool Client::send(const ServerLiveEditRequest& mes)
         
         HTTPClientSession session{ m_settings.server, m_settings.port };
 
-        m_properties_session = &session;
+        m_live_edit_session = &session;
 
         session.setTimeout(Poco::Timespan()); // infinite timeout, this is cancelled manually.
          
@@ -224,7 +224,7 @@ bool Client::send(const ServerLiveEditRequest& mes)
         
         messageFromServer = reqResponse.message;
 
-        m_properties_session = nullptr;
+        m_live_edit_session = nullptr;
 
         return response.getStatus() == HTTPResponse::HTTP_OK;
     }
