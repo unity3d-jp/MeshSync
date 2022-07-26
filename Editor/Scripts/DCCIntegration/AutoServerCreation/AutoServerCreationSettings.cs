@@ -1,12 +1,16 @@
 ﻿
-using System.Runtime.CompilerServices;
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
-[FilePath("Packages/com.unity.meshsync/AutoServerCreationSettings.txt", FilePathAttribute.Location.ProjectFolder)]
+[FilePath("Assets/MeshSyncAssets/AutoServerCreationSettings.txt", FilePathAttribute.Location.ProjectFolder)]
 internal class AutoServerCreationSettings : ScriptableSingleton<AutoServerCreationSettings> {
     
+    /// <remarks>
+    /// Set default to true so we don't show this to users
+    /// when installing using the Unity package manager 
+    /// </remarks>>
     [SerializeField]
-    private bool m_hasPromptedUser = false;
+    public bool m_hasPromptedUser = true;
 
     public bool HasPromptedUser {
         get { return m_hasPromptedUser; }
