@@ -484,6 +484,7 @@ internal delegate void DeleteInstanceHandler(string path);
         }
 
         void CheckForNewSession(FenceMessage? mes) {
+#if UNITY_EDITOR
             if (!mes.HasValue || currentSessionId == mes.Value.SessionId) {
                 return;
             }
@@ -518,6 +519,7 @@ internal delegate void DeleteInstanceHandler(string path);
                     Init(GetAssetsFolder());
                     break;
             }
+#endif
         }
 
         private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets) {
