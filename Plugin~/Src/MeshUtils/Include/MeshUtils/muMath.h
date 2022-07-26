@@ -4,6 +4,7 @@
 #include <cstring>
 #include <algorithm>
 #include <limits>
+#include <assert.h>
 #include "MeshUtils/muIntrusiveArray.h"
 #include "MeshUtils/muHalf.h"
 
