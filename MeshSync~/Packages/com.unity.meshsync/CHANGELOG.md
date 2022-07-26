@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.14.1-preview] - 2022-07-26
+
+### Fixed
+* plugin-fix: fix compile error when compiling MeshSyncDCCPlugins on Mac/Linux
+
 ## [0.14.0-preview] - 2022-07-22
 
 ### Added
