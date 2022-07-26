@@ -4,6 +4,7 @@
 #include <cstring>
 #include <algorithm>
 #include <limits>
+#include <assert.h>
 #include "MeshUtils/muIntrusiveArray.h"
 #include "MeshUtils/muHalf.h"
 
@@ -1653,7 +1654,7 @@ static inline void enumerate(A1& a1, A2& a2, A3& a3, const Body& body)
 
 template
 <typename T>
-T roundToDecimals(T val, float decimalPlaces = 2) {
+T ceilToDecimals(T val, int decimalPlaces = 2) {
     assert(decimalPlaces >= 1);
     float roundingFactor = std::pow(10, decimalPlaces);
     return ceil(val * roundingFactor) / roundingFactor;

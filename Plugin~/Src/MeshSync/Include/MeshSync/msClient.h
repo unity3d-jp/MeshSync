@@ -3,7 +3,6 @@
 #include "msProtocol.h"
 #include "msClientSettings.h" //ClientSettings
 
-#include "pch.h"
 #include "MeshSync/msClient.h"
 #include "MeshSync/SceneGraph/msScene.h" //Scene
 

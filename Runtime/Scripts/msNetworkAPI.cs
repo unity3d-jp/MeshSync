@@ -9,7 +9,7 @@ using Unity.Mathematics;
 #endif
 
 namespace Unity.MeshSync {
-#if UNITY_STANDALONE
+#if UNITY_STANDALONE || UNITY_EDITOR
 
 #region Server
 
@@ -295,6 +295,6 @@ internal struct Server {
 #endregion
 
 
-#endif // UNITY_STANDALONE
+#endif // UNITY_STANDALONE || UNITY_EDITOR
 
     } //end namespace
