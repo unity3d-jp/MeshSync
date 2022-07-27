@@ -409,6 +409,8 @@ namespace Unity.MeshSync {
         [SerializeField]
         internal bool GenerateLODGroup;
 
+=========
+>>>>>>>>> Temporary merge branch 2
         void UpdateProperties(SceneData scene) {
             // handle properties
             Try(() => {

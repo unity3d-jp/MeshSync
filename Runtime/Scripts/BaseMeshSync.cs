@@ -735,46 +735,49 @@ internal delegate void DeleteInstanceHandler(string path);
 
             foreach (var child in GetComponentsInChildren<Transform>()) {
                 // If the name ends in LODx it needs to be put in an LOD group:
-                if (child.name.IndexOf("LOD") == child.name.Length - 4) {
-                    if (int.TryParse(child.name.Substring(child.name.Length - 1), out int lod)) {
-                        lodCount = Mathf.Max(lodCount, lod + 1);
+                if (child.name.IndexOf("LOD") != child.name.Length - 4)
+                    continue;
 
-                        if (!lodRenderers.ContainsKey(lod)) {
-                            lodRenderers[lod] = new List<Renderer>();
-                        }
+                if (!int.TryParse(child.name.Substring(child.name.Length - 1), out int lod)) 
+                    continue;
 
-                        lodRenderers[lod].AddRange(child.GetComponentsInChildren<Renderer>());
-                    }
+                lodCount = Mathf.Max(lodCount, lod + 1);
+
+                if (!lodRenderers.ContainsKey(lod)) {
+                    lodRenderers[lod] = new List<Renderer>();
                 }
+
+                lodRenderers[lod].AddRange(child.GetComponentsInChildren<Renderer>());
             }
 
-            if (lodCount > 0) {
-                var lodGroup = Misc.GetOrAddComponent<LODGroup>(gameObject);
+            if (lodCount == 0)
+                return;
 
-                // Ensure the LOD groups exist:
-                var existingLods = lodGroup.GetLODs();
+            var lodGroup = Misc.GetOrAddComponent<LODGroup>(gameObject);
 
-                // Only create groups if we don't already have what we need:
-                if (existingLods.Length != lodCount) {
-                    List<LOD> lods = new List<LOD>();
-                    foreach (var lodKVP in lodRenderers) {
-                        lods.Add(new LOD(
-                            Mathf.Clamp(1f / (lodKVP.Key + 1), 0.1f, 0.9f),
-                            lodKVP.Value.ToArray()));
-                    }
+            // Ensure the LOD groups exist:
+            var existingLods = lodGroup.GetLODs();
 
-                    lods.Sort((a, b) => b.screenRelativeTransitionHeight.CompareTo(a.screenRelativeTransitionHeight));
-
-                    lodGroup.SetLODs(lods.ToArray());
+            // Only create groups if we don't already have what we need:
+            if (existingLods.Length != lodCount) {
+                List<LOD> lods = new List<LOD>();
+                foreach (var lodKVP in lodRenderers) {
+                    lods.Add(new LOD(
+                        Mathf.Clamp(1f / (lodKVP.Key + 1), 0.1f, 0.9f),
+                        lodKVP.Value.ToArray()));
                 }
-                else {
-                    foreach (var lodKVP in lodRenderers) {
-                        existingLods[lodKVP.Key].renderers = lodKVP.Value.ToArray();
-                    }
 
-                    // Need to set this again to ensure it refreshes:
-                    lodGroup.SetLODs(existingLods);
+                lods.Sort((a, b) => b.screenRelativeTransitionHeight.CompareTo(a.screenRelativeTransitionHeight));
+
+                lodGroup.SetLODs(lods.ToArray());
+            }
+            else {
+                foreach (var lodKVP in lodRenderers) {
+                    existingLods[lodKVP.Key].renderers = lodKVP.Value.ToArray();
                 }
+
+                // Need to set this again to ensure it refreshes:
+                lodGroup.SetLODs(existingLods);
             }
         }
 
@@ -2792,6 +2795,8 @@ internal delegate void DeleteInstanceHandler(string path);
     [SerializeField] private EntityRecordDictionary m_clientInstancedEntities = new EntityRecordDictionary();
 
     private protected Action m_onMaterialChangedInSceneViewCB = null;
+
+    [SerializeField] internal bool GenerateLODGroup;
     
 //----------------------------------------------------------------------------------------------------------------------
 
