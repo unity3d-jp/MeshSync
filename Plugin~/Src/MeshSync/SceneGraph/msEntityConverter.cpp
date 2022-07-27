@@ -10,6 +10,7 @@
 
 #include "MeshSync/SceneGraph/msEntity.h"
 #include "MeshSync/SceneGraph/msTransform.h"
+#include "MeshSync/SceneGraph/msInstanceInfo.h"
 
 namespace ms {
 
@@ -54,6 +55,7 @@ void EntityConverter::convert(Animation &anim)
 void EntityConverter::convertAnimationCurve(AnimationCurve &/*v*/)
 {
 }
+
 
 
 
@@ -137,6 +139,15 @@ void ScaleConverter::convertAnimationCurve(AnimationCurve &c)
         break;
     default:
         break;
+    }
+}
+
+void ScaleConverter::convertInstanceInfos(InstanceInfo& v)
+{
+    for (size_t i = 0; i < v.transforms.size(); ++i)
+    {
+        // We can divide the w component instead of applying the multiplier on xyz:
+        v.transforms[i][3][3] /= m_scale;
     }
 }
 
