@@ -405,12 +405,7 @@ namespace Unity.MeshSync {
             set => useProBuilder = value;
         }
 #endif
-
-        [SerializeField]
-        internal bool GenerateLODGroup;
-
-=========
->>>>>>>>> Temporary merge branch 2
+        
         void UpdateProperties(SceneData scene) {
             // handle properties
             Try(() => {
