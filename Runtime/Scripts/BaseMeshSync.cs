@@ -735,17 +735,19 @@ internal delegate void DeleteInstanceHandler(string path);
 
             foreach (var child in GetComponentsInChildren<Transform>()) {
                 // If the name ends in LODx it needs to be put in an LOD group:
-                if (child.name.IndexOf("LOD") == child.name.Length - 4) {
-                    if (int.TryParse(child.name.Substring(child.name.Length - 1), out int lod)) {
-                        lodCount = Mathf.Max(lodCount, lod + 1);
+                if (child.name.IndexOf("LOD") != child.name.Length - 4)
+                    continue;
 
-                        if (!lodRenderers.ContainsKey(lod)) {
-                            lodRenderers[lod] = new List<Renderer>();
-                        }
+                if (!int.TryParse(child.name.Substring(child.name.Length - 1), out int lod)) 
+                    continue;
 
-                        lodRenderers[lod].AddRange(child.GetComponentsInChildren<Renderer>());
-                    }
+                lodCount = Mathf.Max(lodCount, lod + 1);
+
+                if (!lodRenderers.ContainsKey(lod)) {
+                    lodRenderers[lod] = new List<Renderer>();
                 }
+
+                lodRenderers[lod].AddRange(child.GetComponentsInChildren<Renderer>());
             }
 
             if (lodCount > 0) {
