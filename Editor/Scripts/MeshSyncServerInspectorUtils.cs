@@ -10,6 +10,8 @@ using System.Runtime.CompilerServices;
 namespace Unity.MeshSync.Editor {
     internal static class MeshSyncServerInspectorUtils {
         static HashSet<string> foldouts = new HashSet<string>();
+        
+        const int MAX_SLIDER_RANGE = 1000;
 
 
         public static void DrawSliderForProperties(List<PropertyInfoDataWrapper> props,
@@ -66,11 +68,23 @@ namespace Unity.MeshSync.Editor {
                         // Need to be careful with overflow here:
                         int max = Mathf.Min((int)prop.max, int.MaxValue - 1);
 
-                        newValue = EditorGUILayout.IntSlider(prop.name, prop.GetValue<int>(), (int)prop.min, max);
+                        if (Mathf.Abs(max - prop.min) < MAX_SLIDER_RANGE) {
+                            newValue = EditorGUILayout.IntSlider(prop.name, prop.GetValue<int>(), (int)prop.min, max);
+                        }
+                        else {
+                            newValue = EditorGUILayout.IntField(prop.name, prop.GetValue<int>());
+                        }
+
                         break;
 
                     case PropertyInfoDataType.Float:
-                        newValue = EditorGUILayout.Slider(prop.name, prop.GetValue<float>(), prop.min, prop.max);
+                        if (Mathf.Abs(prop.max - prop.min) < MAX_SLIDER_RANGE) {
+                            newValue = EditorGUILayout.Slider(prop.name, prop.GetValue<float>(), prop.min, prop.max);
+                        }
+                        else {
+                            newValue = EditorGUILayout.FloatField(prop.name, prop.GetValue<float>());
+                        }
+
                         break;
 
                     case PropertyInfoDataType.String:
