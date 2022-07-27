@@ -750,33 +750,34 @@ internal delegate void DeleteInstanceHandler(string path);
                 lodRenderers[lod].AddRange(child.GetComponentsInChildren<Renderer>());
             }
 
-            if (lodCount > 0) {
-                var lodGroup = Misc.GetOrAddComponent<LODGroup>(gameObject);
+            if (lodCount == 0)
+                return;
 
-                // Ensure the LOD groups exist:
-                var existingLods = lodGroup.GetLODs();
+            var lodGroup = Misc.GetOrAddComponent<LODGroup>(gameObject);
 
-                // Only create groups if we don't already have what we need:
-                if (existingLods.Length != lodCount) {
-                    List<LOD> lods = new List<LOD>();
-                    foreach (var lodKVP in lodRenderers) {
-                        lods.Add(new LOD(
-                            Mathf.Clamp(1f / (lodKVP.Key + 1), 0.1f, 0.9f),
-                            lodKVP.Value.ToArray()));
-                    }
+            // Ensure the LOD groups exist:
+            var existingLods = lodGroup.GetLODs();
 
-                    lods.Sort((a, b) => b.screenRelativeTransitionHeight.CompareTo(a.screenRelativeTransitionHeight));
-
-                    lodGroup.SetLODs(lods.ToArray());
+            // Only create groups if we don't already have what we need:
+            if (existingLods.Length != lodCount) {
+                List<LOD> lods = new List<LOD>();
+                foreach (var lodKVP in lodRenderers) {
+                    lods.Add(new LOD(
+                        Mathf.Clamp(1f / (lodKVP.Key + 1), 0.1f, 0.9f),
+                        lodKVP.Value.ToArray()));
                 }
-                else {
-                    foreach (var lodKVP in lodRenderers) {
-                        existingLods[lodKVP.Key].renderers = lodKVP.Value.ToArray();
-                    }
 
-                    // Need to set this again to ensure it refreshes:
-                    lodGroup.SetLODs(existingLods);
+                lods.Sort((a, b) => b.screenRelativeTransitionHeight.CompareTo(a.screenRelativeTransitionHeight));
+
+                lodGroup.SetLODs(lods.ToArray());
+            }
+            else {
+                foreach (var lodKVP in lodRenderers) {
+                    existingLods[lodKVP.Key].renderers = lodKVP.Value.ToArray();
                 }
+
+                // Need to set this again to ensure it refreshes:
+                lodGroup.SetLODs(existingLods);
             }
         }
 
