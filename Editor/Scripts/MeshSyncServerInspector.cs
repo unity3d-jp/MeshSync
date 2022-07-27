@@ -99,7 +99,7 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
             if (t.InstanceHandling != newInstanceHandling &&
                 EditorUtility.DisplayDialog("Warning",
                     "Changing the instance handling mode will delete any prefabs and previously synced objects for this server. Are you sure you want to do this?",
-                    "Yes", "No", DialogOptOutDecisionType.ForThisMachine, OPT_OUT_INSTANCE_HANDLING)) {
+                    "Yes", "No", DialogOptOutDecisionType.ForThisSession, OPT_OUT_INSTANCE_HANDLING)) {
                 t.InstanceHandling = newInstanceHandling;
             }
 
