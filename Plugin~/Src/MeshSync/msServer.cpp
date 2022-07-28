@@ -637,7 +637,7 @@ void Server::recvServerLiveEditRequest(HTTPServerRequest& request, HTTPServerRes
 
     // serve data
     response.set("Cache-Control", "no-store, must-revalidate");
-    
+
     auto reqResponse = ServerLiveEditResponse();
 
     for (const auto& [key, prop] : m_pending_properties)
@@ -658,8 +658,13 @@ void Server::recvServerLiveEditRequest(HTTPServerRequest& request, HTTPServerRes
     }
 
     m_pending_entities.clear();
-    
-    if (m_syncRequested) {
+
+    if (m_pythonCallbackRequested)
+    {
+        reqResponse.message = REQUEST_PYTHON_CALLBACK;
+        m_pythonCallbackRequested = false;
+    }
+    else if (m_syncRequested) {
         reqResponse.message = REQUEST_SYNC;
         m_syncRequested = false;
     }
@@ -687,6 +692,10 @@ void Server::receivedProperty(PropertyInfoPtr prop) {
 
 void Server::syncRequested() {
     m_syncRequested = true;
+}
+
+void Server::pythonCallbackRequested() {
+    m_pythonCallbackRequested = true;
 }
 
 void Server::propertiesReady() {

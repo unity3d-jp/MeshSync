@@ -341,6 +341,13 @@ msAPI void msServerRequestFullSync(ms::Server* server)
     server->syncRequested();
 }
 
+msAPI void msServerRequestPythonCallback(ms::Server* server)
+{
+    if (!server) { return; }
+
+    server->pythonCallbackRequested();
+}
+
 msAPI void msServerInitiatedResponseReady(ms::Server* server)
 {
     if (!server) { return; }

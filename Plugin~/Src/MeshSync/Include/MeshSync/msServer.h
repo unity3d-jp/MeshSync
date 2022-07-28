@@ -94,6 +94,7 @@ public:
     
     void receivedProperty(PropertyInfoPtr prop);
     void syncRequested();
+    void pythonCallbackRequested();
     void propertiesReady();
     bool readyForProperties();
 
@@ -134,6 +135,7 @@ private:
     std::mutex m_properties_mutex;
     ServerLiveEditRequestPtr m_current_live_edit_request;
     std::atomic_bool m_syncRequested;
+    std::atomic_bool m_pythonCallbackRequested;
     std::string m_screenshot_file_path;
     std::string m_file_root_path;
 

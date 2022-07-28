@@ -21,6 +21,7 @@ namespace Unity.MeshSync
         }
 
         bool needsClientSync;
+        bool needsPythonCallback;
 
         Dictionary<EntityRecord, Matrix4x4> entityTransforms = new Dictionary<EntityRecord, Matrix4x4>();
 
@@ -96,48 +97,38 @@ namespace Unity.MeshSync
             return m_server.IsDCCLiveEditReady();
         }
 
-        void SendUpdatedProperties()
-        {
-            if (!m_server.IsDCCLiveEditReady())
-            {
+        void SendUpdatedProperties() {
+            if (!m_server.IsDCCLiveEditReady()) {
                 return;
             }
 
-            lock (PropertyInfoDataWrapper.PropertyUpdateLock)
-            {
+            lock (PropertyInfoDataWrapper.PropertyUpdateLock) {
                 bool sendChanges = false;
 
                 // Send updated properties:
-                foreach (var prop in propertyInfos)
-                {
-                    if (prop.IsDirty)
-                    {
+                foreach (var prop in propertyInfos) {
+                    if (prop.IsDirty) {
                         m_server.SendProperty(prop);
                         prop.IsDirty = false;
-                        sendChanges = true;
+                        sendChanges  = true;
                     }
                 }
 
                 // Send updated entities:
                 {
-                    foreach (var kvp in GetClientObjects())
-                    {
+                    foreach (var kvp in GetClientObjects()) {
                         var entity = kvp.Value;
 
-                        if (entity.trans == null)
-                        {
+                        if (entity.trans == null) {
                             continue;
                         }
 
-                        if (!entityTransforms.TryGetValue(entity, out var matrix))
-                        {
+                        if (!entityTransforms.TryGetValue(entity, out var matrix)) {
                             entityTransforms.Add(entity, entity.trans.localToWorldMatrix);
                         }
-                        else
-                        {
+                        else {
                             // Check if object moved:
-                            if (entity.trans.localToWorldMatrix != matrix)
-                            {
+                            if (entity.trans.localToWorldMatrix != matrix) {
                                 SendTransform(kvp.Key, entity);
 
                                 entityTransforms[entity] = entity.trans.localToWorldMatrix;
@@ -145,9 +136,7 @@ namespace Unity.MeshSync
                         }
 
 #if AT_USE_SPLINES
-                        if (changedSplines.Count > 0 && entity.dataType == EntityType.Curve)
-                        {
-                            //m_server.SendCurve(entity, kvp.Key);
+                        if (changedSplines.Count > 0 && entity.dataType == EntityType.Curve) {
                             SendCurve(kvp.Key, entity);
                             sendChanges = true;
                         }
@@ -173,19 +162,23 @@ namespace Unity.MeshSync
 #endif
                 }
 
-                if (needsClientSync)
-                {
+                if (needsPythonCallback) {
+                    needsPythonCallback = false;
+                    sendChanges         = true;
+
+                    m_server.RequestPythonCallback();
+                }
+                else if (needsClientSync) {
                     needsClientSync = false;
-                    sendChanges = true;
+                    sendChanges     = true;
 
                     m_server.RequestClientSync();
                 }
 
-                if (sendChanges)
-                {
-                    CurrentPropertiesState = PropertiesState.Sending;
-                    onSceneUpdateEnd -= SceneUpdated;
-                    onSceneUpdateEnd += SceneUpdated;
+                if (sendChanges) {
+                    CurrentPropertiesState =  PropertiesState.Sending;
+                    onSceneUpdateEnd       -= SceneUpdated;
+                    onSceneUpdateEnd       += SceneUpdated;
                     m_server.MarkServerInitiatedResponseReady();
                 }
             }
@@ -300,6 +293,10 @@ namespace Unity.MeshSync
             base.ClearInstancePrefabs();
 
             needsClientSync = true;
+        }
+
+        internal void RequestPythonCallback() {
+            needsPythonCallback = true;
         }
 #endif
     }
