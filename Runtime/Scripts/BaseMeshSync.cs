@@ -1262,8 +1262,8 @@ internal delegate void DeleteInstanceHandler(string path);
 
                 meshUpdated = true;
             }
-            else {
-                rec.mesh?.Clear();
+            else if (rec.mesh != null) {
+                rec.mesh.Clear();
             }
 
             if (dflags.hasBones || dflags.hasBlendshapes)
