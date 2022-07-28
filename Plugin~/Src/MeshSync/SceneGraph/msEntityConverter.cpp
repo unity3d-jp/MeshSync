@@ -144,6 +144,11 @@ void ScaleConverter::convertAnimationCurve(AnimationCurve &c)
 
 void ScaleConverter::convertInstanceInfos(InstanceInfo& v)
 {
+    if(m_scale == 0)
+    {
+        return;
+    }
+
     for (size_t i = 0; i < v.transforms.size(); ++i)
     {
         // We can divide the w component instead of applying the multiplier on xyz:
