@@ -795,8 +795,26 @@ internal delegate void DeleteInstanceHandler(string path);
                 lodRenderers[lod].AddRange(child.GetComponentsInChildren<Renderer>());
             }
 
-            if (lodCount == 0)
+            if (lodCount == 0) {
                 return;
+            }
+
+            // If there are no renderers, don't create groups:
+            bool hasRenderers = false;
+            foreach (List<Renderer> renderers in lodRenderers.Values) {
+                if (renderers.Count > 0) {
+                    hasRenderers = true;
+                    break;
+                }
+            }
+
+            if (!hasRenderers) {
+                if (InstanceHandling == InstanceHandlingType.InstanceRenderer) {
+                    Debug.LogWarning("LOD groups are not supported for the 'Instance Renderer' instance handling method. Please use Copies or Prefabs.");
+                }
+
+                return;
+            }
 
             var lodGroup = Misc.GetOrAddComponent<LODGroup>(gameObject);
 
