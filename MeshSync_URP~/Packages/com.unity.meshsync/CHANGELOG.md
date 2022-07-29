@@ -1,6 +1,19 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.14.2-preview] - 2022-07-28
+
+### Added
+* feat: show dialog after changing InstanceHandling to warn against lost changes 
+
+### Changed
+* change: Give user the option to delete or stash previously imported objects when the session changes.
+
+### Fixed
+* fix: don't use slider if the range is too large.
+* fix: Blender installation script due to changes in the plugin structure 
+
+
 ## [0.14.1-preview] - 2022-07-26
 
 ### Fixed
