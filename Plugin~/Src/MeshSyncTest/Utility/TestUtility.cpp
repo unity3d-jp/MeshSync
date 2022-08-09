@@ -16,7 +16,11 @@ ms::ClientSettings TestUtility::GetClientSettings(){
 
 void TestUtility::Send(ms::ScenePtr scene) {
     ms::AsyncSceneSender sender;
-    sender.client_settings = GetClientSettings();
+
+    // Set to invalid ID so it does not trigger popup for server:
+    sender.session_id = ms::InvalidID;
+
+	sender.client_settings = GetClientSettings();
     if (sender.isServerAvaileble()) {
         sender.add(scene);
         sender.kick();
