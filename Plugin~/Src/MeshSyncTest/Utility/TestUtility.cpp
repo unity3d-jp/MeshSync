@@ -20,7 +20,7 @@ void TestUtility::Send(ms::ScenePtr scene) {
     // Set to invalid ID so it does not trigger popup for server:
     sender.session_id = ms::InvalidID;
 
-	sender.client_settings = GetClientSettings();
+    sender.client_settings = GetClientSettings();
     if (sender.isServerAvaileble()) {
         sender.add(scene);
         sender.kick();
