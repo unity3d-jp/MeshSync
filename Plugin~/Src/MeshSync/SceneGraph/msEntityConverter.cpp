@@ -146,8 +146,9 @@ void ScaleConverter::convertInstanceInfos(InstanceInfo& v)
 {
     for (size_t i = 0; i < v.transforms.size(); ++i)
     {
-        // We can divide the w component instead of applying the multiplier on xyz:
-        v.transforms[i][3][3] /= m_scale;
+        v.transforms[i][3][0] *= m_scale;
+        v.transforms[i][3][1] *= m_scale;
+        v.transforms[i][3][2] *= m_scale;
     }
 }
 
