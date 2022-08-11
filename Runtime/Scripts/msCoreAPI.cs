@@ -1825,6 +1825,9 @@ internal struct CameraData {
     static extern byte msCameraIsOrtho(IntPtr self);
 
     [DllImport(Lib.name)]
+    static extern float msCameraOrthoSize(IntPtr self);
+
+    [DllImport(Lib.name)]
     static extern float msCameraGetFov(IntPtr self);
 
     [DllImport(Lib.name)]
@@ -1893,6 +1896,10 @@ internal struct CameraData {
     internal bool orthographic {
         get { return msCameraIsOrtho(self) != 0; }
         set { msCameraSetOrtho(self, (byte)(value ? 1 : 0)); }
+    }
+
+    internal float orthographic_size {
+        get { return msCameraOrthoSize(self); }
     }
 
     internal float fov {

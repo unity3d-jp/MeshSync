@@ -1631,6 +1631,9 @@ internal delegate void DeleteInstanceHandler(string path);
                 cam.enabled = dtrans.visibility.visibleInRender;
 
             cam.orthographic = data.orthographic;
+            if (cam.orthographic) {
+                cam.orthographicSize = data.orthographic_size / cam.aspect / 2;
+            }
 
             // use physical camera params if available
             if (config.IsPhysicalCameraParamsUsed() && dflags.hasFocalLength && dflags.hasSensorSize)

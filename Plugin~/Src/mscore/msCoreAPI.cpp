@@ -227,6 +227,7 @@ msAPI void msTransformSetReference(ms::Transform *self, const char *v) { self->r
 msAPI ms::Camera* msCameraCreate() { return ms::Camera::create_raw(); }
 msAPI uint32_t msCameraGetDataFlags(const ms::Camera *self) { return (uint32_t&)self->cd_flags; }
 msAPI bool msCameraIsOrtho(const ms::Camera *self) { return self->is_ortho; }
+msAPI float msCameraOrthoSize(const ms::Camera* self) { return self->ortho_size; }
 msAPI float msCameraGetFov(const ms::Camera *self) { return self->fov; }
 msAPI float msCameraGetNearPlane(const ms::Camera *self) { return self->near_plane; }
 msAPI float msCameraGetFarPlane(const ms::Camera *self) { return self->far_plane; }
