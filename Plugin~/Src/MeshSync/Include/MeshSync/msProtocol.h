@@ -35,7 +35,8 @@ public:
         Screenshot,
         Query,
         Response,
-        RequestServerLiveEdit
+        RequestServerLiveEdit,
+        EditorCommand
     };
     int protocol_version = msProtocolVersion;
     int session_id = InvalidID;
@@ -264,6 +265,8 @@ public:
         AddServerToScene
     };
     CommandType command_type = CommandType::Unknown;
+
+    std::atomic_bool ready{ false };
 
     EditorCommandMessage();
     void serialize(std::ostream& os) const override;

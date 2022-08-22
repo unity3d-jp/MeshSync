@@ -359,6 +359,11 @@ msAPI bool msServerIsDCCLiveEditReady(ms::Server* server)
     return server->readyForProperties();
 }
 
+msAPI void msServerNotifyEditorCommand(ms::Server* server, ms::EditorCommandMessage::CommandType type) {
+    if (!server) { return; }
+    server->notifyCommand(type);
+}
+
 msAPI int msGetGetBakeSkin(ms::GetMessage *self)
 {
     return self->refine_settings.flags.Get(ms::MESH_REFINE_FLAG_BAKE_SKIN);
@@ -372,5 +377,6 @@ msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *self)
 {
     return self->scene.get();
 }
+
 #pragma endregion
 

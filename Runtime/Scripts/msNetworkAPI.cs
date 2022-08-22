@@ -141,8 +141,12 @@ internal struct Server {
     static extern void msServerInitiatedResponseReady(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern bool msServerIsDCCLiveEditReady(IntPtr self);        
+    static extern bool msServerIsDCCLiveEditReady(IntPtr self);
 
+
+    [DllImport(Lib.name)]
+    static extern void msServerNotifyEditorCommand(IntPtr self, EditorCommandMessage.CommandType type);
+    
     #endregion
 
     public delegate void MessageHandler(NetworkMessageType type, IntPtr data);
@@ -289,6 +293,10 @@ internal struct Server {
 
     public void NotifyPoll(PollMessage.PollType t) {
         msServerNotifyPoll(self, t);
+    }
+
+    public void NotifyEditorCommand(EditorCommandMessage.CommandType type) {
+        msServerNotifyEditorCommand(self, type);
     }
 }
 

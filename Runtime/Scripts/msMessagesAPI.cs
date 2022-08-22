@@ -259,6 +259,7 @@ internal struct EditorCommandMessage {
     }
     
     public enum CommandType {
+        Unknown,
         AddServerToScene
     }
 

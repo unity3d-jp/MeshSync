@@ -1,6 +1,8 @@
 using System;
+using System.Threading;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Unity.MeshSync.Editor {
 
@@ -12,13 +14,17 @@ public static class AutoSetup {
     static AutoSetup() {
         // Create server
         var settings = ServerSettings.defaultValue;
+        //TODO replace this
+        AutoSetupSettings.instance.Port = 8081;
+        
         settings.port = AutoSetupSettings.instance.Port;
         
         if (!Server.Start(ref settings, out m_server)) {
             Debug.LogError("[MeshSync] Could not start Server");
             return;
         }
-
+        
+        //Register calls
         EditorApplication.update -= UpdateCall;
         EditorApplication.update += UpdateCall;
     }
@@ -46,7 +52,7 @@ public static class AutoSetup {
         
         switch (type) {
             case EditorCommandMessage.CommandType.AddServerToScene:
-                AddServerToScene();
+                HandleAddServerToScene();
                 break;
             default:
                 Debug.LogErrorFormat("[MeshSync] Unhandled command type {0}", type);
@@ -54,8 +60,21 @@ public static class AutoSetup {
         }
     }
 
+    private static void HandleAddServerToScene() {
+        AddServerToScene();
+        
+        m_server.NotifyEditorCommand(EditorCommandMessage.CommandType.AddServerToScene);
+    }
     private static void AddServerToScene() {
-        Debug.LogFormat("[MeshSync] Adding server to scene..");
+        //check if the scene has a server
+        var servers = Object.FindObjectsOfType<MeshSyncServer>();
+        if (servers.Length > 0)
+            return;
+        
+        var server = MeshSyncMenu.CreateMeshSyncServer(true);
+        while (!server.IsServerStarted()) {
+            Thread.Sleep(100);
+        }
     }
 }
 }

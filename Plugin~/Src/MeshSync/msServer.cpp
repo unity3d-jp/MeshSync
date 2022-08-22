@@ -155,6 +155,10 @@ int Server::processMessages(const MessageHandler& handler)
             m_current_live_edit_request = req;
             handler(Message::Type::RequestServerLiveEdit, *mes);
         }
+        else if (auto command = std::dynamic_pointer_cast<EditorCommandMessage>(mes)) {
+            m_current_command = command;
+            handler(Message::Type::EditorCommand, *mes);
+        }
 
     next:
         if (skip) {
@@ -667,6 +671,35 @@ void Server::recvServerLiveEditRequest(HTTPServerRequest& request, HTTPServerRes
     auto& os = response.send();
     reqResponse.serialize(os);
     os.flush();
+}
+
+void Server::recvCommand(HTTPServerRequest& request, HTTPServerResponse& response) 
+{
+    auto mes = deserializeMessage<EditorCommandMessage>(request, response);
+    if (!mes)
+        return;
+
+    // Queue the command for execution
+    queueMessage(mes);
+
+    // Wait for command to be executed
+    for (int i = 0; ; ++i) {
+        if (mes->ready)
+            break;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    // Respond to request
+    serveText(response, "ok");
+
+}
+
+void Server::notifyCommand(EditorCommandMessage::CommandType t) {
+    if (!m_current_command)
+        return;
+
+    m_current_command->ready = true;
 }
 
 void Server::notifyPoll(PollMessage::PollType t)

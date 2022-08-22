@@ -25,6 +25,7 @@ msDeclClassPtr(ScreenshotMessage)
 msDeclClassPtr(ServerLiveEditRequest)
 msDeclClassPtr(PropertyInfo)
 msDeclClassPtr(Curve)
+msDeclClassPtr(EditorCommandMessage)
 
 namespace ms {
 
@@ -69,6 +70,8 @@ public:
 
     void notifyPoll(PollMessage::PollType t);
 
+    void notifyCommand(EditorCommandMessage::CommandType t);
+
 public:
     struct MessageHolder
     {
@@ -91,6 +94,7 @@ public:
     void recvScreenshot(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void recvPoll(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void recvServerLiveEditRequest(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvCommand(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     
     void receivedProperty(PropertyInfoPtr prop);
     void syncRequested();
@@ -136,6 +140,8 @@ private:
     std::atomic_bool m_syncRequested;
     std::string m_screenshot_file_path;
     std::string m_file_root_path;
+
+    EditorCommandMessagePtr m_current_command;
 
     public:
     std::vector<EntityPtr> m_pending_entities;
