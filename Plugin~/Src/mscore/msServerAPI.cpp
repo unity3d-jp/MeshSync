@@ -87,6 +87,10 @@ msAPI void msQueryAddResponseText(ms::QueryMessage *self, const char *text)
     }
     res->text.push_back(text);
 }
+
+msAPI ms::EditorCommandMessage::CommandType msEditorCommandGetType(ms::EditorCommandMessage* self) {
+    return self->command_type;
+}
 #pragma endregion
 
 

@@ -191,6 +191,17 @@ void ServerLiveEditResponse::deserialize(std::istream& is)
     EachMember(msRead);
 }
 
+EditorCommandMessage::EditorCommandMessage() {}
+void EditorCommandMessage::serialize(std::ostream& os) const {
+    super::serialize(os);
+    write(os, command_type);
+}
+
+void EditorCommandMessage::deserialize(std::istream& is){
+    super::deserialize(is);
+    read(is, command_type);
+}
+
 #undef EachMember
 
 } // namespace ms

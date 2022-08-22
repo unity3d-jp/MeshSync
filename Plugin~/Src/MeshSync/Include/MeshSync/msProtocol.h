@@ -219,7 +219,6 @@ public:
 };
 msSerializable(PollMessage);
 
-
 /// <summary>
 /// A mechanism to initiate the sending of data from server to client.
 /// Message that does not time out and is only replied to by the server
@@ -252,5 +251,24 @@ public:
     void deserialize(std::istream& is);
 };
 msSerializable(ServerLiveEditResponse);
+
+/// <summary>
+/// Commands to be executed on the Unity Editor.
+/// </summary>
+class EditorCommandMessage : public Message
+{
+    using super = Message;
+public:
+    enum class CommandType {
+        Unknown,
+        AddServerToScene
+    };
+    CommandType command_type = CommandType::Unknown;
+
+    EditorCommandMessage();
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+};
+msSerializable(EditorCommandMessage);
 
 } // namespace ms
