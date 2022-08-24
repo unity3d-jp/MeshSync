@@ -141,7 +141,25 @@ internal class EntityRecord {
         return recComponents;        
     }
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+    internal void DestroyMeshRendererAndFilter() {
+        if (meshRenderer != null)
+        {
+            UnityEngine.Object.DestroyImmediate(meshRenderer);
+            meshRenderer = null;
+        }
+
+        if (meshFilter != null)
+        {
+            UnityEngine.Object.DestroyImmediate(meshFilter);
+            meshFilter = null;
+        }
+    }
+    
+    
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     private struct LightComponents {
         internal Light LightComponent;

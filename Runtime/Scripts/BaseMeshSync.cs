@@ -1208,17 +1208,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 {
                     materialsUpdated = true;
                     smr = rec.skinnedMeshRenderer = Misc.GetOrAddComponent<SkinnedMeshRenderer>(trans.gameObject);
-                    if (rec.meshRenderer != null)
-                    {
-                        DestroyImmediate(rec.meshRenderer);
-                        rec.meshRenderer = null;
-                    }
-
-                    if (rec.meshFilter != null)
-                    {
-                        DestroyImmediate(rec.meshFilter);
-                        rec.meshFilter = null;
-                    }
+                    rec.DestroyMeshRendererAndFilter();
                 }
 
                 rec.smrUpdated = true;
