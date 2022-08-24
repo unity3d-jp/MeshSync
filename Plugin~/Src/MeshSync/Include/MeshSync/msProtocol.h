@@ -262,11 +262,13 @@ class EditorCommandMessage : public Message
 public:
     enum class CommandType {
         Unknown,
-        AddServerToScene
+        AddServerToScene,
+        GetProjectPath
     };
     CommandType command_type = CommandType::Unknown;
 
     std::atomic_bool ready{ false };
+    const char* reply;
 
     EditorCommandMessage();
     void serialize(std::ostream& os) const override;

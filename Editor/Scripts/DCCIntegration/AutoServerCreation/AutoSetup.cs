@@ -54,6 +54,9 @@ public static class AutoSetup {
             case EditorCommandMessage.CommandType.AddServerToScene:
                 HandleAddServerToScene();
                 break;
+            case EditorCommandMessage.CommandType.GetProjectPath:
+                HandleGetProjectPath();
+                break;
             default:
                 Debug.LogErrorFormat("[MeshSync] Unhandled command type {0}", type);
                 break;
@@ -63,8 +66,20 @@ public static class AutoSetup {
     private static void HandleAddServerToScene() {
         AddServerToScene();
         
-        m_server.NotifyEditorCommand(EditorCommandMessage.CommandType.AddServerToScene);
+        m_server.NotifyEditorCommand(EditorCommandMessage.CommandType.AddServerToScene, "ok");
     }
+
+    private static void HandleGetProjectPath() {
+        var path = GetProjectPath();
+        m_server.NotifyEditorCommand(EditorCommandMessage.CommandType.GetProjectPath, path);
+    }
+
+    private static string GetProjectPath() {
+        var path = Application.dataPath;
+        path = path.Replace("/Assets", "");
+        return path;
+    }
+    
     private static void AddServerToScene() {
         //check if the scene has a server
         var servers = Object.FindObjectsOfType<MeshSyncServer>();

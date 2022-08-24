@@ -272,7 +272,7 @@ ResponseMessagePtr Client::send(const QueryMessage& mes, int timeout_ms)
     return ret;
 }
 
-bool Client::send(const EditorCommandMessage& mes)
+bool Client::send(const EditorCommandMessage& mes, string& responseMessage)
 {
     try {
         HTTPClientSession session{ m_settings.server, m_settings.port };
@@ -288,8 +288,11 @@ bool Client::send(const EditorCommandMessage& mes)
 
         HTTPResponse response;
         auto& rs = session.receiveResponse(response);
+        
         std::ostringstream ostr;
         StreamCopier::copyStream(rs, ostr);
+
+        responseMessage.assign(ostr.str());
         return response.getStatus() == HTTPResponse::HTTP_OK;
     }
     catch (...) {

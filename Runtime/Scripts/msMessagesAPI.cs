@@ -260,7 +260,8 @@ internal struct EditorCommandMessage {
     
     public enum CommandType {
         Unknown,
-        AddServerToScene
+        AddServerToScene,
+        GetProjectPath
     }
 
     public CommandType commandType => msEditorCommandGetType(self);
