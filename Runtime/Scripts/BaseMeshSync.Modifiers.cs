@@ -520,15 +520,7 @@ namespace Unity.MeshSync {
             EntityRecord  rec    = UpdateTransformEntity(dtrans, config);
 
             if (rec != null) {
-                if (rec.meshRenderer != null)
-                {
-                    DestroyImmediate(rec.meshRenderer);
-                    rec.meshRenderer = null;
-                }
-                if (rec.meshFilter != null) {
-                    DestroyImmediate(rec.meshFilter);
-                    rec.meshFilter = null;
-                }
+                rec.DestroyMeshRendererAndFilter();
             }
 
             return null;
