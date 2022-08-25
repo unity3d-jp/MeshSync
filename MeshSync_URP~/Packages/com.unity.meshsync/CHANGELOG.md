@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.14.3-preview] - 2022-08-24
+
+### Fixed
+* fix: rebuild plugin for Mac Silicon 
+* fix: delete mesh renderer and filter if it was there from the curves as meshes setting 
+
 ## [0.14.2-preview] - 2022-07-28
 
 ### Added
