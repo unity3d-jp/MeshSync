@@ -1,11 +1,11 @@
-# Unity <-> Blender Bidirectional support
+# Bidirectional Sync
 
-This feature allows you to make changes in blender from inside Unity.
+[MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
+for certain DCC tools have Bidirectional Sync feature that allows us to make changes in DCC Tools from inside Unity,
+in which we can simply turn on "Auto Sync" in the plugin properties to enable this feature.
 
-## Enabling bidirectional support
-Turn on auto-sync in blender to enable bidirectional support.
+## Custom properties and Geometry Node Parameters
 
-## Custom properties and geometry node parameters
 Unity displays blender object's custom properties and geometry node modifier values and allows changing them from inside Unity.
 These properties are displayed in the inspector of a MeshSyncServerProperties MonoBehaviour below the MeshSyncServer.
 The supported property types are:
@@ -13,7 +13,7 @@ The supported property types are:
 * Float
 * Integer Array
 * Float Array
-* String (read-only)
+* String (read-only)  
 This feature is intended to be used to easily change blender's procedural generation parameters from inside Unity.
 Note: This feature requires blender version 3 or higher.
 
