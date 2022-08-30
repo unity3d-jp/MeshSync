@@ -1303,7 +1303,12 @@ internal delegate void DeleteInstanceHandler(string path);
 
                     rec.proBuilderMeshFilter = Misc.GetOrAddComponent<UnityEngine.ProBuilder.ProBuilderMesh>(trans.gameObject);
 
-                    var importer = new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, rec.meshRenderer.sharedMaterials, rec.proBuilderMeshFilter);
+                    Material[] sharedMaterials = null;
+                    if (rec.meshRenderer != null) {
+                        sharedMaterials = rec.meshRenderer.sharedMaterials;
+                    }
+
+                    var importer = new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, sharedMaterials, rec.proBuilderMeshFilter);
                     // Disable quads, it is much slower:
                     importer.Import(new UnityEngine.ProBuilder.MeshOperations.MeshImportSettings() { quads = false });
 
