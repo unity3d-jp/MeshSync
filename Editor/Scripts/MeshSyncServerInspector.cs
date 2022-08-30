@@ -147,7 +147,7 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
 
             if (server.DCCAsset != null)
             {
-                if (GUILayout.Button("Live Edit"))
+                if (GUILayout.Button("Live Edit (Opens new instance)"))
                 {
                     GUILayout.EndHorizontal();
                     MeshSyncServerInspectorUtils.OpenDCCAsset(server);
