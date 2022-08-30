@@ -122,7 +122,7 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
             }
             EditorGUI.indentLevel--;
 
-            if (GUILayout.Button("Clear prefabs"))
+            if (GUILayout.Button("Clear / Resync prefabs"))
             {
                 t.ClearInstancePrefabs();
             }
