@@ -481,6 +481,8 @@ internal delegate void DeleteInstanceHandler(string path);
             onSceneUpdateBegin?.Invoke();
 
             CheckForNewSession(mes);
+
+            numberOfPropertiesReceived = 0;
         }
 
         void CheckForNewSession(FenceMessage? mes) {
@@ -648,6 +650,11 @@ internal delegate void DeleteInstanceHandler(string path);
 
         internal void AfterUpdateScene()
         {
+            // If none of the set messages had properties, we need to remove all properties:
+            if (numberOfPropertiesReceived == 0) {
+                propertyInfos.Clear();
+            }
+
             List<string> deadKeys = null;
 
             // resolve bones
