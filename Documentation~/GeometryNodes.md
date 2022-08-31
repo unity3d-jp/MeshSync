@@ -33,20 +33,21 @@ Property changes in the following components are automatically applied on instan
 
 ## Runtime-Builds
 
-You can create Runtime builds that render instances from Geometry Nodes.  
-Before building, make sure that the required instancing variants are not stripped by 
+We can create Runtime builds that render Geometry Nodes instances.      
+In order to do this, make sure that the required instancing variants are not stripped by 
 selecting the _Keep All_ or _Strip Unused_ option in _Project Settings_ &rarr; _Graphics_ &rarr; _Shader Stripping_ &rarr; _Instancing Variants_.
+
+![](images/ProjectSettingsInstancingVariants.png)
 
 ## Limitations
 
-### Scene Cache
-Exportation of instances to a Scene Cache file is not supported.
-
-### Preview Window
-Rendering instances on the inspector preview window is not supported.
-
-### Creating prefabs
-Creating prefabs for instances is not supported.
+Currently, this geometry nodes synchronization feature has the following limitations:
+1. No [SceneCache](SceneCache.md) support    
+   Importing instances from a SceneCache file is not supported.
+2. No Preview Window support 
+   Rendering instances on the inspector preview window is not supported.
+3. No support for creating prefabs for instances.
+   
 
 ## Tips
 For some files to sync correctly, the Bake Modifiers option must be selected.
