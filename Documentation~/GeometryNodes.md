@@ -1,9 +1,9 @@
-# Geometry Nodes
+# Geometry Nodes Synchronization
 
 Geometry Nodes is a feature that is currently only provided by Blender and 
 used for modifying the geometry of an object with node-based operations.  
 Meshsync will automatically synchronize geometry node instances during the sync process
-from the DCC tool to Unity
+from the DCC tool to Unity.
 
 ## Operations
 
@@ -14,7 +14,7 @@ To stop rendering instances of an object:
 2. Find the MeshSyncInstanceRenderer component that has a reference to the instanced object. 
 3. Disable the component to disable the instances.
 
-![Menu](images/GeometryNodesDisable.gif)
+![](images/GeometryNodesDisable.gif)
 
 ### Controlling instances
 
