@@ -22,16 +22,7 @@ and some mesh data like vertex groups and shape keys, etc. may get lost.
 If the option to bake modifiers was enabled in blender, 
 a mesh that is sent from Unity back into blender will have those modifiers applied and removed.
 
-## Splines
-If the Unity Splines package version 2 is installed in the Unity project and "Curves as Mesh" is disbled in blender, 
-the MeshSyncServer in Unity creates splines from blender curves. 
-These can be edited in Unity and are sent back to blender.
-This feature is intended to be used to easily change geometry node curve inputs from inside Unity.
 
-
-
-
- 
 
 
 ---------------------
