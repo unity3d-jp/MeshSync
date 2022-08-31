@@ -1,9 +1,8 @@
 # Bidirectional Sync
 
 [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
-for certain DCC tools have Bidirectional Sync feature that allows us to make changes in DCC Tools from inside Unity.
-
-Simply turn on "Auto Sync" in the plugin properties to enable this feature.
+for certain DCC tools have Bidirectional Sync feature that allows us to make changes in DCC Tools from inside Unity, 
+and we can simply turn on "Auto Sync" in the plugin properties to enable this feature.
 
 ## Supported Parameters
 
