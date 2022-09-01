@@ -45,9 +45,11 @@ installed in the appropriate DCC tool.
   > 2. Changes in the source objects in the DCC tool will not be applied to the prefabs automatically. 
   >    We can resync the prefabs by clicking the "Clear/resync prefabs" button if the DCC tool is open and and auto-sync has been enabled.
 
+![](images/MeshSyncDCCAssetProperties.png)
+
 - **DCC asset file**
 
-  We can assign a DCC asset file that exists inside the Unity project to launch the supported DCC tool and turns on Auto-Sync automatically.
+  We can assign a DCC asset file inside the Unity project to launch the supported DCC tool and turns on Auto-Sync automatically.
      
   The **Run mode** property specifies how to launch the DCC tool, and can be set with one of the following values:
 
