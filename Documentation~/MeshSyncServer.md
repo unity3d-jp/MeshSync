@@ -29,16 +29,15 @@ installed in the appropriate DCC tool.
 
 ![](images/MeshSyncInstanceProperties.png)
 
-- **Instance Hanlding**
+- **Instance Handling**
 
-  We can specify how Unity will create the instances of [a geometry node](GeometryNodes.md) (or its equivalent) in DCC tools 
-  using one of the following values: 
+  We can specify how Unity will create the instances of [a geometry node](GeometryNodes.md) (or its equivalent) using one of the following values: 
 
   |**Values** |**Description** |
   |:---       |:---|
   | **Instance renderer** | Create a MeshSync specific render component that batches the draw calls of each instance type. This is good for instances that do not need individual **GameObjects**.|
-  | **Copies**            | Create a GameObject for each instance. This is slower than the instance renderer but gives more control over each object.|
-  | **Prefabs**           | Create a prefab of the instanced object and places prefab instances in the scene. The prefab is saved in the **Asset Dir** property of the MeshSyncServer. Using prefabs for instances allows us to make changes to the instanced object and add custom components to it and apply that to all instances. |
+  | **Copies**            | Create a **GameObject** for each instance. This is slower than the instance renderer but gives more control over each object.|
+  | **Prefabs**           | Create a prefab of the instanced object and places prefab instances in the scene. The prefab is saved in the **Asset Dir** property of the MeshSyncServer. Using prefabs for instances allows us to make changes to the instanced object, add custom components to it and apply that to all instances. |
 
   > Some caveats about the **Prefabs** mode: 
   > 1. Setting the mode to **Prefabs** will create a reference between the prefabs and by their original names in the DCC tools.
@@ -46,12 +45,11 @@ installed in the appropriate DCC tool.
   > 2. Changes in the source objects in the DCC tool will not be applied to the prefabs automatically. 
   >    We can resync the prefabs by clicking the "Clear/resync prefabs" button if the DCC tool is open and and auto-sync has been enabled.
 
-- **DCC Asset**
+- **DCC asset file**
 
-  We can assign a DCC asset that exists inside the Unity project to launch the supported DCC tool and turns on Auto-Sync automatically.
-  (Only supported for Blender at the moment).
+  We can assign a DCC asset file that exists inside the Unity project to launch the supported DCC tool and turns on Auto-Sync automatically.
      
-  The **Run mode** property specifies how to run the DCC tool, and can be set with one of the following values:
+  The **Run mode** property specifies how to launch the DCC tool, and can be set with one of the following values:
 
   |**Values** |**Description** |
   |:---       |:---|
