@@ -1,7 +1,6 @@
 # Bidirectional Sync
 
-[MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest)
-for DCC tools that have Bidirectional Sync support, 
+For [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest) of DCC tools that have Bidirectional Sync support, 
 we can change editable properties in Unity and MeshSync will apply them in the DCC tool.
   
 
