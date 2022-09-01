@@ -49,7 +49,9 @@ installed in the appropriate DCC tool.
 
 - **DCC asset file**
 
-  We can assign a DCC asset file inside the Unity project to launch the supported DCC tool and turns on Auto-Sync automatically.
+  We can assign a DCC asset file inside the Unity project to launch a new instance of the applicable DCC tool and 
+  turn on **Auto-Sync** in the plugin automatically, provided that [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest) 
+  has been installed in the DCC tool.
      
   The **Run mode** property specifies how to launch the DCC tool, and can be set with one of the following values:
 
