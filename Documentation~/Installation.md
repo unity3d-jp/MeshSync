@@ -1,17 +1,10 @@
 # Installation
 
-MeshSync is currently a preview package and the steps to install it 
-differ based on the version of Unity.
+MeshSync is currently a preview package and requires Unity 2020.x or above. 
 
-## Unity 2019.x  
 
-<img src="images/PackageManager2019.png" height="300">
-
-1. Open [Package Manager](https://docs.unity3d.com/Manual/upm-ui.html) 
-2. Ensure that **Show preview packages** is checked. 
-3. Search for *MeshSync*.
   
-## Unity 2020.x and above
+## Installation steps:
 
 <img align="right" src="images/PackageManager2020.1.png">
 
