@@ -1877,7 +1877,14 @@ internal delegate void DeleteInstanceHandler(string path);
                     "[MeshSync] No entity found for parent path {0}, using root as parent", data.parentPath);
             }
 
-            switch (InstanceHandling)
+            // Anything other than a mesh needs to use copies if we're in instance renderer mode:
+            var instanceHandlingToUse = InstanceHandling;
+            if (instanceHandlingToUse == InstanceHandlingType.InstanceRenderer &&
+                instancedEntityRecord.dataType != EntityType.Mesh) {
+                instanceHandlingToUse = InstanceHandlingType.Copies;
+            }
+
+            switch (instanceHandlingToUse)
             {
                 case InstanceHandlingType.InstanceRenderer:
                     UpdateInstanceInfo_InstanceRenderer(data, infoRecord, instanceRendererParent);
@@ -1915,11 +1922,11 @@ internal delegate void DeleteInstanceHandler(string path);
                 bool visible = instancedEntityRecord.visibility.visibleInRender;
 
                 GameObject instanceObjectOriginal;
-                if (InstanceHandling == InstanceHandlingType.Copies) {
-                    instanceObjectOriginal = infoRecord.go;
+                if (InstanceHandling == InstanceHandlingType.Prefabs) {
+                    instanceObjectOriginal = GetOrCreatePrefab(data, infoRecord);
                 }
                 else {
-                    instanceObjectOriginal = GetOrCreatePrefab(data, infoRecord);
+                    instanceObjectOriginal = infoRecord.go;
                 }
 
                 if (instanceObjectOriginal == null) {
@@ -1928,16 +1935,16 @@ internal delegate void DeleteInstanceHandler(string path);
 
                 foreach (var mat in data.transforms) {
                     GameObject instancedCopy;
-                    if (InstanceHandling == InstanceHandlingType.Copies) {
-                        instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
-                    }
-                    else {
+                    if (InstanceHandling == InstanceHandlingType.Prefabs) {
 #if UNITY_EDITOR
                         instancedCopy = (GameObject)PrefabUtility.InstantiatePrefab(instanceObjectOriginal,
-                        instanceRendererParent.transform);
+                            instanceRendererParent.transform);
 #else
                         instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
 #endif
+                    }
+                    else {
+                        instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
                     }
 
                     SetInstanceTransform(instancedCopy, instanceObjectOriginal, mat);
