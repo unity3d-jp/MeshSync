@@ -10,7 +10,7 @@ from the DCC tool to Unity.
 ### Disabling Instances
 
 To stop rendering instances of an object:
-1. Cick on the **GameObject** corresponding to the Blender object that has the geometry node modifier which generates the instances. 
+1. Click on the **GameObject** corresponding to the Blender object that has the geometry node modifier which generates the instances. 
 2. Find the MeshSyncInstanceRenderer component that has a reference to the instanced object. 
 3. Disable the component to disable the instances.
 
@@ -35,7 +35,7 @@ Property changes in the following components are automatically applied on instan
 
 We can create Runtime builds that render Geometry Nodes instances.      
 In order to do this, make sure that the required instancing variants are not stripped by 
-selecting the _Keep All_ or _Strip Unused_ option in _Project Settings_ &rarr; _Graphics_ &rarr; _Shader Stripping_ &rarr; _Instancing Variants_.
+selecting _Keep All_ or _Strip Unused_ option in _Project Settings_ &rarr; _Graphics_ &rarr; _Shader Stripping_ &rarr; _Instancing Variants_.
 
 ![](images/ProjectSettingsInstancingVariants.png)
 
