@@ -42,13 +42,7 @@ selecting the _Keep All_ or _Strip Unused_ option in _Project Settings_ &rarr; _
 ## Limitations
 
 Currently, this geometry nodes synchronization feature has the following limitations:
-1. No [SceneCache](SceneCache.md) support    
+1. No [SceneCache](SceneCache.md) support.    
    Importing instances from a SceneCache file is not supported.
-2. No Preview Window support 
-   Rendering instances on the inspector preview window is not supported.
-3. No support for creating prefabs for instances.
-   
-
-## Tips
-For some files to sync correctly, the Bake Modifiers option must be selected.
-![Menu](images/BakeModsTip.png)
+2. No Preview in the Inspector window.   
+   Previewing instances inside an asset in the Inspector window is not supported.   
