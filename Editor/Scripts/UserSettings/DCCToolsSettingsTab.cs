@@ -370,56 +370,52 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
 
 //----------------------------------------------------------------------------------------------------------------------        
     void UpdateDCCPluginStatusLabel(Label statusLabel) {
-        
+
         BaseDCCIntegrator dccIntegrator = statusLabel.userData as BaseDCCIntegrator;
         Assert.IsNotNull(dccIntegrator);
         DCCPluginInstallInfo installInfo = dccIntegrator.FindInstallInfo();
 
         const string NOT_INSTALLED = "MeshSync Plugin not installed";
         if (null == installInfo) {
-            statusLabel.text = NOT_INSTALLED;                
-            return;                
-        }
-
-        DCCToolInfo dccToolInfo = dccIntegrator.GetDCCToolInfo();            
-        string installedPluginVersionStr = installInfo.GetPluginVersion(dccToolInfo.AppPath);
-        if (string.IsNullOrEmpty(installedPluginVersionStr)) {
             statusLabel.text = NOT_INSTALLED;
-            return;
-        }
-        
-        //Remove all known classes
-        const string PLUGIN_INCOMPATIBLE_CLASS  = "plugin-incompatible";
-        const string PLUGIN_INSTALLED_OLD_CLASS = "plugin-installed-old";
-        const string PLUGIN_INSTALLED_CLASS     = "plugin-installed";
-        statusLabel.RemoveFromClassList(PLUGIN_INCOMPATIBLE_CLASS);
-        statusLabel.RemoveFromClassList(PLUGIN_INSTALLED_CLASS);
-        statusLabel.RemoveFromClassList(PLUGIN_INSTALLED_OLD_CLASS);
+        } else {
+            //Remove all known classes
+            const string PLUGIN_INCOMPATIBLE_CLASS  = "plugin-incompatible";
+            const string PLUGIN_INSTALLED_OLD_CLASS = "plugin-installed-old";
+            const string PLUGIN_INSTALLED_CLASS     = "plugin-installed";
+            statusLabel.RemoveFromClassList(PLUGIN_INCOMPATIBLE_CLASS);
+            statusLabel.RemoveFromClassList(PLUGIN_INSTALLED_CLASS);
+            statusLabel.RemoveFromClassList(PLUGIN_INSTALLED_OLD_CLASS);
+            
+            DCCToolInfo dccToolInfo               = dccIntegrator.GetDCCToolInfo();
+            string      installedPluginVersionStr = installInfo.GetPluginVersion(dccToolInfo.AppPath);
+            
+            PackageVersion pluginVer = MeshSyncEditorConstants.GetPluginVersion();
 
-        PackageVersion pluginVer = MeshSyncEditorConstants.GetPluginVersion();
-        
-        //The DCC Plugin is installed, and we need to check if it's compatible with this version of MeshSync
-        if (!IsPackageVersionCompatible(installedPluginVersionStr, pluginVer, out PackageVersion installedPluginVersion)) {
-            statusLabel.AddToClassList(PLUGIN_INCOMPATIBLE_CLASS);
-            statusLabel.text = "Installed MeshSync Plugin is incompatible. Version: " + installedPluginVersionStr; 
-            return;
+            if (string.IsNullOrEmpty(installedPluginVersionStr)) {
+                statusLabel.text = NOT_INSTALLED;
+            } else if (!IsPackageVersionCompatible(installedPluginVersionStr, pluginVer, out PackageVersion installedPluginVersion)) {
+                //The DCC Plugin is installed, and we need to check if it's compatible with this version of MeshSync
+                
+                statusLabel.AddToClassList(PLUGIN_INCOMPATIBLE_CLASS);
+                statusLabel.text = "Installed MeshSync Plugin is incompatible. Version: " + installedPluginVersionStr;
+                return;
+                
+            } else if (null != m_latestCompatibleDCCPluginVersion
+                      && installedPluginVersion.GetPatch() < m_latestCompatibleDCCPluginVersion.GetPatch()) 
+            {
+                //Check if we have newer compatible DCCPlugin
+                statusLabel.AddToClassList(PLUGIN_INSTALLED_OLD_CLASS);
+                statusLabel.text = $"Plugin {installedPluginVersionStr} installed. " +
+                    $"({m_latestCompatibleDCCPluginVersion} is available)";
+            } else {
+                statusLabel.AddToClassList(PLUGIN_INSTALLED_CLASS);
+                statusLabel.text = $"Plugin {installedPluginVersionStr} installed";                
+            }
+            
         }
-        
-        
-        //Check if we have newer compatible DCCPlugin
-        if (null!= m_latestCompatibleDCCPluginVersion 
-            && installedPluginVersion.GetPatch() < m_latestCompatibleDCCPluginVersion.GetPatch()) 
-        {                
-            statusLabel.AddToClassList(PLUGIN_INSTALLED_OLD_CLASS);
-            statusLabel.text = $"Plugin {installedPluginVersionStr} installed. " +
-                $"({m_latestCompatibleDCCPluginVersion} is available)";
-            return;
-        } 
-
-        statusLabel.AddToClassList(PLUGIN_INSTALLED_CLASS);
-        statusLabel.text = $"Plugin {installedPluginVersionStr} installed"; 
-        
     }
+
 
     internal static bool IsPackageVersionCompatible(string ver0Str, PackageVersion ver1, out PackageVersion ver0) {
 
