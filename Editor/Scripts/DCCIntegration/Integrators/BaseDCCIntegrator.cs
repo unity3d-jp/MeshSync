@@ -13,7 +13,9 @@ internal abstract class BaseDCCIntegrator {
         m_dccToolInfo = dccToolInfo;
     }
 
-//----------------------------------------------------------------------------------------------------------------------    
+    internal bool IsInstallable() => m_installable;
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------    
     internal void Integrate(string requestedPluginVersion, Action onComplete) {
 
         string dccToolName = GetDCCToolInFileNameV();
@@ -115,7 +117,8 @@ internal abstract class BaseDCCIntegrator {
     
 //----------------------------------------------------------------------------------------------------------------------    
 
-    private readonly DCCToolInfo m_dccToolInfo = null;
+    private readonly DCCToolInfo m_dccToolInfo      = null;
+    private readonly bool        m_installable      = true;
     private          string      m_lastErrorMessage = null;
 }
 
