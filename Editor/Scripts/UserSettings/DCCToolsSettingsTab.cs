@@ -368,8 +368,8 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
     }
 
 
-//----------------------------------------------------------------------------------------------------------------------        
-    void UpdateDCCPluginStatus(Label statusLabel) {
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------        
+    DCCPluginStatus UpdateDCCPluginStatus(Label statusLabel) {
 
         BaseDCCIntegrator dccIntegrator = statusLabel.userData as BaseDCCIntegrator;
         Assert.IsNotNull(dccIntegrator);
@@ -407,6 +407,7 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         }
 
         UpdateDCCPluginStatusLabel(statusLabel, dccToolInfo, status,installedPluginVersionStr);
+        return status;
     }
     
     void UpdateDCCPluginStatusLabel(Label statusLabel, DCCToolInfo dccToolInfo, DCCPluginStatus status, string installedPluginVersionStr) {
