@@ -389,6 +389,9 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
             PackageVersion pluginVer = MeshSyncEditorConstants.GetPluginVersion();
             if (string.IsNullOrEmpty(installedPluginVersionStr)) {
                 status = DCCPluginStatus.NOT_INSTALLED;
+            } else if (!MeshSyncEditorConstants.SUPPORTED_DCC_TOOLS.ContainsKey(dccToolInfo.Type) ||
+                       !MeshSyncEditorConstants.SUPPORTED_DCC_TOOLS[dccToolInfo.Type].Contains(dccToolInfo.DCCToolVersion)) {
+                status = DCCPluginStatus.DCC_VERSION_UNSUPPORTED;
             } else if (!IsPackageVersionCompatible(installedPluginVersionStr, pluginVer, out PackageVersion installedPluginVersion)) {
                 //The DCC Plugin is installed, and we need to check if it's compatible with this version of MeshSync
                 status = DCCPluginStatus.INSTALLED_PLUGIN_INCOMPATIBLE;
@@ -400,13 +403,14 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
                 status = DCCPluginStatus.NEWER_PLUGIN_AVAILABLE;
             } else {
                 status = DCCPluginStatus.READY;
-            }            
+            }
         }
 
         UpdateDCCPluginStatusLabel(statusLabel, dccToolInfo, status,installedPluginVersionStr);
     }
     
     void UpdateDCCPluginStatusLabel(Label statusLabel, DCCToolInfo dccToolInfo, DCCPluginStatus status, string installedPluginVersionStr) {
+        
         PackageVersion pluginVer = MeshSyncEditorConstants.GetPluginVersion();
 
         //Remove all known classes
@@ -418,6 +422,11 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         statusLabel.RemoveFromClassList(PLUGIN_INSTALLED_OLD_CLASS);
         
         switch (status) {
+            case DCCPluginStatus.DCC_VERSION_UNSUPPORTED: {
+                statusLabel.AddToClassList(PLUGIN_INCOMPATIBLE_CLASS);
+                statusLabel.text = "MeshSync@" + pluginVer + " does not support " + dccToolInfo.GetDescription();
+                break;
+            }
             case DCCPluginStatus.NOT_INSTALLED: {
                 const string NOT_INSTALLED = "MeshSync Plugin not installed";
                 statusLabel.text = NOT_INSTALLED;
