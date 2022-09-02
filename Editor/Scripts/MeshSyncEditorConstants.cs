@@ -14,8 +14,13 @@ internal static class MeshSyncEditorConstants {
         Assert.IsTrue(parsed);
 
         foreach (KeyValuePair<string, DCCToolInfo> kv in SUPPORTED_DCC_TOOLS_BY_FOLDER) {
-            DCCToolInfo dccToolInfo = kv.Value;
-            SUPPORTED_DCC_TOOLS[dccToolInfo.Type].Add(dccToolInfo.DCCToolVersion);
+            DCCToolInfo     dccToolInfo = kv.Value;
+            if (!SUPPORTED_DCC_TOOLS.ContainsKey(dccToolInfo.Type)) {
+                SUPPORTED_DCC_TOOLS.Add(dccToolInfo.Type, new HashSet<string>());
+            }
+            
+            HashSet<string> versions = SUPPORTED_DCC_TOOLS[dccToolInfo.Type];
+            versions.Add(dccToolInfo.DCCToolVersion);
         }
     }
 
