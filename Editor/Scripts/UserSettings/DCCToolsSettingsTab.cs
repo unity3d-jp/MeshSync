@@ -107,7 +107,7 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
             Button button = container.Query<Button>("InstallPluginButton").First();
             button.clickable.clickedWithEventInfo += OnInstallPluginButtonClicked;
             button.userData                       =  integrator;
-            button.SetEnabled(m_checkPluginUpdatesButton.enabledSelf);                
+            button.SetEnabled(integrator.IsInstallable() && m_checkPluginUpdatesButton.enabledSelf);
             m_installPluginButtons.Add(button);
         }
         {
@@ -314,7 +314,9 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         m_footerStatusLabel.text = "";
         m_checkPluginUpdatesButton.SetEnabled(true);            
         foreach (Button installPluginButton in m_installPluginButtons) {
-            installPluginButton.SetEnabled(true);
+            BaseDCCIntegrator integrator  = installPluginButton.userData as BaseDCCIntegrator;
+            bool              installable = integrator?.IsInstallable() ?? false;
+            installPluginButton.SetEnabled(installable);
         }           
         
     }
