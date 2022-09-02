@@ -378,7 +378,7 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         DCCToolInfo          dccToolInfo = dccIntegrator.GetDCCToolInfo();
 
         DCCPluginStatus status                    = DCCPluginStatus.NOT_INSTALLED;
-        string              installedPluginVersionStr = null;
+        string          installedPluginVersionStr = null;
 
         if (null == installInfo) {
             status = DCCPluginStatus.NOT_INSTALLED;
