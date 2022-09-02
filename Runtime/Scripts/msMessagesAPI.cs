@@ -139,6 +139,8 @@ internal struct FenceMessage {
     #region internal
     public IntPtr self;
     [DllImport(Lib.name)] static extern FenceType msFenceGetType(IntPtr self);
+
+    [DllImport(Lib.name)] static extern int msMessageGetSessionID(IntPtr self);
     #endregion
 
     public enum FenceType {
@@ -154,6 +156,10 @@ internal struct FenceMessage {
     }
 
     public FenceType type { get { return msFenceGetType(self); } }
+
+    public int SessionId {
+        get { return msMessageGetSessionID(self); }
+    }
 }
 //----------------------------------------------------------------------------------------------------------------------
 

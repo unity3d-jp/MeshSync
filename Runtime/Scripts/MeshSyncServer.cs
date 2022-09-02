@@ -301,7 +301,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 
     void OnRecvFence(FenceMessage mes) {
         if (mes.type == FenceMessage.FenceType.SceneBegin) {
-            BeforeUpdateScene();
+            BeforeUpdateScene(mes);
         } else if (mes.type == FenceMessage.FenceType.SceneEnd) {
             AfterUpdateScene();
             m_server.NotifyPoll(PollMessage.PollType.SceneUpdate);
