@@ -389,8 +389,7 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
             PackageVersion pluginVer = MeshSyncEditorConstants.GetPluginVersion();
             if (string.IsNullOrEmpty(installedPluginVersionStr)) {
                 status = DCCPluginStatus.NOT_INSTALLED;
-            } else if (!MeshSyncEditorConstants.SUPPORTED_DCC_TOOLS.ContainsKey(dccToolInfo.Type) ||
-                       !MeshSyncEditorConstants.SUPPORTED_DCC_TOOLS[dccToolInfo.Type].Contains(dccToolInfo.DCCToolVersion)) {
+            } else if (!dccIntegrator.IsInstallable()) {
                 status = DCCPluginStatus.DCC_VERSION_UNSUPPORTED;
             } else if (!IsPackageVersionCompatible(installedPluginVersionStr, pluginVer, out PackageVersion installedPluginVersion)) {
                 //The DCC Plugin is installed, and we need to check if it's compatible with this version of MeshSync
