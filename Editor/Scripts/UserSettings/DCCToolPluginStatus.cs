@@ -1,7 +1,7 @@
 
 namespace Unity.MeshSync.Editor {
 
-internal enum DCCToolStatus {
+internal enum DCCToolPluginStatus {
     DCC_VERSION_UNSUPPORTED       = 0,
     NOT_INSTALLED                 = 10,
     INSTALLED_PLUGIN_INCOMPATIBLE = 20,
