@@ -91,7 +91,7 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
 
         Label  statusLabel = container.Query<Label>("DCCToolStatus").First();
         statusLabel.userData = integrator;
-        UpdateDCCPluginStatusLabel(statusLabel);
+        UpdateDCCPluginStatus(statusLabel);
         
         m_dccStatusLabels[dccToolInfo.AppPath] = statusLabel;
         m_dccContainers[dccToolInfo.AppPath]   = container; 
@@ -252,7 +252,7 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
                 return;
             }
 
-            UpdateDCCPluginStatusLabel(statusLabel);
+            UpdateDCCPluginStatus(statusLabel);
         });
 
     }
@@ -283,7 +283,7 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
             //Update status labels
             UpdateLatestCompatibleDCCPlugin(packageInfo.Result[0].versions);
             foreach (KeyValuePair<string, Label> kv in m_dccStatusLabels) {
-                UpdateDCCPluginStatusLabel(kv.Value);
+                UpdateDCCPluginStatus(kv.Value);
             }
             
             m_updateFooterStatusFinished = true;
@@ -369,7 +369,7 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
 
 
 //----------------------------------------------------------------------------------------------------------------------        
-    void UpdateDCCPluginStatusLabel(Label statusLabel) {
+    void UpdateDCCPluginStatus(Label statusLabel) {
 
         BaseDCCIntegrator dccIntegrator = statusLabel.userData as BaseDCCIntegrator;
         Assert.IsNotNull(dccIntegrator);
