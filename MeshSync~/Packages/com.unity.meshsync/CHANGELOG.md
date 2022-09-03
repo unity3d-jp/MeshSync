@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.14.5-preview] - 2022-09-03
+
+### Changed
+* doc: update the documentation on Bidirectional Sync 
+
 ## [0.14.4-preview] - 2022-09-03
 
 ### Changed
