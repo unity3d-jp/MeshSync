@@ -43,17 +43,21 @@ installed in the appropriate DCC tool.
   > 1. Setting the mode to **Prefabs** will create a reference between the prefabs and by their original names in the DCC tools.
   >    If the name in the DCC tool changes, then MeshSync will consider it as a new object and will create a new prefab.
   > 2. Changes in the source objects in the DCC tool will not be applied to the prefabs automatically. 
-  >    We can resync the prefabs by clicking the "Clear/resync prefabs" button if the DCC tool is open and and auto-sync has been enabled.
+  >    To resync the prefabs, turn on **Auto Sync** in the DCC tool plugin and press the "Clear/resync prefabs" button.
+  
+  
 
 ![](images/MeshSyncDCCAssetProperties.png)
 
 - **DCC asset file**
 
   We can assign a DCC asset file inside the Unity project to launch a new instance of the applicable DCC tool and 
-  turn on **Auto-Sync** in the plugin automatically, provided that [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest) 
-  has been installed in the DCC tool.
+  open the file.   
+  Further, if [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest) has been installed in the DCC tool,
+  **Auto-Sync** in the plugin will also be automatically turned on.  
+  
      
-  The **Run mode** property specifies how to launch the DCC tool, and can be set with one of the following values:
+  The **Run mode** property specifies how to launch the DCC tool.
 
   |**Values** |**Description** |
   |:---       |:---|
