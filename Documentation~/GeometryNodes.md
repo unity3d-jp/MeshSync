@@ -1,9 +1,8 @@
 # Geometry Nodes Synchronization
 
-Geometry Nodes is a feature that is currently only provided by Blender and 
-used for modifying the geometry of an object with node-based operations.  
-Meshsync will automatically synchronize geometry node instances during the sync process
-from the DCC tool to Unity.
+Geometry Nodes is a feature for modifying the geometry of an object with node-based operation that 
+is currently only provided by Blender.   
+Meshsync will also automatically synchronize geometry node instances during DCC &rarr; Unity synchronization.
 
 ## Operations
 
