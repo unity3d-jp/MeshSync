@@ -1962,8 +1962,8 @@ internal delegate void DeleteInstanceHandler(string path);
         private static void SetInstanceTransform(GameObject instancedCopy, GameObject instanceObjectOriginal, Matrix4x4 mat) {
             Transform objTransform = instancedCopy.transform;
 
-            var newMat = instanceObjectOriginal.transform.localToWorldMatrix * mat;
-
+            //var newMat = instanceObjectOriginal.transform.localToWorldMatrix * mat;
+            var newMat = mat;
             objTransform.localScale = newMat.lossyScale;
             objTransform.position   = newMat.MultiplyPoint(Vector3.zero);
 
