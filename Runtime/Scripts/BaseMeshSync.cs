@@ -1961,26 +1961,24 @@ internal delegate void DeleteInstanceHandler(string path);
 
         private static void SetInstanceTransform(GameObject instancedCopy, GameObject instanceObjectOriginal, Matrix4x4 mat) {
             Transform objTransform = instancedCopy.transform;
-
-            //var newMat = instanceObjectOriginal.transform.localToWorldMatrix * mat;
-            var newMat = mat;
-            objTransform.localScale = newMat.lossyScale;
-            objTransform.position   = newMat.MultiplyPoint(Vector3.zero);
+            
+            objTransform.localScale = mat.lossyScale;
+            objTransform.position   = mat.MultiplyPoint(Vector3.zero);
 
             // Calculate rotation here to avoid gimbal lock issue:
             Vector3 forward;
-            forward.x = newMat.m02;
-            forward.y = newMat.m12;
-            forward.z = newMat.m22;
+            forward.x = mat.m02;
+            forward.y = mat.m12;
+            forward.z = mat.m22;
 
             Vector3 upwards;
-            upwards.x = newMat.m01;
-            upwards.y = newMat.m11;
-            upwards.z = newMat.m21;
+            upwards.x = mat.m01;
+            upwards.y = mat.m11;
+            upwards.z = mat.m21;
 
             objTransform.rotation = Quaternion.LookRotation(forward, upwards);
 
-            Debug.Assert(objTransform.localToWorldMatrix == newMat, "Matrices don't match!");
+            Debug.Assert(objTransform.localToWorldMatrix == mat, "Matrices don't match!");
         }
 
         private GameObject GetOrCreatePrefab(InstanceInfoData data, InstanceInfoRecord infoRecord) {
