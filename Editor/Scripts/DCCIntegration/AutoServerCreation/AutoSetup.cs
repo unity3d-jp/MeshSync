@@ -14,8 +14,6 @@ public static class AutoSetup {
     static AutoSetup() {
         // Create server
         var settings = ServerSettings.defaultValue;
-        //TODO replace this
-        AutoSetupSettings.instance.Port = 8081;
         
         settings.port = AutoSetupSettings.instance.Port;
         
