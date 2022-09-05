@@ -34,7 +34,7 @@ Property changes in the following components are automatically applied on instan
 ## Runtime-Builds
 
 We can create Runtime builds that render Geometry Nodes instances.      
-In order to do this, make sure that the required instancing variants are not stripped by 
+For this, make sure that the required instancing variants are not stripped by 
 selecting _Keep All_ or _Strip Unused_ option in _Project Settings_ &rarr; _Graphics_ &rarr; _Shader Stripping_ &rarr; _Instancing Variants_.
 
 ![](images/ProjectSettingsInstancingVariants.png)
