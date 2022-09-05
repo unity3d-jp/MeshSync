@@ -37,10 +37,10 @@ installed in the appropriate DCC tool.
   |:---       |:---|
   | **Instance Renderer** | Create a MeshSync specific render component that batches the draw calls of each instance type. This is good for instances that do not need individual **GameObjects**.|
   | **Copies**            | Create a **GameObject** for each instance. The processing load is greater than **Instance Renderer** but gives more control over each object.|
-  | **Prefabs**           | Create a prefab of the instanced object and places prefab instances in the scene. The prefab is saved in the **Asset Dir** property of the MeshSyncServer. Using prefabs for instances allows us to make changes to the instanced object, add custom components to it and apply that to all instances. |
+  | **Prefabs**           | Create a prefab of the instanced object and places prefab instances in the scene. The prefab is saved in the **Asset Dir** property of the MeshSyncServer. This option allows changes to instanced objects or addition of custom components to be applied to all instances. |
 
   > Some caveats about the **Prefabs** mode: 
-  > 1. Setting the mode to **Prefabs** will create a reference between the prefabs and by their original names in the DCC tools.
+  > 1. Setting the mode to **Prefabs** will create references between the prefabs and their original names in the DCC tools.
   >    If the name in the DCC tool changes, then MeshSync will consider it as a new object and will create a new prefab.
   > 2. Changes in the source objects in the DCC tool will not be applied to the prefabs automatically. 
   >    To resync the prefabs, turn on **Auto Sync** in the DCC tool plugin and press the "Clear/resync prefabs" button.
