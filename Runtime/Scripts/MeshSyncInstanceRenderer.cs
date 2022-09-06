@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 #if !UNITY_2021_2_OR_NEWER
 using UnityEditor.Experimental.SceneManagement;
 #endif
@@ -15,7 +15,9 @@ namespace Unity.MeshSync{
 
         [HideInInspector]
         [SerializeField] private Matrix4x4[] transforms;
-        [SerializeField] private GameObject reference; 
+        [SerializeField] private GameObject reference;
+        [SerializeField] private GameObject instanceParent;
+
         public int TransformCount { get => transforms.Length; }
 
         void OnEnable()
@@ -81,29 +83,31 @@ namespace Unity.MeshSync{
 
         #region Events
 
-        public void UpdateAll(Matrix4x4[] transforms, GameObject go)
+        public void UpdateAll(Matrix4x4[] transforms, GameObject go, GameObject instanceParent)
         {
-            this.transforms = transforms;
-            reference = go;
-            
+            this.transforms     = transforms;
+            reference           = go;
+            this.instanceParent = instanceParent;
+
             UpdateRenderingInfo(m_renderingInfo);
         }
 
-        public void UpdateReference(GameObject go)
+        public void UpdateReference(GameObject go, GameObject instanceParent)
         {
-            reference = go;
+            reference           = go;
+            this.instanceParent = instanceParent;
+
             UpdateRenderingInfo(m_renderingInfo);
         }
 
        
         private void UpdateRenderingInfo(InstanceRenderingInfo info)
         {
-            // Transforms
-            info.instances = transforms;
-            
-            // Reference
-            info.gameObject = reference;
+            info.instances      = transforms;
+            info.gameObject     = reference;
+            info.instanceParent = instanceParent;
         }
+
         #endregion
         
         #region Rendering

@@ -78,6 +78,8 @@ namespace Unity.MeshSync
             }
         }
 
+        internal GameObject instanceParent { get; set; }
+
         private Renderer m_renderer;
         internal int layer
         {
@@ -154,10 +156,10 @@ namespace Unity.MeshSync
         {
             get
             {
-                if (gameObject == null)
+                if (instanceParent == null)
                     return Matrix4x4.identity;
 
-                return Matrix4x4.identity;// gameObject.transform.localToWorldMatrix;
+                return instanceParent.transform.localToWorldMatrix;
             }
         }
 

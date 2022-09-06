@@ -1829,7 +1829,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 infoRecord.go = rec.go;
                 var renderer = infoRecord.renderer;
                 if (renderer != null) {
-                    renderer.UpdateReference(rec.go);
+                    renderer.UpdateReference(rec.go, infoRecord.renderer.gameObject);
                 }
             }
 
@@ -1947,7 +1947,7 @@ internal delegate void DeleteInstanceHandler(string path);
                         instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
                     }
 
-                    SetInstanceTransform(instancedCopy, instanceObjectOriginal, mat);
+                    SetInstanceTransform(instancedCopy, instanceRendererParent, mat);
 
                     if (config.SyncVisibility &&
                         instancedEntityRecord.hasVisibility) {
@@ -1959,9 +1959,11 @@ internal delegate void DeleteInstanceHandler(string path);
             }
         }
 
-        private static void SetInstanceTransform(GameObject instancedCopy, GameObject instanceObjectOriginal, Matrix4x4 mat) {
+        private static void SetInstanceTransform(GameObject instancedCopy, GameObject parent, Matrix4x4 mat) {
             Transform objTransform = instancedCopy.transform;
             
+            mat = parent.transform.localToWorldMatrix * mat;
+
             objTransform.localScale = mat.lossyScale;
             objTransform.position   = mat.MultiplyPoint(Vector3.zero);
 
@@ -2028,7 +2030,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 infoRecord.renderer = instanceRendererParent.AddComponent<MeshSyncInstanceRenderer>();
             }
 
-            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
+            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go, infoRecord.renderer.gameObject);
         }
 
         void UpdateConstraint(ConstraintData data)
