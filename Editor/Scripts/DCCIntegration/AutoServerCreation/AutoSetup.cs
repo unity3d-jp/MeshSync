@@ -64,12 +64,12 @@ public static class AutoSetup {
     private static void HandleAddServerToScene() {
         AddServerToScene();
         
-        m_server.NotifyEditorCommand(EditorCommandMessage.CommandType.AddServerToScene, "ok");
+        m_server.NotifyEditorCommand("ok");
     }
 
     private static void HandleGetProjectPath() {
         var path = GetProjectPath();
-        m_server.NotifyEditorCommand(EditorCommandMessage.CommandType.GetProjectPath, path);
+        m_server.NotifyEditorCommand(path);
     }
 
     private static string GetProjectPath() {

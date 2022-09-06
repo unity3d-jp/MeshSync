@@ -145,7 +145,7 @@ internal struct Server {
 
 
     [DllImport(Lib.name)]
-    static extern void msServerNotifyEditorCommand(IntPtr self, EditorCommandMessage.CommandType type, string reply);
+    static extern void msServerNotifyEditorCommand(IntPtr self, string reply);
     
     #endregion
 
@@ -295,8 +295,8 @@ internal struct Server {
         msServerNotifyPoll(self, t);
     }
 
-    public void NotifyEditorCommand(EditorCommandMessage.CommandType type, string reply) {
-        msServerNotifyEditorCommand(self, type, reply);
+    public void NotifyEditorCommand(string reply) {
+        msServerNotifyEditorCommand(self, reply);
     }
 }
 

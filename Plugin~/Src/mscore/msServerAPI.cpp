@@ -359,9 +359,9 @@ msAPI bool msServerIsDCCLiveEditReady(ms::Server* server)
     return server->readyForProperties();
 }
 
-msAPI void msServerNotifyEditorCommand(ms::Server* server, ms::EditorCommandMessage::CommandType type, const char* reply) {
+msAPI void msServerNotifyEditorCommand(ms::Server* server, const char* reply) {
     if (!server) { return; }
-    server->notifyCommand(type, reply);
+    server->notifyCommand(reply);
 }
 
 msAPI int msGetGetBakeSkin(ms::GetMessage *self)

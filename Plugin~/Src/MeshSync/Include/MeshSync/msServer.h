@@ -70,7 +70,7 @@ public:
 
     void notifyPoll(PollMessage::PollType t);
 
-    void notifyCommand(EditorCommandMessage::CommandType t, const char* reply);
+    void notifyCommand(const char* reply);
 
 public:
     struct MessageHolder

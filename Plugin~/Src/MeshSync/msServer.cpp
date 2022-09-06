@@ -694,7 +694,7 @@ void Server::recvCommand(HTTPServerRequest& request, HTTPServerResponse& respons
     serveText(response, mes->reply);
 }
 
-void Server::notifyCommand(EditorCommandMessage::CommandType t, const char* reply) {
+void Server::notifyCommand(const char* reply) {
     if (!m_current_command)
         return;
     m_current_command->reply = reply;
