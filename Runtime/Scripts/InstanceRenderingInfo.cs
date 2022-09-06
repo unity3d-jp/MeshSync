@@ -156,8 +156,8 @@ namespace Unity.MeshSync
             {
                 if (gameObject == null)
                     return Matrix4x4.identity;
-                    
-                return gameObject.transform.localToWorldMatrix;
+
+                return Matrix4x4.identity;// gameObject.transform.localToWorldMatrix;
             }
         }
 
