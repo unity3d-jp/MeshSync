@@ -62,9 +62,13 @@ public static class AutoSetup {
     }
 
     private static void HandleAddServerToScene() {
-        AddServerToScene();
-        
-        m_server.NotifyEditorCommand("ok");
+        if (AddServerToScene()) {
+            m_server.NotifyEditorCommand("ok");
+        }
+        else {
+            m_server.NotifyEditorCommand("Could not start server");
+            Debug.LogErrorFormat("[MeshSync] Could not add server to scene");
+        }
     }
 
     private static void HandleGetProjectPath() {
@@ -78,16 +82,14 @@ public static class AutoSetup {
         return path;
     }
     
-    private static void AddServerToScene() {
+    private static bool AddServerToScene() {
         //check if the scene has a server
         var servers = Object.FindObjectsOfType<MeshSyncServer>();
         if (servers.Length > 0)
-            return;
+            return true;
         
         var server = MeshSyncMenu.CreateMeshSyncServer(true);
-        while (!server.IsServerStarted()) {
-            Thread.Sleep(100);
-        }
+        return server.IsServerStarted();
     }
 }
 }
