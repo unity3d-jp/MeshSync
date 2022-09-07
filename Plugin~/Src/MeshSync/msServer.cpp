@@ -683,15 +683,20 @@ void Server::recvCommand(HTTPServerRequest& request, HTTPServerResponse& respons
     queueMessage(mes);
 
     // Wait for command to be executed
-    for (int i = 0; ; ++i) {
+    for (int i = 0; i < 300 ; ++i) {
         if (mes->ready)
             break;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
-    // Respond to request
-    serveText(response, mes->reply);
+    // serve data
+    if (mes->ready) {
+        serveText(response, mes->reply, HTTPResponse::HTTP_OK);
+    }
+    else {
+        serveText(response, "timeout", HTTPResponse::HTTP_REQUEST_TIMEOUT);
+    }
 }
 
 void Server::notifyCommand(const char* reply) {
