@@ -249,12 +249,9 @@ internal struct PollMessage {
 
 internal struct EditorCommandMessage {
     
-    #region Internal
-    
-    public IntPtr   self;
-    
+    #region internal
+    public IntPtr self;
     [DllImport(Lib.name)] static extern CommandType msEditorCommandGetType(IntPtr self);
-    
     #endregion
     
     public static explicit operator EditorCommandMessage(IntPtr v)
