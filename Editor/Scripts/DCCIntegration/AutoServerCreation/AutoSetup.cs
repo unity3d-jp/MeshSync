@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -9,23 +8,51 @@ namespace Unity.MeshSync.Editor {
 [InitializeOnLoad]
 internal static class AutoSetup {
 
-    private static Server m_server;
-    
+    private static Server            m_server;
+
+    private const string CONFIGURATION_TIP =
+        "You can configure the editor server in Edit/ProjectSettings/MeshSync/EditorServer";
+
     static AutoSetup() {
-        // Create server
-        var settings = ServerSettings.defaultValue;
+        ApplySettingsIfDirty();
+    }
+    
+    internal static void ApplySettingsIfDirty() {
         
-        settings.port = AutoSetupSettings.instance.Port;
+        if (!AutoSetupSettings.instance.Dirty)
+            return;
         
-        if (!Server.Start(ref settings, out m_server)) {
-            Debug.LogError("[MeshSync] Could not start Server");
+        ApplySettings();
+        
+        AutoSetupSettings.instance.Dirty = false;
+    }
+
+    private static void ApplySettings() {
+        
+        EditorApplication.update -= UpdateCall;
+        m_server.Stop();
+        
+        if (!AutoSetupSettings.instance.Active) {
+            Debug.Log("[MeshSync] Stopping Editor Server.\n" + CONFIGURATION_TIP);
+            
             return;
         }
         
-        //Register calls
-        EditorApplication.update -= UpdateCall;
         EditorApplication.update += UpdateCall;
+        
+        var settings = ServerSettings.defaultValue;
+        settings.port = AutoSetupSettings.instance.Port;
+        
+        
+        
+    
+        if (!Server.Start(ref settings, out m_server)) {
+            Debug.LogErrorFormat("[MeshSync] Could not start editor server at port {0}\n" + CONFIGURATION_TIP);
+        }
+        
+        Debug.LogFormat("[MeshSync] Starting Editor Server at port {0}.\n" + CONFIGURATION_TIP, settings.port);
     }
+    
 
     private static void UpdateCall() {
        if (m_server.numMessages == 0)
