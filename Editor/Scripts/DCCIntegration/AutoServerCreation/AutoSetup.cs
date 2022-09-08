@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 namespace Unity.MeshSync.Editor {
 
 [InitializeOnLoad]
-public static class AutoSetup {
+internal static class AutoSetup {
 
     private static Server m_server;
     
