@@ -156,7 +156,6 @@ int Server::processMessages(const MessageHandler& handler)
             handler(Message::Type::RequestServerLiveEdit, *mes);
         }
         else if (auto command = std::dynamic_pointer_cast<EditorCommandMessage>(mes)) {
-            m_current_command = command;
             handler(Message::Type::EditorCommand, *mes);
         }
 
@@ -679,6 +678,18 @@ void Server::recvCommand(HTTPServerRequest& request, HTTPServerResponse& respons
     if (!mes)
         return;
 
+    if (mes->message_id == InvalidID) {
+        throw std::invalid_argument("Invalid EditorCommandMessage::id");
+    }
+    else if (mes->session_id == InvalidID) {
+        throw std::invalid_argument("Invalid EditorCommandMessage::session_id");
+    }
+
+    {
+        lock_t lock(m_commands_mutex);
+        m_current_commands[std::pair{ mes->message_id, mes->session_id }] = mes;
+    }
+
     // Queue the command for execution
     queueMessage(mes);
 
@@ -690,6 +701,11 @@ void Server::recvCommand(HTTPServerRequest& request, HTTPServerResponse& respons
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
+    {
+        lock_t lock(m_commands_mutex);
+        m_current_commands.erase(std::pair{ mes->message_id, mes->session_id });
+    }
+
     // serve data
     if (mes->ready) {
         serveText(response, mes->reply, HTTPResponse::HTTP_OK);
@@ -699,11 +715,17 @@ void Server::recvCommand(HTTPServerRequest& request, HTTPServerResponse& respons
     }
 }
 
-void Server::notifyCommand(const char* reply) {
-    if (!m_current_command)
+void Server::notifyCommand(const char* reply, int messageId, int sessionId) {
+    
+    lock_t lock(m_commands_mutex);
+
+    auto entry = m_current_commands.find(std::pair{ messageId, sessionId });
+    if (entry == m_current_commands.end())
         return;
-    m_current_command->reply = reply;
-    m_current_command->ready = true;
+
+    auto command = entry->second;
+    command->reply = reply;
+    command->ready = true;
 }
 
 void Server::notifyPoll(PollMessage::PollType t)

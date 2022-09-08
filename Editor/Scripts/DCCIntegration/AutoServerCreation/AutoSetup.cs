@@ -50,10 +50,10 @@ internal static class AutoSetup {
         
         switch (type) {
             case EditorCommandMessage.CommandType.AddServerToScene:
-                HandleAddServerToScene();
+                HandleAddServerToScene(message);
                 break;
             case EditorCommandMessage.CommandType.GetProjectPath:
-                HandleGetProjectPath();
+                HandleGetProjectPath(message);
                 break;
             default:
                 Debug.LogErrorFormat("[MeshSync] Unhandled command type {0}", type);
@@ -61,19 +61,19 @@ internal static class AutoSetup {
         }
     }
 
-    private static void HandleAddServerToScene() {
+    private static void HandleAddServerToScene(EditorCommandMessage message) {
         if (AddServerToScene()) {
-            m_server.NotifyEditorCommand("ok");
+            m_server.NotifyEditorCommand("ok", message);
         }
         else {
-            m_server.NotifyEditorCommand("Could not start server");
+            m_server.NotifyEditorCommand("Could not start server", message);
             Debug.LogErrorFormat("[MeshSync] Could not add server to scene");
         }
     }
 
-    private static void HandleGetProjectPath() {
+    private static void HandleGetProjectPath(EditorCommandMessage message) {
         var path = GetProjectPath();
-        m_server.NotifyEditorCommand(path);
+        m_server.NotifyEditorCommand(path, message);
     }
 
     private static string GetProjectPath() {

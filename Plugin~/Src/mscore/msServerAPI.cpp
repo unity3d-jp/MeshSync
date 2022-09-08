@@ -91,6 +91,14 @@ msAPI void msQueryAddResponseText(ms::QueryMessage *self, const char *text)
 msAPI ms::EditorCommandMessage::CommandType msEditorCommandGetType(ms::EditorCommandMessage* self) {
     return self->command_type;
 }
+
+msAPI int msEditorCommandGetId(ms::EditorCommandMessage* self) {
+    return self->message_id;
+}
+
+msAPI int msEditorCommandGetSession(ms::EditorCommandMessage* self) {
+    return self->session_id;
+}
 #pragma endregion
 
 
@@ -359,9 +367,9 @@ msAPI bool msServerIsDCCLiveEditReady(ms::Server* server)
     return server->readyForProperties();
 }
 
-msAPI void msServerNotifyEditorCommand(ms::Server* server, const char* reply) {
+msAPI void msServerNotifyEditorCommand(ms::Server* server, const char* reply, int messageId, int sessionId) {
     if (!server) { return; }
-    server->notifyCommand(reply);
+    server->notifyCommand(reply, messageId, sessionId);
 }
 
 msAPI int msGetGetBakeSkin(ms::GetMessage *self)

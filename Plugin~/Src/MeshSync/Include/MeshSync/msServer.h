@@ -70,7 +70,7 @@ public:
 
     void notifyPoll(PollMessage::PollType t);
 
-    void notifyCommand(const char* reply);
+    void notifyCommand(const char* reply, int messageId, int sessionId);
 
 public:
     struct MessageHolder
@@ -141,7 +141,8 @@ private:
     std::string m_screenshot_file_path;
     std::string m_file_root_path;
 
-    EditorCommandMessagePtr m_current_command;
+    std::map<std::pair<int,int>, EditorCommandMessagePtr> m_current_commands;
+    std::mutex m_commands_mutex;
 
     public:
     std::vector<EntityPtr> m_pending_entities;
