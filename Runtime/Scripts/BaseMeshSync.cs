@@ -1829,7 +1829,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 infoRecord.go = rec.go;
                 var renderer = infoRecord.renderer;
                 if (renderer != null) {
-                    renderer.UpdateReference(rec.go, infoRecord.renderer.gameObject);
+                    renderer.UpdateReference(rec.go, infoRecord.renderer.gameObject.transform);
                 }
             }
 
@@ -2030,7 +2030,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 infoRecord.renderer = instanceRendererParent.AddComponent<MeshSyncInstanceRenderer>();
             }
 
-            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go, infoRecord.renderer.gameObject);
+            infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go, infoRecord.renderer.gameObject.transform);
         }
 
         void UpdateConstraint(ConstraintData data)

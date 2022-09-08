@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -78,7 +78,7 @@ namespace Unity.MeshSync
             }
         }
 
-        internal GameObject instanceParent { get; set; }
+        internal Transform instanceParent { get; set; }
 
         private Renderer m_renderer;
         internal int layer
