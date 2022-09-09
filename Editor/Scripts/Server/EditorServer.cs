@@ -6,25 +6,25 @@ using Object = UnityEngine.Object;
 namespace Unity.MeshSync.Editor {
 
 [InitializeOnLoad]
-internal static class AutoSetup {
+internal static class EditorServer {
 
     private static Server            m_server;
 
     private const string CONFIGURATION_TIP =
         "You can configure the editor server in Edit/ProjectSettings/MeshSync/EditorServer";
 
-    static AutoSetup() {
+    static EditorServer() {
         ApplySettingsIfDirty();
     }
     
     internal static void ApplySettingsIfDirty() {
         
-        if (!AutoSetupSettings.instance.Dirty)
+        if (!EditorServerSettings.instance.Dirty)
             return;
         
         ApplySettings();
         
-        AutoSetupSettings.instance.Dirty = false;
+        EditorServerSettings.instance.Dirty = false;
     }
 
     private static void ApplySettings() {
@@ -32,7 +32,7 @@ internal static class AutoSetup {
         EditorApplication.update -= UpdateCall;
         m_server.Stop();
         
-        if (!AutoSetupSettings.instance.Active) {
+        if (!EditorServerSettings.instance.Active) {
             Debug.Log("[MeshSync] Stopping Editor Server.\n" + CONFIGURATION_TIP);
             
             return;
@@ -41,7 +41,7 @@ internal static class AutoSetup {
         EditorApplication.update += UpdateCall;
         
         var settings = ServerSettings.defaultValue;
-        settings.port = AutoSetupSettings.instance.Port;
+        settings.port = EditorServerSettings.instance.Port;
         
         
         

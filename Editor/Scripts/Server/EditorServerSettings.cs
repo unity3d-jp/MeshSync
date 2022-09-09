@@ -1,8 +1,8 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-[FilePath("Assets/MeshSyncAssets/AutoSetupSettings.yml", FilePathAttribute.Location.ProjectFolder)]
-internal class AutoSetupSettings : ScriptableSingleton<AutoSetupSettings> {
+[FilePath("Assets/MeshSyncAssets/EditorServerSettings.yml", FilePathAttribute.Location.ProjectFolder)]
+internal class EditorServerSettings : ScriptableSingleton<EditorServerSettings> {
 
     private const string DIRTY_KEY = "MESHSYNC_AUTO_SETUP_SETTINGS_DIRTY";
     

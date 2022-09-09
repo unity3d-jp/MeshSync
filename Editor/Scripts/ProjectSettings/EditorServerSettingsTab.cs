@@ -27,19 +27,19 @@ internal class EditorServerSettingsTab : IMeshSyncSettingsTab {
         
         //Add server port
         m_serverPortField = AddField<IntegerField,int>(content, Contents.ServerPort,
-            AutoSetupSettings.instance.Port, null
+            EditorServerSettings.instance.Port, null
         );
 
         // Use Focus out event as the onValueChanged event is invoked while the user is typing
         m_serverPortField.RegisterCallback<FocusOutEvent>(evt => {
-            AutoSetupSettings.instance.Port = (ushort)m_serverPortField.value;
-            AutoSetup.ApplySettingsIfDirty();
+            EditorServerSettings.instance.Port = (ushort)m_serverPortField.value;
+            EditorServer.ApplySettingsIfDirty();
         });
         
-        m_activeField = AddField<Toggle, bool>(content, Contents.Active, AutoSetupSettings.instance.Active,
+        m_activeField = AddField<Toggle, bool>(content, Contents.Active, EditorServerSettings.instance.Active,
             (bool newValue) => {
-                AutoSetupSettings.instance.Active = newValue;
-                AutoSetup.ApplySettingsIfDirty();
+                EditorServerSettings.instance.Active = newValue;
+                EditorServer.ApplySettingsIfDirty();
             });
 
         root.Add(tabInstance);
