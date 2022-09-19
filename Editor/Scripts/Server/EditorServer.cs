@@ -11,7 +11,7 @@ internal static class EditorServer {
     private static Server            m_server;
 
     private const string CONFIGURATION_TIP =
-        "You can configure the editor server in Edit/ProjectSettings/MeshSync/EditorServer";
+        "You can configure the editor server via Project Settings";
 
     static EditorServer() {
         ApplySettingsIfDirty();
