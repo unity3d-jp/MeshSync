@@ -77,6 +77,20 @@ internal delegate void UpdateInstancedEntityHandler(string path, GameObject go);
 /// </summary>
 internal delegate void DeleteInstanceHandler(string path);
 
+    public enum UpdateKind {
+        Asset,
+        Entity,
+        Instance,
+        InstanceInfo,
+        Property
+    }
+
+    public struct MeshSyncAnalyticsData {
+        internal AssetType asset_Type;
+        internal EntityType type;
+
+    }
+
     //----------------------------------------------------------------------------------------------------------------------
 
     /// <summary>
@@ -84,7 +98,7 @@ internal delegate void DeleteInstanceHandler(string path);
     /// which encapsulates common functionalities
     /// </summary>
     [ExecuteInEditMode]
-    public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiver {
+    public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSyncAnalyticsData>, ISerializationCallbackReceiver {
 
 
         #region EventHandler Declarations
@@ -558,6 +572,8 @@ internal delegate void DeleteInstanceHandler(string path);
                                     Debug.Log("unknown asset: " + asset.name);
                                 break;
                         }
+
+                        SendEventData(new MeshSyncAnalyticsData() { asset_Type = asset.type });
                     }
 #if UNITY_EDITOR
                     if (save)
@@ -2709,15 +2725,32 @@ internal delegate void DeleteInstanceHandler(string path);
         SceneView.duringSceneGui -= OnSceneViewGUI;
 #endif
     }
-#endregion
 
-//----------------------------------------------------------------------------------------------------------------------
-    
-    //[TODO-sin: 2020-12-14] m_assetsFolder only makes sense for MeshSyncServer because we need to assign a folder that
-    //will keep the synced resources as edits are performed on the DCC tool side.
-    //For SceneCachePlayer, m_assetsFolder is needed only when loading the file, so it should be passed as a parameter 
-    
-    [SerializeField] private string  m_assetsFolder = null; //Always starts with "Assets"
+        /// <summary>
+        /// Send MeshSync sync event
+        /// </summary>
+        /// <param name="data">Asset type synced</param>
+        private void SendEventData(MeshSyncAnalyticsData data) {
+
+            foreach (var observer in this.m_observers) {
+                observer.OnNext(data);
+            }
+        }
+
+        public IDisposable Subscribe(IObserver<MeshSyncAnalyticsData> observer) {
+
+            this.m_observers.Add(observer);
+            return Unsubscriber<IObserver<MeshSyncAnalyticsData>, MeshSyncAnalyticsData>.Create(this.m_observers, observer);
+        }
+        #endregion
+
+        //----------------------------------------------------------------------------------------------------------------------
+
+        // [TODO-sin: 2020-12-14] m_assetsFolder only makes sense for MeshSyncServer because we need to assign a folder that
+        // will keep the synced resources as edits are performed on the DCC tool side.
+        // For SceneCachePlayer, m_assetsFolder is needed only when loading the file, so it should be passed as a parameter
+
+    [SerializeField] private string  m_assetsFolder = null; // Always starts with "Assets"
     [SerializeField] private Transform m_rootObject;
     
     [Obsolete][SerializeField] private bool m_usePhysicalCameraParams = true;  
@@ -2755,7 +2788,8 @@ internal delegate void DeleteInstanceHandler(string path);
     private bool m_markMeshesDynamic            = false;
     private bool m_needReassignMaterials        = false;
     private bool m_keyValuesSerializationEnabled = true;
-    
+
+    private List<IObserver<MeshSyncAnalyticsData>> m_observers = new List<IObserver<MeshSyncAnalyticsData>>();
     private Material m_cachedDefaultMaterial;
 
     private readonly           Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
