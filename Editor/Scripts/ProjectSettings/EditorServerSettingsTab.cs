@@ -26,7 +26,7 @@ internal class EditorServerSettingsTab : IMeshSyncSettingsTab {
         VisualElement content = tabInstance.Query<VisualElement>("Content").First();
         
         //Add server port
-        m_serverPortField = AddField<IntegerField,int>(content, Contents.ServerPort,
+        m_serverPortField = ProjectSettingsUtility.AddField<IntegerField,int>(content, Contents.ServerPort,
             EditorServerSettings.instance.Port, null
         );
 
@@ -36,27 +36,13 @@ internal class EditorServerSettingsTab : IMeshSyncSettingsTab {
             EditorServer.ApplySettingsIfDirty();
         });
         
-        m_activeField = AddField<Toggle, bool>(content, Contents.Active, EditorServerSettings.instance.Active,
+        m_activeField = ProjectSettingsUtility.AddField<Toggle, bool>(content, Contents.Active, EditorServerSettings.instance.Active,
             (bool newValue) => {
                 EditorServerSettings.instance.Active = newValue;
                 EditorServer.ApplySettingsIfDirty();
             });
 
         root.Add(tabInstance);
-    }
-
-//----------------------------------------------------------------------------------------------------------------------
-    
-    //Support Toggle, FloatField, etc
-    private F AddField<F,V>(VisualElement parent, GUIContent content,
-        V initialValue, Action<V> onValueChanged) where F: VisualElement,INotifyValueChanged<V>, new()  
-    {
-        F field = UIElementsEditorUtility.AddField<F, V>(parent, content, initialValue, (ChangeEvent<V> changeEvent) => {
-            onValueChanged?.Invoke(changeEvent.newValue);
-        });
-
-        field.AddToClassList("project-settings-field");
-        return field;
     }
 
 //----------------------------------------------------------------------------------------------------------------------
