@@ -42,12 +42,15 @@ internal static class EditorServer {
         
         var settings = ServerSettings.defaultValue;
         settings.port = EditorServerSettings.instance.Port;
-        
-        
-        
-    
+
         if (!Server.Start(ref settings, out m_server)) {
-            Debug.LogErrorFormat("[MeshSync] Could not start editor server at port {0}\n" + CONFIGURATION_TIP);
+            EditorUtility.DisplayDialog(
+                "Server Error",
+                $"Could not start Editor Server in port {settings.port}.\n"+CONFIGURATION_TIP,
+                "Ok");
+            
+            Debug.LogErrorFormat("[MeshSync] Could not start editor server at port {0}\n" + CONFIGURATION_TIP, settings.port);
+            return;
         }
         
         Debug.LogFormat("[MeshSync] Starting Editor Server at port {0}.\n" + CONFIGURATION_TIP, settings.port);
