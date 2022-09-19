@@ -379,6 +379,8 @@ namespace Unity.MeshSync {
 
         [SerializeField]
         private InstanceHandlingType instanceHandling = InstanceHandlingType.InstanceRenderer;
+        
+        private int numberOfPropertiesReceived;
 
         internal List<PropertyInfoDataWrapper> propertyInfos {
             get {
@@ -413,6 +415,8 @@ namespace Unity.MeshSync {
                 if (numProperties == 0) {
                     return;
                 }
+
+                numberOfPropertiesReceived += numProperties;
 
                 lock (PropertyInfoDataWrapper.PropertyUpdateLock) {
                     List<PropertyInfoDataWrapper> pendingProps = null;
