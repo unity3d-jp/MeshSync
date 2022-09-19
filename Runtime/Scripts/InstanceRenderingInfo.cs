@@ -159,7 +159,7 @@ namespace Unity.MeshSync
                 if (instanceParent == null)
                     return Matrix4x4.identity;
 
-                return instanceParent.transform.localToWorldMatrix;
+                return instanceParent.localToWorldMatrix;
             }
         }
 
