@@ -11,9 +11,14 @@ internal abstract class BaseDCCIntegrator {
 
     internal BaseDCCIntegrator(DCCToolInfo dccToolInfo) {
         m_dccToolInfo = dccToolInfo;
+
+        m_installable = MeshSyncEditorConstants.SUPPORTED_DCC_TOOLS.ContainsKey(dccToolInfo.Type)
+            && MeshSyncEditorConstants.SUPPORTED_DCC_TOOLS[dccToolInfo.Type].Contains(dccToolInfo.DCCToolVersion);
     }
 
-//----------------------------------------------------------------------------------------------------------------------    
+    internal bool IsInstallable() => m_installable;
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------    
     internal void Integrate(string requestedPluginVersion, Action onComplete) {
 
         string dccToolName = GetDCCToolInFileNameV();
@@ -115,7 +120,8 @@ internal abstract class BaseDCCIntegrator {
     
 //----------------------------------------------------------------------------------------------------------------------    
 
-    private readonly DCCToolInfo m_dccToolInfo = null;
+    private readonly DCCToolInfo m_dccToolInfo      = null;
+    private readonly bool        m_installable      = true;
     private          string      m_lastErrorMessage = null;
 }
 

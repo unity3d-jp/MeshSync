@@ -1,6 +1,45 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.14.5-preview] - 2022-09-03
+
+### Changed
+* doc: update the documentation on Bidirectional Sync 
+
+## [0.14.4-preview] - 2022-09-03
+
+### Changed
+* ui: updating UI texts under the Instances section in MeshSyncServer 
+
+### Fixed
+* fix: clear properties if the client does not send any 
+* fix: find DCC plugins in "Plugins" folder as well 
+* fix: show if a DCC tool is not supported in the Preferences window
+
+## [0.14.3-preview] - 2022-08-24
+
+### Fixed
+* fix: rebuild plugin for Mac Silicon 
+* fix: delete mesh renderer and filter if it was there from the curves as meshes setting 
+
+## [0.14.2-preview] - 2022-07-28
+
+### Added
+* feat: show dialog after changing InstanceHandling to warn against lost changes 
+
+### Changed
+* change: Give user the option to delete or stash previously imported objects when the session changes.
+
+### Fixed
+* fix: don't use slider if the range is too large.
+* fix: Blender installation script due to changes in the plugin structure 
+
+
+## [0.14.1-preview] - 2022-07-26
+
+### Fixed
+* plugin-fix: fix compile error when compiling MeshSyncDCCPlugins on Mac/Linux
+
 ## [0.14.0-preview] - 2022-07-22
 
 ### Added

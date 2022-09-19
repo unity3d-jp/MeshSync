@@ -156,6 +156,8 @@ internal delegate void DeleteInstanceHandler(string path);
 
             m_clientInstances.Clear();
             m_clientInstancedEntities.Clear();
+            
+            m_prefabDict.Clear();
 
             InitInternalV();
         }
@@ -182,7 +184,8 @@ internal delegate void DeleteInstanceHandler(string path);
         #endregion Simple Getter/Setter
 
         #region Properties
-
+        
+        private int currentSessionId = -1;
 
         private protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
 
@@ -473,8 +476,52 @@ internal delegate void DeleteInstanceHandler(string path);
         #endregion
 
         #region ReceiveScene
-        internal void BeforeUpdateScene() {
+
+        internal void BeforeUpdateScene(FenceMessage? mes = null) {
             onSceneUpdateBegin?.Invoke();
+
+            CheckForNewSession(mes);
+
+            numberOfPropertiesReceived = 0;
+        }
+
+        void CheckForNewSession(FenceMessage? mes) {
+#if UNITY_EDITOR
+            if (!mes.HasValue || currentSessionId == mes.Value.SessionId) {
+                return;
+            }
+
+            currentSessionId = mes.Value.SessionId;
+
+            if (transform.childCount <= 0) {
+                return;
+            }
+
+            int choice = EditorUtility.DisplayDialogComplex("A new session started.",
+                "MeshSync detected that the DCC tool session has changed. To ensure that the sync state is correct you can delete previously synced objects, stash them and move them to another game object or ignore this and keep all children.",
+                "Ignore and keep all children",
+                "Stash",
+                "Delete all children of the server");
+
+            switch (choice) {
+                case 1:
+                    // Stash
+                    var stash = new GameObject($"{name}_stash").transform;
+                    for (int i = transform.childCount - 1; i >= 0; i--) {
+                        Transform child = transform.GetChild(i);
+                        child.SetParent(stash, true);
+                    }
+
+                    Init(GetAssetsFolder());
+                    break;
+                case 2:
+                    // Destroy
+                    transform.DestroyChildrenImmediate();
+
+                    Init(GetAssetsFolder());
+                    break;
+            }
+#endif
         }
 
         private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets) {
@@ -603,6 +650,11 @@ internal delegate void DeleteInstanceHandler(string path);
 
         internal void AfterUpdateScene()
         {
+            // If none of the set messages had properties, we need to remove all properties:
+            if (numberOfPropertiesReceived == 0) {
+                propertyInfos.Clear();
+            }
+
             List<string> deadKeys = null;
 
             // resolve bones
@@ -1163,17 +1215,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 {
                     materialsUpdated = true;
                     smr = rec.skinnedMeshRenderer = Misc.GetOrAddComponent<SkinnedMeshRenderer>(trans.gameObject);
-                    if (rec.meshRenderer != null)
-                    {
-                        DestroyImmediate(rec.meshRenderer);
-                        rec.meshRenderer = null;
-                    }
-
-                    if (rec.meshFilter != null)
-                    {
-                        DestroyImmediate(rec.meshFilter);
-                        rec.meshFilter = null;
-                    }
+                    rec.DestroyMeshRendererAndFilter();
                 }
 
                 rec.smrUpdated = true;

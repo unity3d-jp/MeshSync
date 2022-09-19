@@ -379,6 +379,8 @@ namespace Unity.MeshSync {
 
         [SerializeField]
         private InstanceHandlingType instanceHandling = InstanceHandlingType.InstanceRenderer;
+        
+        private int numberOfPropertiesReceived;
 
         internal List<PropertyInfoDataWrapper> propertyInfos {
             get {
@@ -413,6 +415,8 @@ namespace Unity.MeshSync {
                 if (numProperties == 0) {
                     return;
                 }
+
+                numberOfPropertiesReceived += numProperties;
 
                 lock (PropertyInfoDataWrapper.PropertyUpdateLock) {
                     List<PropertyInfoDataWrapper> pendingProps = null;
@@ -515,6 +519,14 @@ namespace Unity.MeshSync {
                 return rec;
             }
 #else
+            // If the curve was exported as a mesh before, delete this now, as it's handled as a curve:
+            TransformData dtrans = data.transform;
+            EntityRecord  rec    = UpdateTransformEntity(dtrans, config);
+
+            if (rec != null) {
+                rec.DestroyMeshRendererAndFilter();
+            }
+
             return null;
 #endif
         }

@@ -11,7 +11,16 @@ internal static class MeshSyncEditorConstants {
     [InitializeOnLoadMethod]
     static void MeshSyncEditorConstants_OnLoad() {
         bool parsed = PackageVersion.TryParse(Lib.GetPluginVersion(), out m_pluginVersion);
-        Assert.IsTrue(parsed);        
+        Assert.IsTrue(parsed);
+
+        foreach (KeyValuePair<string, DCCToolInfo> kv in SUPPORTED_DCC_TOOLS_BY_FOLDER) {
+            DCCToolInfo     dccToolInfo = kv.Value;
+            if (!SUPPORTED_DCC_TOOLS.TryGetValue(dccToolInfo.Type, out HashSet<string> versions)) {
+                versions = new HashSet<string>();
+                SUPPORTED_DCC_TOOLS.Add(dccToolInfo.Type, versions);
+            }
+            versions.Add(dccToolInfo.DCCToolVersion);
+        }
     }
 
     internal static PackageVersion GetPluginVersion() {
@@ -87,6 +96,8 @@ internal static class MeshSyncEditorConstants {
 #endif        
         
     };
+
+    internal static readonly Dictionary<DCCToolType, HashSet<string>> SUPPORTED_DCC_TOOLS = new Dictionary<DCCToolType, HashSet<string>>();                            
     
 
     //UIElements Main
