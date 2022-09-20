@@ -113,6 +113,13 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
                 /*useShellExecute=*/ false, /*redirectStandardError=*/ true                 
             );
             process.WaitForExit();
+
+            process = DiagnosticsUtility.StartProcess(
+                appPath, 
+                $"-b -P {uninstallScriptPath}",                
+                /*useShellExecute=*/ false, /*redirectStandardError=*/ true                 
+            );
+            process.WaitForExit();
             
             
 #if UNITY_EDITOR_OSX
