@@ -11,7 +11,7 @@ but it has the following differences:
 1. Unlike Alembic, *.sc* files are only playable in Unity.
 1. As a side effect from prioritizing performance, newer versions of MeshSync may not be able to 
    play *.sc* file created with earlier versions, although this kind of change will be kept to a minimum.        
-   Please refer to [MeshSync Version and Backward Compatibility](#meshsync-version-and-backward-compatibility) 
+   Please refer to [SceneCache Version and Backward Compatibility](#scenecache-version-and-backward-compatibility) 
    for more details.
 
 
@@ -78,7 +78,7 @@ Please refer to [common properties](CommonMeshSyncProperties.md) for details on 
 * **Material List** property can be used to carry over existing materials when the cache file is updated.
 
 
-## MeshSync Version and Backward Compatibility
+## SceneCache Version and Backward Compatibility
 
 MeshSync assigns a particular *SceneCache Version* when creating a SceneCache (*.sc*) file, and
 a MeshSync package with the same *SceneCache Version* is guaranteed to be able to load and play that *.sc* file.   
