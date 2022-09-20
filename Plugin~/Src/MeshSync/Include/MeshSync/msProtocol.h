@@ -268,7 +268,7 @@ public:
     CommandType command_type = CommandType::Unknown;
 
     std::atomic_bool ready{ false };
-    const char* reply;
+    char reply[256];
 
     EditorCommandMessage();
     void serialize(std::ostream& os) const override;

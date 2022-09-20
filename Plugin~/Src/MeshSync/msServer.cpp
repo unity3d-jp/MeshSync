@@ -718,13 +718,12 @@ void Server::recvCommand(HTTPServerRequest& request, HTTPServerResponse& respons
 void Server::notifyCommand(const char* reply, int messageId, int sessionId) {
     
     lock_t lock(m_commands_mutex);
-
     auto entry = m_current_commands.find(std::pair{ messageId, sessionId });
     if (entry == m_current_commands.end())
         return;
 
     auto command = entry->second;
-    command->reply = reply;
+    strcpy(command->reply, reply);
     command->ready = true;
 }
 
