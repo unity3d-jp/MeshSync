@@ -9,8 +9,8 @@ but it has the following differences:
 1. Scene Cache is designed to playback frames accurately with high performance.
 1. Scene Cache supports material export/import
 1. Unlike Alembic, *.sc* files are only playable in Unity.
-1. Due to placing more priority on performance, newer versions of MeshSync may not be able to 
-   play *.sc* file created with earlier versions.        
+1. As a side effect from prioritizing performance, newer versions of MeshSync may not be able to 
+   play *.sc* file created with earlier versions, although this kind of change will be kept to a minimum.        
    Please refer to [MeshSync Version and Backward Compatibility](#meshsync-version-and-backward-compatibility) 
    for more details.
 
