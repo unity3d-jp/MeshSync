@@ -14,14 +14,15 @@ internal static class EditorServer {
         "You can configure the editor server via Project Settings";
 
     static EditorServer() {
-        ApplySettingsIfDirty();
+        // To avoid timeouts where the server cannot react due to the editor loading
+        // Defer the Initialisation to the first update call
+        EditorApplication.update -= Init;
+        EditorApplication.update += Init;
     }
     
     internal static void ApplySettingsIfDirty() {
-        
         if (!EditorServerSettings.instance.Dirty)
             return;
-        
         ApplySettings();
         
         EditorServerSettings.instance.Dirty = false;
@@ -55,7 +56,11 @@ internal static class EditorServer {
         
         Debug.LogFormat("[MeshSync] Starting Editor Server at port {0}.\n" + CONFIGURATION_TIP, settings.port);
     }
-    
+
+    private static void Init() {
+        EditorApplication.update -= Init;
+        ApplySettingsIfDirty();
+    }
 
     private static void UpdateCall() {
        if (m_server.numMessages == 0)
