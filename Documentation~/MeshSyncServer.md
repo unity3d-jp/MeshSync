@@ -43,7 +43,7 @@ installed in the appropriate DCC tool.
   > 1. Setting the mode to **Prefabs** will create a reference between each prefab and its corresponding original name in the DCC tool.
   >    Therefore, if the name in the DCC tool changes, then MeshSync will consider it as a new object and will create a new prefab.
   > 2. Changes in the source objects in the DCC tool will not be applied to the prefabs automatically.   
-  >    To resync the prefabs, turn on **Auto Sync** in the DCC tool plugin and press the "Clear/resync prefabs" button.
+  >    To resync the prefabs, turn on **Auto Sync** in the DCC tool plugin and press the "Clear/resync prefabs" button in the inspector of MeshSyncServer.
   
   
 
