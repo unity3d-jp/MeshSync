@@ -40,7 +40,7 @@ installed in the appropriate DCC tool.
   | **Prefabs**           | Create a prefab of the instanced object and place prefab instances in the scene. The prefab is saved in the **Asset Dir** property of the MeshSyncServer. This option allows changes to instanced objects or addition of custom components to be applied to all instances. |
 
   > Some caveats about the **Prefabs** mode: 
-  > 1. Setting the mode to **Prefabs** will create references between the prefabs and their original names in the DCC tools.
+  > 1. Setting the mode to **Prefabs** will create a reference between each prefab and its corresponding original name in the DCC tool.
   >    Therefore, if the name in the DCC tool changes, then MeshSync will consider it as a new object and will create a new prefab.
   > 2. Changes in the source objects in the DCC tool will not be applied to the prefabs automatically. 
   >    To resync the prefabs, turn on **Auto Sync** in the DCC tool plugin and press the "Clear/resync prefabs" button.
