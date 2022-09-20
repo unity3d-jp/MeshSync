@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.14.5-preview] - 2022-09-03
+
+### Changed
+* doc: update the documentation on Bidirectional Sync 
+
+## [0.14.4-preview] - 2022-09-03
+
+### Changed
+* ui: updating UI texts under the Instances section in MeshSyncServer 
+
+### Fixed
+* fix: clear properties if the client does not send any 
+* fix: find DCC plugins in "Plugins" folder as well 
+* fix: show if a DCC tool is not supported in the Preferences window
+
 ## [0.14.3-preview] - 2022-08-24
 
 ### Fixed
