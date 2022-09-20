@@ -35,25 +35,29 @@ installed in the appropriate DCC tool.
 
   |**Values** |**Description** |
   |:---       |:---|
-  | **Instance renderer** | Create a MeshSync specific render component that batches the draw calls of each instance type. This is good for instances that do not need individual **GameObjects**.|
-  | **Copies**            | Create a **GameObject** for each instance. This is slower than the instance renderer but gives more control over each object.|
-  | **Prefabs**           | Create a prefab of the instanced object and places prefab instances in the scene. The prefab is saved in the **Asset Dir** property of the MeshSyncServer. Using prefabs for instances allows us to make changes to the instanced object, add custom components to it and apply that to all instances. |
+  | **Instance Renderer** | Create a MeshSync specific render component that batches the draw calls of each instance type. This is good for instances that do not need individual **GameObjects**.|
+  | **Copies**            | Create a **GameObject** for each instance. The processing load is greater than **Instance Renderer** but gives more control over each object.|
+  | **Prefabs**           | Create a prefab of the instanced object and place prefab instances in the scene. The prefab is saved in the **Asset Dir** property of the MeshSyncServer. This option allows changes to instanced objects or addition of custom components to be applied to all instances. |
 
   > Some caveats about the **Prefabs** mode: 
-  > 1. Setting the mode to **Prefabs** will create a reference between the prefabs and by their original names in the DCC tools.
-  >    If the name in the DCC tool changes, then MeshSync will consider it as a new object and will create a new prefab.
-  > 2. Changes in the source objects in the DCC tool will not be applied to the prefabs automatically. 
-  >    We can resync the prefabs by clicking the "Clear/resync prefabs" button if the DCC tool is open and and auto-sync has been enabled.
+  > 1. Setting the mode to **Prefabs** will create a reference between each prefab and its corresponding original name in the DCC tool.
+  >    Therefore, if the name in the DCC tool changes, then MeshSync will consider it as a new object and will create a new prefab.
+  > 2. Changes in the source objects in the DCC tool will not be applied to the prefabs automatically.   
+  >    To resync the prefabs, turn on **Auto Sync** in the DCC tool plugin and press the "Clear/resync prefabs" button in the inspector of MeshSyncServer.
+  
+  
 
 ![](images/MeshSyncDCCAssetProperties.png)
 
 - **DCC asset file**
 
   We can assign a DCC asset file inside the Unity project to launch a new instance of the applicable DCC tool and 
-  turn on **Auto-Sync** in the plugin automatically, provided that [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest) 
-  has been installed in the DCC tool.
+  open the file.   
+  Further, if [MeshSyncDCCPlugins](https://docs.unity3d.com/Packages/com.unity.meshsync.dcc-plugins@latest) has been installed in the DCC tool,
+  **Auto-Sync** in the plugin will also be automatically turned on.  
+  
      
-  The **Run mode** property specifies how to launch the DCC tool, and can be set with one of the following values:
+  The **Run mode** property specifies how to launch the DCC tool.
 
   |**Values** |**Description** |
   |:---       |:---|
