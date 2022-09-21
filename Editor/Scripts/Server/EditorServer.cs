@@ -7,7 +7,6 @@ namespace Unity.MeshSync.Editor {
 
 [InitializeOnLoad]
 internal static class EditorServer {
-
     private static Server            m_server;
 
     private const string CONFIGURATION_TIP =
@@ -19,7 +18,19 @@ internal static class EditorServer {
         EditorApplication.update -= Init;
         EditorApplication.update += Init;
     }
+    private static string m_appRootPath = null;
     
+    //[TODO-sin] replace with FilmInternalUtilities.Editor.AssetEditorUtility.GetApplicationRootPath
+    static string GetApplicationRootPath() {
+        if (null != m_appRootPath)
+            return m_appRootPath;
+
+        //Not using Application.dataPath because it may not be called in certain times, e.g: during serialization
+        
+        m_appRootPath = System.IO.Directory.GetCurrentDirectory().Replace('\\','/');
+        return m_appRootPath;
+    }
+
     internal static void ApplySettingsIfDirty() {
         if (EditorServerSettings.instance.Applied)
             return;
@@ -82,7 +93,6 @@ internal static class EditorServer {
 
     private static void OnRecvEditorCommand(EditorCommandMessage message) {
         var type = message.commandType;
-        
         switch (type) {
             case EditorCommandMessage.CommandType.AddServerToScene:
                 HandleAddServerToScene(message);
@@ -107,16 +117,10 @@ internal static class EditorServer {
     }
 
     private static void HandleGetProjectPath(EditorCommandMessage message) {
-        var path = GetProjectPath();
+        var path = GetApplicationRootPath();
         m_server.NotifyEditorCommand(path, message);
     }
 
-    private static string GetProjectPath() {
-        var path = Application.dataPath;
-        path = path.Replace("/Assets", "");
-        return path;
-    }
-    
     private static bool AddServerToScene() {
         //check if the scene has a server
         var servers = Object.FindObjectsOfType<MeshSyncServer>();
