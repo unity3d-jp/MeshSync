@@ -129,8 +129,9 @@ internal static class EditorServer {
             if (server.GetServerPort() == port)
                 return true;
         }
-        var newServer = MeshSyncMenu.CreateMeshSyncServer(true);
+        var newServer = MeshSyncMenu.CreateMeshSyncServer(false);
         newServer.SetServerPort(port);
+        newServer.StartServer();
         return newServer.IsServerStarted();
     }
 }
