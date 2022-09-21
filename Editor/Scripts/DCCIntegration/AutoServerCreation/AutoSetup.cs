@@ -84,15 +84,10 @@ internal static class AutoSetup {
     }
 
     private static void HandleGetProjectPath(EditorCommandMessage message) {
-        var path = GetProjectPath();
+        var path = GetApplicationRootPath();
         m_server.NotifyEditorCommand(path, message);
     }
 
-    private static string GetProjectPath() {
-        var path = GetApplicationRootPath();
-        return path;
-    }
-    
     private static bool AddServerToScene() {
         //check if the scene has a server
         var servers = Object.FindObjectsOfType<MeshSyncServer>();
