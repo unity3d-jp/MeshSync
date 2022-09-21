@@ -21,11 +21,11 @@ internal static class EditorServer {
     }
     
     internal static void ApplySettingsIfDirty() {
-        if (!EditorServerSettings.instance.Dirty)
+        if (EditorServerSettings.instance.Applied)
             return;
         ApplySettings();
         
-        EditorServerSettings.instance.Dirty = false;
+        EditorServerSettings.instance.Applied = false;
     }
 
     private static void ApplySettings() {

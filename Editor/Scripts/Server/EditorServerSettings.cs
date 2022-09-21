@@ -21,7 +21,7 @@ internal class EditorServerSettings : ScriptableSingleton<EditorServerSettings> 
             Save(true);
 
             if (m_active) {
-                Dirty = true;
+                Applied = false;
             }
         }
     }
@@ -35,17 +35,12 @@ internal class EditorServerSettings : ScriptableSingleton<EditorServerSettings> 
             m_active = value;
             Save(true);
 
-            Dirty = true;
+            Applied = false;
         }
     }
     
-    internal bool Dirty {
-        get { return SessionState.GetBool(DIRTY_KEY, m_active); }
-        set {
-            if (SessionState.GetBool(DIRTY_KEY, m_active) == value)
-                return;
-
-            SessionState.SetBool(DIRTY_KEY, value);
-        }
+    internal bool Applied {
+        get { return SessionState.GetBool(DIRTY_KEY, !m_active); }
+        set { SessionState.SetBool(DIRTY_KEY, value); }
     }
 }
