@@ -107,11 +107,12 @@ internal static class EditorServer {
     }
 
     private static void HandleAddServerToScene(EditorCommandMessage message) {
-        if (AddServerToScene()) {
+        var port = int.Parse(message.buffer);
+        if (AddServerToScene(port)) {
             m_server.NotifyEditorCommand("ok", message);
         }
         else {
-            m_server.NotifyEditorCommand("Could not start server", message);
+            m_server.NotifyEditorCommand("Could not start server with port " + port, message);
             Debug.LogErrorFormat("[MeshSync] Could not add server to scene");
         }
     }
@@ -121,14 +122,16 @@ internal static class EditorServer {
         m_server.NotifyEditorCommand(path, message);
     }
 
-    private static bool AddServerToScene() {
+    private static bool AddServerToScene(int port) {
         //check if the scene has a server
-        var servers = Object.FindObjectsOfType<MeshSyncServer>();
-        if (servers.Length > 0)
-            return true;
-        
-        var server = MeshSyncMenu.CreateMeshSyncServer(true);
-        return server.IsServerStarted();
+        var servers= Object.FindObjectsOfType<MeshSyncServer>();
+        foreach (var server in servers) {
+            if (server.GetServerPort() == port)
+                return true;
+        }
+        var newServer = MeshSyncMenu.CreateMeshSyncServer(true);
+        newServer.SetServerPort(port);
+        return newServer.IsServerStarted();
     }
 }
 }

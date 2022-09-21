@@ -202,19 +202,19 @@ void EditorCommandMessage::deserialize(std::istream& is){
     read(is, command_type);
 }
 
-void EditorCommandMessage::SetReply(const char* input) {
-    auto inputSize = strlen(reply);
-    if (inputSize > MAX_REPLY_SIZE) {
-        strncpy(reply, input, MAX_REPLY_SIZE);
-        reply[MAX_REPLY_SIZE - 1] = '\0';
+void EditorCommandMessage::SetBuffer(const char* input) {
+    auto inputSize = strlen(buffer);
+    if (inputSize > MAX_BUFFER_SIZE) {
+        strncpy(buffer, input, MAX_BUFFER_SIZE);
+        buffer[MAX_BUFFER_SIZE - 1] = '\0';
     }
     else {
-        strcpy(reply, input);
+        strcpy(buffer, input);
     }
 }
 
-const char* EditorCommandMessage::GetReply() {
-    return reply;
+const char* EditorCommandMessage::GetBuffer() {
+    return buffer;
 }
 
 #undef EachMember
