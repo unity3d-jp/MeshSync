@@ -87,7 +87,7 @@ internal delegate void DeleteInstanceHandler(string path);
 
     public struct MeshSyncAnalyticsData {
         internal AssetType asset_Type;
-        internal EntityType type;
+        internal EntityType entity_type;
 
     }
 
@@ -613,6 +613,9 @@ internal delegate void DeleteInstanceHandler(string path);
                             Debug.LogError($"Unhandled entity type: {src.entityType}");
                             break;
                     }
+
+                    SendEventData(new MeshSyncAnalyticsData() { entity_type = src.entityType });
+
 
                     if (dst != null && onUpdateEntity != null)
                         onUpdateEntity.Invoke(dst.go, src);

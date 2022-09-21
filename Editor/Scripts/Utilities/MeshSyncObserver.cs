@@ -11,7 +11,7 @@ namespace Unity.MeshSync.Editor.Analytics {
     /// </summary>
     internal sealed class MeshSyncObserver : IObserver<MeshSyncAnalyticsData> {
         
-        private IMeshSyncAnalytics analytics;
+        private readonly IMeshSyncAnalytics analytics;
 
         public MeshSyncObserver() {
             analytics = MeshSyncAnalyticsFactory.CreateAnalytics();
@@ -26,7 +26,7 @@ namespace Unity.MeshSync.Editor.Analytics {
         }
 
         public void OnNext(MeshSyncAnalyticsData value) {
-            analytics.UserSyncedData(value.asset_Type);
+            analytics.UserSyncedData(value);
             
         }
     }
