@@ -36,7 +36,7 @@ internal static class EditorServer {
             return;
         ApplySettings();
         
-        EditorServerSettings.instance.Applied = false;
+        EditorServerSettings.instance.Applied = true;
     }
 
     private static void ApplySettings() {
