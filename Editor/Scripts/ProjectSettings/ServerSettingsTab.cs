@@ -33,12 +33,18 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
         //Add server port
         m_serverPortField = ProjectSettingsUtility.AddField<IntegerField,int>(content, Contents.ServerPort,
             projectSettings.GetDefaultServerPort(),
-            (int newValue) => { projectSettings.SetDefaultServerPort((ushort) newValue); }
+            (int newValue) => {
+                projectSettings.SetDefaultServerPort((ushort) newValue);
+                MeshSyncProjectSettings.GetOrCreateInstance().SaveInEditor();
+            }
         );
 
         m_allowPublicAccessToggle = ProjectSettingsUtility.AddField<Toggle,bool>(content, Contents.AllowPublicAccess,
             projectSettings.GetServerPublicAccess(),
-            (bool  newValue) => { projectSettings.SetServerPublicAccess(newValue); }
+            (bool  newValue) => {
+                projectSettings.SetServerPublicAccess(newValue);
+                MeshSyncProjectSettings.GetOrCreateInstance().SaveInEditor();
+            }
         );
         
         //MeshSyncPlayerConfig section
