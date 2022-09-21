@@ -259,6 +259,9 @@ msSerializable(ServerLiveEditResponse);
 class EditorCommandMessage : public Message
 {
     using super = Message;
+private:
+    static const int MAX_REPLY_SIZE = 256;
+    char reply[MAX_REPLY_SIZE];
 public:
     enum class CommandType {
         Unknown,
@@ -268,11 +271,15 @@ public:
     CommandType command_type = CommandType::Unknown;
 
     std::atomic_bool ready{ false };
-    char reply[256];
+
 
     EditorCommandMessage();
     void serialize(std::ostream& os) const override;
     void deserialize(std::istream& is) override;
+
+    void SetReply(const char* input);
+    const char* GetReply();
+
 };
 msSerializable(EditorCommandMessage);
 
