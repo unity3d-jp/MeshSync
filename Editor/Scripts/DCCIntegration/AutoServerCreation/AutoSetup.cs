@@ -9,6 +9,19 @@ namespace Unity.MeshSync.Editor {
 [InitializeOnLoad]
 internal static class AutoSetup {
 
+    private static string m_appRootPath = null;
+    
+    //[TODO-sin] replace with FilmInternalUtilities.Editor.AssetEditorUtility.GetApplicationRootPath
+    static string GetApplicationRootPath() {
+        if (null != m_appRootPath)
+            return m_appRootPath;
+
+        //Not using Application.dataPath because it may not be called in certain times, e.g: during serialization
+        
+        m_appRootPath = System.IO.Directory.GetCurrentDirectory().Replace('\\','/');
+        return m_appRootPath;
+    }
+
     private static Server m_server;
     
     static AutoSetup() {
@@ -47,7 +60,6 @@ internal static class AutoSetup {
 
     private static void OnRecvEditorCommand(EditorCommandMessage message) {
         var type = message.commandType;
-        
         switch (type) {
             case EditorCommandMessage.CommandType.AddServerToScene:
                 HandleAddServerToScene(message);
@@ -77,8 +89,7 @@ internal static class AutoSetup {
     }
 
     private static string GetProjectPath() {
-        var path = Application.dataPath;
-        path = path.Replace("/Assets", "");
+        var path = GetApplicationRootPath();
         return path;
     }
     
