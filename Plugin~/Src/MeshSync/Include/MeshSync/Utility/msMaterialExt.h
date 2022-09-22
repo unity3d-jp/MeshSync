@@ -43,6 +43,8 @@ public:
     void    setBumpMap(const TextureRecord& v);
     void    setBumpMap(TexturePtr v);
     TextureRecord* getBumpMap() const;
+
+    void    setSpecular(mu::float3 v);
 };
 msDeclPtr(StandardMaterial);
 inline StandardMaterial& AsStandardMaterial(Material& p) { return reinterpret_cast<StandardMaterial&>(p); }

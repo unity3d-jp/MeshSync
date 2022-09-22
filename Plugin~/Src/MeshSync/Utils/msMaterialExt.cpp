@@ -15,6 +15,7 @@ static const char _BumpScale[] = "_BumpScale";
 static const char _BumpMap[] = "_BumpMap";
 static const char DETAIL_ALBEDO_MAP_SHADER_VAR[] = "_DetailAlbedoMap";
 static const char UV_SEC_SHADER_VAR[] = "_UVSec";
+static const char _SpecColor[] = "_SpecColor";
 
 using TextureRecord = MaterialProperty::TextureRecord;
 
@@ -33,8 +34,8 @@ void StandardMaterial::setColorMap(const TextureRecord& v)
 }
 void StandardMaterial::setColorMap(const TexturePtr v)
 {
-    if (v)
-        addProperty(MaterialProperty(_MainTex, v ));
+    // Allow null:
+    addProperty(MaterialProperty(_MainTex, v));
 }
 
 Material::TextureRecord* StandardMaterial::getColorMap() const {
@@ -145,11 +146,15 @@ Material::TextureRecord* StandardMaterial::getBumpMap() const
     return p ? &p->get<TextureRecord>() : nullptr;
 }
 
+void StandardMaterial::setSpecular(mu::float3 v)
+{
+    addProperty(MaterialProperty(_SpecColor, v));
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 // StandardSpecMaterial
 
-static const char _SpecColor[] = "_SpecColor";
 static const char _SpecGlossMap[] = "_SpecGlossMap";
 
 void StandardSpecMaterial::setupShader() {

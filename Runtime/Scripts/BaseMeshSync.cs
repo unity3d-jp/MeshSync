@@ -1056,86 +1056,99 @@ internal delegate void DeleteInstanceHandler(string path);
             }
 
             int numProps = src.numProperties;
-            for (int pi = 0; pi < numProps; ++pi)
-            {
+            for (int pi = 0; pi < numProps; ++pi) {
                 MaterialPropertyData prop = src.GetProperty(pi);
                 string propName = prop.name;
-                MaterialPropertyData.Type propType = prop.type;
-                if (!destMat.HasProperty(propName))
-                    continue;
 
-                // todo: handle transparent
-                //if (propName == _Color)
-                //{
-                //    var color = prop.vectorValue;
-                //    if (color.w > 0.0f && color.w < 1.0f && dstmat.HasProperty("_SrcBlend"))
-                //    {
-                //        dstmat.SetOverrideTag("RenderType", "Transparent");
-                //        dstmat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                //        dstmat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                //        dstmat.SetInt("_ZWrite", 0);
-                //        dstmat.DisableKeyword("_ALPHATEST_ON");
-                //        dstmat.DisableKeyword("_ALPHABLEND_ON");
-                //        dstmat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-                //        dstmat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-                //    }
-                //}
-                if (propName == _EmissionColor)
-                {
-                    if (destMat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack)
-                    {
-                        destMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-                        destMat.EnableKeyword(_EMISSION);
+                ApplyMaterialProperty(src, destMat, textureHolders, prop, propName);
+            }
+        }
+
+        private static void ApplyMaterialProperty(MaterialData src, Material destMat, List<TextureHolder> textureHolders, MaterialPropertyData prop, string propName) {
+       
+            // _Color is obsolete in some materials but still exists so HasProperty can be true but it needs to be applied to _BaseColor:
+            if (propName == _Color) {
+                ApplyMaterialProperty(src, destMat,textureHolders, prop, _BaseColor);
+            }
+
+            // _Glossiness is obsolete in some materials but still exists so HasProperty can be true but it needs to be applied to _Smoothness:
+            if (propName == _Glossiness) {
+                ApplyMaterialProperty(src, destMat,textureHolders, prop, _Smoothness);
+            }
+
+            // _MainTex is obsolete in some materials but still exists so HasProperty can be true but it needs to be applied to _BaseMap:
+            if (propName == _MainTex) {
+                ApplyMaterialProperty(src, destMat,textureHolders, prop, _BaseMap);
+            }
+            
+            MaterialPropertyData.Type propType = prop.type;
+            if (!destMat.HasProperty(propName))
+                return;
+
+            // todo: handle transparent
+            //if (propName == _Color)
+            //{
+            //    var color = prop.vectorValue;
+            //    if (color.w > 0.0f && color.w < 1.0f && dstmat.HasProperty("_SrcBlend"))
+            //    {
+            //        dstmat.SetOverrideTag("RenderType", "Transparent");
+            //        dstmat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+            //        dstmat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            //        dstmat.SetInt("_ZWrite", 0);
+            //        dstmat.DisableKeyword("_ALPHATEST_ON");
+            //        dstmat.DisableKeyword("_ALPHABLEND_ON");
+            //        dstmat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+            //        dstmat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            //    }
+            //}
+            if (propName == _EmissionColor) {
+                if (destMat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack) {
+                    destMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    destMat.EnableKeyword(_EMISSION);
+                }
+            }
+            else if (propName == _MetallicGlossMap) {
+                destMat.EnableKeyword(_METALLICGLOSSMAP);
+            }
+            else if (propName == _BumpMap) {
+                destMat.EnableKeyword(_NORMALMAP);
+            }
+
+            int len = prop.arrayLength;
+            switch (propType) {
+                case MaterialPropertyData.Type.Int:
+                    destMat.SetInt(propName, prop.intValue);
+                    break;
+                case MaterialPropertyData.Type.Float:
+                    if (len == 1)
+                        destMat.SetFloat(propName, prop.floatValue);
+                    else
+                        destMat.SetFloatArray(propName, prop.floatArray);
+                    break;
+                case MaterialPropertyData.Type.Vector:
+                    if (len == 1)
+                        destMat.SetVector(propName, prop.vectorValue);
+                    else
+                        destMat.SetVectorArray(propName, prop.vectorArray);
+                    break;
+                case MaterialPropertyData.Type.Matrix:
+                    if (len == 1)
+                        destMat.SetMatrix(propName, prop.matrixValue);
+                    else
+                        destMat.SetMatrixArray(propName, prop.matrixArray);
+                    break;
+                case MaterialPropertyData.Type.Texture: {
+                    MaterialPropertyData.TextureRecord rec = prop.textureValue;
+                    Texture2D                          tex = FindTexture(rec.id, textureHolders);
+                    // Allow setting of null textures to clear them:
+                    destMat.SetTexture(propName, tex);
+                    if (rec.hasScaleOffset) {
+                        destMat.SetTextureScale(propName, rec.scale);
+                        destMat.SetTextureOffset(propName, rec.offset);
                     }
                 }
-                else if (propName == _MetallicGlossMap)
-                {
-                    destMat.EnableKeyword(_METALLICGLOSSMAP);
-                }
-                else if (propName == _BumpMap)
-                {
-                    destMat.EnableKeyword(_NORMALMAP);
-                }
-
-                int len = prop.arrayLength;
-                switch (propType)
-                {
-                    case MaterialPropertyData.Type.Int:
-                        destMat.SetInt(propName, prop.intValue);
-                        break;
-                    case MaterialPropertyData.Type.Float:
-                        if (len == 1)
-                            destMat.SetFloat(propName, prop.floatValue);
-                        else
-                            destMat.SetFloatArray(propName, prop.floatArray);
-                        break;
-                    case MaterialPropertyData.Type.Vector:
-                        if (len == 1)
-                            destMat.SetVector(propName, prop.vectorValue);
-                        else
-                            destMat.SetVectorArray(propName, prop.vectorArray);
-                        break;
-                    case MaterialPropertyData.Type.Matrix:
-                        if (len == 1)
-                            destMat.SetMatrix(propName, prop.matrixValue);
-                        else
-                            destMat.SetMatrixArray(propName, prop.matrixArray);
-                        break;
-                    case MaterialPropertyData.Type.Texture:
-                        {
-                            MaterialPropertyData.TextureRecord rec = prop.textureValue;
-                            Texture2D tex = FindTexture(rec.id, textureHolders);
-                            if (tex != null) {
-                                destMat.SetTexture(propName, tex);
-                                if (rec.hasScaleOffset) {
-                                    destMat.SetTextureScale(propName, rec.scale);
-                                    destMat.SetTextureOffset(propName, rec.offset);
-                                }
-                            }
-                        }
-                        break;
-                    default: break;
-                }
+                    break;
+                default: break;
             }
         }
 
@@ -2790,7 +2803,9 @@ internal delegate void DeleteInstanceHandler(string path);
     
     // keyword strings
     const string _Color   = "_Color";
+    const string _BaseColor = "_BaseColor";
     const string _MainTex = "_MainTex";
+    const string _BaseMap = "_BaseMap";
 
     const string _EmissionColor = "_EmissionColor";
     const string _EmissionMap   = "_EmissionMap";
@@ -2798,7 +2813,9 @@ internal delegate void DeleteInstanceHandler(string path);
 
     const string _Metallic         = "_Metallic";
     const string _Glossiness       = "_Glossiness";
-    const string _MetallicGlossMap = "_MetallicGlossMap";
+    const string _Smoothness       = "_Smoothness";
+
+        const string _MetallicGlossMap = "_MetallicGlossMap";
     const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
 
     const string _BumpMap   = "_BumpMap";
