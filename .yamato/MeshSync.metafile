@@ -51,7 +51,7 @@ upm_ci_test_types:
           arguments: --extra-utr-arg=--timeout=1800 --enable-code-coverage --code-coverage-options 'generateAdditionalMetrics;generateHtmlReport;assemblyFilters:+Unity.MeshSync,+Unity.MeshSync.Editor,-Unity.MeshSync.Tests,-Unity.MeshSync.EditorTests'
 
 test_configs:
-  - editor_version: 2020.3
+  - editor_version: 2020.3.39f1
     test_platforms:
       - platform_type: *platform_win
         test_type: *upm_ci_all
