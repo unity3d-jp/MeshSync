@@ -6,22 +6,16 @@ namespace ms {
 // shader keywords
 static const char _Color[] = "_Color";
 static const char _EmissionColor[] = "_EmissionColor";
-static const char _EmissionStrength[] = "_EmissionStrength";
 static const char _Metallic[] = "_Metallic";
 static const char _Glossiness[] = "_Glossiness";
 static const char _MainTex[] = "_MainTex";
 static const char _EmissionMap[] = "_EmissionMap";
 static const char _MetallicGlossMap[] = "_MetallicGlossMap";
-static const char _GlossMap[] = "_GlossMap";
 static const char _BumpScale[] = "_BumpScale";
 static const char _BumpMap[] = "_BumpMap";
 static const char DETAIL_ALBEDO_MAP_SHADER_VAR[] = "_DetailAlbedoMap";
 static const char UV_SEC_SHADER_VAR[] = "_UVSec";
 static const char _SpecColor[] = "_SpecColor";
-static const char _ParallaxMap[] = "_ParallaxMap";
-static const char _Parallax[] = "_Parallax";
-static const char _CoatMask[] = "_CoatMask";
-static const char _CoatMaskMap[] = "_CoatMaskMap";
 
 using TextureRecord = MaterialProperty::TextureRecord;
 
@@ -100,11 +94,6 @@ Material::TextureRecord* StandardMaterial::getEmissionMap() const
     return p ? &p->get<TextureRecord>() : nullptr;
 }
 
-void StandardMaterial::setEmissionStrength(float v)
-{
-    addProperty(MaterialProperty(_EmissionStrength, v));
-}
-
 void StandardMaterial::setMetallic(float v) {
     addProperty( MaterialProperty( _Metallic, v ));
 }
@@ -114,7 +103,6 @@ float StandardMaterial::getMetallic() const
     return p ? p->get<float>() : 0.0f;
 }
 void StandardMaterial::setMetallicMap(const TextureRecord& v) {
-    // Allow null:
     addProperty( MaterialProperty( _MetallicGlossMap, v ));
 }
 void StandardMaterial::setMetallicMap(TexturePtr v) {
@@ -135,12 +123,9 @@ float StandardMaterial::getSmoothness() const
     const MaterialProperty* p = findProperty(_Glossiness);
     return p ? p->get<float>() : 0.0f;
 }
-void StandardMaterial::setSmoothnessMap(const TextureRecord& v) {
-    // Allow null:
-    addProperty(MaterialProperty(_GlossMap, v));
-}
 
-void StandardMaterial::setBumpScale(float v) {
+void StandardMaterial::setBumpScale(float v)
+{
     addProperty(MaterialProperty( _BumpScale, v ));
 }
 float StandardMaterial::getBumpScale() const
@@ -149,7 +134,6 @@ float StandardMaterial::getBumpScale() const
     return p ? p->get<float>() : 0.0f;
 }
 void StandardMaterial::setBumpMap(const TextureRecord& v) {
-    // Allow null:
     addProperty(MaterialProperty( _BumpMap, v ));
 }
 void StandardMaterial::setBumpMap(const TexturePtr v) {
@@ -165,31 +149,6 @@ Material::TextureRecord* StandardMaterial::getBumpMap() const
 void StandardMaterial::setSpecular(mu::float3 v)
 {
     addProperty(MaterialProperty(_SpecColor, v));
-}
-
-void StandardMaterial::setClearCoat(float v)
-{
-    addProperty(MaterialProperty(_CoatMask, v));
-}
-
-void StandardMaterial::setClearCoatMask(const TextureRecord& v)
-{
-    addProperty(MaterialProperty(_CoatMaskMap, v));
-}
-
-void StandardMaterial::setHeightScale(float v) {
-    addProperty(MaterialProperty(_Parallax, v));
-}
-
-void StandardMaterial::setHeightMap(const TextureRecord& v)
-{
-	// Allow null:
-    addProperty(MaterialProperty(_ParallaxMap, v));
-}
-
-void StandardMaterial::setShader(const std::string shaderName)
-{
-    shader = shaderName;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
