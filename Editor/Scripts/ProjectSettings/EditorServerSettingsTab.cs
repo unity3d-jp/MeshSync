@@ -11,8 +11,9 @@ namespace Unity.MeshSync.Editor {
 internal class EditorServerSettingsTab : IMeshSyncSettingsTab {
     private class Contents {
 
-        public static readonly GUIContent ServerPort   = EditorGUIUtility.TrTextContent("Server port");
-        public static readonly GUIContent Active = EditorGUIUtility.TrTextContent("Active");
+        public static readonly GUIContent DefaultPort   = EditorGUIUtility.TrTextContent("Default Server Port");
+        public static readonly GUIContent DefaultActive = EditorGUIUtility.TrTextContent("Start at Editor Launch");
+        public static readonly GUIContent Port          = EditorGUIUtility.TrTextContent("Server Port");
     }
     
 //----------------------------------------------------------------------------------------------------------------------        
@@ -24,31 +25,61 @@ internal class EditorServerSettingsTab : IMeshSyncSettingsTab {
         TemplateContainer tabInstance = tab.CloneTree();
       
         VisualElement content = tabInstance.Query<VisualElement>("Content").First();
+
+        content.Add(m_statusLabel);
         
+        m_portField =
+            ProjectSettingsUtility.AddField<IntegerField, int>(content, Contents.Port, EditorServer.Port, null);
+        
+        m_portField.RegisterCallback<FocusOutEvent>(evt => {
+            EditorServer.Port = (ushort) m_portField.value;
+            EditorServer.ApplySettings();
+        });
+
+        //content.Add(new Label($"Default Settings"));
         //Add server port
-        m_serverPortField = ProjectSettingsUtility.AddField<IntegerField,int>(content, Contents.ServerPort,
+        m_defaultPortField = ProjectSettingsUtility.AddField<IntegerField,int>(content, Contents.DefaultPort,
             EditorServerSettings.instance.Port, null
         );
 
         // Use Focus out event as the onValueChanged event is invoked while the user is typing
-        m_serverPortField.RegisterCallback<FocusOutEvent>(evt => {
-            EditorServerSettings.instance.Port = (ushort)m_serverPortField.value;
-            EditorServer.ApplySettingsIfDirty();
+        m_defaultPortField.RegisterCallback<FocusOutEvent>(evt => {
+            EditorServerSettings.instance.Port = (ushort)m_defaultPortField.value;
         });
         
-        m_activeField = ProjectSettingsUtility.AddField<Toggle, bool>(content, Contents.Active, EditorServerSettings.instance.Active,
+        m_defaultActiveField = ProjectSettingsUtility.AddField<Toggle, bool>(content, Contents.DefaultActive, EditorServerSettings.instance.Active,
             (bool newValue) => {
                 EditorServerSettings.instance.Active = newValue;
-                EditorServer.ApplySettingsIfDirty();
             });
+        
+        m_serveStatusButton      = tabInstance.Query<Button>("Button").First();
+        m_serveStatusButton.clicked += () => {
+            EditorServer.Active = !EditorServer.Active;
+            EditorServer.ApplySettings();
+            UpdateStatus();
+        };
 
         root.Add(tabInstance);
+        
+        UpdateStatus();
+    }
+
+    private void UpdateStatus() {
+        var active = EditorServer.Active;
+        var status = active ? "Started" : "Stopped";
+        m_statusLabel.text = $"Editor Server (Status: {status})";
+
+        m_serveStatusButton.text = active ? "Stop" : "Start";
     }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    private IntegerField m_serverPortField;
-    private Toggle       m_activeField;
+    private Label        m_status;
+    private IntegerField m_portField;
+    private IntegerField m_defaultPortField;
+    private Toggle       m_defaultActiveField;
+    private Button       m_serveStatusButton;
+    private Label        m_statusLabel = new Label("Started");
 }
 
 } //end namespace 

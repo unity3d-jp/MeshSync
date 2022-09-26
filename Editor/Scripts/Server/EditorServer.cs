@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -7,10 +8,31 @@ namespace Unity.MeshSync.Editor {
 
 [InitializeOnLoad]
 internal static class EditorServer {
+
+    private const string APPLIED_SETTINGS_KEY = "MESHSYNC_EDITOR_SERVER_APPLIED_DEFAULT_SETTINGS";
+    private const string PORT_KEY             = "MESHSYNC_EDITOR_SERVER_PORT";
+    private const string ACTIVE_KEY           = "MESHSYNC_EDITOR_ACTIVE";
+    private const string CONFIGURATION_TIP    = "You can configure the editor server via Project Settings";
+    private const string CLI_ARGUMENT_PORT    = "PORT";
+    private const string CLI_ARGUMENT_ACTIVE  = "SERVER_ACTIVE";
+    
+    internal static bool Active {
+        get { return SessionState.GetBool(ACTIVE_KEY, false);}
+        set {SessionState.SetBool(ACTIVE_KEY, value); }
+    }
+
+    internal static ushort Port {
+        get { return (ushort)SessionState.GetInt(PORT_KEY, 8081); }
+        set{ SessionState.SetInt(PORT_KEY, value);}
+    }
+
+    private static bool AppliedInitialSettings {
+        get { return SessionState.GetBool(APPLIED_SETTINGS_KEY, false); }
+        set { SessionState.SetBool(APPLIED_SETTINGS_KEY, value); }
+    }
+    
     private static Server            m_server;
 
-    private const string CONFIGURATION_TIP =
-        "You can configure the editor server via Project Settings";
 
     static EditorServer() {
         // To avoid timeouts where the server cannot react due to the editor loading
@@ -31,29 +53,44 @@ internal static class EditorServer {
         return m_appRootPath;
     }
 
-    internal static void ApplySettingsIfDirty() {
-        if (EditorServerSettings.instance.Applied)
+    /// <summary>
+    /// Apply settings from CLI arguments or use Editor Server Settings.
+    /// </summary>
+    private static void ApplyInitialSettings() {
+        if(AppliedInitialSettings)
             return;
-        ApplySettings();
         
-        EditorServerSettings.instance.Applied = true;
+        AppliedInitialSettings = true;
+        
+        var arguments      = Environment.GetCommandLineArgs();
+
+        var activeKeyIndex = Array.IndexOf(arguments, CLI_ARGUMENT_ACTIVE) + 1;
+        Active = activeKeyIndex > 0 ? bool.Parse(arguments[activeKeyIndex]) : EditorServerSettings.instance.Active;
+        
+        var portKeyIndex = Array.IndexOf(arguments, CLI_ARGUMENT_PORT) + 1;
+        Port = portKeyIndex > 0 ? ushort.Parse(arguments[portKeyIndex]) : EditorServerSettings.instance.Port;
+        
+        ApplySettings(init:true);
     }
 
-    private static void ApplySettings() {
+    internal static void ApplySettings(bool init = false) {
         
         EditorApplication.update -= UpdateCall;
         m_server.Stop();
         
-        if (!EditorServerSettings.instance.Active) {
-            Debug.Log("[MeshSync] Stopping Editor Server.\n" + CONFIGURATION_TIP);
+        if (!Active) {
             
+            if (!init) {
+                Debug.Log("[MeshSync] Stopping Editor Server.\n" + CONFIGURATION_TIP);
+            }
+
             return;
         }
         
         EditorApplication.update += UpdateCall;
         
         var settings = ServerSettings.defaultValue;
-        settings.port = EditorServerSettings.instance.Port;
+        settings.port = Port;
 
         if (!Server.Start(ref settings, out m_server)) {
             EditorUtility.DisplayDialog(
@@ -70,7 +107,7 @@ internal static class EditorServer {
 
     private static void Init() {
         EditorApplication.update -= Init;
-        ApplySettingsIfDirty();
+        ApplyInitialSettings();
     }
 
     private static void UpdateCall() {
