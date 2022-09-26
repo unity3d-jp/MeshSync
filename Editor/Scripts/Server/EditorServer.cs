@@ -19,9 +19,7 @@ internal static class EditorServer {
     
     internal static bool Active {
         get { return SessionState.GetBool(ACTIVE_KEY, false);}
-        set {
-            SessionState.SetBool(ACTIVE_KEY, value);
-        }
+        set {SessionState.SetBool(ACTIVE_KEY, value);}
     }
 
     private static bool ActivePrev {
