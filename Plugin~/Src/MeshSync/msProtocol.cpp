@@ -203,14 +203,7 @@ void EditorCommandMessage::deserialize(std::istream& is){
 }
 
 void EditorCommandMessage::SetReply(const char* input) {
-    auto inputSize = strlen(reply);
-    if (inputSize > MAX_REPLY_SIZE) {
-        strncpy(reply, input, MAX_REPLY_SIZE);
-        reply[MAX_REPLY_SIZE - 1] = '\0';
-    }
-    else {
-        strcpy(reply, input);
-    }
+    strncpy_s(reply, input, MAX_REPLY_SIZE);
 }
 
 const char* EditorCommandMessage::GetReply() {
