@@ -8,9 +8,15 @@
         
 
         <VisualElement name="Content" class="project-settings-content">
+        
             
             
         </VisualElement>
+
+        <VisualElement name="FooterContainer" class="general-footer-container">
+            <Button name="Button" text="Start" class="footer-button"/>
+        </VisualElement>
+
     </ScrollView>
 
         

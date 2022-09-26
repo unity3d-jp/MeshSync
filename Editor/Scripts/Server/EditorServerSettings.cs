@@ -3,8 +3,6 @@ using UnityEngine;
 
 [FilePath("Assets/ProjectSettings/EditorServerSettings.yml", FilePathAttribute.Location.ProjectFolder)]
 internal class EditorServerSettings : ScriptableSingleton<EditorServerSettings> {
-
-    private const string DIRTY_KEY = "MESHSYNC_AUTO_SETUP_SETTINGS_DIRTY";
     
     [SerializeField] private ushort m_port = 8081;
 
@@ -19,10 +17,6 @@ internal class EditorServerSettings : ScriptableSingleton<EditorServerSettings> 
             
             m_port = value;
             Save(true);
-
-            if (m_active) {
-                Applied = false;
-            }
         }
     }
 
@@ -34,13 +28,6 @@ internal class EditorServerSettings : ScriptableSingleton<EditorServerSettings> 
             
             m_active = value;
             Save(true);
-
-            Applied = false;
         }
-    }
-    
-    internal bool Applied {
-        get { return SessionState.GetBool(DIRTY_KEY, !m_active); }
-        set { SessionState.SetBool(DIRTY_KEY, value); }
     }
 }
