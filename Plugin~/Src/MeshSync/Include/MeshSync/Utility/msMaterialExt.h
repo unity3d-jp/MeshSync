@@ -36,6 +36,7 @@ public:
     void    setMetallicMap(TexturePtr v);
     TextureRecord* getMetallicMap() const;
     void    setSmoothness(float v);
+    void    setSmoothnessMap(const TextureRecord& v);
     float   getSmoothness() const;
 
     void    setBumpScale(float v);

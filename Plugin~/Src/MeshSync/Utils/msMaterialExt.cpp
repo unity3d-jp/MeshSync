@@ -11,6 +11,7 @@ static const char _Glossiness[] = "_Glossiness";
 static const char _MainTex[] = "_MainTex";
 static const char _EmissionMap[] = "_EmissionMap";
 static const char _MetallicGlossMap[] = "_MetallicGlossMap";
+static const char _GlossMap[] = "_GlossMap";
 static const char _BumpScale[] = "_BumpScale";
 static const char _BumpMap[] = "_BumpMap";
 static const char DETAIL_ALBEDO_MAP_SHADER_VAR[] = "_DetailAlbedoMap";
@@ -103,6 +104,7 @@ float StandardMaterial::getMetallic() const
     return p ? p->get<float>() : 0.0f;
 }
 void StandardMaterial::setMetallicMap(const TextureRecord& v) {
+    // Allow null:
     addProperty( MaterialProperty( _MetallicGlossMap, v ));
 }
 void StandardMaterial::setMetallicMap(TexturePtr v) {
@@ -123,9 +125,12 @@ float StandardMaterial::getSmoothness() const
     const MaterialProperty* p = findProperty(_Glossiness);
     return p ? p->get<float>() : 0.0f;
 }
+void StandardMaterial::setSmoothnessMap(const TextureRecord& v) {
+    // Allow null:
+    addProperty(MaterialProperty(_GlossMap, v));
+}
 
-void StandardMaterial::setBumpScale(float v)
-{
+void StandardMaterial::setBumpScale(float v) {
     addProperty(MaterialProperty( _BumpScale, v ));
 }
 float StandardMaterial::getBumpScale() const
@@ -134,6 +139,7 @@ float StandardMaterial::getBumpScale() const
     return p ? p->get<float>() : 0.0f;
 }
 void StandardMaterial::setBumpMap(const TextureRecord& v) {
+    // Allow null:
     addProperty(MaterialProperty( _BumpMap, v ));
 }
 void StandardMaterial::setBumpMap(const TexturePtr v) {
