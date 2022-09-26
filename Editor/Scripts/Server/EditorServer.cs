@@ -12,14 +12,24 @@ internal static class EditorServer {
     private const string APPLIED_SETTINGS_KEY = "MESHSYNC_EDITOR_SERVER_APPLIED_DEFAULT_SETTINGS";
     private const string PORT_KEY             = "MESHSYNC_EDITOR_SERVER_PORT";
     private const string ACTIVE_KEY           = "MESHSYNC_EDITOR_ACTIVE";
+    private const string ACTIVE_PREV_KEY      = "MESHSYNC_EDITOR_ACTIVE_PREV";
     private const string CONFIGURATION_TIP    = "You can configure the editor server via Project Settings";
     private const string CLI_ARGUMENT_PORT    = "PORT";
     private const string CLI_ARGUMENT_ACTIVE  = "SERVER_ACTIVE";
     
     internal static bool Active {
         get { return SessionState.GetBool(ACTIVE_KEY, false);}
-        set {SessionState.SetBool(ACTIVE_KEY, value); }
+        set {
+            SessionState.SetBool(ACTIVE_KEY, value);
+        }
     }
+
+    private static bool ActivePrev {
+        get { return SessionState.GetBool(ACTIVE_PREV_KEY, false); }
+        set {SessionState.SetBool(ACTIVE_PREV_KEY, value); }
+    }
+
+
 
     internal static ushort Port {
         get { return (ushort)SessionState.GetInt(PORT_KEY, 8081); }
@@ -70,20 +80,24 @@ internal static class EditorServer {
         var portKeyIndex = Array.IndexOf(arguments, CLI_ARGUMENT_PORT) + 1;
         Port = portKeyIndex > 0 ? ushort.Parse(arguments[portKeyIndex]) : EditorServerSettings.instance.Port;
         
-        ApplySettings(init:true);
+        ApplySettings();
     }
 
-    internal static void ApplySettings(bool init = false) {
+    internal static void ApplySettings() {
+        DoApplySettings();
+        ActivePrev = Active;
+    }
+    
+    private static void DoApplySettings() {
         
         EditorApplication.update -= UpdateCall;
         m_server.Stop();
         
         if (!Active) {
             
-            if (!init) {
+            if (ActivePrev) {
                 Debug.Log("[MeshSync] Stopping Editor Server.\n" + CONFIGURATION_TIP);
             }
-
             return;
         }
         
