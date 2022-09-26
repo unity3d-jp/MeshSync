@@ -4,8 +4,36 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using UnityEditor;
+
 namespace Unity.MeshSync.Editor.Analytics {
     
+
+    /// <summary>
+    /// Hacky way to restore observers to MeshSync servers in scene
+    /// </summary>
+    [InitializeOnLoad]
+    public static class MeshSyncObserverStartUp {
+
+        private static void update() {
+
+            var array = UnityEngine.Object.FindObjectsOfType<BaseMeshSync>();
+
+            foreach (var server in array) {
+                if (server.getNumObservers == 0) {
+
+                    var observer = new MeshSyncObserver();
+                    server.Subscribe(observer);
+                }
+            }
+
+        }
+
+        static MeshSyncObserverStartUp() {
+
+            EditorApplication.update += update;
+        }
+    }
     /// <summary>
     /// Observer that reports analytics events
     /// </summary>

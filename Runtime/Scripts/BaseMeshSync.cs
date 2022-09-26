@@ -2736,6 +2736,10 @@ internal delegate void DeleteInstanceHandler(string path);
 #endif
     }
 
+
+
+        public int getNumObservers => m_observers?.Count ?? 0;
+
         /// <summary>
         /// Send MeshSync sync event
         /// </summary>
