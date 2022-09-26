@@ -286,6 +286,8 @@ internal delegate void DeleteInstanceHandler(string path);
             SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
 
             m_baseMeshSyncVersion = CUR_BASE_MESHSYNC_VERSION;
+
+            SaveMaterialRenderTexturesToAssetdatabase();
         }
 
 
@@ -378,7 +380,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 return "/" + t.name;
         }
 
-        private static Texture2D FindTexture(int id, List<TextureHolder> textureHolders)
+        internal static Texture2D FindTexture(int id, List<TextureHolder> textureHolders)
         {
             if (id == Lib.invalidID)
                 return null;
@@ -850,8 +852,12 @@ internal delegate void DeleteInstanceHandler(string path);
                 if (texture != null) {
                     TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
                     if (importer != null) {
-                        if (src.type == TextureType.NormalMap)
-                            importer.textureType = TextureImporterType.NormalMap;
+                        switch (src.type) {
+
+                            case TextureType.NormalMap:
+                                importer.textureType = TextureImporterType.NormalMap;
+                                break;
+                        }
                     }
                 }
             };
@@ -1044,10 +1050,10 @@ internal delegate void DeleteInstanceHandler(string path);
 
         //----------------------------------------------------------------------------------------------------------------------    
 
-        static void ApplyMaterialDataToMaterial(MaterialData src, Material destMat, List<TextureHolder> textureHolders) {
+        void ApplyMaterialDataToMaterial(MaterialData src, Material destMat,
+            List<TextureHolder> textureHolders) {
             int numKeywords = src.numKeywords;
-            for (int ki = 0; ki < numKeywords; ++ki)
-            {
+            for (int ki = 0; ki < numKeywords; ++ki) {
                 MaterialKeywordData kw = src.GetKeyword(ki);
                 if (kw.value)
                     destMat.EnableKeyword(kw.name);
@@ -1055,32 +1061,49 @@ internal delegate void DeleteInstanceHandler(string path);
                     destMat.DisableKeyword(kw.name);
             }
 
+            var materialProperties = new List<MaterialPropertyData>();
+
             int numProps = src.numProperties;
             for (int pi = 0; pi < numProps; ++pi) {
                 MaterialPropertyData prop = src.GetProperty(pi);
-                string propName = prop.name;
+                materialProperties.Add(prop);
+            }
 
-                ApplyMaterialProperty(src, destMat, textureHolders, prop, propName);
+            // Sort to ensure smoothness is last so it can be baked into the corresponding map that was set before the bake:
+            materialProperties.Sort(delegate(MaterialPropertyData a, MaterialPropertyData b) {
+                if (a.name == _GlossMap) {
+                    return 1;
+                }
+
+                return a.name.CompareTo(b.name);
+            });
+
+            for (int i = 0; i < materialProperties.Count; i++) {
+                var prop = materialProperties[i];
+
+                ApplyMaterialProperty(src, destMat, textureHolders, prop, prop.name, materialProperties);
             }
         }
 
-        private static void ApplyMaterialProperty(MaterialData src, Material destMat, List<TextureHolder> textureHolders, MaterialPropertyData prop, string propName) {
-       
-            // _Color is obsolete in some materials but still exists so HasProperty can be true but it needs to be applied to _BaseColor:
+        private void ApplyMaterialProperty(MaterialData src, Material destMat, List<TextureHolder> textureHolders, MaterialPropertyData prop, string propName, List<MaterialPropertyData> materialProperties) {
+            // Remap properties that are obsolete in some shaders to their new names but also set the old name in case it is still used:
             if (propName == _Color) {
-                ApplyMaterialProperty(src, destMat,textureHolders, prop, _BaseColor);
+                ApplyMaterialProperty(src, destMat, textureHolders, prop, _BaseColor, materialProperties);
             }
 
-            // _Glossiness is obsolete in some materials but still exists so HasProperty can be true but it needs to be applied to _Smoothness:
             if (propName == _Glossiness) {
-                ApplyMaterialProperty(src, destMat,textureHolders, prop, _Smoothness);
+                ApplyMaterialProperty(src, destMat, textureHolders, prop, _Smoothness, materialProperties);
             }
 
-            // _MainTex is obsolete in some materials but still exists so HasProperty can be true but it needs to be applied to _BaseMap:
             if (propName == _MainTex) {
-                ApplyMaterialProperty(src, destMat,textureHolders, prop, _BaseMap);
+                ApplyMaterialProperty(src, destMat, textureHolders, prop, _BaseMap, materialProperties);
             }
-            
+
+            // Bake smoothness into required channel:
+            if (propName == _GlossMap) {
+                ShaderHelper.BakeSmoothness(destMat, textureHolders, materialProperties);
+            }
+
             MaterialPropertyData.Type propType = prop.type;
             if (!destMat.HasProperty(propName))
                 return;
@@ -2802,24 +2825,25 @@ internal delegate void DeleteInstanceHandler(string path);
 //----------------------------------------------------------------------------------------------------------------------
     
     // keyword strings
-    const string _Color   = "_Color";
-    const string _BaseColor = "_BaseColor";
-    const string _MainTex = "_MainTex";
-    const string _BaseMap = "_BaseMap";
+    internal const string _Color     = "_Color";
+    private const string _BaseColor = "_BaseColor";
+    internal const string _MainTex   = "_MainTex";
+    internal const string _BaseMap   = "_BaseMap";
+    internal const string _GlossMap  = "_GlossMap";
 
-    const string _EmissionColor = "_EmissionColor";
-    const string _EmissionMap   = "_EmissionMap";
-    const string _EMISSION      = "_EMISSION";
+    private const string _EmissionColor = "_EmissionColor";
+    private const string _EmissionMap   = "_EmissionMap";
+    private const string _EMISSION      = "_EMISSION";
 
-    const string _Metallic         = "_Metallic";
-    const string _Glossiness       = "_Glossiness";
-    const string _Smoothness       = "_Smoothness";
+    internal const string _Metallic   = "_Metallic";
+    internal const string _Glossiness = "_Glossiness";
+    internal const string _Smoothness = "_Smoothness";
 
-        const string _MetallicGlossMap = "_MetallicGlossMap";
-    const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
+    internal const string _MetallicGlossMap = "_MetallicGlossMap";
+    internal const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
 
-    const string _BumpMap   = "_BumpMap";
-    const string _NORMALMAP = "_NORMALMAP";
+    private const string _BumpMap   = "_BumpMap";
+    private const string _NORMALMAP = "_NORMALMAP";
 
     enum BaseMeshSyncVersion {
         NO_VERSIONING = 0,  //Didn't have versioning in earlier versions

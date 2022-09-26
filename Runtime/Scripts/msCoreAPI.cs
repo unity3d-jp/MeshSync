@@ -305,7 +305,7 @@ internal struct AudioData {
 
 internal enum TextureType {
     Default,
-    NormalMap,
+    NormalMap
 }
 
 internal enum TextureFormat {

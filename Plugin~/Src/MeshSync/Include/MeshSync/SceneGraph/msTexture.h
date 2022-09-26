@@ -42,7 +42,7 @@ enum class TextureFormat
 enum class TextureType
 {
     Default,
-    NormalMap,
+    NormalMap
 };
 
 template<class T> struct GetTextureFormat;

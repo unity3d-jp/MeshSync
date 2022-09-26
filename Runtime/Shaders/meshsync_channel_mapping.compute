@@ -1,0 +1,25 @@
+#pragma kernel smoothness_into_alpha
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Output;
+Texture2D<float3> RGB;
+Texture2D<float> Smoothness;
+
+SamplerState sampler_linear_repeat_metallic;
+SamplerState sampler_linear_repeat_smoothness;
+
+[numthreads(8, 8, 1)]
+void smoothness_into_alpha(uint3 id : SV_DispatchThreadID)
+{
+    int2 rgbDimensions;
+    RGB.GetDimensions(rgbDimensions.x, rgbDimensions.y);
+
+    int2 smoothnessDimensions;
+    Smoothness.GetDimensions(smoothnessDimensions.x, smoothnessDimensions.y);
+
+    float3 metallic = RGB.SampleLevel(sampler_linear_repeat_metallic, id.xy / (float2)rgbDimensions, 0);
+    float alpha = Smoothness.SampleLevel(sampler_linear_repeat_smoothness, id.xy / (float2)smoothnessDimensions, 0);
+
+    Output[id.xy] = float4(metallic[0], metallic[1], metallic[2], alpha);
+}
