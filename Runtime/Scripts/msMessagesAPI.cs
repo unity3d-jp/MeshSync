@@ -254,6 +254,7 @@ internal struct EditorCommandMessage {
     [DllImport(Lib.name)] static extern CommandType msEditorCommandGetType(IntPtr self);
     [DllImport(Lib.name)] static extern int         msEditorCommandGetId(IntPtr self);
     [DllImport(Lib.name)] static extern int         msEditorCommandGetSession(IntPtr self);
+    [DllImport(Lib.name)] static extern IntPtr      msEditorCommandGetBuffer(IntPtr self);
     #endregion
     
     public static explicit operator EditorCommandMessage(IntPtr v)
@@ -274,6 +275,8 @@ internal struct EditorCommandMessage {
     public int id => msEditorCommandGetId(self);
 
     public int session => msEditorCommandGetSession(self);
+
+    public string buffer => Misc.S(msEditorCommandGetBuffer(self));
 }
 
 } //end namespace
