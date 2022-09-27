@@ -87,7 +87,7 @@ internal delegate void DeleteInstanceHandler(string path);
 
     public struct MeshSyncAnalyticsData {
         internal AssetType asset_Type;
-        internal EntityType entity_type;
+        internal EntityType entity_Type;
 
     }
 
@@ -614,7 +614,7 @@ internal delegate void DeleteInstanceHandler(string path);
                             break;
                     }
 
-                    SendEventData(new MeshSyncAnalyticsData() { entity_type = src.entityType });
+                    SendEventData(new MeshSyncAnalyticsData() { entity_Type = src.entityType });
 
 
                     if (dst != null && onUpdateEntity != null)

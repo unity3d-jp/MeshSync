@@ -64,9 +64,9 @@ namespace Unity.MeshSync.Editor.Analytics {
                 ? "none"
                 : data.asset_Type.ToString().ToLower();
 
-            var entityTypeStr = data.entity_type == EntityType.Unknown
+            var entityTypeStr = data.entity_Type == EntityType.Unknown
                 ? "none"
-                : data.entity_type.ToString().ToLower();
+                : data.entity_Type.ToString().ToLower();
 
             var eventData = new SyncEventData {
                 assetSyncType = assetTypeStr,

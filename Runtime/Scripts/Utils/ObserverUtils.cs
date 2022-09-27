@@ -15,13 +15,11 @@ namespace Unity.MeshSync {
         private IList<T> observers;
         private T observer;
 
-
         private Unsubscriber(IList<T> observers, T observer) {
             this.observers = observers;
             this.observer = observer;
             disposed = false;
         }
-
 
         /// <summary>
         /// Create an unsubscriber
@@ -66,11 +64,6 @@ namespace Unity.MeshSync {
                 Dispose(true);
                 disposed = true;
             }
-
-
-
         }
-
     }
-
 }
