@@ -157,8 +157,8 @@ internal static class EditorServer {
             m_server.NotifyEditorCommand("ok", message);
         }
         else {
-            m_server.NotifyEditorCommand("Could not start server with port " + port, message);
-    Debug.LogErrorFormat("[MeshSync] Could not add server to scene");
+            m_server.NotifyEditorCommand("Could not start server with port " + port, message); 
+            Debug.LogErrorFormat("[MeshSync] Could not add server to scene");
         }
     }
 
