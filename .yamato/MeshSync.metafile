@@ -15,7 +15,7 @@ platforms:
       cmd_prefix: 
   - platform_type: &platform_linux
       name: linux
-      type: Unity::VM::GPU
+      type: Unity::VM
       image: package-ci/ubuntu:v3.6.0
       flavor: b1.medium
       cmd_prefix: DISPLAY=:0.0
