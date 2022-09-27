@@ -33,10 +33,11 @@ internal static class MeshSyncEditorConstants {
     internal static readonly string[] Z_UP_CORRECTION_ENUMS         = System.Enum.GetNames( typeof( ZUpCorrectionMode ) );
         
     //Project settings
-    internal const int            UNINITIALIZED_TAB               = -1;
-    internal const int            SERVER_SETTINGS_TAB             = 0;
-    internal const int            SCENE_CACHE_PLAYER_SETTINGS_TAB = 1;
-    internal const int            MAX_SETTINGS_TAB                = 2;
+    internal const int UNINITIALIZED_TAB               = -1;
+    internal const int SERVER_SETTINGS_TAB             = 0;
+    internal const int SCENE_CACHE_PLAYER_SETTINGS_TAB = 1;
+    internal const int EDITOR_SERVER_SETTINGS_TAB      = 2;
+    internal const int MAX_SETTINGS_TAB                = 3;
 
     //
     internal const string DCC_INSTALL_SCRIPTS_PATH = "Packages/com.unity.meshsync/Editor/DCCInstallScripts";
@@ -105,6 +106,7 @@ internal static class MeshSyncEditorConstants {
     //Project Settings UIElements
     internal static readonly string MAIN_PROJECT_SETTINGS_PATH           = ProjSettingsUIPath("ProjectSettings_Main");
     internal static readonly string SERVER_SETTINGS_TAB_PATH             = ProjSettingsUIPath("ServerSettings_Tab");
+    internal static readonly string EDITOR_SERVER_SETTINGS_TAB_PATH      = ProjSettingsUIPath("EditorServerSettings_Tab");
     internal static readonly string SCENE_CACHE_PLAYER_SETTINGS_TAB_PATH = ProjSettingsUIPath("SceneCachePlayerSettings_Tab");
     internal static readonly string TAB_BUTTON_TEMPLATE_PATH             = ProjSettingsUIPath("TabButtonTemplate");
     internal static readonly string COMPONENT_SYNC_FIELDS_TEMPLATE_PATH  = ProjSettingsUIPath("ComponentSyncFieldsTemplate");    
