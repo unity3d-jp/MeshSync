@@ -90,11 +90,14 @@ internal static class MeshSyncEditorConstants {
         { "blender-2.93.7-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
         { "blender-2.93.8-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
         { "blender-2.93.9-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
+        { "blender-2.93.10-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
         { "blender-3.0.1-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.0" ) },
         { "blender-3.1.0-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.1" ) },
         { "blender-3.1.1-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.1" ) },
         { "blender-3.1.2-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.1" ) },
         { "blender-3.2.0-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.2" ) },
+        { "blender-3.2.1-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.2" ) },
+        { "blender-3.2.2-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.2" ) },
         { "blender-3.3.0-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.3" ) },
 #endif        
         
