@@ -8,12 +8,6 @@ namespace Unity.MeshSync.Editor {
 [CustomTimelineEditor(typeof(SceneCacheTrack))]
 internal class SceneCacheTrackEditor : TrackEditor {
     
-    
-    public override void OnCreate(TrackAsset track, TrackAsset copiedFrom)
-    {
-        Debug.Log("OnCreate : " + track +  " muted " + track.muted);
-    }
-    
     public override void OnTrackChanged(TrackAsset track) {
 
         if (WasMuted(track)) {
