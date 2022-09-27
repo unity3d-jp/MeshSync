@@ -9,11 +9,11 @@ namespace Unity.MeshSync {
 
 internal class SceneCachePlayableMixer : PlayableBehaviour {
     
-    internal void Init(PlayableDirector director, SceneCacheTrack track, IEnumerable<TimelineClip> clips) {
+    internal void Init(PlayableDirector director, SceneCacheTrack track) {
         m_playableDirector = director;
         m_sceneCacheTrack  = track;
         
-        m_clips      = new List<TimelineClip>(clips);
+        m_clips      = new List<TimelineClip>(track.GetClips());
         m_clipAssets = new Dictionary<TimelineClip, SceneCachePlayableAsset>();
         foreach (TimelineClip clip in m_clips) {
             SceneCachePlayableAsset sceneCachePlayableAsset = clip.asset as SceneCachePlayableAsset;
