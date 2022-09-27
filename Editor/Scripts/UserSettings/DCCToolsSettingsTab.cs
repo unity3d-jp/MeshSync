@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
 using Unity.FilmInternalUtilities;
@@ -9,6 +10,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor.PackageManager;
+using Debug = UnityEngine.Debug;
 
 namespace Unity.MeshSync.Editor {
 internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
@@ -55,6 +57,9 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         Button addDCCToolButton = containerInstance.Query<Button>("AddDCCToolButton").First();
         addDCCToolButton.userData                       =  scrollView;
         addDCCToolButton.clickable.clickedWithEventInfo += OnAddDCCToolButtonClicked;
+
+        Button showPluginsFolderButton = containerInstance.Query<Button>("ShowPluginsFolder");
+        showPluginsFolderButton.clickable.clicked += OnShowPluginsFolderClicked;
         
         //Label
         m_footerStatusLabel = containerInstance.Query<Label>("FooterStatusLabel").First();
@@ -349,6 +354,38 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
     
 
 //----------------------------------------------------------------------------------------------------------------------        
+
+    #region ShowPluginsFolder
+
+    private void OnShowPluginsFolderClicked() {
+        var path = Application.dataPath;
+        path = path.Replace("/Assets", "");
+        path = Path.Combine(path, "Packages","com.unity.meshsync.dcc-plugins", "Editor", "Plugins");
+        path = Path.GetFullPath(path);
+
+        if (!Directory.Exists(path)) {
+            Debug.LogErrorFormat("[MeshSync] Could not find Plugins Folder at location {0}", path);
+            return;
+        }
+
+        switch (Application.platform) {
+            case RuntimePlatform.OSXEditor:
+                Process.Start("open", path);
+                break;
+            case RuntimePlatform.WindowsEditor:
+                Process.Start("explorer.exe", $"\"{path}\"");
+                break;
+            //TODO Linux
+            default:
+                Debug.LogErrorFormat("[MeshSync] Show zip files: {0} not supported", Application.platform);
+                break;
+        }
+    }
+
+    #endregion
+    
+    
+//----------------------------------------------------------------------------------------------------------------------
 
     Texture2D LoadIcon(string iconPath) {
 
