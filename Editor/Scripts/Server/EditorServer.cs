@@ -12,22 +12,14 @@ internal static class EditorServer {
     private const string APPLIED_SETTINGS_KEY = "MESHSYNC_EDITOR_SERVER_APPLIED_DEFAULT_SETTINGS";
     private const string PORT_KEY             = "MESHSYNC_EDITOR_SERVER_PORT";
     private const string ACTIVE_KEY           = "MESHSYNC_EDITOR_ACTIVE";
-    private const string ACTIVE_PREV_KEY      = "MESHSYNC_EDITOR_ACTIVE_PREV";
     private const string CONFIGURATION_TIP    = "You can configure the editor server via Project Settings";
     private const string CLI_ARGUMENT_PORT    = "PORT";
     private const string CLI_ARGUMENT_ACTIVE  = "SERVER_ACTIVE";
     
     internal static bool Active {
         get { return SessionState.GetBool(ACTIVE_KEY, false);}
-        set {SessionState.SetBool(ACTIVE_KEY, value);}
+        set {SessionState.SetBool(ACTIVE_KEY, value); }
     }
-
-    private static bool ActivePrev {
-        get { return SessionState.GetBool(ACTIVE_PREV_KEY, false); }
-        set {SessionState.SetBool(ACTIVE_PREV_KEY, value); }
-    }
-
-
 
     internal static ushort Port {
         get { return (ushort)SessionState.GetInt(PORT_KEY, 8081); }
@@ -78,24 +70,20 @@ internal static class EditorServer {
         var portKeyIndex = Array.IndexOf(arguments, CLI_ARGUMENT_PORT) + 1;
         Port = portKeyIndex > 0 ? ushort.Parse(arguments[portKeyIndex]) : EditorServerSettings.instance.Port;
         
-        ApplySettings();
+        ApplySettings(init:true);
     }
 
-    internal static void ApplySettings() {
-        DoApplySettings();
-        ActivePrev = Active;
-    }
-    
-    private static void DoApplySettings() {
+    internal static void ApplySettings(bool init = false) {
         
         EditorApplication.update -= UpdateCall;
         m_server.Stop();
         
         if (!Active) {
             
-            if (ActivePrev) {
+            if (!init) {
                 Debug.Log("[MeshSync] Stopping Editor Server.\n" + CONFIGURATION_TIP);
             }
+
             return;
         }
         
@@ -156,12 +144,11 @@ internal static class EditorServer {
     }
 
     private static void HandleAddServerToScene(EditorCommandMessage message) {
-        var port = int.Parse(message.buffer);
-        if (AddServerToScene(port)) {
+        if (AddServerToScene()) {
             m_server.NotifyEditorCommand("ok", message);
         }
         else {
-            m_server.NotifyEditorCommand("Could not start server with port " + port, message);
+            m_server.NotifyEditorCommand("Could not start server", message);
             Debug.LogErrorFormat("[MeshSync] Could not add server to scene");
         }
     }
@@ -171,17 +158,14 @@ internal static class EditorServer {
         m_server.NotifyEditorCommand(path, message);
     }
 
-    private static bool AddServerToScene(int port) {
+    private static bool AddServerToScene() {
         //check if the scene has a server
-        var servers= Object.FindObjectsOfType<MeshSyncServer>();
-        foreach (var server in servers) {
-            if (server.GetServerPort() == port)
-                return true;
-        }
-        var newServer = MeshSyncMenu.CreateMeshSyncServer(false);
-        newServer.SetServerPort(port);
-        newServer.StartServer();
-        return newServer.IsServerStarted();
+        var servers = Object.FindObjectsOfType<MeshSyncServer>();
+        if (servers.Length > 0)
+            return true;
+        
+        var server = MeshSyncMenu.CreateMeshSyncServer(true);
+        return server.IsServerStarted();
     }
 }
 }

@@ -99,10 +99,6 @@ msAPI int msEditorCommandGetId(ms::EditorCommandMessage* self) {
 msAPI int msEditorCommandGetSession(ms::EditorCommandMessage* self) {
     return self->session_id;
 }
-
-msAPI const char* msEditorCommandGetBuffer(ms::EditorCommandMessage* self) {
-    return self->GetBuffer();
-}
 #pragma endregion
 
 
