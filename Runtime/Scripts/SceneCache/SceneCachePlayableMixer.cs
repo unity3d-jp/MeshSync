@@ -47,8 +47,8 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
         }
 
         //Register all SceneCache objects as inactive
-        foreach (var clipData in m_clipAssets.Values) {
-            SceneCachePlayer scPlayer = clipData.GetSceneCachePlayer();
+        foreach (SceneCachePlayableAsset sceneCachePlayableAsset in m_clipAssets.Values) {
+            SceneCachePlayer scPlayer = sceneCachePlayableAsset.GetSceneCachePlayer();
             if (null == scPlayer)
                 continue;
 
