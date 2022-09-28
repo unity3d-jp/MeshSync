@@ -206,8 +206,13 @@ void EditorCommandMessage::deserialize(std::istream& is){
     read(is, buffer);
 }
 
-void EditorCommandMessage::SetBuffer(const char* input) {
-    strncpy_s(buffer, input, MAX_BUFFER_SIZE);
+void EditorCommandMessage::SetBuffer(const char* input){
+    if (input == nullptr)
+        return;
+
+    auto inputLength = strlen(input);
+    strncpy(buffer, input, strlen(input));
+    buffer[inputLength] = '\0';
 }
 
 const char* EditorCommandMessage::GetBuffer() {
