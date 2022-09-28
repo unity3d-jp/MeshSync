@@ -164,10 +164,18 @@ internal static class EditorServer {
             if (server.GetServerPort() == port)
                 return true;
         }
-        var newServer = MeshSyncMenu.CreateMeshSyncServer(false);
-        newServer.SetServerPort(port);
-        newServer.StartServer();
+        
+        var newServer = CreateServer(port);
         return newServer.IsServerStarted();
+    }
+
+    private static MeshSyncServer CreateServer(int port) {
+        GameObject     go  = new GameObject("MeshSyncServer");
+        MeshSyncServer mss = go.AddComponent<MeshSyncServer>();
+        mss.Init(MeshSyncConstants.DEFAULT_ASSETS_PATH);
+        mss.SetServerPort(port);
+        mss.SetAutoStartServer(true);
+        return mss;
     }
 }
 }
