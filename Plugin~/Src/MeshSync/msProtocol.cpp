@@ -191,23 +191,27 @@ void ServerLiveEditResponse::deserialize(std::istream& is)
     EachMember(msRead);
 }
 
-EditorCommandMessage::EditorCommandMessage() {}
+EditorCommandMessage::EditorCommandMessage() {
+    buffer[0] = '\0';
+}
 void EditorCommandMessage::serialize(std::ostream& os) const {
     super::serialize(os);
     write(os, command_type);
+    write(os, buffer);
 }
 
 void EditorCommandMessage::deserialize(std::istream& is){
     super::deserialize(is);
     read(is, command_type);
+    read(is, buffer);
 }
 
-void EditorCommandMessage::SetReply(const char* input) {
-    strncpy_s(reply, input, MAX_REPLY_SIZE);
+void EditorCommandMessage::SetBuffer(const char* input) {
+    strncpy_s(buffer, input, MAX_BUFFER_SIZE);
 }
 
-const char* EditorCommandMessage::GetReply() {
-    return reply;
+const char* EditorCommandMessage::GetBuffer() {
+    return buffer;
 }
 
 #undef EachMember

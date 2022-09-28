@@ -708,7 +708,7 @@ void Server::recvCommand(HTTPServerRequest& request, HTTPServerResponse& respons
 
     // serve data
     if (mes->ready) {
-        serveText(response, mes->GetReply(), HTTPResponse::HTTP_OK);
+        serveText(response, mes->GetBuffer(), HTTPResponse::HTTP_OK);
     }
     else {
         serveText(response, "timeout", HTTPResponse::HTTP_REQUEST_TIMEOUT);
@@ -722,7 +722,7 @@ void Server::notifyCommand(const char* reply, int messageId, int sessionId) {
     if (entry == m_current_commands.end())
         return;
     auto command = entry->second;
-    command->SetReply(reply);
+    command->SetBuffer(reply);
     command->ready = true;
 }
 
