@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -46,18 +47,7 @@ internal static class EditorServer {
         EditorApplication.update -= Init;
         EditorApplication.update += Init;
     }
-    private static string m_appRootPath = null;
     
-    //[TODO-sin] replace with FilmInternalUtilities.Editor.AssetEditorUtility.GetApplicationRootPath
-    static string GetApplicationRootPath() {
-        if (null != m_appRootPath)
-            return m_appRootPath;
-
-        //Not using Application.dataPath because it may not be called in certain times, e.g: during serialization
-        
-        m_appRootPath = System.IO.Directory.GetCurrentDirectory().Replace('\\','/');
-        return m_appRootPath;
-    }
 
     /// <summary>
     /// Apply settings from CLI arguments or use Editor Server Settings.
@@ -163,7 +153,7 @@ internal static class EditorServer {
     }
 
     private static void HandleGetProjectPath(EditorCommandMessage message) {
-        var path = GetApplicationRootPath();
+        string path = AssetEditorUtility.GetApplicationRootPath();
         m_server.NotifyEditorCommand(path, message);
     }
 
