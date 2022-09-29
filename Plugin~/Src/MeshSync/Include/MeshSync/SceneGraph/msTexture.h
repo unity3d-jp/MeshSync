@@ -37,12 +37,14 @@ enum class TextureFormat
     RGBAi32   = Type_i32 | 4,
 
     RawFile = 0x10 << 4,
+    InMemoryFile = 0x11 << 4,
 };
 
 enum class TextureType
 {
     Default,
-    NormalMap
+    NormalMap,
+    NonColor
 };
 
 template<class T> struct GetTextureFormat;

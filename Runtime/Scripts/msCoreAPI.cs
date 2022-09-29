@@ -305,7 +305,8 @@ internal struct AudioData {
 
 internal enum TextureType {
     Default,
-    NormalMap
+    NormalMap,
+    NonColor
 }
 
 internal enum TextureFormat {
@@ -340,7 +341,8 @@ internal enum TextureFormat {
     RGBi32  = Type_i32 | 3,
     RGBAi32 = Type_i32 | 4,
 
-    RawFile = 0x10 << 4,
+    RawFile      = 0x10 << 4,
+    InMemoryFile = 0x11 << 4,
 }
 
 /// <summary>

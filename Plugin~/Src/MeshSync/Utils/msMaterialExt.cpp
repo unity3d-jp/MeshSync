@@ -17,6 +17,8 @@ static const char _BumpMap[] = "_BumpMap";
 static const char DETAIL_ALBEDO_MAP_SHADER_VAR[] = "_DetailAlbedoMap";
 static const char UV_SEC_SHADER_VAR[] = "_UVSec";
 static const char _SpecColor[] = "_SpecColor";
+static const char _ParallaxMap[] = "_ParallaxMap";
+static const char _Parallax[] = "_Parallax";
 
 using TextureRecord = MaterialProperty::TextureRecord;
 
@@ -155,6 +157,16 @@ Material::TextureRecord* StandardMaterial::getBumpMap() const
 void StandardMaterial::setSpecular(mu::float3 v)
 {
     addProperty(MaterialProperty(_SpecColor, v));
+}
+
+void StandardMaterial::setHeightScale(float v) {
+    addProperty(MaterialProperty(_Parallax, v));
+}
+
+void StandardMaterial::setHeightMap(const TextureRecord& v)
+{
+	// Allow null:
+    addProperty(MaterialProperty(_ParallaxMap, v));
 }
 
 //----------------------------------------------------------------------------------------------------------------------

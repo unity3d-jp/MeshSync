@@ -112,6 +112,12 @@ namespace Unity.MeshSync {
                 glossTexture == null ||
                 rgbTexture == null) {
                 destMat.SetTexture(channelName, null);
+
+                if (channelName == BaseMeshSync._MetallicGlossMap) {
+                    destMat.DisableKeyword(BaseMeshSync._METALLICGLOSSMAP);
+                    destMat.DisableKeyword(BaseMeshSync._METALLICSPECGLOSSMAP);
+                }
+
                 return;
             }
 
@@ -124,14 +130,14 @@ namespace Unity.MeshSync {
 
             if (channelName == BaseMeshSync._MetallicGlossMap) {
                 destMat.EnableKeyword(BaseMeshSync._METALLICGLOSSMAP);
+                destMat.EnableKeyword(BaseMeshSync._METALLICSPECGLOSSMAP);
             }
             else if (smoothnessChannel == 0) {
                 destMat.DisableKeyword(BaseMeshSync._METALLICGLOSSMAP);
+                destMat.DisableKeyword(BaseMeshSync._METALLICSPECGLOSSMAP);
             }
 
             destMat.SetTexture(channelName, texture);
-
-            //destMat.SetTexture(channelName, null);
         }
 
         //        private static Texture TextureFromRenderTexture(RenderTexture renderTarget, string path) {
@@ -195,7 +201,7 @@ namespace Unity.MeshSync {
 
         public void SetTexture(string name, Texture texture) {
             shader.SetTexture(kernelIndex, name, texture);
-
+            
             maxTextureSize.x = Math.Max(maxTextureSize.x, texture.width);
             maxTextureSize.y = Math.Max(maxTextureSize.y, texture.height);
         }

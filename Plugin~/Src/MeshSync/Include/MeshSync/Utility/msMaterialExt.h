@@ -45,6 +45,9 @@ public:
     void    setBumpMap(TexturePtr v);
     TextureRecord* getBumpMap() const;
 
+    void    setHeightScale(float v);
+    void    setHeightMap(const TextureRecord& v);
+
     void    setSpecular(mu::float3 v);
 };
 msDeclPtr(StandardMaterial);

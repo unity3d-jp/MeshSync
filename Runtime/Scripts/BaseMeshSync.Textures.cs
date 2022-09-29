@@ -15,6 +15,7 @@ namespace Unity.MeshSync {
         };
 
         void SaveMaterialRenderTexturesToAssetdatabase() {
+            // Check if there are render textures that need to be saved to the asset database:
             foreach (MaterialHolder materialHolder in materialList) {
                 foreach (string textureName in textureNames) {
                     var mat = materialHolder.material;
@@ -36,6 +37,13 @@ namespace Unity.MeshSync {
 
                         if (string.IsNullOrEmpty(AssetDatabase.AssetPathToGUID(savePath))) {
                             AssetDatabase.ImportAsset(savePath);
+                        }
+
+                        if (textureName == _MetallicGlossMap) {
+                            TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(savePath);
+                            if (importer != null) {
+                                importer.sRGBTexture = false;
+                            }
                         }
 
                         var savedTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(savePath);
