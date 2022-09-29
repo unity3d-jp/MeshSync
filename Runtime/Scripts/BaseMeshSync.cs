@@ -853,9 +853,11 @@ internal delegate void DeleteInstanceHandler(string path);
                     TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
                     if (importer != null) {
                         switch (src.type) {
-
                             case TextureType.NormalMap:
                                 importer.textureType = TextureImporterType.NormalMap;
+                                break;
+                            case TextureType.NonColor:
+                                importer.sRGBTexture = false;
                                 break;
                         }
                     }
@@ -1077,12 +1079,27 @@ internal delegate void DeleteInstanceHandler(string path);
 
                 return a.name.CompareTo(b.name);
             });
-
+            
             for (int i = 0; i < materialProperties.Count; i++) {
                 var prop = materialProperties[i];
 
                 ApplyMaterialProperty(src, destMat, textureHolders, prop, prop.name, materialProperties);
             }
+        }
+
+        private static void HandleKeywords(Material destMat, List<TextureHolder> textureHolders,
+            MaterialPropertyData prop, string keyword) {
+            if (prop.type == MaterialPropertyData.Type.Texture) {
+                MaterialPropertyData.TextureRecord rec = prop.textureValue;
+                Texture2D                          tex = FindTexture(rec.id, textureHolders);
+
+                if (tex != null) {
+                    destMat.EnableKeyword(keyword);
+                    return;
+                }
+            }
+
+            destMat.DisableKeyword(keyword);
         }
 
         private void ApplyMaterialProperty(MaterialData src, Material destMat, List<TextureHolder> textureHolders, MaterialPropertyData prop, string propName, List<MaterialPropertyData> materialProperties) {
@@ -1127,14 +1144,19 @@ internal delegate void DeleteInstanceHandler(string path);
             if (propName == _EmissionColor) {
                 if (destMat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack) {
                     destMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-                    destMat.EnableKeyword(_EMISSION);
+
+                    HandleKeywords(destMat, textureHolders, prop, _EMISSION);
                 }
             }
             else if (propName == _MetallicGlossMap) {
-                destMat.EnableKeyword(_METALLICGLOSSMAP);
+                HandleKeywords(destMat, textureHolders, prop, _METALLICGLOSSMAP);
+                HandleKeywords(destMat, textureHolders, prop, _METALLICSPECGLOSSMAP);
             }
             else if (propName == _BumpMap) {
-                destMat.EnableKeyword(_NORMALMAP);
+                HandleKeywords(destMat, textureHolders, prop, _NORMALMAP);
+            }
+            else if (propName == _ParallaxMap) {
+                HandleKeywords(destMat, textureHolders, prop, _PARALLAXMAP);
             }
 
             int len = prop.arrayLength;
@@ -2841,9 +2863,13 @@ internal delegate void DeleteInstanceHandler(string path);
 
     internal const string _MetallicGlossMap = "_MetallicGlossMap";
     internal const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
+    internal const string _METALLICSPECGLOSSMAP = "_METALLICSPECGLOSSMAP";
 
     private const string _BumpMap   = "_BumpMap";
     private const string _NORMALMAP = "_NORMALMAP";
+
+    private const string _ParallaxMap = "_ParallaxMap";
+    private const string _PARALLAXMAP = "_PARALLAXMAP";
 
     enum BaseMeshSyncVersion {
         NO_VERSIONING = 0,  //Didn't have versioning in earlier versions
