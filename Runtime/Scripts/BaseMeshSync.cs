@@ -86,8 +86,8 @@ internal delegate void DeleteInstanceHandler(string path);
     }
 
     public struct MeshSyncAnalyticsData {
-        internal AssetType asset_Type;
-        internal EntityType entity_Type;
+        internal AssetType assetType;
+        internal EntityType entityType;
 
     }
 
@@ -538,7 +538,7 @@ internal delegate void DeleteInstanceHandler(string path);
 #endif
         }
 
-        private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets) {
+        private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets, bool logAnalytics = true) {
             MeshSyncPlayerConfig config = GetConfigV();
             // handle assets
             Try(() => {
@@ -575,7 +575,9 @@ internal delegate void DeleteInstanceHandler(string path);
                                 break;
                         }
 
-                        SendEventData(new MeshSyncAnalyticsData() { asset_Type = asset.type });
+                        if (logAnalytics) {
+                            SendEventData(new MeshSyncAnalyticsData() { assetType = asset.type });
+                        }
                     }
 #if UNITY_EDITOR
                     if (save)
@@ -614,7 +616,7 @@ internal delegate void DeleteInstanceHandler(string path);
                             break;
                     }
 
-                    SendEventData(new MeshSyncAnalyticsData() { entity_Type = src.entityType });
+                    SendEventData(new MeshSyncAnalyticsData() { entityType = src.entityType });
 
 
                     if (dst != null && onUpdateEntity != null)

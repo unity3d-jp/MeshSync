@@ -345,7 +345,7 @@ public class SceneCachePlayer : BaseMeshSync {
             
             // update scene
             this.BeforeUpdateScene();
-            this.UpdateScene(scene, updateNonMaterialAssets);
+            this.UpdateScene(scene, updateNonMaterialAssets, logAnalytics: false);
             this.AfterUpdateScene();
 #if UNITY_EDITOR
             SetSortEntities(false);

@@ -60,13 +60,13 @@ namespace Unity.MeshSync.Editor.Analytics {
         public void UserSyncedData(MeshSyncAnalyticsData data) {
 
 
-            var assetTypeStr = data.asset_Type == AssetType.Unknown
+            var assetTypeStr = data.assetType == AssetType.Unknown
                 ? "none"
-                : data.asset_Type.ToString().ToLower();
+                : data.assetType.ToString().ToLower();
 
-            var entityTypeStr = data.entity_Type == EntityType.Unknown
+            var entityTypeStr = data.entityType == EntityType.Unknown
                 ? "none"
-                : data.entity_Type.ToString().ToLower();
+                : data.entityType.ToString().ToLower();
 
             var eventData = new SyncEventData {
                 assetSyncType = assetTypeStr,
