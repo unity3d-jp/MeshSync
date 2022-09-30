@@ -1,7 +1,7 @@
 using System;
-using System.Linq;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
+using UnityEditor.PackageManager;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -17,7 +17,7 @@ internal static class EditorServer {
     private const string CONFIGURATION_TIP   = "You can configure the editor server via Project Settings";
     private const string CLI_ARGUMENT_PORT   = "PORT";
     private const string CLI_ARGUMENT_ACTIVE = "SERVER_ACTIVE";
-    
+
     internal static bool Active {
         get { return SessionState.GetBool(ACTIVE_KEY, false);}
         set {SessionState.SetBool(ACTIVE_KEY, value);}
@@ -44,10 +44,57 @@ internal static class EditorServer {
     static EditorServer() {
         // To avoid timeouts where the server cannot react due to the editor loading
         // Defer the Initialisation to the first update call
-        EditorApplication.update -= Init;
-        EditorApplication.update += Init;
+        EditorApplication.update   -= Init;
+        EditorApplication.update   += Init;
+
+        Events.registeringPackages -= OnPackageRegistering;
+        Events.registeringPackages += OnPackageRegistering;
+        
+        Events.registeredPackages -= OnPackageRegistered;
+        Events.registeredPackages += OnPackageRegistered;
+    }
+
+    private static void OnPackageRegistering(PackageRegistrationEventArgs obj) {
+        if (obj.changedFrom.FindPackage("com.unity.meshsync") == null)
+            return;
+        
+        // If the package is about to be replaced, cleanup all resources
+        Cleanup();
     }
     
+    private static void OnPackageRegistered(PackageRegistrationEventArgs obj) {
+        
+        if (obj.changedTo.FindPackage("com.unity.meshsync") == null)
+            return;
+        
+        // If the package was just updated, do not create any resources and restart the editor
+        Cleanup();
+        
+        var restart = EditorUtility.DisplayDialog(
+            "MeshSync Package Update",
+            $"MeshSync version has been updated. For the package to work correctly, a restart of the Editor is required.",
+            "Restart Now", "Later");
+
+        if (restart) {
+            var path = AssetEditorUtility.GetApplicationRootPath();
+            EditorApplication.OpenProject(path);
+        }
+    }
+
+    private static void Cleanup() {
+        EditorApplication.update -= Init;
+        EditorApplication.update -= UpdateCall;
+
+        Active = false;
+        ApplySettings();
+        
+        // Stop Scene Servers as well
+        var servers = Object.FindObjectsOfType<MeshSyncServer>();
+        foreach (var server in servers) {
+            server.StopServer();
+        }
+    }
+
 
     /// <summary>
     /// Apply settings from CLI arguments or use Editor Server Settings.
