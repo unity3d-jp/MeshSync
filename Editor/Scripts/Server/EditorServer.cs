@@ -92,6 +92,7 @@ internal static class EditorServer {
         var servers = Object.FindObjectsOfType<MeshSyncServer>();
         foreach (var server in servers) {
             server.StopServer();
+            server.SetAutoStartServer(false);
         }
     }
 
