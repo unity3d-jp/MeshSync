@@ -1,10 +1,7 @@
 using System;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
-using UnityEditor.PackageManager;
-using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 namespace Unity.MeshSync.Editor {
@@ -48,48 +45,14 @@ internal static class EditorServer {
         // Defer the Initialisation to the first update call
         EditorApplication.update   -= Init;
         EditorApplication.update   += Init;
-
-        Events.registeredPackages -= OnPackageRegistered;
-        Events.registeredPackages += OnPackageRegistered;
-
-        Events.registeringPackages -= OnPackageRegistering;
-        Events.registeringPackages += OnPackageRegistering;
     }
 
-    private static void OnPackageRegistering(PackageRegistrationEventArgs obj) {
-        if (obj.changedFrom.FindPackage("com.unity.meshsync") == null)
-            return;
-        
-        Cleanup();
-    }
-    
-    private static void OnPackageRegistered(PackageRegistrationEventArgs obj) {
-        
-        if (obj.changedTo.FindPackage("com.unity.meshsync") == null)
-            return;
-        
-        EditorSceneManager.SaveOpenScenes();
-        // If the package was just updated, do not create any resources and restart the editor
-        Cleanup();
-
-        var path = AssetEditorUtility.GetApplicationRootPath();
-        EditorApplication.OpenProject(path);
-    }
-
-    private static void Cleanup() {
+    internal static void StopServer() {
         EditorApplication.update -= Init;
         EditorApplication.update -= UpdateCall;
 
         Active = false;
         ApplySettings();
-        
-        // Stop Scene Servers as well
-        var servers = Object.FindObjectsOfType<MeshSyncServer>();
-        foreach (var server in servers) {
-            
-            // Stop the server and stop autostart
-            server.StopServer();
-        }
     }
 
 
