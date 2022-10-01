@@ -1,7 +1,6 @@
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEditor.PackageManager;
-using UnityEditor.SceneManagement;
 using Object = UnityEngine.Object;
 
 
@@ -25,24 +24,13 @@ internal class PackageUpdateHandler {
     }
 
     private static void OnPackageRegistered(PackageRegistrationEventArgs obj) {
-
-        if (obj.changedTo.FindPackage("com.unity.meshsync") == null)
-            return;
-
-        // Save the current open scenes
-        EditorSceneManager.SaveOpenScenes();
-
-        // If the package was just updated, stop all servers and restart the editor
-        StopAllServers();
-
-        var path = AssetEditorUtility.GetApplicationRootPath();
-        EditorApplication.OpenProject(path);
+        EditorServer.StartSession();
     }
 
     private static void StopAllServers() {
 
         // Stop editor server
-        EditorServer.StopServer();
+        EditorServer.StopSession();
 
         // Stop scene servers
         var servers = Object.FindObjectsOfType<MeshSyncServer>();

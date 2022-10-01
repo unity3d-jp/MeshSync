@@ -41,18 +41,24 @@ internal static class EditorServer {
 
 
     static EditorServer() {
-        // To avoid timeouts where the server cannot react due to the editor loading
-        // Defer the Initialisation to the first update call
-        EditorApplication.update   -= Init;
-        EditorApplication.update   += Init;
+        StartSession();
     }
 
-    internal static void StopServer() {
+    internal static void StartSession() {
+        // To avoid timeouts where the server cannot react due to the editor loading
+        // Defer the Initialisation to the first update call
+        EditorApplication.update -= Init;
+        EditorApplication.update += Init;
+    }
+
+    internal static void StopSession() {
         EditorApplication.update -= Init;
         EditorApplication.update -= UpdateCall;
 
         Active = false;
         ApplySettings();
+        
+        AppliedInitialSettings = false;
     }
 
 
