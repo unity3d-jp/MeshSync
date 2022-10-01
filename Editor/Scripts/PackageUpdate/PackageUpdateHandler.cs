@@ -45,7 +45,7 @@ internal class PackageUpdateHandler {
     private static void StopAllServers() {
 
         // Stop editor server
-        EditorServer.StopServer();
+        EditorServer.StopSession();
 
         // Stop scene servers
         var servers = Object.FindObjectsOfType<MeshSyncServer>();
