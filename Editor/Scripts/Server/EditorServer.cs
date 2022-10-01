@@ -2,7 +2,9 @@ using System;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEditor.PackageManager;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 namespace Unity.MeshSync.Editor {
@@ -10,13 +12,13 @@ namespace Unity.MeshSync.Editor {
 [InitializeOnLoad]
 internal static class EditorServer {
 
-    private const string APPLIED_SETTINGS_KEY = "MESHSYNC_EDITOR_SERVER_APPLIED_DEFAULT_SETTINGS";
-    private const string PORT_KEY             = "MESHSYNC_EDITOR_SERVER_PORT";
-    private const string ACTIVE_KEY           = "MESHSYNC_EDITOR_ACTIVE";
-    private const string ACTIVE_PREV_KEY     = "MESHSYNC_EDITOR_ACTIVE_PREV";
-    private const string CONFIGURATION_TIP   = "You can configure the editor server via Project Settings";
-    private const string CLI_ARGUMENT_PORT   = "PORT";
-    private const string CLI_ARGUMENT_ACTIVE = "SERVER_ACTIVE";
+    private const string APPLIED_SETTINGS_KEY      = "MESHSYNC_EDITOR_SERVER_APPLIED_DEFAULT_SETTINGS";
+    private const string PORT_KEY                  = "MESHSYNC_EDITOR_SERVER_PORT";
+    private const string ACTIVE_KEY                = "MESHSYNC_EDITOR_ACTIVE";
+    private const string ACTIVE_PREV_KEY           = "MESHSYNC_EDITOR_ACTIVE_PREV";
+    private const string CONFIGURATION_TIP         = "You can configure the editor server via Project Settings";
+    private const string CLI_ARGUMENT_PORT         = "PORT";
+    private const string CLI_ARGUMENT_ACTIVE       = "SERVER_ACTIVE";
 
     internal static bool Active {
         get { return SessionState.GetBool(ACTIVE_KEY, false);}
@@ -47,18 +49,17 @@ internal static class EditorServer {
         EditorApplication.update   -= Init;
         EditorApplication.update   += Init;
 
-        Events.registeringPackages -= OnPackageRegistering;
-        Events.registeringPackages += OnPackageRegistering;
-        
         Events.registeredPackages -= OnPackageRegistered;
         Events.registeredPackages += OnPackageRegistered;
+
+        Events.registeringPackages -= OnPackageRegistering;
+        Events.registeringPackages += OnPackageRegistering;
     }
 
     private static void OnPackageRegistering(PackageRegistrationEventArgs obj) {
         if (obj.changedFrom.FindPackage("com.unity.meshsync") == null)
             return;
         
-        // If the package is about to be replaced, cleanup all resources
         Cleanup();
     }
     
@@ -67,18 +68,12 @@ internal static class EditorServer {
         if (obj.changedTo.FindPackage("com.unity.meshsync") == null)
             return;
         
+        EditorSceneManager.SaveOpenScenes();
         // If the package was just updated, do not create any resources and restart the editor
         Cleanup();
-        
-        var restart = EditorUtility.DisplayDialog(
-            "MeshSync Package Update",
-            $"MeshSync version has been updated. For the package to work correctly, a restart of the Editor is required.",
-            "Restart Now", "Later");
 
-        if (restart) {
-            var path = AssetEditorUtility.GetApplicationRootPath();
-            EditorApplication.OpenProject(path);
-        }
+        var path = AssetEditorUtility.GetApplicationRootPath();
+        EditorApplication.OpenProject(path);
     }
 
     private static void Cleanup() {
@@ -91,6 +86,11 @@ internal static class EditorServer {
         // Stop Scene Servers as well
         var servers = Object.FindObjectsOfType<MeshSyncServer>();
         foreach (var server in servers) {
+            
+            // Cache settings, the server will apply them at deserialization after restart
+            server.CacheSettings();
+            
+            // Stop the server and stop autostart
             server.StopServer();
             server.SetAutoStartServer(false);
         }
