@@ -9,13 +9,19 @@ namespace Unity.MeshSync.Editor {
 [InitializeOnLoad]
 internal static class EditorServer {
 
-    private const string APPLIED_SETTINGS_KEY      = "MESHSYNC_EDITOR_SERVER_APPLIED_DEFAULT_SETTINGS";
-    private const string PORT_KEY                  = "MESHSYNC_EDITOR_SERVER_PORT";
-    private const string ACTIVE_KEY                = "MESHSYNC_EDITOR_ACTIVE";
-    private const string ACTIVE_PREV_KEY           = "MESHSYNC_EDITOR_ACTIVE_PREV";
-    private const string CONFIGURATION_TIP         = "You can configure the editor server via Project Settings";
-    private const string CLI_ARGUMENT_PORT         = "PORT";
-    private const string CLI_ARGUMENT_ACTIVE       = "SERVER_ACTIVE";
+    private const string APPLIED_SETTINGS_KEY = "MESHSYNC_EDITOR_SERVER_APPLIED_DEFAULT_SETTINGS";
+    private const string PORT_KEY             = "MESHSYNC_EDITOR_SERVER_PORT";
+    private const string ACTIVE_KEY           = "MESHSYNC_EDITOR_ACTIVE";
+    private const string ACTIVE_PREV_KEY      = "MESHSYNC_EDITOR_ACTIVE_PREV";
+    private const string CONFIGURATION_TIP    = "You can configure the editor server via Project Settings";
+    private const string CLI_ARGUMENT_PORT    = "PORT";
+    private const string CLI_ARGUMENT_ACTIVE  = "SERVER_ACTIVE";
+    private const string SESSION_STOPPED      = "MESHSYNC_EDITOR_SERVER_SESSION_STOPPED";
+    
+    private static bool SessionStopped {
+        get => SessionState.GetBool(SESSION_STOPPED, false);
+        set => SessionState.SetBool(SESSION_STOPPED, value);
+    }
 
     internal static bool Active {
         get { return SessionState.GetBool(ACTIVE_KEY, false);}
@@ -41,18 +47,23 @@ internal static class EditorServer {
 
 
     static EditorServer() {
+        if (SessionStopped)
+            return;
+        
         // To avoid timeouts where the server cannot react due to the editor loading
         // Defer the Initialisation to the first update call
         EditorApplication.update   -= Init;
         EditorApplication.update   += Init;
     }
-
-    internal static void StopServer() {
+    
+    internal static void StopSession() {
         EditorApplication.update -= Init;
         EditorApplication.update -= UpdateCall;
 
         Active = false;
         ApplySettings();
+        
+        SessionStopped = true;
     }
 
 

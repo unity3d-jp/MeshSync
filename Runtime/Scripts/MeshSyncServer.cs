@@ -131,6 +131,9 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     /// </summary>
     public void StartServer()
     {
+        if (sessionStopped)
+            return;
+        
 #if UNITY_STANDALONE || UNITY_EDITOR
         StopServer();
 
@@ -167,6 +170,14 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 
         //----------------------------------------------------------------------------------------------------------------------        
 
+    /// <summary>
+    /// Terminate the server permanently for the editor session
+    /// </summary>
+    internal void StopSession() {
+        StopServer();
+        sessionStopped = true;
+    }
+    
     internal void StopServer()
     {
 #if UNITY_STANDALONE || UNITY_EDITOR
@@ -570,6 +581,13 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     bool           m_requestRestartServer        = false;
     bool           m_captureScreenshotInProgress = false;
     private bool   m_serverStarted               = false;
+
+    private string sessionStoppedKey => "MESHSYNC_SERVER_STOPPED" + GetInstanceID();
+    
+    private bool sessionStopped {
+        get => SessionState.GetBool(sessionStoppedKey, false);
+        set => SessionState.SetBool(sessionStoppedKey, value);
+    }
     
 //----------------------------------------------------------------------------------------------------------------------    
     
