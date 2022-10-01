@@ -87,12 +87,8 @@ internal static class EditorServer {
         var servers = Object.FindObjectsOfType<MeshSyncServer>();
         foreach (var server in servers) {
             
-            // Cache settings, the server will apply them at deserialization after restart
-            server.CacheSettings();
-            
             // Stop the server and stop autostart
             server.StopServer();
-            server.SetAutoStartServer(false);
         }
     }
 

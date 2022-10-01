@@ -198,8 +198,6 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     private protected override void OnAfterDeserializeMeshSyncPlayerV() {
         m_serverVersion = CUR_SERVER_VERSION;
         
-        RestoreCachedSettings();
-        
         if (string.IsNullOrEmpty(GetAssetsFolder())) {
             SetAssetsFolder(MeshSyncConstants.DEFAULT_ASSETS_PATH);
         }
@@ -542,9 +540,9 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     }
     
 //----------------------------------------------------------------------------------------------------------------------
-    [SerializeField] private MeshSyncServerInstanceSettingsCache m_settingsCache;
-    [SerializeField] private bool                        m_autoStartServer = false;
-    [SerializeField] private int                         m_serverPort      = MeshSyncConstants.DEFAULT_SERVER_PORT;
+    
+    [SerializeField] private bool m_autoStartServer = false;
+    [SerializeField] private int  m_serverPort      = MeshSyncConstants.DEFAULT_SERVER_PORT;
 #if UNITY_EDITOR
     [SerializeField] bool m_foldServerSettings = true;
 
@@ -590,20 +588,9 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         get => m_foldInstanceSettings;
         set => m_foldInstanceSettings = value;
     }
-#endif
-
-    private void RestoreCachedSettings() {
-        if (!m_settingsCache.dirty)
-            return;
-        
-        m_autoStartServer     = m_settingsCache.autostart;
-        m_settingsCache.dirty = false;
-    }
-
-    internal void CacheSettings() {
-        m_settingsCache.autostart = m_autoStartServer;
-        m_settingsCache.dirty     = true;
-    }
+#endif    
+    
+    
 }
 
 } //end namespace
