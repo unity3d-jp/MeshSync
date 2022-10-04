@@ -1,8 +1,7 @@
-﻿#if UNITY_2020_2
-
-using Unity.FilmInternalUtilities.Editor;
+﻿using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEditor.PackageManager;
+using UnityEngine;
 using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 
@@ -12,10 +11,24 @@ internal static class PackageEventSubscriber {
 
     [InitializeOnLoadMethod]
     private static void PackageEventSubscriber_OnEditorLoad() {
+
+        Events.registeringPackages -= OnPackageRegistering;
+        Events.registeringPackages += OnPackageRegistering;
+            
+
+        Events.registeredPackages -= OnPackagesRegistered;
         Events.registeredPackages += OnPackagesRegistered;
     }
-    
-//----------------------------------------------------------------------------------------------------------------------    
+    //---------------------------------------------------------------------------------------------------------------------
+
+    static void OnPackageRegistering(PackageRegistrationEventArgs packageRegistrationEventArgs) {
+        var package = packageRegistrationEventArgs.changedTo.FindPackage(MeshSyncConstants.PACKAGE_NAME);
+        if (package == null)
+            return;
+        
+        StopAllServers();
+    }
+    //----------------------------------------------------------------------------------------------------------------------    
     
     static void OnPackagesRegistered(PackageRegistrationEventArgs packageRegistrationEventArgs) {
        
@@ -27,11 +40,26 @@ internal static class PackageEventSubscriber {
 
         if (null == curPackage) {
             return;
-        }        
+        }
+        
+        StopAllServers();
+        
         EditorRestartMessageNotifier.RequestNotificationOnLoad(curPackage);                    
+    }
+    //---------------------------------------------------------------------------------------------------------------------- 
+    
+    static void StopAllServers() {
+
+        // Stop editor server
+        EditorServer.StopSession();
+
+        // Stop scene servers
+        var servers = Object.FindObjectsOfType<MeshSyncServer>();
+        foreach (var server in servers) {
+
+            server.StopSession();
+        }
     }
 }
 
 } //end namespace
-
-#endif //UNITY_2020_2
