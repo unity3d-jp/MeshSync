@@ -13,7 +13,7 @@ namespace Unity.MeshSync.Editor.Analytics {
     /// Hacky way to restore observers to MeshSync servers in scene
     /// </summary>
     [InitializeOnLoad]
-    public static class MeshSyncObserverStartUp {
+    internal static class MeshSyncObserverStartUp {
 
         private static void update() {
 

@@ -77,14 +77,6 @@ internal delegate void UpdateInstancedEntityHandler(string path, GameObject go);
 /// </summary>
 internal delegate void DeleteInstanceHandler(string path);
 
-    public enum UpdateKind {
-        Asset,
-        Entity,
-        Instance,
-        InstanceInfo,
-        Property
-    }
-
     public struct MeshSyncAnalyticsData {
         internal AssetType assetType;
         internal EntityType entityType;
@@ -2740,7 +2732,7 @@ internal delegate void DeleteInstanceHandler(string path);
 
 
 
-        public int getNumObservers => m_observers?.Count ?? 0;
+        internal int getNumObservers => m_observers?.Count ?? 0;
 
         /// <summary>
         /// Send MeshSync sync event
@@ -2753,6 +2745,7 @@ internal delegate void DeleteInstanceHandler(string path);
             }
         }
 
+        /// <inheritdoc/>
         public IDisposable Subscribe(IObserver<MeshSyncAnalyticsData> observer) {
 
             this.m_observers.Add(observer);
