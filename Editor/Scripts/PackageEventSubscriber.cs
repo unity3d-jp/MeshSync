@@ -22,7 +22,7 @@ internal static class PackageEventSubscriber {
     //---------------------------------------------------------------------------------------------------------------------
 
     static void OnPackageRegistering(PackageRegistrationEventArgs packageRegistrationEventArgs) {
-        var package = packageRegistrationEventArgs.changedTo.FindPackage(MeshSyncConstants.PACKAGE_NAME);
+        var package = packageRegistrationEventArgs.changedFrom.FindPackage(MeshSyncConstants.PACKAGE_NAME);
         if (package == null)
             return;
         
