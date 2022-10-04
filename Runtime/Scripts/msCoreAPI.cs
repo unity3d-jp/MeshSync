@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 using UnityEngine;
 using Unity.Collections;
 
@@ -342,7 +343,6 @@ internal enum TextureFormat {
     RGBAi32 = Type_i32 | 4,
 
     RawFile      = 0x10 << 4,
-    InMemoryFile = 0x11 << 4,
 }
 
 /// <summary>
@@ -497,6 +497,9 @@ internal struct MaterialPropertyData {
     [DllImport(Lib.name)]
     static extern void msMaterialPropCopyData(IntPtr self, Matrix4x4[] dst);
 
+    [DllImport(Lib.name)]
+    static extern void msMaterialPropCopyData(IntPtr self, StringBuilder dst);
+
     #endregion
 
     public enum Type {
@@ -506,6 +509,7 @@ internal struct MaterialPropertyData {
         Vector,
         Matrix,
         Texture,
+        String
     }
 
     public struct TextureRecord {
@@ -563,6 +567,14 @@ internal struct MaterialPropertyData {
             var ret = default(TextureRecord);
             msMaterialPropCopyData(self, ref ret);
             return ret;
+        }
+    }
+
+    public string stringValue {
+        get {
+            StringBuilder ret = new StringBuilder(arrayLength + 1);
+            msMaterialPropCopyData(self, ret);
+            return ret.ToString();
         }
     }
 

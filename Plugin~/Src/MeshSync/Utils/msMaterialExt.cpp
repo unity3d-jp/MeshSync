@@ -169,6 +169,11 @@ void StandardMaterial::setHeightMap(const TextureRecord& v)
     addProperty(MaterialProperty(_ParallaxMap, v));
 }
 
+void StandardMaterial::setShader(const std::string shaderName)
+{
+    shader = shaderName;
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 // StandardSpecMaterial
