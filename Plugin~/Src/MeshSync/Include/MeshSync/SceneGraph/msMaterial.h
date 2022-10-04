@@ -13,7 +13,7 @@ public:
         Float,
         Vector,
         Matrix,
-        Texture,
+        Texture
     };
 
     struct TextureRecord

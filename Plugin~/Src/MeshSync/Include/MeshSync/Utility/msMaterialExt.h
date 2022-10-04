@@ -49,6 +49,8 @@ public:
     void    setHeightMap(const TextureRecord& v);
 
     void    setSpecular(mu::float3 v);
+    
+    void    setShader(const std::string shaderName);
 };
 msDeclPtr(StandardMaterial);
 inline StandardMaterial& AsStandardMaterial(Material& p) { return reinterpret_cast<StandardMaterial&>(p); }
