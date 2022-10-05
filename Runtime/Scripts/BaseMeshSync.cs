@@ -479,6 +479,17 @@ internal delegate void DeleteInstanceHandler(string path);
                     mat.SetOverrideTag("RenderType", "Transparent");
                     mat.SetFloat("_Surface", 1);
                     
+#if AT_USE_HDRP 
+#elif AT_USE_URP 
+#else 
+                    mat.SetFloat("_Mode", 3);
+                    mat.DisableKeyword("_ALPHATEST_ON");
+                    mat.DisableKeyword("_ALPHABLEND_ON");
+                    mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+#endif
+
                     //{
                     //    var color = prop.vectorValue;
                     //    if (color.w > 0.0f && color.w < 1.0f && dstmat.HasProperty("_SrcBlend"))
@@ -1169,9 +1180,18 @@ internal delegate void DeleteInstanceHandler(string path);
                 return;
             
             // Enable alpha test if there is a color texture so alpha clipping works:
-            if (propName == _BaseMap) {
+            if (propName == _BaseMap || propName == _MainTex) {
                 bool hasAlpha = HandleKeywords(destMat, textureHolders, prop, _ALPHATEST_ON);
-                destMat.SetFloat(_AlphaClip, hasAlpha ? 1 : 0);
+#if AT_USE_HDRP
+
+#elif AT_USE_URP
+               destMat.SetFloat(_AlphaClip, hasAlpha ? 1 : 0);
+#else 
+                if (hasAlpha) {
+                    destMat.SetOverrideTag("RenderType", "TransparentCutout");
+                    destMat.SetFloat("_Mode", 1);
+                }
+#endif
             }
 
             // todo: handle transparent
@@ -2078,7 +2098,7 @@ internal delegate void DeleteInstanceHandler(string path);
 
             objTransform.rotation = Quaternion.LookRotation(forward, upwards);
 
-            Debug.Assert(objTransform.localToWorldMatrix == newMat, "Matrices don't match!");
+            //Debug.Assert(objTransform.localToWorldMatrix == newMat, "Matrices don't match!");
         }
 
         private GameObject GetOrCreatePrefab(InstanceInfoData data, InstanceInfoRecord infoRecord) {
