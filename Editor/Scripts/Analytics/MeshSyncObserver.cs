@@ -1,13 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using UnityEditor;
 
 namespace Unity.MeshSync.Editor.Analytics {
-    
 
     /// <summary>
     /// Hacky way to restore observers to MeshSync servers in scene
@@ -16,32 +11,29 @@ namespace Unity.MeshSync.Editor.Analytics {
     internal static class MeshSyncObserverStartUp {
 
         private static void update() {
-
             var array = UnityEngine.Object.FindObjectsOfType<BaseMeshSync>(includeInactive: true);
 
             foreach (var server in array) {
                 if (server.getNumObservers == 0) {
-
                     var observer = new MeshSyncObserver();
                     server.Subscribe(observer);
                 }
             }
 
-            if (array.Length > 0) {
+            if (array.Length > 0 || EditorApplication.timeSinceStartup > 120) {
                 EditorApplication.update -= update;
             }
         }
 
         static MeshSyncObserverStartUp() {
-
             EditorApplication.update += update;
         }
     }
+
     /// <summary>
     /// Observer that reports analytics events
     /// </summary>
     internal sealed class MeshSyncObserver : IObserver<MeshSyncAnalyticsData> {
-        
         private readonly IMeshSyncAnalytics analytics;
 
         public MeshSyncObserver() {
@@ -58,7 +50,6 @@ namespace Unity.MeshSync.Editor.Analytics {
 
         public void OnNext(MeshSyncAnalyticsData value) {
             analytics.UserSyncedData(value);
-            
         }
     }
 }
