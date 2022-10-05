@@ -77,6 +77,9 @@ internal delegate void UpdateInstancedEntityHandler(string path, GameObject go);
 /// </summary>
 internal delegate void DeleteInstanceHandler(string path);
 
+    /// <summary>
+    /// Internal analytics observer data
+    /// </summary>
     public struct MeshSyncAnalyticsData {
         internal AssetType assetType;
         internal EntityType entityType;
@@ -2749,7 +2752,7 @@ internal delegate void DeleteInstanceHandler(string path);
         public IDisposable Subscribe(IObserver<MeshSyncAnalyticsData> observer) {
 
             this.m_observers.Add(observer);
-            return Unsubscriber<IObserver<MeshSyncAnalyticsData>, MeshSyncAnalyticsData>.Create(this.m_observers, observer);
+            return null;
         }
         #endregion
 

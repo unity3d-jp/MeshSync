@@ -17,7 +17,7 @@ namespace Unity.MeshSync.Editor.Analytics {
 
         private static void update() {
 
-            var array = UnityEngine.Object.FindObjectsOfType<BaseMeshSync>();
+            var array = UnityEngine.Object.FindObjectsOfType<BaseMeshSync>(includeInactive: true);
 
             foreach (var server in array) {
                 if (server.getNumObservers == 0) {
