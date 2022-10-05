@@ -26,6 +26,10 @@ namespace Unity.MeshSync.Editor.Analytics {
                     server.Subscribe(observer);
                 }
             }
+
+            if (array.Length > 0) {
+                EditorApplication.update -= update;
+            }
         }
 
         static MeshSyncObserverStartUp() {
