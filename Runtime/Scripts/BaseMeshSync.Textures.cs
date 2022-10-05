@@ -19,7 +19,7 @@ namespace Unity.MeshSync {
             foreach (MaterialHolder materialHolder in materialList) {
                 foreach (string textureName in textureNames) {
                     var mat = materialHolder.material;
-                    if (mat == null || !mat.HasTexture(textureName)) {
+                    if (!mat.HasTexture(textureName)) {
                         continue;
                     }
 
@@ -47,7 +47,7 @@ namespace Unity.MeshSync {
                         }
 
                         var savedTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(savePath);
-                    
+
                         mat.SetTexture(textureName, savedTexture);
                     }
                 }

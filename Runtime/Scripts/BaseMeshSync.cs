@@ -278,8 +278,6 @@ internal delegate void DeleteInstanceHandler(string path);
         public void OnBeforeSerialize() {
             OnBeforeSerializeMeshSyncPlayerV();
 
-            SaveMaterialRenderTexturesToAssetdatabase();
-
             if (!m_keyValuesSerializationEnabled)
                 return;
 
@@ -288,6 +286,8 @@ internal delegate void DeleteInstanceHandler(string path);
             SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
 
             m_baseMeshSyncVersion = CUR_BASE_MESHSYNC_VERSION;
+
+            SaveMaterialRenderTexturesToAssetdatabase();
         }
 
 
@@ -443,65 +443,27 @@ internal delegate void DeleteInstanceHandler(string path);
 
         //----------------------------------------------------------------------------------------------------------------------    
 
-        private static void UpdateShader(ref Material mat, string shaderName) {
+        private static Material CreateDefaultMaterial(string shaderName = null) {
+
             Shader shader = null;
             if (!string.IsNullOrEmpty(shaderName)) {
                 shader = Shader.Find(shaderName);
             }
 
-            bool shaderExists = shader != null;
-
-            if (shader == null) {
+            if (shader == null)
+            {
 #if AT_USE_HDRP
-                shader = Shader.Find("HDRP/Lit");
+            shader = Shader.Find("HDRP/Lit");
 #elif AT_USE_URP
                 shader = Shader.Find("Universal Render Pipeline/Lit");
 #else
-                shader = Shader.Find("Standard");
+            shader = Shader.Find("Standard");
 #endif
             }
 
             Assert.IsNotNull(shader);
-
-            if (mat == null) {
-                mat = new Material(shader);
-            }
-            else {
-                mat.shader = shader;
-            }
-
-            // Map name from DCC tool to render pipeline shader name:
-
-            // If the given shader name did not exist, try to set up the material to be close to the given shader name:
-            if (!shaderExists) {
-                if (shaderName.ToLower() == "glass") {
-                    mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-                    mat.SetOverrideTag("RenderType", "Transparent");
-                    mat.SetFloat("_Surface", 1);
-                    
-                    //{
-                    //    var color = prop.vectorValue;
-                    //    if (color.w > 0.0f && color.w < 1.0f && dstmat.HasProperty("_SrcBlend"))
-                    //    {
-                    //        dstmat.SetOverrideTag("RenderType", "Transparent");
-                    //        dstmat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                    //        dstmat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                    //        dstmat.SetInt("_ZWrite", 0);
-                    //        dstmat.DisableKeyword("_ALPHATEST_ON");
-                    //        dstmat.DisableKeyword("_ALPHABLEND_ON");
-                    //        dstmat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-                    //        dstmat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-                    //    }
-                    //}
-
-                }
-            }
-        }
-
-        private static Material CreateDefaultMaterial(string shaderName = null) {
-            Material mat = null;
-            UpdateShader(ref mat, shaderName);
-            return mat;
+            Material ret = new Material(shader);
+            return ret;
         }
 
         internal void ForceRepaint() {
@@ -1117,8 +1079,6 @@ internal delegate void DeleteInstanceHandler(string path);
 
                 return a.name.CompareTo(b.name);
             });
-
-            UpdateShader(ref destMat, src.shader);
             
             for (int i = 0; i < materialProperties.Count; i++) {
                 var prop = materialProperties[i];
@@ -1127,22 +1087,19 @@ internal delegate void DeleteInstanceHandler(string path);
             }
         }
 
-        private static bool HandleKeywords(Material destMat, List<TextureHolder> textureHolders,
+        private static void HandleKeywords(Material destMat, List<TextureHolder> textureHolders,
             MaterialPropertyData prop, string keyword) {
-            // If the texture exists, enable its keyword, otherwise disable it:
             if (prop.type == MaterialPropertyData.Type.Texture) {
                 MaterialPropertyData.TextureRecord rec = prop.textureValue;
                 Texture2D                          tex = FindTexture(rec.id, textureHolders);
-                
+
                 if (tex != null) {
                     destMat.EnableKeyword(keyword);
-                    return true;
+                    return;
                 }
             }
 
             destMat.DisableKeyword(keyword);
-
-            return false;
         }
 
         private void ApplyMaterialProperty(MaterialData src, Material destMat, List<TextureHolder> textureHolders, MaterialPropertyData prop, string propName, List<MaterialPropertyData> materialProperties) {
@@ -1167,12 +1124,6 @@ internal delegate void DeleteInstanceHandler(string path);
             MaterialPropertyData.Type propType = prop.type;
             if (!destMat.HasProperty(propName))
                 return;
-            
-            // Enable alpha test if there is a color texture so alpha clipping works:
-            if (propName == _BaseMap) {
-                bool hasAlpha = HandleKeywords(destMat, textureHolders, prop, _ALPHATEST_ON);
-                destMat.SetFloat(_AlphaClip, hasAlpha ? 1 : 0);
-            }
 
             // todo: handle transparent
             //if (propName == _Color)
@@ -1241,9 +1192,6 @@ internal delegate void DeleteInstanceHandler(string path);
                         destMat.SetTextureOffset(propName, rec.offset);
                     }
                 }
-                    break;
-                case MaterialPropertyData.Type.String:
-                    var test = prop.stringValue;
                     break;
                 default: break;
             }
@@ -2923,11 +2871,7 @@ internal delegate void DeleteInstanceHandler(string path);
     private const string _ParallaxMap = "_ParallaxMap";
     private const string _PARALLAXMAP = "_PARALLAXMAP";
 
-    private const string _ALPHATEST_ON = "_ALPHATEST_ON";
-    private const string _AlphaClip    = "_AlphaClip";
-        
-
-        enum BaseMeshSyncVersion {
+    enum BaseMeshSyncVersion {
         NO_VERSIONING = 0,  //Didn't have versioning in earlier versions
         INITIAL_0_10_0 = 1, //initial for version 0.10.0-preview 
     
