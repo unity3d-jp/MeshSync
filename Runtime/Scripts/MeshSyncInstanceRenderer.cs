@@ -16,7 +16,6 @@ namespace Unity.MeshSync{
         [HideInInspector]
         [SerializeField] private Matrix4x4[] transforms;
         [SerializeField] private GameObject reference;
-        [SerializeField] private Transform  instanceParent;
 
         public int TransformCount { get => transforms.Length; }
 
@@ -83,29 +82,25 @@ namespace Unity.MeshSync{
 
         #region Events
 
-        public void UpdateAll(Matrix4x4[] transforms, GameObject go, Transform instanceParent)
+        public void UpdateAll(Matrix4x4[] transforms, GameObject go)
         {
             this.transforms     = transforms;
             reference           = go;
-            this.instanceParent = instanceParent;
 
             UpdateRenderingInfo(m_renderingInfo);
         }
 
-        public void UpdateReference(GameObject go, Transform instanceParent)
-        {
-            reference           = go;
-            this.instanceParent = instanceParent;
+        public void UpdateReference(GameObject go) {
+            reference = go;
 
             UpdateRenderingInfo(m_renderingInfo);
         }
 
-       
+
         private void UpdateRenderingInfo(InstanceRenderingInfo info)
         {
             info.instances      = transforms;
             info.gameObject     = reference;
-            info.instanceParent = instanceParent;
         }
 
         #endregion
