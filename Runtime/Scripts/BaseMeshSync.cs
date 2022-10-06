@@ -1348,6 +1348,15 @@ internal delegate void DeleteInstanceHandler(string path);
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
         
 #if AT_USE_HDRP
+
+        void UpdatePathTracingState() {
+            m_pathTracingExists = false;
+            if (!HDRPUtility.IsRayTracingActive()) 
+                return;
+
+            m_pathTracingExists = HDRPUtility.IsPathTracingActive(ObjectUtility.FindSceneComponents<Volume>());
+        }
+        
         void UpdateRayTracingModeIfNecessary(Renderer r) {
             if (m_pathTracingExists) {
                 r.rayTracingMode = UnityEngine.Experimental.Rendering.RayTracingMode.DynamicGeometry;
