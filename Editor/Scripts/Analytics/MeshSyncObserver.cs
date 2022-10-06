@@ -9,18 +9,30 @@ namespace Unity.MeshSync.Editor.Analytics {
     /// </summary>
     [InitializeOnLoad]
     internal static class MeshSyncObserverStartUp {
+        private const string SESSION_STATE_FLAG = "meshSyncAnalyticsSetupFlag";
+        private const int TIMEOUT_SECONDS = 120;
 
         private static void update() {
+            var alreadySetup = SessionState.GetBool(SESSION_STATE_FLAG, defaultValue: false);
+
+            // If the setup was already done, we still need to do it again at least once after a domain reload
+            if (alreadySetup) {
+                EditorApplication.update -= update;
+            }
+
             var array = UnityEngine.Object.FindObjectsOfType<BaseMeshSync>(includeInactive: true);
+            bool success = false;
 
             foreach (var server in array) {
                 if (server.getNumObservers == 0) {
                     var observer = new MeshSyncObserver();
                     server.Subscribe(observer);
+                    success = true;
                 }
             }
 
-            if (array.Length > 0 || EditorApplication.timeSinceStartup > 120) {
+            if (success || EditorApplication.timeSinceStartup > TIMEOUT_SECONDS) {
+                SessionState.SetBool(SESSION_STATE_FLAG, value: true);
                 EditorApplication.update -= update;
             }
         }
