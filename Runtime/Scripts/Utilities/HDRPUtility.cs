@@ -28,12 +28,13 @@ internal static class HDRPUtility  {
         return false;
     }
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
-    
+
+#if UNITY_2021_2_OR_NEWER
     internal static void ResetPathTracing() {
         HDRenderPipeline hdRenderPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
         hdRenderPipeline?.ResetPathTracing();
     }
-    
+#endif // UNITY_2021_2_OR_NEWER
 }
 
 

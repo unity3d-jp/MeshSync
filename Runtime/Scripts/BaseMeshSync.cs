@@ -17,6 +17,7 @@ using Unity.Mathematics;
 #endif
 
 #if AT_USE_HDRP
+using UnityEngine.Rendering; //Volume
 using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.Experimental.Rendering;
 #endif
@@ -653,7 +654,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 ForceRepaint();
 #endif
 
-#if AT_USE_HDRP
+#if AT_USE_HDRP && UNITY_2021_2_OR_NEWER
             if (m_needToResetPathTracing) {
                 HDRPUtility.ResetPathTracing();
                 m_needToResetPathTracing = false;
