@@ -2763,16 +2763,8 @@ internal delegate void DeleteInstanceHandler(string path);
     private void LateUpdate() {
 #if AT_USE_HDRP
         if (m_needToResetPathTracing) {
-            
+            HDRPUtility.ResetPathTracing();
             m_needToResetPathTracing = false;
-
-            //Only reset path tracing once per frame even if there are multiple components
-            int curFrame = Time.frameCount;
-            if (m_lastPathTracingResetFrame != curFrame) {
-                HDRPUtility.ResetPathTracing();
-                m_lastPathTracingResetFrame = curFrame;
-            }
-            
         }
 #endif
 
@@ -2838,9 +2830,8 @@ internal delegate void DeleteInstanceHandler(string path);
     private protected Action m_onMaterialChangedInSceneViewCB = null;
     
 #if AT_USE_HDRP
-    private        bool m_pathTracingExists         = false;
-    private        bool m_needToResetPathTracing    = false;
-    private static int  m_lastPathTracingResetFrame = 0;
+    private bool m_pathTracingExists      = false;
+    private bool m_needToResetPathTracing = false;
 #endif
         
 //----------------------------------------------------------------------------------------------------------------------
