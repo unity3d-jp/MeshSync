@@ -18,13 +18,19 @@ internal static class HDRPUtility  {
     }
     
     internal static bool IsPathTracingActive(IEnumerable<Volume> volumes) {
+        HashSet<VolumeProfile> volumeProfiles = new HashSet<VolumeProfile>();
         foreach (Volume v in volumes) {
-            VolumeProfile volumeProfile = v.sharedProfile;
-            if (volumeProfile.TryGet<PathTracing>(out PathTracing pathTracing)) {
+            VolumeProfile profile = v.sharedProfile;
+            volumeProfiles.Add(profile);
+        }
+
+        foreach (VolumeProfile vp in volumeProfiles) {
+            if (vp.TryGet<PathTracing>(out PathTracing pathTracing)) {
                 if (pathTracing.enable.value)
                     return true;
             }
         }
+        
         return false;
     }
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
