@@ -1,9 +1,9 @@
+#if AT_USE_HDRP
 
 using System.Collections.Generic;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
 
-#if AT_USE_HDRP
 
 namespace Unity.MeshSync {
 
