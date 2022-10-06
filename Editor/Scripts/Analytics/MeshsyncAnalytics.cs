@@ -1,10 +1,4 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-
 using UnityEditor;
-
-using UnityEngine;
 
 namespace Unity.MeshSync.Editor.Analytics {
 
@@ -58,8 +52,6 @@ namespace Unity.MeshSync.Editor.Analytics {
         }
 
         public void UserSyncedData(MeshSyncAnalyticsData data) {
-
-
             var assetTypeStr = data.assetType == AssetType.Unknown
                 ? "none"
                 : data.assetType.ToString().ToLower();

@@ -39,6 +39,7 @@ namespace Unity.MeshSync.Editor.Analytics {
 
         static MeshSyncObserverStartUp() {
             EditorApplication.update += update;
+            EditorApplication.playModeStateChanged += (_) => update();
         }
     }
 
