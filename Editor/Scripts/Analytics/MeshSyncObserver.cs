@@ -53,10 +53,13 @@ namespace Unity.MeshSync.Editor.Analytics {
 
             EditorApplication.playModeStateChanged -= playModeChangedCallback;
             EditorApplication.playModeStateChanged += playModeChangedCallback;
+
+            EditorApplication.hierarchyChanged -= checkWithTimeLimits;
+            EditorApplication.hierarchyChanged += checkWithTimeLimits;
         }
 
         private static void playModeChangedCallback(PlayModeStateChange state) {
-            if (state == PlayModeStateChange.ExitingPlayMode) {
+            if (state == PlayModeStateChange.EnteredEditMode) {
                 updateCallback(limitChecks: false);
             }
         }
