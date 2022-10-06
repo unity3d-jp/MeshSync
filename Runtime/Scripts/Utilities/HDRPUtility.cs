@@ -19,13 +19,21 @@ internal static class HDRPUtility  {
     
     internal static bool IsPathTracingActive(IEnumerable<Volume> volumes) {
         foreach (Volume v in volumes) {
-            if (v.TryGetComponent(out PathTracing pathTracing)) {
+            VolumeProfile volumeProfile = v.sharedProfile;
+            if (volumeProfile.TryGet<PathTracing>(out PathTracing pathTracing)) {
                 if (pathTracing.active)
                     return true;
             }
         }
         return false;
     }
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+    
+    internal static void ResetPathTracing() {
+        HDRenderPipeline hdRenderPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
+        hdRenderPipeline?.ResetPathTracing();
+    }
+    
 }
 
 
