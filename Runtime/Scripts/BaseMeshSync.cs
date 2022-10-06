@@ -2764,6 +2764,7 @@ internal delegate void DeleteInstanceHandler(string path);
 #if AT_USE_HDRP
         if (m_needToResetPathTracing) {
             HDRPUtility.ResetPathTracing();
+            m_needToResetPathTracing = false;
         }
 #endif
 
