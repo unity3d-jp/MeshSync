@@ -2775,10 +2775,8 @@ internal delegate void DeleteInstanceHandler(string path);
             
         }
 #endif
-        LateUpdateInternalV();
-    }
 
-    protected abstract void LateUpdateInternalV();  
+    }
 
 
 #endregion //Events

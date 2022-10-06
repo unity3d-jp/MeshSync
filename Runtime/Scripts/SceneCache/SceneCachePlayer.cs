@@ -572,7 +572,7 @@ public class SceneCachePlayer : BaseMeshSync {
     // note:
     // Update() is called *before* animation update.
     // in many cases m_time is controlled by animation system. so scene update must be handled in LateUpdate()
-    protected override void LateUpdateInternalV() {
+    void LateUpdate() {
         UpdatePlayer( updateNonMaterialAssets: false);
     }
     #endregion //Events
