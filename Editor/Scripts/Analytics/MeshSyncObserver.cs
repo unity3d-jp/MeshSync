@@ -10,7 +10,6 @@ namespace Unity.MeshSync.Editor.Analytics {
     [InitializeOnLoad]
     internal static class MeshSyncObserverStartUp {
         private const string SESSION_STATE_FLAG = "meshSyncAnalyticsSetupFlag";
-        private const int TIMEOUT_SECONDS = 120;
         private static DateTime m_check_Start;
         private static readonly TimeSpan INTERVAL = TimeSpan.FromSeconds(3);
 
@@ -40,7 +39,7 @@ namespace Unity.MeshSync.Editor.Analytics {
                 }
             }
 
-            if (success || EditorApplication.timeSinceStartup > TIMEOUT_SECONDS) {
+            if (success) {
                 SessionState.SetBool(SESSION_STATE_FLAG, value: true);
                 EditorApplication.update -= checkWithTimeLimits;
             }

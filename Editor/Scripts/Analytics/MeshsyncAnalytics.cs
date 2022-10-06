@@ -24,9 +24,13 @@ namespace Unity.MeshSync.Editor.Analytics {
         private const string VENDORKEY = "unity.meshsync";
 
         private const string DCCCONFIGURE_INSTALLEDEVENTNAME = "dccConfigure";
+
+        // Data schema version for install event
         private const int DCCCONFIGURE_VERSION = 4;
 
         private const string MESHSYNC_SYNC_INSTALLEDEVENTNAME = "meshSync_Sync";
+
+        // Data schema version for sync version
         private const int MESHSYNC_SYNC_VERSION = 2;
 
         private const int DCCCONFIGURE_EVENTS_PER_HOUR = 1000;
