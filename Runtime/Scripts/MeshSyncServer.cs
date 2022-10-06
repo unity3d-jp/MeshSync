@@ -510,8 +510,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     #endregion //ServeScene
 
 
-    void LateUpdate()
-    {
+    protected override void LateUpdateInternalV() {
         if (IsInPrefabView)
             return;
         PollServerEvents();
