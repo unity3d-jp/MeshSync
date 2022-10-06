@@ -21,7 +21,7 @@ internal static class HDRPUtility  {
         foreach (Volume v in volumes) {
             VolumeProfile volumeProfile = v.sharedProfile;
             if (volumeProfile.TryGet<PathTracing>(out PathTracing pathTracing)) {
-                if (pathTracing.active)
+                if (pathTracing.enable.value)
                     return true;
             }
         }
