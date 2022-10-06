@@ -652,6 +652,13 @@ internal delegate void DeleteInstanceHandler(string path);
             if (config.ProgressiveDisplay)
                 ForceRepaint();
 #endif
+
+#if AT_USE_HDRP
+            if (m_needToResetPathTracing) {
+                HDRPUtility.ResetPathTracing();
+                m_needToResetPathTracing = false;
+            }
+#endif
         }
 
         internal void AfterUpdateScene()
@@ -2759,17 +2766,6 @@ internal delegate void DeleteInstanceHandler(string path);
         UpdatePathTracingState();
 #endif
     }
-        
-    private void LateUpdate() {
-#if AT_USE_HDRP
-        if (m_needToResetPathTracing) {
-            HDRPUtility.ResetPathTracing();
-            m_needToResetPathTracing = false;
-        }
-#endif
-
-    }
-
 
 #endregion //Events
 
