@@ -1353,14 +1353,18 @@ internal delegate void DeleteInstanceHandler(string path);
             m_pathTracingExists = false;
             if (!HDRPUtility.IsRayTracingActive()) 
                 return;
-
-            m_pathTracingExists = HDRPUtility.IsPathTracingActive(ObjectUtility.FindSceneComponents<Volume>());
+            
+            SceneComponents<Volume> sceneVolumes = SceneComponents<Volume>.GetInstance();
+            sceneVolumes.Update();
+            m_pathTracingExists = HDRPUtility.IsPathTracingActive(sceneVolumes.GetCachedComponents());
         }
         
         void UpdateRayTracingModeIfNecessary(Renderer r) {
-            if (m_pathTracingExists) {
-                r.rayTracingMode = UnityEngine.Experimental.Rendering.RayTracingMode.DynamicGeometry;
-            }            
+            if (!m_pathTracingExists) 
+                return;
+            
+            r.rayTracingMode         = UnityEngine.Experimental.Rendering.RayTracingMode.DynamicGeometry;
+            m_needToResetPathTracing = true;
         }
 #endif
         
@@ -2749,7 +2753,24 @@ internal delegate void DeleteInstanceHandler(string path);
         SceneView.duringSceneGui -= OnSceneViewGUI;
 #endif
     }
-#endregion
+
+    private void Update() {
+#if AT_USE_HDRP
+        UpdatePathTracingState();
+#endif
+    }
+        
+    private void LateUpdate() {
+#if AT_USE_HDRP
+        if (m_needToResetPathTracing) {
+            HDRPUtility.ResetPathTracing();
+        }
+#endif
+
+    }
+
+
+#endregion //Events
 
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -2808,7 +2829,8 @@ internal delegate void DeleteInstanceHandler(string path);
     private protected Action m_onMaterialChangedInSceneViewCB = null;
     
 #if AT_USE_HDRP
-    bool m_pathTracingExists = false;
+    private bool m_pathTracingExists      = false;
+    private bool m_needToResetPathTracing = false;
 #endif
         
 //----------------------------------------------------------------------------------------------------------------------
