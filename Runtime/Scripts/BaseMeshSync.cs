@@ -16,11 +16,17 @@ using Unity.FilmInternalUtilities;
 using Unity.Mathematics;
 #endif
 
+#if AT_USE_HDRP
+using UnityEngine.Rendering.HighDefinition;
+using UnityEngine.Experimental.Rendering;
+#endif
+
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using Unity.FilmInternalUtilities.Editor;
 #endif
+
 
 [assembly: InternalsVisibleTo("Unity.Utilities.VariantExport")]
 
@@ -1163,7 +1169,6 @@ internal delegate void DeleteInstanceHandler(string path);
             if (!activeInHierarchy && !dflags.hasPoints)
                 return null;
 
-
             return UpdateMeshEntity(data, config, rec);
         }
 
@@ -1252,6 +1257,10 @@ internal delegate void DeleteInstanceHandler(string path);
                         smr.SetBlendShapeWeight(bi, bsd.weight);
                     }
                 }
+                
+#if AT_USE_HDRP
+                UpdateRayTracingModeIfNecessary(smr);
+#endif
             }
             else if (meshUpdated)
             {
@@ -1277,6 +1286,11 @@ internal delegate void DeleteInstanceHandler(string path);
                     mr.enabled = data.transform.visibility.visibleInRender;
                 mf.sharedMesh = rec.mesh;
                 rec.smrEnabled = false;
+                
+#if AT_USE_HDRP
+                UpdateRayTracingModeIfNecessary(mr);
+#endif
+
             }
 
             if (meshUpdated)
@@ -1330,9 +1344,19 @@ internal delegate void DeleteInstanceHandler(string path);
         public static Action ProBuilderBeforeRebuild;
         public static Action ProBuilderAfterRebuild;
 #endif
+      
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+        
+#if AT_USE_HDRP
+        void UpdateRayTracingModeIfNecessary(Renderer r) {
+            if (m_pathTracingExists) {
+                r.rayTracingMode = UnityEngine.Experimental.Rendering.RayTracingMode.DynamicGeometry;
+            }            
+        }
+#endif
+        
 
-
-        //----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
         void UpdateMeshEntity(ref Mesh mesh, MeshData data)
         {
@@ -2774,6 +2798,10 @@ internal delegate void DeleteInstanceHandler(string path);
 
     private protected Action m_onMaterialChangedInSceneViewCB = null;
     
+#if AT_USE_HDRP
+    bool m_pathTracingExists = false;
+#endif
+        
 //----------------------------------------------------------------------------------------------------------------------
 
     PinnedList<int>     m_tmpI  = new PinnedList<int>();
