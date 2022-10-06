@@ -16,7 +16,7 @@ namespace Unity.MeshSync.Editor.Analytics {
 
         private static void updateCallback(bool limitChecks) {
             // Limit checks to once every 3 seconds
-            if (DateTime.Now - m_check_Start < INTERVAL) {
+            if ((DateTime.Now - m_check_Start < INTERVAL) && limitChecks) {
                 return;
             }
 
