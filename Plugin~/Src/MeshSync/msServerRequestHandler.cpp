@@ -83,6 +83,9 @@ void ServerRequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerR
     else if (StartsWith(uri, "/request_properties")) {
         m_server->recvServerLiveEditRequest(request, response);
     }
+    else if (StartsWith(uri, "command")) {
+        m_server->recvCommand(request, response);
+    }
     else {
         // note: Poco handles commas in URI
         // e.g. "hoge/hage/../hige" -> "hoge/hige"

@@ -13,6 +13,7 @@ class Points;
 class Animation;
 class AnimationCurve;
 class AnimationClip;
+class InstanceInfo;
 
 class EntityConverter
 {
@@ -49,6 +50,7 @@ public:
 
     void convertAnimationCurve(AnimationCurve& v) override;
 
+    void convertInstanceInfos(InstanceInfo& v);
 private:
     float m_scale;
 };

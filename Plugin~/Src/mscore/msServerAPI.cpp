@@ -87,6 +87,22 @@ msAPI void msQueryAddResponseText(ms::QueryMessage *self, const char *text)
     }
     res->text.push_back(text);
 }
+
+msAPI ms::EditorCommandMessage::CommandType msEditorCommandGetType(ms::EditorCommandMessage* self) {
+    return self->command_type;
+}
+
+msAPI int msEditorCommandGetId(ms::EditorCommandMessage* self) {
+    return self->message_id;
+}
+
+msAPI int msEditorCommandGetSession(ms::EditorCommandMessage* self) {
+    return self->session_id;
+}
+
+msAPI const char* msEditorCommandGetBuffer(ms::EditorCommandMessage* self) {
+    return self->GetBuffer();
+}
 #pragma endregion
 
 
@@ -355,6 +371,11 @@ msAPI bool msServerIsDCCLiveEditReady(ms::Server* server)
     return server->readyForProperties();
 }
 
+msAPI void msServerNotifyEditorCommand(ms::Server* server, const char* reply, int messageId, int sessionId) {
+    if (!server) { return; }
+    server->notifyCommand(reply, messageId, sessionId);
+}
+
 msAPI int msGetGetBakeSkin(ms::GetMessage *self)
 {
     return self->refine_settings.flags.Get(ms::MESH_REFINE_FLAG_BAKE_SKIN);
@@ -368,5 +389,6 @@ msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *self)
 {
     return self->scene.get();
 }
+
 #pragma endregion
 

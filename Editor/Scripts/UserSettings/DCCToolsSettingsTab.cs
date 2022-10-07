@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
 using Unity.FilmInternalUtilities;
@@ -9,6 +10,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor.PackageManager;
+using Debug = UnityEngine.Debug;
 
 namespace Unity.MeshSync.Editor {
 internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
@@ -55,6 +57,9 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         Button addDCCToolButton = containerInstance.Query<Button>("AddDCCToolButton").First();
         addDCCToolButton.userData                       =  scrollView;
         addDCCToolButton.clickable.clickedWithEventInfo += OnAddDCCToolButtonClicked;
+
+        Button showPluginsFolderButton = containerInstance.Query<Button>("ShowPluginsFolder");
+        showPluginsFolderButton.clickable.clicked += OnShowPluginsFolderClicked;
         
         //Label
         m_footerStatusLabel = containerInstance.Query<Label>("FooterStatusLabel").First();
@@ -350,6 +355,38 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
 
 //----------------------------------------------------------------------------------------------------------------------        
 
+    #region ShowPluginsFolder
+
+    private void OnShowPluginsFolderClicked() {
+        var path = Application.dataPath;
+        path = path.Replace("/Assets", "");
+        path = Path.Combine(path, "Packages","com.unity.meshsync.dcc-plugins", "Editor", "Plugins");
+        path = Path.GetFullPath(path);
+
+        if (!Directory.Exists(path)) {
+            Debug.LogErrorFormat("[MeshSync] Could not find Plugins Folder at location {0}", path);
+            return;
+        }
+
+        switch (Application.platform) {
+            case RuntimePlatform.OSXEditor:
+                Process.Start("open", path);
+                break;
+            case RuntimePlatform.WindowsEditor:
+                Process.Start("explorer.exe", $"\"{path}\"");
+                break;
+            //TODO Linux
+            default:
+                Debug.LogErrorFormat("[MeshSync] Show zip files: {0} not supported", Application.platform);
+                break;
+        }
+    }
+
+    #endregion
+    
+    
+//----------------------------------------------------------------------------------------------------------------------
+
     Texture2D LoadIcon(string iconPath) {
 
         if (string.IsNullOrEmpty(iconPath) || !File.Exists(iconPath)) {
@@ -382,7 +419,9 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
         DCCPluginStatus status                    = DCCPluginStatus.NOT_INSTALLED;
         string          installedPluginVersionStr = null;
 
-        if (null == installInfo) {
+        if (!dccIntegrator.IsInstallable()) {
+            status = DCCPluginStatus.DCC_VERSION_UNSUPPORTED;
+        } else if (null == installInfo) {
             status = DCCPluginStatus.NOT_INSTALLED;
         } else {
             
@@ -391,8 +430,6 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
             PackageVersion pluginVer = MeshSyncEditorConstants.GetPluginVersion();
             if (string.IsNullOrEmpty(installedPluginVersionStr)) {
                 status = DCCPluginStatus.NOT_INSTALLED;
-            } else if (!dccIntegrator.IsInstallable()) {
-                status = DCCPluginStatus.DCC_VERSION_UNSUPPORTED;
             } else if (!IsPackageVersionCompatible(installedPluginVersionStr, pluginVer, out PackageVersion installedPluginVersion)) {
                 //The DCC Plugin is installed, and we need to check if it's compatible with this version of MeshSync
                 status = DCCPluginStatus.INSTALLED_PLUGIN_INCOMPATIBLE;
@@ -406,6 +443,8 @@ internal class DCCToolsSettingsTab : IMeshSyncSettingsTab{
                 status = DCCPluginStatus.READY;
             }
         }
+
+        
 
         UpdateDCCPluginStatusLabel(statusLabel, dccToolInfo, status,installedPluginVersionStr);
     }

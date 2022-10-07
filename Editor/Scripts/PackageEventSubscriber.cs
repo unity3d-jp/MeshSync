@@ -1,6 +1,4 @@
-﻿#if UNITY_2020_2
-
-using Unity.FilmInternalUtilities.Editor;
+﻿using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using PackageInfo = UnityEditor.PackageManager.PackageInfo;
@@ -33,5 +31,3 @@ internal static class PackageEventSubscriber {
 }
 
 } //end namespace
-
-#endif //UNITY_2020_2

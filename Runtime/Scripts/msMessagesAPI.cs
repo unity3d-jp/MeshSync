@@ -49,7 +49,11 @@ public enum NetworkMessageType {
     /// <summary>
     /// A message to send data from Unity back to a DCC tool
     /// </summary>
-    RequestServerLiveEdit
+    RequestServerLiveEdit,
+    /// <summary>
+    /// A message to execute a Unity Editor command
+    /// </summary>
+    EditorCommand,
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -241,6 +245,38 @@ internal struct PollMessage {
         Unknown,
         SceneUpdate,
     }
+}
+
+internal struct EditorCommandMessage {
+    
+    #region internal
+    public                              IntPtr      self;
+    [DllImport(Lib.name)] static extern CommandType msEditorCommandGetType(IntPtr self);
+    [DllImport(Lib.name)] static extern int         msEditorCommandGetId(IntPtr self);
+    [DllImport(Lib.name)] static extern int         msEditorCommandGetSession(IntPtr self);
+    [DllImport(Lib.name)] static extern IntPtr      msEditorCommandGetBuffer(IntPtr self);
+    #endregion
+    
+    public static explicit operator EditorCommandMessage(IntPtr v)
+    {
+        EditorCommandMessage ret;
+        ret.self = v;
+        return ret;
+    }
+    
+    public enum CommandType {
+        Unknown,
+        AddServerToScene,
+        GetProjectPath
+    }
+
+    public CommandType commandType => msEditorCommandGetType(self);
+    
+    public int id => msEditorCommandGetId(self);
+
+    public int session => msEditorCommandGetSession(self);
+
+    public string buffer => Misc.S(msEditorCommandGetBuffer(self));
 }
 
 } //end namespace
