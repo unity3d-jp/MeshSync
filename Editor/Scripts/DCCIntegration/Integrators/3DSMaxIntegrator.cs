@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.IO;
 using NUnit.Framework;
 using Unity.FilmInternalUtilities;
-using Unity.MeshSync.Editor.Analytics;
+using Unity.MeshSync.Common.Analytics;
+//using Unity.MeshSync.Editor.Analytics;
 
 using UnityEditor;
 

@@ -11,7 +11,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
-
+using Unity.MeshSync.Common.Analytics;
 #if AT_USE_SPLINES
 using Unity.Mathematics;
 #endif
@@ -77,14 +77,7 @@ internal delegate void UpdateInstancedEntityHandler(string path, GameObject go);
 /// </summary>
 internal delegate void DeleteInstanceHandler(string path);
 
-    /// <summary>
-    /// Internal analytics observer data
-    /// </summary>
-    public struct MeshSyncAnalyticsData {
-        internal AssetType assetType;
-        internal EntityType entityType;
 
-    }
 
     //----------------------------------------------------------------------------------------------------------------------
 
@@ -93,7 +86,7 @@ internal delegate void DeleteInstanceHandler(string path);
     /// which encapsulates common functionalities
     /// </summary>
     [ExecuteInEditMode]
-    public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSyncAnalyticsData>, ISerializationCallbackReceiver {
+    public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiver {
 
 
         #region EventHandler Declarations
@@ -169,6 +162,8 @@ internal delegate void DeleteInstanceHandler(string path);
             m_prefabDict.Clear();
 
             InitInternalV();
+
+            analytics ??= MeshSyncAnalyticsFactory.CreateAnalytics();
         }
 
         private protected abstract void InitInternalV();
@@ -571,7 +566,7 @@ internal delegate void DeleteInstanceHandler(string path);
                         }
 
                         if (logAnalytics) {
-                            SendEventData(new MeshSyncAnalyticsData() { assetType = asset.type });
+                            SendEventData(new SyncEventData() { assetSyncType = asset.type.ToString().ToLower() });
                         }
                     }
 #if UNITY_EDITOR
@@ -611,7 +606,7 @@ internal delegate void DeleteInstanceHandler(string path);
                             break;
                     }
 
-                    SendEventData(new MeshSyncAnalyticsData() { entityType = src.entityType });
+                    SendEventData(new SyncEventData() { entitySyncType = src.entityType.ToString().ToLower() });
 
 
                     if (dst != null && onUpdateEntity != null)
@@ -2733,27 +2728,16 @@ internal delegate void DeleteInstanceHandler(string path);
 #endif
     }
 
-
-
-        internal int getNumObservers => m_observers?.Count ?? 0;
+    
 
         /// <summary>
         /// Send MeshSync sync event
         /// </summary>
         /// <param name="data">Asset type synced</param>
-        private void SendEventData(MeshSyncAnalyticsData data) {
-
-            foreach (var observer in this.m_observers) {
-                observer.OnNext(data);
-            }
+        private void SendEventData(SyncEventData data) {
+            analytics.UserSyncedData(data);
         }
-
-        /// <inheritdoc/>
-        public IDisposable Subscribe(IObserver<MeshSyncAnalyticsData> observer) {
-
-            this.m_observers.Add(observer);
-            return null;
-        }
+        
         #endregion
 
         //----------------------------------------------------------------------------------------------------------------------
@@ -2801,7 +2785,8 @@ internal delegate void DeleteInstanceHandler(string path);
     private bool m_needReassignMaterials        = false;
     private bool m_keyValuesSerializationEnabled = true;
 
-    private List<IObserver<MeshSyncAnalyticsData>> m_observers = new List<IObserver<MeshSyncAnalyticsData>>();
+    private IMeshSyncAnalytics analytics;
+    //private List<IObserver<MeshSyncAnalyticsData>> m_observers = new List<IObserver<MeshSyncAnalyticsData>>();
     private Material m_cachedDefaultMaterial;
 
     private readonly           Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();

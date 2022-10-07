@@ -1,6 +1,6 @@
-using System.IO;
+﻿using System.IO;
 
-using Unity.MeshSync.Editor.Analytics;
+//using Unity.MeshSync.Editor.Analytics;
 
 using UnityEditor;
 using UnityEngine;
@@ -30,8 +30,8 @@ internal static class MeshSyncMenu  {
         MeshSyncServer mss = go.AddComponent<MeshSyncServer>();
 
         // Subscribe analytics event observer to MehSyncServer
-        var observer = new MeshSyncObserver();
-        mss.Subscribe(observer);
+        //var observer = new MeshSyncObserver();
+        //.Subscribe(observer);
 
 
         mss.Init(MeshSyncConstants.DEFAULT_ASSETS_PATH);

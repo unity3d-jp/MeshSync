@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.IO;
 using JetBrains.Annotations;
 using NUnit.Framework;
-
-using Unity.MeshSync.Editor.Analytics;
+using Unity.MeshSync.Common.Analytics;
+//using Unity.MeshSync.Editor.Analytics;
 
 using UnityEditor;
 using UnityEngine;
