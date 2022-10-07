@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿#if UNITY_EDITOR
+using UnityEditor;
 
 namespace Unity.MeshSync.Common.Analytics {
 internal class MeshSyncEditorAnalytics : IMeshSyncAnalytics {
@@ -34,20 +35,10 @@ internal class MeshSyncEditorAnalytics : IMeshSyncAnalytics {
         }
 
         public void UserSyncedData(SyncEventData eventData) {
-            // var assetTypeStr = data.assetType == AssetType.Unknown
-            //     ? "none"
-            //     : data.assetType.ToString().ToLower();
-            //
-            // var entityTypeStr = data.entityType == EntityType.Unknown
-            //     ? "none"
-            //     : data.entityType.ToString().ToLower();
-            //
-            // var eventData = new SyncEventData {
-            //     assetSyncType = assetTypeStr,
-            //     entitySyncType = entityTypeStr
-            // };
+
 
             EditorAnalytics.SendEventWithLimit(MESHSYNC_SYNC_INSTALLEDEVENTNAME, eventData, MESHSYNC_SYNC_VERSION);
         }
 }
 }
+#endif

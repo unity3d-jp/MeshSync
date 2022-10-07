@@ -1,6 +1,6 @@
 ﻿namespace Unity.MeshSync.Common.Analytics {
-public struct SyncEventData {
-    public string assetSyncType;
-    public string entitySyncType;
+internal struct SyncEventData {
+    internal string assetSyncType;
+    internal string entitySyncType;
 }
 }

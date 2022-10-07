@@ -1,5 +1,10 @@
-﻿namespace Unity.MeshSync.Common.Analytics {
-public interface IMeshSyncAnalytics {
+﻿using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Unity.MeshSync")]
+[assembly: InternalsVisibleTo("Unity.MeshSync.Editor")]
+
+namespace Unity.MeshSync.Common.Analytics {
+internal interface IMeshSyncAnalytics {
     /// <summary>
     /// Send an event that a user installed and configured a DCC tool for use with MeshSync
     /// </summary>

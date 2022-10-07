@@ -1,7 +1,10 @@
-﻿namespace Unity.MeshSync.Common.Analytics {
-public static class MeshSyncAnalyticsFactory {
+﻿using System.Runtime.CompilerServices;
 
-    public static IMeshSyncAnalytics CreateAnalytics() {
+namespace Unity.MeshSync.Common.Analytics {
+
+internal static class MeshSyncAnalyticsFactory {
+
+    internal static IMeshSyncAnalytics CreateAnalytics() {
 #if UNITY_EDITOR
         return new MeshSyncEditorAnalytics();
 #else
