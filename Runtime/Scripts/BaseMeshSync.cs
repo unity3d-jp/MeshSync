@@ -1327,8 +1327,8 @@ internal delegate void DeleteInstanceHandler(string path);
         }
 
 #if AT_USE_PROBUILDER
-        public static Action ProBuilderBeforeRebuild;
-        public static Action ProBuilderAfterRebuild;
+        internal static Action ProBuilderBeforeRebuild;
+        internal static Action ProBuilderAfterRebuild;
 #endif
 
 
