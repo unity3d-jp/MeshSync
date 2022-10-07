@@ -36,7 +36,8 @@ for more details on these settings.
 
 ![](images/ProjectSettingsEditorServer.png)
 
-Use the **Editor Server** tab to set the setting values for MeshSync Editor Server that runs automatically by default.
+Use the **Editor Server** tab to set the setting values for the MeshSync Editor Server 
+that runs automatically by default for better integration with DCC tools.
 
 |**Connection Settings**   |**Description** |
 |:---                      |:---|
