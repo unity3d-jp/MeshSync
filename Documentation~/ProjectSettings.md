@@ -41,7 +41,7 @@ that runs automatically by default for better integration with DCC tools.
 
 |**Connection Settings**   |**Description** |
 |:---                      |:---|
-| **Server Port**          | The port of the currently running editor server. Changed will be applied immediately. |
+| **Server Port**          | The port of the currently running editor server. Changes will be applied immediately. |
 | **Default Server Port**  | The default port for the editor server. Takes effect after restarting the editor. |
 | **Start at Editor Launch**  | Runs the editor server automatically at launch if enabled. |
 
