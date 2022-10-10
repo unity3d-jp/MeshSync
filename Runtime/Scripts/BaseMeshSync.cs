@@ -2070,7 +2070,7 @@ internal delegate void DeleteInstanceHandler(string path);
 
             objTransform.rotation = Quaternion.LookRotation(forward, upwards);
 
-            //Debug.Assert(objTransform.localToWorldMatrix == newMat, "Matrices don't match!");
+            Debug.Assert(objTransform.localToWorldMatrix == newMat, "Matrices don't match!");
         }
 
         private GameObject GetOrCreatePrefab(InstanceInfoData data, InstanceInfoRecord infoRecord) {
