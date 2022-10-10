@@ -605,6 +605,10 @@ internal struct MaterialPropertyData {
             return ret;
         }
     }
+
+    public override string ToString() {
+        return name;
+    }
 }
 
 internal struct MaterialKeywordData {

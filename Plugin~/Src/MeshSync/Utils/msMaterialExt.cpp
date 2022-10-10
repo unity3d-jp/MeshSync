@@ -6,6 +6,7 @@ namespace ms {
 // shader keywords
 static const char _Color[] = "_Color";
 static const char _EmissionColor[] = "_EmissionColor";
+static const char _EmissionStrength[] = "_EmissionStrength";
 static const char _Metallic[] = "_Metallic";
 static const char _Glossiness[] = "_Glossiness";
 static const char _MainTex[] = "_MainTex";
@@ -95,6 +96,11 @@ Material::TextureRecord* StandardMaterial::getEmissionMap() const
 {
     const MaterialProperty* p = findProperty(_EmissionMap);
     return p ? &p->get<TextureRecord>() : nullptr;
+}
+
+void StandardMaterial::setEmissionStrength(float v)
+{
+    addProperty(MaterialProperty(_EmissionStrength, v));
 }
 
 void StandardMaterial::setMetallic(float v) {

@@ -278,7 +278,7 @@ internal delegate void DeleteInstanceHandler(string path);
         public void OnBeforeSerialize() {
             OnBeforeSerializeMeshSyncPlayerV();
 
-            SaveMaterialRenderTexturesToAssetdatabase();
+            SaveMaterialRenderTexturesToAssetDatabase();
 
             if (!m_keyValuesSerializationEnabled)
                 return;
@@ -443,71 +443,6 @@ internal delegate void DeleteInstanceHandler(string path);
 
         //----------------------------------------------------------------------------------------------------------------------    
 
-        private static void UpdateShader(ref Material mat, string shaderName) {
-            Shader shader = null;
-            if (!string.IsNullOrEmpty(shaderName)) {
-                shader = Shader.Find(shaderName);
-            }
-
-            bool shaderExists = shader != null;
-
-            if (shader == null) {
-#if AT_USE_HDRP
-                shader = Shader.Find("HDRP/Lit");
-#elif AT_USE_URP
-                shader = Shader.Find("Universal Render Pipeline/Lit");
-#else
-                shader = Shader.Find("Standard");
-#endif
-            }
-
-            Assert.IsNotNull(shader);
-
-            if (mat == null) {
-                mat = new Material(shader);
-            }
-            else {
-                mat.shader = shader;
-            }
-
-            // Map name from DCC tool to render pipeline shader name:
-
-            // If the given shader name did not exist, try to set up the material to be close to the given shader name:
-            if (!shaderExists) {
-                if (shaderName.ToLower() == "glass") {
-                    mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-                    mat.SetOverrideTag("RenderType", "Transparent");
-                    mat.SetFloat("_Surface", 1);
-                    
-#if AT_USE_HDRP 
-#elif AT_USE_URP 
-#else 
-                    mat.SetFloat("_Mode", 3);
-                    mat.DisableKeyword("_ALPHATEST_ON");
-                    mat.DisableKeyword("_ALPHABLEND_ON");
-                    mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-#endif
-
-                    //{
-                    //    var color = prop.vectorValue;
-                    //    if (color.w > 0.0f && color.w < 1.0f && dstmat.HasProperty("_SrcBlend"))
-                    //    {
-                    //        dstmat.SetOverrideTag("RenderType", "Transparent");
-                    //        dstmat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                    //        dstmat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                    //        dstmat.SetInt("_ZWrite", 0);
-                    //        dstmat.DisableKeyword("_ALPHATEST_ON");
-                    //        dstmat.DisableKeyword("_ALPHABLEND_ON");
-                    //        dstmat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-                    //        dstmat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-                    //    }
-                    //}
-
-                }
-            }
-        }
 
         private static Material CreateDefaultMaterial(string shaderName = null) {
             Material mat = null;
@@ -1112,30 +1047,23 @@ internal delegate void DeleteInstanceHandler(string path);
                     destMat.DisableKeyword(kw.name);
             }
 
-            var materialProperties = new List<MaterialPropertyData>();
+            UpdateShader(ref destMat, src.shader);
 
-            int numProps = src.numProperties;
+            // Put all properties in a list so we can look them up more easily:
+            int numProps           = src.numProperties;
+            var materialProperties = new List<MaterialPropertyData>(numProps);
+
             for (int pi = 0; pi < numProps; ++pi) {
                 MaterialPropertyData prop = src.GetProperty(pi);
                 materialProperties.Add(prop);
             }
 
-            // Sort to ensure smoothness is last so it can be baked into the corresponding map that was set before the bake:
-            materialProperties.Sort(delegate(MaterialPropertyData a, MaterialPropertyData b) {
-                if (a.name == _GlossMap) {
-                    return 1;
-                }
-
-                return a.name.CompareTo(b.name);
-            });
-
-            UpdateShader(ref destMat, src.shader);
-            
             for (int i = 0; i < materialProperties.Count; i++) {
                 var prop = materialProperties[i];
-
                 ApplyMaterialProperty(src, destMat, textureHolders, prop, prop.name, materialProperties);
             }
+
+            ShaderHelper.BakeMaps(destMat, textureHolders, materialProperties);
         }
 
         private static bool HandleKeywords(Material destMat, List<TextureHolder> textureHolders,
@@ -1156,36 +1084,45 @@ internal delegate void DeleteInstanceHandler(string path);
             return false;
         }
 
+        private static Dictionary<string, string[]> synonymMap = new Dictionary<string, string[]> {
+            { _Color, new[] { _BaseColor } },
+            { _MainTex, new[] { _BaseMap, _BaseColorMap } },
+            { _Glossiness, new[] { _Smoothness } },
+            { _BumpMap, new[] { _NormalMap } },
+            { _EmissionMap, new[] { _EmissiveColorMap } },
+            { _ParallaxMap , new[] { _HeightMap } }
+        };
+
+        private static MaterialPropertyData? FindMaterialPropertyData(List<MaterialPropertyData> materialProperties, string name) {
+            for (int i = 0; i < materialProperties.Count; i++) {
+                if (materialProperties[i].name == name) {
+                    return materialProperties[i];
+                }
+            }
+
+            return null;
+        }
+
         private void ApplyMaterialProperty(MaterialData src, Material destMat, List<TextureHolder> textureHolders, MaterialPropertyData prop, string propName, List<MaterialPropertyData> materialProperties) {
-            // Remap properties that are obsolete in some shaders to their new names but also set the old name in case it is still used:
-            if (propName == _Color) {
-                ApplyMaterialProperty(src, destMat, textureHolders, prop, _BaseColor, materialProperties);
+           
+            // Shaders use different names to refer to the same maps, this map contains those synonyms so we can apply them to every shader easily:
+            if (synonymMap.TryGetValue(propName, out var synonyms)) {
+                foreach (var synonym in synonyms) {
+                    ApplyMaterialProperty(src, destMat, textureHolders, prop, synonym, materialProperties);
+                }
             }
-
-            if (propName == _Glossiness) {
-                ApplyMaterialProperty(src, destMat, textureHolders, prop, _Smoothness, materialProperties);
-            }
-
-            if (propName == _MainTex) {
-                ApplyMaterialProperty(src, destMat, textureHolders, prop, _BaseMap, materialProperties);
-            }
-
-            // Bake smoothness into required channel:
-            if (propName == _GlossMap) {
-                ShaderHelper.BakeSmoothness(destMat, textureHolders, materialProperties);
-            }
-
+            
             MaterialPropertyData.Type propType = prop.type;
             if (!destMat.HasProperty(propName))
                 return;
             
             // Enable alpha test if there is a color texture so alpha clipping works:
-            if (propName == _BaseMap || propName == _MainTex) {
+            if (propName == _BaseMap || propName == _MainTex || propName == _BaseColorMap) {
                 bool hasAlpha = HandleKeywords(destMat, textureHolders, prop, _ALPHATEST_ON);
 #if AT_USE_HDRP
-
+                destMat.SetFloat(_AlphaCutoffEnable, hasAlpha ? 1 : 0);
 #elif AT_USE_URP
-               destMat.SetFloat(_AlphaClip, hasAlpha ? 1 : 0);
+                destMat.SetFloat(_AlphaClip, hasAlpha ? 1 : 0);
 #else 
                 if (hasAlpha) {
                     destMat.SetOverrideTag("RenderType", "TransparentCutout");
@@ -1227,6 +1164,55 @@ internal delegate void DeleteInstanceHandler(string path);
             else if (propName == _ParallaxMap) {
                 HandleKeywords(destMat, textureHolders, prop, _PARALLAXMAP);
             }
+#if AT_USE_HDRP
+            else if (propName == _EmissiveColorMap) {
+                Color baseEmissionColor = Color.white;
+                var emissionColorProp = FindMaterialPropertyData(materialProperties, _EmissionColor);
+                if (emissionColorProp.HasValue) {
+                    baseEmissionColor = emissionColorProp.Value.vectorValue;
+                }
+
+                var emissionStrengthProp = FindMaterialPropertyData(materialProperties, _EmissionStrength);
+                float emissionStrength = 0;
+                if (emissionStrengthProp.HasValue) {
+                    emissionStrength = emissionStrengthProp.Value.floatValue;
+                }
+                 
+                destMat.SetFloat(_UseEmissiveIntensity,1);
+                destMat.SetFloat(_EmissiveIntensityUnit, 0);
+                destMat.SetFloat(_EmissiveIntensity, emissionStrength);
+                destMat.SetColor(_EmissiveColorLDR, baseEmissionColor);
+                destMat.SetColor(_EmissiveColor, baseEmissionColor * emissionStrength);
+            }
+            else if (propName == _HeightMap) {
+                if (prop.type == MaterialPropertyData.Type.Texture) {
+                    MaterialPropertyData.TextureRecord rec = prop.textureValue;
+                    Texture2D                          tex = FindTexture(rec.id, textureHolders);
+                    if (tex != null) {
+                        destMat.EnableKeyword(_HEIGHTMAP);
+
+                        // If there is no displacement mode set, set it to vertex displacement:
+                        if (Array.IndexOf(destMat.enabledKeywords, "_PIXEL_DISPLACEMENT") == -1) {
+                            destMat.EnableKeyword("_VERTEX_DISPLACEMENT");
+                            destMat.SetInt("_DisplacementMode", 1);
+                        }
+
+                        float scale = 10;
+                        var heightScaleProp = FindMaterialPropertyData(materialProperties, _Parallax);
+                        if (heightScaleProp.HasValue) {
+                            // convert from meters to centimeters and / 2 because midpoint is half of that:
+                            scale = heightScaleProp.Value.floatValue * 100 / 2;
+                        }
+
+                        destMat.SetFloat("_HeightMin", -scale);
+                        destMat.SetFloat("_HeightMax", scale);
+
+                        float amplitude = scale * 2;
+                        destMat.SetFloat("_HeightAmplitude", amplitude * 0.01f);
+                    }
+                }
+            }
+#endif
 
             int len = prop.arrayLength;
             switch (propType) {
@@ -2911,41 +2897,59 @@ internal delegate void DeleteInstanceHandler(string path);
     PinnedList<Vector3> m_tmpV3 = new PinnedList<Vector3>();
     PinnedList<Vector4> m_tmpV4 = new PinnedList<Vector4>();
     PinnedList<Color>   m_tmpC  = new PinnedList<Color>();
-    
+
 #if AT_USE_SPLINES
     PinnedList<float3> m_tmpFloat3 = new PinnedList<float3>();
 #endif
 
-//----------------------------------------------------------------------------------------------------------------------
-    
-    // keyword strings
-    internal const string _Color     = "_Color";
-    private const string _BaseColor = "_BaseColor";
-    internal const string _MainTex   = "_MainTex";
-    internal const string _BaseMap   = "_BaseMap";
-    internal const string _GlossMap  = "_GlossMap";
+        //----------------------------------------------------------------------------------------------------------------------
 
-    private const string _EmissionColor = "_EmissionColor";
-    private const string _EmissionMap   = "_EmissionMap";
-    private const string _EMISSION      = "_EMISSION";
+        // keyword strings
+        internal const string _Color = "_Color";
+        internal const string _BaseColor = "_BaseColor";
+        internal const string _MainTex = "_MainTex";
+        internal const string _BaseColorMap = "_BaseColorMap";
 
-    internal const string _Metallic   = "_Metallic";
-    internal const string _Glossiness = "_Glossiness";
-    internal const string _Smoothness = "_Smoothness";
+        internal const string _BaseMap = "_BaseMap";
+        internal const string _GlossMap = "_GlossMap";
 
-    internal const string _MetallicGlossMap = "_MetallicGlossMap";
-    internal const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
-    internal const string _METALLICSPECGLOSSMAP = "_METALLICSPECGLOSSMAP";
+        private const string _EmissionColor         = "_EmissionColor";
+        private const string _EmissionMap           = "_EmissionMap";
+        private const string _EmissiveColorMap      = "_EmissiveColorMap";
+        private const string _EMISSION              = "_EMISSION";
+        private const string _EmissiveIntensity     = "_EmissiveIntensity";
+        private const string _EmissiveIntensityUnit = "_EmissiveIntensityUnit";
+        private const string _EmissiveColorLDR      = "_EmissiveColorLDR";
+        private const string _EmissiveColor         = "_EmissiveColor";
+        private const string _EmissionStrength      = "_EmissionStrength";
+        private const string _UseEmissiveIntensity  = "_UseEmissiveIntensity";
 
-    private const string _BumpMap   = "_BumpMap";
-    private const string _NORMALMAP = "_NORMALMAP";
+        internal const string _Metallic = "_Metallic";
+        internal const string _Glossiness = "_Glossiness";
+        internal const string _Smoothness = "_Smoothness";
 
-    private const string _ParallaxMap = "_ParallaxMap";
-    private const string _PARALLAXMAP = "_PARALLAXMAP";
+        internal const string _MetallicGlossMap = "_MetallicGlossMap";
+        internal const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
+        internal const string _METALLICSPECGLOSSMAP = "_METALLICSPECGLOSSMAP";
 
-    private const string _ALPHATEST_ON = "_ALPHATEST_ON";
-    private const string _AlphaClip    = "_AlphaClip";
-        
+        private const string _BumpMap = "_BumpMap";
+        private const string _NORMALMAP = "_NORMALMAP";
+        private const string _NormalMap = "_NormalMap";
+
+        private const string _ParallaxMap = "_ParallaxMap";
+        private const string _PARALLAXMAP = "_PARALLAXMAP";
+        private const string _Parallax    = "_Parallax";
+        private const string _HeightMap   = "_HeightMap";
+        private const string _HEIGHTMAP   = "_HEIGHTMAP";
+
+        private const string _ALPHATEST_ON = "_ALPHATEST_ON";
+        private const string _AlphaClip = "_AlphaClip";
+        private const string _AlphaCutoffEnable = "_AlphaCutoffEnable";
+
+        internal const string _MaskMap = "_MaskMap";
+        internal const string _MASKMAP = "_MASKMAP";
+
+
 
         enum BaseMeshSyncVersion {
         NO_VERSIONING = 0,  //Didn't have versioning in earlier versions
