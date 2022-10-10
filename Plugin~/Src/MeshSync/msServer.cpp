@@ -155,6 +155,9 @@ int Server::processMessages(const MessageHandler& handler)
             m_current_live_edit_request = req;
             handler(Message::Type::RequestServerLiveEdit, *mes);
         }
+        else if (auto command = std::dynamic_pointer_cast<EditorCommandMessage>(mes)) {
+            handler(Message::Type::EditorCommand, *mes);
+        }
 
     next:
         if (skip) {
@@ -667,6 +670,60 @@ void Server::recvServerLiveEditRequest(HTTPServerRequest& request, HTTPServerRes
     auto& os = response.send();
     reqResponse.serialize(os);
     os.flush();
+}
+
+void Server::recvCommand(HTTPServerRequest& request, HTTPServerResponse& response) 
+{
+    auto mes = deserializeMessage<EditorCommandMessage>(request, response);
+    if (!mes)
+        return;
+
+    if (mes->message_id == InvalidID) {
+        throw std::invalid_argument("Invalid EditorCommandMessage::id");
+    }
+    else if (mes->session_id == InvalidID) {
+        throw std::invalid_argument("Invalid EditorCommandMessage::session_id");
+    }
+
+    {
+        lock_t lock(m_commands_mutex);
+        m_current_commands[std::pair{ mes->message_id, mes->session_id }] = mes;
+    }
+
+    // Queue the command for execution
+    queueMessage(mes);
+
+    // Wait for command to be executed
+    for (int i = 0; i < 300 ; ++i) {
+        if (mes->ready)
+            break;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    {
+        lock_t lock(m_commands_mutex);
+        m_current_commands.erase(std::pair{ mes->message_id, mes->session_id });
+    }
+
+    // serve data
+    if (mes->ready) {
+        serveText(response, mes->GetBuffer(), HTTPResponse::HTTP_OK);
+    }
+    else {
+        serveText(response, "timeout", HTTPResponse::HTTP_REQUEST_TIMEOUT);
+    }
+}
+
+void Server::notifyCommand(const char* reply, int messageId, int sessionId) {
+    
+    lock_t lock(m_commands_mutex);
+    auto entry = m_current_commands.find(std::pair{ messageId, sessionId });
+    if (entry == m_current_commands.end())
+        return;
+    auto command = entry->second;
+    command->SetBuffer(reply);
+    command->ready = true;
 }
 
 void Server::notifyPoll(PollMessage::PollType t)

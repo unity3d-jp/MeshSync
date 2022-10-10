@@ -31,7 +31,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.film-internal-utilities": {
-      "version": "0.15.1-preview",
+      "version": "0.16.0-preview",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -89,7 +89,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.unity.film-internal-utilities": "0.15.1-preview",
+        "com.unity.film-internal-utilities": "0.16.0-preview",
         "com.unity.editorcoroutines": "1.0.0",
         "com.unity.modules.audio": "1.0.0",
         "com.unity.modules.animation": "1.0.0",
@@ -118,7 +118,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.package-validation-suite": {
-      "version": "0.27.0-preview",
+      "version": "0.31.0-preview",
       "depth": 0,
       "source": "registry",
       "dependencies": {

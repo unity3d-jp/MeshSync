@@ -123,7 +123,7 @@ $ xcodebuild -scheme mscore -configuration Release build
 1. Install [cmake](https://cmake.org/)  version 3.18 or later.  
    Example:
     ``` 
-    wget https://github.com/Kitware/CMake/releases/download/v3.18.0/cmake-3.18.4.tar.gz    
+    wget https://github.com/Kitware/CMake/releases/download/v3.18.4/cmake-3.18.4.tar.gz    
     tar zxvf cmake-3.18.4.tar.gz
     cd cmake-3.18.4
     ./bootstrap --prefix=/usr/local
