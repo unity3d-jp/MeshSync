@@ -12,14 +12,23 @@ namespace Unity.MeshSync {
             MeshSyncConstants._MetallicGlossMap,
             MeshSyncConstants._BaseMap,
             MeshSyncConstants._MaskMap
-    };
+        };
 
         private List<Tuple<Material, string>> pendingMaterialUpdates = new();
 
+        /// <summary>
+        /// Returns the path where the given texture shouuld be saved.
+        /// </summary>
+        /// <param name="mat">Material that owns the texture</param>
+        /// <param name="textureName">Name of the texture in the material</param>
+        /// <returns></returns>
         private string GetSavePath(Material mat, string textureName) {
             return Path.Combine(GetAssetsFolder(), $"{mat.name}_{textureName}_baked.png");
         }
 
+        /// <summary>
+        /// Saves any render targets to the AssetDatabase as textures.
+        /// </summary>
         private void SaveMaterialRenderTexturesToAssetDatabase() {
             // Check if there are render textures that need to be saved to the asset database:
             foreach (MaterialHolder materialHolder in materialList) {
@@ -60,6 +69,12 @@ namespace Unity.MeshSync {
             }
         }
 
+        /// <summary>
+        /// Sets the texture on the material if it exists in the AssetDatabase, otherwise it schedules a delayed call to try again when the asset might be imported.
+        /// </summary>
+        /// <param name="mat">Material to set the texture on</param>
+        /// <param name="textureName">Name of the texture in the material</param>
+        /// <returns></returns>
         private bool SetSerializedTextureForMaterial(Material mat, string textureName) {
             var savePath = GetSavePath(mat, textureName);
 
@@ -99,6 +114,9 @@ namespace Unity.MeshSync {
             return true;
         }
 
+        /// <summary>
+        /// Tries to apply any pending material updates and unschedules itself when done.
+        /// </summary>
         private void UpdatePendingMaterials() {
             EditorApplication.delayCall -= UpdatePendingMaterials;
 
@@ -110,6 +128,11 @@ namespace Unity.MeshSync {
             }
         }
 
+        /// <summary>
+        /// Sets the required shader for the given material.
+        /// </summary>
+        /// <param name="mat">Material to set the shader on</param>
+        /// <param name="shaderName">The name of the shader passed by the DCC tool</param>
         private static void UpdateShader(ref Material mat, string shaderName) {
             Shader shader = null;
             if (!string.IsNullOrEmpty(shaderName)) {
