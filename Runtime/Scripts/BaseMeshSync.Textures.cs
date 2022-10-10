@@ -9,9 +9,9 @@ using UnityEngine.Assertions;
 namespace Unity.MeshSync {
     partial class BaseMeshSync {
         static readonly string[] textureNames = {
-        _MetallicGlossMap,
-        _BaseMap,
-        _MaskMap
+            MeshSyncConstants._MetallicGlossMap,
+            MeshSyncConstants._BaseMap,
+            MeshSyncConstants._MaskMap
     };
 
         private List<Tuple<Material, string>> pendingMaterialUpdates = new();
@@ -76,13 +76,13 @@ namespace Unity.MeshSync {
             AssetDatabase.ImportAsset(savePath);
 
             var savedTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(savePath);
-            
+
             mat.SetTexture(textureName, savedTexture);
 
-            if (textureName == _MetallicGlossMap ||
-                textureName == _MaskMap) {
-                mat.EnableKeyword(_METALLICGLOSSMAP);
-                mat.EnableKeyword(_METALLICSPECGLOSSMAP);
+            if (textureName == MeshSyncConstants._MetallicGlossMap ||
+                textureName == MeshSyncConstants._MaskMap) {
+                mat.EnableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
+                mat.EnableKeyword(MeshSyncConstants._METALLICSPECGLOSSMAP);
 
                 TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(savePath);
                 if (importer != null) {
@@ -116,7 +116,7 @@ namespace Unity.MeshSync {
 
             if (shader == null) {
 #if AT_USE_HDRP
-            shader = Shader.Find("HDRP/Lit");
+                shader = Shader.Find("HDRP/Lit");
 #elif AT_USE_URP
                 shader = Shader.Find("Universal Render Pipeline/Lit");
 #else
@@ -145,17 +145,17 @@ namespace Unity.MeshSync {
                     mat.SetOverrideTag("RenderType", "Transparent");
                     mat.SetFloat("_Surface", 1);
 #if AT_USE_HDRP
-                mat.EnableKeyword("_ENABLE_FOG_ON_TRANSPARENT");
+                    mat.EnableKeyword("_ENABLE_FOG_ON_TRANSPARENT");
 
-                mat.renderQueue = 3000;
+                    mat.renderQueue = 3000;
 
-                mat.SetFloat("_SurfaceType", 1);
-                mat.SetInt("_ZWrite", 0);
-                mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                mat.SetFloat("_AlphaSrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                mat.SetFloat("_AlphaDstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                mat.SetFloat("_ZTestDepthEqualForOpaque", 4);
+                    mat.SetFloat("_SurfaceType", 1);
+                    mat.SetInt("_ZWrite", 0);
+                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                    mat.SetFloat("_AlphaSrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    mat.SetFloat("_AlphaDstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                    mat.SetFloat("_ZTestDepthEqualForOpaque", 4);
 #elif AT_USE_URP
                 mat.SetFloat("_Blend", 1);
                 mat.DisableKeyword("_ALPHATEST_ON");
