@@ -94,7 +94,7 @@ namespace Unity.MeshSync {
         private static void BakeMaskMap(Material destMat,
             List<TextureHolder> textureHolders,
             List<MaterialPropertyData> materialProperties) {
-            if (!destMat.HasTexture(BaseMeshSync._MaskMap)) {
+            if (!destMat.HasTexture(MeshSyncConstants._MaskMap)) {
                 return;
             }
 
@@ -107,19 +107,19 @@ namespace Unity.MeshSync {
             bool texturesExist = false;
 
             texturesExist |=
-                FindTexture(BaseMeshSync._MetallicGlossMap, textureHolders, materialProperties,
-                    BaseMeshSync._Metallic, 0, out var metalTexture);
+                FindTexture(MeshSyncConstants._MetallicGlossMap, textureHolders, materialProperties,
+                    MeshSyncConstants._Metallic, 0, out var metalTexture);
 
             texturesExist |=
-                FindTexture(BaseMeshSync._GlossMap, textureHolders, materialProperties,
-                    BaseMeshSync._Glossiness, 1, out var glossTexture);
+                FindTexture(MeshSyncConstants._GlossMap, textureHolders, materialProperties,
+                    MeshSyncConstants._Glossiness, 1, out var glossTexture);
 
             // If there are no textures, don't bake anything, slider values can control everything:
             if (!texturesExist ||
                 metalTexture == null ||
                 glossTexture == null) {
-                destMat.SetTexture(BaseMeshSync._MaskMap, null);
-                destMat.DisableKeyword(BaseMeshSync._MASKMAP);
+                destMat.SetTexture(MeshSyncConstants._MaskMap, null);
+                destMat.DisableKeyword(MeshSyncConstants._MASKMAP);
                 return;
             }
 
@@ -128,11 +128,11 @@ namespace Unity.MeshSync {
             shader.SetTexture(SHADER_CONST_METALLIC, metalTexture);
             shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossTexture);
 
-            var texture = shader.RenderToTexture(destMat.GetTexture(BaseMeshSync._MaskMap));
+            var texture = shader.RenderToTexture(destMat.GetTexture(MeshSyncConstants._MaskMap));
 
-            destMat.EnableKeyword(BaseMeshSync._MASKMAP);
+            destMat.EnableKeyword(MeshSyncConstants._MASKMAP);
 
-            destMat.SetTexture(BaseMeshSync._MaskMap, texture);
+            destMat.SetTexture(MeshSyncConstants._MaskMap, texture);
         }
 #else
         private static void BakeSmoothness(Material destMat,
@@ -151,16 +151,16 @@ namespace Unity.MeshSync {
 
             if (smoothnessChannel == 0) {
                 // Bake to metallic alpha
-                channelName = BaseMeshSync._MetallicGlossMap;
+                channelName = MeshSyncConstants._MetallicGlossMap;
                 texturesExist |=
-                    FindTexture(BaseMeshSync._MetallicGlossMap, textureHolders, materialProperties,
-                        BaseMeshSync._Metallic, 0, out rgbTexture);
+                    FindTexture(MeshSyncConstants._MetallicGlossMap, textureHolders, materialProperties,
+                        MeshSyncConstants._Metallic, 0, out rgbTexture);
             }
             else if (smoothnessChannel == 1) {
                 // Bake to albedo alpha
-                channelName = BaseMeshSync._BaseMap;
+                channelName = MeshSyncConstants._BaseMap;
                 texturesExist |=
-                    FindTexture(BaseMeshSync._MainTex, textureHolders, materialProperties, BaseMeshSync._Color, 0,
+                    FindTexture(MeshSyncConstants._MainTex, textureHolders, materialProperties, MeshSyncConstants._Color, 0,
                         out rgbTexture);
             }
             else {
@@ -171,7 +171,7 @@ namespace Unity.MeshSync {
 
             // Bake smoothness to 1 if there is no map and use the slider to scale it:
             texturesExist |=
-                FindTexture(BaseMeshSync._GlossMap, textureHolders, materialProperties, string.Empty, 1,
+                FindTexture(MeshSyncConstants._GlossMap, textureHolders, materialProperties, string.Empty, 1,
                     out var glossTexture);
 
             // If there are no textures, don't bake anything, slider values can control everything:
@@ -180,9 +180,9 @@ namespace Unity.MeshSync {
                 rgbTexture == null) {
                 destMat.SetTexture(channelName, null);
 
-                if (channelName == BaseMeshSync._MetallicGlossMap) {
-                    destMat.DisableKeyword(BaseMeshSync._METALLICGLOSSMAP);
-                    destMat.DisableKeyword(BaseMeshSync._METALLICSPECGLOSSMAP);
+                if (channelName == MeshSyncConstants._MetallicGlossMap) {
+                    destMat.DisableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
+                    destMat.DisableKeyword(MeshSyncConstants._METALLICSPECGLOSSMAP);
                 }
 
                 return;
@@ -195,13 +195,13 @@ namespace Unity.MeshSync {
 
             var texture = shader.RenderToTexture(destMat.GetTexture(channelName));
 
-            if (channelName == BaseMeshSync._MetallicGlossMap) {
-                destMat.EnableKeyword(BaseMeshSync._METALLICGLOSSMAP);
-                destMat.EnableKeyword(BaseMeshSync._METALLICSPECGLOSSMAP);
+            if (channelName == MeshSyncConstants._MetallicGlossMap) {
+                destMat.EnableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
+                destMat.EnableKeyword(MeshSyncConstants._METALLICSPECGLOSSMAP);
             }
             else if (smoothnessChannel == 0) {
-                destMat.DisableKeyword(BaseMeshSync._METALLICGLOSSMAP);
-                destMat.DisableKeyword(BaseMeshSync._METALLICSPECGLOSSMAP);
+                destMat.DisableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
+                destMat.DisableKeyword(MeshSyncConstants._METALLICSPECGLOSSMAP);
             }
 
             destMat.SetTexture(channelName, texture);

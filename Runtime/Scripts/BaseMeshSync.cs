@@ -1085,12 +1085,12 @@ internal delegate void DeleteInstanceHandler(string path);
         }
 
         private static Dictionary<string, string[]> synonymMap = new Dictionary<string, string[]> {
-            { _Color, new[] { _BaseColor } },
-            { _MainTex, new[] { _BaseMap, _BaseColorMap } },
-            { _Glossiness, new[] { _Smoothness } },
-            { _BumpMap, new[] { _NormalMap } },
-            { _EmissionMap, new[] { _EmissiveColorMap } },
-            { _ParallaxMap , new[] { _HeightMap } }
+            { MeshSyncConstants._Color, new[] { MeshSyncConstants._BaseColor } },
+            { MeshSyncConstants._MainTex, new[] { MeshSyncConstants._BaseMap, MeshSyncConstants._BaseColorMap } },
+            { MeshSyncConstants._Glossiness, new[] { MeshSyncConstants._Smoothness } },
+            { MeshSyncConstants._BumpMap, new[] { MeshSyncConstants._NormalMap } },
+            { MeshSyncConstants._EmissionMap, new[] { MeshSyncConstants._EmissiveColorMap } },
+            { MeshSyncConstants._ParallaxMap , new[] { MeshSyncConstants._HeightMap } }
         };
 
         private static MaterialPropertyData? FindMaterialPropertyData(List<MaterialPropertyData> materialProperties, string name) {
@@ -1117,12 +1117,14 @@ internal delegate void DeleteInstanceHandler(string path);
                 return;
             
             // Enable alpha test if there is a color texture so alpha clipping works:
-            if (propName == _BaseMap || propName == _MainTex || propName == _BaseColorMap) {
-                bool hasAlpha = HandleKeywords(destMat, textureHolders, prop, _ALPHATEST_ON);
+            if (propName == MeshSyncConstants._BaseMap ||
+                propName == MeshSyncConstants._MainTex || 
+                propName == MeshSyncConstants._BaseColorMap) {
+                bool hasAlpha = HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._ALPHATEST_ON);
 #if AT_USE_HDRP
-                destMat.SetFloat(_AlphaCutoffEnable, hasAlpha ? 1 : 0);
+                destMat.SetFloat(MeshSyncConstants._AlphaCutoffEnable, hasAlpha ? 1 : 0);
 #elif AT_USE_URP
-                destMat.SetFloat(_AlphaClip, hasAlpha ? 1 : 0);
+                destMat.SetFloat(MeshSyncConstants._AlphaClip, hasAlpha ? 1 : 0);
 #else 
                 if (hasAlpha) {
                     destMat.SetOverrideTag("RenderType", "TransparentCutout");
@@ -1131,65 +1133,49 @@ internal delegate void DeleteInstanceHandler(string path);
 #endif
             }
 
-            // todo: handle transparent
-            //if (propName == _Color)
-            //{
-            //    var color = prop.vectorValue;
-            //    if (color.w > 0.0f && color.w < 1.0f && dstmat.HasProperty("_SrcBlend"))
-            //    {
-            //        dstmat.SetOverrideTag("RenderType", "Transparent");
-            //        dstmat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-            //        dstmat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-            //        dstmat.SetInt("_ZWrite", 0);
-            //        dstmat.DisableKeyword("_ALPHATEST_ON");
-            //        dstmat.DisableKeyword("_ALPHABLEND_ON");
-            //        dstmat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-            //        dstmat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-            //    }
-            //}
-            if (propName == _EmissionColor) {
+            if (propName == MeshSyncConstants._EmissionColor) {
                 if (destMat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack) {
                     destMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
 
-                    HandleKeywords(destMat, textureHolders, prop, _EMISSION);
+                    HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._EMISSION);
                 }
             }
-            else if (propName == _MetallicGlossMap) {
-                HandleKeywords(destMat, textureHolders, prop, _METALLICGLOSSMAP);
-                HandleKeywords(destMat, textureHolders, prop, _METALLICSPECGLOSSMAP);
+            else if (propName == MeshSyncConstants._MetallicGlossMap) {
+                HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._METALLICGLOSSMAP);
+                HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._METALLICSPECGLOSSMAP);
             }
-            else if (propName == _BumpMap) {
-                HandleKeywords(destMat, textureHolders, prop, _NORMALMAP);
+            else if (propName == MeshSyncConstants._BumpMap) {
+                HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._NORMALMAP);
             }
-            else if (propName == _ParallaxMap) {
-                HandleKeywords(destMat, textureHolders, prop, _PARALLAXMAP);
+            else if (propName == MeshSyncConstants._ParallaxMap) {
+                HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._PARALLAXMAP);
             }
 #if AT_USE_HDRP
-            else if (propName == _EmissiveColorMap) {
+            else if (propName == MeshSyncConstants._EmissiveColorMap) {
                 Color baseEmissionColor = Color.white;
-                var emissionColorProp = FindMaterialPropertyData(materialProperties, _EmissionColor);
+                var emissionColorProp = FindMaterialPropertyData(materialProperties, MeshSyncConstants._EmissionColor);
                 if (emissionColorProp.HasValue) {
                     baseEmissionColor = emissionColorProp.Value.vectorValue;
                 }
 
-                var emissionStrengthProp = FindMaterialPropertyData(materialProperties, _EmissionStrength);
+                var emissionStrengthProp = FindMaterialPropertyData(materialProperties, MeshSyncConstants._EmissionStrength);
                 float emissionStrength = 0;
                 if (emissionStrengthProp.HasValue) {
                     emissionStrength = emissionStrengthProp.Value.floatValue;
                 }
                  
-                destMat.SetFloat(_UseEmissiveIntensity,1);
-                destMat.SetFloat(_EmissiveIntensityUnit, 0);
-                destMat.SetFloat(_EmissiveIntensity, emissionStrength);
-                destMat.SetColor(_EmissiveColorLDR, baseEmissionColor);
-                destMat.SetColor(_EmissiveColor, baseEmissionColor * emissionStrength);
+                destMat.SetFloat(MeshSyncConstants._UseEmissiveIntensity, 1);
+                destMat.SetFloat(MeshSyncConstants._EmissiveIntensityUnit, 0);
+                destMat.SetFloat(MeshSyncConstants._EmissiveIntensity, emissionStrength);
+                destMat.SetColor(MeshSyncConstants._EmissiveColorLDR, baseEmissionColor);
+                destMat.SetColor(MeshSyncConstants._EmissiveColor, baseEmissionColor * emissionStrength);
             }
-            else if (propName == _HeightMap) {
+            else if (propName == MeshSyncConstants._HeightMap) {
                 if (prop.type == MaterialPropertyData.Type.Texture) {
                     MaterialPropertyData.TextureRecord rec = prop.textureValue;
                     Texture2D                          tex = FindTexture(rec.id, textureHolders);
                     if (tex != null) {
-                        destMat.EnableKeyword(_HEIGHTMAP);
+                        destMat.EnableKeyword(MeshSyncConstants._HEIGHTMAP);
 
                         // If there is no displacement mode set, set it to vertex displacement:
                         if (Array.IndexOf(destMat.enabledKeywords, "_PIXEL_DISPLACEMENT") == -1) {
@@ -1198,7 +1184,7 @@ internal delegate void DeleteInstanceHandler(string path);
                         }
 
                         float scale = 10;
-                        var heightScaleProp = FindMaterialPropertyData(materialProperties, _Parallax);
+                        var heightScaleProp = FindMaterialPropertyData(materialProperties, MeshSyncConstants._Parallax);
                         if (heightScaleProp.HasValue) {
                             // convert from meters to centimeters and / 2 because midpoint is half of that:
                             scale = heightScaleProp.Value.floatValue * 100 / 2;
@@ -2903,53 +2889,6 @@ internal delegate void DeleteInstanceHandler(string path);
 #endif
 
         //----------------------------------------------------------------------------------------------------------------------
-
-        // keyword strings
-        internal const string _Color = "_Color";
-        internal const string _BaseColor = "_BaseColor";
-        internal const string _MainTex = "_MainTex";
-        internal const string _BaseColorMap = "_BaseColorMap";
-
-        internal const string _BaseMap = "_BaseMap";
-        internal const string _GlossMap = "_GlossMap";
-
-        private const string _EmissionColor         = "_EmissionColor";
-        private const string _EmissionMap           = "_EmissionMap";
-        private const string _EmissiveColorMap      = "_EmissiveColorMap";
-        private const string _EMISSION              = "_EMISSION";
-        private const string _EmissiveIntensity     = "_EmissiveIntensity";
-        private const string _EmissiveIntensityUnit = "_EmissiveIntensityUnit";
-        private const string _EmissiveColorLDR      = "_EmissiveColorLDR";
-        private const string _EmissiveColor         = "_EmissiveColor";
-        private const string _EmissionStrength      = "_EmissionStrength";
-        private const string _UseEmissiveIntensity  = "_UseEmissiveIntensity";
-
-        internal const string _Metallic = "_Metallic";
-        internal const string _Glossiness = "_Glossiness";
-        internal const string _Smoothness = "_Smoothness";
-
-        internal const string _MetallicGlossMap = "_MetallicGlossMap";
-        internal const string _METALLICGLOSSMAP = "_METALLICGLOSSMAP";
-        internal const string _METALLICSPECGLOSSMAP = "_METALLICSPECGLOSSMAP";
-
-        private const string _BumpMap = "_BumpMap";
-        private const string _NORMALMAP = "_NORMALMAP";
-        private const string _NormalMap = "_NormalMap";
-
-        private const string _ParallaxMap = "_ParallaxMap";
-        private const string _PARALLAXMAP = "_PARALLAXMAP";
-        private const string _Parallax    = "_Parallax";
-        private const string _HeightMap   = "_HeightMap";
-        private const string _HEIGHTMAP   = "_HEIGHTMAP";
-
-        private const string _ALPHATEST_ON = "_ALPHATEST_ON";
-        private const string _AlphaClip = "_AlphaClip";
-        private const string _AlphaCutoffEnable = "_AlphaCutoffEnable";
-
-        internal const string _MaskMap = "_MaskMap";
-        internal const string _MASKMAP = "_MASKMAP";
-
-
 
         enum BaseMeshSyncVersion {
         NO_VERSIONING = 0,  //Didn't have versioning in earlier versions
