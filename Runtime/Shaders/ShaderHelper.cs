@@ -217,28 +217,7 @@ namespace Unity.MeshSync {
             BakeSmoothness(destMat, textureHolders, materialProperties);
 #endif
         }
-
-        //        private static Texture TextureFromRenderTexture(RenderTexture renderTarget, string path) {
-        //            // TODO:
-        //            // Saving the render texture out to the assetlibrary is really slow, use the render texture and save it later instead:
-        //#if THIS_IS_TOO_SLOW_AT_RUNTIME
-        //            var texture = new Texture2D(renderTarget.width, renderTarget.height, UnityEngine.TextureFormat.RGBA32, true);
-        //            RenderTexture.active = renderTarget;
-        //            texture.ReadPixels(new Rect(0, 0, renderTarget.width, renderTarget.height), 0, 0);
-        //            texture.Apply();
-
-        //            TextureData.WriteToFile(path, texture.EncodeToPNG());
-
-        //            if (string.IsNullOrEmpty(AssetDatabase.AssetPathToGUID(path))) { 
-        //                AssetDatabase.ImportAsset(path);
-        //            }
-        //            var savedTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-
-        //            return savedTexture;
-        //#endif
-        //            return renderTarget;
-        //        }
-
+        
         #region Internals
 
         private readonly ComputeShader shader;
@@ -267,11 +246,6 @@ namespace Unity.MeshSync {
                     enableRandomWrite = true
                 };
                 
-                // If it's supported use a format that's not sRGB:
-                //if (SystemInfo.IsFormatSupported(GraphicsFormat.R8G8B8A8_UNorm, FormatUsage.Render)) {
-                //    renderTarget.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
-                //}
-
                 renderTarget.Create();
             }
 
@@ -281,9 +255,7 @@ namespace Unity.MeshSync {
             var groupsY = (int)Math.Max(1, Math.Ceiling(maxTextureSize.y / (float)groupSizeY));
 
             shader.Dispatch(kernelIndex, groupsX, groupsY, 1);
-
-            //var texture = TextureFromRenderTexture(renderTarget, outputTexturePath);
-
+            
             return renderTarget;
         }
 
