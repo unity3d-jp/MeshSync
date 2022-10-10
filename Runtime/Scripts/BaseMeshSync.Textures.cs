@@ -34,9 +34,13 @@ namespace Unity.MeshSync {
                     if (tex is RenderTexture renderTarget) {
                         var texture = new Texture2D(renderTarget.width, renderTarget.height,
                             UnityEngine.TextureFormat.RGBA32, true);
+                        var activeRenderTarget = RenderTexture.active;
+
                         RenderTexture.active = renderTarget;
                         texture.ReadPixels(new Rect(0, 0, renderTarget.width, renderTarget.height), 0, 0);
                         texture.Apply();
+
+                        RenderTexture.active = activeRenderTarget;
 
                         var savePath = GetSavePath(mat, textureName);
                         TextureData.WriteToFile(savePath, texture.EncodeToPNG());
@@ -157,12 +161,12 @@ namespace Unity.MeshSync {
                     mat.SetFloat("_AlphaDstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                     mat.SetFloat("_ZTestDepthEqualForOpaque", 4);
 #elif AT_USE_URP
-                mat.SetFloat("_Blend", 1);
-                mat.DisableKeyword("_ALPHATEST_ON");
-                mat.DisableKeyword("_ALPHABLEND_ON");
-                mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-                mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                    mat.SetFloat("_Blend", 1);
+                    mat.DisableKeyword("_ALPHATEST_ON");
+                    mat.DisableKeyword("_ALPHABLEND_ON");
+                    mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
 #else
                     mat.SetFloat("_Mode", 3);
                     mat.DisableKeyword("_ALPHATEST_ON");
