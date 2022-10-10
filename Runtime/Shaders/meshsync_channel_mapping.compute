@@ -1,13 +1,17 @@
 #pragma kernel smoothness_into_alpha
+#pragma kernel hdrp_mask
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 RWTexture2D<float4> Output;
+
 Texture2D<float3> RGB;
 Texture2D<float> Smoothness;
+Texture2D<float> Metallic;
 
-SamplerState sampler_linear_repeat_metallic;
-SamplerState sampler_linear_repeat_smoothness;
+SamplerState samplerRGB;
+SamplerState samplerSmoothness;
+SamplerState samplerMetallic;
 
 [numthreads(8, 8, 1)]
 void smoothness_into_alpha(uint3 id : SV_DispatchThreadID)
@@ -18,8 +22,24 @@ void smoothness_into_alpha(uint3 id : SV_DispatchThreadID)
     int2 smoothnessDimensions;
     Smoothness.GetDimensions(smoothnessDimensions.x, smoothnessDimensions.y);
 
-    float3 metallic = RGB.SampleLevel(sampler_linear_repeat_metallic, id.xy / (float2)rgbDimensions, 0);
-    float alpha = Smoothness.SampleLevel(sampler_linear_repeat_smoothness, id.xy / (float2)smoothnessDimensions, 0);
+    float3 metallic = RGB.SampleLevel(samplerRGB, id.xy / (float2)rgbDimensions, 0);
+    float alpha = Smoothness.SampleLevel(samplerSmoothness, id.xy / (float2)smoothnessDimensions, 0);
 
     Output[id.xy] = float4(metallic[0], metallic[1], metallic[2], alpha);
+}
+
+
+[numthreads(8, 8, 1)]
+void hdrp_mask(uint3 id : SV_DispatchThreadID)
+{
+    int2 metalDimensions;
+    Metallic.GetDimensions(metalDimensions.x, metalDimensions.y);
+
+    int2 smoothnessDimensions;
+    Smoothness.GetDimensions(smoothnessDimensions.x, smoothnessDimensions.y);
+
+    float metallic = Metallic.SampleLevel(samplerMetallic, id.xy / (float2)metalDimensions, 0);
+    float smoothness = Smoothness.SampleLevel(samplerSmoothness, id.xy / (float2)smoothnessDimensions, 0);
+
+    Output[id.xy] = float4(metallic, 0, 0, smoothness);
 }

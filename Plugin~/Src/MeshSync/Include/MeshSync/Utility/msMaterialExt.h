@@ -30,6 +30,8 @@ public:
     void    setEmissionMap(TexturePtr v);
     TextureRecord* getEmissionMap() const;
 
+    void    setEmissionStrength(float v);
+
     void    setMetallic(float v);
     float   getMetallic() const;
     void    setMetallicMap(const TextureRecord& v);

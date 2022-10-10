@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Mathematics;
+using System.Runtime.InteropServices;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -11,9 +11,19 @@ namespace Unity.MeshSync {
         private const string _SmoothnessTextureChannel = "_SmoothnessTextureChannel";
 
         static Dictionary<string, ShaderHelper> loadedShaders = new();
+        
+        private const string SHADER_CONST_OUTPUT     = "Output";
+        private const string SHADER_CONST_METALLIC   = "Metallic";
+        private const string SHADER_CONST_SMOOTHNESS = "Smoothness";
+        private const string SHADER_CONST_RGB        = "RGB";
+
+        private const string SHADER_FILE = "meshsync_channel_mapping";
+        private const string SHADER_NAME_SMOOTHNESS_INTO_ALPHA = "smoothness_into_alpha";
+        private const string SHADER_NAME_HDRP_MASK             = "hdrp_mask";
+        
 
         private static ShaderHelper LoadShader(string name) {
-            string file = "meshsync_channel_mapping";
+            string file = SHADER_FILE;
 
             if (!loadedShaders.TryGetValue(file, out var shaderHelper)) {
                 var shaderFiles = AssetDatabase.FindAssets(file);
@@ -57,7 +67,7 @@ namespace Unity.MeshSync {
                 }
             }
 
-            // If there is no such texture, create one with a fallback value:
+            // If there is no such texture, create one with the given fallback value:
 
             float value = fallbackPropertyValue;
 
@@ -72,40 +82,97 @@ namespace Unity.MeshSync {
 
             var pixels = Enumerable.Repeat(new Color(value, value, value, value), dim * dim).ToArray();
 
-            texture = new Texture2D(dim, dim, UnityEngine.TextureFormat.RGBA32, true, true);
+            texture = new Texture2D(dim, dim, UnityEngine.TextureFormat.RFloat, false, true);
 
             texture.SetPixels(pixels);
+            texture.Apply();
 
             return false;
         }
 
-        public static void BakeSmoothness(Material destMat,
+#if AT_USE_HDRP
+        private static void BakeMaskMap(Material destMat,
             List<TextureHolder> textureHolders,
             List<MaterialPropertyData> materialProperties) {
+            if (!destMat.HasTexture(BaseMeshSync._MaskMap)) {
+                return;
+            }
+
+            // Mask map:
+            // R: metal
+            // G: ao
+            // B: detail mask
+            // A: smoothness
+
+            bool texturesExist = false;
+
+            texturesExist |=
+                FindTexture(BaseMeshSync._MetallicGlossMap, textureHolders, materialProperties,
+                    BaseMeshSync._Metallic, 0, out var metalTexture);
+
+            texturesExist |=
+                FindTexture(BaseMeshSync._GlossMap, textureHolders, materialProperties,
+                    BaseMeshSync._Glossiness, 1, out var glossTexture);
+
+            // If there are no textures, don't bake anything, slider values can control everything:
+            if (!texturesExist ||
+                metalTexture == null ||
+                glossTexture == null) {
+                destMat.SetTexture(BaseMeshSync._MaskMap, null);
+                destMat.DisableKeyword(BaseMeshSync._MASKMAP);
+                return;
+            }
+
+            var shader = LoadShader(SHADER_NAME_HDRP_MASK);
+
+            shader.SetTexture(SHADER_CONST_METALLIC, metalTexture);
+            shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossTexture);
+
+            var texture = shader.RenderToTexture(destMat.GetTexture(BaseMeshSync._MaskMap));
+
+            destMat.EnableKeyword(BaseMeshSync._MASKMAP);
+
+            destMat.SetTexture(BaseMeshSync._MaskMap, texture);
+        }
+#else
+        private static void BakeSmoothness(Material destMat,
+            List<TextureHolder> textureHolders,
+            List<MaterialPropertyData> materialProperties) {
+            if (!destMat.HasInt(_SmoothnessTextureChannel)) {
+                return;
+            }
+
             var smoothnessChannel = destMat.GetInt(_SmoothnessTextureChannel);
 
-            Texture2D rgbTexture = null;
-            string channelName = null;
+            Texture2D rgbTexture  = null;
+            string    channelName = null;
 
             bool texturesExist = false;
 
             if (smoothnessChannel == 0) {
                 // Bake to metallic alpha
                 channelName = BaseMeshSync._MetallicGlossMap;
-                texturesExist |= FindTexture(BaseMeshSync._MetallicGlossMap, textureHolders, materialProperties, BaseMeshSync._Metallic, 0, out rgbTexture);
+                texturesExist |=
+                    FindTexture(BaseMeshSync._MetallicGlossMap, textureHolders, materialProperties,
+                        BaseMeshSync._Metallic, 0, out rgbTexture);
             }
             else if (smoothnessChannel == 1) {
                 // Bake to albedo alpha
                 channelName = BaseMeshSync._BaseMap;
-                texturesExist |= FindTexture(BaseMeshSync._MainTex, textureHolders, materialProperties, BaseMeshSync._Color, 0, out rgbTexture);
+                texturesExist |=
+                    FindTexture(BaseMeshSync._MainTex, textureHolders, materialProperties, BaseMeshSync._Color, 0,
+                        out rgbTexture);
             }
             else {
-                Debug.LogError($"Unknown smoothness channel, cannot bake to option: {smoothnessChannel} set in the smoothness texture channel.");
+                Debug.LogError(
+                    $"Unknown smoothness channel, cannot bake to option: {smoothnessChannel} set in the smoothness texture channel.");
                 return;
             }
 
             // Bake smoothness to 1 if there is no map and use the slider to scale it:
-            texturesExist |= FindTexture(BaseMeshSync._GlossMap, textureHolders, materialProperties, string.Empty, 1, out var glossTexture);
+            texturesExist |=
+                FindTexture(BaseMeshSync._GlossMap, textureHolders, materialProperties, string.Empty, 1,
+                    out var glossTexture);
 
             // If there are no textures, don't bake anything, slider values can control everything:
             if (!texturesExist ||
@@ -121,12 +188,12 @@ namespace Unity.MeshSync {
                 return;
             }
 
-            var shader = LoadShader("smoothness_into_alpha");
+            var shader = LoadShader(SHADER_NAME_SMOOTHNESS_INTO_ALPHA);
 
-            shader.SetTexture("Smoothness", glossTexture);
-            shader.SetTexture("RGB", rgbTexture);
+            shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossTexture);
+            shader.SetTexture(SHADER_CONST_RGB, rgbTexture);
 
-            var texture = shader.RenderToTexture();
+            var texture = shader.RenderToTexture(destMat.GetTexture(channelName));
 
             if (channelName == BaseMeshSync._MetallicGlossMap) {
                 destMat.EnableKeyword(BaseMeshSync._METALLICGLOSSMAP);
@@ -139,16 +206,26 @@ namespace Unity.MeshSync {
 
             destMat.SetTexture(channelName, texture);
         }
+#endif
+
+        public static void BakeMaps(Material destMat,
+            List<TextureHolder> textureHolders,
+            List<MaterialPropertyData> materialProperties) {
+#if AT_USE_HDRP
+            BakeMaskMap(destMat, textureHolders, materialProperties);
+#else
+            BakeSmoothness(destMat, textureHolders, materialProperties);
+#endif
+        }
 
         //        private static Texture TextureFromRenderTexture(RenderTexture renderTarget, string path) {
         //            // TODO:
         //            // Saving the render texture out to the assetlibrary is really slow, use the render texture and save it later instead:
-        //#if HMMMMMMMMMMMMM
+        //#if THIS_IS_TOO_SLOW_AT_RUNTIME
         //            var texture = new Texture2D(renderTarget.width, renderTarget.height, UnityEngine.TextureFormat.RGBA32, true);
         //            RenderTexture.active = renderTarget;
         //            texture.ReadPixels(new Rect(0, 0, renderTarget.width, renderTarget.height), 0, 0);
         //            texture.Apply();
-
 
         //            TextureData.WriteToFile(path, texture.EncodeToPNG());
 
@@ -159,9 +236,6 @@ namespace Unity.MeshSync {
 
         //            return savedTexture;
         //#endif
-
-        //            //AssetDatabase.upda
-
         //            return renderTarget;
         //        }
 
@@ -182,12 +256,26 @@ namespace Unity.MeshSync {
             shader.GetKernelThreadGroupSizes(kernelIndex, out groupSizeX, out groupSizeY, out var gsZ);
         }
 
-        public Texture RenderToTexture() {
-            var renderTarget = new RenderTexture(maxTextureSize.x, maxTextureSize.y, 32) {
-                enableRandomWrite = true
-            };
-            renderTarget.Create();
-            SetTexture("Output", renderTarget);
+        public Texture RenderToTexture(Texture existingTexture) {
+            var renderTarget = existingTexture as RenderTexture;
+            
+            // If there is an existing renderTexture, reuse it:
+            if (renderTarget == null ||
+                renderTarget.width != maxTextureSize.x || 
+                renderTarget.height != maxTextureSize.y) {
+                renderTarget = new RenderTexture(maxTextureSize.x, maxTextureSize.y, 32) {
+                    enableRandomWrite = true
+                };
+                
+                // If it's supported use a format that's not sRGB:
+                //if (SystemInfo.IsFormatSupported(GraphicsFormat.R8G8B8A8_UNorm, FormatUsage.Render)) {
+                //    renderTarget.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
+                //}
+
+                renderTarget.Create();
+            }
+
+            SetTexture(SHADER_CONST_OUTPUT, renderTarget);
 
             var groupsX = (int)Math.Max(1, Math.Ceiling(maxTextureSize.x / (float)groupSizeX));
             var groupsY = (int)Math.Max(1, Math.Ceiling(maxTextureSize.y / (float)groupSizeY));
@@ -201,7 +289,7 @@ namespace Unity.MeshSync {
 
         public void SetTexture(string name, Texture texture) {
             shader.SetTexture(kernelIndex, name, texture);
-            
+
             maxTextureSize.x = Math.Max(maxTextureSize.x, texture.width);
             maxTextureSize.y = Math.Max(maxTextureSize.y, texture.height);
         }
