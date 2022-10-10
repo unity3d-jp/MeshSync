@@ -1063,7 +1063,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 ApplyMaterialProperty(src, destMat, textureHolders, prop, prop.name, materialProperties);
             }
 
-            ShaderHelper.BakeMaps(destMat, textureHolders, materialProperties);
+            MapsBaker.BakeMaps(destMat, textureHolders, materialProperties);
         }
 
         private static bool HandleKeywords(Material destMat, List<TextureHolder> textureHolders,

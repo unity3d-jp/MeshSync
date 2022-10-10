@@ -301,10 +301,6 @@ namespace Unity.MeshSync
 
             needsClientSync = true;
         }
-
-        internal void RequestPythonCallback() {
-
-        }
 #endif
     }
 }

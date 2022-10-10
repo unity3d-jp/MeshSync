@@ -1,28 +1,27 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
 
 namespace Unity.MeshSync {
-    internal class ShaderHelper {
+    /// <summary>
+    /// Helper class to bake smoothness and metallic into channels required for the standard shaders.
+    /// </summary>
+    internal static class MapsBaker {
         private const string _SmoothnessTextureChannel = "_SmoothnessTextureChannel";
 
-        static Dictionary<string, ShaderHelper> loadedShaders = new();
-        
-        private const string SHADER_CONST_OUTPUT     = "Output";
-        private const string SHADER_CONST_METALLIC   = "Metallic";
+        static Dictionary<string, ComputeShaderHelper> loadedShaders = new();
+
+        private const string SHADER_CONST_METALLIC = "Metallic";
         private const string SHADER_CONST_SMOOTHNESS = "Smoothness";
-        private const string SHADER_CONST_RGB        = "RGB";
+        private const string SHADER_CONST_RGB = "RGB";
 
         private const string SHADER_FILE = "meshsync_channel_mapping";
         private const string SHADER_NAME_SMOOTHNESS_INTO_ALPHA = "smoothness_into_alpha";
-        private const string SHADER_NAME_HDRP_MASK             = "hdrp_mask";
-        
+        private const string SHADER_NAME_HDRP_MASK = "hdrp_mask";
 
-        private static ShaderHelper LoadShader(string name) {
+
+        private static ComputeShaderHelper LoadShader(string name) {
             string file = SHADER_FILE;
 
             if (!loadedShaders.TryGetValue(file, out var shaderHelper)) {
@@ -31,7 +30,7 @@ namespace Unity.MeshSync {
                     var shaderFile = shaderFiles[0];
                     var shader = AssetDatabase.LoadAssetAtPath<ComputeShader>(AssetDatabase.GUIDToAssetPath(shaderFile));
 
-                    shaderHelper = new ShaderHelper(shader, name);
+                    shaderHelper = new ComputeShaderHelper(shader, name);
 
                     loadedShaders[name] = shaderHelper;
                 }
@@ -144,8 +143,8 @@ namespace Unity.MeshSync {
 
             var smoothnessChannel = destMat.GetInt(_SmoothnessTextureChannel);
 
-            Texture2D rgbTexture  = null;
-            string    channelName = null;
+            Texture2D rgbTexture = null;
+            string channelName = null;
 
             bool texturesExist = false;
 
@@ -217,55 +216,5 @@ namespace Unity.MeshSync {
             BakeSmoothness(destMat, textureHolders, materialProperties);
 #endif
         }
-        
-        #region Internals
-
-        private readonly ComputeShader shader;
-        int kernelIndex;
-
-        readonly uint groupSizeX;
-        readonly uint groupSizeY;
-
-        Vector2Int maxTextureSize = new Vector2Int(1, 1);
-
-        public ShaderHelper(ComputeShader shader, string kernelName) {
-            this.shader = shader;
-
-            kernelIndex = shader.FindKernel(kernelName);
-            shader.GetKernelThreadGroupSizes(kernelIndex, out groupSizeX, out groupSizeY, out var gsZ);
-        }
-
-        public Texture RenderToTexture(Texture existingTexture) {
-            var renderTarget = existingTexture as RenderTexture;
-            
-            // If there is an existing renderTexture, reuse it:
-            if (renderTarget == null ||
-                renderTarget.width != maxTextureSize.x || 
-                renderTarget.height != maxTextureSize.y) {
-                renderTarget = new RenderTexture(maxTextureSize.x, maxTextureSize.y, 32) {
-                    enableRandomWrite = true
-                };
-                
-                renderTarget.Create();
-            }
-
-            SetTexture(SHADER_CONST_OUTPUT, renderTarget);
-
-            var groupsX = (int)Math.Max(1, Math.Ceiling(maxTextureSize.x / (float)groupSizeX));
-            var groupsY = (int)Math.Max(1, Math.Ceiling(maxTextureSize.y / (float)groupSizeY));
-
-            shader.Dispatch(kernelIndex, groupsX, groupsY, 1);
-            
-            return renderTarget;
-        }
-
-        public void SetTexture(string name, Texture texture) {
-            shader.SetTexture(kernelIndex, name, texture);
-
-            maxTextureSize.x = Math.Max(maxTextureSize.x, texture.width);
-            maxTextureSize.y = Math.Max(maxTextureSize.y, texture.height);
-        }
-
-        #endregion
     }
 }
