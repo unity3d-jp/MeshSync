@@ -16,11 +16,18 @@ using Unity.FilmInternalUtilities;
 using Unity.Mathematics;
 #endif
 
+#if AT_USE_HDRP
+using UnityEngine.Rendering; //Volume
+using UnityEngine.Rendering.HighDefinition;
+using UnityEngine.Experimental.Rendering;
+#endif
+
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using Unity.FilmInternalUtilities.Editor;
 #endif
+
 
 [assembly: InternalsVisibleTo("Unity.Utilities.VariantExport")]
 
@@ -662,6 +669,13 @@ internal delegate void DeleteInstanceHandler(string path);
             if (config.ProgressiveDisplay)
                 ForceRepaint();
 #endif
+
+#if AT_USE_HDRP && UNITY_2021_2_OR_NEWER
+            if (m_needToResetPathTracing) {
+                HDRPUtility.ResetPathTracing();
+                m_needToResetPathTracing = false;
+            }
+#endif
         }
 
         internal void AfterUpdateScene()
@@ -1179,7 +1193,6 @@ internal delegate void DeleteInstanceHandler(string path);
             if (!activeInHierarchy && !dflags.hasPoints)
                 return null;
 
-
             return UpdateMeshEntity(data, config, rec);
         }
 
@@ -1268,6 +1281,10 @@ internal delegate void DeleteInstanceHandler(string path);
                         smr.SetBlendShapeWeight(bi, bsd.weight);
                     }
                 }
+                
+#if AT_USE_HDRP
+                UpdateRayTracingModeIfNecessary(smr);
+#endif
             }
             else if (meshUpdated)
             {
@@ -1293,6 +1310,11 @@ internal delegate void DeleteInstanceHandler(string path);
                     mr.enabled = data.transform.visibility.visibleInRender;
                 mf.sharedMesh = rec.mesh;
                 rec.smrEnabled = false;
+                
+#if AT_USE_HDRP
+                UpdateRayTracingModeIfNecessary(mr);
+#endif
+
             }
 
             if (meshUpdated)
@@ -1346,9 +1368,32 @@ internal delegate void DeleteInstanceHandler(string path);
         public static Action ProBuilderBeforeRebuild;
         public static Action ProBuilderAfterRebuild;
 #endif
+      
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+        
+#if AT_USE_HDRP
 
+        void UpdatePathTracingState() {
+            m_pathTracingExists = false;
+            if (!HDRPUtility.IsRayTracingActive()) 
+                return;
+            
+            SceneComponents<Volume> sceneVolumes = SceneComponents<Volume>.GetInstance();
+            sceneVolumes.Update();
+            m_pathTracingExists = HDRPUtility.IsPathTracingActive(sceneVolumes.GetCachedComponents());
+        }
+        
+        void UpdateRayTracingModeIfNecessary(Renderer r) {
+            if (!m_pathTracingExists) 
+                return;
+            
+            r.rayTracingMode         = UnityEngine.Experimental.Rendering.RayTracingMode.DynamicGeometry;
+            m_needToResetPathTracing = true;
+        }
+#endif
+        
 
-        //----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
         void UpdateMeshEntity(ref Mesh mesh, MeshData data)
         {
@@ -2733,7 +2778,13 @@ internal delegate void DeleteInstanceHandler(string path);
 #endif
     }
 
+    private void Update() {
+#if AT_USE_HDRP
+        UpdatePathTracingState();
+#endif
+    }
 
+#endregion //Events
 
         internal int getNumObservers => m_observers?.Count ?? 0;
 
@@ -2754,7 +2805,6 @@ internal delegate void DeleteInstanceHandler(string path);
             this.m_observers.Add(observer);
             return null;
         }
-        #endregion
 
         //----------------------------------------------------------------------------------------------------------------------
 
@@ -2813,6 +2863,11 @@ internal delegate void DeleteInstanceHandler(string path);
 
     private protected Action m_onMaterialChangedInSceneViewCB = null;
     
+#if AT_USE_HDRP
+    private bool m_pathTracingExists      = false;
+    private bool m_needToResetPathTracing = false;
+#endif
+        
 //----------------------------------------------------------------------------------------------------------------------
 
     PinnedList<int>     m_tmpI  = new PinnedList<int>();
