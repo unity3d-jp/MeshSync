@@ -38,6 +38,8 @@ namespace Unity.MeshSync {
         internal const string _METALLICSPECGLOSSMAP = "_METALLICSPECGLOSSMAP";
 
         internal const string _BumpMap = "_BumpMap";
+        internal const string _BumpScale = "_BumpScale";
+        internal const string _NormalScale = "_NormalScale";
         internal const string _NORMALMAP = "_NORMALMAP";
         internal const string _NormalMap = "_NormalMap";
 
