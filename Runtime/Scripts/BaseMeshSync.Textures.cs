@@ -127,6 +127,16 @@ namespace Unity.MeshSync {
                 }
             }
         }
+        
+        private static Shader GetStandardShader() {
+#if AT_USE_HDRP
+                return Shader.Find("HDRP/Lit");
+#elif AT_USE_URP
+                return Shader.Find("Universal Render Pipeline/Lit");
+#else
+                return Shader.Find("Standard");
+#endif
+        }
 
         /// <summary>
         /// Sets the required shader for the given material.
@@ -140,15 +150,9 @@ namespace Unity.MeshSync {
             }
 
             bool shaderExists = shader != null;
-
+            
             if (shader == null) {
-#if AT_USE_HDRP
-                shader = Shader.Find("HDRP/Lit");
-#elif AT_USE_URP
-                shader = Shader.Find("Universal Render Pipeline/Lit");
-#else
-                shader = Shader.Find("Standard");
-#endif
+                shader = GetStandardShader();
             }
 
             Assert.IsNotNull(shader);
