@@ -59,7 +59,7 @@ namespace Unity.MeshSync {
 
                         // Setting the texture can fail if the asset database has not imported it yet.
                         // If that happens, save it for later and try again:
-                        if (!SetSerializedTextureForMaterialOrTryAgainLater(mat, textureName)) {
+                        if (!SetSerializedTextureForMaterial(mat, textureName)) {
                             pendingMaterialUpdates.Add(new Tuple<Material, string>(mat, textureName));
 
                             // Set the texture on the material to null for now so the render texture
@@ -71,26 +71,9 @@ namespace Unity.MeshSync {
                 }
             }
         }
-
+        
         /// <summary>
         /// Sets the texture on the material if it exists in the AssetDatabase, otherwise it schedules a delayed call to try again when the asset might be imported.
-        /// </summary>
-        /// <param name="mat">Material to set the texture on</param>
-        /// <param name="textureName">Name of the texture in the material</param>
-        /// <returns></returns>
-        private bool SetSerializedTextureForMaterialOrTryAgainLater(Material mat, string textureName) {
-            if (!SetSerializedTextureForMaterial(mat, textureName)) {
-                EditorApplication.delayCall -= UpdatePendingMaterials;
-                EditorApplication.delayCall += UpdatePendingMaterials;
-
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Sets the texture on the material if it exists in the AssetDatabase.
         /// </summary>
         /// <param name="mat">Material to set the texture on</param>
         /// <param name="textureName">Name of the texture in the material</param>
@@ -106,6 +89,9 @@ namespace Unity.MeshSync {
             try {
                 savedTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(savePath);
                 if (savedTexture == null) {
+                    EditorApplication.delayCall -= UpdatePendingMaterials;
+                    EditorApplication.delayCall += UpdatePendingMaterials;
+
                     return false;
                 }
             }
@@ -137,12 +123,15 @@ namespace Unity.MeshSync {
         private void UpdatePendingMaterials() {
             for (int i = pendingMaterialUpdates.Count - 1; i >= 0; i--) {
                 Tuple<Material, string> pendingMaterial = pendingMaterialUpdates[i];
-                if (SetSerializedTextureForMaterialOrTryAgainLater(pendingMaterial.Item1, pendingMaterial.Item2)) {
+                if (SetSerializedTextureForMaterial(pendingMaterial.Item1, pendingMaterial.Item2)) {
                     pendingMaterialUpdates.RemoveAt(i);
                 }
             }
         }
 
+        /// <summary>
+        /// Returns the default shader for the active render pipeline.
+        /// </summary>
         private static Shader GetStandardShader() {
 #if AT_USE_HDRP
             return Shader.Find("HDRP/Lit");
@@ -195,6 +184,10 @@ namespace Unity.MeshSync {
             }
         }
 
+        /// <summary>
+        /// Sets the material up to represent a glass shader from DCC tools.
+        /// </summary>
+        /// <param name="mat">The material to change.</param>
         private static void SetupGlassShader(Material mat) {
             mat.EnableKeyword("MESHSYNC_OVERRIDE");
 
