@@ -8,6 +8,9 @@ using UnityEngine.Assertions;
 
 namespace Unity.MeshSync {
     partial class BaseMeshSync {
+        /// <summary>
+        /// Names of all maps that could be baked to a render texture and might need to be saved to the asset database.
+        /// </summary>
         static readonly string[] textureNames = {
             MeshSyncConstants._MetallicGlossMap,
             MeshSyncConstants._BaseMap,
@@ -56,7 +59,7 @@ namespace Unity.MeshSync {
 
                         // Setting the texture can fail if the asset database has not imported it yet.
                         // If that happens, save it for later and try again:
-                        if (!SetSerializedTextureForMaterial(mat, textureName)) {
+                        if (!SetSerializedTextureForMaterialOrTryAgainLater(mat, textureName)) {
                             pendingMaterialUpdates.Add(new Tuple<Material, string>(mat, textureName));
 
                             // Set the texture on the material to null for now so the render texture
@@ -75,6 +78,23 @@ namespace Unity.MeshSync {
         /// <param name="mat">Material to set the texture on</param>
         /// <param name="textureName">Name of the texture in the material</param>
         /// <returns></returns>
+        private bool SetSerializedTextureForMaterialOrTryAgainLater(Material mat, string textureName) {
+            if (!SetSerializedTextureForMaterial(mat, textureName)) {
+                EditorApplication.delayCall -= UpdatePendingMaterials;
+                EditorApplication.delayCall += UpdatePendingMaterials;
+
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Sets the texture on the material if it exists in the AssetDatabase.
+        /// </summary>
+        /// <param name="mat">Material to set the texture on</param>
+        /// <param name="textureName">Name of the texture in the material</param>
+        /// <returns></returns>
         private bool SetSerializedTextureForMaterial(Material mat, string textureName) {
             var savePath = GetSavePath(mat, textureName);
 
@@ -86,9 +106,6 @@ namespace Unity.MeshSync {
             try {
                 savedTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(savePath);
                 if (AssetDatabase.LoadAssetAtPath<Texture2D>(savePath) == null) {
-                    EditorApplication.delayCall -= UpdatePendingMaterials;
-                    EditorApplication.delayCall += UpdatePendingMaterials;
-
                     return false;
                 }
             }
@@ -102,7 +119,7 @@ namespace Unity.MeshSync {
                 textureName == MeshSyncConstants._MaskMap) {
                 mat.EnableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
                 mat.EnableKeyword(MeshSyncConstants._METALLICSPECGLOSSMAP);
-
+                
                 TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(savePath);
                 if (importer != null) {
                     importer.sRGBTexture = false;
@@ -122,7 +139,7 @@ namespace Unity.MeshSync {
 
             for (int i = pendingMaterialUpdates.Count - 1; i >= 0; i--) {
                 Tuple<Material, string> pendingMaterial = pendingMaterialUpdates[i];
-                if (SetSerializedTextureForMaterial(pendingMaterial.Item1, pendingMaterial.Item2)) {
+                if (SetSerializedTextureForMaterialOrTryAgainLater(pendingMaterial.Item1, pendingMaterial.Item2)) {
                     pendingMaterialUpdates.RemoveAt(i);
                 }
             }
