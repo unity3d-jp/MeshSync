@@ -80,7 +80,6 @@ namespace Unity.MeshSync {
 
             // Ensure the texture is up to date:
             AssetDatabase.ImportAsset(savePath);
-
             Texture2D savedTexture;
 
             // LoadAssetAtPath can throw an exception if it's called during a domain backup but we have no way to detect that:
@@ -93,7 +92,7 @@ namespace Unity.MeshSync {
                     return false;
                 }
             }
-            catch (Exception ex) {
+            catch (UnityException) {
                 return false;
             }
 
