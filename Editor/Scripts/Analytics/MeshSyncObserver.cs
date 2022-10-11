@@ -56,8 +56,6 @@ namespace Unity.MeshSync.Editor.Analytics {
 
             EditorApplication.hierarchyChanged -= checkWithoutTimeLimits;
             EditorApplication.hierarchyChanged += checkWithoutTimeLimits;
-            Undo.undoRedoPerformed -= checkWithoutTimeLimits;
-            Undo.undoRedoPerformed += checkWithoutTimeLimits;
         }
 
         private static void playModeChangedCallback(PlayModeStateChange state) {
