@@ -1090,7 +1090,8 @@ internal delegate void DeleteInstanceHandler(string path);
             { MeshSyncConstants._Glossiness, new[] { MeshSyncConstants._Smoothness } },
             { MeshSyncConstants._BumpMap, new[] { MeshSyncConstants._NormalMap } },
             { MeshSyncConstants._EmissionMap, new[] { MeshSyncConstants._EmissiveColorMap } },
-            { MeshSyncConstants._ParallaxMap , new[] { MeshSyncConstants._HeightMap } }
+            { MeshSyncConstants._ParallaxMap, new[] { MeshSyncConstants._HeightMap } },
+            { MeshSyncConstants._BumpScale, new[] { MeshSyncConstants._NormalScale } }
         };
 
         private static MaterialPropertyData? FindMaterialPropertyData(List<MaterialPropertyData> materialProperties, string name) {

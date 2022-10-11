@@ -78,8 +78,14 @@ namespace Unity.MeshSync {
         private bool SetSerializedTextureForMaterial(Material mat, string textureName) {
             var savePath = GetSavePath(mat, textureName);
 
+            // Ensure the texture is up to date:
+            AssetDatabase.ImportAsset(savePath);
+
+            Texture2D savedTexture;
+
             // LoadAssetAtPath can throw an exception if it's called during a domain backup but we have no way to detect that:
             try {
+                savedTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(savePath);
                 if (AssetDatabase.LoadAssetAtPath<Texture2D>(savePath) == null) {
                     EditorApplication.delayCall -= UpdatePendingMaterials;
                     EditorApplication.delayCall += UpdatePendingMaterials;
@@ -90,11 +96,6 @@ namespace Unity.MeshSync {
             catch (Exception ex) {
                 return false;
             }
-
-            // Ensure the texture is up to date:
-            AssetDatabase.ImportAsset(savePath);
-
-            var savedTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(savePath);
 
             mat.SetTexture(textureName, savedTexture);
 
@@ -127,14 +128,14 @@ namespace Unity.MeshSync {
                 }
             }
         }
-        
+
         private static Shader GetStandardShader() {
 #if AT_USE_HDRP
-                return Shader.Find("HDRP/Lit");
+            return Shader.Find("HDRP/Lit");
 #elif AT_USE_URP
-                return Shader.Find("Universal Render Pipeline/Lit");
+            return Shader.Find("Universal Render Pipeline/Lit");
 #else
-                return Shader.Find("Standard");
+            return Shader.Find("Standard");
 #endif
         }
 
@@ -150,7 +151,7 @@ namespace Unity.MeshSync {
             }
 
             bool shaderExists = shader != null;
-            
+
             if (shader == null) {
                 shader = GetStandardShader();
             }
