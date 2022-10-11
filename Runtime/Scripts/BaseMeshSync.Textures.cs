@@ -169,39 +169,8 @@ namespace Unity.MeshSync {
             // If the given shader name did not exist, try to set up the material to be close to the given shader name:
             if (!shaderExists) {
                 if (shaderName.ToLower() == "glass") {
-                    mat.EnableKeyword("MESHSYNC_OVERRIDE");
+                    SetupGlassShader(mat);
                     usingOverride = true;
-
-                    mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-                    mat.SetOverrideTag("RenderType", "Transparent");
-                    mat.SetFloat("_Surface", 1);
-#if AT_USE_HDRP
-                    mat.EnableKeyword("_ENABLE_FOG_ON_TRANSPARENT");
-
-                    mat.renderQueue = 3000;
-
-                    mat.SetFloat("_SurfaceType", 1);
-                    mat.SetInt("_ZWrite", 0);
-                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                    mat.SetFloat("_AlphaSrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                    mat.SetFloat("_AlphaDstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                    mat.SetFloat("_ZTestDepthEqualForOpaque", 4);
-#elif AT_USE_URP
-                    mat.SetFloat("_Blend", 1);
-                    mat.DisableKeyword("_ALPHATEST_ON");
-                    mat.DisableKeyword("_ALPHABLEND_ON");
-                    mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-#else
-                    mat.SetFloat("_Mode", 3);
-                    mat.DisableKeyword("_ALPHATEST_ON");
-                    mat.DisableKeyword("_ALPHABLEND_ON");
-                    mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-#endif
                 }
             }
 
@@ -209,6 +178,41 @@ namespace Unity.MeshSync {
             if (!usingOverride && Array.IndexOf(mat.shaderKeywords, "MESHSYNC_OVERRIDE") >= 0) {
                 mat.CopyPropertiesFromMaterial(new Material(shader));
             }
+        }
+
+        private static void SetupGlassShader(Material mat) {
+            mat.EnableKeyword("MESHSYNC_OVERRIDE");
+
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.SetOverrideTag("RenderType", "Transparent");
+            mat.SetFloat("_Surface", 1);
+#if AT_USE_HDRP
+            mat.EnableKeyword("_ENABLE_FOG_ON_TRANSPARENT");
+
+            mat.renderQueue = 3000;
+
+            mat.SetFloat("_SurfaceType", 1);
+            mat.SetInt("_ZWrite", 0);
+            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat("_AlphaSrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+            mat.SetFloat("_AlphaDstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat("_ZTestDepthEqualForOpaque", 4);
+#elif AT_USE_URP
+            mat.SetFloat("_Blend", 1);
+            mat.DisableKeyword("_ALPHATEST_ON");
+            mat.DisableKeyword("_ALPHABLEND_ON");
+            mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+#else
+            mat.SetFloat("_Mode", 3);
+            mat.DisableKeyword("_ALPHATEST_ON");
+            mat.DisableKeyword("_ALPHABLEND_ON");
+            mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+#endif
         }
     }
 }
