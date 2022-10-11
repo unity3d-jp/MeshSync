@@ -105,7 +105,7 @@ namespace Unity.MeshSync {
             // LoadAssetAtPath can throw an exception if it's called during a domain backup but we have no way to detect that:
             try {
                 savedTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(savePath);
-                if (AssetDatabase.LoadAssetAtPath<Texture2D>(savePath) == null) {
+                if (savedTexture == null) {
                     return false;
                 }
             }
@@ -135,8 +135,6 @@ namespace Unity.MeshSync {
         /// Tries to apply any pending material updates and unschedules itself when done.
         /// </summary>
         private void UpdatePendingMaterials() {
-            EditorApplication.delayCall -= UpdatePendingMaterials;
-
             for (int i = pendingMaterialUpdates.Count - 1; i >= 0; i--) {
                 Tuple<Material, string> pendingMaterial = pendingMaterialUpdates[i];
                 if (SetSerializedTextureForMaterialOrTryAgainLater(pendingMaterial.Item1, pendingMaterial.Item2)) {
