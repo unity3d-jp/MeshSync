@@ -20,11 +20,12 @@ namespace Unity.MeshSync {
         private const string SHADER_NAME_SMOOTHNESS_INTO_ALPHA = "smoothness_into_alpha";
         private const string SHADER_NAME_HDRP_MASK = "hdrp_mask";
 
-
+        
         private static ComputeShaderHelper LoadShader(string name) {
             string file = SHADER_FILE;
 
             if (!loadedShaders.TryGetValue(file, out var shaderHelper)) {
+#if UNITY_EDITOR
                 var shaderFiles = AssetDatabase.FindAssets(file);
                 if (shaderFiles.Length > 0) {
                     var shaderFile = shaderFiles[0];
@@ -34,6 +35,9 @@ namespace Unity.MeshSync {
 
                     loadedShaders[name] = shaderHelper;
                 }
+#else
+// TODO: Load shader at runtime here
+#endif
             }
 
             return shaderHelper;
@@ -123,6 +127,9 @@ namespace Unity.MeshSync {
             }
 
             var shader = LoadShader(SHADER_NAME_HDRP_MASK);
+            if (shader == null) {
+                return;
+            }
 
             shader.SetTexture(SHADER_CONST_METALLIC, metalTexture);
             shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossTexture);
@@ -188,6 +195,9 @@ namespace Unity.MeshSync {
             }
 
             var shader = LoadShader(SHADER_NAME_SMOOTHNESS_INTO_ALPHA);
+            if (shader == null) {
+                return;
+            }
 
             shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossTexture);
             shader.SetTexture(SHADER_CONST_RGB, rgbTexture);
