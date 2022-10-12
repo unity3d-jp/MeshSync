@@ -10,7 +10,7 @@ namespace Unity.MeshSync {
     internal static class MapsBaker {
         private const string _SmoothnessTextureChannel = "_SmoothnessTextureChannel";
 
-        static Dictionary<string, ComputeShaderHelper> loadedShaders = new();
+        static Dictionary<string, ComputeShaderHelper> loadedShaders = new Dictionary<string, ComputeShaderHelper>();
 
         private const string SHADER_CONST_METALLIC = "Metallic";
         private const string SHADER_CONST_SMOOTHNESS = "Smoothness";
@@ -20,7 +20,7 @@ namespace Unity.MeshSync {
         private const string SHADER_NAME_SMOOTHNESS_INTO_ALPHA = "smoothness_into_alpha";
         private const string SHADER_NAME_HDRP_MASK = "hdrp_mask";
 
-        
+
         private static ComputeShaderHelper LoadShader(string name) {
             string file = SHADER_FILE;
 
@@ -58,14 +58,15 @@ namespace Unity.MeshSync {
             List<MaterialPropertyData> materialProperties,
             string fallbackPropertyName,
             float fallbackPropertyValue,
-            out Texture2D texture) {
+            out Texture2DDisposable disposableTexture) {
+
             var prop = FindMaterialProperty(materialProperties, name);
 
             if (prop.HasValue) {
                 MaterialPropertyData.TextureRecord rec = prop.Value.textureValue;
-                texture = BaseMeshSync.FindTexture(rec.id, textureHolders);
+                disposableTexture = new Texture2DDisposable(BaseMeshSync.FindTexture(rec.id, textureHolders), false);
 
-                if (texture != null) {
+                if (disposableTexture.Texture != null) {
                     return true;
                 }
             }
@@ -85,11 +86,11 @@ namespace Unity.MeshSync {
 
             var pixels = Enumerable.Repeat(new Color(value, value, value, value), dim * dim).ToArray();
 
-            texture = new Texture2D(dim, dim, UnityEngine.TextureFormat.RFloat, false, true);
+            disposableTexture = new Texture2DDisposable(new Texture2D(dim, dim, UnityEngine.TextureFormat.RFloat, false, true));
 
-            texture.SetPixels(pixels);
-            texture.Apply();
-
+            disposableTexture.Texture.SetPixels(pixels);
+            disposableTexture.Texture.Apply();
+            
             return false;
         }
 
@@ -119,8 +120,8 @@ namespace Unity.MeshSync {
 
             // If there are no textures, don't bake anything, slider values can control everything:
             if (!texturesExist ||
-                metalTexture == null ||
-                glossTexture == null) {
+                metalTexture.Texture == null ||
+                glossTexture.Texture == null) {
                 destMat.SetTexture(MeshSyncConstants._MaskMap, null);
                 destMat.DisableKeyword(MeshSyncConstants._MASKMAP);
                 return;
@@ -144,13 +145,14 @@ namespace Unity.MeshSync {
         private static void BakeSmoothness(Material destMat,
             List<TextureHolder> textureHolders,
             List<MaterialPropertyData> materialProperties) {
-            if (!destMat.HasInt(_SmoothnessTextureChannel)) {
+         
+            if (!destMat.HasProperty(_SmoothnessTextureChannel)) {
                 return;
             }
 
             var smoothnessChannel = destMat.GetInt(_SmoothnessTextureChannel);
 
-            Texture2D rgbTexture = null;
+            Texture2DDisposable rgbTexture = null;
             string channelName = null;
 
             bool texturesExist = false;
@@ -182,8 +184,8 @@ namespace Unity.MeshSync {
 
             // If there are no textures, don't bake anything, slider values can control everything:
             if (!texturesExist ||
-                glossTexture == null ||
-                rgbTexture == null) {
+                glossTexture.Texture == null ||
+                rgbTexture.Texture == null) {
                 destMat.SetTexture(channelName, null);
 
                 if (channelName == MeshSyncConstants._MetallicGlossMap) {
@@ -199,8 +201,8 @@ namespace Unity.MeshSync {
                 return;
             }
 
-            shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossTexture);
-            shader.SetTexture(SHADER_CONST_RGB, rgbTexture);
+            shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossTexture.Texture);
+            shader.SetTexture(SHADER_CONST_RGB, rgbTexture.Texture);
 
             var texture = shader.RenderToTexture(destMat.GetTexture(channelName));
 
@@ -214,6 +216,9 @@ namespace Unity.MeshSync {
             }
 
             destMat.SetTexture(channelName, texture);
+
+            glossTexture.Dispose();
+            rgbTexture.Dispose();
         }
 #endif
 

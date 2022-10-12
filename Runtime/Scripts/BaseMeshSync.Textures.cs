@@ -20,7 +20,7 @@ namespace Unity.MeshSync {
             MeshSyncConstants._MaskMap
         };
 
-        private List<Tuple<Material, string>> pendingMaterialUpdates = new();
+        private List<Tuple<Material, string>> pendingMaterialUpdates = new List<Tuple<Material, string>>();
 
         /// <summary>
         /// Returns the path where the given texture should be saved.
@@ -40,25 +40,25 @@ namespace Unity.MeshSync {
             foreach (MaterialHolder materialHolder in materialList) {
                 foreach (string textureName in textureNames) {
                     var mat = materialHolder.material;
-                    if (mat == null || !mat.HasTexture(textureName)) {
+
+                    if (mat == null || !mat.HasProperty(textureName)) {
                         continue;
                     }
 
                     var tex = mat.GetTexture(textureName);
+                    if (tex == null) {
+                        continue;
+                    }
 
                     if (tex is RenderTexture renderTarget) {
-                        var texture = new Texture2D(renderTarget.width, renderTarget.height,
-                            UnityEngine.TextureFormat.RGBA32, true);
-                        var activeRenderTarget = RenderTexture.active;
+                        using (var texture = new Texture2DDisposable(
+                                   new Texture2D(renderTarget.width, renderTarget.height,
+                                   UnityEngine.TextureFormat.RGBA32, true))) {
+                            texture.ReadFromRenderTexture(renderTarget);
 
-                        RenderTexture.active = renderTarget;
-                        texture.ReadPixels(new Rect(0, 0, renderTarget.width, renderTarget.height), 0, 0);
-                        texture.Apply();
-
-                        RenderTexture.active = activeRenderTarget;
-
-                        var savePath = GetSavePath(mat, textureName);
-                        TextureData.WriteToFile(savePath, texture.EncodeToPNG());
+                            var savePath = GetSavePath(mat, textureName);
+                            TextureData.WriteToFile(savePath, texture.Texture.EncodeToPNG());
+                        }
 
                         // Setting the texture can fail if the asset database has not imported it yet.
                         // If that happens, save it for later and try again:
