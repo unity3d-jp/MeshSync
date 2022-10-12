@@ -8,4 +8,4 @@
 * [Project Settings](ProjectSettings.md)
 * [Preferences](Preferences.md)
 * [Geometry Nodes](GeometryNodes.md) 
-* [Bidirectional support](BidirectionalSupport.md) 
+* [Bidirectional Sync](BidirectionalSync.md) 

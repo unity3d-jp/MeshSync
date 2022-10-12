@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.IO;
 using NUnit.Framework;
 using Unity.FilmInternalUtilities;
-using Unity.SharpZipLib.Utils;
+using Unity.MeshSync.Editor.Analytics;
 using UnityEditor;
 using UnityEngine;
 
@@ -107,6 +107,10 @@ internal class MayaIntegrator : BaseDCCIntegrator {
         string arg = string.Format(argFormat, loadPluginCmd+FINALIZE_SETUP);
         bool setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, arg);
 
+        if (setupSuccessful) {
+            var analyticsClient = MeshSyncAnalyticsFactory.CreateAnalytics();
+            analyticsClient.UserInstalledPlugin("maya");
+        }
         return setupSuccessful;
     }
     

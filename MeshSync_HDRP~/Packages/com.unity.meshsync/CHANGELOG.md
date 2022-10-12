@@ -1,6 +1,41 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.15.0-preview] - 2022-09-28
+
+### Added
+* feat: Unity Editor server for executing editor commands 
+* feat: add a button to show plugins folder in Preferences
+* feat: add Editor server config in Project Settings page for AutoSetup from DCC tool 
+* feat: add support to install plugin for Blender 3.3 
+* feat:  accept port number of scene server via EditorCommand buffer for AutoSetup from DCC tool 
+* doc: add backward compatibility section to the SceneCache documentation 
+
+### Changed
+* deps: use com.unity.film-internal-utilities@0.16.0-preview 
+* doc: updates on BidirectionalSync, GeometryNodes, and MeshSyncServer pages 
+
+### Fixed
+* fix: show if the current version does not support a particular DCC tool 
+* fix: auto installation of Blender plugin @0.14.x-preview
+* fix: disable applicable SceneCache GameObjects when muting SceneCacheTrack 
+* fix: scale instance transforms with meshsync scale factor to ensure correct positioning 
+
+## [0.14.5-preview] - 2022-09-03
+
+### Changed
+* doc: update the documentation on Bidirectional Sync 
+
+## [0.14.4-preview] - 2022-09-03
+
+### Changed
+* ui: updating UI texts under the Instances section in MeshSyncServer 
+
+### Fixed
+* fix: clear properties if the client does not send any 
+* fix: find DCC plugins in "Plugins" folder as well 
+* fix: show if a DCC tool is not supported in the Preferences window
+
 ## [0.14.3-preview] - 2022-08-24
 
 ### Fixed

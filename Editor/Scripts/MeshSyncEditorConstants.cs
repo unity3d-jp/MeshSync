@@ -11,7 +11,16 @@ internal static class MeshSyncEditorConstants {
     [InitializeOnLoadMethod]
     static void MeshSyncEditorConstants_OnLoad() {
         bool parsed = PackageVersion.TryParse(Lib.GetPluginVersion(), out m_pluginVersion);
-        Assert.IsTrue(parsed);        
+        Assert.IsTrue(parsed);
+
+        foreach (KeyValuePair<string, DCCToolInfo> kv in SUPPORTED_DCC_TOOLS_BY_FOLDER) {
+            DCCToolInfo     dccToolInfo = kv.Value;
+            if (!SUPPORTED_DCC_TOOLS.TryGetValue(dccToolInfo.Type, out HashSet<string> versions)) {
+                versions = new HashSet<string>();
+                SUPPORTED_DCC_TOOLS.Add(dccToolInfo.Type, versions);
+            }
+            versions.Add(dccToolInfo.DCCToolVersion);
+        }
     }
 
     internal static PackageVersion GetPluginVersion() {
@@ -24,10 +33,11 @@ internal static class MeshSyncEditorConstants {
     internal static readonly string[] Z_UP_CORRECTION_ENUMS         = System.Enum.GetNames( typeof( ZUpCorrectionMode ) );
         
     //Project settings
-    internal const int            UNINITIALIZED_TAB               = -1;
-    internal const int            SERVER_SETTINGS_TAB             = 0;
-    internal const int            SCENE_CACHE_PLAYER_SETTINGS_TAB = 1;
-    internal const int            MAX_SETTINGS_TAB                = 2;
+    internal const int UNINITIALIZED_TAB               = -1;
+    internal const int SERVER_SETTINGS_TAB             = 0;
+    internal const int SCENE_CACHE_PLAYER_SETTINGS_TAB = 1;
+    internal const int EDITOR_SERVER_SETTINGS_TAB      = 2;
+    internal const int MAX_SETTINGS_TAB                = 3;
 
     //
     internal const string DCC_INSTALL_SCRIPTS_PATH = "Packages/com.unity.meshsync/Editor/DCCInstallScripts";
@@ -54,6 +64,7 @@ internal static class MeshSyncEditorConstants {
         { "Blender 3.0", new DCCToolInfo(DCCToolType.BLENDER, "3.0" ) },
         { "Blender 3.1", new DCCToolInfo(DCCToolType.BLENDER, "3.1" ) },
         { "Blender 3.2", new DCCToolInfo(DCCToolType.BLENDER, "3.2" ) },
+        { "Blender 3.3", new DCCToolInfo(DCCToolType.BLENDER, "3.3" ) },
 #elif UNITY_EDITOR_OSX
         { "Blender/2.90", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) }, 
         { "Blender/2.91", new DCCToolInfo(DCCToolType.BLENDER, "2.91" ) }, 
@@ -62,6 +73,7 @@ internal static class MeshSyncEditorConstants {
         { "Blender/3.0", new DCCToolInfo(DCCToolType.BLENDER, "3.0" ) }, 
         { "Blender/3.1", new DCCToolInfo(DCCToolType.BLENDER, "3.1" ) }, 
         { "Blender/3.2", new DCCToolInfo(DCCToolType.BLENDER, "3.2" ) }, 
+        { "Blender/3.3", new DCCToolInfo(DCCToolType.BLENDER, "3.3" ) }, 
         { "Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },  //app directly
 #elif UNITY_EDITOR_LINUX
         { "blender-2.90.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) },
@@ -79,14 +91,20 @@ internal static class MeshSyncEditorConstants {
         { "blender-2.93.7-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
         { "blender-2.93.8-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
         { "blender-2.93.9-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
+        { "blender-2.93.10-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "2.93" ) },
         { "blender-3.0.1-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.0" ) },
         { "blender-3.1.0-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.1" ) },
         { "blender-3.1.1-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.1" ) },
         { "blender-3.1.2-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.1" ) },
         { "blender-3.2.0-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.2" ) },
+        { "blender-3.2.1-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.2" ) },
+        { "blender-3.2.2-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.2" ) },
+        { "blender-3.3.0-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.3" ) },
 #endif        
         
     };
+
+    internal static readonly Dictionary<DCCToolType, HashSet<string>> SUPPORTED_DCC_TOOLS = new Dictionary<DCCToolType, HashSet<string>>();                            
     
 
     //UIElements Main
@@ -94,6 +112,7 @@ internal static class MeshSyncEditorConstants {
     //Project Settings UIElements
     internal static readonly string MAIN_PROJECT_SETTINGS_PATH           = ProjSettingsUIPath("ProjectSettings_Main");
     internal static readonly string SERVER_SETTINGS_TAB_PATH             = ProjSettingsUIPath("ServerSettings_Tab");
+    internal static readonly string EDITOR_SERVER_SETTINGS_TAB_PATH      = ProjSettingsUIPath("EditorServerSettings_Tab");
     internal static readonly string SCENE_CACHE_PLAYER_SETTINGS_TAB_PATH = ProjSettingsUIPath("SceneCachePlayerSettings_Tab");
     internal static readonly string TAB_BUTTON_TEMPLATE_PATH             = ProjSettingsUIPath("TabButtonTemplate");
     internal static readonly string COMPONENT_SYNC_FIELDS_TEMPLATE_PATH  = ProjSettingsUIPath("ComponentSyncFieldsTemplate");    
