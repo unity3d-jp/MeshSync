@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace Unity.MeshSync {
     partial class BaseMeshSync {
+#if UNITY_EDITOR
         /// <summary>
         /// Names of all maps that could be baked to a render texture and might need to be saved to the asset database.
         /// </summary>
@@ -71,7 +74,7 @@ namespace Unity.MeshSync {
                 }
             }
         }
-        
+
         /// <summary>
         /// Sets the texture on the material if it exists in the AssetDatabase, otherwise it schedules a delayed call to try again when the asset might be imported.
         /// </summary>
@@ -105,7 +108,7 @@ namespace Unity.MeshSync {
                 textureName == MeshSyncConstants._MaskMap) {
                 mat.EnableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
                 mat.EnableKeyword(MeshSyncConstants._METALLICSPECGLOSSMAP);
-                
+
                 TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(savePath);
                 if (importer != null) {
                     importer.sRGBTexture = false;
@@ -128,6 +131,7 @@ namespace Unity.MeshSync {
                 }
             }
         }
+#endif
 
         /// <summary>
         /// Returns the default shader for the active render pipeline.
@@ -194,7 +198,17 @@ namespace Unity.MeshSync {
             mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             mat.SetOverrideTag("RenderType", "Transparent");
             mat.SetFloat("_Surface", 1);
+
 #if AT_USE_HDRP
+            SetupGlass_HRDP(mat);
+#elif AT_USE_URP
+            SetupGlass_URP(mat);
+#else
+            SetupGlass_Standard(mat);
+#endif
+        }
+
+        private static void SetupGlass_HRDP(Material mat) {
             mat.EnableKeyword("_ENABLE_FOG_ON_TRANSPARENT");
 
             mat.renderQueue = 3000;
@@ -206,21 +220,24 @@ namespace Unity.MeshSync {
             mat.SetFloat("_AlphaSrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
             mat.SetFloat("_AlphaDstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
             mat.SetFloat("_ZTestDepthEqualForOpaque", 4);
-#elif AT_USE_URP
+        }
+
+        private static void SetupGlass_URP(Material mat) {
             mat.SetFloat("_Blend", 1);
             mat.DisableKeyword("_ALPHATEST_ON");
             mat.DisableKeyword("_ALPHABLEND_ON");
             mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
             mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
             mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-#else
+        }
+
+        private static void SetupGlass_Standard(Material mat) {
             mat.SetFloat("_Mode", 3);
             mat.DisableKeyword("_ALPHATEST_ON");
             mat.DisableKeyword("_ALPHABLEND_ON");
             mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
             mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
             mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-#endif
         }
     }
 }

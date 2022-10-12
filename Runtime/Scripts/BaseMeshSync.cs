@@ -278,7 +278,9 @@ internal delegate void DeleteInstanceHandler(string path);
         public void OnBeforeSerialize() {
             OnBeforeSerializeMeshSyncPlayerV();
 
+#if UNITY_EDITOR
             SaveMaterialRenderTexturesToAssetDatabase();
+#endif
 
             if (!m_keyValuesSerializationEnabled)
                 return;
