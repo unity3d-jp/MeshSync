@@ -10,7 +10,7 @@ namespace Unity.MeshSync {
     internal class Texture2DDisposable : IDisposable {
         public Texture2D Texture { get; private set; }
 
-        private bool DoDispose { get; }
+        public bool DoDispose { get; }
 
         public Texture2DDisposable(Texture2D texture, bool doDispose = true) {
             Init(texture);
