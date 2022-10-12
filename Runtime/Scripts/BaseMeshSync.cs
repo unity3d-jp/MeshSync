@@ -84,6 +84,15 @@ internal delegate void UpdateInstancedEntityHandler(string path, GameObject go);
 /// </summary>
 internal delegate void DeleteInstanceHandler(string path);
 
+    /// <summary>
+    /// Internal analytics observer data
+    /// </summary>
+    public struct MeshSyncAnalyticsData {
+        internal AssetType assetType;
+        internal EntityType entityType;
+
+    }
+
     //----------------------------------------------------------------------------------------------------------------------
 
     /// <summary>
@@ -91,7 +100,7 @@ internal delegate void DeleteInstanceHandler(string path);
     /// which encapsulates common functionalities
     /// </summary>
     [ExecuteInEditMode]
-    public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiver {
+    public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSyncAnalyticsData>, ISerializationCallbackReceiver {
 
 
         #region EventHandler Declarations
@@ -531,7 +540,7 @@ internal delegate void DeleteInstanceHandler(string path);
 #endif
         }
 
-        private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets) {
+        private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets, bool logAnalytics = true) {
             MeshSyncPlayerConfig config = GetConfigV();
             // handle assets
             Try(() => {
@@ -566,6 +575,10 @@ internal delegate void DeleteInstanceHandler(string path);
                                 if (config.Logging)
                                     Debug.Log("unknown asset: " + asset.name);
                                 break;
+                        }
+
+                        if (logAnalytics) {
+                            SendEventData(new MeshSyncAnalyticsData() { assetType = asset.type });
                         }
                     }
 #if UNITY_EDITOR
@@ -604,6 +617,9 @@ internal delegate void DeleteInstanceHandler(string path);
                             Debug.LogError($"Unhandled entity type: {src.entityType}");
                             break;
                     }
+
+                    SendEventData(new MeshSyncAnalyticsData() { entityType = src.entityType });
+
 
                     if (dst != null && onUpdateEntity != null)
                         onUpdateEntity.Invoke(dst.go, src);
@@ -2770,13 +2786,33 @@ internal delegate void DeleteInstanceHandler(string path);
 
 #endregion //Events
 
-//----------------------------------------------------------------------------------------------------------------------
-    
-    //[TODO-sin: 2020-12-14] m_assetsFolder only makes sense for MeshSyncServer because we need to assign a folder that
-    //will keep the synced resources as edits are performed on the DCC tool side.
-    //For SceneCachePlayer, m_assetsFolder is needed only when loading the file, so it should be passed as a parameter 
-    
-    [SerializeField] private string  m_assetsFolder = null; //Always starts with "Assets"
+        internal int getNumObservers => m_observers?.Count ?? 0;
+
+        /// <summary>
+        /// Send MeshSync sync event
+        /// </summary>
+        /// <param name="data">Asset type synced</param>
+        private void SendEventData(MeshSyncAnalyticsData data) {
+
+            foreach (var observer in this.m_observers) {
+                observer.OnNext(data);
+            }
+        }
+
+        /// <inheritdoc/>
+        public IDisposable Subscribe(IObserver<MeshSyncAnalyticsData> observer) {
+
+            this.m_observers.Add(observer);
+            return null;
+        }
+
+        //----------------------------------------------------------------------------------------------------------------------
+
+        // [TODO-sin: 2020-12-14] m_assetsFolder only makes sense for MeshSyncServer because we need to assign a folder that
+        // will keep the synced resources as edits are performed on the DCC tool side.
+        // For SceneCachePlayer, m_assetsFolder is needed only when loading the file, so it should be passed as a parameter
+
+    [SerializeField] private string  m_assetsFolder = null; // Always starts with "Assets"
     [SerializeField] private Transform m_rootObject;
     
     [Obsolete][SerializeField] private bool m_usePhysicalCameraParams = true;  
@@ -2814,7 +2850,8 @@ internal delegate void DeleteInstanceHandler(string path);
     private bool m_markMeshesDynamic            = false;
     private bool m_needReassignMaterials        = false;
     private bool m_keyValuesSerializationEnabled = true;
-    
+
+    private List<IObserver<MeshSyncAnalyticsData>> m_observers = new List<IObserver<MeshSyncAnalyticsData>>();
     private Material m_cachedDefaultMaterial;
 
     private readonly           Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();

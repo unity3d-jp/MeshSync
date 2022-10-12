@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.IO;
 using NUnit.Framework;
 using Unity.FilmInternalUtilities;
+using Unity.MeshSync.Editor.Analytics;
+
 using UnityEditor;
-using UnityEngine;
 
 namespace Unity.MeshSync.Editor {
 internal class _3DSMaxIntegrator : BaseDCCIntegrator {
@@ -70,9 +71,13 @@ internal class _3DSMaxIntegrator : BaseDCCIntegrator {
         }
         
         File.Delete(installScriptPath);
-       
-       
-        return setupSuccessful;
+        if (setupSuccessful) {
+            var analyticsClient = MeshSyncAnalyticsFactory.CreateAnalytics();
+            analyticsClient.UserInstalledPlugin("3dsMax");
+        }
+
+
+            return setupSuccessful;
     }
 
 //----------------------------------------------------------------------------------------------------------------------
