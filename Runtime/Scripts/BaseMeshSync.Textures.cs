@@ -20,7 +20,7 @@ namespace Unity.MeshSync {
         private List<Tuple<Material, string>> pendingMaterialUpdates = new();
 
         /// <summary>
-        /// Returns the path where the given texture shouuld be saved.
+        /// Returns the path where the given texture should be saved.
         /// </summary>
         /// <param name="mat">Material that owns the texture</param>
         /// <param name="textureName">Name of the texture in the material</param>
