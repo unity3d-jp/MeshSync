@@ -98,7 +98,7 @@ namespace Unity.MeshSync {
         private static void BakeMaskMap(Material destMat,
             List<TextureHolder> textureHolders,
             List<MaterialPropertyData> materialProperties) {
-            if (!destMat.HasTexture(MeshSyncConstants._MaskMap)) {
+            if (!destMat.HasProperty(MeshSyncConstants._MaskMap)) {
                 return;
             }
 
