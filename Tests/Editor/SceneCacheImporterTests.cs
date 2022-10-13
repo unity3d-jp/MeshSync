@@ -16,21 +16,26 @@ internal class SceneCacheImporterTests  {
     public IEnumerator MoveSceneCacheFile() {
                 
         //Initial setup
-        string destPath = AssetDatabase.GenerateUniqueAssetPath("Assets/Copied.sc");
-        File.Copy(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH, destPath);
-        AssetDatabase.ImportAsset(destPath);
+        string initialPath = AssetDatabase.GenerateUniqueAssetPath("Assets/Copied.sc");
+        File.Copy(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH, initialPath);
+        AssetDatabase.ImportAsset(initialPath);
         yield return null;
 
-        SceneCachePlayer player = AssetDatabase.LoadAssetAtPath<SceneCachePlayer>(destPath);
+        SceneCachePlayer player = AssetDatabase.LoadAssetAtPath<SceneCachePlayer>(initialPath);        
         Assert.IsNotNull(player);
+        Assert.AreEqual(initialPath, player.GetSceneCacheFilePath());
+        yield return null;
+
+        string movedPath = AssetDatabase.GenerateUniqueAssetPath("Assets/Moved.sc");
+        AssetDatabase.MoveAsset(initialPath, movedPath);
         yield return null;
         
-
-        AssetDatabase.DeleteAsset(destPath);
+        player = AssetDatabase.LoadAssetAtPath<SceneCachePlayer>(movedPath);
+        Assert.AreEqual(movedPath, player.GetSceneCacheFilePath());
+        yield return null;
         
+        AssetDatabase.DeleteAsset(movedPath);
     }
-    
-   
 }
 
-}
+} //end namespace
