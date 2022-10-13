@@ -132,8 +132,8 @@ namespace Unity.MeshSync {
                 return;
             }
 
-            shader.SetTexture(SHADER_CONST_METALLIC, metalTexture);
-            shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossTexture);
+            shader.SetTexture(SHADER_CONST_METALLIC, metalTexture.Texture);
+            shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossTexture.Texture);
 
             var texture = shader.RenderToTexture(destMat.GetTexture(MeshSyncConstants._MaskMap));
 
