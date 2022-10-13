@@ -17,6 +17,10 @@ internal class SceneCacheImporterTests  {
         const string INITIAL_FOLDER = "Assets/TestRunnerInitialFolder";
         const string MOVED_FOLDER = "Assets/TestRunnerMovedFolder";
 
+        //Delete folders for easy retesting 
+        AssetDatabase.DeleteAsset(INITIAL_FOLDER); 
+        AssetDatabase.DeleteAsset(MOVED_FOLDER); 
+
         AssetDatabase.CreateFolder("Assets", Path.GetFileName(INITIAL_FOLDER));
         string fileName = Path.GetFileName(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH);
                 
