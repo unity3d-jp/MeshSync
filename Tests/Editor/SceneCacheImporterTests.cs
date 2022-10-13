@@ -38,7 +38,7 @@ internal class SceneCacheImporterTests  {
         AssetDatabase.MoveAsset(INITIAL_FOLDER, MOVED_FOLDER);
         yield return null;
         
-        string movedPath   = $"{MOVED_FOLDER}/{fileName}";
+        string movedPath = $"{MOVED_FOLDER}/{fileName}";
         Assert.IsTrue(File.Exists(movedPath));
         
         
