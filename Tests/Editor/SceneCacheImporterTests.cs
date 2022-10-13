@@ -14,9 +14,14 @@ internal class SceneCacheImporterTests  {
 
     [UnityTest]
     public IEnumerator MoveSceneCacheFile() {
+        const string INITIAL_FOLDER = "Assets/TestRunnerInitialFolder";
+        const string MOVED_FOLDER = "Assets/TestRunnerMovedFolder";
+
+        AssetDatabase.CreateFolder("Assets", Path.GetFileName(INITIAL_FOLDER));
+        string fileName = Path.GetFileName(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH);
                 
         //Initial setup
-        string initialPath = AssetDatabase.GenerateUniqueAssetPath("Assets/Copied.sc");
+        string initialPath = AssetDatabase.GenerateUniqueAssetPath($"{INITIAL_FOLDER}/{fileName}");
         File.Copy(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH, initialPath);
         AssetDatabase.ImportAsset(initialPath);
         yield return null;
@@ -26,9 +31,12 @@ internal class SceneCacheImporterTests  {
         Assert.AreEqual(initialPath, player.GetSceneCacheFilePath());
         yield return null;
 
-        string movedPath = AssetDatabase.GenerateUniqueAssetPath("Assets/Moved.sc");
-        AssetDatabase.MoveAsset(initialPath, movedPath);
+        AssetDatabase.MoveAsset(INITIAL_FOLDER, MOVED_FOLDER);
         yield return null;
+        
+        string movedPath   = $"{MOVED_FOLDER}/{fileName}";
+        Assert.IsTrue(File.Exists(movedPath));
+        
         
         player = AssetDatabase.LoadAssetAtPath<SceneCachePlayer>(movedPath);
         Assert.AreEqual(movedPath, player.GetSceneCacheFilePath());
