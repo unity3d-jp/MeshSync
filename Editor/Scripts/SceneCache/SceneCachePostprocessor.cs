@@ -11,7 +11,7 @@ class SceneCachePostprocessor : AssetPostprocessor {
             if (ext != DOT_SCENE_CACHE_EXTENSION)
                 continue;
             
-            AssetDatabase.ImportAsset(movedAssetPath);
+            AssetDatabase.ImportAsset(movedAssetPath); //need to reimport to ensure that sceneCacheFilePath points to the new one valid one
         }
     }
 
