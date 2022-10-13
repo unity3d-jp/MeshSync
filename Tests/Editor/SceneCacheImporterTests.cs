@@ -47,6 +47,7 @@ internal class SceneCacheImporterTests  {
         yield return null;
         
         AssetDatabase.DeleteAsset(movedPath);
+        AssetDatabase.DeleteAsset(MOVED_FOLDER);
     }
 }
 
