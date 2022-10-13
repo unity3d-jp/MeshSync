@@ -1,10 +1,7 @@
 ﻿using System.Collections;
 using System.IO;
 using NUnit.Framework;
-using Unity.FilmInternalUtilities;
-using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
-using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace Unity.MeshSync.Editor.Tests {
