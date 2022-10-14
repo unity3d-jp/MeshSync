@@ -41,5 +41,5 @@ void hdrp_mask(uint3 id : SV_DispatchThreadID)
     float metallic = Metallic.SampleLevel(samplerMetallic, id.xy / (float2)metalDimensions, 0);
     float smoothness = Smoothness.SampleLevel(samplerSmoothness, id.xy / (float2)smoothnessDimensions, 0);
 
-    Output[id.xy] = float4(metallic, 0, 0, smoothness);
+    Output[id.xy] = float4(metallic, 0.5, 0.5, smoothness);
 }
