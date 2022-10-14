@@ -6,8 +6,9 @@
 msDeclClassPtr(Material)
 
 namespace ms {
-
-// correspond to Unity's Standard shader
+/**
+ * Generic PBR shader using field names from Unity's Standard shader.
+ */
 class StandardMaterial : public Material
 {
 public:
