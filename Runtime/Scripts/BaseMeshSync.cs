@@ -359,6 +359,9 @@ internal delegate void DeleteInstanceHandler(string path);
         //----------------------------------------------------------------------------------------------------------------------    
         private void MakeSureAssetDirectoryExists() {
 #if UNITY_EDITOR
+            if (Directory.Exists(m_assetsFolder))
+                return;
+            
             Directory.CreateDirectory(m_assetsFolder);
             AssetDatabase.Refresh();
 #endif
