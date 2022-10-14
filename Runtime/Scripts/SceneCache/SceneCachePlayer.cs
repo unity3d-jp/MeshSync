@@ -302,6 +302,7 @@ public class SceneCachePlayer : BaseMeshSync {
         Type tPlayer = typeof(SceneCachePlayer);
         clip.SetCurve("", tPlayer, "m_time", m_sceneCacheInfo.timeCurve);
 
+        EditorUtility.SetDirty(clip);
         UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         return true;
     }
