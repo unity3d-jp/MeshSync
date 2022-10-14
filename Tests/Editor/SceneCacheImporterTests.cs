@@ -24,7 +24,7 @@ internal class SceneCacheImporterTests  {
         //Initial setup
         string initialPath = AssetDatabase.GenerateUniqueAssetPath($"{INITIAL_FOLDER}/{fileName}");
         File.Copy(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH, initialPath);
-        AssetDatabase.ImportAsset(initialPath);
+        AssetDatabase.Refresh();
         yield return null;
 
         SceneCachePlayer player = AssetDatabase.LoadAssetAtPath<SceneCachePlayer>(initialPath);        
