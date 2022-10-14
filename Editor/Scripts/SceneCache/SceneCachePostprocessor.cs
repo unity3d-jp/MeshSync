@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEditor;
+using UnityEngine;
 
 namespace Unity.MeshSync.Editor {
 
@@ -11,7 +12,12 @@ class SceneCachePostprocessor : AssetPostprocessor {
             if (ext != DOT_SCENE_CACHE_EXTENSION)
                 continue;
             
-            AssetDatabase.ImportAsset(movedAssetPath); //need to reimport to ensure that sceneCacheFilePath points to the new one
+            //check if we need to reimport to ensure that sceneCacheFilePath points to the new one
+            SceneCachePlayer player = AssetDatabase.LoadAssetAtPath<SceneCachePlayer>(movedAssetPath);
+            if (player.GetSceneCacheFilePath() == movedAssetPath)
+                continue;
+            
+            AssetDatabase.ImportAsset(movedAssetPath); 
         }
     }
 
