@@ -70,6 +70,8 @@ namespace Unity.MeshSync {
                             // set to the texture in the asset library:
                             mat.SetTexture(textureName, null);
                         }
+                        
+                        renderTarget.Release();
                     }
                 }
             }
