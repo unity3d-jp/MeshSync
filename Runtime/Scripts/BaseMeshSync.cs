@@ -1124,13 +1124,19 @@ internal delegate void DeleteInstanceHandler(string path);
                 propName == MeshSyncConstants._MainTex || 
                 propName == MeshSyncConstants._BaseColorMap) {
                 bool hasAlpha = HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._ALPHATEST_ON);
+                if (hasAlpha) {
+                    destMat.SetOverrideTag("RenderType", "TransparentCutout");
+                }
 #if AT_USE_HDRP
                 destMat.SetFloat(MeshSyncConstants._AlphaCutoffEnable, hasAlpha ? 1 : 0);
+                if (hasAlpha) {
+                    destMat.renderQueue = 2475;
+                    destMat.SetFloat("_ZTestGBuffer", 3);
+                }
 #elif AT_USE_URP
                 destMat.SetFloat(MeshSyncConstants._AlphaClip, hasAlpha ? 1 : 0);
 #else 
                 if (hasAlpha) {
-                    destMat.SetOverrideTag("RenderType", "TransparentCutout");
                     destMat.SetFloat("_Mode", 1);
                 }
 #endif
