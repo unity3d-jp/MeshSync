@@ -275,8 +275,7 @@ public class SceneCachePlayer : BaseMeshSync {
         Assert.IsNotNull(clip);
 
         animatorController = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(controllerPath, clip);        
-        m_animator.runtimeAnimatorController = animatorController;
-        AssetDatabase.SaveAssets();
+        m_animator.runtimeAnimatorController = animatorController; 
 
         return animatorController;
     }
@@ -302,6 +301,7 @@ public class SceneCachePlayer : BaseMeshSync {
         Type tPlayer = typeof(SceneCachePlayer);
         clip.SetCurve("", tPlayer, "m_time", m_sceneCacheInfo.timeCurve);
 
+        AssetDatabase.SaveAssets();
         UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         return true;
     }
