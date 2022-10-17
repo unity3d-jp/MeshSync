@@ -140,6 +140,9 @@ internal static class MapsBaker {
         destMat.EnableKeyword(MeshSyncConstants._MASKMAP);
 
         destMat.SetTextureSafe(MeshSyncConstants._MaskMap, texture);
+        
+        metalTexture.Dispose();
+        glossTexture.Dispose();
     }
 #else
         private static void BakeSmoothness(Material destMat,
