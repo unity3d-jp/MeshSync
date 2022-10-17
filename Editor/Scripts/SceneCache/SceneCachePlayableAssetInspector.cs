@@ -1,6 +1,7 @@
 ﻿using Unity.FilmInternalUtilities;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
+using UnityEditor.Timeline;
 using UnityEngine;
 
 namespace Unity.MeshSync.Editor {
@@ -32,6 +33,17 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         if (null == scPlayer)
             return;
 
+
+        GUILayout.Space(15);
+        //Frame markers
+        if (TimelineEditor.selectedClip.asset == m_scPlayableAsset) {
+            using (new EditorGUILayout.HorizontalScope()) {
+                DrawFrameMarkersGUI(m_scPlayableAsset);
+            }
+        }
+        GUILayout.Space(15);
+        
+        
         DrawLimitedAnimationGUI(m_scPlayableAsset);
         
         {
@@ -94,6 +106,22 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         return (GUI.Button(rect, buttonText, GUI.skin.button));        
     }
 
+    
+    internal static bool DrawFrameMarkersGUI<T>(BaseExtendedClipPlayableAsset<T> clipDataPlayableAsset) where T: PlayableFrameClipData 
+    {        
+
+        T clipData = clipDataPlayableAsset.GetBoundClipData();
+        if (null == clipData)
+            return false;
+
+        EditorGUIDrawerUtility.DrawUndoableGUI(
+            clipDataPlayableAsset, "Show Frame Markers",
+            /*guiFunc=*/ () => EditorGUILayout.Toggle("Show Frame Markers", clipData.AreFrameMarkersRequested()), 
+            /*updateFunc=*/ (bool newValue) => { clipData.RequestFrameMarkers(newValue); }                
+        );
+
+        return clipData.AreFrameMarkersRequested();
+    }    
 //----------------------------------------------------------------------------------------------------------------------
 
 
