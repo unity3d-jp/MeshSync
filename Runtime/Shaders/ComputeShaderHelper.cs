@@ -21,7 +21,7 @@ namespace Unity.MeshSync {
             shader.GetKernelThreadGroupSizes(kernelIndex, out groupSizeX, out groupSizeY, out var gsZ);
         }
 
-        public Texture RenderToTexture(Texture existingTexture) {
+        public RenderTexture RenderToTexture(Texture existingTexture) {
             var renderTarget = existingTexture as RenderTexture;
 
             // If there is an existing renderTexture, reuse it:
