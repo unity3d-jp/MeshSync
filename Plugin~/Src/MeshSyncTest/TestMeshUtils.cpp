@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Test.h"
 #include "Common.h"
+#include "MeshSync/Utility/msErrorHandler.h"
 #include "Utility/MeshGenerator.h"
 
 using namespace mu;
@@ -1168,6 +1169,21 @@ TestCase(Test_Quadify)
         QuadifyTriangles(points, triangles, false, 15.0f, dst_indices, dst_counts);
         Expect(dst_counts.size() == 4);
     }
+}
+
+TestCase(TestErrorHandler)
+{
+	ms::msErrorHandler errorHandler;
+
+    Expect(errorHandler.getExportErrors() == "");
+
+    errorHandler.addExportError("test error 1");
+
+    Expect(errorHandler.getExportErrors() == "- test error 1");
+
+    errorHandler.addExportError("test error 2");
+
+    Expect(errorHandler.getExportErrors() == "- test error 1\n- test error 2");
 }
 
 #endif // SKIP_UTILS_TEST
