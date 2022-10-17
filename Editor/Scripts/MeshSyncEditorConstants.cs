@@ -131,6 +131,9 @@ internal static class MeshSyncEditorConstants {
     
     internal const string SCENE_CACHE_EXTENSION = "sc";
     
+    internal const string SHORTCUT_TOGGLE_KEYFRAME = "MeshSync/Toggle KeyFrame";
+    
+    
     //Private
     private const string PROJECT_SETTINGS_UIELEMENTS_PATH = "Packages/com.unity.meshsync/Editor/UIElements/ProjectSettings";
     private const string USER_SETTINGS_UIELEMENTS_PATH    = "Packages/com.unity.meshsync/Editor/UIElements/UserSettings";
