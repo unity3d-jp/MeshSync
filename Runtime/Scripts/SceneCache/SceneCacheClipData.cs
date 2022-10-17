@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Unity.MeshSync {
 
 [Serializable]
-internal class SceneCacheClipData : BaseClipData {
+internal class SceneCacheClipData : PlayableFrameClipData {
 
 //----------------------------------------------------------------------------------------------------------------------
     protected override void OnBeforeSerializeInternalV() {
