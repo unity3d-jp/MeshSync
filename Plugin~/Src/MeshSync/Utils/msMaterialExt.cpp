@@ -20,6 +20,8 @@ static const char UV_SEC_SHADER_VAR[] = "_UVSec";
 static const char _SpecColor[] = "_SpecColor";
 static const char _ParallaxMap[] = "_ParallaxMap";
 static const char _Parallax[] = "_Parallax";
+static const char _CoatMask[] = "_CoatMask";
+static const char _CoatMaskMap[] = "_CoatMaskMap";
 
 using TextureRecord = MaterialProperty::TextureRecord;
 
@@ -163,6 +165,16 @@ Material::TextureRecord* StandardMaterial::getBumpMap() const
 void StandardMaterial::setSpecular(mu::float3 v)
 {
     addProperty(MaterialProperty(_SpecColor, v));
+}
+
+void StandardMaterial::setClearCoat(float v)
+{
+    addProperty(MaterialProperty(_CoatMask, v));
+}
+
+void StandardMaterial::setClearCoatMask(const TextureRecord& v)
+{
+    addProperty(MaterialProperty(_CoatMaskMap, v));
 }
 
 void StandardMaterial::setHeightScale(float v) {

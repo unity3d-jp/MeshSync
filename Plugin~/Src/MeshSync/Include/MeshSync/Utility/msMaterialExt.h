@@ -52,6 +52,9 @@ public:
     void    setHeightMap(const TextureRecord& v);
 
     void    setSpecular(mu::float3 v);
+
+    void    setClearCoat(float v);
+    void    setClearCoatMask(const TextureRecord& v);
     
     void    setShader(const std::string shaderName);
 };
