@@ -1,6 +1,17 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.15.1-preview] - 2022-10-17
+
+### Added
+* internal: MeshSync Analytics 
+* doc: add EditorServer section in ProjectSettings page 
+
+### Fixed
+* fix: enable the restart notifcation again after updating MeshSync package 
+* fix: geometry changes were not reflected when HDRP pathtracing is on 
+* fix: moving sc files made the paths invalid
+
 ## [0.15.0-preview] - 2022-09-28
 
 ### Added
