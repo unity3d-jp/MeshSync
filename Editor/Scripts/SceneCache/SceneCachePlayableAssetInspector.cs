@@ -37,9 +37,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         GUILayout.Space(15);
         //Frame markers
         if (TimelineEditor.selectedClip.asset == m_scPlayableAsset) {
-            using (new EditorGUILayout.HorizontalScope()) {
-                DrawFrameMarkersGUI(m_scPlayableAsset);
-            }
+            DrawFrameMarkersGUI(m_scPlayableAsset);
         }
         GUILayout.Space(15);
         
