@@ -279,7 +279,14 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     //import old data. [TODO-sin: 2022-3-24] Remove in 0.13.x
     internal void SetIsSceneCacheCurveExtracted(bool extracted) { m_isSceneCacheCurveExtracted = extracted; }
     
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+    
 #if UNITY_EDITOR
+    
+    internal void RefreshPlayableFrames() {
+        SceneCacheClipData clipData = GetBoundClipData();
+        clipData?.RefreshPlayableFrames(); //Null check. the data might not have been bound during recompile
+    }
     
     internal void SetSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
         ExposedReferenceUtility.SetReferenceValueInEditor(ref m_sceneCachePlayerRef, m_propertyTable, scPlayer);
@@ -300,7 +307,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         };
 #endif 
     
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
     
     [SerializeField] private ExposedReference<SceneCachePlayer> m_sceneCachePlayerRef;
     [HideInInspector][SerializeField] private ExposedReference<SceneCachePlayer> m_extractedSceneCachePlayerRef;
