@@ -116,6 +116,17 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         if (null == clipData)
             return;
 
+
+        Rect rect = region.position;
+        
+        //Hide frame marker automatically
+        if (Event.current.type == EventType.Repaint) {
+            double framePerSecond =  clip.GetParentTrack().timelineAsset.editorSettings.GetFPS();
+            clipData.UpdateTimelineWidthPerFrame(rect.width, region.endTime-region.startTime, 
+                framePerSecond, clip.timeScale);
+        }
+        
+        
         LimitedAnimationController limitedAnimationController = asset.GetOverrideLimitedAnimationController();
         if (!limitedAnimationController.IsEnabled()) {
             return;
@@ -133,7 +144,6 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         GUIContent laContent = new GUIContent($"Limited: {numFrames}, {offset}");
         
         Vector2 laContentSize = style.CalcSize(laContent);
-        Rect rect = region.position;
         if (rect.width <= laContentSize.x * 2) //2: arbitrary
             return;
         

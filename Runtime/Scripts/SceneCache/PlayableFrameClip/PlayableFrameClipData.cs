@@ -91,7 +91,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             ((visibleTime) * fps / timeScale) 
         );
                 
-        double widthPerFrame       = visibleRectWidth / numFrames;
+        double widthPerFrame = visibleRectWidth / numFrames;
         m_timelineWidthPerFrame = widthPerFrame;
         if (UpdateFrameMarkersVisibility()) {
             RefreshPlayableFrames();
@@ -239,7 +239,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         
         bool prevVisibility = m_frameMarkersVisibility;
 #if UNITY_EDITOR        
-        const int FRAME_MARKER_WIDTH_THRESHOLD = 20;
+        const int FRAME_MARKER_WIDTH_THRESHOLD = 10; //less: tend to keep drawing markers
         m_frameMarkersVisibility = m_frameMarkersRequested && 
             (m_forceShowFrameMarkers || m_timelineWidthPerFrame > FRAME_MARKER_WIDTH_THRESHOLD);
 #else
