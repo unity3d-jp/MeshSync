@@ -82,9 +82,9 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     internal int GetNumPlayableFrames() { return m_playableFrames.Count;}
 
 #if UNITY_EDITOR
-    internal void SetInspectedProperty(PlayableFramePropertyID id) { m_inspectedPropertyID = id; }
+    internal void SetInspectedProperty(KeyFramePropertyID id) { m_inspectedPropertyID = id; }
 
-    internal PlayableFramePropertyID GetInspectedProperty() { return m_inspectedPropertyID; }
+    internal KeyFramePropertyID GetInspectedProperty() { return m_inspectedPropertyID; }
 
     internal void UpdateTimelineWidthPerFrame(float visibleRectWidth, double visibleTime, double fps, double timeScale) {
         int numFrames = Mathf.RoundToInt((float)
@@ -121,7 +121,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    internal void SetAllPlayableFramesProperty(PlayableFramePropertyID id, bool val) {
+    internal void SetAllPlayableFramesProperty(KeyFramePropertyID id, bool val) {
         foreach (SISPlayableFrame playableFrame in m_playableFrames) {
             playableFrame.SetProperty(id, val ? 1 : 0);
         }
@@ -259,7 +259,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 #pragma warning restore 414    
     
 #if UNITY_EDITOR    
-    private PlayableFramePropertyID m_inspectedPropertyID   = PlayableFramePropertyID.USED;
+    private KeyFramePropertyID m_inspectedPropertyID   = KeyFramePropertyID.USED;
     private double                  m_timelineWidthPerFrame = Int16.MaxValue;
     private bool                    m_forceShowFrameMarkers = false;
 #endif

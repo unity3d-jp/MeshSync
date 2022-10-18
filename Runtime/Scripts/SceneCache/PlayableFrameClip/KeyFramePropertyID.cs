@@ -3,7 +3,7 @@
 namespace Unity.MeshSync {
     
 [Serializable]
-internal enum PlayableFramePropertyID {
+internal enum KeyFramePropertyID {
     USED = 0,
     LOCKED,
 }

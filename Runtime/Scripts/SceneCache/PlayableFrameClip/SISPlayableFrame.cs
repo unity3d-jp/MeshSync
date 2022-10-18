@@ -16,7 +16,7 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
 
     internal SISPlayableFrame(PlayableFrameClipData owner) {
         m_clipDataOwner            = owner;
-        m_serializedProperties = new SerializedDictionary<PlayableFramePropertyID, PlayableFrameProperty<int>>();
+        m_serializedProperties = new SerializedDictionary<KeyFramePropertyID, PlayableFrameProperty<int>>();
     }
 
     internal SISPlayableFrame(PlayableFrameClipData owner, SISPlayableFrame otherFrame) {
@@ -71,21 +71,21 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
     
 //----------------------------------------------------------------------------------------------------------------------
     //Property
-    internal int GetProperty(PlayableFramePropertyID propertyID) {
+    internal int GetProperty(KeyFramePropertyID propertyID) {
         if (null!=m_serializedProperties && m_serializedProperties.TryGetValue(propertyID, out PlayableFrameProperty<int> prop)) {
             return prop.GetValue();
         }
 
         switch (propertyID) {
-            case PlayableFramePropertyID.USED: return 1;
-            case PlayableFramePropertyID.LOCKED: return 0;
+            case KeyFramePropertyID.USED: return 1;
+            case KeyFramePropertyID.LOCKED: return 0;
             default: return 0;
         }        
     }
     
     
 
-    internal void SetProperty(PlayableFramePropertyID id, int val) {
+    internal void SetProperty(KeyFramePropertyID id, int val) {
 #if UNITY_EDITOR        
         if (GetProperty(id) != val) {
             EditorSceneManager.MarkAllScenesDirty();            
@@ -144,7 +144,7 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    [HideInInspector][SerializeField] private SerializedDictionary<PlayableFramePropertyID, PlayableFrameProperty<int>> m_serializedProperties;
+    [HideInInspector][SerializeField] private SerializedDictionary<KeyFramePropertyID, PlayableFrameProperty<int>> m_serializedProperties;
     
     [HideInInspector][SerializeField] private double                m_localTime;
     [HideInInspector][SerializeField] private FrameMarker           m_marker = null;
