@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using UnityEditor.Timeline;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Timeline;
 
 namespace Unity.MeshSync.Editor {
@@ -26,10 +27,7 @@ class FrameMarkerEditor : MarkerEditor {
         Rect      labelRect  = region.markerRegion;
         labelRect.x     += labelRect.width;
         labelRect.width =  TEXT_WIDTH;
-
-
-        Graphics.DrawTexture(labelRect, EditorTextures.GetTextBackgroundTexture());
-        GUI.Label(labelRect,playableFrame.GetNormalizedAnimationTime().ToString(CultureInfo.InvariantCulture));
+        DrawFrameNumber(labelRect, clipData, playableFrame.GetNormalizedAnimationTime());
         
         switch (keyFrameMode) {
             case KeyFrameMode.Smooth: {
@@ -42,6 +40,22 @@ class FrameMarkerEditor : MarkerEditor {
             }
         }
         
+    }
+
+    void DrawFrameNumber(Rect rect, PlayableFrameClipData clipData, double normalizedTime) {
+        Assert.IsNotNull(clipData);
+        
+        TimelineClip            clip                    = clipData.GetOwner();
+        SceneCachePlayableAsset sceneCachePlayableAsset = clip.asset as SceneCachePlayableAsset;
+        if (null == sceneCachePlayableAsset)
+            return;
+
+        int numFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clip);
+        
+        int frame = (int) (normalizedTime * numFrames);
+
+        Graphics.DrawTexture(rect, EditorTextures.GetTextBackgroundTexture());
+        GUI.Label(rect,frame.ToString());
     }
 }
 
