@@ -25,10 +25,19 @@ internal static class EditorTextures {
         return m_keyFrameStopTexture;
     }
 
+    internal static Texture GetKeyFrameBackgroundTexture() {
+        if (!m_keyFrameBackGroundTexture.IsNullRef()) {
+            return m_keyFrameBackGroundTexture;
+        }
+
+        m_keyFrameBackGroundTexture = (Texture2D)EditorGUIUtility.Load("gameviewbackground");
+        return m_keyFrameBackGroundTexture;
+    }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    private static Texture m_keyFrameSmoothTexture = null;
-    private static Texture m_keyFrameStopTexture   = null;
+    private static Texture m_keyFrameSmoothTexture     = null;
+    private static Texture m_keyFrameStopTexture       = null;
+    private static Texture m_keyFrameBackGroundTexture = null;
 }
 } //end namespace
