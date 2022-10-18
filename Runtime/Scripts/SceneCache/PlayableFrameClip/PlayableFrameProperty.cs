@@ -4,9 +4,9 @@ using UnityEngine;
 namespace Unity.MeshSync {
     
 [Serializable]
-internal class PlayableFrameBoolProperty{
+internal class PlayableFrameProperty{
     
-    internal PlayableFrameBoolProperty(PlayableFramePropertyID id, bool val) {
+    internal PlayableFrameProperty(PlayableFramePropertyID id, bool val) {
         m_propertyID  = id;
         m_propertyValue = val;
     }
