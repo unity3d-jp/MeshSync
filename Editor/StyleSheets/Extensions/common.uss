@@ -1,0 +1,11 @@
+.FrameMarker {
+    /* GUIStyle.alignment */
+    -unity-text-align: middle-center;
+
+    /* GUIStyle.fixedHeight */
+    height: 16px;
+
+    /* GUIStyle.fixedWidth */
+    width: 16px;
+
+}

@@ -1,0 +1,9 @@
+.FrameMarker {
+    /* GUIState.background */
+    background-image: resource("Packages/com.unity.streaming-image-sequence/Editor/StyleSheets/Images/LightSkin/FrameMarker.png");
+}
+
+.FrameMarker:hover:focus:checked {
+    /* GUIState.background */
+    background-image: resource("Packages/com.unity.streaming-image-sequence/Editor/StyleSheets/Images/LightSkin/FrameMarkerSelected.png");
+}
