@@ -31,7 +31,7 @@ internal static class PlayableFrameExtension {
 //----------------------------------------------------------------------------------------------------------------------    
     
     internal static void SetKeyFrameMode(this SISPlayableFrame playableFrame, KeyFrameMode mode) {
-        playableFrame.SetProperty(KeyFramePropertyID.LOCKED, (int) mode);
+        playableFrame.SetProperty(KeyFramePropertyID.USED, (int) mode);
     } 
     
     internal static T GetTimelineClipAsset<T>(this SISPlayableFrame playableFrame) where T : Object {
