@@ -1,9 +1,9 @@
-.FrameMarker {
+.KeyFrameMarker {
     /* GUIState.background */
-    background-image: resource("Packages/com.unity.meshsync/Editor/StyleSheets/Images/LightSkin/FrameMarker.png");
+    background-image: resource("Packages/com.unity.meshsync/Editor/StyleSheets/Images/LightSkin/KeyFrameMarker.png");
 }
 
-.FrameMarker:hover:focus:checked {
+.KeyFrameMarker:hover:focus:checked {
     /* GUIState.background */
-    background-image: resource("Packages/com.unity.meshsync/Editor/StyleSheets/Images/LightSkin/FrameMarkerSelected.png");
+    background-image: resource("Packages/com.unity.meshsync/Editor/StyleSheets/Images/LightSkin/KeyFrameMarkerSelected.png");
 }

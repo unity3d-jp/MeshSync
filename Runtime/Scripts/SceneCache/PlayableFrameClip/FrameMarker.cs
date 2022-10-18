@@ -6,15 +6,15 @@ using UnityEngine.Timeline;
 namespace Unity.MeshSync {
 
 [Serializable]
-[CustomStyle("FrameMarker")]
+[CustomStyle("KeyFrameMarker")]
 [HideInMenu]
 internal class FrameMarker : Marker, INotification {
 
+    
     internal void Init(SISPlayableFrame controller, double initialTime) {
         m_playableFrameOwner = controller;
         time = initialTime;
-    } 
-    
+    }     
     
 //----------------------------------------------------------------------------------------------------------------------    
     

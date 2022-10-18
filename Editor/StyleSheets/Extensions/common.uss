@@ -1,4 +1,4 @@
-.FrameMarker {
+.KeyFrameMarker {
     /* GUIStyle.alignment */
     -unity-text-align: middle-center;
 
