@@ -301,7 +301,11 @@ public class SceneCachePlayer : BaseMeshSync {
         Type tPlayer = typeof(SceneCachePlayer);
         clip.SetCurve("", tPlayer, "m_time", m_sceneCacheInfo.timeCurve);
 
-        AssetDatabase.SaveAssets();
+        //Delay SaveAssets() call to avoid calling SaveAsset() during asset import
+        EditorApplication.delayCall += () => {
+            AssetDatabase.SaveAssets();
+        };
+
         UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         return true;
     }
@@ -345,7 +349,7 @@ public class SceneCachePlayer : BaseMeshSync {
             
             // update scene
             this.BeforeUpdateScene();
-            this.UpdateScene(scene, updateNonMaterialAssets);
+            this.UpdateScene(scene, updateNonMaterialAssets, logAnalytics: false);
             this.AfterUpdateScene();
 #if UNITY_EDITOR
             SetSortEntities(false);

@@ -1,4 +1,7 @@
 using System.IO;
+
+using Unity.MeshSync.Editor.Analytics;
+
 using UnityEditor;
 using UnityEngine;
 
@@ -25,6 +28,12 @@ internal static class MeshSyncMenu  {
     internal static MeshSyncServer CreateMeshSyncServer(bool autoStart) {
         GameObject     go  = new GameObject("MeshSyncServer");
         MeshSyncServer mss = go.AddComponent<MeshSyncServer>();
+
+        // Subscribe analytics event observer to MehSyncServer
+        var observer = new MeshSyncObserver();
+        mss.Subscribe(observer);
+
+
         mss.Init(MeshSyncConstants.DEFAULT_ASSETS_PATH);
         mss.SetAutoStartServer(autoStart);
         return mss;

@@ -16,11 +16,18 @@ using Unity.FilmInternalUtilities;
 using Unity.Mathematics;
 #endif
 
+#if AT_USE_HDRP
+using UnityEngine.Rendering; //Volume
+using UnityEngine.Rendering.HighDefinition;
+using UnityEngine.Experimental.Rendering;
+#endif
+
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using Unity.FilmInternalUtilities.Editor;
 #endif
+
 
 [assembly: InternalsVisibleTo("Unity.Utilities.VariantExport")]
 
@@ -77,6 +84,15 @@ internal delegate void UpdateInstancedEntityHandler(string path, GameObject go);
 /// </summary>
 internal delegate void DeleteInstanceHandler(string path);
 
+    /// <summary>
+    /// Internal analytics observer data
+    /// </summary>
+    public struct MeshSyncAnalyticsData {
+        internal AssetType assetType;
+        internal EntityType entityType;
+
+    }
+
     //----------------------------------------------------------------------------------------------------------------------
 
     /// <summary>
@@ -84,7 +100,7 @@ internal delegate void DeleteInstanceHandler(string path);
     /// which encapsulates common functionalities
     /// </summary>
     [ExecuteInEditMode]
-    public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiver {
+    public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSyncAnalyticsData>, ISerializationCallbackReceiver {
 
 
         #region EventHandler Declarations
@@ -347,6 +363,9 @@ internal delegate void DeleteInstanceHandler(string path);
         //----------------------------------------------------------------------------------------------------------------------    
         private void MakeSureAssetDirectoryExists() {
 #if UNITY_EDITOR
+            if (Directory.Exists(m_assetsFolder))
+                return;
+            
             Directory.CreateDirectory(m_assetsFolder);
             AssetDatabase.Refresh();
 #endif
@@ -512,7 +531,7 @@ internal delegate void DeleteInstanceHandler(string path);
 #endif
         }
 
-        private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets) {
+        private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets, bool logAnalytics = true) {
             MeshSyncPlayerConfig config = GetConfigV();
             // handle assets
             Try(() => {
@@ -547,6 +566,10 @@ internal delegate void DeleteInstanceHandler(string path);
                                 if (config.Logging)
                                     Debug.Log("unknown asset: " + asset.name);
                                 break;
+                        }
+
+                        if (logAnalytics) {
+                            SendEventData(new MeshSyncAnalyticsData() { assetType = asset.type });
                         }
                     }
 #if UNITY_EDITOR
@@ -585,6 +608,9 @@ internal delegate void DeleteInstanceHandler(string path);
                             Debug.LogError($"Unhandled entity type: {src.entityType}");
                             break;
                     }
+
+                    SendEventData(new MeshSyncAnalyticsData() { entityType = src.entityType });
+
 
                     if (dst != null && onUpdateEntity != null)
                         onUpdateEntity.Invoke(dst.go, src);
@@ -633,6 +659,13 @@ internal delegate void DeleteInstanceHandler(string path);
 #if UNITY_EDITOR
             if (config.ProgressiveDisplay)
                 ForceRepaint();
+#endif
+
+#if AT_USE_HDRP && UNITY_2021_2_OR_NEWER
+            if (m_needToResetPathTracing) {
+                HDRPUtility.ResetPathTracing();
+                m_needToResetPathTracing = false;
+            }
 #endif
         }
 
@@ -1274,7 +1307,6 @@ internal delegate void DeleteInstanceHandler(string path);
             if (!activeInHierarchy && !dflags.hasPoints)
                 return null;
 
-
             return UpdateMeshEntity(data, config, rec);
         }
 
@@ -1363,6 +1395,10 @@ internal delegate void DeleteInstanceHandler(string path);
                         smr.SetBlendShapeWeight(bi, bsd.weight);
                     }
                 }
+                
+#if AT_USE_HDRP
+                UpdateRayTracingModeIfNecessary(smr);
+#endif
             }
             else if (meshUpdated)
             {
@@ -1388,6 +1424,11 @@ internal delegate void DeleteInstanceHandler(string path);
                     mr.enabled = data.transform.visibility.visibleInRender;
                 mf.sharedMesh = rec.mesh;
                 rec.smrEnabled = false;
+                
+#if AT_USE_HDRP
+                UpdateRayTracingModeIfNecessary(mr);
+#endif
+
             }
 
             if (meshUpdated)
@@ -1438,12 +1479,35 @@ internal delegate void DeleteInstanceHandler(string path);
         }
 
 #if AT_USE_PROBUILDER
-        public static Action ProBuilderBeforeRebuild;
-        public static Action ProBuilderAfterRebuild;
+        internal static Action ProBuilderBeforeRebuild;
+        internal static Action ProBuilderAfterRebuild;
 #endif
+      
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+        
+#if AT_USE_HDRP
 
+        void UpdatePathTracingState() {
+            m_pathTracingExists = false;
+            if (!HDRPUtility.IsRayTracingActive()) 
+                return;
+            
+            SceneComponents<Volume> sceneVolumes = SceneComponents<Volume>.GetInstance();
+            sceneVolumes.Update();
+            m_pathTracingExists = HDRPUtility.IsPathTracingActive(sceneVolumes.GetCachedComponents());
+        }
+        
+        void UpdateRayTracingModeIfNecessary(Renderer r) {
+            if (!m_pathTracingExists) 
+                return;
+            
+            r.rayTracingMode         = UnityEngine.Experimental.Rendering.RayTracingMode.DynamicGeometry;
+            m_needToResetPathTracing = true;
+        }
+#endif
+        
 
-        //----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
         void UpdateMeshEntity(ref Mesh mesh, MeshData data)
         {
@@ -2497,20 +2561,21 @@ internal delegate void DeleteInstanceHandler(string path);
             Misc.UniqueNameGenerator nameGenerator = new Misc.UniqueNameGenerator();
             string basePath = m_assetsFolder;
 
+            bool needSaveAssets = false;
             Func<Material, Material> doExport = (Material mat) => {
                 if (mat == null || IsAsset(mat))
                     return mat;
 
                 string dstPath = string.Format("{0}/{1}.mat", basePath, nameGenerator.Gen(mat.name));
                 Material existing = AssetDatabase.LoadAssetAtPath<Material>(dstPath);
-                if (overwrite || existing == null)
-                {
+                if (overwrite || existing == null) {
                     mat = Misc.OverwriteOrCreateAsset(mat, dstPath);
                     MeshSyncPlayerConfig config = GetConfigV();
                     if (config.Logging)
                         Debug.Log("exported material " + dstPath);
-                }
-                else if (useExistingOnes && existing != null)
+
+                    needSaveAssets = true;
+                } else if (useExistingOnes && existing != null)
                     mat = existing;
                 return mat;
             };
@@ -2518,7 +2583,8 @@ internal delegate void DeleteInstanceHandler(string path);
             foreach (MaterialHolder m in m_materialList)
                 m.material = doExport(m.material); // material maybe updated by SaveAsset()
 
-            AssetDatabase.SaveAssets();
+            if (needSaveAssets)
+                AssetDatabase.SaveAssets();
             ReassignMaterials(recordUndo: false);
         }
 
@@ -2827,15 +2893,42 @@ internal delegate void DeleteInstanceHandler(string path);
         SceneView.duringSceneGui -= OnSceneViewGUI;
 #endif
     }
-#endregion
 
-//----------------------------------------------------------------------------------------------------------------------
-    
-    //[TODO-sin: 2020-12-14] m_assetsFolder only makes sense for MeshSyncServer because we need to assign a folder that
-    //will keep the synced resources as edits are performed on the DCC tool side.
-    //For SceneCachePlayer, m_assetsFolder is needed only when loading the file, so it should be passed as a parameter 
-    
-    [SerializeField] private string  m_assetsFolder = null; //Always starts with "Assets"
+    private void Update() {
+#if AT_USE_HDRP
+        UpdatePathTracingState();
+#endif
+    }
+
+#endregion //Events
+
+        internal int getNumObservers => m_observers?.Count ?? 0;
+
+        /// <summary>
+        /// Send MeshSync sync event
+        /// </summary>
+        /// <param name="data">Asset type synced</param>
+        private void SendEventData(MeshSyncAnalyticsData data) {
+
+            foreach (var observer in this.m_observers) {
+                observer.OnNext(data);
+            }
+        }
+
+        /// <inheritdoc/>
+        public IDisposable Subscribe(IObserver<MeshSyncAnalyticsData> observer) {
+
+            this.m_observers.Add(observer);
+            return null;
+        }
+
+        //----------------------------------------------------------------------------------------------------------------------
+
+        // [TODO-sin: 2020-12-14] m_assetsFolder only makes sense for MeshSyncServer because we need to assign a folder that
+        // will keep the synced resources as edits are performed on the DCC tool side.
+        // For SceneCachePlayer, m_assetsFolder is needed only when loading the file, so it should be passed as a parameter
+
+    [SerializeField] private string  m_assetsFolder = null; // Always starts with "Assets"
     [SerializeField] private Transform m_rootObject;
     
     [Obsolete][SerializeField] private bool m_usePhysicalCameraParams = true;  
@@ -2873,7 +2966,8 @@ internal delegate void DeleteInstanceHandler(string path);
     private bool m_markMeshesDynamic            = false;
     private bool m_needReassignMaterials        = false;
     private bool m_keyValuesSerializationEnabled = true;
-    
+
+    private List<IObserver<MeshSyncAnalyticsData>> m_observers = new List<IObserver<MeshSyncAnalyticsData>>();
     private Material m_cachedDefaultMaterial;
 
     private readonly           Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
@@ -2885,6 +2979,11 @@ internal delegate void DeleteInstanceHandler(string path);
 
     private protected Action m_onMaterialChangedInSceneViewCB = null;
     
+#if AT_USE_HDRP
+    private bool m_pathTracingExists      = false;
+    private bool m_needToResetPathTracing = false;
+#endif
+        
 //----------------------------------------------------------------------------------------------------------------------
 
     PinnedList<int>     m_tmpI  = new PinnedList<int>();
