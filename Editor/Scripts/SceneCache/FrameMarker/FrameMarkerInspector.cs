@@ -24,13 +24,13 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
 //----------------------------------------------------------------------------------------------------------------------
     public override void OnInspectorGUI() {
         ShortcutBinding useFrameShortcut 
-            = ShortcutManager.instance.GetShortcutBinding(MeshSyncEditorConstants.SHORTCUT_TOGGLE_KEYFRAME);            
-        bool prevUseFrame= m_assets[0].IsFrameUsed();
-        bool useFrame = EditorGUILayout.Toggle($"Use Frame ({useFrameShortcut})", prevUseFrame);
-        if (useFrame != prevUseFrame) {
+            = ShortcutManager.instance.GetShortcutBinding(MeshSyncEditorConstants.SHORTCUT_TOGGLE_KEYFRAME);
+        KeyFrameMode prevMode = m_assets[0].GetKeyFrameMode();
+        KeyFrameMode mode         = (KeyFrameMode) EditorGUILayout.EnumPopup($"Use Frame ({useFrameShortcut})", prevMode);
+        if (mode != prevMode) {
             //Set all selected objects
             foreach (FrameMarker m in m_assets) {
-                SetMarkerValueByContext(m,useFrame);
+                SetMarkerValueByContext(m,(int) mode);
             }            
         }
 
@@ -63,26 +63,23 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
        
     
 //----------------------------------------------------------------------------------------------------------------------
-    private static void SetMarkerValueByContext(FrameMarker frameMarker, bool value) {
+    private static void SetMarkerValueByContext(FrameMarker frameMarker, int value) {
         SISPlayableFrame      playableFrame = frameMarker.GetOwner();
         PlayableFrameClipData clipData      = playableFrame.GetOwner();
         KeyFramePropertyID inspectedPropertyID = clipData.GetInspectedProperty();
-        switch (inspectedPropertyID) {
-            case KeyFramePropertyID.Mode: {
-                playableFrame.SetUsed(value);
-                break;
-            }
-        }
+        playableFrame.SetProperty(inspectedPropertyID, value);
     }
     
 
     internal static void ToggleMarkerValueByContext(FrameMarker frameMarker) {
-        SISPlayableFrame      playableFrame = frameMarker.GetOwner();
-        PlayableFrameClipData clipData      = playableFrame.GetOwner();
-        KeyFramePropertyID inspectedPropertyID = clipData.GetInspectedProperty();
+        SISPlayableFrame      playableFrame       = frameMarker.GetOwner();
+        PlayableFrameClipData clipData            = playableFrame.GetOwner();
+        KeyFramePropertyID    inspectedPropertyID = clipData.GetInspectedProperty();
+        int                   prevValue           = playableFrame.GetProperty(inspectedPropertyID);
+        
         switch (inspectedPropertyID) {
-            case KeyFramePropertyID.Mode: {
-                playableFrame.SetUsed(!playableFrame.IsUsed());
+            case KeyFramePropertyID.Mode: {                
+                playableFrame.SetProperty(inspectedPropertyID, prevValue == (int) KeyFrameMode.Smooth ? (int) KeyFrameMode.Stop : (int) KeyFrameMode.Smooth);
                 break;
             }
 

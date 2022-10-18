@@ -157,18 +157,18 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         if (numIdealNumPlayableFrames != prevNumPlayableFrames) {
             
             //Change the size of m_playableFrames and reinitialize if necessary
-            List<bool> prevUsedFrames = new List<bool>(prevNumPlayableFrames);
+            List<KeyFrameMode> prevKeyFrameModes = new List<KeyFrameMode>(prevNumPlayableFrames);
             foreach (SISPlayableFrame frame in m_playableFrames) {
-                prevUsedFrames.Add(null == frame || frame.IsUsed()); //if frame ==null, just regard as used.
+                //if frame ==null, just use the default
+                prevKeyFrameModes.Add(null == frame ? KeyFrameMode.Smooth : (KeyFrameMode) frame.GetProperty(KeyFramePropertyID.Mode)); 
             }
 
             UpdatePlayableFramesSize(numIdealNumPlayableFrames);
             
             //Reinitialize 
             if (prevNumPlayableFrames > 0) {
-                for (int i = 0; i < numIdealNumPlayableFrames; ++i) {
-                    int prevIndex = (int)(((float)(i) / numIdealNumPlayableFrames) * prevNumPlayableFrames);
-                    m_playableFrames[i].SetUsed(prevUsedFrames[prevIndex]);
+                for (int i = 0; i < prevNumPlayableFrames; ++i) {
+                    m_playableFrames[i].SetProperty(KeyFramePropertyID.Mode, (int)prevKeyFrameModes[i]);
                 }
             }
             

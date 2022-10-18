@@ -7,6 +7,7 @@ using UnityEngine.Timeline;
 
 #if UNITY_EDITOR
 using UnityEditor.SceneManagement;
+using UnityEditor.Timeline;
 #endif
 
 namespace Unity.MeshSync {
@@ -89,8 +90,17 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
         if (GetProperty(id) != val) {
             EditorSceneManager.MarkAllScenesDirty();            
         }
+        int prevValue = GetProperty(id);
 #endif        
         m_serializedProperties[id] = new PlayableFrameProperty<int>(id, val);
+        
+#if UNITY_EDITOR
+        //Refresh 
+        if (val != prevValue) {
+            TimelineEditor.Refresh(RefreshReason.ContentsModified);
+        }
+#endif
+        
         
     }
     

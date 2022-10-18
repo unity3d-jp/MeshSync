@@ -35,11 +35,11 @@ internal class FrameMarker : Marker, INotification {
     internal void SetOwner(SISPlayableFrame controller) { m_playableFrameOwner = controller; } 
     internal SISPlayableFrame GetOwner() { return m_playableFrameOwner; } 
     
-    internal bool IsFrameUsed() {        
-        return m_playableFrameOwner.IsUsed();
+    internal KeyFrameMode GetKeyFrameMode() {
+        return (KeyFrameMode) m_playableFrameOwner.GetProperty(KeyFramePropertyID.Mode);
 
     }
-    internal void SetFrameUsed(bool used) { m_playableFrameOwner.SetUsed(used); }
+    internal void SetKeyFrameMode(KeyFrameMode mode) { m_playableFrameOwner.SetProperty(KeyFramePropertyID.Mode, (int) mode); }
     
 //----------------------------------------------------------------------------------------------------------------------    
     public PropertyName id { get; } //use default implementation

@@ -10,29 +10,7 @@ namespace Unity.MeshSync {
 [Serializable]
 internal static class PlayableFrameExtension {
 
-    internal static void SetUsed(this SISPlayableFrame playableFrame, bool used) {
-#if UNITY_EDITOR        
-        bool prevUsed = playableFrame.IsUsed();        
-#endif
-                
-        playableFrame.SetProperty(KeyFramePropertyID.Mode, used ? 1 : 0);
-
-#if UNITY_EDITOR        
-        //Refresh 
-        if (used != prevUsed) {
-            TimelineEditor.Refresh(RefreshReason.ContentsModified);
-        }
-#endif        
-    }
-
-    internal static bool IsUsed(this SISPlayableFrame playableFrame) {
-        return true;
-    }
-//----------------------------------------------------------------------------------------------------------------------    
-    
-    internal static void SetKeyFrameMode(this SISPlayableFrame playableFrame, KeyFrameMode mode) {
-        playableFrame.SetProperty(KeyFramePropertyID.Mode, (int) mode);
-    } 
+//----------------------------------------------------------------------------------------------------------------------        
     
     internal static T GetTimelineClipAsset<T>(this SISPlayableFrame playableFrame) where T : Object {
         
