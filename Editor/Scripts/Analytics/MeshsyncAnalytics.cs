@@ -38,7 +38,7 @@ namespace Unity.MeshSync.Editor.Analytics {
         /// <summary>
         /// Minimum time between syncs to analytics backend
         /// </summary>
-        public TimeSpan MinTimeBetweenSync { get; set; }
+        TimeSpan MinTimeBetweenSync { get; set; }
     }
 
 
