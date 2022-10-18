@@ -14,8 +14,8 @@ internal static class PlayableFrameExtension {
 #if UNITY_EDITOR        
         bool prevUsed = playableFrame.IsUsed();        
 #endif
-        
-        playableFrame.SetBoolProperty(PlayableFramePropertyID.USED, used);
+                
+        playableFrame.SetProperty(PlayableFramePropertyID.USED, used ? 1 : 0);
 
 #if UNITY_EDITOR        
         //Refresh 
@@ -26,17 +26,13 @@ internal static class PlayableFrameExtension {
     }
 
     internal static bool IsUsed(this SISPlayableFrame playableFrame) {
-        return null != playableFrame && playableFrame.GetBoolProperty(PlayableFramePropertyID.USED);
+        return true;
     }
 //----------------------------------------------------------------------------------------------------------------------    
     
-    internal static void SetLocked(this SISPlayableFrame playableFrame, bool used) {
-        playableFrame.SetBoolProperty(PlayableFramePropertyID.LOCKED, used);
-    }
-
-    internal static bool IsLocked(this SISPlayableFrame playableFrame) {
-        return null != playableFrame && playableFrame.GetBoolProperty(PlayableFramePropertyID.LOCKED);
-    }
+    internal static void SetKeyFrameMode(this SISPlayableFrame playableFrame, KeyFrameMode mode) {
+        playableFrame.SetProperty(PlayableFramePropertyID.LOCKED, (int) mode);
+    } 
     
     internal static T GetTimelineClipAsset<T>(this SISPlayableFrame playableFrame) where T : Object {
         

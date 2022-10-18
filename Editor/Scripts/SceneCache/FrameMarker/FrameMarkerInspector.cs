@@ -72,13 +72,7 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
                 playableFrame.SetUsed(value);
                 break;
             }
-            case PlayableFramePropertyID.LOCKED: {
-                playableFrame.SetLocked(value);
-                break;
-            }
-            
         }
-               
     }
     
 
@@ -89,10 +83,6 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
         switch (inspectedPropertyID) {
             case PlayableFramePropertyID.USED: {
                 playableFrame.SetUsed(!playableFrame.IsUsed());
-                break;
-            }
-            case PlayableFramePropertyID.LOCKED: {
-                playableFrame.SetLocked(!playableFrame.IsLocked());
                 break;
             }
 

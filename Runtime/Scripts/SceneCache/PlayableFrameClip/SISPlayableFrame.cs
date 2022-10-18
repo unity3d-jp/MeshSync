@@ -16,13 +16,13 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
 
     internal SISPlayableFrame(PlayableFrameClipData owner) {
         m_clipDataOwner            = owner;
-        m_serializedBoolProperties = new SerializedDictionary<PlayableFramePropertyID, PlayableFrameProperty<bool>>();
+        m_serializedProperties = new SerializedDictionary<PlayableFramePropertyID, PlayableFrameProperty<int>>();
     }
 
     internal SISPlayableFrame(PlayableFrameClipData owner, SISPlayableFrame otherFrame) {
-        m_clipDataOwner            = owner;
-        m_serializedBoolProperties = otherFrame.m_serializedBoolProperties;
-        m_localTime                = otherFrame.m_localTime;
+        m_clipDataOwner        = owner;
+        m_serializedProperties = otherFrame.m_serializedProperties;
+        m_localTime            = otherFrame.m_localTime;
     }       
     
     
@@ -71,27 +71,27 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
     
 //----------------------------------------------------------------------------------------------------------------------
     //Property
-    internal bool GetBoolProperty(PlayableFramePropertyID propertyID) {
-        if (null!=m_serializedBoolProperties && m_serializedBoolProperties.TryGetValue(propertyID, out PlayableFrameProperty<bool> prop)) {
+    internal int GetProperty(PlayableFramePropertyID propertyID) {
+        if (null!=m_serializedProperties && m_serializedProperties.TryGetValue(propertyID, out PlayableFrameProperty<int> prop)) {
             return prop.GetValue();
         }
 
         switch (propertyID) {
-            case PlayableFramePropertyID.USED: return true;
-            case PlayableFramePropertyID.LOCKED: return false;
-                default: return false;
+            case PlayableFramePropertyID.USED: return 1;
+            case PlayableFramePropertyID.LOCKED: return 0;
+            default: return 0;
         }        
     }
     
     
 
-    internal void SetBoolProperty(PlayableFramePropertyID id, bool val) {
+    internal void SetProperty(PlayableFramePropertyID id, int val) {
 #if UNITY_EDITOR        
-        if (GetBoolProperty(id) != val) {
+        if (GetProperty(id) != val) {
             EditorSceneManager.MarkAllScenesDirty();            
         }
 #endif        
-        m_serializedBoolProperties[id] = new PlayableFrameProperty<bool>(id, val);
+        m_serializedProperties[id] = new PlayableFrameProperty<int>(id, val);
         
     }
     
@@ -144,7 +144,7 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    [HideInInspector][SerializeField] private SerializedDictionary<PlayableFramePropertyID, PlayableFrameProperty<bool>> m_serializedBoolProperties;
+    [HideInInspector][SerializeField] private SerializedDictionary<PlayableFramePropertyID, PlayableFrameProperty<int>> m_serializedProperties;
     
     [HideInInspector][SerializeField] private double                m_localTime;
     [HideInInspector][SerializeField] private FrameMarker           m_marker = null;

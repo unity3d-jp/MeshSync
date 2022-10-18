@@ -123,7 +123,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 //----------------------------------------------------------------------------------------------------------------------
     internal void SetAllPlayableFramesProperty(PlayableFramePropertyID id, bool val) {
         foreach (SISPlayableFrame playableFrame in m_playableFrames) {
-            playableFrame.SetBoolProperty(id, val);
+            playableFrame.SetProperty(id, val ? 1 : 0);
         }
     }
 
