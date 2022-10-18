@@ -154,7 +154,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         int    numPlayableFrames = m_playableFrames.Count;
         for (int i = 0; i < numPlayableFrames; ++i) {
             m_playableFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
-            m_playableFrames[i].SetNormalizedAnimationTime(((float) i / numPlayableFrames));
+            m_playableFrames[i].SetFrameNo(i);
             m_playableFrames[i].Refresh(m_frameMarkersVisibility);
         }
     }
