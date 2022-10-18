@@ -167,17 +167,17 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             
             //Reinitialize 
             if (prevNumPlayableFrames > 0) {
-                for (int i = 0; i < prevNumPlayableFrames; ++i) {
+                int minNumPlayableFrames = Math.Min(prevNumPlayableFrames, m_playableFrames.Count);
+                for (int i = 0; i < minNumPlayableFrames; ++i) {
                     m_playableFrames[i].SetProperty(KeyFramePropertyID.Mode, (int)prevKeyFrameModes[i]);
                 }
             }
-            
         }
         
         //Refresh all markers
         double timePerFrame           = TimelineUtility.CalculateTimePerFrame(clipOwner);                
         int    numPlayableFrames      = m_playableFrames.Count;
-        for (int i = 0; i < numPlayableFrames; ++i) {                
+        for (int i = 0; i < numPlayableFrames; ++i) {
             m_playableFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
             m_playableFrames[i].Refresh(m_frameMarkersVisibility);
         }
