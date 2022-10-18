@@ -105,26 +105,23 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
     }
 
     
-    internal static bool DrawFrameMarkersGUI<T>(BaseExtendedClipPlayableAsset<T> clipDataPlayableAsset) where T: PlayableFrameClipData 
+    void DrawFrameMarkersGUI<T>(BaseExtendedClipPlayableAsset<T> clipDataPlayableAsset) where T: PlayableFrameClipData 
     {        
 
         T clipData = clipDataPlayableAsset.GetBoundClipData();
         if (null == clipData)
-            return false;
+            return;
 
-        EditorGUIDrawerUtility.DrawUndoableGUI(
-            clipDataPlayableAsset, "Show Frame Markers",
-            /*guiFunc=*/ () => EditorGUILayout.Toggle("Show Frame Markers", clipData.AreFrameMarkersRequested()), 
-            /*updateFunc=*/ (bool newValue) => { clipData.RequestFrameMarkers(newValue); }                
-        );
-
-        return clipData.AreFrameMarkersRequested();
+        EditorGUILayout.BeginHorizontal();
+        m_autoKeyFrameSpan = EditorGUILayout.IntField("Frame Span", m_autoKeyFrameSpan);
+        EditorGUILayout.EndHorizontal();
     }    
 //----------------------------------------------------------------------------------------------------------------------
 
 
     private static readonly GUIContent SCENE_CACHE_PLAYER = EditorGUIUtility.TrTextContent("Scene Cache Player");
-    
+
+    private int                     m_autoKeyFrameSpan;
     private SceneCachePlayableAsset m_scPlayableAsset;        
     
 
