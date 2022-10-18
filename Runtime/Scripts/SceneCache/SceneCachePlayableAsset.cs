@@ -283,7 +283,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
 #if UNITY_EDITOR
     
-    internal void RefreshPlayableFrames() {
+    internal void OnClipChanged() {
         SceneCacheClipData clipData = GetBoundClipData();
         clipData?.RefreshPlayableFrames(); //Null check. the data might not have been bound during recompile
     }
