@@ -50,7 +50,7 @@ namespace Unity.MeshSync.Editor.Analytics {
 
         private static void logIfWarning(AnalyticsResult resp) {
             if (resp != AnalyticsResult.Ok) {
-                Debug.LogWarning($"Analytics endpoint reported: {resp} when should be {AnalyticsResult.Ok}");
+//                Debug.LogWarning($"Analytics endpoint reported: {resp} when should be {AnalyticsResult.Ok}");
             }
         }
 
