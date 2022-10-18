@@ -259,7 +259,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 #pragma warning restore 414    
     
 #if UNITY_EDITOR    
-    private KeyFramePropertyID m_inspectedPropertyID   = KeyFramePropertyID.USED;
+    private KeyFramePropertyID m_inspectedPropertyID   = KeyFramePropertyID.Mode;
     private double                  m_timelineWidthPerFrame = Int16.MaxValue;
     private bool                    m_forceShowFrameMarkers = false;
 #endif

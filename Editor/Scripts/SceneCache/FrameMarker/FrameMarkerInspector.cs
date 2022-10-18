@@ -68,7 +68,7 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
         PlayableFrameClipData clipData      = playableFrame.GetOwner();
         KeyFramePropertyID inspectedPropertyID = clipData.GetInspectedProperty();
         switch (inspectedPropertyID) {
-            case KeyFramePropertyID.USED: {
+            case KeyFramePropertyID.Mode: {
                 playableFrame.SetUsed(value);
                 break;
             }
@@ -81,7 +81,7 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
         PlayableFrameClipData clipData      = playableFrame.GetOwner();
         KeyFramePropertyID inspectedPropertyID = clipData.GetInspectedProperty();
         switch (inspectedPropertyID) {
-            case KeyFramePropertyID.USED: {
+            case KeyFramePropertyID.Mode: {
                 playableFrame.SetUsed(!playableFrame.IsUsed());
                 break;
             }

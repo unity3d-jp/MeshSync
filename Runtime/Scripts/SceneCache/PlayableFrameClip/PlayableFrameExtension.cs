@@ -15,7 +15,7 @@ internal static class PlayableFrameExtension {
         bool prevUsed = playableFrame.IsUsed();        
 #endif
                 
-        playableFrame.SetProperty(KeyFramePropertyID.USED, used ? 1 : 0);
+        playableFrame.SetProperty(KeyFramePropertyID.Mode, used ? 1 : 0);
 
 #if UNITY_EDITOR        
         //Refresh 
@@ -31,7 +31,7 @@ internal static class PlayableFrameExtension {
 //----------------------------------------------------------------------------------------------------------------------    
     
     internal static void SetKeyFrameMode(this SISPlayableFrame playableFrame, KeyFrameMode mode) {
-        playableFrame.SetProperty(KeyFramePropertyID.USED, (int) mode);
+        playableFrame.SetProperty(KeyFramePropertyID.Mode, (int) mode);
     } 
     
     internal static T GetTimelineClipAsset<T>(this SISPlayableFrame playableFrame) where T : Object {

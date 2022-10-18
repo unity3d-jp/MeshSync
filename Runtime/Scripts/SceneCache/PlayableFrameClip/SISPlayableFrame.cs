@@ -77,7 +77,7 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
         }
 
         switch (propertyID) {
-            case KeyFramePropertyID.USED: return (int) KeyFrameMode.Smooth;
+            case KeyFramePropertyID.Mode: return (int) KeyFrameMode.Smooth;
             default: return 0;
         }        
     }

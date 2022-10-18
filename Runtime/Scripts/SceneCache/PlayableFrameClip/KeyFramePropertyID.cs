@@ -4,7 +4,7 @@ namespace Unity.MeshSync {
     
 [Serializable]
 internal enum KeyFramePropertyID {
-    USED = 0,
+    Mode = 0,
 }
 
 } //end namespace
