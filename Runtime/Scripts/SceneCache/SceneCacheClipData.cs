@@ -28,11 +28,6 @@ internal class SceneCacheClipData : PlayableFrameClipData {
         
         m_sceneCacheClipDataVersion = CUR_SCENE_CACHE_CLIP_DATA_VERSION;
     }
-    
-//----------------------------------------------------------------------------------------------------------------------
-
-    internal override void DestroyV() { }
-
 
 //----------------------------------------------------------------------------------------------------------------------
 
