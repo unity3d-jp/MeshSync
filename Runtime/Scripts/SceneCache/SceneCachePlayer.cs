@@ -326,6 +326,27 @@ public class SceneCachePlayer : BaseMeshSync {
         return frame;
     }
 
+    internal int CalculateFrame(float time) {
+        int frame = 0;
+        switch (m_playbackMode) {
+            case SceneCachePlaybackMode.SnapToPreviousFrame: {
+                frame = CalculateFrameByFloor(time, m_sceneCacheInfo);
+                break;
+            }
+
+            case SceneCachePlaybackMode.SnapToNearestFrame: {
+                frame = CalculateFrameByRound(time, m_sceneCacheInfo);
+                break;
+            }
+            default: {
+                Assert.IsTrue(false); //invalid call
+                break;
+            }
+        }
+
+        return frame;
+    }
+    
 
     private static int CalculateFrameByFloor(float time, SceneCacheInfo scInfo, LimitedAnimationController controller) {
         int frame = Mathf.FloorToInt(time * scInfo.sampleRate);
@@ -337,6 +358,18 @@ public class SceneCachePlayer : BaseMeshSync {
     private static int CalculateFrameByRound(float time, SceneCacheInfo scInfo, LimitedAnimationController controller) {
         int frame = Mathf.RoundToInt(time * scInfo.sampleRate);
         frame = controller.Apply(frame);
+        frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
+        return frame;
+    }
+
+    private static int CalculateFrameByFloor(float time, SceneCacheInfo scInfo) {
+        int frame = Mathf.FloorToInt(time * scInfo.sampleRate);
+        frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
+        return frame;
+    }
+
+    private static int CalculateFrameByRound(float time, SceneCacheInfo scInfo) {
+        int frame = Mathf.RoundToInt(time * scInfo.sampleRate);
         frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
         return frame;
     }
