@@ -1,4 +1,6 @@
-﻿using UnityEditor.Timeline;
+﻿using System.Globalization;
+using UnityEditor.Timeline;
+using UnityEngine;
 using UnityEngine.Timeline;
 
 namespace Unity.MeshSync.Editor {
@@ -19,6 +21,15 @@ class FrameMarkerEditor : MarkerEditor {
             return;
         
         KeyFrameMode keyFrameMode = (KeyFrameMode) playableFrame.GetProperty(KeyFramePropertyID.Mode);
+
+        const int TEXT_WIDTH = 30;
+        Rect      labelRect  = region.markerRegion;
+        labelRect.x     += labelRect.width;
+        labelRect.width =  TEXT_WIDTH;
+
+
+        Graphics.DrawTexture(labelRect, EditorTextures.GetTextBackgroundTexture());
+        GUI.Label(labelRect,playableFrame.GetNormalizedAnimationTime().ToString(CultureInfo.InvariantCulture));
         
         switch (keyFrameMode) {
             case KeyFrameMode.Smooth: {
