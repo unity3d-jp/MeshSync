@@ -15,8 +15,8 @@ internal static class EditorTextures {
         
     }
 
-    internal static Texture GetKeyFrameBackgroundTexture() {
-        return GetOrLoadTexture(ref m_keyFrameBackGroundTexture, "gameviewbackground");
+    internal static Texture GetTextBackgroundTexture() {
+        return GetOrLoadTexture(ref m_textBackGroundTexture, "gameviewbackground");
     }
 
     static Texture GetOrLoadTexture(ref Texture tex, string texPath) {
@@ -30,8 +30,8 @@ internal static class EditorTextures {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    private static Texture m_keyFrameSmoothTexture     = null;
-    private static Texture m_keyFrameStopTexture       = null;
-    private static Texture m_keyFrameBackGroundTexture = null;
+    private static Texture m_keyFrameSmoothTexture = null;
+    private static Texture m_keyFrameStopTexture   = null;
+    private static Texture m_textBackGroundTexture = null;
 }
 } //end namespace
