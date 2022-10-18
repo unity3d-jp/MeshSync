@@ -16,7 +16,7 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
 
     internal SISPlayableFrame(PlayableFrameClipData owner) {
         m_clipDataOwner            = owner;
-        m_serializedBoolProperties = new SerializedDictionary<PlayableFramePropertyID, PlayableFrameProperty<bool>>();  
+        m_serializedBoolProperties = new SerializedDictionary<PlayableFramePropertyID, PlayableFrameProperty<bool>>();
     }
 
     internal SISPlayableFrame(PlayableFrameClipData owner, SISPlayableFrame otherFrame) {
@@ -32,7 +32,7 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
         
     }
 
-    public void OnAfterDeserialize() {        
+    public void OnAfterDeserialize() {
         if (null == m_marker)
             return;
 
@@ -146,7 +146,7 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
 
     [HideInInspector][SerializeField] private SerializedDictionary<PlayableFramePropertyID, PlayableFrameProperty<bool>> m_serializedBoolProperties;
     
-    [HideInInspector][SerializeField] private double                m_localTime;    
+    [HideInInspector][SerializeField] private double                m_localTime;
     [HideInInspector][SerializeField] private FrameMarker           m_marker = null;
     [HideInInspector][SerializeField] private string                m_userNote;
     [NonSerialized]                   private PlayableFrameClipData m_clipDataOwner = null;
