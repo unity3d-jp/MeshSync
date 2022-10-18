@@ -15,41 +15,24 @@ namespace Unity.MeshSync {
 internal class SISPlayableFrame : ISerializationCallbackReceiver {
 
     internal SISPlayableFrame(PlayableFrameClipData owner) {
-        m_clipDataOwner = owner;        
-        m_boolProperties = new Dictionary<PlayableFramePropertyID, PlayableFrameProperty<bool>>();  
+        m_clipDataOwner            = owner;
+        m_serializedBoolProperties = new SerializedDictionary<PlayableFramePropertyID, PlayableFrameProperty<bool>>();  
     }
 
     internal SISPlayableFrame(PlayableFrameClipData owner, SISPlayableFrame otherFrame) {
-        m_clipDataOwner = owner;
-        m_boolProperties = otherFrame.m_boolProperties;
-        m_localTime = otherFrame.m_localTime;
+        m_clipDataOwner            = owner;
+        m_serializedBoolProperties = otherFrame.m_serializedBoolProperties;
+        m_localTime                = otherFrame.m_localTime;
     }       
     
     
 //----------------------------------------------------------------------------------------------------------------------
     #region ISerializationCallbackReceiver
     public void OnBeforeSerialize() {
-        if (null != m_boolProperties) {
-            m_serializedBoolProperties = new List<PlayableFrameProperty<bool>>(m_boolProperties.Count);
-            foreach (KeyValuePair<PlayableFramePropertyID, PlayableFrameProperty<bool>> kv in m_boolProperties) {
-                m_serializedBoolProperties.Add(kv.Value);
-            }        
-            
-        } else {
-            m_serializedBoolProperties = new List<PlayableFrameProperty<bool>>();            
-        }
         
     }
 
-    public void OnAfterDeserialize() {
-        m_boolProperties = new Dictionary<PlayableFramePropertyID, PlayableFrameProperty<bool>>();
-        if (null != m_serializedBoolProperties) {
-            foreach (PlayableFrameProperty<bool> prop in m_serializedBoolProperties) {
-                PlayableFramePropertyID id = prop.GetID();
-                m_boolProperties[id] = new PlayableFrameProperty<bool>(id, prop.GetValue());
-            }            
-        } 
-        
+    public void OnAfterDeserialize() {        
         if (null == m_marker)
             return;
 
@@ -89,8 +72,8 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
 //----------------------------------------------------------------------------------------------------------------------
     //Property
     internal bool GetBoolProperty(PlayableFramePropertyID propertyID) {
-        if (null!=m_boolProperties && m_boolProperties.ContainsKey(propertyID)) {
-            return m_boolProperties[propertyID].GetValue();
+        if (null!=m_serializedBoolProperties && m_serializedBoolProperties.TryGetValue(propertyID, out PlayableFrameProperty<bool> prop)) {
+            return prop.GetValue();
         }
 
         switch (propertyID) {
@@ -108,7 +91,7 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
             EditorSceneManager.MarkAllScenesDirty();            
         }
 #endif        
-        m_boolProperties[id] = new PlayableFrameProperty<bool>(id, val);
+        m_serializedBoolProperties[id] = new PlayableFrameProperty<bool>(id, val);
         
     }
     
@@ -161,15 +144,14 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    [HideInInspector][SerializeField] private List<PlayableFrameProperty<bool>> m_serializedBoolProperties;
-    [HideInInspector][SerializeField] private double                          m_localTime;    
-    [HideInInspector][SerializeField] private FrameMarker                     m_marker = null;
-    [HideInInspector][SerializeField] private string                          m_userNote;
-    [NonSerialized]                   private PlayableFrameClipData           m_clipDataOwner = null;
+    [HideInInspector][SerializeField] private SerializedDictionary<PlayableFramePropertyID, PlayableFrameProperty<bool>> m_serializedBoolProperties;
+    
+    [HideInInspector][SerializeField] private double                m_localTime;    
+    [HideInInspector][SerializeField] private FrameMarker           m_marker = null;
+    [HideInInspector][SerializeField] private string                m_userNote;
+    [NonSerialized]                   private PlayableFrameClipData m_clipDataOwner = null;
 
     private int m_index;
-    
-    private Dictionary<PlayableFramePropertyID, PlayableFrameProperty<bool>> m_boolProperties;
 
 }
 
