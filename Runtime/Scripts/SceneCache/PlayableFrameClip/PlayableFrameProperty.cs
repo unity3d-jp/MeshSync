@@ -4,22 +4,22 @@ using UnityEngine;
 namespace Unity.MeshSync {
     
 [Serializable]
-internal class PlayableFrameProperty{
+internal class PlayableFrameProperty<T> where T: struct {
     
-    internal PlayableFrameProperty(PlayableFramePropertyID id, bool val) {
+    internal PlayableFrameProperty(PlayableFramePropertyID id, T val) {
         m_propertyID  = id;
         m_propertyValue = val;
     }
 //----------------------------------------------------------------------------------------------------------------------
 
     internal PlayableFramePropertyID GetID() { return m_propertyID; }
-    internal bool GetValue() { return m_propertyValue;}
+    internal T GetValue() { return m_propertyValue;}
 
 //----------------------------------------------------------------------------------------------------------------------
 
 
     [SerializeField] private PlayableFramePropertyID m_propertyID;
-    [SerializeField] private bool m_propertyValue = false;
+    [SerializeField] private T m_propertyValue = default(T);
     
 }
 
