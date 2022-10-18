@@ -235,7 +235,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 //----------------------------------------------------------------------------------------------------------------------
 
     //return true if the visibility has changed
-    private bool  UpdateFrameMarkersVisibility() {
+    private bool UpdateFrameMarkersVisibility() {
         
         bool prevVisibility = m_frameMarkersVisibility;
 #if UNITY_EDITOR        
@@ -252,7 +252,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     
     //The ground truth for using/dropping an image in a particular frame. See the notes below
     [SerializeField] private List<SISPlayableFrame> m_playableFrames;
-    [FormerlySerializedAs("m_frameMarkersVisibility")] [SerializeField] [HideInInspector] private bool m_frameMarkersRequested = false;
+    [SerializeField] [HideInInspector] private bool m_frameMarkersRequested = true;
 
 #pragma warning disable 414    
     [HideInInspector][SerializeField] private int m_playableFrameClipDataVersion = CUR_PLAYABLE_FRAME_CLIP_DATA_VERSION;        
@@ -264,7 +264,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     private bool                    m_forceShowFrameMarkers = false;
 #endif
 
-    private       bool   m_frameMarkersVisibility           = false;
+    private       bool   m_frameMarkersVisibility           = true;
     
     private const int    CUR_PLAYABLE_FRAME_CLIP_DATA_VERSION = 1;
     

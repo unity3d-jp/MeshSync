@@ -69,6 +69,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
                 clip.duration = updatedCurveDuration;
             }
             m_updateClipDurationOnCreatePlayable = false;
+            scClipData.RefreshPlayableFrames();
         }
 #endif        
         
