@@ -63,9 +63,12 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
     internal void   SetIndexAndLocalTime(int index, double localTime) {
         m_index                   = index; 
         m_localTime               = localTime;
-        m_normalizedAnimationTime = localTime;
     }
 
+    internal void SetNormalizedAnimationTime(double animationTime) {
+        m_normalizedAnimationTime = animationTime;
+    }
+    
     internal TimelineClip GetClipOwner() {
         TimelineClip clip = m_clipDataOwner?.GetOwner();
         return clip;

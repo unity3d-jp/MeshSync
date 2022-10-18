@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -137,7 +138,27 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         }        
     } 
     
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    internal void InitPlayableFrames() {
+        TimelineClip clipOwner = GetOwnerIfReady();
+        if (null == clipOwner)
+            return;
+
+        int numIdealNumPlayableFrames = TimelineUtility.CalculateNumFrames(clipOwner);
+        
+        UpdatePlayableFramesSize(numIdealNumPlayableFrames);
+        
+        //Refresh all markers
+        double timePerFrame      = TimelineUtility.CalculateTimePerFrame(clipOwner);
+        int    numPlayableFrames = m_playableFrames.Count;
+        for (int i = 0; i < numPlayableFrames; ++i) {
+            m_playableFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
+            m_playableFrames[i].SetNormalizedAnimationTime(((float) i / numPlayableFrames));
+            m_playableFrames[i].Refresh(m_frameMarkersVisibility);
+        }
+    }
+    
     
     //Resize PlayableFrames and used the previous values
     internal void RefreshPlayableFrames() {
@@ -247,8 +268,16 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 #endif
         return prevVisibility != m_frameMarkersVisibility;
     }
-       
-//----------------------------------------------------------------------------------------------------------------------    
+
+    [CanBeNull]
+    private TimelineClip GetOwnerIfReady() {
+        TimelineClip clipOwner = GetOwner();
+
+        //Clip may not have a parent because the clip is being moved 
+        return null == clipOwner.GetParentTrack() ? null : clipOwner;
+    }
+    
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
     
     //The ground truth for using/dropping an image in a particular frame. See the notes below
     [SerializeField] private List<SISPlayableFrame> m_playableFrames;
