@@ -1,9 +1,9 @@
 .FrameMarker {
     /* GUIState.background */
-    background-image: resource("Packages/com.unity.streaming-image-sequence/Editor/StyleSheets/Images/DarkSkin/FrameMarker.png");
+    background-image: resource("Packages/com.unity.meshsync/Editor/StyleSheets/Images/DarkSkin/FrameMarker.png");
 }
 
 .FrameMarker:hover:focus:checked {
     /* GUIState.background */
-    background-image: resource("Packages/com.unity.streaming-image-sequence/Editor/StyleSheets/Images/DarkSkin/FrameMarkerSelected.png");
+    background-image: resource("Packages/com.unity.meshsync/Editor/StyleSheets/Images/DarkSkin/FrameMarkerSelected.png");
 }
