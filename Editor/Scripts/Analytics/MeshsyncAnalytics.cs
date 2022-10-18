@@ -76,7 +76,7 @@ namespace Unity.MeshSync.Editor.Analytics {
 
         private const int DCCCONFIGURE_EVENTS_PER_HOUR = 1000;
         private const int MESHSYNC_SYNC_EVENTS_PER_HOUR = 10000;
-        private static readonly TimeSpan DEFAULT_TIME_SPAN = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan DEFAULT_TIME_SPAN = TimeSpan.FromSeconds(10);
 
         private DateTime lastSync;
         private Stack<TimedEvent<SyncEventData>> syncEventStack;
@@ -173,6 +173,7 @@ namespace Unity.MeshSync.Editor.Analytics {
                             evt,
                             MESHSYNC_SYNC_VERSION));
                 }
+                this.syncEventStack.Clear();
             }
             else if ((DateTime.Now - this.lastSync) > MinTimeBetweenSync) {
 
@@ -210,10 +211,10 @@ namespace Unity.MeshSync.Editor.Analytics {
                 }
 
                 this.lastSync = DateTime.Now;
+
+                this.syncEventStack.Clear();
+
             }
-
-            this.syncEventStack.Clear();
-
         }
 
         /// <summary>
