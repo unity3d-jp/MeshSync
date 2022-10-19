@@ -176,18 +176,40 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             m_playableFrames[i].Refresh(m_frameMarkersVisibility);
         }
     }
+
+    private bool NeedsRefresh() {
+        TimelineClip clip = GetOwnerIfReady();
+        if (null == clip) {
+            return false;
+        }
+        
+        if (!Mathf.Approximately(m_lastClipStartTimeOnRefresh, (float) clip.start)) {
+            return true;
+        }
+
+        if (!Mathf.Approximately(m_lastClipDurationOnRefresh, (float) clip.duration)) {
+            return true;
+        }
+        
+        int numIdealNumPlayableFrames = TimelineUtility.CalculateNumFrames(clip);
+        if (numIdealNumPlayableFrames != m_playableFrames.Count)
+            return true;
+        
+        return false;
+
+    }
     
     
     //Resize PlayableFrames and used the previous values
-    internal void RefreshPlayableFrames() {
+    private void RefreshPlayableFrames() {
 
-        TimelineClip clipOwner = GetOwner(); 
-            
-        
-        //Clip doesn't have parent. Might be because the clip is being moved 
-        if (null == clipOwner.GetParentTrack()) {
+        TimelineClip clipOwner = GetOwnerIfReady();
+        if (null == clipOwner) {
             return;
-        }        
+        }
+        
+        m_lastClipStartTimeOnRefresh = (float) clipOwner.start;
+        m_lastClipDurationOnRefresh  = (float) clipOwner.duration;
         
         int numIdealNumPlayableFrames = TimelineUtility.CalculateNumFrames(clipOwner);
       
@@ -301,6 +323,11 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     [SerializeField] private List<SISPlayableFrame> m_playableFrames;
     [SerializeField] [HideInInspector] private bool m_frameMarkersRequested = true;
 
+    [SerializeField] [HideInInspector] private float m_lastClipStartTimeOnRefresh = 0;
+    [SerializeField] [HideInInspector] private float m_lastClipDurationOnRefresh = 0;
+    
+    
+    
 #pragma warning disable 414    
     [HideInInspector][SerializeField] private int m_playableFrameClipDataVersion = CUR_PLAYABLE_FRAME_CLIP_DATA_VERSION;        
 #pragma warning restore 414    
@@ -311,7 +338,8 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     private bool                    m_forceShowFrameMarkers = false;
 #endif
 
-    private       bool   m_frameMarkersVisibility           = true;
+    private bool m_frameMarkersVisibility      = true;
+    private bool m_needToRefreshTimelineEditor = false;
     
     private const int    CUR_PLAYABLE_FRAME_CLIP_DATA_VERSION = 1;
     
