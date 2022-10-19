@@ -121,9 +121,9 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         
         //Hide frame marker automatically
         if (Event.current.type == EventType.Repaint) {
-            double framePerSecond =  clip.GetParentTrack().timelineAsset.editorSettings.GetFPS();
-            clipData.UpdateTimelineWidthPerFrame(rect.width, region.endTime-region.startTime, 
-                framePerSecond, clip.timeScale);
+            // double framePerSecond =  clip.GetParentTrack().timelineAsset.editorSettings.GetFPS();
+            // clipData.UpdateTimelineWidthPerFrame(rect.width, region.endTime-region.startTime, 
+            //     framePerSecond, clip.timeScale);
         }
         
         
