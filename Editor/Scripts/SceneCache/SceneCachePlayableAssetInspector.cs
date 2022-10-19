@@ -112,16 +112,19 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         if (null == clipData)
             return;
 
-        EditorGUILayout.BeginHorizontal();
-        m_autoKeyFrameSpan = EditorGUILayout.IntField("Frame Span", m_autoKeyFrameSpan);
-        EditorGUILayout.EndHorizontal();
-    }    
+        m_autoKeyFrameSpan = EditorGUILayout.IntField("KeyFrame Span", m_autoKeyFrameSpan);
+        
+        GUILayout.Space(15);
+        if (GUILayout.Button("Auto-Generate")) {
+            clipData.AddKeyFrameAuto(m_autoKeyFrameSpan);
+        }
+    }
 //----------------------------------------------------------------------------------------------------------------------
 
 
     private static readonly GUIContent SCENE_CACHE_PLAYER = EditorGUIUtility.TrTextContent("Scene Cache Player");
 
-    private int                     m_autoKeyFrameSpan;
+    private int                     m_autoKeyFrameSpan = 3;
     private SceneCachePlayableAsset m_scPlayableAsset;        
     
 
