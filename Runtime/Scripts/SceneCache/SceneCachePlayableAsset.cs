@@ -169,10 +169,10 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         Assert.IsNotNull(clip);
        
         m_animationCurve = CreateLinearAnimationCurve(clip);
-        UpdateClipCurveInEditor(clip, m_animationCurve);        
+        SetClipCurveInEditor(clip, m_animationCurve);        
     }
 
-    private static void UpdateClipCurveInEditor(TimelineClip clip, AnimationCurve animationCurveToApply) {
+    private static void SetClipCurveInEditor(TimelineClip clip, AnimationCurve animationCurveToApply) {
         
         bool shouldRefresh = (null == clip.curves);
         
@@ -224,7 +224,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             updatedCurveDuration = (float) clip.duration; //no change
         }
 
-        UpdateClipCurveInEditor(clip, m_animationCurve);
+        SetClipCurveInEditor(clip, m_animationCurve);
         m_isSceneCacheCurveExtracted = true;
         SetExtractedSceneCachePlayerInEditor(m_sceneCachePlayer);
         return updatedCurveDuration;
@@ -343,7 +343,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         }
         
         AnimationCurve curve = new AnimationCurve(keys);
-        UpdateClipCurveInEditor(clipData.GetOwner(), curve);
+        SetClipCurveInEditor(clipData.GetOwner(), curve);
     }
 
     static void LinearizeKeyValues(ref Keyframe[] keys, int linearStartIndex, int linearEndIndex, HashSet<int> indicesToUpdate) {
