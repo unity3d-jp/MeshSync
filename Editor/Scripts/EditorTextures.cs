@@ -11,10 +11,9 @@ internal static class EditorTextures {
     }
 
     internal static Texture GetKeyFrameStopTexture() {
-        return GetOrLoadTexture(ref m_keyFrameStopTexture, "d_PauseButton@2x");
+        return GetOrLoadTexture(ref m_keyFrameStopTexture, "d_PlayButtonProfile On");
         
     }
-
     internal static Texture GetTextBackgroundTexture() {
         return GetOrLoadTexture(ref m_textBackGroundTexture, "gameviewbackground");
     }
