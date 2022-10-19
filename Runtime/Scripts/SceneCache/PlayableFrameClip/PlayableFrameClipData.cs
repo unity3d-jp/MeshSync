@@ -169,7 +169,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         if (null == clipOwner)
             return;
         
-        if (NeedsRefresh()) {
+        if (NeedsRefreshPlayableFrames()) {
             RefreshPlayableFrames();
             return;
         }
@@ -248,7 +248,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         }
     }
 
-    private bool NeedsRefresh() {
+    private bool NeedsRefreshPlayableFrames() {
         TimelineClip clip = GetOwnerIfReady();
         if (null == clip) {
             return false;
