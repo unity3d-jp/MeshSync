@@ -65,6 +65,9 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
     internal void SetFrameNo(int frameNo) {
         m_frameNo = frameNo;
     }
+
+    internal void SetEnabled(bool enabled) { m_enabled = enabled; }
+    internal bool IsEnabled() => m_enabled;
     
     internal TimelineClip GetClipOwner() {
         TimelineClip clip = m_clipDataOwner?.GetOwner();

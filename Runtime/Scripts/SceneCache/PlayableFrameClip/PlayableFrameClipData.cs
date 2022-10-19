@@ -138,6 +138,21 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         }        
     } 
     
+    internal void AddKeyFrameAuto(int span) {
+        TimelineClip clip = GetOwner();
+        Assert.IsNotNull(clip);
+        
+        //Refresh all markers
+        double timePerFrame      = TimelineUtility.CalculateTimePerFrame(clip);
+        int    numPlayableFrames = m_playableFrames.Count;
+        for (int i = 0; i < numPlayableFrames; ++i) {
+            m_playableFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
+            m_playableFrames[i].SetFrameNo(i);
+            m_playableFrames[i].SetEnabled( i % span == 0);
+            m_playableFrames[i].Refresh(m_frameMarkersVisibility);
+        }
+    }
+
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     internal void InitPlayableFrames() {
