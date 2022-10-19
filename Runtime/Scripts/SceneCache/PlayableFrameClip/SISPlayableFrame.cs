@@ -112,7 +112,17 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
     }
     
     
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    internal void SaveStateFromMarker() {
+        if (null == m_marker) {
+            m_enabled = false;
+        } else {
+            TimelineClip clipOwner = m_clipDataOwner.GetOwner();
+            m_localTime = m_marker.time - clipOwner.start;
+        }
+    }
+    
     internal void Refresh(bool frameMarkerVisibility) {
         TrackAsset trackAsset = m_clipDataOwner.GetOwner()?.GetParentTrack();
         //Delete Marker first if it's not in the correct track (e.g: after the TimelineClip was moved)
