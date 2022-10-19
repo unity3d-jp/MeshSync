@@ -92,11 +92,13 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
             CreateClipCurve(clip);
         }        
         
+        
+        playableAsset.OnClipChanged();
+        
         //Always apply clipCurves to clipData
         AnimationCurve curve = AnimationUtility.GetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding());        
         playableAsset.SetAnimationCurve(curve);
         
-        playableAsset.OnClipChanged();
         
     }    
 
