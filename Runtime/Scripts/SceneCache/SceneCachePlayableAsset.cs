@@ -84,10 +84,14 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     /// <inheritdoc/>
     public void OnBehaviourPlay(Playable playable, FrameData info) { }
-    
-    
+
+
     /// <inheritdoc/>
-    public void OnGraphStart(Playable playable) { }
+    public void OnGraphStart(Playable playable) {
+        SceneCacheClipData clipData = GetBoundClipData();
+        clipData?.OnGraphStart(); //Null check. the data might not have been bound during recompile
+        
+    }
     
     
     /// <inheritdoc/>
@@ -286,7 +290,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     internal void OnClipChanged() {
         SceneCacheClipData clipData = GetBoundClipData();
-        clipData?.RefreshPlayableFrames(); //Null check. the data might not have been bound during recompile
+        clipData?.OnClipChanged(); //Null check. the data might not have been bound during recompile
     }
     
     internal void SetSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {

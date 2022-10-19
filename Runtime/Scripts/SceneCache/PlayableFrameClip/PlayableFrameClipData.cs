@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
+using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Serialization;
 using UnityEngine.Timeline;
 
 #if UNITY_EDITOR
@@ -157,6 +157,69 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     }
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    internal void OnGraphStart() {
+        if (m_needToRefreshTimelineEditor)
+            TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved);
+    }
+
+    internal void OnClipChanged() {
+        
+        TimelineClip clipOwner = GetOwnerIfReady();
+        if (null == clipOwner)
+            return;
+        
+        if (NeedsRefresh()) {
+            RefreshPlayableFrames();
+            return;
+        }
+        
+        if (!m_frameMarkersVisibility) 
+            return;
+        
+        //Find KeyFrames that need to be moved
+        int numPlayableFrames = m_playableFrames.Count;
+        Dictionary<int, KeyFrameInfo> keyFrameInfoSet = new Dictionary<int, KeyFrameInfo>();
+        for (int i = 0; i < numPlayableFrames; ++i) {
+            SISPlayableFrame keyFrame = m_playableFrames[i];
+            keyFrame.SaveStateFromMarker();
+            int applicableIndex = Mathf.RoundToInt((float)(keyFrame.GetLocalTime() * numPlayableFrames / clipOwner.duration));
+            applicableIndex = Mathf.Clamp(applicableIndex,0,numPlayableFrames - 1);
+            
+            if (applicableIndex == i)
+                continue;
+            
+
+            keyFrameInfoSet[applicableIndex] = (new KeyFrameInfo() {
+                enabled = keyFrame.IsEnabled(),
+                //localTime = keyFrame.GetLocalTime(),
+                mode    = (KeyFrameMode) keyFrame.GetProperty(KeyFramePropertyID.Mode),
+                frameNo = keyFrame.GetFrameNo(),
+            });
+
+            keyFrameInfoSet[i] = new KeyFrameInfo() { frameNo = i , enabled = false};
+
+            //KeyFrameInfo info = keyFrameInfoSet[applicableIndex];            
+            //Debug.Log($"{applicableIndex}, {i}, {numPlayableFrames}, {info.enabled} {info.frameNo} {info.mode} {keyFrame.GetLocalTime()} {keyFrame.GetLocalTime() / clipOwner.duration}");
+        }
+
+        //Update PlayableFrames structure back
+        double timePerFrame = TimelineUtility.CalculateTimePerFrame(clipOwner);
+        for (int i = 0; i < numPlayableFrames; ++i) {
+            m_playableFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
+            if (keyFrameInfoSet.TryGetValue(i, out KeyFrameInfo keyFrameInfo)) {
+
+                //Debug.Log($"Setting {i} {keyFrameInfo.enabled} {keyFrameInfo.frameNo} {keyFrameInfo.mode} ");
+                
+                m_playableFrames[i].SetFrameNo(keyFrameInfo.frameNo);
+                m_playableFrames[i].SetEnabled(keyFrameInfo.enabled);
+                m_playableFrames[i].SetProperty(KeyFramePropertyID.Mode, (int) keyFrameInfo.mode);
+            }
+            m_playableFrames[i].Refresh(m_frameMarkersVisibility);
+        }
+        m_needToRefreshTimelineEditor = true;
+
+    }
 
     internal void InitPlayableFrames() {
         TimelineClip clipOwner = GetOwnerIfReady();
