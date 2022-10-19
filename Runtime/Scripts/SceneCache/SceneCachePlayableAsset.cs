@@ -290,7 +290,71 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     internal void OnClipChanged() {
         SceneCacheClipData clipData = GetBoundClipData();
-        clipData?.OnClipChanged(); //Null check. the data might not have been bound during recompile
+        if (null == clipData)
+            return;
+        
+        clipData.OnClipChanged(); //Null check. the data might not have been bound during recompile
+
+        ISceneCacheInfo sceneCacheInfo = m_sceneCachePlayer.ExtractSceneCacheInfo(false);
+        if (null == sceneCacheInfo) {
+            return;
+        }
+        
+        RecreateClipCurveInEditor(clipData, sceneCacheInfo.GetNumFrames());
+    }
+
+    static void RecreateClipCurveInEditor(SceneCacheClipData clipData, int numFrames) {
+
+        int          numKeyFrames                     = clipData.GetNumPlayableFrames();
+        Keyframe[]   keys                             = new Keyframe[numKeyFrames];
+        float        lastEnabledKeyFrameAnimationTime = 0;
+        bool         lastEnabledKeyFrameIsHold        = false;
+        HashSet<int> keysToLinearize                  = new HashSet<int>();
+        int          prevEnabledKey                   = 0;
+        for (int i = 0; i < numKeyFrames; ++i) {
+            SISPlayableFrame curKeyFrame = clipData.GetPlayableFrame(i);
+            KeyFrameMode     mode        = (KeyFrameMode)(curKeyFrame.GetProperty(KeyFramePropertyID.Mode));
+            
+            float animationTime = Mathf.Clamp(((float) curKeyFrame.GetFrameNo() / numFrames),0,1);
+
+            keys[i].time = (float) curKeyFrame.GetLocalTime();
+            
+            if (curKeyFrame.IsEnabled()) {
+                lastEnabledKeyFrameAnimationTime = animationTime;
+                lastEnabledKeyFrameIsHold        = mode == KeyFrameMode.Stop;
+
+                keys[i].value = animationTime;
+                
+                LinearizeKeyValues(ref keys, prevEnabledKey, i, keysToLinearize);
+                keysToLinearize.Clear();
+                prevEnabledKey = i;
+            } else {
+                if (lastEnabledKeyFrameIsHold) {
+                    keys[i].value = lastEnabledKeyFrameAnimationTime;
+                } else {
+                    keysToLinearize.Add(i);
+                }
+            }
+        }
+        
+        //regard last disabled keys as hold 
+        foreach(int index in keysToLinearize) {
+            keys[index].value = lastEnabledKeyFrameAnimationTime;
+        }
+        
+        AnimationCurve curve = new AnimationCurve(keys);
+        UpdateClipCurveInEditor(clipData.GetOwner(), curve);
+    }
+
+    static void LinearizeKeyValues(ref Keyframe[] keys, int linearStartIndex, int linearEndIndex, HashSet<int> indicesToUpdate) {
+
+        Keyframe startKey = keys[linearStartIndex];
+        Keyframe endKey   = keys[linearEndIndex];
+        
+        AnimationCurve linearCurve = AnimationCurve.Linear(startKey.time, startKey.value, endKey.time, endKey.value);
+        foreach (int index in indicesToUpdate) {
+            keys[index].value = linearCurve.Evaluate(keys[index].time);
+        }
     }
     
     internal void SetSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
