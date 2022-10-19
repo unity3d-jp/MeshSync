@@ -178,8 +178,9 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             return;
         
         //Find KeyFrames that need to be moved
-        int numPlayableFrames = m_playableFrames.Count;
-        Dictionary<int, KeyFrameInfo> keyFrameInfoSet = new Dictionary<int, KeyFrameInfo>();
+        int                           numPlayableFrames     = m_playableFrames.Count;
+        Dictionary<int, KeyFrameInfo> modifiedKeyFrames     = new Dictionary<int, KeyFrameInfo>();
+        HashSet<int>                  keyFramesToInitialize = new HashSet<int>();
         for (int i = 0; i < numPlayableFrames; ++i) {
             SISPlayableFrame keyFrame = m_playableFrames[i];
             keyFrame.SaveStateFromMarker();
@@ -190,25 +191,32 @@ internal abstract class PlayableFrameClipData : BaseClipData {
                 continue;
             
 
-            keyFrameInfoSet[applicableIndex] = (new KeyFrameInfo() {
+            modifiedKeyFrames[applicableIndex] = (new KeyFrameInfo() {
                 enabled = keyFrame.IsEnabled(),
                 //localTime = keyFrame.GetLocalTime(),
                 mode    = (KeyFrameMode) keyFrame.GetProperty(KeyFramePropertyID.Mode),
                 frameNo = keyFrame.GetFrameNo(),
             });
 
-            keyFrameInfoSet[i] = new KeyFrameInfo() { frameNo = i , enabled = false};
+            keyFramesToInitialize.Add(i);
+            //
 
             //KeyFrameInfo info = keyFrameInfoSet[applicableIndex];            
             //Debug.Log($"{applicableIndex}, {i}, {numPlayableFrames}, {info.enabled} {info.frameNo} {info.mode} {keyFrame.GetLocalTime()} {keyFrame.GetLocalTime() / clipOwner.duration}");
+        }
+        
+        //initialize required keyFrames 
+        foreach (int i in keyFramesToInitialize) {
+            if (modifiedKeyFrames.ContainsKey(i))
+                continue;
+            modifiedKeyFrames[i] = new KeyFrameInfo() { frameNo = i , enabled = false};
         }
 
         //Update PlayableFrames structure back
         double timePerFrame = TimelineUtility.CalculateTimePerFrame(clipOwner);
         for (int i = 0; i < numPlayableFrames; ++i) {
             m_playableFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
-            if (keyFrameInfoSet.TryGetValue(i, out KeyFrameInfo keyFrameInfo)) {
-
+            if (modifiedKeyFrames.TryGetValue(i, out KeyFrameInfo keyFrameInfo)) {
                 //Debug.Log($"Setting {i} {keyFrameInfo.enabled} {keyFrameInfo.frameNo} {keyFrameInfo.mode} ");
                 
                 m_playableFrames[i].SetFrameNo(keyFrameInfo.frameNo);
