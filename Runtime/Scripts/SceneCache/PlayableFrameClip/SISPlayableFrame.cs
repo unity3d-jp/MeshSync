@@ -46,10 +46,7 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
 //----------------------------------------------------------------------------------------------------------------------
 
     internal void Destroy() {
-        if (null == m_marker)
-            return;
-
-        DeleteMarker();
+        TryDeleteMarker();
     }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -117,13 +114,13 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
         TrackAsset trackAsset = m_clipDataOwner.GetOwner()?.GetParentTrack();
         //Delete Marker first if it's not in the correct track (e.g: after the TimelineClip was moved)
         if (null!= m_marker && m_marker.parent != trackAsset) {
-            DeleteMarker();
+            TryDeleteMarker();
         }
 
         //Show/Hide the marker
-        if (null != m_marker && !frameMarkerVisibility) {
-            DeleteMarker();
-        } else if (null == m_marker && null!=trackAsset && frameMarkerVisibility) {
+        if (!m_enabled || (!frameMarkerVisibility)) {
+            TryDeleteMarker();
+        } else if (null == m_marker && null!=trackAsset) {
             CreateMarker();
         }
 
@@ -144,8 +141,9 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
         m_marker = trackAsset.CreateMarker<FrameMarker>(m_localTime);
     }
 
-    void DeleteMarker() {
-        Assert.IsNotNull(m_marker);
+    void TryDeleteMarker() {
+        if (null == m_marker)
+            return;
         
         //Marker should have parent, but in rare cases, it may return null
         TrackAsset track = m_marker.parent;
@@ -161,9 +159,13 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
 //----------------------------------------------------------------------------------------------------------------------
 
     [HideInInspector][SerializeField] private SerializedDictionary<KeyFramePropertyID, PlayableFrameProperty<int>> m_serializedProperties;
+
+    [HideInInspector][SerializeField] private bool m_enabled = true;
+
     
     [HideInInspector][SerializeField] private double m_localTime;
     [HideInInspector][SerializeField] private int m_frameNo = 0; //the frame that should be displayed for this localTime
+
     
     [HideInInspector][SerializeField] private FrameMarker           m_marker = null;
     [HideInInspector][SerializeField] private string                m_userNote;
