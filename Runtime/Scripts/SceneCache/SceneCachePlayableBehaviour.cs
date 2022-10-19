@@ -17,6 +17,11 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
     
 //----------------------------------------------------------------------------------------------------------------------        
     
+    /// <inheritdoc/>
+    public override void OnGraphStart(Playable playable) {
+        m_sceneCachePlayableAsset.OnGraphStart(playable);
+    }
+    
     public override void OnPlayableDestroy(Playable playable) { }
     
     public override void OnBehaviourPlay(Playable playable, FrameData info) { }
