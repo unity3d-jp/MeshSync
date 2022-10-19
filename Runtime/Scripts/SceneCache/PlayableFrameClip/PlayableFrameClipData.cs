@@ -141,6 +141,9 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     internal void AddKeyFrameAuto(int span) {
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
+
+        int numIdealNumPlayableFrames = TimelineUtility.CalculateNumFrames(clip);
+        UpdatePlayableFramesSize(numIdealNumPlayableFrames);
         
         //Refresh all markers
         double timePerFrame      = TimelineUtility.CalculateTimePerFrame(clip);
