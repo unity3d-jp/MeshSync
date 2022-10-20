@@ -36,6 +36,10 @@ namespace Unity.MeshSync.Editor.Analytics {
         // Data schema version for sync version
         private const int MESHSYNC_SYNC_VERSION = 2;
 
+        private const string MESHSYNC_SYNC_SESSIONSTARTEDEVENTNAME = "session_start";
+        // Data schema version for session_start
+        private const int MESHSYNC_SYNC_SESSIONSTART_VERSION = 1;
+
         private const int DCCCONFIGURE_EVENTS_PER_HOUR = 1000;
         private const int MESHSYNC_SYNC_EVENTS_PER_HOUR = 10000;
 
@@ -46,6 +50,11 @@ namespace Unity.MeshSync.Editor.Analytics {
         private struct SyncEventData {
             public string assetSyncType;
             public string entitySyncType;
+            public string syncMode;
+        }
+        
+        private struct SessionEventData {
+            public string dccToolName;
         }
 
         private static void logIfWarning(AnalyticsResult resp) {
@@ -78,24 +87,41 @@ namespace Unity.MeshSync.Editor.Analytics {
         }
 
         public void UserSyncedData(MeshSyncAnalyticsData data) {
-            var assetTypeStr = data.assetType == AssetType.Unknown
-                ? "none"
-                : data.assetType.ToString().ToLower();
+            if (data.syncData.HasValue) {
+                var syncData = data.syncData.Value;
 
-            var entityTypeStr = data.entityType == EntityType.Unknown
-                ? "none"
-                : data.entityType.ToString().ToLower();
+                var assetTypeStr = syncData.assetType == AssetType.Unknown
+                    ? "none"
+                    : syncData.assetType.ToString().ToLower();
 
-            var eventData = new SyncEventData {
-                assetSyncType = assetTypeStr,
-                entitySyncType = entityTypeStr
-            };
+                var entityTypeStr = syncData.entityType == EntityType.Unknown
+                    ? "none"
+                    : syncData.entityType.ToString().ToLower();
 
-            logIfWarning(
-                EditorAnalytics.SendEventWithLimit(
-                    MESHSYNC_SYNC_INSTALLEDEVENTNAME,
-                    eventData,
-                    MESHSYNC_SYNC_VERSION));
+                var eventData = new SyncEventData {
+                    assetSyncType  = assetTypeStr,
+                    entitySyncType = entityTypeStr,
+                    syncMode       = syncData.syncMode.ToString()
+                };
+
+                logIfWarning(
+                    EditorAnalytics.SendEventWithLimit(
+                        MESHSYNC_SYNC_INSTALLEDEVENTNAME,
+                        eventData,
+                        MESHSYNC_SYNC_VERSION));
+            }
+            else if (data.sessionStartData.HasValue) {
+                var sessionStartData = data.sessionStartData.Value;
+                var eventData = new SessionEventData {
+                    dccToolName = sessionStartData.DCCToolName
+                };
+
+                logIfWarning(
+                    EditorAnalytics.SendEventWithLimit(
+                        MESHSYNC_SYNC_SESSIONSTARTEDEVENTNAME,
+                        eventData,
+                        MESHSYNC_SYNC_SESSIONSTART_VERSION));
+            }
         }
     }
 }

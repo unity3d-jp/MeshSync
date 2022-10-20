@@ -26,6 +26,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using Unity.FilmInternalUtilities.Editor;
+using UnityEngine.Analytics;
 #endif
 
 
@@ -88,12 +89,27 @@ internal delegate void DeleteInstanceHandler(string path);
     /// Internal analytics observer data
     /// </summary>
     public struct MeshSyncAnalyticsData {
-        internal AssetType assetType;
-        internal EntityType entityType;
-
+        internal MeshSyncSessionStartAnalyticsData? sessionStartData;
+        internal MeshSyncSyncAnalyticsData?         syncData;
     }
 
-    //----------------------------------------------------------------------------------------------------------------------
+    /// <summary>
+    /// Data about sync.
+    /// </summary>
+    public struct MeshSyncSyncAnalyticsData {
+        internal AssetType  assetType;
+        internal EntityType entityType;
+        internal int        syncMode;
+    }
+
+    /// <summary>
+    /// Information about the DCC tool used with MeshSync.
+    /// </summary>
+    public struct MeshSyncSessionStartAnalyticsData {
+        public string DCCToolName;
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
 
     /// <summary>
     /// The base class of main MeshSync components (MeshSyncServer, SceneCachePlayer),
@@ -500,6 +516,9 @@ internal delegate void DeleteInstanceHandler(string path);
 
             currentSessionId = mes.Value.SessionId;
 
+            SendEventData(new MeshSyncAnalyticsData()
+                { sessionStartData = new MeshSyncSessionStartAnalyticsData() { DCCToolName = mes.Value.DCCToolName } });
+           
             if (transform.childCount <= 0) {
                 return;
             }
@@ -569,7 +588,7 @@ internal delegate void DeleteInstanceHandler(string path);
                         }
 
                         if (logAnalytics) {
-                            SendEventData(new MeshSyncAnalyticsData() { assetType = asset.type });
+                            SendEventData(new MeshSyncAnalyticsData() {syncData = new MeshSyncSyncAnalyticsData() { assetType = asset.type }});
                         }
                     }
 #if UNITY_EDITOR
@@ -609,7 +628,7 @@ internal delegate void DeleteInstanceHandler(string path);
                             break;
                     }
 
-                    SendEventData(new MeshSyncAnalyticsData() { entityType = src.entityType });
+                    SendEventData(new MeshSyncAnalyticsData() { syncData =new MeshSyncSyncAnalyticsData(){ entityType = src.entityType} });
 
 
                     if (dst != null && onUpdateEntity != null)

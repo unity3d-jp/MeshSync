@@ -61,6 +61,11 @@ msAPI ms::FenceMessage::FenceType msFenceGetType(ms::FenceMessage *self)
     return self->type;
 }
 
+msAPI const char* msFenceGetDCCToolName(ms::FenceMessage* self)
+{
+    return self->dcc_tool_name.c_str();
+}
+
 msAPI const char* msTextGetText(ms::TextMessage *self)
 {
     return self->text.c_str();
