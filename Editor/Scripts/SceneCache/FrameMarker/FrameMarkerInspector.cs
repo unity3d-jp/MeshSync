@@ -39,7 +39,7 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
         if (prevPlayFrame != playFrame) {
             foreach (FrameMarker m in m_assets) {
                 SISPlayableFrame playableFrame = m.GetOwner();
-                playableFrame.SetFrameNo(playFrame);
+                playableFrame.SetPlayFrame(playFrame);
             }
             TimelineEditor.Refresh(RefreshReason.ContentsModified);
             

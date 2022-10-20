@@ -120,7 +120,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     {
         SISPlayableFrame playableFrame = new SISPlayableFrame(owner);
         playableFrame.SetIndexAndLocalTime(index, timePerFrame * index);
-        playableFrame.SetFrameNo(index);
+        playableFrame.SetPlayFrame(index);
         return playableFrame;
     }
 
@@ -164,7 +164,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         int    numPlayableFrames = m_playableFrames.Count;
         for (int i = 0; i < numPlayableFrames; ++i) {
             m_playableFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
-            m_playableFrames[i].SetFrameNo(i);
+            m_playableFrames[i].SetPlayFrame(i);
             m_playableFrames[i].SetEnabled( i % span == 0);
             m_playableFrames[i].SetProperty(KeyFramePropertyID.Mode, (int) mode);
             m_playableFrames[i].RefreshMarker(m_frameMarkersVisibility);
@@ -192,7 +192,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             prevEnabledFrame = m_playableFrames[0];
 
         if ((KeyFrameMode.Hold == (KeyFrameMode)prevEnabledFrame.GetProperty(KeyFramePropertyID.Mode))) {
-            frame.SetFrameNo(prevEnabledFrame.GetFrameNo());
+            frame.SetPlayFrame(prevEnabledFrame.GetFrameNo());
         } else {
             
             SISPlayableFrame nextEnabledFrame = FindEnabledKeyFrame(m_playableFrames, frameIndex + 1, m_playableFrames.Count);
@@ -202,7 +202,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             AnimationCurve linearCurve = AnimationCurve.Linear((float)prevEnabledFrame.GetLocalTime(), prevEnabledFrame.GetFrameNo(), 
                 (float)nextEnabledFrame.GetLocalTime(), nextEnabledFrame.GetFrameNo());
             int frameNo = (int )linearCurve.Evaluate((float)frame.GetLocalTime());
-            frame.SetFrameNo(frameNo);
+            frame.SetPlayFrame(frameNo);
         }
         
         if (m_frameMarkersVisibility)
@@ -274,7 +274,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             if (modifiedKeyFrames.TryGetValue(i, out KeyFrameInfo keyFrameInfo)) {
                 //Debug.Log($"Setting {i} {keyFrameInfo.enabled} {keyFrameInfo.frameNo} {keyFrameInfo.mode} ");
                 
-                m_playableFrames[i].SetFrameNo(keyFrameInfo.frameNo);
+                m_playableFrames[i].SetPlayFrame(keyFrameInfo.frameNo);
                 m_playableFrames[i].SetEnabled(keyFrameInfo.enabled);
                 m_playableFrames[i].SetProperty(KeyFramePropertyID.Mode, (int) keyFrameInfo.mode);
             }
@@ -299,7 +299,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         for (int i = 0; i < numPlayableFrames; ++i) {
             m_playableFrames[i].SetEnabled(true);
             m_playableFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
-            m_playableFrames[i].SetFrameNo(i);
+            m_playableFrames[i].SetPlayFrame(i);
             m_playableFrames[i].SetProperty(KeyFramePropertyID.Mode, (int)KeyFrameMode.Continuous);
             m_playableFrames[i].RefreshMarker(m_frameMarkersVisibility);
         }
