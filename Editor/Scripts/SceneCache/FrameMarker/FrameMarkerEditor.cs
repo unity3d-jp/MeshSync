@@ -30,11 +30,11 @@ class FrameMarkerEditor : MarkerEditor {
         DrawFrameNumber(labelRect, clipData, playableFrame.GetFrameNo());
         
         switch (keyFrameMode) {
-            case KeyFrameMode.Smooth: {
+            case KeyFrameMode.Continuous: {
                 UnityEngine.Graphics.DrawTexture(region.markerRegion, EditorTextures.GetKeyFrameSmoothTexture());
                 break;
             }
-            case KeyFrameMode.Stop: {
+            case KeyFrameMode.Hold: {
                 UnityEngine.Graphics.DrawTexture(region.markerRegion, EditorTextures.GetKeyFrameStopTexture());
                 break;
             }

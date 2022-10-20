@@ -330,7 +330,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             
             if (curKeyFrame.IsEnabled()) {
                 lastEnabledKeyFrameAnimationTime = animationTime;
-                lastEnabledKeyFrameIsHold        = mode == KeyFrameMode.Stop;
+                lastEnabledKeyFrameIsHold        = mode == KeyFrameMode.Hold;
 
                 keys[i].value = animationTime;
                 

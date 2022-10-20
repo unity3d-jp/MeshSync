@@ -1,8 +1,8 @@
 ﻿namespace Unity.MeshSync {
 
 internal enum KeyFrameMode {
-    Smooth = 0,
-    Stop
+    Continuous = 0,
+    Hold
 }
 
 } //end namespace

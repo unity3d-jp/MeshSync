@@ -79,7 +79,7 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
         
         switch (inspectedPropertyID) {
             case KeyFramePropertyID.Mode: {                
-                playableFrame.SetProperty(inspectedPropertyID, prevValue == (int) KeyFrameMode.Smooth ? (int) KeyFrameMode.Stop : (int) KeyFrameMode.Smooth);
+                playableFrame.SetProperty(inspectedPropertyID, prevValue == (int) KeyFrameMode.Continuous ? (int) KeyFrameMode.Hold : (int) KeyFrameMode.Continuous);
                 break;
             }
 

@@ -170,7 +170,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         frame.SetEnabled(true);
         frame.SetUserNote("");
         
-        frame.SetProperty(KeyFramePropertyID.Mode, (int) KeyFrameMode.Smooth);
+        frame.SetProperty(KeyFramePropertyID.Mode, (int) KeyFrameMode.Continuous);
         
         SISPlayableFrame prevEnabledFrame = m_playableFrames[0];
         for (int i = frameIndex - 1; i >= 0; --i) {
@@ -180,7 +180,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             }
         }
 
-        if ((KeyFrameMode.Stop == (KeyFrameMode)prevEnabledFrame.GetProperty(KeyFramePropertyID.Mode))) {
+        if ((KeyFrameMode.Hold == (KeyFrameMode)prevEnabledFrame.GetProperty(KeyFramePropertyID.Mode))) {
             frame.SetFrameNo(prevEnabledFrame.GetFrameNo());
         } else {
             
@@ -339,7 +339,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             List<KeyFrameMode> prevKeyFrameModes = new List<KeyFrameMode>(prevNumPlayableFrames);
             foreach (SISPlayableFrame frame in m_playableFrames) {
                 //if frame ==null, just use the default
-                prevKeyFrameModes.Add(null == frame ? KeyFrameMode.Smooth : (KeyFrameMode) frame.GetProperty(KeyFramePropertyID.Mode)); 
+                prevKeyFrameModes.Add(null == frame ? KeyFrameMode.Continuous : (KeyFrameMode) frame.GetProperty(KeyFramePropertyID.Mode)); 
             }
 
             UpdatePlayableFramesSize(numIdealNumPlayableFrames);
