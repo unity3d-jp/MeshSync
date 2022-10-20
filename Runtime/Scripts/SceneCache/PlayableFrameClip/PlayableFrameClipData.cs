@@ -156,6 +156,54 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         }
     }
 
+    internal void AddKeyFrame(double globalTime) {
+        TimelineClip clip = GetOwnerIfReady();
+        if (null == clip)
+            return;
+            
+        //already enabled
+        int              frameIndex = LocalTimeToFrameIndex(globalTime - clip.start, clip.duration);
+        SISPlayableFrame frame   = m_playableFrames[frameIndex];
+        if (frame.IsEnabled())
+            return;
+        
+        frame.SetEnabled(true);
+        frame.SetUserNote("");
+        
+        frame.SetProperty(KeyFramePropertyID.Mode, (int) KeyFrameMode.Smooth);
+        
+        SISPlayableFrame prevEnabledFrame = m_playableFrames[0];
+        for (int i = frameIndex - 1; i >= 0; --i) {
+            if (m_playableFrames[i].IsEnabled()) {
+                prevEnabledFrame = m_playableFrames[i];
+                break;
+            }
+        }
+
+        if ((KeyFrameMode.Stop == (KeyFrameMode)prevEnabledFrame.GetProperty(KeyFramePropertyID.Mode))) {
+            frame.SetFrameNo(prevEnabledFrame.GetFrameNo());
+        } else {
+            
+            SISPlayableFrame nextEnabledFrame = m_playableFrames[frameIndex];
+            for (int i = frameIndex + 1; i < m_playableFrames.Count; ++i) {
+                if (m_playableFrames[i].IsEnabled()) {
+                    nextEnabledFrame = m_playableFrames[i];
+                    break;
+                }
+            }
+        
+            AnimationCurve linearCurve = AnimationCurve.Linear((float)prevEnabledFrame.GetLocalTime(), prevEnabledFrame.GetFrameNo(), 
+                (float)nextEnabledFrame.GetLocalTime(), nextEnabledFrame.GetFrameNo());
+            int frameNo = (int )linearCurve.Evaluate((float)frame.GetLocalTime());
+            frame.SetFrameNo(frameNo);
+        }
+        
+        if (m_frameMarkersVisibility)
+            frame.RefreshMarker(m_frameMarkersVisibility);
+        
+        
+    }
+    
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     internal void OnGraphStart() {
@@ -269,7 +317,6 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         return false;
 
     }
-    
     
     //Resize PlayableFrames and used the previous values
     private void RefreshPlayableFrames() {
@@ -387,6 +434,14 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         //Clip may not have a parent because the clip is being moved 
         return null == clipOwner.GetParentTrack() ? null : clipOwner;
     }
+
+    private int LocalTimeToFrameIndex(double localTime, double clipDuration) {
+        int numPlayableFrames = m_playableFrames.Count;
+        int index   = Mathf.RoundToInt((float)(localTime * numPlayableFrames / clipDuration));
+        index = Mathf.Clamp(index,0,numPlayableFrames - 1);
+        return index;
+    }
+    
     
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
     
