@@ -120,6 +120,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     {
         SISPlayableFrame playableFrame = new SISPlayableFrame(owner);
         playableFrame.SetIndexAndLocalTime(index, timePerFrame * index);
+        playableFrame.SetFrameNo(index);
         return playableFrame;
     }
 
