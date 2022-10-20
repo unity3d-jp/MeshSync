@@ -45,7 +45,10 @@ class FrameMarkerEditor : MarkerEditor {
     void DrawFrameNumber(Rect rect, PlayableFrameClipData clipData, int frame) {
         Assert.IsNotNull(clipData);
         
-        TimelineClip            clip                    = clipData.GetOwner();
+        TimelineClip clip = clipData.GetOwner();
+        if (null == clip)
+            return;
+        
         SceneCachePlayableAsset sceneCachePlayableAsset = clip.asset as SceneCachePlayableAsset;
         if (null == sceneCachePlayableAsset)
             return;
