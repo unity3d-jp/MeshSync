@@ -4,6 +4,7 @@ using Unity.MeshSync.Editor;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.Timeline;
 using UnityObject = UnityEngine.Object;
 
 
@@ -26,13 +27,24 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
         ShortcutBinding useFrameShortcut 
             = ShortcutManager.instance.GetShortcutBinding(MeshSyncEditorConstants.SHORTCUT_TOGGLE_KEYFRAME);
         KeyFrameMode prevMode = m_assets[0].GetKeyFrameMode();
-        KeyFrameMode mode         = (KeyFrameMode) EditorGUILayout.EnumPopup($"Use Frame ({useFrameShortcut})", prevMode);
+        KeyFrameMode mode     = (KeyFrameMode) EditorGUILayout.EnumPopup($"Mode ({useFrameShortcut})", prevMode);
         if (mode != prevMode) {
-            //Set all selected objects
             foreach (FrameMarker m in m_assets) {
                 SetMarkerValueByContext(m,(int) mode);
             }            
         }
+
+        int prevPlayFrame = m_assets[0].GetOwner().GetFrameNo();
+        int playFrame     = EditorGUILayout.IntField("Frame To Play: ", prevPlayFrame);
+        if (prevPlayFrame != playFrame) {
+            foreach (FrameMarker m in m_assets) {
+                SISPlayableFrame playableFrame = m.GetOwner();
+                playableFrame.SetFrameNo(playFrame);
+            }
+            TimelineEditor.Refresh(RefreshReason.ContentsModified);
+            
+        }
+        
 
         if (1 == m_assets.Length) {
             SISPlayableFrame playableFrame = m_assets[0].GetOwner();
