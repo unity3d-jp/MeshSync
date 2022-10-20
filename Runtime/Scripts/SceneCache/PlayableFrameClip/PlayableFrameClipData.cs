@@ -138,7 +138,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         }        
     } 
     
-    internal void AddKeyFrameAuto(int span) {
+    internal void AddKeyFrameAuto(int span, KeyFrameMode mode) {
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
 
@@ -152,6 +152,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             m_playableFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
             m_playableFrames[i].SetFrameNo(i);
             m_playableFrames[i].SetEnabled( i % span == 0);
+            m_playableFrames[i].SetProperty(KeyFramePropertyID.Mode, (int) mode);
             m_playableFrames[i].RefreshMarker(m_frameMarkersVisibility);
         }
     }
