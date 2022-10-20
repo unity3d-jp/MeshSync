@@ -285,15 +285,24 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     internal void SetIsSceneCacheCurveExtracted(bool extracted) { m_isSceneCacheCurveExtracted = extracted; }
     
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    internal void AddKeyFrame(double time) {
+        SceneCacheClipData clipData = GetBoundClipData();
+        if (null == clipData) //Null check. the data might not have been bound during recompile
+            return;
+        
+        clipData.AddKeyFrame(time);
+    }    
     
 #if UNITY_EDITOR
     
+    
     internal void OnClipChanged() {
         SceneCacheClipData clipData = GetBoundClipData();
-        if (null == clipData)
+        if (null == clipData) //Null check. the data might not have been bound during recompile
             return;
         
-        clipData.OnClipChanged(); //Null check. the data might not have been bound during recompile
+        clipData.OnClipChanged(); 
 
         ISceneCacheInfo sceneCacheInfo = m_sceneCachePlayer.ExtractSceneCacheInfo(false);
         if (null == sceneCacheInfo) {
