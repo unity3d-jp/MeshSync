@@ -75,6 +75,14 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         
         return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, behaviour);
     }
+    
+    internal void InitKeyFrames() {
+        SceneCacheClipData clipData = GetBoundClipData();
+        if (null == clipData)
+            return;
+        clipData.InitPlayableFrames();
+    }
+    
 
 //----------------------------------------------------------------------------------------------------------------------
     
