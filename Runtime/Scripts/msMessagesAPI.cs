@@ -165,16 +165,9 @@ internal struct FenceMessage {
 
     internal string DCCToolName {
         get {
-            // The method may not exist, we don't want to bump the protocol version just for this change:
-            try {
-                IntPtr
-                    nativeStr = msFenceGetDCCToolName(
-                        self); //Not direct marshalling because there is no free on C# side.
-                return  Marshal.PtrToStringAnsi(nativeStr);
-            }
-            catch {
-                return "";
-            }
+            IntPtr
+                nativeStr = msFenceGetDCCToolName(self); //Not direct marshalling because there is no free on C# side.
+            return  Marshal.PtrToStringAnsi(nativeStr);
         }
     }
 }
