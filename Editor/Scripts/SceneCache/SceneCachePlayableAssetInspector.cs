@@ -97,26 +97,26 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
 
         GUILayout.BeginVertical("Box");
         EditorGUILayout.LabelField("Regenerate Key Frames", EditorStyles.boldLabel);
-
-        m_autoKeyFrameSpan = EditorGUILayout.IntField("KeyFrame Span", m_autoKeyFrameSpan);
-        m_autoKeyFrameMode = (KeyFrameMode) EditorGUILayout.EnumPopup("Mode", m_autoKeyFrameMode);
         
+        
+        clipData.SetEditorKeyFrameAutoSpan(EditorGUILayout.IntField("KeyFrame Span", clipData.GetEditorKeyFrameAutoSpan()));
+        clipData.SetEditorKeyFrameAutoMode((KeyFrameMode) EditorGUILayout.EnumPopup("KeyFrame Mode", clipData.GetEditorKeyFrameAutoMode()));
+               
         GUILayout.Space(15);        
         if (DrawGUIButton( leftX:15, width:120,"Generate")) {
-            clipData.GenerateKeyFramesAuto(m_autoKeyFrameSpan,m_autoKeyFrameMode);
+            clipData.GenerateKeyFramesAuto(clipData.GetEditorKeyFrameAutoSpan(),clipData.GetEditorKeyFrameAutoMode());
         }
             
         GUILayout.EndVertical();
         
         
     }
+
 //----------------------------------------------------------------------------------------------------------------------
 
 
     private static readonly GUIContent SCENE_CACHE_PLAYER = EditorGUIUtility.TrTextContent("Scene Cache Player");
 
-    private int          m_autoKeyFrameSpan = 3;
-    private KeyFrameMode m_autoKeyFrameMode = KeyFrameMode.Continuous;
     
     private SceneCachePlayableAsset m_scPlayableAsset;
     
