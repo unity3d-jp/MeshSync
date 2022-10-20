@@ -42,7 +42,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         GUILayout.Space(15);
         
         
-        DrawLimitedAnimationGUI(m_scPlayableAsset);
+        //DrawLimitedAnimationGUI(m_scPlayableAsset);
         
         {
             // Curve Operations
@@ -51,13 +51,13 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
 
             const float BUTTON_X     = 30;
             const float BUTTON_WIDTH = 160f;
-            if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"To Linear")) {
-                m_scPlayableAsset.SetCurveToLinearInEditor();
+            if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"Reset")) {
+                m_scPlayableAsset.InitKeyFrames();
             }
             
-            if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"Apply Original")) {
-                m_scPlayableAsset.ApplyOriginalSceneCacheCurveInEditor();
-            }
+            // if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"Apply Original")) {
+            //     m_scPlayableAsset.ApplyOriginalSceneCacheCurveInEditor();
+            // }
             
             GUILayout.EndVertical();                    
         }
