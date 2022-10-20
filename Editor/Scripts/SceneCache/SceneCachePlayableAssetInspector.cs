@@ -117,7 +117,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         
         GUILayout.Space(15);
         if (GUILayout.Button("Auto-Generate")) {
-            clipData.AddKeyFrameAuto(m_autoKeyFrameSpan,m_autoKeyFrameMode);
+            clipData.GenerateKeyFramesAuto(m_autoKeyFrameSpan,m_autoKeyFrameMode);
         }
     }
 //----------------------------------------------------------------------------------------------------------------------

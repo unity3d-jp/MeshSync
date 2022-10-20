@@ -138,7 +138,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         }        
     } 
     
-    internal void AddKeyFrameAuto(int span, KeyFrameMode mode) {
+    internal void GenerateKeyFramesAuto(int span, KeyFrameMode mode) {
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
 
