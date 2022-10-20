@@ -172,25 +172,17 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         
         frame.SetProperty(KeyFramePropertyID.Mode, (int) KeyFrameMode.Continuous);
         
-        SISPlayableFrame prevEnabledFrame = m_playableFrames[0];
-        for (int i = frameIndex - 1; i >= 0; --i) {
-            if (m_playableFrames[i].IsEnabled()) {
-                prevEnabledFrame = m_playableFrames[i];
-                break;
-            }
-        }
+        SISPlayableFrame prevEnabledFrame = FindEnabledKeyFrame(m_playableFrames, frameIndex - 1, 0);
+        if (null == prevEnabledFrame)
+            prevEnabledFrame = m_playableFrames[0];
 
         if ((KeyFrameMode.Hold == (KeyFrameMode)prevEnabledFrame.GetProperty(KeyFramePropertyID.Mode))) {
             frame.SetFrameNo(prevEnabledFrame.GetFrameNo());
         } else {
             
-            SISPlayableFrame nextEnabledFrame = m_playableFrames[frameIndex];
-            for (int i = frameIndex + 1; i < m_playableFrames.Count; ++i) {
-                if (m_playableFrames[i].IsEnabled()) {
-                    nextEnabledFrame = m_playableFrames[i];
-                    break;
-                }
-            }
+            SISPlayableFrame nextEnabledFrame = FindEnabledKeyFrame(m_playableFrames, frameIndex + 1, m_playableFrames.Count);
+            if (null == nextEnabledFrame)
+                nextEnabledFrame = m_playableFrames[frameIndex];
         
             AnimationCurve linearCurve = AnimationCurve.Linear((float)prevEnabledFrame.GetLocalTime(), prevEnabledFrame.GetFrameNo(), 
                 (float)nextEnabledFrame.GetLocalTime(), nextEnabledFrame.GetFrameNo());
@@ -441,8 +433,20 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         index = Mathf.Clamp(index,0,numPlayableFrames - 1);
         return index;
     }
-    
-    
+
+
+    [CanBeNull]
+    static SISPlayableFrame FindEnabledKeyFrame(IList<SISPlayableFrame> keyFrames, int startIndex, int endIndex) {
+
+        int counter = (int)Mathf.Sign(endIndex - startIndex);
+        for (int i = startIndex; i != endIndex; i += counter) {
+            if (keyFrames[i].IsEnabled()) {
+                return keyFrames[i];
+            }
+        }
+        return null;
+        
+    }
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
     
     //The ground truth for using/dropping an image in a particular frame. See the notes below
