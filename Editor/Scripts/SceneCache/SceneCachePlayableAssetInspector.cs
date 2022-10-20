@@ -37,29 +37,12 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         GUILayout.Space(15);
         //Frame markers
         if (null!=TimelineEditor.selectedClip && TimelineEditor.selectedClip.asset == m_scPlayableAsset) {
-            DrawFrameMarkersGUI(m_scPlayableAsset);
+            DrawRegenerateKeyFramesGUI(m_scPlayableAsset);
         }
         GUILayout.Space(15);
-        
-        
-        //DrawLimitedAnimationGUI(m_scPlayableAsset);
-        
-        {
-            // Curve Operations
-            GUILayout.BeginVertical("Box");
-            EditorGUILayout.LabelField("Curves", EditorStyles.boldLabel);
-
-            const float BUTTON_X     = 30;
-            const float BUTTON_WIDTH = 160f;
-            if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"Reset")) {
-                m_scPlayableAsset.InitKeyFrames();
-            }
-            
-            // if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"Apply Original")) {
-            //     m_scPlayableAsset.ApplyOriginalSceneCacheCurveInEditor();
-            // }
-            
-            GUILayout.EndVertical();                    
+                
+        if (DrawGUIButton(leftX:0, width:120,"Reset")) {
+            m_scPlayableAsset.InitKeyFrames();
         }
         
         so.ApplyModifiedProperties();       
@@ -105,20 +88,27 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
     }
 
     
-    void DrawFrameMarkersGUI<T>(BaseExtendedClipPlayableAsset<T> clipDataPlayableAsset) where T: PlayableFrameClipData 
+    void DrawRegenerateKeyFramesGUI<T>(BaseExtendedClipPlayableAsset<T> clipDataPlayableAsset) where T: PlayableFrameClipData 
     {        
 
         T clipData = clipDataPlayableAsset.GetBoundClipData();
         if (null == clipData)
             return;
 
+        GUILayout.BeginVertical("Box");
+        EditorGUILayout.LabelField("Regenerate Key Frames", EditorStyles.boldLabel);
+
         m_autoKeyFrameSpan = EditorGUILayout.IntField("KeyFrame Span", m_autoKeyFrameSpan);
         m_autoKeyFrameMode = (KeyFrameMode) EditorGUILayout.EnumPopup("Mode", m_autoKeyFrameMode);
         
-        GUILayout.Space(15);
-        if (GUILayout.Button("Auto-Generate")) {
+        GUILayout.Space(15);        
+        if (DrawGUIButton( leftX:15, width:120,"Generate")) {
             clipData.GenerateKeyFramesAuto(m_autoKeyFrameSpan,m_autoKeyFrameMode);
         }
+            
+        GUILayout.EndVertical();
+        
+        
     }
 //----------------------------------------------------------------------------------------------------------------------
 
