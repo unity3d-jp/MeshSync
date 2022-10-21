@@ -315,7 +315,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         if (null == m_sceneCachePlayer)
             return;
         
-        ISceneCacheInfo sceneCacheInfo = m_sceneCachePlayer.ExtractSceneCacheInfo(false);
+        ISceneCacheInfo sceneCacheInfo = m_sceneCachePlayer.ExtractSceneCacheInfo(forceOpen:true);
         if (null == sceneCacheInfo) {
             return;
         }
