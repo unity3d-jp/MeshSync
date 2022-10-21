@@ -58,7 +58,7 @@ namespace Unity.MeshSync.Editor.Analytics {
         /// <summary>
         /// Sends any object to the analytics library.
         /// </summary>
-        /// <param name="data"></param>
+        /// <param name="data">Data to send</param>
         protected void Send(object data) {
             logIfWarning(
             EditorAnalytics.SendEventWithLimit(
