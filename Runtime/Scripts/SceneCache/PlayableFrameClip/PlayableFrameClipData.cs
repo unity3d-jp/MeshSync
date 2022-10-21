@@ -192,15 +192,15 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             prevEnabledFrame = m_playableFrames[0];
 
         if ((KeyFrameMode.Hold == (KeyFrameMode)prevEnabledFrame.GetProperty(KeyFramePropertyID.Mode))) {
-            frame.SetPlayFrame(prevEnabledFrame.GetFrameNo());
+            frame.SetPlayFrame(prevEnabledFrame.GetPlayFrame());
         } else {
             
             SISPlayableFrame nextEnabledFrame = FindEnabledKeyFrame(m_playableFrames, frameIndex + 1, m_playableFrames.Count);
             if (null == nextEnabledFrame)
                 nextEnabledFrame = m_playableFrames[frameIndex];
         
-            AnimationCurve linearCurve = AnimationCurve.Linear((float)prevEnabledFrame.GetLocalTime(), prevEnabledFrame.GetFrameNo(), 
-                (float)nextEnabledFrame.GetLocalTime(), nextEnabledFrame.GetFrameNo());
+            AnimationCurve linearCurve = AnimationCurve.Linear((float)prevEnabledFrame.GetLocalTime(), prevEnabledFrame.GetPlayFrame(), 
+                (float)nextEnabledFrame.GetLocalTime(), nextEnabledFrame.GetPlayFrame());
             int frameNo = (int )linearCurve.Evaluate((float)frame.GetLocalTime());
             frame.SetPlayFrame(frameNo);
         }
@@ -256,7 +256,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
                 enabled = true,
                 //localTime = keyFrame.GetLocalTime(),
                 mode    = (KeyFrameMode) keyFrame.GetProperty(KeyFramePropertyID.Mode),
-                frameNo = keyFrame.GetFrameNo(),
+                playFrame = keyFrame.GetPlayFrame(),
             });
             
 
@@ -277,7 +277,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             if (movedKeyFrames.TryGetValue(i, out KeyFrameInfo keyFrameInfo)) {
                 
                 //Debug.Log($"Setting {i} {keyFrameInfo.enabled} {keyFrameInfo.frameNo} {keyFrameInfo.mode} ");
-                m_playableFrames[i].SetPlayFrame(keyFrameInfo.frameNo);
+                m_playableFrames[i].SetPlayFrame(keyFrameInfo.playFrame);
                 m_playableFrames[i].SetEnabled(keyFrameInfo.enabled);
                 m_playableFrames[i].SetProperty(KeyFramePropertyID.Mode, (int) keyFrameInfo.mode);
             }

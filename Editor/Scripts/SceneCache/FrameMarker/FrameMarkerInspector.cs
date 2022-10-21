@@ -34,14 +34,14 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
             }            
         }
 
-        int prevPlayFrame = m_assets[0].GetOwner().GetFrameNo();
+        int prevPlayFrame = m_assets[0].GetOwner().GetPlayFrame();
         int playFrame     = EditorGUILayout.IntField("Frame To Play: ", prevPlayFrame);
         if (prevPlayFrame != playFrame) {
             foreach (FrameMarker m in m_assets) {
                 SISPlayableFrame playableFrame = m.GetOwner();
                 playableFrame.SetPlayFrame(playFrame);
             }
-            TimelineEditor.Refresh(RefreshReason.ContentsModified);
+            //TimelineEditor.Refresh(RefreshReason.ContentsModified);
             
         }
         

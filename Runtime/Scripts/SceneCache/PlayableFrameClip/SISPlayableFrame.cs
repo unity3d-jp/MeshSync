@@ -54,7 +54,7 @@ internal class SISPlayableFrame : ISerializationCallbackReceiver {
     internal PlayableFrameClipData GetOwner()                             {  return m_clipDataOwner; }    
     internal double      GetLocalTime()                                   { return m_localTime; }
 
-    internal int GetFrameNo() { return m_playFrame; }
+    internal int GetPlayFrame() { return m_playFrame; }
     
     internal int GetIndex() { return m_index; }
     internal void   SetIndexAndLocalTime(int index, double localTime) {

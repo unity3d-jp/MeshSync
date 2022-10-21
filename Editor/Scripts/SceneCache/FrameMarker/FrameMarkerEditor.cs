@@ -27,7 +27,7 @@ class FrameMarkerEditor : MarkerEditor {
         Rect      labelRect  = region.markerRegion;
         labelRect.x     += labelRect.width;
         labelRect.width =  TEXT_WIDTH;
-        DrawFrameNumber(labelRect, clipData, playableFrame.GetFrameNo());
+        DrawFrameNumber(labelRect, clipData, playableFrame.GetPlayFrame());
         
         switch (keyFrameMode) {
             case KeyFrameMode.Continuous: {
