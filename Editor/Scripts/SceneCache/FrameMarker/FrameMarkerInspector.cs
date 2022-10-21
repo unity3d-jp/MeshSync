@@ -41,8 +41,7 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
                 SISPlayableFrame playableFrame = m.GetOwner();
                 playableFrame.SetPlayFrame(playFrame);
             }
-            //TimelineEditor.Refresh(RefreshReason.ContentsModified);
-            
+            TimelineEditor.Refresh(RefreshReason.ContentsModified);            
         }
         
 
