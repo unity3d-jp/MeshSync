@@ -214,8 +214,12 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     internal void OnGraphStart() {
-        if (m_needToRefreshTimelineEditor)
+        if (m_needToRefreshTimelineEditor) {
+            foreach (SISPlayableFrame playableKeyFrame in m_playableFrames) {
+                playableKeyFrame.RefreshMarker(m_frameMarkersVisibility);
+            }
             TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved);
+        }
     }
 
     internal void OnClipChanged() {
@@ -247,11 +251,12 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             
 
             modifiedKeyFrames[applicableIndex] = (new KeyFrameInfo() {
-                enabled = keyFrame.IsEnabled(),
+                enabled = true,
                 //localTime = keyFrame.GetLocalTime(),
                 mode    = (KeyFrameMode) keyFrame.GetProperty(KeyFramePropertyID.Mode),
                 frameNo = keyFrame.GetFrameNo(),
             });
+            
 
             keyFramesToInitialize.Add(i);
             //
@@ -278,10 +283,11 @@ internal abstract class PlayableFrameClipData : BaseClipData {
                 m_playableFrames[i].SetEnabled(keyFrameInfo.enabled);
                 m_playableFrames[i].SetProperty(KeyFramePropertyID.Mode, (int) keyFrameInfo.mode);
             }
-            m_playableFrames[i].RefreshMarker(m_frameMarkersVisibility);
         }
-        m_needToRefreshTimelineEditor = true;
 
+        if (modifiedKeyFrames.Count > 0) {
+            m_needToRefreshTimelineEditor = true;
+        }
     }
 
     internal void InitPlayableFrames() {
