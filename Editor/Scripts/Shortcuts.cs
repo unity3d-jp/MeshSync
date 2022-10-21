@@ -6,14 +6,14 @@ namespace Unity.MeshSync.Editor {
 
 internal static class Shortcuts  {
 
-    [Shortcut(MeshSyncEditorConstants.SHORTCUT_TOGGLE_KEYFRAME, null,  KeyCode.U)]
-    static void ToggleFrameMarker(ShortcutArguments args) {
+    [Shortcut(MeshSyncEditorConstants.SHORTCUT_CHANGE_KEYFRAME_MODE, null,  KeyCode.M, ShortcutModifiers.Alt)]
+    static void ChangeKeyFrameMode(ShortcutArguments args) {
         foreach (Object obj in Selection.objects) {
             FrameMarker marker = obj as FrameMarker;
             if (null == marker) {
                 continue;
             }
-            FrameMarkerInspector.ToggleMarkerValueByContext(marker);
+            FrameMarkerInspector.ChangeKeyFrameMode(marker);
 
         }
     }

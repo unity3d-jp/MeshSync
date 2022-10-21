@@ -25,7 +25,7 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
 //----------------------------------------------------------------------------------------------------------------------
     public override void OnInspectorGUI() {
         ShortcutBinding useFrameShortcut 
-            = ShortcutManager.instance.GetShortcutBinding(MeshSyncEditorConstants.SHORTCUT_TOGGLE_KEYFRAME);
+            = ShortcutManager.instance.GetShortcutBinding(MeshSyncEditorConstants.SHORTCUT_CHANGE_KEYFRAME_MODE);
         KeyFrameMode prevMode = m_assets[0].GetKeyFrameMode();
         KeyFrameMode mode     = (KeyFrameMode) EditorGUILayout.EnumPopup($"Mode ({useFrameShortcut})", prevMode);
         if (mode != prevMode) {
@@ -82,19 +82,11 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
     }
     
 
-    internal static void ToggleMarkerValueByContext(FrameMarker frameMarker) {
-        SISPlayableFrame      playableFrame       = frameMarker.GetOwner();
-        PlayableFrameClipData clipData            = playableFrame.GetOwner();
-        KeyFramePropertyID    inspectedPropertyID = clipData.GetInspectedProperty();
-        int                   prevValue           = playableFrame.GetProperty(inspectedPropertyID);
-        
-        switch (inspectedPropertyID) {
-            case KeyFramePropertyID.Mode: {                
-                playableFrame.SetProperty(inspectedPropertyID, prevValue == (int) KeyFrameMode.Continuous ? (int) KeyFrameMode.Hold : (int) KeyFrameMode.Continuous);
-                break;
-            }
+    internal static void ChangeKeyFrameMode(FrameMarker frameMarker) {
+        SISPlayableFrame playableFrame = frameMarker.GetOwner();
+        int              prevValue     = playableFrame.GetProperty(KeyFramePropertyID.Mode);
 
-        }
+        playableFrame.SetProperty(KeyFramePropertyID.Mode, prevValue == (int) KeyFrameMode.Continuous? (int) KeyFrameMode.Hold : (int) KeyFrameMode.Continuous);
     }
 //----------------------------------------------------------------------------------------------------------------------
 
