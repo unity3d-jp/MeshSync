@@ -238,19 +238,21 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         
         //Find KeyFrames that need to be moved
         int                           numPlayableFrames     = m_playableFrames.Count;
-        Dictionary<int, KeyFrameInfo> modifiedKeyFrames     = new Dictionary<int, KeyFrameInfo>();
-        HashSet<int>                  keyFramesToInitialize = new HashSet<int>();
+        Dictionary<int, KeyFrameInfo> movedKeyFrames        = new Dictionary<int, KeyFrameInfo>();
+        HashSet<int>                  keyFramesToDisable    = new HashSet<int>();
+        
+        
         for (int i = 0; i < numPlayableFrames; ++i) {
             SISPlayableFrame keyFrame = m_playableFrames[i];
             keyFrame.SaveStateFromMarker();
-            int applicableIndex = Mathf.RoundToInt((float)(keyFrame.GetLocalTime() * numPlayableFrames / clipOwner.duration));
-            applicableIndex = Mathf.Clamp(applicableIndex,0,numPlayableFrames - 1);
+            int moveDestIndex = Mathf.RoundToInt((float)(keyFrame.GetLocalTime() * numPlayableFrames / clipOwner.duration));
+            moveDestIndex = Mathf.Clamp(moveDestIndex,0,numPlayableFrames - 1);
             
-            if (applicableIndex == i)
+            if (moveDestIndex == i)
                 continue;
             
 
-            modifiedKeyFrames[applicableIndex] = (new KeyFrameInfo() {
+            movedKeyFrames[moveDestIndex] = (new KeyFrameInfo() {
                 enabled = true,
                 //localTime = keyFrame.GetLocalTime(),
                 mode    = (KeyFrameMode) keyFrame.GetProperty(KeyFramePropertyID.Mode),
@@ -258,34 +260,34 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             });
             
 
-            keyFramesToInitialize.Add(i);
-            //
+            keyFramesToDisable.Add(i);
 
             //KeyFrameInfo info = keyFrameInfoSet[applicableIndex];            
             //Debug.Log($"{applicableIndex}, {i}, {numPlayableFrames}, {info.enabled} {info.frameNo} {info.mode} {keyFrame.GetLocalTime()} {keyFrame.GetLocalTime() / clipOwner.duration}");
         }
-        
-        //initialize required keyFrames 
-        foreach (int i in keyFramesToInitialize) {
-            if (modifiedKeyFrames.ContainsKey(i))
-                continue;
-            modifiedKeyFrames[i] = new KeyFrameInfo() { frameNo = i , enabled = false};
+
+        foreach (int moveDestIndex in movedKeyFrames.Keys) {
+            keyFramesToDisable.Remove(moveDestIndex);
         }
 
         //Update PlayableFrames structure back
         double timePerFrame = TimelineUtility.CalculateTimePerFrame(clipOwner);
         for (int i = 0; i < numPlayableFrames; ++i) {
             m_playableFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
-            if (modifiedKeyFrames.TryGetValue(i, out KeyFrameInfo keyFrameInfo)) {
-                //Debug.Log($"Setting {i} {keyFrameInfo.enabled} {keyFrameInfo.frameNo} {keyFrameInfo.mode} ");
+            if (movedKeyFrames.TryGetValue(i, out KeyFrameInfo keyFrameInfo)) {
                 
+                //Debug.Log($"Setting {i} {keyFrameInfo.enabled} {keyFrameInfo.frameNo} {keyFrameInfo.mode} ");
                 m_playableFrames[i].SetPlayFrame(keyFrameInfo.frameNo);
                 m_playableFrames[i].SetEnabled(keyFrameInfo.enabled);
                 m_playableFrames[i].SetProperty(KeyFramePropertyID.Mode, (int) keyFrameInfo.mode);
             }
         }
 
-        if (modifiedKeyFrames.Count > 0) {
+        foreach (int i in keyFramesToDisable) {
+            m_playableFrames[i].SetEnabled(false);
+        }
+        
+        if (movedKeyFrames.Count > 0) {
             m_needToRefreshTimelineEditor = true;
         }
     }
