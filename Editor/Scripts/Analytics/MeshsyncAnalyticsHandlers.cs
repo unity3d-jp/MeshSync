@@ -43,8 +43,6 @@ namespace Unity.MeshSync.Editor.Analytics {
     /// Base class for all analytics handlers.
     /// </summary>
     internal abstract class AnalyticsDataHandlerBase {
-        internal const string VENDORKEY = "unity.meshsync";
-
         protected virtual string eventName { get; }
         protected virtual int version { get; }
         protected virtual int eventsPerHour => 10000;
@@ -58,7 +56,7 @@ namespace Unity.MeshSync.Editor.Analytics {
         /// <summary>
         /// Sends any object to the analytics library.
         /// </summary>
-        /// <param name="data">Data to send</param>
+        /// <param name="data"></param>
         protected void Send(object data) {
             logIfWarning(
             EditorAnalytics.SendEventWithLimit(
@@ -76,7 +74,7 @@ namespace Unity.MeshSync.Editor.Analytics {
                     eventName,
                     eventsPerHour,
                     10,
-                    VENDORKEY,
+                    MeshSyncAnalytics.VENDORKEY,
                     version));
 
         }
@@ -102,11 +100,6 @@ namespace Unity.MeshSync.Editor.Analytics {
 
         public override void Send(MeshSyncAnalyticsData data) {
             var sessionStartData = data.sessionStartData.Value;
-
-            if (string.IsNullOrEmpty(sessionStartData.DCCToolName)) {
-                return;
-            }
-
             var eventData = new SessionEventData {
                 dccToolName = sessionStartData.DCCToolName
             };
