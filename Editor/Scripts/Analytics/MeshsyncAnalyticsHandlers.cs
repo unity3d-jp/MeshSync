@@ -43,6 +43,8 @@ namespace Unity.MeshSync.Editor.Analytics {
     /// Base class for all analytics handlers.
     /// </summary>
     internal abstract class AnalyticsDataHandlerBase {
+        internal const string VENDORKEY = "unity.meshsync";
+
         protected virtual string eventName { get; }
         protected virtual int version { get; }
         protected virtual int eventsPerHour => 10000;
@@ -74,7 +76,7 @@ namespace Unity.MeshSync.Editor.Analytics {
                     eventName,
                     eventsPerHour,
                     10,
-                    MeshSyncAnalytics.VENDORKEY,
+                    VENDORKEY,
                     version));
 
         }

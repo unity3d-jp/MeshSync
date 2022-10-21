@@ -20,8 +20,6 @@ namespace Unity.MeshSync.Editor.Analytics {
     }
 
     internal sealed class MeshSyncAnalytics : IMeshSyncAnalytics {
-        internal const string VENDORKEY = "unity.meshsync";
-        
         static MeshSyncAnalytics() {
             AnalyticsHandlerFactory.RegisterHandlers();
         }
