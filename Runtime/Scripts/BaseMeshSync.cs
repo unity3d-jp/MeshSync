@@ -99,7 +99,7 @@ internal delegate void DeleteInstanceHandler(string path);
     public struct MeshSyncSyncAnalyticsData {
         internal AssetType  assetType;
         internal EntityType entityType;
-        internal int        syncMode;
+        internal string     syncMode;
     }
 
     /// <summary>
@@ -513,7 +513,7 @@ internal delegate void DeleteInstanceHandler(string path);
             if (!mes.HasValue || currentSessionId == mes.Value.SessionId) {
                 return;
             }
-
+            
             currentSessionId = mes.Value.SessionId;
 
             SendEventData(new MeshSyncAnalyticsData()
@@ -588,7 +588,11 @@ internal delegate void DeleteInstanceHandler(string path);
                         }
 
                         if (logAnalytics) {
-                            SendEventData(new MeshSyncAnalyticsData() {syncData = new MeshSyncSyncAnalyticsData() { assetType = asset.type }});
+                            string syncMode = "None";
+                            if (asset.type == AssetType.Material) {
+                                syncMode = scene.GetMaterialSyncMode();
+                            }
+                            SendEventData(new MeshSyncAnalyticsData() { syncData = new MeshSyncSyncAnalyticsData() { assetType = asset.type, syncMode = syncMode }});
                         }
                     }
 #if UNITY_EDITOR
@@ -628,7 +632,7 @@ internal delegate void DeleteInstanceHandler(string path);
                             break;
                     }
 
-                    SendEventData(new MeshSyncAnalyticsData() { syncData =new MeshSyncSyncAnalyticsData(){ entityType = src.entityType} });
+                    SendEventData(new MeshSyncAnalyticsData() { syncData = new MeshSyncSyncAnalyticsData(){ entityType = src.entityType} });
 
 
                     if (dst != null && onUpdateEntity != null)

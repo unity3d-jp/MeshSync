@@ -3165,6 +3165,9 @@ internal struct InstanceInfoData
     [DllImport(Lib.name)]
     static extern PropertyInfoData msSceneGetPropertyInfo(IntPtr self, int i);
 
+    [DllImport(Lib.name)]
+    static extern int msSceneGetMaterialSyncMode(IntPtr self);
+
 #endregion
 
     public static implicit operator bool(SceneData v) {
@@ -3232,7 +3235,18 @@ internal struct InstanceInfoData
     public PropertyInfoData GetPropertyInfo(int i)
     {
         return msSceneGetPropertyInfo(self, i);
-    }  
+    }
+
+    public string GetMaterialSyncMode() {
+        var mode = msSceneGetMaterialSyncMode(self);
+
+        switch (mode) {
+            case 1:
+                return "Basic";
+            default:
+                return "None";
+        }
+    }
 }
 
 #endregion Scene
