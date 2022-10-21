@@ -3,6 +3,7 @@ using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEditor.Timeline;
 using UnityEngine;
+using UnityEngine.Timeline;
 
 namespace Unity.MeshSync.Editor {
 
@@ -95,15 +96,46 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         if (null == clipData)
             return;
 
+        TimelineClip clip = clipData.GetOwner();
+        if (null == clip)
+            return;
+
+        
+        SceneCachePlayableAssetEditorConfig editorConfig = sceneCachePlayableAsset.GetEditorConfig();
         GUILayout.BeginVertical("Box");
         EditorGUILayout.LabelField("Regenerate Key Frames", EditorStyles.boldLabel);
 
-        SceneCachePlayableAssetEditorConfig editorConfig = sceneCachePlayableAsset.GetEditorConfig();
-        
-        
-        
-        editorConfig.SetGenerateKeyFrameSpan(EditorGUILayout.IntField("KeyFrame Span", editorConfig.GetGenerateKeyFrameSpan()));
-        editorConfig.SetGenerateKeyFrameMode((KeyFrameMode) EditorGUILayout.EnumPopup("KeyFrame Mode", editorConfig.GetGenerateKeyFrameMode()));
+        //UI
+        EditorGUI.BeginChangeCheck();
+        int keyFrameSpan = EditorGUILayout.IntField("KeyFrame Span", editorConfig.GetGenerateKeyFrameSpan());
+        KeyFrameMode keyFrameMode = (KeyFrameMode) EditorGUILayout.EnumPopup("KeyFrame Mode", editorConfig.GetGenerateKeyFrameMode());
+            
+        bool generateAllKeyFrames = EditorGUILayout.Toggle("All Frames", editorConfig.GetGenerateAllKeyFrames());
+        EditorGUI.BeginDisabledGroup(generateAllKeyFrames);
+        ++EditorGUI.indentLevel;
+
+        int startKeyFrame = Mathf.Max(0,editorConfig.GetGenerateStartKeyFrame());
+        int endKeyFrame   = editorConfig.GetGenerateEndKeyFrame();
+        if (endKeyFrame < 0) {
+            endKeyFrame = TimelineUtility.CalculateNumFrames(clipData.GetOwner());
+        }
+
+        startKeyFrame = EditorGUILayout.IntField("From", startKeyFrame);
+        endKeyFrame   = EditorGUILayout.IntField("To", endKeyFrame);
+
+        --EditorGUI.indentLevel;
+        EditorGUI.EndDisabledGroup();
+            
+        if (EditorGUI.EndChangeCheck()) {
+            Undo.RecordObject(sceneCachePlayableAsset,"SceneCache: Generate KeyFrames");
+            
+            editorConfig.SetGenerateKeyFrameSpan(keyFrameSpan);
+            editorConfig.SetGenerateKeyFrameMode(keyFrameMode);
+            
+            editorConfig.SetGenerateAllKeyFrames(generateAllKeyFrames);
+            editorConfig.SetGenerateStartKeyFrame(startKeyFrame);
+            editorConfig.SetGenerateEndKeyFrame(endKeyFrame);
+        }
                
         GUILayout.Space(15);        
         if (DrawGUIButton( leftX:15, width:120,"Generate")) {
