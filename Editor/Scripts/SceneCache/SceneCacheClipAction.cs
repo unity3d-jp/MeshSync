@@ -4,10 +4,9 @@ using UnityEditor.Timeline;
 using UnityEditor.Timeline.Actions;
 using UnityEngine.Playables;
 
-namespace Unity.MeshSync {
+namespace Unity.MeshSync.Editor {
 
 [MenuEntry("Add KeyFrame", MenuPriority.MarkerActionSection.start)]
-//[Shortcut(Shortcuts.Clip.trimStart), UsedImplicitly]
 class AddKeyFrameSceneCacheClipAction : ClipAction {
     public override ActionValidity Validate(IEnumerable<TimelineClip> clips) {
         if (clips.Contains<SceneCachePlayableAsset>()) {
