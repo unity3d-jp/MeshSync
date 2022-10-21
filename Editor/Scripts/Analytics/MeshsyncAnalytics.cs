@@ -1,12 +1,8 @@
-using UnityEditor;
-
 using UnityEngine;
-using UnityEngine.Analytics;
 
 namespace Unity.MeshSync.Editor.Analytics {
 
     internal static class MeshSyncAnalyticsFactory {
-
         public static IMeshSyncAnalytics CreateAnalytics() {
             return new MeshSyncAnalytics();
         }
@@ -25,40 +21,13 @@ namespace Unity.MeshSync.Editor.Analytics {
 
     internal sealed class MeshSyncAnalytics : IMeshSyncAnalytics {
         internal const string VENDORKEY = "unity.meshsync";
-
-        private const string DCCCONFIGURE_INSTALLEDEVENTNAME = "dccConfigure";
-
-        // Data schema version for install event
-        private const int DCCCONFIGURE_VERSION = 4;
-
-        private const int DCCCONFIGURE_EVENTS_PER_HOUR = 1000;
-
-        private struct DCCInstallEventData {
-            public string meshSyncDccName;
-        }
-
-
-        private static void logIfWarning(AnalyticsResult resp) {
-            if (resp != AnalyticsResult.Ok) {
-                Debug.LogWarning($"Analytics endpoint reported: {resp} when should be {AnalyticsResult.Ok}");
-            }
-        }
-
+        
         static MeshSyncAnalytics() {
-            logIfWarning(
-                EditorAnalytics.RegisterEventWithLimit(
-                    DCCCONFIGURE_INSTALLEDEVENTNAME,
-                    DCCCONFIGURE_EVENTS_PER_HOUR,
-                    10,
-                    VENDORKEY,
-                    DCCCONFIGURE_VERSION));
-
             AnalyticsHandlerFactory.RegisterHandlers();
         }
 
         public void UserInstalledPlugin(string dccTool) {
-            var data = new DCCInstallEventData { meshSyncDccName = dccTool.ToLower() };
-            logIfWarning(EditorAnalytics.SendEventWithLimit(DCCCONFIGURE_INSTALLEDEVENTNAME, data, DCCCONFIGURE_VERSION));
+            new InstallAnalyticsHandler().Send(dccTool);
         }
 
         public void UserSyncedData(MeshSyncAnalyticsData data) {

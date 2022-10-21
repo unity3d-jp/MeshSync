@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using UnityEditor;
-
 using UnityEngine;
 using UnityEngine.Analytics;
 
@@ -10,16 +9,12 @@ namespace Unity.MeshSync.Editor.Analytics {
     /// Factory class to create the required analytics handler for the given MeshSyncAnalyticsData.
     /// </summary>
     internal static class AnalyticsHandlerFactory {
-        public static void RegisterHandlers() {
-            // Finds subclasses of AnalyticsHandlerFactory and calls Register() on them all:
-            var analyticHandlerSubclasses = typeof(AnalyticsHandlerFactory).Assembly.GetTypes().Where(type => type.IsSubclassOf(typeof(AnalyticsDataHandler)));
-            foreach (Type analyticHandlerSubclass in analyticHandlerSubclasses) {
-                var t = (AnalyticsDataHandler)Activator.CreateInstance(analyticHandlerSubclass);
-                t.Register();
-            }
-        }
-
-        public static AnalyticsDataHandler GetHandler(MeshSyncAnalyticsData data) {
+        /// <summary>
+        /// Returns the analytics handler depending on which field in MeshSyncAnalyticsData is set.
+        /// </summary>
+        /// <param name="data">The analytics data container to send</param>
+        /// <returns>Handler specific to the data in the container</returns>
+        public static AnalyticsDataHandler<MeshSyncAnalyticsData> GetHandler(MeshSyncAnalyticsData data) {
             if (data.sessionStartData.HasValue) {
                 return new SessionStartAnalyticsHandler();
             }
@@ -28,17 +23,26 @@ namespace Unity.MeshSync.Editor.Analytics {
                 return new SyncAnalyticsHandler();
             }
 
-            // TODO: If new handlers are added, update this to return one depending on the field it uses:
+            // TODO: If new handlers for MeshSyncAnalyticsData are added, update this to return the new one depending on the field it uses:
 
             return null;
+        }
+
+        public static void RegisterHandlers() {
+            // Finds non-abstract subclasses of AnalyticsHandlerFactory and calls Register() on them all:
+            var analyticHandlerSubclasses = typeof(AnalyticsHandlerFactory).Assembly.GetTypes().Where(type => !type.IsAbstract && type.IsSubclassOf(typeof(AnalyticsDataHandlerBase)));
+
+            foreach (Type analyticHandlerSubclass in analyticHandlerSubclasses) {
+                var t = (AnalyticsDataHandlerBase)Activator.CreateInstance(analyticHandlerSubclass);
+                t.Register();
+            }
         }
     }
 
     /// <summary>
     /// Base class for all analytics handlers.
     /// </summary>
-    internal abstract class AnalyticsDataHandler {
-
+    internal abstract class AnalyticsDataHandlerBase {
         protected virtual string eventName { get; }
         protected virtual int version { get; }
         protected virtual int eventsPerHour => 10000;
@@ -48,16 +52,22 @@ namespace Unity.MeshSync.Editor.Analytics {
                 Debug.LogWarning($"Analytics endpoint reported: {resp} when should be {AnalyticsResult.Ok}");
             }
         }
+
+        /// <summary>
+        /// Sends any object to the analytics library.
+        /// </summary>
+        /// <param name="data"></param>
         protected void Send(object data) {
             logIfWarning(
-                EditorAnalytics.SendEventWithLimit(
-                    eventName,
-                        data,
-                    version));
+            EditorAnalytics.SendEventWithLimit(
+                eventName,
+                data,
+                version));
         }
 
-        public abstract void Send(MeshSyncAnalyticsData data);
-
+        /// <summary>
+        /// Registers the handler's event and version with the analytics library.
+        /// </summary>
         public void Register() {
             logIfWarning(
                 EditorAnalytics.RegisterEventWithLimit(
@@ -71,10 +81,17 @@ namespace Unity.MeshSync.Editor.Analytics {
     }
 
     /// <summary>
+    /// Base class for analytics handlers that allows specifying the input data type.
+    /// </summary>
+    internal abstract class AnalyticsDataHandler<T> : AnalyticsDataHandlerBase {
+        public abstract void Send(T data);
+    }
+
+    /// <summary>
     /// Handles MeshSyncAnalyticsData.sessionStartData
     /// </summary>
-    internal class SessionStartAnalyticsHandler : AnalyticsDataHandler {
-        internal class SessionEventData {
+    internal class SessionStartAnalyticsHandler : AnalyticsDataHandler<MeshSyncAnalyticsData> {
+        struct SessionEventData {
             public string dccToolName;
         }
 
@@ -86,7 +103,7 @@ namespace Unity.MeshSync.Editor.Analytics {
             var eventData = new SessionEventData {
                 dccToolName = sessionStartData.DCCToolName
             };
-            
+
             Send(eventData);
         }
     }
@@ -94,9 +111,9 @@ namespace Unity.MeshSync.Editor.Analytics {
     /// <summary>
     /// Handles MeshSyncAnalyticsData.syncData
     /// </summary>
-    internal class SyncAnalyticsHandler : AnalyticsDataHandler {
+    internal class SyncAnalyticsHandler : AnalyticsDataHandler<MeshSyncAnalyticsData> {
 
-        private struct SyncEventData {
+        struct SyncEventData {
             public string assetSyncType;
             public string entitySyncType;
             public string syncMode;
@@ -121,6 +138,25 @@ namespace Unity.MeshSync.Editor.Analytics {
                 entitySyncType = entityTypeStr,
                 syncMode = syncData.syncMode
             };
+
+            Send(eventData);
+        }
+    }
+
+    /// <summary>
+    /// Handles installation analytics event.
+    /// </summary>
+    internal class InstallAnalyticsHandler : AnalyticsDataHandler<string> {
+        struct DCCInstallEventData {
+            public string meshSyncDccName;
+        }
+
+        protected override string eventName => "dccConfigure";
+        protected override int version => 4;
+        protected override int eventsPerHour => 1000;
+
+        public override void Send(string data) {
+            var eventData = new DCCInstallEventData { meshSyncDccName = data.ToLower() };
 
             Send(eventData);
         }
