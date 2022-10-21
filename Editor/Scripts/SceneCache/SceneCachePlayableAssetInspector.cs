@@ -88,23 +88,26 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
     }
 
     
-    void DrawRegenerateKeyFramesGUI<T>(BaseExtendedClipPlayableAsset<T> clipDataPlayableAsset) where T: PlayableFrameClipData 
+    void DrawRegenerateKeyFramesGUI(SceneCachePlayableAsset sceneCachePlayableAsset) 
     {        
 
-        T clipData = clipDataPlayableAsset.GetBoundClipData();
+        SceneCacheClipData clipData = sceneCachePlayableAsset.GetBoundClipData();
         if (null == clipData)
             return;
 
         GUILayout.BeginVertical("Box");
         EditorGUILayout.LabelField("Regenerate Key Frames", EditorStyles.boldLabel);
+
+        SceneCachePlayableAssetEditorConfig editorConfig = sceneCachePlayableAsset.GetEditorConfig();
         
         
-        clipData.SetEditorKeyFrameAutoSpan(EditorGUILayout.IntField("KeyFrame Span", clipData.GetEditorKeyFrameAutoSpan()));
-        clipData.SetEditorKeyFrameAutoMode((KeyFrameMode) EditorGUILayout.EnumPopup("KeyFrame Mode", clipData.GetEditorKeyFrameAutoMode()));
+        
+        editorConfig.SetGenerateKeyFrameSpan(EditorGUILayout.IntField("KeyFrame Span", editorConfig.GetGenerateKeyFrameSpan()));
+        editorConfig.SetGenerateKeyFrameMode((KeyFrameMode) EditorGUILayout.EnumPopup("KeyFrame Mode", editorConfig.GetGenerateKeyFrameMode()));
                
         GUILayout.Space(15);        
         if (DrawGUIButton( leftX:15, width:120,"Generate")) {
-            clipData.GenerateKeyFramesAuto(clipData.GetEditorKeyFrameAutoSpan(),clipData.GetEditorKeyFrameAutoMode());
+            clipData.GenerateKeyFramesAuto(editorConfig.GetGenerateKeyFrameSpan(),editorConfig.GetGenerateKeyFrameMode());
         }
             
         GUILayout.EndVertical();

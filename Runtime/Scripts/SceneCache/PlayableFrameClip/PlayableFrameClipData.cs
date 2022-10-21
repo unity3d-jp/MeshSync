@@ -79,21 +79,8 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         }
     }
 
-
     internal int GetNumPlayableFrames() { return m_playableFrames.Count;}
 
-    internal int          GetEditorKeyFrameAutoSpan() => m_editorKeyFrameAutoSpan;
-    internal KeyFrameMode GetEditorKeyFrameAutoMode() => m_editorKeyFrameAutoMode;
-    
-    internal void SetEditorKeyFrameAutoSpan(int span) {
-        m_editorKeyFrameAutoSpan = Mathf.Max(1,span);
-    }
-
-    internal void SetEditorKeyFrameAutoMode(KeyFrameMode mode) {
-        m_editorKeyFrameAutoMode = mode;
-    } 
-    
-    
 
 #if UNITY_EDITOR
     internal void SetInspectedProperty(KeyFramePropertyID id) { m_inspectedPropertyID = id; }
@@ -481,9 +468,6 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     [SerializeField] [HideInInspector] private float m_lastClipStartTimeOnRefresh = 0;
     [SerializeField] [HideInInspector] private float m_lastClipDurationOnRefresh = 0;
 
-    [SerializeField] [HideInInspector] private int          m_editorKeyFrameAutoSpan = 3;
-    [SerializeField] [HideInInspector] private KeyFrameMode m_editorKeyFrameAutoMode = KeyFrameMode.Continuous;
-    
     
 #pragma warning disable 414    
     [HideInInspector][SerializeField] private int m_playableFrameClipDataVersion = CUR_PLAYABLE_FRAME_CLIP_DATA_VERSION;        

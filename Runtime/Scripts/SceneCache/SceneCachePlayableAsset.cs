@@ -5,6 +5,7 @@ using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using UnityEngine.SceneManagement;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -22,14 +23,28 @@ namespace Unity.MeshSync {
 
 [System.Serializable] 
 internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCacheClipData>
-    , ITimelineClipAsset, IPlayableBehaviour 
+    , ITimelineClipAsset, IPlayableBehaviour, ISerializationCallbackReceiver 
 {
 
+    SceneCachePlayableAsset() : base() {
+        m_editorConfig = new SceneCachePlayableAssetEditorConfig();
+    }
+    
     internal void Init(bool updateClipDurationOnCreatePlayable) {
         m_updateClipDurationOnCreatePlayable = updateClipDurationOnCreatePlayable;
     } 
     
-//----------------------------------------------------------------------------------------------------------------------
+    public void OnBeforeSerialize() {
+            
+    }
+
+    public void OnAfterDeserialize() {
+        if (null == m_editorConfig) {
+            m_editorConfig = new SceneCachePlayableAssetEditorConfig();
+        }
+    }
+    
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
     public ClipCaps clipCaps {
         get { return ClipCaps.ClipIn | ClipCaps.SpeedMultiplier | ClipCaps.Extrapolation; }
     }
@@ -292,6 +307,8 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     internal void           SetAnimationCurve(AnimationCurve curve) { m_animationCurve = curve; }
     internal AnimationCurve GetAnimationCurve()                     => m_animationCurve;
     
+
+    internal SceneCachePlayableAssetEditorConfig GetEditorConfig() { return m_editorConfig;}
     
     //import old data. [TODO-sin: 2022-3-24] Remove in 0.13.x
     internal void SetIsSceneCacheCurveExtracted(bool extracted) { m_isSceneCacheCurveExtracted = extracted; }
@@ -466,6 +483,8 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     [HideInInspector][SerializeField] private AnimationCurve m_animationCurve = AnimationCurve.Constant(0,0,0);
 
     [HideInInspector][SerializeField] private bool m_isSceneCacheCurveExtracted = false;
+ 
+    [HideInInspector][SerializeField] private SceneCachePlayableAssetEditorConfig m_editorConfig;
     
 //----------------------------------------------------------------------------------------------------------------------
 
