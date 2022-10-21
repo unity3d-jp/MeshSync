@@ -6,7 +6,7 @@ namespace Unity.MeshSync.Editor {
 
 internal static class Shortcuts  {
 
-    [Shortcut(MeshSyncEditorConstants.SHORTCUT_CHANGE_KEYFRAME_MODE, null,  KeyCode.M, ShortcutModifiers.Alt)]
+    [Shortcut(MeshSyncEditorConstants.SHORTCUT_CHANGE_KEYFRAME_MODE, null,  KeyCode.M, ShortcutModifiers.Shift)]
     static void ChangeKeyFrameMode(ShortcutArguments args) {
         foreach (Object obj in Selection.objects) {
             FrameMarker marker = obj as FrameMarker;
