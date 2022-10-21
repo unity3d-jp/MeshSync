@@ -139,7 +139,10 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
                
         GUILayout.Space(15);        
         if (DrawGUIButton( leftX:15, width:120,"Generate")) {
-            clipData.GenerateKeyFramesAuto(editorConfig.GetGenerateKeyFrameSpan(),editorConfig.GetGenerateKeyFrameMode());
+            if (generateAllKeyFrames)
+                clipData.RegenerateKeyFrames(keyFrameSpan, keyFrameMode);
+            else 
+                clipData.RegenerateKeyFrames(startKeyFrame, endKeyFrame, keyFrameSpan, keyFrameMode);
         }
             
         GUILayout.EndVertical();
