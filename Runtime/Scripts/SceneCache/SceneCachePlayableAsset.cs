@@ -161,6 +161,10 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         return (float) (((double) keyFrames[index].value - (double) keyFrames[toIndex].value) 
             / ((double) keyFrames[index].time - (double) keyFrames[toIndex].time));
     }
+
+    private static float CalculateLinearTangent(Keyframe key0, Keyframe key1) {
+        return (key0.value - key1.value) / (key0.time - key1.time);
+    }
     
     private static AnimationCurve CreateLinearAnimationCurve(TimelineClip clip) {
         return AnimationCurve.Linear(0f, 0f,(float) (clip.duration * clip.timeScale), 1f );
@@ -323,7 +327,59 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         RecreateClipCurveInEditor(clipData, sceneCacheInfo.GetNumFrames());
     }
 
-    static void RecreateClipCurveInEditor(SceneCacheClipData clipData, int numFrames) {
+    static void AddCurveKey(List<Keyframe> keys, float time, int frameToPlay, int numFrames, KeyFrameMode mode) {
+        Keyframe key = new Keyframe(time, Mathf.Clamp((float) frameToPlay / numFrames,0,1));
+        switch (mode) {
+            case KeyFrameMode.Hold: key.outTangent = float.PositiveInfinity;  break;
+            default:                break;
+        }
+
+        int curNumKeys = keys.Count;
+        if  (curNumKeys > 0) {
+            Keyframe prevKey       = keys[curNumKeys - 1];
+            bool     isPrevKeyHold = float.IsPositiveInfinity(prevKey.outTangent);
+            if (isPrevKeyHold) {
+                key.inTangent = float.PositiveInfinity;
+            } else {
+                prevKey.outTangent = CalculateLinearTangent(prevKey, key);
+                key.inTangent      = prevKey.outTangent;
+            }
+            keys[curNumKeys - 1] = prevKey;
+        }
+        
+        keys.Add(key);
+    }
+    
+    static void RecreateClipCurveInEditor(SceneCacheClipData clipData, int numSceneCacheFrames) {
+
+        int numPlayableKeyFrames = clipData.GetNumPlayableFrames();
+        if (numPlayableKeyFrames <= 0 || numSceneCacheFrames <= 0) {
+            AnimationCurve dummyCurve = new AnimationCurve();
+            SetClipCurveInEditor(clipData.GetOwner(), dummyCurve);
+            return;
+        }
+        
+        List<Keyframe>   keys                  =  new List<Keyframe>();
+        SISPlayableFrame firstPlayableKeyFrame = clipData.GetPlayableFrame(0);
+
+        //always create curve key for the first keyframe
+        KeyFrameMode firstCurveKeyMode = firstPlayableKeyFrame.IsEnabled() ? (KeyFrameMode) firstPlayableKeyFrame.GetProperty(KeyFramePropertyID.Mode) : KeyFrameMode.Hold;
+        AddCurveKey(keys, (float)firstPlayableKeyFrame.GetLocalTime(), firstPlayableKeyFrame.GetFrameNo(), numSceneCacheFrames, firstCurveKeyMode);
+        
+        for (int i = 1; i < numPlayableKeyFrames; ++i) {
+            SISPlayableFrame curPlayableKeyFrame = clipData.GetPlayableFrame(i);
+            if (!curPlayableKeyFrame.IsEnabled())
+                continue;
+            
+            KeyFrameMode mode = (KeyFrameMode)(curPlayableKeyFrame.GetProperty(KeyFramePropertyID.Mode));            
+            AddCurveKey(keys, (float) curPlayableKeyFrame.GetLocalTime(), curPlayableKeyFrame.GetFrameNo(), numSceneCacheFrames, mode);            
+        }
+        
+        AnimationCurve curve = new AnimationCurve(keys.ToArray());
+        SetClipCurveInEditor(clipData.GetOwner(), curve);
+    }
+    
+    static void RecreateClipCurveInEditorOld(SceneCacheClipData clipData, int numFrames) {
 
         int          numKeyFrames                     = clipData.GetNumPlayableFrames();
         Keyframe[]   keys                             = new Keyframe[numKeyFrames];
