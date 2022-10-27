@@ -131,6 +131,7 @@ internal static class MeshSyncEditorConstants {
     
     internal const string SCENE_CACHE_EXTENSION = "sc";
     
+    internal const string SHORTCUT_ADD_KEYFRAME         = "MeshSync/Add KeyFrame";
     internal const string SHORTCUT_CHANGE_KEYFRAME_MODE = "MeshSync/Change KeyFrame Mode";
     
     

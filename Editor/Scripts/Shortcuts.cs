@@ -1,6 +1,8 @@
+using JetBrains.Annotations;
 using UnityEditor.ShortcutManagement;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.Timeline.Actions;
 
 namespace Unity.MeshSync.Editor {
 
@@ -17,6 +19,11 @@ internal static class Shortcuts  {
 
         }
     }
+    
+    [TimelineShortcut(MeshSyncEditorConstants.SHORTCUT_ADD_KEYFRAME, KeyCode.A, ShortcutModifiers.Shift), UsedImplicitly]
+    public static void HandleShortCut(ShortcutArguments args) {
+        Invoker.InvokeWithSelectedClips<AddKeyFrameSceneCacheClipAction>();
+    }    
 }
 
 } //end namespace
