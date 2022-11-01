@@ -26,7 +26,6 @@ internal struct ServerSettings {
     public Flags             flags; // reserved
     public uint              meshSplitUnit;
     public uint              meshMaxBoneInfluence; // 4 or 255 (variable)
-    public ZUpCorrectionMode zUpCorrectionMode;
 
     public static ServerSettings defaultValue {
         get {
@@ -37,7 +36,6 @@ internal struct ServerSettings {
                 port                 = settings.GetDefaultServerPort(),
                 meshSplitUnit        = Lib.maxVerticesPerMesh,
                 meshMaxBoneInfluence = Lib.maxBoneInfluence,
-                zUpCorrectionMode    = ZUpCorrectionMode.FlipYZ,
             };
             return ret;
         }

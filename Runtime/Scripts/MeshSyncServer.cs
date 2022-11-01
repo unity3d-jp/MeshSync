@@ -145,7 +145,6 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         
         
         m_serverSettings.port = (ushort)m_serverPort;
-        m_serverSettings.zUpCorrectionMode = (ZUpCorrectionMode) m_config.ZUpCorrection;
 
         m_serverStarted = Server.Start(ref m_serverSettings, out m_server);
         if (!m_serverStarted)
