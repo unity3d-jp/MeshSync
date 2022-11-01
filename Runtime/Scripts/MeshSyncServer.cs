@@ -88,7 +88,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 #endregion
 
     
-    void ApplyConfig() {
+    internal void ApplyConfig() {
         if (!m_server) 
             return;
         
