@@ -175,8 +175,8 @@ internal struct Server {
         msServerAbort(self);
     }
     
-    internal ZUpCorrectionMode zUpCorrectionMode {
-        set { msServerSetZUpCorrectionMode(self, value); }
+    internal void SetZUpCorrectionMode(ZUpCorrectionMode mode) {
+        msServerSetZUpCorrectionMode(self, mode);
     }
 
     public int numMessages {

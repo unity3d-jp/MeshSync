@@ -221,7 +221,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     void CheckParamsUpdated()  {
 
         if (m_server) {
-            m_server.zUpCorrectionMode = (ZUpCorrectionMode) m_config.ZUpCorrection;
+            m_server.SetZUpCorrectionMode((ZUpCorrectionMode) m_config.ZUpCorrection);
         }
     }
 
