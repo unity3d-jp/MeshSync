@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Rendering;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -225,7 +226,7 @@ namespace Unity.MeshSync {
         private static void SetupGlass_HRDP(Material mat) {
             mat.EnableKeyword(MeshSyncConstants._ENABLE_FOG_ON_TRANSPARENT);
 
-            mat.renderQueue = 3000;
+            mat.renderQueue = (int)RenderQueue.Transparent;
 
             mat.SetFloat(MeshSyncConstants._SurfaceType, 1);
             mat.SetInt(MeshSyncConstants._ZWrite, 0);
