@@ -1086,16 +1086,15 @@ internal delegate void DeleteInstanceHandler(string path);
 
             // Put all properties in a list so we can look them up more easily:
             int numProps           = src.numProperties;
-            var materialProperties = new List<MaterialPropertyData>(numProps);
+            var materialProperties = new Dictionary<int, MaterialPropertyData>(numProps);
 
             for (int pi = 0; pi < numProps; ++pi) {
                 MaterialPropertyData prop = src.GetProperty(pi);
-                materialProperties.Add(prop);
+                materialProperties.Add(prop.nameID, prop);
             }
 
-            for (int i = 0; i < materialProperties.Count; i++) {
-                var prop = materialProperties[i];
-                ApplyMaterialProperty(src, destMat, textureHolders, prop, prop.nameID, materialProperties);
+            foreach (var prop in materialProperties) {
+                ApplyMaterialProperty(src, destMat, textureHolders, prop.Value, prop.Key, materialProperties);
             }
 
             MapsBaker.BakeMaps(destMat, textureHolders, materialProperties);
@@ -1122,24 +1121,19 @@ internal delegate void DeleteInstanceHandler(string path);
         private static Dictionary<int, int[]> synonymMap = new Dictionary<int, int[]> {
             { MeshSyncConstants._Color, new[] { MeshSyncConstants._BaseColor } },
             { MeshSyncConstants._MainTex, new[] { MeshSyncConstants._BaseMap, MeshSyncConstants._BaseColorMap } },
-            { MeshSyncConstants._Glossiness, new[] { MeshSyncConstants._Smoothness } },
+            { MeshSyncConstants._Glossiness, new[] { MeshSyncConstants._Smoothness, MeshSyncConstants._GlossMapScale } },
             { MeshSyncConstants._BumpMap, new[] { MeshSyncConstants._NormalMap } },
             { MeshSyncConstants._EmissionMap, new[] { MeshSyncConstants._EmissiveColorMap } },
             { MeshSyncConstants._ParallaxMap, new[] { MeshSyncConstants._HeightMap } },
             { MeshSyncConstants._BumpScale, new[] { MeshSyncConstants._NormalScale } }
         };
 
-        private static MaterialPropertyData? FindMaterialPropertyData(List<MaterialPropertyData> materialProperties, int nameID) {
-            for (int i = 0; i < materialProperties.Count; i++) {
-                if (materialProperties[i].nameID == nameID) {
-                    return materialProperties[i];
-                }
-            }
-
-            return null;
-        }
-
-        private void ApplyMaterialProperty(MaterialData src, Material destMat, List<TextureHolder> textureHolders, MaterialPropertyData prop, int propNameID, List<MaterialPropertyData> materialProperties) {
+        private void ApplyMaterialProperty(MaterialData src, 
+            Material destMat, 
+            List<TextureHolder> textureHolders,
+            MaterialPropertyData prop,
+            int propNameID, 
+            Dictionary<int, MaterialPropertyData> materialProperties) {
            
             // Shaders use different names to refer to the same maps, this map contains those synonyms so we can apply them to every shader easily:
             if (synonymMap.TryGetValue(propNameID, out var synonyms)) {
@@ -1158,7 +1152,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 propNameID == MeshSyncConstants._BaseColorMap) {
                 bool hasAlpha = HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._ALPHATEST_ON);
                 if (hasAlpha) {
-                    destMat.SetOverrideTag("RenderType", "TransparentCutout");
+                    destMat.SetOverrideTag(MeshSyncConstants.RenderType,MeshSyncConstants.TransparentCutout);
                 }
 #if AT_USE_HDRP
                 destMat.SetFloat(MeshSyncConstants._AlphaCutoffEnable, hasAlpha ? 1 : 0);
@@ -1170,7 +1164,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 destMat.SetFloat(MeshSyncConstants._AlphaClip, hasAlpha ? 1 : 0);
 #else 
                 if (hasAlpha) {
-                    destMat.SetFloat("_Mode", 1);
+                    destMat.SetFloat(MeshSyncConstants._Mode, 1);
                 }
 #endif
             }
@@ -1195,17 +1189,16 @@ internal delegate void DeleteInstanceHandler(string path);
 #if AT_USE_HDRP
             else if (propNameID == MeshSyncConstants._EmissiveColorMap) {
                 Color baseEmissionColor = Color.white;
-                var emissionColorProp = FindMaterialPropertyData(materialProperties, MeshSyncConstants._EmissionColor);
-                if (emissionColorProp.HasValue) {
-                    baseEmissionColor = emissionColorProp.Value.vectorValue;
+
+                if (materialProperties.TryGetValue(MeshSyncConstants._EmissionColor, out var emissionColorProp)) {
+                    baseEmissionColor = emissionColorProp.vectorValue;
                 }
 
-                var emissionStrengthProp = FindMaterialPropertyData(materialProperties, MeshSyncConstants._EmissionStrength);
                 float emissionStrength = 0;
-                if (emissionStrengthProp.HasValue) {
-                    emissionStrength = emissionStrengthProp.Value.floatValue;
+                if (materialProperties.TryGetValue(MeshSyncConstants._EmissionStrength, out var emissionStrengthProp)) {
+                    emissionStrength = emissionStrengthProp.floatValue;
                 }
-                 
+
                 destMat.SetFloat(MeshSyncConstants._UseEmissiveIntensity, 1);
                 destMat.SetFloat(MeshSyncConstants._EmissiveIntensityUnit, 0);
                 destMat.SetFloat(MeshSyncConstants._EmissiveIntensity, emissionStrength);
@@ -1220,23 +1213,22 @@ internal delegate void DeleteInstanceHandler(string path);
                         destMat.EnableKeyword(MeshSyncConstants._HEIGHTMAP);
 
                         // If there is no displacement mode set, set it to vertex displacement:
-                        if (destMat.IsKeywordEnabled( "_PIXEL_DISPLACEMENT")) {
-                            destMat.EnableKeyword("_VERTEX_DISPLACEMENT");
-                            destMat.SetInt("_DisplacementMode", 1);
+                        if (destMat.IsKeywordEnabled(MeshSyncConstants._PIXEL_DISPLACEMENT)) {
+                            destMat.EnableKeyword(MeshSyncConstants._VERTEX_DISPLACEMENT);
+                            destMat.SetInt(MeshSyncConstants._DisplacementMode, 1);
                         }
 
                         float scale = 10;
-                        var heightScaleProp = FindMaterialPropertyData(materialProperties, MeshSyncConstants._Parallax);
-                        if (heightScaleProp.HasValue) {
+                        if (materialProperties.TryGetValue(MeshSyncConstants._Parallax, out var heightScaleProp)) {
                             // convert from meters to centimeters and / 2 because midpoint is half of that:
-                            scale = heightScaleProp.Value.floatValue * 100 / 2;
+                            scale = heightScaleProp.floatValue * 100 / 2;
                         }
 
-                        destMat.SetFloat("_HeightMin", -scale);
-                        destMat.SetFloat("_HeightMax", scale);
+                        destMat.SetFloat(MeshSyncConstants._HeightMin, -scale);
+                        destMat.SetFloat(MeshSyncConstants._HeightMax, scale);
 
                         float amplitude = scale * 2;
-                        destMat.SetFloat("_HeightAmplitude", amplitude * 0.01f);
+                        destMat.SetFloat(MeshSyncConstants._HeightAmplitude, amplitude * 0.01f);
                     }
                 }
             }

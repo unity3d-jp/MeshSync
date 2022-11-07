@@ -36,7 +36,12 @@ namespace Unity.MeshSync {
                 return;
             }
 
-            FilmInternalUtilities.ObjectUtility.Destroy(Texture);
+            if (Application.isPlaying) {
+                Object.Destroy(Texture);
+            }
+            else {
+                Object.DestroyImmediate(Texture);
+            }
         }
     }
 }

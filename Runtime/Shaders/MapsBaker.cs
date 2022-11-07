@@ -43,26 +43,14 @@ internal static class MapsBaker {
         return shaderHelper;
     }
 
-    static MaterialPropertyData? FindMaterialProperty(List<MaterialPropertyData> materialProperties, int nameID) {
-        for (int i = 0; i < materialProperties.Count; i++) {
-            if (materialProperties[i].nameID == nameID) {
-                return materialProperties[i];
-            }
-        }
-
-        return null;
-    }
-
     private static bool FindTexture(int nameID,
         List<TextureHolder> textureHolders,
-        List<MaterialPropertyData> materialProperties,
+        Dictionary<int, MaterialPropertyData> materialProperties,
         int fallbackPropertyNameID,
         float fallbackPropertyValue,
         out Texture2DDisposable disposableTexture) {
-        var prop = FindMaterialProperty(materialProperties, nameID);
-
-        if (prop.HasValue) {
-            MaterialPropertyData.TextureRecord rec = prop.Value.textureValue;
+        if (materialProperties.TryGetValue(nameID, out var prop)) {
+            MaterialPropertyData.TextureRecord rec = prop.textureValue;
             disposableTexture = new Texture2DDisposable(BaseMeshSync.FindTexture(rec.id, textureHolders), false);
 
             if (disposableTexture.Texture != null) {
@@ -73,12 +61,8 @@ internal static class MapsBaker {
         // If there is no such texture, create one with the given fallback value:
 
         float value = fallbackPropertyValue;
-
-        for (int i = 0; i < materialProperties.Count; i++) {
-            if (materialProperties[i].nameID == fallbackPropertyNameID) {
-                value = materialProperties[i].floatValue;
-                break;
-            }
+        if (materialProperties.TryGetValue(fallbackPropertyNameID, out var fallbackMaterialProperty)) {
+            value = fallbackMaterialProperty.floatValue;
         }
 
         const int dim = 8;
@@ -97,7 +81,7 @@ internal static class MapsBaker {
 #if AT_USE_HDRP
     private static void BakeMaskMap(Material destMat,
         List<TextureHolder> textureHolders,
-        List<MaterialPropertyData> materialProperties) {
+        Dictionary<int, MaterialPropertyData> materialProperties) {
         if (!destMat.HasProperty(MeshSyncConstants._MaskMap)) {
             return;
         }
@@ -145,89 +129,88 @@ internal static class MapsBaker {
         glossTexture.Dispose();
     }
 #else
-        private static void BakeSmoothness(Material destMat,
-            List<TextureHolder> textureHolders,
-            List<MaterialPropertyData> materialProperties) {
-         
-            if (!destMat.HasProperty(_SmoothnessTextureChannel)) {
-                return;
-            }
+    private static void BakeSmoothness(Material destMat,
+        List<TextureHolder> textureHolders,
+        Dictionary<int, MaterialPropertyData> materialProperties) {
+        if (!destMat.HasProperty(_SmoothnessTextureChannel)) {
+            return;
+        }
 
-            var smoothnessChannel = destMat.GetInt(_SmoothnessTextureChannel);
+        var smoothnessChannel = destMat.GetInt(_SmoothnessTextureChannel);
 
-            Texture2DDisposable rgbTexture = null;
-            string channelName = null;
+        Texture2DDisposable rgbTexture = null;
+        int                 channelName;
 
-            bool texturesExist = false;
+        bool texturesExist = false;
 
-            if (smoothnessChannel == 0) {
-                // Bake to metallic alpha
-                channelName = MeshSyncConstants._MetallicGlossMap;
-                texturesExist |=
-                    FindTexture(MeshSyncConstants._MetallicGlossMap, textureHolders, materialProperties,
-                        MeshSyncConstants._Metallic, 0, out rgbTexture);
-            }
-            else if (smoothnessChannel == 1) {
-                // Bake to albedo alpha
-                channelName = MeshSyncConstants._BaseMap;
-                texturesExist |=
-                    FindTexture(MeshSyncConstants._MainTex, textureHolders, materialProperties, MeshSyncConstants._Color, 0,
-                        out rgbTexture);
-            }
-            else {
-                Debug.LogError(
-                    $"Unknown smoothness channel, cannot bake to option: {smoothnessChannel} set in the smoothness texture channel.");
-                return;
-            }
-
-            // Bake smoothness to 1 if there is no map and use the slider to scale it:
+        if (smoothnessChannel == 0) {
+            // Bake to metallic alpha
+            channelName = MeshSyncConstants._MetallicGlossMap;
             texturesExist |=
-                FindTexture(MeshSyncConstants._GlossMap, textureHolders, materialProperties, string.Empty, 1,
-                    out var glossTexture);
+                FindTexture(MeshSyncConstants._MetallicGlossMap, textureHolders, materialProperties,
+                    MeshSyncConstants._Metallic, 0, out rgbTexture);
+        }
+        else if (smoothnessChannel == 1) {
+            // Bake to albedo alpha
+            channelName = MeshSyncConstants._BaseMap;
+            texturesExist |=
+                FindTexture(MeshSyncConstants._MainTex, textureHolders, materialProperties, MeshSyncConstants._Color, 0,
+                    out rgbTexture);
+        }
+        else {
+            Debug.LogError(
+                $"Unknown smoothness channel, cannot bake to option: {smoothnessChannel} set in the smoothness texture channel.");
+            return;
+        }
 
-            // If there are no textures, don't bake anything, slider values can control everything:
-            if (!texturesExist ||
-                glossTexture.Texture == null ||
-                rgbTexture.Texture == null) {
-                destMat.SetTextureSafe(channelName, null);
+        // Bake smoothness to 1 if there is no map and use the slider to scale it:
+        texturesExist |=
+            FindTexture(MeshSyncConstants._GlossMap, textureHolders, materialProperties, 0, 1,
+                out var glossTexture);
 
-                if (channelName == MeshSyncConstants._MetallicGlossMap) {
-                    destMat.DisableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
-                    destMat.DisableKeyword(MeshSyncConstants._METALLICSPECGLOSSMAP);
-                }
-
-                return;
-            }
-
-            var shader = LoadShader(SHADER_NAME_SMOOTHNESS_INTO_ALPHA);
-            if (shader == null) {
-                return;
-            }
-
-            shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossTexture.Texture);
-            shader.SetTexture(SHADER_CONST_RGB, rgbTexture.Texture);
-
-            var texture = shader.RenderToTexture(destMat.GetTexture(channelName));
+        // If there are no textures, don't bake anything, slider values can control everything:
+        if (!texturesExist ||
+            glossTexture.Texture == null ||
+            rgbTexture.Texture == null) {
+            destMat.SetTextureSafe(channelName, null);
 
             if (channelName == MeshSyncConstants._MetallicGlossMap) {
-                destMat.EnableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
-                destMat.EnableKeyword(MeshSyncConstants._METALLICSPECGLOSSMAP);
-            }
-            else if (smoothnessChannel == 0) {
                 destMat.DisableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
                 destMat.DisableKeyword(MeshSyncConstants._METALLICSPECGLOSSMAP);
             }
 
-            destMat.SetTextureSafe(channelName, texture);
-            
-            glossTexture.Dispose();
-            rgbTexture.Dispose();
+            return;
         }
+
+        var shader = LoadShader(SHADER_NAME_SMOOTHNESS_INTO_ALPHA);
+        if (shader == null) {
+            return;
+        }
+
+        shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossTexture.Texture);
+        shader.SetTexture(SHADER_CONST_RGB, rgbTexture.Texture);
+
+        var texture = shader.RenderToTexture(destMat.GetTexture(channelName));
+
+        if (channelName == MeshSyncConstants._MetallicGlossMap) {
+            destMat.EnableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
+            destMat.EnableKeyword(MeshSyncConstants._METALLICSPECGLOSSMAP);
+        }
+        else if (smoothnessChannel == 0) {
+            destMat.DisableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
+            destMat.DisableKeyword(MeshSyncConstants._METALLICSPECGLOSSMAP);
+        }
+
+        destMat.SetTextureSafe(channelName, texture);
+
+        glossTexture.Dispose();
+        rgbTexture.Dispose();
+    }
 #endif
 
     public static void BakeMaps(Material destMat,
         List<TextureHolder> textureHolders,
-        List<MaterialPropertyData> materialProperties) {
+        Dictionary<int, MaterialPropertyData> materialProperties) {
 #if AT_USE_HDRP
         BakeMaskMap(destMat, textureHolders, materialProperties);
 #else

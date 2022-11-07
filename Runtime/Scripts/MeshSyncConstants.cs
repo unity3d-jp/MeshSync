@@ -29,6 +29,7 @@ internal static class MeshSyncConstants {
     internal static readonly int _Metallic                 = Shader.PropertyToID("_Metallic");
     internal static readonly int _Glossiness               = Shader.PropertyToID("_Glossiness");
     internal static readonly int _Smoothness               = Shader.PropertyToID("_Smoothness");
+    internal static readonly int _GlossMapScale            = Shader.PropertyToID("_GlossMapScale");
     internal static readonly int _MetallicGlossMap         = Shader.PropertyToID("_MetallicGlossMap");
     internal static readonly int _BumpMap                  = Shader.PropertyToID("_BumpMap");
     internal static readonly int _BumpScale                = Shader.PropertyToID("_BumpScale");
@@ -50,6 +51,10 @@ internal static class MeshSyncConstants {
     internal static readonly int _ZTestDepthEqualForOpaque = Shader.PropertyToID("_ZTestDepthEqualForOpaque");
     internal static readonly int _Mode                     = Shader.PropertyToID("_Mode");
     internal static readonly int _Surface                  = Shader.PropertyToID("_Surface");
+    internal static readonly int _DisplacementMode         = Shader.PropertyToID("_DisplacementMode");
+    internal static readonly int _HeightMin                = Shader.PropertyToID("_HeightMin");
+    internal static readonly int _HeightMax                = Shader.PropertyToID("_HeightMax");
+    internal static readonly int _HeightAmplitude          = Shader.PropertyToID("_HeightAmplitude");
 
     #endregion
 
@@ -67,6 +72,8 @@ internal static class MeshSyncConstants {
     internal const string _EMISSION                  = "_EMISSION";
     internal const string _ENABLE_FOG_ON_TRANSPARENT = "_ENABLE_FOG_ON_TRANSPARENT";
     internal const string _SURFACE_TYPE_TRANSPARENT  = "_SURFACE_TYPE_TRANSPARENT";
+    internal const string _PIXEL_DISPLACEMENT        = "_PIXEL_DISPLACEMENT";
+    internal const string _VERTEX_DISPLACEMENT       = "_VERTEX_DISPLACEMENT";
 
     // Used to mark materials that have a specific shader setup based on a shader from the DCC tool.  
     internal const string MESHSYNC_OVERRIDE = "MESHSYNC_OVERRIDE";
@@ -75,8 +82,9 @@ internal static class MeshSyncConstants {
 
     #region Override tags
 
-    internal  const string RenderType  = "RenderType";
-    internal  const string Transparent = "Transparent";
+    internal const string RenderType        = "RenderType";
+    internal const string Transparent       = "Transparent";
+    internal const string TransparentCutout = "TransparentCutout";
 
     #endregion
 }

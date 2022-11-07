@@ -126,9 +126,9 @@ namespace Unity.MeshSync {
 
                 TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(savePath);
                 if (importer != null) {
-                    importer.sRGBTexture = false;
+                    importer.sRGBTexture         = false;
                     importer.alphaIsTransparency = false;
-                    importer.ignorePngGamma = true;
+                    importer.ignorePngGamma      = true;
                 }
             }
 
