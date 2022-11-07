@@ -1219,8 +1219,7 @@ internal delegate void DeleteInstanceHandler(string path);
 
                         float scale = 10;
                         if (materialProperties.TryGetValue(MeshSyncConstants._Parallax, out var heightScaleProp)) {
-                            // convert from meters to centimeters and / 2 because midpoint is half of that:
-                            scale = heightScaleProp.floatValue * 100 / 2;
+                            scale = heightScaleProp.floatValue;
                         }
 
                         destMat.SetFloat(MeshSyncConstants._HeightMin, -scale);
