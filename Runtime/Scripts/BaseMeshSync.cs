@@ -1094,7 +1094,7 @@ internal delegate void DeleteInstanceHandler(string path);
             }
 
             foreach (var prop in materialProperties) {
-                ApplyMaterialProperty(src, destMat, textureHolders, prop.Value, prop.Key, materialProperties);
+                ApplyMaterialProperty(destMat, textureHolders, prop.Value, prop.Key, materialProperties);
             }
 
             MapsBaker.BakeMaps(destMat, textureHolders, materialProperties);
@@ -1128,8 +1128,7 @@ internal delegate void DeleteInstanceHandler(string path);
             { MeshSyncConstants._BumpScale, new[] { MeshSyncConstants._NormalScale } }
         };
 
-        private void ApplyMaterialProperty(MaterialData src, 
-            Material destMat, 
+        private void ApplyMaterialProperty(Material destMat, 
             List<TextureHolder> textureHolders,
             MaterialPropertyData prop,
             int propNameID, 
@@ -1138,7 +1137,7 @@ internal delegate void DeleteInstanceHandler(string path);
             // Shaders use different names to refer to the same maps, this map contains those synonyms so we can apply them to every shader easily:
             if (synonymMap.TryGetValue(propNameID, out var synonyms)) {
                 foreach (var synonym in synonyms) {
-                    ApplyMaterialProperty(src, destMat, textureHolders, prop, synonym, materialProperties);
+                    ApplyMaterialProperty(destMat, textureHolders, prop, synonym, materialProperties);
                 }
             }
             
