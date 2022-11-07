@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 namespace Unity.MeshSync {
-public static class MaterialExtensions {
+internal static class MaterialExtensions {
     /// <summary>
     /// Sets the given texture on the material.
     /// If there was a render texture in the slot, it is released.
