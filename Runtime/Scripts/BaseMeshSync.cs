@@ -1277,7 +1277,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 }
                     break;
                 case MaterialPropertyData.Type.String:
-                    var test = prop.stringValue;
+                    // Not used at the moment but would be: prop.stringValue;
                     break;
                 default: break;
             }
