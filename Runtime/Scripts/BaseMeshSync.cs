@@ -1212,7 +1212,7 @@ internal delegate void DeleteInstanceHandler(string path);
                         destMat.EnableKeyword(MeshSyncConstants._HEIGHTMAP);
 
                         // If there is no displacement mode set, set it to vertex displacement:
-                        if (destMat.IsKeywordEnabled(MeshSyncConstants._PIXEL_DISPLACEMENT)) {
+                        if (!destMat.IsKeywordEnabled(MeshSyncConstants._PIXEL_DISPLACEMENT)) {
                             destMat.EnableKeyword(MeshSyncConstants._VERTEX_DISPLACEMENT);
                             destMat.SetInt(MeshSyncConstants._DisplacementMode, 1);
                         }
