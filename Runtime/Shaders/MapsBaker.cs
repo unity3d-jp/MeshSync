@@ -43,9 +43,9 @@ internal static class MapsBaker {
         return shaderHelper;
     }
 
-    static MaterialPropertyData? FindMaterialProperty(List<MaterialPropertyData> materialProperties, string name) {
+    static MaterialPropertyData? FindMaterialProperty(List<MaterialPropertyData> materialProperties, int nameID) {
         for (int i = 0; i < materialProperties.Count; i++) {
-            if (materialProperties[i].name == name) {
+            if (materialProperties[i].nameID == nameID) {
                 return materialProperties[i];
             }
         }
@@ -53,13 +53,13 @@ internal static class MapsBaker {
         return null;
     }
 
-    private static bool FindTexture(string name,
+    private static bool FindTexture(int nameID,
         List<TextureHolder> textureHolders,
         List<MaterialPropertyData> materialProperties,
-        string fallbackPropertyName,
+        int fallbackPropertyNameID,
         float fallbackPropertyValue,
         out Texture2DDisposable disposableTexture) {
-        var prop = FindMaterialProperty(materialProperties, name);
+        var prop = FindMaterialProperty(materialProperties, nameID);
 
         if (prop.HasValue) {
             MaterialPropertyData.TextureRecord rec = prop.Value.textureValue;
@@ -75,7 +75,7 @@ internal static class MapsBaker {
         float value = fallbackPropertyValue;
 
         for (int i = 0; i < materialProperties.Count; i++) {
-            if (materialProperties[i].name == fallbackPropertyName) {
+            if (materialProperties[i].nameID == fallbackPropertyNameID) {
                 value = materialProperties[i].floatValue;
                 break;
             }

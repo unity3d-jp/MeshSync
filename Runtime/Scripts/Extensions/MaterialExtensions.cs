@@ -9,15 +9,15 @@ internal static class MaterialExtensions {
     /// <param name="mat">The material to set the texture on</param>
     /// <param name="name">The name of the texture slot</param>
     /// <param name="texture">The texture to set</param>
-    public  static void SetTextureSafe(this Material mat, string name, Texture texture) {
+    public  static void SetTextureSafe(this Material mat, int nameID, Texture texture) {
         // If there was a renderTexture set that we're clearing now, make sure to release its resources:
-        var existingTexture = mat.GetTexture(name);
+        var existingTexture = mat.GetTexture(nameID);
         if (existingTexture is RenderTexture existingRenderTexture &&
             texture != existingRenderTexture) {
             existingRenderTexture.Release();
         }
 
-        mat.SetTexture(name, texture);
+        mat.SetTexture(nameID, texture);
     }
 }
 }

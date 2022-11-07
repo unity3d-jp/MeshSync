@@ -14,13 +14,24 @@ namespace Unity.MeshSync {
         /// <summary>
         /// Names of all maps that could be baked to a render texture and might need to be saved to the asset database.
         /// </summary>
-        static readonly string[] textureNames = {
+        static readonly int[] textureNameIDs = {
             MeshSyncConstants._MetallicGlossMap,
             MeshSyncConstants._BaseMap,
             MeshSyncConstants._MaskMap
         };
 
-        private List<Tuple<Material, string>> pendingMaterialUpdates = new List<Tuple<Material, string>>();
+        static string nameFromID(int id) {
+            if (id == MeshSyncConstants._MetallicGlossMap)
+                return "metallic";
+            if (id == MeshSyncConstants._BaseMap)
+                return "basemap";
+            if (id == MeshSyncConstants._MaskMap)
+                return "maskmap";
+
+            return id.ToString();
+        }
+
+        private List<Tuple<Material, int>> pendingMaterialUpdates = new List<Tuple<Material, int>>();
 
         /// <summary>
         /// Returns the path where the given texture should be saved.
@@ -28,7 +39,8 @@ namespace Unity.MeshSync {
         /// <param name="mat">Material that owns the texture</param>
         /// <param name="textureName">Name of the texture in the material</param>
         /// <returns></returns>
-        private string GetSavePath(Material mat, string textureName) {
+        private string GetSavePath(Material mat, int textureNameID) {
+            string textureName = nameFromID(textureNameID);
             return Path.Combine(GetAssetsFolder(), $"{mat.name}_{textureName}_baked.png");
         }
 
@@ -38,14 +50,14 @@ namespace Unity.MeshSync {
         private void SaveMaterialRenderTexturesToAssetDatabase() {
             // Check if there are render textures that need to be saved to the asset database:
             foreach (MaterialHolder materialHolder in materialList) {
-                foreach (string textureName in textureNames) {
+                foreach (int textureNameID in textureNameIDs) {
                     var mat = materialHolder.material;
 
-                    if (mat == null || !mat.HasProperty(textureName)) {
+                    if (mat == null || !mat.HasProperty(textureNameID)) {
                         continue;
                     }
 
-                    var tex = mat.GetTexture(textureName);
+                    var tex = mat.GetTexture(textureNameID);
                     if (tex == null) {
                         continue;
                     }
@@ -56,21 +68,21 @@ namespace Unity.MeshSync {
                                    UnityEngine.TextureFormat.RGBA32, true))) {
                             texture.ReadFromRenderTexture(renderTarget);
 
-                            var savePath = GetSavePath(mat, textureName);
+                            var savePath = GetSavePath(mat, textureNameID);
                             TextureData.WriteToFile(savePath, texture.Texture.EncodeToPNG());
                         }
 
                         // Setting the texture can fail if the asset database has not imported it yet.
                         // If that happens, save it for later and try again:
-                        if (!SetSerializedTextureForMaterial(mat, textureName)) {
-                            pendingMaterialUpdates.Add(new Tuple<Material, string>(mat, textureName));
+                        if (!SetSerializedTextureForMaterial(mat, textureNameID)) {
+                            pendingMaterialUpdates.Add(new Tuple<Material, int>(mat, textureNameID));
 
                             // Set the texture on the material to null for now so the render texture
                             // is not saved to file again if this gets called again before it was
                             // set to the texture in the asset library:
-                            mat.SetTextureSafe(textureName, null);
+                            mat.SetTextureSafe(textureNameID, null);
                         }
-                        
+
                         renderTarget.Release();
                     }
                 }
@@ -83,8 +95,8 @@ namespace Unity.MeshSync {
         /// <param name="mat">Material to set the texture on</param>
         /// <param name="textureName">Name of the texture in the material</param>
         /// <returns></returns>
-        private bool SetSerializedTextureForMaterial(Material mat, string textureName) {
-            var savePath = GetSavePath(mat, textureName);
+        private bool SetSerializedTextureForMaterial(Material mat, int textureNameID) {
+            var savePath = GetSavePath(mat, textureNameID);
 
             // Ensure the texture is up to date:
             AssetDatabase.ImportAsset(savePath);
@@ -104,10 +116,10 @@ namespace Unity.MeshSync {
                 return false;
             }
 
-            mat.SetTexture(textureName, savedTexture);
+            mat.SetTexture(textureNameID, savedTexture);
 
-            if (textureName == MeshSyncConstants._MetallicGlossMap ||
-                textureName == MeshSyncConstants._MaskMap) {
+            if (textureNameID == MeshSyncConstants._MetallicGlossMap ||
+                textureNameID == MeshSyncConstants._MaskMap) {
                 mat.EnableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
                 mat.EnableKeyword(MeshSyncConstants._METALLICSPECGLOSSMAP);
 
@@ -123,11 +135,11 @@ namespace Unity.MeshSync {
         }
 
         /// <summary>
-        /// Tries to apply any pending material updates and unschedules itself when done.
+        /// Tries to apply any pending material updates.
         /// </summary>
         private void UpdatePendingMaterials() {
             for (int i = pendingMaterialUpdates.Count - 1; i >= 0; i--) {
-                Tuple<Material, string> pendingMaterial = pendingMaterialUpdates[i];
+                Tuple<Material, int> pendingMaterial = pendingMaterialUpdates[i];
                 if (SetSerializedTextureForMaterial(pendingMaterial.Item1, pendingMaterial.Item2)) {
                     pendingMaterialUpdates.RemoveAt(i);
                 }

@@ -1095,7 +1095,7 @@ internal delegate void DeleteInstanceHandler(string path);
 
             for (int i = 0; i < materialProperties.Count; i++) {
                 var prop = materialProperties[i];
-                ApplyMaterialProperty(src, destMat, textureHolders, prop, prop.name, materialProperties);
+                ApplyMaterialProperty(src, destMat, textureHolders, prop, prop.nameID, materialProperties);
             }
 
             MapsBaker.BakeMaps(destMat, textureHolders, materialProperties);
@@ -1119,7 +1119,7 @@ internal delegate void DeleteInstanceHandler(string path);
             return false;
         }
 
-        private static Dictionary<string, string[]> synonymMap = new Dictionary<string, string[]> {
+        private static Dictionary<int, int[]> synonymMap = new Dictionary<int, int[]> {
             { MeshSyncConstants._Color, new[] { MeshSyncConstants._BaseColor } },
             { MeshSyncConstants._MainTex, new[] { MeshSyncConstants._BaseMap, MeshSyncConstants._BaseColorMap } },
             { MeshSyncConstants._Glossiness, new[] { MeshSyncConstants._Smoothness } },
@@ -1129,9 +1129,9 @@ internal delegate void DeleteInstanceHandler(string path);
             { MeshSyncConstants._BumpScale, new[] { MeshSyncConstants._NormalScale } }
         };
 
-        private static MaterialPropertyData? FindMaterialPropertyData(List<MaterialPropertyData> materialProperties, string name) {
+        private static MaterialPropertyData? FindMaterialPropertyData(List<MaterialPropertyData> materialProperties, int nameID) {
             for (int i = 0; i < materialProperties.Count; i++) {
-                if (materialProperties[i].name == name) {
+                if (materialProperties[i].nameID == nameID) {
                     return materialProperties[i];
                 }
             }
@@ -1139,23 +1139,23 @@ internal delegate void DeleteInstanceHandler(string path);
             return null;
         }
 
-        private void ApplyMaterialProperty(MaterialData src, Material destMat, List<TextureHolder> textureHolders, MaterialPropertyData prop, string propName, List<MaterialPropertyData> materialProperties) {
+        private void ApplyMaterialProperty(MaterialData src, Material destMat, List<TextureHolder> textureHolders, MaterialPropertyData prop, int propNameID, List<MaterialPropertyData> materialProperties) {
            
             // Shaders use different names to refer to the same maps, this map contains those synonyms so we can apply them to every shader easily:
-            if (synonymMap.TryGetValue(propName, out var synonyms)) {
+            if (synonymMap.TryGetValue(propNameID, out var synonyms)) {
                 foreach (var synonym in synonyms) {
                     ApplyMaterialProperty(src, destMat, textureHolders, prop, synonym, materialProperties);
                 }
             }
             
             MaterialPropertyData.Type propType = prop.type;
-            if (!destMat.HasProperty(propName))
+            if (!destMat.HasProperty(propNameID))
                 return;
             
             // Enable alpha test if there is a color texture so alpha clipping works:
-            if (propName == MeshSyncConstants._BaseMap ||
-                propName == MeshSyncConstants._MainTex || 
-                propName == MeshSyncConstants._BaseColorMap) {
+            if (propNameID == MeshSyncConstants._BaseMap ||
+                propNameID == MeshSyncConstants._MainTex || 
+                propNameID == MeshSyncConstants._BaseColorMap) {
                 bool hasAlpha = HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._ALPHATEST_ON);
                 if (hasAlpha) {
                     destMat.SetOverrideTag("RenderType", "TransparentCutout");
@@ -1175,25 +1175,25 @@ internal delegate void DeleteInstanceHandler(string path);
 #endif
             }
 
-            if (propName == MeshSyncConstants._EmissionColor) {
+            if (propNameID == MeshSyncConstants._EmissionColor) {
                 if (destMat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack) {
                     destMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
 
                     HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._EMISSION);
                 }
             }
-            else if (propName == MeshSyncConstants._MetallicGlossMap) {
+            else if (propNameID == MeshSyncConstants._MetallicGlossMap) {
                 HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._METALLICGLOSSMAP);
                 HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._METALLICSPECGLOSSMAP);
             }
-            else if (propName == MeshSyncConstants._BumpMap) {
+            else if (propNameID == MeshSyncConstants._BumpMap) {
                 HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._NORMALMAP);
             }
-            else if (propName == MeshSyncConstants._ParallaxMap) {
+            else if (propNameID == MeshSyncConstants._ParallaxMap) {
                 HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._PARALLAXMAP);
             }
 #if AT_USE_HDRP
-            else if (propName == MeshSyncConstants._EmissiveColorMap) {
+            else if (propNameID == MeshSyncConstants._EmissiveColorMap) {
                 Color baseEmissionColor = Color.white;
                 var emissionColorProp = FindMaterialPropertyData(materialProperties, MeshSyncConstants._EmissionColor);
                 if (emissionColorProp.HasValue) {
@@ -1212,7 +1212,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 destMat.SetColor(MeshSyncConstants._EmissiveColorLDR, baseEmissionColor);
                 destMat.SetColor(MeshSyncConstants._EmissiveColor, baseEmissionColor * emissionStrength);
             }
-            else if (propName == MeshSyncConstants._HeightMap) {
+            else if (propNameID == MeshSyncConstants._HeightMap) {
                 if (prop.type == MaterialPropertyData.Type.Texture) {
                     MaterialPropertyData.TextureRecord rec = prop.textureValue;
                     Texture2D                          tex = FindTexture(rec.id, textureHolders);
@@ -1245,34 +1245,34 @@ internal delegate void DeleteInstanceHandler(string path);
             int len = prop.arrayLength;
             switch (propType) {
                 case MaterialPropertyData.Type.Int:
-                    destMat.SetInt(propName, prop.intValue);
+                    destMat.SetInt(propNameID, prop.intValue);
                     break;
                 case MaterialPropertyData.Type.Float:
                     if (len == 1)
-                        destMat.SetFloat(propName, prop.floatValue);
+                        destMat.SetFloat(propNameID, prop.floatValue);
                     else
-                        destMat.SetFloatArray(propName, prop.floatArray);
+                        destMat.SetFloatArray(propNameID, prop.floatArray);
                     break;
                 case MaterialPropertyData.Type.Vector:
                     if (len == 1)
-                        destMat.SetVector(propName, prop.vectorValue);
+                        destMat.SetVector(propNameID, prop.vectorValue);
                     else
-                        destMat.SetVectorArray(propName, prop.vectorArray);
+                        destMat.SetVectorArray(propNameID, prop.vectorArray);
                     break;
                 case MaterialPropertyData.Type.Matrix:
                     if (len == 1)
-                        destMat.SetMatrix(propName, prop.matrixValue);
+                        destMat.SetMatrix(propNameID, prop.matrixValue);
                     else
-                        destMat.SetMatrixArray(propName, prop.matrixArray);
+                        destMat.SetMatrixArray(propNameID, prop.matrixArray);
                     break;
                 case MaterialPropertyData.Type.Texture: {
                     MaterialPropertyData.TextureRecord rec = prop.textureValue;
                     Texture2D                          tex = FindTexture(rec.id, textureHolders);
                     // Allow setting of null textures to clear them:
-                    destMat.SetTextureSafe(propName, tex);
+                    destMat.SetTextureSafe(propNameID, tex);
                     if (rec.hasScaleOffset) {
-                        destMat.SetTextureScale(propName, rec.scale);
-                        destMat.SetTextureOffset(propName, rec.offset);
+                        destMat.SetTextureScale(propNameID, rec.scale);
+                        destMat.SetTextureOffset(propNameID, rec.offset);
                     }
                 }
                     break;

@@ -526,6 +526,10 @@ internal struct MaterialPropertyData {
         get { return Misc.S(msMaterialPropGetName(self)); }
     }
 
+    public int nameID {
+        get { return  Shader.PropertyToID(name); }
+    }
+
     public Type type {
         get { return msMaterialPropGetType(self); }
     }
