@@ -103,9 +103,7 @@ internal static class MapsBaker {
                 MeshSyncConstants._Glossiness, 1, out var glossTexture);
 
         // If there are no textures, don't bake anything, slider values can control everything:
-        if (!texturesExist ||
-            metalTexture.Texture == null ||
-            glossTexture.Texture == null) {
+        if (!texturesExist) {
             destMat.SetTextureSafe(MeshSyncConstants._MaskMap, null);
             destMat.DisableKeyword(MeshSyncConstants._MASKMAP);
             return;
@@ -154,7 +152,7 @@ internal static class MapsBaker {
             // Bake to albedo alpha
             channelName = MeshSyncConstants._BaseMap;
             texturesExist |=
-                FindTexture(MeshSyncConstants._MainTex, textureHolders, materialProperties, MeshSyncConstants._Color, 0,
+                FindTexture(MeshSyncConstants._MainTex, textureHolders, materialProperties, 0, 0,
                     out rgbTexture);
         }
         else {
