@@ -10,7 +10,7 @@ namespace Unity.MeshSync {
     internal class Texture2DDisposable : IDisposable {
         public Texture2D Texture { get; private set; }
 
-        public bool DoDispose { get; }
+        private bool DoDispose { get; }
 
         public Texture2DDisposable(Texture2D texture, bool doDispose = true) {
             Init(texture);
@@ -36,12 +36,7 @@ namespace Unity.MeshSync {
                 return;
             }
 
-            if (Application.isPlaying) {
-                Object.Destroy(Texture);
-            }
-            else {
-                Object.DestroyImmediate(Texture);
-            }
+            FilmInternalUtilities.ObjectUtility.Destroy(Texture);
         }
     }
 }
