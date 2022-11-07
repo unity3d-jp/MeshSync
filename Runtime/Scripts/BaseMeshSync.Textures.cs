@@ -197,7 +197,7 @@ namespace Unity.MeshSync {
             }
 
             // If the material was set up by meshsync but doesn't need that anymore, revert it to a standard material:
-            if (!usingOverride && Array.IndexOf(mat.shaderKeywords, "MESHSYNC_OVERRIDE") >= 0) {
+            if (!usingOverride && Array.IndexOf(mat.shaderKeywords, MeshSyncConstants.MESHSYNC_OVERRIDE) >= 0) {
                 mat.CopyPropertiesFromMaterial(new Material(shader));
             }
         }
@@ -207,11 +207,11 @@ namespace Unity.MeshSync {
         /// </summary>
         /// <param name="mat">The material to change.</param>
         private static void SetupGlassShader(Material mat) {
-            mat.EnableKeyword("MESHSYNC_OVERRIDE");
+            mat.EnableKeyword(MeshSyncConstants.MESHSYNC_OVERRIDE);
 
-            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            mat.SetOverrideTag("RenderType", "Transparent");
-            mat.SetFloat("_Surface", 1);
+            mat.EnableKeyword(MeshSyncConstants._SURFACE_TYPE_TRANSPARENT);
+            mat.SetOverrideTag(MeshSyncConstants.RenderType, MeshSyncConstants.Transparent);
+            mat.SetFloat(MeshSyncConstants._Surface, 1);
 
 #if AT_USE_HDRP
             SetupGlass_HRDP(mat);
@@ -223,35 +223,35 @@ namespace Unity.MeshSync {
         }
 
         private static void SetupGlass_HRDP(Material mat) {
-            mat.EnableKeyword("_ENABLE_FOG_ON_TRANSPARENT");
+            mat.EnableKeyword(MeshSyncConstants._ENABLE_FOG_ON_TRANSPARENT);
 
             mat.renderQueue = 3000;
 
-            mat.SetFloat("_SurfaceType", 1);
-            mat.SetInt("_ZWrite", 0);
-            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-            mat.SetFloat("_AlphaSrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-            mat.SetFloat("_AlphaDstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-            mat.SetFloat("_ZTestDepthEqualForOpaque", 4);
+            mat.SetFloat(MeshSyncConstants._SurfaceType, 1);
+            mat.SetInt(MeshSyncConstants._ZWrite, 0);
+            mat.SetInt(MeshSyncConstants._SrcBlend, (int)UnityEngine.Rendering.BlendMode.One);
+            mat.SetInt(MeshSyncConstants._DstBlend, (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat(MeshSyncConstants._AlphaSrcBlend, (int)UnityEngine.Rendering.BlendMode.One);
+            mat.SetFloat(MeshSyncConstants._AlphaDstBlend, (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat(MeshSyncConstants._ZTestDepthEqualForOpaque, 4);
         }
 
         private static void SetupGlass_URP(Material mat) {
-            mat.SetFloat("_Blend", 1);
-            mat.DisableKeyword("_ALPHATEST_ON");
-            mat.DisableKeyword("_ALPHABLEND_ON");
-            mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat(MeshSyncConstants._Blend, 1);
+            mat.DisableKeyword(MeshSyncConstants._ALPHATEST_ON);
+            mat.DisableKeyword(MeshSyncConstants._ALPHABLEND_ON);
+            mat.EnableKeyword(MeshSyncConstants._ALPHAPREMULTIPLY_ON);
+            mat.SetInt(MeshSyncConstants._SrcBlend, (int)UnityEngine.Rendering.BlendMode.One);
+            mat.SetInt(MeshSyncConstants._DstBlend, (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
         }
 
         private static void SetupGlass_Standard(Material mat) {
-            mat.SetFloat("_Mode", 3);
-            mat.DisableKeyword("_ALPHATEST_ON");
-            mat.DisableKeyword("_ALPHABLEND_ON");
-            mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat(MeshSyncConstants._Mode, 3);
+            mat.DisableKeyword(MeshSyncConstants._ALPHATEST_ON);
+            mat.DisableKeyword(MeshSyncConstants._ALPHABLEND_ON);
+            mat.EnableKeyword(MeshSyncConstants._ALPHAPREMULTIPLY_ON);
+            mat.SetInt(MeshSyncConstants._SrcBlend, (int)UnityEngine.Rendering.BlendMode.One);
+            mat.SetInt(MeshSyncConstants._DstBlend, (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
         }
     }
 }
