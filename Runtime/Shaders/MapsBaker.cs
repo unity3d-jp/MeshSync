@@ -169,9 +169,7 @@ internal static class MapsBaker {
                 out var glossTexture);
 
         // If there are no textures, don't bake anything, slider values can control everything:
-        if (!texturesExist ||
-            glossTexture.Texture == null ||
-            rgbTexture.Texture == null) {
+        if (!texturesExist) {
             destMat.SetTextureSafe(channelName, null);
 
             if (channelName == MeshSyncConstants._MetallicGlossMap) {
