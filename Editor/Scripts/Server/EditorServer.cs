@@ -21,7 +21,7 @@ internal static class EditorServer {
     
     private static void UpdateLog() {
         var appRoot = AssetEditorUtility.GetApplicationRootPath();
-        var dir = Path.Combine(appRoot, "Assets", "ProjectSettings");
+        var dir = Path.Combine(appRoot, "Logs");
         Directory.CreateDirectory(dir);
         var path = Path.Combine(dir, "MeshSyncEditorServerLog.txt");
         using (var stream = File.Create(path)) {
