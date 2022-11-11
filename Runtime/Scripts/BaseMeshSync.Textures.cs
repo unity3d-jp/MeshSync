@@ -129,7 +129,7 @@ namespace Unity.MeshSync {
                     importer.sRGBTexture         = false;
                     importer.alphaIsTransparency = false;
                     importer.ignorePngGamma      = true;
-                    
+                    importer.SaveAndReimport();
                     AssetDatabase.Refresh();
                 }
             }
