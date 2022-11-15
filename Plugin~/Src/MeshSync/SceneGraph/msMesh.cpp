@@ -380,11 +380,6 @@ bool Mesh::merge(const Entity& base_)
         auto assign_if_empty = [](auto& cur, const auto& base) {
             if (cur.empty())
                 cur = base;
-            else
-            {
-                int i = 0;
-                i ++;
-            }
         };
 #define Body(A) assign_if_empty(A, base.A);
         EachGeometryAttribute(Body);

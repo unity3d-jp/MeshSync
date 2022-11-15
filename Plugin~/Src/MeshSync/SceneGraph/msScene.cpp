@@ -286,18 +286,6 @@ std::vector<EntityConverterPtr> Scene::getConverters(const SceneImportSettings& 
 
 void Scene::import(const SceneImportSettings& cv)
 {
-    // test:
-    int indices;
-    for (size_t i = 0; i < entities.size(); i++)
-    {
-        auto geom = entities[i];
-        if (geom->getType() == EntityType::Mesh)
-        {
-            auto mesh = static_cast<ms::Mesh&>(*geom);
-            indices = mesh.indices.size();
-        }
-    }
-
     // receive and convert assets
     std::vector<EntityConverterPtr> converters = getConverters(cv, settings, false);
 

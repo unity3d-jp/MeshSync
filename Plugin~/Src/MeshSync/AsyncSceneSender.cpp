@@ -223,31 +223,31 @@ void AsyncSceneSender::send()
             mes.scene->entities = { geom };
 
             // test:
-            auto obj = geom;
-            const bool is_mesh = obj->getType() == EntityType::Mesh;
-            if (is_mesh) {
-                Mesh& mesh = dynamic_cast<Mesh&>(*obj);
+            //auto obj = geom;
+            //const bool is_mesh = obj->getType() == EntityType::Mesh;
+            //if (is_mesh) {
+            //    Mesh& mesh = dynamic_cast<Mesh&>(*obj);
 
-                if (mesh.test) {
-                    if (mesh.indices.size() != static_cast<ms::Mesh&>(*mesh.test).indices.size())
-                    {
-                        int i = 0;
-                        i++;
-                    }
-                }
+            //    if (mesh.test) {
+            //        if (mesh.indices.size() != static_cast<ms::Mesh&>(*mesh.test).indices.size())
+            //        {
+            //            int i = 0;
+            //            i++;
+            //        }
+            //    }
 
-                if (false) {
-                    ms::SceneImportSettings cv;
+            //    if (false) {
+            //        ms::SceneImportSettings cv;
 
 
-                    /*    for (std::vector<std::shared_ptr<BoneData>>::value_type& bone : mesh.bones)
-                            sanitizeHierarchyPath(bone->path);*/
-                    mesh.refine_settings.flags.Set(MESH_REFINE_FLAG_SPLIT, true);
-                    mesh.refine_settings.split_unit = cv.mesh_split_unit;
-                    mesh.refine_settings.max_bone_influence = cv.mesh_max_bone_influence;
-                    mesh.refine();
-                }
-            }
+            //        /*    for (std::vector<std::shared_ptr<BoneData>>::value_type& bone : mesh.bones)
+            //                sanitizeHierarchyPath(bone->path);*/
+            //        mesh.refine_settings.flags.Set(MESH_REFINE_FLAG_SPLIT, true);
+            //        mesh.refine_settings.split_unit = cv.mesh_split_unit;
+            //        mesh.refine_settings.max_bone_influence = cv.mesh_max_bone_influence;
+            //        mesh.refine();
+            //    }
+            //}
 
             succeeded = succeeded && client.send(mes);
             if (!succeeded)
