@@ -1227,7 +1227,10 @@ internal delegate void DeleteInstanceHandler(string path);
                         destMat.SetFloat(MeshSyncConstants._HeightMin, -scale);
                         destMat.SetFloat(MeshSyncConstants._HeightMax, scale);
 
+                        // Amplitude is the difference between min height and max height: 
                         float amplitude = scale * 2;
+                        
+                        // Convert from meters to centimeters:
                         destMat.SetFloat(MeshSyncConstants._HeightAmplitude, amplitude * 0.01f);
                     }
                 }
