@@ -136,7 +136,7 @@ public:
     uint32_t bone_weight_count = 0; // sum of bone_counts
 
 
-public:
+protected:
     Mesh();
     ~Mesh() override;
 public:

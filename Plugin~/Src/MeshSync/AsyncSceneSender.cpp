@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "MeshSync/AsyncSceneSender.h"
 
-#include "MeshSync/SceneGraph/msSceneImportSettings.h"
-
 #ifndef msRuntime
 
 #include "MeshSync/SceneGraph/msAnimation.h"

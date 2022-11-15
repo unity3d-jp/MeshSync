@@ -480,7 +480,6 @@ uint64_t Mesh::hash() const
     uint64_t ret = super::hash();
 #define Body(A) ret += vhash(A);
     EachGeometryAttribute(Body);
-    EachTopologyAttribute(Body);
 #undef Body
 
     // bones

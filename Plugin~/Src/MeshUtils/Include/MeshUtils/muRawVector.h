@@ -409,12 +409,6 @@ public:
     {
         // just share data. no copy at this point.
         m_data = (pointer)data;
-        if(m_shared_data)
-        {
-	        // already shared!
-            int x = 0;
-            x++;
-        }
         m_shared_data = data;
         m_size = m_capacity = size;
     }
