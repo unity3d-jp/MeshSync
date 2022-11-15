@@ -30,8 +30,6 @@ public:
     mu::float4x4 world_matrix;
     mu::float4x4 local_matrix;
 
-    TransformPtr test;
-
 protected:
     Transform();
     ~Transform() override;
