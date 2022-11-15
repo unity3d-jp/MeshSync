@@ -240,7 +240,7 @@ namespace Unity.MeshSync {
         }
 
         private static void SetupGlass_URP(Material mat) {
-            mat.SetFloat(MeshSyncConstants._Blend, 1);
+            mat.SetFloat(MeshSyncConstants._Blend, 1);  // Premultiplied alpha
             mat.DisableKeyword(MeshSyncConstants._ALPHATEST_ON);
             mat.DisableKeyword(MeshSyncConstants._ALPHABLEND_ON);
             mat.EnableKeyword(MeshSyncConstants._ALPHAPREMULTIPLY_ON);
