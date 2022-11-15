@@ -223,7 +223,7 @@ namespace Unity.MeshSync.Editor.Analytics {
         /// <typeparam name="T">Event data type</typeparam>
         /// <param name="events">Events grouped by type</param>
         /// <returns>Flattened list of events limited to one per second per event type</returns>
-        private static IEnumerable<TimedEvent<T>> CoalesceEventsByTime<T>(ILookup<string, TimedEvent<T>> events)
+        internal static IEnumerable<TimedEvent<T>> CoalesceEventsByTime<T>(ILookup<string, TimedEvent<T>> events)
             where T: struct {
             var list = new List<TimedEvent<T>>();
 
