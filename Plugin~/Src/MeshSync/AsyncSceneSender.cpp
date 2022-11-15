@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "MeshSync/AsyncSceneSender.h"
 
+#include "MeshSync/SceneGraph/msSceneImportSettings.h"
+
 #ifndef msRuntime
 
 #include "MeshSync/SceneGraph/msAnimation.h"
@@ -203,14 +205,41 @@ void AsyncSceneSender::send()
 
     // geometries
     if (!geometries.empty()) {
-        for (auto& geom : geometries) {
-            ms::SetMessage mes;
+        for (size_t i =0;i<geometries.size();i++){
+        //for (auto& geom : geometries) {
+            // test:
+           /* int indices;
+            if (geom->getType() == EntityType::Mesh)
+            {
+                auto mesh = static_cast<ms::Mesh*>(geom);
+                indices = mesh.indices.size();
+            }*/
+
+            auto& geom = geometries[i];
+
+        	ms::SetMessage mes;
             setup_message(mes);
             mes.scene->settings = scene_settings;
             mes.scene->entities = { geom };
-            succeeded = succeeded && client.send(mes);
+            
+            //succeeded = succeeded && client.send(mes);
             if (!succeeded)
                 goto cleanup;
+
+            // test:
+            auto obj = geom;
+            const bool is_mesh = obj->getType() == EntityType::Mesh;
+            if (is_mesh) {
+                ms::SceneImportSettings cv;
+
+                Mesh& mesh = dynamic_cast<Mesh&>(*obj);
+            /*    for (std::vector<std::shared_ptr<BoneData>>::value_type& bone : mesh.bones)
+                    sanitizeHierarchyPath(bone->path);*/
+                mesh.refine_settings.flags.Set(MESH_REFINE_FLAG_SPLIT, true);
+                mesh.refine_settings.split_unit = cv.mesh_split_unit;
+                mesh.refine_settings.max_bone_influence = cv.mesh_max_bone_influence;
+                mesh.refine();
+            }
         };
     }
 
