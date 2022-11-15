@@ -208,11 +208,10 @@ void AsyncSceneSender::send()
             setup_message(mes);
             mes.scene->settings = scene_settings;
             mes.scene->entities = { geom };
-
             succeeded = succeeded && client.send(mes);
             if (!succeeded)
                 goto cleanup;
-        }
+        };
     }
 
     //instance meshes
