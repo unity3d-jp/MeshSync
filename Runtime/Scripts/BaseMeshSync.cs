@@ -1157,7 +1157,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 destMat.SetFloat(MeshSyncConstants._AlphaCutoffEnable, hasAlpha ? 1 : 0);
                 if (hasAlpha) {
                     destMat.renderQueue = (int)RenderQueue.AlphaTest + 25;
-                    destMat.SetFloat("_ZTestGBuffer", 3);
+                    destMat.SetFloat(MeshSyncConstants._ZTestGBuffer, 3);
                 }
 #elif AT_USE_URP
                 destMat.SetFloat(MeshSyncConstants._AlphaClip, hasAlpha ? 1 : 0);

@@ -55,6 +55,7 @@ internal static class MeshSyncConstants {
     internal static readonly int _HeightMin                = Shader.PropertyToID("_HeightMin");
     internal static readonly int _HeightMax                = Shader.PropertyToID("_HeightMax");
     internal static readonly int _HeightAmplitude          = Shader.PropertyToID("_HeightAmplitude");
+    internal static readonly int _ZTestGBuffer             = Shader.PropertyToID("_ZTestGBuffer");
 
     #endregion
 
