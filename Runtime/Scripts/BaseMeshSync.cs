@@ -1217,6 +1217,8 @@ internal delegate void DeleteInstanceHandler(string path);
                             destMat.SetInt(MeshSyncConstants._DisplacementMode, 1);
                         }
 
+                        // Fallback value in case the node setup in blender does not specify the height scale.
+                        // Normally this is not used because the value comes from the displacement node:
                         float scale = 10;
                         if (materialProperties.TryGetValue(MeshSyncConstants._Parallax, out var heightScaleProp)) {
                             scale = heightScaleProp.floatValue;
