@@ -72,9 +72,6 @@ public class SceneCachePlayer : BaseMeshSync {
     internal bool IsSceneCacheOpened() { return m_sceneCache;}
 
     internal override MeshSyncPlayerConfig GetConfigV() => m_config;
-    
-    internal void SetAutoplay(bool autoPlay) {
-    }
 
     internal SceneCachePlaybackMode GetPlaybackMode() { return m_playbackMode; }
 

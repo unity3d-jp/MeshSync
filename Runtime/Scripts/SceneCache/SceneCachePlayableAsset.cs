@@ -58,8 +58,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             m_isSceneCacheCurveExtracted = false;
             return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, behaviour);
         }
-
-        m_sceneCachePlayer.SetAutoplay(false);
         
 #if UNITY_EDITOR        
         //Initialize curve
