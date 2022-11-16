@@ -366,12 +366,18 @@ public class SceneCachePlayer : BaseMeshSync {
 
     private protected override void OnBeforeSerializeMeshSyncPlayerV() {
         m_sceneCachePlayerVersion = CUR_SCENE_CACHE_PLAYER_VERSION;        
+        Debug.Log("OnBeforeSerializeMeshSyncPlayerV : " + m_sceneCachePlayerVersion);
+        return;
     }
 
     private protected override void OnAfterDeserializeMeshSyncPlayerV() {
+        
+        Debug.Log("OnAfterDeserializeMeshSyncPlayerV : " + m_sceneCachePlayerVersion);
+//        return;
 
-        if (m_sceneCachePlayerVersion == CUR_SCENE_CACHE_PLAYER_VERSION)
+        if (m_sceneCachePlayerVersion >= CUR_SCENE_CACHE_PLAYER_VERSION) {
             return;
+        }
         
 #if UNITY_EDITOR
         if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.NORMALIZED_PATH_0_9_2) {
@@ -386,7 +392,8 @@ public class SceneCachePlayer : BaseMeshSync {
 #pragma warning restore 612
 
         if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.RemoveAnimator_0_16_0) {
-            m_destroyAnimator = true;
+            Debug.Log("Setting DestroyAnimator: ");
+            m_destroyAnimatorOnEnable = true;
         } 
         
 #endif
@@ -465,11 +472,22 @@ public class SceneCachePlayer : BaseMeshSync {
     private protected override void OnEnable() {
         base.OnEnable();
 
-        if (m_destroyAnimator) {
-            m_destroyAnimator = false;
-            DestroyImmediate(GetComponent<Animator>());
-            PrefabUtility.RecordPrefabInstancePropertyModifications(this);
+#if UNITY_EDITOR
+        if (m_destroyAnimatorOnEnable) {
+            m_destroyAnimatorOnEnable = false;
+            Animator animator = GetComponent<Animator>();
+            if (null != animator) {
+                DestroyImmediate(animator);
+                
+                bool isPrefabInstance = gameObject.IsPrefabInstance();
+                if (isPrefabInstance) {
+                    GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(gameObject);
+                    PrefabUtility.ApplyRemovedComponent(gameObject, prefab.GetComponent<Animator>(), InteractionMode.AutomatedAction);                    
+                }
+            }
+            EditorUtility.SetDirty(this);
         }
+#endif
 
         
 #if UNITY_EDITOR
@@ -530,7 +548,9 @@ public class SceneCachePlayer : BaseMeshSync {
     //Renamed in 0.10.x-preview
     [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_sceneCachePlayerVersion = (int) SceneCachePlayerVersion.NO_VERSIONING;
     private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.RemoveAnimator_0_16_0;
-        
+
+    [SerializeField] private bool m_destroyAnimatorOnEnable = false;
+    
     SceneCacheData m_sceneCache;
 
     private readonly SceneCacheInfo m_sceneCacheInfo = new SceneCacheInfo(); 
@@ -538,7 +558,6 @@ public class SceneCachePlayer : BaseMeshSync {
     int            m_frame      = 0;
     float          m_loadedTime = -1;
 
-    private bool m_destroyAnimator = false;
     
 #if UNITY_EDITOR
     float                 m_dbgSceneGetTime;
