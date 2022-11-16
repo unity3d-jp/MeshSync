@@ -466,8 +466,8 @@ internal delegate void DeleteInstanceHandler(string path);
 
 
         private static Material CreateDefaultMaterial(string shaderName = null) {
-            Material mat = null;
-            UpdateShader(ref mat, shaderName);
+            Material mat = new Material(GetShader(shaderName, out _));
+            UpdateShader(mat, shaderName);
             return mat;
         }
 
@@ -1082,7 +1082,7 @@ internal delegate void DeleteInstanceHandler(string path);
                     destMat.DisableKeyword(kw.name);
             }
 
-            UpdateShader(ref destMat, src.shader);
+            UpdateShader(destMat, src.shader);
 
             // Put all properties in a list so we can look them up more easily:
             int numProps           = src.numProperties;

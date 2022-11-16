@@ -168,26 +168,10 @@ namespace Unity.MeshSync {
         /// </summary>
         /// <param name="mat">Material to set the shader on</param>
         /// <param name="shaderName">The name of the shader passed by the DCC tool</param>
-        private static void UpdateShader(ref Material mat, string shaderName) {
-            Shader shader = null;
-            if (!string.IsNullOrEmpty(shaderName)) {
-                shader = Shader.Find(shaderName);
-            }
+        private static void UpdateShader(Material mat, string shaderName) {
+            Shader shader = GetShader(shaderName, out bool shaderExists);
 
-            bool shaderExists = shader != null;
-
-            if (shader == null) {
-                shader = GetStandardShader();
-            }
-
-            Assert.IsNotNull(shader);
-
-            if (mat == null) {
-                mat = new Material(shader);
-            }
-            else {
-                mat.shader = shader;
-            }
+            mat.shader = shader;
 
             bool usingOverride = false;
 
@@ -203,6 +187,29 @@ namespace Unity.MeshSync {
             if (!usingOverride && Array.IndexOf(mat.shaderKeywords, MeshSyncConstants.MESHSYNC_OVERRIDE) >= 0) {
                 mat.CopyPropertiesFromMaterial(new Material(shader));
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="shaderName">Name of the shader in the asset database.</param>
+        /// <param name="shaderNameExists">True if the shader was found. False if the standard shader for the current render pipeline was used.</param>
+        /// <returns></returns>
+        private static Shader GetShader(string shaderName, out bool shaderNameExists) {
+            Shader shader = null;
+            if (!string.IsNullOrEmpty(shaderName)) {
+                shader = Shader.Find(shaderName);
+            }
+
+            shaderNameExists = shader != null;
+            
+            if (shader == null) {
+                shader = GetStandardShader();
+            }
+
+            Assert.IsNotNull(shader);
+
+            return shader;
         }
 
         /// <summary>
