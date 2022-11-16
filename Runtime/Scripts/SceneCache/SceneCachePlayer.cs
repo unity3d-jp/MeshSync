@@ -176,7 +176,6 @@ public class SceneCachePlayer : BaseMeshSync {
         }
         
         ExportMaterials(false, true);
-        ResetTimeAnimationInEditor();
 
         if (m_sceneCache) {
             SceneData scene = LoadSceneData(m_loadedTime, out _);
@@ -553,7 +552,6 @@ public class SceneCachePlayer : BaseMeshSync {
 #if UNITY_EDITOR
         //required one time reset after version upgrade to 0.12.x
         if (m_resetTimeAnimationOnEnable) {
-            ResetTimeAnimationInEditor();
             m_resetTimeAnimationOnEnable = false;
         }
 #endif
