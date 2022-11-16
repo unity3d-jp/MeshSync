@@ -28,6 +28,10 @@ namespace Unity.MeshSync {
             if (renderTarget == null ||
                 renderTarget.width != maxTextureSize.x ||
                 renderTarget.height != maxTextureSize.y) {
+                if (renderTarget != null) {
+                    renderTarget.Release();
+                }
+
                 renderTarget = new RenderTexture(maxTextureSize.x, maxTextureSize.y, 32) {
                     enableRandomWrite = true
                 };
