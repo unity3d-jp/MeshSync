@@ -384,7 +384,10 @@ public class SceneCachePlayer : BaseMeshSync {
             m_timeUnit = TimeUnit.Seconds;
         }
 #pragma warning restore 612
-        
+
+        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.RemoveAnimator_0_16_0) {
+            Debug.LogWarning($"[MeshSync] SceneCache no longer requires Animator component. {gameObject.name}");
+        }
 #endif
         
         m_sceneCachePlayerVersion = CUR_SCENE_CACHE_PLAYER_VERSION;
@@ -536,11 +539,11 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------    
     
     enum SceneCachePlayerVersion {
-        NoVersioning         = 0, //Didn't have versioning in earlier versions
-        StringPath_0_4_0     = 2, //0.4.0-preview: the path is declared as a string 
-        NormalizedPath_0_9_2 = 3, //0.9.2-preview: Path must be normalized by default 
-        PlaybackMode_0_12_0 = 4, //0.12.0-preview: integrate frame/time unit and interpolation into playback mode  
-    
+        NoVersioning          = 0, //Didn't have versioning in earlier versions
+        StringPath_0_4_0      = 2, //0.4.0-preview: the path is declared as a string 
+        NormalizedPath_0_9_2  = 3, //0.9.2-preview: Path must be normalized by default 
+        PlaybackMode_0_12_0   = 4, //0.12.0-preview: integrate frame/time unit and interpolation into playback mode  
+        RemoveAnimator_0_16_0 = 5, //0.16.0-preview. Animator is removed, and animating has to be performed via Timeline  
     }
     
 }
