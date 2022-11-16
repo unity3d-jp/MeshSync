@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 using UnityEditor;
@@ -29,11 +30,6 @@ namespace Unity.MeshSync.Editor.Analytics {
         /// </summary>
         /// <param name="data">Description of data synched</param>
         void UserSyncedData(MeshSyncAnalyticsData data);
-
-        /// <summary>
-        /// Whether or not to coalesce events to prevent over reporting
-        /// </summary>
-        bool CoalesceEvents { get; set; }
 
         /// <summary>
         /// Minimum time between syncs to analytics backend
@@ -79,9 +75,8 @@ namespace Unity.MeshSync.Editor.Analytics {
         private static readonly TimeSpan DEFAULT_TIME_SPAN = TimeSpan.FromSeconds(10);
 
         private DateTime lastSync;
-        private Stack<TimedEvent<SyncEventData>> syncEventStack;
+        private readonly Stack<TimedEvent<SyncEventData>> syncEventStack;
 
-        public bool CoalesceEvents { get; set; }
         public TimeSpan MinTimeBetweenSync { get; set; }
 
         private struct DCCInstallEventData {
@@ -98,13 +93,13 @@ namespace Unity.MeshSync.Editor.Analytics {
             this.syncEventStack = new Stack<TimedEvent<SyncEventData>>();
             this.lastSync = DateTime.Now;
 
-            CoalesceEvents = true;
             MinTimeBetweenSync = DEFAULT_TIME_SPAN;
         }
 
+        [Conditional("DEBUG")]
         private static void logIfWarning(AnalyticsResult resp) {
-            if (resp != AnalyticsResult.Ok && resp != AnalyticsResult.TooManyRequests) {
-                Debug.LogWarning($"Analytics endpoint reported: {resp} when should be {AnalyticsResult.Ok}");
+            if (resp != AnalyticsResult.Ok) {
+                UnityEngine.Debug.LogWarning($"Analytics endpoint reported: {resp} when should be {AnalyticsResult.Ok}");
             }
         }
 
@@ -140,7 +135,6 @@ namespace Unity.MeshSync.Editor.Analytics {
         public void UserSyncedData(MeshSyncAnalyticsData data) {
             if (data.entityType == EntityType.Unknown &&
                 data.assetType == AssetType.Unknown) {
-                Debug.LogWarning("Invalid event data sent");
                 return;
             }
 
@@ -163,19 +157,7 @@ namespace Unity.MeshSync.Editor.Analytics {
                 Data = eventData
             });
 
-            if (!CoalesceEvents) {
-                var evts = this.syncEventStack.Select(evt => evt.Data).ToArray();
-
-                foreach (var evt in evts) {
-                    logIfWarning(
-                        EditorAnalytics.SendEventWithLimit(
-                            MESHSYNC_SYNC_INSTALLEDEVENTNAME,
-                            evt,
-                            MESHSYNC_SYNC_VERSION));
-                }
-                this.syncEventStack.Clear();
-            }
-            else if ((DateTime.Now - this.lastSync) > MinTimeBetweenSync) {
+            if ((DateTime.Now - this.lastSync) > MinTimeBetweenSync) {
 
                 // Group entity sync events by type
                 var syncEntityTypeLookup = this.syncEventStack
