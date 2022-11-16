@@ -32,6 +32,7 @@ public:
     std::vector<PropertyInfo> properties;
     std::vector<EntityPtr> entities;
     std::string messageFromServer;
+    int server_session_id = ms::InvalidID;
 
     void abortLiveEditRequest();
 private:
