@@ -201,7 +201,8 @@ internal delegate void DeleteInstanceHandler(string path);
 
         #region Properties
         
-        private int currentSessionId = -1;
+        private int  currentSessionId  = -1;
+        private bool ignoreNewSessions = false;
 
         private protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
 
@@ -504,24 +505,36 @@ internal delegate void DeleteInstanceHandler(string path);
             numberOfPropertiesReceived = 0;
         }
 
+        public void IgnoreNewSessions() {
+            ignoreNewSessions = true;
+        }
+
         void CheckForNewSession(FenceMessage? mes) {
 #if UNITY_EDITOR
             if (!mes.HasValue || currentSessionId == mes.Value.SessionId) {
                 return;
             }
-
+            
             currentSessionId = mes.Value.SessionId;
-
+            
             if (transform.childCount <= 0) {
                 return;
             }
 
-            int choice = EditorUtility.DisplayDialogComplex("A new session started.",
-                "MeshSync detected that the DCC tool session has changed. To ensure that the sync state is correct you can delete previously synced objects, stash them and move them to another game object or ignore this and keep all children.",
-                "Ignore and keep all children",
-                "Stash",
-                "Delete all children of the server");
-
+            int choice;
+            
+            if (ignoreNewSessions) {
+                choice            = 2;
+                ignoreNewSessions = false;
+            }
+            else {
+                choice = EditorUtility.DisplayDialogComplex("A new session started.",
+                    "MeshSync detected that the DCC tool session has changed. To ensure that the sync state is correct you can delete previously synced objects, stash them and move them to another game object or ignore this and keep all children.",
+                    "Ignore and keep all children",
+                    "Stash",
+                    "Delete all children of the server");
+            }
+            
             switch (choice) {
                 case 1:
                     // Stash
