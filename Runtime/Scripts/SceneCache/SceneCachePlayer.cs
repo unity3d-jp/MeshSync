@@ -384,6 +384,10 @@ public class SceneCachePlayer : BaseMeshSync {
             m_timeUnit = TimeUnit.Seconds;
         }
 #pragma warning restore 612
+
+        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.RemoveAnimator_0_16_0) {
+            m_destroyAnimator = true;
+        } 
         
 #endif
         
@@ -460,6 +464,13 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------    
     private protected override void OnEnable() {
         base.OnEnable();
+
+        if (m_destroyAnimator) {
+            m_destroyAnimator = false;
+            DestroyImmediate(GetComponent<Animator>());
+            PrefabUtility.RecordPrefabInstancePropertyModifications(this);
+        }
+
         
 #if UNITY_EDITOR
         m_onMaterialChangedInSceneViewCB += SavePrefabInEditor; 
@@ -526,6 +537,8 @@ public class SceneCachePlayer : BaseMeshSync {
         
     int            m_frame      = 0;
     float          m_loadedTime = -1;
+
+    private bool m_destroyAnimator = false;
     
 #if UNITY_EDITOR
     float                 m_dbgSceneGetTime;
@@ -539,7 +552,9 @@ public class SceneCachePlayer : BaseMeshSync {
         NO_VERSIONING         = 0, //Didn't have versioning in earlier versions
         STRING_PATH_0_4_0     = 2, //0.4.0-preview: the path is declared as a string 
         NORMALIZED_PATH_0_9_2 = 3, //0.9.2-preview: Path must be normalized by default 
-        PLAYBACK_MODE_0_12_0 = 4, //0.12.0-preview: integrate frame/time unit and interpolation into playback mode  
+        PLAYBACK_MODE_0_12_0  = 4, //0.12.0-preview: integrate frame/time unit and interpolation into playback mode
+        RemoveAnimator_0_16_0 = 5, //0.16.0-preview. Animator is removed, and animating has to be performed via Timeline  
+
     
     }
     
