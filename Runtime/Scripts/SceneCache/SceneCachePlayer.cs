@@ -365,7 +365,7 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------
 
     private protected override void OnBeforeSerializeMeshSyncPlayerV() {
-        
+        m_sceneCachePlayerVersion = CUR_SCENE_CACHE_PLAYER_VERSION;        
     }
 
     private protected override void OnAfterDeserializeMeshSyncPlayerV() {
@@ -517,7 +517,7 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] bool m_overrideModelImporterSettings = false;
     
     //Renamed in 0.10.x-preview
-    [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_sceneCachePlayerVersion = (int) CUR_SCENE_CACHE_PLAYER_VERSION;
+    [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_sceneCachePlayerVersion = (int) SceneCachePlayerVersion.NO_VERSIONING;
     private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.PLAYBACK_MODE_0_12_0;
         
     SceneCacheData m_sceneCache;
