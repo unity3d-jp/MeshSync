@@ -19,7 +19,6 @@ namespace Unity.MeshSync
 /// SceneCachePlayer controls the playback of an .sc file that has been exported
 /// using MeshSyncDCCPlugins installed in a DCC Tool.
 /// </summary>
-[RequireComponent(typeof(Animator))]
 [ExecuteInEditMode]
 public class SceneCachePlayer : BaseMeshSync {
     #region Types
@@ -75,12 +74,6 @@ public class SceneCachePlayer : BaseMeshSync {
     internal override MeshSyncPlayerConfig GetConfigV() => m_config;
     
     internal void SetAutoplay(bool autoPlay) {
-        //[Note-sin: 2021-1-18] May be called before m_animator is initialized in Playmode.
-        //It is expected that the animator was already disabled previously in EditMode though.
-        if (null == m_animator)
-            return;
-        
-        m_animator.enabled = autoPlay;
     }
 
     internal SceneCachePlaybackMode GetPlaybackMode() { return m_playbackMode; }
@@ -475,7 +468,6 @@ public class SceneCachePlayer : BaseMeshSync {
         m_onMaterialChangedInSceneViewCB += SavePrefabInEditor; 
 #endif
         
-        m_animator = GetComponent<Animator>();
         if (!string.IsNullOrEmpty(m_sceneCacheFilePath)) {
             OpenCacheInternal(m_sceneCacheFilePath, updateNonMaterialAssets: false);
         }
@@ -537,7 +529,6 @@ public class SceneCachePlayer : BaseMeshSync {
         
     int            m_frame      = 0;
     float          m_loadedTime = -1;
-    Animator       m_animator   = null;
     
 #if UNITY_EDITOR
     float                 m_dbgSceneGetTime;
