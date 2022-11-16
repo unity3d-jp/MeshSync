@@ -37,7 +37,6 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
         AnimationCurve curve          = m_sceneCachePlayableAsset.GetAnimationCurve();
         float          normalizedTime = curve.Evaluate((float)t);
               
-        m_sceneCachePlayer.SetAutoplay(false);
         m_sceneCachePlayer.SetTimeByNormalizedTime(normalizedTime);
 
     }

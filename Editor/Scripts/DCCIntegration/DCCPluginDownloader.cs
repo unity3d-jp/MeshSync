@@ -84,6 +84,8 @@ internal class DCCPluginDownloader  {
             string[] folders = {
                 $"Library/PackageCache/{MESHSYNC_DCC_PLUGIN_PACKAGE}@{version}/Editor/Plugins~",                
                 $"Packages/{MESHSYNC_DCC_PLUGIN_PACKAGE}/Editor/Plugins~",
+                $"Library/PackageCache/{MESHSYNC_DCC_PLUGIN_PACKAGE}@{version}/Editor/Plugins",                
+                $"Packages/{MESHSYNC_DCC_PLUGIN_PACKAGE}/Editor/Plugins",
             };
             
             string[] zipFileNames = {

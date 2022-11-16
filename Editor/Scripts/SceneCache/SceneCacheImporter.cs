@@ -10,7 +10,7 @@ using UnityEditor.Experimental.AssetImporters;
 
 namespace Unity.MeshSync.Editor {
 
-[ScriptedImporter(1, "sc")]
+[ScriptedImporter(1, MeshSyncEditorConstants.SCENE_CACHE_EXTENSION)]
 internal class SceneCacheImporter : ScriptedImporter, IHasModelImporterSettings
 {
     private void Reset() {

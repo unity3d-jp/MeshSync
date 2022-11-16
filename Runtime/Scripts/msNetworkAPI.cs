@@ -57,6 +57,9 @@ internal struct Server {
 
     [DllImport(Lib.name)]
     static extern void msServerStop(IntPtr self);
+    
+    [DllImport(Lib.name)]
+    static extern void msServerAbort(IntPtr self);
 
     [DllImport(Lib.name)]
     static extern void msServerSetZUpCorrectionMode(IntPtr self, ZUpCorrectionMode v);
@@ -144,8 +147,12 @@ internal struct Server {
     static extern void msServerInitiatedResponseReady(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern bool msServerIsDCCLiveEditReady(IntPtr self);        
+    static extern bool msServerIsDCCLiveEditReady(IntPtr self);
 
+
+    [DllImport(Lib.name)]
+    static extern void msServerNotifyEditorCommand(IntPtr self, string reply, int messageId, int sessionId);
+    
     #endregion
 
     public delegate void MessageHandler(NetworkMessageType type, IntPtr data);
@@ -167,6 +174,10 @@ internal struct Server {
         msServerStop(self);
     }
 
+    public void Abort() {
+        msServerAbort(self);
+    }
+    
     internal ZUpCorrectionMode zUpCorrectionMode {
         set { msServerSetZUpCorrectionMode(self, value); }
     }
@@ -297,6 +308,10 @@ internal struct Server {
 
     public void NotifyPoll(PollMessage.PollType t) {
         msServerNotifyPoll(self, t);
+    }
+
+    public void NotifyEditorCommand(string reply, EditorCommandMessage message) {
+        msServerNotifyEditorCommand(self, reply, message.id, message.session);
     }
 }
 

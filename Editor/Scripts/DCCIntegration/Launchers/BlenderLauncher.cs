@@ -168,7 +168,7 @@ namespace Unity.MeshSync.Editor
 
         void HandleRedirect(MeshSyncServer server)
         {
-            var newRedirect = EditorGUILayout.Toggle("Redirect Blender to Unity Console:", redirectBlenderToUnityConsole);
+            var newRedirect = EditorGUILayout.Toggle("Redirect DCC Tool to Unity Console:", redirectBlenderToUnityConsole);
             if (newRedirect != redirectBlenderToUnityConsole)
             {
                 redirectBlenderToUnityConsole = newRedirect;

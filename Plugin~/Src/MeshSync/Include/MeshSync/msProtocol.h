@@ -36,7 +36,8 @@ public:
         Screenshot,
         Query,
         Response,
-        RequestServerLiveEdit
+        RequestServerLiveEdit,
+        EditorCommand
     };
     int protocol_version = msProtocolVersion;
     int session_id = InvalidID;
@@ -220,7 +221,6 @@ public:
 };
 msSerializable(PollMessage);
 
-
 /// <summary>
 /// A mechanism to initiate the sending of data from server to client.
 /// Message that does not time out and is only replied to by the server
@@ -253,5 +253,35 @@ public:
     void deserialize(std::istream& is);
 };
 msSerializable(ServerLiveEditResponse);
+
+/// <summary>
+/// Commands to be executed on the Unity Editor.
+/// </summary>
+class EditorCommandMessage : public Message
+{
+    using super = Message;
+private:
+    static const int MAX_BUFFER_SIZE = 256;
+    char buffer[MAX_BUFFER_SIZE];
+public:
+    enum class CommandType {
+        Unknown,
+        AddServerToScene,
+        GetProjectPath
+    };
+    CommandType command_type = CommandType::Unknown;
+
+    std::atomic_bool ready{ false };
+
+
+    EditorCommandMessage();
+    void serialize(std::ostream& os) const override;
+    void deserialize(std::istream& is) override;
+
+    void SetBuffer(const char* input);
+    const char* GetBuffer();
+
+};
+msSerializable(EditorCommandMessage);
 
 } // namespace ms

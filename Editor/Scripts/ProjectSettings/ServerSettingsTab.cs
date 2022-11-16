@@ -31,14 +31,20 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
         MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
         
         //Add server port
-        m_serverPortField = AddField<IntegerField,int>(content, Contents.ServerPort,
+        m_serverPortField = ProjectSettingsUtility.AddField<IntegerField,int>(content, Contents.ServerPort,
             projectSettings.GetDefaultServerPort(),
-            (int newValue) => { projectSettings.SetDefaultServerPort((ushort) newValue); }
+            (int newValue) => {
+                projectSettings.SetDefaultServerPort((ushort) newValue);
+                MeshSyncProjectSettings.GetOrCreateInstance().SaveInEditor();
+            }
         );
 
-        m_allowPublicAccessToggle = AddField<Toggle,bool>(content, Contents.AllowPublicAccess,
+        m_allowPublicAccessToggle = ProjectSettingsUtility.AddField<Toggle,bool>(content, Contents.AllowPublicAccess,
             projectSettings.GetServerPublicAccess(),
-            (bool  newValue) => { projectSettings.SetServerPublicAccess(newValue); }
+            (bool  newValue) => {
+                projectSettings.SetServerPublicAccess(newValue);
+                MeshSyncProjectSettings.GetOrCreateInstance().SaveInEditor();
+            }
         );
         
         //MeshSyncPlayerConfig section
@@ -56,21 +62,6 @@ internal class ServerSettingsTab : IMeshSyncSettingsTab {
         root.Add(tabInstance);
     }
 
-//----------------------------------------------------------------------------------------------------------------------
-    
-    //Support Toggle, FloatField, etc
-    private F AddField<F,V>(VisualElement parent, GUIContent content,
-        V initialValue, Action<V> onValueChanged) where F: VisualElement,INotifyValueChanged<V>, new()  
-    {
-        F field = UIElementsEditorUtility.AddField<F, V>(parent, content, initialValue, (ChangeEvent<V> changeEvent) => {
-            onValueChanged(changeEvent.newValue);
-            MeshSyncProjectSettings.GetOrCreateInstance().SaveInEditor();
-        });
-
-        field.AddToClassList("project-settings-field");
-        return field;
-    }	
-    
 //----------------------------------------------------------------------------------------------------------------------
     private VisualTreeAsset LoadVisualTreeAsset(string path) {
         return UIElementsEditorUtility.LoadVisualTreeAsset(path); 
