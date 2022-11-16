@@ -521,7 +521,7 @@ public class SceneCachePlayer : BaseMeshSync {
     
     //Renamed in 0.10.x-preview
     [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_sceneCachePlayerVersion = (int) SceneCachePlayerVersion.NoVersioning;
-    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.PlaybackMode_0_12_0;
+    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.RemoveAnimator_0_16_0;
         
     SceneCacheData m_sceneCache;
 
