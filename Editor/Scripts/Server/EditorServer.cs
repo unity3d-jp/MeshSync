@@ -65,8 +65,14 @@ internal static class EditorServer {
         // Defer the Initialisation to the first update call
         EditorApplication.update -= Init;
         EditorApplication.update += Init;
+        
+        EditorApplication.quitting -= OnQuit;
+        EditorApplication.quitting += OnQuit;
     }
-    
+
+    private static void OnQuit() {
+        m_server.Abort();
+    }
 
     /// <summary>
     /// Apply settings from CLI arguments or use Editor Server Settings.
