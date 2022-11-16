@@ -1,5 +1,86 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3211964653106895802
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5930938126114300846}
+  - component: {fileID: 7673470863041045030}
+  - component: {fileID: 4346691982452853027}
+  m_Layer: 0
+  m_Name: Cylinder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5930938126114300846
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3211964653106895802}
+  m_LocalRotation: {x: 0, y: -0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: 0, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 9187519978430125855}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &7673470863041045030
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3211964653106895802}
+  m_Mesh: {fileID: 0}
+--- !u!23 &4346691982452853027
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3211964653106895802}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: bd3f05b1b7c35834d8b436ddf1cc38aa, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &4931574018256027498
 GameObject:
   m_ObjectHideFlags: 0
@@ -11,6 +92,7 @@ GameObject:
   - component: {fileID: 9187519978430125855}
   - component: {fileID: 7986458508741096044}
   - component: {fileID: 6960142661406281469}
+  - component: {fileID: 1284054646112150542}
   m_Layer: 0
   m_Name: Cylinder
   m_TagString: Untagged
@@ -29,9 +111,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 4054738110945340166}
   - {fileID: 5542431617373973240}
-  - {fileID: 1888413371289295265}
+  - {fileID: 5930938126114300846}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -66,91 +147,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 830bc2fb88909644f9e00e67384c90de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_assetDir:
-    m_root: 0
-    m_leaf: 
-    m_readOnly: 0
-    m_showRootSelector: 0
-    m_isDirectory: 1
-  m_assetsFolder: Assets/SceneCacheResources\Cylinder
+  instanceHandling: 0
+  useProBuilder: 0
+  m_assetsFolder: Assets/SceneCacheResources/Cylinder
   m_rootObject: {fileID: 9187519978430125855}
-  m_config:
-    SyncVisibility: 1
-    SyncTransform: 1
-    SyncCameras: 1
-    SyncLights: 1
-    SyncMeshes: 1
-    UpdateMeshColliders: 0
-    SyncMaterials: 1
-    FindMaterialFromAssets: 0
-    AnimationInterpolation: 0
-    KeyframeReduction: 1
-    ReductionThreshold: 0.001
-    ReductionEraseFlatCurves: 0
-    ZUpCorrection: 0
-    SyncMaterialList: 1
-    ProgressiveDisplay: 0
-    Logging: 0
-    Profiling: 0
-    m_animationTweakSettings:
-      TimeScale: 1
-      TimeOffset: 0
-      DropStep: 2
-      ReductionThreshold: 0.001
-      EraseFlatCurves: 0
   m_usePhysicalCameraParams: 1
   m_useCustomCameraMatrices: 1
-  m_dummyMaterial: {fileID: 0}
   m_materialList:
   - id: 0
     name: Default
     index: 0
-    shader: 
     color: {r: 1, g: 1, b: 1, a: 1}
-    material: {fileID: 2100000, guid: f551c1498de68b840ad750a5eb5401c4, type: 2}
-    materialIID: -8424
-  - id: 1
-    name: Dots Stroke
-    index: 1
-    shader: 
-    color: {r: 0.8, g: 0.8, b: 0.8, a: 1}
-    material: {fileID: 2100000, guid: 7c2b0c3cae4fa0740ab2719e49dc8c22, type: 2}
-    materialIID: -8426
-  - id: 2
-    name: Material
-    index: 2
-    shader: 
-    color: {r: 0.8, g: 0.8, b: 0.8, a: 1}
-    material: {fileID: 2100000, guid: c26342743090a0a4ab09c6a390192822, type: 2}
-    materialIID: -8428
+    material: {fileID: 2100000, guid: bd3f05b1b7c35834d8b436ddf1cc38aa, type: 2}
+    materialIID: 0
+    ShouldApplyMaterialData: 0
   m_textureList: []
   m_audioList: []
+  m_prefabDict:
+    m_keys: []
+    m_values: []
   m_clientObjects_keys:
-  - /Camera
   - /Light
   - /Cylinder
   m_clientObjects_values:
-  - dataType: 2
-    index: 0
-    go: {fileID: 5464987316364345258}
-    trans: {fileID: 4054738110945340166}
-    camera: {fileID: 5749595450176477413}
-    light: {fileID: 0}
-    meshFilter: {fileID: 0}
-    meshRenderer: {fileID: 0}
-    skinnedMeshRenderer: {fileID: 0}
-    pointCache: {fileID: 0}
-    pointCacheRenderer: {fileID: 0}
-    origMesh: {fileID: 0}
-    mesh: {fileID: 0}
-    materialIDs: 
-    reference: 
-    rootBonePath: 
-    bonePaths: []
-    smrUpdated: 0
-    smrEnabled: 0
-    hasVisibility: 1
-    recved: 1
   - dataType: 3
     index: 0
     go: {fileID: 8879327136212474374}
@@ -164,6 +183,7 @@ MonoBehaviour:
     pointCacheRenderer: {fileID: 0}
     origMesh: {fileID: 0}
     mesh: {fileID: 0}
+    proBuilderMeshFilter: {fileID: 0}
     materialIDs: 
     reference: 
     rootBonePath: 
@@ -171,20 +191,24 @@ MonoBehaviour:
     smrUpdated: 0
     smrEnabled: 0
     hasVisibility: 1
+    visibility:
+      flags:
+        bits: 31
     recved: 1
   - dataType: 4
     index: 0
-    go: {fileID: 7663028269349290949}
-    trans: {fileID: 1888413371289295265}
+    go: {fileID: 3211964653106895802}
+    trans: {fileID: 5930938126114300846}
     camera: {fileID: 0}
     light: {fileID: 0}
-    meshFilter: {fileID: 1612747506122785069}
-    meshRenderer: {fileID: 6574722601881360200}
+    meshFilter: {fileID: 7673470863041045030}
+    meshRenderer: {fileID: 4346691982452853027}
     skinnedMeshRenderer: {fileID: 0}
     pointCache: {fileID: 0}
     pointCacheRenderer: {fileID: 0}
     origMesh: {fileID: 0}
     mesh: {fileID: 0}
+    proBuilderMeshFilter: {fileID: 0}
     materialIDs: 00000000
     reference: 
     rootBonePath: 
@@ -192,12 +216,16 @@ MonoBehaviour:
     smrUpdated: 0
     smrEnabled: 0
     hasVisibility: 1
+    visibility:
+      flags:
+        bits: 31
     recved: 1
   m_hostObjects_keys: 
   m_hostObjects_values: []
   m_objIDTable_keys: []
   m_objIDTable_values: 
   m_objIDSeed: 0
+  m_baseMeshSyncVersion: 1
   m_sortEntities: 0
   m_foldSyncSettings: 1
   m_foldImportSettings: 1
@@ -205,174 +233,65 @@ MonoBehaviour:
   m_foldMaterialList: 1
   m_foldAnimationTweak: 1
   m_foldExportAssets: 1
+  m_clientInstances:
+    m_keys: []
+    m_values: []
+  m_clientInstancedEntities:
+    m_keys: []
+    m_values: []
   m_sceneCacheFilePath: Assets/SceneCache/Cylinder.sc
-  m_cacheFilePath:
-    m_root: 0
-    m_leaf: 
-    m_readOnly: 0
-    m_showRootSelector: 0
-    m_isDirectory: 1
   m_timeUnit: 0
+  m_playbackMode: 1
+  m_limitedAnimationController:
+    m_enabled: 0
+    m_numFramesToHold: 2
+    m_frameOffset: 0
   m_time: 0
-  m_interpolation: 0
-  m_baseFrame: 1
-  m_frame: 1
   m_preloadLength: 0
-  m_version: 3
-  m_foldCacheSettings: 1
---- !u!1 &5464987316364345258
-GameObject:
+  m_config:
+    SyncVisibility: 1
+    SyncTransform: 1
+    SyncMeshes: 1
+    m_componentSyncSettings:
+    - CanCreate: 1
+      CanUpdate: 1
+    - CanCreate: 1
+      CanUpdate: 1
+    m_usePhysicalCameraParams: 1
+    UpdateMeshColliders: 0
+    SyncMaterials: 1
+    m_importerSettings:
+      CreateMaterials: 1
+      MaterialSearchMode: 0
+    AnimationInterpolation: 0
+    KeyframeReduction: 1
+    ReductionThreshold: 0.001
+    ReductionEraseFlatCurves: 0
+    ZUpCorrection: 0
+    SyncMaterialList: 1
+    ProgressiveDisplay: 0
+    Logging: 0
+    Profiling: 0
+    m_meshSyncPlayerConfigVersion: 1
+    m_sceneCachePlayerConfigVersion: 1
+  m_showCacheFileInInspector: 1
+  m_showPlaybackInInspector: 1
+  m_showInfoInInspector: 0
+  m_overrideModelImporterSettings: 0
+  m_sceneCachePlayerVersion: 4
+--- !u!114 &1284054646112150542
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4054738110945340166}
-  - component: {fileID: 5749595450176477413}
-  m_Layer: 0
-  m_Name: Camera
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4054738110945340166
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5464987316364345258}
-  m_LocalRotation: {x: 0.09062845, y: 0.8937962, z: -0.20997298, w: 0.38577992}
-  m_LocalPosition: {x: -7.3588915, y: 4.958309, z: 6.925791}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 9187519978430125855}
-  m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!20 &5749595450176477413
-Camera:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5464987316364345258}
+  m_GameObject: {fileID: 4931574018256027498}
   m_Enabled: 1
-  serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
-  m_projectionMatrixMode: 2
-  m_GateFitMode: 2
-  m_FOVAxisMode: 0
-  m_SensorSize: {x: 36, y: 24}
-  m_LensShift: {x: 0, y: 0}
-  m_FocalLength: 50
-  m_NormalizedViewPortRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 1
-    height: 1
-  near clip plane: 0.1
-  far clip plane: 100
-  field of view: 26.991467
-  orthographic: 0
-  orthographic size: 5
-  m_Depth: 0
-  m_CullingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
-  m_TargetDisplay: 0
-  m_TargetEye: 3
-  m_HDR: 1
-  m_AllowMSAA: 1
-  m_AllowDynamicResolution: 0
-  m_ForceIntoRT: 0
-  m_OcclusionCulling: 1
-  m_StereoConvergence: 10
-  m_StereoSeparation: 0.022
---- !u!1 &7663028269349290949
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1888413371289295265}
-  - component: {fileID: 1612747506122785069}
-  - component: {fileID: 6574722601881360200}
-  m_Layer: 0
-  m_Name: Cylinder
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1888413371289295265
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7663028269349290949}
-  m_LocalRotation: {x: 0, y: -0, z: 0, w: 1}
-  m_LocalPosition: {x: -0, y: 0, z: -0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 9187519978430125855}
-  m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &1612747506122785069
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7663028269349290949}
-  m_Mesh: {fileID: 0}
---- !u!23 &6574722601881360200
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7663028269349290949}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: f551c1498de68b840ad750a5eb5401c4, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e29c607502d5464fadd8bb0e0b22067, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  propertyInfos: []
 --- !u!1 &8879327136212474374
 GameObject:
   m_ObjectHideFlags: 0
@@ -402,7 +321,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 9187519978430125855}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!108 &6291806303770256121
 Light:
@@ -463,5 +382,6 @@ Light:
   m_UseColorTemperature: 0
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
+  m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
