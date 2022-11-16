@@ -459,8 +459,7 @@ public class SceneCachePlayer : BaseMeshSync {
         if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.PLAYBACK_MODE_0_12_0 
             && m_timeUnit == TimeUnit.Frames) 
         {
-            m_timeUnit                   = TimeUnit.Seconds;
-            m_resetTimeAnimationOnEnable = true;
+            m_timeUnit = TimeUnit.Seconds;
         }
 #pragma warning restore 612
         
@@ -549,13 +548,6 @@ public class SceneCachePlayer : BaseMeshSync {
             OpenCacheInternal(m_sceneCacheFilePath, updateNonMaterialAssets: false);
         }
 
-#if UNITY_EDITOR
-        //required one time reset after version upgrade to 0.12.x
-        if (m_resetTimeAnimationOnEnable) {
-            m_resetTimeAnimationOnEnable = false;
-        }
-#endif
-        
         if (!m_sceneCache)
             return;
         
@@ -615,8 +607,6 @@ public class SceneCachePlayer : BaseMeshSync {
     float          m_loadedTime = -1;
     Animator       m_animator   = null;
     
-    private bool   m_resetTimeAnimationOnEnable = false;
-
 #if UNITY_EDITOR
     float                 m_dbgSceneGetTime;
     float                 m_dbgSceneUpdateTime;
