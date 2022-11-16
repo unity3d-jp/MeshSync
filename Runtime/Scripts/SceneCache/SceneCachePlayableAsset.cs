@@ -58,8 +58,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             m_isSceneCacheCurveExtracted = false;
             return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, behaviour);
         }
-
-        m_sceneCachePlayer.SetAutoplay(false);
         
 #if UNITY_EDITOR        
         //Initialize curve
@@ -238,9 +236,14 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         Keyframe[] xKeys = x.keys;
         Keyframe[] yKeys = y.keys;
 
-        if (xKeys.Length != yKeys.Length)
+        int numKeys0 = xKeys.Length; 
+
+        if (numKeys0 != yKeys.Length)
             return false;
 
+        if (0 == numKeys0)
+            return true;
+        
         HashSet<int> framesToCheck = new HashSet<int>() {
             0, 
             xKeys.Length - 1

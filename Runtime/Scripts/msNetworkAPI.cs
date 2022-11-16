@@ -57,6 +57,9 @@ internal struct Server {
 
     [DllImport(Lib.name)]
     static extern void msServerStop(IntPtr self);
+    
+    [DllImport(Lib.name)]
+    static extern void msServerAbort(IntPtr self);
 
     [DllImport(Lib.name)]
     static extern void msServerSetZUpCorrectionMode(IntPtr self, ZUpCorrectionMode v);
@@ -168,6 +171,10 @@ internal struct Server {
         msServerStop(self);
     }
 
+    public void Abort() {
+        msServerAbort(self);
+    }
+    
     internal ZUpCorrectionMode zUpCorrectionMode {
         set { msServerSetZUpCorrectionMode(self, value); }
     }

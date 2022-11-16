@@ -359,6 +359,9 @@ internal delegate void DeleteInstanceHandler(string path);
         //----------------------------------------------------------------------------------------------------------------------    
         private void MakeSureAssetDirectoryExists() {
 #if UNITY_EDITOR
+            if (Directory.Exists(m_assetsFolder))
+                return;
+            
             Directory.CreateDirectory(m_assetsFolder);
             AssetDatabase.Refresh();
 #endif
@@ -2459,20 +2462,21 @@ internal delegate void DeleteInstanceHandler(string path);
             Misc.UniqueNameGenerator nameGenerator = new Misc.UniqueNameGenerator();
             string basePath = m_assetsFolder;
 
+            bool needSaveAssets = false;
             Func<Material, Material> doExport = (Material mat) => {
                 if (mat == null || IsAsset(mat))
                     return mat;
 
                 string dstPath = string.Format("{0}/{1}.mat", basePath, nameGenerator.Gen(mat.name));
                 Material existing = AssetDatabase.LoadAssetAtPath<Material>(dstPath);
-                if (overwrite || existing == null)
-                {
+                if (overwrite || existing == null) {
                     mat = Misc.OverwriteOrCreateAsset(mat, dstPath);
                     MeshSyncPlayerConfig config = GetConfigV();
                     if (config.Logging)
                         Debug.Log("exported material " + dstPath);
-                }
-                else if (useExistingOnes && existing != null)
+
+                    needSaveAssets = true;
+                } else if (useExistingOnes && existing != null)
                     mat = existing;
                 return mat;
             };
@@ -2480,7 +2484,8 @@ internal delegate void DeleteInstanceHandler(string path);
             foreach (MaterialHolder m in m_materialList)
                 m.material = doExport(m.material); // material maybe updated by SaveAsset()
 
-            AssetDatabase.SaveAssets();
+            if (needSaveAssets)
+                AssetDatabase.SaveAssets();
             ReassignMaterials(recordUndo: false);
         }
 

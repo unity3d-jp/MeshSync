@@ -129,10 +129,7 @@ internal static class MeshSyncEditorConstants {
     
     internal static readonly string USER_SETTINGS_STYLE_PATH = UserSettingsUIPath("UserSettings_Style");
     
-    //
-    internal const string DCC_PLUGINS_GITHUB_RELEASE_URL = "https://github.com/Unity-Technologies/MeshSyncDCCPlugins/releases/download/";
-
-
+    internal const string SCENE_CACHE_EXTENSION = "sc";
     
     //Private
     private const string PROJECT_SETTINGS_UIELEMENTS_PATH = "Packages/com.unity.meshsync/Editor/UIElements/ProjectSettings";
