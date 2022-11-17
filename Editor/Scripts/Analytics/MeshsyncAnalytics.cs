@@ -96,7 +96,7 @@ namespace Unity.MeshSync.Editor.Analytics {
             MinTimeBetweenSync = DEFAULT_TIME_SPAN;
         }
 
-        [Conditional("DEBUG")]
+        [Conditional("DEBUG_ANALYTICS")]
         private static void logIfWarning(AnalyticsResult resp) {
             if (resp != AnalyticsResult.Ok) {
                 UnityEngine.Debug.LogWarning($"Analytics endpoint reported: {resp} when should be {AnalyticsResult.Ok}");
