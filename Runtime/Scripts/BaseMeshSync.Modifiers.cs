@@ -407,7 +407,7 @@ namespace Unity.MeshSync {
             set => useProBuilder = value;
         }
 #endif
-        
+
         void UpdateProperties(SceneData scene) {
             // handle properties
             Try(() => {

@@ -646,7 +646,7 @@ void Server::recvServerLiveEditRequest(HTTPServerRequest& request, HTTPServerRes
 
     // serve data
     response.set("Cache-Control", "no-store, must-revalidate");
-
+    
     auto reqResponse = ServerLiveEditResponse();
 
     for (const auto& [key, prop] : m_pending_properties)
