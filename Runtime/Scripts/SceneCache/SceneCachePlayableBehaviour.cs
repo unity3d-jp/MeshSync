@@ -17,6 +17,11 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
     
 //----------------------------------------------------------------------------------------------------------------------        
     
+    /// <inheritdoc/>
+    public override void OnGraphStart(Playable playable) {
+        m_sceneCachePlayableAsset.OnGraphStart(playable);
+    }
+    
     public override void OnPlayableDestroy(Playable playable) { }
     
     public override void OnBehaviourPlay(Playable playable, FrameData info) { }
@@ -36,6 +41,8 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
         
         AnimationCurve curve          = m_sceneCachePlayableAsset.GetAnimationCurve();
         float          normalizedTime = curve.Evaluate((float)t);
+        
+        //Debug.Log($"MotionNormalizedTime: {normalizedTime}. LocalTime: {t}");
               
         m_sceneCachePlayer.SetTimeByNormalizedTime(normalizedTime);
 

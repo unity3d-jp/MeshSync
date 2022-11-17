@@ -22,14 +22,28 @@ namespace Unity.MeshSync {
 
 [System.Serializable] 
 internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCacheClipData>
-    , ITimelineClipAsset, IPlayableBehaviour 
+    , ITimelineClipAsset, IPlayableBehaviour, ISerializationCallbackReceiver 
 {
 
+    SceneCachePlayableAsset() : base() {
+        m_editorConfig = new SceneCachePlayableAssetEditorConfig();
+    }
+    
     internal void Init(bool updateClipDurationOnCreatePlayable) {
         m_updateClipDurationOnCreatePlayable = updateClipDurationOnCreatePlayable;
     } 
     
-//----------------------------------------------------------------------------------------------------------------------
+    public void OnBeforeSerialize() {
+            
+    }
+
+    public void OnAfterDeserialize() {
+        if (null == m_editorConfig) {
+            m_editorConfig = new SceneCachePlayableAssetEditorConfig();
+        }
+    }
+    
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------
     public ClipCaps clipCaps {
         get { return ClipCaps.ClipIn | ClipCaps.SpeedMultiplier | ClipCaps.Extrapolation; }
     }
@@ -69,11 +83,20 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
                 clip.duration = updatedCurveDuration;
             }
             m_updateClipDurationOnCreatePlayable = false;
+            scClipData.InitPlayableFrames();
         }
 #endif        
         
         return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, behaviour);
     }
+    
+    internal void InitKeyFrames() {
+        SceneCacheClipData clipData = GetBoundClipData();
+        if (null == clipData)
+            return;
+        clipData.InitPlayableFrames();
+    }
+    
 
 //----------------------------------------------------------------------------------------------------------------------
     
@@ -83,10 +106,14 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     /// <inheritdoc/>
     public void OnBehaviourPlay(Playable playable, FrameData info) { }
-    
-    
+
+
     /// <inheritdoc/>
-    public void OnGraphStart(Playable playable) { }
+    public void OnGraphStart(Playable playable) {
+        SceneCacheClipData clipData = GetBoundClipData();
+        clipData?.OnGraphStart(); //Null check. the data might not have been bound during recompile
+        
+    }
     
     
     /// <inheritdoc/>
@@ -148,6 +175,10 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         return (float) (((double) keyFrames[index].value - (double) keyFrames[toIndex].value) 
             / ((double) keyFrames[index].time - (double) keyFrames[toIndex].time));
     }
+
+    private static float CalculateLinearTangent(Keyframe key0, Keyframe key1) {
+        return (key0.value - key1.value) / (key0.time - key1.time);
+    }
     
     private static AnimationCurve CreateLinearAnimationCurve(TimelineClip clip) {
         return AnimationCurve.Linear(0f, 0f,(float) (clip.duration * clip.timeScale), 1f );
@@ -164,10 +195,10 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         Assert.IsNotNull(clip);
        
         m_animationCurve = CreateLinearAnimationCurve(clip);
-        UpdateClipCurveInEditor(clip, m_animationCurve);        
+        SetClipCurveInEditor(clip, m_animationCurve);        
     }
 
-    private static void UpdateClipCurveInEditor(TimelineClip clip, AnimationCurve animationCurveToApply) {
+    private static void SetClipCurveInEditor(TimelineClip clip, AnimationCurve animationCurveToApply) {
         
         bool shouldRefresh = (null == clip.curves);
         
@@ -219,7 +250,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             updatedCurveDuration = (float) clip.duration; //no change
         }
 
-        UpdateClipCurveInEditor(clip, m_animationCurve);
+        SetClipCurveInEditor(clip, m_animationCurve);
         m_isSceneCacheCurveExtracted = true;
         SetExtractedSceneCachePlayerInEditor(m_sceneCachePlayer);
         return updatedCurveDuration;
@@ -275,11 +306,150 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     internal void           SetAnimationCurve(AnimationCurve curve) { m_animationCurve = curve; }
     internal AnimationCurve GetAnimationCurve()                     => m_animationCurve;
     
+
+    internal SceneCachePlayableAssetEditorConfig GetEditorConfig() { return m_editorConfig;}
     
     //import old data. [TODO-sin: 2022-3-24] Remove in 0.13.x
     internal void SetIsSceneCacheCurveExtracted(bool extracted) { m_isSceneCacheCurveExtracted = extracted; }
     
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    internal void AddKeyFrame(double time) {
+        SceneCacheClipData clipData = GetBoundClipData();
+        if (null == clipData) //Null check. the data might not have been bound during recompile
+            return;
+        
+        clipData.AddKeyFrame(time);
+    }    
+    
 #if UNITY_EDITOR
+    
+    
+    internal void OnClipChanged() {
+        SceneCacheClipData clipData = GetBoundClipData();
+        if (null == clipData) //Null check. the data might not have been bound during recompile
+            return;
+        
+        clipData.OnClipChanged();
+
+        if (null == m_sceneCachePlayer)
+            return;
+        
+        ISceneCacheInfo sceneCacheInfo = m_sceneCachePlayer.ExtractSceneCacheInfo(forceOpen:true);
+        if (null == sceneCacheInfo) {
+            return;
+        }
+        
+        RecreateClipCurveInEditor(clipData, sceneCacheInfo.GetNumFrames());
+    }
+
+    static void AddCurveKey(List<Keyframe> keys, float time, int frameToPlay, int numFrames, KeyFrameMode mode) {
+        Keyframe key = new Keyframe(time, Mathf.Clamp((float) frameToPlay / numFrames,0,1));
+        switch (mode) {
+            case KeyFrameMode.Hold: key.outTangent = float.PositiveInfinity;  break;
+            default:                break;
+        }
+
+        int curNumKeys = keys.Count;
+        if  (curNumKeys > 0) {
+            Keyframe prevKey       = keys[curNumKeys - 1];
+            bool     isPrevKeyHold = float.IsPositiveInfinity(prevKey.outTangent);
+            if (isPrevKeyHold) {
+                key.inTangent = float.PositiveInfinity;
+            } else {
+                prevKey.outTangent = CalculateLinearTangent(prevKey, key);
+                key.inTangent      = prevKey.outTangent;
+            }
+            keys[curNumKeys - 1] = prevKey;
+        }
+        
+        keys.Add(key);
+    }
+    
+    static void RecreateClipCurveInEditor(SceneCacheClipData clipData, int numSceneCacheFrames) {
+
+        int numPlayableKeyFrames = clipData.GetNumPlayableFrames();
+        if (numPlayableKeyFrames <= 0 || numSceneCacheFrames <= 0) {
+            AnimationCurve dummyCurve = new AnimationCurve();
+            SetClipCurveInEditor(clipData.GetOwner(), dummyCurve);
+            return;
+        }
+        
+        List<Keyframe>   keys                  =  new List<Keyframe>();
+        PlayableKeyFrame firstPlayableKeyKeyFrame = clipData.GetPlayableKeyFrame(0);
+
+        //always create curve key for the first keyframe
+        KeyFrameMode firstCurveKeyMode = firstPlayableKeyKeyFrame.IsEnabled() ? firstPlayableKeyKeyFrame.GetKeyFrameMode() : KeyFrameMode.Hold;
+        AddCurveKey(keys, (float)firstPlayableKeyKeyFrame.GetLocalTime(), firstPlayableKeyKeyFrame.GetPlayFrame(), numSceneCacheFrames, firstCurveKeyMode);
+        
+        for (int i = 1; i < numPlayableKeyFrames; ++i) {
+            PlayableKeyFrame curPlayableKeyKeyFrame = clipData.GetPlayableKeyFrame(i);
+            if (!curPlayableKeyKeyFrame.IsEnabled())
+                continue;
+            
+            KeyFrameMode mode = curPlayableKeyKeyFrame.GetKeyFrameMode();
+            AddCurveKey(keys, (float) curPlayableKeyKeyFrame.GetLocalTime(), curPlayableKeyKeyFrame.GetPlayFrame(), numSceneCacheFrames, mode);            
+        }
+        
+        AnimationCurve curve = new AnimationCurve(keys.ToArray());
+        SetClipCurveInEditor(clipData.GetOwner(), curve);
+    }
+    
+    static void RecreateClipCurveInEditorOld(SceneCacheClipData clipData, int numFrames) {
+
+        int          numKeyFrames                     = clipData.GetNumPlayableFrames();
+        Keyframe[]   keys                             = new Keyframe[numKeyFrames];
+        float        lastEnabledKeyFrameAnimationTime = 0;
+        bool         lastEnabledKeyFrameIsHold        = false;
+        HashSet<int> keysToLinearize                  = new HashSet<int>();
+        int          prevEnabledKey                   = 0;
+        for (int i = 0; i < numKeyFrames; ++i) {
+            PlayableKeyFrame curKeyFrame = clipData.GetPlayableKeyFrame(i);
+            KeyFrameMode     mode        = curKeyFrame.GetKeyFrameMode();
+            
+            float animationTime = Mathf.Clamp(((float) curKeyFrame.GetPlayFrame() / numFrames),0,1);
+
+            keys[i].time = (float) curKeyFrame.GetLocalTime();
+            
+            keys[i].inTangent = keys[i].outTangent = float.PositiveInfinity;
+            
+            if (curKeyFrame.IsEnabled()) {
+                lastEnabledKeyFrameAnimationTime = animationTime;
+                lastEnabledKeyFrameIsHold        = mode == KeyFrameMode.Hold;
+
+                keys[i].value = animationTime;
+                
+                LinearizeKeyValues(ref keys, prevEnabledKey, i, keysToLinearize);
+                keysToLinearize.Clear();
+                prevEnabledKey = i;
+            } else {
+                if (lastEnabledKeyFrameIsHold) {
+                    keys[i].value = lastEnabledKeyFrameAnimationTime;
+                } else {
+                    keysToLinearize.Add(i);
+                }
+            }
+        }
+        
+        //regard last disabled keys as hold 
+        foreach(int index in keysToLinearize) {
+            keys[index].value = lastEnabledKeyFrameAnimationTime;
+        }
+        
+        AnimationCurve curve = new AnimationCurve(keys);
+        SetClipCurveInEditor(clipData.GetOwner(), curve);
+    }
+
+    static void LinearizeKeyValues(ref Keyframe[] keys, int linearStartIndex, int linearEndIndex, HashSet<int> indicesToUpdate) {
+
+        Keyframe startKey = keys[linearStartIndex];
+        Keyframe endKey   = keys[linearEndIndex];
+        
+        AnimationCurve linearCurve = AnimationCurve.Linear(startKey.time, startKey.value, endKey.time, endKey.value);
+        foreach (int index in indicesToUpdate) {
+            keys[index].value = linearCurve.Evaluate(keys[index].time);
+        }
+    }
     
     internal void SetSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
         ExposedReferenceUtility.SetReferenceValueInEditor(ref m_sceneCachePlayerRef, m_propertyTable, scPlayer);
@@ -300,7 +470,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         };
 #endif 
     
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
     
     [SerializeField] private ExposedReference<SceneCachePlayer> m_sceneCachePlayerRef;
     [HideInInspector][SerializeField] private ExposedReference<SceneCachePlayer> m_extractedSceneCachePlayerRef;
@@ -312,6 +482,8 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     [HideInInspector][SerializeField] private AnimationCurve m_animationCurve = AnimationCurve.Constant(0,0,0);
 
     [HideInInspector][SerializeField] private bool m_isSceneCacheCurveExtracted = false;
+ 
+    [HideInInspector][SerializeField] private SceneCachePlayableAssetEditorConfig m_editorConfig;
     
 //----------------------------------------------------------------------------------------------------------------------
 
