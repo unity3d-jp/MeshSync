@@ -15,7 +15,7 @@ internal static class Shortcuts  {
             if (null == marker) {
                 continue;
             }
-            FrameMarkerInspector.ChangeKeyFrameMode(marker);
+            KeyFrameMarkerInspector.ChangeKeyFrameMode(marker);
 
         }
     }

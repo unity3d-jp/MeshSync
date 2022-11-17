@@ -12,7 +12,7 @@ namespace Unity.MeshSync.Editor {
 
 [CustomEditor(typeof(KeyFrameMarker), true)]
 [CanEditMultipleObjects]
-internal class FrameMarkerInspector: UnityEditor.Editor {
+internal class KeyFrameMarkerInspector: UnityEditor.Editor {
 
     void OnEnable() {
         int numTargets = targets.Length;
