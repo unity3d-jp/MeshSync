@@ -157,7 +157,7 @@ internal static class MapsBaker {
         }
         else {
             Debug.LogError(
-                $"Unknown smoothness channel, cannot bake to option: {smoothnessChannel} set in the smoothness texture channel.");
+                $"[MeshSync] Unknown smoothness channel, cannot bake to option: {smoothnessChannel} set in the smoothness texture channel.");
             return;
         }
 
