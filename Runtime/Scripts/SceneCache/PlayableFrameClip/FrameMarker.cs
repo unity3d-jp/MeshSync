@@ -40,7 +40,6 @@ internal class FrameMarker : Marker, INotification {
         return m_playableFrameOwner.GetKeyFrameMode();
 
     }
-    internal void SetKeyFrameMode(KeyFrameMode mode) { m_playableFrameOwner.SetKeyFrameMode(mode); }
     
 //----------------------------------------------------------------------------------------------------------------------    
     public PropertyName id { get; } //use default implementation
