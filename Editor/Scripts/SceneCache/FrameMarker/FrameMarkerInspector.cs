@@ -24,14 +24,13 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
 
 //----------------------------------------------------------------------------------------------------------------------
     public override void OnInspectorGUI() {
-        ShortcutBinding useFrameShortcut 
-            = ShortcutManager.instance.GetShortcutBinding(MeshSyncEditorConstants.SHORTCUT_CHANGE_KEYFRAME_MODE);
-        KeyFrameMode prevMode = m_assets[0].GetKeyFrameMode();
-        KeyFrameMode mode     = (KeyFrameMode) EditorGUILayout.EnumPopup($"Mode ({useFrameShortcut})", prevMode);
+        ShortcutBinding useFrameShortcut = ShortcutManager.instance.GetShortcutBinding(MeshSyncEditorConstants.SHORTCUT_CHANGE_KEYFRAME_MODE);
+        KeyFrameMode    prevMode         = m_assets[0].GetKeyFrameMode();
+        KeyFrameMode    mode             = (KeyFrameMode) EditorGUILayout.EnumPopup($"Mode ({useFrameShortcut})", prevMode);
         if (mode != prevMode) {
             foreach (FrameMarker m in m_assets) {
-                SetMarkerValueByContext(m,(int) mode);
-            }            
+                m.GetOwner().SetKeyFrameMode(mode);
+            }
         }
 
         int prevPlayFrame = m_assets[0].GetOwner().GetPlayFrame();
@@ -74,19 +73,12 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
        
     
 //----------------------------------------------------------------------------------------------------------------------
-    private static void SetMarkerValueByContext(FrameMarker frameMarker, int value) {
-        SceneCachePlayableFrame      playableFrame = frameMarker.GetOwner();
-        PlayableFrameClipData clipData      = playableFrame.GetOwner();
-        KeyFramePropertyID inspectedPropertyID = clipData.GetInspectedProperty();
-        playableFrame.SetProperty(inspectedPropertyID, value);
-    }
-    
 
     internal static void ChangeKeyFrameMode(FrameMarker frameMarker) {
         SceneCachePlayableFrame playableFrame = frameMarker.GetOwner();
-        int              prevValue     = playableFrame.GetProperty(KeyFramePropertyID.Mode);
+        KeyFrameMode            prevValue     = playableFrame.GetKeyFrameMode();
 
-        playableFrame.SetProperty(KeyFramePropertyID.Mode, prevValue == (int) KeyFrameMode.Continuous? (int) KeyFrameMode.Hold : (int) KeyFrameMode.Continuous);
+        playableFrame.SetKeyFrameMode(prevValue == KeyFrameMode.Continuous? KeyFrameMode.Hold : KeyFrameMode.Continuous);
     }
 //----------------------------------------------------------------------------------------------------------------------
 

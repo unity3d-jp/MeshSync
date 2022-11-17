@@ -21,7 +21,7 @@ class FrameMarkerEditor : MarkerEditor {
         if (clipData == null)
             return;
         
-        KeyFrameMode keyFrameMode = (KeyFrameMode) playableFrame.GetProperty(KeyFramePropertyID.Mode);
+        KeyFrameMode keyFrameMode = playableFrame.GetKeyFrameMode();
 
         const int TEXT_WIDTH = 30;
         Rect      labelRect  = region.markerRegion;

@@ -122,12 +122,6 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         UpdatePlayableFramesSize(numFrames);                
     }
 
-//----------------------------------------------------------------------------------------------------------------------
-    internal void SetAllPlayableFramesProperty(KeyFramePropertyID id, bool val) {
-        foreach (SceneCachePlayableFrame playableFrame in m_playableFrames) {
-            playableFrame.SetProperty(id, val ? 1 : 0);
-        }
-    }
 
 //----------------------------------------------------------------------------------------------------------------------
     private void DestroyPlayableFrames() {
@@ -168,7 +162,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             m_playableFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
             m_playableFrames[i].SetPlayFrame(i);
             m_playableFrames[i].SetEnabled( i % span == 0);
-            m_playableFrames[i].SetProperty(KeyFramePropertyID.Mode, (int) mode);
+            m_playableFrames[i].SetKeyFrameMode(mode);
             m_playableFrames[i].RefreshMarker(m_frameMarkersVisibility);
         }
         
@@ -190,13 +184,13 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         frame.SetEnabled(true);
         frame.SetUserNote("");
         
-        frame.SetProperty(KeyFramePropertyID.Mode, (int) KeyFrameMode.Continuous);
+        frame.SetKeyFrameMode(KeyFrameMode.Continuous);
         
         SceneCachePlayableFrame prevEnabledFrame = FindEnabledKeyFrame(m_playableFrames, frameIndex - 1, 0);
         if (null == prevEnabledFrame)
             prevEnabledFrame = m_playableFrames[0];
 
-        if ((KeyFrameMode.Hold == (KeyFrameMode)prevEnabledFrame.GetProperty(KeyFramePropertyID.Mode))) {
+        if (KeyFrameMode.Hold == prevEnabledFrame.GetKeyFrameMode()) {
             frame.SetPlayFrame(prevEnabledFrame.GetPlayFrame());
         } else {
             
@@ -260,7 +254,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             movedKeyFrames[moveDestIndex] = (new KeyFrameInfo() {
                 enabled = true,
                 //localTime = keyFrame.GetLocalTime(),
-                mode    = (KeyFrameMode) keyFrame.GetProperty(KeyFramePropertyID.Mode),
+                mode    = keyFrame.GetKeyFrameMode(),
                 playFrame = keyFrame.GetPlayFrame(),
             });
             
@@ -284,7 +278,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
                 //Debug.Log($"Setting {i} {keyFrameInfo.enabled} {keyFrameInfo.frameNo} {keyFrameInfo.mode} ");
                 m_playableFrames[i].SetPlayFrame(keyFrameInfo.playFrame);
                 m_playableFrames[i].SetEnabled(keyFrameInfo.enabled);
-                m_playableFrames[i].SetProperty(KeyFramePropertyID.Mode, (int) keyFrameInfo.mode);
+                m_playableFrames[i].SetKeyFrameMode(keyFrameInfo.mode);
             }
         }
 
@@ -313,7 +307,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             m_playableFrames[i].SetEnabled(true);
             m_playableFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
             m_playableFrames[i].SetPlayFrame(i);
-            m_playableFrames[i].SetProperty(KeyFramePropertyID.Mode, (int)KeyFrameMode.Continuous);
+            m_playableFrames[i].SetKeyFrameMode(KeyFrameMode.Continuous);
             m_playableFrames[i].RefreshMarker(m_frameMarkersVisibility);
         }
     }
@@ -361,7 +355,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             List<KeyFrameMode> prevKeyFrameModes = new List<KeyFrameMode>(prevNumPlayableFrames);
             foreach (SceneCachePlayableFrame frame in m_playableFrames) {
                 //if frame ==null, just use the default
-                prevKeyFrameModes.Add(null == frame ? KeyFrameMode.Continuous : (KeyFrameMode) frame.GetProperty(KeyFramePropertyID.Mode)); 
+                prevKeyFrameModes.Add(null == frame ? KeyFrameMode.Continuous : frame.GetKeyFrameMode()); 
             }
 
             UpdatePlayableFramesSize(numIdealNumPlayableFrames);
@@ -370,7 +364,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             if (prevNumPlayableFrames > 0) {
                 int minNumPlayableFrames = Math.Min(prevNumPlayableFrames, m_playableFrames.Count);
                 for (int i = 0; i < minNumPlayableFrames; ++i) {
-                    m_playableFrames[i].SetProperty(KeyFramePropertyID.Mode, (int)prevKeyFrameModes[i]);
+                    m_playableFrames[i].SetKeyFrameMode(prevKeyFrameModes[i]);
                 }
             }
         }

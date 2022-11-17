@@ -17,14 +17,13 @@ internal class SceneCachePlayableFrame : ISerializationCallbackReceiver {
 
     internal SceneCachePlayableFrame(PlayableFrameClipData owner) {
         m_clipDataOwner            = owner;
-        m_serializedProperties = new SerializedDictionary<KeyFramePropertyID, PlayableFrameProperty<int>>();
     }
 
     internal SceneCachePlayableFrame(PlayableFrameClipData owner, SceneCachePlayableFrame otherFrame) {
-        m_clipDataOwner        = owner;
-        m_serializedProperties = otherFrame.m_serializedProperties;
-        m_localTime            = otherFrame.m_localTime;
-        m_playFrame            = otherFrame.m_playFrame;
+        m_clipDataOwner = owner;
+        m_localTime     = otherFrame.m_localTime;
+        m_playFrame     = otherFrame.m_playFrame;
+        m_keyFrameMode  = otherFrame.m_keyFrameMode;
     }       
     
     
@@ -66,6 +65,12 @@ internal class SceneCachePlayableFrame : ISerializationCallbackReceiver {
         m_playFrame = playFrame;
     }
 
+    internal void SetKeyFrameMode(KeyFrameMode mode) {
+        m_keyFrameMode = mode;
+    }
+
+    internal KeyFrameMode GetKeyFrameMode()  => m_keyFrameMode;
+    
     internal void SetEnabled(bool enabled) { m_enabled = enabled; }
     internal bool IsEnabled() => m_enabled;
     
@@ -76,41 +81,6 @@ internal class SceneCachePlayableFrame : ISerializationCallbackReceiver {
 
     internal string GetUserNote() {  return m_userNote;}
     internal void SetUserNote(string userNote)   {  m_userNote = userNote; }    
-    
-//----------------------------------------------------------------------------------------------------------------------
-    //Property
-    internal int GetProperty(KeyFramePropertyID propertyID) {
-        if (null!=m_serializedProperties && m_serializedProperties.TryGetValue(propertyID, out PlayableFrameProperty<int> prop)) {
-            return prop.GetValue();
-        }
-
-        switch (propertyID) {
-            case KeyFramePropertyID.Mode: return (int) KeyFrameMode.Continuous;
-            default: return 0;
-        }        
-    }
-    
-    
-
-    internal void SetProperty(KeyFramePropertyID id, int val) {
-#if UNITY_EDITOR        
-        if (GetProperty(id) != val) {
-            EditorSceneManager.MarkAllScenesDirty();            
-        }
-        int prevValue = GetProperty(id);
-#endif        
-        m_serializedProperties[id] = new PlayableFrameProperty<int>(id, val);
-        
-#if UNITY_EDITOR
-        //Refresh 
-        if (val != prevValue) {
-            TimelineEditor.Refresh(RefreshReason.ContentsModified);
-        }
-#endif
-        
-        
-    }
-    
     
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -171,7 +141,7 @@ internal class SceneCachePlayableFrame : ISerializationCallbackReceiver {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    [HideInInspector][SerializeField] private SerializedDictionary<KeyFramePropertyID, PlayableFrameProperty<int>> m_serializedProperties;
+//    [HideInInspector][SerializeField] private SerializedDictionary<KeyFramePropertyID, PlayableFrameProperty<int>> m_serializedProperties;
 
     [HideInInspector][SerializeField] private bool m_enabled = true;
 
