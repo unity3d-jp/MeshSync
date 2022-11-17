@@ -35,12 +35,6 @@ internal class FrameMarker : Marker, INotification {
     internal void SetOwner(SceneCachePlayableFrame controller) { m_playableFrameOwner = controller; } 
     internal SceneCachePlayableFrame GetOwner() { return m_playableFrameOwner; } 
     
-    //TODO-remove this
-    internal KeyFrameMode GetKeyFrameMode() {
-        return m_playableFrameOwner.GetKeyFrameMode();
-
-    }
-    
 //----------------------------------------------------------------------------------------------------------------------    
     public PropertyName id { get; } //use default implementation
 

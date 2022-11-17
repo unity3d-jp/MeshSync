@@ -25,7 +25,7 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
 //----------------------------------------------------------------------------------------------------------------------
     public override void OnInspectorGUI() {
         ShortcutBinding useFrameShortcut = ShortcutManager.instance.GetShortcutBinding(MeshSyncEditorConstants.SHORTCUT_CHANGE_KEYFRAME_MODE);
-        KeyFrameMode    prevMode         = m_assets[0].GetKeyFrameMode();
+        KeyFrameMode    prevMode         = m_assets[0].GetOwner().GetKeyFrameMode();
         KeyFrameMode    mode             = (KeyFrameMode) EditorGUILayout.EnumPopup($"Mode ({useFrameShortcut})", prevMode);
         if (mode != prevMode) {
             foreach (FrameMarker m in m_assets) {
