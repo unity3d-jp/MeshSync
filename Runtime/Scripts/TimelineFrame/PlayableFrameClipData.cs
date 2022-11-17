@@ -496,7 +496,3 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 
 } //end namespace
 
-
-//[Note-Sin: 2022-11-17] SceneCachePlayableFrame
-//SceneCacheTrack owns SceneCachePlayableFrame, which is associated with a TimelineClip.
-//SceneCachePlayableFrame is a ScriptableObject and owns FrameMarker.
