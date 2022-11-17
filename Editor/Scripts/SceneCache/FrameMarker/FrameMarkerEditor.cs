@@ -14,7 +14,7 @@ class FrameMarkerEditor : MarkerEditor {
         if (null == marker)
             return;
 
-        SISPlayableFrame playableFrame = marker.GetOwner();
+        SceneCachePlayableFrame playableFrame = marker.GetOwner();
         
         //Check invalid PlayableFrame/ClipData. Perhaps because of unsupported Duplicate operation ?
         PlayableFrameClipData clipData = playableFrame?.GetOwner();

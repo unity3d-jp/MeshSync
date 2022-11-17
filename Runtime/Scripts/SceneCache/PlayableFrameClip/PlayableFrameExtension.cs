@@ -12,7 +12,7 @@ internal static class PlayableFrameExtension {
 
 //----------------------------------------------------------------------------------------------------------------------        
     
-    internal static T GetTimelineClipAsset<T>(this SISPlayableFrame playableFrame) where T : Object {
+    internal static T GetTimelineClipAsset<T>(this SceneCachePlayableFrame playableFrame) where T : Object {
         
         TimelineClip     timelineClip  = playableFrame?.GetOwner().GetOwner();
         if (null == timelineClip)

@@ -11,7 +11,7 @@ namespace Unity.MeshSync {
 internal class FrameMarker : Marker, INotification {
 
     
-    internal void Init(SISPlayableFrame controller, double initialTime) {
+    internal void Init(SceneCachePlayableFrame controller, double initialTime) {
         m_playableFrameOwner = controller;
         time = initialTime;
     }     
@@ -32,8 +32,8 @@ internal class FrameMarker : Marker, INotification {
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    internal void SetOwner(SISPlayableFrame controller) { m_playableFrameOwner = controller; } 
-    internal SISPlayableFrame GetOwner() { return m_playableFrameOwner; } 
+    internal void SetOwner(SceneCachePlayableFrame controller) { m_playableFrameOwner = controller; } 
+    internal SceneCachePlayableFrame GetOwner() { return m_playableFrameOwner; } 
     
     internal KeyFrameMode GetKeyFrameMode() {
         return (KeyFrameMode) m_playableFrameOwner.GetProperty(KeyFramePropertyID.Mode);
@@ -44,7 +44,7 @@ internal class FrameMarker : Marker, INotification {
 //----------------------------------------------------------------------------------------------------------------------    
     public PropertyName id { get; } //use default implementation
 
-    private SISPlayableFrame m_playableFrameOwner;
+    private SceneCachePlayableFrame m_playableFrameOwner;
        
 }
 

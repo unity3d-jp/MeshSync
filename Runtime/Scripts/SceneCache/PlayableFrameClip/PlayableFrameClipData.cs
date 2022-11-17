@@ -17,19 +17,19 @@ namespace Unity.MeshSync {
 internal abstract class PlayableFrameClipData : BaseClipData {
 
     protected PlayableFrameClipData() {
-        m_playableFrames = new List<SISPlayableFrame>();
+        m_playableFrames = new List<SceneCachePlayableFrame>();
     }
 
     protected PlayableFrameClipData(TimelineClip clipOwner) {
         SetOwner(clipOwner);
-        m_playableFrames = new List<SISPlayableFrame>();
+        m_playableFrames = new List<SceneCachePlayableFrame>();
     }
 
     protected PlayableFrameClipData(TimelineClip owner, PlayableFrameClipData other) : this(owner){
         Assert.IsNotNull(m_playableFrames);
         
-        foreach (SISPlayableFrame otherFrame in other.m_playableFrames) {
-            SISPlayableFrame newFrame = new SISPlayableFrame(this, otherFrame);
+        foreach (SceneCachePlayableFrame otherFrame in other.m_playableFrames) {
+            SceneCachePlayableFrame newFrame = new SceneCachePlayableFrame(this, otherFrame);
             m_playableFrames.Add(newFrame);
         }
         
@@ -43,7 +43,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     }
 
     protected override void OnAfterDeserializeInternalV() {
-        foreach (SISPlayableFrame playableFrame in m_playableFrames) {
+        foreach (SceneCachePlayableFrame playableFrame in m_playableFrames) {
             playableFrame.SetOwner(this);
         }
     }    
@@ -51,7 +51,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 //----------------------------------------------------------------------------------------------------------------------
     internal override void DestroyV() {
 
-        foreach (SISPlayableFrame playableFrame in m_playableFrames) {
+        foreach (SceneCachePlayableFrame playableFrame in m_playableFrames) {
             playableFrame.Destroy();
         }
 
@@ -103,9 +103,9 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 #endif    
     
 //----------------------------------------------------------------------------------------------------------------------    
-    private static SISPlayableFrame CreatePlayableFrame(PlayableFrameClipData owner, int index, double timePerFrame) 
+    private static SceneCachePlayableFrame CreatePlayableFrame(PlayableFrameClipData owner, int index, double timePerFrame) 
     {
-        SISPlayableFrame playableFrame = new SISPlayableFrame(owner);
+        SceneCachePlayableFrame playableFrame = new SceneCachePlayableFrame(owner);
         playableFrame.SetIndexAndLocalTime(index, timePerFrame * index);
         playableFrame.SetPlayFrame(index);
         return playableFrame;
@@ -118,13 +118,13 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 
         //Recalculate the number of frames and create the marker's ground truth data
         int numFrames = TimelineUtility.CalculateNumFrames(GetOwner());
-        m_playableFrames = new List<SISPlayableFrame>(numFrames);
+        m_playableFrames = new List<SceneCachePlayableFrame>(numFrames);
         UpdatePlayableFramesSize(numFrames);                
     }
 
 //----------------------------------------------------------------------------------------------------------------------
     internal void SetAllPlayableFramesProperty(KeyFramePropertyID id, bool val) {
-        foreach (SISPlayableFrame playableFrame in m_playableFrames) {
+        foreach (SceneCachePlayableFrame playableFrame in m_playableFrames) {
             playableFrame.SetProperty(id, val ? 1 : 0);
         }
     }
@@ -134,7 +134,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         if (null == m_playableFrames)
             return;
         
-        foreach (SISPlayableFrame frame in m_playableFrames) {
+        foreach (SceneCachePlayableFrame frame in m_playableFrames) {
             frame?.Destroy();
         }        
     } 
@@ -183,7 +183,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             
         //already enabled
         int              frameIndex = LocalTimeToFrameIndex(globalTime - clip.start, clip.duration);
-        SISPlayableFrame frame   = m_playableFrames[frameIndex];
+        SceneCachePlayableFrame frame   = m_playableFrames[frameIndex];
         if (frame.IsEnabled())
             return;
         
@@ -192,7 +192,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         
         frame.SetProperty(KeyFramePropertyID.Mode, (int) KeyFrameMode.Continuous);
         
-        SISPlayableFrame prevEnabledFrame = FindEnabledKeyFrame(m_playableFrames, frameIndex - 1, 0);
+        SceneCachePlayableFrame prevEnabledFrame = FindEnabledKeyFrame(m_playableFrames, frameIndex - 1, 0);
         if (null == prevEnabledFrame)
             prevEnabledFrame = m_playableFrames[0];
 
@@ -200,7 +200,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             frame.SetPlayFrame(prevEnabledFrame.GetPlayFrame());
         } else {
             
-            SISPlayableFrame nextEnabledFrame = FindEnabledKeyFrame(m_playableFrames, frameIndex + 1, m_playableFrames.Count);
+            SceneCachePlayableFrame nextEnabledFrame = FindEnabledKeyFrame(m_playableFrames, frameIndex + 1, m_playableFrames.Count);
             if (null == nextEnabledFrame)
                 nextEnabledFrame = m_playableFrames[frameIndex];
         
@@ -220,7 +220,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 
     internal void OnGraphStart() {
         if (m_needToRefreshTimelineEditor) {
-            foreach (SISPlayableFrame playableKeyFrame in m_playableFrames) {
+            foreach (SceneCachePlayableFrame playableKeyFrame in m_playableFrames) {
                 playableKeyFrame.RefreshMarker(m_frameMarkersVisibility);
             }
             TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved);
@@ -248,7 +248,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         
         
         for (int i = 0; i < numPlayableFrames; ++i) {
-            SISPlayableFrame keyFrame = m_playableFrames[i];
+            SceneCachePlayableFrame keyFrame = m_playableFrames[i];
             keyFrame.SaveStateFromMarker();
             int moveDestIndex = Mathf.RoundToInt((float)(keyFrame.GetLocalTime() * numPlayableFrames / clipOwner.duration));
             moveDestIndex = Mathf.Clamp(moveDestIndex,0,numPlayableFrames - 1);
@@ -359,7 +359,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             
             //Change the size of m_playableFrames and reinitialize if necessary
             List<KeyFrameMode> prevKeyFrameModes = new List<KeyFrameMode>(prevNumPlayableFrames);
-            foreach (SISPlayableFrame frame in m_playableFrames) {
+            foreach (SceneCachePlayableFrame frame in m_playableFrames) {
                 //if frame ==null, just use the default
                 prevKeyFrameModes.Add(null == frame ? KeyFrameMode.Continuous : (KeyFrameMode) frame.GetProperty(KeyFramePropertyID.Mode)); 
             }
@@ -388,7 +388,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
     //may return null
-    internal SISPlayableFrame GetPlayableFrame(int index) {
+    internal SceneCachePlayableFrame GetPlayableFrame(int index) {
         if (null == m_playableFrames || index >= m_playableFrames.Count)
             return null;
         
@@ -407,7 +407,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         //Resize m_playableFrames
         if (m_playableFrames.Count < reqPlayableFramesSize) {
             int             numNewPlayableFrames = (reqPlayableFramesSize - m_playableFrames.Count);
-            List<SISPlayableFrame> newPlayableFrames = new List<SISPlayableFrame>(numNewPlayableFrames);           
+            List<SceneCachePlayableFrame> newPlayableFrames = new List<SceneCachePlayableFrame>(numNewPlayableFrames);           
             for (int i = m_playableFrames.Count; i < reqPlayableFramesSize; ++i) {
                 newPlayableFrames.Add(CreatePlayableFrame(this,i, timePerFrame));
             }            
@@ -417,7 +417,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         if (m_playableFrames.Count > reqPlayableFramesSize) {
             int numLastPlayableFrames = m_playableFrames.Count;
             for (int i = reqPlayableFramesSize; i < numLastPlayableFrames; ++i) {
-                SISPlayableFrame curFrame = m_playableFrames[i];
+                SceneCachePlayableFrame curFrame = m_playableFrames[i];
                 curFrame?.Destroy();
             }            
             m_playableFrames.RemoveRange(reqPlayableFramesSize, numLastPlayableFrames - reqPlayableFramesSize);
@@ -426,7 +426,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         Assert.IsTrue(m_playableFrames.Count == reqPlayableFramesSize);
            
         for (int i = 0; i < reqPlayableFramesSize; ++i) {
-            SISPlayableFrame curPlayableFrame = m_playableFrames[i];
+            SceneCachePlayableFrame curPlayableFrame = m_playableFrames[i];
             Assert.IsNotNull(curPlayableFrame);                
             m_playableFrames[i].SetIndexAndLocalTime(i, timePerFrame * i);
             
@@ -466,7 +466,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 
 
     [CanBeNull]
-    static SISPlayableFrame FindEnabledKeyFrame(IList<SISPlayableFrame> keyFrames, int startIndex, int endIndex) {
+    static SceneCachePlayableFrame FindEnabledKeyFrame(IList<SceneCachePlayableFrame> keyFrames, int startIndex, int endIndex) {
 
         int counter = (int)Mathf.Sign(endIndex - startIndex);
         for (int i = startIndex; i != endIndex; i += counter) {
@@ -480,7 +480,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
     
     //The ground truth for using/dropping an image in a particular frame. See the notes below
-    [SerializeField] private List<SISPlayableFrame> m_playableFrames;
+    [SerializeField] private List<SceneCachePlayableFrame> m_playableFrames;
     [SerializeField] [HideInInspector] private bool m_frameMarkersRequested = true;
 
     [SerializeField] [HideInInspector] private float m_lastClipStartTimeOnRefresh = 0;

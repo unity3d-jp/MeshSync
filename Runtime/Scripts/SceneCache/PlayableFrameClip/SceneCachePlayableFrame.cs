@@ -13,14 +13,14 @@ using UnityEditor.Timeline;
 namespace Unity.MeshSync {
     
 [Serializable]
-internal class SISPlayableFrame : ISerializationCallbackReceiver {
+internal class SceneCachePlayableFrame : ISerializationCallbackReceiver {
 
-    internal SISPlayableFrame(PlayableFrameClipData owner) {
+    internal SceneCachePlayableFrame(PlayableFrameClipData owner) {
         m_clipDataOwner            = owner;
         m_serializedProperties = new SerializedDictionary<KeyFramePropertyID, PlayableFrameProperty<int>>();
     }
 
-    internal SISPlayableFrame(PlayableFrameClipData owner, SISPlayableFrame otherFrame) {
+    internal SceneCachePlayableFrame(PlayableFrameClipData owner, SceneCachePlayableFrame otherFrame) {
         m_clipDataOwner        = owner;
         m_serializedProperties = otherFrame.m_serializedProperties;
         m_localTime            = otherFrame.m_localTime;
