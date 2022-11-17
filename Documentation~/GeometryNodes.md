@@ -17,7 +17,7 @@ To stop rendering instances of an object:
 
 ### Controlling instances
 
-We can control the rendering and world transform of instances by modifying the **GameObject** that 
+We can control the rendering and world transform of instances by modifying the parent of the **GameObject** that 
 is being instantiated.
 
 ![Menu](images/GeometryNodesMove.gif)
