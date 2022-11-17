@@ -147,12 +147,9 @@ internal class SceneCachePlayableFrame : ISerializationCallbackReceiver {
     }
     
     
-//----------------------------------------------------------------------------------------------------------------------
-
-//    [HideInInspector][SerializeField] private SerializedDictionary<KeyFramePropertyID, PlayableFrameProperty<int>> m_serializedProperties;
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     [HideInInspector][SerializeField] private bool m_enabled = true;
-
     
     [HideInInspector][SerializeField] private double m_localTime;
     
