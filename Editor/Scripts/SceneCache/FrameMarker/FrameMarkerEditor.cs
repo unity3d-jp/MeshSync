@@ -6,11 +6,11 @@ using UnityEngine.Timeline;
 
 namespace Unity.MeshSync.Editor {
 
-[CustomTimelineEditor(typeof(FrameMarker))]
+[CustomTimelineEditor(typeof(SceneCacheFrameMarker))]
 class FrameMarkerEditor : MarkerEditor {
 
     public override void DrawOverlay(IMarker m, MarkerUIStates uiState, MarkerOverlayRegion region) {
-        FrameMarker marker = m as FrameMarker;
+        SceneCacheFrameMarker marker = m as SceneCacheFrameMarker;
         if (null == marker)
             return;
 

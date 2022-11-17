@@ -129,7 +129,7 @@ internal class SceneCachePlayableFrame : ISerializationCallbackReceiver {
         Assert.IsNotNull(trackAsset);
         Assert.IsNull(m_marker);
                
-        m_marker = trackAsset.CreateMarker<FrameMarker>(m_localTime);
+        m_marker = trackAsset.CreateMarker<SceneCacheFrameMarker>(m_localTime);
     }
 
     void TryDeleteMarker() {
@@ -160,7 +160,7 @@ internal class SceneCachePlayableFrame : ISerializationCallbackReceiver {
     [HideInInspector][SerializeField] private KeyFrameMode m_keyFrameMode = KeyFrameMode.Continuous; 
 
     
-    [HideInInspector][SerializeField] private FrameMarker           m_marker = null;
+    [HideInInspector][SerializeField] private SceneCacheFrameMarker           m_marker = null;
     [HideInInspector][SerializeField] private string                m_userNote;
     [NonSerialized]                   private PlayableFrameClipData m_clipDataOwner = null;
 

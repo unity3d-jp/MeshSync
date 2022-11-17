@@ -11,7 +11,7 @@ internal static class Shortcuts  {
     [Shortcut(MeshSyncEditorConstants.SHORTCUT_CHANGE_KEYFRAME_MODE, null,  KeyCode.Tab, ShortcutModifiers.Shift)]
     static void ChangeKeyFrameMode(ShortcutArguments args) {
         foreach (Object obj in Selection.objects) {
-            FrameMarker marker = obj as FrameMarker;
+            SceneCacheFrameMarker marker = obj as SceneCacheFrameMarker;
             if (null == marker) {
                 continue;
             }

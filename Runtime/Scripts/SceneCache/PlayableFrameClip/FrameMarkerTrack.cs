@@ -12,7 +12,7 @@ where T: PlayableFrameClipData, new()
 
     protected void DeleteInvalidMarkers() {
         foreach(IMarker m in GetMarkers()) {
-            FrameMarker marker = m as FrameMarker;
+            SceneCacheFrameMarker marker = m as SceneCacheFrameMarker;
             if (null == marker)
                 continue;
 
@@ -21,7 +21,7 @@ where T: PlayableFrameClipData, new()
             }      
         }
 
-        foreach (FrameMarker marker in m_markersToDelete) {
+        foreach (SceneCacheFrameMarker marker in m_markersToDelete) {
             DeleteMarker(marker);
         }
     }
@@ -29,7 +29,7 @@ where T: PlayableFrameClipData, new()
 //----------------------------------------------------------------------------------------------------------------------
 
         
-    private readonly List<FrameMarker> m_markersToDelete = new List<FrameMarker>();
+    private readonly List<SceneCacheFrameMarker> m_markersToDelete = new List<SceneCacheFrameMarker>();
     
 }
 
