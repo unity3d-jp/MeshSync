@@ -4,9 +4,9 @@ using Unity.FilmInternalUtilities;
 
 namespace Unity.MeshSync { 
 /// <summary>
-/// A track which has FrameMarkers and stores extra ClipData for TimelineClips inside Track
+/// A track which has KeyFrameMarkers and stores extra ClipData for TimelineClips inside Track
 /// </summary>
-internal abstract class FrameMarkerTrack<T>: BaseExtendedClipTrack<T>
+internal abstract class KeyFrameMarkerTrack<T>: BaseExtendedClipTrack<T>
 where T: KeyFrameControllerClipData, new()
 {
 
