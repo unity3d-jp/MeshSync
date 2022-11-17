@@ -376,14 +376,14 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         }
         
         List<Keyframe>   keys                  =  new List<Keyframe>();
-        SceneCachePlayableFrame firstPlayableKeyFrame = clipData.GetPlayableFrame(0);
+        PlayableFrame firstPlayableKeyFrame = clipData.GetPlayableFrame(0);
 
         //always create curve key for the first keyframe
         KeyFrameMode firstCurveKeyMode = firstPlayableKeyFrame.IsEnabled() ? firstPlayableKeyFrame.GetKeyFrameMode() : KeyFrameMode.Hold;
         AddCurveKey(keys, (float)firstPlayableKeyFrame.GetLocalTime(), firstPlayableKeyFrame.GetPlayFrame(), numSceneCacheFrames, firstCurveKeyMode);
         
         for (int i = 1; i < numPlayableKeyFrames; ++i) {
-            SceneCachePlayableFrame curPlayableKeyFrame = clipData.GetPlayableFrame(i);
+            PlayableFrame curPlayableKeyFrame = clipData.GetPlayableFrame(i);
             if (!curPlayableKeyFrame.IsEnabled())
                 continue;
             
@@ -404,7 +404,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         HashSet<int> keysToLinearize                  = new HashSet<int>();
         int          prevEnabledKey                   = 0;
         for (int i = 0; i < numKeyFrames; ++i) {
-            SceneCachePlayableFrame curKeyFrame = clipData.GetPlayableFrame(i);
+            PlayableFrame curKeyFrame = clipData.GetPlayableFrame(i);
             KeyFrameMode            mode        = curKeyFrame.GetKeyFrameMode();
             
             float animationTime = Mathf.Clamp(((float) curKeyFrame.GetPlayFrame() / numFrames),0,1);

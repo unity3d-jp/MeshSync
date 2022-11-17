@@ -11,7 +11,7 @@ namespace Unity.MeshSync {
 internal class SceneCacheFrameMarker : Marker, INotification {
 
     
-    internal void Init(SceneCachePlayableFrame controller, double initialTime) {
+    internal void Init(PlayableFrame controller, double initialTime) {
         m_playableFrameOwner = controller;
         time = initialTime;
     }     
@@ -32,13 +32,13 @@ internal class SceneCacheFrameMarker : Marker, INotification {
 
 //----------------------------------------------------------------------------------------------------------------------
     
-    internal void SetOwner(SceneCachePlayableFrame controller) { m_playableFrameOwner = controller; } 
-    internal SceneCachePlayableFrame GetOwner() { return m_playableFrameOwner; } 
+    internal void SetOwner(PlayableFrame controller) { m_playableFrameOwner = controller; } 
+    internal PlayableFrame GetOwner() { return m_playableFrameOwner; } 
     
 //----------------------------------------------------------------------------------------------------------------------    
     public PropertyName id { get; } //use default implementation
 
-    private SceneCachePlayableFrame m_playableFrameOwner;
+    private PlayableFrame m_playableFrameOwner;
        
 }
 
