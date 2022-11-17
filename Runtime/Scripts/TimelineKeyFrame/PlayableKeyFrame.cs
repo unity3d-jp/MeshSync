@@ -27,7 +27,7 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
     }       
     
     
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
     #region ISerializationCallbackReceiver
     public void OnBeforeSerialize() {
         
@@ -42,23 +42,23 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
     #endregion //ISerializationCallbackReceiver
     
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     internal void Destroy() {
         TryDeleteMarker();
     }
 
-//----------------------------------------------------------------------------------------------------------------------
-    internal void        SetOwner(KeyFrameControllerClipData owner) {  m_clipDataOwner = owner;}
-    internal KeyFrameControllerClipData GetOwner()                             {  return m_clipDataOwner; }    
-    internal double      GetLocalTime()                                   { return m_localTime; }
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+    internal void                       SetOwner(KeyFrameControllerClipData owner) {  m_clipDataOwner = owner;}
+    internal KeyFrameControllerClipData GetOwner()                                 {  return m_clipDataOwner; }
+    internal double                     GetLocalTime()                             { return m_localTime; }
 
     internal int GetPlayFrame() { return m_playFrame; }
     
     internal int GetIndex() { return m_index; }
     internal void   SetIndexAndLocalTime(int index, double localTime) {
-        m_index                   = index; 
-        m_localTime               = localTime;
+        m_index     = index; 
+        m_localTime = localTime;
     }
 
     internal void SetPlayFrame(int playFrame) {
@@ -88,7 +88,7 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
     }
 
     internal string GetUserNote() {  return m_userNote;}
-    internal void SetUserNote(string userNote)   {  m_userNote = userNote; }    
+    internal void SetUserNote(string userNote)   {  m_userNote = userNote; }
     
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -120,7 +120,7 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
             m_marker.Init(this, clipOwner.start + m_localTime);
         }
     }
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     void CreateMarker() {
         TimelineClip clipOwner = m_clipDataOwner.GetOwner();
