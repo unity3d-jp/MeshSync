@@ -75,7 +75,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
 
     }
 
-    protected bool DrawImportSettings(BaseMeshSync t) {
+    protected static bool DrawImportSettings(BaseMeshSync t) {
 
         bool changed   = false;
         MeshSyncPlayerConfig playerConfig = t.GetConfigV();
