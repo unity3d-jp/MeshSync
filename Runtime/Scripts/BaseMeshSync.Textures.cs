@@ -256,7 +256,7 @@ namespace Unity.MeshSync {
         }
 
         private static void SetupGlass_Standard(Material mat) {
-            mat.SetFloat(MeshSyncConstants._Mode, 3);
+            mat.SetFloat(MeshSyncConstants._Mode, 3);   // Transparent
             mat.DisableKeyword(MeshSyncConstants._ALPHATEST_ON);
             mat.DisableKeyword(MeshSyncConstants._ALPHABLEND_ON);
             mat.EnableKeyword(MeshSyncConstants._ALPHAPREMULTIPLY_ON);
