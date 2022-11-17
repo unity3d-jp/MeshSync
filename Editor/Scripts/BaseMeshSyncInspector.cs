@@ -116,7 +116,7 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
                     MeshSyncEditorConstants.Z_UP_CORRECTION_ENUMS),
                 updateFunc: (int val) => { playerConfig.ZUpCorrection = val; }
             );
-            
+
             EditorGUILayout.Space();
         }
 
