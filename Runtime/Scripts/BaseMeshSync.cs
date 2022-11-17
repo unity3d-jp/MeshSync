@@ -864,12 +864,23 @@ internal delegate void DeleteInstanceHandler(string path);
             MakeSureAssetDirectoryExists();
             Texture2D texture = null;
 #if UNITY_EDITOR
-            Action<string> doImport = (path) =>
-            {
+            Action<string> doImport = (path) => {
+                bool assetExisted = AssetDatabase.LoadAssetAtPath<Texture2D>(path) != null;
+
                 AssetDatabase.ImportAsset(path);
                 texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 if (texture != null) {
                     TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
+
+                    // Make sure the full texture is used unless the user changed this setting before:
+                    assetExisted = true;
+                    if (!assetExisted) {
+                        importer.npotScale = TextureImporterNPOTScale.None;
+
+                        importer.SaveAndReimport();
+                        AssetDatabase.Refresh();
+                    }
+
                     if (importer != null) {
                         switch (src.type) {
                             case TextureType.NormalMap:
