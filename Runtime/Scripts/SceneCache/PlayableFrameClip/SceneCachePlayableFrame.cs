@@ -177,7 +177,9 @@ internal class SceneCachePlayableFrame : ISerializationCallbackReceiver {
 
     
     [HideInInspector][SerializeField] private double m_localTime;
-    [HideInInspector][SerializeField] private int m_playFrame = 0; //the frame that should be displayed for this localTime
+    
+    [HideInInspector][SerializeField] private int          m_playFrame    = 0; //the frame that should be displayed for this localTime
+    [HideInInspector][SerializeField] private KeyFrameMode m_keyFrameMode = KeyFrameMode.Continuous; 
 
     
     [HideInInspector][SerializeField] private FrameMarker           m_marker = null;
