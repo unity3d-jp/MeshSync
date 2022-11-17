@@ -45,6 +45,7 @@ public:
 
     bool start();
     void stop();
+    void abort();
     void clear();
     ServerSettings& getSettings();
 

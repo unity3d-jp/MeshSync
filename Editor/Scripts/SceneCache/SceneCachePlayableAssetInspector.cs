@@ -69,7 +69,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         if (disableScope) {
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.HelpBox(
-                "Disabled because Limited Animation settings on the SceneCache GameObject is enabled, or the playback mode is set to interpolate", 
+                "Disabled because the playback mode of the SceneCache is set to Interpolate", 
                 MessageType.Warning
             );
             if (GUILayout.Button("Fix", GUILayout.Width(64), GUILayout.Height(36))) {
