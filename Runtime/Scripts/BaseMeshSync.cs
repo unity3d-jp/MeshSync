@@ -1264,7 +1264,7 @@ internal delegate void DeleteInstanceHandler(string path);
                     MaterialPropertyData.TextureRecord rec = prop.textureValue;
                     Texture2D                          tex = FindTexture(rec.id, textureHolders);
                     // Allow setting of null textures to clear them:
-                    destMat.SetTextureSafe(propNameID, tex);
+                    destMat.SetTextureAndReleaseExistingRenderTextures(propNameID, tex);
                     if (rec.hasScaleOffset) {
                         destMat.SetTextureScale(propNameID, rec.scale);
                         destMat.SetTextureOffset(propNameID, rec.offset);

@@ -81,7 +81,7 @@ namespace Unity.MeshSync {
                             // Set the texture on the material to null for now so the render texture
                             // is not saved to file again if this gets called again before it was
                             // set to the texture in the asset library:
-                            mat.SetTextureSafe(textureNameID, null);
+                            mat.SetTextureAndReleaseExistingRenderTextures(textureNameID, null);
                         }
 
                         renderTarget.Release();
