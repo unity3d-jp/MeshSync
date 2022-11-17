@@ -83,10 +83,6 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 
 
 #if UNITY_EDITOR
-    internal void SetInspectedProperty(KeyFramePropertyID id) { m_inspectedPropertyID = id; }
-
-    internal KeyFramePropertyID GetInspectedProperty() { return m_inspectedPropertyID; }
-
     internal void UpdateTimelineWidthPerFrame(float visibleRectWidth, double visibleTime, double fps, double timeScale) {
         int numFrames = Mathf.RoundToInt((float)
             ((visibleTime) * fps / timeScale) 
@@ -486,9 +482,8 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 #pragma warning restore 414    
     
 #if UNITY_EDITOR    
-    private KeyFramePropertyID m_inspectedPropertyID   = KeyFramePropertyID.Mode;
-    private double                  m_timelineWidthPerFrame = Int16.MaxValue;
-    private bool                    m_forceShowFrameMarkers = false;
+    private double m_timelineWidthPerFrame = Int16.MaxValue;
+    private bool   m_forceShowFrameMarkers = false;
 #endif
 
     private bool m_frameMarkersVisibility      = true;
