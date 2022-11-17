@@ -694,7 +694,7 @@ internal delegate void DeleteInstanceHandler(string path);
 #endif
         }
 
-        internal void AfterUpdateScene()
+        internal virtual void AfterUpdateScene()
         {
             // If none of the set messages had properties, we need to remove all properties:
             if (numberOfPropertiesReceived == 0) {
@@ -813,6 +813,10 @@ internal delegate void DeleteInstanceHandler(string path);
 
                 UpdateLODGroups();
             }
+#endif
+
+#if VERBOSE_LOGS
+            Debug.Log($"Scene updated.");
 #endif
 
             if (onSceneUpdateEnd != null)

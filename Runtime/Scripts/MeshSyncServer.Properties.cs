@@ -111,6 +111,10 @@ namespace Unity.MeshSync
                         m_server.SendProperty(prop);
                         prop.IsDirty = false;
                         sendChanges  = true;
+
+#if VERBOSE_LOGS
+                        Debug.Log($"Sending changes, property '{prop.name}' was dirty.");
+#endif
                     }
                 }
 
@@ -163,12 +167,18 @@ namespace Unity.MeshSync
                 }
 
                 if (needsPythonCallback) {
+#if VERBOSE_LOGS
+                    Debug.Log("Sending changes, needed python callback.");
+#endif
                     needsPythonCallback = false;
                     sendChanges         = true;
 
                     m_server.RequestPythonCallback();
                 }
                 else if (needsClientSync) {
+#if VERBOSE_LOGS
+                    Debug.Log("Sending changes, needed client sync.");
+#endif
                     needsClientSync = false;
                     sendChanges     = true;
 
@@ -176,9 +186,7 @@ namespace Unity.MeshSync
                 }
 
                 if (sendChanges) {
-                    CurrentPropertiesState =  PropertiesState.Sending;
-                    onSceneUpdateEnd       -= SceneUpdated;
-                    onSceneUpdateEnd       += SceneUpdated;
+                    CurrentPropertiesState = PropertiesState.Sending;
                     m_server.MarkServerInitiatedResponseReady();
                 }
             }
@@ -280,17 +288,19 @@ namespace Unity.MeshSync
         {
         }
 
-        void SceneUpdated()
-        {
-            onSceneUpdateEnd -= SceneUpdated;
-
+#if UNITY_EDITOR
+        internal override void AfterUpdateScene() {
+            base.AfterUpdateScene();
+            
             CurrentPropertiesState = PropertiesState.Received;
         }
 
-#if UNITY_EDITOR
-        internal override void ClearInstancePrefabs()
-        {
+        internal override void ClearInstancePrefabs() {
             base.ClearInstancePrefabs();
+
+#if VERBOSE_LOGS
+            Debug.Log("Clearing instance prefabs.");
+#endif
 
             needsClientSync = true;
         }
