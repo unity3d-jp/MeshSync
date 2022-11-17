@@ -8,7 +8,7 @@ namespace Unity.MeshSync {
 [Serializable]
 [CustomStyle("KeyFrameMarker")]
 [HideInMenu]
-internal class SceneCacheFrameMarker : Marker, INotification {
+internal class KeyFrameMarker : Marker, INotification {
 
     
     internal void Init(PlayableKeyFrame controller, double initialTime) {

@@ -10,15 +10,15 @@ using UnityObject = UnityEngine.Object;
 
 namespace Unity.MeshSync.Editor {
 
-[CustomEditor(typeof(SceneCacheFrameMarker), true)]
+[CustomEditor(typeof(KeyFrameMarker), true)]
 [CanEditMultipleObjects]
 internal class FrameMarkerInspector: UnityEditor.Editor {
 
     void OnEnable() {
         int numTargets = targets.Length;
-        m_assets = new SceneCacheFrameMarker[numTargets];
+        m_assets = new KeyFrameMarker[numTargets];
         for (int i = 0; i < numTargets; i++) {
-            m_assets[i] = targets[i] as SceneCacheFrameMarker;
+            m_assets[i] = targets[i] as KeyFrameMarker;
         }        
     }
 
@@ -28,7 +28,7 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
         KeyFrameMode    prevMode         = m_assets[0].GetOwner().GetKeyFrameMode();
         KeyFrameMode    mode             = (KeyFrameMode) EditorGUILayout.EnumPopup($"Mode ({useFrameShortcut})", prevMode);
         if (mode != prevMode) {
-            foreach (SceneCacheFrameMarker m in m_assets) {
+            foreach (KeyFrameMarker m in m_assets) {
                 m.GetOwner().SetKeyFrameMode(mode);
             }
         }
@@ -36,7 +36,7 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
         int prevPlayFrame = m_assets[0].GetOwner().GetPlayFrame();
         int playFrame     = EditorGUILayout.IntField("Frame To Play: ", prevPlayFrame);
         if (prevPlayFrame != playFrame) {
-            foreach (SceneCacheFrameMarker m in m_assets) {
+            foreach (KeyFrameMarker m in m_assets) {
                 PlayableKeyFrame playableKeyFrame = m.GetOwner();
                 playableKeyFrame.SetPlayFrame(playFrame);
             }
@@ -74,7 +74,7 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    internal static void ChangeKeyFrameMode(SceneCacheFrameMarker frameMarker) {
+    internal static void ChangeKeyFrameMode(KeyFrameMarker frameMarker) {
         PlayableKeyFrame playableKeyFrame = frameMarker.GetOwner();
         KeyFrameMode     prevValue        = playableKeyFrame.GetKeyFrameMode();
 
@@ -99,7 +99,7 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
         string userNote = userNoteObj?.ToString();
         
         if (userNote != prevNote) {
-            foreach (SceneCacheFrameMarker frameMarker in m_assets) {
+            foreach (KeyFrameMarker frameMarker in m_assets) {
                 frameMarker.GetOwner().SetUserNote(userNote);
             }
         }
@@ -120,7 +120,7 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
     
     
 //----------------------------------------------------------------------------------------------------------------------
-    private SceneCacheFrameMarker[] m_assets = null;
+    private KeyFrameMarker[] m_assets = null;
     Vector2               m_noteScroll  = Vector2.zero;
     
 
