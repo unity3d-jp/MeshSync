@@ -378,7 +378,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
     //may return null
-    internal PlayableKeyFrame GetPlayableFrame(int index) {
+    internal PlayableKeyFrame GetPlayableKeyFrame(int index) {
         if (null == m_playableKeyFrames || index >= m_playableKeyFrames.Count)
             return null;
         
