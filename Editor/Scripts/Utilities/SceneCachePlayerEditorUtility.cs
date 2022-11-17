@@ -182,11 +182,18 @@ internal static class SceneCachePlayerEditorUtility {
         
         //Limited Animation
         changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, UNDO_TEXT,
-            guiFunc: () => (EditorGUILayout.Toggle("Limited Animation", ctrl.IsEnabled())),
+            guiFunc: () => (EditorGUILayout.Toggle("Limited Animation (Obsolete !)", ctrl.IsEnabled())),
             updateFunc: (bool limitedAnimation) => {
                 ctrl.SetEnabled(limitedAnimation);
                 SceneCachePlayerEditorUtility.RefreshSceneCache(sc);
             });
+
+        if (ctrl.IsEnabled()) {
+            EditorGUILayout.HelpBox(
+                "Limited Animation is obsolete and will be replaced by frame adjustment.", 
+                MessageType.Warning
+            );            
+        }        
 
         ++EditorGUI.indentLevel;
         using (new EditorGUI.DisabledScope(!ctrl.IsEnabled())) {
