@@ -384,7 +384,10 @@ public class SceneCachePlayer : BaseMeshSync {
             m_timeUnit = TimeUnit.Seconds;
         }
 #pragma warning restore 612
-        
+
+        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.RemoveAnimator_0_16_0) {
+            Debug.LogWarning("[MeshSync] SceneCachePlayer no longer requires Animator component. Please remove it if applicable.");
+        }
 #endif
         
         m_sceneCachePlayerVersion = CUR_SCENE_CACHE_PLAYER_VERSION;
@@ -518,7 +521,7 @@ public class SceneCachePlayer : BaseMeshSync {
     
     //Renamed in 0.10.x-preview
     [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_sceneCachePlayerVersion = (int) SceneCachePlayerVersion.NoVersioning;
-    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.PlaybackMode_0_12_0;
+    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.RemoveAnimator_0_16_0;
         
     SceneCacheData m_sceneCache;
 
@@ -536,11 +539,11 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------    
     
     enum SceneCachePlayerVersion {
-        NoVersioning         = 0, //Didn't have versioning in earlier versions
-        StringPath_0_4_0     = 2, //0.4.0-preview: the path is declared as a string 
-        NormalizedPath_0_9_2 = 3, //0.9.2-preview: Path must be normalized by default 
-        PlaybackMode_0_12_0 = 4, //0.12.0-preview: integrate frame/time unit and interpolation into playback mode  
-    
+        NoVersioning          = 0, //Didn't have versioning in earlier versions
+        StringPath_0_4_0      = 2, //0.4.0-preview: the path is declared as a string 
+        NormalizedPath_0_9_2  = 3, //0.9.2-preview: Path must be normalized by default 
+        PlaybackMode_0_12_0   = 4, //0.12.0-preview: integrate frame/time unit and interpolation into playback mode  
+        RemoveAnimator_0_16_0 = 5, //0.16.0-preview. Animator is removed, and animating has to be performed via Timeline  
     }
     
 }
