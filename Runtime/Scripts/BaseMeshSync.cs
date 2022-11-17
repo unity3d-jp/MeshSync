@@ -810,8 +810,6 @@ internal delegate void DeleteInstanceHandler(string path);
             {
                 // mark scene dirty
                 EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
-
-                UpdateLODGroups();
             }
 #endif
 
@@ -822,84 +820,7 @@ internal delegate void DeleteInstanceHandler(string path);
             if (onSceneUpdateEnd != null)
                 onSceneUpdateEnd.Invoke();
         }
-
-        void UpdateLODGroups() {
-            if (!GenerateLODGroup) {
-                return;
-            }
-
-            // Add an LOD group component if we have LODs:
-
-            // Find out how many LODs we got:
-            int lodCount = 0;
-
-            Dictionary<int, List<Renderer>> lodRenderers = new Dictionary<int, List<Renderer>>();
-
-            foreach (var child in GetComponentsInChildren<Transform>()) {
-                // If the name ends in LODx it needs to be put in an LOD group:
-                if (child.name.IndexOf("LOD") != child.name.Length - 4)
-                    continue;
-
-                if (!int.TryParse(child.name.Substring(child.name.Length - 1), out int lod)) 
-                    continue;
-
-                lodCount = Mathf.Max(lodCount, lod + 1);
-
-                if (!lodRenderers.ContainsKey(lod)) {
-                    lodRenderers[lod] = new List<Renderer>();
-                }
-
-                lodRenderers[lod].AddRange(child.GetComponentsInChildren<Renderer>());
-            }
-
-            if (lodCount == 0) {
-                return;
-            }
-
-            // If there are no renderers, don't create groups:
-            bool hasRenderers = false;
-            foreach (List<Renderer> renderers in lodRenderers.Values) {
-                if (renderers.Count > 0) {
-                    hasRenderers = true;
-                    break;
-                }
-            }
-
-            if (!hasRenderers) {
-                if (InstanceHandling == InstanceHandlingType.InstanceRenderer) {
-                    Debug.LogWarning("LOD groups are not supported for the 'Instance Renderer' instance handling method. Please use Copies or Prefabs.");
-                }
-
-                return;
-            }
-
-            var lodGroup = Misc.GetOrAddComponent<LODGroup>(gameObject);
-
-            // Ensure the LOD groups exist:
-            var existingLods = lodGroup.GetLODs();
-
-            // Only create groups if we don't already have what we need:
-            if (existingLods.Length != lodCount) {
-                List<LOD> lods = new List<LOD>();
-                foreach (var lodKVP in lodRenderers) {
-                    lods.Add(new LOD(
-                        Mathf.Clamp(1f / (lodKVP.Key + 1), 0.1f, 0.9f),
-                        lodKVP.Value.ToArray()));
-                }
-
-                lods.Sort((a, b) => b.screenRelativeTransitionHeight.CompareTo(a.screenRelativeTransitionHeight));
-
-                lodGroup.SetLODs(lods.ToArray());
-            }
-            else {
-                foreach (var lodKVP in lodRenderers) {
-                    existingLods[lodKVP.Key].renderers = lodKVP.Value.ToArray();
-                }
-
-                // Need to set this again to ensure it refreshes:
-                lodGroup.SetLODs(existingLods);
-            }
-        }
+        
 
         //----------------------------------------------------------------------------------------------------------------------
 
