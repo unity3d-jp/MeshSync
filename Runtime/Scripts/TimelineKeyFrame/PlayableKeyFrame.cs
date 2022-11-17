@@ -171,4 +171,4 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
 //[Note-Sin: 2022-11-17] PlayableKeyFrame
 //* A structure to store if we should use the image at a particular frame
 //* SceneCacheTrack owns PlayableKeyFrame, which is associated with a TimelineClip.
-//* PlayableKeyFrame  owns FrameMarker.
+//* PlayableKeyFrame owns KeyFrameMarker.
