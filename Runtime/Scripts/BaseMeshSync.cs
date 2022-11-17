@@ -2869,7 +2869,7 @@ internal delegate void DeleteInstanceHandler(string path);
     [SerializeField] private EntityRecordDictionary m_clientInstancedEntities = new EntityRecordDictionary();
 
     private protected Action m_onMaterialChangedInSceneViewCB = null;
-
+    
 #if AT_USE_HDRP
     private bool m_pathTracingExists      = false;
     private bool m_needToResetPathTracing = false;
