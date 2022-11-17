@@ -386,7 +386,7 @@ public class SceneCachePlayer : BaseMeshSync {
 #pragma warning restore 612
 
         if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.RemoveAnimator_0_16_0) {
-            Debug.LogWarning("[MeshSync] SceneCachePlayer no longer requires Animator component.");
+            Debug.LogWarning("[MeshSync] SceneCachePlayer no longer requires Animator component. Please remove it if applicable.");
         }
 #endif
         
