@@ -51,4 +51,4 @@ internal class FrameMarker : Marker, INotification {
 } //end namespace
 
 
-//A visual representation (Marker) of SISPlayableFrame
+//A visual representation (Marker) of SceneCachePlayableFrame
