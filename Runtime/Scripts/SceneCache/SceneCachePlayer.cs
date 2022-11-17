@@ -373,18 +373,6 @@ public class SceneCachePlayer : BaseMeshSync {
         frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
         return frame;
     }
-
-    private static int CalculateFrameByFloor(float time, SceneCacheInfo scInfo) {
-        int frame = Mathf.FloorToInt(time * scInfo.sampleRate);
-        frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
-        return frame;
-    }
-
-    private static int CalculateFrameByRound(float time, SceneCacheInfo scInfo) {
-        int frame = Mathf.RoundToInt(time * scInfo.sampleRate);
-        frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
-        return frame;
-    }
     
 //----------------------------------------------------------------------------------------------------------------------
     internal bool IsLimitedAnimationOverrideable() {
