@@ -17,20 +17,20 @@ namespace Unity.MeshSync {
 internal abstract class PlayableFrameClipData : BaseClipData {
 
     protected PlayableFrameClipData() {
-        m_playableFrames = new List<PlayableFrame>();
+        m_playableFrames = new List<PlayableKeyFrame>();
     }
 
     protected PlayableFrameClipData(TimelineClip clipOwner) {
         SetOwner(clipOwner);
-        m_playableFrames = new List<PlayableFrame>();
+        m_playableFrames = new List<PlayableKeyFrame>();
     }
 
     protected PlayableFrameClipData(TimelineClip owner, PlayableFrameClipData other) : this(owner){
         Assert.IsNotNull(m_playableFrames);
         
-        foreach (PlayableFrame otherFrame in other.m_playableFrames) {
-            PlayableFrame newFrame = new PlayableFrame(this, otherFrame);
-            m_playableFrames.Add(newFrame);
+        foreach (PlayableKeyFrame otherFrame in other.m_playableFrames) {
+            PlayableKeyFrame newKeyFrame = new PlayableKeyFrame(this, otherFrame);
+            m_playableFrames.Add(newKeyFrame);
         }
         
         m_frameMarkersRequested = other.m_frameMarkersRequested;
@@ -43,7 +43,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     }
 
     protected override void OnAfterDeserializeInternalV() {
-        foreach (PlayableFrame playableFrame in m_playableFrames) {
+        foreach (PlayableKeyFrame playableFrame in m_playableFrames) {
             playableFrame.SetOwner(this);
         }
     }    
@@ -51,7 +51,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 //----------------------------------------------------------------------------------------------------------------------
     internal override void DestroyV() {
 
-        foreach (PlayableFrame playableFrame in m_playableFrames) {
+        foreach (PlayableKeyFrame playableFrame in m_playableFrames) {
             playableFrame.Destroy();
         }
 
@@ -99,12 +99,12 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 #endif    
     
 //----------------------------------------------------------------------------------------------------------------------    
-    private static PlayableFrame CreatePlayableFrame(PlayableFrameClipData owner, int index, double timePerFrame) 
+    private static PlayableKeyFrame CreatePlayableFrame(PlayableFrameClipData owner, int index, double timePerFrame) 
     {
-        PlayableFrame playableFrame = new PlayableFrame(owner);
-        playableFrame.SetIndexAndLocalTime(index, timePerFrame * index);
-        playableFrame.SetPlayFrame(index);
-        return playableFrame;
+        PlayableKeyFrame playableKeyFrame = new PlayableKeyFrame(owner);
+        playableKeyFrame.SetIndexAndLocalTime(index, timePerFrame * index);
+        playableKeyFrame.SetPlayFrame(index);
+        return playableKeyFrame;
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
@@ -114,7 +114,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 
         //Recalculate the number of frames and create the marker's ground truth data
         int numFrames = TimelineUtility.CalculateNumFrames(GetOwner());
-        m_playableFrames = new List<PlayableFrame>(numFrames);
+        m_playableFrames = new List<PlayableKeyFrame>(numFrames);
         UpdatePlayableFramesSize(numFrames);                
     }
 
@@ -124,7 +124,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         if (null == m_playableFrames)
             return;
         
-        foreach (PlayableFrame frame in m_playableFrames) {
+        foreach (PlayableKeyFrame frame in m_playableFrames) {
             frame?.Destroy();
         }        
     } 
@@ -173,35 +173,35 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             
         //already enabled
         int              frameIndex = LocalTimeToFrameIndex(globalTime - clip.start, clip.duration);
-        PlayableFrame frame   = m_playableFrames[frameIndex];
-        if (frame.IsEnabled())
+        PlayableKeyFrame keyFrame   = m_playableFrames[frameIndex];
+        if (keyFrame.IsEnabled())
             return;
         
-        frame.SetEnabled(true);
-        frame.SetUserNote("");
+        keyFrame.SetEnabled(true);
+        keyFrame.SetUserNote("");
         
-        frame.SetKeyFrameMode(KeyFrameMode.Continuous);
+        keyFrame.SetKeyFrameMode(KeyFrameMode.Continuous);
         
-        PlayableFrame prevEnabledFrame = FindEnabledKeyFrame(m_playableFrames, frameIndex - 1, 0);
-        if (null == prevEnabledFrame)
-            prevEnabledFrame = m_playableFrames[0];
+        PlayableKeyFrame prevEnabledKeyFrame = FindEnabledKeyFrame(m_playableFrames, frameIndex - 1, 0);
+        if (null == prevEnabledKeyFrame)
+            prevEnabledKeyFrame = m_playableFrames[0];
 
-        if (KeyFrameMode.Hold == prevEnabledFrame.GetKeyFrameMode()) {
-            frame.SetPlayFrame(prevEnabledFrame.GetPlayFrame());
+        if (KeyFrameMode.Hold == prevEnabledKeyFrame.GetKeyFrameMode()) {
+            keyFrame.SetPlayFrame(prevEnabledKeyFrame.GetPlayFrame());
         } else {
             
-            PlayableFrame nextEnabledFrame = FindEnabledKeyFrame(m_playableFrames, frameIndex + 1, m_playableFrames.Count);
-            if (null == nextEnabledFrame)
-                nextEnabledFrame = m_playableFrames[frameIndex];
+            PlayableKeyFrame nextEnabledKeyFrame = FindEnabledKeyFrame(m_playableFrames, frameIndex + 1, m_playableFrames.Count);
+            if (null == nextEnabledKeyFrame)
+                nextEnabledKeyFrame = m_playableFrames[frameIndex];
         
-            AnimationCurve linearCurve = AnimationCurve.Linear((float)prevEnabledFrame.GetLocalTime(), prevEnabledFrame.GetPlayFrame(), 
-                (float)nextEnabledFrame.GetLocalTime(), nextEnabledFrame.GetPlayFrame());
-            int frameNo = (int )linearCurve.Evaluate((float)frame.GetLocalTime());
-            frame.SetPlayFrame(frameNo);
+            AnimationCurve linearCurve = AnimationCurve.Linear((float)prevEnabledKeyFrame.GetLocalTime(), prevEnabledKeyFrame.GetPlayFrame(), 
+                (float)nextEnabledKeyFrame.GetLocalTime(), nextEnabledKeyFrame.GetPlayFrame());
+            int frameNo = (int )linearCurve.Evaluate((float)keyFrame.GetLocalTime());
+            keyFrame.SetPlayFrame(frameNo);
         }
         
         if (m_frameMarkersVisibility)
-            frame.RefreshMarker(m_frameMarkersVisibility);
+            keyFrame.RefreshMarker(m_frameMarkersVisibility);
         
         
     }
@@ -210,7 +210,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 
     internal void OnGraphStart() {
         if (m_needToRefreshTimelineEditor) {
-            foreach (PlayableFrame playableKeyFrame in m_playableFrames) {
+            foreach (PlayableKeyFrame playableKeyFrame in m_playableFrames) {
                 playableKeyFrame.RefreshMarker(m_frameMarkersVisibility);
             }
             TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved);
@@ -238,9 +238,9 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         
         
         for (int i = 0; i < numPlayableFrames; ++i) {
-            PlayableFrame keyFrame = m_playableFrames[i];
-            keyFrame.SaveStateFromMarker();
-            int moveDestIndex = Mathf.RoundToInt((float)(keyFrame.GetLocalTime() * numPlayableFrames / clipOwner.duration));
+            PlayableKeyFrame keyKeyFrame = m_playableFrames[i];
+            keyKeyFrame.SaveStateFromMarker();
+            int moveDestIndex = Mathf.RoundToInt((float)(keyKeyFrame.GetLocalTime() * numPlayableFrames / clipOwner.duration));
             moveDestIndex = Mathf.Clamp(moveDestIndex,0,numPlayableFrames - 1);
             
             if (moveDestIndex == i)
@@ -250,8 +250,8 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             movedKeyFrames[moveDestIndex] = (new KeyFrameInfo() {
                 enabled = true,
                 //localTime = keyFrame.GetLocalTime(),
-                mode    = keyFrame.GetKeyFrameMode(),
-                playFrame = keyFrame.GetPlayFrame(),
+                mode    = keyKeyFrame.GetKeyFrameMode(),
+                playFrame = keyKeyFrame.GetPlayFrame(),
             });
             
 
@@ -349,7 +349,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
             
             //Change the size of m_playableFrames and reinitialize if necessary
             List<KeyFrameMode> prevKeyFrameModes = new List<KeyFrameMode>(prevNumPlayableFrames);
-            foreach (PlayableFrame frame in m_playableFrames) {
+            foreach (PlayableKeyFrame frame in m_playableFrames) {
                 //if frame ==null, just use the default
                 prevKeyFrameModes.Add(null == frame ? KeyFrameMode.Continuous : frame.GetKeyFrameMode()); 
             }
@@ -378,7 +378,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
     //may return null
-    internal PlayableFrame GetPlayableFrame(int index) {
+    internal PlayableKeyFrame GetPlayableFrame(int index) {
         if (null == m_playableFrames || index >= m_playableFrames.Count)
             return null;
         
@@ -397,7 +397,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         //Resize m_playableFrames
         if (m_playableFrames.Count < reqPlayableFramesSize) {
             int             numNewPlayableFrames = (reqPlayableFramesSize - m_playableFrames.Count);
-            List<PlayableFrame> newPlayableFrames = new List<PlayableFrame>(numNewPlayableFrames);           
+            List<PlayableKeyFrame> newPlayableFrames = new List<PlayableKeyFrame>(numNewPlayableFrames);           
             for (int i = m_playableFrames.Count; i < reqPlayableFramesSize; ++i) {
                 newPlayableFrames.Add(CreatePlayableFrame(this,i, timePerFrame));
             }            
@@ -407,8 +407,8 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         if (m_playableFrames.Count > reqPlayableFramesSize) {
             int numLastPlayableFrames = m_playableFrames.Count;
             for (int i = reqPlayableFramesSize; i < numLastPlayableFrames; ++i) {
-                PlayableFrame curFrame = m_playableFrames[i];
-                curFrame?.Destroy();
+                PlayableKeyFrame curKeyFrame = m_playableFrames[i];
+                curKeyFrame?.Destroy();
             }            
             m_playableFrames.RemoveRange(reqPlayableFramesSize, numLastPlayableFrames - reqPlayableFramesSize);
         }
@@ -416,8 +416,8 @@ internal abstract class PlayableFrameClipData : BaseClipData {
         Assert.IsTrue(m_playableFrames.Count == reqPlayableFramesSize);
            
         for (int i = 0; i < reqPlayableFramesSize; ++i) {
-            PlayableFrame curPlayableFrame = m_playableFrames[i];
-            Assert.IsNotNull(curPlayableFrame);                
+            PlayableKeyFrame curPlayableKeyFrame = m_playableFrames[i];
+            Assert.IsNotNull(curPlayableKeyFrame);                
             m_playableFrames[i].SetIndexAndLocalTime(i, timePerFrame * i);
             
         }                        
@@ -456,7 +456,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 
 
     [CanBeNull]
-    static PlayableFrame FindEnabledKeyFrame(IList<PlayableFrame> keyFrames, int startIndex, int endIndex) {
+    static PlayableKeyFrame FindEnabledKeyFrame(IList<PlayableKeyFrame> keyFrames, int startIndex, int endIndex) {
 
         int counter = (int)Mathf.Sign(endIndex - startIndex);
         for (int i = startIndex; i != endIndex; i += counter) {
@@ -470,7 +470,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
     
     //The ground truth for using/dropping an image in a particular frame. See the notes below
-    [SerializeField] private List<PlayableFrame> m_playableFrames;
+    [SerializeField] private List<PlayableKeyFrame> m_playableFrames;
     [SerializeField] [HideInInspector] private bool m_frameMarkersRequested = true;
 
     [SerializeField] [HideInInspector] private float m_lastClipStartTimeOnRefresh = 0;

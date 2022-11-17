@@ -14,20 +14,20 @@ class FrameMarkerEditor : MarkerEditor {
         if (null == marker)
             return;
 
-        PlayableFrame playableFrame = marker.GetOwner();
+        PlayableKeyFrame playableKeyFrame = marker.GetOwner();
         
         //Check invalid PlayableFrame/ClipData. Perhaps because of unsupported Duplicate operation ?
-        PlayableFrameClipData clipData = playableFrame?.GetOwner();
+        PlayableFrameClipData clipData = playableKeyFrame?.GetOwner();
         if (clipData == null)
             return;
         
-        KeyFrameMode keyFrameMode = playableFrame.GetKeyFrameMode();
+        KeyFrameMode keyFrameMode = playableKeyFrame.GetKeyFrameMode();
 
         const int TEXT_WIDTH = 30;
         Rect      labelRect  = region.markerRegion;
         labelRect.x     += labelRect.width;
         labelRect.width =  TEXT_WIDTH;
-        DrawFrameNumber(labelRect, clipData, playableFrame.GetPlayFrame());
+        DrawFrameNumber(labelRect, clipData, playableKeyFrame.GetPlayFrame());
         
         switch (keyFrameMode) {
             case KeyFrameMode.Continuous: {

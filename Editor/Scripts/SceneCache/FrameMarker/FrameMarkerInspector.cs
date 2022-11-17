@@ -37,32 +37,32 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
         int playFrame     = EditorGUILayout.IntField("Frame To Play: ", prevPlayFrame);
         if (prevPlayFrame != playFrame) {
             foreach (SceneCacheFrameMarker m in m_assets) {
-                PlayableFrame playableFrame = m.GetOwner();
-                playableFrame.SetPlayFrame(playFrame);
+                PlayableKeyFrame playableKeyFrame = m.GetOwner();
+                playableKeyFrame.SetPlayFrame(playFrame);
             }
-            TimelineEditor.Refresh(RefreshReason.ContentsModified);            
+            TimelineEditor.Refresh(RefreshReason.ContentsModified);
         }
         
 
         if (1 == m_assets.Length) {
-            PlayableFrame playableFrame = m_assets[0].GetOwner();
-            string           prevNote      = playableFrame?.GetUserNote();            
-            DrawNoteGUI(prevNote);            
+            PlayableKeyFrame playableKeyFrame = m_assets[0].GetOwner();
+            string           prevNote      = playableKeyFrame?.GetUserNote();
+            DrawNoteGUI(prevNote);
         } else {
 
             int numSelectedAssets = m_assets.Length;
             Assert.IsTrue(numSelectedAssets > 1);
-            PlayableFrame firstPlayableFrame = m_assets[0].GetOwner();
+            PlayableKeyFrame firstPlayableKeyFrame = m_assets[0].GetOwner();
             //Check invalid PlayableFrame. Perhaps because of unsupported Duplicate operation ?
-            if (null == firstPlayableFrame) {
+            if (null == firstPlayableKeyFrame) {
                 return;
             }
-            string prevNote = firstPlayableFrame.GetUserNote();
+            string prevNote = firstPlayableKeyFrame.GetUserNote();
             for (int i = 1; i < numSelectedAssets; ++i) {
-                PlayableFrame playableFrame = m_assets[i].GetOwner();
-                if (playableFrame.GetUserNote() != prevNote) {
+                PlayableKeyFrame playableKeyFrame = m_assets[i].GetOwner();
+                if (playableKeyFrame.GetUserNote() != prevNote) {
                     prevNote = "<different notes>";
-                }                                
+                }
             }
 
             DrawNoteGUI(prevNote);
@@ -75,10 +75,10 @@ internal class FrameMarkerInspector: UnityEditor.Editor {
 //----------------------------------------------------------------------------------------------------------------------
 
     internal static void ChangeKeyFrameMode(SceneCacheFrameMarker frameMarker) {
-        PlayableFrame playableFrame = frameMarker.GetOwner();
-        KeyFrameMode            prevValue     = playableFrame.GetKeyFrameMode();
+        PlayableKeyFrame playableKeyFrame = frameMarker.GetOwner();
+        KeyFrameMode     prevValue        = playableKeyFrame.GetKeyFrameMode();
 
-        playableFrame.SetKeyFrameMode(prevValue == KeyFrameMode.Continuous? KeyFrameMode.Hold : KeyFrameMode.Continuous);
+        playableKeyFrame.SetKeyFrameMode(prevValue == KeyFrameMode.Continuous? KeyFrameMode.Hold : KeyFrameMode.Continuous);
     }
 //----------------------------------------------------------------------------------------------------------------------
 
