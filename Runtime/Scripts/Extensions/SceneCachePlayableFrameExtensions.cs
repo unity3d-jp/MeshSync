@@ -8,7 +8,7 @@ using UnityEditor.Timeline;
 namespace Unity.MeshSync {
     
 [Serializable]
-internal static class PlayableFrameExtension {
+internal static class SceneCachePlayableFrameExtensions {
 
 //----------------------------------------------------------------------------------------------------------------------        
     
