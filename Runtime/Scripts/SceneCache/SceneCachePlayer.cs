@@ -76,8 +76,6 @@ public class SceneCachePlayer : BaseMeshSync {
     internal SceneCachePlaybackMode GetPlaybackMode() { return m_playbackMode; }
 
     internal void SetPlaybackMode(SceneCachePlaybackMode mode) { m_playbackMode = mode; }
-
-    internal LimitedAnimationController GetLimitedAnimationController() { return m_limitedAnimationController; }
     
     internal float GetTime() { return m_time;}
     internal void SetTime(float time) { m_time = time; }
@@ -289,13 +287,13 @@ public class SceneCachePlayer : BaseMeshSync {
         frame = m_frame; //no change by default        
         switch (m_playbackMode) {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
-                frame = CalculateFrameByFloor(time, m_sceneCacheInfo, m_limitedAnimationController);
+                frame = CalculateFrameByFloor(time, m_sceneCacheInfo);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
 
             case SceneCachePlaybackMode.SnapToNearestFrame: {
-                frame = CalculateFrameByRound(time, m_sceneCacheInfo, m_limitedAnimationController);
+                frame = CalculateFrameByRound(time, m_sceneCacheInfo);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
@@ -342,12 +340,21 @@ public class SceneCachePlayer : BaseMeshSync {
         frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
         return frame;
     }
+
+    private static int CalculateFrameByFloor(float time, SceneCacheInfo scInfo) {
+        int frame = Mathf.FloorToInt(time * scInfo.sampleRate);
+        frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
+        return frame;
+    }
+
+    private static int CalculateFrameByRound(float time, SceneCacheInfo scInfo) {
+        int frame = Mathf.RoundToInt(time * scInfo.sampleRate);
+        frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
+        return frame;
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
     internal bool IsLimitedAnimationOverrideable() {
-        if (m_limitedAnimationController.IsEnabled())
-            return false;
-
         if (m_playbackMode == SceneCachePlaybackMode.Interpolate)
             return false;
 
@@ -355,8 +362,6 @@ public class SceneCachePlayer : BaseMeshSync {
     }
 
     internal void AllowLimitedAnimationOverride() {
-        m_limitedAnimationController.SetEnabled(false);
-
         if (m_playbackMode == SceneCachePlaybackMode.Interpolate)
             m_playbackMode = SceneCachePlaybackMode.SnapToNearestFrame;
 
@@ -503,8 +508,6 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] private TimeUnit m_timeUnit = TimeUnit.Seconds;
     
     [SerializeField] private SceneCachePlaybackMode m_playbackMode = SceneCachePlaybackMode.SnapToNearestFrame;
-
-    [SerializeField] private LimitedAnimationController m_limitedAnimationController = new LimitedAnimationController();
     
     [SerializeField] float     m_time;
     [SerializeField] int       m_preloadLength = 1;
