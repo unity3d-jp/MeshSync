@@ -15,11 +15,11 @@ namespace Unity.MeshSync {
 [Serializable]
 internal class PlayableKeyFrame : ISerializationCallbackReceiver {
 
-    internal PlayableKeyFrame(PlayableFrameClipData owner) {
+    internal PlayableKeyFrame(KeyFrameControllerClipData owner) {
         m_clipDataOwner            = owner;
     }
 
-    internal PlayableKeyFrame(PlayableFrameClipData owner, PlayableKeyFrame otherKeyFrame) {
+    internal PlayableKeyFrame(KeyFrameControllerClipData owner, PlayableKeyFrame otherKeyFrame) {
         m_clipDataOwner = owner;
         m_localTime     = otherKeyFrame.m_localTime;
         m_playFrame     = otherKeyFrame.m_playFrame;
@@ -49,8 +49,8 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    internal void        SetOwner(PlayableFrameClipData owner) {  m_clipDataOwner = owner;}
-    internal PlayableFrameClipData GetOwner()                             {  return m_clipDataOwner; }    
+    internal void        SetOwner(KeyFrameControllerClipData owner) {  m_clipDataOwner = owner;}
+    internal KeyFrameControllerClipData GetOwner()                             {  return m_clipDataOwner; }    
     internal double      GetLocalTime()                                   { return m_localTime; }
 
     internal int GetPlayFrame() { return m_playFrame; }
@@ -159,7 +159,7 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
     
     [HideInInspector][SerializeField] private KeyFrameMarker        m_marker = null;
     [HideInInspector][SerializeField] private string                m_userNote;
-    [NonSerialized]                   private PlayableFrameClipData m_clipDataOwner = null;
+    [NonSerialized]                   private KeyFrameControllerClipData m_clipDataOwner = null;
 
     private int m_index;
 

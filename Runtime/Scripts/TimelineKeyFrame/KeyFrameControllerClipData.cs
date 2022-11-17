@@ -14,18 +14,18 @@ using UnityEditor;
 namespace Unity.MeshSync {
 
 [Serializable]
-internal abstract class PlayableFrameClipData : BaseClipData {
+internal abstract class KeyFrameControllerClipData : BaseClipData {
 
-    protected PlayableFrameClipData() {
+    protected KeyFrameControllerClipData() {
         m_playableFrames = new List<PlayableKeyFrame>();
     }
 
-    protected PlayableFrameClipData(TimelineClip clipOwner) {
+    protected KeyFrameControllerClipData(TimelineClip clipOwner) {
         SetOwner(clipOwner);
         m_playableFrames = new List<PlayableKeyFrame>();
     }
 
-    protected PlayableFrameClipData(TimelineClip owner, PlayableFrameClipData other) : this(owner){
+    protected KeyFrameControllerClipData(TimelineClip owner, KeyFrameControllerClipData other) : this(owner){
         Assert.IsNotNull(m_playableFrames);
         
         foreach (PlayableKeyFrame otherFrame in other.m_playableFrames) {
@@ -99,7 +99,7 @@ internal abstract class PlayableFrameClipData : BaseClipData {
 #endif    
     
 //----------------------------------------------------------------------------------------------------------------------    
-    private static PlayableKeyFrame CreatePlayableFrame(PlayableFrameClipData owner, int index, double timePerFrame) 
+    private static PlayableKeyFrame CreatePlayableFrame(KeyFrameControllerClipData owner, int index, double timePerFrame) 
     {
         PlayableKeyFrame playableKeyFrame = new PlayableKeyFrame(owner);
         playableKeyFrame.SetIndexAndLocalTime(index, timePerFrame * index);

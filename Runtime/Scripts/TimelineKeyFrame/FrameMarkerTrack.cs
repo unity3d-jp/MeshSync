@@ -7,7 +7,7 @@ namespace Unity.MeshSync {
 /// A track which has FrameMarkers and stores extra ClipData for TimelineClips inside Track
 /// </summary>
 internal abstract class FrameMarkerTrack<T>: BaseExtendedClipTrack<T>
-where T: PlayableFrameClipData, new()
+where T: KeyFrameControllerClipData, new()
 {
 
     protected void DeleteInvalidMarkers() {

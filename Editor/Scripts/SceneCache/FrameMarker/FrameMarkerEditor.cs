@@ -17,7 +17,7 @@ class FrameMarkerEditor : MarkerEditor {
         PlayableKeyFrame playableKeyFrame = marker.GetOwner();
         
         //Check invalid PlayableFrame/ClipData. Perhaps because of unsupported Duplicate operation ?
-        PlayableFrameClipData clipData = playableKeyFrame?.GetOwner();
+        KeyFrameControllerClipData clipData = playableKeyFrame?.GetOwner();
         if (clipData == null)
             return;
         
@@ -42,7 +42,7 @@ class FrameMarkerEditor : MarkerEditor {
         
     }
 
-    void DrawFrameNumber(Rect rect, PlayableFrameClipData clipData, int frame) {
+    void DrawFrameNumber(Rect rect, KeyFrameControllerClipData clipData, int frame) {
         Assert.IsNotNull(clipData);
         
         TimelineClip clip = clipData.GetOwner();
