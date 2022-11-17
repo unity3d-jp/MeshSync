@@ -7,7 +7,7 @@ using UnityEngine.Timeline;
 namespace Unity.MeshSync.Editor {
 
 [CustomTimelineEditor(typeof(KeyFrameMarker))]
-class FrameMarkerEditor : MarkerEditor {
+class KeyFrameMarkerEditor : MarkerEditor {
 
     public override void DrawOverlay(IMarker m, MarkerUIStates uiState, MarkerOverlayRegion region) {
         KeyFrameMarker marker = m as KeyFrameMarker;
