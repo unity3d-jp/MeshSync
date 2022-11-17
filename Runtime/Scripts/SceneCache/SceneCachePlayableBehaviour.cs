@@ -45,11 +45,7 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
 
     private static double CalculateTimeForLimitedAnimation(SceneCachePlayer scPlayer, 
         LimitedAnimationController overrideLimitedAnimationController, double time)  
-    {
-        LimitedAnimationController origLimitedAnimationController = scPlayer.GetLimitedAnimationController();
-        if (origLimitedAnimationController.IsEnabled()) //do nothing if LA is set on the target SceneCache
-            return time;
-        
+    {        
         if (!overrideLimitedAnimationController.IsEnabled())
             return time;
 

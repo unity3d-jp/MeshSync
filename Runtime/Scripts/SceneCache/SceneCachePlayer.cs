@@ -76,8 +76,6 @@ public class SceneCachePlayer : BaseMeshSync {
     internal SceneCachePlaybackMode GetPlaybackMode() { return m_playbackMode; }
 
     internal void SetPlaybackMode(SceneCachePlaybackMode mode) { m_playbackMode = mode; }
-
-    internal LimitedAnimationController GetLimitedAnimationController() { return m_limitedAnimationController; }
     
     internal float GetTime() { return m_time;}
     internal void SetTime(float time) { m_time = time; }
