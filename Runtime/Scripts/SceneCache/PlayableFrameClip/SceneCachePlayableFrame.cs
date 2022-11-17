@@ -66,7 +66,15 @@ internal class SceneCachePlayableFrame : ISerializationCallbackReceiver {
     }
 
     internal void SetKeyFrameMode(KeyFrameMode mode) {
+        if (m_keyFrameMode == mode) {
+            return;
+        }
+        
         m_keyFrameMode = mode;
+#if UNITY_EDITOR
+        TimelineEditor.Refresh(RefreshReason.ContentsModified);
+#endif
+        
     }
 
     internal KeyFrameMode GetKeyFrameMode()  => m_keyFrameMode;
