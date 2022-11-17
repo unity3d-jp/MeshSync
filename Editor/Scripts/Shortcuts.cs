@@ -20,7 +20,7 @@ internal static class Shortcuts  {
         }
     }
     
-    [TimelineShortcut(MeshSyncEditorConstants.SHORTCUT_ADD_KEYFRAME, KeyCode.R, ShortcutModifiers.Shift), UsedImplicitly]
+    [TimelineShortcut(MeshSyncEditorConstants.SHORTCUT_ADD_KEYFRAME, KeyCode.E, ShortcutModifiers.Shift), UsedImplicitly]
     public static void HandleShortCut(ShortcutArguments args) {
         Invoker.InvokeWithSelectedClips<AddKeyFrameSceneCacheClipAction>();
     }    
