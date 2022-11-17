@@ -156,6 +156,10 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 #if UNITY_EDITOR
         EditorApplication.update -= PollServerEvents;
         EditorApplication.update += PollServerEvents;
+        
+        EditorApplication.quitting -= OnEditorQuit;
+        EditorApplication.quitting += OnEditorQuit;
+        
 #endif
         if (m_config.Logging)
             Debug.Log("[MeshSync] Server started (port: " + m_serverSettings.port + ")");
@@ -165,7 +169,13 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 #endif //UNITY_STANDALONE || UNITY_EDITOR
     }
 
-        //----------------------------------------------------------------------------------------------------------------------        
+    private void OnEditorQuit() {
+        if (m_server) {
+            m_server.Abort();
+        }
+    }
+
+    //----------------------------------------------------------------------------------------------------------------------        
 
     internal void StopServer()
     {

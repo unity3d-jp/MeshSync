@@ -7,6 +7,7 @@ namespace Unity.MeshSync.Editor  {
 [CustomEditor(typeof(MeshSyncServer))]
 [InitializeOnLoad]
 internal class MeshSyncServerInspector : BaseMeshSyncInspector {
+    private const string OPT_OUT_INSTANCE_HANDLING = "MeshSync.InstanceHandling.OptOut";
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -87,29 +88,20 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
         }
     }
 
-    protected override bool DrawAdditionalImportSettings(BaseMeshSync t) {
-        MeshSyncServer server = t as MeshSyncServer;
-        if (!server) {
-            return false;
-        }
-
-        bool changed = false;
-        changed |= EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: LOD Group",
-            guiFunc: () => EditorGUILayout.Toggle("Generate LOD Group", server.GenerateLODGroup),
-            updateFunc: (bool val) => { server.GenerateLODGroup = val; }
-        );
-
-        return changed;
-    }
-
-    private void DrawInstanceSettings(MeshSyncServer t)
-    {
+    private void DrawInstanceSettings(MeshSyncServer t) {
         var style = EditorStyles.foldout;
-        style.fontStyle = FontStyle.Bold;
+        style.fontStyle        = FontStyle.Bold;
         t.foldInstanceSettings = EditorGUILayout.Foldout(t.foldInstanceSettings, "Instances", true, style);
-        if (t.foldInstanceSettings)
-        {
-            t.InstanceHandling = (BaseMeshSync.InstanceHandlingType)EditorGUILayout.EnumPopup("Instance handling", t.InstanceHandling);
+        if (t.foldInstanceSettings) {
+            var newInstanceHandling =
+                (BaseMeshSync.InstanceHandlingType)EditorGUILayout.EnumPopup("Instance handling", t.InstanceHandling);
+
+            if (t.InstanceHandling != newInstanceHandling &&
+                EditorUtility.DisplayDialog("Warning",
+                    "Changing the instance handling mode will delete any prefabs and previously synced objects for this server. Are you sure you want to do this?",
+                    "Yes", "No", DialogOptOutDecisionType.ForThisSession, OPT_OUT_INSTANCE_HANDLING)) {
+                t.InstanceHandling = newInstanceHandling;
+            }
 
             DrawPrefabListElement(t);
         }
@@ -130,7 +122,7 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
             }
             EditorGUI.indentLevel--;
 
-            if (GUILayout.Button("Clear prefabs"))
+            if (GUILayout.Button("Clear / Resync prefabs"))
             {
                 t.ClearInstancePrefabs();
             }
@@ -155,7 +147,7 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
 
             if (server.DCCAsset != null)
             {
-                if (GUILayout.Button("Live Edit"))
+                if (GUILayout.Button("Live Edit (Opens new instance)"))
                 {
                     GUILayout.EndHorizontal();
                     MeshSyncServerInspectorUtils.OpenDCCAsset(server);

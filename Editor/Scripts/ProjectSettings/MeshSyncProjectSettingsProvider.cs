@@ -13,8 +13,9 @@ namespace Unity.MeshSync.Editor {
 class MeshSyncProjectSettingsProvider : SettingsProvider {
     
     private class Contents {
-        public static readonly GUIContent Server = EditorGUIUtility.TrTextContent("Server");		
-        public static readonly GUIContent SceneCachePlayer = EditorGUIUtility.TrTextContent("Scene Cache Player");		
+        public static readonly GUIContent Server           = EditorGUIUtility.TrTextContent("Server");
+        public static readonly GUIContent SceneCachePlayer = EditorGUIUtility.TrTextContent("Scene Cache Player");
+        public static readonly GUIContent EditorServer     = EditorGUIUtility.TrTextContent("Editor Server");
     }
     
 //----------------------------------------------------------------------------------------------------------------------	
@@ -24,6 +25,7 @@ class MeshSyncProjectSettingsProvider : SettingsProvider {
         Button[] tabButtons = new Button[MeshSyncEditorConstants.MAX_SETTINGS_TAB];		
         m_tabs[MeshSyncEditorConstants.SERVER_SETTINGS_TAB] = new ServerSettingsTab();
         m_tabs[MeshSyncEditorConstants.SCENE_CACHE_PLAYER_SETTINGS_TAB] = new SceneCachePlayerSettingsTab();
+        m_tabs[MeshSyncEditorConstants.EDITOR_SERVER_SETTINGS_TAB] = new EditorServerSettingsTab();
         
         //activateHandler is called when the user clicks on the Settings item in the Settings window.
         activateHandler = (string searchContext, VisualElement root) => {
@@ -37,7 +39,8 @@ class MeshSyncProjectSettingsProvider : SettingsProvider {
             VisualTreeAsset btnTemplate=UIElementsEditorUtility.LoadVisualTreeAsset(Constants.TAB_BUTTON_TEMPLATE_PATH);
 
             tabButtons[0] = CreateButton(btnTemplate, Contents.Server, OnServerSettingsTabClicked);
-            tabButtons[1] = CreateButton(btnTemplate, Contents.SceneCachePlayer, OnSceneCachePlayerTabClicked);			
+            tabButtons[1] = CreateButton(btnTemplate, Contents.SceneCachePlayer, OnSceneCachePlayerTabClicked);
+            tabButtons[2] = CreateButton(btnTemplate, Contents.EditorServer, OnEditorServerSettingsTabClicked);
 
             foreach (Button tabButton in tabButtons) {
                 tabsContainer.Add(tabButton);
@@ -101,6 +104,13 @@ class MeshSyncProjectSettingsProvider : SettingsProvider {
 
         m_projectSettingsProvider.SetupTab(MeshSyncEditorConstants.SCENE_CACHE_PLAYER_SETTINGS_TAB);
     }	
+
+    static void OnEditorServerSettingsTabClicked(EventBase evt) {
+        if (!UpdateSelectedTabButton(evt.target as Button))
+            return;
+
+        m_projectSettingsProvider.SetupTab(MeshSyncEditorConstants.EDITOR_SERVER_SETTINGS_TAB);
+    }
 
     #endregion	
 

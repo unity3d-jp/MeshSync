@@ -22,8 +22,8 @@ displays them inside the window.
 ## Supported DCC Tools
 
 1. Maya 2018 - 2023
-2. 3ds Max 2018 - 2021
-3. Blender 2.90, 2.91, 2.92, 2.93, 3.0, 3.1, 3.2
+2. 3ds Max 2018 - 2023
+3. Blender 2.90, 2.91, 2.92, 2.93, 3.0, 3.1, 3.2, 3.3
 
 ## Notes
 
