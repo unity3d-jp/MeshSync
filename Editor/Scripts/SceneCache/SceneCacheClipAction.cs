@@ -27,7 +27,7 @@ class AddKeyFrameSceneCacheClipAction : ClipAction {
             if (null == director)
                 return false;
             
-            sceneCachePlayableAsset.AddKeyFrame(director.time);
+            //sceneCachePlayableAsset.AddKeyFrame(director.time);
         }
         return true;
     }
