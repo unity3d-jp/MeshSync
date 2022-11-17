@@ -374,11 +374,11 @@ public class SceneCachePlayer : BaseMeshSync {
             return;
         
 #if UNITY_EDITOR
-        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.NORMALIZED_PATH_0_9_2) {
+        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.NormalizedPath_0_9_2) {
             m_sceneCacheFilePath = AssetEditorUtility.NormalizePath(m_sceneCacheFilePath);
         } 
 #pragma warning disable 612 
-        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.PLAYBACK_MODE_0_12_0 
+        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.PlaybackMode_0_12_0 
             && m_timeUnit == TimeUnit.Frames) 
         {
             m_timeUnit = TimeUnit.Seconds;
@@ -517,8 +517,8 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] bool m_overrideModelImporterSettings = false;
     
     //Renamed in 0.10.x-preview
-    [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_sceneCachePlayerVersion = (int) SceneCachePlayerVersion.NO_VERSIONING;
-    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.PLAYBACK_MODE_0_12_0;
+    [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_sceneCachePlayerVersion = (int) SceneCachePlayerVersion.NoVersioning;
+    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.PlaybackMode_0_12_0;
         
     SceneCacheData m_sceneCache;
 
@@ -536,10 +536,10 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------    
     
     enum SceneCachePlayerVersion {
-        NO_VERSIONING         = 0, //Didn't have versioning in earlier versions
-        STRING_PATH_0_4_0     = 2, //0.4.0-preview: the path is declared as a string 
-        NORMALIZED_PATH_0_9_2 = 3, //0.9.2-preview: Path must be normalized by default 
-        PLAYBACK_MODE_0_12_0 = 4, //0.12.0-preview: integrate frame/time unit and interpolation into playback mode  
+        NoVersioning         = 0, //Didn't have versioning in earlier versions
+        StringPath_0_4_0     = 2, //0.4.0-preview: the path is declared as a string 
+        NormalizedPath_0_9_2 = 3, //0.9.2-preview: Path must be normalized by default 
+        PlaybackMode_0_12_0 = 4, //0.12.0-preview: integrate frame/time unit and interpolation into playback mode  
     
     }
     
