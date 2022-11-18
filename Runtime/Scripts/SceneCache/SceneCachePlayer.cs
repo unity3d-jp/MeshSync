@@ -76,8 +76,6 @@ public class SceneCachePlayer : BaseMeshSync {
     internal SceneCachePlaybackMode GetPlaybackMode() { return m_playbackMode; }
 
     internal void SetPlaybackMode(SceneCachePlaybackMode mode) { m_playbackMode = mode; }
-
-    internal LimitedAnimationController GetLimitedAnimationController() { return m_limitedAnimationController; }
     
     internal float GetTime() { return m_time;}
     internal void SetTime(float time) { m_time = time; }
@@ -289,13 +287,13 @@ public class SceneCachePlayer : BaseMeshSync {
         frame = m_frame; //no change by default        
         switch (m_playbackMode) {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
-                frame = CalculateFrameByFloor(time, m_sceneCacheInfo, m_limitedAnimationController);
+                frame = CalculateFrameByFloor(time, m_sceneCacheInfo);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
 
             case SceneCachePlaybackMode.SnapToNearestFrame: {
-                frame = CalculateFrameByRound(time, m_sceneCacheInfo, m_limitedAnimationController);
+                frame = CalculateFrameByRound(time, m_sceneCacheInfo);
                 scene = m_sceneCache.LoadByFrame(frame);
                 break;
             }
@@ -342,12 +340,21 @@ public class SceneCachePlayer : BaseMeshSync {
         frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
         return frame;
     }
+
+    private static int CalculateFrameByFloor(float time, SceneCacheInfo scInfo) {
+        int frame = Mathf.FloorToInt(time * scInfo.sampleRate);
+        frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
+        return frame;
+    }
+
+    private static int CalculateFrameByRound(float time, SceneCacheInfo scInfo) {
+        int frame = Mathf.RoundToInt(time * scInfo.sampleRate);
+        frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
+        return frame;
+    }
     
 //----------------------------------------------------------------------------------------------------------------------
     internal bool IsLimitedAnimationOverrideable() {
-        if (m_limitedAnimationController.IsEnabled())
-            return false;
-
         if (m_playbackMode == SceneCachePlaybackMode.Interpolate)
             return false;
 
@@ -355,8 +362,6 @@ public class SceneCachePlayer : BaseMeshSync {
     }
 
     internal void AllowLimitedAnimationOverride() {
-        m_limitedAnimationController.SetEnabled(false);
-
         if (m_playbackMode == SceneCachePlaybackMode.Interpolate)
             m_playbackMode = SceneCachePlaybackMode.SnapToNearestFrame;
 
@@ -374,17 +379,20 @@ public class SceneCachePlayer : BaseMeshSync {
             return;
         
 #if UNITY_EDITOR
-        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.NORMALIZED_PATH_0_9_2) {
+        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.NormalizedPath_0_9_2) {
             m_sceneCacheFilePath = AssetEditorUtility.NormalizePath(m_sceneCacheFilePath);
         } 
 #pragma warning disable 612 
-        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.PLAYBACK_MODE_0_12_0 
+        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.PlaybackMode_0_12_0 
             && m_timeUnit == TimeUnit.Frames) 
         {
             m_timeUnit = TimeUnit.Seconds;
         }
 #pragma warning restore 612
-        
+
+        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.RemoveAnimator_0_16_0) {
+            Debug.LogWarning("[MeshSync] SceneCachePlayer no longer requires Animator component. Please remove it if applicable.");
+        }
 #endif
         
         m_sceneCachePlayerVersion = CUR_SCENE_CACHE_PLAYER_VERSION;
@@ -500,8 +508,6 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] private TimeUnit m_timeUnit = TimeUnit.Seconds;
     
     [SerializeField] private SceneCachePlaybackMode m_playbackMode = SceneCachePlaybackMode.SnapToNearestFrame;
-
-    [SerializeField] private LimitedAnimationController m_limitedAnimationController = new LimitedAnimationController();
     
     [SerializeField] float     m_time;
     [SerializeField] int       m_preloadLength = 1;
@@ -517,8 +523,8 @@ public class SceneCachePlayer : BaseMeshSync {
     [SerializeField] bool m_overrideModelImporterSettings = false;
     
     //Renamed in 0.10.x-preview
-    [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_sceneCachePlayerVersion = (int) SceneCachePlayerVersion.NO_VERSIONING;
-    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.PLAYBACK_MODE_0_12_0;
+    [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_sceneCachePlayerVersion = (int) SceneCachePlayerVersion.NoVersioning;
+    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.RemoveAnimator_0_16_0;
         
     SceneCacheData m_sceneCache;
 
@@ -536,11 +542,11 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------    
     
     enum SceneCachePlayerVersion {
-        NO_VERSIONING         = 0, //Didn't have versioning in earlier versions
-        STRING_PATH_0_4_0     = 2, //0.4.0-preview: the path is declared as a string 
-        NORMALIZED_PATH_0_9_2 = 3, //0.9.2-preview: Path must be normalized by default 
-        PLAYBACK_MODE_0_12_0 = 4, //0.12.0-preview: integrate frame/time unit and interpolation into playback mode  
-    
+        NoVersioning          = 0, //Didn't have versioning in earlier versions
+        StringPath_0_4_0      = 2, //0.4.0-preview: the path is declared as a string 
+        NormalizedPath_0_9_2  = 3, //0.9.2-preview: Path must be normalized by default 
+        PlaybackMode_0_12_0   = 4, //0.12.0-preview: integrate frame/time unit and interpolation into playback mode  
+        RemoveAnimator_0_16_0 = 5, //0.16.0-preview. Animator is removed, and animating has to be performed via Timeline  
     }
     
 }

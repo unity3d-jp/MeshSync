@@ -50,6 +50,11 @@
             "name": "com.unity.probuilder",
             "expression": "",
             "define": "AT_USE_PROBUILDER"
+        },
+        {
+            "name": "com.unity.timeline",
+            "expression": "1.4.0-preview",
+            "define": "AT_USE_TIMELINE_GE_1_4_0"
         }
     ],
     "noEngineReferences": false

@@ -22,17 +22,20 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
 
         EditorGUILayout.Space();
         DrawServerSettings(m_meshSyncServer);
-        DrawAssetSyncSettings(m_meshSyncServer);
-        DrawImportSettings(m_meshSyncServer);
-        DrawMiscSettings(m_meshSyncServer);
-        DrawDefaultMaterialList(m_meshSyncServer);
+        bool changed = DrawAssetSyncSettings(m_meshSyncServer);
+        changed |= DrawImportSettings(m_meshSyncServer);
+        changed |= DrawMiscSettings(m_meshSyncServer);
+        changed |= DrawDefaultMaterialList(m_meshSyncServer);
         DrawExportAssets(m_meshSyncServer);
         DrawInstanceSettings(m_meshSyncServer);
         DrawDCCToolInfo(m_meshSyncServer);
         DrawPluginVersion();
 
         PrefabUtility.RecordPrefabInstancePropertyModifications(m_meshSyncServer);
-        
+
+        if (changed) {
+            m_meshSyncServer.ApplyConfig();
+        }
     }
 //----------------------------------------------------------------------------------------------------------------------
 
