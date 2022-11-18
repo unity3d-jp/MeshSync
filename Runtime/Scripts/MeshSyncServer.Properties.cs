@@ -168,7 +168,7 @@ namespace Unity.MeshSync
 
                 if (needsUserScriptCallback) {
 #if VERBOSE_LOGS
-                    Debug.Log("[MeshSync] Sending changes, needed python callback.");
+                    Debug.Log("[MeshSync] Sending changes, needed user script callback.");
 #endif
                     needsUserScriptCallback = false;
                     sendChanges         = true;
