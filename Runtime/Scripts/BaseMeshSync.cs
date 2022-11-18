@@ -814,7 +814,7 @@ internal delegate void DeleteInstanceHandler(string path);
 #endif
 
 #if VERBOSE_LOGS
-            Debug.Log($"Scene updated.");
+            Debug.Log($"[MeshSync] Scene updated.");
 #endif
 
             if (onSceneUpdateEnd != null)

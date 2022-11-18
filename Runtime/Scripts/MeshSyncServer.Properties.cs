@@ -113,7 +113,7 @@ namespace Unity.MeshSync
                         sendChanges  = true;
 
 #if VERBOSE_LOGS
-                        Debug.Log($"Sending changes, property '{prop.name}' was dirty.");
+                        Debug.Log($"[MeshSync] Sending changes, property '{prop.name}' was dirty.");
 #endif
                     }
                 }
@@ -168,7 +168,7 @@ namespace Unity.MeshSync
 
                 if (needsPythonCallback) {
 #if VERBOSE_LOGS
-                    Debug.Log("Sending changes, needed python callback.");
+                    Debug.Log("[MeshSync] Sending changes, needed python callback.");
 #endif
                     needsPythonCallback = false;
                     sendChanges         = true;
@@ -177,7 +177,7 @@ namespace Unity.MeshSync
                 }
                 else if (needsClientSync) {
 #if VERBOSE_LOGS
-                    Debug.Log("Sending changes, needed client sync.");
+                    Debug.Log("[MeshSync] Sending changes, needed client sync.");
 #endif
                     needsClientSync = false;
                     sendChanges     = true;
@@ -299,7 +299,7 @@ namespace Unity.MeshSync
             base.ClearInstancePrefabs();
 
 #if VERBOSE_LOGS
-            Debug.Log("Clearing instance prefabs.");
+            Debug.Log("[MeshSync] Clearing instance prefabs.");
 #endif
 
             needsClientSync = true;
