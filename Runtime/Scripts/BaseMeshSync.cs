@@ -2904,8 +2904,6 @@ internal delegate void DeleteInstanceHandler(string path);
     [SerializeField] private EntityRecordDictionary m_clientInstancedEntities = new EntityRecordDictionary();
 
     private protected Action m_onMaterialChangedInSceneViewCB = null;
-
-    [SerializeField] internal bool GenerateLODGroup;
     
 #if AT_USE_HDRP
     private bool m_pathTracingExists      = false;
