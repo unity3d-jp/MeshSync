@@ -21,7 +21,7 @@ namespace Unity.MeshSync
         }
 
         bool needsClientSync;
-        bool needsPythonCallback;
+        bool needsUserScriptCallback;
 
         Dictionary<EntityRecord, Matrix4x4> entityTransforms = new Dictionary<EntityRecord, Matrix4x4>();
 
@@ -166,11 +166,11 @@ namespace Unity.MeshSync
 #endif
                 }
 
-                if (needsPythonCallback) {
+                if (needsUserScriptCallback) {
 #if VERBOSE_LOGS
                     Debug.Log("[MeshSync] Sending changes, needed python callback.");
 #endif
-                    needsPythonCallback = false;
+                    needsUserScriptCallback = false;
                     sendChanges         = true;
 
                     m_server.RequestUserScriptCallback();
@@ -305,8 +305,8 @@ namespace Unity.MeshSync
             needsClientSync = true;
         }
 
-        internal void RequestPythonCallback() {
-            needsPythonCallback = true;
+        internal void RequestUserScriptCallback() {
+            needsUserScriptCallback = true;
         }
 #endif
     }
