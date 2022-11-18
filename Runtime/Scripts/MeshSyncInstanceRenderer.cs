@@ -101,6 +101,7 @@ namespace Unity.MeshSync{
         {
             info.instances      = transforms;
             info.gameObject     = reference;
+            info.instanceParent = transform;
         }
 
         #endregion
