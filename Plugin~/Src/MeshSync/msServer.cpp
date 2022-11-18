@@ -668,10 +668,10 @@ void Server::recvServerLiveEditRequest(HTTPServerRequest& request, HTTPServerRes
 
     m_pending_entities.clear();
 
-    if (m_pythonCallbackRequested)
+    if (m_scriptCallbackRequested)
     {
-        reqResponse.message = REQUEST_PYTHON_CALLBACK;
-        m_pythonCallbackRequested = false;
+        reqResponse.message = REQUEST_SCRIPT_CALLBACK;
+        m_scriptCallbackRequested = false;
     }
     else if (m_syncRequested) {
         reqResponse.message = REQUEST_SYNC;
@@ -757,8 +757,8 @@ void Server::syncRequested() {
     m_syncRequested = true;
 }
 
-void Server::pythonCallbackRequested() {
-    m_pythonCallbackRequested = true;
+void Server::scriptCallbackRequested() {
+    m_scriptCallbackRequested = true;
 }
 
 void Server::propertiesReady() {

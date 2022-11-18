@@ -20,7 +20,7 @@ msDeclClassPtr(Entity)
 namespace ms {
 
 const std::string REQUEST_SYNC = "sync";
-const std::string REQUEST_PYTHON_CALLBACK = "python_callback";
+const std::string REQUEST_SCRIPT_CALLBACK = "script_callback";
 
 class Message
 {

@@ -369,7 +369,7 @@ msAPI void msServerRequestPythonCallback(ms::Server* server)
 {
     if (!server) { return; }
 
-    server->pythonCallbackRequested();
+    server->scriptCallbackRequested();
 }
 
 msAPI void msServerInitiatedResponseReady(ms::Server* server)
