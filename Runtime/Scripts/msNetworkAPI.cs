@@ -139,7 +139,7 @@ internal struct Server {
     static extern void msServerRequestFullSync(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msServerRequestPythonCallback(IntPtr self);
+    static extern void msServerRequestUserScriptCallback(IntPtr self);
 
     [DllImport(Lib.name)]
     static extern void msServerInitiatedResponseReady(IntPtr self);
@@ -257,9 +257,9 @@ internal struct Server {
         msServerRequestFullSync(self);
     }
 
-    public void RequestPythonCallback() 
+    public void RequestUserScriptCallback() 
     {
-        msServerRequestPythonCallback(self);
+        msServerRequestUserScriptCallback(self);
     }
 
     public void MarkServerInitiatedResponseReady()

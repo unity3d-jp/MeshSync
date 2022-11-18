@@ -757,7 +757,7 @@ void Server::syncRequested() {
     m_syncRequested = true;
 }
 
-void Server::scriptCallbackRequested() {
+void Server::userScriptCallbackRequested() {
     m_userScriptCallbackRequested = true;
 }
 

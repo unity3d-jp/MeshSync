@@ -99,7 +99,7 @@ public:
     
     void receivedProperty(PropertyInfoPtr prop);
     void syncRequested();
-    void scriptCallbackRequested();
+    void userScriptCallbackRequested();
     void propertiesReady();
     bool readyForProperties();
 

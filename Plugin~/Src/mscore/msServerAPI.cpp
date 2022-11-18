@@ -365,11 +365,11 @@ msAPI void msServerRequestFullSync(ms::Server* server)
     server->syncRequested();
 }
 
-msAPI void msServerRequestPythonCallback(ms::Server* server)
+msAPI void msServerRequestUserScriptCallback(ms::Server* server)
 {
     if (!server) { return; }
 
-    server->scriptCallbackRequested();
+    server->userScriptCallbackRequested();
 }
 
 msAPI void msServerInitiatedResponseReady(ms::Server* server)

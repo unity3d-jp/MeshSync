@@ -173,7 +173,7 @@ namespace Unity.MeshSync
                     needsPythonCallback = false;
                     sendChanges         = true;
 
-                    m_server.RequestPythonCallback();
+                    m_server.RequestUserScriptCallback();
                 }
                 else if (needsClientSync) {
 #if VERBOSE_LOGS
