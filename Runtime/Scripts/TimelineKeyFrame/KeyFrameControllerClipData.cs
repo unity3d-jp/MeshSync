@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
-using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Timeline;
 
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.Timeline;
 #endif
 
 namespace Unity.MeshSync {
@@ -209,12 +209,14 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     internal void OnGraphStart() {
+#if UNITY_EDITOR
         if (m_needToRefreshTimelineEditor) {
             foreach (PlayableKeyFrame playableKeyFrame in m_keyFrames) {
                 playableKeyFrame.RefreshMarker(m_keyFrameMarkersVisibility);
             }
             TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved);
         }
+#endif        
     }
 
     internal void OnClipChanged() {
