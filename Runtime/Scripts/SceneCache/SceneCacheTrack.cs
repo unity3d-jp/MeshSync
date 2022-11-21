@@ -11,7 +11,7 @@ namespace Unity.MeshSync {
 internal class SceneCacheTrack : BaseExtendedClipTrack<SceneCacheClipData> {
 
     protected override Playable CreateTrackMixerInternal(PlayableGraph graph, GameObject go, int inputCount) {
-        
+        TimelineUtility.DeleteInvalidMarkers(this);
         
         ScriptPlayable<SceneCachePlayableMixer> playable = ScriptPlayable<SceneCachePlayableMixer>.Create(graph, inputCount);
         PlayableDirector director = go.GetComponent<PlayableDirector>();
