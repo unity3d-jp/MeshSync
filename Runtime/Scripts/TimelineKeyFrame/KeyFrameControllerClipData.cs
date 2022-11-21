@@ -195,7 +195,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         if (null == clipOwner)
             return;
         
-        if (NeedsRefreshKeyFrames()) {
+        if (NeedsRefreshKeyFrames() || UpdateFrameMarkersVisibility()) {
             RefreshKeyFrames();
             return;
         }
