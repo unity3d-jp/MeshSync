@@ -37,8 +37,8 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         //Key Frame markers
         EditorGUIDrawerUtility.DrawUndoableGUI(
             m_scPlayableAsset, "Show Key Frame Markers",
-            /*guiFunc=*/ () => EditorGUILayout.Toggle("Show Key Frame Markers", clipData.AreKeyFrameMarkersRequested()), 
-            /*updateFunc=*/ (bool newValue) => { clipData.RequestKeyFrameMarkers(newValue); }                
+            guiFunc: () => EditorGUILayout.Toggle("Show Key Frame Markers", clipData.AreKeyFrameMarkersRequested()), 
+            updateFunc: (bool newValue) => { clipData.RequestKeyFrameMarkers(newValue); }
         );
         GUILayout.Space(15);
         if (null!=TimelineEditor.selectedClip && TimelineEditor.selectedClip.asset == m_scPlayableAsset) {
