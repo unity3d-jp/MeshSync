@@ -71,9 +71,13 @@ internal class SceneCachePlayableAssetTests {
 
         InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
         yield return null;
+        
+        ISceneCacheInfo scInfo = sceneCachePlayer.ExtractSceneCacheInfo(forceOpen: true);
+        Assert.IsNotNull(scInfo);
+        float halfDuration = scInfo.GetNumFrames() * 0.5f / scInfo.GetSampleRate();
+        
 
-        double halfDuration = clip.duration * 0.5; 
-        clip.start    = clip.duration * 0.5;
+        clip.start    = halfDuration;
         director.time = 0;
         yield return null;
                 
