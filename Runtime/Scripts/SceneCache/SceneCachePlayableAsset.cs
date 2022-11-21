@@ -286,7 +286,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             return;
         }
         
-        RecreateClipCurveInEditor(clipData);
+        m_animationCurve = RecreateClipCurveInEditor(clipData);
     }
 
     static void AddCurveKey(List<Keyframe> keys, float time, int frameToPlay, int numFrames, KeyFrameMode mode) {
@@ -312,20 +312,21 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         keys.Add(key);
     }
     
-    static void RecreateClipCurveInEditor(SceneCacheClipData clipData) {
+    static AnimationCurve RecreateClipCurveInEditor(SceneCacheClipData clipData) {
 
+        AnimationCurve ret = new AnimationCurve();
+        
         int numKeyFrames = clipData.GetNumKeyFrames();
         if (numKeyFrames <= 0) {
-            AnimationCurve dummyCurve = new AnimationCurve();
-            SetClipCurveInEditor(clipData.GetOwner(), dummyCurve);
-            return;
+            SetClipCurveInEditor(clipData.GetOwner(), ret);
+            return ret;
         }
         
         List<Keyframe>   keys          = new List<Keyframe>();
         PlayableKeyFrame firstKeyFrame = clipData.GetKeyFrame(0);
         if (null == firstKeyFrame) {
             Debug.LogError($"[MeshSync] Internal errors in clip {clipData.GetOwner().displayName}");
-            return;
+            return ret;
         }
 
         //always create curve key for the first keyframe
@@ -343,8 +344,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             AddCurveKey(keys, (float) curKeyFrame.GetLocalTime(), curKeyFrame.GetPlayFrame(), numKeyFrames, mode);
         }
         
-        AnimationCurve curve = new AnimationCurve(keys.ToArray());
-        SetClipCurveInEditor(clipData.GetOwner(), curve);
+        ret = new AnimationCurve(keys.ToArray());
+        SetClipCurveInEditor(clipData.GetOwner(), ret);
+        return ret;
     }
     
     internal void SetSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
