@@ -286,7 +286,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             return;
         }
         
-        m_animationCurve = RecreateClipCurveInEditor(clipData, sceneCacheInfo.GetNumFrames());
+        m_animationCurve = RecreateClipCurveInEditor(clipData, sceneCacheInfo);
     }
 
     static void AddCurveKey(List<Keyframe> keys, float time, int frameToPlay, int numFrames, KeyFrameMode mode) {
@@ -312,11 +312,12 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         keys.Add(key);
     }
     
-    static AnimationCurve RecreateClipCurveInEditor(SceneCacheClipData clipData, int numSceneCacheFrames) {
-
+    static AnimationCurve RecreateClipCurveInEditor(SceneCacheClipData clipData, ISceneCacheInfo sceneCacheInfo) {
         AnimationCurve ret = new AnimationCurve();
+
+        int numSceneCacheFrames = sceneCacheInfo.GetNumFrames();
+        int numKeyFrames        = clipData.GetNumKeyFrames();
         
-        int numKeyFrames = clipData.GetNumKeyFrames();
         if (numKeyFrames <= 0 || numSceneCacheFrames <= 0) {
             SetClipCurveInEditor(clipData.GetOwner(), ret);
             return ret;
