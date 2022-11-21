@@ -473,7 +473,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
     
     //The ground truth for using/dropping an image in a particular frame. See the notes below
     [SerializeField] private List<PlayableKeyFrame> m_keyFrames;
-    [SerializeField] [HideInInspector] private bool m_keyFrameMarkersRequested = true;
+    [SerializeField] [HideInInspector] private bool m_keyFrameMarkersRequested = false;
 
     [SerializeField] [HideInInspector] private float m_lastClipStartTimeOnRefresh = 0;
     [SerializeField] [HideInInspector] private float m_lastClipDurationOnRefresh = 0;
