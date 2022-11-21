@@ -97,9 +97,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
     }
 
     
-    void DrawAutoGenerateKeyFramesGUI(SceneCachePlayableAsset sceneCachePlayableAsset) 
-    {        
-
+    void DrawAutoGenerateKeyFramesGUI(SceneCachePlayableAsset sceneCachePlayableAsset) {
         SceneCacheClipData clipData = sceneCachePlayableAsset.GetBoundClipData();
         if (null == clipData)
             return;
