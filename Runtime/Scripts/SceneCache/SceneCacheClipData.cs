@@ -13,18 +13,6 @@ internal class SceneCacheClipData : BaseClipData {
     }
 
     protected override void OnAfterDeserializeInternalV() {
-        if (m_sceneCacheClipDataVersion == CUR_SCENE_CACHE_CLIP_DATA_VERSION) {
-            return;
-        }
-
-        if (m_sceneCacheClipDataVersion < (int) SceneCacheClipDataVersion.MovedLimitedAnimationController_0_12_6) {
-            m_copyLimitedAnimationControllerToAsset = true;
-        }
-
-        if (m_sceneCacheClipDataVersion < (int) SceneCacheClipDataVersion.MovedAnimationCurve_0_12_6) {
-            m_copyAnimationCurveToAsset = true;
-        }
-        
         m_sceneCacheClipDataVersion = CUR_SCENE_CACHE_CLIP_DATA_VERSION;
     }
     
@@ -46,9 +34,6 @@ internal class SceneCacheClipData : BaseClipData {
 //----------------------------------------------------------------------------------------------------------------------
     
     private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = (int) SceneCacheClipDataVersion.MovedAnimationCurve_0_12_6;
-
-    private bool m_copyLimitedAnimationControllerToAsset = false;
-    private bool m_copyAnimationCurveToAsset = false;
 
 //----------------------------------------------------------------------------------------------------------------------
 
