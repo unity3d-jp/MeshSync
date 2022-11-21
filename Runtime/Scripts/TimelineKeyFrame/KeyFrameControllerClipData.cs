@@ -148,24 +148,6 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         InitKeyFrames(startIndex, endIndex, span, mode);
     }
 
-    private void InitKeyFrames(int startIndex, int endIndex, int span, KeyFrameMode mode) {
-        TimelineClip clip = GetOwner();
-        Assert.IsNotNull(clip);
-        
-        double timePerFrame = FilmInternalUtilities.TimelineUtility.CalculateTimePerFrame(clip);
-        endIndex = Mathf.Min(endIndex, m_keyFrames.Count);
-        for (int i = startIndex; i < endIndex; ++i) {
-            m_keyFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
-            m_keyFrames[i].SetPlayFrame(i);
-            m_keyFrames[i].SetEnabled( i % span == 0);
-            m_keyFrames[i].SetKeyFrameMode(mode);
-            m_keyFrames[i].RefreshMarker(m_keyFrameMarkersVisibility);
-        }
-        
-    }
-    
-    
-
     internal void AddKeyFrame(double globalTime) {
         TimelineClip clip = GetOwnerIfReady();
         if (null == clip)
@@ -309,6 +291,23 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
             m_keyFrames[i].RefreshMarker(m_keyFrameMarkersVisibility);
         }
     }
+    
+    private void InitKeyFrames(int startIndex, int endIndex, int span, KeyFrameMode mode) {
+        TimelineClip clip = GetOwner();
+        Assert.IsNotNull(clip);
+        
+        double timePerFrame = FilmInternalUtilities.TimelineUtility.CalculateTimePerFrame(clip);
+        endIndex = Mathf.Min(endIndex, m_keyFrames.Count);
+        for (int i = startIndex; i < endIndex; ++i) {
+            m_keyFrames[i].SetEnabled( i % span == 0);
+            m_keyFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
+            m_keyFrames[i].SetPlayFrame(i);
+            m_keyFrames[i].SetKeyFrameMode(mode);
+            m_keyFrames[i].RefreshMarker(m_keyFrameMarkersVisibility);
+        }
+        
+    }
+
 
     private bool NeedsRefreshKeyFrames() {
         TimelineClip clip = GetOwnerIfReady();
