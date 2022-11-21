@@ -873,7 +873,6 @@ internal delegate void DeleteInstanceHandler(string path);
                     TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
 
                     // Make sure the full texture is used unless the user changed this setting before:
-                    assetExisted = true;
                     if (!assetExisted) {
                         importer.npotScale = TextureImporterNPOTScale.None;
 
