@@ -34,32 +34,26 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
             return;
         }
         
-        LimitedAnimationController limitedAnimationController = m_sceneCachePlayableAsset.GetOverrideLimitedAnimationController(); 
+        LimitedAnimationController limitedAnimationController = m_sceneCachePlayableAsset.GetOverrideLimitedAnimationController();
+
+        float localTime = (float) playable.GetTime(); 
         
-        double localTime = playable.GetTime();
-        double t         = CalculateTimeForLimitedAnimation(m_sceneCachePlayer,limitedAnimationController, localTime);
+        //LimitedAnimationController (obsolete!)
+        if (limitedAnimationController.IsEnabled()) {
+            ISceneCacheInfo scInfo = m_sceneCachePlayer.ExtractSceneCacheInfo(forceOpen: true);
+            if (null != scInfo) {
+                int frame = m_sceneCachePlayer.CalculateFrame((float)localTime,limitedAnimationController);
+                localTime = frame / scInfo.GetSampleRate(); 
+            }
+            m_sceneCachePlayer.SetTime(localTime);
+            return;
+        }
         
         AnimationCurve curve          = m_sceneCachePlayableAsset.GetAnimationCurve();
-        float          normalizedTime = curve.Evaluate((float)t);
-              
+        float          normalizedTime = curve.Evaluate((float)localTime);
         m_sceneCachePlayer.SetTimeByNormalizedTime(normalizedTime);
-
-    }
-    
-//----------------------------------------------------------------------------------------------------------------------        
-
-    private static double CalculateTimeForLimitedAnimation(SceneCachePlayer scPlayer, 
-        LimitedAnimationController overrideLimitedAnimationController, double time)  
-    {        
-        if (!overrideLimitedAnimationController.IsEnabled())
-            return time;
-
-        ISceneCacheInfo scInfo = scPlayer.ExtractSceneCacheInfo(forceOpen: true);
-        if (null == scInfo)
-            return time;
-            
-        int frame = scPlayer.CalculateFrame((float)time,overrideLimitedAnimationController);
-        return frame / scInfo.GetSampleRate();
+        
+        //Debug.Log($"MotionNormalizedTime: {normalizedTime}. LocalTime: {t}");
     }
 
 //----------------------------------------------------------------------------------------------------------------------
