@@ -369,17 +369,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         SetClipCurveInEditor(clipData.GetOwner(), curve);
     }
     
-    static void LinearizeKeyValues(ref Keyframe[] keys, int linearStartIndex, int linearEndIndex, HashSet<int> indicesToUpdate) {
-
-        Keyframe startKey = keys[linearStartIndex];
-        Keyframe endKey   = keys[linearEndIndex];
-        
-        AnimationCurve linearCurve = AnimationCurve.Linear(startKey.time, startKey.value, endKey.time, endKey.value);
-        foreach (int index in indicesToUpdate) {
-            keys[index].value = linearCurve.Evaluate(keys[index].time);
-        }
-    }
-    
     internal void SetSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
         ExposedReferenceUtility.SetReferenceValueInEditor(ref m_sceneCachePlayerRef, m_propertyTable, scPlayer);
     }
