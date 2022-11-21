@@ -90,13 +90,6 @@ public class SceneCachePlayer : BaseMeshSync {
         m_time = (float) frame / m_sceneCache.GetSampleRate();
     }
     
-    //NormalizedTime: (0.0 .. 1.0)
-    internal void SetTimeByNormalizedTime(float normalizedTime) {
-        float time = normalizedTime * m_sceneCacheInfo.timeRange.end;
-        m_time = ClampTime(time);
-    }
-    
-
     internal int GetPreloadLength() { return m_preloadLength;}
     internal void SetPreloadLength(int preloadLength) { m_preloadLength = preloadLength;}
 
