@@ -36,24 +36,31 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
         
         LimitedAnimationController limitedAnimationController = m_sceneCachePlayableAsset.GetOverrideLimitedAnimationController();
 
-        float localTime = (float) playable.GetTime(); 
+        float           localTime = (float) playable.GetTime();
+        ISceneCacheInfo scInfo    = m_sceneCachePlayer.ExtractSceneCacheInfo(forceOpen: true);
+        if (null == scInfo)
+            return;
+
+        float sceneCacheTime = 0;
+        int   sceneCacheFrame = 0;
         
         //LimitedAnimationController (obsolete!)
         if (limitedAnimationController.IsEnabled()) {
-            ISceneCacheInfo scInfo = m_sceneCachePlayer.ExtractSceneCacheInfo(forceOpen: true);
-            if (null != scInfo) {
-                int frame = m_sceneCachePlayer.CalculateFrame((float)localTime,limitedAnimationController);
-                localTime = frame / scInfo.GetSampleRate(); 
-            }
-            m_sceneCachePlayer.SetTime(localTime);
+            sceneCacheFrame = m_sceneCachePlayer.CalculateFrame((float)localTime,limitedAnimationController);
+            sceneCacheTime  = sceneCacheFrame / scInfo.GetSampleRate(); 
+            m_sceneCachePlayer.SetTime(sceneCacheTime);
             return;
         }
         
         AnimationCurve curve          = m_sceneCachePlayableAsset.GetAnimationCurve();
-        float          normalizedTime = curve.Evaluate((float)localTime);
-        m_sceneCachePlayer.SetTimeByNormalizedTime(normalizedTime);
+        float          normalizedTime = curve.Evaluate(localTime);
         
-        //Debug.Log($"MotionNormalizedTime: {normalizedTime}. LocalTime: {t}");
+        float estimatedTime = (normalizedTime * scInfo.GetTimeRange().end);
+        sceneCacheFrame = m_sceneCachePlayer.CalculateFrame(estimatedTime);
+        sceneCacheTime  = sceneCacheFrame / scInfo.GetSampleRate();
+        m_sceneCachePlayer.SetTime(sceneCacheTime);
+        
+        //Debug.Log($"MotionNormalizedTime: {normalizedTime}. Frame: {sceneCacheFrame}. LocalTime: {localTime}.");
     }
 
 //----------------------------------------------------------------------------------------------------------------------
