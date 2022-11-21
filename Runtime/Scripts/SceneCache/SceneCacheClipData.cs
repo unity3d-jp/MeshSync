@@ -28,15 +28,15 @@ internal class SceneCacheClipData : KeyFrameControllerClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
     
-    private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = (int) SceneCacheClipDataVersion.MovedAnimationCurve_0_12_6;
+    private const int CUR_SCENE_CACHE_CLIP_DATA_VERSION = (int) SceneCacheClipDataVersion.KeyFrame_0_16_0;
 
 //----------------------------------------------------------------------------------------------------------------------
 
     internal enum SceneCacheClipDataVersion {
         Initial = 1, 
         MovedLimitedAnimationController_0_12_6, //Moved LimitedAnimationController to SceneCachePlayableAsset in 0.12.6
-        MovedAnimationCurve_0_12_6, //Moved LimitedAnimationController to SceneCachePlayableAsset in 0.12.6
-        
+        MovedAnimationCurve_0_12_6,             //Moved LimitedAnimationController to SceneCachePlayableAsset in 0.12.6
+        KeyFrame_0_16_0,                        //Owns KeyFrames in 0.16.0
     } 
     
 }
