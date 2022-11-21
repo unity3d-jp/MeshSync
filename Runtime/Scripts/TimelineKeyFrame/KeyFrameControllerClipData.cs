@@ -200,9 +200,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
             return;
         }
         
-
         foreach (PlayableKeyFrame keyFrame in m_keyFrames) {
-            
             keyFrame.SetOwner(this);
             keyFrame.RefreshMarkerOwner();
         }
