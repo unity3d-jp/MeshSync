@@ -42,7 +42,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         
         m_propertyTable             = graph.GetResolver();
         m_sceneCachePlayer          = m_sceneCachePlayerRef.Resolve(m_propertyTable);
-        m_extractedSceneCachePlayer = m_extractedSceneCachePlayerRef.Resolve(m_propertyTable);
         
         behaviour.SetSceneCachePlayer(m_sceneCachePlayer);
         behaviour.SetPlayableAsset(this);
@@ -349,11 +348,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         ExposedReferenceUtility.SetReferenceValueInEditor(ref m_sceneCachePlayerRef, m_propertyTable, scPlayer);
     }
     
-    private void SetExtractedSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
-        ExposedReferenceUtility.SetReferenceValueInEditor(ref m_extractedSceneCachePlayerRef, m_propertyTable, scPlayer);
-    }
-
-       
     internal static EditorCurveBinding GetTimeCurveBinding() {return m_timeCurveBinding; }
     
     private static EditorCurveBinding m_timeCurveBinding =  
@@ -367,7 +361,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
     
     [SerializeField] private ExposedReference<SceneCachePlayer> m_sceneCachePlayerRef;
-    [HideInInspector][SerializeField] private ExposedReference<SceneCachePlayer> m_extractedSceneCachePlayerRef;
     
     [SerializeField] private LimitedAnimationController m_overrideLimitedAnimationController = new LimitedAnimationController();
     
@@ -383,7 +376,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     private IExposedPropertyTable m_propertyTable;
     private SceneCachePlayer      m_sceneCachePlayer;
-    private SceneCachePlayer      m_extractedSceneCachePlayer;
 
 }
 
