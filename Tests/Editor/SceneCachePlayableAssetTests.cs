@@ -30,10 +30,13 @@ internal class SceneCachePlayableAssetTests {
     [UnityTest]
     public IEnumerator CreatePlayableAssetUsingDisabledGameObject() {
 
-        InitTest(false, out PlayableDirector _, out SceneCachePlayer _, out TimelineClip clip);
+        InitTest(false, out PlayableDirector director, out SceneCachePlayer _, out TimelineClip clip);
         yield return null;
         
-        AnimationCurve curve = VerifyAnimationCurve(clip);
+        SetDirectorTime(director, 0);
+        yield return null;
+        
+        AnimationCurve curve = VerifyAnimationCurve(clip);        
         Assert.Greater(curve.keys.Length,2);
         Assert.Greater(clip.duration,0);
     }
