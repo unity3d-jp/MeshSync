@@ -488,7 +488,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
     private bool   m_forceShowFrameMarkers = false;
 #endif
 
-    private bool m_keyFrameMarkersVisibility      = true;
+    private bool m_keyFrameMarkersVisibility   = false;
     private bool m_needToRefreshTimelineEditor = false;
     
     private const int    CUR_KEYFRAME_CONTROLLER_CLIP_DATA_VERSION = 1;
