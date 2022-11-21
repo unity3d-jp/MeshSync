@@ -198,15 +198,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         
     }
 
-    internal void ApplyOriginalSceneCacheCurveInEditor() {
-        if (null == m_sceneCachePlayer)
-            return;
-
-        TimelineClip clip = GetBoundClipData()?.GetOwner();
-        Assert.IsNotNull(clip);
-        ExtractSceneCacheCurveInEditor(clip);
-    }    
-    
     bool ShouldExtractCurveInEditor() {
         if (null == m_sceneCachePlayer) {
             return false;
