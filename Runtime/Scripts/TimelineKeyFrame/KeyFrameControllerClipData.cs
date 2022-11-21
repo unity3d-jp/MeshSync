@@ -107,18 +107,6 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         return playableKeyFrame;
     }
 
-//----------------------------------------------------------------------------------------------------------------------    
-    
-    internal void ResetKeyFrames() {
-        DestroyPlayableFrames();
-
-        //Recalculate the number of frames and create the marker's ground truth data
-        int numFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(GetOwner());
-        m_keyFrames = new List<PlayableKeyFrame>(numFrames);
-        UpdateKeyFramesSize(numFrames);
-    }
-
-
 //----------------------------------------------------------------------------------------------------------------------
     private void DestroyPlayableFrames() {
         if (null == m_keyFrames)
