@@ -17,10 +17,6 @@ internal class SceneCacheClipData : KeyFrameControllerClipData {
     }
     
 //----------------------------------------------------------------------------------------------------------------------
-
-    internal override void DestroyV() { }
-
-//----------------------------------------------------------------------------------------------------------------------
    
     [SerializeField] private AnimationCurve m_animationCurve = AnimationCurve.Constant(0,0,0);
     [SerializeField] private bool           m_initialized    = false;
