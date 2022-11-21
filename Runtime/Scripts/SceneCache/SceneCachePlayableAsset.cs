@@ -139,7 +139,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     private float FindSceneCacheDurationInEditor(TimelineClip clip) {
        
-        //Bind for the first time
         ISceneCacheInfo sceneCacheInfo = m_sceneCachePlayer.ExtractSceneCacheInfo(forceOpen:true);
         if (null == sceneCacheInfo) {
             return (float) clip.duration;
