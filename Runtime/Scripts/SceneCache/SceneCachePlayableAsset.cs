@@ -369,53 +369,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         SetClipCurveInEditor(clipData.GetOwner(), curve);
     }
     
-    static void RecreateClipCurveInEditorOld(SceneCacheClipData clipData, int numFrames) {
-
-        int          numKeyFrames                     = clipData.GetNumKeyFrames();
-        Keyframe[]   keys                             = new Keyframe[numKeyFrames];
-        float        lastEnabledKeyFrameAnimationTime = 0;
-        bool         lastEnabledKeyFrameIsHold        = false;
-        HashSet<int> keysToLinearize                  = new HashSet<int>();
-        int          prevEnabledKey                   = 0;
-        for (int i = 0; i < numKeyFrames; ++i) {
-            PlayableKeyFrame curKeyFrame = clipData.GetKeyFrame(i);
-            if (null == curKeyFrame)
-                continue;
-            KeyFrameMode     mode        = curKeyFrame.GetKeyFrameMode();
-            
-            float animationTime = Mathf.Clamp(((float) curKeyFrame.GetPlayFrame() / numFrames),0,1);
-
-            keys[i].time = (float) curKeyFrame.GetLocalTime();
-            
-            keys[i].inTangent = keys[i].outTangent = float.PositiveInfinity;
-            
-            if (curKeyFrame.IsEnabled()) {
-                lastEnabledKeyFrameAnimationTime = animationTime;
-                lastEnabledKeyFrameIsHold        = mode == KeyFrameMode.Hold;
-
-                keys[i].value = animationTime;
-                
-                LinearizeKeyValues(ref keys, prevEnabledKey, i, keysToLinearize);
-                keysToLinearize.Clear();
-                prevEnabledKey = i;
-            } else {
-                if (lastEnabledKeyFrameIsHold) {
-                    keys[i].value = lastEnabledKeyFrameAnimationTime;
-                } else {
-                    keysToLinearize.Add(i);
-                }
-            }
-        }
-        
-        //regard last disabled keys as hold 
-        foreach(int index in keysToLinearize) {
-            keys[index].value = lastEnabledKeyFrameAnimationTime;
-        }
-        
-        AnimationCurve curve = new AnimationCurve(keys);
-        SetClipCurveInEditor(clipData.GetOwner(), curve);
-    }
-
     static void LinearizeKeyValues(ref Keyframe[] keys, int linearStartIndex, int linearEndIndex, HashSet<int> indicesToUpdate) {
 
         Keyframe startKey = keys[linearStartIndex];
