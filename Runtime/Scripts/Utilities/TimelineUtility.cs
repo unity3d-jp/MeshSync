@@ -3,12 +3,13 @@ using UnityEngine.Timeline;
 
 namespace Unity.MeshSync {
 
+//[TODO-sin: 2022-11-21] Move to FIU
 internal static class TimelineUtility {
 
-    internal static void DeleteInvalidMarkers(TrackAsset track) {
-        List<KeyFrameMarker> markersToDelete = new List<KeyFrameMarker>();
+    internal static void DeleteInvalidMarkers<MarkerType>(TrackAsset track) where MarkerType : Marker, ICanRefresh {
+        List<Marker> markersToDelete = new List<Marker>();
         foreach(IMarker m in track.GetMarkers()) {
-            KeyFrameMarker marker = m as KeyFrameMarker;
+            MarkerType marker = m as MarkerType;
             if (null == marker)
                 continue;
 
@@ -17,7 +18,7 @@ internal static class TimelineUtility {
             }
         }
 
-        foreach (KeyFrameMarker marker in markersToDelete) {
+        foreach (Marker marker in markersToDelete) {
             track.DeleteMarker(marker);
         }
     }
