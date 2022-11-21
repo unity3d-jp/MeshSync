@@ -74,8 +74,8 @@ internal class SceneCachePlayableAssetTests {
         
         ISceneCacheInfo scInfo = sceneCachePlayer.ExtractSceneCacheInfo(forceOpen: true);
         Assert.IsNotNull(scInfo);
-        float halfDuration = scInfo.GetNumFrames() * 0.5f / scInfo.GetSampleRate();
-        
+        float halfDuration = Mathf.FloorToInt(scInfo.GetNumFrames() * 0.5f) / scInfo.GetSampleRate();
+
 
         clip.start    = halfDuration;
         director.time = 0;
