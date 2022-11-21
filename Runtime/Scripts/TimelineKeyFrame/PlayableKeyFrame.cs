@@ -123,6 +123,14 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
             m_marker.Init(this, clipOwner.start + m_localTime);
         }
     }
+    
+    internal void RefreshMarkerOwner() {
+        if (!m_marker) 
+            return;
+        
+        m_marker.SetOwner(this);
+    }
+    
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     void CreateMarker() {

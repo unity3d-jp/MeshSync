@@ -200,9 +200,16 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
             return;
         }
         
+
+        foreach (PlayableKeyFrame keyFrame in m_keyFrames) {
+            
+            keyFrame.SetOwner(this);
+            keyFrame.RefreshMarkerOwner();
+        }
+                
         if (!m_keyFrameMarkersVisibility) 
             return;
-        
+                
         //Find KeyFrames that need to be moved
         int                           numPlayableFrames  = m_keyFrames.Count;
         Dictionary<int, KeyFrameInfo> movedKeyFrames     = new Dictionary<int, KeyFrameInfo>();
