@@ -116,14 +116,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
 #if UNITY_EDITOR
    
-        
-    internal void SetCurveToLinearInEditor() {
-        TimelineClip clip = GetBoundClipData()?.GetOwner();
-        Assert.IsNotNull(clip);
-       
-        m_animationCurve = CreateLinearAnimationCurve(clip);
-        SetClipCurveInEditor(clip, m_animationCurve);
-    }
 
     private static void SetClipCurveInEditor(TimelineClip clip, AnimationCurve animationCurveToApply) {
         
