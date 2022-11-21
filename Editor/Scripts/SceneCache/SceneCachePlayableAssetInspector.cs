@@ -51,7 +51,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         GUILayout.Space(15);
         
         if (DrawGUIButton(leftX:0, width:120,"Reset Key Frames")) {
-            clipData.InitKeyFrames();
+            clipData.ResetKeyFrames();
         }
         
         so.ApplyModifiedProperties();

@@ -259,7 +259,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         }
     }
 
-    internal void InitKeyFrames() {
+    internal void ResetKeyFrames() {
         TimelineClip clipOwner = GetOwnerIfReady();
         if (null == clipOwner)
             return;
