@@ -62,7 +62,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             m_updateClipDurationOnCreatePlayable = false;
             clip.duration                        = updatedCurveDuration;
         }
-        scClipData.InitKeyFrames();
 #endif
         
         return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, behaviour);
