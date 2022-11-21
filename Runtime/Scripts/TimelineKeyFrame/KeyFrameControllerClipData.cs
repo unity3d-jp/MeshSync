@@ -361,6 +361,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         double timePerFrame      = FilmInternalUtilities.TimelineUtility.CalculateTimePerFrame(clipOwner);
         int    numPlayableFrames = m_keyFrames.Count;
         for (int i = 0; i < numPlayableFrames; ++i) {
+            m_keyFrames[i].SetOwner(this);
             m_keyFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
             m_keyFrames[i].RefreshMarker(m_keyFrameMarkersVisibility);
         }
