@@ -70,7 +70,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
             return;
         
 #if UNITY_EDITOR
-        Undo.RegisterCompleteObjectUndo(GetOwner().GetParentTrack(),"StreamingImageSequence Show/Hide FrameMarker");
+        Undo.RegisterCompleteObjectUndo(GetOwner().GetParentTrack(),"MeshSync: Show/Hide Key Frame Markers");
         m_forceShowFrameMarkers = forceShow && req;
 #endif        
         m_keyFrameMarkersRequested = req;
