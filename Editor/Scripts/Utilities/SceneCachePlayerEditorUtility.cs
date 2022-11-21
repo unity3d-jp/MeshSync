@@ -190,7 +190,7 @@ internal static class SceneCachePlayerEditorUtility {
 
         if (ctrl.IsEnabled()) {
             EditorGUILayout.HelpBox(
-                "Limited Animation is obsolete and will be replaced by frame adjustment.", 
+                "Limited Animation controls is obsolete and has been replaced by key frame adjustment.", 
                 MessageType.Warning
             );            
         }        
