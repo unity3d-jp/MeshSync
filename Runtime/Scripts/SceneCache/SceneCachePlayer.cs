@@ -212,10 +212,13 @@ public class SceneCachePlayer : BaseMeshSync {
     private static void UpdateSceneCacheInfo( SceneCacheInfo scInfo, SceneCacheData scData) {
         Assert.IsTrue(scData);
         
-        scInfo.numFrames  = scData.GetNumScenes();
         scInfo.sampleRate = scData.GetSampleRate();
         scInfo.timeCurve  = scData.GetTimeCurve(InterpolationMode.Constant);
         scInfo.timeRange  = scData.GetTimeRange();
+
+        float duration = scInfo.timeRange.GetDuration();
+        scInfo.numFrames = Mathf.Min((int) Mathf.Floor(duration * scInfo.sampleRate), scData.GetNumScenes());
+        
     }
     
     internal void CloseCache() {
@@ -326,6 +329,27 @@ public class SceneCachePlayer : BaseMeshSync {
         return frame;
     }
 
+    internal int CalculateFrame(float time) {
+        int frame = 0;
+        switch (m_playbackMode) {
+            case SceneCachePlaybackMode.SnapToPreviousFrame: {
+                frame = CalculateFrameByFloor(time, m_sceneCacheInfo);
+                break;
+            }
+
+            case SceneCachePlaybackMode.SnapToNearestFrame: {
+                frame = CalculateFrameByRound(time, m_sceneCacheInfo);
+                break;
+            }
+            default: {
+                Assert.IsTrue(false); //invalid call
+                break;
+            }
+        }
+
+        return frame;
+    }
+    
 
     private static int CalculateFrameByFloor(float time, SceneCacheInfo scInfo, LimitedAnimationController controller) {
         int frame = Mathf.FloorToInt(time * scInfo.sampleRate);

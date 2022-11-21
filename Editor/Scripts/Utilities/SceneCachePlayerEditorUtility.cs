@@ -168,6 +168,7 @@ internal static class SceneCachePlayerEditorUtility {
         TimelineClip            clip            = sceneCacheTrack.CreateDefaultClip();
         SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
         Assert.IsNotNull(playableAsset);
+        playableAsset.Init(updateClipDurationOnCreatePlayable:true); //ClipEditor.OnCreate() is not called when creating a clip this way
         director.SetReferenceValue(playableAsset.GetSceneCachePlayerRef().exposedName, sceneCachePlayer );
         return clip;
     }
@@ -190,7 +191,7 @@ internal static class SceneCachePlayerEditorUtility {
 
         if (ctrl.IsEnabled()) {
             EditorGUILayout.HelpBox(
-                "Limited Animation is obsolete and will be replaced by frame adjustment.", 
+                "Limited Animation controls is obsolete and has been replaced by key frame adjustment.", 
                 MessageType.Warning
             );            
         }        

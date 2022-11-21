@@ -96,6 +96,9 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
         if (null == m_marker) {
             m_enabled = false;
         } else {
+            if (null == m_clipDataOwner)
+                return;
+            
             TimelineClip clipOwner = m_clipDataOwner.GetOwner();
             m_localTime = m_marker.time - clipOwner.start;
         }
