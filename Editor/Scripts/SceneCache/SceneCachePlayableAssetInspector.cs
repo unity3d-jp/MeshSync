@@ -119,7 +119,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         int startKeyFrame = Mathf.Max(0,editorConfig.GetGenerateStartKeyFrame());
         int endKeyFrame   = editorConfig.GetGenerateEndKeyFrame();
         if (endKeyFrame < 0) {
-            endKeyFrame = TimelineUtility.CalculateNumFrames(clipData.GetOwner());
+            endKeyFrame = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clipData.GetOwner());
         }
 
         startKeyFrame = EditorGUILayout.IntField("From", startKeyFrame);
