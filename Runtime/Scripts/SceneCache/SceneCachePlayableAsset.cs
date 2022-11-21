@@ -308,7 +308,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             return;
         }
         
-        RecreateClipCurveInEditor(clipData, sceneCacheInfo.GetNumFrames());
+        RecreateClipCurveInEditor(clipData);
     }
 
     static void AddCurveKey(List<Keyframe> keys, float time, int frameToPlay, int numFrames, KeyFrameMode mode) {
@@ -334,10 +334,10 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         keys.Add(key);
     }
     
-    static void RecreateClipCurveInEditor(SceneCacheClipData clipData, int numSceneCacheFrames) {
+    static void RecreateClipCurveInEditor(SceneCacheClipData clipData) {
 
-        int numPlayableKeyFrames = clipData.GetNumKeyFrames();
-        if (numPlayableKeyFrames <= 0 || numSceneCacheFrames <= 0) {
+        int numKeyFrames = clipData.GetNumKeyFrames();
+        if (numKeyFrames <= 0) {
             AnimationCurve dummyCurve = new AnimationCurve();
             SetClipCurveInEditor(clipData.GetOwner(), dummyCurve);
             return;
@@ -352,9 +352,9 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
         //always create curve key for the first keyframe
         KeyFrameMode firstCurveKeyMode = firstKeyFrame.IsEnabled() ? firstKeyFrame.GetKeyFrameMode() : KeyFrameMode.Hold;
-        AddCurveKey(keys, (float)firstKeyFrame.GetLocalTime(), firstKeyFrame.GetPlayFrame(), numSceneCacheFrames, firstCurveKeyMode);
+        AddCurveKey(keys, (float)firstKeyFrame.GetLocalTime(), firstKeyFrame.GetPlayFrame(), numKeyFrames, firstCurveKeyMode);
         
-        for (int i = 1; i < numPlayableKeyFrames; ++i) {
+        for (int i = 1; i < numKeyFrames; ++i) {
             PlayableKeyFrame curKeyFrame = clipData.GetKeyFrame(i);
             if (null == curKeyFrame)
                 continue;
@@ -362,7 +362,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
                 continue;
             
             KeyFrameMode mode = curKeyFrame.GetKeyFrameMode();
-            AddCurveKey(keys, (float) curKeyFrame.GetLocalTime(), curKeyFrame.GetPlayFrame(), numSceneCacheFrames, mode);            
+            AddCurveKey(keys, (float) curKeyFrame.GetLocalTime(), curKeyFrame.GetPlayFrame(), numKeyFrames, mode);
         }
         
         AnimationCurve curve = new AnimationCurve(keys.ToArray());
