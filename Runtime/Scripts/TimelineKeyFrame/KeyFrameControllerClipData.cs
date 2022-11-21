@@ -289,6 +289,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         double timePerFrame = FilmInternalUtilities.TimelineUtility.CalculateTimePerFrame(clip);
         endIndex = Mathf.Min(endIndex, m_keyFrames.Count);
         for (int i = startIndex; i < endIndex; ++i) {
+            m_keyFrames[i].SetOwner(this);
             m_keyFrames[i].SetEnabled( i % span == 0);
             m_keyFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
             m_keyFrames[i].SetPlayFrame(i);
