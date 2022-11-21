@@ -212,10 +212,13 @@ public class SceneCachePlayer : BaseMeshSync {
     private static void UpdateSceneCacheInfo( SceneCacheInfo scInfo, SceneCacheData scData) {
         Assert.IsTrue(scData);
         
-        scInfo.numFrames  = scData.GetNumScenes();
         scInfo.sampleRate = scData.GetSampleRate();
         scInfo.timeCurve  = scData.GetTimeCurve(InterpolationMode.Constant);
         scInfo.timeRange  = scData.GetTimeRange();
+
+        float duration = scInfo.timeRange.GetDuration();
+        scInfo.numFrames = Mathf.Min((int) Mathf.Floor(duration * scInfo.sampleRate), scData.GetNumScenes());
+        
     }
     
     internal void CloseCache() {
