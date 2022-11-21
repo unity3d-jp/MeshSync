@@ -277,19 +277,9 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
             return;
 
         int numIdealNumPlayableFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clipOwner);
-        
         UpdateKeyFramesSize(numIdealNumPlayableFrames);
         
-        //Refresh all markers
-        double timePerFrame      = FilmInternalUtilities.TimelineUtility.CalculateTimePerFrame(clipOwner);
-        int    numPlayableFrames = m_keyFrames.Count;
-        for (int i = 0; i < numPlayableFrames; ++i) {
-            m_keyFrames[i].SetEnabled(true);
-            m_keyFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
-            m_keyFrames[i].SetPlayFrame(i);
-            m_keyFrames[i].SetKeyFrameMode(KeyFrameMode.Continuous);
-            m_keyFrames[i].RefreshMarker(m_keyFrameMarkersVisibility);
-        }
+        InitKeyFrames(0, numIdealNumPlayableFrames-1, span: 1, KeyFrameMode.Continuous);
     }
     
     private void InitKeyFrames(int startIndex, int endIndex, int span, KeyFrameMode mode) {
