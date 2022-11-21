@@ -168,6 +168,7 @@ internal static class SceneCachePlayerEditorUtility {
         TimelineClip            clip            = sceneCacheTrack.CreateDefaultClip();
         SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
         Assert.IsNotNull(playableAsset);
+        playableAsset.Init(updateClipDurationOnCreatePlayable:true); //ClipEditor.OnCreate() is not called when creating a clip this way
         director.SetReferenceValue(playableAsset.GetSceneCachePlayerRef().exposedName, sceneCachePlayer );
         return clip;
     }
