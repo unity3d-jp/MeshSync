@@ -5,6 +5,7 @@ using UnityEngine.Timeline;
 
 namespace Unity.MeshSync {
 
+[TrackBindingType(typeof(GameObject))]
 [TrackClipType(typeof(SceneCachePlayableAsset))]
 [TrackColor(0.196f, 0.804f, 0.196f)] //limegreen
 internal class SceneCacheTrack : BaseExtendedClipTrack<SceneCacheClipData> {
