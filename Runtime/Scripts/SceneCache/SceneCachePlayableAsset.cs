@@ -101,48 +101,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     #endregion
     
-//----------------------------------------------------------------------------------------------------------------------
-    [CanBeNull]
-    private static AnimationCurve ExtractNormalizedTimeCurve(SceneCachePlayer scPlayer, out float duration) {
-
-        ISceneCacheInfo sceneCacheInfo = scPlayer.ExtractSceneCacheInfo(forceOpen:true);
-        if (null == sceneCacheInfo) {
-            duration = 0;
-            return null;
-        }
-
-        TimeRange timeRange = sceneCacheInfo.GetTimeRange(); 
-        duration = timeRange.GetDuration(); 
-        if (duration <= 0f) {
-            duration = Mathf.Epsilon;
-        }
-
-        Keyframe[] keyframes = sceneCacheInfo.GetTimeCurve().keys;
-        int numKeyframes = keyframes.Length;
-        for (int i = 0; i < numKeyframes; ++i) {
-            keyframes[i].value /= timeRange.end;
-        }
-        
-        //outTangent
-        for (int i = 0; i < numKeyframes-1; ++i) {
-            keyframes[i].outTangent = CalculateLinearTangent(keyframes, i, i+1);
-        }
-        
-        //inTangent
-        for (int i = 1; i < numKeyframes; ++i) {
-            keyframes[i].inTangent = CalculateLinearTangent(keyframes, i-1, i);
-        }
-        
-        AnimationCurve curve = new AnimationCurve(keyframes);
-        return curve;
-    }
-    
-//----------------------------------------------------------------------------------------------------------------------
-
-    private static float CalculateLinearTangent(Keyframe[] keyFrames, int index, int toIndex) {
-        return (float) (((double) keyFrames[index].value - (double) keyFrames[toIndex].value) 
-            / ((double) keyFrames[index].time - (double) keyFrames[toIndex].time));
-    }
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     private static float CalculateLinearTangent(Keyframe key0, Keyframe key1) {
         return (key0.value - key1.value) / (key0.time - key1.time);
@@ -153,7 +112,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     }
     
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #if UNITY_EDITOR
    
