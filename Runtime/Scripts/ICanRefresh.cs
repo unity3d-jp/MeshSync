@@ -1,10 +1,9 @@
-using System;
-using UnityEngine;
-
 namespace Unity.MeshSync {
 
+//[TODO-sin: 2022-11-21] Move to FIU
 internal interface ICanRefresh {
-    void Refresh();
+        
+    bool Refresh(); //return false if Refresh() failed, true otherwise
 }
 
 } //end namespace
