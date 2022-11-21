@@ -40,12 +40,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         SceneCacheClipData scClipData = GetBoundClipData() as SceneCacheClipData;        
         Assert.IsNotNull(scClipData);
         
-#pragma warning disable 612
-        //import old data. [TODO-sin: 2022-3-24] Remove in 0.13.x
-        scClipData.CopyLegacyClipDataToAsset(this);
-#pragma warning restore 612
-        
-        
         m_propertyTable             = graph.GetResolver();
         m_sceneCachePlayer          = m_sceneCachePlayerRef.Resolve(m_propertyTable);
         m_extractedSceneCachePlayer = m_extractedSceneCachePlayerRef.Resolve(m_propertyTable);
