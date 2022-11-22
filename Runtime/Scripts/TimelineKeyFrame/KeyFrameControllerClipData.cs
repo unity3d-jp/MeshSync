@@ -195,6 +195,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         if (null == clipOwner)
             return;
         
+        //Need to decide if we want apply the KeyFrames data to Marker, or the other way around        
         if (NeedsRefreshKeyFrames() || UpdateFrameMarkersVisibility()) {
             RefreshKeyFrames();
             return;
