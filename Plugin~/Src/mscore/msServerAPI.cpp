@@ -159,6 +159,14 @@ msAPI void  msServerStop(ms::Server *server)
     }
 }
 
+msAPI void  msServerAbort(ms::Server* server)
+{
+    // stop server and shut down client connections
+    if (server) {
+        server->abort();
+    }
+}
+
 msAPI uint32_t msServerGetSplitUnit(ms::Server *server)
 {
     return server ? server->getSettings().import_settings.mesh_split_unit : 0;

@@ -30,10 +30,13 @@ internal class SceneCachePlayableAssetTests {
     [UnityTest]
     public IEnumerator CreatePlayableAssetUsingDisabledGameObject() {
 
-        InitTest(false, out PlayableDirector _, out SceneCachePlayer _, out TimelineClip clip);
+        InitTest(false, out PlayableDirector director, out SceneCachePlayer _, out TimelineClip clip);
         yield return null;
         
-        AnimationCurve curve = VerifyAnimationCurve(clip);
+        SetDirectorTime(director, 0);
+        yield return null;
+        
+        AnimationCurve curve = VerifyAnimationCurve(clip);        
         Assert.Greater(curve.keys.Length,2);
         Assert.Greater(clip.duration,0);
     }
@@ -68,9 +71,13 @@ internal class SceneCachePlayableAssetTests {
 
         InitTest(true, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip);
         yield return null;
+        
+        ISceneCacheInfo scInfo = sceneCachePlayer.ExtractSceneCacheInfo(forceOpen: true);
+        Assert.IsNotNull(scInfo);
+        float halfDuration = Mathf.FloorToInt(scInfo.GetNumFrames() * 0.5f) / scInfo.GetSampleRate();
 
-        double halfDuration = clip.duration * 0.5; 
-        clip.start    = clip.duration * 0.5;
+
+        clip.start    = halfDuration;
         director.time = 0;
         yield return null;
                 

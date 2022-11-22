@@ -58,7 +58,7 @@ internal class SceneCachePlayableMixer : PlayableBehaviour {
 
     public override void ProcessFrame(Playable playable, FrameData info, object playerData) {
         
-        TimelineUtility.GetActiveTimelineClipInto(m_clips, m_playableDirector.time, out TimelineClip clip, 
+        FilmInternalUtilities.TimelineUtility.GetActiveTimelineClipInto(m_clips, m_playableDirector.time, out TimelineClip clip, 
             out SceneCachePlayableAsset activePlayableAsset);
         if (null == clip) {
             UpdateObjectActiveStates();

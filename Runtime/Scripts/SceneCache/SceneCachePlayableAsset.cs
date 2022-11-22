@@ -40,43 +40,32 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         SceneCacheClipData scClipData = GetBoundClipData() as SceneCacheClipData;        
         Assert.IsNotNull(scClipData);
         
-#pragma warning disable 612
-        //import old data. [TODO-sin: 2022-3-24] Remove in 0.13.x
-        scClipData.CopyLegacyClipDataToAsset(this);
-#pragma warning restore 612
-        
-        
         m_propertyTable             = graph.GetResolver();
         m_sceneCachePlayer          = m_sceneCachePlayerRef.Resolve(m_propertyTable);
-        m_extractedSceneCachePlayer = m_extractedSceneCachePlayerRef.Resolve(m_propertyTable);
         
         behaviour.SetSceneCachePlayer(m_sceneCachePlayer);
         behaviour.SetPlayableAsset(this);
 
             
         if (!m_sceneCachePlayer) {
-            m_isSceneCacheCurveExtracted = false;
             return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, behaviour);
         }
-
-        m_sceneCachePlayer.SetAutoplay(false);
         
 #if UNITY_EDITOR        
-        //Initialize curve
-        if (ShouldExtractCurveInEditor()) {
+        //Initialize duration
+        if (m_updateClipDurationOnCreatePlayable) {
             TimelineClip clip = scClipData.GetOwner();
             Assert.IsNotNull(clip);
-            float updatedCurveDuration = ExtractSceneCacheCurveInEditor(clip);
-            if (m_updateClipDurationOnCreatePlayable) {
-                clip.duration = updatedCurveDuration;
-            }
+            float updatedCurveDuration = FindSceneCacheDurationInEditor(clip);
+            
             m_updateClipDurationOnCreatePlayable = false;
+            clip.duration                        = updatedCurveDuration;
         }
-#endif        
+#endif
         
         return ScriptPlayable<SceneCachePlayableBehaviour>.Create(graph, behaviour);
     }
-
+    
 //----------------------------------------------------------------------------------------------------------------------
     
     #region IPlayableBehaviour interfaces
@@ -85,10 +74,14 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     /// <inheritdoc/>
     public void OnBehaviourPlay(Playable playable, FrameData info) { }
-    
-    
+
+
     /// <inheritdoc/>
-    public void OnGraphStart(Playable playable) { }
+    public void OnGraphStart(Playable playable) {
+        SceneCacheClipData clipData = GetBoundClipData();
+        clipData?.OnGraphStart(); //Null check. the data might not have been bound during recompile
+        
+    }
     
     
     /// <inheritdoc/>
@@ -108,47 +101,10 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
 
     #endregion
     
-//----------------------------------------------------------------------------------------------------------------------
-    [CanBeNull]
-    private static AnimationCurve ExtractNormalizedTimeCurve(SceneCachePlayer scPlayer, out float duration) {
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-        ISceneCacheInfo sceneCacheInfo = scPlayer.ExtractSceneCacheInfo(forceOpen:true);
-        if (null == sceneCacheInfo) {
-            duration = 0;
-            return null;
-        }
-
-        TimeRange timeRange = sceneCacheInfo.GetTimeRange(); 
-        duration = timeRange.GetDuration(); 
-        if (duration <= 0f) {
-            duration = Mathf.Epsilon;
-        }
-
-        Keyframe[] keyframes = sceneCacheInfo.GetTimeCurve().keys;
-        int numKeyframes = keyframes.Length;
-        for (int i = 0; i < numKeyframes; ++i) {
-            keyframes[i].value /= timeRange.end;
-        }
-        
-        //outTangent
-        for (int i = 0; i < numKeyframes-1; ++i) {
-            keyframes[i].outTangent = CalculateLinearTangent(keyframes, i, i+1);
-        }
-        
-        //inTangent
-        for (int i = 1; i < numKeyframes; ++i) {
-            keyframes[i].inTangent = CalculateLinearTangent(keyframes, i-1, i);
-        }
-        
-        AnimationCurve curve = new AnimationCurve(keyframes);
-        return curve;
-    }
-    
-//----------------------------------------------------------------------------------------------------------------------
-
-    private static float CalculateLinearTangent(Keyframe[] keyFrames, int index, int toIndex) {
-        return (float) (((double) keyFrames[index].value - (double) keyFrames[toIndex].value) 
-            / ((double) keyFrames[index].time - (double) keyFrames[toIndex].time));
+    private static float CalculateLinearTangent(Keyframe key0, Keyframe key1) {
+        return (key0.value - key1.value) / (key0.time - key1.time);
     }
     
     private static AnimationCurve CreateLinearAnimationCurve(TimelineClip clip) {
@@ -156,20 +112,12 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     }
     
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #if UNITY_EDITOR
    
-        
-    internal void SetCurveToLinearInEditor() {
-        TimelineClip clip = GetBoundClipData()?.GetOwner();
-        Assert.IsNotNull(clip);
-       
-        m_animationCurve = CreateLinearAnimationCurve(clip);
-        UpdateClipCurveInEditor(clip, m_animationCurve);        
-    }
 
-    private static void UpdateClipCurveInEditor(TimelineClip clip, AnimationCurve animationCurveToApply) {
+    private static void SetClipCurveInEditor(TimelineClip clip, AnimationCurve animationCurveToApply) {
         
         bool shouldRefresh = (null == clip.curves);
         
@@ -189,42 +137,15 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         
     }
 
-    internal void ApplyOriginalSceneCacheCurveInEditor() {
-        if (null == m_sceneCachePlayer)
-            return;
-
-        TimelineClip clip = GetBoundClipData()?.GetOwner();
-        Assert.IsNotNull(clip);
-        ExtractSceneCacheCurveInEditor(clip);
-    }    
-    
-    bool ShouldExtractCurveInEditor() {
-        if (null == m_sceneCachePlayer) {
-            return false;
+    private float FindSceneCacheDurationInEditor(TimelineClip clip) {
+       
+        ISceneCacheInfo sceneCacheInfo = m_sceneCachePlayer.ExtractSceneCacheInfo(forceOpen:true);
+        if (null == sceneCacheInfo) {
+            return (float) clip.duration;
         }
         
-        //no need to update if the curve has been extracted
-        if (m_isSceneCacheCurveExtracted && (m_extractedSceneCachePlayer == m_sceneCachePlayer)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    //returns curve duration
-    private float ExtractSceneCacheCurveInEditor(TimelineClip clip) {
-       
-        //Bind for the first time
-        m_animationCurve = ExtractNormalizedTimeCurve(m_sceneCachePlayer, out float updatedCurveDuration);
-        if (null == m_animationCurve) {
-            m_animationCurve     = CreateLinearAnimationCurve(clip);
-            updatedCurveDuration = (float) clip.duration; //no change
-        }
-
-        UpdateClipCurveInEditor(clip, m_animationCurve);
-        m_isSceneCacheCurveExtracted = true;
-        SetExtractedSceneCachePlayerInEditor(m_sceneCachePlayer);
-        return updatedCurveDuration;
+        TimeRange timeRange = sceneCacheInfo.GetTimeRange(); 
+        return timeRange.GetDuration();
     }    
     
     
@@ -238,9 +159,14 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         Keyframe[] xKeys = x.keys;
         Keyframe[] yKeys = y.keys;
 
-        if (xKeys.Length != yKeys.Length)
+        int numKeys0 = xKeys.Length; 
+
+        if (numKeys0 != yKeys.Length)
             return false;
 
+        if (0 == numKeys0)
+            return true;
+        
         HashSet<int> framesToCheck = new HashSet<int>() {
             0, 
             xKeys.Length - 1
@@ -272,21 +198,116 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     internal void           SetAnimationCurve(AnimationCurve curve) { m_animationCurve = curve; }
     internal AnimationCurve GetAnimationCurve()                     => m_animationCurve;
     
-    
-    //import old data. [TODO-sin: 2022-3-24] Remove in 0.13.x
-    internal void SetIsSceneCacheCurveExtracted(bool extracted) { m_isSceneCacheCurveExtracted = extracted; }
+
+    internal SceneCachePlayableAssetEditorConfig GetEditorConfig() { return m_editorConfig;}
+        
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    internal void AddKeyFrame(double time) {
+        SceneCacheClipData clipData = GetBoundClipData();        
+        clipData?.AddKeyFrame(time); //Null check. the data might not have been bound during recompile
+    }
     
 #if UNITY_EDITOR
+    
+    
+    internal void OnClipChanged() {
+        SceneCacheClipData clipData = GetBoundClipData();
+        if (null == clipData) //Null check. the data might not have been bound during recompile
+            return;
+        
+        clipData.OnClipChanged();
+        
+        TimelineClip clip = clipData.GetOwner();
+        if (null == clip)
+            return;
+
+        TrackAsset track = clip.GetParentTrack();
+        if (null == track)
+            return;
+        
+
+        if (null == m_sceneCachePlayer)
+            return;
+        
+        ISceneCacheInfo sceneCacheInfo = m_sceneCachePlayer.ExtractSceneCacheInfo(forceOpen:true);
+        if (null == sceneCacheInfo) {
+            return;
+        }
+        
+        m_animationCurve = RecreateClipCurveInEditor(track, clip, clipData, sceneCacheInfo);
+    }
+
+    static void AddCurveKey(List<Keyframe> keys, float time, int frameToPlay, int numFrames, KeyFrameMode mode) {
+        Keyframe key = new Keyframe(time, Mathf.Clamp((float) frameToPlay / numFrames,0,1));
+        switch (mode) {
+            case KeyFrameMode.Hold: key.outTangent = float.PositiveInfinity;  break;
+            default:                break;
+        }
+
+        int curNumKeys = keys.Count;
+        if  (curNumKeys > 0) {
+            Keyframe prevKey       = keys[curNumKeys - 1];
+            bool     isPrevKeyHold = float.IsPositiveInfinity(prevKey.outTangent);
+            if (isPrevKeyHold) {
+                key.inTangent = float.PositiveInfinity;
+            } else {
+                prevKey.outTangent = CalculateLinearTangent(prevKey, key);
+                key.inTangent      = prevKey.outTangent;
+            }
+            keys[curNumKeys - 1] = prevKey;
+        }
+        
+        keys.Add(key);
+    }
+    
+    static AnimationCurve RecreateClipCurveInEditor(TrackAsset track, TimelineClip clip, SceneCacheClipData clipData, ISceneCacheInfo sceneCacheInfo) {
+        AnimationCurve ret  = new AnimationCurve();
+        Assert.IsNotNull(clip);
+        Assert.IsNotNull(track);
+
+        int origNumSceneCacheFrames = sceneCacheInfo.GetNumFrames();
+        int numKeyFrames            = clipData.GetNumKeyFrames();
+
+        if (numKeyFrames <= 0 || origNumSceneCacheFrames <= 0) {
+            SetClipCurveInEditor(clipData.GetOwner(), ret);
+            return ret;
+        }
+        
+        double fps = clip.GetParentTrack().timelineAsset.editorSettings.GetFPS();
+        int curNumSceneCacheFrames = (int) (origNumSceneCacheFrames * fps / sceneCacheInfo.GetSampleRate()); 
+        
+        List<Keyframe>   keys          = new List<Keyframe>();
+        PlayableKeyFrame firstKeyFrame = clipData.GetKeyFrame(0);
+        if (null == firstKeyFrame) {
+            Debug.LogError($"[MeshSync] Internal errors in clip {clipData.GetOwner().displayName}");
+            return ret;
+        }
+
+        //always create curve key for the first keyframe
+        KeyFrameMode firstCurveKeyMode = firstKeyFrame.IsEnabled() ? firstKeyFrame.GetKeyFrameMode() : KeyFrameMode.Hold;
+        AddCurveKey(keys, (float)firstKeyFrame.GetLocalTime(), firstKeyFrame.GetPlayFrame(), curNumSceneCacheFrames, firstCurveKeyMode);
+        
+        for (int i = 1; i < numKeyFrames; ++i) {
+            PlayableKeyFrame curKeyFrame = clipData.GetKeyFrame(i);
+            if (null == curKeyFrame)
+                continue;
+            if (!curKeyFrame.IsEnabled())
+                continue;
+            
+            KeyFrameMode mode = curKeyFrame.GetKeyFrameMode();
+            AddCurveKey(keys, (float) curKeyFrame.GetLocalTime(), curKeyFrame.GetPlayFrame(), curNumSceneCacheFrames, mode);
+        }
+        
+        ret = new AnimationCurve(keys.ToArray());
+        SetClipCurveInEditor(clipData.GetOwner(), ret);
+        return ret;
+    }
     
     internal void SetSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
         ExposedReferenceUtility.SetReferenceValueInEditor(ref m_sceneCachePlayerRef, m_propertyTable, scPlayer);
     }
     
-    private void SetExtractedSceneCachePlayerInEditor(SceneCachePlayer scPlayer) {
-        ExposedReferenceUtility.SetReferenceValueInEditor(ref m_extractedSceneCachePlayerRef, m_propertyTable, scPlayer);
-    }
-
-       
     internal static EditorCurveBinding GetTimeCurveBinding() {return m_timeCurveBinding; }
     
     private static EditorCurveBinding m_timeCurveBinding =  
@@ -297,18 +318,17 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         };
 #endif 
     
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
     
     [SerializeField] private ExposedReference<SceneCachePlayer> m_sceneCachePlayerRef;
-    [HideInInspector][SerializeField] private ExposedReference<SceneCachePlayer> m_extractedSceneCachePlayerRef;
     
     [SerializeField] private LimitedAnimationController m_overrideLimitedAnimationController = new LimitedAnimationController();
     
     [SerializeField] private double      m_time;
 
     [HideInInspector][SerializeField] private AnimationCurve m_animationCurve = AnimationCurve.Constant(0,0,0);
-
-    [HideInInspector][SerializeField] private bool m_isSceneCacheCurveExtracted = false;
+ 
+    [HideInInspector][SerializeField] private SceneCachePlayableAssetEditorConfig m_editorConfig = new SceneCachePlayableAssetEditorConfig();
     
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -316,7 +336,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
     
     private IExposedPropertyTable m_propertyTable;
     private SceneCachePlayer      m_sceneCachePlayer;
-    private SceneCachePlayer      m_extractedSceneCachePlayer;
 
 }
 

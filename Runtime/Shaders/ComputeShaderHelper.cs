@@ -28,6 +28,10 @@ namespace Unity.MeshSync {
             if (renderTarget == null ||
                 renderTarget.width != maxTextureSize.x ||
                 renderTarget.height != maxTextureSize.y) {
+                if (renderTarget != null) {
+                    renderTarget.Release();
+                }
+
                 renderTarget = new RenderTexture(maxTextureSize.x, maxTextureSize.y, 32) {
                     enableRandomWrite = true
                 };
@@ -47,7 +51,8 @@ namespace Unity.MeshSync {
 
         public void SetTexture(string name, Texture texture) {
             shader.SetTexture(kernelIndex, name, texture);
-
+            shader.SetVector($"{name}_dims", new Vector4(texture.width, texture.height));
+      
             maxTextureSize.x = Math.Max(maxTextureSize.x, texture.width);
             maxTextureSize.y = Math.Max(maxTextureSize.y, texture.height);
         }
