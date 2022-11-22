@@ -138,7 +138,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
             return;
             
         //already enabled
-        int              frameIndex = LocalTimeToFrameIndex(globalTime - clip.start, clip.duration);
+        int              frameIndex = LocalTimeToFrameIndex(globalTime - clip.start + clip.clipIn, clip.duration, clip.clipIn);
         PlayableKeyFrame keyFrame   = m_keyFrames[frameIndex];
         if (keyFrame.IsEnabled())
             return;
@@ -436,10 +436,10 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         return null == clipOwner.GetParentTrack() ? null : clipOwner;
     }
 
-    private int LocalTimeToFrameIndex(double localTime, double clipDuration) {
-        int numPlayableFrames = m_keyFrames.Count;
-        int index   = Mathf.RoundToInt((float)(localTime * numPlayableFrames / clipDuration));
-        index = Mathf.Clamp(index,0,numPlayableFrames - 1);
+    private int LocalTimeToFrameIndex(double localTime, double clipDuration, double clipIn) {
+        int numKeyFrames = m_keyFrames.Count;        
+        int index = Mathf.RoundToInt((float)(localTime * numKeyFrames / (clipDuration + clipIn)));
+        index = Mathf.Clamp(index,0,numKeyFrames - 1);
         return index;
     }
 
