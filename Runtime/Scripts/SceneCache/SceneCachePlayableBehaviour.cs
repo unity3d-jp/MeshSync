@@ -46,7 +46,8 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
         
         //LimitedAnimationController (obsolete!)
         if (limitedAnimationController.IsEnabled()) {
-            sceneCacheTime  = SceneCachePlayer.CalculatePlaybackTime(localTime, playbackMode, scInfo); 
+            int sceneCacheFrame = m_sceneCachePlayer.CalculateFrame((float)localTime,limitedAnimationController);
+            sceneCacheTime  = sceneCacheFrame / scInfo.GetSampleRate();
             m_sceneCachePlayer.SetTime(sceneCacheTime);
             return;
         }
