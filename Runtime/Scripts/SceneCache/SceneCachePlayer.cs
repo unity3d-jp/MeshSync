@@ -102,7 +102,7 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------
     
     [CanBeNull]
-    internal ISceneCacheInfo ExtractSceneCacheInfo(bool forceOpen) {
+    internal SceneCacheInfo ExtractSceneCacheInfo(bool forceOpen) {
         
         if (IsSceneCacheOpened()) {
             return m_sceneCacheInfo;
@@ -343,7 +343,24 @@ public class SceneCachePlayer : BaseMeshSync {
         return frame;
     }
     
+    internal static float CalculatePlaybackTime(float time, SceneCachePlaybackMode playbackMode, SceneCacheInfo scInfo) {
+        switch (playbackMode) {
+            case SceneCachePlaybackMode.SnapToPreviousFrame: {
+                int frame = CalculateFrameByFloor(time, scInfo);
+                return frame / scInfo.sampleRate;
+            }
 
+            case SceneCachePlaybackMode.SnapToNearestFrame: {
+                int frame = CalculateFrameByRound(time, scInfo);
+                return frame / scInfo.sampleRate;
+            }
+            default: {
+                return time;
+            }
+        }
+    }
+
+    
     private static int CalculateFrameByFloor(float time, SceneCacheInfo scInfo, LimitedAnimationController controller) {
         int frame = Mathf.FloorToInt(time * scInfo.sampleRate);
         frame = controller.Apply(frame);
