@@ -307,6 +307,14 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         if (!Mathf.Approximately(m_lastClipDurationOnRefresh, (float) clip.duration)) {
             return true;
         }
+
+        if (!Mathf.Approximately(m_lastClipTimeScaleOnRefresh, (float) clip.timeScale)) {
+            return true;
+        }
+
+        if (!Mathf.Approximately(m_lastClipInOnRefresh, (float) clip.clipIn)) {
+            return true;
+        }
         
         int numIdealNumPlayableFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clip);
         if (numIdealNumPlayableFrames != m_keyFrames.Count)
@@ -326,6 +334,8 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         
         m_lastClipStartTimeOnRefresh = (float) clipOwner.start;
         m_lastClipDurationOnRefresh  = (float) clipOwner.duration;
+        m_lastClipTimeScaleOnRefresh = (float) clipOwner.timeScale;
+        m_lastClipInOnRefresh        = (float) clipOwner.clipIn;
         
         int numIdealNumPlayableFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clipOwner);
       
@@ -461,7 +471,9 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
     [SerializeField] [HideInInspector] private bool m_keyFrameMarkersRequested = false;
 
     [SerializeField] [HideInInspector] private float m_lastClipStartTimeOnRefresh = 0;
-    [SerializeField] [HideInInspector] private float m_lastClipDurationOnRefresh = 0;
+    [SerializeField] [HideInInspector] private float m_lastClipDurationOnRefresh  = 0;
+    [SerializeField] [HideInInspector] private float m_lastClipTimeScaleOnRefresh = 0;
+    [SerializeField] [HideInInspector] private float m_lastClipInOnRefresh        = 0;
 
     
 #pragma warning disable 414    
