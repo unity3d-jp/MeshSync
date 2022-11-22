@@ -788,6 +788,10 @@ internal delegate void DeleteInstanceHandler(string path);
             }
 #endif
 
+#if VERBOSE_LOGS
+            Debug.Log($"[MeshSync] Scene updated.");
+#endif
+
             if (onSceneUpdateEnd != null)
                 onSceneUpdateEnd.Invoke();
         }
@@ -2631,6 +2635,10 @@ internal delegate void DeleteInstanceHandler(string path);
     }
 
     internal virtual void ClearInstancePrefabs() {
+#if VERBOSE_LOGS
+        Debug.Log("[MeshSync] Clearing instance prefabs.");
+#endif
+
         transform.DestroyChildrenImmediate();
 
         foreach (var prefabHolder in m_prefabDict.Values) {

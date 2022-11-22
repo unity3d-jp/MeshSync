@@ -115,6 +115,10 @@ namespace Unity.MeshSync
                         m_server.SendProperty(prop);
                         prop.IsDirty = false;
                         sendChanges = true;
+
+#if VERBOSE_LOGS
+                        Debug.Log($"[MeshSync] Sending changes, property '{prop.name}' was dirty.");
+#endif
                     }
                 }
 
@@ -175,6 +179,9 @@ namespace Unity.MeshSync
 
                 if (needsClientSync)
                 {
+#if VERBOSE_LOGS
+                    Debug.Log("[MeshSync] Sending changes, needed client sync.");
+#endif
                     needsClientSync = false;
                     sendChanges = true;
 
