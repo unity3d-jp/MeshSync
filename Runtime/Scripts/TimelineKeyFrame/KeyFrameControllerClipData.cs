@@ -208,7 +208,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         for (int i = 0; i < numPlayableFrames; ++i) {
             PlayableKeyFrame keyFrame = m_keyFrames[i];
             keyFrame.SaveStateFromMarker();
-            int moveDestIndex = Mathf.RoundToInt((float)(keyFrame.GetLocalTime() * numPlayableFrames / clipOwner.duration));
+            int moveDestIndex = Mathf.RoundToInt((float)(keyFrame.GetLocalTime() * numPlayableFrames / (clipOwner.duration + clipOwner.clipIn)));
             moveDestIndex = Mathf.Clamp(moveDestIndex,0,numPlayableFrames - 1);
             
             if (moveDestIndex == i)
