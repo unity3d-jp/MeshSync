@@ -70,7 +70,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
             return;
         
 #if UNITY_EDITOR
-        Undo.RegisterCompleteObjectUndo(GetOwner().GetParentTrack(),"StreamingImageSequence Show/Hide FrameMarker");
+        Undo.RegisterCompleteObjectUndo(GetOwner().GetParentTrack(),"MeshSync: Show/Hide Key Frame Markers");
         m_forceShowFrameMarkers = forceShow && req;
 #endif        
         m_keyFrameMarkersRequested = req;
@@ -195,7 +195,8 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         if (null == clipOwner)
             return;
         
-        if (NeedsRefreshKeyFrames()) {
+        //Need to decide if we want apply the KeyFrames data to Marker, or the other way around        
+        if (NeedsRefreshKeyFrames() || UpdateFrameMarkersVisibility()) {
             RefreshKeyFrames();
             return;
         }
