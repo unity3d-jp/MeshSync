@@ -43,8 +43,9 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
     }
 
     protected override void OnAfterDeserializeInternalV() {
-        foreach (PlayableKeyFrame playableFrame in m_keyFrames) {
-            playableFrame.SetOwner(this);
+        foreach (PlayableKeyFrame keyFrame in m_keyFrames) {
+            keyFrame.SetOwner(this);
+            keyFrame.RefreshMarkerOwner();
         }
     }    
     #endregion
@@ -203,12 +204,6 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
 
         if (!m_keyFrameMarkersVisibility) 
             return;
-        
-        //Sort out KeyFrame ownership before rearranging key frames
-        foreach (PlayableKeyFrame keyFrame in m_keyFrames) {
-            keyFrame.SetOwner(this);
-            keyFrame.RefreshMarkerOwner();
-        }
         
         //Find KeyFrames that need to be moved
         int                           numPlayableFrames  = m_keyFrames.Count;
