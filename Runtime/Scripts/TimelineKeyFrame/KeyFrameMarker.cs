@@ -31,7 +31,12 @@ internal class KeyFrameMarker : Marker, INotification, ICanRefresh {
 
     private static double CalculateMarkerTime(TimelineClip clip, double keyFrameLocalTime) {
         return clip.start - clip.clipIn + keyFrameLocalTime;
+    }
+    
+    internal double CalculateKeyFrameLocalTime(TimelineClip clip) {
+        return time - clip.start + clip.clipIn;
     } 
+    
 
 //----------------------------------------------------------------------------------------------------------------------
     

@@ -100,11 +100,14 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
                 return;
             
             TimelineClip clipOwner = m_clipDataOwner.GetOwner();
-            m_localTime = m_marker.time - clipOwner.start;
+            m_localTime = m_marker.CalculateKeyFrameLocalTime(clipOwner);
         }
     }
     
     internal void RefreshMarker(bool frameMarkerVisibility) {
+        if (null == m_clipDataOwner)
+            return;
+        
         TrackAsset trackAsset = m_clipDataOwner.GetOwner()?.GetParentTrack();
         //Delete Marker first if it's not in the correct track (e.g: after the TimelineClip was moved)
         if (null!= m_marker && m_marker.parent != trackAsset) {
