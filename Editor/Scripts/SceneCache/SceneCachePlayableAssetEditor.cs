@@ -5,7 +5,8 @@ using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Timeline;
-using Unity.FilmInternalUtilities; //Required for TryMoveToTrack() in Timeline 1.4 and earlier 
+using Unity.FilmInternalUtilities; //Required for TryMoveToTrack() in Timeline 1.4 and earlier
+using UnityEngine.Assertions;
 
 
 namespace Unity.MeshSync.Editor {
@@ -73,7 +74,17 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
             clip.TryMoveToTrack(track);
         }
 
-        asset.Init(updateClipDurationOnCreatePlayable: null == clonedFrom);
+        bool isCloned = (null != clonedFrom);
+        
+        asset.Init(updateClipDurationOnCreatePlayable: !isCloned);
+
+        if (isCloned) {
+            SceneCachePlayableAsset clonedFromAsset = clonedFrom.asset as SceneCachePlayableAsset;
+            Assert.IsNotNull(clonedFromAsset);
+            
+            SceneCacheClipData otherClipData = clonedFromAsset.GetBoundClipData();
+            asset.BindClipData(new SceneCacheClipData(clip, otherClipData)); 
+        }
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
