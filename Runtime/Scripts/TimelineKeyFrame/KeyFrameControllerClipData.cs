@@ -434,7 +434,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
     }
 
     private int LocalTimeToFrameIndex(double localTime, double clipDuration, double clipIn) {
-        int numKeyFrames = m_keyFrames.Count;        
+        int numKeyFrames = m_keyFrames.Count;
         int index = Mathf.RoundToInt((float)(localTime * numKeyFrames / (clipDuration + clipIn)));
         index = Mathf.Clamp(index,0,numKeyFrames - 1);
         return index;
