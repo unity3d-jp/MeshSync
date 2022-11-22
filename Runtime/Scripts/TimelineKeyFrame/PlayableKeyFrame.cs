@@ -21,12 +21,13 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
 
     internal PlayableKeyFrame(KeyFrameControllerClipData owner, PlayableKeyFrame otherKeyFrame) {
         m_clipDataOwner = owner;
+        m_enabled       = otherKeyFrame.m_enabled;
         m_localTime     = otherKeyFrame.m_localTime;
         m_playFrame     = otherKeyFrame.m_playFrame;
         m_keyFrameMode  = otherKeyFrame.m_keyFrameMode;
+        m_userNote      = otherKeyFrame.m_userNote;
     }       
-    
-    
+   
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
     #region ISerializationCallbackReceiver
     public void OnBeforeSerialize() {
