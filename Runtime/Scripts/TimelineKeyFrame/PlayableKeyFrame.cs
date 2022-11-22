@@ -120,7 +120,7 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
 
         if (m_marker) {
             TimelineClip clipOwner = m_clipDataOwner.GetOwner();
-            m_marker.Init(this, clipOwner.start + m_localTime);
+            m_marker.Init(this, clipOwner);
         }
     }
     
