@@ -20,13 +20,9 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         m_keyFrames = new List<PlayableKeyFrame>();
     }
 
-    protected KeyFrameControllerClipData(TimelineClip clipOwner) {
-        SetOwner(clipOwner);
+    protected KeyFrameControllerClipData(TimelineClip owner, KeyFrameControllerClipData other) {
+        SetOwner(owner);
         m_keyFrames = new List<PlayableKeyFrame>();
-    }
-
-    protected KeyFrameControllerClipData(TimelineClip owner, KeyFrameControllerClipData other) : this(owner){
-        Assert.IsNotNull(m_keyFrames);
         
         foreach (PlayableKeyFrame otherFrame in other.m_keyFrames) {
             PlayableKeyFrame newKeyFrame = new PlayableKeyFrame(this, otherFrame);
