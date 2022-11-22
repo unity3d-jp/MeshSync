@@ -605,16 +605,6 @@ internal struct MaterialPropertyData {
             return ret;
         }
     }
-    
-    // Not used yet:
-    // public string stringValue {
-    //     get {
-    //         StringBuilder ret = new StringBuilder(arrayLength + 1);
-    //         msMaterialPropCopyData(self, ret);
-    //         return ret.ToString();
-    //     }
-    // }
-
     public int arrayLength {
         get {
             if (self == IntPtr.Zero) {
