@@ -216,6 +216,14 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         if (null == clipData) //Null check. the data might not have been bound during recompile
             return;
         
+        TimelineClip clip = clipData.GetOwner();
+        if (null == clip)
+            return;
+
+        TrackAsset track = clip.GetParentTrack();
+        if (null == track)
+            return;
+        
         clipData.OnClipChanged();
 
         if (null == m_sceneCachePlayer)
@@ -226,7 +234,7 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             return;
         }
         
-        m_animationCurve = RecreateClipCurveInEditor(clipData, sceneCacheInfo);
+        m_animationCurve = RecreateClipCurveInEditor(track, clip, clipData, sceneCacheInfo);
     }
 
     static void AddCurveKey(List<Keyframe> keys, float time, int frameToPlay, int numFrames, KeyFrameMode mode) {
@@ -252,20 +260,15 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         keys.Add(key);
     }
     
-    static AnimationCurve RecreateClipCurveInEditor(SceneCacheClipData clipData, ISceneCacheInfo sceneCacheInfo) {
+    static AnimationCurve RecreateClipCurveInEditor(TrackAsset track, TimelineClip clip, SceneCacheClipData clipData, ISceneCacheInfo sceneCacheInfo) {
         AnimationCurve ret  = new AnimationCurve();
-        TimelineClip   clip = clipData.GetOwner();
+        Assert.IsNotNull(clip);
+        Assert.IsNotNull(track);
 
         int origNumSceneCacheFrames = sceneCacheInfo.GetNumFrames();
         int numKeyFrames            = clipData.GetNumKeyFrames();
 
-        if (numKeyFrames <= 0 || origNumSceneCacheFrames <= 0 || null==clip) {
-            SetClipCurveInEditor(clipData.GetOwner(), ret);
-            return ret;
-        }
-
-        TrackAsset track = clip.GetParentTrack();
-        if (null == track) {
+        if (numKeyFrames <= 0 || origNumSceneCacheFrames <= 0) {
             SetClipCurveInEditor(clipData.GetOwner(), ret);
             return ret;
         }
