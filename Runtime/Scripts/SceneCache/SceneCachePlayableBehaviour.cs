@@ -36,18 +36,17 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
         
         LimitedAnimationController limitedAnimationController = m_sceneCachePlayableAsset.GetOverrideLimitedAnimationController();
 
-        float           localTime = (float) playable.GetTime();
-        ISceneCacheInfo scInfo    = m_sceneCachePlayer.ExtractSceneCacheInfo(forceOpen: true);
+        float          localTime = (float) playable.GetTime();
+        SceneCacheInfo scInfo    = m_sceneCachePlayer.ExtractSceneCacheInfo(forceOpen: true);
         if (null == scInfo)
             return;
 
-        float sceneCacheTime = 0;
-        int   sceneCacheFrame = 0;
+        float                  sceneCacheTime = 0;
+        SceneCachePlaybackMode playbackMode   = m_sceneCachePlayer.GetPlaybackMode();
         
         //LimitedAnimationController (obsolete!)
         if (limitedAnimationController.IsEnabled()) {
-            sceneCacheFrame = m_sceneCachePlayer.CalculateFrame((float)localTime,limitedAnimationController);
-            sceneCacheTime  = sceneCacheFrame / scInfo.GetSampleRate(); 
+            sceneCacheTime  = SceneCachePlayer.CalculatePlaybackTime(localTime, playbackMode, scInfo); 
             m_sceneCachePlayer.SetTime(sceneCacheTime);
             return;
         }
@@ -56,8 +55,7 @@ internal class SceneCachePlayableBehaviour : PlayableBehaviour {
         float          normalizedTime = curve.Evaluate(localTime);
         
         float estimatedTime = (normalizedTime * scInfo.GetTimeRange().end);
-        sceneCacheFrame = m_sceneCachePlayer.CalculateFrame(estimatedTime);
-        sceneCacheTime  = sceneCacheFrame / scInfo.GetSampleRate();
+        sceneCacheTime = SceneCachePlayer.CalculatePlaybackTime(estimatedTime,playbackMode, scInfo);
         m_sceneCachePlayer.SetTime(sceneCacheTime);
         
         //Debug.Log($"MotionNormalizedTime: {normalizedTime}. Frame: {sceneCacheFrame}. LocalTime: {localTime}.");
