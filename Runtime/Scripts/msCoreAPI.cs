@@ -633,7 +633,7 @@ internal struct MaterialPropertyData {
             if (self == IntPtr.Zero) {
                 return default;
             }
-            
+
             var ret = new Vector4[arrayLength];
             msMaterialPropCopyData(self, ret);
             return ret;
