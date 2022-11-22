@@ -202,7 +202,7 @@ internal delegate void DeleteInstanceHandler(string path);
         #region Properties
         
         private int  currentSessionId  = -1;
-        private bool ignoreNextNewSession = false;
+        private bool forceDeleteChildrenInNextSession = false;
 
         private protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
 
@@ -505,8 +505,8 @@ internal delegate void DeleteInstanceHandler(string path);
             numberOfPropertiesReceived = 0;
         }
 
-        public void IgnoreNextNewSession() {
-            ignoreNextNewSession = true;
+        public void ForceDeleteChildrenInNextSession() {
+            forceDeleteChildrenInNextSession = true;
         }
 
         void CheckForNewSession(FenceMessage? mes) {
@@ -523,9 +523,9 @@ internal delegate void DeleteInstanceHandler(string path);
 
             int choice;
             
-            if (ignoreNextNewSession) {
+            if (forceDeleteChildrenInNextSession) {
                 choice            = 2;
-                ignoreNextNewSession = false;
+                forceDeleteChildrenInNextSession = false;
             }
             else {
                 choice = EditorUtility.DisplayDialogComplex("A new session started.",
