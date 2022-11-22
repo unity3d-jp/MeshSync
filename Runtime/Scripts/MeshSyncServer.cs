@@ -23,11 +23,6 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     
 //----------------------------------------------------------------------------------------------------------------------
 
-    void OnValidate()
-    {
-        CheckParamsUpdated();
-    }
-
     void ResetServerConfig() {
         MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
         m_config     = new MeshSyncServerConfig(projectSettings.GetDefaultServerConfig());
@@ -80,7 +75,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         UpdateMaterialAssetByDefault(materialData,m_config.GetModelImporterSettings());
     }
     
-//----------------------------------------------------------------------------------------------------------------------        
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------        
     
 #region Getter/Setter
     internal bool IsServerStarted()             { return m_serverStarted;}
@@ -92,7 +87,15 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     
 #endregion
 
-//----------------------------------------------------------------------------------------------------------------------        
+    
+    internal void ApplyConfig() {
+        if (!m_server) 
+            return;
+        
+        m_server.SetZUpCorrectionMode((ZUpCorrectionMode) m_config.ZUpCorrection);
+    }
+    
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------        
     /// <summary>
     /// Sets whether the server should be started automatically or not
     /// </summary>
@@ -142,12 +145,12 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         
         
         m_serverSettings.port = (ushort)m_serverPort;
-        m_serverSettings.zUpCorrectionMode = (ZUpCorrectionMode) m_config.ZUpCorrection;
 
         m_serverStarted = Server.Start(ref m_serverSettings, out m_server);
         if (!m_serverStarted)
             return;
         
+        ApplyConfig();
         m_server.fileRootPath = GetServerDocRootPath();
         m_server.AllowPublicAccess(projectSettings.GetServerPublicAccess());
 
@@ -156,6 +159,10 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 #if UNITY_EDITOR
         EditorApplication.update -= PollServerEvents;
         EditorApplication.update += PollServerEvents;
+        
+        EditorApplication.quitting -= OnEditorQuit;
+        EditorApplication.quitting += OnEditorQuit;
+        
 #endif
         if (m_config.Logging)
             Debug.Log("[MeshSync] Server started (port: " + m_serverSettings.port + ")");
@@ -165,7 +172,13 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 #endif //UNITY_STANDALONE || UNITY_EDITOR
     }
 
-        //----------------------------------------------------------------------------------------------------------------------        
+    private void OnEditorQuit() {
+        if (m_server) {
+            m_server.Abort();
+        }
+    }
+
+    //----------------------------------------------------------------------------------------------------------------------        
 
     internal void StopServer()
     {
@@ -207,13 +220,6 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     
 
 #if UNITY_STANDALONE || UNITY_EDITOR
-    
-    void CheckParamsUpdated()  {
-
-        if (m_server) {
-            m_server.zUpCorrectionMode = (ZUpCorrectionMode) m_config.ZUpCorrection;
-        }
-    }
 
     #region MessageHandlers
 

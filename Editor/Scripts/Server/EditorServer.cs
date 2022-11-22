@@ -21,7 +21,7 @@ internal static class EditorServer {
     
     private static void UpdateLog() {
         var appRoot = AssetEditorUtility.GetApplicationRootPath();
-        var dir = Path.Combine(appRoot, "Assets", "ProjectSettings");
+        var dir = Path.Combine(appRoot, "Logs");
         Directory.CreateDirectory(dir);
         var path = Path.Combine(dir, "MeshSyncEditorServerLog.txt");
         using (var stream = File.Create(path)) {
@@ -65,8 +65,14 @@ internal static class EditorServer {
         // Defer the Initialisation to the first update call
         EditorApplication.update -= Init;
         EditorApplication.update += Init;
+        
+        EditorApplication.quitting -= OnQuit;
+        EditorApplication.quitting += OnQuit;
     }
-    
+
+    private static void OnQuit() {
+        m_server.Abort();
+    }
 
     /// <summary>
     /// Apply settings from CLI arguments or use Editor Server Settings.

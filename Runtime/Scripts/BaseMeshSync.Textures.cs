@@ -81,7 +81,7 @@ namespace Unity.MeshSync {
                             // Set the texture on the material to null for now so the render texture
                             // is not saved to file again if this gets called again before it was
                             // set to the texture in the asset library:
-                            mat.SetTextureSafe(textureNameID, null);
+                            mat.SetTextureAndReleaseExistingRenderTextures(textureNameID, null);
                         }
 
                         renderTarget.Release();
@@ -256,7 +256,7 @@ namespace Unity.MeshSync {
         }
 
         private static void SetupGlass_Standard(Material mat) {
-            mat.SetFloat(MeshSyncConstants._Mode, 3);
+            mat.SetFloat(MeshSyncConstants._Mode, 3);   // Transparent
             mat.DisableKeyword(MeshSyncConstants._ALPHATEST_ON);
             mat.DisableKeyword(MeshSyncConstants._ALPHABLEND_ON);
             mat.EnableKeyword(MeshSyncConstants._ALPHAPREMULTIPLY_ON);

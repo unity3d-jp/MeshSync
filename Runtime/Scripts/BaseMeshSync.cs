@@ -864,12 +864,22 @@ internal delegate void DeleteInstanceHandler(string path);
             MakeSureAssetDirectoryExists();
             Texture2D texture = null;
 #if UNITY_EDITOR
-            Action<string> doImport = (path) =>
-            {
+            Action<string> doImport = (path) => {
+                bool assetExisted = AssetDatabase.LoadAssetAtPath<Texture2D>(path) != null;
+
                 AssetDatabase.ImportAsset(path);
                 texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 if (texture != null) {
                     TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
+
+                    // Make sure the full texture is used unless the user changed this setting before:
+                    if (!assetExisted) {
+                        importer.npotScale = TextureImporterNPOTScale.None;
+
+                        importer.SaveAndReimport();
+                        AssetDatabase.Refresh();
+                    }
+
                     if (importer != null) {
                         switch (src.type) {
                             case TextureType.NormalMap:
@@ -1264,7 +1274,7 @@ internal delegate void DeleteInstanceHandler(string path);
                     MaterialPropertyData.TextureRecord rec = prop.textureValue;
                     Texture2D                          tex = FindTexture(rec.id, textureHolders);
                     // Allow setting of null textures to clear them:
-                    destMat.SetTextureSafe(propNameID, tex);
+                    destMat.SetTextureAndReleaseExistingRenderTextures(propNameID, tex);
                     if (rec.hasScaleOffset) {
                         destMat.SetTextureScale(propNameID, rec.scale);
                         destMat.SetTextureOffset(propNameID, rec.offset);
@@ -1344,6 +1354,9 @@ internal delegate void DeleteInstanceHandler(string path);
                 }
 
                 meshUpdated = true;
+            }
+            else if (rec.mesh != null) {
+                rec.mesh.Clear();
             }
 
             if (dflags.hasBones || dflags.hasBlendshapes)
@@ -1450,7 +1463,12 @@ internal delegate void DeleteInstanceHandler(string path);
 
                     rec.proBuilderMeshFilter = Misc.GetOrAddComponent<UnityEngine.ProBuilder.ProBuilderMesh>(trans.gameObject);
 
-                    var importer = new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, rec.meshRenderer.sharedMaterials, rec.proBuilderMeshFilter);
+                    Material[] sharedMaterials = null;
+                    if (rec.meshRenderer != null) {
+                        sharedMaterials = rec.meshRenderer.sharedMaterials;
+                    }
+
+                    var importer = new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, sharedMaterials, rec.proBuilderMeshFilter);
                     // Disable quads, it is much slower:
                     importer.Import(new UnityEngine.ProBuilder.MeshOperations.MeshImportSettings() { quads = false });
 
@@ -2042,7 +2060,14 @@ internal delegate void DeleteInstanceHandler(string path);
                     "[MeshSync] No entity found for parent path {0}, using root as parent", data.parentPath);
             }
 
-            switch (InstanceHandling)
+            // Anything other than a mesh needs to use copies if we're in instance renderer mode:
+            var instanceHandlingToUse = InstanceHandling;
+            if (instanceHandlingToUse == InstanceHandlingType.InstanceRenderer &&
+                instancedEntityRecord.dataType != EntityType.Mesh) {
+                instanceHandlingToUse = InstanceHandlingType.Copies;
+            }
+
+            switch (instanceHandlingToUse)
             {
                 case InstanceHandlingType.InstanceRenderer:
                     UpdateInstanceInfo_InstanceRenderer(data, infoRecord, instanceRendererParent);
@@ -2080,11 +2105,11 @@ internal delegate void DeleteInstanceHandler(string path);
                 bool visible = instancedEntityRecord.visibility.visibleInRender;
 
                 GameObject instanceObjectOriginal;
-                if (InstanceHandling == InstanceHandlingType.Copies) {
-                    instanceObjectOriginal = infoRecord.go;
+                if (InstanceHandling == InstanceHandlingType.Prefabs) {
+                    instanceObjectOriginal = GetOrCreatePrefab(data, infoRecord);
                 }
                 else {
-                    instanceObjectOriginal = GetOrCreatePrefab(data, infoRecord);
+                    instanceObjectOriginal = infoRecord.go;
                 }
 
                 if (instanceObjectOriginal == null) {
@@ -2093,19 +2118,19 @@ internal delegate void DeleteInstanceHandler(string path);
 
                 foreach (var mat in data.transforms) {
                     GameObject instancedCopy;
-                    if (InstanceHandling == InstanceHandlingType.Copies) {
-                        instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
-                    }
-                    else {
+                    if (InstanceHandling == InstanceHandlingType.Prefabs) {
 #if UNITY_EDITOR
                         instancedCopy = (GameObject)PrefabUtility.InstantiatePrefab(instanceObjectOriginal,
-                        instanceRendererParent.transform);
+                            instanceRendererParent.transform);
 #else
                         instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
 #endif
                     }
+                    else {
+                        instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
+                    }
 
-                    SetInstanceTransform(instancedCopy, instanceObjectOriginal, mat);
+                    SetInstanceTransform(instancedCopy, instanceRendererParent, mat);
 
                     if (config.SyncVisibility &&
                         instancedEntityRecord.hasVisibility) {
@@ -2117,28 +2142,35 @@ internal delegate void DeleteInstanceHandler(string path);
             }
         }
 
-        private static void SetInstanceTransform(GameObject instancedCopy, GameObject instanceObjectOriginal, Matrix4x4 mat) {
+        private static void SetInstanceTransform(GameObject instancedCopy, GameObject parent, Matrix4x4 mat) {
             Transform objTransform = instancedCopy.transform;
+            
+            mat = parent.transform.localToWorldMatrix * mat;
 
-            var newMat = instanceObjectOriginal.transform.localToWorldMatrix * mat;
-
-            objTransform.localScale = newMat.lossyScale;
-            objTransform.position   = newMat.MultiplyPoint(Vector3.zero);
+            objTransform.localScale = mat.lossyScale;
+            objTransform.position   = mat.MultiplyPoint(Vector3.zero);
 
             // Calculate rotation here to avoid gimbal lock issue:
             Vector3 forward;
-            forward.x = newMat.m02;
-            forward.y = newMat.m12;
-            forward.z = newMat.m22;
+            forward.x = mat.m02;
+            forward.y = mat.m12;
+            forward.z = mat.m22;
 
             Vector3 upwards;
-            upwards.x = newMat.m01;
-            upwards.y = newMat.m11;
-            upwards.z = newMat.m21;
+            upwards.x = mat.m01;
+            upwards.y = mat.m11;
+            upwards.z = mat.m21;
 
             objTransform.rotation = Quaternion.LookRotation(forward, upwards);
 
-            Debug.Assert(objTransform.localToWorldMatrix == newMat, "Matrices don't match!");
+#if DEBUG
+            var localMatrix = objTransform.localToWorldMatrix;
+            for (int x = 0; x < 3; x++) {
+                for (int y = 0; y < 3; y++) {
+                    Debug.Assert( Math.Abs(localMatrix[x, y] - mat[x, y]) < 0.01f, "Matrices don't match!");
+                }
+            }
+#endif
         }
 
         private GameObject GetOrCreatePrefab(InstanceInfoData data, InstanceInfoRecord infoRecord) {

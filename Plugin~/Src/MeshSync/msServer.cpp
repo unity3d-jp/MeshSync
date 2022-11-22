@@ -60,6 +60,12 @@ void Server::stop()
     m_server.reset();
 }
 
+void Server::abort() {
+    if (m_server) {
+        m_server->stopAll(true);
+    }
+}
+
 void Server::clear()
 {
     lock_t lock(m_message_mutex);

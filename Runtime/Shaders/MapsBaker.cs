@@ -104,7 +104,7 @@ internal static class MapsBaker {
 
         // If there are no textures, don't bake anything, slider values can control everything:
         if (!texturesExist) {
-            destMat.SetTextureSafe(MeshSyncConstants._MaskMap, null);
+            destMat.SetTextureAndReleaseExistingRenderTextures(MeshSyncConstants._MaskMap, null);
             destMat.DisableKeyword(MeshSyncConstants._MASKMAP);
             return;
         }
@@ -121,7 +121,7 @@ internal static class MapsBaker {
 
         destMat.EnableKeyword(MeshSyncConstants._MASKMAP);
 
-        destMat.SetTextureSafe(MeshSyncConstants._MaskMap, texture);
+        destMat.SetTextureAndReleaseExistingRenderTextures(MeshSyncConstants._MaskMap, texture);
         
         metalTexture.Dispose();
         glossTexture.Dispose();
@@ -157,7 +157,7 @@ internal static class MapsBaker {
         }
         else {
             Debug.LogError(
-                $"Unknown smoothness channel, cannot bake to option: {smoothnessChannel} set in the smoothness texture channel.");
+                $"[MeshSync] Unknown smoothness channel, cannot bake to option: {smoothnessChannel} set in the smoothness texture channel.");
             return;
         }
 
@@ -168,7 +168,7 @@ internal static class MapsBaker {
 
         // If there are no textures, don't bake anything, slider values can control everything:
         if (!texturesExist) {
-            destMat.SetTextureSafe(channelName, null);
+            destMat.SetTextureAndReleaseExistingRenderTextures(channelName, null);
 
             if (channelName == MeshSyncConstants._MetallicGlossMap) {
                 destMat.DisableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
@@ -197,7 +197,7 @@ internal static class MapsBaker {
             destMat.DisableKeyword(MeshSyncConstants._METALLICSPECGLOSSMAP);
         }
 
-        destMat.SetTextureSafe(channelName, texture);
+        destMat.SetTextureAndReleaseExistingRenderTextures(channelName, texture);
 
         glossTexture.Dispose();
         rgbTexture.Dispose();
