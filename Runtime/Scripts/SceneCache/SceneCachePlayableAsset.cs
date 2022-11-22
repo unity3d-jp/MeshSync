@@ -216,6 +216,8 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         if (null == clipData) //Null check. the data might not have been bound during recompile
             return;
         
+        clipData.OnClipChanged();
+        
         TimelineClip clip = clipData.GetOwner();
         if (null == clip)
             return;
@@ -224,7 +226,6 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
         if (null == track)
             return;
         
-        clipData.OnClipChanged();
 
         if (null == m_sceneCachePlayer)
             return;
