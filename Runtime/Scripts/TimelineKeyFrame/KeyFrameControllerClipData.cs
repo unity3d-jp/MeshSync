@@ -136,9 +136,8 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         TimelineClip clip = GetOwnerIfReady();
         if (null == clip)
             return;
-            
-        //already enabled
-        int              frameIndex = LocalTimeToFrameIndex(globalTime - clip.start + clip.clipIn, clip.duration, clip.clipIn);
+
+        int              frameIndex = LocalTimeToFrameIndex(clip.ToLocalTime(globalTime), clip.duration, clip.clipIn);
         PlayableKeyFrame keyFrame   = m_keyFrames[frameIndex];
         if (keyFrame.IsEnabled())
             return;
