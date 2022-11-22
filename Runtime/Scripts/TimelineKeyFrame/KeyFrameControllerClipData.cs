@@ -30,7 +30,6 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         }
         
         m_keyFrameMarkersRequested = other.m_keyFrameMarkersRequested;
-        
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -118,7 +117,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
 
-        int numIdealNumPlayableFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clip);
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clip);
         UpdateKeyFramesSize(numIdealNumPlayableFrames);
         InitKeyFrames(0, m_keyFrames.Count, span, mode);
     }
@@ -127,7 +126,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
 
-        int numIdealNumPlayableFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clip);
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clip);
         UpdateKeyFramesSize(numIdealNumPlayableFrames);
         
         InitKeyFrames(startIndex, endIndex, span, mode);
@@ -261,7 +260,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         if (null == clipOwner)
             return;
 
-        int numIdealNumPlayableFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clipOwner);
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clipOwner);
         UpdateKeyFramesSize(numIdealNumPlayableFrames);
         
         InitKeyFrames(0, numIdealNumPlayableFrames-1, span: 1, KeyFrameMode.Continuous);
@@ -307,7 +306,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
             return true;
         }
         
-        int numIdealNumPlayableFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clip);
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clip);
         if (numIdealNumPlayableFrames != m_keyFrames.Count)
             return true;
         
@@ -328,10 +327,12 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         m_lastClipTimeScaleOnRefresh = (float) clipOwner.timeScale;
         m_lastClipInOnRefresh        = (float) clipOwner.clipIn;
         
-        int numIdealNumPlayableFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clipOwner);
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clipOwner);
+        
       
         //Change the size of m_playableFrames and reinitialize if necessary
         int prevNumPlayableFrames = m_keyFrames.Count;
+        
         if (numIdealNumPlayableFrames != prevNumPlayableFrames) {
             
             //Change the size of m_playableFrames and reinitialize if necessary
@@ -455,6 +456,12 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         return null;
         
     }
+
+    private int CalculateNumIdealKeyFrames(TimelineClip clip) {
+        int numIdealKeyFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clip);
+        return numIdealKeyFrames;
+    }
+    
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
     
     //The ground truth for using/dropping an image in a particular frame. See the notes below
