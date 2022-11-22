@@ -201,11 +201,11 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
             return;
         
         //Find KeyFrames that need to be moved
-        int                           numPlayableFrames  = m_keyFrames.Count;
+        int                           numKeyFrames       = m_keyFrames.Count;
         Dictionary<int, KeyFrameInfo> movedKeyFrames     = new Dictionary<int, KeyFrameInfo>();
         HashSet<int>                  keyFramesToDisable = new HashSet<int>();
         
-        for (int i = 0; i < numPlayableFrames; ++i) {
+        for (int i = 0; i < numKeyFrames; ++i) {
             PlayableKeyFrame keyFrame = m_keyFrames[i];
             keyFrame.SaveStateFromMarker();
             int moveDestIndex = LocalTimeToFrameIndex(keyFrame.GetLocalTime(), clipOwner.duration, clipOwner.clipIn);            
@@ -232,7 +232,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
 
         //Update PlayableFrames structure back
         double timePerFrame = FilmInternalUtilities.TimelineUtility.CalculateTimePerFrame(clipOwner);
-        for (int i = 0; i < numPlayableFrames; ++i) {
+        for (int i = 0; i < numKeyFrames; ++i) {
             m_keyFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
             if (movedKeyFrames.TryGetValue(i, out KeyFrameInfo keyFrameInfo)) {
                 
