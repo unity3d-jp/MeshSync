@@ -263,6 +263,12 @@ internal class SceneCachePlayableAsset : BaseExtendedClipPlayableAsset<SceneCach
             SetClipCurveInEditor(clipData.GetOwner(), ret);
             return ret;
         }
+
+        TrackAsset track = clip.GetParentTrack();
+        if (null == track) {
+            SetClipCurveInEditor(clipData.GetOwner(), ret);
+            return ret;
+        }
         
         double fps = clip.GetParentTrack().timelineAsset.editorSettings.GetFPS();
         int curNumSceneCacheFrames = (int) (origNumSceneCacheFrames * fps / sceneCacheInfo.GetSampleRate()); 
