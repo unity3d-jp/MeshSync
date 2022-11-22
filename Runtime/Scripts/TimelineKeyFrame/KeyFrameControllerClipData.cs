@@ -470,10 +470,10 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
     [SerializeField] private List<PlayableKeyFrame> m_keyFrames;
     [SerializeField] [HideInInspector] private bool m_keyFrameMarkersRequested = false;
 
-    [SerializeField] [HideInInspector] private float m_lastClipStartTimeOnRefresh = 0;
-    [SerializeField] [HideInInspector] private float m_lastClipDurationOnRefresh  = 0;
-    [SerializeField] [HideInInspector] private float m_lastClipTimeScaleOnRefresh = 0;
-    [SerializeField] [HideInInspector] private float m_lastClipInOnRefresh        = 0;
+    private float m_lastClipStartTimeOnRefresh = 0;
+    private float m_lastClipDurationOnRefresh  = 0;
+    private float m_lastClipTimeScaleOnRefresh = 0;
+    private float m_lastClipInOnRefresh        = 0;
 
     
 #pragma warning disable 414    
