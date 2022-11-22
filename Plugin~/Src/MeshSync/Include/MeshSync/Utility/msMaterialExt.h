@@ -6,8 +6,9 @@
 msDeclClassPtr(Material)
 
 namespace ms {
-
-// correspond to Unity's Standard shader
+/**
+ * Generic PBR shader using field names from Unity's Standard shader.
+ */
 class StandardMaterial : public Material
 {
 public:
@@ -30,12 +31,15 @@ public:
     void    setEmissionMap(TexturePtr v);
     TextureRecord* getEmissionMap() const;
 
+    void    setEmissionStrength(float v);
+
     void    setMetallic(float v);
     float   getMetallic() const;
     void    setMetallicMap(const TextureRecord& v);
     void    setMetallicMap(TexturePtr v);
     TextureRecord* getMetallicMap() const;
     void    setSmoothness(float v);
+    void    setSmoothnessMap(const TextureRecord& v);
     float   getSmoothness() const;
 
     void    setBumpScale(float v);
@@ -43,6 +47,13 @@ public:
     void    setBumpMap(const TextureRecord& v);
     void    setBumpMap(TexturePtr v);
     TextureRecord* getBumpMap() const;
+
+    void    setHeightScale(float v);
+    void    setHeightMap(const TextureRecord& v);
+
+    void    setSpecular(mu::float3 v);
+    
+    void    setShader(const std::string shaderName);
 };
 msDeclPtr(StandardMaterial);
 inline StandardMaterial& AsStandardMaterial(Material& p) { return reinterpret_cast<StandardMaterial&>(p); }

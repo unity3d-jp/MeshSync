@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 using UnityEngine;
 using Unity.Collections;
 
@@ -306,6 +307,7 @@ internal struct AudioData {
 internal enum TextureType {
     Default,
     NormalMap,
+    NonColor
 }
 
 internal enum TextureFormat {
@@ -340,7 +342,7 @@ internal enum TextureFormat {
     RGBi32  = Type_i32 | 3,
     RGBAi32 = Type_i32 | 4,
 
-    RawFile = 0x10 << 4,
+    RawFile      = 0x10 << 4,
 }
 
 /// <summary>
@@ -495,6 +497,9 @@ internal struct MaterialPropertyData {
     [DllImport(Lib.name)]
     static extern void msMaterialPropCopyData(IntPtr self, Matrix4x4[] dst);
 
+    [DllImport(Lib.name)]
+    static extern void msMaterialPropCopyData(IntPtr self, StringBuilder dst);
+
     #endregion
 
     public enum Type {
@@ -504,6 +509,7 @@ internal struct MaterialPropertyData {
         Vector,
         Matrix,
         Texture,
+        String
     }
 
     public struct TextureRecord {
@@ -524,6 +530,10 @@ internal struct MaterialPropertyData {
 
             return Misc.S(msMaterialPropGetName(self));
         }
+    }
+
+    public int nameID {
+        get { return  Shader.PropertyToID(name); }
     }
 
     public Type type {
@@ -550,6 +560,10 @@ internal struct MaterialPropertyData {
 
     public float floatValue {
         get {
+            if (self == IntPtr.Zero) {
+                return default;
+            }
+            
             float ret = 0;
             msMaterialPropCopyData(self, ref ret);
             return ret;
@@ -636,6 +650,10 @@ internal struct MaterialPropertyData {
             msMaterialPropCopyData(self, ret);
             return ret;
         }
+    }
+
+    public override string ToString() {
+        return name;
     }
 }
 
