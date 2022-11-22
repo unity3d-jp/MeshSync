@@ -682,7 +682,7 @@ internal delegate void DeleteInstanceHandler(string path);
 #endif
         }
 
-        internal void AfterUpdateScene()
+        internal virtual void AfterUpdateScene()
         {
             // If none of the set messages had properties, we need to remove all properties:
             if (numberOfPropertiesReceived == 0) {

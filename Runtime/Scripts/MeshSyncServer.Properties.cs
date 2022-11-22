@@ -184,8 +184,6 @@ namespace Unity.MeshSync
                 if (sendChanges)
                 {
                     CurrentPropertiesState = PropertiesState.Sending;
-                    onSceneUpdateEnd -= SceneUpdated;
-                    onSceneUpdateEnd += SceneUpdated;
                     m_server.MarkServerInitiatedResponseReady();
                 }
             }
@@ -287,9 +285,8 @@ namespace Unity.MeshSync
         {
         }
 
-        void SceneUpdated()
-        {
-            onSceneUpdateEnd -= SceneUpdated;
+        internal override void AfterUpdateScene() {
+            base.AfterUpdateScene();
 
             CurrentPropertiesState = PropertiesState.Received;
         }
