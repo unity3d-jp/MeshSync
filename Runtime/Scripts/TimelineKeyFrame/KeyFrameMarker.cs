@@ -11,9 +11,9 @@ namespace Unity.MeshSync {
 internal class KeyFrameMarker : Marker, INotification, ICanRefresh {
 
     
-    internal void Init(PlayableKeyFrame controller, double initialTime) {
+    internal void Init(PlayableKeyFrame controller, TimelineClip clip) {
         m_playableKeyFrameOwner = controller;
-        time = initialTime;
+        time                    = CalculateMarkerTime(clip, m_playableKeyFrameOwner.GetLocalTime());
     }     
     
 //----------------------------------------------------------------------------------------------------------------------    
@@ -25,10 +25,18 @@ internal class KeyFrameMarker : Marker, INotification, ICanRefresh {
             return false;
         } 
         
-        time = clip.start + m_playableKeyFrameOwner.GetLocalTime();
-        
+        time = CalculateMarkerTime(clip, m_playableKeyFrameOwner.GetLocalTime());
         return true;
     }
+
+    private static double CalculateMarkerTime(TimelineClip clip, double keyFrameLocalTime) {
+        return clip.start + ((-clip.clipIn + keyFrameLocalTime) / clip.timeScale);
+    }
+    
+    internal double CalculateKeyFrameLocalTime(TimelineClip clip) {
+        return ((time - clip.start) * clip.timeScale) + clip.clipIn;
+    } 
+    
 
 //----------------------------------------------------------------------------------------------------------------------
     
