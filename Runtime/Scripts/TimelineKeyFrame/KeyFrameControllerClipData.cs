@@ -458,8 +458,10 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
     }
 
     private int CalculateNumIdealKeyFrames(TimelineClip clip) {
-        int numIdealKeyFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clip);
-        return numIdealKeyFrames;
+        double fps               = clip.GetParentTrack().timelineAsset.editorSettings.GetFPS();
+        int    numIdealKeyFrames = Mathf.RoundToInt((float)((clip.duration + clip.clipIn) * fps));
+        return numIdealKeyFrames; 
+        
     }
     
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
