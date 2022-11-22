@@ -211,9 +211,9 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         HashSet<int>                  keyFramesToDisable = new HashSet<int>();
         
         for (int i = 0; i < numPlayableFrames; ++i) {
-            PlayableKeyFrame keyKeyFrame = m_keyFrames[i];
-            keyKeyFrame.SaveStateFromMarker();
-            int moveDestIndex = Mathf.RoundToInt((float)(keyKeyFrame.GetLocalTime() * numPlayableFrames / clipOwner.duration));
+            PlayableKeyFrame keyFrame = m_keyFrames[i];
+            keyFrame.SaveStateFromMarker();
+            int moveDestIndex = Mathf.RoundToInt((float)(keyFrame.GetLocalTime() * numPlayableFrames / clipOwner.duration));
             moveDestIndex = Mathf.Clamp(moveDestIndex,0,numPlayableFrames - 1);
             
             if (moveDestIndex == i)
@@ -223,8 +223,8 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
             movedKeyFrames[moveDestIndex] = (new KeyFrameInfo() {
                 enabled = true,
                 //localTime = keyFrame.GetLocalTime(),
-                mode    = keyKeyFrame.GetKeyFrameMode(),
-                playFrame = keyKeyFrame.GetPlayFrame(),
+                mode      = keyFrame.GetKeyFrameMode(),
+                playFrame = keyFrame.GetPlayFrame(),
             });
             
 
