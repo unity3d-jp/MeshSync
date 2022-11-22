@@ -14,10 +14,12 @@ internal class SceneCacheClipData : KeyFrameControllerClipData {
     
 //----------------------------------------------------------------------------------------------------------------------
     protected override void OnBeforeSerializeInternalV() {
+        base.OnBeforeSerializeInternalV();
         m_sceneCacheClipDataVersion = CUR_SCENE_CACHE_CLIP_DATA_VERSION;
     }
 
     protected override void OnAfterDeserializeInternalV() {
+        base.OnAfterDeserializeInternalV();
         m_sceneCacheClipDataVersion = CUR_SCENE_CACHE_CLIP_DATA_VERSION;
     }
     

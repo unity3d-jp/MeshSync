@@ -20,13 +20,9 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         m_keyFrames = new List<PlayableKeyFrame>();
     }
 
-    protected KeyFrameControllerClipData(TimelineClip clipOwner) {
-        SetOwner(clipOwner);
+    protected KeyFrameControllerClipData(TimelineClip owner, KeyFrameControllerClipData other) {
+        SetOwner(owner);
         m_keyFrames = new List<PlayableKeyFrame>();
-    }
-
-    protected KeyFrameControllerClipData(TimelineClip owner, KeyFrameControllerClipData other) : this(owner){
-        Assert.IsNotNull(m_keyFrames);
         
         foreach (PlayableKeyFrame otherFrame in other.m_keyFrames) {
             PlayableKeyFrame newKeyFrame = new PlayableKeyFrame(this, otherFrame);
@@ -43,8 +39,9 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
     }
 
     protected override void OnAfterDeserializeInternalV() {
-        foreach (PlayableKeyFrame playableFrame in m_keyFrames) {
-            playableFrame.SetOwner(this);
+        foreach (PlayableKeyFrame keyFrame in m_keyFrames) {
+            keyFrame.SetOwner(this);
+            keyFrame.RefreshMarkerOwner();
         }
     }    
     #endregion
@@ -204,21 +201,15 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         if (!m_keyFrameMarkersVisibility) 
             return;
         
-        //Sort out KeyFrame ownership before rearranging key frames
-        foreach (PlayableKeyFrame keyFrame in m_keyFrames) {
-            keyFrame.SetOwner(this);
-            keyFrame.RefreshMarkerOwner();
-        }
-        
         //Find KeyFrames that need to be moved
         int                           numPlayableFrames  = m_keyFrames.Count;
         Dictionary<int, KeyFrameInfo> movedKeyFrames     = new Dictionary<int, KeyFrameInfo>();
         HashSet<int>                  keyFramesToDisable = new HashSet<int>();
         
         for (int i = 0; i < numPlayableFrames; ++i) {
-            PlayableKeyFrame keyKeyFrame = m_keyFrames[i];
-            keyKeyFrame.SaveStateFromMarker();
-            int moveDestIndex = Mathf.RoundToInt((float)(keyKeyFrame.GetLocalTime() * numPlayableFrames / clipOwner.duration));
+            PlayableKeyFrame keyFrame = m_keyFrames[i];
+            keyFrame.SaveStateFromMarker();
+            int moveDestIndex = Mathf.RoundToInt((float)(keyFrame.GetLocalTime() * numPlayableFrames / clipOwner.duration));
             moveDestIndex = Mathf.Clamp(moveDestIndex,0,numPlayableFrames - 1);
             
             if (moveDestIndex == i)
@@ -228,8 +219,8 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
             movedKeyFrames[moveDestIndex] = (new KeyFrameInfo() {
                 enabled = true,
                 //localTime = keyFrame.GetLocalTime(),
-                mode    = keyKeyFrame.GetKeyFrameMode(),
-                playFrame = keyKeyFrame.GetPlayFrame(),
+                mode      = keyFrame.GetKeyFrameMode(),
+                playFrame = keyFrame.GetPlayFrame(),
             });
             
 
