@@ -322,27 +322,6 @@ public class SceneCachePlayer : BaseMeshSync {
         return frame;
     }
 
-    internal int CalculateFrame(float time) {
-        int frame = 0;
-        switch (m_playbackMode) {
-            case SceneCachePlaybackMode.SnapToPreviousFrame: {
-                frame = CalculateFrameByFloor(time, m_sceneCacheInfo);
-                break;
-            }
-
-            case SceneCachePlaybackMode.SnapToNearestFrame: {
-                frame = CalculateFrameByRound(time, m_sceneCacheInfo);
-                break;
-            }
-            default: {
-                Assert.IsTrue(false); //invalid call
-                break;
-            }
-        }
-
-        return frame;
-    }
-    
     internal static float CalculatePlaybackTime(float time, SceneCachePlaybackMode playbackMode, SceneCacheInfo scInfo) {
         switch (playbackMode) {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
