@@ -116,9 +116,7 @@ namespace Unity.MeshSync
                         prop.IsDirty = false;
                         sendChanges = true;
 
-#if VERBOSE_LOGS
-                        Debug.Log($"[MeshSync] Sending changes, property '{prop.name}' was dirty.");
-#endif
+                        MeshSyncLogger.VerboseLog($"Sending changes, property '{prop.name}' was dirty.");
                     }
                 }
 
@@ -179,9 +177,8 @@ namespace Unity.MeshSync
 
                 if (needsClientSync)
                 {
-#if VERBOSE_LOGS
-                    Debug.Log("[MeshSync] Sending changes, needed client sync.");
-#endif
+                    MeshSyncLogger.VerboseLog("Sending changes, needed client sync.");
+
                     needsClientSync = false;
                     sendChanges = true;
 
