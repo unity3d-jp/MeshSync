@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -78,6 +78,8 @@ namespace Unity.MeshSync
             }
         }
 
+        internal Transform instanceParent { get; set; }
+
         private Renderer m_renderer;
         internal int layer
         {
@@ -154,10 +156,10 @@ namespace Unity.MeshSync
         {
             get
             {
-                if (gameObject == null)
+                if (instanceParent == null)
                     return Matrix4x4.identity;
-                    
-                return gameObject.transform.localToWorldMatrix;
+
+                return instanceParent.localToWorldMatrix;
             }
         }
 

@@ -1,7 +1,10 @@
-﻿using System;
+using System;
 using System.IO;
 using JetBrains.Annotations;
 using NUnit.Framework;
+
+using Unity.MeshSync.Editor.Analytics;
+
 using UnityEditor;
 using UnityEngine;
 
@@ -80,6 +83,11 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
 
         //Cleanup
         File.Delete(installScriptPath);
+
+        if (setupSuccessful) {
+            var analyticsClient = MeshSyncAnalyticsFactory.CreateAnalytics();
+            analyticsClient.UserInstalledPlugin("blender");
+        }
 
         return setupSuccessful;
     }

@@ -17,7 +17,7 @@ To stop rendering instances of an object:
 
 ### Controlling instances
 
-We can control the rendering and world transform of instances by modifying the **GameObject** that 
+We can control the rendering and world transform of instances by modifying the parent of the **GameObject** that 
 is being instantiated.
 
 ![Menu](images/GeometryNodesMove.gif)
@@ -45,3 +45,4 @@ Currently, this geometry nodes synchronization feature has the following limitat
    Importing instances from a SceneCache file is not supported.
 2. No Preview in the Inspector window.   
    Previewing instances inside an asset in the Inspector window is not supported.   
+3. Lights cannot be instanced. MeshSync uses copies of the instanced light **GameObjects** when the **MeshSyncServer** is in **Instance Renderer** mode.

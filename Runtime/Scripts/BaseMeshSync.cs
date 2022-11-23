@@ -16,11 +16,18 @@ using Unity.FilmInternalUtilities;
 using Unity.Mathematics;
 #endif
 
+#if AT_USE_HDRP
+using UnityEngine.Rendering; //Volume
+using UnityEngine.Rendering.HighDefinition;
+using UnityEngine.Experimental.Rendering;
+#endif
+
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using Unity.FilmInternalUtilities.Editor;
 #endif
+
 
 [assembly: InternalsVisibleTo("Unity.Utilities.VariantExport")]
 
@@ -77,6 +84,15 @@ internal delegate void UpdateInstancedEntityHandler(string path, GameObject go);
 /// </summary>
 internal delegate void DeleteInstanceHandler(string path);
 
+    /// <summary>
+    /// Internal analytics observer data
+    /// </summary>
+    public struct MeshSyncAnalyticsData {
+        internal AssetType assetType;
+        internal EntityType entityType;
+
+    }
+
     //----------------------------------------------------------------------------------------------------------------------
 
     /// <summary>
@@ -84,7 +100,7 @@ internal delegate void DeleteInstanceHandler(string path);
     /// which encapsulates common functionalities
     /// </summary>
     [ExecuteInEditMode]
-    public abstract partial class BaseMeshSync : MonoBehaviour, ISerializationCallbackReceiver {
+    public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSyncAnalyticsData>, ISerializationCallbackReceiver {
 
 
         #region EventHandler Declarations
@@ -185,7 +201,8 @@ internal delegate void DeleteInstanceHandler(string path);
 
         #region Properties
         
-        private int currentSessionId = -1;
+        private int  currentSessionId                 = -1;
+        private bool forceDeleteChildrenInNextSession = false;
 
         private protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
 
@@ -347,6 +364,9 @@ internal delegate void DeleteInstanceHandler(string path);
         //----------------------------------------------------------------------------------------------------------------------    
         private void MakeSureAssetDirectoryExists() {
 #if UNITY_EDITOR
+            if (Directory.Exists(m_assetsFolder))
+                return;
+            
             Directory.CreateDirectory(m_assetsFolder);
             AssetDatabase.Refresh();
 #endif
@@ -447,8 +467,8 @@ internal delegate void DeleteInstanceHandler(string path);
 
 
         private static Material CreateDefaultMaterial(string shaderName = null) {
-            Material mat = null;
-            UpdateShader(ref mat, shaderName);
+            Material mat = new Material(GetShader(shaderName, out _));
+            UpdateShader(mat, shaderName);
             return mat;
         }
 
@@ -473,6 +493,10 @@ internal delegate void DeleteInstanceHandler(string path);
             numberOfPropertiesReceived = 0;
         }
 
+        public void ForceDeleteChildrenInNextSession() {
+            forceDeleteChildrenInNextSession = true;
+        }
+
         void CheckForNewSession(FenceMessage? mes) {
 #if UNITY_EDITOR
             if (!mes.HasValue || currentSessionId == mes.Value.SessionId) {
@@ -485,11 +509,19 @@ internal delegate void DeleteInstanceHandler(string path);
                 return;
             }
 
-            int choice = EditorUtility.DisplayDialogComplex("A new session started.",
-                "MeshSync detected that the DCC tool session has changed. To ensure that the sync state is correct you can delete previously synced objects, stash them and move them to another game object or ignore this and keep all children.",
-                "Ignore and keep all children",
-                "Stash",
-                "Delete all children of the server");
+            int choice;
+
+            if (forceDeleteChildrenInNextSession) {
+                choice = 2;
+                forceDeleteChildrenInNextSession = false;
+            }
+            else {
+                choice = EditorUtility.DisplayDialogComplex("A new session started.",
+                    "MeshSync detected that the DCC tool session has changed. To ensure that the sync state is correct you can delete previously synced objects, stash them and move them to another game object or ignore this and keep all children.",
+                    "Ignore and keep all children",
+                    "Stash",
+                    "Delete all children of the server");
+            }
 
             switch (choice) {
                 case 1:
@@ -512,7 +544,7 @@ internal delegate void DeleteInstanceHandler(string path);
 #endif
         }
 
-        private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets) {
+        private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets, bool logAnalytics = true) {
             MeshSyncPlayerConfig config = GetConfigV();
             // handle assets
             Try(() => {
@@ -547,6 +579,10 @@ internal delegate void DeleteInstanceHandler(string path);
                                 if (config.Logging)
                                     Debug.Log("unknown asset: " + asset.name);
                                 break;
+                        }
+
+                        if (logAnalytics) {
+                            SendEventData(new MeshSyncAnalyticsData() { assetType = asset.type });
                         }
                     }
 #if UNITY_EDITOR
@@ -585,6 +621,9 @@ internal delegate void DeleteInstanceHandler(string path);
                             Debug.LogError($"Unhandled entity type: {src.entityType}");
                             break;
                     }
+
+                    SendEventData(new MeshSyncAnalyticsData() { entityType = src.entityType });
+
 
                     if (dst != null && onUpdateEntity != null)
                         onUpdateEntity.Invoke(dst.go, src);
@@ -634,9 +673,16 @@ internal delegate void DeleteInstanceHandler(string path);
             if (config.ProgressiveDisplay)
                 ForceRepaint();
 #endif
+
+#if AT_USE_HDRP && UNITY_2021_2_OR_NEWER
+            if (m_needToResetPathTracing) {
+                HDRPUtility.ResetPathTracing();
+                m_needToResetPathTracing = false;
+            }
+#endif
         }
 
-        internal void AfterUpdateScene()
+        internal virtual void AfterUpdateScene()
         {
             // If none of the set messages had properties, we need to remove all properties:
             if (numberOfPropertiesReceived == 0) {
@@ -831,12 +877,22 @@ internal delegate void DeleteInstanceHandler(string path);
             MakeSureAssetDirectoryExists();
             Texture2D texture = null;
 #if UNITY_EDITOR
-            Action<string> doImport = (path) =>
-            {
+            Action<string> doImport = (path) => {
+                bool assetExisted = AssetDatabase.LoadAssetAtPath<Texture2D>(path) != null;
+
                 AssetDatabase.ImportAsset(path);
                 texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 if (texture != null) {
                     TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
+
+                    // Make sure the full texture is used unless the user changed this setting before:
+                    if (!assetExisted) {
+                        importer.npotScale = TextureImporterNPOTScale.None;
+
+                        importer.SaveAndReimport();
+                        AssetDatabase.Refresh();
+                    }
+
                     if (importer != null) {
                         switch (src.type) {
                             case TextureType.NormalMap:
@@ -1049,20 +1105,19 @@ internal delegate void DeleteInstanceHandler(string path);
                     destMat.DisableKeyword(kw.name);
             }
 
-            UpdateShader(ref destMat, src.shader);
+            UpdateShader(destMat, src.shader);
 
             // Put all properties in a list so we can look them up more easily:
             int numProps           = src.numProperties;
-            var materialProperties = new List<MaterialPropertyData>(numProps);
+            var materialProperties = new Dictionary<int, MaterialPropertyData>(numProps);
 
             for (int pi = 0; pi < numProps; ++pi) {
                 MaterialPropertyData prop = src.GetProperty(pi);
-                materialProperties.Add(prop);
+                materialProperties.Add(prop.nameID, prop);
             }
 
-            for (int i = 0; i < materialProperties.Count; i++) {
-                var prop = materialProperties[i];
-                ApplyMaterialProperty(src, destMat, textureHolders, prop, prop.name, materialProperties);
+            foreach (var prop in materialProperties) {
+                ApplyMaterialProperty(destMat, textureHolders, prop.Value, prop.Key, materialProperties);
             }
 
             MapsBaker.BakeMaps(destMat, textureHolders, materialProperties);
@@ -1086,100 +1141,93 @@ internal delegate void DeleteInstanceHandler(string path);
             return false;
         }
 
-        private static Dictionary<string, string[]> synonymMap = new Dictionary<string, string[]> {
+        private static Dictionary<int, int[]> synonymMap = new Dictionary<int, int[]> {
             { MeshSyncConstants._Color, new[] { MeshSyncConstants._BaseColor } },
             { MeshSyncConstants._MainTex, new[] { MeshSyncConstants._BaseMap, MeshSyncConstants._BaseColorMap } },
-            { MeshSyncConstants._Glossiness, new[] { MeshSyncConstants._Smoothness } },
+            { MeshSyncConstants._Glossiness, new[] { MeshSyncConstants._Smoothness, MeshSyncConstants._GlossMapScale } },
             { MeshSyncConstants._BumpMap, new[] { MeshSyncConstants._NormalMap } },
             { MeshSyncConstants._EmissionMap, new[] { MeshSyncConstants._EmissiveColorMap } },
             { MeshSyncConstants._ParallaxMap, new[] { MeshSyncConstants._HeightMap } },
             { MeshSyncConstants._BumpScale, new[] { MeshSyncConstants._NormalScale } }
         };
 
-        private static MaterialPropertyData? FindMaterialPropertyData(List<MaterialPropertyData> materialProperties, string name) {
-            for (int i = 0; i < materialProperties.Count; i++) {
-                if (materialProperties[i].name == name) {
-                    return materialProperties[i];
-                }
-            }
-
-            return null;
-        }
-
-        private void ApplyMaterialProperty(MaterialData src, Material destMat, List<TextureHolder> textureHolders, MaterialPropertyData prop, string propName, List<MaterialPropertyData> materialProperties) {
+        private void ApplyMaterialProperty(Material destMat, 
+            List<TextureHolder> textureHolders,
+            MaterialPropertyData prop,
+            int propNameID, 
+            Dictionary<int, MaterialPropertyData> materialProperties) {
            
             // Shaders use different names to refer to the same maps, this map contains those synonyms so we can apply them to every shader easily:
-            if (synonymMap.TryGetValue(propName, out var synonyms)) {
+            if (synonymMap.TryGetValue(propNameID, out var synonyms)) {
                 foreach (var synonym in synonyms) {
-                    ApplyMaterialProperty(src, destMat, textureHolders, prop, synonym, materialProperties);
+                    ApplyMaterialProperty(destMat, textureHolders, prop, synonym, materialProperties);
                 }
             }
             
             MaterialPropertyData.Type propType = prop.type;
-            if (!destMat.HasProperty(propName))
+            if (!destMat.HasProperty(propNameID))
                 return;
             
             // Enable alpha test if there is a color texture so alpha clipping works:
-            if (propName == MeshSyncConstants._BaseMap ||
-                propName == MeshSyncConstants._MainTex || 
-                propName == MeshSyncConstants._BaseColorMap) {
+            if (propNameID == MeshSyncConstants._BaseMap ||
+                propNameID == MeshSyncConstants._MainTex || 
+                propNameID == MeshSyncConstants._BaseColorMap) {
                 bool hasAlpha = HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._ALPHATEST_ON);
                 if (hasAlpha) {
-                    destMat.SetOverrideTag("RenderType", "TransparentCutout");
+                    destMat.SetOverrideTag(MeshSyncConstants.RenderType,MeshSyncConstants.TransparentCutout);
                 }
 #if AT_USE_HDRP
                 destMat.SetFloat(MeshSyncConstants._AlphaCutoffEnable, hasAlpha ? 1 : 0);
                 if (hasAlpha) {
-                    destMat.renderQueue = 2475;
-                    destMat.SetFloat("_ZTestGBuffer", 3);
+                    destMat.renderQueue = (int)RenderQueue.AlphaTest + 25;
+                    destMat.SetFloat(MeshSyncConstants._ZTestGBuffer, 3);
                 }
 #elif AT_USE_URP
                 destMat.SetFloat(MeshSyncConstants._AlphaClip, hasAlpha ? 1 : 0);
 #else 
                 if (hasAlpha) {
-                    destMat.SetFloat("_Mode", 1);
+                    destMat.SetFloat(MeshSyncConstants._Mode, 1);
                 }
 #endif
             }
 
-            if (propName == MeshSyncConstants._EmissionColor) {
+            if (propNameID == MeshSyncConstants._EmissionColor) {
                 if (destMat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack) {
                     destMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
 
                     HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._EMISSION);
                 }
             }
-            else if (propName == MeshSyncConstants._MetallicGlossMap) {
+            else if (propNameID == MeshSyncConstants._MetallicGlossMap) {
                 HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._METALLICGLOSSMAP);
                 HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._METALLICSPECGLOSSMAP);
             }
-            else if (propName == MeshSyncConstants._BumpMap) {
+            else if (propNameID == MeshSyncConstants._BumpMap) {
                 HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._NORMALMAP);
             }
-            else if (propName == MeshSyncConstants._ParallaxMap) {
+            else if (propNameID == MeshSyncConstants._ParallaxMap) {
                 HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._PARALLAXMAP);
             }
 #if AT_USE_HDRP
-            else if (propName == MeshSyncConstants._EmissiveColorMap) {
+            else if (propNameID == MeshSyncConstants._EmissiveColorMap) {
                 Color baseEmissionColor = Color.white;
-                var emissionColorProp = FindMaterialPropertyData(materialProperties, MeshSyncConstants._EmissionColor);
-                if (emissionColorProp.HasValue) {
-                    baseEmissionColor = emissionColorProp.Value.vectorValue;
+
+                if (materialProperties.TryGetValue(MeshSyncConstants._EmissionColor, out var emissionColorProp)) {
+                    baseEmissionColor = emissionColorProp.vectorValue;
                 }
 
-                var emissionStrengthProp = FindMaterialPropertyData(materialProperties, MeshSyncConstants._EmissionStrength);
                 float emissionStrength = 0;
-                if (emissionStrengthProp.HasValue) {
-                    emissionStrength = emissionStrengthProp.Value.floatValue;
+                if (materialProperties.TryGetValue(MeshSyncConstants._EmissionStrength, out var emissionStrengthProp)) {
+                    emissionStrength = emissionStrengthProp.floatValue;
                 }
-                 
+
                 destMat.SetFloat(MeshSyncConstants._UseEmissiveIntensity, 1);
                 destMat.SetFloat(MeshSyncConstants._EmissiveIntensityUnit, 0);
                 destMat.SetFloat(MeshSyncConstants._EmissiveIntensity, emissionStrength);
                 destMat.SetColor(MeshSyncConstants._EmissiveColorLDR, baseEmissionColor);
                 destMat.SetColor(MeshSyncConstants._EmissiveColor, baseEmissionColor * emissionStrength);
             }
-            else if (propName == MeshSyncConstants._HeightMap) {
+            else if (propNameID == MeshSyncConstants._HeightMap) {
                 if (prop.type == MaterialPropertyData.Type.Texture) {
                     MaterialPropertyData.TextureRecord rec = prop.textureValue;
                     Texture2D                          tex = FindTexture(rec.id, textureHolders);
@@ -1187,23 +1235,26 @@ internal delegate void DeleteInstanceHandler(string path);
                         destMat.EnableKeyword(MeshSyncConstants._HEIGHTMAP);
 
                         // If there is no displacement mode set, set it to vertex displacement:
-                        if (destMat.IsKeywordEnabled( "_PIXEL_DISPLACEMENT")) {
-                            destMat.EnableKeyword("_VERTEX_DISPLACEMENT");
-                            destMat.SetInt("_DisplacementMode", 1);
+                        if (!destMat.IsKeywordEnabled(MeshSyncConstants._PIXEL_DISPLACEMENT)) {
+                            destMat.EnableKeyword(MeshSyncConstants._VERTEX_DISPLACEMENT);
+                            destMat.SetInt(MeshSyncConstants._DisplacementMode, 1);
                         }
 
+                        // Fallback value in case the node setup in blender does not specify the height scale.
+                        // Normally this is not used because the value comes from the displacement node:
                         float scale = 10;
-                        var heightScaleProp = FindMaterialPropertyData(materialProperties, MeshSyncConstants._Parallax);
-                        if (heightScaleProp.HasValue) {
-                            // convert from meters to centimeters and / 2 because midpoint is half of that:
-                            scale = heightScaleProp.Value.floatValue * 100 / 2;
+                        if (materialProperties.TryGetValue(MeshSyncConstants._Parallax, out var heightScaleProp)) {
+                            scale = heightScaleProp.floatValue;
                         }
 
-                        destMat.SetFloat("_HeightMin", -scale);
-                        destMat.SetFloat("_HeightMax", scale);
+                        destMat.SetFloat(MeshSyncConstants._HeightMin, -scale);
+                        destMat.SetFloat(MeshSyncConstants._HeightMax, scale);
 
+                        // Amplitude is the difference between min height and max height: 
                         float amplitude = scale * 2;
-                        destMat.SetFloat("_HeightAmplitude", amplitude * 0.01f);
+                        
+                        // Convert from meters to centimeters:
+                        destMat.SetFloat(MeshSyncConstants._HeightAmplitude, amplitude * 0.01f);
                     }
                 }
             }
@@ -1218,39 +1269,39 @@ internal delegate void DeleteInstanceHandler(string path);
             int len = prop.arrayLength;
             switch (propType) {
                 case MaterialPropertyData.Type.Int:
-                    destMat.SetInt(propName, prop.intValue);
+                    destMat.SetInt(propNameID, prop.intValue);
                     break;
                 case MaterialPropertyData.Type.Float:
                     if (len == 1)
-                        destMat.SetFloat(propName, prop.floatValue);
+                        destMat.SetFloat(propNameID, prop.floatValue);
                     else
-                        destMat.SetFloatArray(propName, prop.floatArray);
+                        destMat.SetFloatArray(propNameID, prop.floatArray);
                     break;
                 case MaterialPropertyData.Type.Vector:
                     if (len == 1)
-                        destMat.SetVector(propName, prop.vectorValue);
+                        destMat.SetVector(propNameID, prop.vectorValue);
                     else
-                        destMat.SetVectorArray(propName, prop.vectorArray);
+                        destMat.SetVectorArray(propNameID, prop.vectorArray);
                     break;
                 case MaterialPropertyData.Type.Matrix:
                     if (len == 1)
-                        destMat.SetMatrix(propName, prop.matrixValue);
+                        destMat.SetMatrix(propNameID, prop.matrixValue);
                     else
-                        destMat.SetMatrixArray(propName, prop.matrixArray);
+                        destMat.SetMatrixArray(propNameID, prop.matrixArray);
                     break;
                 case MaterialPropertyData.Type.Texture: {
                     MaterialPropertyData.TextureRecord rec = prop.textureValue;
                     Texture2D                          tex = FindTexture(rec.id, textureHolders);
                     // Allow setting of null textures to clear them:
-                    destMat.SetTexture(propName, tex);
+                    destMat.SetTextureAndReleaseExistingRenderTextures(propNameID, tex);
                     if (rec.hasScaleOffset) {
-                        destMat.SetTextureScale(propName, rec.scale);
-                        destMat.SetTextureOffset(propName, rec.offset);
+                        destMat.SetTextureScale(propNameID, rec.scale);
+                        destMat.SetTextureOffset(propNameID, rec.offset);
                     }
                 }
                     break;
                 case MaterialPropertyData.Type.String:
-                    var test = prop.stringValue;
+                    // Not used at the moment but would be: prop.stringValue;
                     break;
                 default: break;
             }
@@ -1279,7 +1330,6 @@ internal delegate void DeleteInstanceHandler(string path);
             bool activeInHierarchy = go.activeInHierarchy;
             if (!activeInHierarchy && !dflags.hasPoints)
                 return null;
-
 
             return UpdateMeshEntity(data, config, rec);
         }
@@ -1323,6 +1373,9 @@ internal delegate void DeleteInstanceHandler(string path);
                 }
 
                 meshUpdated = true;
+            }
+            else if (rec.mesh != null) {
+                rec.mesh.Clear();
             }
 
             if (dflags.hasBones || dflags.hasBlendshapes)
@@ -1369,6 +1422,10 @@ internal delegate void DeleteInstanceHandler(string path);
                         smr.SetBlendShapeWeight(bi, bsd.weight);
                     }
                 }
+                
+#if AT_USE_HDRP
+                UpdateRayTracingModeIfNecessary(smr);
+#endif
             }
             else if (meshUpdated)
             {
@@ -1394,6 +1451,11 @@ internal delegate void DeleteInstanceHandler(string path);
                     mr.enabled = data.transform.visibility.visibleInRender;
                 mf.sharedMesh = rec.mesh;
                 rec.smrEnabled = false;
+                
+#if AT_USE_HDRP
+                UpdateRayTracingModeIfNecessary(mr);
+#endif
+
             }
 
             if (meshUpdated)
@@ -1420,7 +1482,12 @@ internal delegate void DeleteInstanceHandler(string path);
 
                     rec.proBuilderMeshFilter = Misc.GetOrAddComponent<UnityEngine.ProBuilder.ProBuilderMesh>(trans.gameObject);
 
-                    var importer = new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, rec.meshRenderer.sharedMaterials, rec.proBuilderMeshFilter);
+                    Material[] sharedMaterials = null;
+                    if (rec.meshRenderer != null) {
+                        sharedMaterials = rec.meshRenderer.sharedMaterials;
+                    }
+
+                    var importer = new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, sharedMaterials, rec.proBuilderMeshFilter);
                     // Disable quads, it is much slower:
                     importer.Import(new UnityEngine.ProBuilder.MeshOperations.MeshImportSettings() { quads = false });
 
@@ -1444,12 +1511,35 @@ internal delegate void DeleteInstanceHandler(string path);
         }
 
 #if AT_USE_PROBUILDER
-        public static Action ProBuilderBeforeRebuild;
-        public static Action ProBuilderAfterRebuild;
+        internal static Action ProBuilderBeforeRebuild;
+        internal static Action ProBuilderAfterRebuild;
 #endif
+      
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+        
+#if AT_USE_HDRP
 
+        void UpdatePathTracingState() {
+            m_pathTracingExists = false;
+            if (!HDRPUtility.IsRayTracingActive()) 
+                return;
+            
+            SceneComponents<Volume> sceneVolumes = SceneComponents<Volume>.GetInstance();
+            sceneVolumes.Update();
+            m_pathTracingExists = HDRPUtility.IsPathTracingActive(sceneVolumes.GetCachedComponents());
+        }
+        
+        void UpdateRayTracingModeIfNecessary(Renderer r) {
+            if (!m_pathTracingExists) 
+                return;
+            
+            r.rayTracingMode         = UnityEngine.Experimental.Rendering.RayTracingMode.DynamicGeometry;
+            m_needToResetPathTracing = true;
+        }
+#endif
+        
 
-        //----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
         void UpdateMeshEntity(ref Mesh mesh, MeshData data)
         {
@@ -1989,7 +2079,14 @@ internal delegate void DeleteInstanceHandler(string path);
                     "[MeshSync] No entity found for parent path {0}, using root as parent", data.parentPath);
             }
 
-            switch (InstanceHandling)
+            // Anything other than a mesh needs to use copies if we're in instance renderer mode:
+            var instanceHandlingToUse = InstanceHandling;
+            if (instanceHandlingToUse == InstanceHandlingType.InstanceRenderer &&
+                instancedEntityRecord.dataType != EntityType.Mesh) {
+                instanceHandlingToUse = InstanceHandlingType.Copies;
+            }
+
+            switch (instanceHandlingToUse)
             {
                 case InstanceHandlingType.InstanceRenderer:
                     UpdateInstanceInfo_InstanceRenderer(data, infoRecord, instanceRendererParent);
@@ -2027,11 +2124,11 @@ internal delegate void DeleteInstanceHandler(string path);
                 bool visible = instancedEntityRecord.visibility.visibleInRender;
 
                 GameObject instanceObjectOriginal;
-                if (InstanceHandling == InstanceHandlingType.Copies) {
-                    instanceObjectOriginal = infoRecord.go;
+                if (InstanceHandling == InstanceHandlingType.Prefabs) {
+                    instanceObjectOriginal = GetOrCreatePrefab(data, infoRecord);
                 }
                 else {
-                    instanceObjectOriginal = GetOrCreatePrefab(data, infoRecord);
+                    instanceObjectOriginal = infoRecord.go;
                 }
 
                 if (instanceObjectOriginal == null) {
@@ -2040,19 +2137,19 @@ internal delegate void DeleteInstanceHandler(string path);
 
                 foreach (var mat in data.transforms) {
                     GameObject instancedCopy;
-                    if (InstanceHandling == InstanceHandlingType.Copies) {
-                        instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
-                    }
-                    else {
+                    if (InstanceHandling == InstanceHandlingType.Prefabs) {
 #if UNITY_EDITOR
                         instancedCopy = (GameObject)PrefabUtility.InstantiatePrefab(instanceObjectOriginal,
-                        instanceRendererParent.transform);
+                            instanceRendererParent.transform);
 #else
                         instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
 #endif
                     }
+                    else {
+                        instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
+                    }
 
-                    SetInstanceTransform(instancedCopy, instanceObjectOriginal, mat);
+                    SetInstanceTransform(instancedCopy, instanceRendererParent, mat);
 
                     if (config.SyncVisibility &&
                         instancedEntityRecord.hasVisibility) {
@@ -2064,28 +2161,35 @@ internal delegate void DeleteInstanceHandler(string path);
             }
         }
 
-        private static void SetInstanceTransform(GameObject instancedCopy, GameObject instanceObjectOriginal, Matrix4x4 mat) {
+        private static void SetInstanceTransform(GameObject instancedCopy, GameObject parent, Matrix4x4 mat) {
             Transform objTransform = instancedCopy.transform;
+            
+            mat = parent.transform.localToWorldMatrix * mat;
 
-            var newMat = instanceObjectOriginal.transform.localToWorldMatrix * mat;
-
-            objTransform.localScale = newMat.lossyScale;
-            objTransform.position   = newMat.MultiplyPoint(Vector3.zero);
+            objTransform.localScale = mat.lossyScale;
+            objTransform.position   = mat.MultiplyPoint(Vector3.zero);
 
             // Calculate rotation here to avoid gimbal lock issue:
             Vector3 forward;
-            forward.x = newMat.m02;
-            forward.y = newMat.m12;
-            forward.z = newMat.m22;
+            forward.x = mat.m02;
+            forward.y = mat.m12;
+            forward.z = mat.m22;
 
             Vector3 upwards;
-            upwards.x = newMat.m01;
-            upwards.y = newMat.m11;
-            upwards.z = newMat.m21;
+            upwards.x = mat.m01;
+            upwards.y = mat.m11;
+            upwards.z = mat.m21;
 
             objTransform.rotation = Quaternion.LookRotation(forward, upwards);
 
-            Debug.Assert(objTransform.localToWorldMatrix == newMat, "Matrices don't match!");
+#if DEBUG
+            var localMatrix = objTransform.localToWorldMatrix;
+            for (int x = 0; x < 3; x++) {
+                for (int y = 0; y < 3; y++) {
+                    Debug.Assert( Math.Abs(localMatrix[x, y] - mat[x, y]) < 0.01f, "Matrices don't match!");
+                }
+            }
+#endif
         }
 
         private GameObject GetOrCreatePrefab(InstanceInfoData data, InstanceInfoRecord infoRecord) {
@@ -2503,20 +2607,21 @@ internal delegate void DeleteInstanceHandler(string path);
             Misc.UniqueNameGenerator nameGenerator = new Misc.UniqueNameGenerator();
             string basePath = m_assetsFolder;
 
+            bool needSaveAssets = false;
             Func<Material, Material> doExport = (Material mat) => {
                 if (mat == null || IsAsset(mat))
                     return mat;
 
                 string dstPath = string.Format("{0}/{1}.mat", basePath, nameGenerator.Gen(mat.name));
                 Material existing = AssetDatabase.LoadAssetAtPath<Material>(dstPath);
-                if (overwrite || existing == null)
-                {
+                if (overwrite || existing == null) {
                     mat = Misc.OverwriteOrCreateAsset(mat, dstPath);
                     MeshSyncPlayerConfig config = GetConfigV();
                     if (config.Logging)
                         Debug.Log("exported material " + dstPath);
-                }
-                else if (useExistingOnes && existing != null)
+
+                    needSaveAssets = true;
+                } else if (useExistingOnes && existing != null)
                     mat = existing;
                 return mat;
             };
@@ -2524,7 +2629,8 @@ internal delegate void DeleteInstanceHandler(string path);
             foreach (MaterialHolder m in m_materialList)
                 m.material = doExport(m.material); // material maybe updated by SaveAsset()
 
-            AssetDatabase.SaveAssets();
+            if (needSaveAssets)
+                AssetDatabase.SaveAssets();
             ReassignMaterials(recordUndo: false);
         }
 
@@ -2833,15 +2939,42 @@ internal delegate void DeleteInstanceHandler(string path);
         SceneView.duringSceneGui -= OnSceneViewGUI;
 #endif
     }
-#endregion
 
-//----------------------------------------------------------------------------------------------------------------------
-    
-    //[TODO-sin: 2020-12-14] m_assetsFolder only makes sense for MeshSyncServer because we need to assign a folder that
-    //will keep the synced resources as edits are performed on the DCC tool side.
-    //For SceneCachePlayer, m_assetsFolder is needed only when loading the file, so it should be passed as a parameter 
-    
-    [SerializeField] private string  m_assetsFolder = null; //Always starts with "Assets"
+    private void Update() {
+#if AT_USE_HDRP
+        UpdatePathTracingState();
+#endif
+    }
+
+#endregion //Events
+
+        internal int getNumObservers => m_observers?.Count ?? 0;
+
+        /// <summary>
+        /// Send MeshSync sync event
+        /// </summary>
+        /// <param name="data">Asset type synced</param>
+        private void SendEventData(MeshSyncAnalyticsData data) {
+
+            foreach (var observer in this.m_observers) {
+                observer.OnNext(data);
+            }
+        }
+
+        /// <inheritdoc/>
+        public IDisposable Subscribe(IObserver<MeshSyncAnalyticsData> observer) {
+
+            this.m_observers.Add(observer);
+            return null;
+        }
+
+        //----------------------------------------------------------------------------------------------------------------------
+
+        // [TODO-sin: 2020-12-14] m_assetsFolder only makes sense for MeshSyncServer because we need to assign a folder that
+        // will keep the synced resources as edits are performed on the DCC tool side.
+        // For SceneCachePlayer, m_assetsFolder is needed only when loading the file, so it should be passed as a parameter
+
+    [SerializeField] private string  m_assetsFolder = null; // Always starts with "Assets"
     [SerializeField] private Transform m_rootObject;
     
     [Obsolete][SerializeField] private bool m_usePhysicalCameraParams = true;  
@@ -2879,7 +3012,8 @@ internal delegate void DeleteInstanceHandler(string path);
     private bool m_markMeshesDynamic            = false;
     private bool m_needReassignMaterials        = false;
     private bool m_keyValuesSerializationEnabled = true;
-    
+
+    private List<IObserver<MeshSyncAnalyticsData>> m_observers = new List<IObserver<MeshSyncAnalyticsData>>();
     private Material m_cachedDefaultMaterial;
 
     private readonly           Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
@@ -2891,6 +3025,11 @@ internal delegate void DeleteInstanceHandler(string path);
 
     private protected Action m_onMaterialChangedInSceneViewCB = null;
     
+#if AT_USE_HDRP
+    private bool m_pathTracingExists      = false;
+    private bool m_needToResetPathTracing = false;
+#endif
+        
 //----------------------------------------------------------------------------------------------------------------------
 
     PinnedList<int>     m_tmpI  = new PinnedList<int>();

@@ -35,7 +35,7 @@ installed in the appropriate DCC tool.
 
   |**Values** |**Description** |
   |:---       |:---|
-  | **Instance Renderer** | Create a MeshSync specific render component that batches the draw calls of each instance type. This is good for instances that do not need individual **GameObjects**.|
+  | **Instance Renderer** | Create a MeshSync specific render component that batches the draw calls of each instance type. This is good for instances that do not need individual **GameObjects**. The instances are attached to their parent and transform with it.|
   | **Copies**            | Create a **GameObject** for each instance. The processing load is greater than **Instance Renderer** but gives more control over each object.|
   | **Prefabs**           | Create a prefab of the instanced object and place prefab instances in the scene. The prefab is saved in the **Asset Dir** property of the MeshSyncServer. This option allows changes to instanced objects or addition of custom components to be applied to all instances. |
 

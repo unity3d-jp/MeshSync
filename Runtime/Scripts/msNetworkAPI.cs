@@ -26,7 +26,6 @@ internal struct ServerSettings {
     public Flags             flags; // reserved
     public uint              meshSplitUnit;
     public uint              meshMaxBoneInfluence; // 4 or 255 (variable)
-    public ZUpCorrectionMode zUpCorrectionMode;
 
     public static ServerSettings defaultValue {
         get {
@@ -37,7 +36,6 @@ internal struct ServerSettings {
                 port                 = settings.GetDefaultServerPort(),
                 meshSplitUnit        = Lib.maxVerticesPerMesh,
                 meshMaxBoneInfluence = Lib.maxBoneInfluence,
-                zUpCorrectionMode    = ZUpCorrectionMode.FlipYZ,
             };
             return ret;
         }
@@ -57,6 +55,9 @@ internal struct Server {
 
     [DllImport(Lib.name)]
     static extern void msServerStop(IntPtr self);
+    
+    [DllImport(Lib.name)]
+    static extern void msServerAbort(IntPtr self);
 
     [DllImport(Lib.name)]
     static extern void msServerSetZUpCorrectionMode(IntPtr self, ZUpCorrectionMode v);
@@ -168,8 +169,12 @@ internal struct Server {
         msServerStop(self);
     }
 
-    internal ZUpCorrectionMode zUpCorrectionMode {
-        set { msServerSetZUpCorrectionMode(self, value); }
+    public void Abort() {
+        msServerAbort(self);
+    }
+    
+    internal void SetZUpCorrectionMode(ZUpCorrectionMode mode) {
+        msServerSetZUpCorrectionMode(self, mode);
     }
 
     public int numMessages {

@@ -1,5 +1,6 @@
 using System;
-using System.Linq;
+using System.IO;
+using System.Text;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -18,9 +19,24 @@ internal static class EditorServer {
     private const string CLI_ARGUMENT_PORT   = "PORT";
     private const string CLI_ARGUMENT_ACTIVE = "SERVER_ACTIVE";
     
+    private static void UpdateLog() {
+        var appRoot = AssetEditorUtility.GetApplicationRootPath();
+        var dir = Path.Combine(appRoot, "Logs");
+        Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, "MeshSyncEditorServerLog.txt");
+        using (var stream = File.Create(path)) {
+            var    log   = $"active:{Active}\nport:{Port}";
+            byte[] bytes = new UTF8Encoding(true).GetBytes(log);
+            stream.Write(bytes, 0, bytes.Length);
+        }
+    }
+    
     internal static bool Active {
         get { return SessionState.GetBool(ACTIVE_KEY, false);}
-        set {SessionState.SetBool(ACTIVE_KEY, value);}
+        set {
+            SessionState.SetBool(ACTIVE_KEY, value);
+            UpdateLog();
+        }
     }
 
     private static bool ActivePrev {
@@ -30,7 +46,10 @@ internal static class EditorServer {
     
     internal static ushort Port {
         get { return (ushort)SessionState.GetInt(PORT_KEY, 8081); }
-        set{ SessionState.SetInt(PORT_KEY, value);}
+        set {
+            SessionState.SetInt(PORT_KEY, value);
+            UpdateLog();
+        }
     }
 
     private static bool AppliedInitialSettings {
@@ -46,8 +65,14 @@ internal static class EditorServer {
         // Defer the Initialisation to the first update call
         EditorApplication.update -= Init;
         EditorApplication.update += Init;
+        
+        EditorApplication.quitting -= OnQuit;
+        EditorApplication.quitting += OnQuit;
     }
-    
+
+    private static void OnQuit() {
+        m_server.Abort();
+    }
 
     /// <summary>
     /// Apply settings from CLI arguments or use Editor Server Settings.

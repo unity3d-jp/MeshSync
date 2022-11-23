@@ -523,15 +523,35 @@ internal struct MaterialPropertyData {
     }
 
     public string name {
-        get { return Misc.S(msMaterialPropGetName(self)); }
+        get {
+            if (self == IntPtr.Zero) {
+                return default;
+            }
+
+            return Misc.S(msMaterialPropGetName(self));
+        }
+    }
+
+    public int nameID {
+        get { return  Shader.PropertyToID(name); }
     }
 
     public Type type {
-        get { return msMaterialPropGetType(self); }
+        get {
+            if (self == IntPtr.Zero) {
+                return default;
+            }
+
+            return msMaterialPropGetType(self);
+        }
     }
 
     public int intValue {
         get {
+            if (self == IntPtr.Zero) {
+                return default;
+            }
+            
             int ret = 0;
             msMaterialPropCopyData(self, ref ret);
             return ret;
@@ -540,6 +560,10 @@ internal struct MaterialPropertyData {
 
     public float floatValue {
         get {
+            if (self == IntPtr.Zero) {
+                return default;
+            }
+            
             float ret = 0;
             msMaterialPropCopyData(self, ref ret);
             return ret;
@@ -548,6 +572,10 @@ internal struct MaterialPropertyData {
 
     public Vector4 vectorValue {
         get {
+            if (self == IntPtr.Zero) {
+                return default;
+            }
+            
             Vector4 ret = Vector4.zero;
             msMaterialPropCopyData(self, ref ret);
             return ret;
@@ -556,6 +584,10 @@ internal struct MaterialPropertyData {
 
     public Matrix4x4 matrixValue {
         get {
+            if (self == IntPtr.Zero) {
+                return default;
+            }
+            
             Matrix4x4 ret = Matrix4x4.identity;
             msMaterialPropCopyData(self, ref ret);
             return ret;
@@ -564,6 +596,10 @@ internal struct MaterialPropertyData {
 
     public TextureRecord textureValue {
         get {
+            if (self == IntPtr.Zero) {
+                return default;
+            }
+            
             var ret = default(TextureRecord);
             msMaterialPropCopyData(self, ref ret);
             return ret;
@@ -579,11 +615,21 @@ internal struct MaterialPropertyData {
     }
 
     public int arrayLength {
-        get { return msMaterialPropGetArrayLength(self); }
+        get {
+            if (self == IntPtr.Zero) {
+                return default;
+            }
+
+            return msMaterialPropGetArrayLength(self);
+        }
     }
 
     public float[] floatArray {
         get {
+            if (self == IntPtr.Zero) {
+                return default;
+            }
+            
             var ret = new float[arrayLength];
             msMaterialPropCopyData(self, ret);
             return ret;
@@ -592,6 +638,10 @@ internal struct MaterialPropertyData {
 
     public Vector4[] vectorArray {
         get {
+            if (self == IntPtr.Zero) {
+                return default;
+            }
+
             var ret = new Vector4[arrayLength];
             msMaterialPropCopyData(self, ret);
             return ret;
@@ -600,6 +650,10 @@ internal struct MaterialPropertyData {
 
     public Matrix4x4[] matrixArray {
         get {
+            if (self == IntPtr.Zero) {
+                return default;
+            }
+            
             var ret = new Matrix4x4[arrayLength];
             msMaterialPropCopyData(self, ret);
             return ret;

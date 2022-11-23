@@ -1,7 +1,9 @@
 ﻿using Unity.FilmInternalUtilities;
 using Unity.FilmInternalUtilities.Editor;
 using UnityEditor;
+using UnityEditor.Timeline;
 using UnityEngine;
+using UnityEngine.Timeline;
 
 namespace Unity.MeshSync.Editor {
 
@@ -31,28 +33,28 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         SceneCachePlayer scPlayer = m_scPlayableAsset.GetSceneCachePlayer();
         if (null == scPlayer)
             return;
-
-        DrawLimitedAnimationGUI(m_scPlayableAsset);
         
-        {
-            // Curve Operations
-            GUILayout.BeginVertical("Box");
-            EditorGUILayout.LabelField("Curves", EditorStyles.boldLabel);
-
-            const float BUTTON_X     = 30;
-            const float BUTTON_WIDTH = 160f;
-            if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"To Linear")) {
-                m_scPlayableAsset.SetCurveToLinearInEditor();
-            }
-            
-            if (DrawGUIButton(BUTTON_X, BUTTON_WIDTH,"Apply Original")) {
-                m_scPlayableAsset.ApplyOriginalSceneCacheCurveInEditor();
-            }
-            
-            GUILayout.EndVertical();                    
+        //Key Frame markers
+        EditorGUIDrawerUtility.DrawUndoableGUI(
+            m_scPlayableAsset, "Show Key Frame Markers",
+            guiFunc: () => EditorGUILayout.Toggle("Show Key Frame Markers", clipData.AreKeyFrameMarkersRequested()), 
+            updateFunc: (bool newValue) => { clipData.RequestKeyFrameMarkers(newValue); }
+        );
+        GUILayout.Space(15);
+        if (null!=TimelineEditor.selectedClip && TimelineEditor.selectedClip.asset == m_scPlayableAsset) {
+            DrawAutoGenerateKeyFramesGUI(m_scPlayableAsset);
         }
         
-        so.ApplyModifiedProperties();       
+        //Limited Animation
+        GUILayout.Space(15);
+        DrawLimitedAnimationGUI(m_scPlayableAsset);
+        GUILayout.Space(15);
+        
+        if (DrawGUIButton(leftX:0, width:120,"Reset Key Frames")) {
+            clipData.ResetKeyFrames();
+        }
+        
+        so.ApplyModifiedProperties();
     }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -69,7 +71,7 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         if (disableScope) {
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.HelpBox(
-                "Disabled because Limited Animation settings on the SceneCache GameObject is enabled, or the playback mode is set to interpolate", 
+                "Disabled because the playback mode of the SceneCache is set to Interpolate", 
                 MessageType.Warning
             );
             if (GUILayout.Button("Fix", GUILayout.Width(64), GUILayout.Height(36))) {
@@ -94,12 +96,76 @@ internal class SceneCachePlayableAssetInspector : UnityEditor.Editor {
         return (GUI.Button(rect, buttonText, GUI.skin.button));        
     }
 
+    
+    void DrawAutoGenerateKeyFramesGUI(SceneCachePlayableAsset sceneCachePlayableAsset) {
+        SceneCacheClipData clipData = sceneCachePlayableAsset.GetBoundClipData();
+        if (null == clipData)
+            return;
+
+        TimelineClip clip = clipData.GetOwner();
+        if (null == clip)
+            return;
+
+        
+        SceneCachePlayableAssetEditorConfig editorConfig = sceneCachePlayableAsset.GetEditorConfig();
+        GUILayout.BeginVertical("Box");
+        EditorGUILayout.LabelField("Auto Generate Key Frames", EditorStyles.boldLabel);
+
+        //UI
+        EditorGUI.BeginChangeCheck();
+        int keyFrameSpan = EditorGUILayout.IntField("KeyFrame Span", editorConfig.GetGenerateKeyFrameSpan());
+        KeyFrameMode keyFrameMode = (KeyFrameMode) EditorGUILayout.EnumPopup("KeyFrame Mode", editorConfig.GetGenerateKeyFrameMode());
+            
+        bool generateAllKeyFrames = EditorGUILayout.Toggle("All Frames", editorConfig.GetGenerateAllKeyFrames());
+        EditorGUI.BeginDisabledGroup(generateAllKeyFrames);
+        ++EditorGUI.indentLevel;
+
+        int startKeyFrame = Mathf.Max(0,editorConfig.GetGenerateStartKeyFrame());
+        int endKeyFrame   = editorConfig.GetGenerateEndKeyFrame();
+        if (endKeyFrame < 0) {
+            endKeyFrame = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clipData.GetOwner());
+        }
+
+        startKeyFrame = EditorGUILayout.IntField("From", startKeyFrame);
+        endKeyFrame   = EditorGUILayout.IntField("To", endKeyFrame);
+
+        --EditorGUI.indentLevel;
+        EditorGUI.EndDisabledGroup();
+            
+        if (EditorGUI.EndChangeCheck()) {
+            Undo.RecordObject(sceneCachePlayableAsset,"SceneCache: Generate KeyFrames");
+            
+            editorConfig.SetGenerateKeyFrameSpan(keyFrameSpan);
+            editorConfig.SetGenerateKeyFrameMode(keyFrameMode);
+            
+            editorConfig.SetGenerateAllKeyFrames(generateAllKeyFrames);
+            editorConfig.SetGenerateStartKeyFrame(startKeyFrame);
+            editorConfig.SetGenerateEndKeyFrame(endKeyFrame);
+        }
+               
+        GUILayout.Space(15);
+        if (DrawGUIButton( leftX:15, width:120,"Generate")) {
+            Undo.RegisterCompleteObjectUndo(clip.GetParentTrack(),"MeshSync: Regenerate KeyFrames");
+            
+            if (generateAllKeyFrames)
+                clipData.RegenerateKeyFrames(keyFrameSpan, keyFrameMode);
+            else 
+                clipData.RegenerateKeyFrames(startKeyFrame, endKeyFrame, keyFrameSpan, keyFrameMode);
+        }
+            
+        GUILayout.EndVertical();
+        
+        
+    }
+
 //----------------------------------------------------------------------------------------------------------------------
 
 
     private static readonly GUIContent SCENE_CACHE_PLAYER = EditorGUIUtility.TrTextContent("Scene Cache Player");
+
     
-    private SceneCachePlayableAsset m_scPlayableAsset;        
+    private SceneCachePlayableAsset m_scPlayableAsset;
+    
     
 
 }
