@@ -56,25 +56,28 @@ internal static class MeshSyncConstants {
     internal static readonly int _HeightMax                = Shader.PropertyToID("_HeightMax");
     internal static readonly int _HeightAmplitude          = Shader.PropertyToID("_HeightAmplitude");
     internal static readonly int _ZTestGBuffer             = Shader.PropertyToID("_ZTestGBuffer");
-
+    internal static readonly int _CoatMaskMap              = Shader.PropertyToID("_CoatMaskMap");
+    internal static readonly int _CoatMask                 = Shader.PropertyToID("_CoatMask");
+    
     #endregion
 
     #region Keywords
 
-    internal const string _MASKMAP                   = "_MASKMAP";
-    internal const string _ALPHATEST_ON              = "_ALPHATEST_ON";
-    internal const string _ALPHABLEND_ON             = "_ALPHABLEND_ON";
-    internal const string _ALPHAPREMULTIPLY_ON       = "_ALPHAPREMULTIPLY_ON";
-    internal const string _HEIGHTMAP                 = "_HEIGHTMAP";
-    internal const string _PARALLAXMAP               = "_PARALLAXMAP";
-    internal const string _NORMALMAP                 = "_NORMALMAP";
-    internal const string _METALLICGLOSSMAP          = "_METALLICGLOSSMAP";
-    internal const string _METALLICSPECGLOSSMAP      = "_METALLICSPECGLOSSMAP";
-    internal const string _EMISSION                  = "_EMISSION";
-    internal const string _ENABLE_FOG_ON_TRANSPARENT = "_ENABLE_FOG_ON_TRANSPARENT";
-    internal const string _SURFACE_TYPE_TRANSPARENT  = "_SURFACE_TYPE_TRANSPARENT";
-    internal const string _PIXEL_DISPLACEMENT        = "_PIXEL_DISPLACEMENT";
-    internal const string _VERTEX_DISPLACEMENT       = "_VERTEX_DISPLACEMENT";
+    internal const string _MASKMAP                     = "_MASKMAP";
+    internal const string _ALPHATEST_ON                = "_ALPHATEST_ON";
+    internal const string _ALPHABLEND_ON               = "_ALPHABLEND_ON";
+    internal const string _ALPHAPREMULTIPLY_ON         = "_ALPHAPREMULTIPLY_ON";
+    internal const string _HEIGHTMAP                   = "_HEIGHTMAP";
+    internal const string _PARALLAXMAP                 = "_PARALLAXMAP";
+    internal const string _NORMALMAP                   = "_NORMALMAP";
+    internal const string _METALLICGLOSSMAP            = "_METALLICGLOSSMAP";
+    internal const string _METALLICSPECGLOSSMAP        = "_METALLICSPECGLOSSMAP";
+    internal const string _EMISSION                    = "_EMISSION";
+    internal const string _ENABLE_FOG_ON_TRANSPARENT   = "_ENABLE_FOG_ON_TRANSPARENT";
+    internal const string _SURFACE_TYPE_TRANSPARENT    = "_SURFACE_TYPE_TRANSPARENT";
+    internal const string _PIXEL_DISPLACEMENT          = "_PIXEL_DISPLACEMENT";
+    internal const string _VERTEX_DISPLACEMENT         = "_VERTEX_DISPLACEMENT";
+    internal const string _MATERIAL_FEATURE_CLEAR_COAT = "_MATERIAL_FEATURE_CLEAR_COAT";
 
     // Used to mark materials that have a specific shader setup based on a shader from the DCC tool.  
     internal const string MESHSYNC_OVERRIDE = "MESHSYNC_OVERRIDE";
