@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -49,6 +50,26 @@ namespace Unity.MeshSync.Editor.Analytics {
         protected virtual int version { get; }
         protected virtual int eventsPerHour => 10000;
 
+        protected abstract Dictionary<string, DateTime> lastSendTimes { get; }
+
+        protected virtual TimeSpan MinTimeBetweenEvents {
+            get { return TimeSpan.FromSeconds(10); }
+        }
+
+        bool ShouldSend(string key) {
+            // If it is not in the dictionary, it will default to DateTime.MinValue:
+            lastSendTimes.TryGetValue(key, out var lastSendTime);
+
+            var now = DateTime.Now;
+            var timeSinceLastEvent = now - lastSendTime;
+            if (timeSinceLastEvent < MinTimeBetweenEvents) {
+                return false;
+            }
+
+            lastSendTimes[key] = now;
+            return true;
+        }
+
         private static void logIfWarning(AnalyticsResult resp) {
             if (resp != AnalyticsResult.Ok) {
                 Debug.LogWarning($"Analytics endpoint reported: {resp} when should be {AnalyticsResult.Ok}");
@@ -59,7 +80,12 @@ namespace Unity.MeshSync.Editor.Analytics {
         /// Sends any object to the analytics library.
         /// </summary>
         /// <param name="data">Data to send</param>
-        protected void Send(object data) {
+        /// <param name="timeKey">Key used to coalesce events</param>
+        protected void Send(object data, string timeKey) {
+            if (!ShouldSend(timeKey)) {
+                return;
+            }
+
             logIfWarning(
             EditorAnalytics.SendEventWithLimit(
                 eventName,
@@ -93,6 +119,9 @@ namespace Unity.MeshSync.Editor.Analytics {
     /// Handles MeshSyncAnalyticsData.sessionStartData
     /// </summary>
     internal class SessionStartAnalyticsHandler : AnalyticsDataHandler<MeshSyncAnalyticsData> {
+        private static readonly Dictionary<string, DateTime> lastSendTimesDict = new Dictionary<string, DateTime>();
+        protected override      Dictionary<string, DateTime> lastSendTimes => lastSendTimesDict;
+
         struct SessionEventData {
             public string dccToolName;
         }
@@ -106,7 +135,7 @@ namespace Unity.MeshSync.Editor.Analytics {
                 dccToolName = sessionStartData.DCCToolName
             };
 
-            Send(eventData);
+            Send(eventData, sessionStartData.DCCToolName);
         }
     }
 
@@ -114,13 +143,15 @@ namespace Unity.MeshSync.Editor.Analytics {
     /// Handles MeshSyncAnalyticsData.syncData
     /// </summary>
     internal class SyncAnalyticsHandler : AnalyticsDataHandler<MeshSyncAnalyticsData> {
+        private static readonly Dictionary<string, DateTime> lastSendTimesDict = new Dictionary<string, DateTime>();
+        protected override      Dictionary<string, DateTime> lastSendTimes => lastSendTimesDict;
 
         struct SyncEventData {
             public string assetSyncType;
             public string entitySyncType;
             public string syncMode;
         }
-
+        
         protected override string eventName => "meshSync_Sync";
         protected override int version => 2;
 
@@ -141,7 +172,7 @@ namespace Unity.MeshSync.Editor.Analytics {
                 syncMode = syncData.syncMode
             };
 
-            Send(eventData);
+            Send(eventData, entityTypeStr);
         }
     }
 
@@ -149,6 +180,9 @@ namespace Unity.MeshSync.Editor.Analytics {
     /// Handles installation analytics event.
     /// </summary>
     internal class InstallAnalyticsHandler : AnalyticsDataHandler<string> {
+        private static readonly Dictionary<string, DateTime> lastSendTimesDict = new Dictionary<string, DateTime>();
+        protected override      Dictionary<string, DateTime> lastSendTimes => lastSendTimesDict;
+
         struct DCCInstallEventData {
             public string meshSyncDccName;
         }
@@ -160,7 +194,7 @@ namespace Unity.MeshSync.Editor.Analytics {
         public override void Send(string data) {
             var eventData = new DCCInstallEventData { meshSyncDccName = data.ToLower() };
 
-            Send(eventData);
+            Send(eventData, eventData.meshSyncDccName);
         }
     }
 }
