@@ -163,7 +163,7 @@ void AsyncSceneSender::send()
         ms::FenceMessage mes;
         setup_message(mes);
         mes.type = ms::FenceMessage::FenceType::SceneBegin;
-        mes.dcc_tool_name = client_settings.dcc_tool_name;
+        //mes.dcc_tool_name = client_settings.dcc_tool_name;
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
             goto cleanup;

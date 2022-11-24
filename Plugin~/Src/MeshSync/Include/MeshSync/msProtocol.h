@@ -115,7 +115,7 @@ public:
 
     FenceType type = FenceType::Unknown;
 
-    std::string dcc_tool_name = "";
+//    std::string dcc_tool_name = "";
 
     ~FenceMessage() override;
     void serialize(std::ostream& os) const override;

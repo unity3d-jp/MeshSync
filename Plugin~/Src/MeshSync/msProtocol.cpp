@@ -91,13 +91,13 @@ void FenceMessage::serialize(std::ostream& os) const
 {
     super::serialize(os);
     write(os, type);
-    write(os, dcc_tool_name);
+//    write(os, dcc_tool_name);
 }
 void FenceMessage::deserialize(std::istream& is)
 {
     super::deserialize(is);
     read(is, type);
-    read(is, dcc_tool_name);
+//    read(is, dcc_tool_name);
 }
 
 TextMessage::~TextMessage() {}
