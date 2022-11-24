@@ -3239,7 +3239,13 @@ internal struct InstanceInfoData
     }
 
     public string GetMaterialSyncMode() {
-        var mode = msSceneGetMaterialSyncMode(self);
+        int mode = 0;
+        // The method might not exist, we can't bump the protocol version yet:
+        try {
+            mode = msSceneGetMaterialSyncMode(self);
+        }
+        catch {
+        }
 
         switch (mode) {
             case 1:
