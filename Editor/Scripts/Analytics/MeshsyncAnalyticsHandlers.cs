@@ -1,0 +1,171 @@
+using System;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Analytics;
+
+namespace Unity.MeshSync.Editor.Analytics {
+    /// <summary>
+    /// Factory class to create the required analytics handler for the given MeshSyncAnalyticsData.
+    /// </summary>
+    internal static class AnalyticsHandlerFactory {
+        /// <summary>
+        /// Returns the analytics handler depending on which field in MeshSyncAnalyticsData is set.
+        /// </summary>
+        /// <param name="data">The analytics data container to send</param>
+        /// <returns>Handler specific to the data in the container</returns>
+        public static AnalyticsDataHandler<MeshSyncAnalyticsData> GetHandler(MeshSyncAnalyticsData data) {
+            if (data.sessionStartData.HasValue) {
+                return new SessionStartAnalyticsHandler();
+            }
+
+            if (data.syncData.HasValue) {
+                return new SyncAnalyticsHandler();
+            }
+
+            // TODO: If new handlers for MeshSyncAnalyticsData are added, update this to return the new one depending on the field it uses:
+
+            return null;
+        }
+
+        public static void RegisterHandlers() {
+            // Finds non-abstract subclasses of AnalyticsHandlerFactory and calls Register() on them all:
+            var analyticHandlerSubclasses = typeof(AnalyticsHandlerFactory).Assembly.GetTypes().Where(type => !type.IsAbstract && type.IsSubclassOf(typeof(AnalyticsDataHandlerBase)));
+
+            foreach (Type analyticHandlerSubclass in analyticHandlerSubclasses) {
+                var t = (AnalyticsDataHandlerBase)Activator.CreateInstance(analyticHandlerSubclass);
+                t.Register();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Base class for all analytics handlers.
+    /// </summary>
+    internal abstract class AnalyticsDataHandlerBase {
+        internal const string VENDORKEY = "unity.meshsync";
+
+        protected virtual string eventName { get; }
+        protected virtual int version { get; }
+        protected virtual int eventsPerHour => 10000;
+
+        private static void logIfWarning(AnalyticsResult resp) {
+            if (resp != AnalyticsResult.Ok) {
+                Debug.LogWarning($"Analytics endpoint reported: {resp} when should be {AnalyticsResult.Ok}");
+            }
+        }
+
+        /// <summary>
+        /// Sends any object to the analytics library.
+        /// </summary>
+        /// <param name="data">Data to send</param>
+        protected void Send(object data) {
+            logIfWarning(
+            EditorAnalytics.SendEventWithLimit(
+                eventName,
+                data,
+                version));
+        }
+
+        /// <summary>
+        /// Registers the handler's event and version with the analytics library.
+        /// </summary>
+        public void Register() {
+            logIfWarning(
+                EditorAnalytics.RegisterEventWithLimit(
+                    eventName,
+                    eventsPerHour,
+                    10,
+                    VENDORKEY,
+                    version));
+
+        }
+    }
+
+    /// <summary>
+    /// Base class for analytics handlers that allows specifying the input data type.
+    /// </summary>
+    internal abstract class AnalyticsDataHandler<T> : AnalyticsDataHandlerBase {
+        public abstract void Send(T data);
+    }
+
+    /// <summary>
+    /// Handles MeshSyncAnalyticsData.sessionStartData
+    /// </summary>
+    internal class SessionStartAnalyticsHandler : AnalyticsDataHandler<MeshSyncAnalyticsData> {
+        struct SessionEventData {
+            public string dccToolName;
+        }
+
+        protected override string eventName => "meshSync_session_start";
+        protected override int version => 2;
+
+        public override void Send(MeshSyncAnalyticsData data) {
+            var sessionStartData = data.sessionStartData.Value;
+
+            if (string.IsNullOrEmpty(sessionStartData.DCCToolName)) {
+                return;
+            }
+
+            var eventData = new SessionEventData {
+                dccToolName = sessionStartData.DCCToolName
+            };
+
+            Send(eventData);
+        }
+    }
+
+    /// <summary>
+    /// Handles MeshSyncAnalyticsData.syncData
+    /// </summary>
+    internal class SyncAnalyticsHandler : AnalyticsDataHandler<MeshSyncAnalyticsData> {
+
+        struct SyncEventData {
+            public string assetSyncType;
+            public string entitySyncType;
+            public string syncMode;
+        }
+
+        protected override string eventName => "meshSync_Sync";
+        protected override int version => 2;
+
+        public override void Send(MeshSyncAnalyticsData data) {
+            var syncData = data.syncData.Value;
+
+            var assetTypeStr = syncData.assetType == AssetType.Unknown
+                ? "none"
+                : syncData.assetType.ToString().ToLower();
+
+            var entityTypeStr = syncData.entityType == EntityType.Unknown
+                ? "none"
+                : syncData.entityType.ToString().ToLower();
+
+            var eventData = new SyncEventData {
+                assetSyncType = assetTypeStr,
+                entitySyncType = entityTypeStr,
+                syncMode = syncData.syncMode
+            };
+
+            Send(eventData);
+        }
+    }
+
+    /// <summary>
+    /// Handles installation analytics event.
+    /// </summary>
+    internal class InstallAnalyticsHandler : AnalyticsDataHandler<string> {
+        struct DCCInstallEventData {
+            public string meshSyncDccName;
+        }
+
+        protected override string eventName => "dccConfigure";
+        protected override int version => 4;
+        protected override int eventsPerHour => 1000;
+
+        public override void Send(string data) {
+            var eventData = new DCCInstallEventData { meshSyncDccName = data.ToLower() };
+
+            Send(eventData);
+        }
+    }
+}
