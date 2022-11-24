@@ -172,7 +172,7 @@ namespace Unity.MeshSync.Editor.Analytics {
                 syncMode = syncData.syncMode
             };
 
-            Send(eventData, entityTypeStr);
+            Send(eventData, entityTypeStr+assetTypeStr);
         }
     }
 
