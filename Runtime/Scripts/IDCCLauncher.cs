@@ -18,6 +18,8 @@ namespace Unity.MeshSync
 
         void OpenDCCTool(UnityEngine.Object asset);
 
+        void CloseDCCTool();
+
         void DrawDCCMenu(BaseMeshSync player);
     }
 }

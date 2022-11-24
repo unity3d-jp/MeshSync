@@ -370,6 +370,13 @@ msAPI void msServerRequestFullSync(ms::Server* server)
     server->syncRequested();
 }
 
+msAPI void msServerRequestUserScriptCallback(ms::Server* server)
+{
+    if (!server) { return; }
+
+    server->userScriptCallbackRequested();
+}
+
 msAPI void msServerInitiatedResponseReady(ms::Server* server)
 {
     if (!server) { return; }

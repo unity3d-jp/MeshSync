@@ -21,6 +21,7 @@ namespace Unity.MeshSync
         }
 
         bool needsClientSync;
+        bool needsUserScriptCallback;
 
         Dictionary<EntityRecord, Matrix4x4> entityTransforms = new Dictionary<EntityRecord, Matrix4x4>();
 
@@ -178,10 +179,14 @@ namespace Unity.MeshSync
                 if (needsClientSync)
                 {
                     MeshSyncLogger.VerboseLog("Sending changes, needed client sync.");
-
+                    needsUserScriptCallback = false;
+                    sendChanges             = true;
+                    m_server.RequestUserScriptCallback();
+                }
+                else if (needsClientSync) {
+                    MeshSyncLogger.VerboseLog("Sending changes, needed client sync.");
                     needsClientSync = false;
-                    sendChanges = true;
-
+                    sendChanges     = true;
                     m_server.RequestClientSync();
                 }
 
@@ -289,18 +294,23 @@ namespace Unity.MeshSync
         {
         }
 
+#if UNITY_EDITOR
         internal override void AfterUpdateScene() {
             base.AfterUpdateScene();
 
             CurrentPropertiesState = PropertiesState.Received;
         }
 
-#if UNITY_EDITOR
-        internal override void ClearInstancePrefabs()
-        {
+        internal override void ClearInstancePrefabs() {
             base.ClearInstancePrefabs();
 
+            MeshSyncLogger.VerboseLog("Clearing instance prefabs.");
+
             needsClientSync = true;
+        }
+
+        internal void RequestUserScriptCallback() {
+            needsUserScriptCallback = true;
         }
 #endif
     }

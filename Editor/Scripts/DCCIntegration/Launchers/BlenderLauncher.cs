@@ -121,6 +121,17 @@ namespace Unity.MeshSync.Editor
             }
         }
 
+        public void CloseDCCTool() {
+            try {
+                m_blenderProcess.Kill();
+            }
+            catch {
+                // Exceptions don't matter here, just close it no matter what.
+            }
+
+            m_blenderProcess = null;
+        }
+
         bool HandleBlenderPath(MeshSyncServer server)
         {
             bool changed = false;
