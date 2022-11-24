@@ -605,7 +605,6 @@ internal struct MaterialPropertyData {
             return ret;
         }
     }
-
     public int arrayLength {
         get {
             if (self == IntPtr.Zero) {
@@ -3211,6 +3210,9 @@ internal struct InstanceInfoData
     [DllImport(Lib.name)]
     static extern PropertyInfoData msSceneGetPropertyInfo(IntPtr self, int i);
 
+    [DllImport(Lib.name)]
+    static extern int msSceneGetMaterialSyncMode(IntPtr self);
+
 #endregion
 
     public static implicit operator bool(SceneData v) {
@@ -3278,7 +3280,24 @@ internal struct InstanceInfoData
     public PropertyInfoData GetPropertyInfo(int i)
     {
         return msSceneGetPropertyInfo(self, i);
-    }  
+    }
+
+    public string GetMaterialSyncMode() {
+        int mode = 0;
+        // The method might not exist, we can't bump the protocol version yet:
+        try {
+            mode = msSceneGetMaterialSyncMode(self);
+        }
+        catch {
+        }
+
+        switch (mode) {
+            case 1:
+                return "Basic";
+            default:
+                return "None";
+        }
+    }
 }
 
 #endregion Scene

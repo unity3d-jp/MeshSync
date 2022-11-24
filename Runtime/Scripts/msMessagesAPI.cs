@@ -138,11 +138,13 @@ internal struct DeleteMessage {
 internal struct FenceMessage {
     #region internal
     public IntPtr self;
-    [DllImport(Lib.name)] static extern FenceType msFenceGetType(IntPtr self);
+    [DllImport(Lib.name)] static extern FenceType msFenceGetType(IntPtr self); 
+    
+    [DllImport(Lib.name)] static extern IntPtr msFenceGetDCCToolName(IntPtr self);
 
     [DllImport(Lib.name)] static extern int msMessageGetSessionID(IntPtr self);
     #endregion
-
+    
     public enum FenceType {
         Unknown,
         SceneBegin,
@@ -159,6 +161,21 @@ internal struct FenceMessage {
 
     public int SessionId {
         get { return msMessageGetSessionID(self); }
+    }
+
+    internal string DCCToolName {
+        get {
+            // The method may not exist, we don't want to bump the protocol version just for this change:
+            try {
+                IntPtr
+                    nativeStr = msFenceGetDCCToolName(
+                        self); //Not direct marshalling because there is no free on C# side.
+                return  Marshal.PtrToStringAnsi(nativeStr);
+            }
+            catch {
+                return "";
+            }
+        }
     }
 }
 //----------------------------------------------------------------------------------------------------------------------
