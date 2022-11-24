@@ -45,11 +45,14 @@ const std::string& AsyncSceneSender::getErrorMessage() const
     return m_error_message;
 }
 
-bool AsyncSceneSender::isServerAvaileble()
+bool AsyncSceneSender::isServerAvailable(int* server_session_id)
 {
     ms::Client client(client_settings);
     bool ret = client.isServerAvailable();
     m_error_message = client.getErrorMessage();
+    if (server_session_id) {
+        *server_session_id = client.server_session_id;
+    }
     return ret;
 }
 

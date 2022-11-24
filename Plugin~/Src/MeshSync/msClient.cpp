@@ -31,6 +31,7 @@ bool Client::isServerAvailable(int timeout_ms)
 
         HTTPResponse response;
         auto& rs = session.receiveResponse(response);
+        server_session_id = std::stoi(response.get(SERVER_SESSION_ID, InvalidID_str));
         std::ostringstream ostr;
         StreamCopier::copyStream(rs, ostr);
         auto content = ostr.str();

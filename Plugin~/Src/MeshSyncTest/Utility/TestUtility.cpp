@@ -21,7 +21,7 @@ void TestUtility::Send(ms::ScenePtr scene) {
     sender.session_id = ms::InvalidID;
 
     sender.client_settings = GetClientSettings();
-    if (sender.isServerAvaileble()) {
+    if (sender.isServerAvailable()) {
         sender.add(scene);
         sender.kick();
     }
