@@ -120,7 +120,7 @@ namespace Unity.MeshSync.Editor.Analytics {
     /// </summary>
     internal class SessionStartAnalyticsHandler : AnalyticsDataHandler<MeshSyncAnalyticsData> {
         private static readonly Dictionary<string, DateTime> lastSendTimesDict = new Dictionary<string, DateTime>();
-        protected override      Dictionary<string, DateTime> lastSendTimes => lastSendTimesDict;
+        protected override Dictionary<string, DateTime> lastSendTimes => lastSendTimesDict;
 
         struct SessionEventData {
             public string dccToolName;
@@ -131,6 +131,11 @@ namespace Unity.MeshSync.Editor.Analytics {
 
         public override void Send(MeshSyncAnalyticsData data) {
             var sessionStartData = data.sessionStartData.Value;
+
+            if (string.IsNullOrEmpty(sessionStartData.DCCToolName)) {
+                return;
+            }
+
             var eventData = new SessionEventData {
                 dccToolName = sessionStartData.DCCToolName
             };
@@ -144,14 +149,14 @@ namespace Unity.MeshSync.Editor.Analytics {
     /// </summary>
     internal class SyncAnalyticsHandler : AnalyticsDataHandler<MeshSyncAnalyticsData> {
         private static readonly Dictionary<string, DateTime> lastSendTimesDict = new Dictionary<string, DateTime>();
-        protected override      Dictionary<string, DateTime> lastSendTimes => lastSendTimesDict;
+        protected override Dictionary<string, DateTime> lastSendTimes => lastSendTimesDict;
 
         struct SyncEventData {
             public string assetSyncType;
             public string entitySyncType;
             public string syncMode;
         }
-        
+
         protected override string eventName => "meshSync_Sync";
         protected override int version => 2;
 
@@ -172,7 +177,7 @@ namespace Unity.MeshSync.Editor.Analytics {
                 syncMode = syncData.syncMode
             };
 
-            Send(eventData, entityTypeStr+assetTypeStr);
+            Send(eventData, entityTypeStr + assetTypeStr);
         }
     }
 
@@ -181,7 +186,7 @@ namespace Unity.MeshSync.Editor.Analytics {
     /// </summary>
     internal class InstallAnalyticsHandler : AnalyticsDataHandler<string> {
         private static readonly Dictionary<string, DateTime> lastSendTimesDict = new Dictionary<string, DateTime>();
-        protected override      Dictionary<string, DateTime> lastSendTimes => lastSendTimesDict;
+        protected override Dictionary<string, DateTime> lastSendTimes => lastSendTimesDict;
 
         struct DCCInstallEventData {
             public string meshSyncDccName;
