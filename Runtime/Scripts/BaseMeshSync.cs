@@ -800,6 +800,7 @@ internal delegate void DeleteInstanceHandler(string path);
                 EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
             }
 #endif
+            MeshSyncLogger.VerboseLog( $"Scene updated.");
 
             if (onSceneUpdateEnd != null)
                 onSceneUpdateEnd.Invoke();
@@ -2644,6 +2645,8 @@ internal delegate void DeleteInstanceHandler(string path);
     }
 
     internal virtual void ClearInstancePrefabs() {
+        MeshSyncLogger.VerboseLog("Clearing instance prefabs.");
+ 
         transform.DestroyChildrenImmediate();
 
         foreach (var prefabHolder in m_prefabDict.Values) {
