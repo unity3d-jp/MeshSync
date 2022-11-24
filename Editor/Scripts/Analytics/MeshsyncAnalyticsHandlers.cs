@@ -53,7 +53,7 @@ namespace Unity.MeshSync.Editor.Analytics {
         protected abstract Dictionary<string, DateTime> lastSendTimes { get; }
 
         protected virtual TimeSpan MinTimeBetweenEvents {
-            get { return TimeSpan.FromSeconds(10); }
+            get { return TimeSpan.FromSeconds(1); }
         }
 
         bool ShouldSend(string key) {
