@@ -572,7 +572,11 @@ msAPI ms::InstanceInfo* msSceneGetInstanceInfo(const ms::Scene* self, int i) { r
 msAPI ms::PropertyInfo* msSceneGetPropertyInfo(const ms::Scene* self, int i) { return self->propertyInfos[i].get(); }
 msAPI ms::Transform* msSceneGetInstanceMesh(const ms::Scene* self, int i) { return self->instanceMeshes[i].get(); }
 msAPI bool msSceneSubmeshesHaveUniqueMaterial(const ms::Scene *self) { return self->submeshesHaveUniqueMaterial(); }
-msAPI int msSceneGetMaterialSyncMode(const ms::Scene* self) { return self->settings.material_sync_mode; }
+msAPI int msSceneGetMaterialSyncMode(const ms::Scene* self)
+{
+    return 0;
+    //self->settings.material_sync_mode;
+}
 msAPI ms::SceneProfileData msSceneGetProfileData(const ms::Scene *self) { return self->profile_data; }
 #pragma endregion
 
