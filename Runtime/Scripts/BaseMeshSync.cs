@@ -603,7 +603,13 @@ public struct MeshSyncSessionStartAnalyticsData {
                             string syncMode = "None";
                             if (asset.type == AssetType.Material) {
                                 syncMode = scene.GetMaterialSyncMode();
+                                
+                                // TODO: Don't do this when GetMaterialSyncMode() works
+                                if (textureList.Count > 0) {
+                                    syncMode = "Basic";
+                                }
                             }
+
                             SendEventData(new MeshSyncAnalyticsData() { syncData = new MeshSyncSyncAnalyticsData() { assetType = asset.type, syncMode = syncMode }});
                         }
                     }
