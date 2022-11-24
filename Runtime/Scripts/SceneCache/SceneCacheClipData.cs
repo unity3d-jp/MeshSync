@@ -1,18 +1,25 @@
 ﻿using System;
 using Unity.FilmInternalUtilities;
 using UnityEngine;
+using UnityEngine.Timeline;
 
 namespace Unity.MeshSync {
 
 [Serializable]
 internal class SceneCacheClipData : KeyFrameControllerClipData {
 
+    public SceneCacheClipData() : base() { }
+
+    internal SceneCacheClipData(TimelineClip owner, SceneCacheClipData other) : base(owner, other) { }
+    
 //----------------------------------------------------------------------------------------------------------------------
     protected override void OnBeforeSerializeInternalV() {
+        base.OnBeforeSerializeInternalV();
         m_sceneCacheClipDataVersion = CUR_SCENE_CACHE_CLIP_DATA_VERSION;
     }
 
     protected override void OnAfterDeserializeInternalV() {
+        base.OnAfterDeserializeInternalV();
         m_sceneCacheClipDataVersion = CUR_SCENE_CACHE_CLIP_DATA_VERSION;
     }
     

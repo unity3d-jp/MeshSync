@@ -196,6 +196,7 @@ namespace Unity.MeshSync.Editor {
             if (server.m_DCCInterop != null) {
                 server.m_DCCInterop.runMode = previousRunMode;
                 server.m_DCCInterop.OpenDCCTool(asset);
+                server.ForceDeleteChildrenInNextSession();
             }
             else {
                 var assetPath = AssetDatabase.GetAssetPath(asset);

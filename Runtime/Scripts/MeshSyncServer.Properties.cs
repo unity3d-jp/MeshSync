@@ -115,6 +115,8 @@ namespace Unity.MeshSync
                         m_server.SendProperty(prop);
                         prop.IsDirty = false;
                         sendChanges = true;
+
+                        MeshSyncLogger.VerboseLog($"Sending changes, property '{prop.name}' was dirty.");
                     }
                 }
 
@@ -175,6 +177,8 @@ namespace Unity.MeshSync
 
                 if (needsClientSync)
                 {
+                    MeshSyncLogger.VerboseLog("Sending changes, needed client sync.");
+
                     needsClientSync = false;
                     sendChanges = true;
 
@@ -184,8 +188,6 @@ namespace Unity.MeshSync
                 if (sendChanges)
                 {
                     CurrentPropertiesState = PropertiesState.Sending;
-                    onSceneUpdateEnd -= SceneUpdated;
-                    onSceneUpdateEnd += SceneUpdated;
                     m_server.MarkServerInitiatedResponseReady();
                 }
             }
@@ -287,9 +289,8 @@ namespace Unity.MeshSync
         {
         }
 
-        void SceneUpdated()
-        {
-            onSceneUpdateEnd -= SceneUpdated;
+        internal override void AfterUpdateScene() {
+            base.AfterUpdateScene();
 
             CurrentPropertiesState = PropertiesState.Received;
         }

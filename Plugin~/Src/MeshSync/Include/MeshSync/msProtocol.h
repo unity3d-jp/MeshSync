@@ -20,6 +20,7 @@ msDeclClassPtr(Entity)
 namespace ms {
 
     const std::string REQUEST_SYNC = "sync";
+    const std::string SERVER_SESSION_ID = "server_session_id";
 
 class Message
 {

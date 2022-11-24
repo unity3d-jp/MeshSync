@@ -216,7 +216,8 @@ public struct MeshSyncSessionStartAnalyticsData {
 
         #region Properties
         
-        private int currentSessionId = -1;
+        private int  currentSessionId                 = -1;
+        private bool forceDeleteChildrenInNextSession = false;
 
         private protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
 
@@ -507,6 +508,10 @@ public struct MeshSyncSessionStartAnalyticsData {
             numberOfPropertiesReceived = 0;
         }
 
+        public void ForceDeleteChildrenInNextSession() {
+            forceDeleteChildrenInNextSession = true;
+        }
+
         void CheckForNewSession(FenceMessage? mes) {
 #if UNITY_EDITOR
             if (!mes.HasValue || currentSessionId == mes.Value.SessionId) {
@@ -522,11 +527,19 @@ public struct MeshSyncSessionStartAnalyticsData {
                 return;
             }
 
-            int choice = EditorUtility.DisplayDialogComplex("A new session started.",
-                "MeshSync detected that the DCC tool session has changed. To ensure that the sync state is correct you can delete previously synced objects, stash them and move them to another game object or ignore this and keep all children.",
-                "Ignore and keep all children",
-                "Stash",
-                "Delete all children of the server");
+            int choice;
+
+            if (forceDeleteChildrenInNextSession) {
+                choice = 2;
+                forceDeleteChildrenInNextSession = false;
+            }
+            else {
+                choice = EditorUtility.DisplayDialogComplex("A new session started.",
+                    "MeshSync detected that the DCC tool session has changed. To ensure that the sync state is correct you can delete previously synced objects, stash them and move them to another game object or ignore this and keep all children.",
+                    "Ignore and keep all children",
+                    "Stash",
+                    "Delete all children of the server");
+            }
 
             switch (choice) {
                 case 1:
@@ -691,7 +704,7 @@ public struct MeshSyncSessionStartAnalyticsData {
 #endif
         }
 
-        internal void AfterUpdateScene()
+        internal virtual void AfterUpdateScene()
         {
             // If none of the set messages had properties, we need to remove all properties:
             if (numberOfPropertiesReceived == 0) {
@@ -809,6 +822,7 @@ public struct MeshSyncSessionStartAnalyticsData {
                 EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
             }
 #endif
+            MeshSyncLogger.VerboseLog( $"Scene updated.");
 
             if (onSceneUpdateEnd != null)
                 onSceneUpdateEnd.Invoke();
@@ -2653,6 +2667,8 @@ public struct MeshSyncSessionStartAnalyticsData {
     }
 
     internal virtual void ClearInstancePrefabs() {
+        MeshSyncLogger.VerboseLog("Clearing instance prefabs.");
+ 
         transform.DestroyChildrenImmediate();
 
         foreach (var prefabHolder in m_prefabDict.Values) {
