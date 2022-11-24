@@ -1287,6 +1287,12 @@ public struct MeshSyncSessionStartAnalyticsData {
                     }
                 }
             }
+            else if (propNameID == MeshSyncConstants._CoatMaskMap) {
+                HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._MATERIAL_FEATURE_CLEAR_COAT);
+            }
+            else if (propNameID == MeshSyncConstants._CoatMask) {
+                destMat.EnableKeyword(MeshSyncConstants._MATERIAL_FEATURE_CLEAR_COAT);
+            }
 #endif
 
             int len = prop.arrayLength;
