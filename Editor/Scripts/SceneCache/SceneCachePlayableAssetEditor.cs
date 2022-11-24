@@ -82,9 +82,10 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
             SceneCachePlayableAsset clonedFromAsset = clonedFrom.asset as SceneCachePlayableAsset;
             Assert.IsNotNull(clonedFromAsset);
             
+            clip.displayName = clonedFrom.displayName + " (Cloned)";
+            
             SceneCacheClipData otherClipData = clonedFromAsset.GetBoundClipData();
             asset.BindClipData(new SceneCacheClipData(clip, otherClipData));
-            clip.displayName = clonedFrom.displayName + " (Cloned)";
         }
     }
 

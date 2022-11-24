@@ -30,7 +30,6 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         }
         
         m_keyFrameMarkersRequested = other.m_keyFrameMarkersRequested;
-        
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -118,7 +117,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
 
-        int numIdealNumPlayableFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clip);
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clip);
         UpdateKeyFramesSize(numIdealNumPlayableFrames);
         InitKeyFrames(0, m_keyFrames.Count, span, mode);
     }
@@ -127,7 +126,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
 
-        int numIdealNumPlayableFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clip);
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clip);
         UpdateKeyFramesSize(numIdealNumPlayableFrames);
         
         InitKeyFrames(startIndex, endIndex, span, mode);
@@ -137,9 +136,8 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         TimelineClip clip = GetOwnerIfReady();
         if (null == clip)
             return;
-            
-        //already enabled
-        int              frameIndex = LocalTimeToFrameIndex(globalTime - clip.start, clip.duration);
+
+        int              frameIndex = LocalTimeToFrameIndex(clip.ToLocalTime(globalTime), clip.duration, clip.clipIn);
         PlayableKeyFrame keyFrame   = m_keyFrames[frameIndex];
         if (keyFrame.IsEnabled())
             return;
@@ -202,19 +200,16 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
             return;
         
         //Find KeyFrames that need to be moved
-        int                           numPlayableFrames  = m_keyFrames.Count;
+        int                           numKeyFrames       = m_keyFrames.Count;
         Dictionary<int, KeyFrameInfo> movedKeyFrames     = new Dictionary<int, KeyFrameInfo>();
         HashSet<int>                  keyFramesToDisable = new HashSet<int>();
         
-        for (int i = 0; i < numPlayableFrames; ++i) {
+        for (int i = 0; i < numKeyFrames; ++i) {
             PlayableKeyFrame keyFrame = m_keyFrames[i];
             keyFrame.SaveStateFromMarker();
-            int moveDestIndex = Mathf.RoundToInt((float)(keyFrame.GetLocalTime() * numPlayableFrames / clipOwner.duration));
-            moveDestIndex = Mathf.Clamp(moveDestIndex,0,numPlayableFrames - 1);
-            
+            int moveDestIndex = LocalTimeToFrameIndex(keyFrame.GetLocalTime(), clipOwner.duration, clipOwner.clipIn);            
             if (moveDestIndex == i)
                 continue;
-            
 
             movedKeyFrames[moveDestIndex] = (new KeyFrameInfo() {
                 enabled = true,
@@ -236,7 +231,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
 
         //Update PlayableFrames structure back
         double timePerFrame = FilmInternalUtilities.TimelineUtility.CalculateTimePerFrame(clipOwner);
-        for (int i = 0; i < numPlayableFrames; ++i) {
+        for (int i = 0; i < numKeyFrames; ++i) {
             m_keyFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
             if (movedKeyFrames.TryGetValue(i, out KeyFrameInfo keyFrameInfo)) {
                 
@@ -261,7 +256,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         if (null == clipOwner)
             return;
 
-        int numIdealNumPlayableFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clipOwner);
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clipOwner);
         UpdateKeyFramesSize(numIdealNumPlayableFrames);
         
         InitKeyFrames(0, numIdealNumPlayableFrames-1, span: 1, KeyFrameMode.Continuous);
@@ -307,7 +302,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
             return true;
         }
         
-        int numIdealNumPlayableFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clip);
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clip);
         if (numIdealNumPlayableFrames != m_keyFrames.Count)
             return true;
         
@@ -328,10 +323,12 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         m_lastClipTimeScaleOnRefresh = (float) clipOwner.timeScale;
         m_lastClipInOnRefresh        = (float) clipOwner.clipIn;
         
-        int numIdealNumPlayableFrames = FilmInternalUtilities.TimelineUtility.CalculateNumFrames(clipOwner);
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clipOwner);
+        
       
         //Change the size of m_playableFrames and reinitialize if necessary
         int prevNumPlayableFrames = m_keyFrames.Count;
+        
         if (numIdealNumPlayableFrames != prevNumPlayableFrames) {
             
             //Change the size of m_playableFrames and reinitialize if necessary
@@ -435,10 +432,10 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         return null == clipOwner.GetParentTrack() ? null : clipOwner;
     }
 
-    private int LocalTimeToFrameIndex(double localTime, double clipDuration) {
-        int numPlayableFrames = m_keyFrames.Count;
-        int index   = Mathf.RoundToInt((float)(localTime * numPlayableFrames / clipDuration));
-        index = Mathf.Clamp(index,0,numPlayableFrames - 1);
+    private int LocalTimeToFrameIndex(double localTime, double clipDuration, double clipIn) {
+        int numKeyFrames = m_keyFrames.Count;
+        int index = Mathf.RoundToInt((float)(localTime * numKeyFrames / (clipDuration + clipIn)));
+        index = Mathf.Clamp(index,0,numKeyFrames - 1);
         return index;
     }
 
@@ -455,6 +452,14 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         return null;
         
     }
+
+    private int CalculateNumIdealKeyFrames(TimelineClip clip) {
+        double fps               = clip.GetParentTrack().timelineAsset.editorSettings.GetFPS();
+        int    numIdealKeyFrames = Mathf.RoundToInt((float)((clip.duration + clip.clipIn) * fps));
+        return numIdealKeyFrames; 
+        
+    }
+    
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
     
     //The ground truth for using/dropping an image in a particular frame. See the notes below
