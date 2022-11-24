@@ -13,6 +13,7 @@
 #include "MeshSync/SceneGraph/msCurve.h"
 
 #include "MeshSync/SceneGraph/msEntityConverter.h"
+#include "MeshSync/Utility/msIdUtility.h"
 
 namespace ms {
 
@@ -22,6 +23,7 @@ using namespace Poco::Net;
 Server::Server(const ServerSettings& settings)
     : m_settings(settings)
 {
+    m_server_session_id = IdUtility::GenerateSessionId();
 }
 
 Server::~Server()
@@ -177,13 +179,14 @@ int Server::processMessages(const MessageHandler& handler)
     return ret;
 }
 
-void Server::serveText(HTTPServerResponse &response, const char* text, int stat)
+void Server::serveText(HTTPServerResponse& response, const char* text, int stat)
 {
     size_t size = std::strlen(text);
 
     response.setStatus((HTTPResponse::HTTPStatus)stat);
     response.setContentType("text/plain");
     response.setContentLength(size);
+    response.set(SERVER_SESSION_ID, std::to_string(m_server_session_id));
 
     auto& os = response.send();
     os.write(text, size);

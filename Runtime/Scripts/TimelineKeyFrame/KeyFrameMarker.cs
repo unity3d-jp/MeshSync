@@ -8,27 +8,35 @@ namespace Unity.MeshSync {
 [Serializable]
 [CustomStyle("KeyFrameMarker")]
 [HideInMenu]
-internal class KeyFrameMarker : Marker, INotification {
+internal class KeyFrameMarker : Marker, INotification, ICanRefresh {
 
     
-    internal void Init(PlayableKeyFrame controller, double initialTime) {
+    internal void Init(PlayableKeyFrame controller, TimelineClip clip) {
         m_playableKeyFrameOwner = controller;
-        time = initialTime;
+        time                    = CalculateMarkerTime(clip, m_playableKeyFrameOwner.GetLocalTime());
     }     
     
 //----------------------------------------------------------------------------------------------------------------------    
     
     //return false to indicate that this marker has been invalidated
-    internal bool Refresh() {
+    public bool Refresh() {
         TimelineClip clip = m_playableKeyFrameOwner?.GetClipOwner();;
         if (clip == null) {
             return false;
         } 
         
-        time = clip.start + m_playableKeyFrameOwner.GetLocalTime();
-        
+        time = CalculateMarkerTime(clip, m_playableKeyFrameOwner.GetLocalTime());
         return true;
     }
+
+    private static double CalculateMarkerTime(TimelineClip clip, double keyFrameLocalTime) {
+        return clip.start + ((-clip.clipIn + keyFrameLocalTime) / clip.timeScale);
+    }
+    
+    internal double CalculateKeyFrameLocalTime(TimelineClip clip) {
+        return ((time - clip.start) * clip.timeScale) + clip.clipIn;
+    } 
+    
 
 //----------------------------------------------------------------------------------------------------------------------
     

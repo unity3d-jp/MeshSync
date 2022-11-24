@@ -1,0 +1,38 @@
+#pragma kernel smoothness_into_alpha
+#pragma kernel hdrp_mask
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Output;
+
+Texture2D<float3> RGB;
+float2 RGB_dims;
+
+Texture2D<float> Smoothness;
+float2 Smoothness_dims;
+
+Texture2D<float> Metallic;
+float2 Metallic_dims;
+
+SamplerState samplerRGB;
+SamplerState samplerSmoothness;
+SamplerState samplerMetallic;
+
+[numthreads(8, 8, 1)]
+void smoothness_into_alpha(uint3 id : SV_DispatchThreadID)
+{
+    float3 metallic = RGB.SampleLevel(samplerRGB, id.xy / (float2)RGB_dims, 0);
+    float alpha = Smoothness.SampleLevel(samplerSmoothness, id.xy / (float2)Smoothness_dims, 0);
+
+    Output[id.xy] = float4(metallic[0], metallic[1], metallic[2], alpha);
+}
+
+
+[numthreads(8, 8, 1)]
+void hdrp_mask(uint3 id : SV_DispatchThreadID)
+{
+    float metallic = Metallic.SampleLevel(samplerMetallic, id.xy / (float2)Metallic_dims, 0);
+    float smoothness = Smoothness.SampleLevel(samplerSmoothness, id.xy / (float2)Smoothness_dims, 0);
+
+    Output[id.xy] = float4(metallic, 0.5, 0.5, smoothness);
+}

@@ -147,6 +147,8 @@ private:
     std::map<std::pair<int,int>, EditorCommandMessagePtr> m_current_commands;
     std::mutex m_commands_mutex;
 
+    int m_server_session_id;
+
     public:
     std::vector<EntityPtr> m_pending_entities;
     std::map<uint64_t, PropertyInfoPtr> m_pending_properties;

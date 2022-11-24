@@ -90,13 +90,6 @@ public class SceneCachePlayer : BaseMeshSync {
         m_time = (float) frame / m_sceneCache.GetSampleRate();
     }
     
-    //NormalizedTime: (0.0 .. 1.0)
-    internal void SetTimeByNormalizedTime(float normalizedTime) {
-        float time = normalizedTime * m_sceneCacheInfo.timeRange.end;
-        m_time = ClampTime(time);
-    }
-    
-
     internal int GetPreloadLength() { return m_preloadLength;}
     internal void SetPreloadLength(int preloadLength) { m_preloadLength = preloadLength;}
 
@@ -109,7 +102,7 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------
     
     [CanBeNull]
-    internal ISceneCacheInfo ExtractSceneCacheInfo(bool forceOpen) {
+    internal SceneCacheInfo ExtractSceneCacheInfo(bool forceOpen) {
         
         if (IsSceneCacheOpened()) {
             return m_sceneCacheInfo;
@@ -212,10 +205,13 @@ public class SceneCachePlayer : BaseMeshSync {
     private static void UpdateSceneCacheInfo( SceneCacheInfo scInfo, SceneCacheData scData) {
         Assert.IsTrue(scData);
         
-        scInfo.numFrames  = scData.GetNumScenes();
         scInfo.sampleRate = scData.GetSampleRate();
         scInfo.timeCurve  = scData.GetTimeCurve(InterpolationMode.Constant);
         scInfo.timeRange  = scData.GetTimeRange();
+
+        float duration = scInfo.timeRange.GetDuration();
+        scInfo.numFrames = Mathf.Min((int) Mathf.Floor(duration * scInfo.sampleRate), scData.GetNumScenes());
+        
     }
     
     internal void CloseCache() {
@@ -326,7 +322,24 @@ public class SceneCachePlayer : BaseMeshSync {
         return frame;
     }
 
+    internal static float CalculatePlaybackTime(float time, SceneCachePlaybackMode playbackMode, SceneCacheInfo scInfo) {
+        switch (playbackMode) {
+            case SceneCachePlaybackMode.SnapToPreviousFrame: {
+                int frame = CalculateFrameByFloor(time, scInfo);
+                return frame / scInfo.sampleRate;
+            }
 
+            case SceneCachePlaybackMode.SnapToNearestFrame: {
+                int frame = CalculateFrameByRound(time, scInfo);
+                return frame / scInfo.sampleRate;
+            }
+            default: {
+                return time;
+            }
+        }
+    }
+
+    
     private static int CalculateFrameByFloor(float time, SceneCacheInfo scInfo, LimitedAnimationController controller) {
         int frame = Mathf.FloorToInt(time * scInfo.sampleRate);
         frame = controller.Apply(frame);

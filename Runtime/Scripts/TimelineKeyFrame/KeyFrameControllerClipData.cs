@@ -20,13 +20,9 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         m_keyFrames = new List<PlayableKeyFrame>();
     }
 
-    protected KeyFrameControllerClipData(TimelineClip clipOwner) {
-        SetOwner(clipOwner);
+    protected KeyFrameControllerClipData(TimelineClip owner, KeyFrameControllerClipData other) {
+        SetOwner(owner);
         m_keyFrames = new List<PlayableKeyFrame>();
-    }
-
-    protected KeyFrameControllerClipData(TimelineClip owner, KeyFrameControllerClipData other) : this(owner){
-        Assert.IsNotNull(m_keyFrames);
         
         foreach (PlayableKeyFrame otherFrame in other.m_keyFrames) {
             PlayableKeyFrame newKeyFrame = new PlayableKeyFrame(this, otherFrame);
@@ -34,7 +30,6 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         }
         
         m_keyFrameMarkersRequested = other.m_keyFrameMarkersRequested;
-        
     }
     
 //----------------------------------------------------------------------------------------------------------------------
@@ -43,8 +38,9 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
     }
 
     protected override void OnAfterDeserializeInternalV() {
-        foreach (PlayableKeyFrame playableFrame in m_keyFrames) {
-            playableFrame.SetOwner(this);
+        foreach (PlayableKeyFrame keyFrame in m_keyFrames) {
+            keyFrame.SetOwner(this);
+            keyFrame.RefreshMarkerOwner();
         }
     }    
     #endregion
@@ -70,7 +66,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
             return;
         
 #if UNITY_EDITOR
-        Undo.RegisterCompleteObjectUndo(GetOwner().GetParentTrack(),"StreamingImageSequence Show/Hide FrameMarker");
+        Undo.RegisterCompleteObjectUndo(GetOwner().GetParentTrack(),"MeshSync: Show/Hide Key Frame Markers");
         m_forceShowFrameMarkers = forceShow && req;
 #endif        
         m_keyFrameMarkersRequested = req;
@@ -107,18 +103,6 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         return playableKeyFrame;
     }
 
-//----------------------------------------------------------------------------------------------------------------------    
-    
-    internal void ResetKeyFrames() {
-        DestroyPlayableFrames();
-
-        //Recalculate the number of frames and create the marker's ground truth data
-        int numFrames = TimelineUtility.CalculateNumFrames(GetOwner());
-        m_keyFrames = new List<PlayableKeyFrame>(numFrames);
-        UpdateKeyFramesSize(numFrames);
-    }
-
-
 //----------------------------------------------------------------------------------------------------------------------
     private void DestroyPlayableFrames() {
         if (null == m_keyFrames)
@@ -133,7 +117,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
 
-        int numIdealNumPlayableFrames = TimelineUtility.CalculateNumFrames(clip);
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clip);
         UpdateKeyFramesSize(numIdealNumPlayableFrames);
         InitKeyFrames(0, m_keyFrames.Count, span, mode);
     }
@@ -142,37 +126,18 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         TimelineClip clip = GetOwner();
         Assert.IsNotNull(clip);
 
-        int numIdealNumPlayableFrames = TimelineUtility.CalculateNumFrames(clip);
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clip);
         UpdateKeyFramesSize(numIdealNumPlayableFrames);
         
         InitKeyFrames(startIndex, endIndex, span, mode);
     }
 
-    private void InitKeyFrames(int startIndex, int endIndex, int span, KeyFrameMode mode) {
-        TimelineClip clip = GetOwner();
-        Assert.IsNotNull(clip);
-        
-        double timePerFrame = TimelineUtility.CalculateTimePerFrame(clip);
-        endIndex = Mathf.Min(endIndex, m_keyFrames.Count);
-        for (int i = startIndex; i < endIndex; ++i) {
-            m_keyFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
-            m_keyFrames[i].SetPlayFrame(i);
-            m_keyFrames[i].SetEnabled( i % span == 0);
-            m_keyFrames[i].SetKeyFrameMode(mode);
-            m_keyFrames[i].RefreshMarker(m_keyFrameMarkersVisibility);
-        }
-        
-    }
-    
-    
-
     internal void AddKeyFrame(double globalTime) {
         TimelineClip clip = GetOwnerIfReady();
         if (null == clip)
             return;
-            
-        //already enabled
-        int              frameIndex = LocalTimeToFrameIndex(globalTime - clip.start, clip.duration);
+
+        int              frameIndex = LocalTimeToFrameIndex(clip.ToLocalTime(globalTime), clip.duration, clip.clipIn);
         PlayableKeyFrame keyFrame   = m_keyFrames[frameIndex];
         if (keyFrame.IsEnabled())
             return;
@@ -225,35 +190,32 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         if (null == clipOwner)
             return;
         
-        if (NeedsRefreshKeyFrames()) {
+        //Need to decide if we want apply the KeyFrames data to Marker, or the other way around        
+        if (NeedsRefreshKeyFrames() || UpdateFrameMarkersVisibility()) {
             RefreshKeyFrames();
             return;
         }
-        
+
         if (!m_keyFrameMarkersVisibility) 
             return;
         
         //Find KeyFrames that need to be moved
-        int                           numPlayableFrames  = m_keyFrames.Count;
+        int                           numKeyFrames       = m_keyFrames.Count;
         Dictionary<int, KeyFrameInfo> movedKeyFrames     = new Dictionary<int, KeyFrameInfo>();
         HashSet<int>                  keyFramesToDisable = new HashSet<int>();
         
-        
-        for (int i = 0; i < numPlayableFrames; ++i) {
-            PlayableKeyFrame keyKeyFrame = m_keyFrames[i];
-            keyKeyFrame.SaveStateFromMarker();
-            int moveDestIndex = Mathf.RoundToInt((float)(keyKeyFrame.GetLocalTime() * numPlayableFrames / clipOwner.duration));
-            moveDestIndex = Mathf.Clamp(moveDestIndex,0,numPlayableFrames - 1);
-            
+        for (int i = 0; i < numKeyFrames; ++i) {
+            PlayableKeyFrame keyFrame = m_keyFrames[i];
+            keyFrame.SaveStateFromMarker();
+            int moveDestIndex = LocalTimeToFrameIndex(keyFrame.GetLocalTime(), clipOwner.duration, clipOwner.clipIn);            
             if (moveDestIndex == i)
                 continue;
-            
 
             movedKeyFrames[moveDestIndex] = (new KeyFrameInfo() {
                 enabled = true,
                 //localTime = keyFrame.GetLocalTime(),
-                mode    = keyKeyFrame.GetKeyFrameMode(),
-                playFrame = keyKeyFrame.GetPlayFrame(),
+                mode      = keyFrame.GetKeyFrameMode(),
+                playFrame = keyFrame.GetPlayFrame(),
             });
             
 
@@ -268,8 +230,8 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         }
 
         //Update PlayableFrames structure back
-        double timePerFrame = TimelineUtility.CalculateTimePerFrame(clipOwner);
-        for (int i = 0; i < numPlayableFrames; ++i) {
+        double timePerFrame = FilmInternalUtilities.TimelineUtility.CalculateTimePerFrame(clipOwner);
+        for (int i = 0; i < numKeyFrames; ++i) {
             m_keyFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
             if (movedKeyFrames.TryGetValue(i, out KeyFrameInfo keyFrameInfo)) {
                 
@@ -289,26 +251,34 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         }
     }
 
-    internal void InitKeyFrames() {
+    internal void ResetKeyFrames() {
         TimelineClip clipOwner = GetOwnerIfReady();
         if (null == clipOwner)
             return;
 
-        int numIdealNumPlayableFrames = TimelineUtility.CalculateNumFrames(clipOwner);
-        
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clipOwner);
         UpdateKeyFramesSize(numIdealNumPlayableFrames);
         
-        //Refresh all markers
-        double timePerFrame      = TimelineUtility.CalculateTimePerFrame(clipOwner);
-        int    numPlayableFrames = m_keyFrames.Count;
-        for (int i = 0; i < numPlayableFrames; ++i) {
-            m_keyFrames[i].SetEnabled(true);
+        InitKeyFrames(0, numIdealNumPlayableFrames-1, span: 1, KeyFrameMode.Continuous);
+    }
+    
+    private void InitKeyFrames(int startIndex, int endIndex, int span, KeyFrameMode mode) {
+        TimelineClip clip = GetOwner();
+        Assert.IsNotNull(clip);
+        
+        double timePerFrame = FilmInternalUtilities.TimelineUtility.CalculateTimePerFrame(clip);
+        endIndex = Mathf.Min(endIndex, m_keyFrames.Count);
+        for (int i = startIndex; i < endIndex; ++i) {
+            m_keyFrames[i].SetOwner(this);
+            m_keyFrames[i].SetEnabled( i % span == 0);
             m_keyFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
             m_keyFrames[i].SetPlayFrame(i);
-            m_keyFrames[i].SetKeyFrameMode(KeyFrameMode.Continuous);
+            m_keyFrames[i].SetKeyFrameMode(mode);
             m_keyFrames[i].RefreshMarker(m_keyFrameMarkersVisibility);
         }
+        
     }
+
 
     private bool NeedsRefreshKeyFrames() {
         TimelineClip clip = GetOwnerIfReady();
@@ -323,8 +293,16 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         if (!Mathf.Approximately(m_lastClipDurationOnRefresh, (float) clip.duration)) {
             return true;
         }
+
+        if (!Mathf.Approximately(m_lastClipTimeScaleOnRefresh, (float) clip.timeScale)) {
+            return true;
+        }
+
+        if (!Mathf.Approximately(m_lastClipInOnRefresh, (float) clip.clipIn)) {
+            return true;
+        }
         
-        int numIdealNumPlayableFrames = TimelineUtility.CalculateNumFrames(clip);
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clip);
         if (numIdealNumPlayableFrames != m_keyFrames.Count)
             return true;
         
@@ -342,11 +320,15 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         
         m_lastClipStartTimeOnRefresh = (float) clipOwner.start;
         m_lastClipDurationOnRefresh  = (float) clipOwner.duration;
+        m_lastClipTimeScaleOnRefresh = (float) clipOwner.timeScale;
+        m_lastClipInOnRefresh        = (float) clipOwner.clipIn;
         
-        int numIdealNumPlayableFrames = TimelineUtility.CalculateNumFrames(clipOwner);
+        int numIdealNumPlayableFrames = CalculateNumIdealKeyFrames(clipOwner);
+        
       
         //Change the size of m_playableFrames and reinitialize if necessary
         int prevNumPlayableFrames = m_keyFrames.Count;
+        
         if (numIdealNumPlayableFrames != prevNumPlayableFrames) {
             
             //Change the size of m_playableFrames and reinitialize if necessary
@@ -368,9 +350,10 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         }
         
         //Refresh all markers
-        double timePerFrame      = TimelineUtility.CalculateTimePerFrame(clipOwner);
+        double timePerFrame      = FilmInternalUtilities.TimelineUtility.CalculateTimePerFrame(clipOwner);
         int    numPlayableFrames = m_keyFrames.Count;
         for (int i = 0; i < numPlayableFrames; ++i) {
+            m_keyFrames[i].SetOwner(this);
             m_keyFrames[i].SetIndexAndLocalTime(i, i * timePerFrame);
             m_keyFrames[i].RefreshMarker(m_keyFrameMarkersVisibility);
         }
@@ -395,7 +378,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         TimelineClip clipOwner = GetOwner();
         Assert.IsNotNull(clipOwner);
 
-        double timePerFrame = TimelineUtility.CalculateTimePerFrame(clipOwner);
+        double timePerFrame = FilmInternalUtilities.TimelineUtility.CalculateTimePerFrame(clipOwner);
         //Resize m_playableFrames
         if (m_keyFrames.Count < reqPlayableFramesSize) {
             int             numNewPlayableFrames = (reqPlayableFramesSize - m_keyFrames.Count);
@@ -449,10 +432,10 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         return null == clipOwner.GetParentTrack() ? null : clipOwner;
     }
 
-    private int LocalTimeToFrameIndex(double localTime, double clipDuration) {
-        int numPlayableFrames = m_keyFrames.Count;
-        int index   = Mathf.RoundToInt((float)(localTime * numPlayableFrames / clipDuration));
-        index = Mathf.Clamp(index,0,numPlayableFrames - 1);
+    private int LocalTimeToFrameIndex(double localTime, double clipDuration, double clipIn) {
+        int numKeyFrames = m_keyFrames.Count;
+        int index = Mathf.RoundToInt((float)(localTime * numKeyFrames / (clipDuration + clipIn)));
+        index = Mathf.Clamp(index,0,numKeyFrames - 1);
         return index;
     }
 
@@ -469,14 +452,24 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
         return null;
         
     }
+
+    private int CalculateNumIdealKeyFrames(TimelineClip clip) {
+        double fps               = clip.GetParentTrack().timelineAsset.editorSettings.GetFPS();
+        int    numIdealKeyFrames = Mathf.RoundToInt((float)((clip.duration + clip.clipIn) * fps));
+        return numIdealKeyFrames; 
+        
+    }
+    
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
     
     //The ground truth for using/dropping an image in a particular frame. See the notes below
     [SerializeField] private List<PlayableKeyFrame> m_keyFrames;
-    [SerializeField] [HideInInspector] private bool m_keyFrameMarkersRequested = true;
+    [SerializeField] [HideInInspector] private bool m_keyFrameMarkersRequested = false;
 
-    [SerializeField] [HideInInspector] private float m_lastClipStartTimeOnRefresh = 0;
-    [SerializeField] [HideInInspector] private float m_lastClipDurationOnRefresh = 0;
+    private float m_lastClipStartTimeOnRefresh = 0;
+    private float m_lastClipDurationOnRefresh  = 0;
+    private float m_lastClipTimeScaleOnRefresh = 0;
+    private float m_lastClipInOnRefresh        = 0;
 
     
 #pragma warning disable 414    
@@ -488,7 +481,7 @@ internal abstract class KeyFrameControllerClipData : BaseClipData {
     private bool   m_forceShowFrameMarkers = false;
 #endif
 
-    private bool m_keyFrameMarkersVisibility      = true;
+    private bool m_keyFrameMarkersVisibility   = false;
     private bool m_needToRefreshTimelineEditor = false;
     
     private const int    CUR_KEYFRAME_CONTROLLER_CLIP_DATA_VERSION = 1;

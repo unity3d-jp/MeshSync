@@ -1,10 +1,12 @@
 #pragma once
 
 #include "MeshSync/msFoundation.h" //msSerializable
+#include <string>
 
 namespace ms {
 
 const int InvalidID = -1;
+const std::string InvalidID_str = std::to_string(InvalidID);
 
 struct Identifier
 {

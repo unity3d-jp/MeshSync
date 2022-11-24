@@ -19,8 +19,9 @@ msDeclClassPtr(Entity)
 
 namespace ms {
 
-const std::string REQUEST_SYNC = "sync";
-const std::string REQUEST_USER_SCRIPT_CALLBACK = "user_script_callback";
+    const std::string REQUEST_SYNC = "sync";
+    const std::string SERVER_SESSION_ID = "server_session_id";
+	const std::string REQUEST_USER_SCRIPT_CALLBACK = "user_script_callback";
 
 class Message
 {
@@ -114,6 +115,8 @@ public:
     };
 
     FenceType type = FenceType::Unknown;
+
+    std::string dcc_tool_name = "";
 
     ~FenceMessage() override;
     void serialize(std::ostream& os) const override;

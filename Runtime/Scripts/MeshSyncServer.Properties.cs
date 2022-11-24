@@ -112,9 +112,7 @@ namespace Unity.MeshSync
                         prop.IsDirty = false;
                         sendChanges  = true;
 
-#if VERBOSE_LOGS
-                        Debug.Log($"[MeshSync] Sending changes, property '{prop.name}' was dirty.");
-#endif
+                        MeshSyncLogger.VerboseLog($"Sending changes, property '{prop.name}' was dirty.");
                     }
                 }
 
@@ -166,13 +164,11 @@ namespace Unity.MeshSync
 #endif
                 }
 
-                if (needsUserScriptCallback) {
-#if VERBOSE_LOGS
-                    Debug.Log("[MeshSync] Sending changes, needed user script callback.");
-#endif
-                    needsUserScriptCallback = false;
+                if (needsClientSync)
+                {
+                    MeshSyncLogger.VerboseLog("Sending changes, needed client sync.");
+			   		needsUserScriptCallback = false;
                     sendChanges         = true;
-
                     m_server.RequestUserScriptCallback();
                 }
                 else if (needsClientSync) {
@@ -291,7 +287,7 @@ namespace Unity.MeshSync
 #if UNITY_EDITOR
         internal override void AfterUpdateScene() {
             base.AfterUpdateScene();
-            
+
             CurrentPropertiesState = PropertiesState.Received;
         }
 

@@ -13,6 +13,7 @@ class AsyncSceneSender : public SceneExporter
 {
 public:
     int session_id = InvalidID;
+    int server_session_id = InvalidID;
 
     ClientSettings client_settings;
 
@@ -24,7 +25,7 @@ public:
     ~AsyncSceneSender() override;
 
     const std::string& getErrorMessage() const;
-    bool isServerAvaileble();
+    bool isServerAvailable(int* server_session_id = nullptr);
 
     bool isExporting() override;
     void wait() override;

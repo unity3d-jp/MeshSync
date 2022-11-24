@@ -21,12 +21,13 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
 
     internal PlayableKeyFrame(KeyFrameControllerClipData owner, PlayableKeyFrame otherKeyFrame) {
         m_clipDataOwner = owner;
+        m_enabled       = otherKeyFrame.m_enabled;
         m_localTime     = otherKeyFrame.m_localTime;
         m_playFrame     = otherKeyFrame.m_playFrame;
         m_keyFrameMode  = otherKeyFrame.m_keyFrameMode;
+        m_userNote      = otherKeyFrame.m_userNote;
     }       
-    
-    
+   
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
     #region ISerializationCallbackReceiver
     public void OnBeforeSerialize() {
@@ -96,12 +97,18 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
         if (null == m_marker) {
             m_enabled = false;
         } else {
+            if (null == m_clipDataOwner)
+                return;
+            
             TimelineClip clipOwner = m_clipDataOwner.GetOwner();
-            m_localTime = m_marker.time - clipOwner.start;
+            m_localTime = m_marker.CalculateKeyFrameLocalTime(clipOwner);
         }
     }
     
     internal void RefreshMarker(bool frameMarkerVisibility) {
+        if (null == m_clipDataOwner)
+            return;
+        
         TrackAsset trackAsset = m_clipDataOwner.GetOwner()?.GetParentTrack();
         //Delete Marker first if it's not in the correct track (e.g: after the TimelineClip was moved)
         if (null!= m_marker && m_marker.parent != trackAsset) {
@@ -117,9 +124,17 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
 
         if (m_marker) {
             TimelineClip clipOwner = m_clipDataOwner.GetOwner();
-            m_marker.Init(this, clipOwner.start + m_localTime);
+            m_marker.Init(this, clipOwner);
         }
     }
+    
+    internal void RefreshMarkerOwner() {
+        if (!m_marker) 
+            return;
+        
+        m_marker.SetOwner(this);
+    }
+    
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     void CreateMarker() {

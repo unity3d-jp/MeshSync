@@ -6,7 +6,7 @@ using UnityEditor.Experimental.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Unity.MeshSync{
+namespace Unity.MeshSync {
     
     [ExecuteInEditMode]
     internal class MeshSyncInstanceRenderer : MonoBehaviour
