@@ -102,6 +102,11 @@ namespace Unity.MeshSync.Editor.Analytics {
 
         public override void Send(MeshSyncAnalyticsData data) {
             var sessionStartData = data.sessionStartData.Value;
+
+            if (string.IsNullOrEmpty(sessionStartData.DCCToolName)) {
+                return;
+            }
+
             var eventData = new SessionEventData {
                 dccToolName = sessionStartData.DCCToolName
             };
