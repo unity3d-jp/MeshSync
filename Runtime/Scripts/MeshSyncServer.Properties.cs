@@ -164,7 +164,7 @@ namespace Unity.MeshSync
 #endif
                 }
 
-                if (needsClientSync)
+                if (needsUserScriptCallback)
                 {
                     MeshSyncLogger.VerboseLog("Sending changes, needed client sync.");
 			   		needsUserScriptCallback = false;
