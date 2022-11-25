@@ -1,6 +1,34 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.16.0-preview] - 2022-11-25
+
+### Added
+* feat: key frame adjustments for SceneCache
+* feat: material support 
+* feat: send the server's session id and let clients read it to check if the server has changed.
+* feat: add a way to force delete all children in the next sync session without user prompt. 
+* feat: add a way to trigger a script callback from Unity
+
+### Changed
+* deps: update dependency to com.unity.film-internal-utilities@0.16.1-preview
+* change: output logs of the Editor Server
+
+### Fixed
+* fix: make all object types (incl. lights) instantiable for geometry nodes
+* fix: server hanging on exit, after updating package version 
+* fix: apply changes of ZUpCorrectionMode 
+* fix: handle zero keys when comparing two curves of SceneCachePlayableAsset
+* fix: legacy non-versioned SceneCache was considered as versioned
+* fix: clear synced meshes if they are empty 
+* fix: fix for crashing debugger when references are not set
+
+### Removed
+* remove: remove code to import obsolete SceneCachePlayableAsset prior to 0.13.0-preview
+* remove: LimitedAnimation option in SceneCachePlayer
+* remove: the autoplay of SceneCache 
+
+
 ## [0.15.1-preview] - 2022-10-17
 
 ### Added
@@ -19,7 +47,7 @@ All notable changes to the MeshSync package will be documented in this file.
 * feat: add a button to show plugins folder in Preferences
 * feat: add Editor server config in Project Settings page for AutoSetup from DCC tool 
 * feat: add support to install plugin for Blender 3.3 
-* feat:  accept port number of scene server via EditorCommand buffer for AutoSetup from DCC tool 
+* feat: accept port number of scene server via EditorCommand buffer for AutoSetup from DCC tool 
 * doc: add backward compatibility section to the SceneCache documentation 
 
 ### Changed
