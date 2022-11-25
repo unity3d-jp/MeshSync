@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEditor;
-using UnityEngine;
 using UnityEngine.Analytics;
+using Debug = UnityEngine.Debug;
 
 namespace Unity.MeshSync.Editor.Analytics {
     /// <summary>
@@ -70,7 +71,8 @@ namespace Unity.MeshSync.Editor.Analytics {
             return true;
         }
 
-        private static void logIfWarning(AnalyticsResult resp) {
+        [Conditional("DEBUG_ANALYTICS")]
+        private static void LogIfWarning(AnalyticsResult resp) {
             if (resp != AnalyticsResult.Ok) {
                 Debug.LogWarning($"Analytics endpoint reported: {resp} when should be {AnalyticsResult.Ok}");
             }
@@ -86,7 +88,7 @@ namespace Unity.MeshSync.Editor.Analytics {
                 return;
             }
 
-            logIfWarning(
+            LogIfWarning(
             EditorAnalytics.SendEventWithLimit(
                 eventName,
                 data,
@@ -97,7 +99,7 @@ namespace Unity.MeshSync.Editor.Analytics {
         /// Registers the handler's event and version with the analytics library.
         /// </summary>
         public void Register() {
-            logIfWarning(
+            LogIfWarning(
                 EditorAnalytics.RegisterEventWithLimit(
                     eventName,
                     eventsPerHour,
