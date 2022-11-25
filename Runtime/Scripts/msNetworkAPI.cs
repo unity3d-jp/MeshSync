@@ -136,7 +136,10 @@ internal struct Server {
 #endif
 
     [DllImport(Lib.name)]
-    static extern void msServerRequestFullSync(IntPtr self);        
+    static extern void msServerRequestFullSync(IntPtr self);
+
+    [DllImport(Lib.name)]
+    static extern void msServerRequestUserScriptCallback(IntPtr self);
 
     [DllImport(Lib.name)]
     static extern void msServerInitiatedResponseReady(IntPtr self);
@@ -252,6 +255,11 @@ internal struct Server {
     public void RequestClientSync()
     {
         msServerRequestFullSync(self);
+    }
+
+    public void RequestUserScriptCallback() 
+    {
+        msServerRequestUserScriptCallback(self);
     }
 
     public void MarkServerInitiatedResponseReady()

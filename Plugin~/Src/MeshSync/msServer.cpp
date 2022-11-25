@@ -670,8 +670,13 @@ void Server::recvServerLiveEditRequest(HTTPServerRequest& request, HTTPServerRes
     }
 
     m_pending_entities.clear();
-    
-    if (m_syncRequested) {
+
+    if (m_userScriptCallbackRequested)
+    {
+        reqResponse.message = REQUEST_USER_SCRIPT_CALLBACK;
+        m_userScriptCallbackRequested = false;
+    }
+    else if (m_syncRequested) {
         reqResponse.message = REQUEST_SYNC;
         m_syncRequested = false;
     }
@@ -753,6 +758,10 @@ void Server::receivedProperty(PropertyInfoPtr prop) {
 
 void Server::syncRequested() {
     m_syncRequested = true;
+}
+
+void Server::userScriptCallbackRequested() {
+    m_userScriptCallbackRequested = true;
 }
 
 void Server::propertiesReady() {

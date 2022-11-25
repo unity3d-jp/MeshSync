@@ -21,6 +21,7 @@ namespace ms {
 
     const std::string REQUEST_SYNC = "sync";
     const std::string SERVER_SESSION_ID = "server_session_id";
+	const std::string REQUEST_USER_SCRIPT_CALLBACK = "user_script_callback";
 
 class Message
 {
