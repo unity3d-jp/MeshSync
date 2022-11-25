@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.16.1-preview] - 2022-11-25
+
+### Fixed
+* fix: regenerate the guid of files that conflict with files in StreamingImageSequence package 
+
 ## [0.16.0-preview] - 2022-11-25
 
 ### Added
