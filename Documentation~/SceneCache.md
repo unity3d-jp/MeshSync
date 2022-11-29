@@ -67,10 +67,6 @@ This component handles the playback of an *.sc* file.
   - **Frame**: the selected frame of the *.sc* file.   
     Disabled if the **Playback Mode** is set to **Interpolation**.
 
-- **Limited Animation**: skips *.sc* frames during playback if enabled.
-  - **Num Frames to Hold**: the duration in number of frames that a selected frame will be hold.
-  - **Frame Offset**: an offset value to change which frames get selected when applying **Limited Animation**.
-
 Please refer to [common properties](CommonMeshSyncProperties.md) for details on the other properties.
 
 ### Tips
