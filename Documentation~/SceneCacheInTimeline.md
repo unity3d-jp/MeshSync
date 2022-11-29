@@ -53,10 +53,3 @@ using one of the following options:
 | **Scene Cache Player**  | The [SceneCachePlayer](SceneCache.md#scene-cache-player) to be played in Timeline. |
 | **Limited Animation**   | Overrides the [Limited Animation](SceneCache.md#properties) properties of the SceneCachePlayer. |
 
-### Curve buttons
-
-|**Buttons**          |**Description** |
-|:--------------------|:---|
-| **To Linear**       | Set the animation curve to a linear curve. |
-| **Apply Original**  | Applies the original animation curve from the Scene Cache (.sc) file. |
-
