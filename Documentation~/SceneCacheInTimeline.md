@@ -53,7 +53,40 @@ using one of the following options:
 | **Scene Cache Player**  | The [SceneCachePlayer](SceneCache.md#scene-cache-player) to be played in Timeline. |
 | **Show Key Frame Markers**   | Shows/hides the key frame markers for editing the timing. Refer to [Key Frame Adjustment](#key-frame-adjustment) for more details|
 | **Auto Generate Key Frames** | A section to configure the key frames of the specified duration. |
-| **Limited Animation**   | Automatically skip frames if enabled. This property has been replaced by [Key Frame Adjustment](#key-frame-adjustment), and has been marked as obsolete. |
+| **Limited Animation**        | Automatically skip frames if enabled. This property has been replaced by [Key Frame Adjustment](#key-frame-adjustment), and has been marked as obsolete. |
+
 
 ### Key Frame Adjustment
+
+
+![](images/SceneCacheKeyFrameDragging.png)
+
+We can modify the timing of the playback by the following steps:
+1. Check the **Show Key Frame Markers** property.
+2. Add, drag, or delete the key frame markers.
+3. Set the properties of the key frames to configure which frame to show. Refer to [Key Frames](#key-frames) for more details.
+
+Pressing the curve button next to the track name will open the curve section 
+which allows us to confirm how the playback is being controlled by the clip.
+
+#### Key Frames
+
+A key frame marker has the following properties.
+
+![](images/SceneCacheKeyFrameMarker.png)
+
+|**Properties**           |**Description** |
+|:----------------------- |:---|
+| **Mode**            | **Continuous**: interpolates **Frame To Play** linearly. <br/> **Hold**: keep showing **Frame To Play** to create limited animation. |
+| **Frame To Play**   | The frame of the *.sc* file to show at the timing of the marker. |
+| **Note**            | User notes. |
+
+#### Default Key Frame Shortcuts
+
+|**Shorcut Keys**     |**Description** |
+|:----------------------- |:---|
+| *Shift-Tab* | Change the mode of the selected key frame. |
+| *Shift-E*   | Add a new key frame at the playhead location for the selected clip. |
+
+
 
