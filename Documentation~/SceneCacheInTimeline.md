@@ -56,7 +56,7 @@ using one of the following options:
 | **Scene Cache Player**  | The [SceneCachePlayer](SceneCache.md#scene-cache-player) to be played in Timeline. |
 | **Show Key Frame Markers**   | Shows/hides the key frame markers for editing the timing. <br/> Refer to [Key Frame Adjustment](#key-frame-adjustment) for more details|
 | **Auto Generate Key Frames** | A section to configure the key frames of the specified duration automatically. |
-| **Limited Animation**        | Automatically skip frames if enabled. This property has been replaced by [Key Frame Adjustment](#key-frame-adjustment), and has been marked as obsolete. |
+| **Limited Animation**        | Automatically skip frames if enabled. This property has been replaced by [Key Frame Adjustment](#key-frame-adjustment), and may be removed in later versions. |
 
 
 ### Key Frame Adjustment
