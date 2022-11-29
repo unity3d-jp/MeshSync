@@ -72,7 +72,7 @@ We can modify the timing of the playback by the following steps:
 Pressing the curve button next to the track name will open the curve section 
 which allows us to confirm how the playback is being controlled by the clip.
 
-Additionally, if we want to configure the key frames so that they follow a certain rule for a specified duration, 
+Additionally, if we want to configure the key frames using a certain rule for a specified duration, 
 we can use the **Auto Generate Key Frames** section to do this automatically. 
 
 ### Key Frame Properties
