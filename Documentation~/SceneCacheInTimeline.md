@@ -5,7 +5,7 @@
 1. [Gap Extrapolation](#gap-extrapolation)
 1. [Scene Cache Playable Asset](#scenecacheplayableasset)
    1. [Key Frame Adjustment](#key-frame-adjustment)
-   1. [Key Frame Properties](#key-frames-properties)
+   1. [Key Frame Properties](#key-frame-properties)
    1. [Default Key Frame Shortcuts](#default-key-frame-shortcuts)
 
 ## Quick Start
