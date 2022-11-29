@@ -5,6 +5,8 @@
 1. [Gap Extrapolation](#gap-extrapolation)
 1. [Scene Cache Playable Asset](#scenecacheplayableasset)
    1. [Key Frame Adjustment](#key-frame-adjustment)
+   1. [Key Frame Properties](#key-frames-properties)
+   1. [Default Key Frame Shortcuts](#default-key-frame-shortcuts)
 
 ## Quick Start
 
@@ -65,14 +67,12 @@ using one of the following options:
 We can modify the timing of the playback by the following steps:
 1. Check the **Show Key Frame Markers** property.
 2. Add, drag, or delete the key frame markers.
-3. Set the properties of the key frames to configure which frame to show. Refer to [Key Frames](#key-frames) for more details.
+3. Set the properties of the key frames to configure which frame to show. Refer to [Key Frame Properties](#key-frame-properties) for more details.
 
 Pressing the curve button next to the track name will open the curve section 
 which allows us to confirm how the playback is being controlled by the clip.
 
-### Key Frames
-
-A key frame marker has the following properties.
+### Key Frame Properties
 
 ![](images/SceneCacheKeyFrameMarker.png)
 
