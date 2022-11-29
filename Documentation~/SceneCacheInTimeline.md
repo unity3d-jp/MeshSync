@@ -70,7 +70,7 @@ We can modify the timing of the playback by the following steps:
 Pressing the curve button next to the track name will open the curve section 
 which allows us to confirm how the playback is being controlled by the clip.
 
-#### Key Frames
+### Key Frames
 
 A key frame marker has the following properties.
 
@@ -82,7 +82,7 @@ A key frame marker has the following properties.
 | **Frame To Play**   | The frame of the *.sc* file to show at the timing of the marker. |
 | **Note**            | User notes. |
 
-#### Default Key Frame Shortcuts
+### Default Key Frame Shortcuts
 
 |**Shorcut Keys**     |**Description** |
 |:----------------------- |:---|
