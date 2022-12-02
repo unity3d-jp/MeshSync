@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.16.2-preview] - 2022-12-02
+
+### Added
+* doc: add the Key Frames documentation of SceneCache
+
+### Changed
+* deps: use com.unity.film-internal-utilities@0.16.2-preview
+
 ## [0.16.1-preview] - 2022-11-25
 
 ### Fixed
