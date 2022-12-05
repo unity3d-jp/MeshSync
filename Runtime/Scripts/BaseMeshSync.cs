@@ -216,7 +216,8 @@ public struct MeshSyncSessionStartAnalyticsData {
 
         #region Properties
         
-        private int  currentSessionId                 = -1;
+        [SerializeField] private int  currentSessionId = -1;
+        
         private bool forceDeleteChildrenInNextSession = false;
 
         private protected string GetServerDocRootPath() { return Application.streamingAssetsPath + "/MeshSyncServerRoot"; }
