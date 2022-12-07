@@ -71,11 +71,12 @@ namespace Unity.MeshSync.Editor.Analytics {
             return true;
         }
 
-        [Conditional("DEBUG_ANALYTICS")]
         private static void LogIfWarning(AnalyticsResult resp) {
+#if DEBUG_ANALYTICS
             if (resp != AnalyticsResult.Ok) {
                 Debug.LogWarning($"Analytics endpoint reported: {resp} when should be {AnalyticsResult.Ok}");
             }
+#endif
         }
 
         /// <summary>
