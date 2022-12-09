@@ -18,7 +18,9 @@ internal static class MapsBaker {
 
     private const string SHADER_FILE                       = "meshsync_channel_mapping";
     private const string SHADER_NAME_SMOOTHNESS_INTO_ALPHA = "smoothness_into_alpha";
+    private const string SHADER_NAME_ROUGHNESS_INTO_ALPHA  = "roughness_into_alpha";
     private const string SHADER_NAME_HDRP_MASK             = "hdrp_mask";
+    private const string SHADER_NAME_HDRP_MASK_ROUGHNESS   = "hdrp_mask_roughness";
 
 
     private static ComputeShaderHelper LoadShader(string name) {
@@ -98,9 +100,22 @@ internal static class MapsBaker {
             FindTexture(MeshSyncConstants._MetallicGlossMap, textureHolders, materialProperties,
                 MeshSyncConstants._Metallic, 0, out var metalTexture);
 
-        texturesExist |=
-            FindTexture(MeshSyncConstants._GlossMap, textureHolders, materialProperties,
-                MeshSyncConstants._Glossiness, 1, out var glossTexture);
+        Texture2DDisposable glossTexture;
+        bool                usingRoughness = false;
+        // If there is a roughness map, use that instead of smoothness and invert it:
+        if (materialProperties.ContainsKey(MeshSyncConstants._RoughMap)) {
+            usingRoughness = true;
+
+            texturesExist |=
+                FindTexture(MeshSyncConstants._RoughMap, textureHolders, materialProperties, 0, 0,
+                    out glossTexture);
+        }
+        else {
+            // Bake smoothness to 1 if there is no map and use the slider to scale it:
+            texturesExist |=
+                FindTexture(MeshSyncConstants._GlossMap, textureHolders, materialProperties,
+                    MeshSyncConstants._Glossiness, 1, out glossTexture);
+        }
 
         // If there are no textures, don't bake anything, slider values can control everything:
         if (!texturesExist) {
@@ -109,7 +124,15 @@ internal static class MapsBaker {
             return;
         }
 
-        var shader = LoadShader(SHADER_NAME_HDRP_MASK);
+
+        ComputeShaderHelper shader;
+        if (usingRoughness) {
+            shader = LoadShader(SHADER_NAME_HDRP_MASK_ROUGHNESS);
+        }
+        else {
+            shader = LoadShader(SHADER_NAME_HDRP_MASK);
+        }
+
         if (shader == null) {
             return;
         }
@@ -136,7 +159,7 @@ internal static class MapsBaker {
 
         var smoothnessChannel = destMat.GetInt(_SmoothnessTextureChannel);
 
-        Texture2DDisposable rgbTexture = null;
+        Texture2DDisposable rgbTexture;
         int                 channelName;
 
         bool texturesExist = false;
@@ -161,10 +184,22 @@ internal static class MapsBaker {
             return;
         }
 
-        // Bake smoothness to 1 if there is no map and use the slider to scale it:
-        texturesExist |=
-            FindTexture(MeshSyncConstants._GlossMap, textureHolders, materialProperties, 0, 1,
-                out var glossTexture);
+        Texture2DDisposable glossTexture;
+        bool                usingRoughness = false;
+        // If there is a roughness map, use that instead of smoothness and invert it:
+        if (materialProperties.ContainsKey(MeshSyncConstants._RoughMap)) {
+            usingRoughness = true;
+
+            texturesExist |=
+                FindTexture(MeshSyncConstants._RoughMap, textureHolders, materialProperties, 0, 0,
+                    out glossTexture);
+        }
+        else {
+            // Bake smoothness to 1 if there is no map and use the slider to scale it:
+            texturesExist |=
+                FindTexture(MeshSyncConstants._GlossMap, textureHolders, materialProperties, 0, 1,
+                    out glossTexture);
+        }
 
         // If there are no textures, don't bake anything, slider values can control everything:
         if (!texturesExist) {
@@ -178,7 +213,14 @@ internal static class MapsBaker {
             return;
         }
 
-        var shader = LoadShader(SHADER_NAME_SMOOTHNESS_INTO_ALPHA);
+        ComputeShaderHelper shader;
+        if (usingRoughness) {
+            shader = LoadShader(SHADER_NAME_ROUGHNESS_INTO_ALPHA);
+        }
+        else {
+            shader = LoadShader(SHADER_NAME_SMOOTHNESS_INTO_ALPHA);
+        }
+
         if (shader == null) {
             return;
         }

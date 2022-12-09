@@ -17,6 +17,7 @@ internal static class MeshSyncConstants {
     internal static readonly int _BaseColorMap             = Shader.PropertyToID("_BaseColorMap");
     internal static readonly int _BaseMap                  = Shader.PropertyToID("_BaseMap");
     internal static readonly int _GlossMap                 = Shader.PropertyToID("_GlossMap");
+    internal static readonly int _RoughMap                 = Shader.PropertyToID("_RoughMap");
     internal static readonly int _EmissionColor            = Shader.PropertyToID("_EmissionColor");
     internal static readonly int _EmissionMap              = Shader.PropertyToID("_EmissionMap");
     internal static readonly int _EmissiveColorMap         = Shader.PropertyToID("_EmissiveColorMap");
