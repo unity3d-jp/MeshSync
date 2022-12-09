@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.16.3-preview] - 2022-12-09
+
+### Changed
+* deps: use com.unity.film-internal-utilities@0.16.3-preview
+
+### Fixed
+* fix: keep currentSessionId when switching PlayMode
+* fix: ensure calling analytics API 
+* fix: remove unused meta file
+
 ## [0.16.2-preview] - 2022-12-02
 
 ### Added
