@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.16.3-preview] - 2022-12-09
+
 ### Changed
 * deps: use com.unity.film-internal-utilities@0.16.3-preview
 
