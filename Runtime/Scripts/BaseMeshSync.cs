@@ -1147,10 +1147,13 @@ public struct MeshSyncSessionStartAnalyticsData {
             }
 
             foreach (var prop in materialProperties) {
-                ApplyMaterialProperty(destMat, textureHolders, prop.Value, prop.Key, materialProperties);
+                ApplyMaterialProperty(destMat, textureHolders, prop.Value, prop.Key, materialProperties, src.shader);
             }
 
             MapsBaker.BakeMaps(destMat, textureHolders, materialProperties);
+
+            // Need to update shader again to ensure any custom setup is still there after the material properties were applied.
+            UpdateCustomShaderSettings(destMat, src.shader);
         }
 
         private static bool HandleKeywords(Material destMat, List<TextureHolder> textureHolders,
@@ -1185,12 +1188,13 @@ public struct MeshSyncSessionStartAnalyticsData {
             List<TextureHolder> textureHolders,
             MaterialPropertyData prop,
             int propNameID, 
-            Dictionary<int, MaterialPropertyData> materialProperties) {
+            Dictionary<int, MaterialPropertyData> materialProperties,
+            string shaderName) {
            
             // Shaders use different names to refer to the same maps, this map contains those synonyms so we can apply them to every shader easily:
             if (synonymMap.TryGetValue(propNameID, out var synonyms)) {
                 foreach (var synonym in synonyms) {
-                    ApplyMaterialProperty(destMat, textureHolders, prop, synonym, materialProperties);
+                    ApplyMaterialProperty(destMat, textureHolders, prop, synonym, materialProperties, shaderName);
                 }
             }
             

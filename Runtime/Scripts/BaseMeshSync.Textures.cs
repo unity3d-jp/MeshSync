@@ -177,16 +177,23 @@ namespace Unity.MeshSync {
 
             // If the given shader name did not exist, try to set up the material to be close to the given shader name:
             if (!shaderExists) {
-                if (shaderName.ToLower() == "glass") {
-                    SetupGlassShader(mat);
-                    usingOverride = true;
-                }
+                usingOverride = UpdateCustomShaderSettings(mat, shaderName);
             }
 
             // If the material was set up by meshsync but doesn't need that anymore, revert it to a standard material:
             if (!usingOverride && Array.IndexOf(mat.shaderKeywords, MeshSyncConstants.MESHSYNC_OVERRIDE) >= 0) {
                 mat.CopyPropertiesFromMaterial(new Material(shader));
             }
+        }
+
+        private static bool UpdateCustomShaderSettings(Material mat, string shaderName) {
+            // If the given shader name did not exist, try to set up the material to be close to the given shader name:
+            if (shaderName.ToLower() == "glass") {
+                SetupGlassShader(mat);
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -240,7 +247,7 @@ namespace Unity.MeshSync {
             mat.SetFloat(MeshSyncConstants._SurfaceType, 1);
             mat.SetInt(MeshSyncConstants._ZWrite, 0);
             mat.SetInt(MeshSyncConstants._SrcBlend, (int)UnityEngine.Rendering.BlendMode.One);
-            mat.SetInt(MeshSyncConstants._DstBlend, (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetInt(MeshSyncConstants._DstBlend, (int)UnityEngine.Rendering.BlendMode.One);
             mat.SetFloat(MeshSyncConstants._AlphaSrcBlend, (int)UnityEngine.Rendering.BlendMode.One);
             mat.SetFloat(MeshSyncConstants._AlphaDstBlend, (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
             mat.SetFloat(MeshSyncConstants._ZTestDepthEqualForOpaque, 4);
