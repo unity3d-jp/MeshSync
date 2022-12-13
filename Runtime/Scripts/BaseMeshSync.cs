@@ -915,23 +915,30 @@ public struct MeshSyncSessionStartAnalyticsData {
                 if (texture != null) {
                     TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
 
+                    bool needReimport = false;
+
                     // Make sure the full texture is used unless the user changed this setting before:
                     if (!assetExisted) {
                         importer.npotScale = TextureImporterNPOTScale.None;
-
-                        importer.SaveAndReimport();
-                        AssetDatabase.Refresh();
+                        needReimport       = true;
                     }
 
                     if (importer != null) {
                         switch (src.type) {
                             case TextureType.NormalMap:
                                 importer.textureType = TextureImporterType.NormalMap;
+                                needReimport         = true;
                                 break;
                             case TextureType.NonColor:
                                 importer.sRGBTexture = false;
+                                needReimport         = true;
                                 break;
                         }
+                    }
+
+                    if (needReimport) {
+                        importer.SaveAndReimport();
+                        AssetDatabase.Refresh();
                     }
                 }
             };
