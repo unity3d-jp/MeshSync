@@ -2200,26 +2200,25 @@ public struct MeshSyncSessionStartAnalyticsData {
 
         private static void SetInstanceTransform(GameObject instancedCopy, GameObject parent, Matrix4x4 mat) {
             Transform objTransform = instancedCopy.transform;
-            
-            var converted = parent.transform.localToWorldMatrix * mat;
 
             objTransform.localScale = mat.lossyScale;
-            objTransform.position   = converted.MultiplyPoint(Vector3.zero);
+            objTransform.localPosition   = mat.MultiplyPoint(Vector3.zero);
 
             // Calculate rotation here to avoid gimbal lock issue:
             Vector3 forward;
-            forward.x = converted.m02;
-            forward.y = converted.m12;
-            forward.z = converted.m22;
+            forward.x = mat.m02;
+            forward.y = mat.m12;
+            forward.z = mat.m22;
 
             Vector3 upwards;
-            upwards.x = converted.m01;
-            upwards.y = converted.m11;
-            upwards.z = converted.m21;
+            upwards.x = mat.m01;
+            upwards.y = mat.m11;
+            upwards.z = mat.m21;
 
-            objTransform.rotation = Quaternion.LookRotation(forward, upwards);
+            objTransform.localRotation = Quaternion.LookRotation(forward, upwards);
 
 #if DEBUG
+            var converted   = parent.transform.localToWorldMatrix * mat;
             var localMatrix = objTransform.localToWorldMatrix;
             for (int x = 0; x < 3; x++) {
                 for (int y = 0; y < 3; y++) {
