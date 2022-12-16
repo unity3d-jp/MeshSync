@@ -18,7 +18,9 @@ internal static class MapsBaker {
 
     private const string SHADER_FILE                       = "meshsync_channel_mapping";
     private const string SHADER_NAME_SMOOTHNESS_INTO_ALPHA = "smoothness_into_alpha";
+    private const string SHADER_NAME_ROUGHNESS_INTO_ALPHA  = "roughness_into_alpha";
     private const string SHADER_NAME_HDRP_MASK             = "hdrp_mask";
+    private const string SHADER_NAME_HDRP_MASK_ROUGHNESS   = "hdrp_mask_roughness";
 
 
     private static ComputeShaderHelper LoadShader(string name) {
@@ -78,6 +80,29 @@ internal static class MapsBaker {
         return false;
     }
 
+    private static void GetSmoothnessOrRoughnessMap(
+        Dictionary<int, MaterialPropertyData> materialProperties,
+        List<TextureHolder> textureHolders,
+        out Texture2DDisposable texture,
+        out bool usingRoughness,
+        ref bool texturesExist) {
+        // If there is a roughness map, use that instead of smoothness and invert it:
+        if (materialProperties.ContainsKey(MeshSyncConstants._RoughMap)) {
+            usingRoughness = true;
+
+            texturesExist |=
+                FindTexture(MeshSyncConstants._RoughMap, textureHolders, materialProperties, 0, 0,
+                    out texture);
+        }
+        else {
+            usingRoughness = false;
+            // Bake smoothness to 1 if there is no map and use the slider to scale it:
+            texturesExist |=
+                FindTexture(MeshSyncConstants._GlossMap, textureHolders, materialProperties,
+                    MeshSyncConstants._Glossiness, 1, out texture);
+        }
+    }
+
 #if AT_USE_HDRP
     private static void BakeMaskMap(Material destMat,
         List<TextureHolder> textureHolders,
@@ -98,9 +123,12 @@ internal static class MapsBaker {
             FindTexture(MeshSyncConstants._MetallicGlossMap, textureHolders, materialProperties,
                 MeshSyncConstants._Metallic, 0, out var metalTexture);
 
-        texturesExist |=
-            FindTexture(MeshSyncConstants._GlossMap, textureHolders, materialProperties,
-                MeshSyncConstants._Glossiness, 1, out var glossTexture);
+        GetSmoothnessOrRoughnessMap(
+            materialProperties, 
+            textureHolders,
+            out var glossOrRoughTexture,
+            out bool usingRoughness,
+            ref texturesExist);
 
         // If there are no textures, don't bake anything, slider values can control everything:
         if (!texturesExist) {
@@ -109,22 +137,29 @@ internal static class MapsBaker {
             return;
         }
 
-        var shader = LoadShader(SHADER_NAME_HDRP_MASK);
+        ComputeShaderHelper shader;
+        if (usingRoughness) {
+            shader = LoadShader(SHADER_NAME_HDRP_MASK_ROUGHNESS);
+        }
+        else {
+            shader = LoadShader(SHADER_NAME_HDRP_MASK);
+        }
+
         if (shader == null) {
             return;
         }
 
         shader.SetTexture(SHADER_CONST_METALLIC, metalTexture.Texture);
-        shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossTexture.Texture);
+        shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossOrRoughTexture.Texture);
 
         var texture = shader.RenderToTexture(destMat.GetTexture(MeshSyncConstants._MaskMap));
 
         destMat.EnableKeyword(MeshSyncConstants._MASKMAP);
 
         destMat.SetTextureAndReleaseExistingRenderTextures(MeshSyncConstants._MaskMap, texture);
-        
+
         metalTexture.Dispose();
-        glossTexture.Dispose();
+        glossOrRoughTexture.Dispose();
     }
 #else
     private static void BakeSmoothness(Material destMat,
@@ -136,7 +171,7 @@ internal static class MapsBaker {
 
         var smoothnessChannel = destMat.GetInt(_SmoothnessTextureChannel);
 
-        Texture2DDisposable rgbTexture = null;
+        Texture2DDisposable rgbTexture;
         int                 channelName;
 
         bool texturesExist = false;
@@ -161,11 +196,13 @@ internal static class MapsBaker {
             return;
         }
 
-        // Bake smoothness to 1 if there is no map and use the slider to scale it:
-        texturesExist |=
-            FindTexture(MeshSyncConstants._GlossMap, textureHolders, materialProperties, 0, 1,
-                out var glossTexture);
-
+        GetSmoothnessOrRoughnessMap(
+            materialProperties, 
+            textureHolders,
+            out var glossOrRoughTexture,
+            out bool usingRoughness,
+            ref texturesExist);
+            
         // If there are no textures, don't bake anything, slider values can control everything:
         if (!texturesExist) {
             destMat.SetTextureAndReleaseExistingRenderTextures(channelName, null);
@@ -178,12 +215,19 @@ internal static class MapsBaker {
             return;
         }
 
-        var shader = LoadShader(SHADER_NAME_SMOOTHNESS_INTO_ALPHA);
+        ComputeShaderHelper shader;
+        if (usingRoughness) {
+            shader = LoadShader(SHADER_NAME_ROUGHNESS_INTO_ALPHA);
+        }
+        else {
+            shader = LoadShader(SHADER_NAME_SMOOTHNESS_INTO_ALPHA);
+        }
+
         if (shader == null) {
             return;
         }
 
-        shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossTexture.Texture);
+        shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossOrRoughTexture.Texture);
         shader.SetTexture(SHADER_CONST_RGB, rgbTexture.Texture);
 
         var texture = shader.RenderToTexture(destMat.GetTexture(channelName));
@@ -199,8 +243,8 @@ internal static class MapsBaker {
 
         destMat.SetTextureAndReleaseExistingRenderTextures(channelName, texture);
 
-        glossTexture.Dispose();
         rgbTexture.Dispose();
+        glossOrRoughTexture.Dispose();
     }
 #endif
 

@@ -13,6 +13,7 @@ static const char _MainTex[] = "_MainTex";
 static const char _EmissionMap[] = "_EmissionMap";
 static const char _MetallicGlossMap[] = "_MetallicGlossMap";
 static const char _GlossMap[] = "_GlossMap";
+static const char _RoughMap[] = "_RoughMap";
 static const char _BumpScale[] = "_BumpScale";
 static const char _BumpMap[] = "_BumpMap";
 static const char DETAIL_ALBEDO_MAP_SHADER_VAR[] = "_DetailAlbedoMap";
@@ -138,6 +139,10 @@ float StandardMaterial::getSmoothness() const
 void StandardMaterial::setSmoothnessMap(const TextureRecord& v) {
     // Allow null:
     addProperty(MaterialProperty(_GlossMap, v));
+}
+void StandardMaterial::setRoughnessMap(const TextureRecord& v) {
+    // Allow null:
+    addProperty(MaterialProperty(_RoughMap, v));
 }
 
 void StandardMaterial::setBumpScale(float v) {
