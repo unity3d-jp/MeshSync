@@ -384,25 +384,28 @@ static inline void compute_triangle_tangents(
     float d = s.x * t.y - s.y * t.x;
     float area = abs(d);
 
-    if (area > 1e-8f) {
-        float rd = rcp(d);
-        s = s * rd;
-        t = t * rd;
-        tangent = normalize_estimate(float3_(
-            t.y * p.x - t.x * q.x,
-            t.y * p.y - t.x * q.y,
-            t.y * p.z - t.x * q.z
-        )) * area;
-        binormal = normalize_estimate(float3_(
-            s.x * q.x - s.y * p.x,
-            s.x * q.y - s.y * p.y,
-            s.x * q.z - s.y * p.z
-        )) * area;
-    }
-    else {
-        tangent = binormal = float3_(0, 0, 0);
+    if (area <= 1e-8f) {
+        for (int v = 0; v < 3; ++v) {
+            dst_tangent[v] = float3_(0.0f, 0.0f, 0.0f);
+            dst_binormal[v] = float3_(0.0f, 0.0f, 0.0f);
+        }
+        return;
     }
 
+    float rd = rcp(d);
+    s = s * rd;
+    t = t * rd;
+    tangent = normalize_estimate(float3_(
+        t.y * p.x - t.x * q.x,
+        t.y * p.y - t.x * q.y,
+        t.y * p.z - t.x * q.z
+    )) * area;
+
+    binormal = normalize_estimate(float3_(
+        s.x * q.x - s.y * p.x,
+        s.x * q.y - s.y * p.y,
+        s.x * q.z - s.y * p.z
+    )) * area;
 
     float angles[3] = {
         angle_between2_estimate(vertices[2], vertices[1], vertices[0]),
@@ -414,6 +417,7 @@ static inline void compute_triangle_tangents(
         dst_binormal[v] = binormal * angles[v];
     }
 }
+
 static inline void compute_triangle_tangents(
     uniform const float3(&vertices)[3], uniform const float2(&uv)[3],
     uniform float3(&dst_tangent)[3], uniform float3(&dst_binormal)[3])
