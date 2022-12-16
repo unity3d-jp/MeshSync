@@ -2162,7 +2162,6 @@ public struct MeshSyncSessionStartAnalyticsData {
 
             if (infoRecord.go.transform.parent == null ||
                 !instanceNames.Contains(infoRecord.go.transform.parent.name)) {
-                bool visible = instancedEntityRecord.visibility.visibleInRender;
 
                 GameObject instanceObjectOriginal;
                 if (InstanceHandling == InstanceHandlingType.Prefabs) {
@@ -2191,24 +2190,26 @@ public struct MeshSyncSessionStartAnalyticsData {
                     }
 
                     SetInstanceTransform(instancedCopy, instanceRendererParent, mat);
-
-                    if (config.SyncVisibility &&
-                        instancedEntityRecord.hasVisibility) {
-                        instancedCopy.SetActive(visible);
-                    }
-
+                    EnableInstancedCopy(instancedCopy);
+                    
                     infoRecord.instanceObjects.Add(instancedCopy);
                 }
             }
         }
 
+        private void EnableInstancedCopy(GameObject obj) {
+            obj.SetActive(true);
+            
+            var renderer = obj.GetComponent<MeshRenderer>();
+            if (renderer != null)
+                renderer.enabled = true;
+        }
+
         private static void SetInstanceTransform(GameObject instancedCopy, GameObject parent, Matrix4x4 mat) {
             Transform objTransform = instancedCopy.transform;
-            
-            mat = parent.transform.localToWorldMatrix * mat;
 
             objTransform.localScale = mat.lossyScale;
-            objTransform.position   = mat.MultiplyPoint(Vector3.zero);
+            objTransform.localPosition   = mat.MultiplyPoint(Vector3.zero);
 
             // Calculate rotation here to avoid gimbal lock issue:
             Vector3 forward;
@@ -2221,13 +2222,14 @@ public struct MeshSyncSessionStartAnalyticsData {
             upwards.y = mat.m11;
             upwards.z = mat.m21;
 
-            objTransform.rotation = Quaternion.LookRotation(forward, upwards);
+            objTransform.localRotation = Quaternion.LookRotation(forward, upwards);
 
 #if DEBUG
+            var converted   = parent.transform.localToWorldMatrix * mat;
             var localMatrix = objTransform.localToWorldMatrix;
             for (int x = 0; x < 3; x++) {
                 for (int y = 0; y < 3; y++) {
-                    Debug.Assert( Math.Abs(localMatrix[x, y] - mat[x, y]) < 0.01f, "Matrices don't match!");
+                    Debug.Assert( Math.Abs(localMatrix[x, y] - converted[x, y]) < 0.01f, "Matrices don't match!");
                 }
             }
 #endif
