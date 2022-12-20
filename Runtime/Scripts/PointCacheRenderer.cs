@@ -8,15 +8,15 @@ namespace Unity.MeshSync {
 internal class PointCacheRenderer : MonoBehaviour {
     #region Fields
 
-    [SerializeField] Mesh              m_mesh;
-    [SerializeField] Material[]        m_materials;
-    [SerializeField] float             m_pointSize      = 1.0f;
-    [SerializeField] bool              m_applyTransform = true;
-    [SerializeField] ShadowCastingMode m_castShadows    = ShadowCastingMode.On;
-    [SerializeField] bool              m_receiveShadows = true;
-    [SerializeField] int               m_batchSize      = 1024;
-    MaterialPropertyBlock              m_mpb;
-    Matrix4x4[]                        m_matrices;
+    [SerializeField] private Mesh                  m_mesh;
+    [SerializeField] private Material[]            m_materials;
+    [SerializeField] private float                 m_pointSize      = 1.0f;
+    [SerializeField] private bool                  m_applyTransform = true;
+    [SerializeField] private ShadowCastingMode     m_castShadows    = ShadowCastingMode.On;
+    [SerializeField] private bool                  m_receiveShadows = true;
+    [SerializeField] private int                   m_batchSize      = 1024;
+    private                  MaterialPropertyBlock m_mpb;
+    private                  Matrix4x4[]           m_matrices;
 
     #endregion
 
@@ -65,7 +65,7 @@ internal class PointCacheRenderer : MonoBehaviour {
 
     #region Impl
 
-    bool IsValidArray<T>(T[] a) {
+    private bool IsValidArray<T>(T[] a) {
         return a != null && a.Length > 0;
     }
 
@@ -91,9 +91,9 @@ internal class PointCacheRenderer : MonoBehaviour {
         bool hasRotations = IsValidArray(data.rotations);
         bool hasScales    = IsValidArray(data.scales);
 
-        var identity = Quaternion.identity;
-        var zero     = Vector3.zero;
-        var one      = Vector3.one;
+        Quaternion identity = Quaternion.identity;
+        Vector3    zero     = Vector3.zero;
+        Vector3    one      = Vector3.one;
 
         Matrix4x4 local = m_applyTransform ? GetComponent<Transform>().localToWorldMatrix : Matrix4x4.identity;
         if (m_matrices == null || m_matrices.Length != m_batchSize)
@@ -112,7 +112,7 @@ internal class PointCacheRenderer : MonoBehaviour {
             }
 
             for (int si = 0; si < submeshCount; ++si) {
-                var material = m_materials[si];
+                Material material = m_materials[si];
                 if (material == null)
                     continue;
                 Graphics.DrawMeshInstanced(m_mesh, si, material, m_matrices, n, m_mpb, m_castShadows, m_receiveShadows,
@@ -121,15 +121,14 @@ internal class PointCacheRenderer : MonoBehaviour {
         }
     }
 
-    void OnValidate() {
+    private void OnValidate() {
         m_batchSize = Mathf.Clamp(m_batchSize, 1, 1024);
     }
 
-    void LateUpdate() {
+    private void LateUpdate() {
         Flush(GetComponent<PointCache>());
     }
 
     #endregion
 }
-
 } //end namespace

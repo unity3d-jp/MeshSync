@@ -10,7 +10,7 @@ namespace Unity.MeshSync {
 internal static class MapsBaker {
     private const string _SmoothnessTextureChannel = "_SmoothnessTextureChannel";
 
-    static Dictionary<string, ComputeShaderHelper> loadedShaders = new Dictionary<string, ComputeShaderHelper>();
+    private static Dictionary<string, ComputeShaderHelper> loadedShaders = new Dictionary<string, ComputeShaderHelper>();
 
     private const string SHADER_CONST_METALLIC   = "Metallic";
     private const string SHADER_CONST_SMOOTHNESS = "Smoothness";
@@ -26,12 +26,12 @@ internal static class MapsBaker {
     private static ComputeShaderHelper LoadShader(string name) {
         string file = SHADER_FILE;
 
-        if (!loadedShaders.TryGetValue(file, out var shaderHelper)) {
+        if (!loadedShaders.TryGetValue(file, out ComputeShaderHelper shaderHelper)) {
 #if UNITY_EDITOR
-            var shaderFiles = AssetDatabase.FindAssets(file);
+            string[] shaderFiles = AssetDatabase.FindAssets(file);
             if (shaderFiles.Length > 0) {
-                var shaderFile = shaderFiles[0];
-                var shader = AssetDatabase.LoadAssetAtPath<ComputeShader>(AssetDatabase.GUIDToAssetPath(shaderFile));
+                string        shaderFile = shaderFiles[0];
+                ComputeShader shader     = AssetDatabase.LoadAssetAtPath<ComputeShader>(AssetDatabase.GUIDToAssetPath(shaderFile));
 
                 shaderHelper = new ComputeShaderHelper(shader, name);
 
@@ -51,25 +51,22 @@ internal static class MapsBaker {
         int fallbackPropertyNameID,
         float fallbackPropertyValue,
         out Texture2DDisposable disposableTexture) {
-        if (materialProperties.TryGetValue(nameID, out var prop)) {
+        if (materialProperties.TryGetValue(nameID, out MaterialPropertyData prop)) {
             MaterialPropertyData.TextureRecord rec = prop.textureValue;
             disposableTexture = new Texture2DDisposable(BaseMeshSync.FindTexture(rec.id, textureHolders), false);
 
-            if (disposableTexture.Texture != null) {
-                return true;
-            }
+            if (disposableTexture.Texture != null) return true;
         }
 
         // If there is no such texture, create one with the given fallback value:
 
         float value = fallbackPropertyValue;
-        if (materialProperties.TryGetValue(fallbackPropertyNameID, out var fallbackMaterialProperty)) {
+        if (materialProperties.TryGetValue(fallbackPropertyNameID, out MaterialPropertyData fallbackMaterialProperty))
             value = fallbackMaterialProperty.floatValue;
-        }
 
         const int dim = 8;
 
-        var pixels = Enumerable.Repeat(new Color(value, value, value, value), dim * dim).ToArray();
+        Color[] pixels = Enumerable.Repeat(new Color(value, value, value, value), dim * dim).ToArray();
 
         disposableTexture =
             new Texture2DDisposable(new Texture2D(dim, dim, UnityEngine.TextureFormat.RFloat, false, true));
@@ -107,9 +104,7 @@ internal static class MapsBaker {
     private static void BakeMaskMap(Material destMat,
         List<TextureHolder> textureHolders,
         Dictionary<int, MaterialPropertyData> materialProperties) {
-        if (!destMat.HasProperty(MeshSyncConstants._MaskMap)) {
-            return;
-        }
+        if (!destMat.HasProperty(MeshSyncConstants._MaskMap)) return;
 
         // Mask map:
         // R: metal
@@ -121,12 +116,12 @@ internal static class MapsBaker {
 
         texturesExist |=
             FindTexture(MeshSyncConstants._MetallicGlossMap, textureHolders, materialProperties,
-                MeshSyncConstants._Metallic, 0, out var metalTexture);
+                MeshSyncConstants._Metallic, 0, out Texture2DDisposable metalTexture);
 
         GetSmoothnessOrRoughnessMap(
-            materialProperties, 
+            materialProperties,
             textureHolders,
-            out var glossOrRoughTexture,
+            out Texture2DDisposable glossOrRoughTexture,
             out bool usingRoughness,
             ref texturesExist);
 
@@ -138,21 +133,17 @@ internal static class MapsBaker {
         }
 
         ComputeShaderHelper shader;
-        if (usingRoughness) {
+        if (usingRoughness)
             shader = LoadShader(SHADER_NAME_HDRP_MASK_ROUGHNESS);
-        }
-        else {
+        else
             shader = LoadShader(SHADER_NAME_HDRP_MASK);
-        }
 
-        if (shader == null) {
-            return;
-        }
+        if (shader == null) return;
 
         shader.SetTexture(SHADER_CONST_METALLIC, metalTexture.Texture);
         shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossOrRoughTexture.Texture);
 
-        var texture = shader.RenderToTexture(destMat.GetTexture(MeshSyncConstants._MaskMap));
+        RenderTexture texture = shader.RenderToTexture(destMat.GetTexture(MeshSyncConstants._MaskMap));
 
         destMat.EnableKeyword(MeshSyncConstants._MASKMAP);
 

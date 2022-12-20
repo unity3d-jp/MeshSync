@@ -9,35 +9,29 @@ using Unity.Mathematics;
 using UnityEngine.ProBuilder;
 #endif
 
-namespace Unity.MeshSync
-{
-    partial class MeshSyncServer
-    {
-        internal enum PropertiesState
-        {
-            None,
-            Sending,
-            Received
-        }
+namespace Unity.MeshSync {
+partial class MeshSyncServer {
+    internal enum PropertiesState {
+        None,
+        Sending,
+        Received
+    }
 
-        bool needsClientSync;
+    private bool needsClientSync;
 
-        Dictionary<EntityRecord, Matrix4x4> entityTransforms = new Dictionary<EntityRecord, Matrix4x4>();
+    private Dictionary<EntityRecord, Matrix4x4> entityTransforms = new Dictionary<EntityRecord, Matrix4x4>();
 
 #if UNITY_EDITOR
-        internal override InstanceHandlingType InstanceHandling
-        {
-            get => base.InstanceHandling; 
-            set
-            {
-                if (InstanceHandling != value)
-                {
-                    base.InstanceHandling = value;
+    internal override InstanceHandlingType InstanceHandling {
+        get { return base.InstanceHandling; }
+        set {
+            if (InstanceHandling != value) {
+                base.InstanceHandling = value;
 
-                    ClearInstancePrefabs();
-                }
+                ClearInstancePrefabs();
             }
         }
+    }
 #endif
 
 #if AT_USE_SPLINES
@@ -45,7 +39,6 @@ namespace Unity.MeshSync
 #endif
 
 #if AT_USE_PROBUILDER && UNITY_EDITOR
-
         HashSet<ProBuilderMesh> changedMeshes = new HashSet<ProBuilderMesh>();
         
         internal override bool UseProBuilder
@@ -63,88 +56,67 @@ namespace Unity.MeshSync
         }
 #endif
 
-        internal int InstanceCount
-        {
-            get
-            {
-                int count = 0;
+    internal int InstanceCount {
+        get {
+            int count = 0;
 
-                foreach (var inst in m_clientInstances)
-                {
-                    count += inst.Value.instanceObjects.Count;
+            foreach (KeyValuePair<string, InstanceInfoRecord> inst in m_clientInstances) {
+                count += inst.Value.instanceObjects.Count;
 
-                    if (inst.Value.renderer != null)
-                    {
-                        count += inst.Value.renderer.TransformCount;
-                    }
-                }
-                return count;
-            }
-        }
-
-        internal PropertiesState CurrentPropertiesState { get; private set; }
-        internal void ResetPropertiesState()
-        {
-            CurrentPropertiesState = PropertiesState.None;
-        }
-
-        /// <summary>
-        /// True when the connection to the DCC tool to send data is active.
-        /// </summary>
-        public bool IsDCCLiveEditReady()
-        {
-            return m_server.IsDCCLiveEditReady();
-        }
-
-        void SendUpdatedProperties()
-        {
-            if (!m_server.IsDCCLiveEditReady())
-            {
-                return;
+                if (inst.Value.renderer != null) count += inst.Value.renderer.TransformCount;
             }
 
-            lock (PropertyInfoDataWrapper.PropertyUpdateLock)
-            {
-                bool sendChanges = false;
+            return count;
+        }
+    }
 
-                // Send updated properties:
-                foreach (var prop in propertyInfos)
-                {
-                    if (prop.IsDirty)
-                    {
-                        m_server.SendProperty(prop);
-                        prop.IsDirty = false;
-                        sendChanges = true;
+    internal PropertiesState CurrentPropertiesState { get; private set; }
 
-                        MeshSyncLogger.VerboseLog($"Sending changes, property '{prop.name}' was dirty.");
-                    }
+    internal void ResetPropertiesState() {
+        CurrentPropertiesState = PropertiesState.None;
+    }
+
+    /// <summary>
+    /// True when the connection to the DCC tool to send data is active.
+    /// </summary>
+    public bool IsDCCLiveEditReady() {
+        return m_server.IsDCCLiveEditReady();
+    }
+
+    private void SendUpdatedProperties() {
+        if (!m_server.IsDCCLiveEditReady()) return;
+
+        lock (PropertyInfoDataWrapper.PropertyUpdateLock) {
+            bool sendChanges = false;
+
+            // Send updated properties:
+            foreach (PropertyInfoDataWrapper prop in propertyInfos)
+                if (prop.IsDirty) {
+                    m_server.SendProperty(prop);
+                    prop.IsDirty = false;
+                    sendChanges  = true;
+
+                    MeshSyncLogger.VerboseLog($"Sending changes, property '{prop.name}' was dirty.");
                 }
 
-                // Send updated entities:
-                {
-                    foreach (var kvp in GetClientObjects())
-                    {
-                        var entity = kvp.Value;
+            // Send updated entities:
+            {
+                foreach (KeyValuePair<string, EntityRecord> kvp in GetClientObjects()) {
+                    EntityRecord entity = kvp.Value;
 
-                        if (entity.trans == null)
-                        {
-                            continue;
-                        }
+                    if (entity.trans == null) continue;
 
-                        if (!entityTransforms.TryGetValue(entity, out var matrix))
-                        {
-                            entityTransforms.Add(entity, entity.trans.localToWorldMatrix);
-                        }
-                        else
-                        {
-                            // Check if object moved:
-                            if (entity.trans.localToWorldMatrix != matrix)
-                            {
-                                SendTransform(kvp.Key, entity);
+                    if (!entityTransforms.TryGetValue(entity, out Matrix4x4 matrix)) {
+                        entityTransforms.Add(entity, entity.trans.localToWorldMatrix);
+                    }
+                    else {
+                        // Check if object moved:
+                        if (entity.trans.localToWorldMatrix != matrix) {
+                            SendTransform(kvp.Key, entity);
 
-                                entityTransforms[entity] = entity.trans.localToWorldMatrix;
-                            }
+                            entityTransforms[entity] = entity.trans.localToWorldMatrix;
                         }
+                    }
 
 #if AT_USE_SPLINES
                         if (changedSplines.Count > 0 && entity.dataType == EntityType.Curve)
@@ -164,7 +136,7 @@ namespace Unity.MeshSync
                             }
                         }
 #endif
-                    }
+                }
 
 #if AT_USE_SPLINES
                     changedSplines.Clear();
@@ -173,30 +145,27 @@ namespace Unity.MeshSync
 #if AT_USE_PROBUILDER && UNITY_EDITOR
                     changedMeshes.Clear();
 #endif
-                }
+            }
 
-                if (needsClientSync)
-                {
-                    MeshSyncLogger.VerboseLog("Sending changes, needed client sync.");
+            if (needsClientSync) {
+                MeshSyncLogger.VerboseLog("Sending changes, needed client sync.");
 
-                    needsClientSync = false;
-                    sendChanges = true;
+                needsClientSync = false;
+                sendChanges     = true;
 
-                    m_server.RequestClientSync();
-                }
+                m_server.RequestClientSync();
+            }
 
-                if (sendChanges)
-                {
-                    CurrentPropertiesState = PropertiesState.Sending;
-                    m_server.MarkServerInitiatedResponseReady();
-                }
+            if (sendChanges) {
+                CurrentPropertiesState = PropertiesState.Sending;
+                m_server.MarkServerInitiatedResponseReady();
             }
         }
+    }
 
-        void SendTransform(string path, EntityRecord entity)
-        {
-            // TODO: Implement this. https://jira.unity3d.com/browse/BLENDER-478
-        }
+    private void SendTransform(string path, EntityRecord entity) {
+        // TODO: Implement this. https://jira.unity3d.com/browse/BLENDER-478
+    }
 
 
 #if AT_USE_PROBUILDER && UNITY_EDITOR
@@ -243,7 +212,6 @@ namespace Unity.MeshSync
 #endif
 
 #if AT_USE_SPLINES
-
         void SendCurve(string path, EntityRecord entity)
         {
             Debug.Assert(entity.dataType == EntityType.Curve);
@@ -285,23 +253,21 @@ namespace Unity.MeshSync
         }
 #endif
 
-        void OnRecvPropertyRequest()
-        {
-        }
+    private void OnRecvPropertyRequest() {
+    }
 
-        internal override void AfterUpdateScene() {
-            base.AfterUpdateScene();
+    internal override void AfterUpdateScene() {
+        base.AfterUpdateScene();
 
-            CurrentPropertiesState = PropertiesState.Received;
-        }
+        CurrentPropertiesState = PropertiesState.Received;
+    }
 
 #if UNITY_EDITOR
-        internal override void ClearInstancePrefabs()
-        {
-            base.ClearInstancePrefabs();
+    internal override void ClearInstancePrefabs() {
+        base.ClearInstancePrefabs();
 
-            needsClientSync = true;
-        }
-#endif
+        needsClientSync = true;
     }
+#endif
+}
 }

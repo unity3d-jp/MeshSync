@@ -1,10 +1,7 @@
-﻿
-namespace Unity.MeshSync {
-
+﻿namespace Unity.MeshSync {
 internal enum SceneCachePlaybackMode {
     SnapToPreviousFrame,
     SnapToNearestFrame,
-    Interpolate,
+    Interpolate
 }
-
 } //namespace

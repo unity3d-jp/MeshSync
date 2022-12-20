@@ -59,7 +59,7 @@ internal static class MeshSyncConstants {
     internal static readonly int _ZTestGBuffer             = Shader.PropertyToID("_ZTestGBuffer");
     internal static readonly int _CoatMaskMap              = Shader.PropertyToID("_CoatMaskMap");
     internal static readonly int _CoatMask                 = Shader.PropertyToID("_CoatMask");
-    
+
     #endregion
 
     #region Keywords

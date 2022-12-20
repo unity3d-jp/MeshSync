@@ -11,12 +11,10 @@ using UnityEditor.Timeline;
 #endif
 
 namespace Unity.MeshSync {
-    
 [Serializable]
 internal class PlayableKeyFrame : ISerializationCallbackReceiver {
-
     internal PlayableKeyFrame(KeyFrameControllerClipData owner) {
-        m_clipDataOwner            = owner;
+        m_clipDataOwner = owner;
     }
 
     internal PlayableKeyFrame(KeyFrameControllerClipData owner, PlayableKeyFrame otherKeyFrame) {
@@ -26,12 +24,13 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
         m_playFrame     = otherKeyFrame.m_playFrame;
         m_keyFrameMode  = otherKeyFrame.m_keyFrameMode;
         m_userNote      = otherKeyFrame.m_userNote;
-    }       
-   
+    }
+
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
     #region ISerializationCallbackReceiver
+
     public void OnBeforeSerialize() {
-        
     }
 
     public void OnAfterDeserialize() {
@@ -39,9 +38,10 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
             return;
 
         m_marker.SetOwner(this);
-    }    
+    }
+
     #endregion //ISerializationCallbackReceiver
-    
+
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -50,15 +50,28 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
     }
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
-    internal void                       SetOwner(KeyFrameControllerClipData owner) {  m_clipDataOwner = owner;}
-    internal KeyFrameControllerClipData GetOwner()                                 {  return m_clipDataOwner; }
-    internal double                     GetLocalTime()                             { return m_localTime; }
+    internal void SetOwner(KeyFrameControllerClipData owner) {
+        m_clipDataOwner = owner;
+    }
 
-    internal int GetPlayFrame() { return m_playFrame; }
-    
-    internal int GetIndex() { return m_index; }
-    internal void   SetIndexAndLocalTime(int index, double localTime) {
-        m_index     = index; 
+    internal KeyFrameControllerClipData GetOwner() {
+        return m_clipDataOwner;
+    }
+
+    internal double GetLocalTime() {
+        return m_localTime;
+    }
+
+    internal int GetPlayFrame() {
+        return m_playFrame;
+    }
+
+    internal int GetIndex() {
+        return m_index;
+    }
+
+    internal void SetIndexAndLocalTime(int index, double localTime) {
+        m_index     = index;
         m_localTime = localTime;
     }
 
@@ -67,119 +80,120 @@ internal class PlayableKeyFrame : ISerializationCallbackReceiver {
     }
 
     internal void SetKeyFrameMode(KeyFrameMode mode) {
-        if (m_keyFrameMode == mode) {
-            return;
-        }
-        
+        if (m_keyFrameMode == mode) return;
+
         m_keyFrameMode = mode;
 #if UNITY_EDITOR
         TimelineEditor.Refresh(RefreshReason.ContentsModified);
 #endif
-        
     }
 
-    internal KeyFrameMode GetKeyFrameMode()  => m_keyFrameMode;
-    
-    internal void SetEnabled(bool enabled) { m_enabled = enabled; }
-    internal bool IsEnabled() => m_enabled;
-    
+    internal KeyFrameMode GetKeyFrameMode() {
+        return m_keyFrameMode;
+    }
+
+    internal void SetEnabled(bool enabled) {
+        m_enabled = enabled;
+    }
+
+    internal bool IsEnabled() {
+        return m_enabled;
+    }
+
     internal TimelineClip GetClipOwner() {
         TimelineClip clip = m_clipDataOwner?.GetOwner();
         return clip;
     }
 
-    internal string GetUserNote() {  return m_userNote;}
-    internal void SetUserNote(string userNote)   {  m_userNote = userNote; }
-    
+    internal string GetUserNote() {
+        return m_userNote;
+    }
+
+    internal void SetUserNote(string userNote) {
+        m_userNote = userNote;
+    }
+
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     internal void SaveStateFromMarker() {
         if (null == m_marker) {
             m_enabled = false;
-        } else {
+        }
+        else {
             if (null == m_clipDataOwner)
                 return;
-            
+
             TimelineClip clipOwner = m_clipDataOwner.GetOwner();
             m_localTime = m_marker.CalculateKeyFrameLocalTime(clipOwner);
         }
     }
-    
+
     internal void RefreshMarker(bool frameMarkerVisibility) {
         if (null == m_clipDataOwner)
             return;
-        
+
         TrackAsset trackAsset = m_clipDataOwner.GetOwner()?.GetParentTrack();
         //Delete Marker first if it's not in the correct track (e.g: after the TimelineClip was moved)
-        if (null!= m_marker && m_marker.parent != trackAsset) {
-            TryDeleteMarker();
-        }
+        if (null != m_marker && m_marker.parent != trackAsset) TryDeleteMarker();
 
         //Show/Hide the marker
-        if (!m_enabled || (!frameMarkerVisibility)) {
+        if (!m_enabled || !frameMarkerVisibility)
             TryDeleteMarker();
-        } else if (null == m_marker && null!=trackAsset) {
-            CreateMarker();
-        }
+        else if (null == m_marker && null != trackAsset) CreateMarker();
 
         if (m_marker) {
             TimelineClip clipOwner = m_clipDataOwner.GetOwner();
             m_marker.Init(this, clipOwner);
         }
     }
-    
+
     internal void RefreshMarkerOwner() {
-        if (!m_marker) 
+        if (!m_marker)
             return;
-        
+
         m_marker.SetOwner(this);
     }
-    
+
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    void CreateMarker() {
-        TimelineClip clipOwner = m_clipDataOwner.GetOwner();
-        TrackAsset trackAsset = clipOwner?.GetParentTrack();
-                       
+    private void CreateMarker() {
+        TimelineClip clipOwner  = m_clipDataOwner.GetOwner();
+        TrackAsset   trackAsset = clipOwner?.GetParentTrack();
+
         Assert.IsNotNull(trackAsset);
         Assert.IsNull(m_marker);
-               
+
         m_marker = trackAsset.CreateMarker<KeyFrameMarker>(m_localTime);
     }
 
-    void TryDeleteMarker() {
+    private void TryDeleteMarker() {
         if (null == m_marker)
             return;
-        
+
         //Marker should have parent, but in rare cases, it may return null
         TrackAsset track = m_marker.parent;
-        if (null != track) {
-            track.DeleteMarker(m_marker);            
-        }
+        if (null != track) track.DeleteMarker(m_marker);
 
         m_marker = null;
-
     }
-    
-    
+
+
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    [HideInInspector][SerializeField] private bool m_enabled = true;
-    
-    [HideInInspector][SerializeField] private double m_localTime;
-    
-    [HideInInspector][SerializeField] private int          m_playFrame    = 0; //the frame that should be displayed for this localTime
-    [HideInInspector][SerializeField] private KeyFrameMode m_keyFrameMode = KeyFrameMode.Continuous; 
+    [HideInInspector] [SerializeField] private bool m_enabled = true;
 
-    
-    [HideInInspector][SerializeField] private KeyFrameMarker        m_marker = null;
-    [HideInInspector][SerializeField] private string                m_userNote;
-    [NonSerialized]                   private KeyFrameControllerClipData m_clipDataOwner = null;
+    [HideInInspector] [SerializeField] private double m_localTime;
+
+    [HideInInspector] [SerializeField] private int          m_playFrame    = 0; //the frame that should be displayed for this localTime
+    [HideInInspector] [SerializeField] private KeyFrameMode m_keyFrameMode = KeyFrameMode.Continuous;
+
+
+    [HideInInspector] [SerializeField] private KeyFrameMarker             m_marker = null;
+    [HideInInspector] [SerializeField] private string                     m_userNote;
+    [NonSerialized]                    private KeyFrameControllerClipData m_clipDataOwner = null;
 
     private int m_index;
-
 }
-
 } //end namespace
 
 
