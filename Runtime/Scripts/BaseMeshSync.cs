@@ -1467,7 +1467,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 Material[] sharedMaterials                    = null;
                 if (rec.meshRenderer != null) sharedMaterials = rec.meshRenderer.sharedMaterials;
 
-                MeshImporter importer = new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, sharedMaterials, rec.proBuilderMeshFilter);
+                UnityEngine.ProBuilder.MeshOperations.MeshImporter importer = 
+                    new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, sharedMaterials, rec.proBuilderMeshFilter);
                 // Disable quads, it is much slower:
                 importer.Import(new UnityEngine.ProBuilder.MeshOperations.MeshImportSettings() { quads = false });
 
