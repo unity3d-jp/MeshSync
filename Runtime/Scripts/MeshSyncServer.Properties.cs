@@ -39,21 +39,18 @@ partial class MeshSyncServer {
 #endif
 
 #if AT_USE_PROBUILDER && UNITY_EDITOR
-        HashSet<ProBuilderMesh> changedMeshes = new HashSet<ProBuilderMesh>();
-        
-        internal override bool UseProBuilder
-        {
-            get => base.UseProBuilder;
-            set
-            {
-                if (UseProBuilder != value)
-                {
-                    base.UseProBuilder = value;
+    private HashSet<ProBuilderMesh> changedMeshes = new HashSet<ProBuilderMesh>();
 
-                    ClearInstancePrefabs();
-                }
+    internal override bool UseProBuilder {
+        get { return base.UseProBuilder; }
+        set {
+            if (UseProBuilder != value) {
+                base.UseProBuilder = value;
+
+                ClearInstancePrefabs();
             }
         }
+    }
 #endif
 
     internal int InstanceCount {
@@ -127,13 +124,10 @@ partial class MeshSyncServer {
                         }
 #endif
 #if AT_USE_PROBUILDER && UNITY_EDITOR
-                        if (entity.dataType == EntityType.Mesh && entity.proBuilderMeshFilter != null)
-                        {
-                            if (changedMeshes.Contains(entity.proBuilderMeshFilter))
-                            {
-                                SendMesh(kvp.Key, entity);
-                                sendChanges = true;
-                            }
+                    if (entity.dataType == EntityType.Mesh && entity.proBuilderMeshFilter != null)
+                        if (changedMeshes.Contains(entity.proBuilderMeshFilter)) {
+                            SendMesh(kvp.Key, entity);
+                            sendChanges = true;
                         }
 #endif
                 }
@@ -143,7 +137,7 @@ partial class MeshSyncServer {
 #endif
 
 #if AT_USE_PROBUILDER && UNITY_EDITOR
-                    changedMeshes.Clear();
+                changedMeshes.Clear();
 #endif
             }
 
@@ -169,46 +163,45 @@ partial class MeshSyncServer {
 
 
 #if AT_USE_PROBUILDER && UNITY_EDITOR
-        internal void MeshChanged(ProBuilderMesh mesh) {
-            lock (PropertyInfoDataWrapper.PropertyUpdateLock) {
-                changedMeshes.Add(mesh);
-            }
+    internal void MeshChanged(ProBuilderMesh mesh) {
+        lock (PropertyInfoDataWrapper.PropertyUpdateLock) {
+            changedMeshes.Add(mesh);
         }
+    }
 
-        static GetFlags sendMeshSettings = new GetFlags(
-            GetFlags.GetFlagsSetting.Transform, 
-            GetFlags.GetFlagsSetting.Points,
-            GetFlags.GetFlagsSetting.Indices, 
-            GetFlags.GetFlagsSetting.MaterialIDS);
+    private static GetFlags sendMeshSettings = new GetFlags(
+        GetFlags.GetFlagsSetting.Transform,
+        GetFlags.GetFlagsSetting.Points,
+        GetFlags.GetFlagsSetting.Indices,
+        GetFlags.GetFlagsSetting.MaterialIDS);
 
-        void SendMesh(string path, EntityRecord entity)
-        {
-            Debug.Assert(entity.dataType == EntityType.Mesh);
+    private void SendMesh(string path, EntityRecord entity) {
+        Debug.Assert(entity.dataType == EntityType.Mesh);
 
-            var objRenderer = entity.meshRenderer;
+        MeshRenderer objRenderer = entity.meshRenderer;
 
-            MeshData dst = MeshData.Create();
+        MeshData dst = MeshData.Create();
 
-            var mesh = entity.meshFilter.sharedMesh;
-            var mr = entity.meshRenderer;
+        Mesh         mesh = entity.meshFilter.sharedMesh;
+        MeshRenderer mr   = entity.meshRenderer;
 
-            CaptureMesh(ref dst, mesh, null,
-                sendMeshSettings,
-                mr.sharedMaterials);
+        CaptureMesh(ref dst, mesh, null,
+            sendMeshSettings,
+            mr.sharedMaterials);
 
-            TransformData dstTrans = dst.transform;
-            Transform rendererTransform = objRenderer.transform;
-            dstTrans.hostID = GetObjectlID(objRenderer.gameObject);
-            dstTrans.position = rendererTransform.localPosition;
-            dstTrans.rotation = rendererTransform.localRotation;
-            dstTrans.scale = rendererTransform.localScale;
-            dst.local2world = rendererTransform.localToWorldMatrix;
-            dst.world2local = rendererTransform.worldToLocalMatrix;
+        TransformData dstTrans          = dst.transform;
+        Transform     rendererTransform = objRenderer.transform;
+        dstTrans.hostID   = GetObjectlID(objRenderer.gameObject);
+        dstTrans.position = rendererTransform.localPosition;
+        dstTrans.rotation = rendererTransform.localRotation;
+        dstTrans.scale    = rendererTransform.localScale;
+        dst.local2world   = rendererTransform.localToWorldMatrix;
+        dst.world2local   = rendererTransform.worldToLocalMatrix;
 
-            dstTrans.path = path;
-            
-            m_server.SendMesh(dst);
-        }
+        dstTrans.path = path;
+
+        m_server.SendMesh(dst);
+    }
 #endif
 
 #if AT_USE_SPLINES

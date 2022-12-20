@@ -11,6 +11,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
+using UnityEngine.ProBuilder.MeshOperations;
 
 #if AT_USE_SPLINES
 using Unity.Mathematics;
@@ -1193,9 +1194,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 #elif AT_USE_URP
             destMat.SetFloat(MeshSyncConstants._AlphaClip, hasAlpha ? 1 : 0);
 #else
-                if (hasAlpha) {
-                    destMat.SetFloat(MeshSyncConstants._Mode, 1);
-                }
+            if (hasAlpha) destMat.SetFloat(MeshSyncConstants._Mode, 1);
 #endif
         }
 
@@ -1458,46 +1457,40 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             AssignMaterials(rec, false);
 
 #if AT_USE_PROBUILDER
-            if (UseProBuilder)
-            {
-                if (rec.mesh != null && (meshUpdated || materialsUpdated))
-                {
-                    //Debug.LogError("Rebuilding");
-                    ProBuilderBeforeRebuild?.Invoke();
+        if (UseProBuilder) {
+            if (rec.mesh != null && (meshUpdated || materialsUpdated)) {
+                //Debug.LogError("Rebuilding");
+                ProBuilderBeforeRebuild?.Invoke();
 
-                    rec.proBuilderMeshFilter = Misc.GetOrAddComponent<UnityEngine.ProBuilder.ProBuilderMesh>(trans.gameObject);
+                rec.proBuilderMeshFilter = Misc.GetOrAddComponent<UnityEngine.ProBuilder.ProBuilderMesh>(trans.gameObject);
 
-                    Material[] sharedMaterials = null;
-                    if (rec.meshRenderer != null) {
-                        sharedMaterials = rec.meshRenderer.sharedMaterials;
-                    }
+                Material[] sharedMaterials                    = null;
+                if (rec.meshRenderer != null) sharedMaterials = rec.meshRenderer.sharedMaterials;
 
-                    var importer = new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, sharedMaterials, rec.proBuilderMeshFilter);
-                    // Disable quads, it is much slower:
-                    importer.Import(new UnityEngine.ProBuilder.MeshOperations.MeshImportSettings() { quads = false });
+                MeshImporter importer = new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, sharedMaterials, rec.proBuilderMeshFilter);
+                // Disable quads, it is much slower:
+                importer.Import(new UnityEngine.ProBuilder.MeshOperations.MeshImportSettings() { quads = false });
 
-                    // To refresh the internal probuilder mesh:
-                    rec.proBuilderMeshFilter.ToMesh();
-                    rec.proBuilderMeshFilter.Refresh();
+                // To refresh the internal probuilder mesh:
+                rec.proBuilderMeshFilter.ToMesh();
+                rec.proBuilderMeshFilter.Refresh();
 
-                    ProBuilderAfterRebuild?.Invoke();
-                }
+                ProBuilderAfterRebuild?.Invoke();
             }
-            else
-            {
-                if (rec.proBuilderMeshFilter != null)
-                {
-                    DestroyImmediate(rec.proBuilderMeshFilter);
-                    rec.proBuilderMeshFilter = null;
-                }
+        }
+        else {
+            if (rec.proBuilderMeshFilter != null) {
+                DestroyImmediate(rec.proBuilderMeshFilter);
+                rec.proBuilderMeshFilter = null;
             }
+        }
 #endif
         return rec;
     }
 
 #if AT_USE_PROBUILDER
-        internal static Action ProBuilderBeforeRebuild;
-        internal static Action ProBuilderAfterRebuild;
+    internal static Action ProBuilderBeforeRebuild;
+    internal static Action ProBuilderAfterRebuild;
 #endif
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
