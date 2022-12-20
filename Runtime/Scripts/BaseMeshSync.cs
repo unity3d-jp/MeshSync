@@ -2929,7 +2929,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
     
 #if UNITY_2021_2_OR_NEWER
     private bool m_needToResetPathTracing = false;
-#endif    
+#endif
 #endif
 
 //----------------------------------------------------------------------------------------------------------------------
