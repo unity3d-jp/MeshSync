@@ -11,14 +11,13 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
-using UnityEngine.Rendering;
+using UnityEngine.Rendering; //Volume, IndexFormat
 
 #if AT_USE_SPLINES
 using Unity.Mathematics;
 #endif
 
 #if AT_USE_HDRP
-using UnityEngine.Rendering; //Volume
 using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.Experimental.Rendering;
 #endif
