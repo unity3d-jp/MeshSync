@@ -8,7 +8,6 @@ using Constants = Unity.MeshSync.Editor.MeshSyncEditorConstants;
 
 namespace Unity.MeshSync.Editor {
 internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
-
     internal class Contents {
         public static readonly GUIContent OutputPrefabPath = EditorGUIUtility.TrTextContent("Scene Cache Output Path");
     }
@@ -17,25 +16,25 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
     public void Setup(VisualElement root) {
         Assert.IsNotNull(root);
         root.Clear();
-        
-        VisualTreeAsset tab = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SCENE_CACHE_PLAYER_SETTINGS_TAB_PATH);
+
+        VisualTreeAsset   tab         = UIElementsEditorUtility.LoadVisualTreeAsset(Constants.SCENE_CACHE_PLAYER_SETTINGS_TAB_PATH);
         TemplateContainer tabInstance = tab.CloneTree();
-        
+
         VisualElement content = tabInstance.Query<VisualElement>("Content").First();
-        
-        m_generatedSCResPathTextField	 = tabInstance.Query<TextField>("GeneratedSCResPathText").First();
+
+        m_generatedSCResPathTextField = tabInstance.Query<TextField>("GeneratedSCResPathText").First();
         m_generatedSCResPathTextField.RegisterValueChangedCallback((ChangeEvent<string> changeEvent) => {
             MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateInstance();
             settings.SetSceneCacheOutputPath(changeEvent.newValue);
             settings.SaveInEditor();
-        });        
-        
-        m_outputPathSelectButton = tabInstance.Query<Button>("OutputPathSelectButton").First();
+        });
+
+        m_outputPathSelectButton         =  tabInstance.Query<Button>("OutputPathSelectButton").First();
         m_outputPathSelectButton.clicked += OnOutputPathSelectButtonClicked;
-        RefreshSettings();    
-        
+        RefreshSettings();
+
         //MeshSyncPlayerConfig
-        MeshSyncPlayerConfigSection section = new MeshSyncPlayerConfigSection(MeshSyncPlayerType.CACHE_PLAYER);	    
+        MeshSyncPlayerConfigSection section = new MeshSyncPlayerConfigSection(MeshSyncPlayerType.CACHE_PLAYER);
         section.Setup(content);
 
         Button resetButton = tabInstance.Query<Button>("ResetButton").First();
@@ -45,30 +44,30 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
             projectSettings.SaveInEditor();
             Setup(root);
         };
-       
-        
-        root.Add(tabInstance);	    
+
+
+        root.Add(tabInstance);
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
-    void OnOutputPathSelectButtonClicked() {
+    private void OnOutputPathSelectButtonClicked() {
         string path = EditorUtility.OpenFolderPanel("Select Scene Cache Output Path",
-                                                    m_generatedSCResPathTextField.value,
-                                                    "");
+            m_generatedSCResPathTextField.value,
+            "");
 
         if (string.IsNullOrEmpty(path))
             return;
 
         if (!path.StartsWith(Application.dataPath)) {
             EditorUtility.DisplayDialog("MeshSync",
-                $"Invalid path: {path}. " + 
-                "Path has to be under the Assets folder.", 
+                $"Invalid path: {path}. " +
+                "Path has to be under the Assets folder.",
                 "Ok");
-            return;            
-        }        
+            return;
+        }
 
         MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateInstance();
-        
+
         path = AssetEditorUtility.NormalizePath(path);
         settings.SetSceneCacheOutputPath(path);
         settings.SaveInEditor();
@@ -77,17 +76,15 @@ internal class SceneCachePlayerSettingsTab : IMeshSyncSettingsTab {
     }
 //----------------------------------------------------------------------------------------------------------------------
 
-    void RefreshSettings() {
+    private void RefreshSettings() {
         MeshSyncProjectSettings settings = MeshSyncProjectSettings.GetOrCreateInstance();
-        m_generatedSCResPathTextField.value = settings.GetSceneCacheOutputPath();		
+        m_generatedSCResPathTextField.value = settings.GetSceneCacheOutputPath();
     }
 
-    
+
 //----------------------------------------------------------------------------------------------------------------------
-    
-    private TextField m_generatedSCResPathTextField  	= null;
-    private Button    m_outputPathSelectButton 	= null;
 
+    private TextField m_generatedSCResPathTextField = null;
+    private Button    m_outputPathSelectButton      = null;
 }
-
 } //end namespace 

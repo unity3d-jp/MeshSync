@@ -10,22 +10,20 @@ using UnityEngine.Assertions;
 
 
 namespace Unity.MeshSync.Editor {
-
-[CustomTimelineEditor(typeof(SceneCachePlayableAsset)), UsedImplicitly]
+[CustomTimelineEditor(typeof(SceneCachePlayableAsset))]
+[UsedImplicitly]
 internal class SceneCachePlayableAssetEditor : ClipEditor {
-
     [InitializeOnLoadMethod]
-    static void SceneCachePlayableAssetEditor_OnEditorLoad() {
-        
+    private static void SceneCachePlayableAssetEditor_OnEditorLoad() {
         EditorSceneManager.sceneSaved += SceneCachePlayableAssetEditor_OnSceneSaved;
     }
-    
-    static void SceneCachePlayableAssetEditor_OnSceneSaved(Scene scene) {
+
+    private static void SceneCachePlayableAssetEditor_OnSceneSaved(Scene scene) {
         //Workaround to prevent errors: "The Playable is invalid. It has either been Disposed or was never created."
         //when editing curves after saving the scene
-        TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved);    
+        TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved);
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------    
     /// <inheritdoc/>
     public override ClipDrawOptions GetClipOptions(TimelineClip clip) {
@@ -35,9 +33,9 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
             Debug.LogError("Asset is not a SceneCachePlayableAsset: " + clip.asset);
             return clipOptions;
         }
-        
+
         SceneCacheClipData clipData = asset.GetBoundClipData();
-        if (null == clipData) 
+        if (null == clipData)
             return clipOptions;
 
         SceneCachePlayer scPlayer = asset.GetSceneCachePlayer();
@@ -46,8 +44,8 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
             return clipOptions;
         }
 
-        LimitedAnimationController overrideLimitedAnimationController =asset.GetOverrideLimitedAnimationController();
-        
+        LimitedAnimationController overrideLimitedAnimationController = asset.GetOverrideLimitedAnimationController();
+
         if (!scPlayer.IsLimitedAnimationOverrideable() && overrideLimitedAnimationController.IsEnabled()) {
             clipOptions.errorText = UNABLE_TO_OVERRIDE_LIMITED_ANIMATION_ERROR;
             return clipOptions;
@@ -56,34 +54,32 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
         clipOptions.tooltip = scPlayer.GetSceneCacheFilePath();
 
         return clipOptions;
-    } 
-       
+    }
+
 //----------------------------------------------------------------------------------------------------------------------    
     /// <inheritdoc/>
     public override void OnCreate(TimelineClip clip, TrackAsset track, TimelineClip clonedFrom) {
-                
         SceneCachePlayableAsset asset = clip.asset as SceneCachePlayableAsset;
         if (null == asset) {
             Debug.LogError("[MeshSync] Asset is not a SceneCachePlayableAsset: " + clip.asset);
             return;
         }
-        
+
         //Track can be null during copy and paste
-        if (null != track) {
+        if (null != track)
             //This callback occurs before the clip is assigned to the track, but we need the track for creating curves.
             clip.TryMoveToTrack(track);
-        }
 
-        bool isCloned = (null != clonedFrom);
-        
-        asset.Init(updateClipDurationOnCreatePlayable: !isCloned);
-        
+        bool isCloned = null != clonedFrom;
+
+        asset.Init(!isCloned);
+
         if (isCloned) {
             SceneCachePlayableAsset clonedFromAsset = clonedFrom.asset as SceneCachePlayableAsset;
             Assert.IsNotNull(clonedFromAsset);
-            
+
             clip.displayName = clonedFrom.displayName + " (Cloned)";
-            
+
             SceneCacheClipData otherClipData = clonedFromAsset.GetBoundClipData();
             asset.BindClipData(new SceneCacheClipData(clip, otherClipData));
         }
@@ -91,100 +87,89 @@ internal class SceneCachePlayableAssetEditor : ClipEditor {
 
 //----------------------------------------------------------------------------------------------------------------------    
     //Called when a clip is changed by the Editor. (TrimStart, TrimEnd, etc)    
-    public override void OnClipChanged(TimelineClip clip) {       
+    public override void OnClipChanged(TimelineClip clip) {
         base.OnClipChanged(clip);
-        
+
         SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
         if (null == playableAsset) {
             Debug.LogWarning("[MeshSync] Clip Internal Error: Asset is not SceneCache");
-            return;            
+            return;
         }
-        
+
         //Check if the curves is null, which may happen if the clip is created using code ?
-        if (null == clip.curves) {
-            CreateClipCurve(clip);
-        }        
-        
-        
+        if (null == clip.curves) CreateClipCurve(clip);
+
+
         playableAsset.OnClipChanged();
-        
+
         //Always apply clipCurves to clipData
-        AnimationCurve curve = AnimationUtility.GetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding());        
+        AnimationCurve curve = AnimationUtility.GetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding());
         playableAsset.SetAnimationCurve(curve);
-        
-        
-    }    
+    }
 
 //----------------------------------------------------------------------------------------------------------------------
-    
+
     /// <inheritdoc/>
     public override void DrawBackground(TimelineClip clip, ClipBackgroundRegion region) {
         base.DrawBackground(clip, region);
-        
+
         SceneCachePlayableAsset asset = clip.asset as SceneCachePlayableAsset;
         if (null == asset) {
             Debug.LogError("Asset is not a SceneCachePlayableAsset: " + clip.asset);
             return;
         }
-        
+
         SceneCacheClipData clipData = asset.GetBoundClipData();
         if (null == clipData)
             return;
 
 
         Rect rect = region.position;
-        
+
         //Hide frame marker automatically
         if (Event.current.type == EventType.Repaint) {
             // double framePerSecond =  clip.GetParentTrack().timelineAsset.editorSettings.GetFPS();
             // clipData.UpdateTimelineWidthPerFrame(rect.width, region.endTime-region.startTime, 
             //     framePerSecond, clip.timeScale);
         }
-        
-        
+
+
         LimitedAnimationController limitedAnimationController = asset.GetOverrideLimitedAnimationController();
-        if (!limitedAnimationController.IsEnabled()) {
-            return;
-        }
+        if (!limitedAnimationController.IsEnabled()) return;
 
         int numFrames = limitedAnimationController.GetNumFramesToHold();
         int offset    = limitedAnimationController.GetFrameOffset();
-            
+
         GUIStyle style = new GUIStyle(GUI.skin.label) {
             alignment = TextAnchor.LowerRight,
-            normal    = {
-                textColor = new Color(0.3f,0.9f,0.3f),
+            normal = {
+                textColor = new Color(0.3f, 0.9f, 0.3f)
             }
         };
         GUIContent laContent = new GUIContent($"Limited: {numFrames}, {offset}");
-        
+
         Vector2 laContentSize = style.CalcSize(laContent);
         if (rect.width <= laContentSize.x * 2) //2: arbitrary
             return;
-        
-        EditorGUI.LabelField(rect, laContent, style);
 
-        
+        EditorGUI.LabelField(rect, laContent, style);
     }
-    
-    
+
+
 //----------------------------------------------------------------------------------------------------------------------
 
-    private void CreateClipCurve(TimelineClip clip) {        
+    private void CreateClipCurve(TimelineClip clip) {
         clip.CreateCurves("Curves: " + clip.displayName);
-        
+
         //Init dummy linear curve
-        AnimationCurve curve = AnimationCurve.Linear(0f,0f,(float)clip.duration,1f);
-        AnimationUtility.SetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding(),curve);
-        TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved );
-        
-        
+        AnimationCurve curve = AnimationCurve.Linear(0f, 0f, (float)clip.duration, 1f);
+        AnimationUtility.SetEditorCurve(clip.curves, SceneCachePlayableAsset.GetTimeCurveBinding(), curve);
+        TimelineEditor.Refresh(RefreshReason.ContentsAddedOrRemoved);
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
-    
+
     private const string NO_SCENE_CACHE_ASSIGNED_ERROR              = "No Scene Cache Assigned";
     private const string UNABLE_TO_OVERRIDE_LIMITED_ANIMATION_ERROR = "Unable to override Limited Animation";
-    
 }
 } //end namespace

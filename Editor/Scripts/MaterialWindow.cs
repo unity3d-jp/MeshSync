@@ -4,18 +4,16 @@ using UnityEngine;
 namespace Unity.MeshSync.Editor {
 internal class MaterialWindow : EditorWindow {
     public static void Open(BaseMeshSync server) {
-        MaterialWindow window = (MaterialWindow)EditorWindow.GetWindow(typeof(MaterialWindow));
+        MaterialWindow window = (MaterialWindow)GetWindow(typeof(MaterialWindow));
         window.titleContent        = new GUIContent("Material List");
         window.m_meshSyncComponent = server;
         window.Show();
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
 
-    void OnGUI() {
-        if (m_meshSyncComponent == null) {
-            return;
-        }
+    private void OnGUI() {
+        if (m_meshSyncComponent == null) return;
 
         Rect pos = position;
         m_scrollPos =
@@ -29,5 +27,4 @@ internal class MaterialWindow : EditorWindow {
     private BaseMeshSync m_meshSyncComponent;
     private Vector2      m_scrollPos;
 }
-
 } //end namespace
