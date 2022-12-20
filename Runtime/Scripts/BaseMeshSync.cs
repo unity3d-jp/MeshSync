@@ -710,10 +710,10 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 #endif
 
 #if AT_USE_HDRP && UNITY_2021_2_OR_NEWER
-            if (m_needToResetPathTracing) {
-                HDRPUtility.ResetPathTracing();
-                m_needToResetPathTracing = false;
-            }
+        if (m_needToResetPathTracing) {
+            HDRPUtility.ResetPathTracing();
+            m_needToResetPathTracing = false;
+        }
 #endif
     }
 
