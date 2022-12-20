@@ -7,25 +7,23 @@ using UnityEngine;
 
 
 namespace Unity.MeshSync.Editor {
-    
 /// <summary>
 /// A utility class for finding DCC Tools
 /// </summary>
 public static class DCCFinderUtility {
-    
     //Find the location of supported DCC tools on Windows and Mac.
     private static List<string> GetDefaultVendorDirectories() {
-
         List<string> existingDirectories = new List<string>();
-        List<string> searchDirectories = new List<string>();
+        List<string> searchDirectories   = new List<string>();
 
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
                 DriveInfo[] allDrives = DriveInfo.GetDrives();
                 foreach (DriveInfo drive in allDrives) {
-                    searchDirectories.Add(Path.Combine(drive.Name, @"Program Files\Autodesk") );
-                    searchDirectories.Add(Path.Combine(drive.Name, @"Program Files\Blender Foundation") );
+                    searchDirectories.Add(Path.Combine(drive.Name, @"Program Files\Autodesk"));
+                    searchDirectories.Add(Path.Combine(drive.Name, @"Program Files\Blender Foundation"));
                 }
+
                 break;
             }
             case RuntimePlatform.OSXEditor: {
@@ -34,25 +32,22 @@ public static class DCCFinderUtility {
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
-                
                 searchDirectories.Add(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
                 searchDirectories.Add("/usr/autodesk");
                 break;
             }
             default: {
-                throw new System.NotImplementedException();
-            }
-        }
-        
-        foreach (string path in searchDirectories) {
-            if (Directory.Exists(path)) {
-                existingDirectories.Add(path);
+                throw new NotImplementedException();
             }
         }
 
+        foreach (string path in searchDirectories)
+            if (Directory.Exists(path))
+                existingDirectories.Add(path);
+
         return existingDirectories;
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
 
     /// <summary>
@@ -62,11 +57,11 @@ public static class DCCFinderUtility {
     /// <param name="dir">Directory to be searched</param>
     /// <param name="version">known Maya version</param>
     private static DCCToolInfo FindMayaInDirectory(string dir, string version) {
-        string appPath = dir;
+        string appPath  = dir;
         string iconPath = dir;
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
-                appPath+= @"\bin\maya.exe";
+                appPath  += @"\bin\maya.exe";
                 iconPath += @"\icons\mayaico.png";
                 break;
             }
@@ -78,13 +73,16 @@ public static class DCCFinderUtility {
                 if (dir.EndsWith(".app/Contents")) {
                     appPath  += "/MacOS/Maya";
                     iconPath += "/icons/mayaico.png";
-                } else if (dir.EndsWith(".app")) {
+                }
+                else if (dir.EndsWith(".app")) {
                     appPath  += "/Contents/MacOS/Maya";
                     iconPath += "/Contents/icons/mayaico.png";
-                } else {
+                }
+                else {
                     appPath  += "/Maya.app/Contents/MacOS/Maya";
                     iconPath += "/Maya.app/Contents/icons/mayaico.png";
                 }
+
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
@@ -93,31 +91,28 @@ public static class DCCFinderUtility {
                 break;
             }
             default:
-                throw new NotImplementedException ();
+                throw new NotImplementedException();
         }
 
         if (!File.Exists(appPath))
             return null;
-        
-        iconPath = (!File.Exists(iconPath)) ? null : iconPath;
 
-        version = (string.IsNullOrEmpty(version)) ? FindMayaVersion(appPath) : version;
+        iconPath = !File.Exists(iconPath) ? null : iconPath;
 
-        return new DCCToolInfo(DCCToolType.AUTODESK_MAYA,version) {
-            AppPath = appPath,
+        version = string.IsNullOrEmpty(version) ? FindMayaVersion(appPath) : version;
+
+        return new DCCToolInfo(DCCToolType.AUTODESK_MAYA, version) {
+            AppPath  = appPath,
             IconPath = iconPath
         };
-        
     }
 
 //----------------------------------------------------------------------------------------------------------------------
 
     internal static string FindMayaVersion(string appPath) {
-        
         string productDir = null;
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
-                
                 //2 levels up: "/bin/maya.exe";
                 productDir = PathUtility.GetDirectoryName(appPath, 2);
                 break;
@@ -125,7 +120,7 @@ public static class DCCFinderUtility {
             case RuntimePlatform.OSXEditor: {
                 //4 levels up: "/Maya.app/Contents/MacOS/Maya";
                 productDir = PathUtility.GetDirectoryName(appPath, 4);
-        
+
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
@@ -135,20 +130,16 @@ public static class DCCFinderUtility {
             }
 
             default:
-                throw new NotImplementedException ();
+                throw new NotImplementedException();
         }
 
-        if (string.IsNullOrEmpty(productDir)) {
-            return UNKNOWN_VERSION;
-        }
+        if (string.IsNullOrEmpty(productDir)) return UNKNOWN_VERSION;
 
         const string MAYA_STR = "maya";
-        int index = productDir.IndexOf(MAYA_STR, StringComparison.OrdinalIgnoreCase);
-        if (index == -1) {
-            return UNKNOWN_VERSION;
-        }
-        
-        string version = productDir.Substring (index + MAYA_STR.Length);
+        int          index    = productDir.IndexOf(MAYA_STR, StringComparison.OrdinalIgnoreCase);
+        if (index == -1) return UNKNOWN_VERSION;
+
+        string version = productDir.Substring(index + MAYA_STR.Length);
         return version.Trim();
     }
 
@@ -156,63 +147,62 @@ public static class DCCFinderUtility {
 
     //3DS Max is only available for Windows
     private static DCCToolInfo Find3DSMaxInDirectory(string dir, string version) {
-        if (RuntimePlatform.WindowsEditor != Application.platform) {
-            return null;
-        }
-        
-        string appPath = dir + @"\3dsmax.exe";
+        if (RuntimePlatform.WindowsEditor != Application.platform) return null;
+
+        string appPath  = dir + @"\3dsmax.exe";
         string iconPath = dir + @"\Icons\icon_main.ico";
-        
+
         if (!File.Exists(appPath))
             return null;
-        
-        iconPath = (!File.Exists(iconPath)) ? null : iconPath;       
-        version = (string.IsNullOrEmpty(version)) ? Find3DSMaxVersion(appPath) : version;
-        
-        return new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX,version) {
-            AppPath = appPath,
+
+        iconPath = !File.Exists(iconPath) ? null : iconPath;
+        version  = string.IsNullOrEmpty(version) ? Find3DSMaxVersion(appPath) : version;
+
+        return new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, version) {
+            AppPath  = appPath,
             IconPath = iconPath
         };
-        
     }
 //----------------------------------------------------------------------------------------------------------------------
 
     internal static string Find3DSMaxVersion(string appPath) {
         //4 levels up: "C:\Program Files\3dsMax 2019\3dsmax.exe";
         string folderName = Path.GetFileName(Path.GetDirectoryName(appPath));
-        int len = folderName.Length;
-        if (len > 4) {
-            return folderName.Substring(len - 4, 4);
-        }
+        int    len        = folderName.Length;
+        if (len > 4) return folderName.Substring(len - 4, 4);
         return folderName;
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
-    
+
     #region Blender
+
     private static DCCToolInfo FindBlenderInDirectory(string dir, string version) {
-        string appPath = dir;
+        string appPath  = dir;
         string iconPath = dir;
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
-                appPath+= @"\blender.exe";
-                iconPath = null;
+                appPath  += @"\blender.exe";
+                iconPath =  null;
                 break;
             }
             case RuntimePlatform.OSXEditor: {
-                const string CONTENTS_APP_PATH = "/MacOS/Blender";
+                const string CONTENTS_APP_PATH  = "/MacOS/Blender";
                 const string CONTENTS_ICON_PATH = "/Resources/blender icon.icns";
 
                 if (dir.EndsWith(".app/Contents")) {
                     appPath  += CONTENTS_APP_PATH;
                     iconPath += CONTENTS_ICON_PATH;
-                } else if (dir.EndsWith(".app")) {
+                }
+                else if (dir.EndsWith(".app")) {
                     appPath  += $"/Contents{CONTENTS_APP_PATH}";
                     iconPath += $"/Contents{CONTENTS_ICON_PATH}";
-                } else {
+                }
+                else {
                     appPath  += $"/Blender.app/Contents{CONTENTS_APP_PATH}";
                     iconPath += $"/Blender.app/Contents{CONTENTS_ICON_PATH}";
                 }
+
                 break;
             }
             case RuntimePlatform.LinuxEditor: {
@@ -221,28 +211,26 @@ public static class DCCFinderUtility {
                 break;
             }
             default:
-                throw new NotImplementedException ();
+                throw new NotImplementedException();
         }
 
         if (!File.Exists(appPath))
             return null;
-        
-        iconPath = (!File.Exists(iconPath)) ? null : iconPath;
 
-        version = (string.IsNullOrEmpty(version)) ? FindBlenderVersion(appPath) : version;
+        iconPath = !File.Exists(iconPath) ? null : iconPath;
 
-        return new DCCToolInfo(DCCToolType.BLENDER,version) {
-            AppPath = appPath,
+        version = string.IsNullOrEmpty(version) ? FindBlenderVersion(appPath) : version;
+
+        return new DCCToolInfo(DCCToolType.BLENDER, version) {
+            AppPath  = appPath,
             IconPath = iconPath
         };
-        
     }
 
     private static string FindBlenderVersion(string appPath) {
-
         //Blender has a directory in one of its subfolders with the version as its name
         string versionParentDir = null;
-        
+
         switch (Application.platform) {
             case RuntimePlatform.WindowsEditor: {
                 //- C:\Program Files\Blender Foundation\Blender\2.80
@@ -260,40 +248,36 @@ public static class DCCFinderUtility {
                 //Example: /home/Unity/blender-2.82a-linux64/2.82
                 versionParentDir = Path.GetDirectoryName(appPath);
                 break;
-
             }
 
             default:
-                throw new NotImplementedException ();
+                throw new NotImplementedException();
         }
 
-        
-        if (string.IsNullOrEmpty(versionParentDir)) {
-            return UNKNOWN_VERSION;
-        }
-                
+
+        if (string.IsNullOrEmpty(versionParentDir)) return UNKNOWN_VERSION;
+
         foreach (string versionDir in Directory.EnumerateDirectories(versionParentDir)) {
             string dirName = Path.GetFileName(versionDir);
-            if (Single.TryParse(dirName, out float number))
+            if (float.TryParse(dirName, out float number))
                 return dirName;
         }
-        
+
         return UNKNOWN_VERSION;
     }
-    
+
     #endregion
-    
+
 //----------------------------------------------------------------------------------------------------------------------
 
     //Returns the DCCToolInfo of the DCC tool.
     //If version is null, then the correct version will be returned if found
     [CanBeNull]
     internal static DCCToolInfo FindDCCToolInDirectory(DCCToolType toolType, string version, string dir) {
-
 #if UNITY_EDITOR_WIN
-        dir = dir.Replace("/","\\");
-#endif             
-        
+        dir = dir.Replace("/", "\\");
+#endif
+
         switch (toolType) {
             case DCCToolType.AUTODESK_MAYA: {
                 return FindMayaInDirectory(dir, version);
@@ -308,7 +292,7 @@ public static class DCCFinderUtility {
                 throw new NotImplementedException();
         }
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
 
     /// <summary>
@@ -316,27 +300,26 @@ public static class DCCFinderUtility {
     /// </summary>
     /// <returns>A dictionary containing the detected DCC tools, with their paths as keys</returns>
     public static Dictionary<string, DCCToolInfo> FindInstalledDCCTools() {
-        List<string> vendorDirs = GetDefaultVendorDirectories();
-        Dictionary<string, DCCToolInfo> dccPaths = new Dictionary<string, DCCToolInfo>();
-        
-        //From default Folders
-        foreach (string vendorDir in vendorDirs) {
-            foreach (var dcc in MeshSyncEditorConstants.SUPPORTED_DCC_TOOLS_BY_FOLDER) {
-                string dir = Path.Combine(vendorDir, dcc.Key);
-                if (!Directory.Exists(dir))
-                    continue;
-                DCCToolInfo dccToolInfo = dcc.Value;
+        List<string>                    vendorDirs = GetDefaultVendorDirectories();
+        Dictionary<string, DCCToolInfo> dccPaths   = new Dictionary<string, DCCToolInfo>();
 
-                DCCToolInfo foundDCC = FindDCCToolInDirectory(dccToolInfo.Type, dccToolInfo.DCCToolVersion, dir);
-                if (null == foundDCC)
-                    continue;
-                
-                dccPaths.Add(foundDCC.AppPath, foundDCC);
-            }
+        //From default Folders
+        foreach (string vendorDir in vendorDirs)
+        foreach (KeyValuePair<string, DCCToolInfo> dcc in MeshSyncEditorConstants.SUPPORTED_DCC_TOOLS_BY_FOLDER) {
+            string dir = Path.Combine(vendorDir, dcc.Key);
+            if (!Directory.Exists(dir))
+                continue;
+            DCCToolInfo dccToolInfo = dcc.Value;
+
+            DCCToolInfo foundDCC = FindDCCToolInDirectory(dccToolInfo.Type, dccToolInfo.DCCToolVersion, dir);
+            if (null == foundDCC)
+                continue;
+
+            dccPaths.Add(foundDCC.AppPath, foundDCC);
         }
-        
+
         //From default environment vars:
-        foreach (var dcc in DEFAULT_DCC_TOOLS_BY_ENV_VAR) {
+        foreach (KeyValuePair<string, DCCToolInfo> dcc in DEFAULT_DCC_TOOLS_BY_ENV_VAR) {
             string dir = Environment.GetEnvironmentVariable(dcc.Key);
             if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir))
                 continue;
@@ -345,32 +328,30 @@ public static class DCCFinderUtility {
             DCCToolInfo foundDCC = FindDCCToolInDirectory(dccToolInfo.Type, dccToolInfo.DCCToolVersion, dir);
             if (null == foundDCC)
                 continue;
-                
+
             dccPaths.Add(foundDCC.AppPath, foundDCC);
         }
-        
+
         return dccPaths;
     }
-    
+
 
 //----------------------------------------------------------------------------------------------------------------------    
-        
+
     //environment variables
-    static readonly Dictionary<string, DCCToolInfo> DEFAULT_DCC_TOOLS_BY_ENV_VAR = new Dictionary<string, DCCToolInfo>() {
-        { "MAYA_LOCATION_2017", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2017" ) },
-        { "MAYA_LOCATION_2018", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2018" ) },
-        { "MAYA_LOCATION_2019", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2019" ) },
-        { "MAYA_LOCATION_2020", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2020" ) },
-        { "MAYA_LOCATION_2022", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2022" ) },
-        { "ADSK_3DSMAX_SDK_2017", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2017" ) },
-        { "ADSK_3DSMAX_SDK_2018", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2018" ) },
-        { "ADSK_3DSMAX_SDK_2019", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2019" ) },
-        { "ADSK_3DSMAX_SDK_2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020" ) },
-        { "ADSK_3DSMAX_SDK_2021", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2021" ) },
+    private static readonly Dictionary<string, DCCToolInfo> DEFAULT_DCC_TOOLS_BY_ENV_VAR = new Dictionary<string, DCCToolInfo>() {
+        { "MAYA_LOCATION_2017", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2017") },
+        { "MAYA_LOCATION_2018", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2018") },
+        { "MAYA_LOCATION_2019", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2019") },
+        { "MAYA_LOCATION_2020", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2020") },
+        { "MAYA_LOCATION_2022", new DCCToolInfo(DCCToolType.AUTODESK_MAYA, "2022") },
+        { "ADSK_3DSMAX_SDK_2017", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2017") },
+        { "ADSK_3DSMAX_SDK_2018", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2018") },
+        { "ADSK_3DSMAX_SDK_2019", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2019") },
+        { "ADSK_3DSMAX_SDK_2020", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2020") },
+        { "ADSK_3DSMAX_SDK_2021", new DCCToolInfo(DCCToolType.AUTODESK_3DSMAX, "2021") }
     };
 
     private const string UNKNOWN_VERSION = "Unknown";
-
 }
-
 }

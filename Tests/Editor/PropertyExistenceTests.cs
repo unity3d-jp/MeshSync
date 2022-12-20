@@ -2,10 +2,7 @@
 using NUnit.Framework;
 
 namespace Unity.MeshSync.Editor.Tests {
-
-
 internal class PropertyExistenceTests  {
-
 //----------------------------------------------------------------------------------------------------------------------
     [Test]
     public void CheckSceneCacheImporterProperties() {
@@ -18,14 +15,11 @@ internal class PropertyExistenceTests  {
         VerifyMemberExists(typeof(ModelImporterSettings), ModelImporterSettings.MATERIAL_SEARCH_MODE_PROP);
     }
 
-    
-    static void VerifyMemberExists(System.Type type, string memberName) {
+
+    private static void VerifyMemberExists(System.Type type, string memberName) {
         MemberInfo[] m = type.GetMember(memberName, BindingFlags.NonPublic | BindingFlags.Instance);
         Assert.Greater(m.Length, 0);
         Assert.IsNotNull(m[0]);
-        
     }
-    
 }
-
 } //end namespace

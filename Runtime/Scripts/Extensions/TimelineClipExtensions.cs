@@ -4,7 +4,6 @@ using UnityEngine.Timeline;
 
 namespace Unity.MeshSync {
 internal static class TimelineClipExtensions {
-    
     //[TODO-sin: 2022-11-17] Move to FIU
     internal static bool Contains<T>(this IEnumerable<TimelineClip> clips) where T : PlayableAsset {
         foreach (TimelineClip clip in clips) {
@@ -12,6 +11,7 @@ internal static class TimelineClipExtensions {
             if (null != asset)
                 return true;
         }
+
         return false;
     }
 }

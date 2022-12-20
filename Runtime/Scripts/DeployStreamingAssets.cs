@@ -23,7 +23,7 @@ internal static class DeployStreamingAssets {
 
 //----------------------------------------------------------------------------------------------------------------------                
 
-    static bool CopyDirectory(string src, string dst, bool overwrite = false) {
+    private static bool CopyDirectory(string src, string dst, bool overwrite = false) {
         DirectoryInfo dir = new DirectoryInfo(src);
         if (!dir.Exists)
             return false;
@@ -55,7 +55,6 @@ internal static class DeployStreamingAssets {
         return true;
     }
 }
-
 } //end namespace
 
 #endif //UNITY_EDITOR
