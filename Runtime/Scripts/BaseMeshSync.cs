@@ -1191,7 +1191,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 destMat.SetFloat(MeshSyncConstants._ZTestGBuffer, 3);
             }
 #elif AT_USE_URP
-                destMat.SetFloat(MeshSyncConstants._AlphaClip, hasAlpha ? 1 : 0);
+            destMat.SetFloat(MeshSyncConstants._AlphaClip, hasAlpha ? 1 : 0);
 #else
                 if (hasAlpha) {
                     destMat.SetFloat(MeshSyncConstants._Mode, 1);
@@ -1503,7 +1503,6 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #if AT_USE_HDRP
-
     private void UpdatePathTracingState() {
         m_pathTracingExists = false;
         if (!HDRPUtility.IsRayTracingActive())

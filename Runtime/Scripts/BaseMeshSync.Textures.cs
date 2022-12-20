@@ -150,7 +150,7 @@ partial class BaseMeshSync {
 #if AT_USE_HDRP
         return Shader.Find("HDRP/Lit");
 #elif AT_USE_URP
-            return Shader.Find("Universal Render Pipeline/Lit");
+        return Shader.Find("Universal Render Pipeline/Lit");
 #else
             return Shader.Find("Standard");
 #endif
@@ -218,7 +218,7 @@ partial class BaseMeshSync {
 #if AT_USE_HDRP
         SetupGlass_HRDP(mat);
 #elif AT_USE_URP
-            SetupGlass_URP(mat);
+        SetupGlass_URP(mat);
 #else
             SetupGlass_Standard(mat);
 #endif

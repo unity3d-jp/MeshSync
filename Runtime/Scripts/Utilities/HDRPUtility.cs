@@ -1,5 +1,4 @@
 #if AT_USE_HDRP
-
 using System.Collections.Generic;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;

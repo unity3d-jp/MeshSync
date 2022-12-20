@@ -156,11 +156,9 @@ internal static class MapsBaker {
     private static void BakeSmoothness(Material destMat,
         List<TextureHolder> textureHolders,
         Dictionary<int, MaterialPropertyData> materialProperties) {
-        if (!destMat.HasProperty(_SmoothnessTextureChannel)) {
-            return;
-        }
+        if (!destMat.HasProperty(_SmoothnessTextureChannel)) return;
 
-        var smoothnessChannel = destMat.GetInt(_SmoothnessTextureChannel);
+        int smoothnessChannel = destMat.GetInt(_SmoothnessTextureChannel);
 
         Texture2DDisposable rgbTexture;
         int                 channelName;
@@ -188,12 +186,12 @@ internal static class MapsBaker {
         }
 
         GetSmoothnessOrRoughnessMap(
-            materialProperties, 
+            materialProperties,
             textureHolders,
-            out var glossOrRoughTexture,
+            out Texture2DDisposable glossOrRoughTexture,
             out bool usingRoughness,
             ref texturesExist);
-            
+
         // If there are no textures, don't bake anything, slider values can control everything:
         if (!texturesExist) {
             destMat.SetTextureAndReleaseExistingRenderTextures(channelName, null);
@@ -207,21 +205,17 @@ internal static class MapsBaker {
         }
 
         ComputeShaderHelper shader;
-        if (usingRoughness) {
+        if (usingRoughness)
             shader = LoadShader(SHADER_NAME_ROUGHNESS_INTO_ALPHA);
-        }
-        else {
+        else
             shader = LoadShader(SHADER_NAME_SMOOTHNESS_INTO_ALPHA);
-        }
 
-        if (shader == null) {
-            return;
-        }
+        if (shader == null) return;
 
         shader.SetTexture(SHADER_CONST_SMOOTHNESS, glossOrRoughTexture.Texture);
         shader.SetTexture(SHADER_CONST_RGB, rgbTexture.Texture);
 
-        var texture = shader.RenderToTexture(destMat.GetTexture(channelName));
+        RenderTexture texture = shader.RenderToTexture(destMat.GetTexture(channelName));
 
         if (channelName == MeshSyncConstants._MetallicGlossMap) {
             destMat.EnableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
