@@ -11,7 +11,6 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using Unity.FilmInternalUtilities;
-using UnityEngine.ProBuilder.MeshOperations;
 using UnityEngine.Rendering;
 
 #if AT_USE_SPLINES
