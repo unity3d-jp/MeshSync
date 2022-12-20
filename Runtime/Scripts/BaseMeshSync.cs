@@ -1511,7 +1511,9 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             return;
 
         r.rayTracingMode         = UnityEngine.Experimental.Rendering.RayTracingMode.DynamicGeometry;
+#if UNITY_2021_2_OR_NEWER
         m_needToResetPathTracing = true;
+#endif
     }
 #endif
 
@@ -2924,7 +2926,10 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
 #if AT_USE_HDRP
     private bool m_pathTracingExists      = false;
+    
+#if UNITY_2021_2_OR_NEWER
     private bool m_needToResetPathTracing = false;
+#endif    
 #endif
 
 //----------------------------------------------------------------------------------------------------------------------
