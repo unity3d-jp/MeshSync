@@ -11,10 +11,7 @@ using UnityEditor;
 using Unity.FilmInternalUtilities.Editor;
 #endif
 
-namespace Unity.MeshSync
-{
-
-
+namespace Unity.MeshSync {
 /// <summary>
 /// SceneCachePlayer controls the playback of an .sc file that has been exported
 /// using MeshSyncDCCPlugins installed in a DCC Tool.
@@ -22,99 +19,117 @@ namespace Unity.MeshSync
 [ExecuteInEditMode]
 public class SceneCachePlayer : BaseMeshSync {
     #region Types
+
     internal enum TimeUnit {
         Seconds,
-        Frames,
-    }    
+        Frames
+    }
+
     #endregion
 
 
 //----------------------------------------------------------------------------------------------------------------------
-    
-    SceneCachePlayer() : base() {
+
+    private SceneCachePlayer() : base() {
         SetSaveAssetsInScene(false);
         MarkMeshesDynamic(true);
     }
 
     private protected override void InitInternalV() {
-        
     }
 
     private protected override void UpdateMaterialAssetV(MaterialData materialData) {
-        
         ModelImporterSettings modelImporterSettings = m_config.GetModelImporterSettings();
 
-        
+
 #if UNITY_EDITOR
         //Get the settings from the SceneCacheImporter if not set to override
-        if (AssetImporter.GetAtPath(m_sceneCacheFilePath) is IHasModelImporterSettings importer 
-            && !m_overrideModelImporterSettings) 
-        {
+        if (AssetImporter.GetAtPath(m_sceneCacheFilePath) is IHasModelImporterSettings importer
+            && !m_overrideModelImporterSettings)
             modelImporterSettings = importer.GetModelImporterSettings();
-        } 
-#endif            
-        
+#endif
+
         UpdateMaterialAssetByDefault(materialData,  modelImporterSettings);
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
 
     /// <summary>
     /// Force SceneCache to be updated and loaded to scene.
     /// </summary>
     public void ForceUpdate() {
-        LoadSceneCacheToScene(m_time, updateNonMaterialAssets: false);
+        LoadSceneCacheToScene(m_time, false);
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
 
-    internal string GetSceneCacheFilePath() { return m_sceneCacheFilePath; }
-    internal bool IsSceneCacheOpened() { return m_sceneCache;}
+    internal string GetSceneCacheFilePath() {
+        return m_sceneCacheFilePath;
+    }
 
-    internal override MeshSyncPlayerConfig GetConfigV() => m_config;
+    internal bool IsSceneCacheOpened() {
+        return m_sceneCache;
+    }
 
-    internal SceneCachePlaybackMode GetPlaybackMode() { return m_playbackMode; }
+    internal override MeshSyncPlayerConfig GetConfigV() {
+        return m_config;
+    }
 
-    internal void SetPlaybackMode(SceneCachePlaybackMode mode) { m_playbackMode = mode; }
-    
-    internal float GetTime() { return m_time;}
-    internal void SetTime(float time) { m_time = time; }
+    internal SceneCachePlaybackMode GetPlaybackMode() {
+        return m_playbackMode;
+    }
 
-    internal int GetFrame() { return m_frame; }
+    internal void SetPlaybackMode(SceneCachePlaybackMode mode) {
+        m_playbackMode = mode;
+    }
+
+    internal float GetTime() {
+        return m_time;
+    }
+
+    internal void SetTime(float time) {
+        m_time = time;
+    }
+
+    internal int GetFrame() {
+        return m_frame;
+    }
 
     internal void SetTimeByFrame(int frame) {
         if (!m_sceneCache)
             return;
 
-        frame = Mathf.Clamp(frame, 0, m_sceneCache.GetNumScenes());
-        m_time = (float) frame / m_sceneCache.GetSampleRate();
+        frame  = Mathf.Clamp(frame, 0, m_sceneCache.GetNumScenes());
+        m_time = (float)frame / m_sceneCache.GetSampleRate();
     }
-    
-    internal int GetPreloadLength() { return m_preloadLength;}
-    internal void SetPreloadLength(int preloadLength) { m_preloadLength = preloadLength;}
 
-    internal bool IsModelImporterSettingsOverridden() => m_overrideModelImporterSettings;
+    internal int GetPreloadLength() {
+        return m_preloadLength;
+    }
+
+    internal void SetPreloadLength(int preloadLength) {
+        m_preloadLength = preloadLength;
+    }
+
+    internal bool IsModelImporterSettingsOverridden() {
+        return m_overrideModelImporterSettings;
+    }
 
     internal void OverrideModelImporterSettings(bool overrideValue) {
         m_overrideModelImporterSettings = overrideValue;
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
-    
+
     [CanBeNull]
     internal SceneCacheInfo ExtractSceneCacheInfo(bool forceOpen) {
-        
-        if (IsSceneCacheOpened()) {
-            return m_sceneCacheInfo;
-        }
-        
+        if (IsSceneCacheOpened()) return m_sceneCacheInfo;
+
         if (!forceOpen)
             return null;
-        
+
         SceneCacheData tempSceneCache = SceneCacheData.Open(m_sceneCacheFilePath);
-        if (!tempSceneCache) {
-            return null;
-        }
+        if (!tempSceneCache) return null;
 
         SceneCacheInfo ret = new SceneCacheInfo();
         UpdateSceneCacheInfo(ret, tempSceneCache);
@@ -122,58 +137,70 @@ public class SceneCachePlayer : BaseMeshSync {
 
         return ret;
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
+
     #region Properties
-    
+
 #if UNITY_EDITOR
 
-    internal bool IsCacheFileShownInInspector()       => m_showCacheFileInInspector;
-    internal void ShowCacheFileInInspector(bool show) { m_showCacheFileInInspector = show; }
+    internal bool IsCacheFileShownInInspector() {
+        return m_showCacheFileInInspector;
+    }
 
-    internal bool IsPlaybackInInspectorShown()       => m_showPlaybackInInspector;
-    internal void ShowPlaybackInInspector(bool show) { m_showPlaybackInInspector = show; }
+    internal void ShowCacheFileInInspector(bool show) {
+        m_showCacheFileInInspector = show;
+    }
 
-    internal bool IsInfoInInspectorShown()      => m_showInfoInInspector;
-    internal void ShowInfoInInspector(bool show) { m_showInfoInInspector = show; }
-    
+    internal bool IsPlaybackInInspectorShown() {
+        return m_showPlaybackInInspector;
+    }
+
+    internal void ShowPlaybackInInspector(bool show) {
+        m_showPlaybackInInspector = show;
+    }
+
+    internal bool IsInfoInInspectorShown() {
+        return m_showInfoInInspector;
+    }
+
+    internal void ShowInfoInInspector(bool show) {
+        m_showInfoInInspector = show;
+    }
+
 
     internal string dbgProfileReport {
         get { return m_dbgProfileReport; }
     }
 #endif
+
     #endregion
 
     #region Internal Methods
 
-#if UNITY_EDITOR    
+#if UNITY_EDITOR
     internal bool OpenCacheInEditor(string path) {
-        
-        string normalizedPath = System.IO.Path.GetFullPath(path).Replace('\\','/');
+        string normalizedPath = System.IO.Path.GetFullPath(path).Replace('\\', '/');
         normalizedPath = AssetEditorUtility.NormalizePath(normalizedPath);
 
-        if (!OpenCacheInternal(normalizedPath, updateNonMaterialAssets: true)) {
-            return false;
-        }
-        
+        if (!OpenCacheInternal(normalizedPath, true)) return false;
+
         ExportMaterials(false, true);
 
         if (m_sceneCache) {
             SceneData scene = LoadSceneData(m_loadedTime, out _);
             //[TODO-sin: 2022-3-9] Review if this code is necessary.
             //Was added in commit  b60337aff38e55febf81a9b7c741458eff34a919 on August 18, 2019.
-            if (scene && !scene.submeshesHaveUniqueMaterial) {
-                m_config.SyncMaterialList = false;
-            }
+            if (scene && !scene.submeshesHaveUniqueMaterial) m_config.SyncMaterialList = false;
         }
-        
-        return true;
-    }   
 
-    void SavePrefabInEditor() {
+        return true;
+    }
+
+    private void SavePrefabInEditor() {
         PrefabUtility.RecordPrefabInstancePropertyModifications(this);
     }
-    
+
 #endif //UNITY_EDITOR    
 
 //----------------------------------------------------------------------------------------------------------------------    
@@ -184,13 +211,13 @@ public class SceneCachePlayer : BaseMeshSync {
         m_sceneCache = SceneCacheData.Open(path);
         if (!m_sceneCache) {
             Debug.LogError($"SceneCachePlayer: cache open failed ({path})");
-            return false;            
+            return false;
         }
 
         m_sceneCacheFilePath = path;
-        
+
         UpdateSceneCacheInfo(m_sceneCacheInfo, m_sceneCache);
-        
+
 #if UNITY_EDITOR
         SetSortEntities(true);
 #endif
@@ -198,52 +225,50 @@ public class SceneCachePlayer : BaseMeshSync {
 
         //[Note-sin: 2021-7-19] Time/Frame 0 must be loaded first, because the data of other frames might contain "No change from frame 0" 
         LoadSceneCacheToScene(0, updateNonMaterialAssets);
-        
+
         return true;
     }
 
-    private static void UpdateSceneCacheInfo( SceneCacheInfo scInfo, SceneCacheData scData) {
+    private static void UpdateSceneCacheInfo(SceneCacheInfo scInfo, SceneCacheData scData) {
         Assert.IsTrue(scData);
-        
+
         scInfo.sampleRate = scData.GetSampleRate();
         scInfo.timeCurve  = scData.GetTimeCurve(InterpolationMode.Constant);
         scInfo.timeRange  = scData.GetTimeRange();
 
         float duration = scInfo.timeRange.GetDuration();
-        scInfo.numFrames = Mathf.Min((int) Mathf.Floor(duration * scInfo.sampleRate), scData.GetNumScenes());
-        
+        scInfo.numFrames = Mathf.Min((int)Mathf.Floor(duration * scInfo.sampleRate), scData.GetNumScenes());
     }
-    
+
     internal void CloseCache() {
         if (m_sceneCache) {
             m_sceneCache.Close();
             m_sceneCacheInfo.Reset();
             LogDebug($"SceneCachePlayer: cache closed ({m_sceneCacheFilePath})");
         }
+
         m_loadedTime = -1;
     }
 
-    
+
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     private void UpdatePlayer(bool updateNonMaterialAssets) {
+        if (!m_sceneCache) return;
 
-        if (!m_sceneCache) {
-            return;
-        }
-        
         if (m_time != m_loadedTime) {
             LoadSceneCacheToScene(m_time, updateNonMaterialAssets);
-        } else if(m_sceneCache.GetPreloadLength() != m_preloadLength) {
+        }
+        else if (m_sceneCache.GetPreloadLength() != m_preloadLength) {
             m_sceneCache.SetPreloadLength(m_preloadLength);
             m_sceneCache.Preload(m_sceneCache.GetFrame(m_time));
         }
-
     }
+
     #endregion
 
 
-    void LoadSceneCacheToScene(float time, bool updateNonMaterialAssets) {
+    private void LoadSceneCacheToScene(float time, bool updateNonMaterialAssets) {
         m_sceneCache.SetPreloadLength(m_preloadLength);
 #if UNITY_EDITOR
         ulong sceneGetBegin = Misc.GetTimeNS();
@@ -251,7 +276,7 @@ public class SceneCachePlayer : BaseMeshSync {
 
         SceneData scene = LoadSceneData(time, out m_frame);
         m_loadedTime = time;
-        
+
         // get scene
 #if UNITY_EDITOR
         m_dbgSceneGetTime = Misc.NS2MS(Misc.GetTimeNS() - sceneGetBegin);
@@ -261,11 +286,11 @@ public class SceneCachePlayer : BaseMeshSync {
 #if UNITY_EDITOR
             ulong sceneUpdateBegin = Misc.GetTimeNS();
 #endif
-            
+
             // update scene
-            this.BeforeUpdateScene();
-            this.UpdateScene(scene, updateNonMaterialAssets, logAnalytics: false);
-            this.AfterUpdateScene();
+            BeforeUpdateScene();
+            UpdateScene(scene, updateNonMaterialAssets, false);
+            AfterUpdateScene();
 #if UNITY_EDITOR
             SetSortEntities(false);
 
@@ -279,7 +304,7 @@ public class SceneCachePlayer : BaseMeshSync {
 
     //frame: the frame that corresponds to the time parameter, if applicable
     private SceneData LoadSceneData(float time, out int frame) {
-        SceneData scene = default(SceneData);
+        SceneData scene = default;
         frame = m_frame; //no change by default        
         switch (m_playbackMode) {
             case SceneCachePlaybackMode.SnapToPreviousFrame: {
@@ -294,10 +319,11 @@ public class SceneCachePlayer : BaseMeshSync {
                 break;
             }
             case SceneCachePlaybackMode.Interpolate: {
-                scene = m_sceneCache.LoadByTime(m_time, lerp: true);
+                scene = m_sceneCache.LoadByTime(m_time, true);
                 break;
             }
         }
+
         return scene;
     }
 
@@ -339,33 +365,33 @@ public class SceneCachePlayer : BaseMeshSync {
         }
     }
 
-    
+
     private static int CalculateFrameByFloor(float time, SceneCacheInfo scInfo, LimitedAnimationController controller) {
         int frame = Mathf.FloorToInt(time * scInfo.sampleRate);
         frame = controller.Apply(frame);
-        frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
+        frame = Mathf.Clamp(frame, 0, scInfo.numFrames - 1);
         return frame;
     }
 
     private static int CalculateFrameByRound(float time, SceneCacheInfo scInfo, LimitedAnimationController controller) {
         int frame = Mathf.RoundToInt(time * scInfo.sampleRate);
         frame = controller.Apply(frame);
-        frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
+        frame = Mathf.Clamp(frame, 0, scInfo.numFrames - 1);
         return frame;
     }
 
     private static int CalculateFrameByFloor(float time, SceneCacheInfo scInfo) {
         int frame = Mathf.FloorToInt(time * scInfo.sampleRate);
-        frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
+        frame = Mathf.Clamp(frame, 0, scInfo.numFrames - 1);
         return frame;
     }
 
     private static int CalculateFrameByRound(float time, SceneCacheInfo scInfo) {
         int frame = Mathf.RoundToInt(time * scInfo.sampleRate);
-        frame = Mathf.Clamp(frame, 0, scInfo.numFrames-1);
+        frame = Mathf.Clamp(frame, 0, scInfo.numFrames - 1);
         return frame;
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
     internal bool IsLimitedAnimationOverrideable() {
         if (m_playbackMode == SceneCachePlaybackMode.Interpolate)
@@ -377,46 +403,40 @@ public class SceneCachePlayer : BaseMeshSync {
     internal void AllowLimitedAnimationOverride() {
         if (m_playbackMode == SceneCachePlaybackMode.Interpolate)
             m_playbackMode = SceneCachePlaybackMode.SnapToNearestFrame;
-
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
 
     private protected override void OnBeforeSerializeMeshSyncPlayerV() {
-        m_sceneCachePlayerVersion = CUR_SCENE_CACHE_PLAYER_VERSION;        
+        m_sceneCachePlayerVersion = CUR_SCENE_CACHE_PLAYER_VERSION;
     }
 
     private protected override void OnAfterDeserializeMeshSyncPlayerV() {
-
         if (m_sceneCachePlayerVersion == CUR_SCENE_CACHE_PLAYER_VERSION)
             return;
-        
+
 #if UNITY_EDITOR
-        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.NormalizedPath_0_9_2) {
+        if (m_sceneCachePlayerVersion < (int)SceneCachePlayerVersion.NormalizedPath_0_9_2)
             m_sceneCacheFilePath = AssetEditorUtility.NormalizePath(m_sceneCacheFilePath);
-        } 
-#pragma warning disable 612 
-        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.PlaybackMode_0_12_0 
-            && m_timeUnit == TimeUnit.Frames) 
-        {
+#pragma warning disable 612
+        if (m_sceneCachePlayerVersion < (int)SceneCachePlayerVersion.PlaybackMode_0_12_0
+            && m_timeUnit == TimeUnit.Frames)
             m_timeUnit = TimeUnit.Seconds;
-        }
 #pragma warning restore 612
 
-        if (m_sceneCachePlayerVersion < (int) SceneCachePlayerVersion.RemoveAnimator_0_16_0) {
+        if (m_sceneCachePlayerVersion < (int)SceneCachePlayerVersion.RemoveAnimator_0_16_0)
             Debug.LogWarning("[MeshSync] SceneCachePlayer no longer requires Animator component. Please remove it if applicable.");
-        }
 #endif
-        
+
         m_sceneCachePlayerVersion = CUR_SCENE_CACHE_PLAYER_VERSION;
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
-    
+
 
 #if UNITY_EDITOR
-    void UpdateProfileReport(SceneData data) {
-        StringBuilder sb = new System.Text.StringBuilder();
+    private void UpdateProfileReport(SceneData data) {
+        StringBuilder    sb   = new StringBuilder();
         SceneProfileData prof = data.profileData;
         sb.AppendFormat("Scene Get: {0:#.##}ms\n", m_dbgSceneGetTime);
         sb.AppendFormat("Scene Update: {0:#.##}ms\n", m_dbgSceneUpdateTime);
@@ -433,7 +453,7 @@ public class SceneCachePlayer : BaseMeshSync {
             sb.AppendFormat("{0} verts\n", prof.vertexCount);
         }
         sb.AppendFormat("Cache Load: {0:#.##}ms\n", prof.loadTime);
-        double MBperSec = ((double)prof.sizeEncoded / 1000000.0) / (prof.readTime / 1000.0);
+        double MBperSec = (double)prof.sizeEncoded / 1000000.0 / (prof.readTime / 1000.0);
         sb.AppendFormat("  Cache Read: {0:#.##}ms ({1:#.##}MB/sec)\n", prof.readTime, MBperSec);
         sb.AppendFormat("  Cache Decode: {0:#.##}ms (total of worker threads)\n", prof.decodeTime);
         if (prof.setupTime > 0)
@@ -443,37 +463,38 @@ public class SceneCachePlayer : BaseMeshSync {
         m_dbgProfileReport = sb.ToString();
     }
 
-    
+
 #endif //UNITY_EDITOR
-    
+
 //----------------------------------------------------------------------------------------------------------------------
 
-    void LogDebug(string logMessage) {
+    private void LogDebug(string logMessage) {
         if (!m_config.Logging)
             return;
 
-        Debug.Log(logMessage); 
-    }
-    
-//----------------------------------------------------------------------------------------------------------------------
-    
-    float ClampTime(float time) {
-        return Mathf.Clamp(time, m_sceneCacheInfo.timeRange.start, m_sceneCacheInfo.timeRange.end);
-    }
-    
-//----------------------------------------------------------------------------------------------------------------------
-    
-    #region Events
-#if UNITY_EDITOR
-    void Reset() {
-        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance(); 
-        m_config = new SceneCachePlayerConfig(projectSettings.GetDefaultSceneCachePlayerConfig());            
+        Debug.Log(logMessage);
     }
 
-    void OnValidate() {
+//----------------------------------------------------------------------------------------------------------------------
+
+    private float ClampTime(float time) {
+        return Mathf.Clamp(time, m_sceneCacheInfo.timeRange.start, m_sceneCacheInfo.timeRange.end);
+    }
+
+//----------------------------------------------------------------------------------------------------------------------
+
+    #region Events
+
+#if UNITY_EDITOR
+    private void Reset() {
+        MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
+        m_config = new SceneCachePlayerConfig(projectSettings.GetDefaultSceneCachePlayerConfig());
+    }
+
+    private void OnValidate() {
         if (!m_sceneCache)
             return;
-        
+
         m_time = ClampTime(m_time);
     }
 #endif
@@ -481,87 +502,85 @@ public class SceneCachePlayer : BaseMeshSync {
 //----------------------------------------------------------------------------------------------------------------------    
     private protected override void OnEnable() {
         base.OnEnable();
-        
+
 #if UNITY_EDITOR
-        m_onMaterialChangedInSceneViewCB += SavePrefabInEditor; 
+        m_onMaterialChangedInSceneViewCB += SavePrefabInEditor;
 #endif
-        
-        if (!string.IsNullOrEmpty(m_sceneCacheFilePath)) {
-            OpenCacheInternal(m_sceneCacheFilePath, updateNonMaterialAssets: false);
-        }
+
+        if (!string.IsNullOrEmpty(m_sceneCacheFilePath)) OpenCacheInternal(m_sceneCacheFilePath, false);
 
         if (!m_sceneCache)
             return;
-        
-        m_time = ClampTime(m_time);        
+
+        m_time = ClampTime(m_time);
     }
 
     private protected override void OnDisable() {
         base.OnDisable();
 #if UNITY_EDITOR
-        m_onMaterialChangedInSceneViewCB -= SavePrefabInEditor; 
+        m_onMaterialChangedInSceneViewCB -= SavePrefabInEditor;
 #endif
-        
+
         CloseCache();
     }
 
     // note:
     // Update() is called *before* animation update.
     // in many cases m_time is controlled by animation system. so scene update must be handled in LateUpdate()
-    void LateUpdate() {
-        UpdatePlayer( updateNonMaterialAssets: false);
+    private void LateUpdate() {
+        UpdatePlayer(false);
     }
+
     #endregion //Events
 
 //----------------------------------------------------------------------------------------------------------------------
-    
-    [SerializeField] private string   m_sceneCacheFilePath = null; //The full path of the file. Use '/'
-    
-    [Obsolete]
-    [SerializeField] private TimeUnit m_timeUnit = TimeUnit.Seconds;
-    
+
+    [SerializeField] private string m_sceneCacheFilePath = null; //The full path of the file. Use '/'
+
+    [Obsolete] [SerializeField] private TimeUnit m_timeUnit = TimeUnit.Seconds;
+
     [SerializeField] private SceneCachePlaybackMode m_playbackMode = SceneCachePlaybackMode.SnapToNearestFrame;
-    
-    [SerializeField] float     m_time;
-    [SerializeField] int       m_preloadLength = 1;
+
+    [SerializeField] private float m_time;
+    [SerializeField] private int   m_preloadLength = 1;
 
     [SerializeField] private SceneCachePlayerConfig m_config;
 
     //Foldout settings
-    [SerializeField] bool m_showCacheFileInInspector = true; 
-    [SerializeField] bool m_showPlaybackInInspector = true;
-    [SerializeField] bool m_showInfoInInspector = false;
-    
-    //only used when the sceneCacheFilePath has a valid importer (under Assets)
-    [SerializeField] bool m_overrideModelImporterSettings = false;
-    
-    //Renamed in 0.10.x-preview
-    [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_sceneCachePlayerVersion = (int) SceneCachePlayerVersion.NoVersioning;
-    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int) SceneCachePlayerVersion.RemoveAnimator_0_16_0;
-        
-    SceneCacheData m_sceneCache;
+    [SerializeField] private bool m_showCacheFileInInspector = true;
+    [SerializeField] private bool m_showPlaybackInInspector  = true;
+    [SerializeField] private bool m_showInfoInInspector      = false;
 
-    private readonly SceneCacheInfo m_sceneCacheInfo = new SceneCacheInfo(); 
-        
-    int            m_frame      = 0;
-    float          m_loadedTime = -1;
-    
+    //only used when the sceneCacheFilePath has a valid importer (under Assets)
+    [SerializeField] private bool m_overrideModelImporterSettings = false;
+
+    //Renamed in 0.10.x-preview
+    [FormerlySerializedAs("m_version")] [HideInInspector] [SerializeField]
+    private int m_sceneCachePlayerVersion = (int)SceneCachePlayerVersion.NoVersioning;
+
+    private const int CUR_SCENE_CACHE_PLAYER_VERSION = (int)SceneCachePlayerVersion.RemoveAnimator_0_16_0;
+
+    private SceneCacheData m_sceneCache;
+
+    private readonly SceneCacheInfo m_sceneCacheInfo = new SceneCacheInfo();
+
+    private int   m_frame      = 0;
+    private float m_loadedTime = -1;
+
 #if UNITY_EDITOR
-    float                 m_dbgSceneGetTime;
-    float                 m_dbgSceneUpdateTime;
-    string                m_dbgProfileReport;
+    private float  m_dbgSceneGetTime;
+    private float  m_dbgSceneUpdateTime;
+    private string m_dbgProfileReport;
 #endif
 
 //----------------------------------------------------------------------------------------------------------------------    
-    
-    enum SceneCachePlayerVersion {
+
+    private enum SceneCachePlayerVersion {
         NoVersioning          = 0, //Didn't have versioning in earlier versions
         StringPath_0_4_0      = 2, //0.4.0-preview: the path is declared as a string 
         NormalizedPath_0_9_2  = 3, //0.9.2-preview: Path must be normalized by default 
         PlaybackMode_0_12_0   = 4, //0.12.0-preview: integrate frame/time unit and interpolation into playback mode  
-        RemoveAnimator_0_16_0 = 5, //0.16.0-preview. Animator is removed, and animating has to be performed via Timeline  
+        RemoveAnimator_0_16_0 = 5  //0.16.0-preview. Animator is removed, and animating has to be performed via Timeline  
     }
-    
 }
-
 } //end namespace
