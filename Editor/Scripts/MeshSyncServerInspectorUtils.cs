@@ -189,7 +189,7 @@ internal static class MeshSyncServerInspectorUtils {
         }
     }
 
-    internal static IDCCLauncher GetLauncherForAsset(UnityEngine.Object asset) {
+    internal static IDCCLauncher GetLauncherForAsset(Object asset) {
         if (asset == null) return null;
 
         string assetPath = AssetDatabase.GetAssetPath(asset);
