@@ -152,7 +152,7 @@ partial class BaseMeshSync {
 #elif AT_USE_URP
         return Shader.Find("Universal Render Pipeline/Lit");
 #else
-            return Shader.Find("Standard");
+        return Shader.Find("Standard");
 #endif
     }
 
@@ -220,7 +220,7 @@ partial class BaseMeshSync {
 #elif AT_USE_URP
         SetupGlass_URP(mat);
 #else
-            SetupGlass_Standard(mat);
+        SetupGlass_Standard(mat);
 #endif
     }
 

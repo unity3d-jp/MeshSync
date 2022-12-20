@@ -137,7 +137,7 @@ internal struct Server {
 
 #if AT_USE_PROBUILDER
     [DllImport(Lib.name)]
-    static extern void msServerSendMesh(IntPtr self, MeshData data);
+    private static extern void msServerSendMesh(IntPtr self, MeshData data);
 #endif
 
     [DllImport(Lib.name)]
@@ -221,8 +221,7 @@ internal struct Server {
 #endif
 
 #if AT_USE_PROBUILDER
-    public void SendMesh(MeshData data)
-    {
+    public void SendMesh(MeshData data) {
         msServerSendMesh(self, data);
     }
 #endif

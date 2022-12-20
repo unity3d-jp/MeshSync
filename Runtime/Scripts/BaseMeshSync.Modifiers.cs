@@ -369,13 +369,12 @@ partial class BaseMeshSync {
     }
 
 #if AT_USE_PROBUILDER
-        [SerializeField]
-        private bool useProBuilder;
+    [SerializeField] private bool useProBuilder;
 
-        internal virtual bool UseProBuilder {
-            get => useProBuilder;
-            set => useProBuilder = value;
-        }
+    internal virtual bool UseProBuilder {
+        get { return useProBuilder; }
+        set { useProBuilder = value; }
+    }
 #endif
 
     private void UpdateProperties(SceneData scene) {
