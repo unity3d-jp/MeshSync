@@ -4,9 +4,22 @@ using Unity.FilmInternalUtilities.Editor;
 using UnityEngine.TestTools;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
+using UnityEngine;
 
 namespace Unity.MeshSync.Editor.Tests {
 internal class PluginEditorTests {
+    
+    //Skip OSXPlayer because we don't have a OSXUniversal bundle for mscore 
+    [Test]
+    [UnityPlatform(RuntimePlatform.WindowsPlayer, RuntimePlatform.WindowsEditor, RuntimePlatform.LinuxPlayer,
+        RuntimePlatform.LinuxEditor, RuntimePlatform.OSXEditor)]
+    public void CheckVersionValidity() {
+        string version = Lib.GetPluginVersion();
+        Assert.IsTrue(PackageVersion.TryParse(version, out _));
+    }
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+    
     [UnityTest]
     public IEnumerator CheckPluginVersionCompatibility() {
         ListRequest list = Client.List(true, false);
@@ -40,6 +53,6 @@ internal class PluginEditorTests {
         }
     }
 
-//----------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 }
 } //end namespace
