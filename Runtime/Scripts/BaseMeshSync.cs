@@ -364,13 +364,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
         if (m_baseMeshSyncVersion < (int)BaseMeshSyncVersion.INITIAL_0_10_0) {
 #pragma warning disable 612
-            foreach (MaterialHolder m in m_materialList) {
-                if (m.materialIID != 0)
-                    continue;
-
-                m.ShouldApplyMaterialData = false;
-            }
-
+            
             MeshSyncPlayerConfig config = GetConfigV();
             config?.UsePhysicalCameraParams(m_usePhysicalCameraParams);
 #pragma warning restore 612
