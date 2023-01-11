@@ -142,7 +142,7 @@ partial class MeshSyncServer {
             }
 
             if (needsUserScriptCallback) {
-                MeshSyncLogger.VerboseLog("Sending changes, needed client sync.");
+                MeshSyncLogger.VerboseLog("Sending changes, needed user script callback.");
                 needsUserScriptCallback = false;
                 sendChanges             = true;
                 m_server.RequestUserScriptCallback();
