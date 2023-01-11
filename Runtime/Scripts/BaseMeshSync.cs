@@ -1034,6 +1034,9 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
         if (dst == null || dst.material == null)
             return;
+        
+        if (GetConfigV().OverwriteMaterials)
+            dst.ShouldApplyMaterialData = true;
 
         dst.name  = materialName;
         dst.index = src.index;
