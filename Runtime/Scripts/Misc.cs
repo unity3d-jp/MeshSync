@@ -15,10 +15,10 @@ internal static class Misc {
     #region internal
 
     [DllImport(Lib.name)]
-    static extern ulong msGetTime();
+    private static extern ulong msGetTime();
 
     [DllImport(Lib.name)]
-    static extern int msKeyframeReduction(Keyframe[] keys, int keyCount, float threshold, byte eraseFlatCurves);
+    private static extern int msKeyframeReduction(Keyframe[] keys, int keyCount, float threshold, byte eraseFlatCurves);
 
     #endregion
 
@@ -39,14 +39,15 @@ internal static class Misc {
     }
 
     public static string SanitizeFileName(string name) {
-        var reg = new Regex("[:<>|\\*\\?]");
+        Regex reg = new Regex("[:<>|\\*\\?]");
         return reg.Replace(name, "_");
     }
 
     public static void Resize<T>(List<T> list, int n) where T : new() {
         int cur = list.Count;
-        if (n < cur)
+        if (n < cur) {
             list.RemoveRange(n, cur - n);
+        }
         else if (n > cur) {
             if (n > list.Capacity)
                 list.Capacity = n;
@@ -57,26 +58,26 @@ internal static class Misc {
     }
 
     public static T GetOrAddComponent<T>(GameObject go) where T : Component {
-        var ret = go.GetComponent<T>();
+        T ret = go.GetComponent<T>();
         if (ret == null)
             ret = go.AddComponent<T>();
         return ret;
     }
 
     public static Component GetOrAddComponent(GameObject go, Type type) {
-        var ret = go.GetComponent(type);
+        Component ret = go.GetComponent(type);
         if (ret == null)
             ret = go.AddComponent(type);
         return ret;
     }
 
 #if UNITY_EDITOR
-    
+
     //[TODO-sin: 2022-3-14] Check if msKeyframeReduction is used
     private static Keyframe[] KeyframeReduction(Keyframe[] keys, float threshold, bool eraseFlatCurves) {
         AnimationClipData.Prepare();
-        int newCount = msKeyframeReduction(keys, keys.Length, threshold, ToByte(eraseFlatCurves));
-        var newKeys  = new Keyframe[newCount];
+        int        newCount = msKeyframeReduction(keys, keys.Length, threshold, ToByte(eraseFlatCurves));
+        Keyframe[] newKeys  = new Keyframe[newCount];
         if (newCount > 0)
             Array.Copy(keys, newKeys, newCount);
         return newKeys;
@@ -111,21 +112,21 @@ internal static class Misc {
     // - otherwise copy with rename (e.g. hoge.png -> hoge2.png)
     // return destination path
     public static string CopyFileToStreamingAssets(string srcPath) {
-        if (!System.IO.File.Exists(srcPath))
+        if (!File.Exists(srcPath))
             return null; // srcPath doesn't exist
 
         string streamingAssetsPath = Application.streamingAssetsPath;
         if (srcPath.Contains(streamingAssetsPath))
             return srcPath; // srcPath is already in StreamingAssets
 
-        string filename = System.IO.Path.GetFileNameWithoutExtension(srcPath);
-        string ext      = System.IO.Path.GetExtension(srcPath);
+        string filename = Path.GetFileNameWithoutExtension(srcPath);
+        string ext      = Path.GetExtension(srcPath);
         for (int n = 1;; ++n) {
             string ns      = n == 1 ? "" : n.ToString();
             string dstPath = string.Format("{0}/{1}{2}{3}", streamingAssetsPath, filename, ns, ext);
-            if (System.IO.File.Exists(dstPath)) {
-                FileInfo srcInfo = new System.IO.FileInfo(srcPath);
-                FileInfo dstInfo = new System.IO.FileInfo(dstPath);
+            if (File.Exists(dstPath)) {
+                FileInfo srcInfo = new FileInfo(srcPath);
+                FileInfo dstInfo = new FileInfo(dstPath);
                 bool identical =
                     srcInfo.Length == dstInfo.Length &&
                     srcInfo.LastWriteTime == dstInfo.LastWriteTime;
@@ -138,7 +139,7 @@ internal static class Misc {
             }
             else {
                 // do copy
-                System.IO.File.Copy(srcPath, dstPath);
+                File.Copy(srcPath, dstPath);
                 Debug.Log($"CopyFileToStreamingAssets: copy {srcPath} -> {dstPath}");
                 AssetDatabase.Refresh();
                 return dstPath;
@@ -149,21 +150,21 @@ internal static class Misc {
 //----------------------------------------------------------------------------------------------------------------------        
 
     public static string MoveFileToStreamingAssets(string srcPath) {
-        if (!System.IO.File.Exists(srcPath))
+        if (!File.Exists(srcPath))
             return null; // srcPath doesn't exist
 
-        var streaminAssetsPath = Application.streamingAssetsPath;
+        string streaminAssetsPath = Application.streamingAssetsPath;
         if (srcPath.Contains(streaminAssetsPath))
             return srcPath; // srcPath is already in StreamingAssets
 
-        var filename = System.IO.Path.GetFileNameWithoutExtension(srcPath);
-        var ext      = System.IO.Path.GetExtension(srcPath);
+        string filename = Path.GetFileNameWithoutExtension(srcPath);
+        string ext      = Path.GetExtension(srcPath);
         for (int n = 1;; ++n) {
-            var ns      = n == 1 ? "" : n.ToString();
-            var dstPath = string.Format("{0}/{1}{2}{3}", streaminAssetsPath, filename, ns, ext);
-            if (System.IO.File.Exists(dstPath)) {
-                var srcInfo = new System.IO.FileInfo(srcPath);
-                var dstInfo = new System.IO.FileInfo(dstPath);
+            string ns      = n == 1 ? "" : n.ToString();
+            string dstPath = string.Format("{0}/{1}{2}{3}", streaminAssetsPath, filename, ns, ext);
+            if (File.Exists(dstPath)) {
+                FileInfo srcInfo = new FileInfo(srcPath);
+                FileInfo dstInfo = new FileInfo(dstPath);
                 bool identical =
                     srcInfo.Length == dstInfo.Length &&
                     srcInfo.LastWriteTime == dstInfo.LastWriteTime;
@@ -173,12 +174,13 @@ internal static class Misc {
                         string.Format("MoveFileToStreamingAssets: use existing file {0} -> {1}", srcPath, dstPath));
                     return dstPath;
                 }
-                else
+                else {
                     continue;
+                }
             }
             else {
                 // do move
-                System.IO.File.Move(srcPath, dstPath);
+                File.Move(srcPath, dstPath);
                 Debug.Log(string.Format("MoveFileToStreamingAssets: move {0} -> {1}", srcPath, dstPath));
                 return dstPath;
             }
@@ -190,21 +192,19 @@ internal static class Misc {
     [CanBeNull]
     public static T OverwriteOrCreateAsset<T>(T asset, string path) where T : UnityEngine.Object {
         try {
-            path = Misc.SanitizeFileName(path);
+            path = SanitizeFileName(path);
 
-                // If it's an existing asset but the path doesn't match, make a copy of it for the new path:
-                if (AssetDatabase.Contains(asset))
-                {
-                    var assetPath = Path.GetFullPath(AssetDatabase.GetAssetPath(asset));
-                    var fullPath = Path.GetFullPath(path);
+            // If it's an existing asset but the path doesn't match, make a copy of it for the new path:
+            if (AssetDatabase.Contains(asset)) {
+                string assetPath = Path.GetFullPath(AssetDatabase.GetAssetPath(asset));
+                string fullPath  = Path.GetFullPath(path);
 
-                    if (assetPath != fullPath)
-                    {
-                        var newAsset = UnityEngine.Object.Instantiate(asset);
-                        newAsset.name = asset.name;
-                        asset = newAsset;
-                    }
+                if (assetPath != fullPath) {
+                    T newAsset = UnityEngine.Object.Instantiate(asset);
+                    newAsset.name = asset.name;
+                    asset         = newAsset;
                 }
+            }
 
             // to keep meta, rewrite the existing one if already exists.
             T loadedAsset = AssetDatabase.LoadAssetAtPath<T>(path);
@@ -226,78 +226,77 @@ internal static class Misc {
 
     internal static UnityEngine.TextureFormat ToUnityTextureFormat(TextureFormat v) {
         switch (v) {
-            case TextureFormat.Ru8: return UnityEngine.TextureFormat.R8;
-            case TextureFormat.RGu8: return UnityEngine.TextureFormat.RG16;
-            case TextureFormat.RGBu8: return UnityEngine.TextureFormat.RGB24;
-            case TextureFormat.RGBAu8: return UnityEngine.TextureFormat.RGBA32;
-            case TextureFormat.Rf16: return UnityEngine.TextureFormat.RHalf;
-            case TextureFormat.RGf16: return UnityEngine.TextureFormat.RGHalf;
+            case TextureFormat.Ru8:     return UnityEngine.TextureFormat.R8;
+            case TextureFormat.RGu8:    return UnityEngine.TextureFormat.RG16;
+            case TextureFormat.RGBu8:   return UnityEngine.TextureFormat.RGB24;
+            case TextureFormat.RGBAu8:  return UnityEngine.TextureFormat.RGBA32;
+            case TextureFormat.Rf16:    return UnityEngine.TextureFormat.RHalf;
+            case TextureFormat.RGf16:   return UnityEngine.TextureFormat.RGHalf;
             case TextureFormat.RGBAf16: return UnityEngine.TextureFormat.RGBAHalf;
-            case TextureFormat.Rf32: return UnityEngine.TextureFormat.RFloat;
-            case TextureFormat.RGf32: return UnityEngine.TextureFormat.RGFloat;
+            case TextureFormat.Rf32:    return UnityEngine.TextureFormat.RFloat;
+            case TextureFormat.RGf32:   return UnityEngine.TextureFormat.RGFloat;
             case TextureFormat.RGBAf32: return UnityEngine.TextureFormat.RGBAFloat;
-            default: return UnityEngine.TextureFormat.Alpha8;
+            default:                    return UnityEngine.TextureFormat.Alpha8;
         }
     }
 
     internal static TextureFormat ToMSTextureFormat(UnityEngine.TextureFormat v) {
         switch (v) {
-            case UnityEngine.TextureFormat.R8: return TextureFormat.Ru8;
-            case UnityEngine.TextureFormat.RG16: return TextureFormat.RGu8;
-            case UnityEngine.TextureFormat.RGB24: return TextureFormat.RGBu8;
-            case UnityEngine.TextureFormat.RGBA32: return TextureFormat.RGBAu8;
-            case UnityEngine.TextureFormat.RHalf: return TextureFormat.Rf16;
-            case UnityEngine.TextureFormat.RGHalf: return TextureFormat.RGf16;
-            case UnityEngine.TextureFormat.RGBAHalf: return TextureFormat.RGBAf16;
-            case UnityEngine.TextureFormat.RFloat: return TextureFormat.Rf32;
-            case UnityEngine.TextureFormat.RGFloat: return TextureFormat.RGf32;
+            case UnityEngine.TextureFormat.R8:        return TextureFormat.Ru8;
+            case UnityEngine.TextureFormat.RG16:      return TextureFormat.RGu8;
+            case UnityEngine.TextureFormat.RGB24:     return TextureFormat.RGBu8;
+            case UnityEngine.TextureFormat.RGBA32:    return TextureFormat.RGBAu8;
+            case UnityEngine.TextureFormat.RHalf:     return TextureFormat.Rf16;
+            case UnityEngine.TextureFormat.RGHalf:    return TextureFormat.RGf16;
+            case UnityEngine.TextureFormat.RGBAHalf:  return TextureFormat.RGBAf16;
+            case UnityEngine.TextureFormat.RFloat:    return TextureFormat.Rf32;
+            case UnityEngine.TextureFormat.RGFloat:   return TextureFormat.RGf32;
             case UnityEngine.TextureFormat.RGBAFloat: return TextureFormat.RGBAf32;
-            default: return TextureFormat.Ru8;
+            default:                                  return TextureFormat.Ru8;
         }
     }
 
     // explicit layout doesn't work with generics...
     [StructLayout(LayoutKind.Explicit)]
-    struct NAByte {
+    private struct NAByte {
         [FieldOffset(0)] public NativeArray<byte> nativeArray;
         [FieldOffset(0)] public IntPtr            pointer;
     }
 
     public static IntPtr ForceGetPointer(ref NativeArray<byte> na) {
-        var union = new NAByte();
+        NAByte union = new NAByte();
         union.nativeArray = na;
         return union.pointer;
     }
 
     [StructLayout(LayoutKind.Explicit)]
-    struct NABoneWeight1 {
+    private struct NABoneWeight1 {
         [FieldOffset(0)] public NativeArray<BoneWeight1> nativeArray;
         [FieldOffset(0)] public IntPtr                   pointer;
     }
 
     public static IntPtr ForceGetPointer(ref NativeArray<BoneWeight1> na) {
-        var union = new NABoneWeight1();
+        NABoneWeight1 union = new NABoneWeight1();
         union.nativeArray = na;
         return union.pointer;
     }
 
     internal class UniqueNameGenerator {
         public string Gen(string name) {
-            var uniqueName = name;
-            for (int i = 1;; ++i) {
-                if (m_usedNames.Contains(uniqueName))
+            string uniqueName = name;
+            for (int i = 1;; ++i)
+                if (m_usedNames.Contains(uniqueName)) {
                     uniqueName = string.Format("{0} ({1})", name, i);
+                }
                 else {
                     m_usedNames.Add(uniqueName);
                     break;
                 }
-            }
 
             return uniqueName;
         }
 
-        HashSet<string> m_usedNames = new HashSet<string>();
+        private HashSet<string> m_usedNames = new HashSet<string>();
     }
 }
-
 } //end namespace

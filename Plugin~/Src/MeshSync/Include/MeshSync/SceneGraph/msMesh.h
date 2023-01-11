@@ -166,7 +166,6 @@ public:
     void makeDoubleSided();
     void mirrorMesh(const mu::float3& plane_n, float plane_d, bool welding = false);
     void transformMesh(const mu::float4x4& t);
-    void mergeMesh(const Mesh& to_be_merged);
 
     void setupBoneWeights4();
     void setupBoneWeightsVariable();

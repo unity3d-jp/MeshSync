@@ -1,14 +1,11 @@
 ﻿using System.IO;
 using Microsoft.Win32;
 
-internal static class DefaultAppUtility
-{
-    public static bool TryGetRegisteredApplication(string extension, out string registeredApp)
-    {
+internal static class DefaultAppUtility {
+    public static bool TryGetRegisteredApplication(string extension, out string registeredApp) {
 #if UNITY_EDITOR_WIN
         string extensionId = GetClassesRootKeyDefaultValue(extension);
-        if (extensionId == null)
-        {
+        if (extensionId == null) {
             registeredApp = null;
             return false;
         }
@@ -16,8 +13,7 @@ internal static class DefaultAppUtility
         string openCommand = GetClassesRootKeyDefaultValue(
             Path.Combine(extensionId, "shell", "open", "command"));
 
-        if (openCommand == null)
-        {
+        if (openCommand == null) {
             registeredApp = null;
             return false;
         }
@@ -34,20 +30,12 @@ internal static class DefaultAppUtility
 #endif
     }
 
-    private static string GetClassesRootKeyDefaultValue(string keyPath)
-    {
-        using (var key = Registry.ClassesRoot.OpenSubKey(keyPath))
-        {
-            if (key == null)
-            {
-                return null;
-            }
+    private static string GetClassesRootKeyDefaultValue(string keyPath) {
+        using (RegistryKey key = Registry.ClassesRoot.OpenSubKey(keyPath)) {
+            if (key == null) return null;
 
-            var defaultValue = key.GetValue(null);
-            if (defaultValue == null)
-            {
-                return null;
-            }
+            object defaultValue = key.GetValue(null);
+            if (defaultValue == null) return null;
 
             return defaultValue.ToString();
         }

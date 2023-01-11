@@ -17,22 +17,19 @@ using UnityEngine.Rendering.HighDefinition;
 using Object = UnityEngine.Object;
 
 namespace Unity.MeshSync.Editor  {
-
 internal static class SceneCachePlayerEditorUtility {
-
-    internal static bool CreateSceneCachePlayerAndPrefab(string sceneCacheFilePath, 
-        string prefabPath, string assetsFolder, 
-        out SceneCachePlayer player, out GameObject prefab) 
-    {
+    internal static bool CreateSceneCachePlayerAndPrefab(string sceneCacheFilePath,
+        string prefabPath, string assetsFolder,
+        out SceneCachePlayer player, out GameObject prefab) {
         player = null;
         prefab = null;
-        
-        GameObject go = new GameObject();        
+
+        GameObject go = new GameObject();
         go.name = Path.GetFileNameWithoutExtension(sceneCacheFilePath);
 
         player = AddSceneCachePlayer(go, sceneCacheFilePath, assetsFolder);
         if (null == player) {
-            Object.DestroyImmediate(go);            
+            Object.DestroyImmediate(go);
             return false;
         }
 
@@ -40,31 +37,31 @@ internal static class SceneCachePlayerEditorUtility {
         player.EnableKeyValuesSerialization(false);
         prefab = player.gameObject.SaveAsPrefab(prefabPath);
         if (null == prefab) {
-            Object.DestroyImmediate(go);            
+            Object.DestroyImmediate(go);
             return false;
         }
-        
-        player.EnableKeyValuesSerialization(true);       
+
+        player.EnableKeyValuesSerialization(true);
         PrefabUtility.ApplyPrefabInstance(player.gameObject, InteractionMode.AutomatedAction);
-        
+
         Undo.RegisterCreatedObjectUndo(go, "SceneCachePlayer");
         return true;
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
-    
+
     internal static void ChangeSceneCacheFile(SceneCachePlayer cachePlayer, string sceneCacheFilePath) {
         string     prefabPath = null;
         GameObject go         = cachePlayer.gameObject;
         //Check if it's possible to reuse the old assetsFolder
         string assetsFolder = cachePlayer.GetAssetsFolder();
         if (string.IsNullOrEmpty(assetsFolder)) {
-            MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();        
-            string                  scOutputPath    = projectSettings.GetSceneCacheOutputPath();            
+            MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
+            string                  scOutputPath    = projectSettings.GetSceneCacheOutputPath();
             assetsFolder = Path.Combine(scOutputPath, Path.GetFileNameWithoutExtension(sceneCacheFilePath));
         }
-        
-        bool isPrefabInstance = cachePlayer.gameObject.IsPrefabInstance();        
+
+        bool isPrefabInstance = cachePlayer.gameObject.IsPrefabInstance();
         //We are directly modifying a prefab
         if (!isPrefabInstance && go.IsPrefab()) {
             prefabPath = AssetDatabase.GetAssetPath(go);
@@ -72,147 +69,133 @@ internal static class SceneCachePlayerEditorUtility {
                 out GameObject newPrefab);
             Object.DestroyImmediate(player.gameObject);
             return;
+        }
 
-        } 
-        
         if (isPrefabInstance) {
             GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(cachePlayer.gameObject);
-            
+
             //GetCorrespondingObjectFromSource() may return the ".sc" GameObject instead of the prefab
             //due to the SceneCacheImporter
             string assetPath = AssetDatabase.GetAssetPath(prefab);
-            if (Path.GetExtension(assetPath).ToLower() == ".prefab") {
+            if (Path.GetExtension(assetPath).ToLower() == ".prefab")
                 prefabPath = assetPath;
-            } else {
+            else
                 isPrefabInstance = false;
-            }            
-        } 
-        
+        }
+
         cachePlayer.CloseCache();
-        
+
         //[TODO-sin: 2020-9-28] Find out if it is possible to do undo properly
         Undo.RegisterFullObjectHierarchyUndo(cachePlayer.gameObject, "SceneCachePlayer");
-        
-        Dictionary<string,EntityRecord> prevRecords = new Dictionary<string, EntityRecord>(cachePlayer.GetClientObjects());        
-        
-        GameObject tempGO = null;
+
+        Dictionary<string, EntityRecord> prevRecords = new Dictionary<string, EntityRecord>(cachePlayer.GetClientObjects());
+
+        GameObject                       tempGO         = null;
         Dictionary<Transform, Transform> nonPrefabTrans = new Dictionary<Transform, Transform>(); //nonPrefab -> origParent
         if (isPrefabInstance) {
             //Move non-prefab transforms
             tempGO = new GameObject("Temp");
             FindNonPrefabChildren(cachePlayer.transform, ref nonPrefabTrans);
             nonPrefabTrans.Keys.SetParent(tempGO.transform);
-            
-            PrefabUtility.UnpackPrefabInstance(cachePlayer.gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);                       
+
+            PrefabUtility.UnpackPrefabInstance(cachePlayer.gameObject, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
         }
 
 
         //remove irrelevant  components of the GameObject if the entity type is different
         void ChangeEntityTypeCB(GameObject updatedGo, TransformData data) {
             string dataPath = data.path;
-            if (!prevRecords.TryGetValue(dataPath, out EntityRecord prevRecord)) 
+            if (!prevRecords.TryGetValue(dataPath, out EntityRecord prevRecord))
                 return;
 
-            if (data.entityType == prevRecord.dataType) 
+            if (data.entityType == prevRecord.dataType)
                 return;
 
             DestroyIrrelevantComponents(updatedGo, data.entityType);
         }
 
 
-        cachePlayer.onUpdateEntity += ChangeEntityTypeCB;        
+        cachePlayer.onUpdateEntity += ChangeEntityTypeCB;
         cachePlayer.Init(assetsFolder);
-        cachePlayer.OpenCacheInEditor(sceneCacheFilePath);        
+        cachePlayer.OpenCacheInEditor(sceneCacheFilePath);
         cachePlayer.onUpdateEntity -= ChangeEntityTypeCB;
-        
-        IDictionary<string,EntityRecord> curRecords = cachePlayer.GetClientObjects();
+
+        IDictionary<string, EntityRecord> curRecords = cachePlayer.GetClientObjects();
         DeleteInvalidRecordedGameObjects(prevRecords, curRecords);
 
-        if (!isPrefabInstance) {
-            return;
-        }
-        
-        
+        if (!isPrefabInstance) return;
+
+
         cachePlayer.gameObject.SaveAsPrefab(prefabPath); //Save as prefab if it was originally a prefab instance
-        
+
         //Move nonPrefab transforms back
         foreach (KeyValuePair<Transform, Transform> kv in nonPrefabTrans) {
             Transform origParent = kv.Value;
             Transform t          = kv.Key;
-            if (null == origParent) {
+            if (null == origParent)
                 ObjectUtility.Destroy(t.gameObject);
-            } else {
+            else
                 t.SetParent(origParent);
-            } 
         }
+
         ObjectUtility.Destroy(tempGO);
-        
-        
     }
 
     internal static void ReloadSceneCacheFile(SceneCachePlayer cachePlayer) {
-        string sceneCacheFilePath = cachePlayer.GetSceneCacheFilePath();        
+        string sceneCacheFilePath = cachePlayer.GetSceneCacheFilePath();
         ChangeSceneCacheFile(cachePlayer, sceneCacheFilePath);
-        
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------    
 
-    internal static TimelineClip AddSceneCacheTrackAndClip(PlayableDirector director, string trackName, 
-        SceneCachePlayer sceneCachePlayer) 
-    {
+    internal static TimelineClip AddSceneCacheTrackAndClip(PlayableDirector director, string trackName,
+        SceneCachePlayer sceneCachePlayer) {
         TimelineAsset timelineAsset = director.playableAsset as TimelineAsset;
         Assert.IsNotNull(timelineAsset);
-    
+
         SceneCacheTrack         sceneCacheTrack = timelineAsset.CreateTrack<SceneCacheTrack>(null, trackName);
         TimelineClip            clip            = sceneCacheTrack.CreateDefaultClip();
-        SceneCachePlayableAsset playableAsset = clip.asset as SceneCachePlayableAsset;
+        SceneCachePlayableAsset playableAsset   = clip.asset as SceneCachePlayableAsset;
         Assert.IsNotNull(playableAsset);
-        playableAsset.Init(updateClipDurationOnCreatePlayable:true); //ClipEditor.OnCreate() is not called when creating a clip this way
-        director.SetReferenceValue(playableAsset.GetSceneCachePlayerRef().exposedName, sceneCachePlayer );
+        playableAsset.Init(true); //ClipEditor.OnCreate() is not called when creating a clip this way
+        director.SetReferenceValue(playableAsset.GetSceneCachePlayerRef().exposedName, sceneCachePlayer);
         return clip;
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
-    
-    internal static bool DrawLimitedAnimationGUI(LimitedAnimationController ctrl, 
-        Object target, SceneCachePlayer sc) 
-    {
+
+    internal static bool DrawLimitedAnimationGUI(LimitedAnimationController ctrl,
+        Object target, SceneCachePlayer sc) {
         bool         changed   = false;
         const string UNDO_TEXT = "SceneCache: Limited Animation";
-        
+
         //Limited Animation
         changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, UNDO_TEXT,
-            guiFunc: () => (EditorGUILayout.Toggle("Limited Animation (Obsolete !)", ctrl.IsEnabled())),
-            updateFunc: (bool limitedAnimation) => {
+            () => EditorGUILayout.Toggle("Limited Animation (Obsolete !)", ctrl.IsEnabled()),
+            (bool limitedAnimation) => {
                 ctrl.SetEnabled(limitedAnimation);
-                SceneCachePlayerEditorUtility.RefreshSceneCache(sc);
+                RefreshSceneCache(sc);
             });
 
-        if (ctrl.IsEnabled()) {
+        if (ctrl.IsEnabled())
             EditorGUILayout.HelpBox(
-                "Limited Animation controls is obsolete and has been replaced by key frame adjustment.", 
+                "Limited Animation controls is obsolete and has been replaced by key frame adjustment.",
                 MessageType.Warning
-            );            
-        }        
+            );
 
         ++EditorGUI.indentLevel;
         using (new EditorGUI.DisabledScope(!ctrl.IsEnabled())) {
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, UNDO_TEXT,
-                guiFunc: () => (
-                    EditorGUILayout.IntField("Num Frames to Hold", ctrl.GetNumFramesToHold())
-                ),
-                updateFunc: (int frames) => {
+                () => EditorGUILayout.IntField("Num Frames to Hold", ctrl.GetNumFramesToHold()),
+                (int frames) => {
                     ctrl.SetNumFramesToHold(frames);
-                    SceneCachePlayerEditorUtility.RefreshSceneCache(sc);
+                    RefreshSceneCache(sc);
                 });
             changed |= EditorGUIDrawerUtility.DrawUndoableGUI(target, UNDO_TEXT,
-                guiFunc: () => (
-                    EditorGUILayout.IntField("Frame Offset", ctrl.GetFrameOffset())
-                ),
-                updateFunc: (int offset) => {
+                () => EditorGUILayout.IntField("Frame Offset", ctrl.GetFrameOffset()),
+                (int offset) => {
                     ctrl.SetFrameOffset(offset);
-                    SceneCachePlayerEditorUtility.RefreshSceneCache(sc);
+                    RefreshSceneCache(sc);
                 });
         }
 
@@ -221,15 +204,14 @@ internal static class SceneCachePlayerEditorUtility {
         EditorGUILayout.Space();
         return changed;
     }
-    
+
     internal static void RefreshSceneCache(SceneCachePlayer t) {
         t.ForceUpdate();
         SceneView.RepaintAll();
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------    
     private static void DestroyIrrelevantComponents(GameObject obj, EntityType curEntityType) {
-
         HashSet<Type> componentsToDelete = new HashSet<Type>(m_componentsToDeleteOnReload);
 
         //Check which component should remain (should not be deleted)
@@ -245,7 +227,7 @@ internal static class SceneCachePlayerEditorUtility {
                 componentsToDelete.Remove(typeof(MeshFilter));
                 componentsToDelete.Remove(typeof(MeshRenderer));
                 break;
-            }                
+            }
             case EntityType.Points:
                 componentsToDelete.Remove(typeof(PointCache));
                 componentsToDelete.Remove(typeof(PointCacheRenderer));
@@ -253,62 +235,53 @@ internal static class SceneCachePlayerEditorUtility {
             default:
                 break;
         }
-        
+
 
         foreach (Type t in componentsToDelete) {
             Component c = obj.GetComponent(t);
             if (null == c)
                 continue;
-            
+
             ObjectUtility.Destroy(c);
         }
-
     }
-    
+
     //Delete GameObject if they exist in prevRecords, but not in curRecords
     private static void DeleteInvalidRecordedGameObjects(IDictionary<string, EntityRecord> prevRecords,
-        IDictionary<string, EntityRecord> curRecords) 
-    {
+        IDictionary<string, EntityRecord> curRecords) {
         foreach (KeyValuePair<string, EntityRecord> kv in prevRecords) {
             string       goPath           = kv.Key;
             EntityRecord prevEntityRecord = kv.Value;
 
-            if (curRecords.ContainsKey(goPath)) 
+            if (curRecords.ContainsKey(goPath))
                 continue;
-            
+
             ObjectUtility.Destroy(prevEntityRecord.go);
         }
     }
 
     private static void FindNonPrefabChildren(Transform t, ref Dictionary<Transform, Transform> nonPrefabTransforms) {
-        if (!t.gameObject.IsPrefabInstance()) {
-            nonPrefabTransforms.Add(t, t.parent);
-        }
-        
+        if (!t.gameObject.IsPrefabInstance()) nonPrefabTransforms.Add(t, t.parent);
+
         int numChildren = t.childCount;
         for (int i = 0; i < numChildren; ++i) {
             Transform child = t.GetChild(i);
             FindNonPrefabChildren(child, ref nonPrefabTransforms);
         }
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------    
-    private static SceneCachePlayer  AddSceneCachePlayer(GameObject go, 
-                                                            string sceneCacheFilePath, 
-                                                            string assetsFolder) 
-    {
-        if (!ValidateSceneCacheOutputPath()) {
-            return null;
-        }
-        
-              
+    private static SceneCachePlayer AddSceneCachePlayer(GameObject go,
+        string sceneCacheFilePath,
+        string assetsFolder) {
+        if (!ValidateSceneCacheOutputPath()) return null;
+
+
         SceneCachePlayer player = go.GetOrAddComponent<SceneCachePlayer>();
         player.Init(assetsFolder);
 
-        if (!player.OpenCacheInEditor(sceneCacheFilePath)) {
-            return null;
-        }       
-        
+        if (!player.OpenCacheInEditor(sceneCacheFilePath)) return null;
+
         return player;
     }
 
@@ -316,17 +289,17 @@ internal static class SceneCachePlayerEditorUtility {
 //----------------------------------------------------------------------------------------------------------------------    
 
     private static bool ValidateSceneCacheOutputPath() {
-
         MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
         string                  scOutputPath    = projectSettings.GetSceneCacheOutputPath();
         if (!scOutputPath.StartsWith("Assets")) {
             DisplaySceneCacheOutputPathErrorDialog(scOutputPath);
-            return false;            
-        }        
-        
+            return false;
+        }
+
         try {
             Directory.CreateDirectory(scOutputPath);
-        } catch {
+        }
+        catch {
             DisplaySceneCacheOutputPathErrorDialog(scOutputPath);
             return false;
         }
@@ -336,14 +309,13 @@ internal static class SceneCachePlayerEditorUtility {
 
     private static void DisplaySceneCacheOutputPathErrorDialog(string path) {
         EditorUtility.DisplayDialog("MeshSync",
-            $"Invalid SceneCache output path: {path}. " + Environment.NewLine + 
-            "Please configure in ProjectSettings", 
+            $"Invalid SceneCache output path: {path}. " + Environment.NewLine +
+            "Please configure in ProjectSettings",
             "Ok");
-        
     }
-    
-    
-    static readonly HashSet<Type> m_componentsToDeleteOnReload = new HashSet<Type>() {
+
+
+    private static readonly HashSet<Type> m_componentsToDeleteOnReload = new HashSet<Type>() {
         typeof(SkinnedMeshRenderer),
         typeof(MeshFilter),
         typeof(MeshRenderer),
@@ -351,22 +323,18 @@ internal static class SceneCachePlayerEditorUtility {
         typeof(PointCache),
         typeof(Camera),
         typeof(Light),
-#if AT_USE_HDRP            
+#if AT_USE_HDRP
         typeof(HDAdditionalLightData),
-#endif            
+#endif
 
         typeof(AimConstraint),
         typeof(ParentConstraint),
         typeof(PositionConstraint),
         typeof(RotationConstraint),
         typeof(ScaleConstraint),
-            
-        //typeof(Animator),
-        typeof(MeshCollider),
-            
-    };
-    
-    
-}
 
+        //typeof(Animator),
+        typeof(MeshCollider)
+    };
+}
 } //end namespace

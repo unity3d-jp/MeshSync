@@ -7,10 +7,8 @@ using UnityEngine.Rendering.HighDefinition;
 #endif
 
 namespace Unity.MeshSync {
-
 [Serializable]
 internal class EntityRecord {
-
     // return true if modified
     public bool BuildMaterialData(MeshData md) {
         int numSubmeshes = md.numSubmeshes;
@@ -18,34 +16,35 @@ internal class EntityRecord {
         bool updated = false;
         if (materialIDs == null || materialIDs.Length != numSubmeshes) {
             materialIDs = new int[numSubmeshes];
-            updated = true;
+            updated     = true;
         }
-        
+
         for (int i = 0; i < numSubmeshes; ++i) {
             int mid = md.GetSubmesh(i).materialID;
             if (!updated)
                 updated = materialIDs[i] != mid;
             materialIDs[i] = mid;
         }
+
         return updated;
     }
 //----------------------------------------------------------------------------------------------------------------------
 
     internal void SetLight(LightData lightData, bool syncVisibility, bool shouldUpdate) {
         TransformData  transformData = lightData.transform;
-        LightDataFlags flags = lightData.dataFlags;
-               
+        LightDataFlags flags         = lightData.dataFlags;
+
         LightComponents components = GetOrAddLightComponents();
 
         if (!shouldUpdate)
             return;
-        
-        Light destLight  = components.LightComponent;
+
+        Light destLight = components.LightComponent;
 
 #if AT_USE_HDRP
         HDAdditionalLightData destHDLightData = components.HDAdditionalLightDataComponent;
 #endif
-        
+
         if (syncVisibility && transformData.dataFlags.hasVisibility)
             destLight.enabled = transformData.visibility.visibleInRender;
 
@@ -56,7 +55,7 @@ internal class EntityRecord {
             destHDLightData.SetTypeFromLegacy(lightData.lightType);
 #endif
         }
-        
+
         if (flags.hasShadowType)
             destLight.shadows = lightData.shadowType;
 
@@ -82,32 +81,29 @@ internal class EntityRecord {
         }
 
         if (flags.hasSpotAngle) {
-            
             destLight.spotAngle = lightData.spotAngle;
 #if AT_USE_HDRP
             destHDLightData.SetSpotAngle(lightData.spotAngle);
 #endif
         }
-
     }
-    
+
     internal void SetLight(EntityRecord srcRecord, bool syncVisibility) {
-        
         Light srcLight = srcRecord.light;
-        if (null == srcLight) 
+        if (null == srcLight)
             return;
-            
+
         LightComponents components = GetOrAddLightComponents();
-        Light destLight  = components.LightComponent;
-        
-        if (syncVisibility && this.hasVisibility)
-            destLight.enabled = this.visibility.visibleInRender;
+        Light           destLight  = components.LightComponent;
+
+        if (syncVisibility && hasVisibility)
+            destLight.enabled = visibility.visibleInRender;
         destLight.type      = srcLight.type;
         destLight.color     = srcLight.color;
         destLight.intensity = srcLight.intensity;
         destLight.range     = srcLight.range;
         destLight.spotAngle = srcLight.spotAngle;
-        
+
 #if AT_USE_HDRP
         HDAdditionalLightData destHDLightData = components.HDAdditionalLightDataComponent;
         destHDLightData.SetTypeFromLegacy(srcLight.type);
@@ -116,71 +112,62 @@ internal class EntityRecord {
         destHDLightData.range     = srcLight.range;
         destHDLightData.SetSpotAngle(srcLight.spotAngle);
 #endif
-
-
     }
 
-    LightComponents GetOrAddLightComponents() {
-
+    private LightComponents GetOrAddLightComponents() {
         LightComponents recComponents;
-        Assert.IsNotNull(this.go);
-        if (null == this.light) {
-            this.light = Misc.GetOrAddComponent<Light>(this.go);
-        }
-        Assert.IsNotNull(this.light);
-        recComponents.LightComponent = this.light;
+        Assert.IsNotNull(go);
+        if (null == light) light = Misc.GetOrAddComponent<Light>(go);
+        Assert.IsNotNull(light);
+        recComponents.LightComponent = light;
 
-#if AT_USE_HDRP    
-        if (null == m_hdAdditionalLightData) {
-            m_hdAdditionalLightData = Misc.GetOrAddComponent<HDAdditionalLightData>(this.go);
-        }
+#if AT_USE_HDRP
+        if (null == m_hdAdditionalLightData) m_hdAdditionalLightData = Misc.GetOrAddComponent<HDAdditionalLightData>(go);
         Assert.IsNotNull(m_hdAdditionalLightData);
         recComponents.HDAdditionalLightDataComponent = m_hdAdditionalLightData;
 #endif
-        
-        return recComponents;        
+
+        return recComponents;
     }
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
     internal void DestroyMeshRendererAndFilter() {
-        if (meshRenderer != null)
-        {
+        if (meshRenderer != null) {
             UnityEngine.Object.DestroyImmediate(meshRenderer);
             meshRenderer = null;
         }
 
-        if (meshFilter != null)
-        {
+        if (meshFilter != null) {
             UnityEngine.Object.DestroyImmediate(meshFilter);
             meshFilter = null;
         }
     }
-    
-    
+
+
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     private struct LightComponents {
         internal Light LightComponent;
-        
-#if AT_USE_HDRP    
+
+#if AT_USE_HDRP
         internal HDAdditionalLightData HDAdditionalLightDataComponent;
-#endif    
-    }    
-    
+#endif
+    }
+
 //----------------------------------------------------------------------------------------------------------------------
-    
-    public EntityType          dataType;
-    public int                 index;
-    public GameObject          go;
-    public Transform           trans;
-    public Camera              camera;
-    
-    [SerializeField] private Light               light;
-#if AT_USE_HDRP    
+
+    public EntityType dataType;
+    public int        index;
+    public GameObject go;
+    public Transform  trans;
+    public Camera     camera;
+
+    [SerializeField] private Light light;
+#if AT_USE_HDRP
     [SerializeField] private HDAdditionalLightData m_hdAdditionalLightData;
-#endif    
+#endif
     public MeshFilter          meshFilter;
     public MeshRenderer        meshRenderer;
     public SkinnedMeshRenderer skinnedMeshRenderer;
@@ -206,8 +193,5 @@ internal class EntityRecord {
     public bool            hasVisibility = false;
     public VisibilityFlags visibility; // for reference
     public bool            recved = false;
-    
 }
-
-
 } //end namespace

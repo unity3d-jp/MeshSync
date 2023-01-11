@@ -23,9 +23,9 @@ internal struct ServerSettings {
     public int    maxThreads;
     public ushort port;
 
-    public Flags             flags; // reserved
-    public uint              meshSplitUnit;
-    public uint              meshMaxBoneInfluence; // 4 or 255 (variable)
+    public Flags flags; // reserved
+    public uint  meshSplitUnit;
+    public uint  meshMaxBoneInfluence; // 4 or 255 (variable)
 
     public static ServerSettings defaultValue {
         get {
@@ -35,7 +35,7 @@ internal struct ServerSettings {
                 maxThreads           = 8,
                 port                 = settings.GetDefaultServerPort(),
                 meshSplitUnit        = Lib.maxVerticesPerMesh,
-                meshMaxBoneInfluence = Lib.maxBoneInfluence,
+                meshMaxBoneInfluence = Lib.maxBoneInfluence
             };
             return ret;
         }
@@ -48,80 +48,85 @@ internal struct Server {
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern Server msServerIsStarted(int port);
+    private static extern Server msServerIsStarted(int port);
 
     [DllImport(Lib.name)]
-    static extern Server msServerStart(ref ServerSettings settings);
+    private static extern Server msServerStart(ref ServerSettings settings);
 
     [DllImport(Lib.name)]
-    static extern void msServerStop(IntPtr self);
-    
-    [DllImport(Lib.name)]
-    static extern void msServerAbort(IntPtr self);
+    private static extern void msServerStop(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msServerSetZUpCorrectionMode(IntPtr self, ZUpCorrectionMode v);
+    private static extern void msServerAbort(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msServerGetNumMessages(IntPtr self);
+    private static extern void msServerSetZUpCorrectionMode(IntPtr self, ZUpCorrectionMode v);
 
     [DllImport(Lib.name)]
-    static extern int msServerProcessMessages(IntPtr self, MessageHandler handler);
+    private static extern int msServerGetNumMessages(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msServerBeginServe(IntPtr self);
+    private static extern int msServerProcessMessages(IntPtr self, MessageHandler handler);
 
     [DllImport(Lib.name)]
-    static extern void msServerEndServe(IntPtr self);
+    private static extern void msServerBeginServe(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msServerServeTransform(IntPtr self, TransformData data);
+    private static extern void msServerEndServe(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msServerServeCamera(IntPtr self, CameraData data);
+    private static extern void msServerServeTransform(IntPtr self, TransformData data);
 
     [DllImport(Lib.name)]
-    static extern void msServerServeLight(IntPtr self, LightData data);
+    private static extern void msServerServeCamera(IntPtr self, CameraData data);
 
     [DllImport(Lib.name)]
-    static extern void msServerServeMesh(IntPtr self, MeshData data);
+    private static extern void msServerServeLight(IntPtr self, LightData data);
 
     [DllImport(Lib.name)]
-    static extern void msServerServeTexture(IntPtr self, TextureData data);
+    private static extern void msServerServeMesh(IntPtr self, MeshData data);
 
     [DllImport(Lib.name)]
-    static extern void msServerServeMaterial(IntPtr self, MaterialData data);
+    private static extern void msServerServeTexture(IntPtr self, TextureData data);
 
     [DllImport(Lib.name)]
-    static extern void msServerAllowPublicAccess(IntPtr self, bool access);
+    private static extern void msServerServeMaterial(IntPtr self, MaterialData data);
 
     [DllImport(Lib.name)]
-    static extern bool msServerIsPublicAccessAllowed(IntPtr self);
+    private static extern void msServerAllowPublicAccess(IntPtr self, bool access);
 
     [DllImport(Lib.name)]
-    static extern void msServerSetFileRootPath(IntPtr self, string path);
+    private static extern bool msServerIsPublicAccessAllowed(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msServerSetScreenshotFilePath(IntPtr self, string path);
+    private static extern void msServerSetFileRootPath(IntPtr self, string path);
 
     [DllImport(Lib.name)]
-    static extern void msServerNotifyPoll(IntPtr self, PollMessage.PollType t);
+    private static extern void msServerSetScreenshotFilePath(IntPtr self, string path);
 
     [DllImport(Lib.name)]
-    static extern void msServerSendPropertyInt(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, int newValue);
+    private static extern void msServerNotifyPoll(IntPtr self, PollMessage.PollType t);
 
     [DllImport(Lib.name)]
-    static extern void msServerSendPropertyFloat(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, float newValue);
+    private static extern void msServerSendPropertyInt(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName,
+        int newValue);
 
     [DllImport(Lib.name)]
-    static extern void msServerSendPropertyIntArray(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, int[] newValue, int arrayLength);
+    private static extern void msServerSendPropertyFloat(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName,
+        float newValue);
 
     [DllImport(Lib.name)]
-    static extern void msServerSendPropertyFloatArray(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, float[] newValue, int arrayLength);
+    private static extern void msServerSendPropertyIntArray(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName,
+        int[] newValue, int arrayLength);
 
     [DllImport(Lib.name)]
-    static extern void msServerSendPropertyString(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName, string newValue, int length);
-        
+    private static extern void msServerSendPropertyFloatArray(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName,
+        float[] newValue, int arrayLength);
+
+    [DllImport(Lib.name)]
+    private static extern void msServerSendPropertyString(IntPtr self, int sourceType, string name, string path, string modifierName, string propertyName,
+        string newValue, int length);
+
 #if AT_USE_SPLINES
     [DllImport(Lib.name)]
     static extern void msServerSendTransform(IntPtr self, string path, float3 position, float3 scale, float3 rotation);  
@@ -132,25 +137,25 @@ internal struct Server {
 
 #if AT_USE_PROBUILDER
     [DllImport(Lib.name)]
-    static extern void msServerSendMesh(IntPtr self, MeshData data);
+    private static extern void msServerSendMesh(IntPtr self, MeshData data);
 #endif
 
     [DllImport(Lib.name)]
-    static extern void msServerRequestFullSync(IntPtr self);
+    private static extern void msServerRequestFullSync(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msServerRequestUserScriptCallback(IntPtr self);
+    private static extern void msServerRequestUserScriptCallback(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msServerInitiatedResponseReady(IntPtr self);
+    private static extern void msServerInitiatedResponseReady(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern bool msServerIsDCCLiveEditReady(IntPtr self);
+    private static extern bool msServerIsDCCLiveEditReady(IntPtr self);
 
 
     [DllImport(Lib.name)]
-    static extern void msServerNotifyEditorCommand(IntPtr self, string reply, int messageId, int sessionId);
-    
+    private static extern void msServerNotifyEditorCommand(IntPtr self, string reply, int messageId, int sessionId);
+
     #endregion
 
     public delegate void MessageHandler(NetworkMessageType type, IntPtr data);
@@ -162,7 +167,7 @@ internal struct Server {
     internal static bool IsStarted(int port) {
         return msServerIsStarted(port);
     }
-    
+
     public static bool Start(ref ServerSettings settings, out Server server) {
         server = msServerStart(ref settings);
         return server;
@@ -175,7 +180,7 @@ internal struct Server {
     public void Abort() {
         msServerAbort(self);
     }
-    
+
     internal void SetZUpCorrectionMode(ZUpCorrectionMode mode) {
         msServerSetZUpCorrectionMode(self, mode);
     }
@@ -216,16 +221,13 @@ internal struct Server {
 #endif
 
 #if AT_USE_PROBUILDER
-    public void SendMesh(MeshData data)
-    {
+    public void SendMesh(MeshData data) {
         msServerSendMesh(self, data);
     }
 #endif
 
-    public void SendProperty(PropertyInfoDataWrapper prop)
-    {
-        switch (prop.type)
-        {
+    public void SendProperty(PropertyInfoDataWrapper prop) {
+        switch (prop.type) {
             case PropertyInfoDataType.Int:
                 msServerSendPropertyInt(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<int>());
                 break;
@@ -235,15 +237,17 @@ internal struct Server {
                 break;
 
             case PropertyInfoDataType.IntArray:
-                msServerSendPropertyIntArray(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<int[]>(), prop.arrayLength);
+                msServerSendPropertyIntArray(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<int[]>(),
+                    prop.arrayLength);
                 break;
 
             case PropertyInfoDataType.FloatArray:
-                msServerSendPropertyFloatArray(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<float[]>(), prop.arrayLength);
+                msServerSendPropertyFloatArray(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, prop.GetValue<float[]>(),
+                    prop.arrayLength);
                 break;
 
             case PropertyInfoDataType.String:
-                var s = prop.GetValue<string>();
+                string s = prop.GetValue<string>();
                 msServerSendPropertyString(self, (int)prop.sourceType, prop.name, prop.path, prop.modifierName, prop.propertyName, s, s.Length);
                 break;
 
@@ -252,23 +256,19 @@ internal struct Server {
         }
     }
 
-    public void RequestClientSync()
-    {
+    public void RequestClientSync() {
         msServerRequestFullSync(self);
     }
 
-    public void RequestUserScriptCallback() 
-    {
+    public void RequestUserScriptCallback() {
         msServerRequestUserScriptCallback(self);
     }
 
-    public void MarkServerInitiatedResponseReady()
-    {
+    public void MarkServerInitiatedResponseReady() {
         msServerInitiatedResponseReady(self);
     }
 
-    public bool IsDCCLiveEditReady()
-    {
+    public bool IsDCCLiveEditReady() {
         return msServerIsDCCLiveEditReady(self);
     }
 
@@ -317,5 +317,4 @@ internal struct Server {
 
 
 #endif // UNITY_STANDALONE || UNITY_EDITOR
-
-    } //end namespace
+}      //end namespace
