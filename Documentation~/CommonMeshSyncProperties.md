@@ -40,6 +40,14 @@ These properties are shared by multiple components in this package.
   | Local           | search in the local folder of the MeshSync component.|
   | Recursive-Up    | search starting from the local folder of the MeshSync component up to the Assets folder.|
   | Everywhere      | search in all Unity Project folders.|
+  
+- **Overwrite Exported Materials**
+
+   Apply changes from dcc tools to materials in the list, even if the materials have been exported.
+   |**Values** |**Description** |
+   |:---       |:---|
+   | On| Apply changes to materials, even when they have been exported.|
+   | Off| Do not apply changes to materials, if they have been exported.|
 
 - **Animation Interpolation**: sets the animation interpolation method.   
 
@@ -93,7 +101,7 @@ This material list holds all the materials that are used by this component.
 Changing a material in this list will update objects that use the previous material 
 to use the new material.
 
-**Import List** and **Export List** buttons are used to load and save material lists.    
+**Import List** and **Export List** buttons are used to load and save material lists.
 
 ## Export Assets 
 
