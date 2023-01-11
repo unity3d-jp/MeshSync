@@ -4,6 +4,9 @@
 1. [Scene Cache Track](#scene-cache-track)
 1. [Gap Extrapolation](#gap-extrapolation)
 1. [Scene Cache Playable Asset](#scenecacheplayableasset)
+   1. [Key Frame Adjustment](#key-frame-adjustment)
+   1. [Key Frame Properties](#key-frame-properties)
+   1. [Default Key Frame Shortcuts](#default-key-frame-shortcuts)
 
 ## Quick Start
 
@@ -51,12 +54,43 @@ using one of the following options:
 |**Properties**           |**Description** |
 |:----------------------- |:---|
 | **Scene Cache Player**  | The [SceneCachePlayer](SceneCache.md#scene-cache-player) to be played in Timeline. |
-| **Limited Animation**   | Overrides the [Limited Animation](SceneCache.md#properties) properties of the SceneCachePlayer. |
+| **Show Key Frame Markers**   | Shows/hides the key frame markers for editing the timing. <br/> Refer to [Key Frame Adjustment](#key-frame-adjustment) for more details|
+| **Auto Generate Key Frames** | A section to configure the key frames of the specified duration automatically. |
+| **Limited Animation**        | Automatically skip frames if enabled. This property has been replaced by [Key Frame Adjustment](#key-frame-adjustment), and may be removed in later versions. |
 
-### Curve buttons
 
-|**Buttons**          |**Description** |
-|:--------------------|:---|
-| **To Linear**       | Set the animation curve to a linear curve. |
-| **Apply Original**  | Applies the original animation curve from the Scene Cache (.sc) file. |
+### Key Frame Adjustment
+
+
+![](images/SceneCacheKeyFrameDragging.png)
+
+We can modify the timing of the playback by the following steps:
+1. Check the **Show Key Frame Markers** property.
+2. Add, drag, or delete the key frame markers.
+3. Set the properties of the key frames to configure which frame to show. Refer to [Key Frame Properties](#key-frame-properties) for more details.
+
+Pressing the curve button next to the track name will open the curve section 
+which allows us to confirm how the playback is being controlled by the clip.
+
+Additionally, if we want to configure the key frames using a certain rule for a specified duration, 
+we can use the **Auto Generate Key Frames** section to do this automatically. 
+
+### Key Frame Properties
+
+![](images/SceneCacheKeyFrameMarker.png)
+
+|**Properties**           |**Description** |
+|:----------------------- |:---|
+| **Mode**            | **Continuous**: interpolates **Frame To Play** linearly. <br/> **Hold**: keep showing **Frame To Play** to create limited animation. |
+| **Frame To Play**   | The frame of the *.sc* file to show at the timing of the marker. |
+| **Note**            | User notes. |
+
+### Default Key Frame Shortcuts
+
+|**Shorcut Keys**     |**Description** |
+|:----------------------- |:---|
+| *Shift-Tab* | Change the mode of the selected key frame. |
+| *Shift-E*   | Add a new key frame at the playhead location for the selected clip. |
+
+
 

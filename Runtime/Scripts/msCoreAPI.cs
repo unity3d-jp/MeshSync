@@ -22,21 +22,21 @@ internal static class Lib {
 
 
     [DllImport(name)]
-    static extern IntPtr msGetPluginVersionStr();
+    private static extern IntPtr msGetPluginVersionStr();
 
     [DllImport(name)]
-    static extern int msGetProtocolVersion();
+    private static extern int msGetProtocolVersion();
 
-        #endregion
+    #endregion
 
-    static string version;
-    internal static string GetPluginVersion()
-    {
-        if (version == null)
-        {
+    private static string version;
+
+    internal static string GetPluginVersion() {
+        if (version == null) {
             IntPtr nativeStr = msGetPluginVersionStr(); //Not direct marshalling because there is no free on C# side.
             version = Marshal.PtrToStringAnsi(nativeStr);
         }
+
         return version;
     }
 
@@ -62,7 +62,7 @@ internal enum AssetType {
     Animation,
     Texture,
     Material,
-    Audio,
+    Audio
 };
 
 
@@ -73,19 +73,19 @@ internal struct AssetData {
     [FieldOffset(0)] public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern int msAssetGetID(IntPtr self);
+    private static extern int msAssetGetID(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msAssetSetID(IntPtr self, int v);
+    private static extern void msAssetSetID(IntPtr self, int v);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msAssetGetName(IntPtr self);
+    private static extern IntPtr msAssetGetName(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msAssetSetName(IntPtr self, string v);
+    private static extern void msAssetSetName(IntPtr self, string v);
 
     [DllImport(Lib.name)]
-    static extern AssetType msAssetGetType(IntPtr self);
+    private static extern AssetType msAssetGetType(IntPtr self);
 
     #endregion
 
@@ -135,13 +135,13 @@ internal struct FileAssetData {
     [FieldOffset(0)] public IntPtr    self;
     [FieldOffset(0)] public AssetData asset;
     [DllImport(Lib.name)]
-    static extern FileAssetData msFileAssetCreate();
+    private static extern FileAssetData msFileAssetCreate();
 #if UNITY_EDITOR
     [DllImport(Lib.name)]
-    static extern byte msFileAssetReadFromFile(IntPtr self, string path);
+    private static extern byte msFileAssetReadFromFile(IntPtr self, string path);
 
     [DllImport(Lib.name)]
-    static extern byte msFileAssetWriteToFile(IntPtr self, string path);
+    private static extern byte msFileAssetWriteToFile(IntPtr self, string path);
 #endif
 
     #endregion
@@ -186,7 +186,7 @@ internal enum AudioFormat {
     S24,
     S32,
     F32,
-    RawFile = 100,
+    RawFile = 100
 }
 
 /// <summary>
@@ -200,37 +200,37 @@ internal struct AudioData {
     [FieldOffset(0)] public AssetData asset;
 
     [DllImport(Lib.name)]
-    static extern AudioData msAudioCreate();
+    private static extern AudioData msAudioCreate();
 
     [DllImport(Lib.name)]
-    static extern AudioFormat msAudioGetFormat(IntPtr self);
+    private static extern AudioFormat msAudioGetFormat(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msAudioSetFormat(IntPtr self, AudioFormat v);
+    private static extern void msAudioSetFormat(IntPtr self, AudioFormat v);
 
     [DllImport(Lib.name)]
-    static extern int msAudioGetFrequency(IntPtr self);
+    private static extern int msAudioGetFrequency(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msAudioSetFrequency(IntPtr self, int v);
+    private static extern void msAudioSetFrequency(IntPtr self, int v);
 
     [DllImport(Lib.name)]
-    static extern int msAudioGetChannels(IntPtr self);
+    private static extern int msAudioGetChannels(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msAudioSetChannels(IntPtr self, int v);
+    private static extern void msAudioSetChannels(IntPtr self, int v);
 
     [DllImport(Lib.name)]
-    static extern int msAudioGetSampleLength(IntPtr self);
+    private static extern int msAudioGetSampleLength(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msAudioGetDataAsFloat(IntPtr self, float[] dst);
+    private static extern int msAudioGetDataAsFloat(IntPtr self, float[] dst);
 #if UNITY_EDITOR
     [DllImport(Lib.name)]
-    static extern byte msAudioWriteToFile(IntPtr self, string path);
+    private static extern byte msAudioWriteToFile(IntPtr self, string path);
 
     [DllImport(Lib.name)]
-    static extern byte msAudioExportAsWave(IntPtr self, string path);
+    private static extern byte msAudioExportAsWave(IntPtr self, string path);
 #endif
 
     #endregion
@@ -283,7 +283,7 @@ internal struct AudioData {
 
     internal float[] samples {
         get {
-            var ret = new float[sampleLength];
+            float[] ret = new float[sampleLength];
             msAudioGetDataAsFloat(self, ret);
             return ret;
         }
@@ -342,7 +342,7 @@ internal enum TextureFormat {
     RGBi32  = Type_i32 | 3,
     RGBAi32 = Type_i32 | 4,
 
-    RawFile      = 0x10 << 4,
+    RawFile = 0x10 << 4
 }
 
 /// <summary>
@@ -356,43 +356,43 @@ internal struct TextureData {
     [FieldOffset(0)] public AssetData asset;
 
     [DllImport(Lib.name)]
-    static extern TextureData msTextureCreate();
+    private static extern TextureData msTextureCreate();
 
     [DllImport(Lib.name)]
-    static extern TextureType msTextureGetType(IntPtr self);
+    private static extern TextureType msTextureGetType(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msTextureSetType(IntPtr self, TextureType v);
+    private static extern void msTextureSetType(IntPtr self, TextureType v);
 
     [DllImport(Lib.name)]
-    static extern TextureFormat msTextureGetFormat(IntPtr self);
+    private static extern TextureFormat msTextureGetFormat(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msTextureSetFormat(IntPtr self, TextureFormat v);
+    private static extern void msTextureSetFormat(IntPtr self, TextureFormat v);
 
     [DllImport(Lib.name)]
-    static extern int msTextureGetWidth(IntPtr self);
+    private static extern int msTextureGetWidth(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msTextureSetWidth(IntPtr self, int v);
+    private static extern void msTextureSetWidth(IntPtr self, int v);
 
     [DllImport(Lib.name)]
-    static extern int msTextureGetHeight(IntPtr self);
+    private static extern int msTextureGetHeight(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msTextureSetHeight(IntPtr self, int v);
+    private static extern void msTextureSetHeight(IntPtr self, int v);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msTextureGetDataPtr(IntPtr self);
+    private static extern IntPtr msTextureGetDataPtr(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msTextureGetSizeInByte(IntPtr self);
+    private static extern int msTextureGetSizeInByte(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern byte msTextureWriteToFile(IntPtr self, string path);
+    private static extern byte msTextureWriteToFile(IntPtr self, string path);
 
     [DllImport(Lib.name)]
-    static extern byte msWriteToFile(string path, byte[] data, int size);
+    private static extern byte msWriteToFile(string path, byte[] data, int size);
 
     #endregion
 
@@ -465,40 +465,40 @@ internal struct MaterialPropertyData {
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMaterialPropGetName(IntPtr self);
+    private static extern IntPtr msMaterialPropGetName(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern Type msMaterialPropGetType(IntPtr self);
+    private static extern Type msMaterialPropGetType(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msMaterialPropGetArrayLength(IntPtr self);
+    private static extern int msMaterialPropGetArrayLength(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialPropCopyData(IntPtr self, ref int dst);
+    private static extern void msMaterialPropCopyData(IntPtr self, ref int dst);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialPropCopyData(IntPtr self, ref float dst);
+    private static extern void msMaterialPropCopyData(IntPtr self, ref float dst);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialPropCopyData(IntPtr self, ref Vector4 dst);
+    private static extern void msMaterialPropCopyData(IntPtr self, ref Vector4 dst);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialPropCopyData(IntPtr self, ref Matrix4x4 dst);
+    private static extern void msMaterialPropCopyData(IntPtr self, ref Matrix4x4 dst);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialPropCopyData(IntPtr self, ref TextureRecord dst);
+    private static extern void msMaterialPropCopyData(IntPtr self, ref TextureRecord dst);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialPropCopyData(IntPtr self, float[] dst);
+    private static extern void msMaterialPropCopyData(IntPtr self, float[] dst);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialPropCopyData(IntPtr self, Vector4[] dst);
+    private static extern void msMaterialPropCopyData(IntPtr self, Vector4[] dst);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialPropCopyData(IntPtr self, Matrix4x4[] dst);
+    private static extern void msMaterialPropCopyData(IntPtr self, Matrix4x4[] dst);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialPropCopyData(IntPtr self, StringBuilder dst);
+    private static extern void msMaterialPropCopyData(IntPtr self, StringBuilder dst);
 
     #endregion
 
@@ -524,9 +524,7 @@ internal struct MaterialPropertyData {
 
     public string name {
         get {
-            if (self == IntPtr.Zero) {
-                return default;
-            }
+            if (self == IntPtr.Zero) return default;
 
             return Misc.S(msMaterialPropGetName(self));
         }
@@ -538,9 +536,7 @@ internal struct MaterialPropertyData {
 
     public Type type {
         get {
-            if (self == IntPtr.Zero) {
-                return default;
-            }
+            if (self == IntPtr.Zero) return default;
 
             return msMaterialPropGetType(self);
         }
@@ -548,10 +544,8 @@ internal struct MaterialPropertyData {
 
     public int intValue {
         get {
-            if (self == IntPtr.Zero) {
-                return default;
-            }
-            
+            if (self == IntPtr.Zero) return default;
+
             int ret = 0;
             msMaterialPropCopyData(self, ref ret);
             return ret;
@@ -560,10 +554,8 @@ internal struct MaterialPropertyData {
 
     public float floatValue {
         get {
-            if (self == IntPtr.Zero) {
-                return default;
-            }
-            
+            if (self == IntPtr.Zero) return default;
+
             float ret = 0;
             msMaterialPropCopyData(self, ref ret);
             return ret;
@@ -572,10 +564,8 @@ internal struct MaterialPropertyData {
 
     public Vector4 vectorValue {
         get {
-            if (self == IntPtr.Zero) {
-                return default;
-            }
-            
+            if (self == IntPtr.Zero) return default;
+
             Vector4 ret = Vector4.zero;
             msMaterialPropCopyData(self, ref ret);
             return ret;
@@ -584,10 +574,8 @@ internal struct MaterialPropertyData {
 
     public Matrix4x4 matrixValue {
         get {
-            if (self == IntPtr.Zero) {
-                return default;
-            }
-            
+            if (self == IntPtr.Zero) return default;
+
             Matrix4x4 ret = Matrix4x4.identity;
             msMaterialPropCopyData(self, ref ret);
             return ret;
@@ -596,20 +584,17 @@ internal struct MaterialPropertyData {
 
     public TextureRecord textureValue {
         get {
-            if (self == IntPtr.Zero) {
-                return default;
-            }
-            
-            var ret = default(TextureRecord);
+            if (self == IntPtr.Zero) return default;
+
+            TextureRecord ret = default(TextureRecord);
             msMaterialPropCopyData(self, ref ret);
             return ret;
         }
     }
+
     public int arrayLength {
         get {
-            if (self == IntPtr.Zero) {
-                return default;
-            }
+            if (self == IntPtr.Zero) return default;
 
             return msMaterialPropGetArrayLength(self);
         }
@@ -617,11 +602,9 @@ internal struct MaterialPropertyData {
 
     public float[] floatArray {
         get {
-            if (self == IntPtr.Zero) {
-                return default;
-            }
-            
-            var ret = new float[arrayLength];
+            if (self == IntPtr.Zero) return default;
+
+            float[] ret = new float[arrayLength];
             msMaterialPropCopyData(self, ret);
             return ret;
         }
@@ -629,11 +612,9 @@ internal struct MaterialPropertyData {
 
     public Vector4[] vectorArray {
         get {
-            if (self == IntPtr.Zero) {
-                return default;
-            }
+            if (self == IntPtr.Zero) return default;
 
-            var ret = new Vector4[arrayLength];
+            Vector4[] ret = new Vector4[arrayLength];
             msMaterialPropCopyData(self, ret);
             return ret;
         }
@@ -641,11 +622,9 @@ internal struct MaterialPropertyData {
 
     public Matrix4x4[] matrixArray {
         get {
-            if (self == IntPtr.Zero) {
-                return default;
-            }
-            
-            var ret = new Matrix4x4[arrayLength];
+            if (self == IntPtr.Zero) return default;
+
+            Matrix4x4[] ret = new Matrix4x4[arrayLength];
             msMaterialPropCopyData(self, ret);
             return ret;
         }
@@ -662,10 +641,10 @@ internal struct MaterialKeywordData {
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMaterialKeywordGetName(IntPtr self);
+    private static extern IntPtr msMaterialKeywordGetName(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern byte msMaterialKeywordGetValue(IntPtr self);
+    private static extern byte msMaterialKeywordGetValue(IntPtr self);
 
     #endregion
 
@@ -693,61 +672,61 @@ internal struct MaterialData {
     [FieldOffset(0)] public AssetData asset;
 
     [DllImport(Lib.name)]
-    static extern MaterialData msMaterialCreate();
+    private static extern MaterialData msMaterialCreate();
 
     [DllImport(Lib.name)]
-    static extern int msMaterialGetIndex(IntPtr self);
+    private static extern int msMaterialGetIndex(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialSetIndex(IntPtr self, int v);
+    private static extern void msMaterialSetIndex(IntPtr self, int v);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMaterialGetShader(IntPtr self);
+    private static extern IntPtr msMaterialGetShader(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialSetShader(IntPtr self, string v);
+    private static extern void msMaterialSetShader(IntPtr self, string v);
 
     [DllImport(Lib.name)]
-    static extern int msMaterialGetNumParams(IntPtr self);
+    private static extern int msMaterialGetNumParams(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern MaterialPropertyData msMaterialGetParam(IntPtr self, int i);
+    private static extern MaterialPropertyData msMaterialGetParam(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern MaterialPropertyData msMaterialFindParam(IntPtr self, string name);
+    private static extern MaterialPropertyData msMaterialFindParam(IntPtr self, string name);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialSetInt(IntPtr self, string name, int v);
+    private static extern void msMaterialSetInt(IntPtr self, string name, int v);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialSetFloat(IntPtr self, string name, float v);
+    private static extern void msMaterialSetFloat(IntPtr self, string name, float v);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialSetVector(IntPtr self, string name, Vector4 v);
+    private static extern void msMaterialSetVector(IntPtr self, string name, Vector4 v);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialSetMatrix(IntPtr self, string name, Matrix4x4 v);
+    private static extern void msMaterialSetMatrix(IntPtr self, string name, Matrix4x4 v);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialSetFloatArray(IntPtr self, string name, float[] v, int c);
+    private static extern void msMaterialSetFloatArray(IntPtr self, string name, float[] v, int c);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialSetVectorArray(IntPtr self, string name, Vector4[] v, int c);
+    private static extern void msMaterialSetVectorArray(IntPtr self, string name, Vector4[] v, int c);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialSetMatrixArray(IntPtr self, string name, Matrix4x4[] v, int c);
+    private static extern void msMaterialSetMatrixArray(IntPtr self, string name, Matrix4x4[] v, int c);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialSetTexture(IntPtr self, string name, TextureData v);
+    private static extern void msMaterialSetTexture(IntPtr self, string name, TextureData v);
 
     [DllImport(Lib.name)]
-    static extern int msMaterialGetNumKeywords(IntPtr self);
+    private static extern int msMaterialGetNumKeywords(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern MaterialKeywordData msMaterialGetKeyword(IntPtr self, int i);
+    private static extern MaterialKeywordData msMaterialGetKeyword(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern void msMaterialAddKeyword(IntPtr self, string name, byte v);
+    private static extern void msMaterialAddKeyword(IntPtr self, string name, byte v);
 
     #endregion
 
@@ -802,7 +781,7 @@ internal struct MaterialData {
 
     internal Color color {
         get {
-            var p = FindProperty("_Color");
+            MaterialPropertyData p = FindProperty("_Color");
             if (p && p.type == MaterialPropertyData.Type.Vector)
                 return p.vectorValue;
             else
@@ -862,18 +841,17 @@ internal struct MaterialData {
 #region Animations
 
 internal struct TimeRange {
-
     internal float GetDuration() {
-        return (end - start);
+        return end - start;
     }
-    
+
     public float start, end;
 }
 
 internal enum InterpolationMode {
     Smooth,
     Linear,
-    Constant,
+    Constant
 }
 
 internal class AnimationImportContext {
@@ -892,28 +870,28 @@ internal struct AnimationCurveData {
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern IntPtr msCurveGetName(IntPtr self);
+    private static extern IntPtr msCurveGetName(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern DataType msCurveGetDataType(IntPtr self);
+    private static extern DataType msCurveGetDataType(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msCurveGetNumSamples(IntPtr self);
+    private static extern int msCurveGetNumSamples(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msCurveGetBlendshapeName(IntPtr self);
+    private static extern IntPtr msCurveGetBlendshapeName(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msCurveGetNumElements(IntPtr self);
+    private static extern int msCurveGetNumElements(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msCurveGetNumKeys(IntPtr self, int i);
+    private static extern int msCurveGetNumKeys(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern void msCurveCopy(IntPtr self, int i, Keyframe[] x);
+    private static extern void msCurveCopy(IntPtr self, int i, Keyframe[] x);
 
     [DllImport(Lib.name)]
-    static extern void msCurveConvert(IntPtr self, InterpolationMode it);
+    private static extern void msCurveConvert(IntPtr self, InterpolationMode it);
 
     #endregion
 
@@ -924,7 +902,7 @@ internal struct AnimationCurveData {
         Float2,
         Float3,
         Float4,
-        Quaternion,
+        Quaternion
     }
 
     public static implicit operator bool(AnimationCurveData v) {
@@ -973,66 +951,66 @@ internal struct AnimationData {
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern IntPtr msAnimationGetPath(IntPtr self);
+    private static extern IntPtr msAnimationGetPath(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern EntityType msAnimationGetEntityType(IntPtr self);
+    private static extern EntityType msAnimationGetEntityType(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msAnimationGetNumCurves(IntPtr self);
+    private static extern int msAnimationGetNumCurves(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetCurve(IntPtr self, int i);
+    private static extern AnimationCurveData msAnimationGetCurve(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationFindCurve(IntPtr self, string name);
+    private static extern AnimationCurveData msAnimationFindCurve(IntPtr self, string name);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetTransformTranslation(IntPtr self);
+    private static extern AnimationCurveData msAnimationGetTransformTranslation(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetTransformRotation(IntPtr self);
+    private static extern AnimationCurveData msAnimationGetTransformRotation(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetTransformScale(IntPtr self);
+    private static extern AnimationCurveData msAnimationGetTransformScale(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetTransformVisible(IntPtr self);
+    private static extern AnimationCurveData msAnimationGetTransformVisible(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetCameraFieldOfView(IntPtr self);
+    private static extern AnimationCurveData msAnimationGetCameraFieldOfView(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetCameraNearPlane(IntPtr self);
+    private static extern AnimationCurveData msAnimationGetCameraNearPlane(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetCameraFarPlane(IntPtr self);
+    private static extern AnimationCurveData msAnimationGetCameraFarPlane(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetCameraFocalLength(IntPtr self);
+    private static extern AnimationCurveData msAnimationGetCameraFocalLength(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetCameraSensorSize(IntPtr self);
+    private static extern AnimationCurveData msAnimationGetCameraSensorSize(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetCameraLensShift(IntPtr self);
+    private static extern AnimationCurveData msAnimationGetCameraLensShift(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetLightColor(IntPtr self);
+    private static extern AnimationCurveData msAnimationGetLightColor(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetLightIntensity(IntPtr self);
+    private static extern AnimationCurveData msAnimationGetLightIntensity(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetLightRange(IntPtr self);
+    private static extern AnimationCurveData msAnimationGetLightRange(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationGetLightSpotAngle(IntPtr self);
+    private static extern AnimationCurveData msAnimationGetLightSpotAngle(IntPtr self);
 
     internal delegate void msCurveCallback(AnimationCurveData data);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msAnimationEachBlendshapeCurves(IntPtr self, msCurveCallback cb);
+    private static extern AnimationCurveData msAnimationEachBlendshapeCurves(IntPtr self, msCurveCallback cb);
 
     #endregion
 
@@ -1053,16 +1031,16 @@ internal struct AnimationData {
         get { return msAnimationGetEntityType(self); }
     }
 
-    AnimationCurve[] GenCurves(AnimationCurveData data) {
+    private AnimationCurve[] GenCurves(AnimationCurveData data) {
         if (!data)
             return null;
 
-        int numElements = data.numElements;
-        var ret         = new AnimationCurve[numElements];
+        int              numElements = data.numElements;
+        AnimationCurve[] ret         = new AnimationCurve[numElements];
         for (int i = 0; i < numElements; ++i) {
             int keyCount = data.GetKeyCount(i);
             if (keyCount > 0) {
-                var keys = new Keyframe[keyCount];
+                Keyframe[] keys = new Keyframe[keyCount];
                 data.Copy(i, keys);
                 ret[i] = new AnimationCurve(keys);
             }
@@ -1081,13 +1059,13 @@ internal struct AnimationData {
     }
 
     internal void ExportTransformAnimation(AnimationImportContext ctx) {
-        var clip   = ctx.clip;
-        var path   = ctx.path;
-        var ttrans = typeof(Transform);
+        AnimationClip clip   = ctx.clip;
+        string        path   = ctx.path;
+        Type          ttrans = typeof(Transform);
 
         {
             SetCurve(clip, path, ttrans, "m_LocalPosition", null, true);
-            var curves = GenCurves(msAnimationGetTransformTranslation(self));
+            AnimationCurve[] curves = GenCurves(msAnimationGetTransformTranslation(self));
             if (curves != null && curves.Length == 3) {
                 SetCurve(clip, path, ttrans, "m_LocalPosition.x", curves[0]);
                 SetCurve(clip, path, ttrans, "m_LocalPosition.y", curves[1]);
@@ -1097,7 +1075,7 @@ internal struct AnimationData {
         {
             SetCurve(clip, path, ttrans, "m_LocalEuler", null, true);
             SetCurve(clip, path, ttrans, "m_LocalRotation", null, true);
-            var curves = GenCurves(msAnimationGetTransformRotation(self));
+            AnimationCurve[] curves = GenCurves(msAnimationGetTransformRotation(self));
             if (curves != null) {
                 if (curves.Length == 3) {
                     SetCurve(clip, path, ttrans, "m_LocalEulerAnglesHint.x", curves[0]);
@@ -1114,7 +1092,7 @@ internal struct AnimationData {
         }
         {
             SetCurve(clip, path, ttrans, "m_LocalScale", null, true);
-            var curves = GenCurves(msAnimationGetTransformScale(self));
+            AnimationCurve[] curves = GenCurves(msAnimationGetTransformScale(self));
             if (curves != null && curves.Length == 3) {
                 SetCurve(clip, path, ttrans, "m_LocalScale.x", curves[0]);
                 SetCurve(clip, path, ttrans, "m_LocalScale.y", curves[1]);
@@ -1124,26 +1102,26 @@ internal struct AnimationData {
         if (ctx.enableVisibility && ctx.mainComponentType != null) {
             const string Target = "m_Enabled";
             SetCurve(clip, path, ctx.mainComponentType, Target, null, true);
-            var curves = GenCurves(msAnimationGetTransformVisible(self));
+            AnimationCurve[] curves = GenCurves(msAnimationGetTransformVisible(self));
             if (curves != null && curves.Length == 1)
                 SetCurve(clip, path, ctx.mainComponentType, Target, curves[0]);
         }
     }
 
     internal void ExportCameraAnimation(AnimationImportContext ctx) {
-        var tcam = typeof(Camera);
+        Type tcam = typeof(Camera);
         ctx.mainComponentType = tcam;
         ExportTransformAnimation(ctx);
 
-        var clip = ctx.clip;
-        var path = ctx.path;
+        AnimationClip clip = ctx.clip;
+        string        path = ctx.path;
 
         // use physical camera params if available
         bool isPhysicalCameraParamsAvailable = false;
         if (ctx.usePhysicalCameraParams) {
             const string Target = "m_FocalLength";
             SetCurve(clip, path, tcam, Target, null, true);
-            var curves = GenCurves(msAnimationGetCameraFocalLength(self));
+            AnimationCurve[] curves = GenCurves(msAnimationGetCameraFocalLength(self));
             if (curves != null && curves.Length == 1) {
                 SetCurve(clip, path, tcam, Target, curves[0]);
                 isPhysicalCameraParamsAvailable = true;
@@ -1153,7 +1131,7 @@ internal struct AnimationData {
         if (isPhysicalCameraParamsAvailable) {
             {
                 SetCurve(clip, path, tcam, "m_SensorSize", null, true);
-                var curves = GenCurves(msAnimationGetCameraSensorSize(self));
+                AnimationCurve[] curves = GenCurves(msAnimationGetCameraSensorSize(self));
                 if (curves != null && curves.Length == 2) {
                     SetCurve(clip, path, tcam, "m_SensorSize.x", curves[0]);
                     SetCurve(clip, path, tcam, "m_SensorSize.y", curves[1]);
@@ -1161,7 +1139,7 @@ internal struct AnimationData {
             }
             {
                 SetCurve(clip, path, tcam, "m_LensShift", null, true);
-                var curves = GenCurves(msAnimationGetCameraLensShift(self));
+                AnimationCurve[] curves = GenCurves(msAnimationGetCameraLensShift(self));
                 if (curves != null && curves.Length == 2) {
                     SetCurve(clip, path, tcam, "m_LensShift.x", curves[0]);
                     SetCurve(clip, path, tcam, "m_LensShift.y", curves[1]);
@@ -1171,7 +1149,7 @@ internal struct AnimationData {
         else {
             const string Target = "field of view";
             SetCurve(clip, path, tcam, Target, null, true);
-            var curves = GenCurves(msAnimationGetCameraFieldOfView(self));
+            AnimationCurve[] curves = GenCurves(msAnimationGetCameraFieldOfView(self));
             if (curves != null && curves.Length == 1)
                 SetCurve(clip, path, tcam, Target, curves[0]);
         }
@@ -1179,30 +1157,30 @@ internal struct AnimationData {
         {
             const string Target = "far clip plane";
             SetCurve(clip, path, tcam, Target, null, true);
-            var curves = GenCurves(msAnimationGetCameraFarPlane(self));
+            AnimationCurve[] curves = GenCurves(msAnimationGetCameraFarPlane(self));
             if (curves != null && curves.Length == 1)
                 SetCurve(clip, path, tcam, Target, curves[0]);
         }
         {
             const string Target = "near clip plane";
             SetCurve(clip, path, tcam, Target, null, true);
-            var curves = GenCurves(msAnimationGetCameraNearPlane(self));
+            AnimationCurve[] curves = GenCurves(msAnimationGetCameraNearPlane(self));
             if (curves != null && curves.Length == 1)
                 SetCurve(clip, path, tcam, Target, curves[0]);
         }
     }
 
     internal void ExportLightAnimation(AnimationImportContext ctx) {
-        var tlight = typeof(Light);
+        Type tlight = typeof(Light);
         ctx.mainComponentType = tlight;
         ExportTransformAnimation(ctx);
 
-        var clip = ctx.clip;
-        var path = ctx.path;
+        AnimationClip clip = ctx.clip;
+        string        path = ctx.path;
 
         {
             SetCurve(clip, path, tlight, "m_Color", null, true);
-            var curves = GenCurves(msAnimationGetLightColor(self));
+            AnimationCurve[] curves = GenCurves(msAnimationGetLightColor(self));
             if (curves != null && curves.Length == 4) {
                 SetCurve(clip, path, tlight, "m_Color.r", curves[0]);
                 SetCurve(clip, path, tlight, "m_Color.g", curves[1]);
@@ -1213,40 +1191,40 @@ internal struct AnimationData {
         {
             const string Target = "m_Intensity";
             SetCurve(clip, path, tlight, Target, null, true);
-            var curves = GenCurves(msAnimationGetLightIntensity(self));
+            AnimationCurve[] curves = GenCurves(msAnimationGetLightIntensity(self));
             if (curves != null && curves.Length == 1)
                 SetCurve(clip, path, tlight, Target, curves[0]);
         }
         {
             const string Target = "m_Range";
             SetCurve(clip, path, tlight, Target, null, true);
-            var curves = GenCurves(msAnimationGetLightRange(self));
+            AnimationCurve[] curves = GenCurves(msAnimationGetLightRange(self));
             if (curves != null && curves.Length == 1)
                 SetCurve(clip, path, tlight, Target, curves[0]);
         }
         {
             const string Target = "m_SpotAngle";
             SetCurve(clip, path, tlight, Target, null, true);
-            var curves = GenCurves(msAnimationGetLightSpotAngle(self));
+            AnimationCurve[] curves = GenCurves(msAnimationGetLightSpotAngle(self));
             if (curves != null && curves.Length == 1)
                 SetCurve(clip, path, tlight, Target, curves[0]);
         }
     }
 
-    static List<AnimationCurveData> s_blendshapes;
+    private static List<AnimationCurveData> s_blendshapes;
 
-    static void BlendshapeCallback(AnimationCurveData data) {
+    private static void BlendshapeCallback(AnimationCurveData data) {
         s_blendshapes.Add(data);
     }
 
     internal void ExportMeshAnimation(AnimationImportContext ctx) {
         if (ctx.mainComponentType == null)
             ctx.mainComponentType = typeof(MeshRenderer);
-        var tsmr = typeof(SkinnedMeshRenderer);
+        Type tsmr = typeof(SkinnedMeshRenderer);
         ExportTransformAnimation(ctx);
 
-        var clip = ctx.clip;
-        var path = ctx.path;
+        AnimationClip clip = ctx.clip;
+        string        path = ctx.path;
 
         {
             // blendshape animation
@@ -1256,8 +1234,8 @@ internal struct AnimationData {
             msAnimationEachBlendshapeCurves(self, BlendshapeCallback);
             int numBS = s_blendshapes.Count;
             for (int bi = 0; bi < numBS; ++bi) {
-                var data   = s_blendshapes[bi];
-                var curves = GenCurves(data);
+                AnimationCurveData data   = s_blendshapes[bi];
+                AnimationCurve[]   curves = GenCurves(data);
                 if (curves != null && curves.Length == 1)
                     SetCurve(clip, path, tsmr, "blendShape." + data.blendshapeName, curves[0]);
             }
@@ -1267,7 +1245,7 @@ internal struct AnimationData {
     }
 
     internal void ExportPointsAnimation(AnimationImportContext ctx) {
-        var tpoints = typeof(PointCache);
+        Type tpoints = typeof(PointCache);
         ctx.mainComponentType = tpoints;
         ExportTransformAnimation(ctx);
     }
@@ -1305,27 +1283,27 @@ internal struct AnimationClipData {
     [FieldOffset(0)] public AssetData asset;
 
     [DllImport(Lib.name)]
-    static extern IntPtr msAssetGetName(IntPtr self);
+    private static extern IntPtr msAssetGetName(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern float msAnimationClipGetFrameRate(IntPtr self);
+    private static extern float msAnimationClipGetFrameRate(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msAnimationClipGetNumAnimations(IntPtr self);
+    private static extern int msAnimationClipGetNumAnimations(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationData msAnimationClipGetAnimationData(IntPtr self, int i);
+    private static extern AnimationData msAnimationClipGetAnimationData(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern void msAnimationClipConvert(IntPtr self, InterpolationMode it);
+    private static extern void msAnimationClipConvert(IntPtr self, InterpolationMode it);
 
     [DllImport(Lib.name)]
-    static extern void msAnimationClipKeyframeReduction(IntPtr self, float threshold, byte eraseFlatCurves);
+    private static extern void msAnimationClipKeyframeReduction(IntPtr self, float threshold, byte eraseFlatCurves);
 
     [DllImport(Lib.name)]
-    static extern void msSetSizeOfKeyframe(int v);
+    private static extern void msSetSizeOfKeyframe(int v);
 
-    static bool s_prepared = false;
+    private static bool s_prepared = false;
 
     #endregion
 
@@ -1379,49 +1357,49 @@ internal struct VariantData {
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern IntPtr msVariantGetName(IntPtr self);
+    private static extern IntPtr msVariantGetName(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern Type msVariantGetType(IntPtr self);
+    private static extern Type msVariantGetType(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msVariantGetArrayLength(IntPtr self);
+    private static extern int msVariantGetArrayLength(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msVariantCopyData(IntPtr self, ref int dst);
+    private static extern void msVariantCopyData(IntPtr self, ref int dst);
 
     [DllImport(Lib.name)]
-    static extern void msVariantCopyData(IntPtr self, ref float dst);
+    private static extern void msVariantCopyData(IntPtr self, ref float dst);
 
     [DllImport(Lib.name)]
-    static extern void msVariantCopyData(IntPtr self, ref Vector2 dst);
+    private static extern void msVariantCopyData(IntPtr self, ref Vector2 dst);
 
     [DllImport(Lib.name)]
-    static extern void msVariantCopyData(IntPtr self, ref Vector3 dst);
+    private static extern void msVariantCopyData(IntPtr self, ref Vector3 dst);
 
     [DllImport(Lib.name)]
-    static extern void msVariantCopyData(IntPtr self, ref Vector4 dst);
+    private static extern void msVariantCopyData(IntPtr self, ref Vector4 dst);
 
     [DllImport(Lib.name)]
-    static extern void msVariantCopyData(IntPtr self, ref Matrix4x4 dst);
+    private static extern void msVariantCopyData(IntPtr self, ref Matrix4x4 dst);
 
     [DllImport(Lib.name)]
-    static extern void msVariantCopyData(IntPtr self, int[] dst);
+    private static extern void msVariantCopyData(IntPtr self, int[] dst);
 
     [DllImport(Lib.name)]
-    static extern void msVariantCopyData(IntPtr self, float[] dst);
+    private static extern void msVariantCopyData(IntPtr self, float[] dst);
 
     [DllImport(Lib.name)]
-    static extern void msVariantCopyData(IntPtr self, Vector2[] dst);
+    private static extern void msVariantCopyData(IntPtr self, Vector2[] dst);
 
     [DllImport(Lib.name)]
-    static extern void msVariantCopyData(IntPtr self, Vector3[] dst);
+    private static extern void msVariantCopyData(IntPtr self, Vector3[] dst);
 
     [DllImport(Lib.name)]
-    static extern void msVariantCopyData(IntPtr self, Vector4[] dst);
+    private static extern void msVariantCopyData(IntPtr self, Vector4[] dst);
 
     [DllImport(Lib.name)]
-    static extern void msVariantCopyData(IntPtr self, Matrix4x4[] dst);
+    private static extern void msVariantCopyData(IntPtr self, Matrix4x4[] dst);
 
     #endregion
 
@@ -1440,7 +1418,7 @@ internal struct VariantData {
         Quat,
         Float2x2,
         Float3x3,
-        Float4x4,
+        Float4x4
     }
 
     internal string name {
@@ -1505,7 +1483,7 @@ internal struct VariantData {
 
     public float[] floatArray {
         get {
-            var ret = new float[arrayLength];
+            float[] ret = new float[arrayLength];
             msVariantCopyData(self, ret);
             return ret;
         }
@@ -1513,7 +1491,7 @@ internal struct VariantData {
 
     public Vector2[] vector2Array {
         get {
-            var ret = new Vector2[arrayLength];
+            Vector2[] ret = new Vector2[arrayLength];
             msVariantCopyData(self, ret);
             return ret;
         }
@@ -1521,7 +1499,7 @@ internal struct VariantData {
 
     public Vector3[] vector3Array {
         get {
-            var ret = new Vector3[arrayLength];
+            Vector3[] ret = new Vector3[arrayLength];
             msVariantCopyData(self, ret);
             return ret;
         }
@@ -1529,7 +1507,7 @@ internal struct VariantData {
 
     public Vector4[] vector4Array {
         get {
-            var ret = new Vector4[arrayLength];
+            Vector4[] ret = new Vector4[arrayLength];
             msVariantCopyData(self, ret);
             return ret;
         }
@@ -1537,7 +1515,7 @@ internal struct VariantData {
 
     public Matrix4x4[] matrixArray {
         get {
-            var ret = new Matrix4x4[arrayLength];
+            Matrix4x4[] ret = new Matrix4x4[arrayLength];
             msVariantCopyData(self, ret);
             return ret;
         }
@@ -1554,10 +1532,10 @@ internal struct Identifier {
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern int msIdentifierGetID(IntPtr self);
+    private static extern int msIdentifierGetID(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msIdentifierGetName(IntPtr self);
+    private static extern IntPtr msIdentifierGetName(IntPtr self);
 
     #endregion
 
@@ -1577,7 +1555,7 @@ internal enum EntityType {
     Light,
     Mesh,
     Points,
-    Curve,
+    Curve
 };
 
 internal struct TransformDataFlags {
@@ -1642,70 +1620,70 @@ internal struct TransformData {
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern TransformData msTransformCreate();
+    private static extern TransformData msTransformCreate();
 
     [DllImport(Lib.name)]
-    static extern TransformDataFlags msTransformGetDataFlags(IntPtr self);
+    private static extern TransformDataFlags msTransformGetDataFlags(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern EntityType msTransformGetType(IntPtr self);
+    private static extern EntityType msTransformGetType(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msTransformGetHostID(IntPtr self);
+    private static extern int msTransformGetHostID(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msTransformGetIndex(IntPtr self);
+    private static extern int msTransformGetIndex(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msTransformGetPath(IntPtr self);
+    private static extern IntPtr msTransformGetPath(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern Vector3 msTransformGetPosition(IntPtr self);
+    private static extern Vector3 msTransformGetPosition(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern Quaternion msTransformGetRotation(IntPtr self);
+    private static extern Quaternion msTransformGetRotation(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern Vector3 msTransformGetScale(IntPtr self);
+    private static extern Vector3 msTransformGetScale(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern VisibilityFlags msTransformGetVisibility(IntPtr self);
+    private static extern VisibilityFlags msTransformGetVisibility(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msTransformGetReference(IntPtr self);
+    private static extern IntPtr msTransformGetReference(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msTransformGetNumUserProperties(IntPtr self);
+    private static extern int msTransformGetNumUserProperties(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern VariantData msTransformGetUserProperty(IntPtr self, int i);
+    private static extern VariantData msTransformGetUserProperty(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern VariantData msTransformFindUserProperty(IntPtr self, string name);
+    private static extern VariantData msTransformFindUserProperty(IntPtr self, string name);
 
     [DllImport(Lib.name)]
-    static extern void msTransformSetHostID(IntPtr self, int v);
+    private static extern void msTransformSetHostID(IntPtr self, int v);
 
     [DllImport(Lib.name)]
-    static extern void msTransformSetIndex(IntPtr self, int v);
+    private static extern void msTransformSetIndex(IntPtr self, int v);
 
     [DllImport(Lib.name)]
-    static extern void msTransformSetPath(IntPtr self, string v);
+    private static extern void msTransformSetPath(IntPtr self, string v);
 
     [DllImport(Lib.name)]
-    static extern void msTransformSetPosition(IntPtr self, Vector3 v);
+    private static extern void msTransformSetPosition(IntPtr self, Vector3 v);
 
     [DllImport(Lib.name)]
-    static extern void msTransformSetRotation(IntPtr self, Quaternion v);
+    private static extern void msTransformSetRotation(IntPtr self, Quaternion v);
 
     [DllImport(Lib.name)]
-    static extern void msTransformSetScale(IntPtr self, Vector3 v);
+    private static extern void msTransformSetScale(IntPtr self, Vector3 v);
 
     [DllImport(Lib.name)]
-    static extern void msTransformSetVisibility(IntPtr self, VisibilityFlags v);
+    private static extern void msTransformSetVisibility(IntPtr self, VisibilityFlags v);
 
     [DllImport(Lib.name)]
-    static extern void msTransformSetReference(IntPtr self, string v);
+    private static extern void msTransformSetReference(IntPtr self, string v);
 
     #endregion
 
@@ -1819,7 +1797,7 @@ internal struct TransformData {
         get { return msTransformGetNumUserProperties(self); }
     }
 
-    VariantData GetUserProperty(int i) {
+    private VariantData GetUserProperty(int i) {
         return msTransformGetUserProperty(self, i);
     }
 
@@ -1879,64 +1857,64 @@ internal struct CameraData {
     [FieldOffset(0)] public TransformData transform;
 
     [DllImport(Lib.name)]
-    static extern CameraData msCameraCreate();
+    private static extern CameraData msCameraCreate();
 
     [DllImport(Lib.name)]
-    static extern CameraDataFlags msCameraGetDataFlags(IntPtr self);
+    private static extern CameraDataFlags msCameraGetDataFlags(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern byte msCameraIsOrtho(IntPtr self);
+    private static extern byte msCameraIsOrtho(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern float msCameraGetFov(IntPtr self);
+    private static extern float msCameraGetFov(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern float msCameraGetNearPlane(IntPtr self);
+    private static extern float msCameraGetNearPlane(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern float msCameraGetFarPlane(IntPtr self);
+    private static extern float msCameraGetFarPlane(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern float msCameraGetFocalLength(IntPtr self);
+    private static extern float msCameraGetFocalLength(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern Vector2 msCameraGetSensorSize(IntPtr self);
+    private static extern Vector2 msCameraGetSensorSize(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern Vector2 msCameraGetLensShift(IntPtr self);
+    private static extern Vector2 msCameraGetLensShift(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern Matrix4x4 msCameraGetViewMatrix(IntPtr self);
+    private static extern Matrix4x4 msCameraGetViewMatrix(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern Matrix4x4 msCameraGetProjMatrix(IntPtr self);
+    private static extern Matrix4x4 msCameraGetProjMatrix(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msCameraSetOrtho(IntPtr self, byte v);
+    private static extern void msCameraSetOrtho(IntPtr self, byte v);
 
     [DllImport(Lib.name)]
-    static extern void msCameraSetFov(IntPtr self, float v);
+    private static extern void msCameraSetFov(IntPtr self, float v);
 
     [DllImport(Lib.name)]
-    static extern void msCameraSetNearPlane(IntPtr self, float v);
+    private static extern void msCameraSetNearPlane(IntPtr self, float v);
 
     [DllImport(Lib.name)]
-    static extern void msCameraSetFarPlane(IntPtr self, float v);
+    private static extern void msCameraSetFarPlane(IntPtr self, float v);
 
     [DllImport(Lib.name)]
-    static extern void msCameraSetFocalLength(IntPtr self, float v);
+    private static extern void msCameraSetFocalLength(IntPtr self, float v);
 
     [DllImport(Lib.name)]
-    static extern void msCameraSetSensorSize(IntPtr self, Vector2 v);
+    private static extern void msCameraSetSensorSize(IntPtr self, Vector2 v);
 
     [DllImport(Lib.name)]
-    static extern void msCameraSetLensShift(IntPtr self, Vector2 v);
+    private static extern void msCameraSetLensShift(IntPtr self, Vector2 v);
 
     [DllImport(Lib.name)]
-    static extern void msCameraSetViewMatrix(IntPtr self, Matrix4x4 v);
+    private static extern void msCameraSetViewMatrix(IntPtr self, Matrix4x4 v);
 
     [DllImport(Lib.name)]
-    static extern void msCameraSetProjMatrix(IntPtr self, Matrix4x4 v);
+    private static extern void msCameraSetProjMatrix(IntPtr self, Matrix4x4 v);
 
     #endregion
 
@@ -2042,46 +2020,46 @@ internal struct LightData {
     [FieldOffset(0)] public TransformData transform;
 
     [DllImport(Lib.name)]
-    static extern LightData msLightCreate();
+    private static extern LightData msLightCreate();
 
     [DllImport(Lib.name)]
-    static extern LightDataFlags msLightGetDataFlags(IntPtr self);
+    private static extern LightDataFlags msLightGetDataFlags(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern LightType msLightGetType(IntPtr self);
+    private static extern LightType msLightGetType(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msLightSetType(IntPtr self, LightType v);
+    private static extern void msLightSetType(IntPtr self, LightType v);
 
     [DllImport(Lib.name)]
-    static extern LightShadows msLightGetShadowType(IntPtr self);
+    private static extern LightShadows msLightGetShadowType(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msLightSetShadowType(IntPtr self, LightShadows v);
+    private static extern void msLightSetShadowType(IntPtr self, LightShadows v);
 
     [DllImport(Lib.name)]
-    static extern Color msLightGetColor(IntPtr self);
+    private static extern Color msLightGetColor(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msLightSetColor(IntPtr self, Color v);
+    private static extern void msLightSetColor(IntPtr self, Color v);
 
     [DllImport(Lib.name)]
-    static extern float msLightGetIntensity(IntPtr self);
+    private static extern float msLightGetIntensity(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msLightSetIntensity(IntPtr self, float v);
+    private static extern void msLightSetIntensity(IntPtr self, float v);
 
     [DllImport(Lib.name)]
-    static extern float msLightGetRange(IntPtr self);
+    private static extern float msLightGetRange(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msLightSetRange(IntPtr self, float v);
+    private static extern void msLightSetRange(IntPtr self, float v);
 
     [DllImport(Lib.name)]
-    static extern float msLightGetSpotAngle(IntPtr self);
+    private static extern float msLightGetSpotAngle(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msLightSetSpotAngle(IntPtr self, float v);
+    private static extern void msLightSetSpotAngle(IntPtr self, float v);
 
     #endregion
 
@@ -2136,16 +2114,16 @@ internal struct SubmeshData {
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern int msSubmeshGetNumIndices(IntPtr self);
+    private static extern int msSubmeshGetNumIndices(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msSubmeshReadIndices(IntPtr self, IntPtr mesh, IntPtr dst);
+    private static extern void msSubmeshReadIndices(IntPtr self, IntPtr mesh, IntPtr dst);
 
     [DllImport(Lib.name)]
-    static extern int msSubmeshGetMaterialID(IntPtr self);
+    private static extern int msSubmeshGetMaterialID(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern Topology msSubmeshGetTopology(IntPtr self);
+    private static extern Topology msSubmeshGetTopology(IntPtr self);
 
     #endregion
 
@@ -2153,7 +2131,7 @@ internal struct SubmeshData {
         Points,
         Lines,
         Triangles,
-        Quads,
+        Quads
     };
 
 
@@ -2180,34 +2158,34 @@ internal struct BlendShapeData {
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern IntPtr msBlendShapeGetName(IntPtr self);
+    private static extern IntPtr msBlendShapeGetName(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msBlendShapeSetName(IntPtr self, string v);
+    private static extern void msBlendShapeSetName(IntPtr self, string v);
 
     [DllImport(Lib.name)]
-    static extern float msBlendShapeGetWeight(IntPtr self);
+    private static extern float msBlendShapeGetWeight(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msBlendShapeSetWeight(IntPtr self, float v);
+    private static extern void msBlendShapeSetWeight(IntPtr self, float v);
 
     [DllImport(Lib.name)]
-    static extern int msBlendShapeGetNumFrames(IntPtr self);
+    private static extern int msBlendShapeGetNumFrames(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern float msBlendShapeGetFrameWeight(IntPtr self, int f);
+    private static extern float msBlendShapeGetFrameWeight(IntPtr self, int f);
 
     [DllImport(Lib.name)]
-    static extern void msBlendShapeReadPoints(IntPtr self, int f, IntPtr dst);
+    private static extern void msBlendShapeReadPoints(IntPtr self, int f, IntPtr dst);
 
     [DllImport(Lib.name)]
-    static extern void msBlendShapeReadNormals(IntPtr self, int f, IntPtr dst);
+    private static extern void msBlendShapeReadNormals(IntPtr self, int f, IntPtr dst);
 
     [DllImport(Lib.name)]
-    static extern void msBlendShapeReadTangents(IntPtr self, int f, IntPtr dst);
+    private static extern void msBlendShapeReadTangents(IntPtr self, int f, IntPtr dst);
 
     [DllImport(Lib.name)]
-    static extern void msBlendShapeAddFrame(IntPtr self, float weight, int num, Vector3[] v, Vector3[] n, Vector3[] t);
+    private static extern void msBlendShapeAddFrame(IntPtr self, float weight, int num, Vector3[] v, Vector3[] n, Vector3[] t);
 
     #endregion
 
@@ -2301,7 +2279,7 @@ internal struct MeshDataFlags {
         get { return flags[19]; }
     }
 
-    const int UV_START_BIT_POS = 24;
+    private const int UV_START_BIT_POS = 24;
 
     public bool HasUV(int index) {
         return flags[UV_START_BIT_POS + index];
@@ -2319,159 +2297,159 @@ internal struct MeshData {
     [FieldOffset(0)] public TransformData transform;
 
     [DllImport(Lib.name)]
-    static extern MeshData msMeshCreate();
+    private static extern MeshData msMeshCreate();
 
     [DllImport(Lib.name)]
-    static extern MeshDataFlags msMeshGetDataFlags(IntPtr self);
+    private static extern MeshDataFlags msMeshGetDataFlags(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msMeshSetFlags(IntPtr self, MeshDataFlags v);
+    private static extern void msMeshSetFlags(IntPtr self, MeshDataFlags v);
 
     [DllImport(Lib.name)]
-    static extern int msMeshGetNumPoints(IntPtr self);
+    private static extern int msMeshGetNumPoints(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msMeshGetNumIndices(IntPtr self);
+    private static extern int msMeshGetNumIndices(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msMeshReadPoints(IntPtr self, IntPtr dst);
+    private static extern void msMeshReadPoints(IntPtr self, IntPtr dst);
 
     [DllImport(Lib.name)]
-    static extern void msMeshReadNormals(IntPtr self, IntPtr dst);
+    private static extern void msMeshReadNormals(IntPtr self, IntPtr dst);
 
     [DllImport(Lib.name)]
-    static extern void msMeshReadTangents(IntPtr self, IntPtr dst);
+    private static extern void msMeshReadTangents(IntPtr self, IntPtr dst);
 
     [DllImport(Lib.name)]
-    static extern void msMeshReadUV(IntPtr self, IntPtr dst, int index);
+    private static extern void msMeshReadUV(IntPtr self, IntPtr dst, int index);
 
     [DllImport(Lib.name)]
-    static extern void msMeshReadColors(IntPtr self, IntPtr dst);
+    private static extern void msMeshReadColors(IntPtr self, IntPtr dst);
 
     [DllImport(Lib.name)]
-    static extern void msMeshReadVelocities(IntPtr self, IntPtr dst);
+    private static extern void msMeshReadVelocities(IntPtr self, IntPtr dst);
 
     [DllImport(Lib.name)]
-    static extern void msMeshReadIndices(IntPtr self, IntPtr dst);
+    private static extern void msMeshReadIndices(IntPtr self, IntPtr dst);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMeshGetPointsPtr(IntPtr self);
+    private static extern IntPtr msMeshGetPointsPtr(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMeshGetNormalsPtr(IntPtr self);
+    private static extern IntPtr msMeshGetNormalsPtr(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMeshGetTangentsPtr(IntPtr self);
+    private static extern IntPtr msMeshGetTangentsPtr(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMeshGetUV0Ptr(IntPtr self);
+    private static extern IntPtr msMeshGetUV0Ptr(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMeshGetUV1Ptr(IntPtr self);
+    private static extern IntPtr msMeshGetUV1Ptr(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMeshGetColorsPtr(IntPtr self);
+    private static extern IntPtr msMeshGetColorsPtr(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMeshGetVelocitiesPtr(IntPtr self);
+    private static extern IntPtr msMeshGetVelocitiesPtr(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMeshGetIndicesPtr(IntPtr self);
+    private static extern IntPtr msMeshGetIndicesPtr(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msMeshWritePoints(IntPtr self, Vector3[] v, int size);
+    private static extern void msMeshWritePoints(IntPtr self, Vector3[] v, int size);
 
     [DllImport(Lib.name)]
-    static extern void msMeshWriteNormals(IntPtr self, Vector3[] v, int size);
+    private static extern void msMeshWriteNormals(IntPtr self, Vector3[] v, int size);
 
     [DllImport(Lib.name)]
-    static extern void msMeshWriteTangents(IntPtr self, Vector4[] v, int size);
+    private static extern void msMeshWriteTangents(IntPtr self, Vector4[] v, int size);
 
     [DllImport(Lib.name)]
-    static extern void msMeshWriteUV(IntPtr self, int index, Vector2[] v, int size);
+    private static extern void msMeshWriteUV(IntPtr self, int index, Vector2[] v, int size);
 
     [DllImport(Lib.name)]
-    static extern void msMeshWriteColors(IntPtr self, Color[] v, int size);
+    private static extern void msMeshWriteColors(IntPtr self, Color[] v, int size);
 
     [DllImport(Lib.name)]
-    static extern void msMeshWriteVelocities(IntPtr self, Vector3[] v, int size);
+    private static extern void msMeshWriteVelocities(IntPtr self, Vector3[] v, int size);
 
     [DllImport(Lib.name)]
-    static extern void msMeshWriteIndices(IntPtr self, int[] v, int size);
+    private static extern void msMeshWriteIndices(IntPtr self, int[] v, int size);
 
     [DllImport(Lib.name)]
-    static extern void msMeshWriteSubmeshTriangles(IntPtr self, int[] v, int size, int materialID);
+    private static extern void msMeshWriteSubmeshTriangles(IntPtr self, int[] v, int size, int materialID);
 
     [DllImport(Lib.name)]
-    static extern int msMeshGetNumSubmeshes(IntPtr self);
+    private static extern int msMeshGetNumSubmeshes(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern SubmeshData msMeshGetSubmesh(IntPtr self, int i);
+    private static extern SubmeshData msMeshGetSubmesh(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern Bounds msMeshGetBounds(IntPtr self);
+    private static extern Bounds msMeshGetBounds(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msMeshReadBoneWeights4(IntPtr self, IntPtr dst);
+    private static extern void msMeshReadBoneWeights4(IntPtr self, IntPtr dst);
 
     [DllImport(Lib.name)]
-    static extern void msMeshWriteBoneWeights4(IntPtr self, BoneWeight[] weights, int size);
+    private static extern void msMeshWriteBoneWeights4(IntPtr self, BoneWeight[] weights, int size);
 #if UNITY_2019_1_OR_NEWER
     [DllImport(Lib.name)]
-    static extern void msMeshReadBoneCounts(IntPtr self, IntPtr dst);
+    private static extern void msMeshReadBoneCounts(IntPtr self, IntPtr dst);
 
     [DllImport(Lib.name)]
-    static extern void msMeshReadBoneWeightsV(IntPtr self, IntPtr dst);
+    private static extern void msMeshReadBoneWeightsV(IntPtr self, IntPtr dst);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMeshGetBoneCountsPtr(IntPtr self);
+    private static extern IntPtr msMeshGetBoneCountsPtr(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMeshGetBoneWeightsVPtr(IntPtr self);
+    private static extern IntPtr msMeshGetBoneWeightsVPtr(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msMeshWriteBoneWeightsV(IntPtr self, IntPtr counts, int numCounts, IntPtr weights,
+    private static extern void msMeshWriteBoneWeightsV(IntPtr self, IntPtr counts, int numCounts, IntPtr weights,
         int numWeights);
 #endif
     [DllImport(Lib.name)]
-    static extern int msMeshGetNumBones(IntPtr self);
+    private static extern int msMeshGetNumBones(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msMeshGetNumBoneWeights(IntPtr self);
+    private static extern int msMeshGetNumBoneWeights(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMeshGetRootBonePath(IntPtr self);
+    private static extern IntPtr msMeshGetRootBonePath(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msMeshSetRootBonePath(IntPtr self, string v);
+    private static extern void msMeshSetRootBonePath(IntPtr self, string v);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msMeshGetBonePath(IntPtr self, int i);
+    private static extern IntPtr msMeshGetBonePath(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern void msMeshSetBonePath(IntPtr self, string v, int i);
+    private static extern void msMeshSetBonePath(IntPtr self, string v, int i);
 
     [DllImport(Lib.name)]
-    static extern void msMeshReadBindPoses(IntPtr self, Matrix4x4[] v);
+    private static extern void msMeshReadBindPoses(IntPtr self, Matrix4x4[] v);
 
     [DllImport(Lib.name)]
-    static extern void msMeshWriteBindPoses(IntPtr self, Matrix4x4[] v, int size);
+    private static extern void msMeshWriteBindPoses(IntPtr self, Matrix4x4[] v, int size);
 
     [DllImport(Lib.name)]
-    static extern void msMeshSetLocal2World(IntPtr self, ref Matrix4x4 v);
+    private static extern void msMeshSetLocal2World(IntPtr self, ref Matrix4x4 v);
 
     [DllImport(Lib.name)]
-    static extern void msMeshSetWorld2Local(IntPtr self, ref Matrix4x4 v);
+    private static extern void msMeshSetWorld2Local(IntPtr self, ref Matrix4x4 v);
 
 
     [DllImport(Lib.name)]
-    static extern int msMeshGetNumBlendShapes(IntPtr self);
+    private static extern int msMeshGetNumBlendShapes(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern BlendShapeData msMeshGetBlendShapeData(IntPtr self, int i);
+    private static extern BlendShapeData msMeshGetBlendShapeData(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern BlendShapeData msMeshAddBlendShape(IntPtr self, string name);
+    private static extern BlendShapeData msMeshAddBlendShape(IntPtr self, string name);
 
     #endregion
 
@@ -2595,8 +2573,8 @@ internal struct MeshData {
 
     internal string[] bonePaths {
         get {
-            int n   = numBones;
-            var ret = new string[n];
+            int      n   = numBones;
+            string[] ret = new string[n];
             for (int i = 0; i < n; ++i)
                 ret[i] = Misc.S(msMeshGetBonePath(self, i));
             return ret;
@@ -2622,7 +2600,7 @@ internal struct MeshData {
 
     internal Matrix4x4[] bindposes {
         get {
-            var ret = new Matrix4x4[numBones];
+            Matrix4x4[] ret = new Matrix4x4[numBones];
             msMeshReadBindPoses(self, ret);
             return ret;
         }
@@ -2701,52 +2679,52 @@ internal struct PointsData {
     [FieldOffset(0)] public TransformData transform;
 
     [DllImport(Lib.name)]
-    static extern PointsData msPointsCreate();
+    private static extern PointsData msPointsCreate();
 
     [DllImport(Lib.name)]
-    static extern PointsDataFlags msPointsGetFlags(IntPtr self);
+    private static extern PointsDataFlags msPointsGetFlags(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern Bounds msPointsGetBounds(IntPtr self);
+    private static extern Bounds msPointsGetBounds(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msPointsGetNumPoints(IntPtr self);
+    private static extern int msPointsGetNumPoints(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msPointsReadPoints(IntPtr self, Vector3[] dst);
+    private static extern void msPointsReadPoints(IntPtr self, Vector3[] dst);
 
     [DllImport(Lib.name)]
-    static extern void msPointsWritePoints(IntPtr self, Vector3[] v, int size);
+    private static extern void msPointsWritePoints(IntPtr self, Vector3[] v, int size);
 
     [DllImport(Lib.name)]
-    static extern void msPointsReadRotations(IntPtr self, Quaternion[] dst);
+    private static extern void msPointsReadRotations(IntPtr self, Quaternion[] dst);
 
     [DllImport(Lib.name)]
-    static extern void msPointsWriteRotations(IntPtr self, Quaternion[] v, int size);
+    private static extern void msPointsWriteRotations(IntPtr self, Quaternion[] v, int size);
 
     [DllImport(Lib.name)]
-    static extern void msPointsReadScales(IntPtr self, Vector3[] dst);
+    private static extern void msPointsReadScales(IntPtr self, Vector3[] dst);
 
     [DllImport(Lib.name)]
-    static extern void msPointsWriteScales(IntPtr self, Vector3[] v, int size);
+    private static extern void msPointsWriteScales(IntPtr self, Vector3[] v, int size);
 
     [DllImport(Lib.name)]
-    static extern void msPointsReadVelocities(IntPtr self, Vector3[] dst);
+    private static extern void msPointsReadVelocities(IntPtr self, Vector3[] dst);
 
     [DllImport(Lib.name)]
-    static extern void msPointsWriteVelocities(IntPtr self, Vector3[] v, int size);
+    private static extern void msPointsWriteVelocities(IntPtr self, Vector3[] v, int size);
 
     [DllImport(Lib.name)]
-    static extern void msPointsReadColors(IntPtr self, Color[] dst);
+    private static extern void msPointsReadColors(IntPtr self, Color[] dst);
 
     [DllImport(Lib.name)]
-    static extern void msPointsWriteColors(IntPtr self, Color[] v, int size);
+    private static extern void msPointsWriteColors(IntPtr self, Color[] v, int size);
 
     [DllImport(Lib.name)]
-    static extern void msPointsReadIDs(IntPtr self, int[] dst);
+    private static extern void msPointsReadIDs(IntPtr self, int[] dst);
 
     [DllImport(Lib.name)]
-    static extern void msPointsWriteIDs(IntPtr self, int[] v, int size);
+    private static extern void msPointsWriteIDs(IntPtr self, int[] v, int size);
 
     #endregion
 
@@ -2819,42 +2797,41 @@ internal struct PointsData {
     }
 }
 
-    #endregion
+#endregion
 
 #region Curve
-    
-    /// <summary>
-    /// CurvesData
-    /// </summary>
-    [StructLayout(LayoutKind.Explicit)]
-    internal struct CurvesData
-    {
-        #region internal
 
-        [FieldOffset(0)] public IntPtr self;
-        [FieldOffset(0)] public TransformData transform;
+/// <summary>
+/// CurvesData
+/// </summary>
+[StructLayout(LayoutKind.Explicit)]
+internal struct CurvesData {
+    #region internal
 
-        
-        [DllImport(Lib.name)]
-        static extern int msCurveGetNumSplines(IntPtr self);
+    [FieldOffset(0)] public IntPtr        self;
+    [FieldOffset(0)] public TransformData transform;
 
-        [DllImport(Lib.name)]
-        static extern bool msCurveReadSplineClosed(IntPtr self, int index);        
 
-        [DllImport(Lib.name)]
-        static extern int msCurveGetNumSplinePoints(IntPtr self, int index);
+    [DllImport(Lib.name)]
+    private static extern int msCurveGetNumSplines(IntPtr self);
 
-        [DllImport(Lib.name)]
-        static extern int msCurveReadSplineCos(IntPtr self, int index, IntPtr dst);
+    [DllImport(Lib.name)]
+    private static extern bool msCurveReadSplineClosed(IntPtr self, int index);
 
-        [DllImport(Lib.name)]
-        static extern int msCurveReadSplineHandlesLeft(IntPtr self, int index, IntPtr dst);
+    [DllImport(Lib.name)]
+    private static extern int msCurveGetNumSplinePoints(IntPtr self, int index);
 
-        [DllImport(Lib.name)]
-        static extern int msCurveReadSplineHandlesRight(IntPtr self, int index, IntPtr dst);
+    [DllImport(Lib.name)]
+    private static extern int msCurveReadSplineCos(IntPtr self, int index, IntPtr dst);
 
-        #endregion
-        
+    [DllImport(Lib.name)]
+    private static extern int msCurveReadSplineHandlesLeft(IntPtr self, int index, IntPtr dst);
+
+    [DllImport(Lib.name)]
+    private static extern int msCurveReadSplineHandlesRight(IntPtr self, int index, IntPtr dst);
+
+    #endregion
+
 #if AT_USE_SPLINES
         public int numSplines
         {
@@ -2886,8 +2863,8 @@ internal struct PointsData {
             msCurveReadSplineHandlesRight(self, index, dst);
         }
 #endif
-    }
-    
+}
+
 #endregion Curve
 
 #endregion
@@ -2901,18 +2878,18 @@ internal struct ConstraintData {
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern ConstraintType msConstraintGetType(IntPtr self);
+    private static extern ConstraintType msConstraintGetType(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msConstraintGetPath(IntPtr self);
+    private static extern IntPtr msConstraintGetPath(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msConstraintGetNumSources(IntPtr self);
+    private static extern int msConstraintGetNumSources(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msConstraintGetSource(IntPtr self, int i);
+    private static extern IntPtr msConstraintGetSource(IntPtr self, int i);
 
-#endregion
+    #endregion
 
     internal enum ConstraintType {
         Unknown,
@@ -2920,7 +2897,7 @@ internal struct ConstraintData {
         Parent,
         Position,
         Rotation,
-        Scale,
+        Scale
     }
 
     /// <summary>
@@ -2952,11 +2929,11 @@ internal struct ConstraintData {
 }
 
 internal struct AimConstraintData {
-#region internal
+    #region internal
 
     public IntPtr self;
 
-#endregion
+    #endregion
 
 
     public static explicit operator AimConstraintData(ConstraintData v) {
@@ -2967,17 +2944,17 @@ internal struct AimConstraintData {
 }
 
 internal struct ParentConstraintData {
-#region internal
+    #region internal
 
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern Vector3 msParentConstraintGetPositionOffset(IntPtr self, int i);
+    private static extern Vector3 msParentConstraintGetPositionOffset(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern Quaternion msParentConstraintGetRotationOffset(IntPtr self, int i);
+    private static extern Quaternion msParentConstraintGetRotationOffset(IntPtr self, int i);
 
-#endregion
+    #endregion
 
 
     public static explicit operator ParentConstraintData(ConstraintData v) {
@@ -2996,11 +2973,11 @@ internal struct ParentConstraintData {
 }
 
 internal struct PositionConstraintData {
-#region internal
+    #region internal
 
     public IntPtr self;
 
-#endregion
+    #endregion
 
     public static explicit operator PositionConstraintData(ConstraintData v) {
         PositionConstraintData ret;
@@ -3010,11 +2987,11 @@ internal struct PositionConstraintData {
 }
 
 internal struct RotationConstraintData {
-#region internal
+    #region internal
 
     public IntPtr self;
 
-#endregion
+    #endregion
 
     public static explicit operator RotationConstraintData(ConstraintData v) {
         RotationConstraintData ret;
@@ -3024,11 +3001,11 @@ internal struct RotationConstraintData {
 }
 
 internal struct ScaleConstrainData {
-#region internal
+    #region internal
 
     public IntPtr self;
 
-#endregion
+    #endregion
 
     public static explicit operator ScaleConstrainData(ConstraintData v) {
         ScaleConstrainData ret;
@@ -3044,50 +3021,52 @@ internal struct ScaleConstrainData {
 
 internal enum ZUpCorrectionMode {
     FlipYZ,
-    RotateX,
+    RotateX
 }
 
 internal struct SceneProfileData {
     public ulong sizeEncoded;
     public ulong sizeDecoded;
     public ulong vertexCount;
-    public float loadTime; // in ms
-    public float readTime; // in ms
+    public float loadTime;   // in ms
+    public float readTime;   // in ms
     public float decodeTime; // in ms
-    public float setupTime; // in ms
-    public float lerpTime; // in ms
+    public float setupTime;  // in ms
+    public float lerpTime;   // in ms
 };
 
 #region InstanceInfo
 
-internal struct InstanceInfoData
-{
+internal struct InstanceInfoData {
     public IntPtr self;
 
-    [DllImport((Lib.name))]
-    static extern IntPtr msInstanceInfoGetPath(IntPtr self);
+    [DllImport(Lib.name)]
+    private static extern IntPtr msInstanceInfoGetPath(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern IntPtr msInstanceInfoGetParentPath(IntPtr self);
+    private static extern IntPtr msInstanceInfoGetParentPath(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msInstanceInfoPropGetArrayLength(IntPtr self);
+    private static extern int msInstanceInfoPropGetArrayLength(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msInstanceInfoCopyTransforms(IntPtr self, IntPtr matrices);
+    private static extern void msInstanceInfoCopyTransforms(IntPtr self, IntPtr matrices);
 
-    public string path => Misc.S(msInstanceInfoGetPath(self));
+    public string path {
+        get { return Misc.S(msInstanceInfoGetPath(self)); }
+    }
 
-    public string parentPath => Misc.S(msInstanceInfoGetParentPath(self));
+    public string parentPath {
+        get { return Misc.S(msInstanceInfoGetParentPath(self)); }
+    }
 
-    public int arrayLength => msInstanceInfoPropGetArrayLength(self);
+    public int arrayLength {
+        get { return msInstanceInfoPropGetArrayLength(self); }
+    }
 
-    public Matrix4x4[] transforms
-    {
-        get
-        {
-            using (var pinnedData = new PinnedList<Matrix4x4>(arrayLength))
-            {
+    public Matrix4x4[] transforms {
+        get {
+            using (PinnedList<Matrix4x4> pinnedData = new PinnedList<Matrix4x4>(arrayLength)) {
                 msInstanceInfoCopyTransforms(self, pinnedData.Pointer);
                 return pinnedData.Array;
             }
@@ -3098,122 +3077,139 @@ internal struct InstanceInfoData
 #endregion
 
 
-
 #region PropertyInfo
 
-    internal enum PropertyInfoDataType
-    {
-        Int,
-        Float,
-        IntArray,
-        FloatArray,
-        String
+internal enum PropertyInfoDataType {
+    Int,
+    Float,
+    IntArray,
+    FloatArray,
+    String
+}
+
+internal enum PropertyInfoDataSourceType {
+    GEO_NODES,
+    CUSTOM_PROPERTY
+};
+
+internal struct PropertyInfoData {
+    public IntPtr self;
+
+    #region DLL Imports
+
+    [DllImport(Lib.name)]
+    private static extern IntPtr msPropertyInfoGetPath(IntPtr self);
+
+    [DllImport(Lib.name)]
+    private static extern IntPtr msPropertyInfoGetName(IntPtr self);
+
+    [DllImport(Lib.name)]
+    private static extern IntPtr msPropertyInfoGetModifierName(IntPtr self);
+
+    [DllImport(Lib.name)]
+    private static extern IntPtr msPropertyInfoGetPropertyName(IntPtr self);
+
+    [DllImport(Lib.name)]
+    private static extern int msPropertyInfoGetType(IntPtr self);
+
+    [DllImport(Lib.name)]
+    private static extern int msPropertyInfoGetSourceType(IntPtr self);
+
+    [DllImport(Lib.name)]
+    private static extern float msPropertyInfoGetMin(IntPtr self);
+
+    [DllImport(Lib.name)]
+    private static extern float msPropertyInfoGetMax(IntPtr self);
+
+    #endregion DLL Imports
+
+    public float min {
+        get { return msPropertyInfoGetMin(self); }
     }
-    internal enum PropertyInfoDataSourceType {
-		GEO_NODES,
-		CUSTOM_PROPERTY
-	};
 
-    internal struct PropertyInfoData
-    {
-        public IntPtr self;
-
-#region DLL Imports
-        [DllImport((Lib.name))]
-        static extern IntPtr msPropertyInfoGetPath(IntPtr self);
-
-        [DllImport((Lib.name))]
-        static extern IntPtr msPropertyInfoGetName(IntPtr self);
-
-        [DllImport((Lib.name))]
-        static extern IntPtr msPropertyInfoGetModifierName(IntPtr self);
-
-        [DllImport((Lib.name))]
-        static extern IntPtr msPropertyInfoGetPropertyName(IntPtr self);
-        
-        [DllImport(Lib.name)]
-        static extern int msPropertyInfoGetType(IntPtr self);
-
-        [DllImport(Lib.name)]
-        static extern int msPropertyInfoGetSourceType(IntPtr self);
-
-        [DllImport(Lib.name)]
-        static extern float msPropertyInfoGetMin(IntPtr self);
-
-        [DllImport(Lib.name)]
-        static extern float msPropertyInfoGetMax(IntPtr self);
-#endregion DLL Imports
-
-        public float min => msPropertyInfoGetMin(self);
-        public float max => msPropertyInfoGetMax(self);
-
-        public string path => Misc.S(msPropertyInfoGetPath(self));
-
-        public string modifierName => Misc.S(msPropertyInfoGetModifierName(self));
-
-        public string propertyName => Misc.S(msPropertyInfoGetPropertyName(self));
-        
-        public string name => Misc.S(msPropertyInfoGetName(self));
-
-        public PropertyInfoDataType type => (PropertyInfoDataType)msPropertyInfoGetType(self);
-
-        public PropertyInfoDataSourceType sourceType => (PropertyInfoDataSourceType)msPropertyInfoGetSourceType(self);
+    public float max {
+        get { return msPropertyInfoGetMax(self); }
     }
+
+    public string path {
+        get { return Misc.S(msPropertyInfoGetPath(self)); }
+    }
+
+    public string modifierName {
+        get { return Misc.S(msPropertyInfoGetModifierName(self)); }
+    }
+
+    public string propertyName {
+        get { return Misc.S(msPropertyInfoGetPropertyName(self)); }
+    }
+
+    public string name {
+        get { return Misc.S(msPropertyInfoGetName(self)); }
+    }
+
+    public PropertyInfoDataType type {
+        get { return (PropertyInfoDataType)msPropertyInfoGetType(self); }
+    }
+
+    public PropertyInfoDataSourceType sourceType {
+        get { return (PropertyInfoDataSourceType)msPropertyInfoGetSourceType(self); }
+    }
+}
 
 #endregion PropertyInfo
 
 
-    internal struct SceneData {
-#region internal
+internal struct SceneData {
+    #region internal
 
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern int msSceneGetNumAssets(IntPtr self);
+    private static extern int msSceneGetNumAssets(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AssetData msSceneGetAsset(IntPtr self, int i);
+    private static extern AssetData msSceneGetAsset(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern int msSceneGetNumEntities(IntPtr self);
+    private static extern int msSceneGetNumEntities(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern TransformData msSceneGetEntity(IntPtr self, int i);
+    private static extern TransformData msSceneGetEntity(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern int msSceneGetNumConstraints(IntPtr self);
+    private static extern int msSceneGetNumConstraints(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern ConstraintData msSceneGetConstraint(IntPtr self, int i);
+    private static extern ConstraintData msSceneGetConstraint(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern byte msSceneSubmeshesHaveUniqueMaterial(IntPtr self);
+    private static extern byte msSceneSubmeshesHaveUniqueMaterial(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern SceneProfileData msSceneGetProfileData(IntPtr self);
+    private static extern SceneProfileData msSceneGetProfileData(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msSceneGetNumInstanceInfos(IntPtr self);
+    private static extern int msSceneGetNumInstanceInfos(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern InstanceInfoData msSceneGetInstanceInfo(IntPtr self, int i);
+    private static extern InstanceInfoData msSceneGetInstanceInfo(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern int msSceneGetNumInstanceMeshes(IntPtr self);
+    private static extern int msSceneGetNumInstanceMeshes(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern TransformData msSceneGetInstanceMesh(IntPtr self, int i);
+    private static extern TransformData msSceneGetInstanceMesh(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern int msSceneGetNumPropertyInfos(IntPtr self);
+    private static extern int msSceneGetNumPropertyInfos(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern PropertyInfoData msSceneGetPropertyInfo(IntPtr self, int i);
+    private static extern PropertyInfoData msSceneGetPropertyInfo(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern int msSceneGetMaterialSyncMode(IntPtr self);
+    private static extern int msSceneGetMaterialSyncMode(IntPtr self);
 
-#endregion
+    #endregion
 
     public static implicit operator bool(SceneData v) {
         return v.self != IntPtr.Zero;
@@ -3231,24 +3227,21 @@ internal struct InstanceInfoData
         get { return msSceneGetNumConstraints(self); }
     }
 
-    public int numInstanceInfos
-    {
+    public int numInstanceInfos {
         get { return msSceneGetNumInstanceInfos(self); }
     }
 
-    public int numInstancedEntities
-    {
+    public int numInstancedEntities {
         get { return msSceneGetNumInstanceMeshes(self); }
     }
 
-    public int numPropertyInfos
-    {
+    public int numPropertyInfos {
         get { return msSceneGetNumPropertyInfos(self); }
     }
 
-    
+
     public bool submeshesHaveUniqueMaterial {
-    get { return msSceneSubmeshesHaveUniqueMaterial(self) != 0; }
+        get { return msSceneSubmeshesHaveUniqueMaterial(self) != 0; }
     }
 
     public SceneProfileData profileData {
@@ -3267,18 +3260,15 @@ internal struct InstanceInfoData
         return msSceneGetConstraint(self, i);
     }
 
-    public InstanceInfoData GetInstanceInfo(int i)
-    {
+    public InstanceInfoData GetInstanceInfo(int i) {
         return msSceneGetInstanceInfo(self, i);
     }
 
-    public TransformData GetInstancedEntity(int i)
-    {
+    public TransformData GetInstancedEntity(int i) {
         return msSceneGetInstanceMesh(self, i);
     }
 
-    public PropertyInfoData GetPropertyInfo(int i)
-    {
+    public PropertyInfoData GetPropertyInfo(int i) {
         return msSceneGetPropertyInfo(self, i);
     }
 
@@ -3305,56 +3295,56 @@ internal struct InstanceInfoData
 #region SceneCache
 
 internal struct SceneCacheData {
-#region internal
+    #region internal
 
     public IntPtr self;
 
     [DllImport(Lib.name)]
-    static extern SceneCacheData msSceneCacheOpen(string path);
+    private static extern SceneCacheData msSceneCacheOpen(string path);
 
     [DllImport(Lib.name)]
-    static extern void msSceneCacheClose(IntPtr self);
+    private static extern void msSceneCacheClose(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern int msSceneCacheGetPreloadLength(IntPtr self);
+    private static extern int msSceneCacheGetPreloadLength(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msSceneCacheSetPreloadLength(IntPtr self, int v);
+    private static extern void msSceneCacheSetPreloadLength(IntPtr self, int v);
 
     [DllImport(Lib.name)]
-    static extern float msSceneCacheGetSampleRate(IntPtr self);
+    private static extern float msSceneCacheGetSampleRate(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msSceneCacheGetTimeRange(IntPtr self, ref float start, ref float end);
+    private static extern void msSceneCacheGetTimeRange(IntPtr self, ref float start, ref float end);
 
     [DllImport(Lib.name)]
-    static extern int msSceneCacheGetNumScenes(IntPtr self);
+    private static extern int msSceneCacheGetNumScenes(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern float msSceneCacheGetTime(IntPtr self, int i);
+    private static extern float msSceneCacheGetTime(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern int msSceneCacheGetFrameByTime(IntPtr self, float time);
+    private static extern int msSceneCacheGetFrameByTime(IntPtr self, float time);
 
     [DllImport(Lib.name)]
-    static extern SceneData msSceneCacheLoadByFrame(IntPtr self, int i);
+    private static extern SceneData msSceneCacheLoadByFrame(IntPtr self, int i);
 
     [DllImport(Lib.name)]
-    static extern SceneData msSceneCacheLoadByTime(IntPtr self, float time, bool lerp);
+    private static extern SceneData msSceneCacheLoadByTime(IntPtr self, float time, bool lerp);
 
     [DllImport(Lib.name)]
-    static extern void msSceneCacheRefresh(IntPtr self);
+    private static extern void msSceneCacheRefresh(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern void msSceneCachePreload(IntPtr self, int frame);
+    private static extern void msSceneCachePreload(IntPtr self, int frame);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msSceneCacheGetTimeCurve(IntPtr self);
+    private static extern AnimationCurveData msSceneCacheGetTimeCurve(IntPtr self);
 
     [DllImport(Lib.name)]
-    static extern AnimationCurveData msSceneCacheGetFrameCurve(IntPtr self);
+    private static extern AnimationCurveData msSceneCacheGetFrameCurve(IntPtr self);
 
-#endregion
+    #endregion
 
     public static implicit operator bool(SceneCacheData v) {
         return v.self != IntPtr.Zero;
@@ -3372,7 +3362,7 @@ internal struct SceneCacheData {
     public int GetPreloadLength() {
         return msSceneCacheGetPreloadLength(self);
     }
-    
+
     public void SetPreloadLength(int preload) {
         msSceneCacheSetPreloadLength(self, preload);
     }
@@ -3386,7 +3376,7 @@ internal struct SceneCacheData {
     }
 
     internal TimeRange GetTimeRange() {
-        TimeRange ret = default(TimeRange);
+        TimeRange ret = default;
         msSceneCacheGetTimeRange(self, ref ret.start, ref ret.end);
         return ret;
     }
@@ -3427,7 +3417,7 @@ internal struct SceneCacheData {
     }
 
 //----------------------------------------------------------------------------------------------------------------------        
-    static AnimationCurve CreateAnimationCurveFromData(AnimationCurveData curveData,
+    private static AnimationCurve CreateAnimationCurveFromData(AnimationCurveData curveData,
         InterpolationMode interpolationMode) {
         AnimationClipData.Prepare();
         curveData.Convert(interpolationMode);
@@ -3438,5 +3428,4 @@ internal struct SceneCacheData {
 }
 
 #endregion
-
 } //end namespace

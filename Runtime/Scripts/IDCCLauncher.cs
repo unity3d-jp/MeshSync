@@ -1,25 +1,22 @@
 ﻿using System;
 
-namespace Unity.MeshSync
-{
-    internal enum RunMode
-    {
-        GUI,
-        Background,
-        Console
-    }
+namespace Unity.MeshSync {
+internal enum RunMode {
+    GUI,
+    Background,
+    Console
+}
 
-    /// <summary>
-    /// Interface for classes that handle DCC tool control from inside Unity.
-    /// </summary>
-    internal interface IDCCLauncher : IDisposable
-    {
-        RunMode runMode { get; set; }
+/// <summary>
+/// Interface for classes that handle DCC tool control from inside Unity.
+/// </summary>
+internal interface IDCCLauncher : IDisposable {
+    RunMode runMode { get; set; }
 
-        void OpenDCCTool(UnityEngine.Object asset);
+    void OpenDCCTool(UnityEngine.Object asset);
 
-        void CloseDCCTool();
+    void CloseDCCTool();
 
-        void DrawDCCMenu(BaseMeshSync player);
-    }
+    void DrawDCCMenu(BaseMeshSync player);
+}
 }

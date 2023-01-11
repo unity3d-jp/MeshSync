@@ -9,46 +9,39 @@ using UnityEditor;
 #endif
 
 namespace Unity.MeshSync {
-
 /// <summary>
 /// A component to sync meshes/models editing in DCC tools into Unity in real time.
 /// </summary>
 [ExecuteAlways]
 public partial class MeshSyncServer : BaseMeshSync, IDisposable {
-
     /// <summary>
     /// Callback which will be called after MeshSyncServer receives data and finishes processing it
     /// </summary>
     public ServerMessageCallback OnPostRecvMessageCallback = null;
-    
+
 //----------------------------------------------------------------------------------------------------------------------
 
-    void ResetServerConfig() {
+    private void ResetServerConfig() {
         MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
         m_config     = new MeshSyncServerConfig(projectSettings.GetDefaultServerConfig());
         m_serverPort = projectSettings.GetDefaultServerPort();
-        
     }
 
-    void Reset() {
+    private void Reset() {
         ResetServerConfig();
     }
 
     private protected override void OnEnable() {
         base.OnEnable();
-        if (null == m_config) {
-            ResetServerConfig();
-        } 
-        if (m_autoStartServer) {
-            m_requestRestartServer = true;
-        }
+        if (null == m_config) ResetServerConfig();
+        if (m_autoStartServer) m_requestRestartServer = true;
     }
 
     private protected override void OnDisable() {
         base.OnDisable();
         StopServer();
     }
-    
+
     protected override void OnDestroy() {
         base.OnDestroy();
 
@@ -63,56 +56,66 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         m_DCCInterop = null;
 #endif
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
-    
+
     private protected override void InitInternalV() {
-        
     }
 
 
     private protected override void UpdateMaterialAssetV(MaterialData materialData) {
-        UpdateMaterialAssetByDefault(materialData,m_config.GetModelImporterSettings());
+        UpdateMaterialAssetByDefault(materialData, m_config.GetModelImporterSettings());
     }
-    
-//--------------------------------------------------------------------------------------------------------------------------------------------------------------        
-    
-#region Getter/Setter
-    internal bool IsServerStarted()             { return m_serverStarted;}
-    internal bool IsAutoStart()                 { return m_autoStartServer; }
-    internal int  GetServerPort()               { return m_serverPort; }
-    internal void SetServerPort(int port )      { m_serverPort = port; }
-    
-    internal override MeshSyncPlayerConfig GetConfigV() => m_config;
-    
-#endregion
 
-    
-    internal void ApplyConfig() {
-        if (!m_server) 
-            return;
-        
-        m_server.SetZUpCorrectionMode((ZUpCorrectionMode) m_config.ZUpCorrection);
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------        
+
+    #region Getter/Setter
+
+    internal bool IsServerStarted() {
+        return m_serverStarted;
     }
-    
+
+    internal bool IsAutoStart() {
+        return m_autoStartServer;
+    }
+
+    internal int GetServerPort() {
+        return m_serverPort;
+    }
+
+    internal void SetServerPort(int port) {
+        m_serverPort = port;
+    }
+
+    internal override MeshSyncPlayerConfig GetConfigV() {
+        return m_config;
+    }
+
+    #endregion
+
+
+    internal void ApplyConfig() {
+        if (!m_server)
+            return;
+
+        m_server.SetZUpCorrectionMode((ZUpCorrectionMode)m_config.ZUpCorrection);
+    }
+
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------        
     /// <summary>
     /// Sets whether the server should be started automatically or not
     /// </summary>
     /// <param name="autoStart">true if the server should start automatically; otherwise, false.</param>
     public void SetAutoStartServer(bool autoStart) {
-        m_autoStartServer = autoStart; 
+        m_autoStartServer = autoStart;
 
-        if (m_autoStartServer && !m_serverStarted && gameObject.scene.IsValid() && !IsInPrefabView && enabled && gameObject.activeInHierarchy) {
-            StartServer();
-        }
+        if (m_autoStartServer && !m_serverStarted && gameObject.scene.IsValid() && !IsInPrefabView && enabled && gameObject.activeInHierarchy) StartServer();
     }
-    
+
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------        
-    
+
 #if UNITY_EDITOR
-    internal bool foldServerSettings
-    {
+    internal bool foldServerSettings {
         get { return m_foldServerSettings; }
         set { m_foldServerSettings = value; }
     }
@@ -128,28 +131,27 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 #endif
         return ret;
     }
-    
+
     /// <summary>
     /// Starts the server. If the server is already running, it will be restarted.
     /// </summary>
-    public void StartServer()
-    {
+    public void StartServer() {
 #if UNITY_STANDALONE || UNITY_EDITOR
         StopServer();
 
-#if UNITY_EDITOR 
+#if UNITY_EDITOR
         //Deploy HTTP assets to StreamingAssets
         DeployStreamingAssets.Deploy();
 #endif
         MeshSyncProjectSettings projectSettings = MeshSyncProjectSettings.GetOrCreateInstance();
-        
-        
+
+
         m_serverSettings.port = (ushort)m_serverPort;
 
         m_serverStarted = Server.Start(ref m_serverSettings, out m_server);
         if (!m_serverStarted)
             return;
-        
+
         ApplyConfig();
         m_server.fileRootPath = GetServerDocRootPath();
         m_server.AllowPublicAccess(projectSettings.GetServerPublicAccess());
@@ -159,10 +161,10 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 #if UNITY_EDITOR
         EditorApplication.update -= PollServerEvents;
         EditorApplication.update += PollServerEvents;
-        
+
         EditorApplication.quitting -= OnEditorQuit;
         EditorApplication.quitting += OnEditorQuit;
-        
+
 #endif
         if (m_config.Logging)
             Debug.Log("[MeshSync] Server started (port: " + m_serverSettings.port + ")");
@@ -173,15 +175,12 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
     }
 
     private void OnEditorQuit() {
-        if (m_server) {
-            m_server.Abort();
-        }
+        if (m_server) m_server.Abort();
     }
 
     //----------------------------------------------------------------------------------------------------------------------        
 
-    internal void StopServer()
-    {
+    internal void StopServer() {
 #if UNITY_STANDALONE || UNITY_EDITOR
 #if UNITY_EDITOR
         EditorApplication.update -= PollServerEvents;
@@ -191,7 +190,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
             return;
 
         m_server.Stop();
-        m_server = default(Server);
+        m_server = default;
 
         if (m_config.Logging)
             Debug.Log("[MeshSync] Server stopped (port: " + m_serverSettings.port + ")");
@@ -205,19 +204,16 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 //----------------------------------------------------------------------------------------------------------------------
 
     private protected override void OnBeforeSerializeMeshSyncPlayerV() {
-        
     }
 
     private protected override void OnAfterDeserializeMeshSyncPlayerV() {
         m_serverVersion = CUR_SERVER_VERSION;
-        
-        if (string.IsNullOrEmpty(GetAssetsFolder())) {
-            SetAssetsFolder(MeshSyncConstants.DEFAULT_ASSETS_PATH);
-        }
-    }   
-    
+
+        if (string.IsNullOrEmpty(GetAssetsFolder())) SetAssetsFolder(MeshSyncConstants.DEFAULT_ASSETS_PATH);
+    }
+
 //----------------------------------------------------------------------------------------------------------------------
-    
+
 
 #if UNITY_STANDALONE || UNITY_EDITOR
 
@@ -228,9 +224,10 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
             m_requestRestartServer = false;
             StartServer();
         }
+
         if (m_captureScreenshotInProgress) {
             m_captureScreenshotInProgress = false;
-            m_server.screenshotPath = "screenshot.png";
+            m_server.screenshotPath       = "screenshot.png";
         }
 
         if (m_server.numMessages > 0)
@@ -239,7 +236,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         SendUpdatedProperties();
     }
 
-    void HandleRecvMessage(NetworkMessageType type, IntPtr data) {
+    private void HandleRecvMessage(NetworkMessageType type, IntPtr data) {
         Try(() => {
             switch (type) {
                 case NetworkMessageType.Get:
@@ -249,7 +246,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
                     OnRecvSet((SetMessage)data);
                     break;
                 case NetworkMessageType.Delete:
-                    OnRecvDelete((DeleteMessage)data); 
+                    OnRecvDelete((DeleteMessage)data);
                     break;
                 case NetworkMessageType.Fence:
                     OnRecvFence((FenceMessage)data);
@@ -274,7 +271,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         OnPostRecvMessageCallback?.Invoke(type);
     }
 
-    void OnRecvGet(GetMessage mes) {
+    private void OnRecvGet(GetMessage mes) {
         m_server.BeginServe();
         foreach (Renderer mr in FindObjectsOfType<Renderer>())
             ServeMesh(mr, mes);
@@ -286,12 +283,10 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
             Debug.Log("[MeshSync] served");
     }
 
-    void OnRecvDelete(DeleteMessage mes) {
-
+    private void OnRecvDelete(DeleteMessage mes) {
         int numInstanceMeshes = mes.numInstances;
-        for (int i = 0; i < numInstanceMeshes; i++)
-        {
-            var instance = mes.GetInstance(i);
+        for (int i = 0; i < numInstanceMeshes; i++) {
+            Identifier instance = mes.GetInstance(i);
             EraseInstanceInfoRecord(instance);
             EraseInstancedEntityRecord(instance);
         }
@@ -305,24 +300,25 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
             EraseMaterialRecord(mes.GetMaterial(i).id);
     }
 
-    void OnRecvFence(FenceMessage mes) {
+    private void OnRecvFence(FenceMessage mes) {
         if (mes.type == FenceMessage.FenceType.SceneBegin) {
             BeforeUpdateScene(mes);
-        } else if (mes.type == FenceMessage.FenceType.SceneEnd) {
+        }
+        else if (mes.type == FenceMessage.FenceType.SceneEnd) {
             AfterUpdateScene();
             m_server.NotifyPoll(PollMessage.PollType.SceneUpdate);
         }
     }
 
-    static void OnRecvText(TextMessage mes) {
+    private static void OnRecvText(TextMessage mes) {
         mes.Print();
     }
 
-    void OnRecvSet(SetMessage mes) {
+    private void OnRecvSet(SetMessage mes) {
         UpdateScene(mes.scene, true);
     }
 
-    void OnRecvScreenshot(IntPtr data) {
+    private void OnRecvScreenshot(IntPtr data) {
         ForceRepaint();
 
         ScreenCapture.CaptureScreenshot("screenshot.png");
@@ -331,7 +327,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         m_captureScreenshotInProgress = true;
     }
 
-    void OnRecvQuery(QueryMessage data) {
+    private void OnRecvQuery(QueryMessage data) {
         switch (data.queryType) {
             case QueryMessage.QueryType.PluginVersion:
                 data.AddResponseText(Lib.GetPluginVersion());
@@ -342,12 +338,11 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
             case QueryMessage.QueryType.HostName:
                 data.AddResponseText("Unity " + Application.unityVersion);
                 break;
-            case QueryMessage.QueryType.RootNodes:
-                {
-                    GameObject[] roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
-                    foreach (GameObject go in roots)
-                        data.AddResponseText(BuildPath(go.transform));
-                }
+            case QueryMessage.QueryType.RootNodes: {
+                GameObject[] roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+                foreach (GameObject go in roots)
+                    data.AddResponseText(BuildPath(go.transform));
+            }
                 break;
             case QueryMessage.QueryType.AllNodes: {
                 Transform[] objTransforms = FindObjectsOfType<Transform>();
@@ -358,55 +353,59 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
             default:
                 break;
         }
+
         data.FinishRespond();
     }
 
     #endregion //MessageHandlers
 
     #region ServeScene
-    bool ServeMesh(Renderer objRenderer, GetMessage mes) {
-        bool ret = false;
+
+    private bool ServeMesh(Renderer objRenderer, GetMessage mes) {
+        bool ret      = false;
         Mesh origMesh = null;
 
         MeshData dst = MeshData.Create();
-        if (objRenderer.GetType() == typeof(MeshRenderer)){
+        if (objRenderer.GetType() == typeof(MeshRenderer))
             ret = CaptureMeshRenderer(ref dst, objRenderer as MeshRenderer, mes, ref origMesh);
-        }
-        else if (objRenderer.GetType() == typeof(SkinnedMeshRenderer)){
+        else if (objRenderer.GetType() == typeof(SkinnedMeshRenderer))
             ret = CaptureSkinnedMeshRenderer(ref dst, objRenderer as SkinnedMeshRenderer, mes, ref origMesh);
-        }
 
         if (ret) {
-            TransformData dstTrans = dst.transform;
-            Transform rendererTransform = objRenderer.transform;
-            dstTrans.hostID = GetObjectlID(objRenderer.gameObject);
+            TransformData dstTrans          = dst.transform;
+            Transform     rendererTransform = objRenderer.transform;
+            dstTrans.hostID   = GetObjectlID(objRenderer.gameObject);
             dstTrans.position = rendererTransform.localPosition;
             dstTrans.rotation = rendererTransform.localRotation;
-            dstTrans.scale = rendererTransform.localScale;
-            dst.local2world = rendererTransform.localToWorldMatrix;
-            dst.world2local = rendererTransform.worldToLocalMatrix;
+            dstTrans.scale    = rendererTransform.localScale;
+            dst.local2world   = rendererTransform.localToWorldMatrix;
+            dst.world2local   = rendererTransform.worldToLocalMatrix;
 
             EntityRecord rec;
             if (!m_hostObjects.TryGetValue(dstTrans.hostID, out rec)) {
                 rec = new EntityRecord();
                 m_hostObjects.Add(dstTrans.hostID, rec);
             }
-            rec.go = objRenderer.gameObject;
+
+            rec.go       = objRenderer.gameObject;
             rec.origMesh = origMesh;
 
             dstTrans.path = BuildPath(rendererTransform);
             m_server.ServeMesh(dst);
         }
+
         return ret;
     }
-    bool ServeTexture(Texture2D v, GetMessage mes) {
+
+    private bool ServeTexture(Texture2D v, GetMessage mes) {
         TextureData data = TextureData.Create();
         data.name = v.name;
         // todo
         m_server.ServeTexture(data);
         return true;
     }
-    bool ServeMaterial(Material mat, GetMessage mes) {
+
+    private bool ServeMaterial(Material mat, GetMessage mes) {
         MaterialData data = MaterialData.Create();
         data.name = mat.name;
         if (mat.HasProperty("_Color"))
@@ -415,7 +414,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         return true;
     }
 
-    bool CaptureMeshRenderer(ref MeshData dst, MeshRenderer mr, GetMessage mes, ref Mesh mesh) {
+    private bool CaptureMeshRenderer(ref MeshData dst, MeshRenderer mr, GetMessage mes, ref Mesh mesh) {
         mesh = mr.GetComponent<MeshFilter>().sharedMesh;
         if (mesh == null) return false;
         if (!mesh.isReadable) {
@@ -427,7 +426,7 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         return true;
     }
 
-    bool CaptureSkinnedMeshRenderer(ref MeshData dst, SkinnedMeshRenderer smr, GetMessage mes, ref Mesh mesh) {
+    private bool CaptureSkinnedMeshRenderer(ref MeshData dst, SkinnedMeshRenderer smr, GetMessage mes, ref Mesh mesh) {
         mesh = smr.sharedMesh;
         if (mesh == null) return false;
 
@@ -437,15 +436,14 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         }
 
         Cloth cloth = smr.GetComponent<Cloth>();
-        if (cloth != null && mes.bakeCloth) {
-            CaptureMesh(ref dst, mesh, cloth, mes.flags, smr.sharedMaterials);
-        }
+        if (cloth != null && mes.bakeCloth) CaptureMesh(ref dst, mesh, cloth, mes.flags, smr.sharedMaterials);
 
         if (mes.bakeSkin) {
             Mesh tmp = new Mesh();
             smr.BakeMesh(tmp);
             CaptureMesh(ref dst, tmp, null, mes.flags, smr.sharedMaterials);
-        } else {
+        }
+        else {
             CaptureMesh(ref dst, mesh, null, mes.flags, smr.sharedMaterials);
 
             // bones
@@ -475,37 +473,39 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
                 }
             }
         }
+
         return true;
     }
 
-    void CaptureMesh(ref MeshData data, Mesh mesh, Cloth cloth, GetFlags flags, Material[] materials) {
+    private void CaptureMesh(ref MeshData data, Mesh mesh, Cloth cloth, GetFlags flags, Material[] materials) {
         if (flags.getPoints)
             data.WritePoints(mesh.vertices);
         if (flags.getNormals)
             data.WriteNormals(mesh.normals);
         if (flags.getTangents)
             data.WriteTangents(mesh.tangents);
-        
+
         //UV
-        if (flags.GetUV(0)) { data.WriteUV(0, mesh.uv); }
-        if (flags.GetUV(1)) { data.WriteUV(1, mesh.uv2); }
-        if (flags.GetUV(2)) { data.WriteUV(2, mesh.uv3); }
-        if (flags.GetUV(3)) { data.WriteUV(3, mesh.uv4); }
-        if (flags.GetUV(4)) { data.WriteUV(4, mesh.uv5); }
-        if (flags.GetUV(5)) { data.WriteUV(5, mesh.uv6); }
-        if (flags.GetUV(6)) { data.WriteUV(6, mesh.uv7); }
-        if (flags.GetUV(7)) { data.WriteUV(7, mesh.uv8); }
-               
+        if (flags.GetUV(0)) data.WriteUV(0, mesh.uv);
+        if (flags.GetUV(1)) data.WriteUV(1, mesh.uv2);
+        if (flags.GetUV(2)) data.WriteUV(2, mesh.uv3);
+        if (flags.GetUV(3)) data.WriteUV(3, mesh.uv4);
+        if (flags.GetUV(4)) data.WriteUV(4, mesh.uv5);
+        if (flags.GetUV(5)) data.WriteUV(5, mesh.uv6);
+        if (flags.GetUV(6)) data.WriteUV(6, mesh.uv7);
+        if (flags.GetUV(7)) data.WriteUV(7, mesh.uv8);
+
         if (flags.getColors)
             data.WriteColors(mesh.colors);
         if (flags.getIndices) {
             if (!flags.getMaterialIDs || materials == null || materials.Length == 0) {
                 data.WriteIndices(mesh.triangles);
-            } else {
+            }
+            else {
                 int n = mesh.subMeshCount;
                 for (int i = 0; i < n; ++i) {
                     int[] indices = mesh.GetIndices(i);
-                    int mid = i < materials.Length ? GetMaterialIndex(materials[i]) : 0;
+                    int   mid     = i < materials.Length ? GetMaterialIndex(materials[i]) : 0;
                     data.WriteSubmeshTriangles(indices, mid);
                 }
             }
@@ -513,26 +513,24 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 
         // bones & blendshapes are handled by CaptureSkinnedMeshRenderer()
     }
+
     #endregion //ServeScene
 
 
-    void LateUpdate()
-    {
+    private void LateUpdate() {
         if (IsInPrefabView)
             return;
         PollServerEvents();
     }
 
-    Server m_server;
-    Server.MessageHandler m_handler;
-    
+    private Server                m_server;
+    private Server.MessageHandler m_handler;
+
 #endif // UNITY_STANDALONE || UNITY_EDITOR
-    
+
 //----------------------------------------------------------------------------------------------------------------------    
-    bool IsInPrefabView
-    {
-        get
-        {
+    private bool IsInPrefabView {
+        get {
 #if UNITY_EDITOR
 #if UNITY_2021_2_OR_NEWER
             return UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null;
@@ -544,59 +542,53 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
 #endif
         }
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
-    
+
     [SerializeField] private bool m_autoStartServer = false;
     [SerializeField] private int  m_serverPort      = MeshSyncConstants.DEFAULT_SERVER_PORT;
 #if UNITY_EDITOR
-    [SerializeField] bool m_foldServerSettings = true;
+    [SerializeField] private bool m_foldServerSettings = true;
 
-    internal         IDCCLauncher       m_DCCInterop;
-    [SerializeField] UnityEngine.Object m_DCCAsset;
+    internal                 IDCCLauncher       m_DCCInterop;
+    [SerializeField] private UnityEngine.Object m_DCCAsset;
 
-    public UnityEngine.Object DCCAsset
-    {
+    public UnityEngine.Object DCCAsset {
         get { return m_DCCAsset; }
         internal set { m_DCCAsset = value; }
     }
 #endif
-    
+
     [SerializeField] private MeshSyncServerConfig m_config;
 
-    
+
 #pragma warning disable 414
     //Renamed in 0.10.x-preview
-    [FormerlySerializedAs("m_version")] [HideInInspector][SerializeField] private int m_serverVersion = (int) ServerVersion.NO_VERSIONING;
+    [FormerlySerializedAs("m_version")] [HideInInspector] [SerializeField]
+    private int m_serverVersion = (int)ServerVersion.NO_VERSIONING;
 #pragma warning restore 414
-    private const int CUR_SERVER_VERSION = (int) ServerVersion.INITIAL_0_4_0;
-    
-    
-    ServerSettings m_serverSettings              = ServerSettings.defaultValue;
-    bool           m_requestRestartServer        = false;
-    bool           m_captureScreenshotInProgress = false;
-    private bool   m_serverStarted               = false;
-    
+    private const int CUR_SERVER_VERSION = (int)ServerVersion.INITIAL_0_4_0;
+
+
+    private ServerSettings m_serverSettings              = ServerSettings.defaultValue;
+    private bool           m_requestRestartServer        = false;
+    private bool           m_captureScreenshotInProgress = false;
+    private bool           m_serverStarted               = false;
+
 //----------------------------------------------------------------------------------------------------------------------    
-    
-    enum ServerVersion {
+
+    private enum ServerVersion {
         NO_VERSIONING = 0, //Didn't have versioning in earlier versions        
-        INITIAL_0_4_0 = 1, //initial for version 0.4.0-preview 
-    
+        INITIAL_0_4_0 = 1  //initial for version 0.4.0-preview 
     }
 
 #if UNITY_EDITOR
-    [SerializeField]
-    private bool m_foldInstanceSettings = true;
+    [SerializeField] private bool m_foldInstanceSettings = true;
 
-    internal bool foldInstanceSettings
-    {
-        get => m_foldInstanceSettings;
-        set => m_foldInstanceSettings = value;
+    internal bool foldInstanceSettings {
+        get { return m_foldInstanceSettings; }
+        set { m_foldInstanceSettings = value; }
     }
-#endif    
-    
-    
+#endif
 }
-
 } //end namespace

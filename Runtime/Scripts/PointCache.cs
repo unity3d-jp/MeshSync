@@ -11,5 +11,4 @@ internal class PointCache : MonoBehaviour {
     public void Clear() {
     }
 }
-
 } //end namespace

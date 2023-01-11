@@ -16,9 +16,8 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    public override void OnInspectorGUI()
-    {
-        Undo.RecordObject(m_meshSyncServer, "MeshSyncServer Update");        
+    public override void OnInspectorGUI() {
+        Undo.RecordObject(m_meshSyncServer, "MeshSyncServer Update");
 
         EditorGUILayout.Space();
         DrawServerSettings(m_meshSyncServer);
@@ -33,78 +32,68 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
 
         PrefabUtility.RecordPrefabInstancePropertyModifications(m_meshSyncServer);
 
-        if (changed) {
-            m_meshSyncServer.ApplyConfig();
-        }
+        if (changed) m_meshSyncServer.ApplyConfig();
     }
 //----------------------------------------------------------------------------------------------------------------------
 
-    public void DrawServerSettings(MeshSyncServer t)
-    {
-        var styleFold = EditorStyles.foldout;
+    public void DrawServerSettings(MeshSyncServer t) {
+        GUIStyle styleFold = EditorStyles.foldout;
         styleFold.fontStyle = FontStyle.Bold;
 
-        bool isServerStarted = m_meshSyncServer.IsServerStarted();
-        string serverStatus = isServerStarted ? "Server (Status: Started)" : "Server (Status: Stopped)";
-        t.foldServerSettings= EditorGUILayout.Foldout(t.foldServerSettings, serverStatus, true, styleFold);
+        bool   isServerStarted = m_meshSyncServer.IsServerStarted();
+        string serverStatus    = isServerStarted ? "Server (Status: Started)" : "Server (Status: Stopped)";
+        t.foldServerSettings = EditorGUILayout.Foldout(t.foldServerSettings, serverStatus, true, styleFold);
         if (t.foldServerSettings) {
-            
             bool autoStart = EditorGUILayout.Toggle("Auto Start", m_meshSyncServer.IsAutoStart());
             m_meshSyncServer.SetAutoStartServer(autoStart);
 
             //Draw GUI that are disabled when autoStart is true
             EditorGUI.BeginDisabledGroup(autoStart);
-            int serverPort = EditorGUILayout.IntField("Server Port:", (int) m_meshSyncServer.GetServerPort());
-            m_meshSyncServer.SetServerPort((ushort) serverPort);
+            int serverPort = EditorGUILayout.IntField("Server Port:", (int)m_meshSyncServer.GetServerPort());
+            m_meshSyncServer.SetServerPort((ushort)serverPort);
             GUILayout.BeginHorizontal();
             if (isServerStarted) {
-                if (GUILayout.Button("Stop", GUILayout.Width(110.0f))) {
-                    m_meshSyncServer.StopServer();
-                }
-            } else {
-                if (GUILayout.Button("Start", GUILayout.Width(110.0f))) {
-                    m_meshSyncServer.StartServer();
-                }
-
+                if (GUILayout.Button("Stop", GUILayout.Width(110.0f))) m_meshSyncServer.StopServer();
             }
+            else {
+                if (GUILayout.Button("Start", GUILayout.Width(110.0f))) m_meshSyncServer.StartServer();
+            }
+
             GUILayout.EndHorizontal();
             EditorGUI.EndDisabledGroup();
 
-            string prevFolder = t.GetAssetsFolder(); 
+            string prevFolder = t.GetAssetsFolder();
             string selectedFolder = AssetEditorUtility.NormalizePath(
                 EditorGUIDrawerUtility.DrawFolderSelectorGUI("Asset Dir", "Asset Dir", prevFolder, null)
             );
             if (selectedFolder != prevFolder) {
-                if (string.IsNullOrEmpty(selectedFolder) || !AssetEditorUtility.IsPathNormalized(selectedFolder)) {
-                    Debug.LogError($"[MeshSync] {selectedFolder} is not under Assets. Ignoring.");  
-                } else {
+                if (string.IsNullOrEmpty(selectedFolder) || !AssetEditorUtility.IsPathNormalized(selectedFolder))
+                    Debug.LogError($"[MeshSync] {selectedFolder} is not under Assets. Ignoring.");
+                else
                     t.SetAssetsFolder(selectedFolder);
-                }
-                
             }
-            
-            Transform rootObject = (Transform) EditorGUILayout.ObjectField("Root Object", t.GetRootObject(), 
-                typeof(Transform), allowSceneObjects: true);                
+
+            Transform rootObject = (Transform)EditorGUILayout.ObjectField("Root Object", t.GetRootObject(),
+                typeof(Transform), true);
             t.SetRootObject(rootObject);
-            
+
             EditorGUILayout.Space();
         }
     }
 
     private void DrawInstanceSettings(MeshSyncServer t) {
-        var style = EditorStyles.foldout;
+        GUIStyle style = EditorStyles.foldout;
         style.fontStyle        = FontStyle.Bold;
         t.foldInstanceSettings = EditorGUILayout.Foldout(t.foldInstanceSettings, "Instances", true, style);
         if (t.foldInstanceSettings) {
-            var newInstanceHandling =
+            BaseMeshSync.InstanceHandlingType newInstanceHandling =
                 (BaseMeshSync.InstanceHandlingType)EditorGUILayout.EnumPopup("Instance handling", t.InstanceHandling);
 
             if (t.InstanceHandling != newInstanceHandling &&
                 EditorUtility.DisplayDialog("Warning",
                     "Changing the instance handling mode will delete any prefabs and previously synced objects for this server. Are you sure you want to do this?",
-                    "Yes", "No", DialogOptOutDecisionType.ForThisSession, OPT_OUT_INSTANCE_HANDLING)) {
+                    "Yes", "No", DialogOptOutDecisionType.ForThisSession, OPT_OUT_INSTANCE_HANDLING))
                 t.InstanceHandling = newInstanceHandling;
-            }
 
             DrawPrefabListElement(t);
         }
@@ -112,65 +101,48 @@ internal class MeshSyncServerInspector : BaseMeshSyncInspector {
         EditorGUILayout.LabelField($"Instance count: {t.InstanceCount}");
     }
 
-    static void DrawPrefabListElement(MeshSyncServer t)
-    {
-        if (t.prefabDict.Count > 0)
-        {
+    private static void DrawPrefabListElement(MeshSyncServer t) {
+        if (t.prefabDict.Count > 0) {
             EditorGUILayout.LabelField("Instance prefabs:");
 
             EditorGUI.indentLevel++;
-            foreach (var prefabHolder in t.prefabDict.Values)
-            {
+            foreach (PrefabHolder prefabHolder in t.prefabDict.Values)
                 EditorGUILayout.ObjectField(prefabHolder.name, prefabHolder.prefab, typeof(GameObject), true);
-            }
             EditorGUI.indentLevel--;
 
-            if (GUILayout.Button("Clear / Resync prefabs"))
-            {
-                t.ClearInstancePrefabs();
-            }
+            if (GUILayout.Button("Clear / Resync prefabs")) t.ClearInstancePrefabs();
         }
     }
 
-    static void DrawDCCToolInfo(MeshSyncServer server)
-    {
-        if (server != null)
-        {
+    private static void DrawDCCToolInfo(MeshSyncServer server) {
+        if (server != null) {
             GUILayout.BeginHorizontal();
 
-            var newAsset = EditorGUILayout.ObjectField("DCC asset file:",
+            Object newAsset = EditorGUILayout.ObjectField("DCC asset file:",
                 server.DCCAsset,
-                typeof(UnityEngine.Object), true);
+                typeof(Object), true);
 
-            if (newAsset != server.DCCAsset)
-            {
-                server.DCCAsset = newAsset;
+            if (newAsset != server.DCCAsset) {
+                server.DCCAsset     = newAsset;
                 server.m_DCCInterop = MeshSyncServerInspectorUtils.GetLauncherForAsset(server.DCCAsset);
             }
 
             if (server.DCCAsset != null)
-            {
-                if (GUILayout.Button("Live Edit (Opens new instance)"))
-                {
+                if (GUILayout.Button("Live Edit (Opens new instance)")) {
                     GUILayout.EndHorizontal();
                     MeshSyncServerInspectorUtils.OpenDCCAsset(server);
                     return;
                 }
-            }
 
             GUILayout.EndHorizontal();
 
-            if (server.m_DCCInterop == null)
-            {
-                server.m_DCCInterop = MeshSyncServerInspectorUtils.GetLauncherForAsset(server.DCCAsset);
-            }
+            if (server.m_DCCInterop == null) server.m_DCCInterop = MeshSyncServerInspectorUtils.GetLauncherForAsset(server.DCCAsset);
 
             server.m_DCCInterop?.DrawDCCMenu(server);
         }
     }
 
 //----------------------------------------------------------------------------------------------------------------------                
-    private MeshSyncServer m_meshSyncServer = null;        
+    private MeshSyncServer m_meshSyncServer = null;
 }
-
 } //end namespace

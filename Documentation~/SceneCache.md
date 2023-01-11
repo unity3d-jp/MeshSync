@@ -48,30 +48,28 @@ This component handles the playback of an *.sc* file.
 
 ![](images/SceneCachePlayer.png)
 
-- **Cache File Path**: the path to the *.sc* file.  
-  Copying the cache file to StreamingAssets is recommended, and can be done by simply clicking the **Copy** button.  
+|**Properties**           |**Description** |
+|:----------------------- |:---|
+| **Cache File Path** | The path to the *.sc* file. <br/>   Copying the cache file to StreamingAssets is recommended, and can be done by simply clicking the **Copy** button. |
+| **Info**            | Shows the basic information of the *.sc* file. |
+| **Playback Mode**   | Refer to [playback mode](#playback-mode) for more details. |
+| **Time**            | The playback time. |
+| **Frame**           | The selected frame of the *.sc* file. <br/> Disabled if the **Playback Mode** is set to **Interpolation**. |
  
-  > Playing *.sc* files located in folders outside the active Unity project is supported, 
-  > but keep in mind that only the computer which stores those *.sc* files can play them.
 
-- **Info**: basic information of the *.sc* file.
-- **Playback Mode**  
-
-  |**Playback Mode**           |**Description** |
-  |:----------------------- |:---|
-  | **Snap to Previous Frame** | Selects the last frame which has been passed by the playback time. |
-  | **Snap to Nearest Frame** (Default) | Selects the frame which is nearest to the playback time. |
-  | **Interpolation**          | Smoothens animations by interpolating meshes and transforms between nearest neighboring frames. <br/> Note that meshes are only interpolated if the topologies match (the vertex indexes remain unchanged). |
-
-  - **Time**: the playback time. 
-  - **Frame**: the selected frame of the *.sc* file.   
-    Disabled if the **Playback Mode** is set to **Interpolation**.
-
-- **Limited Animation**: skips *.sc* frames during playback if enabled.
-  - **Num Frames to Hold**: the duration in number of frames that a selected frame will be hold.
-  - **Frame Offset**: an offset value to change which frames get selected when applying **Limited Animation**.
+> Playing *.sc* files located in folders outside the active Unity project is supported, 
+> but keep in mind that only the computer which stores those *.sc* files can play them.
 
 Please refer to [common properties](CommonMeshSyncProperties.md) for details on the other properties.
+
+#### Playback Mode
+
+|**Playback Mode**           |**Description** |
+|:----------------------- |:---|
+| **Snap to Previous Frame** | Selects the last frame which has been passed by the playback time. |
+| **Snap to Nearest Frame** (Default) | Selects the frame which is nearest to the playback time. |
+| **Interpolation**          | Smoothens animations by interpolating meshes and transforms between nearest neighboring frames. <br/> Note that meshes are only interpolated if the topologies match (the vertex indexes remain unchanged). |
+
 
 ### Tips
 

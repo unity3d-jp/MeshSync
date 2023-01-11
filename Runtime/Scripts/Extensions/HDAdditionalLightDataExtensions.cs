@@ -1,15 +1,10 @@
-﻿
-#if AT_USE_HDRP
-
+﻿#if AT_USE_HDRP
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
 
 namespace Unity.MeshSync {
-
 internal static class HDAdditionalLightDataExtensions {
-
     internal static void SetTypeFromLegacy(this HDAdditionalLightData lightData, LightType legacyLightType) {
-
         switch (legacyLightType) {
             case LightType.Directional: {
                 lightData.type = HDLightType.Directional;
@@ -18,7 +13,7 @@ internal static class HDAdditionalLightDataExtensions {
             case LightType.Spot: {
                 lightData.type = HDLightType.Spot;
                 break;
-            }            
+            }
             case LightType.Point: {
                 lightData.type = HDLightType.Point;
                 break;
@@ -36,15 +31,11 @@ internal static class HDAdditionalLightDataExtensions {
             default: {
                 Debug.LogWarning($"[MeshSync] Unsupported legacy light type: {legacyLightType}");
                 break;
-            };
-        
-        }        
+            }
+                ;
+        }
     }
-    
-
 }
-
 } //end namespace
 
 #endif //#if AT_USE_HDRP    
-    

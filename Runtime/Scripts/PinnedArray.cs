@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 
 namespace Unity.MeshSync {
 internal class PinnedObject<T> : IDisposable {
-    T        m_data;
-    GCHandle m_gch;
+    private T        m_data;
+    private GCHandle m_gch;
 
     public PinnedObject(T data) {
         m_data = data;
@@ -27,10 +27,9 @@ internal class PinnedObject<T> : IDisposable {
     }
 
     protected virtual void Dispose(bool disposing) {
-        if (disposing) {
+        if (disposing)
             if (m_gch.IsAllocated)
                 m_gch.Free();
-        }
     }
 
     public static implicit operator IntPtr(PinnedObject<T> v) {
@@ -40,8 +39,8 @@ internal class PinnedObject<T> : IDisposable {
 
 
 internal class PinnedArray<T> : IDisposable, IEnumerable<T> where T : struct {
-    T[]      m_data;
-    GCHandle m_gch;
+    private T[]      m_data;
+    private GCHandle m_gch;
 
     public PinnedArray(int size) {
         m_data = new T[size];
@@ -89,10 +88,9 @@ internal class PinnedArray<T> : IDisposable, IEnumerable<T> where T : struct {
     }
 
     protected virtual void Dispose(bool disposing) {
-        if (disposing) {
+        if (disposing)
             if (m_gch.IsAllocated)
                 m_gch.Free();
-        }
     }
 
     public IEnumerator<T> GetEnumerator() {
@@ -112,26 +110,26 @@ internal class PinnedArray<T> : IDisposable, IEnumerable<T> where T : struct {
 #region dirty
 
 internal static class PinnedListImpl {
-    class ListData {
+    private class ListData {
         public object items;
         public int    size;
     }
 
     [StructLayout(LayoutKind.Explicit)]
-    struct Caster {
+    private struct Caster {
         [FieldOffset(0)] public object   list;
         [FieldOffset(0)] public ListData data;
     }
 
     public static T[] GetInternalArray<T>(List<T> list) where T : struct {
-        var caster = new Caster();
+        Caster caster = new Caster();
         caster.list = list;
         return (T[])caster.data.items;
     }
 
     public static List<T> CreateIntrusiveList<T>(T[] data) where T : struct {
-        var ret    = new List<T>();
-        var caster = new Caster();
+        List<T> ret    = new List<T>();
+        Caster  caster = new Caster();
         caster.list       = ret;
         caster.data.items = data;
         caster.data.size  = data.Length;
@@ -139,7 +137,7 @@ internal static class PinnedListImpl {
     }
 
     public static void SetCount<T>(List<T> list, int count) where T : struct {
-        var caster = new Caster();
+        Caster caster = new Caster();
         caster.list      = list;
         caster.data.size = count;
     }
@@ -151,9 +149,9 @@ internal static class PinnedListImpl {
 // Pinned"List" but assume size is fixed (== functionality is same as PinnedArray).
 // this class is intended to pass to Mesh.GetNormals(), Mesh.SetNormals(), and C++ functions.
 internal class PinnedList<T> : IDisposable, IEnumerable<T> where T : struct {
-    List<T>  m_list;
-    T[]      m_data;
-    GCHandle m_gch;
+    private List<T>  m_list;
+    private T[]      m_data;
+    private GCHandle m_gch;
 
     public PinnedList(int size = 0) {
         m_data = new T[size];
@@ -208,9 +206,7 @@ internal class PinnedList<T> : IDisposable, IEnumerable<T> where T : struct {
     }
 
     public void Resize(int size) {
-        if (size > m_data.Length) {
-            LockList(l => { l.Capacity = size; });
-        }
+        if (size > m_data.Length) LockList(l => { l.Capacity = size; });
 
         PinnedListImpl.SetCount(m_list, size);
     }
@@ -243,18 +239,14 @@ internal class PinnedList<T> : IDisposable, IEnumerable<T> where T : struct {
     }
 
     public void Assign(List<T> sourceList) {
-        var sourceData = PinnedListImpl.GetInternalArray(sourceList);
-        var count      = sourceList.Count;
+        T[] sourceData = PinnedListImpl.GetInternalArray(sourceList);
+        int count      = sourceList.Count;
         ResizeDiscard(count);
         System.Array.Copy(sourceData, m_data, count);
     }
 
-    public void CopyTo(ref T[] dest)
-    { 
-        if (dest == null || dest.Length != Count)
-        {
-            dest = new T[Count];
-        }
+    public void CopyTo(ref T[] dest) {
+        if (dest == null || dest.Length != Count) dest = new T[Count];
 
         System.Array.Copy(Array, dest, Count);
     }
@@ -265,10 +257,9 @@ internal class PinnedList<T> : IDisposable, IEnumerable<T> where T : struct {
     }
 
     protected virtual void Dispose(bool disposing) {
-        if (disposing) {
+        if (disposing)
             if (m_gch.IsAllocated)
                 m_gch.Free();
-        }
     }
 
     public IEnumerator<T> GetEnumerator() {
@@ -283,5 +274,4 @@ internal class PinnedList<T> : IDisposable, IEnumerable<T> where T : struct {
         return v == null ? IntPtr.Zero : v.Pointer;
     }
 }
-
 } //end namespace

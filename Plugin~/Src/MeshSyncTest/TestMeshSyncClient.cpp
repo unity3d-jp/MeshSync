@@ -322,34 +322,6 @@ TestCase(Test_Animation)
     TestUtility::Send(scene);
 }
 
-TestCase(Test_MeshMerge)
-{
-    std::shared_ptr<ms::Scene> scene = ms::Scene::create();
-
-    std::shared_ptr<ms::Mesh> mesh = ms::Mesh::create();
-    scene->entities.push_back(mesh);
-    {
-        mesh->path = "/Test/Merge";
-        mesh->position = { 0.0f, 0.0f, 0.0f };
-        mesh->rotation = quatf::identity();
-        mesh->scale = { 1.0f, 1.0f, 1.0f };
-
-        MeshGenerator::GenerateWaveMesh(mesh->counts, mesh->indices, mesh->points, mesh->m_uv, 2.0f, 1.0f, 16, 90.0f * mu::DegToRad);
-        mesh->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_NORMALS, true);
-        mesh->refine_settings.flags.Set(ms::MESH_REFINE_FLAG_GEN_TANGENTS, true);
-        mesh->material_ids.resize(mesh->counts.size(), 0);
-    }
-
-    {
-        std::shared_ptr<ms::Mesh> sphere = ms::Mesh::create();
-        MeshGenerator::GenerateIcoSphereMesh(sphere->counts, sphere->indices, sphere->points, sphere->m_uv[0], 0.5f, 1);
-        sphere->material_ids.resize(sphere->counts.size(), 1);
-        sphere->transformMesh(mu::translate(float3{ 0.0f, 1.5f, 0.0f }));
-
-        mesh->mergeMesh(*sphere);
-    }
-    TestUtility::Send(scene);
-}
 
 TestCase(Test_Points)
 {

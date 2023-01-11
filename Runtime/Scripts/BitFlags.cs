@@ -11,11 +11,10 @@ internal struct BitFlags {
         get { return (bits & (1 << v)) != 0; }
         set {
             if (value)
-                bits |= (1 << v);
+                bits |= 1 << v;
             else
                 bits &= ~(1 << v);
         }
     }
 }
-
 } //end namespace

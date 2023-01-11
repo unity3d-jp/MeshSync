@@ -8,27 +8,26 @@ using UnityEngine.TestTools;
 namespace Unity.MeshSync.Editor.Tests {
 internal class MeshSyncServerTests  {
     [UnityTest]
-    public IEnumerator CreateAutoServer()  {
+    public IEnumerator CreateAutoServer() {
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
 
         //Delete Server Root Path
-        string serverRootPath = Path.Combine(Application.streamingAssetsPath,DeployStreamingAssets.SERVER_ROOT_DIR_NAME);
+        string serverRootPath = Path.Combine(Application.streamingAssetsPath, DeployStreamingAssets.SERVER_ROOT_DIR_NAME);
         if (Directory.Exists(serverRootPath))
-            Directory.Delete(serverRootPath,true);
+            Directory.Delete(serverRootPath, true);
         Assert.IsFalse(Directory.Exists(serverRootPath));
-        
+
         MeshSyncServer mss = MeshSyncMenu.CreateMeshSyncServer(true);
         Assert.IsTrue(mss.IsServerStarted());
         yield return null;
 
         //Make sure the server files have been deployed
         Assert.IsTrue(Directory.Exists(serverRootPath));
-        
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------    
     [UnityTest]
-    public IEnumerator CreateManualServer()  {
+    public IEnumerator CreateManualServer() {
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
         MeshSyncServer mss = MeshSyncMenu.CreateMeshSyncServer(false);
         Assert.IsFalse(mss.IsServerStarted());
@@ -49,8 +48,5 @@ internal class MeshSyncServerTests  {
         Assert.AreEqual(projectSettings.GetDefaultServerPort(), mss.GetServerPort());
         yield return null;
     }
-
-
 }
-
 } //end namespace
