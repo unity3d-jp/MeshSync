@@ -524,7 +524,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
     private void CheckForNewSession(FenceMessage? mes) {
 #if UNITY_EDITOR
         if (!mes.HasValue || currentSessionId == mes.Value.SessionId) return;
-            
+
         currentSessionId = mes.Value.SessionId;
 
         SendEventData(new MeshSyncAnalyticsData()
@@ -816,7 +816,6 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         if (onSceneUpdateEnd != null)
             onSceneUpdateEnd.Invoke();
     }
-        
 
     //----------------------------------------------------------------------------------------------------------------------
 
