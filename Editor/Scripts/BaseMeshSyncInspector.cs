@@ -161,12 +161,10 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
             return false;
 
         var playerConfig = t.GetConfigV();
-        bool changed = EditorGUIDrawerUtility.DrawUndoableGUI(t, "MeshSync: Overwrite Existing Materials",
-            () => EditorGUILayout.Toggle("Overwrite Existing", playerConfig.OverwriteMaterials),
-            (bool toggle) => { playerConfig.OverwriteMaterials = toggle; }
-        );
-        changed |= DrawMaterialListElements(t);
+
+        bool changed = DrawMaterialListElements(t);
         DrawMaterialImportExportButtons(t);
+        
         if (GUILayout.Button("Open Material Window", GUILayout.Width(160.0f)))
             MaterialWindow.Open(t);
         EditorGUILayout.Space();
