@@ -43,11 +43,11 @@ These properties are shared by multiple components in this package.
   
 - **Overwrite Exported Materials**
 
-   Apply changes from dcc tools to materials in the list, even if the materials have been exported.
+   Apply changes from dcc tools to exported materials that are referenced in the material list.
    |**Values** |**Description** |
    |:---       |:---|
-   | On| Apply changes to materials, even when they have been exported.|
-   | Off| Do not apply changes to materials, if they have been exported.|
+   | On| Apply changes to exported materials.|
+   | Off| Do not apply changes to exported materials.|
 
 - **Animation Interpolation**: sets the animation interpolation method.   
 
