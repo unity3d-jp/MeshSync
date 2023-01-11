@@ -14,8 +14,8 @@ internal static class MeshSyncInspectorUtility {
         DrawModelImporterMaterialSearchMode(obj, settings);
         
         EditorGUIDrawerUtility.DrawUndoableGUI(obj, "Overwrite Exported Materials",
-            () => (bool)EditorGUILayout.Toggle("Overwrite Exported Materials", settings.CreateMaterials),
-            (bool createMat) => { settings.CreateMaterials = createMat; });
+            () => (bool)EditorGUILayout.Toggle("Overwrite Exported Materials", settings.OverwriteExportedMaterials),
+            (bool overwriteMat) => { settings.OverwriteExportedMaterials = overwriteMat; });
     }
 
     internal static void DrawModelImporterMaterialSearchMode(Object obj, ModelImporterSettings settings) {
