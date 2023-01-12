@@ -268,10 +268,8 @@ partial class MeshSyncServer {
     }
 #endif
 
-
-        internal void RequestUserScriptCallback() {
-            needsUserScriptCallback = true;
-        }
-#endif
+    internal void RequestUserScriptCallback() {
+        needsUserScriptCallback = true;
+    }
 }
 }
