@@ -114,7 +114,6 @@ internal abstract class MeshSyncPlayerConfig : ISerializationCallbackReceiver {
     public bool UpdateMeshColliders       = true;
 
     [Obsolete]       public  bool                  SyncMaterials      = true;
-    
     [SerializeField] private ModelImporterSettings m_importerSettings = new ModelImporterSettings();
 
     //Import Settings   
