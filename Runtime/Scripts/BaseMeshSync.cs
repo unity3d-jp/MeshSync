@@ -1208,6 +1208,9 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         else if (propNameID == MeshSyncConstants._ParallaxMap) {
             HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._PARALLAXMAP);
         }
+        else if (propNameID == MeshSyncConstants._OcclusionMap) {
+            HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._OCCLUSIONMAP);
+        }
 #if AT_USE_HDRP
         else if (propNameID == MeshSyncConstants._EmissiveColorMap) {
             Color baseEmissionColor = Color.white;
