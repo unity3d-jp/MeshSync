@@ -28,7 +28,7 @@ These properties are shared by multiple components in this package.
 
 ## Import 
    
-![](images/MeshSyncImportProperties.png)
+<img src='images/MeshSyncImportProperties.png' width='450'>
 
 - **Create Materials**: finds existing materials based on their names using the **Search Mode**
   and applies them to relevant **GameObjects**.  
