@@ -337,6 +337,8 @@ ScenePtr SceneCacheInputFile::PostProcess(ScenePtr& sp, const size_t sceneIndex)
         m_lastDiff->diff(*sp, *m_lastScene);
         m_lastScene = sp;
         ret = m_lastDiff;
+        ret->instanceInfos.assign(sp->instanceInfos.begin(), sp->instanceInfos.end());
+        ret->instanceMeshes.assign(sp->instanceMeshes.begin(), sp->instanceMeshes.end());
     }
     else {
         m_lastDiff = nullptr;
