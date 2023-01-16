@@ -113,6 +113,13 @@ static std::vector<ScenePtr> LoadBalancing(ScenePtr base, const int max_segments
         for (std::vector<TransformPtr>::value_type& g : geometries)
             add_geometry(g);
     }
+
+    // instances
+    {
+        //TODO load balancing
+        segments[0]->instanceMeshes.assign(base->instanceMeshes.begin(), base->instanceMeshes.end());
+        segments[0]->instanceInfos.assign(base->instanceInfos.begin(), base->instanceInfos.end());
+    }
     return segments;
 }
 

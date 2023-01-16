@@ -162,6 +162,8 @@ void Scene::diff(const Scene& s1, const Scene& s2)
             s2.dbgDump();
         }
     }
+    //TODO instneced meshes changes
+    instanceInfos.assign(s2.instanceInfos.begin(), s2.instanceInfos.end());
 }
 
 void Scene::lerp(const Scene& s1, const Scene& s2, float t)

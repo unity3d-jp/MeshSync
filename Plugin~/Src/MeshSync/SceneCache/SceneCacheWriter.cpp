@@ -62,13 +62,16 @@ void SceneCacheWriter::Write()
     if (on_prepare)
         on_prepare();
 
-    if (assets.empty() && transforms.empty() && geometries.empty())
+    if (assets.empty() && transforms.empty() && geometries.empty() && instanceMeshes.empty() && instanceInfos.empty())
         return;
 
     SetupDataFlags(transforms);
     SetupDataFlags(geometries);
+    SetupDataFlags(instanceMeshes);
+
     AssignIDs(transforms, id_table);
     AssignIDs(geometries, id_table);
+    AssignIDs(instanceMeshes, id_table);
 
     auto append = [](auto& dst, auto& src) { dst.insert(dst.end(), src.begin(), src.end()); };
 
@@ -85,6 +88,8 @@ void SceneCacheWriter::Write()
 
         scene->entities = transforms;
         append(scene->entities, geometries);
+        scene->instanceInfos = instanceInfos;
+        scene->instanceMeshes = instanceMeshes;
         m_scOutputFile->AddScene(scene, m_time);
     }
 
