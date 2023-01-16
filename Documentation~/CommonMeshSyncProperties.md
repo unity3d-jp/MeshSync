@@ -28,7 +28,7 @@ These properties are shared by multiple components in this package.
 
 ## Import 
    
-![](images/MeshSyncImportProperties.png)
+<img src='images/MeshSyncImportProperties.png' width='450'>
 
 - **Create Materials**: finds existing materials based on their names using the **Search Mode**
   and applies them to relevant **GameObjects**.  
@@ -40,6 +40,14 @@ These properties are shared by multiple components in this package.
   | Local           | search in the local folder of the MeshSync component.|
   | Recursive-Up    | search starting from the local folder of the MeshSync component up to the Assets folder.|
   | Everywhere      | search in all Unity Project folders.|
+  
+- **Overwrite Exported Materials**
+
+   Apply changes from dcc tools to exported materials that are referenced in the material list.
+   |**Values** |**Description** |
+   |:---       |:---|
+   | On| Apply changes to exported materials.|
+   | Off| Do not apply changes to exported materials.|
 
 - **Animation Interpolation**: sets the animation interpolation method.   
 
@@ -93,7 +101,7 @@ This material list holds all the materials that are used by this component.
 Changing a material in this list will update objects that use the previous material 
 to use the new material.
 
-**Import List** and **Export List** buttons are used to load and save material lists.    
+**Import List** and **Export List** buttons are used to load and save material lists.
 
 ## Export Assets 
 

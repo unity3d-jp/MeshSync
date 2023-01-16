@@ -11,8 +11,11 @@ internal static class MeshSyncInspectorUtility {
             () => (bool)EditorGUILayout.Toggle("Create Materials", settings.CreateMaterials),
             (bool createMat) => { settings.CreateMaterials = createMat; });
 
-
         DrawModelImporterMaterialSearchMode(obj, settings);
+        
+        EditorGUIDrawerUtility.DrawUndoableGUI(obj, "Overwrite Exported Materials",
+            () => (bool)EditorGUILayout.Toggle("Overwrite Exported Materials", settings.OverwriteExportedMaterials),
+            (bool overwriteMat) => { settings.OverwriteExportedMaterials = overwriteMat; });
     }
 
     internal static void DrawModelImporterMaterialSearchMode(Object obj, ModelImporterSettings settings) {
@@ -33,6 +36,10 @@ internal static class MeshSyncInspectorUtility {
 
         SerializedProperty createMatProp = property.FindPropertyRelative(ModelImporterSettings.CREATE_MATERIALS_PROP);
         EditorGUILayout.PropertyField(createMatProp, new GUIContent("Create Materials"));
+
+        SerializedProperty overwriteExportedMatProp =
+            property.FindPropertyRelative(ModelImporterSettings.OVERWRITE_EXPORTED_MATERIALS);
+        EditorGUILayout.PropertyField(overwriteExportedMatProp, new GUIContent("Overwrite Exported Materials"));
 
         using (new EditorGUI.DisabledScope(!createMatProp.boolValue)) {
             ++EditorGUI.indentLevel;

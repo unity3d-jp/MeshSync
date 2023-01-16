@@ -160,8 +160,11 @@ internal abstract class BaseMeshSyncInspector : UnityEditor.Editor {
         if (!t.foldMaterialList)
             return false;
 
+        var playerConfig = t.GetConfigV();
+
         bool changed = DrawMaterialListElements(t);
         DrawMaterialImportExportButtons(t);
+        
         if (GUILayout.Button("Open Material Window", GUILayout.Width(160.0f)))
             MaterialWindow.Open(t);
         EditorGUILayout.Space();
