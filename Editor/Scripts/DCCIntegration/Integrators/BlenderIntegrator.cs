@@ -114,7 +114,7 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
             //Try to uninstall first. The uninstallation may have exceptions/error messages, but they can be ignored
             System.Diagnostics.Process process = DiagnosticsUtility.StartProcess(
                 appPath,
-                $"-b -P {uninstallScriptPath}",
+                $"-b -P \"{uninstallScriptPath}\"",
                 /*useShellExecute=*/ false, /*redirectStandardError=*/ true
             );
             process.WaitForExit();
