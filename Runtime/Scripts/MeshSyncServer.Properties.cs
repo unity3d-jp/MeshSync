@@ -18,6 +18,7 @@ partial class MeshSyncServer {
     }
 
     private bool needsClientSync;
+    bool needsUserScriptCallback;
 
     private Dictionary<EntityRecord, Matrix4x4> entityTransforms = new Dictionary<EntityRecord, Matrix4x4>();
 
@@ -116,12 +117,11 @@ partial class MeshSyncServer {
                     }
 
 #if AT_USE_SPLINES
-                        if (changedSplines.Count > 0 && entity.dataType == EntityType.Curve)
-                        {
-                            //m_server.SendCurve(entity, kvp.Key);
-                            SendCurve(kvp.Key, entity);
-                            sendChanges = true;
-                        }
+                    if (changedSplines.Count > 0 && entity.dataType == EntityType.Curve)
+                    {
+                        SendCurve(kvp.Key, entity);
+                        sendChanges = true;
+                    }
 #endif
 #if AT_USE_PROBUILDER && UNITY_EDITOR
                     if (entity.dataType == EntityType.Mesh && entity.proBuilderMeshFilter != null)
@@ -141,9 +141,14 @@ partial class MeshSyncServer {
 #endif
             }
 
-            if (needsClientSync) {
+            if (needsUserScriptCallback) {
+                MeshSyncLogger.VerboseLog("Sending changes, needed user script callback.");
+                needsUserScriptCallback = false;
+                sendChanges             = true;
+                m_server.RequestUserScriptCallback();
+            }
+            else if (needsClientSync) {
                 MeshSyncLogger.VerboseLog("Sending changes, needed client sync.");
-
                 needsClientSync = false;
                 sendChanges     = true;
 
@@ -262,5 +267,9 @@ partial class MeshSyncServer {
         needsClientSync = true;
     }
 #endif
+
+    internal void RequestUserScriptCallback() {
+        needsUserScriptCallback = true;
+    }
 }
 }
