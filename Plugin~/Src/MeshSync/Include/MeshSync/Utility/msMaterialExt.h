@@ -42,6 +42,7 @@ public:
     void    setSmoothnessMap(const TextureRecord& v);
     void    setRoughnessMap(const TextureRecord& v);
     float   getSmoothness() const;
+    void    setOcclusionMap(const TextureRecord& v);
 
     void    setBumpScale(float v);
     float   getBumpScale() const;

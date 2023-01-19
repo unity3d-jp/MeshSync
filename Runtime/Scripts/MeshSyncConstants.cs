@@ -59,6 +59,7 @@ internal static class MeshSyncConstants {
     internal static readonly int _ZTestGBuffer             = Shader.PropertyToID("_ZTestGBuffer");
     internal static readonly int _CoatMaskMap              = Shader.PropertyToID("_CoatMaskMap");
     internal static readonly int _CoatMask                 = Shader.PropertyToID("_CoatMask");
+    internal static readonly int _OcclusionMap             = Shader.PropertyToID("_OcclusionMap");
 
     #endregion
 
@@ -79,6 +80,7 @@ internal static class MeshSyncConstants {
     internal const string _PIXEL_DISPLACEMENT          = "_PIXEL_DISPLACEMENT";
     internal const string _VERTEX_DISPLACEMENT         = "_VERTEX_DISPLACEMENT";
     internal const string _MATERIAL_FEATURE_CLEAR_COAT = "_MATERIAL_FEATURE_CLEAR_COAT";
+    internal const string _OCCLUSIONMAP                = "_OCCLUSIONMAP";
 
     // Used to mark materials that have a specific shader setup based on a shader from the DCC tool.  
     internal const string MESHSYNC_OVERRIDE = "MESHSYNC_OVERRIDE";

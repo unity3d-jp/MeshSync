@@ -23,6 +23,7 @@ static const char _ParallaxMap[] = "_ParallaxMap";
 static const char _Parallax[] = "_Parallax";
 static const char _CoatMask[] = "_CoatMask";
 static const char _CoatMaskMap[] = "_CoatMaskMap";
+static const char _OcclusionMap[] = "_OcclusionMap";
 
 using TextureRecord = MaterialProperty::TextureRecord;
 
@@ -143,6 +144,10 @@ void StandardMaterial::setSmoothnessMap(const TextureRecord& v) {
 void StandardMaterial::setRoughnessMap(const TextureRecord& v) {
     // Allow null:
     addProperty(MaterialProperty(_RoughMap, v));
+}
+void StandardMaterial::setOcclusionMap(const TextureRecord& v) {
+    // Allow null:
+    addProperty(MaterialProperty(_OcclusionMap, v));
 }
 
 void StandardMaterial::setBumpScale(float v) {
