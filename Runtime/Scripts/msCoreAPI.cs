@@ -459,7 +459,8 @@ internal struct TextureData {
 
 #region Material
 
-internal struct MaterialPropertyData {
+internal struct MaterialPropertyData : IMaterialPropertyData
+{
     #region internal
 
     public IntPtr self;
@@ -468,7 +469,7 @@ internal struct MaterialPropertyData {
     private static extern IntPtr msMaterialPropGetName(IntPtr self);
 
     [DllImport(Lib.name)]
-    private static extern Type msMaterialPropGetType(IntPtr self);
+    private static extern IMaterialPropertyData.Type msMaterialPropGetType(IntPtr self);
 
     [DllImport(Lib.name)]
     private static extern int msMaterialPropGetArrayLength(IntPtr self);
@@ -486,7 +487,7 @@ internal struct MaterialPropertyData {
     private static extern void msMaterialPropCopyData(IntPtr self, ref Matrix4x4 dst);
 
     [DllImport(Lib.name)]
-    private static extern void msMaterialPropCopyData(IntPtr self, ref TextureRecord dst);
+    private static extern void msMaterialPropCopyData(IntPtr self, ref IMaterialPropertyData.TextureRecord dst);
 
     [DllImport(Lib.name)]
     private static extern void msMaterialPropCopyData(IntPtr self, float[] dst);
@@ -502,21 +503,7 @@ internal struct MaterialPropertyData {
 
     #endregion
 
-    public enum Type {
-        Unknown,
-        Int,
-        Float,
-        Vector,
-        Matrix,
-        Texture,
-        String
-    }
 
-    public struct TextureRecord {
-        public int     id;
-        public bool    hasScaleOffset;
-        public Vector2 scale, offset;
-    }
 
     public static implicit operator bool(MaterialPropertyData v) {
         return v.self != IntPtr.Zero;
@@ -534,7 +521,7 @@ internal struct MaterialPropertyData {
         get { return  Shader.PropertyToID(name); }
     }
 
-    public Type type {
+    public IMaterialPropertyData.Type type {
         get {
             if (self == IntPtr.Zero) return default;
 
@@ -582,11 +569,11 @@ internal struct MaterialPropertyData {
         }
     }
 
-    public TextureRecord textureValue {
+    public IMaterialPropertyData.TextureRecord textureValue {
         get {
             if (self == IntPtr.Zero) return default;
 
-            TextureRecord ret = default(TextureRecord);
+            IMaterialPropertyData.TextureRecord ret = default(IMaterialPropertyData.TextureRecord);
             msMaterialPropCopyData(self, ref ret);
             return ret;
         }
@@ -782,7 +769,7 @@ internal struct MaterialData {
     internal Color color {
         get {
             MaterialPropertyData p = FindProperty("_Color");
-            if (p && p.type == MaterialPropertyData.Type.Vector)
+            if (p && p.type == IMaterialPropertyData.Type.Vector)
                 return p.vectorValue;
             else
                 return Color.white;

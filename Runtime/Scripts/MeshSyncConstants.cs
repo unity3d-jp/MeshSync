@@ -60,6 +60,7 @@ internal static class MeshSyncConstants {
     internal static readonly int _CoatMaskMap              = Shader.PropertyToID("_CoatMaskMap");
     internal static readonly int _CoatMask                 = Shader.PropertyToID("_CoatMask");
     internal static readonly int _OcclusionMap             = Shader.PropertyToID("_OcclusionMap");
+    internal static readonly int _OcclusionStrength        = Shader.PropertyToID("_OcclusionStrength");
 
     #endregion
 
