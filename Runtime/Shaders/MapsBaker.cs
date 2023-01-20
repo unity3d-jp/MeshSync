@@ -103,7 +103,7 @@ internal static class MapsBaker {
 #if AT_USE_HDRP
     private static void BakeMaskMap(Material destMat,
         List<TextureHolder> textureHolders,
-        Dictionary<int, MaterialPropertyData> materialProperties) {
+        Dictionary<int, IMaterialPropertyData> materialProperties) {
         if (!destMat.HasProperty(MeshSyncConstants._MaskMap)) return;
 
         // Mask map:

@@ -1230,11 +1230,11 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         else if (propNameID == MeshSyncConstants._EmissiveColorMap) {
             Color baseEmissionColor = Color.white;
 
-            if (materialProperties.TryGetValue(MeshSyncConstants._EmissionColor, out MaterialPropertyData emissionColorProp))
+            if (materialProperties.TryGetValue(MeshSyncConstants._EmissionColor, out IMaterialPropertyData emissionColorProp))
                 baseEmissionColor = emissionColorProp.vectorValue;
 
             float emissionStrength = 0;
-            if (materialProperties.TryGetValue(MeshSyncConstants._EmissionStrength, out MaterialPropertyData emissionStrengthProp))
+            if (materialProperties.TryGetValue(MeshSyncConstants._EmissionStrength, out IMaterialPropertyData emissionStrengthProp))
                 emissionStrength = emissionStrengthProp.floatValue;
 
             destMat.SetFloat(MeshSyncConstants._UseEmissiveIntensity, 1);
@@ -1244,8 +1244,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             destMat.SetColor(MeshSyncConstants._EmissiveColor, baseEmissionColor * emissionStrength);
         }
         else if (propNameID == MeshSyncConstants._HeightMap) {
-            if (prop.type == MaterialPropertyData.Type.Texture) {
-                MaterialPropertyData.TextureRecord rec = prop.textureValue;
+            if (prop.type == IMaterialPropertyData.Type.Texture) {
+                IMaterialPropertyData.TextureRecord rec = prop.textureValue;
                 Texture2D                          tex = FindTexture(rec.id, textureHolders);
                 if (tex != null) {
                     destMat.EnableKeyword(MeshSyncConstants._HEIGHTMAP);
@@ -1259,7 +1259,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                     // Fallback value in case the node setup in blender does not specify the height scale.
                     // Normally this is not used because the value comes from the displacement node:
                     float scale = 10;
-                    if (materialProperties.TryGetValue(MeshSyncConstants._Parallax, out MaterialPropertyData heightScaleProp))
+                    if (materialProperties.TryGetValue(MeshSyncConstants._Parallax, out IMaterialPropertyData heightScaleProp))
                         scale = heightScaleProp.floatValue;
 
                     destMat.SetFloat(MeshSyncConstants._HeightMin, -scale);
