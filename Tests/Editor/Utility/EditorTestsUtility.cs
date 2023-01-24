@@ -8,7 +8,7 @@ using UnityEngine.Timeline;
 namespace Unity.MeshSync.Editor.Tests {
 internal static class EditorTestsUtility {
 
-    private static void InitTimelineTest(bool enableSceneCacheGo, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip) {
+    internal static void InitTimelineTest(bool enableSceneCacheGo, out PlayableDirector director, out SceneCachePlayer sceneCachePlayer, out TimelineClip clip) {
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
 
         director         = CreateDirector();
