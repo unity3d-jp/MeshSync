@@ -10,7 +10,7 @@ namespace Unity.MeshSync.Editor.Tests {
 internal class SceneCacheKeyFrameTests {
     
     [UnityTest]
-    public IEnumerator ShowFrameMarkers() {
+    public IEnumerator ShowKeyFrameMarkers() {
         
 #if !UNITY_2022_2_OR_NEWER
         EditorTestsUtility.InitTimelineTest(enableSceneCacheGo:true, out _, out _, out TimelineClip clip);
