@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using NUnit.Framework;
 using Unity.FilmInternalUtilities;
+using Unity.FilmInternalUtilities.Editor;
 using UnityEngine.TestTools;
 using UnityEngine.Timeline;
 using UnityEditor.Timeline;
@@ -16,7 +17,7 @@ internal class SceneCacheKeyFrameTests {
         EditorTestsUtility.InitTimelineTest(enableSceneCacheGo:true, out _, out _, out TimelineClip clip);
         SceneCachePlayableAsset sceneCachePlayableAsset = clip.asset as SceneCachePlayableAsset;
         Assert.IsNotNull(sceneCachePlayableAsset);
-        yield return null;
+        yield return YieldEditorUtility.WaitForFramesAndIncrementUndo(1);
         
         //Show
         SceneCacheClipData clipData = sceneCachePlayableAsset.GetBoundClipData();
@@ -25,18 +26,20 @@ internal class SceneCacheKeyFrameTests {
         TrackAsset trackAsset = clip.GetParentTrack();
         clipData.RequestKeyFrameMarkers(true, true);
         TimelineEditor.Refresh(RefreshReason.ContentsModified);
-        yield return null;
+        yield return YieldEditorUtility.WaitForFramesAndIncrementUndo(1);
         
         Assert.AreEqual(TimelineUtility.CalculateNumFrames(clip), trackAsset.GetMarkerCount());
-        yield return null;
+        yield return YieldEditorUtility.WaitForFramesAndIncrementUndo(1);
 
 
         //Undo showing FrameMarkers
-        EditorTestsUtility.UndoAndRefreshTimelineEditor(); yield return null;
+        EditorTestsUtility.UndoAndRefreshTimelineEditor();
+        yield return YieldEditorUtility.WaitForFramesAndIncrementUndo(1);
+        
         Assert.False(clipData.AreKeyFrameMarkersRequested());
         Assert.AreEqual(0, trackAsset.GetMarkerCount());        
 #endif
-        yield return null;
+        yield return YieldEditorUtility.WaitForFramesAndIncrementUndo(1);
     }
     
     
