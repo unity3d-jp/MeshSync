@@ -233,7 +233,7 @@ internal class SceneCachePlayableAssetTests {
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
 
         director         = EditorTestsUtility.CreateDirector();
-        sceneCachePlayer = EditorTestsUtility.CreateTestSceneCachePlayer();
+        sceneCachePlayer = EditorTestsUtility.CreateSceneCachePlayer();
         sceneCachePlayer.gameObject.SetActive(enableSceneCacheGo);
         clip = SceneCachePlayerEditorUtility.AddSceneCacheTrackAndClip(director, "TestSceneCacheTrack", sceneCachePlayer);
 

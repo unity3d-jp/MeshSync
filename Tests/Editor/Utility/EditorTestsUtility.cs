@@ -14,7 +14,7 @@ internal static class EditorTestsUtility {
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
     
-    internal static SceneCachePlayer CreateTestSceneCachePlayer() {
+    internal static SceneCachePlayer CreateSceneCachePlayer() {
         GameObject       sceneCacheGo     = new GameObject();
         SceneCachePlayer sceneCachePlayer = sceneCacheGo.AddComponent<SceneCachePlayer>();
         SceneCachePlayerEditorUtility.ChangeSceneCacheFile(sceneCachePlayer, Path.GetFullPath(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH));
