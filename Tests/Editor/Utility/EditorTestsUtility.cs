@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using Unity.FilmInternalUtilities.Editor;
+using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
@@ -18,6 +20,15 @@ internal static class EditorTestsUtility {
 
         TimelineEditorUtility.SelectDirectorInTimelineWindow(director); //trigger the TimelineWindow's update etc.
         TimelineEditorUtility.RefreshTimelineEditor();
+    }
+    
+    
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+    
+    //[TODO-sin: 2023-1-14] Move to FIU
+    internal static void UndoAndRefreshTimelineEditor() {
+        Undo.PerformUndo(); 
+        TimelineEditor.Refresh(RefreshReason.ContentsModified);
     }
     
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
