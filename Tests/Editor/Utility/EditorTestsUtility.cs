@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.IO;
+using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
@@ -10,5 +11,15 @@ internal static class EditorTestsUtility {
         director.playableAsset = asset;
         return director;
     }
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+    
+    internal static SceneCachePlayer CreateTestSceneCachePlayer() {
+        GameObject       sceneCacheGo     = new GameObject();
+        SceneCachePlayer sceneCachePlayer = sceneCacheGo.AddComponent<SceneCachePlayer>();
+        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(sceneCachePlayer, Path.GetFullPath(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH));
+        return sceneCachePlayer;
+    }
+    
 }
 } //end namespace
