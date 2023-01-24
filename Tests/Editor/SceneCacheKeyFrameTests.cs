@@ -13,7 +13,6 @@ internal class SceneCacheKeyFrameTests {
     [UnityTest]
     public IEnumerator ShowKeyFrameMarkers() {
         
-#if !UNITY_2022_2_OR_NEWER
         EditorTestsUtility.InitTimelineTest(enableSceneCacheGo:true, out _, out _, out TimelineClip clip);
         SceneCachePlayableAsset sceneCachePlayableAsset = clip.asset as SceneCachePlayableAsset;
         Assert.IsNotNull(sceneCachePlayableAsset);
@@ -31,14 +30,12 @@ internal class SceneCacheKeyFrameTests {
         Assert.AreEqual(TimelineUtility.CalculateNumFrames(clip), trackAsset.GetMarkerCount());
         yield return YieldEditorUtility.WaitForFramesAndIncrementUndo(1);
 
-
         //Undo showing FrameMarkers
         EditorTestsUtility.UndoAndRefreshTimelineEditor();
         yield return YieldEditorUtility.WaitForFramesAndIncrementUndo(1);
         
         Assert.False(clipData.AreKeyFrameMarkersRequested());
         Assert.AreEqual(0, trackAsset.GetMarkerCount());        
-#endif
         yield return YieldEditorUtility.WaitForFramesAndIncrementUndo(1);
     }
     
