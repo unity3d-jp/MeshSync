@@ -233,19 +233,12 @@ internal class SceneCachePlayableAssetTests {
         EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
 
         director         = EditorTestsUtility.CreateDirector();
-        sceneCachePlayer = CreateTestSceneCachePlayer();
+        sceneCachePlayer = EditorTestsUtility.CreateTestSceneCachePlayer();
         sceneCachePlayer.gameObject.SetActive(enableSceneCacheGo);
         clip = SceneCachePlayerEditorUtility.AddSceneCacheTrackAndClip(director, "TestSceneCacheTrack", sceneCachePlayer);
 
         TimelineEditorUtility.SelectDirectorInTimelineWindow(director); //trigger the TimelineWindow's update etc.
         TimelineEditorUtility.RefreshTimelineEditor();
-    }
-
-    private static SceneCachePlayer CreateTestSceneCachePlayer() {
-        GameObject       sceneCacheGo     = new GameObject();
-        SceneCachePlayer sceneCachePlayer = sceneCacheGo.AddComponent<SceneCachePlayer>();
-        SceneCachePlayerEditorUtility.ChangeSceneCacheFile(sceneCachePlayer, Path.GetFullPath(MeshSyncTestEditorConstants.CUBE_TEST_DATA_PATH));
-        return sceneCachePlayer;
     }
 
     [NotNull]
