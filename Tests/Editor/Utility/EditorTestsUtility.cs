@@ -3,7 +3,7 @@ using UnityEngine.Playables;
 using UnityEngine.Timeline;
 
 namespace Unity.MeshSync.Editor.Tests {
-internal class EditorTestsUtility {
+internal static class EditorTestsUtility {
     
     internal static PlayableDirector CreateTestDirector() {
         PlayableDirector director = new GameObject("Director").AddComponent<PlayableDirector>();
