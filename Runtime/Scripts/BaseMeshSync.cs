@@ -1118,9 +1118,20 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         int                                   numProps           = src.numProperties;
         Dictionary<int, IMaterialPropertyData> materialProperties = new Dictionary<int, IMaterialPropertyData>(numProps);
 
-        for (int pi = 0; pi < numProps; ++pi) {
+        for (int pi = 0; pi < numProps; ++pi)
+        {
             IMaterialPropertyData prop = src.GetProperty(pi);
-            materialProperties.Add(prop.nameID, prop);
+            // Change parallax slider value to 0.005
+            if (prop.nameID == MeshSyncConstants._Parallax)
+            {
+                CustomMaterialPropertyData parallax = new CustomMaterialPropertyData(prop);
+                parallax.floatValue = 0.005f;
+                materialProperties.Add(parallax.nameID, parallax);
+            }
+            else
+            {
+                materialProperties.Add(prop.nameID, prop);
+            }
         }
         
         // Change AO slider value to 0.25
@@ -1132,8 +1143,6 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             nameID = MeshSyncConstants._OcclusionStrength
         };
         materialProperties.Add(aoStrength.nameID, aoStrength);
-        
-        
 
         foreach (KeyValuePair<int, IMaterialPropertyData> prop in materialProperties)
             ApplyMaterialProperty(destMat, textureHolders, prop.Value, prop.Key, materialProperties, src.shader);
