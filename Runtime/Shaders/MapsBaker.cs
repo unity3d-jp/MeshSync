@@ -47,12 +47,12 @@ internal static class MapsBaker {
 
     private static bool FindTexture(int nameID,
         List<TextureHolder> textureHolders,
-        Dictionary<int, MaterialPropertyData> materialProperties,
+        Dictionary<int, IMaterialPropertyData> materialProperties,
         int fallbackPropertyNameID,
         float fallbackPropertyValue,
         out Texture2DDisposable disposableTexture) {
-        if (materialProperties.TryGetValue(nameID, out MaterialPropertyData prop)) {
-            MaterialPropertyData.TextureRecord rec = prop.textureValue;
+        if (materialProperties.TryGetValue(nameID, out IMaterialPropertyData prop)) {
+            IMaterialPropertyData.TextureRecord rec = prop.textureValue;
             disposableTexture = new Texture2DDisposable(BaseMeshSync.FindTexture(rec.id, textureHolders), false);
 
             if (disposableTexture.Texture != null) return true;
@@ -61,7 +61,7 @@ internal static class MapsBaker {
         // If there is no such texture, create one with the given fallback value:
 
         float value = fallbackPropertyValue;
-        if (materialProperties.TryGetValue(fallbackPropertyNameID, out MaterialPropertyData fallbackMaterialProperty))
+        if (materialProperties.TryGetValue(fallbackPropertyNameID, out IMaterialPropertyData fallbackMaterialProperty))
             value = fallbackMaterialProperty.floatValue;
 
         const int dim = 8;
@@ -78,7 +78,7 @@ internal static class MapsBaker {
     }
 
     private static void GetSmoothnessOrRoughnessMap(
-        Dictionary<int, MaterialPropertyData> materialProperties,
+        Dictionary<int, IMaterialPropertyData> materialProperties,
         List<TextureHolder> textureHolders,
         out Texture2DDisposable texture,
         out bool usingRoughness,
@@ -103,7 +103,7 @@ internal static class MapsBaker {
 #if AT_USE_HDRP
     private static void BakeMaskMap(Material destMat,
         List<TextureHolder> textureHolders,
-        Dictionary<int, MaterialPropertyData> materialProperties) {
+        Dictionary<int, IMaterialPropertyData> materialProperties) {
         if (!destMat.HasProperty(MeshSyncConstants._MaskMap)) return;
 
         // Mask map:
@@ -155,7 +155,7 @@ internal static class MapsBaker {
 #else
     private static void BakeSmoothness(Material destMat,
         List<TextureHolder> textureHolders,
-        Dictionary<int, MaterialPropertyData> materialProperties) {
+        Dictionary<int, IMaterialPropertyData> materialProperties) {
         if (!destMat.HasProperty(_SmoothnessTextureChannel)) return;
 
         int smoothnessChannel = destMat.GetInt(_SmoothnessTextureChannel);
@@ -235,7 +235,7 @@ internal static class MapsBaker {
 
     public static void BakeMaps(Material destMat,
         List<TextureHolder> textureHolders,
-        Dictionary<int, MaterialPropertyData> materialProperties) {
+        Dictionary<int, IMaterialPropertyData> materialProperties) {
 #if AT_USE_HDRP
         BakeMaskMap(destMat, textureHolders, materialProperties);
 #else

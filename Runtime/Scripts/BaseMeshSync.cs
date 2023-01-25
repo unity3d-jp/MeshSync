@@ -1116,14 +1116,26 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
         // Put all properties in a list so we can look them up more easily:
         int                                   numProps           = src.numProperties;
-        Dictionary<int, MaterialPropertyData> materialProperties = new Dictionary<int, MaterialPropertyData>(numProps);
+        Dictionary<int, IMaterialPropertyData> materialProperties = new Dictionary<int, IMaterialPropertyData>(numProps);
 
         for (int pi = 0; pi < numProps; ++pi) {
-            MaterialPropertyData prop = src.GetProperty(pi);
+            IMaterialPropertyData prop = src.GetProperty(pi);
             materialProperties.Add(prop.nameID, prop);
         }
+        
+        // Change AO slider value to 0.25
+        CustomMaterialPropertyData aoStrength = new CustomMaterialPropertyData
+        {
+            floatValue = 0.25f,
+            arrayLength = 1,
+            type = IMaterialPropertyData.Type.Float,
+            nameID = MeshSyncConstants._OcclusionStrength
+        };
+        materialProperties.Add(aoStrength.nameID, aoStrength);
+        
+        
 
-        foreach (KeyValuePair<int, MaterialPropertyData> prop in materialProperties)
+        foreach (KeyValuePair<int, IMaterialPropertyData> prop in materialProperties)
             ApplyMaterialProperty(destMat, textureHolders, prop.Value, prop.Key, materialProperties, src.shader);
 
         MapsBaker.BakeMaps(destMat, textureHolders, materialProperties);
@@ -1133,10 +1145,10 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
     }
 
     private static bool HandleKeywords(Material destMat, List<TextureHolder> textureHolders,
-        MaterialPropertyData prop, string keyword) {
+        IMaterialPropertyData prop, string keyword) {
         // If the texture exists, enable its keyword, otherwise disable it:
-        if (prop.type == MaterialPropertyData.Type.Texture) {
-            MaterialPropertyData.TextureRecord rec = prop.textureValue;
+        if (prop.type == IMaterialPropertyData.Type.Texture) {
+            IMaterialPropertyData.TextureRecord rec = prop.textureValue;
             Texture2D                          tex = FindTexture(rec.id, textureHolders);
 
             if (tex != null) {
@@ -1162,16 +1174,16 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
     private void ApplyMaterialProperty(Material destMat,
         List<TextureHolder> textureHolders,
-        MaterialPropertyData prop,
+        IMaterialPropertyData prop,
         int propNameID,
-        Dictionary<int, MaterialPropertyData> materialProperties,
+        Dictionary<int, IMaterialPropertyData> materialProperties,
         string shaderName) {
         // Shaders use different names to refer to the same maps, this map contains those synonyms so we can apply them to every shader easily:
         if (synonymMap.TryGetValue(propNameID, out int[] synonyms))
             foreach (int synonym in synonyms)
                 ApplyMaterialProperty(destMat, textureHolders, prop, synonym, materialProperties, shaderName);
 
-        MaterialPropertyData.Type propType = prop.type;
+        IMaterialPropertyData.Type propType = prop.type;
         if (!destMat.HasProperty(propNameID))
             return;
 
@@ -1218,11 +1230,11 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         else if (propNameID == MeshSyncConstants._EmissiveColorMap) {
             Color baseEmissionColor = Color.white;
 
-            if (materialProperties.TryGetValue(MeshSyncConstants._EmissionColor, out MaterialPropertyData emissionColorProp))
+            if (materialProperties.TryGetValue(MeshSyncConstants._EmissionColor, out IMaterialPropertyData emissionColorProp))
                 baseEmissionColor = emissionColorProp.vectorValue;
 
             float emissionStrength = 0;
-            if (materialProperties.TryGetValue(MeshSyncConstants._EmissionStrength, out MaterialPropertyData emissionStrengthProp))
+            if (materialProperties.TryGetValue(MeshSyncConstants._EmissionStrength, out IMaterialPropertyData emissionStrengthProp))
                 emissionStrength = emissionStrengthProp.floatValue;
 
             destMat.SetFloat(MeshSyncConstants._UseEmissiveIntensity, 1);
@@ -1232,8 +1244,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             destMat.SetColor(MeshSyncConstants._EmissiveColor, baseEmissionColor * emissionStrength);
         }
         else if (propNameID == MeshSyncConstants._HeightMap) {
-            if (prop.type == MaterialPropertyData.Type.Texture) {
-                MaterialPropertyData.TextureRecord rec = prop.textureValue;
+            if (prop.type == IMaterialPropertyData.Type.Texture) {
+                IMaterialPropertyData.TextureRecord rec = prop.textureValue;
                 Texture2D                          tex = FindTexture(rec.id, textureHolders);
                 if (tex != null) {
                     destMat.EnableKeyword(MeshSyncConstants._HEIGHTMAP);
@@ -1247,7 +1259,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                     // Fallback value in case the node setup in blender does not specify the height scale.
                     // Normally this is not used because the value comes from the displacement node:
                     float scale = 10;
-                    if (materialProperties.TryGetValue(MeshSyncConstants._Parallax, out MaterialPropertyData heightScaleProp))
+                    if (materialProperties.TryGetValue(MeshSyncConstants._Parallax, out IMaterialPropertyData heightScaleProp))
                         scale = heightScaleProp.floatValue;
 
                     destMat.SetFloat(MeshSyncConstants._HeightMin, -scale);
@@ -1271,29 +1283,29 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
         int len = prop.arrayLength;
         switch (propType) {
-            case MaterialPropertyData.Type.Int:
+            case IMaterialPropertyData.Type.Int:
                 destMat.SetInt(propNameID, prop.intValue);
                 break;
-            case MaterialPropertyData.Type.Float:
+            case IMaterialPropertyData.Type.Float:
                 if (len == 1)
                     destMat.SetFloat(propNameID, prop.floatValue);
                 else
                     destMat.SetFloatArray(propNameID, prop.floatArray);
                 break;
-            case MaterialPropertyData.Type.Vector:
+            case IMaterialPropertyData.Type.Vector:
                 if (len == 1)
                     destMat.SetVector(propNameID, prop.vectorValue);
                 else
                     destMat.SetVectorArray(propNameID, prop.vectorArray);
                 break;
-            case MaterialPropertyData.Type.Matrix:
+            case IMaterialPropertyData.Type.Matrix:
                 if (len == 1)
                     destMat.SetMatrix(propNameID, prop.matrixValue);
                 else
                     destMat.SetMatrixArray(propNameID, prop.matrixArray);
                 break;
-            case MaterialPropertyData.Type.Texture: {
-                MaterialPropertyData.TextureRecord rec = prop.textureValue;
+            case IMaterialPropertyData.Type.Texture: {
+                IMaterialPropertyData.TextureRecord rec = prop.textureValue;
                 Texture2D                          tex = FindTexture(rec.id, textureHolders);
                 // Allow setting of null textures to clear them:
                 destMat.SetTextureAndReleaseExistingRenderTextures(propNameID, tex);
@@ -1303,7 +1315,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 }
             }
                 break;
-            case MaterialPropertyData.Type.String:
+            case IMaterialPropertyData.Type.String:
                 // Not used at the moment but would be: prop.stringValue;
                 break;
             default: break;
