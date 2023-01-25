@@ -174,7 +174,7 @@ internal static class MapsBaker {
         }
         else if (smoothnessChannel == 1) {
             // Bake to albedo alpha
-            channelName = MeshSyncConstants._BaseMap;
+            channelName = MeshSyncConstants._MainTex;
             texturesExist |=
                 FindTexture(MeshSyncConstants._MainTex, textureHolders, materialProperties, 0, 0,
                     out rgbTexture);
