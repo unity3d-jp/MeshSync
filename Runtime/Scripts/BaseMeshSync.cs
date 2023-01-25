@@ -1117,7 +1117,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         // Put all properties in a list so we can look them up more easily:
         int                                   numProps           = src.numProperties;
         Dictionary<int, IMaterialPropertyData> materialProperties = new Dictionary<int, IMaterialPropertyData>(numProps);
-
+        
         for (int pi = 0; pi < numProps; ++pi)
         {
             IMaterialPropertyData prop = src.GetProperty(pi);
