@@ -674,6 +674,12 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             int numMeshes = scene.numInstancedEntities;
             for (int i = 0; i < numMeshes; ++i) {
                 TransformData src = scene.GetInstancedEntity(i);
+                
+                // If an instance entity is not part of the scene, it can only be supported if it is a Mesh
+                //[TODO] Refactor code to support more types
+                if (src.entityType != EntityType.Mesh)
+                    continue;
+                
                 EntityRecord  dst = UpdateInstancedEntity(src);
 
                 if (dst == null) return;
