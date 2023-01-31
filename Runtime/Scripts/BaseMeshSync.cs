@@ -1121,7 +1121,6 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         for (int pi = 0; pi < numProps; ++pi)
         {
             IMaterialPropertyData prop = src.GetProperty(pi);
-            
             // Change parallax slider value to 0.005
             if (prop.nameID == MeshSyncConstants._Parallax)
             {
@@ -1161,7 +1160,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 nameID = id
             };
                 
-            materialProperties.Add(glossiness.nameID, glossiness); 
+            materialProperties.Add(glossiness.nameID, glossiness);
         }
         
         // Change AO slider value to 0.25
