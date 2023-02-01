@@ -1139,6 +1139,35 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 materialProperties.Add(prop.nameID, prop);
             }
         }
+
+        if (!materialProperties.ContainsKey(MeshSyncConstants._Glossiness)
+            && !materialProperties.ContainsKey(MeshSyncConstants._GlossMapScale))
+        {
+            var id = MeshSyncConstants._Glossiness;
+            if (!materialProperties.ContainsKey(MeshSyncConstants._MetallicGlossMap))
+            {
+                id = MeshSyncConstants._GlossMapScale;
+                
+                var textureChannel = new CustomMaterialPropertyData()
+                {
+                    intValue = 1,
+                    arrayLength = 1,
+                    type = IMaterialPropertyData.Type.Int,
+                        nameID = MeshSyncConstants._SmoothnessTextureChannel
+                };
+                materialProperties.Add(textureChannel.nameID, textureChannel);
+            }
+            
+            var glossiness = new CustomMaterialPropertyData
+            {
+                floatValue = 0.5f,
+                arrayLength = 1,
+                type = IMaterialPropertyData.Type.Float,
+                nameID = id
+            };
+                
+            materialProperties.Add(glossiness.nameID, glossiness);
+        }
         
         // Change AO slider value to 0.25
         CustomMaterialPropertyData aoStrength = new CustomMaterialPropertyData
@@ -1175,6 +1204,12 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         destMat.DisableKeyword(keyword);
 
         return false;
+    }
+
+    private static bool HandleKeywords(Material destMat, string keyword)
+    {
+        destMat.EnableKeyword(keyword);
+        return true;
     }
 
     private static Dictionary<int, int[]> synonymMap = new Dictionary<int, int[]> {
@@ -1240,6 +1275,10 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         }
         else if (propNameID == MeshSyncConstants._OcclusionMap) {
             HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._OCCLUSIONMAP);
+        }
+        else if (propNameID == MeshSyncConstants._SmoothnessTextureChannel)
+        {
+            HandleKeywords(destMat, MeshSyncConstants._SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A);
         }
 #if AT_USE_HDRP
         else if (propNameID == MeshSyncConstants._EmissiveColorMap) {

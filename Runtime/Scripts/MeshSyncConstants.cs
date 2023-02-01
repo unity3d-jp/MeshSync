@@ -61,6 +61,7 @@ internal static class MeshSyncConstants {
     internal static readonly int _CoatMask                 = Shader.PropertyToID("_CoatMask");
     internal static readonly int _OcclusionMap             = Shader.PropertyToID("_OcclusionMap");
     internal static readonly int _OcclusionStrength        = Shader.PropertyToID("_OcclusionStrength");
+    internal static readonly int _SmoothnessTextureChannel = Shader.PropertyToID("_SmoothnessTextureChannel");
 
     #endregion
 
@@ -82,6 +83,7 @@ internal static class MeshSyncConstants {
     internal const string _VERTEX_DISPLACEMENT         = "_VERTEX_DISPLACEMENT";
     internal const string _MATERIAL_FEATURE_CLEAR_COAT = "_MATERIAL_FEATURE_CLEAR_COAT";
     internal const string _OCCLUSIONMAP                = "_OCCLUSIONMAP";
+    internal const string _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A = "_SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A";
 
     // Used to mark materials that have a specific shader setup based on a shader from the DCC tool.  
     internal const string MESHSYNC_OVERRIDE = "MESHSYNC_OVERRIDE";
