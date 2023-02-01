@@ -11,7 +11,6 @@ public:
     // serializable
     CameraDataFlags cd_flags;
     bool is_ortho;
-    float ortho_size;
     float fov;
     float near_plane;
     float far_plane;
