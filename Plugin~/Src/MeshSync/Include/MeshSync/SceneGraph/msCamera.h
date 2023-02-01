@@ -11,7 +11,7 @@ public:
     // serializable
     CameraDataFlags cd_flags;
     bool is_ortho;
-    float fov;
+    float fov_or_ortho_size; // fov for non-ortho cameras, ortho size for ortho cameras
     float near_plane;
     float far_plane;
     float focal_length;     // in mm

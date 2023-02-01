@@ -96,7 +96,7 @@ struct CameraDataFlags
 {
     uint32_t unchanged : 1;         // 0
     uint32_t has_is_ortho : 1;
-    uint32_t has_fov : 1;
+    uint32_t has_fov_or_ortho_size : 1;
     uint32_t has_near_plane : 1;
     uint32_t has_far_plane : 1;
     uint32_t has_focal_length : 1;  // 5
