@@ -227,7 +227,6 @@ msAPI void msTransformSetReference(ms::Transform *self, const char *v) { self->r
 msAPI ms::Camera* msCameraCreate() { return ms::Camera::create_raw(); }
 msAPI uint32_t msCameraGetDataFlags(const ms::Camera *self) { return (uint32_t&)self->cd_flags; }
 msAPI bool msCameraIsOrtho(const ms::Camera *self) { return self->is_ortho; }
-msAPI float msCameraOrthoSize(const ms::Camera* self) { return self->ortho_size; }
 msAPI float msCameraGetFov(const ms::Camera *self) { return self->fov; }
 msAPI float msCameraGetNearPlane(const ms::Camera *self) { return self->near_plane; }
 msAPI float msCameraGetFarPlane(const ms::Camera *self) { return self->far_plane; }
@@ -573,6 +572,13 @@ msAPI ms::InstanceInfo* msSceneGetInstanceInfo(const ms::Scene* self, int i) { r
 msAPI ms::PropertyInfo* msSceneGetPropertyInfo(const ms::Scene* self, int i) { return self->propertyInfos[i].get(); }
 msAPI ms::Transform* msSceneGetInstanceMesh(const ms::Scene* self, int i) { return self->instanceMeshes[i].get(); }
 msAPI bool msSceneSubmeshesHaveUniqueMaterial(const ms::Scene *self) { return self->submeshesHaveUniqueMaterial(); }
+msAPI int msSceneGetMaterialSyncMode(const ms::Scene* self)
+{
+    // Disabling for now because it breaks scenecache.
+    return 0;
+    // TODO: use this instead:
+    //return self->settings.material_sync_mode;
+}
 msAPI ms::SceneProfileData msSceneGetProfileData(const ms::Scene *self) { return self->profile_data; }
 #pragma endregion
 

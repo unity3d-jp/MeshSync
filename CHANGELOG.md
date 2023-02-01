@@ -1,6 +1,118 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.17.0-preview] - 2023-01-10
+
+* TBD
+
+## [0.16.4-preview] - 2022-12-09
+
+### Changed
+* deps: use com.unity.film-internal-utilities@0.16.4-preview
+
+## [0.16.3-preview] - 2022-12-09
+
+### Changed
+* deps: use com.unity.film-internal-utilities@0.16.3-preview
+
+### Fixed
+* fix: keep currentSessionId when switching PlayMode
+* fix: ensure calling analytics API 
+* fix: remove unused meta file
+
+## [0.16.2-preview] - 2022-12-02
+
+### Added
+* doc: add the Key Frames documentation of SceneCache
+
+### Changed
+* deps: use com.unity.film-internal-utilities@0.16.2-preview
+
+## [0.16.1-preview] - 2022-11-25
+
+### Fixed
+* fix: regenerate the guid of files that conflict with files in StreamingImageSequence package 
+
+## [0.16.0-preview] - 2022-11-25
+
+### Added
+* feat: key frame adjustments for SceneCache
+* feat: material support 
+* feat: send the server's session id and let clients read it to check if the server has changed.
+* feat: add a way to force delete all children in the next sync session without user prompt. 
+* feat: add a way to trigger a script callback from Unity
+
+### Changed
+* deps: update dependency to com.unity.film-internal-utilities@0.16.1-preview
+* change: output logs of the Editor Server
+
+### Fixed
+* fix: make all object types (incl. lights) instantiable for geometry nodes
+* fix: server hanging on exit, after updating package version 
+* fix: apply changes of ZUpCorrectionMode 
+* fix: handle zero keys when comparing two curves of SceneCachePlayableAsset
+* fix: legacy non-versioned SceneCache was considered as versioned
+* fix: clear synced meshes if they are empty 
+* fix: fix for crashing debugger when references are not set
+
+### Removed
+* remove: remove code to import obsolete SceneCachePlayableAsset prior to 0.13.0-preview
+* remove: LimitedAnimation option in SceneCachePlayer
+* remove: the autoplay of SceneCache 
+
+
+## [0.15.1-preview] - 2022-10-17
+
+### Added
+* internal: MeshSync Analytics 
+* doc: add EditorServer section in ProjectSettings page 
+
+### Fixed
+* fix: enable the restart notifcation again after updating MeshSync package 
+* fix: geometry changes were not reflected when HDRP pathtracing is on 
+* fix: moving sc files made the paths invalid
+
+## [0.15.0-preview] - 2022-09-28
+
+### Added
+* feat: Unity Editor server for executing editor commands 
+* feat: add a button to show plugins folder in Preferences
+* feat: add Editor server config in Project Settings page for AutoSetup from DCC tool 
+* feat: add support to install plugin for Blender 3.3 
+* feat: accept port number of scene server via EditorCommand buffer for AutoSetup from DCC tool 
+* doc: add backward compatibility section to the SceneCache documentation 
+
+### Changed
+* deps: use com.unity.film-internal-utilities@0.16.0-preview 
+* doc: updates on BidirectionalSync, GeometryNodes, and MeshSyncServer pages 
+
+### Fixed
+* fix: show if the current version does not support a particular DCC tool 
+* fix: auto installation of Blender plugin @0.14.x-preview
+* fix: disable applicable SceneCache GameObjects when muting SceneCacheTrack 
+* fix: scale instance transforms with meshsync scale factor to ensure correct positioning 
+
+## [0.14.5-preview] - 2022-09-03
+
+### Changed
+* doc: update the documentation on Bidirectional Sync 
+
+## [0.14.4-preview] - 2022-09-03
+
+### Changed
+* ui: updating UI texts under the Instances section in MeshSyncServer 
+
+### Fixed
+* fix: clear properties if the client does not send any 
+* fix: find DCC plugins in "Plugins" folder as well 
+* fix: show if a DCC tool is not supported in the Preferences window
+
+## [0.14.3-preview] - 2022-08-24
+
+### Fixed
+* fix: rebuild plugin for Mac Silicon 
+* fix: delete mesh renderer and filter if it was there from the curves as meshes setting 
+
 ## [0.14.2-preview] - 2022-07-28
 
 ### Added

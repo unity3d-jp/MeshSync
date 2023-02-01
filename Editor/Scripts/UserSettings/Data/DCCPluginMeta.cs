@@ -4,10 +4,8 @@ using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Unity.MeshSync.Editor {
-    
 [Serializable]
 internal class DCCPluginMeta : ISerializationCallbackReceiver {
-
 //----------------------------------------------------------------------------------------------------------------------    
 
     //May return null
@@ -15,7 +13,7 @@ internal class DCCPluginMeta : ISerializationCallbackReceiver {
     internal DCCPluginSignature GetSignature(string dccPluginFileName) {
         return m_dictionary.TryGetValue(dccPluginFileName, out DCCPluginSignature signature) ? signature : null;
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------    
 
     #region ISerializationCallbackReceiver
@@ -33,10 +31,11 @@ internal class DCCPluginMeta : ISerializationCallbackReceiver {
                 Debug.LogWarning("[MeshSync] Duplicate signature for " + signature.FileName);
                 continue;
             }
-            
-            m_dictionary.Add(signature.FileName, signature);                        
-        }        
+
+            m_dictionary.Add(signature.FileName, signature);
+        }
     }
+
     #endregion
 
 //----------------------------------------------------------------------------------------------------------------------    
@@ -45,8 +44,5 @@ internal class DCCPluginMeta : ISerializationCallbackReceiver {
 
     //Serialized fields
     [SerializeField] private List<DCCPluginSignature> FileSignatures = null;
-    
-    
 }
-    
 } //end namespace

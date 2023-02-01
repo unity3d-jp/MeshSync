@@ -2,13 +2,14 @@ using System.Collections.Generic;
 using UnityEditor;
 
 namespace Unity.MeshSync.Editor {
-    [InitializeOnLoad]
-    internal static class MeshSyncServerProBuilderHelper {
+[InitializeOnLoad]
+internal static class MeshSyncServerProBuilderHelper {
 #if AT_USE_PROBUILDER
         static readonly System.Reflection.FieldInfo versionInfoField = typeof(UnityEngine.ProBuilder.ProBuilderMesh).GetField("m_VersionIndex",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-        static readonly Dictionary<UnityEngine.ProBuilder.ProBuilderMesh, ushort> versionIndices = new Dictionary<UnityEngine.ProBuilder.ProBuilderMesh, ushort>();
+        static readonly Dictionary<UnityEngine.ProBuilder.ProBuilderMesh, ushort> versionIndices =
+ new Dictionary<UnityEngine.ProBuilder.ProBuilderMesh, ushort>();
 
         static MeshSyncServerProBuilderHelper() {
             BaseMeshSync.ProBuilderBeforeRebuild += ProBuilderBeforeRebuild;
@@ -71,5 +72,5 @@ namespace Unity.MeshSync.Editor {
             UnityEditor.ProBuilder.ProBuilderEditor.selectionUpdated += ProBuilderEditor_selectionUpdated;
         }
 #endif
-    }
+}
 }

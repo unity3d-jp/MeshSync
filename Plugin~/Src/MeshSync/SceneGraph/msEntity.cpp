@@ -246,7 +246,6 @@ CameraDataFlags::CameraDataFlags()
     (uint32_t&)*this = 0;
     unchanged = 0;
     has_is_ortho = 1;
-    has_ortho_size = 1;
     has_fov = 0;
     has_near_plane = 0;
     has_far_plane = 0;
@@ -267,7 +266,7 @@ EntityType Camera::getType() const
 }
 
 #define EachMember(F)\
-    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(focal_length) F(sensor_size) F(lens_shift) F(view_matrix) F(proj_matrix) F(layer_mask) F(ortho_size)
+    F(is_ortho) F(fov) F(near_plane) F(far_plane) F(focal_length) F(sensor_size) F(lens_shift) F(view_matrix) F(proj_matrix) F(layer_mask)
 
 void Camera::serialize(std::ostream& os) const
 {
@@ -315,7 +314,6 @@ static bool NearEqual(const Camera& a, const Camera& b)
 {
     return
         a.is_ortho == b.is_ortho &&
-        mu::near_equal(a.ortho_size, b.ortho_size) &&
         mu::near_equal(a.fov, b.fov) &&
         mu::near_equal(a.near_plane, b.near_plane) &&
         mu::near_equal(a.far_plane, b.far_plane) &&

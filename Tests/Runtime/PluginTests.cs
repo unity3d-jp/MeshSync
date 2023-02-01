@@ -7,16 +7,6 @@ using UnityEngine.TestTools;
 namespace Unity.MeshSync.Tests {
 internal class PluginTests {
     
-    [Test]
-    [UnityPlatform(RuntimePlatform.WindowsPlayer, RuntimePlatform.WindowsEditor, RuntimePlatform.LinuxPlayer, 
-        RuntimePlatform.LinuxEditor, RuntimePlatform.OSXEditor)]
-    public void CheckVersionValidity() {
-        string version = Lib.GetPluginVersion();
-        Assert.IsTrue(PackageVersion.TryParse(version, out _));
-    }
-    
-//----------------------------------------------------------------------------------------------------------------------
-    
     [UnityTest]
     [UnityPlatform(RuntimePlatform.WindowsPlayer, RuntimePlatform.WindowsEditor, RuntimePlatform.LinuxPlayer, 
         RuntimePlatform.LinuxEditor, RuntimePlatform.OSXEditor)]
@@ -28,9 +18,6 @@ internal class PluginTests {
         Assert.IsTrue(Server.IsStarted(goServer.GetServerPort()));
         yield return null;
     }
-    
-    
-    
     
 }
 

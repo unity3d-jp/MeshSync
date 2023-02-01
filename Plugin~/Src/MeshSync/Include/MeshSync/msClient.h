@@ -27,9 +27,12 @@ public:
     ResponseMessagePtr send(const QueryMessage& mes);
     ResponseMessagePtr send(const QueryMessage& mes, int timeout_ms);
 
+    bool send(const EditorCommandMessage& mes, string& responseMessage);
+
     std::vector<PropertyInfo> properties;
     std::vector<EntityPtr> entities;
     std::string messageFromServer;
+    int server_session_id = ms::InvalidID;
 
     void abortLiveEditRequest();
 private:

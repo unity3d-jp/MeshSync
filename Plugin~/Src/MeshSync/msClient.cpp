@@ -31,6 +31,7 @@ bool Client::isServerAvailable(int timeout_ms)
 
         HTTPResponse response;
         auto& rs = session.receiveResponse(response);
+        server_session_id = std::stoi(response.get(SERVER_SESSION_ID, InvalidID_str));
         std::ostringstream ostr;
         StreamCopier::copyStream(rs, ostr);
         auto content = ostr.str();
@@ -270,6 +271,34 @@ ResponseMessagePtr Client::send(const QueryMessage& mes, int timeout_ms)
         m_error_message = e.what();
     }
     return ret;
+}
+
+bool Client::send(const EditorCommandMessage& mes, string& responseMessage)
+{
+    try {
+        HTTPClientSession session{ m_settings.server, m_settings.port };
+        session.setTimeout(m_settings.timeout_ms * 1000);
+
+        HTTPRequest request{ HTTPRequest::HTTP_POST, "command" };
+        request.setContentType("application/octet-stream");
+        request.setExpectContinue(true);
+        request.setContentLength(ssize(mes));
+        auto& os = session.sendRequest(request);
+        mes.serialize(os);
+        os.flush();
+
+        HTTPResponse response;
+        auto& rs = session.receiveResponse(response);
+        
+        std::ostringstream ostr;
+        StreamCopier::copyStream(rs, ostr);
+
+        responseMessage.assign(ostr.str());
+        return response.getStatus() == HTTPResponse::HTTP_OK;
+    }
+    catch (...) {
+        return false;
+    }
 }
 
 ResponseMessagePtr Client::send(const QueryMessage& mes)

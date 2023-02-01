@@ -1,10 +1,8 @@
 ﻿using System;
 using Unity.FilmInternalUtilities;
 
-namespace Unity.MeshSync
-{
-    [Serializable]
-    class EntityRecordDictionary : SerializedDictionary<string, EntityRecord>
-    {
-    };
+namespace Unity.MeshSync {
+[Serializable]
+internal class EntityRecordDictionary : SerializedDictionary<string, EntityRecord> {
+};
 }

@@ -2,22 +2,20 @@
 using UnityEngine;
 
 namespace Unity.MeshSync.Editor {
-
 /// <summary>
 /// Basic information about DCCTool
 /// </summary>
 [Serializable]
 public class DCCToolInfo {
-
     internal DCCToolInfo(DCCToolType type, string dccToolVersion) {
-        Type = type;
+        Type           = type;
         DCCToolVersion = dccToolVersion;
     }
 
     internal DCCToolInfo(DCCToolInfo other)  {
-        Type = other.Type;
+        Type           = other.Type;
         DCCToolVersion = other.DCCToolVersion;
-        AppPath = other.AppPath;
+        AppPath        = other.AppPath;
     }
 
 //----------------------------------------------------------------------------------------------------------------------    
@@ -44,34 +42,29 @@ public class DCCToolInfo {
 
         return desc + DCCToolVersion;
     }
-    
-    
+
+
 //----------------------------------------------------------------------------------------------------------------------    
     /// <summary>
     /// The type of DCC Tool
     /// </summary>
-    public DCCToolType    Type;    //DCC Tool Type
-    
+    public DCCToolType Type; //DCC Tool Type
+
     /// <summary>
     /// The version of DCC Tool
     /// </summary>
-    public string         DCCToolVersion; //DCC Tool Version
-    
+    public string DCCToolVersion; //DCC Tool Version
+
     /// <summary>
     /// The path to the DCC Tool application file
     /// </summary>
-    public string         AppPath;
+    public string AppPath;
 
     /// <summary>
     /// The path to the icon of the DCC Tool
     /// </summary>
-    public string         IconPath;
-    
+    public string IconPath;
+
     [SerializeField] internal readonly int ClassVersion = 1;
-    
-    
 }
-
 }
-
-

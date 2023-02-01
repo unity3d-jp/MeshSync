@@ -105,7 +105,6 @@ struct CameraDataFlags
     uint32_t has_view_matrix : 1;
     uint32_t has_proj_matrix : 1;
     uint32_t has_layer_mask : 1;    // 10
-    uint32_t has_ortho_size : 1;
 
     CameraDataFlags();
 };

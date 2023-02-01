@@ -25,6 +25,7 @@ msDeclClassPtr(ScreenshotMessage)
 msDeclClassPtr(ServerLiveEditRequest)
 msDeclClassPtr(PropertyInfo)
 msDeclClassPtr(Curve)
+msDeclClassPtr(EditorCommandMessage)
 
 namespace ms {
 
@@ -44,6 +45,7 @@ public:
 
     bool start();
     void stop();
+    void abort();
     void clear();
     ServerSettings& getSettings();
 
@@ -69,6 +71,8 @@ public:
 
     void notifyPoll(PollMessage::PollType t);
 
+    void notifyCommand(const char* reply, int messageId, int sessionId);
+
 public:
     struct MessageHolder
     {
@@ -91,9 +95,11 @@ public:
     void recvScreenshot(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void recvPoll(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void recvServerLiveEditRequest(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void recvCommand(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     
     void receivedProperty(PropertyInfoPtr prop);
     void syncRequested();
+    void userScriptCallbackRequested();
     void propertiesReady();
     bool readyForProperties();
 
@@ -134,8 +140,14 @@ private:
     std::mutex m_properties_mutex;
     ServerLiveEditRequestPtr m_current_live_edit_request;
     std::atomic_bool m_syncRequested;
+    std::atomic_bool m_userScriptCallbackRequested;
     std::string m_screenshot_file_path;
     std::string m_file_root_path;
+
+    std::map<std::pair<int,int>, EditorCommandMessagePtr> m_current_commands;
+    std::mutex m_commands_mutex;
+
+    int m_server_session_id;
 
     public:
     std::vector<EntityPtr> m_pending_entities;

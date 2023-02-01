@@ -61,6 +61,11 @@ msAPI ms::FenceMessage::FenceType msFenceGetType(ms::FenceMessage *self)
     return self->type;
 }
 
+msAPI const char* msFenceGetDCCToolName(ms::FenceMessage* self)
+{
+    return self->dcc_tool_name.c_str();
+}
+
 msAPI const char* msTextGetText(ms::TextMessage *self)
 {
     return self->text.c_str();
@@ -86,6 +91,22 @@ msAPI void msQueryAddResponseText(ms::QueryMessage *self, const char *text)
         self->response = res;
     }
     res->text.push_back(text);
+}
+
+msAPI ms::EditorCommandMessage::CommandType msEditorCommandGetType(ms::EditorCommandMessage* self) {
+    return self->command_type;
+}
+
+msAPI int msEditorCommandGetId(ms::EditorCommandMessage* self) {
+    return self->message_id;
+}
+
+msAPI int msEditorCommandGetSession(ms::EditorCommandMessage* self) {
+    return self->session_id;
+}
+
+msAPI const char* msEditorCommandGetBuffer(ms::EditorCommandMessage* self) {
+    return self->GetBuffer();
 }
 #pragma endregion
 
@@ -135,6 +156,14 @@ msAPI void  msServerStop(ms::Server *server)
     // actually not stop. just make server ignore further requests.
     if (server) {
         server->setServe(false);
+    }
+}
+
+msAPI void  msServerAbort(ms::Server* server)
+{
+    // stop server and shut down client connections
+    if (server) {
+        server->abort();
     }
 }
 
@@ -341,6 +370,13 @@ msAPI void msServerRequestFullSync(ms::Server* server)
     server->syncRequested();
 }
 
+msAPI void msServerRequestUserScriptCallback(ms::Server* server)
+{
+    if (!server) { return; }
+
+    server->userScriptCallbackRequested();
+}
+
 msAPI void msServerInitiatedResponseReady(ms::Server* server)
 {
     if (!server) { return; }
@@ -353,6 +389,11 @@ msAPI bool msServerIsDCCLiveEditReady(ms::Server* server)
     if (!server) { return false; }
 
     return server->readyForProperties();
+}
+
+msAPI void msServerNotifyEditorCommand(ms::Server* server, const char* reply, int messageId, int sessionId) {
+    if (!server) { return; }
+    server->notifyCommand(reply, messageId, sessionId);
 }
 
 msAPI int msGetGetBakeSkin(ms::GetMessage *self)
@@ -368,5 +409,6 @@ msAPI ms::Scene* msSetGetSceneData(ms::SetMessage *self)
 {
     return self->scene.get();
 }
+
 #pragma endregion
 

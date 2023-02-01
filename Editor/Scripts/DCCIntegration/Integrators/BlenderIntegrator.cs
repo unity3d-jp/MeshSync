@@ -1,29 +1,31 @@
-﻿using System;
+using System;
 using System.IO;
 using JetBrains.Annotations;
 using NUnit.Framework;
+using Unity.MeshSync.Editor.Analytics;
 using UnityEditor;
 using UnityEngine;
 
 namespace Unity.MeshSync.Editor {
 internal class BlenderIntegrator : BaseDCCIntegrator {
-    internal BlenderIntegrator(DCCToolInfo dccToolInfo) : base(dccToolInfo) { }
+    internal BlenderIntegrator(DCCToolInfo dccToolInfo) : base(dccToolInfo) {
+    }
 
 //----------------------------------------------------------------------------------------------------------------------
     [CanBeNull]
     internal static string GetInstallScriptTemplatePath(string ver) {
         string installScriptFileName = $"InstallBlenderPlugin.py";
-        string templatePath = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH,installScriptFileName );
+        string templatePath          = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH, installScriptFileName);
         return File.Exists(templatePath) ? templatePath : null;
     }
 
     [CanBeNull]
     internal static string GetUninstallScriptPath(string ver) {
         string uninstallScriptFilename = $"UninstallBlenderPlugin.py";
-        string uninstallScriptPath = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH,uninstallScriptFilename );
+        string uninstallScriptPath     = Path.Combine(MeshSyncEditorConstants.DCC_INSTALL_SCRIPTS_PATH, uninstallScriptFilename);
         return File.Exists(uninstallScriptPath) ? uninstallScriptPath : null;
     }
-    
+
 //----------------------------------------------------------------------------------------------------------------------
 
     protected override string GetDCCToolInFileNameV() {
@@ -31,9 +33,8 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
     }
 
 //----------------------------------------------------------------------------------------------------------------------
-    internal override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string srcPluginRoot, 
-        string tempPath) 
-    {
+    internal override bool ConfigureDCCToolV(DCCToolInfo dccToolInfo, string srcPluginRoot,
+        string tempPath) {
         Assert.IsTrue(Directory.Exists(srcPluginRoot));
 
         //Must use '/' for the pluginFile which is going to be inserted into the template
@@ -43,43 +44,48 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
         string[] pluginFiles = Directory.GetFiles(srcPluginRoot, zipFileName);
         if (pluginFiles.Length <= 0) {
             SetLastErrorMessage($"Can't find {zipFileName} in MeshSyncDCCPlugins package");
-            return false;            
+            return false;
         }
-        
-        string pluginFile = pluginFiles[0].Replace(Path.DirectorySeparatorChar,'/');        
+
+        string pluginFile = pluginFiles[0].Replace(Path.DirectorySeparatorChar, '/');
         if (!File.Exists(pluginFile)) {
             SetLastErrorMessage($"Can't find plugin file: {pluginFile}");
             return false;
         }
-        
+
         //Prepare install script
         string templatePath = GetInstallScriptTemplatePath(ver);
         if (string.IsNullOrEmpty(templatePath)) {
-            SetLastErrorMessage($"Can't find install script template path: {templatePath}");            
+            SetLastErrorMessage($"Can't find install script template path: {templatePath}");
             return false;
         }
-        
+
         //Replace the path in the template with actual path.
         string installScriptFormat = File.ReadAllText(templatePath);
-        string installScript = String.Format(installScriptFormat,pluginFile);
-        string installScriptPath = Path.Combine(tempPath, $"InstallBlenderPlugin_{ver}.py");
+        string installScript       = string.Format(installScriptFormat, pluginFile);
+        string installScriptPath   = Path.Combine(tempPath, $"InstallBlenderPlugin_{ver}.py");
         File.WriteAllText(installScriptPath, installScript);
-        
+
         //Prepare remove script to remove old plugin
         string uninstallScriptPath = GetUninstallScriptPath(ver);
         if (string.IsNullOrEmpty(uninstallScriptPath)) {
-            SetLastErrorMessage($"Can't find uninstall script path: {uninstallScriptPath}");            
-            return false;            
+            SetLastErrorMessage($"Can't find uninstall script path: {uninstallScriptPath}");
+            return false;
         }
-      
-        bool setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath, 
+
+        bool setupSuccessful = SetupAutoLoadPlugin(dccToolInfo.AppPath,
             dccToolInfo.DCCToolVersion,
-            Path.GetFullPath(uninstallScriptPath), 
+            Path.GetFullPath(uninstallScriptPath),
             Path.GetFullPath(installScriptPath)
         );
 
         //Cleanup
         File.Delete(installScriptPath);
+
+        if (setupSuccessful) {
+            IMeshSyncAnalytics analyticsClient = MeshSyncAnalyticsFactory.CreateAnalytics();
+            analyticsClient.UserInstalledPlugin("blender");
+        }
 
         return setupSuccessful;
     }
@@ -87,52 +93,51 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
 //----------------------------------------------------------------------------------------------------------------------
     protected override void FinalizeDCCConfigurationV() {
         DCCToolInfo dccToolInfo = GetDCCToolInfo();
-        
+
         EditorUtility.DisplayDialog("MeshSync",
-            $"MeshSync plugin configured. Please restart {dccToolInfo.GetDescription()} to complete the installation.", 
+            $"MeshSync plugin configured. Please restart {dccToolInfo.GetDescription()} to complete the installation.",
             "Ok"
         );
     }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    
-    bool SetupAutoLoadPlugin(string appPath, string dccToolVersion, 
-        string uninstallScriptPath, string installScriptPath) {
 
+    private bool SetupAutoLoadPlugin(string appPath, string dccToolVersion,
+        string uninstallScriptPath, string installScriptPath) {
         try {
-            if (!System.IO.File.Exists(appPath)) {
+            if (!File.Exists(appPath)) {
                 SetLastErrorMessage("No Blender installation found at " + appPath);
                 return false;
             }
 
             //Try to uninstall first. The uninstallation may have exceptions/error messages, but they can be ignored
             System.Diagnostics.Process process = DiagnosticsUtility.StartProcess(
-                appPath, 
-                $"-b -P {uninstallScriptPath}",                
-                /*useShellExecute=*/ false, /*redirectStandardError=*/ true                 
+                appPath,
+                $"-b -P \"{uninstallScriptPath}\"",
+                /*useShellExecute=*/ false, /*redirectStandardError=*/ true
             );
             process.WaitForExit();
-            
-            
+
+
 #if UNITY_EDITOR_OSX
             DeleteInstalledPluginOnMac(dccToolVersion);
-#endif            
-            
+#endif
+
             //Install
             const int PYTHON_EXIT_CODE = 10;
             process.StartInfo.Arguments = $"-b -P \"{installScriptPath}\" --python-exit-code {PYTHON_EXIT_CODE}";
             process.Start();
             process.WaitForExit();
             int exitCode = process.ExitCode;
-            
-            if (0!=exitCode) {
+
+            if (0 != exitCode) {
                 string stderr = process.StandardError.ReadToEnd();
                 SetLastErrorMessage($"Process error. ExitCode: {exitCode}. {stderr}");
                 return false;
             }
-                        
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             SetLastErrorMessage($"Process error. Exception: {e.Message}");
             return false;
         }
@@ -142,31 +147,27 @@ internal class BlenderIntegrator : BaseDCCIntegrator {
 
 //----------------------------------------------------------------------------------------------------------------------        
 
-    void DeleteInstalledPluginOnMac(string blenderVersion) {
+    private void DeleteInstalledPluginOnMac(string blenderVersion) {
         //Delete plugin on mac to avoid errors of loading new plugin:
         //Termination Reason: Namespace CODESIGNING, Code 0x2 
         string installedPluginDir = Environment.GetFolderPath(Environment.SpecialFolder.Personal)
             + $"/Library/Application Support/Blender/{blenderVersion}/scripts/addons/MeshSyncClientBlender";
-        if (!Directory.Exists(installedPluginDir)) 
+        if (!Directory.Exists(installedPluginDir))
             return;
 
-        string[] files = System.IO.Directory.GetFiles(installedPluginDir, "*.so");            
-        if (files.Length <=0)
+        string[] files = Directory.GetFiles(installedPluginDir, "*.so");
+        if (files.Length <= 0)
             return;
 
-        foreach (string binaryPluginFile in files) {
+        foreach (string binaryPluginFile in files)
             try {
                 File.Delete(binaryPluginFile);
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 string errMsg = $"[MeshSync] Error when overwriting plugin: {binaryPluginFile}. Error: {e}";
                 SetLastErrorMessage(errMsg);
                 Debug.LogError(errMsg);
             }
-        }
-
     }
-
-    
 }
-
 } //end namespace

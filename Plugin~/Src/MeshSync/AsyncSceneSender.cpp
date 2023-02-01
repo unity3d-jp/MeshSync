@@ -13,14 +13,17 @@
 
 namespace ms {
 
+AsyncSceneSender::AsyncSceneSender(ms::IdUtility util)
+{
+    this->id_utility = util;
+    session_id = util.GenerateSessionId();
+}
+
 AsyncSceneSender::AsyncSceneSender(int sid)
 {
     if (sid == InvalidID) {
-        // gen session id
-        std::uniform_int_distribution<> d(0, 0x70000000);
-        std::mt19937 r;
-        r.seed(std::random_device()());
-        session_id = d(r);
+ 
+        session_id = ms::IdUtility::GenerateSessionId();
     }
     else {
         session_id = sid;
@@ -42,11 +45,14 @@ const std::string& AsyncSceneSender::getErrorMessage() const
     return m_error_message;
 }
 
-bool AsyncSceneSender::isServerAvaileble()
+bool AsyncSceneSender::isServerAvailable(int* server_session_id)
 {
     ms::Client client(client_settings);
     bool ret = client.isServerAvailable();
     m_error_message = client.getErrorMessage();
+    if (server_session_id) {
+        *server_session_id = client.server_session_id;
+    }
     return ret;
 }
 
@@ -87,7 +93,7 @@ void AsyncSceneSender::requestLiveEditMessage()
 void AsyncSceneSender::requestLiveEditMessageImpl() {
     auto setup_message = [this](ms::Message& mes) {
         mes.session_id = session_id;
-        mes.message_id = message_count++;
+        mes.message_id = id_utility.GetNextMessageId();
         mes.timestamp_send = mu::Now();
     };
 
@@ -148,7 +154,7 @@ void AsyncSceneSender::send()
 
     auto setup_message = [this](ms::Message& mes) {
         mes.session_id = session_id;
-        mes.message_id = message_count++;
+        mes.message_id = id_utility.GetNextMessageId();
         mes.timestamp_send = mu::Now();
     };
 
@@ -157,6 +163,7 @@ void AsyncSceneSender::send()
         ms::FenceMessage mes;
         setup_message(mes);
         mes.type = ms::FenceMessage::FenceType::SceneBegin;
+        mes.dcc_tool_name = client_settings.dcc_tool_name;
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
             goto cleanup;

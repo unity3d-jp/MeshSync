@@ -13,5 +13,4 @@ internal class MaterialList : ScriptableObject {
     [SerializeField] public List<MaterialHolder> materials = new List<MaterialHolder>();
     [SerializeField] public List<Node>           nodes     = new List<Node>();
 }
-
 } //end namespace

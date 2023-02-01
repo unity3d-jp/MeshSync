@@ -13,6 +13,7 @@
 #include "MeshSync/SceneGraph/msCurve.h"
 
 #include "MeshSync/SceneGraph/msEntityConverter.h"
+#include "MeshSync/Utility/msIdUtility.h"
 
 namespace ms {
 
@@ -22,6 +23,7 @@ using namespace Poco::Net;
 Server::Server(const ServerSettings& settings)
     : m_settings(settings)
 {
+    m_server_session_id = IdUtility::GenerateSessionId();
 }
 
 Server::~Server()
@@ -56,6 +58,12 @@ bool Server::start()
 void Server::stop()
 {
     m_server.reset();
+}
+
+void Server::abort() {
+    if (m_server) {
+        m_server->stopAll(true);
+    }
 }
 
 void Server::clear()
@@ -155,6 +163,9 @@ int Server::processMessages(const MessageHandler& handler)
             m_current_live_edit_request = req;
             handler(Message::Type::RequestServerLiveEdit, *mes);
         }
+        else if (auto command = std::dynamic_pointer_cast<EditorCommandMessage>(mes)) {
+            handler(Message::Type::EditorCommand, *mes);
+        }
 
     next:
         if (skip) {
@@ -168,13 +179,14 @@ int Server::processMessages(const MessageHandler& handler)
     return ret;
 }
 
-void Server::serveText(HTTPServerResponse &response, const char* text, int stat)
+void Server::serveText(HTTPServerResponse& response, const char* text, int stat)
 {
     size_t size = std::strlen(text);
 
     response.setStatus((HTTPResponse::HTTPStatus)stat);
     response.setContentType("text/plain");
     response.setContentLength(size);
+    response.set(SERVER_SESSION_ID, std::to_string(m_server_session_id));
 
     auto& os = response.send();
     os.write(text, size);
@@ -658,8 +670,13 @@ void Server::recvServerLiveEditRequest(HTTPServerRequest& request, HTTPServerRes
     }
 
     m_pending_entities.clear();
-    
-    if (m_syncRequested) {
+
+    if (m_userScriptCallbackRequested)
+    {
+        reqResponse.message = REQUEST_USER_SCRIPT_CALLBACK;
+        m_userScriptCallbackRequested = false;
+    }
+    else if (m_syncRequested) {
         reqResponse.message = REQUEST_SYNC;
         m_syncRequested = false;
     }
@@ -667,6 +684,60 @@ void Server::recvServerLiveEditRequest(HTTPServerRequest& request, HTTPServerRes
     auto& os = response.send();
     reqResponse.serialize(os);
     os.flush();
+}
+
+void Server::recvCommand(HTTPServerRequest& request, HTTPServerResponse& response) 
+{
+    auto mes = deserializeMessage<EditorCommandMessage>(request, response);
+    if (!mes)
+        return;
+
+    if (mes->message_id == InvalidID) {
+        throw std::invalid_argument("Invalid EditorCommandMessage::id");
+    }
+    else if (mes->session_id == InvalidID) {
+        throw std::invalid_argument("Invalid EditorCommandMessage::session_id");
+    }
+
+    {
+        lock_t lock(m_commands_mutex);
+        m_current_commands[std::pair{ mes->message_id, mes->session_id }] = mes;
+    }
+
+    // Queue the command for execution
+    queueMessage(mes);
+
+    // Wait for command to be executed
+    for (int i = 0; i < 300 ; ++i) {
+        if (mes->ready)
+            break;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    {
+        lock_t lock(m_commands_mutex);
+        m_current_commands.erase(std::pair{ mes->message_id, mes->session_id });
+    }
+
+    // serve data
+    if (mes->ready) {
+        serveText(response, mes->GetBuffer(), HTTPResponse::HTTP_OK);
+    }
+    else {
+        serveText(response, "timeout", HTTPResponse::HTTP_REQUEST_TIMEOUT);
+    }
+}
+
+void Server::notifyCommand(const char* reply, int messageId, int sessionId) {
+    
+    lock_t lock(m_commands_mutex);
+    auto entry = m_current_commands.find(std::pair{ messageId, sessionId });
+    if (entry == m_current_commands.end())
+        return;
+    auto command = entry->second;
+    command->SetBuffer(reply);
+    command->ready = true;
 }
 
 void Server::notifyPoll(PollMessage::PollType t)
@@ -687,6 +758,10 @@ void Server::receivedProperty(PropertyInfoPtr prop) {
 
 void Server::syncRequested() {
     m_syncRequested = true;
+}
+
+void Server::userScriptCallbackRequested() {
+    m_userScriptCallbackRequested = true;
 }
 
 void Server::propertiesReady() {
