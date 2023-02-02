@@ -227,7 +227,7 @@ msAPI void msTransformSetReference(ms::Transform *self, const char *v) { self->r
 msAPI ms::Camera* msCameraCreate() { return ms::Camera::create_raw(); }
 msAPI uint32_t msCameraGetDataFlags(const ms::Camera *self) { return (uint32_t&)self->cd_flags; }
 msAPI bool msCameraIsOrtho(const ms::Camera *self) { return self->is_ortho; }
-msAPI float msCameraGetFov(const ms::Camera *self) { return self->fov; }
+msAPI float msCameraGetFov(const ms::Camera *self) { return self->fov_or_ortho_size; }
 msAPI float msCameraGetNearPlane(const ms::Camera *self) { return self->near_plane; }
 msAPI float msCameraGetFarPlane(const ms::Camera *self) { return self->far_plane; }
 msAPI float msCameraGetFocalLength(const ms::Camera *self) { return self->focal_length; }
@@ -237,7 +237,7 @@ msAPI mu::float4x4 msCameraGetViewMatrix(const ms::Camera *self) { return self->
 msAPI mu::float4x4 msCameraGetProjMatrix(const ms::Camera *self) { return self->proj_matrix; }
 
 msAPI void msCameraSetOrtho(ms::Camera *self, bool v) { self->is_ortho = v; }
-msAPI void msCameraSetFov(ms::Camera *self, float v) { self->fov = v; }
+msAPI void msCameraSetFov(ms::Camera *self, float v) { self->fov_or_ortho_size = v; }
 msAPI void msCameraSetNearPlane(ms::Camera *self, float v) { self->near_plane = v; }
 msAPI void msCameraSetFarPlane(ms::Camera *self, float v) { self->far_plane = v; }
 msAPI void msCameraSetFocalLength(ms::Camera *self, float v) { self->focal_length = v; }

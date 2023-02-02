@@ -1923,6 +1923,10 @@ internal struct CameraData {
         set { msCameraSetOrtho(self, (byte)(value ? 1 : 0)); }
     }
 
+    internal float orthographic_size {
+        get { return msCameraGetFov(self); }
+    }
+
     internal float fov {
         get { return msCameraGetFov(self); }
         set { msCameraSetFov(self, value); }
