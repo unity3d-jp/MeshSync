@@ -3,7 +3,25 @@ All notable changes to the MeshSync package will be documented in this file.
 
 ## [0.17.0-preview] - 2023-01-10
 
-* TBD
+### Added
+* feat: Material baking AO
+* feat: add "Overwrite material properties" for importing 
+* feat: orthographic size support for camera.
+
+### Changed
+* deps: use com.unity.film-internal-utilities@0.17.0-preview
+
+### Fixed
+
+* fix: reimport textures after changing importer settings
+* fix: copy the scale/visibility of instances based on the parent/original respectively
+* fix: Smoothness was not inverting roughness for textures. Fix for glass shader 
+* fix: NaN in tangents and bitangents when vertices are too close to each other 
+* fix: set parallax slider to min value when using Built-in Render Pipeline or URP 
+* fix: fix for crashes where instantiated objects are not meshes and not part of the scene
+* fix: set Glossiness to 0.5 when value is not provided by material data 
+* fix: warnings in Unity 2020 projects using HDRP
+* fix: Blender Uninstall script
 
 ## [0.16.4-preview] - 2022-12-09
 
