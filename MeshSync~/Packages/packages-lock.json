@@ -71,7 +71,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "3.0.17",
+      "version": "3.0.18",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -113,7 +113,7 @@
       }
     },
     "com.unity.meshsync.dcc-plugins": {
-      "version": "0.14.1-preview",
+      "version": "0.17.0-preview",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -129,7 +129,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.package-validation-suite": {
-      "version": "0.45.0-preview",
+      "version": "0.48.0-preview",
       "depth": 0,
       "source": "registry",
       "dependencies": {
