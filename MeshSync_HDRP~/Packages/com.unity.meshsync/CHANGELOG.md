@@ -1,7 +1,12 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
-## [0.17.0-preview] - 2023-01-10
+## [0.17.1-preview] - 2023-02-07
+
+### Changed
+* doc: fixed release dates
+
+## [0.17.0-preview] - 2023-02-06
 
 ### Added
 * feat: Material baking AO
