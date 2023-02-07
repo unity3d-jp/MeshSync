@@ -1872,6 +1872,9 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             cam.enabled = dtrans.visibility.visibleInRender;
 
         cam.orthographic = data.orthographic;
+        if (cam.orthographic) {
+            cam.orthographicSize = data.orthographic_size / cam.aspect / 2;
+        }
 
         // use physical camera params if available
         if (config.IsPhysicalCameraParamsUsed() && dflags.hasFocalLength && dflags.hasSensorSize) {
@@ -1882,7 +1885,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             //todo: gate fit support
         }
         else {
-            if (dflags.hasFov)
+            if (dflags.hasFov && !cam.orthographic)
                 cam.fieldOfView = data.fov;
         }
 
