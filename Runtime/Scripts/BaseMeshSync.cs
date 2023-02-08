@@ -2122,19 +2122,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
         return infoRecord;
     }
-
-    private List<Transform> FindChildrenWithName(Transform parent, string name) {
-        var result = new List<Transform>();
-        for (int i = 0; i < parent.childCount; i++) {
-            var child = parent.GetChild(i);
-            if (child.name == name) {
-                result.Add(child);
-            }
-        }
-
-        return result;
-    }
-
+    
     private void UpdateInstanceInfo_CopiesAndPrefabs(
         InstanceInfoData data,
         InstanceInfoRecord infoRecord,
