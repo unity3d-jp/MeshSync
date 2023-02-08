@@ -2114,7 +2114,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 break;
             case InstanceHandlingType.Copies:
             case InstanceHandlingType.Prefabs:
-                UpdateInstanceInfo_CopiesAndPrefabs(data, infoRecord, instancedEntityRecord, instanceRendererParent);
+                UpdateInstanceInfo_CopiesAndPrefabs(data, infoRecord, instanceRendererParent);
                 break;
             default:
                 break;
@@ -2135,108 +2135,96 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         return result;
     }
 
-        private void UpdateInstanceInfo_CopiesAndPrefabs(
-            InstanceInfoData data,
-            InstanceInfoRecord infoRecord,
-            EntityRecord instancedEntityRecord,
-            GameObject instanceRendererParent) {
-            // Make sure the other renderer is removed if this was not a copy or prefab before:
-            if (infoRecord.renderer != null) {
-                DestroyImmediate(infoRecord.renderer);
-                infoRecord.renderer = null;
-            }
+    private void UpdateInstanceInfo_CopiesAndPrefabs(
+        InstanceInfoData data,
+        InstanceInfoRecord infoRecord,
+        GameObject instanceRendererParent) {
+        // Make sure the other renderer is removed if this was not a copy or prefab before:
+        if (infoRecord.renderer != null) {
+            DestroyImmediate(infoRecord.renderer);
+            infoRecord.renderer = null;
+        }
 
-            infoRecord.DeleteInstanceObjects();
+        infoRecord.DeleteInstanceObjects();
 
-            instanceNames.Add(infoRecord.go.name);
+        instanceNames.Add(infoRecord.go.name);
+        
+        if (infoRecord.go.transform.parent == null ||
+            !instanceNames.Contains(infoRecord.go.transform.parent.name)) {
+            GameObject instanceObjectOriginal;
+            if (InstanceHandling == InstanceHandlingType.Prefabs)
+                instanceObjectOriginal = GetOrCreatePrefab(data, infoRecord);
+            else
+                instanceObjectOriginal = infoRecord.go;
 
-            //MeshSyncPlayerConfig config = GetConfigV();
+            if (instanceObjectOriginal == null) return;
 
-            if (infoRecord.go.transform.parent == null ||
-                !instanceNames.Contains(infoRecord.go.transform.parent.name)) {
-                GameObject instanceObjectOriginal;
-                if (InstanceHandling == InstanceHandlingType.Prefabs)
-                    instanceObjectOriginal = GetOrCreatePrefab(data, infoRecord);
-                else
-                    instanceObjectOriginal = infoRecord.go;
-
-                if (instanceObjectOriginal == null) return;
-
-                foreach (Matrix4x4 mat in data.transforms) {
-                    GameObject instancedCopy;
-                    if (InstanceHandling == InstanceHandlingType.Prefabs) {
+            foreach (Matrix4x4 mat in data.transforms) {
+                GameObject instancedCopy;
+                if (InstanceHandling == InstanceHandlingType.Prefabs) {
 #if UNITY_EDITOR
-                        instancedCopy = (GameObject)PrefabUtility.InstantiatePrefab(instanceObjectOriginal,
-                            instanceRendererParent.transform);
+                    instancedCopy = (GameObject)PrefabUtility.InstantiatePrefab(instanceObjectOriginal,
+                        instanceRendererParent.transform);
 #else
                         instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
 #endif
-                    }
-                    else {
-                        instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
-                    }
-
-                    SetInstanceTransform(instancedCopy, instanceRendererParent, mat);
-                    EnableInstancedCopy(instancedCopy);
-
-                    infoRecord.instanceObjects.Add(instancedCopy);
-                }
-            }
-            else {
-                // This instance exists inside another instanced object,
-                // update its transform to be correct relative to the parent on the infoRecord:
-                // For example, in an object structure like this:
-                // MainObject
-                //   InstancedChildA
-                //     InstancedChildB
-                // For the instance renderer method, InstancedChildA and InstancedChildB exist as
-                // MeshSyncInstanceRenderer components on MainObject and the transforms in data.transforms
-                // are relative to MainObject. 
-                // In this mode, where we use copies of the objects, InstancedChildB already exists as child of InstancedChildA
-                // but the transform of InstancedChildB needs to be updated to be relative to MainObject.
-
-                if (data.transforms.Length != 1) {
-                    Debug.LogWarning(
-                        $"[MeshSync] There should never be more than 1 transform on instances inside other instances: {data.path}");
-                    return;
-                }
-
-                // Rebuild the path of InstancedChildA:
-                var instancedParentPath = data.path.Substring(0, data.path.LastIndexOf('/'));
-                var parentAndInstancedParentPath =
-                    $"{data.parentPath}{instancedParentPath}"; // instancedParentPath starts with '/'
-
-                //GameObject instanceRendererParentInstancedCopy;
-                //if (m_clientInstances.TryGetValue(instancedParentPath, out var instancedParent)) {
-                if (m_clientInstances.TryGetValue(data.path, out var instancedCopy) &&
-                    m_clientInstances.TryGetValue(instancedParentPath, out var instancedParent)) {
-                    //instanceRendererParentInstancedCopy = instancedParent.go;
-
-                    var parent = instancedCopy.go.transform.parent;
-
-                    instancedCopy.go.transform.SetParent(instanceRendererParent.transform);
-
-                    SetInstanceTransform(instancedCopy.go, instanceRendererParent, data.transforms[0]);
-
-                    instancedCopy.go.transform.SetParent(parent);
                 }
                 else {
-                    Debug.LogWarning(
-                        $"[MeshSync] No entity found for instanced copy parent path {instancedParentPath}");
+                    instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
                 }
 
-                //var instancedParentPath = $"{data.parentPath}/{paths}";
+                // Remove (Clone) at the end so the path lookup works:
+                instancedCopy.name = instanceObjectOriginal.name;
 
-                //var parentsOfInstances =
-                //    FindChildrenWithName(instanceRendererParent.transform, infoRecord.go.transform.parent.name);
+                SetInstanceTransform(instancedCopy, instanceRendererParent, mat);
+                EnableInstancedCopy(instancedCopy);
 
-                //if (m_clientInstances.TryGetValue(infoRecord.go.transform.parent.name, out var parentInstance)) {
-                //    foreach (Matrix4x4 mat in data.transforms) {
-
-                //    }
-                //}
+                infoRecord.instanceObjects.Add(instancedCopy);
             }
         }
+        else {
+            // This instance exists inside another instanced object,
+            // update its transform to be correct relative to the parent on the infoRecord:
+            // For example, in an object structure like this:
+            // MainObject
+            //   InstancedChildA
+            //     InstancedChildB
+            // For the instance renderer method, InstancedChildA and InstancedChildB exist as
+            // MeshSyncInstanceRenderer components on MainObject and the transforms in data.transforms
+            // are relative to MainObject. 
+            // In this mode, where we use copies of the objects, InstancedChildB already exists as child of InstancedChildA
+            // but the transform of InstancedChildB needs to be updated to be relative to MainObject.
+
+            if (data.transforms.Length != 1) {
+                Debug.LogWarning(
+                    $"[MeshSync] There should never be more than 1 transform on instances inside other instances: {data.path}");
+                return;
+            }
+
+            // Find the instanced copy as (a potentially indirect) child of `MainObject`:
+            var instancedCopy =
+                FilmInternalUtilities.GameObjectUtility.FindByPath(instanceRendererParent.transform, data.path);
+
+            if (instancedCopy == null) {
+                Debug.LogWarning(
+                    $"[MeshSync] No instanced copy found for {data.path}");
+                return;
+            }
+
+            // Set the transform relative to `MainObject`.
+            // The easiest and safest way to do that is to:
+            // - parent the instanced copy to `MainObject`
+            // - set the transform matrix
+            // - restore the original parent
+            var originalParent = instancedCopy.parent;
+
+            instancedCopy.transform.SetParent(instanceRendererParent.transform);
+
+            SetInstanceTransform(instancedCopy.gameObject, instanceRendererParent, data.transforms[0]);
+
+            instancedCopy.SetParent(originalParent);
+        }
+    }
 
     private void EnableInstancedCopy(GameObject obj) {
         obj.SetActive(true);
