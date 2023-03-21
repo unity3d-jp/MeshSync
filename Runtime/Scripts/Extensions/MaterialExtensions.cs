@@ -19,6 +19,11 @@ internal static class MaterialExtensions {
             existingRenderTexture.Release();
 
         mat.SetTexture(nameID, texture);
+            
+        // Ensure main texture is set if the name is not _MainTex!
+        if (nameID == MeshSyncConstants._MainTex) {
+            mat.mainTexture = texture;
+        }
     }
 }
 }

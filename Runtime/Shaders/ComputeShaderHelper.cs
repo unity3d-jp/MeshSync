@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 
 namespace Unity.MeshSync {
 internal class ComputeShaderHelper {
@@ -29,7 +30,8 @@ internal class ComputeShaderHelper {
             renderTarget.height != maxTextureSize.y) {
             if (renderTarget != null) renderTarget.Release();
 
-            renderTarget = new RenderTexture(maxTextureSize.x, maxTextureSize.y, 32) {
+            // We don't want sRGB here!
+            renderTarget = new RenderTexture(maxTextureSize.x, maxTextureSize.y, 32, DefaultFormat.HDR) {
                 enableRandomWrite = true
             };
 
