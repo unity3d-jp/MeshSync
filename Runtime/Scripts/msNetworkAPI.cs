@@ -214,7 +214,7 @@ internal struct Server {
 
 
 #if AT_USE_SPLINES
-        public void SendCurve(string path, int splineIndex, int knotCount, bool closed, float3[] cos, float3[] handlesLeft, float3[] handlesRight)
+    public void SendCurve(string path, int splineIndex, int knotCount, bool closed, float3[] cos, float3[] handlesLeft, float3[] handlesRight)
     {
         msServerSendCurve(self, path, splineIndex, knotCount, closed, cos, handlesLeft, handlesRight);
     }
