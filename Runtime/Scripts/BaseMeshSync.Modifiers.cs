@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Unity.MeshSync;
-using UnityEditor;
 using UnityEngine;
 
 #if AT_USE_SPLINES
