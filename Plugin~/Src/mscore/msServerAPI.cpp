@@ -341,7 +341,7 @@ msAPI void msServerSendCurve(ms::Server* server, const char* path, int splineInd
 
     auto curve = server->getOrCreatePendingEntity<ms::Curve>(path);
 
-    if (curve->splines.size() <= splineIndex) {
+    while (curve->splines.size() <= splineIndex) {
         curve->splines.push_back(ms::CurveSpline::create());
     }
 
