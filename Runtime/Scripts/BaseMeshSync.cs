@@ -1746,6 +1746,24 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         return rec;
     }
 
+    void AddClientObject(string path, out EntityRecord rec, ref Transform trans) {
+        if (m_clientObjects.TryGetValue(path, out rec))
+            if (rec.go == null) {
+                m_clientObjects.Remove(path);
+                rec = null;
+            }
+
+        if (rec == null) {
+            trans = FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
+            rec = new EntityRecord {
+                go     = trans.gameObject,
+                trans  = trans,
+                recved = true
+            };
+            m_clientObjects.Add(path, rec);
+        }
+    }
+
     private EntityRecord UpdateTransformEntity(TransformData data, MeshSyncPlayerConfig config) {
         string path   = data.path;
         int    hostID = data.hostID;
@@ -1765,20 +1783,17 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 return null;
         }
         else {
-            if (m_clientObjects.TryGetValue(path, out rec))
-                if (rec.go == null) {
-                    m_clientObjects.Remove(path);
-                    rec = null;
-                }
-
-            if (rec == null) {
-                trans = FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
-                rec = new EntityRecord {
-                    go     = trans.gameObject,
-                    trans  = trans,
-                    recved = true
-                };
-                m_clientObjects.Add(path, rec);
+            AddClientObject(path, out rec, ref trans);
+            
+            // Ensure any objects that were created as parent of this object are also added to m_clientObjects:
+            var names = path.Split("/");
+            for (int i = names.Length - 1; i > 1; i--) {
+                var          parentPath  = String.Join("/", names.Take(i));
+                Transform    parentTrans = null;
+                EntityRecord parentRec   = null;
+                AddClientObject(parentPath, out parentRec, ref parentTrans);
+                if (parentRec.dataType == EntityType.Unknown)
+                    parentRec.dataType = EntityType.Transform;
             }
         }
 
