@@ -18,5 +18,7 @@ internal interface IDCCLauncher : IDisposable {
     void CloseDCCTool();
 
     void DrawDCCMenu(BaseMeshSync player);
+
+    bool HasProcess { get; }
 }
 }
