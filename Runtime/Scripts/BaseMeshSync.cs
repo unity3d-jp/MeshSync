@@ -1786,7 +1786,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             AddClientObject(path, out rec, ref trans);
             
             // Ensure any objects that were created as parent of this object are also added to m_clientObjects:
-            var names = path.Split("/");
+            var names = path.Split('/');
             for (int i = names.Length - 1; i > 1; i--) {
                 var          parentPath  = String.Join("/", names.Take(i));
                 Transform    parentTrans = null;
