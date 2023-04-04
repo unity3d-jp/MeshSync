@@ -1746,7 +1746,79 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         return rec;
     }
 
-    void AddClientObject(string path, out EntityRecord rec, ref Transform trans) {
+    static Transform FindOrCreateByPath(Transform parent, string path, Action<string> parentCreationCallback, bool worldPositionStays = true) {
+        string[] names = path.Split('/');
+        if (names.Length <= 0)
+            return null;
+
+        static Transform FindFirstRoot(string objectName) {
+            GameObject[] roots = SceneManager.GetActiveScene().GetRootGameObjects();
+            foreach (GameObject go in roots) {
+                if (go.name != objectName)
+                    continue;
+
+                return go.transform;
+            }
+
+            return null;
+        }
+
+        //if parent is null, search from root 
+        Transform t             = parent;
+        int       tokenStartIdx = 0;
+        if (null == t) {
+            string rootGameObjectName = names[0];
+            t = FindFirstRoot(rootGameObjectName);
+            if (null == t) {
+                GameObject go = new GameObject(rootGameObjectName);
+                t = go.GetComponent<Transform>();
+            }
+
+            tokenStartIdx = 1;
+        }
+
+        static Transform FindOrCreateChild(Transform t, string childName, out bool didCreate, bool worldPositionStays = true) {
+            Transform childT = t.Find(childName);
+            if (null != childT) {
+                didCreate = false;
+                return childT;
+            }
+
+            GameObject go = new GameObject(childName);
+            childT = go.transform;
+            childT.SetParent(t, worldPositionStays);
+            didCreate = true;
+            return childT;
+        }
+        
+        //loop over hierarchy of names and generate parents that don't exist
+        int          nameLength       = names.Length;
+        List<string> processedParents = new List<string>();
+        for (int i = tokenStartIdx; i < nameLength; ++i) {
+            string nameToken = names[i];
+            if (string.IsNullOrEmpty(nameToken))
+                continue;
+            
+            processedParents.Add(nameToken);
+
+            t = FindOrCreateChild(t, nameToken, out var didCreate, worldPositionStays);
+            if (i < nameLength - 1 && didCreate) {
+                var parentPath = String.Join("/", processedParents);
+                if (!parentPath.StartsWith("/")) {
+                    parentPath = $"/{parentPath}";
+                }
+                
+                parentCreationCallback?.Invoke(parentPath);
+            }
+
+            if (null == t)
+                return null;
+        }
+
+        return t;
+    }
+
+    void AddClientObject(string path, out EntityRecord rec) {
         if (m_clientObjects.TryGetValue(path, out rec))
             if (rec.go == null) {
                 m_clientObjects.Remove(path);
@@ -1754,7 +1826,15 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             }
 
         if (rec == null) {
-            trans = FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
+            var trans = FindOrCreateByPath(m_rootObject, path,
+                delegate(string parentPath) {
+                    EntityRecord parentRec = null;
+                    AddClientObject(parentPath, out parentRec);
+                    if (parentRec.dataType == EntityType.Unknown)
+                        parentRec.dataType = EntityType.Transform;
+                },
+                false);
+
             rec = new EntityRecord {
                 go     = trans.gameObject,
                 trans  = trans,
@@ -1770,7 +1850,6 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         if (path.Length == 0)
             return null;
 
-        Transform    trans = null;
         EntityRecord rec   = null;
         if (hostID != Lib.invalidID) {
             if (m_hostObjects.TryGetValue(hostID, out rec))
@@ -1783,18 +1862,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 return null;
         }
         else {
-            AddClientObject(path, out rec, ref trans);
-            
-            // Ensure any objects that were created as parent of this object are also added to m_clientObjects:
-            var names = path.Split('/');
-            for (int i = names.Length - 1; i > 1; i--) {
-                var          parentPath  = String.Join("/", names.Take(i));
-                Transform    parentTrans = null;
-                EntityRecord parentRec   = null;
-                AddClientObject(parentPath, out parentRec, ref parentTrans);
-                if (parentRec.dataType == EntityType.Unknown)
-                    parentRec.dataType = EntityType.Transform;
-            }
+            AddClientObject(path, out rec);
         }
 
         return UpdateTransformEntity(data, config, rec);
