@@ -31,7 +31,7 @@ internal class ComputeShaderHelper {
             if (renderTarget != null) renderTarget.Release();
 
             // We don't want sRGB here!
-            renderTarget = new RenderTexture(maxTextureSize.x, maxTextureSize.y, 32, DefaultFormat.HDR) {
+            renderTarget = new RenderTexture(maxTextureSize.x, maxTextureSize.y, 32, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear) {
                 enableRandomWrite = true
             };
 
