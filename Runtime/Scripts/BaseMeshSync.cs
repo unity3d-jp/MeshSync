@@ -1750,25 +1750,13 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         string[] names = path.Split('/');
         if (names.Length <= 0)
             return null;
-
-        static Transform FindFirstRoot(string objectName) {
-            GameObject[] roots = SceneManager.GetActiveScene().GetRootGameObjects();
-            foreach (GameObject go in roots) {
-                if (go.name != objectName)
-                    continue;
-
-                return go.transform;
-            }
-
-            return null;
-        }
-
+        
         //if parent is null, search from root 
         Transform t             = parent;
         int       tokenStartIdx = 0;
         if (null == t) {
             string rootGameObjectName = names[0];
-            t = FindFirstRoot(rootGameObjectName);
+            t = FilmInternalUtilities.GameObjectUtility.FindFirstRoot(rootGameObjectName);
             if (null == t) {
                 GameObject go = new GameObject(rootGameObjectName);
                 t = go.GetComponent<Transform>();
