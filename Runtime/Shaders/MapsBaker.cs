@@ -60,13 +60,31 @@ internal static class MapsBaker {
 
         // If there is no such texture, create one with the given fallback value:
 
-        float value = fallbackPropertyValue;
-        if (materialProperties.TryGetValue(fallbackPropertyNameID, out IMaterialPropertyData fallbackMaterialProperty))
-            value = fallbackMaterialProperty.floatValue;
+        Color value = new Color(
+            fallbackPropertyValue,
+            fallbackPropertyValue,
+            fallbackPropertyValue,
+            fallbackPropertyValue);
+
+        if (materialProperties.TryGetValue(fallbackPropertyNameID,
+                out IMaterialPropertyData fallbackMaterialProperty)) {
+            switch (fallbackMaterialProperty.type) {
+                case IMaterialPropertyData.Type.Float:
+                    float v = fallbackMaterialProperty.floatValue;
+                    value = new Color(v, v, v, v);
+                    break;
+                case IMaterialPropertyData.Type.Vector:
+                    value = fallbackMaterialProperty.vectorValue;
+                    break;
+                default:
+                    Debug.LogError($"Unsupported fallback property type: {fallbackMaterialProperty.type}!");
+                    break;
+            }
+        }
 
         const int dim = 8;
 
-        Color[] pixels = Enumerable.Repeat(new Color(value, value, value, value), dim * dim).ToArray();
+        Color[] pixels = Enumerable.Repeat(value, dim * dim).ToArray();
 
         disposableTexture =
             new Texture2DDisposable(new Texture2D(dim, dim, UnityEngine.TextureFormat.RFloat, false, true));
@@ -176,7 +194,7 @@ internal static class MapsBaker {
             // Bake to albedo alpha
             channelName = MeshSyncConstants._MainTex;
             texturesExist |=
-                FindTexture(MeshSyncConstants._MainTex, textureHolders, materialProperties, 0, 0,
+                FindTexture(MeshSyncConstants._MainTex, textureHolders, materialProperties, MeshSyncConstants._Color, 0,
                     out rgbTexture);
         }
         else {

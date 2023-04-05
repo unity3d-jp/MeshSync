@@ -118,15 +118,15 @@ partial class BaseMeshSync {
             textureNameID == MeshSyncConstants._MaskMap) {
             mat.EnableKeyword(MeshSyncConstants._METALLICGLOSSMAP);
             mat.EnableKeyword(MeshSyncConstants._METALLICSPECGLOSSMAP);
+        }
 
-            TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(savePath);
-            if (importer != null) {
-                importer.sRGBTexture         = false;
-                importer.alphaIsTransparency = false;
-                importer.ignorePngGamma      = true;
-                importer.SaveAndReimport();
-                AssetDatabase.Refresh();
-            }
+        TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(savePath);
+        if (importer != null) {
+            importer.sRGBTexture         = false;
+            importer.alphaIsTransparency = false;
+            importer.ignorePngGamma      = true;
+            importer.SaveAndReimport();
+            AssetDatabase.Refresh();
         }
 
         return true;
