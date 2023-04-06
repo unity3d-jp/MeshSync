@@ -558,6 +558,9 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         internal set { m_DCCAsset = value; }
     }
 
+    /// <summary>
+    /// True if this is currently being live-edited.
+    /// </summary>
     public bool IsLiveEditing
     {
         get
