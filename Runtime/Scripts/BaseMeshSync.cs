@@ -1842,7 +1842,6 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             };
             m_clientObjects.Add(path, rec);
         }
-    }
 
         if (m_clientObjects.TryGetValue(path, out rec))
             if (rec.go == null) {
