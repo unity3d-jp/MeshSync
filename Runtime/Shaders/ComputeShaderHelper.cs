@@ -37,7 +37,9 @@ internal class ComputeShaderHelper {
 
             renderTarget.Create();
             
+#if UNITY_EDITOR
             owner.AddCreatedRenderTexture(renderTarget);
+#endif
         }
 
         SetTexture(SHADER_CONST_OUTPUT, renderTarget);
