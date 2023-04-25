@@ -1182,7 +1182,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         foreach (KeyValuePair<int, IMaterialPropertyData> prop in materialProperties)
             ApplyMaterialProperty(destMat, textureHolders, prop.Value, prop.Key, materialProperties, src.shader);
 
-        MapsBaker.BakeMaps(destMat, textureHolders, materialProperties);
+        MapsBaker.BakeMaps(destMat, textureHolders, materialProperties, this);
 
         // Need to update shader again to ensure any custom setup is still there after the material properties were applied.
         UpdateCustomShaderSettings(destMat, src.shader);
@@ -3002,6 +3002,15 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         m_tmpV3.Dispose();
         m_tmpV4.Dispose();
         m_tmpC.Dispose();
+        
+#if UNITY_EDITOR
+        // Release any render textures that have not been released:
+        foreach (var renderTexture in CreatedRenderTextures)
+        {
+            if (renderTexture.IsCreated())
+                renderTexture.Release();
+        }
+#endif
     }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -3124,6 +3133,22 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
 #if AT_USE_SPLINES
     PinnedList<float3> m_tmpFloat3 = new PinnedList<float3>();
+#endif
+    
+#if UNITY_EDITOR
+    [NonSerialized]
+    private List<RenderTexture> CreatedRenderTextures = new List<RenderTexture>();
+
+    public void AddCreatedRenderTexture(RenderTexture renderTexture) {
+        // Make sure the list doesn't grow infinitely with already released references:
+        for (int i = CreatedRenderTextures.Count - 1; i >= 0; i--) {
+            if (!CreatedRenderTextures[i].IsCreated()) {
+                CreatedRenderTextures.RemoveAt(i);
+            }
+        }
+        
+        CreatedRenderTextures.Add(renderTexture);
+    }
 #endif
 
     //----------------------------------------------------------------------------------------------------------------------
