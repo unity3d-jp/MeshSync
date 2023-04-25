@@ -557,6 +557,19 @@ public partial class MeshSyncServer : BaseMeshSync, IDisposable {
         get { return m_DCCAsset; }
         internal set { m_DCCAsset = value; }
     }
+    
+    /// <summary>
+    /// True if this is currently being live-edited.
+    /// </summary>
+    public bool IsLiveEditing
+    {
+        get
+        {
+            if (m_DCCInterop != null)
+                return m_DCCInterop.HasProcess;
+            return false;
+        }
+    }
 #endif
 
     [SerializeField] private MeshSyncServerConfig m_config;
