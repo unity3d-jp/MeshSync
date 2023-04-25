@@ -2551,11 +2551,33 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 #endif
     }
 
-    private void ReassignMaterials(bool recordUndo) {
+    private void ReassignMaterials(bool recordUndo)
+    {
         foreach (KeyValuePair<string, EntityRecord> rec in m_clientObjects)
             AssignMaterials(rec.Value, recordUndo);
         foreach (KeyValuePair<int, EntityRecord> rec in m_hostObjects)
             AssignMaterials(rec.Value, recordUndo);
+        foreach (KeyValuePair<string, EntityRecord> rec in m_clientInstancedEntities)
+        {
+            AssignMaterials(rec.Value, recordUndo);
+
+            if (m_clientInstances.TryGetValue(rec.Key, out var instanceInfoRecord))
+            {
+                if (instanceInfoRecord.renderer != null)
+                {
+                    instanceInfoRecord.renderer.UpdateMaterials();
+                }
+                
+                foreach (var instancedCopy in instanceInfoRecord.instanceObjects)
+                {
+                    var renderer = instancedCopy.GetComponent<Renderer>();
+                    if (renderer != null)
+                    {
+                        AssignMaterials(renderer, rec.Value.materialIDs, recordUndo);
+                    }
+                }
+            }
+        }
     }
 
     private void AssignMaterials(EntityRecord rec, bool recordUndo) {
@@ -2563,17 +2585,21 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             return;
 
         Renderer r = rec.meshRenderer != null ? (Renderer)rec.meshRenderer : (Renderer)rec.skinnedMeshRenderer;
+        AssignMaterials(r, rec.materialIDs, recordUndo);
+    }
+    
+    private void AssignMaterials(Renderer r, int[]materialIDs , bool recordUndo) {
         if (r == null)
             return;
 
         bool       changed       = false;
-        int        materialCount = rec.materialIDs.Length;
+        int        materialCount = materialIDs.Length;
         Material[] materials     = new Material[materialCount];
         Material[] prevMaterials = r.sharedMaterials;
         Array.Copy(prevMaterials, materials, Math.Min(prevMaterials.Length, materials.Length));
 
         for (int si = 0; si < materialCount; ++si) {
-            int      mid      = rec.materialIDs[si];
+            int      mid      = materialIDs[si];
             Material material = FindMaterial(mid);
             if (material != null) {
                 if (materials[si] == material)
