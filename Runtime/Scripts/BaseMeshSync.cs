@@ -1750,7 +1750,19 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         string[] names = path.Split('/');
         if (names.Length <= 0)
             return null;
-        
+
+        static Transform FindFirstRoot(string objectName) {
+            GameObject[] roots = SceneManager.GetActiveScene().GetRootGameObjects();
+            foreach (GameObject go in roots) {
+                if (go.name != objectName)
+                    continue;
+
+                return go.transform;
+            }
+
+            return null;
+        }
+
         //if parent is null, search from root 
         Transform t             = parent;
         int       tokenStartIdx = 0;
@@ -1807,6 +1819,30 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
     }
 
     void AddClientObject(string path, out EntityRecord rec) {
+        if (m_clientObjects.TryGetValue(path, out rec))
+            if (rec.go == null) {
+                m_clientObjects.Remove(path);
+                rec = null;
+            }
+
+        if (rec == null) {
+            var trans = FindOrCreateByPath(m_rootObject, path,
+                delegate(string parentPath) {
+                    EntityRecord parentRec = null;
+                    AddClientObject(parentPath, out parentRec);
+                    if (parentRec.dataType == EntityType.Unknown)
+                        parentRec.dataType = EntityType.Transform;
+                },
+                false);
+
+            rec = new EntityRecord {
+                go     = trans.gameObject,
+                trans  = trans,
+                recved = true
+            };
+            m_clientObjects.Add(path, rec);
+        }
+
         if (m_clientObjects.TryGetValue(path, out rec))
             if (rec.go == null) {
                 m_clientObjects.Remove(path);
