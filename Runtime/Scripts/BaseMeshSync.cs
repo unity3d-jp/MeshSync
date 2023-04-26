@@ -490,7 +490,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
     //----------------------------------------------------------------------------------------------------------------------    
 
 
-    private static Material CreateDefaultMaterial(string shaderName = null) {
+    private Material CreateDefaultMaterial(string shaderName = null) {
         Material mat = new Material(GetShader(shaderName, out _));
         UpdateShader(mat, shaderName);
         return mat;

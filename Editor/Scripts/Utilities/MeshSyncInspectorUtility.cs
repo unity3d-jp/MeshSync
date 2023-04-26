@@ -16,6 +16,10 @@ internal static class MeshSyncInspectorUtility {
         EditorGUIDrawerUtility.DrawUndoableGUI(obj, "Overwrite Exported Materials",
             () => (bool)EditorGUILayout.Toggle("Overwrite Exported Materials", settings.OverwriteExportedMaterials),
             (bool overwriteMat) => { settings.OverwriteExportedMaterials = overwriteMat; });
+        
+        EditorGUIDrawerUtility.DrawUndoableGUI(obj, "Default Shader",
+            () => EditorGUILayout.ObjectField("Default Shader", settings.DefaultShader, typeof(Shader)),
+            (Object defaultShader) => { settings.DefaultShader = defaultShader as Shader; });
     }
 
     internal static void DrawModelImporterMaterialSearchMode(Object obj, ModelImporterSettings settings) {
