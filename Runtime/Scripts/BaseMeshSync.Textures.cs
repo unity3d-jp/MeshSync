@@ -146,7 +146,12 @@ partial class BaseMeshSync {
     /// <summary>
     /// Returns the default shader for the active render pipeline.
     /// </summary>
-    private static Shader GetStandardShader() {
+    private Shader GetStandardShader() {
+        if (GetConfigV().GetModelImporterSettings().DefaultShader != null)
+        {
+            return GetConfigV().GetModelImporterSettings().DefaultShader;
+        }
+        
 #if AT_USE_HDRP
         return Shader.Find("HDRP/Lit");
 #elif AT_USE_URP
@@ -161,7 +166,7 @@ partial class BaseMeshSync {
     /// </summary>
     /// <param name="mat">Material to set the shader on</param>
     /// <param name="shaderName">The name of the shader passed by the DCC tool</param>
-    private static void UpdateShader(Material mat, string shaderName) {
+    private void UpdateShader(Material mat, string shaderName) {
         Shader shader = GetShader(shaderName, out bool shaderExists);
 
         mat.shader = shader;
@@ -191,7 +196,7 @@ partial class BaseMeshSync {
     /// <param name="shaderName">Name of the shader in the asset database.</param>
     /// <param name="shaderNameExists">True if the shader was found. False if the standard shader for the current render pipeline was used.</param>
     /// <returns></returns>
-    private static Shader GetShader(string shaderName, out bool shaderNameExists) {
+    private Shader GetShader(string shaderName, out bool shaderNameExists) {
         Shader shader                                 = null;
         if (!string.IsNullOrEmpty(shaderName)) shader = Shader.Find(shaderName);
 
