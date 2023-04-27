@@ -30,7 +30,7 @@ internal static class MeshSyncServerInspectorUtils {
 
             if (prop.path != lastPathDrawn) {
                 bool wasExpanded = foldouts.Contains(prop.path);
-                expanded = EditorGUILayout.Foldout(wasExpanded, prop.path);
+                expanded = EditorGUILayout.Foldout(wasExpanded, prop.path, toggleOnLabelClick:true);
 
                 if (wasExpanded != expanded) {
                     if (wasExpanded)
