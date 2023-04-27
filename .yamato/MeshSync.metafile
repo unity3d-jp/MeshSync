@@ -4,7 +4,7 @@ platforms:
   - platform_type: &platform_win
       name: win
       type: Unity::VM
-      image: package-ci/win10:v1.20.1
+      image: package-ci/win10:v4
       flavor: b1.medium
       cmd_prefix: 
   - platform_type: &platform_mac

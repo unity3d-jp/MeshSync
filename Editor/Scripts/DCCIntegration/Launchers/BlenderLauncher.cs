@@ -14,9 +14,9 @@ internal class BlenderLauncher : IDCCLauncher {
     private        Process m_blenderProcess;
     private static bool    redirectBlenderToUnityConsole;
 
-	public bool HasProcess => m_blenderProcess != null;
-
-    public RunMode runMode { get; set; }
+    public bool    HasProcess => m_blenderProcess != null;
+    
+    public RunMode runMode    { get; set; }
 
     private static string GetBlenderPath() {
         string blenderPath = EditorPrefs.GetString(editorSettingPath);
