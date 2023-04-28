@@ -81,6 +81,11 @@ internal class MeshSyncInstanceRenderer : MonoBehaviour {
         UpdateRenderingInfo(m_renderingInfo);
     }
 
+    public void UpdateMaterials()
+    {
+        m_renderingInfo.UpdateMaterials();
+    }
+
 
     private void UpdateRenderingInfo(InstanceRenderingInfo info) {
         info.instances      = transforms;

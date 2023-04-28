@@ -65,6 +65,11 @@ internal class InstanceRenderingInfo {
         }
     }
 
+    internal void UpdateMaterials()
+    {
+        OnGameObjectUpdated();
+    }
+
     internal Transform instanceParent { get; set; }
 
     private Renderer m_renderer;
