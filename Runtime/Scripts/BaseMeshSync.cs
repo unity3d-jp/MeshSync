@@ -3166,7 +3166,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
     [NonSerialized]
     private List<RenderTexture> CreatedRenderTextures = new List<RenderTexture>();
 
-    public void AddCreatedRenderTexture(RenderTexture renderTexture) {
+    internal void AddCreatedRenderTexture(RenderTexture renderTexture) {
         // Make sure the list doesn't grow infinitely with already released references:
         for (int i = CreatedRenderTextures.Count - 1; i >= 0; i--) {
             if (!CreatedRenderTextures[i].IsCreated()) {
