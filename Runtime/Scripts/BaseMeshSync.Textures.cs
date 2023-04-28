@@ -147,9 +147,10 @@ partial class BaseMeshSync {
     /// Returns the default shader for the active render pipeline.
     /// </summary>
     private Shader GetStandardShader() {
-        if (GetConfigV().GetModelImporterSettings().DefaultShader != null)
+        var defaultShader = GetConfigV().GetModelImporterSettings().DefaultShader;
+        if (defaultShader != null)
         {
-            return GetConfigV().GetModelImporterSettings().DefaultShader;
+            return defaultShader;
         }
         
 #if AT_USE_HDRP
