@@ -146,13 +146,7 @@ partial class BaseMeshSync {
     /// <summary>
     /// Returns the default shader for the active render pipeline.
     /// </summary>
-    private Shader GetStandardShader() {
-        var defaultShader = GetConfigV().GetModelImporterSettings().DefaultShader;
-        if (defaultShader != null)
-        {
-            return defaultShader;
-        }
-        
+    private static Shader GetStandardShader() {
 #if AT_USE_HDRP
         return Shader.Find("HDRP/Lit");
 #elif AT_USE_URP
@@ -203,7 +197,14 @@ partial class BaseMeshSync {
 
         shaderNameExists = shader != null;
 
-        if (shader == null) shader = GetStandardShader();
+        if (shader == null) {
+            Shader defaultShader = GetConfigV().GetModelImporterSettings().DefaultShader;
+            if (defaultShader != null) {
+                return defaultShader;
+            }
+            
+            shader = GetStandardShader();
+        }
 
         Assert.IsNotNull(shader);
 
