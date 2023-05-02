@@ -191,8 +191,12 @@ internal static class MeshSyncServerInspectorUtils {
 
     internal static IDCCLauncher GetLauncherForAsset(Object asset) {
         if (asset == null) return null;
-
-        string assetPath = AssetDatabase.GetAssetPath(asset);
+        
+        return GetLauncherForAsset(AssetDatabase.GetAssetPath(asset));
+    }
+    
+    internal static IDCCLauncher GetLauncherForAsset(string assetPath) {
+        if (assetPath == null) return null;
 
         if (Path.GetExtension(assetPath) == BlenderLauncher.FileFormat) return new BlenderLauncher();
 
