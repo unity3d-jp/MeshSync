@@ -49,8 +49,16 @@ internal class BlenderLauncher : IDCCLauncher {
     }
 
     #region IDCCLauncher
-
+    
     public void OpenDCCTool(UnityEngine.Object asset) {
+        string assetPath = FilmInternalUtilities.AssetUtility.ToAssetRelativePath(AssetDatabase.GetAssetPath(asset));
+        OpenDCCTool(assetPath);
+    }
+
+    public void OpenDCCTool(string assetPath)
+    {
+        assetPath = Path.GetFullPath(assetPath);
+        
         Dispose();
 
         ProcessStartInfo startInfo = new ProcessStartInfo();
@@ -60,8 +68,6 @@ internal class BlenderLauncher : IDCCLauncher {
             Debug.LogError("The blender path is not set or blender cannot be found.");
             return;
         }
-
-        string assetPath = FilmInternalUtilities.AssetUtility.ToAssetRelativePath(AssetDatabase.GetAssetPath(asset));
 
         string absoluteAssetPath = Path.Combine(Application.dataPath, assetPath).Replace('\\', '/');
 
