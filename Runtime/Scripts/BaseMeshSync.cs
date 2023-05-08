@@ -1014,6 +1014,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
         MaterialHolder dst = m_materialList.Find(a => a.id == materialID);
 
+        bool isNewMaterial = dst == null || dst.material == null;
+        
         //if (invalid && creating materials is allowed)
         if ((dst == null || dst.material == null || dst.name != materialName) && importerSettings.CreateMaterials) {
             if (null == dst) {
@@ -1041,9 +1043,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         if (dst == null || dst.material == null)
             return;
         
-        if (importerSettings.OverwriteExportedMaterials)
-            dst.ShouldApplyMaterialData = true;
-
+        dst.ShouldApplyMaterialData = isNewMaterial || importerSettings.OverwriteExportedMaterials;
+            
         dst.name  = materialName;
         dst.index = src.index;
         dst.color = src.color;
