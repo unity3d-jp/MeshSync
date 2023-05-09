@@ -18,6 +18,9 @@ internal class BlenderLauncher : IDCCLauncher {
     
     public RunMode runMode    { get; set; }
 
+    internal string InteropFile =
+        Path.GetFullPath("Packages/com.unity.meshsync/Editor/Scripts/DCCIntegration/Launchers/blender_interop.py");
+
     private static string GetBlenderPath() {
         string blenderPath = EditorPrefs.GetString(editorSettingPath);
 
@@ -65,9 +68,7 @@ internal class BlenderLauncher : IDCCLauncher {
 
         string absoluteAssetPath = Path.Combine(Application.dataPath, assetPath).Replace('\\', '/');
 
-        string scriptPath = Path.GetFullPath("Packages/com.unity.meshsync/Editor/Scripts/DCCIntegration/Launchers/blender_interop.py");
-
-        startInfo.Arguments = $"\"{absoluteAssetPath}\" -P \"{scriptPath}\"";
+        startInfo.Arguments = $"\"{absoluteAssetPath}\" -P \"{InteropFile}\"";
 
         if (runMode != RunMode.GUI)
             startInfo.Arguments = "-b " + startInfo.Arguments;
