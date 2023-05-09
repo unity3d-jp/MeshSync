@@ -14,7 +14,8 @@ internal interface IDCCLauncher : IDisposable {
     RunMode runMode { get; set; }
 
     void OpenDCCTool(UnityEngine.Object asset);
-
+    void OpenDCCTool(string assetPath);
+    
     void CloseDCCTool();
 
     void DrawDCCMenu(BaseMeshSync player);
