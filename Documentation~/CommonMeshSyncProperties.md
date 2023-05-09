@@ -48,6 +48,10 @@ These properties are shared by multiple components in this package.
    |:---       |:---|
    | On| Apply changes to exported materials.|
    | Off| Do not apply changes to exported materials.|
+   
+- **Default Shader**
+
+   Use this shader instead of the default for the current render pipeline when creating materials.
 
 - **Animation Interpolation**: sets the animation interpolation method.   
 

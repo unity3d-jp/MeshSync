@@ -161,7 +161,7 @@ partial class BaseMeshSync {
     /// </summary>
     /// <param name="mat">Material to set the shader on</param>
     /// <param name="shaderName">The name of the shader passed by the DCC tool</param>
-    private static void UpdateShader(Material mat, string shaderName) {
+    private void UpdateShader(Material mat, string shaderName) {
         Shader shader = GetShader(shaderName, out bool shaderExists);
 
         mat.shader = shader;
@@ -191,13 +191,20 @@ partial class BaseMeshSync {
     /// <param name="shaderName">Name of the shader in the asset database.</param>
     /// <param name="shaderNameExists">True if the shader was found. False if the standard shader for the current render pipeline was used.</param>
     /// <returns></returns>
-    private static Shader GetShader(string shaderName, out bool shaderNameExists) {
+    private Shader GetShader(string shaderName, out bool shaderNameExists) {
         Shader shader                                 = null;
         if (!string.IsNullOrEmpty(shaderName)) shader = Shader.Find(shaderName);
 
         shaderNameExists = shader != null;
 
-        if (shader == null) shader = GetStandardShader();
+        if (shader == null) {
+            Shader defaultShader = GetConfigV().GetModelImporterSettings().DefaultShader;
+            if (defaultShader != null) {
+                return defaultShader;
+            }
+            
+            shader = GetStandardShader();
+        }
 
         Assert.IsNotNull(shader);
 
