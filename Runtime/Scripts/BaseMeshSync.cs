@@ -1043,14 +1043,14 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         if (dst == null || dst.material == null)
             return;
         
-        dst.ShouldApplyMaterialData = isNewMaterial || importerSettings.OverwriteExportedMaterials;
+        bool shouldApplyMaterialData = isNewMaterial || importerSettings.OverwriteExportedMaterials;
             
         dst.name  = materialName;
         dst.index = src.index;
         dst.color = src.color;
 
         Material destMat = dst.material;
-        if (importerSettings.CreateMaterials && dst.ShouldApplyMaterialData) ApplyMaterialDataToMaterial(src, destMat, m_textureList);
+        if (importerSettings.CreateMaterials && shouldApplyMaterialData) ApplyMaterialDataToMaterial(src, destMat, m_textureList);
 
         if (onUpdateMaterial != null)
             onUpdateMaterial.Invoke(destMat, src);
