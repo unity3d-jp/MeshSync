@@ -1029,6 +1029,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             dst.material = SearchMaterialInEditor(importerSettings.MaterialSearchMode, materialName);
             if (null != dst.material) {
                 dst.ShouldApplyMaterialData = false;
+                isNewMaterial = false;
             }
             else
 #endif
