@@ -21,7 +21,7 @@ internal class ComputeShaderHelper {
         shader.GetKernelThreadGroupSizes(kernelIndex, out groupSizeX, out groupSizeY, out uint gsZ);
     }
 
-    public RenderTexture RenderToTexture(Texture existingTexture) {
+    public RenderTexture RenderToTexture(Texture existingTexture, BaseMeshSync owner) {
         RenderTexture renderTarget = existingTexture as RenderTexture;
 
         // If there is an existing renderTexture, reuse it:
@@ -36,6 +36,10 @@ internal class ComputeShaderHelper {
             };
 
             renderTarget.Create();
+            
+#if UNITY_EDITOR
+            owner.AddCreatedRenderTexture(renderTarget);
+#endif
         }
 
         SetTexture(SHADER_CONST_OUTPUT, renderTarget);
