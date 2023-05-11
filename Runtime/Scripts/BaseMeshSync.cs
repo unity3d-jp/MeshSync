@@ -1014,6 +1014,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
         MaterialHolder dst = m_materialList.Find(a => a.id == materialID);
 
+        bool isNewMaterial = dst == null || dst.material == null;
+        
         //if (invalid && creating materials is allowed)
         if ((dst == null || dst.material == null || dst.name != materialName) && importerSettings.CreateMaterials) {
             if (null == dst) {
@@ -1026,7 +1028,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 #if UNITY_EDITOR
             dst.material = SearchMaterialInEditor(importerSettings.MaterialSearchMode, materialName);
             if (null != dst.material) {
-                dst.ShouldApplyMaterialData = false;
+                isNewMaterial = false;
             }
             else
 #endif
@@ -1041,15 +1043,14 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         if (dst == null || dst.material == null)
             return;
         
-        if (importerSettings.OverwriteExportedMaterials)
-            dst.ShouldApplyMaterialData = true;
-
+        bool shouldApplyMaterialData = isNewMaterial || importerSettings.OverwriteExportedMaterials;
+            
         dst.name  = materialName;
         dst.index = src.index;
         dst.color = src.color;
 
         Material destMat = dst.material;
-        if (importerSettings.CreateMaterials && dst.ShouldApplyMaterialData) ApplyMaterialDataToMaterial(src, destMat, m_textureList);
+        if (importerSettings.CreateMaterials && shouldApplyMaterialData) ApplyMaterialDataToMaterial(src, destMat, m_textureList);
 
         if (onUpdateMaterial != null)
             onUpdateMaterial.Invoke(destMat, src);
