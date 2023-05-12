@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.17.2-preview] - 2023-05-11
+
+### Added
+* feat: add IsLiveEditing API to check whether live editing is active 
+* feat: add DefaultShader field to set the default shader instead of the default of each RP 
+
+### Fixed
+* fix: prevent overwriting materials when OverwriteExportedMaterials is false
+* fix: keep track of RenderTextures and release them when the server is destroyed. 
+* fix: transform fixes for nested instances 
+* fix: Fix for baking smoothness to albedo alpha. 
+* fix: add empty transforms to the list of objects for making instances
+* fix: toggle foldout state when clicking the label in the inspector UI
+* fix: update the material of instanced meshes after assigning to the slot in MeshSyncServer 
+
 ## [0.17.1-preview] - 2023-02-08
 
 ### Changed
