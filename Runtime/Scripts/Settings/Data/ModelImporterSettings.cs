@@ -18,6 +18,7 @@ internal class ModelImporterSettings {
     [SerializeField] internal AssetSearchMode MaterialSearchMode         = AssetSearchMode.LOCAL;
     [SerializeField] internal bool            OverwriteExportedMaterials = false;
     [SerializeField] internal Shader          DefaultShader;
+    internal bool ImportTextures = true;
 
 //----------------------------------------------------------------------------------------------------------------------
 
