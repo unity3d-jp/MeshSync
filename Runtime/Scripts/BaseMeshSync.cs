@@ -1355,9 +1355,34 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 break;
             case IMaterialPropertyData.Type.Vector:
                 if (len == 1)
-                    destMat.SetVector(propNameID, prop.vectorValue);
+                {
+                    // Apply gamma correction if needed:
+                    Color propertyValueAsColor = prop.vectorValue;
+                    var col = QualitySettings.activeColorSpace == ColorSpace.Linear ? propertyValueAsColor.gamma : propertyValueAsColor;
+                    destMat.SetVector(propNameID, col);
+                }
                 else
-                    destMat.SetVectorArray(propNameID, prop.vectorArray);
+                {
+                    if (QualitySettings.activeColorSpace == ColorSpace.Linear)
+                    {
+                        var propertyValueAsColorArray = new Vector4[prop.vectorArray.Length];
+                        for (int i = 0; i < prop.vectorArray.Length; i++)
+                        {
+                            Color propertyValueAsColor = prop.vectorArray[i];
+                            var col = QualitySettings.activeColorSpace == ColorSpace.Linear
+                                ? propertyValueAsColor.gamma
+                                : propertyValueAsColor;
+                            propertyValueAsColorArray[i] = col;
+                        }
+
+                        destMat.SetVectorArray(propNameID, propertyValueAsColorArray);
+                    }
+                    else
+                    {
+                        destMat.SetVectorArray(propNameID, prop.vectorArray);
+                    }
+                }
+
                 break;
             case IMaterialPropertyData.Type.Matrix:
                 if (len == 1)
