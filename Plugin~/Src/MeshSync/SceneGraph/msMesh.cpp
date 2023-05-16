@@ -226,6 +226,14 @@ void BoneData::clear()
 #define EachGeometryAttribute(F)\
     EachVertexAttribute(F) EachTopologyAttribute(F)
 
+
+#define EachVertexAttributeExceptNormals(F)\
+    F(points) F(tangents) F(colors) F(velocities) \
+    F(m_uv[0]) F(m_uv[1]) F(m_uv[2]) F(m_uv[3]) F(m_uv[4]) F(m_uv[5]) F(m_uv[6]) F(m_uv[7])
+
+#define EachGeometryAttributeExceptNormals(F)\
+    EachVertexAttributeExceptNormals(F) EachTopologyAttribute(F)
+
 #define EachMember(F)\
     F(refine_settings) EachGeometryAttribute(F) F(root_bone) F(bones) F(blendshapes) F(submeshes) F(bounds)
 
@@ -502,7 +510,7 @@ uint64_t Mesh::checksumGeom() const
     uint64_t ret = 0;
     ret += refine_settings.checksum();
 #define Body(A) ret += csum(A);
-    EachGeometryAttribute(Body);
+    EachGeometryAttributeExceptNormals(Body);
 #undef Body
 
     // bones
