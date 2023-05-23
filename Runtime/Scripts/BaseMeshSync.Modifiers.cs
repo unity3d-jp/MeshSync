@@ -349,6 +349,7 @@ partial class BaseMeshSync {
     }
 
     [SerializeField] private InstanceHandlingType instanceHandling = InstanceHandlingType.InstanceRenderer;
+    Dictionary<string, HashSet<string>> instancesReceivedLastUpdate = new Dictionary<string, HashSet<string>>();
 
     private int numberOfPropertiesReceived;
 

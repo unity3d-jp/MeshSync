@@ -515,6 +515,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         CheckForNewSession(mes);
 
         numberOfPropertiesReceived = 0;
+        instancesReceivedLastUpdate.Clear();
     }
 
     public void ForceDeleteChildrenInNextSession() {
@@ -680,7 +681,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 if (src.entityType != EntityType.Mesh)
                     continue;
                 
-                EntityRecord  dst = UpdateInstancedEntity(src);
+                EntityRecord dst = UpdateInstancedEntity(src);
 
                 if (dst == null) return;
 
@@ -775,13 +776,35 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
         // resolve references
         // this must be another pass because resolving bones can affect references
-        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects) {
+        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
+        {
             EntityRecord rec = kvp.Value;
-            if (!string.IsNullOrEmpty(rec.reference)) {
-                EntityRecord srcrec = null;
-                if (m_clientObjects.TryGetValue(rec.reference, out srcrec) && srcrec.go != null) {
-                    rec.materialIDs = srcrec.materialIDs;
-                    UpdateReference(rec, srcrec, GetConfigV());
+            UpdateReference(rec);
+        }
+        
+        // Check for dead instances and delete them:
+        foreach (var clientInstance in m_clientInstances)
+        {
+            var instancedObjectPath = clientInstance.Key;
+            var instanceInfo = clientInstance.Value;
+
+            foreach (var parentPath in instanceInfo.parentPaths)
+            {
+                if (instancesReceivedLastUpdate.TryGetValue(instancedObjectPath, out var parentList))
+                {
+                    if (parentList.Contains(parentPath))
+                        continue;
+
+                    // The instance for this parent was not updated, remove it:
+                    var parent =
+                        FilmInternalUtilities.GameObjectUtility.FindByPath(m_rootObject, parentPath);
+
+                    EraseInstanceInfoRecord(instanceInfo, parent);
+                }
+                else
+                {
+                    // The instance was not sent at all, remove it from all parents:
+                    EraseInstanceInfoRecord(instanceInfo, null);
                 }
             }
         }
@@ -821,6 +844,19 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
         if (onSceneUpdateEnd != null)
             onSceneUpdateEnd.Invoke();
+    }
+
+    void UpdateReference(EntityRecord rec)
+    {
+        if (!string.IsNullOrEmpty(rec.reference))
+        {
+            EntityRecord srcrec = null;
+            if (m_clientObjects.TryGetValue(rec.reference, out srcrec) && srcrec.go != null)
+            {
+                rec.materialIDs = srcrec.materialIDs;
+                UpdateReference(rec, srcrec, GetConfigV());
+            }
+        }
     }
 
     //----------------------------------------------------------------------------------------------------------------------
@@ -2059,12 +2095,15 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         rec.SetLight(data, config.SyncVisibility, syncLightSettings.CanUpdate);
         return rec;
     }
-
+    
     private void UpdateReference(EntityRecord dst, EntityRecord src, MeshSyncPlayerConfig config) {
         if (src.dataType == EntityType.Unknown) {
             Debug.LogError("MeshSync: should not be here!");
             return;
         }
+
+        // Objects with references are passed as transforms, update the type to match the reference:
+        dst.dataType = src.dataType;
 
         GameObject dstgo = dst.go;
         GameObject srcgo = src.go;
@@ -2202,8 +2241,11 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         if (m_clientInstances.TryGetValue(data.path, out InstanceInfoRecord infoRecord)) {
             // Update the renderer reference
             infoRecord.go = rec.go;
-            MeshSyncInstanceRenderer renderer = infoRecord.renderer;
-            if (renderer != null) renderer.UpdateReference(rec.go);
+
+            foreach (var renderer in infoRecord.renderers)
+            {
+                if (renderer != null) renderer.UpdateReference(rec.go);
+            }
         }
 
         return rec;
@@ -2211,14 +2253,25 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
     private HashSet<string> instanceNames = new HashSet<string>();
 
-    private InstanceInfoRecord UpdateInstanceInfo(InstanceInfoData data) {
+    private InstanceInfoRecord UpdateInstanceInfo(InstanceInfoData data)
+    {
         string path = data.path;
 
+        if (!instancesReceivedLastUpdate.TryGetValue(data.path, out var parentList))
+        {
+            parentList = new HashSet<string>();
+            instancesReceivedLastUpdate[data.path] = parentList;
+        }
+        parentList.Add(data.parentPath);
+
         InstanceInfoRecord infoRecord;
-        if (!m_clientInstances.TryGetValue(path, out infoRecord)) {
+        if (!m_clientInstances.TryGetValue(path, out infoRecord))
+        {
             infoRecord = new InstanceInfoRecord();
             m_clientInstances.Add(path, infoRecord);
         }
+
+        infoRecord.parentPaths.Add(data.parentPath);
 
         EntityRecord instancedEntityRecord;
         // Look for reference in client instanced objects
@@ -2231,23 +2284,29 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
         // Find parent for this instance:
         GameObject instanceRendererParent;
-        if (m_clientObjects.TryGetValue(data.parentPath, out EntityRecord parentRecord)) {
+        if (m_clientObjects.TryGetValue(data.parentPath, out EntityRecord parentRecord))
+        {
             instanceRendererParent = parentRecord.go;
         }
-        else {
+        else
+        {
             instanceRendererParent = m_rootObject.gameObject;
 
             Debug.LogWarningFormat(
                 "[MeshSync] No entity found for parent path {0}, using root as parent", data.parentPath);
         }
 
+        // Ensure references are updated
+        UpdateReference(instancedEntityRecord);
+        
         // Anything other than a mesh needs to use copies if we're in instance renderer mode:
         InstanceHandlingType instanceHandlingToUse = InstanceHandling;
         if (instanceHandlingToUse == InstanceHandlingType.InstanceRenderer &&
             instancedEntityRecord.dataType != EntityType.Mesh)
             instanceHandlingToUse = InstanceHandlingType.Copies;
 
-        switch (instanceHandlingToUse) {
+        switch (instanceHandlingToUse)
+        {
             case InstanceHandlingType.InstanceRenderer:
                 UpdateInstanceInfo_InstanceRenderer(data, infoRecord, instanceRendererParent);
                 break;
@@ -2261,23 +2320,26 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
         return infoRecord;
     }
-    
+
     private void UpdateInstanceInfo_CopiesAndPrefabs(
         InstanceInfoData data,
         InstanceInfoRecord infoRecord,
-        GameObject instanceRendererParent) {
+        GameObject instanceRendererParent)
+    {
         // Make sure the other renderer is removed if this was not a copy or prefab before:
-        if (infoRecord.renderer != null) {
-            DestroyImmediate(infoRecord.renderer);
-            infoRecord.renderer = null;
+        foreach (var meshSyncInstanceRenderer in infoRecord.renderers)
+        {
+            DestroyImmediate(meshSyncInstanceRenderer);
         }
-
-        infoRecord.DeleteInstanceObjects();
+        infoRecord.renderers.Clear();
 
         instanceNames.Add(infoRecord.go.name);
         
         if (infoRecord.go.transform.parent == null ||
-            !instanceNames.Contains(infoRecord.go.transform.parent.name)) {
+            !instanceNames.Contains(infoRecord.go.transform.parent.name))
+        {
+            infoRecord.DeleteInstanceObjects(instanceRendererParent.transform);
+
             GameObject instanceObjectOriginal;
             if (InstanceHandling == InstanceHandlingType.Prefabs)
                 instanceObjectOriginal = GetOrCreatePrefab(data, infoRecord);
@@ -2286,9 +2348,11 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
             if (instanceObjectOriginal == null) return;
 
-            foreach (Matrix4x4 mat in data.transforms) {
+            foreach (Matrix4x4 mat in data.transforms)
+            {
                 GameObject instancedCopy;
-                if (InstanceHandling == InstanceHandlingType.Prefabs) {
+                if (InstanceHandling == InstanceHandlingType.Prefabs)
+                {
 #if UNITY_EDITOR
                     instancedCopy = (GameObject)PrefabUtility.InstantiatePrefab(instanceObjectOriginal,
                         instanceRendererParent.transform);
@@ -2296,7 +2360,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                         instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
 #endif
                 }
-                else {
+                else
+                {
                     instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
                 }
 
@@ -2309,48 +2374,100 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 infoRecord.instanceObjects.Add(instancedCopy);
             }
         }
-        else {
-            // This instance exists inside another instanced object,
-            // update its transform to be correct relative to the parent on the infoRecord:
-            // For example, in an object structure like this:
-            // MainObject
-            //   InstancedChildA
-            //     InstancedChildB
-            // For the instance renderer method, InstancedChildA and InstancedChildB exist as
-            // MeshSyncInstanceRenderer components on MainObject and the transforms in data.transforms
-            // are relative to MainObject. 
-            // In this mode, where we use copies of the objects, InstancedChildB already exists as child of InstancedChildA
-            // but the transform of InstancedChildB needs to be updated to be relative to MainObject.
+        else
+        {
+            var originalInstanceGoParent = infoRecord.go.transform.parent;
+            // If the instance is already in the scene as a child of another instance,
+            // match the child to the corresponding parent and set its transform:
+            if (originalInstanceGoParent != null &&
+                instanceNames.Contains(originalInstanceGoParent.name))
+            {
+                var originalInstanceGoParentPath = BuildPath(originalInstanceGoParent); // BuildPathFromObjectHierarchy(originalInstanceGoParent);
+                if (m_clientInstances.TryGetValue(originalInstanceGoParentPath, out var parentInfoRecord))
+                {
+                    return;
+                    Debug.Assert(parentInfoRecord.instanceObjects.Count == data.transforms.Length,
+                        "The number of instances of the instanced parent and its children should match");
 
-            if (data.transforms.Length != 1) {
-                Debug.LogWarning(
-                    $"[MeshSync] There should never be more than 1 transform on instances inside other instances: {data.path}");
-                return;
+                    // Set the transforms:
+                    for (int i = 0; i < data.transforms.Length; i++)
+                    {
+                        var instanceParent = parentInfoRecord.instanceObjects[i];
+
+                        var instancedCopy = instanceParent.transform.Find(infoRecord.go.name);
+                        EnableInstancedCopy(instancedCopy.gameObject);
+                        
+                        SetInstanceTransformRelative(instanceRendererParent, instancedCopy, ref data.transforms[i]);
+                    }
+                }
             }
+            else
+            {
+                // This instance exists inside another instanced object,
+                // update its transform to be correct relative to the parent on the infoRecord:
+                // For example, in an object structure like this:
+                // MainObject
+                //   InstancedChildA
+                //     InstancedChildB
+                // For the instance renderer method, InstancedChildA and InstancedChildB exist as
+                // MeshSyncInstanceRenderer components on MainObject and the transforms in data.transforms
+                // are relative to MainObject. 
+                // In this mode, where we use copies of the objects, InstancedChildB already exists as child of InstancedChildA
+                // but the transform of InstancedChildB needs to be updated to be relative to MainObject.
 
-            // Find the instanced copy as (a potentially indirect) child of `MainObject`:
-            var instancedCopy =
-                FilmInternalUtilities.GameObjectUtility.FindByPath(instanceRendererParent.transform, data.path);
+                // if (data.transforms.Length != 1) {
+                //     Debug.LogWarning(
+                //         $"[MeshSync] There should never be more than 1 transform on instances inside other instances: {data.path}");
+                //     return;
+                // }
 
-            if (instancedCopy == null) {
-                Debug.LogWarning(
-                    $"[MeshSync] No instanced copy found for {data.path}");
-                return;
+                // Find the instanced copy as (a potentially indirect) child of `MainObject`:
+                var instancedCopy =
+                    FilmInternalUtilities.GameObjectUtility.FindByPath(instanceRendererParent.transform, data.path);
+
+                if (instancedCopy == null)
+                {
+                    Debug.LogWarning(
+                        $"[MeshSync] No instanced copy found for {data.path}");
+                    return;
+                }
+
+                SetInstanceTransformRelative(instanceRendererParent, instancedCopy, ref data.transforms[0]);
+                // // Set the transform relative to `MainObject`.
+                // // The easiest and safest way to do that is to:
+                // // - parent the instanced copy to `MainObject`
+                // // - set the transform matrix
+                // // - restore the original parent
+                // var originalParent = instancedCopy.parent;
+                //
+                // instancedCopy.transform.SetParent(instanceRendererParent.transform);
+                //
+                // // for (int i = 0; i < data.transforms.Length; i++)
+                // {
+                //     SetInstanceTransform(instancedCopy.gameObject, instanceRendererParent, data.transforms[0]);
+                // }
+                //
+                // instancedCopy.SetParent(originalParent);
             }
-
-            // Set the transform relative to `MainObject`.
-            // The easiest and safest way to do that is to:
-            // - parent the instanced copy to `MainObject`
-            // - set the transform matrix
-            // - restore the original parent
-            var originalParent = instancedCopy.parent;
-
-            instancedCopy.transform.SetParent(instanceRendererParent.transform);
-
-            SetInstanceTransform(instancedCopy.gameObject, instanceRendererParent, data.transforms[0]);
-
-            instancedCopy.SetParent(originalParent);
         }
+    }
+
+    static void SetInstanceTransformRelative(
+        GameObject instanceRendererParent,
+        Transform instancedCopy,
+        ref Matrix4x4 mat)
+    {
+        // Set the transform relative to the parent of the instance.
+        // The easiest and safest way to do that is to:
+        // - parent the instanced copy to the parent of the instance
+        // - set the transform matrix
+        // - restore the original parent
+        var originalParent = instancedCopy.parent;
+        instancedCopy.transform.SetParent(instanceRendererParent.transform);
+
+        SetInstanceTransform(instancedCopy.gameObject, instanceRendererParent, mat);
+
+        instancedCopy.SetParent(originalParent);
     }
 
     private void EnableInstancedCopy(GameObject obj) {
@@ -2426,14 +2543,40 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         return instanceObject;
     }
 
-    private static void UpdateInstanceInfo_InstanceRenderer(InstanceInfoData data, InstanceInfoRecord infoRecord,
-        GameObject instanceRendererParent) {
+    private static void UpdateInstanceInfo_InstanceRenderer(
+        InstanceInfoData data,
+        InstanceInfoRecord infoRecord,
+        GameObject instanceRendererParent)
+    {
         infoRecord.DeleteInstanceObjects();
 
-        if (instanceRendererParent != null && infoRecord.renderer == null)
-            infoRecord.renderer = instanceRendererParent.AddComponent<MeshSyncInstanceRenderer>();
+        if (instanceRendererParent != null)
+        {
+            var existingRenderers = instanceRendererParent.GetComponents<MeshSyncInstanceRenderer>();
 
-        infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
+            bool hasRenderer = false;
+            foreach (var existingRenderer in existingRenderers)
+            {
+                if (infoRecord.renderers.Contains(existingRenderer))
+                {
+                    hasRenderer = true;
+                    break;
+                }
+            }
+
+            if (!hasRenderer)
+            {
+                infoRecord.renderers.Add(instanceRendererParent.AddComponent<MeshSyncInstanceRenderer>());
+            }
+        }
+
+        foreach (var renderer in infoRecord.renderers)
+        {
+            if (renderer.gameObject != instanceRendererParent)
+                continue;
+
+            renderer.UpdateAll(data.transforms, infoRecord.go);
+        }
     }
 
     private void UpdateConstraint(ConstraintData data) {
@@ -2595,9 +2738,9 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
             if (m_clientInstances.TryGetValue(rec.Key, out var instanceInfoRecord))
             {
-                if (instanceInfoRecord.renderer != null)
+                foreach (var meshSyncInstanceRenderer in instanceInfoRecord.renderers)
                 {
-                    instanceInfoRecord.renderer.UpdateMaterials();
+                    if (meshSyncInstanceRenderer != null) meshSyncInstanceRenderer.UpdateMaterials();
                 }
                 
                 foreach (var instancedCopy in instanceInfoRecord.instanceObjects)
@@ -2670,18 +2813,37 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         return ret;
     }
 
+    internal void EraseInstanceInfoRecord(
+        InstanceInfoRecord record,
+        Transform parentFilter)
+    {
+        for (var i = record.renderers.Count - 1; i >= 0; i--)
+        {
+            var meshSyncInstanceRenderer = record.renderers[i];
+            if (parentFilter == null || meshSyncInstanceRenderer.transform == parentFilter)
+            {
+                DestroyImmediate(meshSyncInstanceRenderer);
+                record.renderers.RemoveAt(i);
+            }
+        }
+
+        record.DeleteInstanceObjects(parentFilter);
+    }
+    
     internal bool EraseInstanceInfoRecord(Identifier identifier) {
         return EraseInstanceRecord(identifier, m_clientInstances,
             delegate(InstanceInfoRecord record) {
-                DestroyImmediate(record.renderer);
-
+                foreach (var meshSyncInstanceRenderer in record.renderers)
+                {
+                    DestroyImmediate(meshSyncInstanceRenderer);
+                }
                 record.DeleteInstanceObjects();
 
                 if (onDeleteInstanceInfo != null)
                     onDeleteInstancedEntity(identifier.name);
             });
     }
-
+    
     internal bool EraseInstancedEntityRecord(Identifier identifier) {
         return EraseInstanceRecord(identifier, m_clientInstancedEntities,
             delegate(EntityRecord record) {
@@ -3200,12 +3362,12 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
     private List<IObserver<MeshSyncAnalyticsData>> m_observers = new List<IObserver<MeshSyncAnalyticsData>>();
     private Material                               m_cachedDefaultMaterial;
 
-    private readonly           Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
+    private protected readonly Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
     private protected readonly Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
     private readonly           Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
 
     [SerializeField] private protected InstanceInfoRecordDictionary m_clientInstances         = new InstanceInfoRecordDictionary();
-    [SerializeField] private           EntityRecordDictionary       m_clientInstancedEntities = new EntityRecordDictionary();
+    [SerializeField] private protected EntityRecordDictionary       m_clientInstancedEntities = new EntityRecordDictionary();
 
     private protected Action m_onMaterialChangedInSceneViewCB = null;
 
