@@ -30,6 +30,10 @@ partial class MeshSyncServer {
                 base.InstanceHandling = value;
 
                 ClearInstancePrefabs();
+                
+                m_clientInstances.Clear();
+                m_clientInstancedEntities.Clear();
+                m_clientObjects.Clear();
             }
         }
     }
@@ -61,7 +65,10 @@ partial class MeshSyncServer {
             foreach (KeyValuePair<string, InstanceInfoRecord> inst in m_clientInstances) {
                 count += inst.Value.instanceObjects.Count;
 
-                if (inst.Value.renderer != null) count += inst.Value.renderer.TransformCount;
+                foreach (var renderer in inst.Value.renderers)
+                {
+                    if (renderer != null) count += renderer.TransformCount; 
+                }
             }
 
             return count;
