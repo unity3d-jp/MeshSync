@@ -2483,6 +2483,39 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
     {
         infoRecord.DeleteInstanceObjects();
 
+        // If the infoRecord's gameObject has a mesh instance renderer, we need to make child instance renderers:
+        var instanceRenderers = infoRecord.go.GetComponents<MeshSyncInstanceRenderer>();
+        if (instanceRenderers.Length > 0)
+        {
+            Debug.LogWarningFormat("[MeshSync] Using child instance renderers for {0}", data.path);
+
+            var existingRenderers = instanceRendererParent.GetComponents<MeshSyncInstanceRenderer>();
+
+            foreach (var instanceRenderer in instanceRenderers)
+            {
+                MeshSyncInstanceRenderer renderer = null;
+                foreach (var existingRenderer in existingRenderers)
+                {
+                    if (instanceRenderer.ParentRenderers.Contains(existingRenderer))
+                    {
+                        renderer = existingRenderer;
+                        break;
+                    }
+                }
+
+                if (renderer == null)
+                {
+                    renderer = instanceRendererParent.AddComponent<MeshSyncInstanceRenderer>();
+                    infoRecord.renderers.Add(renderer);
+                    instanceRenderer.ParentRenderers.Add(renderer);
+                }
+
+                renderer.UpdateFromExistingInstanceRenderer(instanceRenderer, data);
+            }
+
+            return;
+        }
+
         if (instanceRendererParent != null)
         {
             var existingRenderers = instanceRendererParent.GetComponents<MeshSyncInstanceRenderer>();
@@ -2948,6 +2981,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
         transform.DestroyChildrenImmediate();
 
+        AssetDatabase.StartAssetEditing();
+        
         foreach (PrefabHolder prefabHolder in m_prefabDict.Values) {
             string path = AssetDatabase.GetAssetPath(prefabHolder.prefab);
 
@@ -2958,6 +2993,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
             AssetDatabase.DeleteAsset(path);
         }
+        
+        AssetDatabase.StopAssetEditing();
 
         m_prefabDict.Clear();
     }
