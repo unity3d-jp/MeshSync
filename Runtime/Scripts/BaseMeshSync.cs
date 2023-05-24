@@ -890,7 +890,13 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
     //----------------------------------------------------------------------------------------------------------------------
 
-    private void UpdateTextureAsset(TextureData src) {
+    private void UpdateTextureAsset(TextureData src)
+    {
+        if (!GetConfigV().GetModelImporterSettings().ImportTextures)
+        {
+            return;
+        }
+        
         MakeSureAssetDirectoryExists();
         Texture2D texture = null;
 #if UNITY_EDITOR
