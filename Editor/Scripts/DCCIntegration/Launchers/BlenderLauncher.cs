@@ -53,8 +53,9 @@ internal class BlenderLauncher : IDCCLauncher {
 
     #region IDCCLauncher
     
-    public void OpenDCCTool(UnityEngine.Object asset) {
-        string assetPath = FilmInternalUtilities.AssetUtility.ToAssetRelativePath(AssetDatabase.GetAssetPath(asset));
+    public void OpenDCCTool(UnityEngine.Object asset)
+    {
+        string assetPath = AssetDatabase.GetAssetPath(asset);
         OpenDCCTool(assetPath);
     }
 
