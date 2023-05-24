@@ -2401,10 +2401,10 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         if (renderer != null)
             renderer.enabled = true;
 
-        for (int i = 0; i < obj.transform.childCount; i++)
-        {
-            EnableInstancedCopy(obj.transform.GetChild(i).gameObject);
-        }
+        // for (int i = 0; i < obj.transform.childCount; i++)
+        // {
+        //     EnableInstancedCopy(obj.transform.GetChild(i).gameObject);
+        // }
     }
 
     private static void SetInstanceTransform(GameObject instancedCopy, GameObject parent, Matrix4x4 mat) {
