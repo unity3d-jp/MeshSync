@@ -1815,7 +1815,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         return rec;
     }
 
-    static Transform FindOrCreateByPath(Transform parent, string path, Action<string> parentCreationCallback, bool worldPositionStays = true) {
+    private Transform FindOrCreateByPath(Transform parent, string path, Action<string> parentCreationCallback, bool worldPositionStays = true) {
         string[] names = path.Split('/');
         if (names.Length <= 0)
             return null;
@@ -1841,12 +1841,15 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             if (null == t) {
                 GameObject go = new GameObject(rootGameObjectName);
                 t = go.GetComponent<Transform>();
+                
+                // Ensure any objects we create are on the same layer as the server:
+                go.layer = m_rootObject.gameObject.layer;
             }
 
             tokenStartIdx = 1;
         }
 
-        static Transform FindOrCreateChild(Transform t, string childName, out bool didCreate, bool worldPositionStays = true) {
+        Transform FindOrCreateChild(Transform t, string childName, out bool didCreate, bool worldPositionStays = true) {
             Transform childT = t.Find(childName);
             if (null != childT) {
                 didCreate = false;
@@ -1854,6 +1857,9 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             }
 
             GameObject go = new GameObject(childName);
+            // Ensure any objects we create are on the same layer as the server:
+            go.layer = m_rootObject.gameObject.layer;
+            
             childT = go.transform;
             childT.SetParent(t, worldPositionStays);
             didCreate = true;
@@ -2223,7 +2229,9 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         if (!m_clientInstancedEntities.TryGetValue(data.path, out EntityRecord rec) || rec.go == null) {
             Transform trans =
                 FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, data.path, false);
-
+        
+            // Ensure any objects we create are on the same layer as the server:
+            trans.gameObject.layer = m_rootObject.gameObject.layer;
             rec = new EntityRecord {
                 go     = trans.gameObject,
                 trans  = trans,
