@@ -892,11 +892,6 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
     private void UpdateTextureAsset(TextureData src)
     {
-        if (!GetConfigV().GetModelImporterSettings().ImportTextures)
-        {
-            return;
-        }
-        
         MakeSureAssetDirectoryExists();
         Texture2D texture = null;
 #if UNITY_EDITOR
@@ -941,6 +936,12 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 #if UNITY_EDITOR
             // write data to file and import
             string path = m_assetsFolder + "/" + src.name;
+            
+            if (!GetConfigV().GetModelImporterSettings().ImportTextures && File.Exists(path))
+            {
+                return;
+            }
+            
             if (src.WriteToFile(path))
                 doImport(path);
 #endif
