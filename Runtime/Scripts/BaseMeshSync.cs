@@ -2979,20 +2979,24 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
         transform.DestroyChildrenImmediate();
 
-        AssetDatabase.StartAssetEditing();
-        
-        foreach (PrefabHolder prefabHolder in m_prefabDict.Values) {
-            string path = AssetDatabase.GetAssetPath(prefabHolder.prefab);
+        if (m_prefabDict.Count > 0)
+        {
+            AssetDatabase.StartAssetEditing();
 
-            // Also delete its asset:
-            string[] deps      = AssetDatabase.GetDependencies(path);
-            string   assetName = Path.ChangeExtension(path, "asset");
-            if (deps.Contains(assetName)) AssetDatabase.DeleteAsset(assetName);
+            foreach (PrefabHolder prefabHolder in m_prefabDict.Values)
+            {
+                string path = AssetDatabase.GetAssetPath(prefabHolder.prefab);
 
-            AssetDatabase.DeleteAsset(path);
+                // Also delete its asset:
+                string[] deps = AssetDatabase.GetDependencies(path);
+                string assetName = Path.ChangeExtension(path, "asset");
+                if (deps.Contains(assetName)) AssetDatabase.DeleteAsset(assetName);
+
+                AssetDatabase.DeleteAsset(path);
+            }
+
+            AssetDatabase.StopAssetEditing();
         }
-        
-        AssetDatabase.StopAssetEditing();
 
         m_prefabDict.Clear();
     }
