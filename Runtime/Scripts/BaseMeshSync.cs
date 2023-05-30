@@ -2358,11 +2358,6 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         for (int x = 0; x < 3; x++)
         for (int y = 0; y < 3; y++)
         {
-            if (Math.Abs(localMatrix[x, y] - converted[x, y]) > 0.01f)
-            {
-                int zzzz = 0;
-                zzzz++;
-            }
             Debug.Assert(Math.Abs(localMatrix[x, y] - converted[x, y]) < 0.01f, "Matrices don't match!");
         }
 #endif
