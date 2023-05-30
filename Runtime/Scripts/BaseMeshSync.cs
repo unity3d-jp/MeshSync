@@ -856,6 +856,17 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 rec.materialIDs = srcrec.materialIDs;
                 UpdateReference(rec, srcrec, GetConfigV());
             }
+            // else if(m_clientInstancedEntities.TryGetValue(rec.reference, out srcrec) && srcrec.go != null)
+            // {
+            //     rec.materialIDs = srcrec.materialIDs;
+            //     UpdateReference(rec, srcrec, GetConfigV());
+            // }
+            
+            // if(srcrec.go!=null)
+            // { 
+            //         rec.materialIDs = srcrec.materialIDs;
+            //         UpdateReference(rec, srcrec, GetConfigV()); 
+            // }
         }
     }
 
@@ -2307,24 +2318,6 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 infoRecord.instanceObjects.Add(instancedCopy);
             }
         }
-    }
-
-    static void SetInstanceTransformRelative(
-        GameObject instanceRendererParent,
-        Transform instancedCopy,
-        ref Matrix4x4 mat)
-    {
-        // Set the transform relative to the parent of the instance.
-        // The easiest and safest way to do that is to:
-        // - parent the instanced copy to the parent of the instance
-        // - set the transform matrix
-        // - restore the original parent
-        var originalParent = instancedCopy.parent;
-        instancedCopy.transform.SetParent(instanceRendererParent.transform);
-
-        SetInstanceTransform(instancedCopy.gameObject, instanceRendererParent, mat);
-
-        instancedCopy.SetParent(originalParent);
     }
 
     private void EnableInstancedCopy(GameObject obj) {
