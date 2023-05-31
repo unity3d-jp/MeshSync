@@ -2721,10 +2721,13 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 
                 foreach (var instancedCopy in instanceInfoRecord.instanceObjects)
                 {
-                    var renderer = instancedCopy.GetComponent<Renderer>();
-                    if (renderer != null)
+                    if (instancedCopy != null)
                     {
-                        AssignMaterials(renderer, rec.Value.materialIDs, recordUndo);
+                        var renderer = instancedCopy.GetComponent<Renderer>();
+                        if (renderer != null)
+                        {
+                            AssignMaterials(renderer, rec.Value.materialIDs, recordUndo);
+                        }
                     }
                 }
             }
