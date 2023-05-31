@@ -2221,10 +2221,15 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         // Look for reference in client instanced objects
         if (m_clientInstancedEntities.TryGetValue(path, out instancedEntityRecord))
             infoRecord.go = instancedEntityRecord.go;
-        else if (m_clientObjects.TryGetValue(path, out instancedEntityRecord))
-            infoRecord.go = instancedEntityRecord.go;
-        else
-            throw new Exception($"[MeshSync] No instanced entity found for path {data.path}");
+
+        // Instanced object might exist in m_clientInstancedEntities but deleted because it was sent as a client object:
+        if (instancedEntityRecord == null || instancedEntityRecord.go == null)
+        {
+            if (m_clientObjects.TryGetValue(path, out instancedEntityRecord))
+                infoRecord.go = instancedEntityRecord.go;
+            else
+                throw new Exception($"[MeshSync] No instanced entity found for path {data.path}");
+        }
 
         // Find parent for this instance:
         GameObject instanceRendererParent;
@@ -2277,6 +2282,11 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         }
         infoRecord.renderers.Clear();
 
+        if (infoRecord.go == null)
+        {
+            Debug.LogError($"Found null on {infoRecord.parentPaths} {instanceRendererParent} {data.path}");
+        }
+        
         instanceNames.Add(infoRecord.go.name);
         
         if (infoRecord.go.transform.parent == null ||
@@ -2661,6 +2671,11 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         int        materialCount = materialIDs.Length;
         Material[] materials     = new Material[materialCount];
         Material[] prevMaterials = r.sharedMaterials;
+
+        // If the number of material slots has changed, we have to reassign!
+        if (prevMaterials.Length != materials.Length) 
+            changed = true;
+
         Array.Copy(prevMaterials, materials, Math.Min(prevMaterials.Length, materials.Length));
 
         for (int si = 0; si < materialCount; ++si) {
