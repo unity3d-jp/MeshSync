@@ -243,6 +243,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
     internal abstract MeshSyncPlayerConfig GetConfigV();
 
+    protected bool IsColorInGammaSpace = false;
 
     internal bool useCustomCameraMatrices {
         get { return m_useCustomCameraMatrices; }
@@ -515,6 +516,11 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         CheckForNewSession(mes);
 
         numberOfPropertiesReceived = 0;
+
+        if (mes.HasValue)
+        {
+            IsColorInGammaSpace = mes.Value.DCCToolName.ToLower().Contains("blender");
+        }
     }
 
     public void ForceDeleteChildrenInNextSession() {
@@ -1352,12 +1358,15 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 {
                     // Apply gamma correction if needed:
                     Color propertyValueAsColor = prop.vectorValue;
-                    var col = QualitySettings.activeColorSpace == ColorSpace.Linear ? propertyValueAsColor.gamma : propertyValueAsColor;
+
+                    var col = IsColorInGammaSpace && QualitySettings.activeColorSpace == ColorSpace.Linear
+                        ? propertyValueAsColor.gamma
+                        : propertyValueAsColor;
                     destMat.SetVector(propNameID, col);
                 }
                 else
                 {
-                    if (QualitySettings.activeColorSpace == ColorSpace.Linear)
+                    if (IsColorInGammaSpace && QualitySettings.activeColorSpace == ColorSpace.Linear)
                     {
                         var propertyValueAsColorArray = new Vector4[prop.vectorArray.Length];
                         for (int i = 0; i < prop.vectorArray.Length; i++)
