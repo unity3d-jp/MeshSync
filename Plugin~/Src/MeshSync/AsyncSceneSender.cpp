@@ -220,15 +220,13 @@ void AsyncSceneSender::send()
 
     //instance meshes
     if (!instanceMeshes.empty()) {
-        for (auto& mesh : instanceMeshes) {
-            ms::SetMessage mes;
-            setup_message(mes);
-            mes.scene->settings = scene_settings;
-            mes.scene->instanceMeshes = { mesh };
-            succeeded = succeeded && client.send(mes);
-            if (!succeeded)
-                goto cleanup;
-        }
+        ms::SetMessage mes;
+        setup_message(mes);
+        mes.scene->settings = scene_settings;
+        mes.scene->instanceMeshes = instanceMeshes;
+        succeeded = succeeded && client.send(mes);
+        if (!succeeded)
+            goto cleanup;
     }
 
     // instance infos
