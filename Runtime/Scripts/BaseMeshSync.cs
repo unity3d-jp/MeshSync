@@ -684,7 +684,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 
                 // If an instance entity is not part of the scene, it can only be supported if it is a Mesh
                 //[TODO] Refactor code to support more types
-                if (src.entityType != EntityType.Mesh)
+                if (src.entityType != EntityType.Mesh &&
+                    src.entityType != EntityType.Transform)
                     continue;
                 
                 EntityRecord dst = UpdateInstancedEntity(src);
@@ -2271,7 +2272,10 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         }
 
         UpdateTransformEntity(data, config, rec);
-        UpdateMeshEntity((MeshData)data, config, rec);
+        if (data.entityType == EntityType.Mesh)
+        {
+            UpdateMeshEntity((MeshData)data, config, rec);
+        }
 
         m_clientInstancedEntities[data.path] = rec;
 
