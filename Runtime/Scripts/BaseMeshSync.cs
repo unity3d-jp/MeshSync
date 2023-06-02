@@ -3272,6 +3272,9 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         m_tmpV3.Dispose();
         m_tmpV4.Dispose();
         m_tmpC.Dispose();
+
+        onSceneUpdateEnd = null;
+        onDeleteEntity = null;
         
 #if UNITY_EDITOR
         // Release any render textures that have not been released:
