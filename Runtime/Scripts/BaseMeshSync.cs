@@ -948,10 +948,14 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         MakeSureAssetDirectoryExists();
         Texture2D texture = null;
 #if UNITY_EDITOR
-        Action<string> doImport = (path) => {
+        Action<string, bool> doImport = (path, forceReimport) => {
             bool assetExisted = AssetDatabase.LoadAssetAtPath<Texture2D>(path) != null;
 
-            AssetDatabase.ImportAsset(path);
+            if (forceReimport)
+            {
+                AssetDatabase.ImportAsset(path);
+            }
+
             texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
             if (texture != null) {
                 TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
@@ -967,12 +971,20 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 if (importer != null)
                     switch (src.type) {
                         case TextureType.NormalMap:
-                            importer.textureType = TextureImporterType.NormalMap;
-                            needReimport         = true;
+                            if (importer.textureType != TextureImporterType.NormalMap)
+                            {
+                                importer.textureType = TextureImporterType.NormalMap;
+                                needReimport = true;
+                            }
+
                             break;
                         case TextureType.NonColor:
-                            importer.sRGBTexture = false;
-                            needReimport         = true;
+                            if (importer.sRGBTexture)
+                            {
+                                importer.sRGBTexture = false;
+                                needReimport = true;
+                            }
+
                             break;
                     }
 
@@ -990,13 +1002,10 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             // write data to file and import
             string path = m_assetsFolder + "/" + src.name;
             
-            if (!GetConfigV().GetModelImporterSettings().ImportTextures && File.Exists(path))
-            {
-                return;
-            }
+            bool needImport = GetConfigV().GetModelImporterSettings().ImportTextures || !File.Exists(path);
             
-            if (src.WriteToFile(path))
-                doImport(path);
+            if (!needImport || src.WriteToFile(path))
+                doImport(path, needImport);
 #endif
         }
         else {
@@ -1038,7 +1047,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
             if (exported) {
                 texture = null;
-                doImport(path);
+                doImport(path, true);
             }
 #endif
         }
