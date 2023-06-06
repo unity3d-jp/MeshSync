@@ -9,6 +9,8 @@
 
 namespace ms {
 
+bool Mesh::useNormalsForHashing = true;
+
 static_assert(sizeof(MeshDataFlags) == sizeof(uint32_t), "");
 static_assert(sizeof(MeshRefineFlags) == sizeof(uint32_t), "");
 
@@ -510,7 +512,12 @@ uint64_t Mesh::checksumGeom() const
     uint64_t ret = 0;
     ret += refine_settings.checksum();
 #define Body(A) ret += csum(A);
-    EachGeometryAttributeExceptNormals(Body);
+    if (useNormalsForHashing) {
+        EachGeometryAttribute(Body);
+    }
+    else {
+        EachGeometryAttributeExceptNormals(Body);
+    }
 #undef Body
 
     // bones

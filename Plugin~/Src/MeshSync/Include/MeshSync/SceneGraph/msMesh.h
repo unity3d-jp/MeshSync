@@ -135,7 +135,7 @@ public:
     SharedVector<mu::Weights1>  weights1;
     uint32_t bone_weight_count = 0; // sum of bone_counts
 
-
+    static bool useNormalsForHashing;
 protected:
     Mesh();
     ~Mesh() override;
