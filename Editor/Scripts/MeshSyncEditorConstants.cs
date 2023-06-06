@@ -64,6 +64,7 @@ internal static class MeshSyncEditorConstants {
         { "Blender 3.1", new DCCToolInfo(DCCToolType.BLENDER, "3.1") },
         { "Blender 3.2", new DCCToolInfo(DCCToolType.BLENDER, "3.2") },
         { "Blender 3.3", new DCCToolInfo(DCCToolType.BLENDER, "3.3") },
+        { "Blender 3.4", new DCCToolInfo(DCCToolType.BLENDER, "3.4") },
 #elif UNITY_EDITOR_OSX
         { "Blender/2.90", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) }, 
         { "Blender/2.91", new DCCToolInfo(DCCToolType.BLENDER, "2.91" ) }, 
@@ -73,6 +74,7 @@ internal static class MeshSyncEditorConstants {
         { "Blender/3.1", new DCCToolInfo(DCCToolType.BLENDER, "3.1" ) }, 
         { "Blender/3.2", new DCCToolInfo(DCCToolType.BLENDER, "3.2" ) }, 
         { "Blender/3.3", new DCCToolInfo(DCCToolType.BLENDER, "3.3" ) }, 
+        { "Blender/3.4", new DCCToolInfo(DCCToolType.BLENDER, "3.4" ) }, 
         { "Blender.app", new DCCToolInfo(DCCToolType.BLENDER, null ) },  //app directly
 #elif UNITY_EDITOR_LINUX
         { "blender-2.90.0-linux64", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) },
@@ -99,6 +101,15 @@ internal static class MeshSyncEditorConstants {
         { "blender-3.2.1-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.2" ) },
         { "blender-3.2.2-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.2" ) },
         { "blender-3.3.0-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.3" ) },
+        { "blender-3.3.1-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.3" ) },
+        { "blender-3.3.2-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.3" ) },
+        { "blender-3.3.3-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.3" ) },
+        { "blender-3.3.4-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.3" ) },
+        { "blender-3.3.5-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.3" ) },
+        { "blender-3.3.6-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.3" ) },
+        { "blender-3.3.7-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.3" ) },
+        { "blender-3.4.0-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.4" ) },
+        { "blender-3.4.1-linux-x64", new DCCToolInfo(DCCToolType.BLENDER, "3.4" ) },
 #endif
     };
 
