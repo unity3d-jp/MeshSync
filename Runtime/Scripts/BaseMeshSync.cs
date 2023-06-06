@@ -1005,7 +1005,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             
             bool needImport = GetConfigV().GetModelImporterSettings().ImportTextures || !File.Exists(path);
             
-            if (!needImport || src.WriteToFile(path))
+            if (src.WriteToFile(path))
                 doImport(path, needImport);
 #endif
         }
