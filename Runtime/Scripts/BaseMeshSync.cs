@@ -1773,7 +1773,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 t = go.GetComponent<Transform>();
 
                 if (gameObjectLayer != -1) {
-                    go.layer = gameObjectLayer;// m_rootObject.gameObject.layer;
+                    go.layer = gameObjectLayer;
                 }
             }
 
@@ -1790,7 +1790,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             GameObject go = new GameObject(childName);
 
             if (gameObjectLayer != -1) {
-                go.layer = gameObjectLayer;// m_rootObject.gameObject.layer;
+                go.layer = gameObjectLayer;
             }
             
             childT = go.transform;
