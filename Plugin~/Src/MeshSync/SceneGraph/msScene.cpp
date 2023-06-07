@@ -235,18 +235,18 @@ void Scene::sanitizeObjectName(std::string& name)
 
 std::vector<EntityConverterPtr> Scene::getConverters(const SceneImportSettings& cv, const SceneSettings& settings, bool invert) {
     // receive and convert assets
-    bool flip_x = settings.handedness == Handedness::Right || settings.handedness == Handedness::RightZUp;
-    bool swap_yz = settings.handedness == Handedness::LeftZUp || settings.handedness == Handedness::RightZUp;
+    bool flip_x = settings.get_handedness() == Handedness::Right || settings.get_handedness() == Handedness::RightZUp;
+    bool swap_yz = settings.get_handedness() == Handedness::LeftZUp || settings.get_handedness() == Handedness::RightZUp;
 
     std::vector<EntityConverterPtr> converters;
-    if (settings.scale_factor != 1.0f) {
+    if (settings.get_scale_factor() != 1.0f) {
         float scale;
 
         if (invert) {
-            scale = settings.scale_factor;
+            scale = settings.get_scale_factor();
         }
         else {
-            scale = 1.0f / settings.scale_factor;
+            scale = 1.0f / settings.get_scale_factor();
         }
 
         converters.push_back(ScaleConverter::create(scale));
@@ -307,8 +307,8 @@ void Scene::import(const SceneImportSettings& cv)
         }
     }
 
-    settings.handedness = Handedness::Left;
-    settings.scale_factor = 1.0f;
+    settings.set_handedness(Handedness::Left);
+    settings.set_scale_factor(1.0f);
 }
 
 void Scene::updateEntities(

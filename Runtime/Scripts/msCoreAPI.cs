@@ -3200,10 +3200,17 @@ internal struct SceneData {
     [DllImport(Lib.name)]
     private static extern int msSceneGetMaterialSyncMode(IntPtr self);
 
+    [DllImport(Lib.name)]
+    private static extern int msSceneGetColorSpace(IntPtr self);
+    
     #endregion
 
     public static implicit operator bool(SceneData v) {
         return v.self != IntPtr.Zero;
+    }
+    
+    public bool isSRGBColorSpace {
+        get { return msSceneGetColorSpace(self) == 1; }
     }
 
     public int numAssets {

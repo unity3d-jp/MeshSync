@@ -516,11 +516,6 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         CheckForNewSession(mes);
 
         numberOfPropertiesReceived = 0;
-
-        if (mes.HasValue)
-        {
-            IsColorInGammaSpace = mes.Value.DCCToolName.ToLower().Contains("blender");
-        }
     }
 
     public void ForceDeleteChildrenInNextSession() {
@@ -576,7 +571,10 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
     private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets, bool logAnalytics = true) {
         MeshSyncPlayerConfig config = GetConfigV();
         // handle assets
-        Try(() => {
+        Try(() =>
+        {
+            IsColorInGammaSpace = scene.isSRGBColorSpace;
+            
             int numAssets = scene.numAssets;
             if (numAssets > 0) {
                 bool save = false;

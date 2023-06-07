@@ -579,6 +579,8 @@ msAPI int msSceneGetMaterialSyncMode(const ms::Scene* self)
     // TODO: use this instead:
     //return self->settings.material_sync_mode;
 }
+msAPI int msSceneGetColorSpace(const ms::Scene* self) { return (int)self->settings.get_color_space(); }
+
 msAPI ms::SceneProfileData msSceneGetProfileData(const ms::Scene *self) { return self->profile_data; }
 #pragma endregion
 
