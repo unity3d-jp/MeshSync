@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
+## [0.17.3-preview] - 2023-06-12
+
+### Added
+* internal: add a field to skip texture imports
+
+### Changed
+* change: send all instanced meshes at once to avoid instance display issues
+* opt: make texture import faster and ensure texture is still loaded when skipping import 
+
+### Fixed
+* internal-fix: incorrect path when opening an asset with a DCC Tool 
+
 ## [0.17.2-preview] - 2023-05-11
 
 ### Added
