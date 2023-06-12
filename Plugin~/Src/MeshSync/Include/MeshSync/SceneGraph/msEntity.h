@@ -31,6 +31,8 @@ public:
     int host_id = InvalidID;
     std::string path;
 
+    uint64_t propertiesHash;
+
     // non-serializable
     // flags for scene cache player
     struct {

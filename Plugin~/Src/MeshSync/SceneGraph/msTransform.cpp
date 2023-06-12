@@ -152,7 +152,7 @@ void Transform::clear() {
 }
 
 uint64_t Transform::checksumTrans() const {
-    uint64_t ret = 0;
+    uint64_t ret = propertiesHash;
     ret += csum(position);
     ret += csum(rotation);
     ret += csum(scale);
