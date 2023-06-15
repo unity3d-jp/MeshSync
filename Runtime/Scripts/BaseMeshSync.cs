@@ -2428,9 +2428,17 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         }
     }
 
-    private void EnableInstancedCopy(GameObject obj) {
-        obj.SetActive(true);
+    static void EnableChildren(Transform trans) {
+        trans.gameObject.SetActive(true);
 
+        for (int i = 0; i < trans.childCount; i++) {
+            EnableChildren(trans.GetChild(i));
+        }
+    }
+
+    private void EnableInstancedCopy(GameObject obj) {
+        EnableChildren(obj.transform);
+        
         MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
         if (renderer != null)
             renderer.enabled = true;
@@ -3274,6 +3282,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         m_tmpC.Dispose();
 
         onSceneUpdateEnd = null;
+        onSceneUpdateBegin = null;
         onDeleteEntity = null;
         
 #if UNITY_EDITOR

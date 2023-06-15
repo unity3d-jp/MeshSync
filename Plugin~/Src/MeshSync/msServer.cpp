@@ -91,6 +91,10 @@ int Server::processMessages(const MessageHandler& handler)
         m_processing_messages.splice(m_processing_messages.end(), m_received_messages);
     }
 
+    static time_t lastSessionIDReset = time(0);
+    
+  
+
     int ret = 0;
     for (auto i = m_processing_messages.begin(); i != m_processing_messages.end(); /**/) {
         auto& holder = *i;
@@ -127,16 +131,26 @@ int Server::processMessages(const MessageHandler& handler)
         }
         else if (auto fence = std::dynamic_pointer_cast<FenceMessage>(mes)) {
             if (fence->type == FenceMessage::FenceType::SceneBegin) {
-                if (m_current_scene_session == InvalidID)
+                if (m_current_scene_session == InvalidID) {
                     m_current_scene_session = fence->session_id;
+                    lastSessionIDReset = time(0);
+                }
                 else
                     skip = true;
             }
             else if (fence->type == FenceMessage::FenceType::SceneEnd) {
                 if (m_current_scene_session == fence->session_id)
                     m_current_scene_session = InvalidID;
-                else
+                else {
+                    // The server can get stuck with a session id and ignore every session afterwards if the client sends a begin fence but no end fence.
+                    // This can happen if the client crashes or disconnects between fences.
+                    // To handle this, we reset the session id if we don't receive an end fence after a certain amount of time:
+                    if(time(0) - lastSessionIDReset > 10)
+                    {
+                        m_current_scene_session = InvalidID;
+                    }
                     skip = true;
+                }
             }
 
             if (!skip) {
