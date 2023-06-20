@@ -2373,6 +2373,13 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         InstanceInfoRecord infoRecord,
         GameObject instanceRendererParent)
     {
+#if UNITY_EDITOR
+        if (PrefabUtility.IsAnyPrefabInstanceRoot(instanceRendererParent)) {
+            Debug.LogWarning($"Object '{instanceRendererParent.name}' is a prefab, to avoid data loss this cannot be updated. If you want to update this object, clear the prefabs on the MeshSyncServer.");
+            return;
+        }
+#endif
+            
         // Make sure the other renderer is removed if this was not a copy or prefab before:
         foreach (var meshSyncInstanceRenderer in infoRecord.renderers)
         {
@@ -2488,9 +2495,10 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             if (instanceObject == null) m_prefabDict.Remove(data.path);
         }
 
+#if UNITY_EDITOR // Cannot create prefabs when not in editor.
+
         // Create it if it doesn't exist:
         if (instanceObject == null) {
-#if UNITY_EDITOR // Cannot create prefabs when not in editor.
             ExportMeshes();
             ExportMaterials();
 
@@ -2510,9 +2518,9 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             instanceObject = prefab;
 
             infoRecord.go.SetActive(wasActive);
-#endif
         }
-
+#endif
+        
         return instanceObject;
     }
 
