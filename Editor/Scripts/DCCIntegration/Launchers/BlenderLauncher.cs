@@ -14,9 +14,9 @@ internal class BlenderLauncher : IDCCLauncher {
     private        Process m_blenderProcess;
     private static bool    redirectBlenderToUnityConsole;
 
-	public bool HasProcess => m_blenderProcess != null;
-
-    public RunMode runMode { get; set; }
+    public bool    HasProcess => m_blenderProcess != null;
+    
+    public RunMode runMode    { get; set; }
 
     internal string InteropFile =
         Path.GetFullPath("Packages/com.unity.meshsync/Editor/Scripts/DCCIntegration/Launchers/blender_interop.py");

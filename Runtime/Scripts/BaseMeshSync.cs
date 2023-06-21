@@ -1845,7 +1845,11 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         return rec;
     }
 
-    private Transform FindOrCreateByPath(Transform parent, string path, Action<string> parentCreationCallback, bool worldPositionStays = true) {
+    static Transform FindOrCreateByPath(Transform parent, 
+        string path,
+        Action<string> parentCreationCallback,
+        bool worldPositionStays = true, 
+        int gameObjectLayer = -1) {
         string[] names = path.Split('/');
         if (names.Length <= 0)
             return null;
@@ -1871,9 +1875,10 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             if (null == t) {
                 GameObject go = new GameObject(rootGameObjectName);
                 t = go.GetComponent<Transform>();
-                
-                // Ensure any objects we create are on the same layer as the server:
-                go.layer = m_rootObject.gameObject.layer;
+
+                if (gameObjectLayer != -1) {
+                    go.layer = gameObjectLayer;
+                }
             }
 
             tokenStartIdx = 1;
@@ -1887,8 +1892,10 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             }
 
             GameObject go = new GameObject(childName);
-            // Ensure any objects we create are on the same layer as the server:
-            go.layer = m_rootObject.gameObject.layer;
+
+            if (gameObjectLayer != -1) {
+                go.layer = gameObjectLayer;
+            }
             
             childT = go.transform;
             childT.SetParent(t, worldPositionStays);
@@ -1938,7 +1945,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                     if (parentRec.dataType == EntityType.Unknown)
                         parentRec.dataType = EntityType.Transform;
                 },
-                false);
+                false,
+                m_rootObject.gameObject.layer);
 
             rec = new EntityRecord {
                 go     = trans.gameObject,
@@ -2503,6 +2511,9 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             ExportMaterials();
 
             string pathWithoutSlash = data.path.Trim('/');
+
+            pathWithoutSlash = Path.GetFileNameWithoutExtension(pathWithoutSlash);
+            
             string prefabLocation   = Path.Combine(m_assetsFolder, Misc.SanitizeFileName(pathWithoutSlash) + ".prefab");
 
             bool wasActive = infoRecord.go.activeSelf;

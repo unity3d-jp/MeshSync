@@ -202,7 +202,14 @@ partial class BaseMeshSync {
 
         shaderNameExists = shader != null;
 
-        if (shader == null) shader = GetStandardShader();
+        if (shader == null) {
+            Shader defaultShader = GetConfigV().GetModelImporterSettings().DefaultShader;
+            if (defaultShader != null) {
+                return defaultShader;
+            }
+            
+            shader = GetStandardShader();
+        }
 
         Assert.IsNotNull(shader);
 
