@@ -167,11 +167,7 @@ internal class PropertyInfoDataWrapper : ISerializationCallbackReceiver {
         return sb.ToString();
     }
 
-    public string GetSerializedValue(bool useNewValues = false) {
-        object valueToSerialize = propertyValue;
-
-        if (useNewValues && newValue != null) valueToSerialize = newValue;
-
+    public static string GetSerializedValue(object valueToSerialize) {
         if (valueToSerialize == null) return $"{SERIALIZED_NULL}";
 
         if (valueToSerialize is int)
@@ -184,7 +180,17 @@ internal class PropertyInfoDataWrapper : ISerializationCallbackReceiver {
             return SaveArray($"{SERIALIZED_INT_ARRAY}", intArray);
         if (valueToSerialize is float[] floatArray)
             return SaveArray($"{SERIALIZED_FLOAT_ARRAY}", floatArray);
+        
         throw new NotImplementedException($"propertyValue: {valueToSerialize.GetType()} cannot be serialized!");
+    }
+    
+    public string GetSerializedValue(bool useNewValues = false) {
+     
+        object valueToSerialize = propertyValue;
+        
+        if (useNewValues && newValue != null) valueToSerialize = newValue;
+
+        return GetSerializedValue(valueToSerialize);
     }
 
     private static object DeserializeString(string serializedValue) {
