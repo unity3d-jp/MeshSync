@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <unordered_map>
 #include "MeshUtils/muMeshRefiner.h"
 #include "MeshUtils/MeshUtils.h"
 
@@ -155,7 +156,7 @@ void MeshRefiner::genSubmeshes(const IArray<int>& material_ids, bool has_face_gr
 
     int num_splits = (int)splits.size();
     int offset_faces = 0;
-    RawVector<Submesh> tmp_submeshes;
+    std::unordered_map<int,Submesh> tmp_submeshes;
 
     auto get_ids = [has_face_group](int base, int& mid, int& gid) {
         base = std::max(base, 0);
@@ -175,13 +176,12 @@ void MeshRefiner::genSubmeshes(const IArray<int>& material_ids, bool has_face_gr
         // triangles
         if (split.index_count_tri > 0) {
             // count submesh indices
+            tmp_submeshes.reserve(material_ids.size());
             for (int fi = 0; fi < split.face_count; ++fi) {
                 int count = new_counts[offset_faces + fi];
                 if (count >= 3) {
                     int mid, gid;
                     get_ids(material_ids[offset_faces + fi], mid, gid);
-                    if (gid >= (int)tmp_submeshes.size())
-                        tmp_submeshes.resize(gid + 1, {});
                     auto& sm = tmp_submeshes[gid];
                     sm.material_id = mid;
                     sm.index_count += (new_counts[fi] - 2) * 3;
@@ -189,8 +189,9 @@ void MeshRefiner::genSubmeshes(const IArray<int>& material_ids, bool has_face_gr
             }
 
             // allocate submesh indices
-            for (int mi = 0; mi < (int)tmp_submeshes.size(); ++mi) {
-                auto& sm = tmp_submeshes[mi];
+            for (auto& pair : tmp_submeshes)
+            {
+                auto& sm = pair.second;
                 sm.dst_indices = dst_indices;
                 sm.index_offset = (int)std::distance(new_indices_submeshes.data(), dst_indices);
                 dst_indices += sm.index_count;
@@ -207,9 +208,10 @@ void MeshRefiner::genSubmeshes(const IArray<int>& material_ids, bool has_face_gr
                         *(tmp_submeshes[gid].dst_indices++) = *(src_tri++) - offset_vertices;
                 }
             }
-
-            for (int mi = 0; mi < (int)tmp_submeshes.size(); ++mi) {
-                auto& sm = tmp_submeshes[mi];
+            
+            for (auto& pair : tmp_submeshes)
+            {
+                auto& sm = pair.second;
                 if (sm.index_count > 0) {
                     ++split.submesh_count;
                     submeshes.push_back(sm);
