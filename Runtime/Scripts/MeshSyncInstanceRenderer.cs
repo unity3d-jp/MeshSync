@@ -3,6 +3,7 @@
 using UnityEditor.Experimental.SceneManagement;
 #endif
 #endif
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -14,6 +15,8 @@ internal class MeshSyncInstanceRenderer : MonoBehaviour {
     [HideInInspector] [SerializeField] private Matrix4x4[] transforms;
     [SerializeField]                   private GameObject  reference;
 
+    [HideInInspector] public List<MeshSyncInstanceRenderer> ParentRenderers = new List<MeshSyncInstanceRenderer>(); 
+    
     public int TransformCount {
         get { return transforms.Length; }
     }
@@ -91,6 +94,20 @@ internal class MeshSyncInstanceRenderer : MonoBehaviour {
         info.instances      = transforms;
         info.gameObject     = reference;
         info.instanceParent = transform;
+    }
+
+    public void UpdateFromExistingInstanceRenderer(MeshSyncInstanceRenderer child, InstanceInfoData data)
+    {
+        var combinedTransforms = new Matrix4x4[data.transforms.Length * child.transforms.Length];
+        for (int i = 0; i < data.transforms.Length; i++)
+        {
+            for (int j = 0; j < child.transforms.Length; j++)
+            {
+                combinedTransforms[i * child.transforms.Length + j] = data.transforms[i] * child.transforms[j];      
+            }
+        }
+                
+        UpdateAll(combinedTransforms, child.reference);
     }
 
     #endregion

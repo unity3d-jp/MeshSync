@@ -167,11 +167,7 @@ internal class PropertyInfoDataWrapper : ISerializationCallbackReceiver {
         return sb.ToString();
     }
 
-    public string GetSerializedValue(bool useNewValues = false) {
-        object valueToSerialize = propertyValue;
-
-        if (useNewValues && newValue != null) valueToSerialize = newValue;
-
+    public static string GetSerializedValue(object valueToSerialize) {
         if (valueToSerialize == null) return $"{SERIALIZED_NULL}";
 
         if (valueToSerialize is int)
@@ -184,7 +180,17 @@ internal class PropertyInfoDataWrapper : ISerializationCallbackReceiver {
             return SaveArray($"{SERIALIZED_INT_ARRAY}", intArray);
         if (valueToSerialize is float[] floatArray)
             return SaveArray($"{SERIALIZED_FLOAT_ARRAY}", floatArray);
+        
         throw new NotImplementedException($"propertyValue: {valueToSerialize.GetType()} cannot be serialized!");
+    }
+    
+    public string GetSerializedValue(bool useNewValues = false) {
+     
+        object valueToSerialize = propertyValue;
+        
+        if (useNewValues && newValue != null) valueToSerialize = newValue;
+
+        return GetSerializedValue(valueToSerialize);
     }
 
     private static object DeserializeString(string serializedValue) {
@@ -349,6 +355,7 @@ partial class BaseMeshSync {
     }
 
     [SerializeField] private InstanceHandlingType instanceHandling = InstanceHandlingType.InstanceRenderer;
+    Dictionary<string, HashSet<string>> instancesReceivedLastUpdate = new Dictionary<string, HashSet<string>>();
 
     private int numberOfPropertiesReceived;
 
@@ -417,66 +424,90 @@ partial class BaseMeshSync {
 
     private EntityRecord UpdateCurveEntity(CurvesData data, MeshSyncPlayerConfig config) {
 #if AT_USE_SPLINES
-            lock (splineLock)
-            {
-                TransformData dtrans = data.transform;
-                EntityRecord rec = UpdateTransformEntity(dtrans, config);
+        lock (splineLock) {
+            TransformData dtrans = data.transform;
+            EntityRecord  rec    = UpdateTransformEntity(dtrans, config);
+            
+            GameObject go    = rec.go;
+            Transform  trans = go.transform;
 
-                GameObject go = rec.go;
-                Transform trans = go.transform;
+            SplineContainer splineContainer = rec.splineContainer;
 
-                SplineContainer splineContainer = rec.splineContainer;
+            if (splineContainer == null) {
+                splineContainer = rec.splineContainer = Misc.GetOrAddComponent<SplineContainer>(trans.gameObject);
+            }
 
-                if (splineContainer == null)
-                {
-                    splineContainer = rec.splineContainer = Misc.GetOrAddComponent<SplineContainer>(trans.gameObject);
-                }
+            float3[] cos           = null;
+            float3[] handles_left  = null;
+            float3[] handles_right = null;
 
-                float3[] cos = null;
-                float3[] handles_left = null;
-                float3[] handles_right = null;
+            var numSplines = data.numSplines;
 
-                var numSplines = data.numSplines;
+            Spline.Changed -= SplineChanged;
 
-                Spline.Changed -= SplineChanged;
-
-                var newSplines = new List<Spline>();
-
-                for (int index = 0; index < numSplines; index++)
-                {
-                    var spline = new Spline();
-                    newSplines.Add(spline);
-
-                    spline.Closed = data.IsSplineClosed(index);
-
-                    var numPoints = data.GetNumSplinePoints(index);
-                    m_tmpFloat3.Resize(numPoints);
-
-                    data.ReadSplineCos(index, m_tmpFloat3);
-                    m_tmpFloat3.CopyTo(ref cos);
-
-                    data.ReadSplineHandlesLeft(index, m_tmpFloat3);
-                    m_tmpFloat3.CopyTo(ref handles_left);
-
-                    data.ReadSplineHandlesRight(index, m_tmpFloat3);
-                    m_tmpFloat3.CopyTo(ref handles_right);
-
-                    for (int pointIndex = 0; pointIndex < cos.Length; pointIndex++)
-                    {
-                        var co = cos[pointIndex];
-
-                        var knot = new BezierKnot(co, handles_left[pointIndex] - co, handles_right[pointIndex] - co, Quaternion.identity);
-
-                        spline.Add(knot);
+            // Try to reuse the same splines if the number of splines and knots has not changed:
+            bool useNewSplines = splineContainer.Splines.Count != numSplines;
+            if (!useNewSplines) {
+                for (int index = 0; index < numSplines; index++) {
+                    if (splineContainer.Splines[index].Count != data.GetNumSplinePoints(index)) {
+                        useNewSplines = true;
+                        break;
                     }
                 }
-
-                splineContainer.Splines = newSplines;
-
-                Spline.Changed += SplineChanged;
-
-                return rec;
             }
+            
+            var newSplines = new List<Spline>();
+
+            for (int index = 0; index < numSplines; index++) {
+                Spline spline;
+                if (useNewSplines) {
+                    spline = new Spline();
+                    newSplines.Add(spline);
+                }
+                else {
+                    spline = splineContainer.Splines[index];
+                }
+
+                // Need to be in this mode to be consistent with blender:
+                spline.SetTangentMode(TangentMode.Broken);
+
+                spline.Closed = data.IsSplineClosed(index);
+
+                var numPoints = data.GetNumSplinePoints(index);
+                m_tmpFloat3.Resize(numPoints);
+
+                data.ReadSplineCos(index, m_tmpFloat3);
+                m_tmpFloat3.CopyTo(ref cos);
+
+                data.ReadSplineHandlesLeft(index, m_tmpFloat3);
+                m_tmpFloat3.CopyTo(ref handles_left);
+
+                data.ReadSplineHandlesRight(index, m_tmpFloat3);
+                m_tmpFloat3.CopyTo(ref handles_right);
+
+                for (int pointIndex = 0; pointIndex < cos.Length; pointIndex++) {
+                    var co = cos[pointIndex];
+
+                    var knot = new BezierKnot(co, handles_left[pointIndex] - co, handles_right[pointIndex] - co,
+                        Quaternion.identity);
+
+                    if (useNewSplines) {
+                        spline.Add(knot);
+                    }
+                    else {
+                        spline.SetKnot(pointIndex, knot);
+                    }
+                }
+            }
+
+            if (useNewSplines) {
+                splineContainer.Splines = newSplines;
+            }
+
+            Spline.Changed += SplineChanged;
+                
+            return rec;
+        }
 #else
         // If the curve was exported as a mesh before, delete this now, as it's handled as a curve:
         TransformData dtrans = data.transform;
@@ -491,6 +522,7 @@ partial class BaseMeshSync {
 #if AT_USE_SPLINES
         protected virtual void SplineChanged(Spline spline, int arg2, SplineModification arg3)
         {
+            // Overriden in Server.
         }
 #endif
 }

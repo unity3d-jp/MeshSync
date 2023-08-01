@@ -69,7 +69,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "3.0.21",
+      "version": "3.0.22",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -127,7 +127,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.package-validation-suite": {
-      "version": "0.50.0-preview",
+      "version": "0.54.0-preview",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -186,7 +186,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.timeline": {
-      "version": "1.6.4",
+      "version": "1.6.5",
       "depth": 0,
       "source": "registry",
       "dependencies": {

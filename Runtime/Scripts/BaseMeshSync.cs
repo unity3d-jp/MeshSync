@@ -32,679 +32,693 @@ using Unity.FilmInternalUtilities.Editor;
 [assembly: InternalsVisibleTo("Unity.Utilities.VariantExport")]
 
 namespace Unity.MeshSync {
-/// <summary>
-/// A delegate to handle scene updates
-/// </summary>
-internal delegate void SceneHandler();
+    /// <summary>
+    /// A delegate to handle scene updates
+    /// </summary>
+    internal delegate void SceneHandler();
 
-/// <summary>
-/// A delegate to handle audio updates
-/// </summary>
-internal delegate void UpdateAudioHandler(AudioClip audio, AudioData data);
+    /// <summary>
+    /// A delegate to handle audio updates
+    /// </summary>
+    internal delegate void UpdateAudioHandler(AudioClip audio, AudioData data);
 
-/// <summary>
-/// A delegate to handle texture updates
-/// </summary>
-internal delegate void UpdateTextureHandler(Texture2D tex, TextureData data);
+    /// <summary>
+    /// A delegate to handle texture updates
+    /// </summary>
+    internal delegate void UpdateTextureHandler(Texture2D tex, TextureData data);
 
-/// <summary>
-/// A delegate to handle material updates
-/// </summary>
-internal delegate void UpdateMaterialHandler(Material mat, MaterialData data);
+    /// <summary>
+    /// A delegate to handle material updates
+    /// </summary>
+    internal delegate void UpdateMaterialHandler(Material mat, MaterialData data);
 
-/// <summary>
-/// A delegate to handle entity updates
-/// </summary>
-internal delegate void UpdateEntityHandler(GameObject obj, TransformData data);
+    /// <summary>
+    /// A delegate to handle entity updates
+    /// </summary>
+    internal delegate void UpdateEntityHandler(GameObject obj, TransformData data);
 
-/// <summary>
-/// A delegate to handle animation updates
-/// </summary>
-internal delegate void UpdateAnimationHandler(AnimationClip anim, AnimationClipData data);
+    /// <summary>
+    /// A delegate to handle animation updates
+    /// </summary>
+    internal delegate void UpdateAnimationHandler(AnimationClip anim, AnimationClipData data);
 
-/// <summary>
-/// A delegate to handle entity deletions
-/// </summary>
-internal delegate void DeleteEntityHandler(GameObject obj);
+    /// <summary>
+    /// A delegate to handle entity deletions
+    /// </summary>
+    internal delegate void DeleteEntityHandler(GameObject obj);
 
-/// <summary>
-/// A delegate to handle instance info updates
-/// </summary>
-/// <param name="data"></param>
-internal delegate void UpdateInstanceInfoHandler(string path, GameObject go, Matrix4x4[] transforms);
+    /// <summary>
+    /// A delegate to handle instance info updates
+    /// </summary>
+    /// <param name="data"></param>
+    internal delegate void UpdateInstanceInfoHandler(string path, GameObject go, Matrix4x4[] transforms);
 
-/// <summary>
-/// A delegate to handle instance meshes.
-/// </summary>
-internal delegate void UpdateInstancedEntityHandler(string path, GameObject go);
+    /// <summary>
+    /// A delegate to handle instance meshes.
+    /// </summary>
+    internal delegate void UpdateInstancedEntityHandler(string path, GameObject go);
 
-/// <summary>
-/// A delegate to handle instance deletions
-/// </summary>
-internal delegate void DeleteInstanceHandler(string path);
+    /// <summary>
+    /// A delegate to handle instance deletions
+    /// </summary>
+    internal delegate void DeleteInstanceHandler(string path);
 
-/// <summary>
-/// Internal analytics observer data
-/// </summary>
-public struct MeshSyncAnalyticsData {
-    internal MeshSyncSessionStartAnalyticsData? sessionStartData;
-    internal MeshSyncSyncAnalyticsData?         syncData;
-}
+    /// <summary>
+    /// Internal analytics observer data
+    /// </summary>
+    public struct MeshSyncAnalyticsData {
+        internal MeshSyncSessionStartAnalyticsData? sessionStartData;
+        internal MeshSyncSyncAnalyticsData? syncData;
+    }
 
-/// <summary>
-/// Data about sync.
-/// </summary>
-public struct MeshSyncSyncAnalyticsData {
-    internal AssetType  assetType;
-    internal EntityType entityType;
-    internal string     syncMode;
-}
+    /// <summary>
+    /// Data about sync.
+    /// </summary>
+    public struct MeshSyncSyncAnalyticsData {
+        internal AssetType assetType;
+        internal EntityType entityType;
+        internal string syncMode;
+    }
 
-/// <summary>
-/// Information about the DCC tool used with MeshSync.
-/// </summary>
-public struct MeshSyncSessionStartAnalyticsData {
-    public string DCCToolName;
-}
+    /// <summary>
+    /// Information about the DCC tool used with MeshSync.
+    /// </summary>
+    public struct MeshSyncSessionStartAnalyticsData {
+        public string DCCToolName;
+    }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-/// <summary>
-/// The base class of main MeshSync components (MeshSyncServer, SceneCachePlayer),
-/// which encapsulates common functionalities
-/// </summary>
-[ExecuteInEditMode]
+    /// <summary>
+    /// The base class of main MeshSync components (MeshSyncServer, SceneCachePlayer),
+    /// which encapsulates common functionalities
+    /// </summary>
+    [ExecuteInEditMode]
 public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSyncAnalyticsData>, ISerializationCallbackReceiver {
-    #region EventHandler Declarations
+        #region EventHandler Declarations
 
-    /// <summary>
-    /// An event that is executed when the scene update is started
-    /// </summary>
-    internal event SceneHandler onSceneUpdateBegin;
+        /// <summary>
+        /// An event that is executed when the scene update is started
+        /// </summary>
+        internal event SceneHandler onSceneUpdateBegin;
 
-    /// <summary>
-    /// An event that is executed when an audio is updated
-    /// </summary>
-    internal event UpdateAudioHandler onUpdateAudio;
+        /// <summary>
+        /// An event that is executed when an audio is updated
+        /// </summary>
+        internal event UpdateAudioHandler onUpdateAudio;
 
-    /// <summary>
-    /// An event that is executed when a texture is updated
-    /// </summary>
-    internal event UpdateTextureHandler onUpdateTexture;
+        /// <summary>
+        /// An event that is executed when a texture is updated
+        /// </summary>
+        internal event UpdateTextureHandler onUpdateTexture;
 
-    /// <summary>
-    /// An event that is executed when an material is updated
-    /// </summary>
-    internal event UpdateMaterialHandler onUpdateMaterial;
+        /// <summary>
+        /// An event that is executed when an material is updated
+        /// </summary>
+        internal event UpdateMaterialHandler onUpdateMaterial;
 
-    /// <summary>
-    /// An event that is executed when an entity is updated
-    /// </summary>
-    internal event UpdateEntityHandler onUpdateEntity;
+        /// <summary>
+        /// An event that is executed when an entity is updated
+        /// </summary>
+        internal event UpdateEntityHandler onUpdateEntity;
 
-    /// <summary>
-    /// An event that is executed when an animation is updated
-    /// </summary>
-    internal event UpdateAnimationHandler onUpdateAnimation;
+        /// <summary>
+        /// An event that is executed when an animation is updated
+        /// </summary>
+        internal event UpdateAnimationHandler onUpdateAnimation;
 
-    /// <summary>
-    /// An event that is executed when an entity is deleted
-    /// </summary>
-    internal event DeleteEntityHandler onDeleteEntity;
+        /// <summary>
+        /// An event that is executed when an entity is deleted
+        /// </summary>
+        internal event DeleteEntityHandler onDeleteEntity;
 
-    /// <summary>
-    /// An event that is executed when the scene update is finished
-    /// </summary>
-    internal event SceneHandler onSceneUpdateEnd;
+        /// <summary>
+        /// An event that is executed when the scene update is finished
+        /// </summary>
+        internal event SceneHandler onSceneUpdateEnd;
 
-    internal event UpdateInstanceInfoHandler onUpdateInstanceInfo;
+        internal event UpdateInstanceInfoHandler onUpdateInstanceInfo;
 
-    internal event UpdateInstancedEntityHandler onUpdateInstancedEntity;
+        internal event UpdateInstancedEntityHandler onUpdateInstancedEntity;
 
-    internal event DeleteInstanceHandler onDeleteInstanceInfo;
+        internal event DeleteInstanceHandler onDeleteInstanceInfo;
 
-    internal event DeleteInstanceHandler onDeleteInstancedEntity;
+        internal event DeleteInstanceHandler onDeleteInstancedEntity;
 
-    #endregion EventHandler Declarations
+        #endregion EventHandler Declarations
 
-    //----------------------------------------------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------------------------------------------
 
-    internal void Init(string assetsFolder) {
-        Assert.IsTrue(assetsFolder.StartsWith("Assets"));
-        m_assetsFolder = assetsFolder.Replace('\\', '/');
-        m_rootObject   = gameObject.transform;
+        internal void Init(string assetsFolder) {
+            Assert.IsTrue(assetsFolder.StartsWith("Assets"));
+            m_assetsFolder = assetsFolder.Replace('\\', '/');
+            m_rootObject = gameObject.transform;
 
-        m_materialList.Clear();
-        m_textureList.Clear();
-        m_audioList.Clear();
+            m_materialList.Clear();
+            m_textureList.Clear();
+            m_audioList.Clear();
 
-        m_clientObjects.Clear();
-        m_hostObjects.Clear();
-        m_objIDTable.Clear();
+            m_clientObjects.Clear();
+            m_hostObjects.Clear();
+            m_objIDTable.Clear();
 
-        m_clientInstances.Clear();
-        m_clientInstancedEntities.Clear();
+            m_clientInstances.Clear();
+            m_clientInstancedEntities.Clear();
 
-        m_prefabDict.Clear();
+            m_prefabDict.Clear();
 
-        InitInternalV();
-    }
+            InitInternalV();
+        }
 
-    private protected abstract void InitInternalV();
+        private protected abstract void InitInternalV();
 
-    //----------------------------------------------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------------------------------------------
 
-    #region Getter/Setter
+        #region Getter/Setter
 
-    internal string GetAssetsFolder() {
-        return m_assetsFolder;
-    }
+        internal string GetAssetsFolder() {
+            return m_assetsFolder;
+        }
 
-    public void SetAssetsFolder(string folder) {
-        m_assetsFolder = folder;
-    }
+        public void SetAssetsFolder(string folder) {
+            m_assetsFolder = folder;
+        }
 
-    internal Transform GetRootObject() {
-        return m_rootObject;
-    }
+        internal Transform GetRootObject() {
+            return m_rootObject;
+        }
 
-    internal void SetRootObject(Transform t) {
-        m_rootObject = t;
-    }
-
-
-    internal IDictionary<string, EntityRecord> GetClientObjects() {
-        return m_clientObjects;
-    }
-
-    #endregion Simple Getter/Setter
-
-    #region Properties
-
-    [SerializeField] private int currentSessionId = -1;
-
-    private bool forceDeleteChildrenInNextSession = false;
-
-    private protected string GetServerDocRootPath() {
-        return Application.streamingAssetsPath + "/MeshSyncServerRoot";
-    }
-
-    private protected void SetSaveAssetsInScene(bool saveAssetsInScene) {
-        m_saveAssetsInScene = saveAssetsInScene;
-    }
-
-    private protected void MarkMeshesDynamic(bool markMeshesDynamic) {
-        m_markMeshesDynamic = markMeshesDynamic;
-    }
-
-    internal void EnableKeyValuesSerialization(bool kvEnabled) {
-        m_keyValuesSerializationEnabled = kvEnabled;
-    }
-
-    internal abstract MeshSyncPlayerConfig GetConfigV();
+        internal void SetRootObject(Transform t) {
+            m_rootObject = t;
+        }
 
 
-    internal bool useCustomCameraMatrices {
-        get { return m_useCustomCameraMatrices; }
-        set { m_useCustomCameraMatrices = value; }
-    }
+        internal IDictionary<string, EntityRecord> GetClientObjects() {
+            return m_clientObjects;
+        }
 
-    internal List<MaterialHolder> materialList {
-        get { return m_materialList; }
-    }
+        #endregion Simple Getter/Setter
 
-    internal List<TextureHolder> textureList {
-        get { return m_textureList; }
-    }
+        #region Properties
 
-    internal PrefabDictionary prefabDict {
-        get { return m_prefabDict; }
-    }
+        [SerializeField] private int currentSessionId = -1;
+
+        private bool forceDeleteChildrenInNextSession = false;
+
+        private protected string GetServerDocRootPath() {
+            return Application.streamingAssetsPath + "/MeshSyncServerRoot";
+        }
+
+        private protected void SetSaveAssetsInScene(bool saveAssetsInScene) {
+            m_saveAssetsInScene = saveAssetsInScene;
+        }
+
+        private protected void MarkMeshesDynamic(bool markMeshesDynamic) {
+            m_markMeshesDynamic = markMeshesDynamic;
+        }
+
+        internal void EnableKeyValuesSerialization(bool kvEnabled) {
+            m_keyValuesSerializationEnabled = kvEnabled;
+        }
+
+        internal abstract MeshSyncPlayerConfig GetConfigV();
+
+        protected bool IsColorInGammaSpace = false;
+
+        internal bool useCustomCameraMatrices {
+            get { return m_useCustomCameraMatrices; }
+            set { m_useCustomCameraMatrices = value; }
+        }
+
+        internal List<MaterialHolder> materialList {
+            get { return m_materialList; }
+        }
+
+        internal List<TextureHolder> textureList {
+            get { return m_textureList; }
+        }
+
+        internal PrefabDictionary prefabDict {
+            get { return m_prefabDict; }
+        }
 
 
 #if UNITY_EDITOR
 
-    protected void SetSortEntities(bool sortEntities) {
-        m_sortEntities = sortEntities;
-    }
+        protected void SetSortEntities(bool sortEntities) {
+            m_sortEntities = sortEntities;
+        }
 
-    internal bool foldSyncSettings {
-        get { return m_foldSyncSettings; }
-        set { m_foldSyncSettings = value; }
-    }
+        internal bool foldSyncSettings {
+            get { return m_foldSyncSettings; }
+            set { m_foldSyncSettings = value; }
+        }
 
-    internal bool foldImportSettings {
-        get { return m_foldImportSettings; }
-        set { m_foldImportSettings = value; }
-    }
+        internal bool foldImportSettings {
+            get { return m_foldImportSettings; }
+            set { m_foldImportSettings = value; }
+        }
 
-    internal bool foldMisc {
-        get { return m_foldMisc; }
-        set { m_foldMisc = value; }
-    }
+        internal bool foldMisc {
+            get { return m_foldMisc; }
+            set { m_foldMisc = value; }
+        }
 
-    internal bool foldMaterialList {
-        get { return m_foldMaterialList; }
-        set { m_foldMaterialList = value; }
-    }
+        internal bool foldMaterialList {
+            get { return m_foldMaterialList; }
+            set { m_foldMaterialList = value; }
+        }
 
-    internal bool foldAnimationTweak {
-        get { return m_foldAnimationTweak; }
-        set { m_foldAnimationTweak = value; }
-    }
+        internal bool foldAnimationTweak {
+            get { return m_foldAnimationTweak; }
+            set { m_foldAnimationTweak = value; }
+        }
 
-    internal bool foldExportAssets {
-        get { return m_foldExportAssets; }
-        set { m_foldExportAssets = value; }
-    }
+        internal bool foldExportAssets {
+            get { return m_foldExportAssets; }
+            set { m_foldExportAssets = value; }
+        }
 #endif
 
-    #endregion
+        #endregion
 
-    //----------------------------------------------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------------------------------------------
 
-    #region Impl
+        #region Impl
 
-    private void SerializeDictionary<K, V>(Dictionary<K, V> dic, ref K[] keys, ref V[] values) {
-        keys   = dic.Keys.ToArray();
-        values = dic.Values.ToArray();
-    }
+        private void SerializeDictionary<K, V>(Dictionary<K, V> dic, ref K[] keys, ref V[] values) {
+            keys = dic.Keys.ToArray();
+            values = dic.Values.ToArray();
+        }
 
-    private void DeserializeDictionary<K, V>(Dictionary<K, V> dic, ref K[] keys, ref V[] values) {
-        try {
-            if (keys != null && values != null && keys.Length == values.Length) {
-                int n = keys.Length;
-                for (int i = 0; i < n; ++i)
-                    dic[keys[i]] = values[i];
+        private void DeserializeDictionary<K, V>(Dictionary<K, V> dic, ref K[] keys, ref V[] values) {
+            try {
+                if (keys != null && values != null && keys.Length == values.Length) {
+                    int n = keys.Length;
+                    for (int i = 0; i < n; ++i)
+                        dic[keys[i]] = values[i];
+                }
+            }
+            catch (Exception e) {
+                Debug.LogError(e);
+            }
+
+            keys = null;
+            values = null;
+        }
+
+        //----------------------------------------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Called during serialization as an implementation of ISerializationCallbackReceiver
+        /// </summary>
+        public void OnBeforeSerialize() {
+            OnBeforeSerializeMeshSyncPlayerV();
+
+#if UNITY_EDITOR
+            SaveMaterialRenderTexturesToAssetDatabase();
+#endif
+
+            if (!m_keyValuesSerializationEnabled)
+                return;
+
+            SerializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
+            SerializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
+            SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
+
+            m_baseMeshSyncVersion = CUR_BASE_MESHSYNC_VERSION;
+        }
+
+
+        /// <summary>
+        /// Called during serialization as an implementation of ISerializationCallbackReceiver
+        /// </summary>
+        public void OnAfterDeserialize() {
+            DeserializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
+            DeserializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
+            DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
+
+            OnAfterDeserializeMeshSyncPlayerV();
+
+            if (CUR_BASE_MESHSYNC_VERSION == m_baseMeshSyncVersion)
+                return;
+
+            if (m_baseMeshSyncVersion < (int)BaseMeshSyncVersion.INITIAL_0_10_0) {
+#pragma warning disable 612
+
+                MeshSyncPlayerConfig config = GetConfigV();
+                config?.UsePhysicalCameraParams(m_usePhysicalCameraParams);
+#pragma warning restore 612
+            }
+
+            m_baseMeshSyncVersion = CUR_BASE_MESHSYNC_VERSION;
+        }
+
+        private protected abstract void OnBeforeSerializeMeshSyncPlayerV();
+        private protected abstract void OnAfterDeserializeMeshSyncPlayerV();
+
+        //----------------------------------------------------------------------------------------------------------------------
+
+        #endregion
+
+        #region Misc
+
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private protected bool Try(Action act) {
+            try {
+                act.Invoke();
+                return true;
+            }
+            catch (Exception e) {
+                if (GetConfigV().Logging)
+                    Debug.LogError(e);
+                return false;
             }
         }
-        catch (Exception e) {
-            Debug.LogError(e);
-        }
 
-        keys   = null;
-        values = null;
-    }
-
-    //----------------------------------------------------------------------------------------------------------------------
-
-    /// <summary>
-    /// Called during serialization as an implementation of ISerializationCallbackReceiver
-    /// </summary>
-    public void OnBeforeSerialize() {
-        OnBeforeSerializeMeshSyncPlayerV();
-
+        //----------------------------------------------------------------------------------------------------------------------    
+        private void MakeSureAssetDirectoryExists() {
 #if UNITY_EDITOR
-        SaveMaterialRenderTexturesToAssetDatabase();
+            if (Directory.Exists(m_assetsFolder))
+                return;
+
+            Directory.CreateDirectory(m_assetsFolder);
+            AssetDatabase.Refresh();
 #endif
-
-        if (!m_keyValuesSerializationEnabled)
-            return;
-
-        SerializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
-        SerializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
-        SerializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
-
-        m_baseMeshSyncVersion = CUR_BASE_MESHSYNC_VERSION;
-    }
-
-
-    /// <summary>
-    /// Called during serialization as an implementation of ISerializationCallbackReceiver
-    /// </summary>
-    public void OnAfterDeserialize() {
-        DeserializeDictionary(m_clientObjects, ref m_clientObjects_keys, ref m_clientObjects_values);
-        DeserializeDictionary(m_hostObjects, ref m_hostObjects_keys, ref m_hostObjects_values);
-        DeserializeDictionary(m_objIDTable, ref m_objIDTable_keys, ref m_objIDTable_values);
-
-        OnAfterDeserializeMeshSyncPlayerV();
-
-        if (CUR_BASE_MESHSYNC_VERSION == m_baseMeshSyncVersion)
-            return;
-
-        if (m_baseMeshSyncVersion < (int)BaseMeshSyncVersion.INITIAL_0_10_0) {
-#pragma warning disable 612
-            
-            MeshSyncPlayerConfig config = GetConfigV();
-            config?.UsePhysicalCameraParams(m_usePhysicalCameraParams);
-#pragma warning restore 612
         }
 
-        m_baseMeshSyncVersion = CUR_BASE_MESHSYNC_VERSION;
-    }
+        //----------------------------------------------------------------------------------------------------------------------    
 
-    private protected abstract void OnBeforeSerializeMeshSyncPlayerV();
-    private protected abstract void OnAfterDeserializeMeshSyncPlayerV();
-
-    //----------------------------------------------------------------------------------------------------------------------
-
-    #endregion
-
-    #region Misc
-
-    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private protected bool Try(Action act) {
-        try {
-            act.Invoke();
-            return true;
-        }
-        catch (Exception e) {
-            if (GetConfigV().Logging)
-                Debug.LogError(e);
-            return false;
-        }
-    }
-
-    //----------------------------------------------------------------------------------------------------------------------    
-    private void MakeSureAssetDirectoryExists() {
+        private bool IsAsset(UnityEngine.Object obj) {
 #if UNITY_EDITOR
-        if (Directory.Exists(m_assetsFolder))
-            return;
-
-        Directory.CreateDirectory(m_assetsFolder);
-        AssetDatabase.Refresh();
-#endif
-    }
-
-    //----------------------------------------------------------------------------------------------------------------------    
-
-    private bool IsAsset(UnityEngine.Object obj) {
-#if UNITY_EDITOR
-        return AssetDatabase.Contains(obj);
+            return AssetDatabase.Contains(obj);
 #else
         return false;
 #endif
-    }
-
-    private bool DestroyIfNotAsset(UnityEngine.Object obj) {
-        if (obj != null && IsAsset(obj)) {
-            DestroyImmediate(obj, false);
-            return true;
         }
 
-        return false;
-    }
+        private bool DestroyIfNotAsset(UnityEngine.Object obj) {
+            if (obj != null && IsAsset(obj)) {
+                DestroyImmediate(obj, false);
+                return true;
+            }
 
-    internal string BuildPath(Transform t) {
-        Transform parent = t.parent;
-        if (parent != null && parent != m_rootObject)
-            return BuildPath(parent) + "/" + t.name;
-        else
-            return "/" + t.name;
-    }
+            return false;
+        }
 
-    internal static Texture2D FindTexture(int id, List<TextureHolder> textureHolders) {
-        if (id == Lib.invalidID)
-            return null;
-        TextureHolder rec = textureHolders.Find(a => a.id == id);
-        return rec != null ? rec.texture : null;
-    }
+        internal string BuildPath(Transform t) {
+            Transform parent = t.parent;
+            if (parent != null && parent != m_rootObject)
+                return BuildPath(parent) + "/" + t.name;
+            else
+                return "/" + t.name;
+        }
 
-    internal Material FindMaterial(int id) {
-        if (id == Lib.invalidID)
-            return null;
-        MaterialHolder rec = m_materialList.Find(a => a.id == id);
-        return rec != null ? rec.material : null;
-    }
+        internal static Texture2D FindTexture(int id, List<TextureHolder> textureHolders) {
+            if (id == Lib.invalidID)
+                return null;
+            TextureHolder rec = textureHolders.Find(a => a.id == id);
+            return rec != null ? rec.texture : null;
+        }
 
-    internal bool EraseMaterialRecord(int id) {
-        return m_materialList.RemoveAll(v => v.id == id) != 0;
-    }
+        internal Material FindMaterial(int id) {
+            if (id == Lib.invalidID)
+                return null;
+            MaterialHolder rec = m_materialList.Find(a => a.id == id);
+            return rec != null ? rec.material : null;
+        }
 
-    private protected int GetMaterialIndex(Material mat) {
-        if (mat == null)
-            return Lib.invalidID;
+        internal bool EraseMaterialRecord(int id) {
+            return m_materialList.RemoveAll(v => v.id == id) != 0;
+        }
 
-        for (int i = 0; i < m_materialList.Count; ++i)
-            if (m_materialList[i].material == mat)
-                return i;
+        private protected int GetMaterialIndex(Material mat) {
+            if (mat == null)
+                return Lib.invalidID;
 
-        int            ret = m_materialList.Count;
-        MaterialHolder tmp = new MaterialHolder();
-        tmp.name     = mat.name;
-        tmp.material = mat;
-        tmp.id       = ret + 1;
-        m_materialList.Add(tmp);
-        return ret;
-    }
+            for (int i = 0; i < m_materialList.Count; ++i)
+                if (m_materialList[i].material == mat)
+                    return i;
 
-    internal AudioClip FindAudio(int id) {
-        if (id == Lib.invalidID)
-            return null;
-        AudioHolder rec = m_audioList.Find(a => a.id == id);
-        return rec != null ? rec.audio : null;
-    }
-
-    internal int GetObjectlID(GameObject go) {
-        if (go == null)
-            return Lib.invalidID;
-
-        if (m_objIDTable.TryGetValue(go, out int ret))
+            int ret = m_materialList.Count;
+            MaterialHolder tmp = new MaterialHolder();
+            tmp.name = mat.name;
+            tmp.material = mat;
+            tmp.id = ret + 1;
+            m_materialList.Add(tmp);
             return ret;
+        }
 
-        ret              = ++m_objIDSeed;
-        m_objIDTable[go] = ret;
-        return ret;
-    }
+        internal AudioClip FindAudio(int id) {
+            if (id == Lib.invalidID)
+                return null;
+            AudioHolder rec = m_audioList.Find(a => a.id == id);
+            return rec != null ? rec.audio : null;
+        }
 
-    //----------------------------------------------------------------------------------------------------------------------    
+        internal int GetObjectlID(GameObject go) {
+            if (go == null)
+                return Lib.invalidID;
+
+            if (m_objIDTable.TryGetValue(go, out int ret))
+                return ret;
+
+            ret = ++m_objIDSeed;
+            m_objIDTable[go] = ret;
+            return ret;
+        }
+
+        //----------------------------------------------------------------------------------------------------------------------    
 
 
-    private Material CreateDefaultMaterial(string shaderName = null) {
-        Material mat = new Material(GetShader(shaderName, out _));
-        UpdateShader(mat, shaderName);
-        return mat;
-    }
+        private Material CreateDefaultMaterial(string shaderName = null) {
+            Material mat = new Material(GetShader(shaderName, out _));
+            UpdateShader(mat, shaderName);
+            return mat;
+        }
 
-    internal void ForceRepaint() {
+        internal void ForceRepaint() {
 #if UNITY_EDITOR
-        if (!EditorApplication.isPlaying && !EditorApplication.isPaused) {
-            SceneView.RepaintAll();
-            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
-        }
+            if (!EditorApplication.isPlaying && !EditorApplication.isPaused) {
+                SceneView.RepaintAll();
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            }
 #endif
-    }
+        }
 
-    #endregion
+        #endregion
 
-    #region ReceiveScene
+        #region ReceiveScene
 
-    internal void BeforeUpdateScene(FenceMessage? mes = null) {
-        onSceneUpdateBegin?.Invoke();
+        internal void BeforeUpdateScene(FenceMessage? mes = null) {
+            onSceneUpdateBegin?.Invoke();
 
-        CheckForNewSession(mes);
+            CheckForNewSession(mes);
 
-        numberOfPropertiesReceived = 0;
-    }
+            numberOfPropertiesReceived = 0;
+            instancesReceivedLastUpdate.Clear();
 
-    public void ForceDeleteChildrenInNextSession() {
-        forceDeleteChildrenInNextSession = true;
-    }
+        if (mes.HasValue)
+        {
+                IsColorInGammaSpace = mes.Value.DCCToolName.ToLower().Contains("blender");
+            }
+        }
 
-    private void CheckForNewSession(FenceMessage? mes) {
+        public void ForceDeleteChildrenInNextSession() {
+            forceDeleteChildrenInNextSession = true;
+        }
+
+        private void CheckForNewSession(FenceMessage? mes) {
 #if UNITY_EDITOR
-        if (!mes.HasValue || currentSessionId == mes.Value.SessionId) return;
+            if (!mes.HasValue || currentSessionId == mes.Value.SessionId) return;
 
-        currentSessionId = mes.Value.SessionId;
+            currentSessionId = mes.Value.SessionId;
 
-        SendEventData(new MeshSyncAnalyticsData()
-            { sessionStartData = new MeshSyncSessionStartAnalyticsData() { DCCToolName = mes.Value.DCCToolName } });
+            SendEventData(new MeshSyncAnalyticsData()
+                { sessionStartData = new MeshSyncSessionStartAnalyticsData() { DCCToolName = mes.Value.DCCToolName } });
 
-        if (transform.childCount <= 0) return;
+            if (transform.childCount <= 0) return;
 
-        int choice;
+            int choice;
 
-        if (forceDeleteChildrenInNextSession) {
-            choice                           = 2;
-            forceDeleteChildrenInNextSession = false;
-        }
-        else {
-            choice = EditorUtility.DisplayDialogComplex("A new session started.",
-                "MeshSync detected that the DCC tool session has changed. To ensure that the sync state is correct you can delete previously synced objects, stash them and move them to another game object or ignore this and keep all children.",
-                "Ignore and keep all children",
-                "Stash",
-                "Delete all children of the server");
-        }
+            if (forceDeleteChildrenInNextSession) {
+                choice = 2;
+                forceDeleteChildrenInNextSession = false;
+            }
+            else {
+                choice = EditorUtility.DisplayDialogComplex("A new session started.",
+                    "MeshSync detected that the DCC tool session has changed. To ensure that the sync state is correct you can delete previously synced objects, stash them and move them to another game object or ignore this and keep all children.",
+                    "Ignore and keep all children",
+                    "Stash",
+                    "Delete all children of the server");
+            }
 
-        switch (choice) {
-            case 1:
-                // Stash
-                Transform stash = new GameObject($"{name}_stash").transform;
-                for (int i = transform.childCount - 1; i >= 0; i--) {
-                    Transform child = transform.GetChild(i);
-                    child.SetParent(stash, true);
-                }
-
-                Init(GetAssetsFolder());
-                break;
-            case 2:
-                // Destroy
-                transform.DestroyChildrenImmediate();
-
-                Init(GetAssetsFolder());
-                break;
-        }
-#endif
-    }
-
-    private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets, bool logAnalytics = true) {
-        MeshSyncPlayerConfig config = GetConfigV();
-        // handle assets
-        Try(() => {
-            int numAssets = scene.numAssets;
-            if (numAssets > 0) {
-                bool save = false;
-                for (int i = 0; i < numAssets; ++i) {
-                    AssetData asset = scene.GetAsset(i);
-
-                    //Only update non-MaterialAsset if specified
-                    if (!updateNonMaterialAssets && asset.type != AssetType.Material)
-                        continue;
-
-                    switch (asset.type) {
-                        case AssetType.File:
-                            UpdateFileAsset((FileAssetData)asset);
-                            break;
-                        case AssetType.Audio:
-                            UpdateAudioAsset((AudioData)asset);
-                            break;
-                        case AssetType.Texture:
-                            UpdateTextureAsset((TextureData)asset);
-                            break;
-                        case AssetType.Material:
-                            UpdateMaterialAssetV((MaterialData)asset);
-                            break;
-                        case AssetType.Animation:
-                            UpdateAnimationAsset((AnimationClipData)asset, config);
-                            save = true;
-                            break;
-                        default:
-                            if (config.Logging)
-                                Debug.Log("unknown asset: " + asset.name);
-                            break;
+            switch (choice) {
+                case 1:
+                    // Stash
+                    Transform stash = new GameObject($"{name}_stash").transform;
+                    for (int i = transform.childCount - 1; i >= 0; i--) {
+                        Transform child = transform.GetChild(i);
+                        child.SetParent(stash, true);
                     }
 
-                    if (logAnalytics) {
-                        string syncMode = "None";
-                        if (asset.type == AssetType.Material) {
-                            syncMode = scene.GetMaterialSyncMode();
+                    Init(GetAssetsFolder());
+                    break;
+                case 2:
+                    // Destroy
+                    transform.DestroyChildrenImmediate();
 
-                            // TODO: Don't do this when GetMaterialSyncMode() works
-                            if (textureList.Count > 0) syncMode = "Basic";
+                    Init(GetAssetsFolder());
+                    break;
+            }
+#endif
+        }
+
+        private protected void UpdateScene(SceneData scene, bool updateNonMaterialAssets, bool logAnalytics = true) {
+            MeshSyncPlayerConfig config = GetConfigV();
+            // handle assets
+            Try(() => {
+                int numAssets = scene.numAssets;
+                if (numAssets > 0) {
+                    bool save = false;
+                    for (int i = 0; i < numAssets; ++i) {
+                        AssetData asset = scene.GetAsset(i);
+
+                        //Only update non-MaterialAsset if specified
+                        if (!updateNonMaterialAssets && asset.type != AssetType.Material)
+                            continue;
+
+                        switch (asset.type) {
+                            case AssetType.File:
+                                UpdateFileAsset((FileAssetData)asset);
+                                break;
+                            case AssetType.Audio:
+                                UpdateAudioAsset((AudioData)asset);
+                                break;
+                            case AssetType.Texture:
+                                UpdateTextureAsset((TextureData)asset);
+                                break;
+                            case AssetType.Material:
+                                UpdateMaterialAssetV((MaterialData)asset);
+                                break;
+                            case AssetType.Animation:
+                                UpdateAnimationAsset((AnimationClipData)asset, config);
+                                save = true;
+                                break;
+                            default:
+                                if (config.Logging)
+                                    Debug.Log("unknown asset: " + asset.name);
+                                break;
                         }
 
-                        SendEventData(
-                            new MeshSyncAnalyticsData() { syncData = new MeshSyncSyncAnalyticsData() { assetType = asset.type, syncMode = syncMode } });
-                    }
-                }
-#if UNITY_EDITOR
-                if (save)
-                    AssetDatabase.SaveAssets();
-#endif
-            }
-        });
+                        if (logAnalytics) {
+                            string syncMode = "None";
+                            if (asset.type == AssetType.Material) {
+                                syncMode = scene.GetMaterialSyncMode();
 
-        // handle entities
-        Try(() => {
-            int numObjects = scene.numEntities;
-            for (int i = 0; i < numObjects; ++i) {
-                EntityRecord  dst = null;
-                TransformData src = scene.GetEntity(i);
-                switch (src.entityType) {
-                    case EntityType.Transform:
-                        dst = UpdateTransformEntity(src, config);
-                        break;
-                    case EntityType.Camera:
-                        dst = UpdateCameraEntity((CameraData)src, config);
-                        break;
-                    case EntityType.Light:
-                        dst = UpdateLightEntity((LightData)src, config);
-                        break;
-                    case EntityType.Mesh:
-                        dst = UpdateMeshEntity((MeshData)src, config);
-                        break;
-                    case EntityType.Points:
-                        dst = UpdatePointsEntity((PointsData)src, config);
-                        break;
-                    case EntityType.Curve:
-                        dst = UpdateCurveEntity((CurvesData)src, config);
-                        break;
-                    default:
-                        Debug.LogError($"Unhandled entity type: {src.entityType}");
-                        break;
+                                // TODO: Don't do this when GetMaterialSyncMode() works
+                                if (textureList.Count > 0) syncMode = "Basic";
+                            }
+
+                            SendEventData(
+                            new MeshSyncAnalyticsData() { syncData = new MeshSyncSyncAnalyticsData() { assetType = asset.type, syncMode = syncMode } });
+                        }
+                    }
+#if UNITY_EDITOR
+                    if (save)
+                        AssetDatabase.SaveAssets();
+#endif
                 }
+            });
+
+            // handle entities
+            Try(() => {
+                int numObjects = scene.numEntities;
+                for (int i = 0; i < numObjects; ++i) {
+                    EntityRecord dst = null;
+                    TransformData src = scene.GetEntity(i);
+                    switch (src.entityType) {
+                        case EntityType.Transform:
+                            dst = UpdateTransformEntity(src, config);
+                            break;
+                        case EntityType.Camera:
+                            dst = UpdateCameraEntity((CameraData)src, config);
+                            break;
+                        case EntityType.Light:
+                            dst = UpdateLightEntity((LightData)src, config);
+                            break;
+                        case EntityType.Mesh:
+                            dst = UpdateMeshEntity((MeshData)src, config);
+                            break;
+                        case EntityType.Points:
+                            dst = UpdatePointsEntity((PointsData)src, config);
+                            break;
+                        case EntityType.Curve:
+                            dst = UpdateCurveEntity((CurvesData)src, config);
+                            break;
+                        default:
+                            Debug.LogError($"Unhandled entity type: {src.entityType}");
+                            break;
+                    }
 
                 SendEventData(new MeshSyncAnalyticsData() { syncData = new MeshSyncSyncAnalyticsData() { entityType = src.entityType } });
 
 
-                if (dst != null && onUpdateEntity != null)
-                    onUpdateEntity.Invoke(dst.go, src);
+                    if (dst != null && onUpdateEntity != null)
+                        onUpdateEntity.Invoke(dst.go, src);
+                }
+            });
+
+            // handle constraints
+            Try(() => {
+                int numConstraints = scene.numConstraints;
+                for (int i = 0; i < numConstraints; ++i)
+                    UpdateConstraint(scene.GetConstraint(i));
+            });
+
+            // handle instance meshes
+            Try(() => {
+                int numMeshes = scene.numInstancedEntities;
+                for (int i = 0; i < numMeshes; ++i) {
+                    TransformData src = scene.GetInstancedEntity(i);
+
+                    // If an instance entity is not part of the scene, it can only be supported if it is a Mesh
+                    //[TODO] Refactor code to support more types
+                    if (src.entityType != EntityType.Mesh &&
+                        src.entityType != EntityType.Transform)
+                        continue;
+
+                    EntityRecord dst = UpdateInstancedEntity(src);
+
+                    if (dst == null) return;
+
+                    if (onUpdateInstancedEntity != null)
+                        onUpdateInstancedEntity(src.path, dst.go);
+                }
+            });
+
+            // Update mesh references before applying instances to make sure the instanced objects are up to date:
+            foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects) {
+                EntityRecord rec = kvp.Value;
+                UpdateReference(rec);
             }
-        });
 
-        // handle constraints
-        Try(() => {
-            int numConstraints = scene.numConstraints;
-            for (int i = 0; i < numConstraints; ++i)
-                UpdateConstraint(scene.GetConstraint(i));
-        });
+            UpdateProperties(scene);
 
-        // handle instance meshes
-        Try(() => {
-            int numMeshes = scene.numInstancedEntities;
-            for (int i = 0; i < numMeshes; ++i) {
-                TransformData src = scene.GetInstancedEntity(i);
-                
-                // If an instance entity is not part of the scene, it can only be supported if it is a Mesh
-                //[TODO] Refactor code to support more types
-                if (src.entityType != EntityType.Mesh)
-                    continue;
-                
-                EntityRecord  dst = UpdateInstancedEntity(src);
-
-                if (dst == null) return;
-
-                if (onUpdateInstancedEntity != null)
-                    onUpdateInstancedEntity(src.path, dst.go);
-            }
-        });
-
-        // handle instances
-        Try(() => {
-            int numInstances = scene.numInstanceInfos;
-            for (int i = 0; i < numInstances; ++i) {
-                InstanceInfoData   src = scene.GetInstanceInfo(i);
-                InstanceInfoRecord dst = UpdateInstanceInfo(src);
-                if (onUpdateInstanceInfo != null)
-                    onUpdateInstanceInfo.Invoke(src.path, dst.go, src.transforms);
-            }
-        });
-
-        UpdateProperties(scene);
+            // handle instances
+            Try(() => {
+                int numInstances = scene.numInstanceInfos;
+                for (int i = 0; i < numInstances; ++i) {
+                    InstanceInfoData src = scene.GetInstanceInfo(i);
+                    InstanceInfoRecord dst = UpdateInstanceInfo(src);
+                    if (onUpdateInstanceInfo != null)
+                        onUpdateInstanceInfo.Invoke(src.path, dst.go, src.transforms);
+                }
+            });
 
 #if UNITY_EDITOR
-        if (config.ProgressiveDisplay)
-            ForceRepaint();
+            if (config.ProgressiveDisplay)
+                ForceRepaint();
 #endif
 
 #if AT_USE_HDRP && UNITY_2021_2_OR_NEWER
@@ -713,150 +727,175 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             m_needToResetPathTracing = false;
         }
 #endif
-    }
-
-    internal virtual void AfterUpdateScene() {
-        // If none of the set messages had properties, we need to remove all properties:
-        if (numberOfPropertiesReceived == 0) propertyInfos.Clear();
-
-        List<string> deadKeys = null;
-
-        // resolve bones
-        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects) {
-            EntityRecord rec = kvp.Value;
-            if (rec.go == null) {
-                if (deadKeys == null)
-                    deadKeys = new List<string>();
-                deadKeys.Add(kvp.Key);
-                continue;
-            }
-
-            if (rec.smrUpdated) {
-                rec.smrUpdated = false;
-
-                SkinnedMeshRenderer smr = rec.skinnedMeshRenderer;
-                if (rec.bonePaths != null && rec.bonePaths.Length > 0) {
-                    int boneCount = rec.bonePaths.Length;
-
-                    Transform[] bones = new Transform[boneCount];
-                    for (int bi = 0; bi < boneCount; ++bi)
-                        bones[bi] = FilmInternalUtilities.GameObjectUtility.FindByPath(m_rootObject, rec.bonePaths[bi]);
-
-                    Transform root = null;
-                    if (!string.IsNullOrEmpty(rec.rootBonePath))
-                        root = FilmInternalUtilities.GameObjectUtility.FindByPath(m_rootObject, rec.rootBonePath);
-
-                    if (root == null && boneCount > 0) {
-                        // find root bone
-                        root = bones[0];
-                        for (;;) {
-                            Transform parent = root.parent;
-                            if (parent == null || parent == m_rootObject)
-                                break;
-                            root = parent;
-                        }
-                    }
-
-                    smr.rootBone            = root;
-                    smr.bones               = bones;
-                    smr.updateWhenOffscreen = true; // todo: this should be turned off at some point
-
-                    rec.bonePaths    = null;
-                    rec.rootBonePath = null;
-                }
-
-                smr.enabled = rec.smrEnabled;
-            }
         }
 
-        if (deadKeys != null)
-            foreach (string key in deadKeys)
-                m_clientObjects.Remove(key);
+        internal virtual void AfterUpdateScene() {
+            // If none of the set messages had properties, we need to remove all properties:
+            if (numberOfPropertiesReceived == 0) propertyInfos.Clear();
 
-        // resolve references
-        // this must be another pass because resolving bones can affect references
-        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects) {
-            EntityRecord rec = kvp.Value;
+            List<string> deadKeys = null;
+
+            // resolve bones
+            foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects) {
+                EntityRecord rec = kvp.Value;
+                if (rec.go == null) {
+                    if (deadKeys == null)
+                        deadKeys = new List<string>();
+                    deadKeys.Add(kvp.Key);
+                    continue;
+                }
+
+                if (rec.smrUpdated) {
+                    rec.smrUpdated = false;
+
+                    SkinnedMeshRenderer smr = rec.skinnedMeshRenderer;
+                    if (rec.bonePaths != null && rec.bonePaths.Length > 0) {
+                        int boneCount = rec.bonePaths.Length;
+
+                        Transform[] bones = new Transform[boneCount];
+                        for (int bi = 0; bi < boneCount; ++bi)
+                        bones[bi] = FilmInternalUtilities.GameObjectUtility.FindByPath(m_rootObject, rec.bonePaths[bi]);
+
+                        Transform root = null;
+                        if (!string.IsNullOrEmpty(rec.rootBonePath))
+                            root = FilmInternalUtilities.GameObjectUtility.FindByPath(m_rootObject, rec.rootBonePath);
+
+                        if (root == null && boneCount > 0) {
+                            // find root bone
+                            root = bones[0];
+                            for (;;) {
+                                Transform parent = root.parent;
+                                if (parent == null || parent == m_rootObject)
+                                    break;
+                                root = parent;
+                            }
+                        }
+
+                        smr.rootBone = root;
+                        smr.bones = bones;
+                        smr.updateWhenOffscreen = true; // todo: this should be turned off at some point
+
+                        rec.bonePaths = null;
+                        rec.rootBonePath = null;
+                    }
+
+                    smr.enabled = rec.smrEnabled;
+                }
+            }
+
+            if (deadKeys != null)
+                foreach (string key in deadKeys)
+                    m_clientObjects.Remove(key);
+
+            // resolve references
+            // this must be another pass because resolving bones can affect references
+            foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects) {
+                EntityRecord rec = kvp.Value;
+                UpdateReference(rec);
+            }
+
+            // Check for dead instances and delete them:
+            foreach (var clientInstance in m_clientInstances) {
+                var instancedObjectPath = clientInstance.Key;
+                var instanceInfo = clientInstance.Value;
+
+                foreach (var parentPath in instanceInfo.parentPaths) {
+                    if (instancesReceivedLastUpdate.TryGetValue(instancedObjectPath, out var parentList)) {
+                        if (parentList.Contains(parentPath))
+                            continue;
+
+                        // The instance for this parent was not updated, remove it:
+                        var parent =
+                            FilmInternalUtilities.GameObjectUtility.FindByPath(m_rootObject, parentPath);
+
+                        EraseInstanceInfoRecord(instanceInfo, parent);
+                        continue;
+                    }
+                    else {
+                        // The instance was not sent at all, remove it from all parents:
+                        EraseInstanceInfoRecord(instanceInfo, null);
+                        continue;
+                    }
+                }
+            }
+
+            // reassign materials
+            if (m_needReassignMaterials) {
+                m_materialList = m_materialList.OrderBy(v => v.index).ToList();
+                ReassignMaterials(false);
+                m_needReassignMaterials = false;
+            }
+
+#if UNITY_EDITOR
+            // sort objects by index
+            if (m_sortEntities) {
+                IOrderedEnumerable<EntityRecord> rec = m_clientObjects.Values.OrderBy(v => v.index);
+                foreach (EntityRecord r in rec)
+                    if (r.go != null)
+                        r.go.GetComponent<Transform>().SetSiblingIndex(r.index + 1000);
+            }
+
+            if (!EditorApplication.isPlaying || !EditorApplication.isPaused)
+                // force recalculate skinning
+                foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects) {
+                    EntityRecord rec = kvp.Value;
+                    SkinnedMeshRenderer smr = rec.skinnedMeshRenderer;
+                    if (smr != null && rec.smrEnabled && rec.go.activeInHierarchy) {
+                        smr.enabled = false; // 
+                        smr.enabled = true; // force recalculate skinned mesh on editor. I couldn't find better way...
+                    }
+                }
+
+            if (!EditorApplication.isPlaying)
+                // mark scene dirty
+                EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+#endif
+            MeshSyncLogger.VerboseLog($"Scene updated.");
+
+            if (onSceneUpdateEnd != null)
+                onSceneUpdateEnd.Invoke();
+        }
+
+        void UpdateReference(EntityRecord rec) {
             if (!string.IsNullOrEmpty(rec.reference)) {
                 EntityRecord srcrec = null;
                 if (m_clientObjects.TryGetValue(rec.reference, out srcrec) && srcrec.go != null) {
                     rec.materialIDs = srcrec.materialIDs;
                     UpdateReference(rec, srcrec, GetConfigV());
                 }
+                // else if(m_clientInstancedEntities.TryGetValue(rec.reference, out srcrec) && srcrec.go != null)
+                // {
+                //     rec.materialIDs = srcrec.materialIDs;
+                //     UpdateReference(rec, srcrec, GetConfigV());
+                // }
+
+                // if(srcrec.go!=null)
+                // { 
+                //         rec.materialIDs = srcrec.materialIDs;
+                //         UpdateReference(rec, srcrec, GetConfigV()); 
+                // }
             }
         }
 
-        // reassign materials
-        if (m_needReassignMaterials) {
-            m_materialList = m_materialList.OrderBy(v => v.index).ToList();
-            ReassignMaterials(false);
-            m_needReassignMaterials = false;
-        }
+        //----------------------------------------------------------------------------------------------------------------------
 
+        private void UpdateFileAsset(FileAssetData src) {
+            MakeSureAssetDirectoryExists();
 #if UNITY_EDITOR
-        // sort objects by index
-        if (m_sortEntities) {
-            IOrderedEnumerable<EntityRecord> rec = m_clientObjects.Values.OrderBy(v => v.index);
-            foreach (EntityRecord r in rec)
-                if (r.go != null)
-                    r.go.GetComponent<Transform>().SetSiblingIndex(r.index + 1000);
-        }
-
-        if (!EditorApplication.isPlaying || !EditorApplication.isPaused)
-            // force recalculate skinning
-            foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects) {
-                EntityRecord        rec = kvp.Value;
-                SkinnedMeshRenderer smr = rec.skinnedMeshRenderer;
-                if (smr != null && rec.smrEnabled && rec.go.activeInHierarchy) {
-                    smr.enabled = false; // 
-                    smr.enabled = true;  // force recalculate skinned mesh on editor. I couldn't find better way...
-                }
-            }
-
-        if (!EditorApplication.isPlaying)
-            // mark scene dirty
-            EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
-#endif
-        MeshSyncLogger.VerboseLog($"Scene updated.");
-
-        if (onSceneUpdateEnd != null)
-            onSceneUpdateEnd.Invoke();
-    }
-
-    //----------------------------------------------------------------------------------------------------------------------
-
-    private void UpdateFileAsset(FileAssetData src) {
-        MakeSureAssetDirectoryExists();
-#if UNITY_EDITOR
-        src.WriteToFile(m_assetsFolder + "/" + src.name);
-#endif
-    }
-
-    private void UpdateAudioAsset(AudioData src) {
-        MakeSureAssetDirectoryExists();
-        AudioClip ac = null;
-
-        AudioFormat format = src.format;
-        if (format == AudioFormat.RawFile) {
-#if UNITY_EDITOR
-            // create file and import it
-            string dstPath = m_assetsFolder + "/" + src.name;
-            src.WriteToFile(dstPath);
-            AssetDatabase.ImportAsset(dstPath);
-            ac = AssetDatabase.LoadAssetAtPath<AudioClip>(dstPath);
-            if (ac != null) {
-                AudioImporter importer = (AudioImporter)AssetImporter.GetAtPath(dstPath);
-                if (importer != null) {
-                    // nothing todo for now
-                }
-            }
+            src.WriteToFile(m_assetsFolder + "/" + src.name);
 #endif
         }
-        else {
+
+        private void UpdateAudioAsset(AudioData src) {
+            MakeSureAssetDirectoryExists();
+            AudioClip ac = null;
+
+            AudioFormat format = src.format;
+            if (format == AudioFormat.RawFile) {
 #if UNITY_EDITOR
-            // export as .wav and import it
-            string dstPath = m_assetsFolder + "/" + src.name + ".wav";
-            if (src.ExportAsWave(dstPath)) {
+                // create file and import it
+                string dstPath = m_assetsFolder + "/" + src.name;
+                src.WriteToFile(dstPath);
                 AssetDatabase.ImportAsset(dstPath);
                 ac = AssetDatabase.LoadAssetAtPath<AudioClip>(dstPath);
                 if (ac != null) {
@@ -865,401 +904,409 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                         // nothing todo for now
                     }
                 }
-            }
 #endif
-            if (ac == null) {
-                ac = AudioClip.Create(src.name, src.sampleLength, src.channels, src.frequency, false);
-                ac.SetData(src.samples, 0);
             }
-        }
-
-        if (ac != null) {
-            int         id  = src.id;
-            AudioHolder dst = m_audioList.Find(a => a.id == id);
-            if (dst == null) {
-                dst    = new AudioHolder();
-                dst.id = id;
-                m_audioList.Add(dst);
-            }
-
-            dst.audio = ac;
-            if (onUpdateAudio != null)
-                onUpdateAudio.Invoke(ac, src);
-        }
-    }
-
-    //----------------------------------------------------------------------------------------------------------------------
-
-    private void UpdateTextureAsset(TextureData src)
-    {
-        MakeSureAssetDirectoryExists();
-        Texture2D texture = null;
+            else {
 #if UNITY_EDITOR
-        Action<string, bool> doImport = (path, forceReimport) => {
-            bool assetExisted = AssetDatabase.LoadAssetAtPath<Texture2D>(path) != null;
-
-            if (forceReimport)
-            {
-                AssetDatabase.ImportAsset(path);
+                // export as .wav and import it
+                string dstPath = m_assetsFolder + "/" + src.name + ".wav";
+                if (src.ExportAsWave(dstPath)) {
+                    AssetDatabase.ImportAsset(dstPath);
+                    ac = AssetDatabase.LoadAssetAtPath<AudioClip>(dstPath);
+                    if (ac != null) {
+                        AudioImporter importer = (AudioImporter)AssetImporter.GetAtPath(dstPath);
+                        if (importer != null) {
+                            // nothing todo for now
+                        }
+                    }
+                }
+#endif
+                if (ac == null) {
+                    ac = AudioClip.Create(src.name, src.sampleLength, src.channels, src.frequency, false);
+                    ac.SetData(src.samples, 0);
+                }
             }
 
-            texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            if (texture != null) {
-                TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
-
-                bool needReimport = false;
-
-                // Make sure the full texture is used unless the user changed this setting before:
-                if (!assetExisted) {
-                    importer.npotScale = TextureImporterNPOTScale.None;
-                    needReimport       = true;
+            if (ac != null) {
+                int id = src.id;
+                AudioHolder dst = m_audioList.Find(a => a.id == id);
+                if (dst == null) {
+                    dst = new AudioHolder();
+                    dst.id = id;
+                    m_audioList.Add(dst);
                 }
 
-                if (importer != null)
-                    switch (src.type) {
-                        case TextureType.NormalMap:
-                            if (importer.textureType != TextureImporterType.NormalMap)
-                            {
-                                importer.textureType = TextureImporterType.NormalMap;
-                                needReimport = true;
-                            }
+                dst.audio = ac;
+                if (onUpdateAudio != null)
+                    onUpdateAudio.Invoke(ac, src);
+            }
+        }
 
-                            break;
-                        case TextureType.NonColor:
-                            if (importer.sRGBTexture)
-                            {
-                                importer.sRGBTexture = false;
-                                needReimport = true;
-                            }
+        //----------------------------------------------------------------------------------------------------------------------
 
-                            break;
+        private void UpdateTextureAsset(TextureData src) {
+            MakeSureAssetDirectoryExists();
+            Texture2D texture = null;
+#if UNITY_EDITOR
+            Action<string, bool> doImport = (path, forceReimport) => {
+                bool assetExisted = AssetDatabase.LoadAssetAtPath<Texture2D>(path) != null;
+
+                if (forceReimport) {
+                    AssetDatabase.ImportAsset(path);
+                }
+
+                texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                if (texture != null) {
+                    TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
+
+                    bool needReimport = false;
+
+                    // Make sure the full texture is used unless the user changed this setting before:
+                    if (!assetExisted) {
+                        importer.npotScale = TextureImporterNPOTScale.None;
+                        needReimport = true;
                     }
 
-                if (needReimport) {
-                    importer.SaveAndReimport();
-                    AssetDatabase.Refresh();
+                    if (importer != null)
+                        switch (src.type) {
+                            case TextureType.NormalMap:
+                                if (importer.textureType != TextureImporterType.NormalMap) {
+                                    importer.textureType = TextureImporterType.NormalMap;
+                                    needReimport = true;
+                                }
+
+                                break;
+                            case TextureType.NonColor:
+                                if (importer.sRGBTexture) {
+                                    importer.sRGBTexture = false;
+                                    needReimport = true;
+                                }
+
+                                break;
+                        }
+
+                    if (needReimport) {
+                        importer.SaveAndReimport();
+                        AssetDatabase.Refresh();
+                    }
                 }
-            }
-        };
+            };
 #endif
 
-        TextureFormat format = src.format;
-        if (format == TextureFormat.RawFile) {
+            TextureFormat format = src.format;
+            if (format == TextureFormat.RawFile) {
 #if UNITY_EDITOR
-            // write data to file and import
-            string path = m_assetsFolder + "/" + src.name;
-            
-            bool needImport = GetConfigV().GetModelImporterSettings().ImportTextures || !File.Exists(path);
-            
-            if (src.WriteToFile(path))
-                doImport(path, needImport);
+                // write data to file and import
+                string path = m_assetsFolder + "/" + src.name;
+
+                bool needImport = GetConfigV().GetModelImporterSettings().ImportTextures || !File.Exists(path);
+
+                if (src.WriteToFile(path))
+                    doImport(path, needImport);
 #endif
-        }
-        else {
-            texture      = new Texture2D(src.width, src.height, Misc.ToUnityTextureFormat(src.format), false);
-            texture.name = src.name;
-            texture.LoadRawTextureData(src.dataPtr, src.sizeInByte);
-            texture.Apply();
+            }
+            else {
+                texture = new Texture2D(src.width, src.height, Misc.ToUnityTextureFormat(src.format), false);
+                texture.name = src.name;
+                texture.LoadRawTextureData(src.dataPtr, src.sizeInByte);
+                texture.Apply();
 #if UNITY_EDITOR
-            // encode and write data to file and import
-            // (script-generated texture works but can't set texture type such as normal map)
-            bool   exported = false;
-            string path     = null;
-            switch (src.format) {
-                case TextureFormat.Ru8:
-                case TextureFormat.RGu8:
-                case TextureFormat.RGBu8:
-                case TextureFormat.RGBAu8: {
-                    path     = m_assetsFolder + "/" + src.name + ".png";
-                    exported = TextureData.WriteToFile(path, EncodeToPNG(texture));
-                    break;
+                // encode and write data to file and import
+                // (script-generated texture works but can't set texture type such as normal map)
+                bool exported = false;
+                string path = null;
+                switch (src.format) {
+                    case TextureFormat.Ru8:
+                    case TextureFormat.RGu8:
+                    case TextureFormat.RGBu8:
+                    case TextureFormat.RGBAu8: {
+                        path = m_assetsFolder + "/" + src.name + ".png";
+                        exported = TextureData.WriteToFile(path, EncodeToPNG(texture));
+                        break;
+                    }
+                    case TextureFormat.Rf16:
+                    case TextureFormat.RGf16:
+                    case TextureFormat.RGBf16:
+                    case TextureFormat.RGBAf16: {
+                        path = m_assetsFolder + "/" + src.name + ".exr";
+                        exported = TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.CompressZIP));
+                        break;
+                    }
+                    case TextureFormat.Rf32:
+                    case TextureFormat.RGf32:
+                    case TextureFormat.RGBf32:
+                    case TextureFormat.RGBAf32: {
+                        path = m_assetsFolder + "/" + src.name + ".exr";
+                        exported = TextureData.WriteToFile(path,
+                            EncodeToEXR(texture, Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP));
+                        break;
+                    }
                 }
-                case TextureFormat.Rf16:
-                case TextureFormat.RGf16:
-                case TextureFormat.RGBf16:
-                case TextureFormat.RGBAf16: {
-                    path     = m_assetsFolder + "/" + src.name + ".exr";
-                    exported = TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.CompressZIP));
-                    break;
-                }
-                case TextureFormat.Rf32:
-                case TextureFormat.RGf32:
-                case TextureFormat.RGBf32:
-                case TextureFormat.RGBAf32: {
-                    path     = m_assetsFolder + "/" + src.name + ".exr";
-                    exported = TextureData.WriteToFile(path, EncodeToEXR(texture, Texture2D.EXRFlags.OutputAsFloat | Texture2D.EXRFlags.CompressZIP));
-                    break;
-                }
-            }
 
-            if (exported) {
-                texture = null;
-                doImport(path, true);
-            }
+                if (exported) {
+                    texture = null;
+                    doImport(path, true);
+                }
 #endif
+            }
+
+            if (texture != null) {
+                int id = src.id;
+                TextureHolder dst = m_textureList.Find(a => a.id == id);
+                if (dst == null) {
+                    dst = new TextureHolder();
+                    dst.id = id;
+                    m_textureList.Add(dst);
+                }
+
+                dst.texture = texture;
+                if (onUpdateTexture != null)
+                    onUpdateTexture.Invoke(texture, src);
+            }
         }
 
-        if (texture != null) {
-            int           id  = src.id;
-            TextureHolder dst = m_textureList.Find(a => a.id == id);
-            if (dst == null) {
-                dst    = new TextureHolder();
-                dst.id = id;
-                m_textureList.Add(dst);
-            }
-
-            dst.texture = texture;
-            if (onUpdateTexture != null)
-                onUpdateTexture.Invoke(texture, src);
-        }
-    }
-
-    private byte[] EncodeToPNG(Texture2D tex) {
-        return ImageConversion.EncodeToPNG(tex);
-    }
-
-    private byte[] EncodeToEXR(Texture2D tex, Texture2D.EXRFlags flags) {
-        return ImageConversion.EncodeToEXR(tex, flags);
-    }
-
-    private protected abstract void UpdateMaterialAssetV(MaterialData materialData);
-
-    private protected void UpdateMaterialAssetByDefault(MaterialData src, ModelImporterSettings importerSettings) {
-        int    materialID   = src.id;
-        string materialName = src.name;
-
-        MaterialHolder dst = m_materialList.Find(a => a.id == materialID);
-
-        bool isNewMaterial = dst == null || dst.material == null;
-        
-        //if (invalid && creating materials is allowed)
-        if ((dst == null || dst.material == null || dst.name != materialName) && importerSettings.CreateMaterials) {
-            if (null == dst) {
-                dst = new MaterialHolder { id = materialID };
-                m_materialList.Add(dst);
-            }
-
-            Assert.IsNotNull(dst);
-
-#if UNITY_EDITOR
-            dst.material = SearchMaterialInEditor(importerSettings.MaterialSearchMode, materialName);
-            if (null != dst.material) {
-                isNewMaterial = false;
-            }
-            else
-#endif
-            {
-                dst.material      = CreateDefaultMaterial(src.shader);
-                dst.material.name = materialName;
-            }
-
-            m_needReassignMaterials = true;
+        private byte[] EncodeToPNG(Texture2D tex) {
+            return ImageConversion.EncodeToPNG(tex);
         }
 
-        if (dst == null || dst.material == null)
-            return;
-        
-        bool shouldApplyMaterialData = isNewMaterial || importerSettings.OverwriteExportedMaterials;
-            
-        dst.name  = materialName;
-        dst.index = src.index;
-        dst.color = src.color;
+        private byte[] EncodeToEXR(Texture2D tex, Texture2D.EXRFlags flags) {
+            return ImageConversion.EncodeToEXR(tex, flags);
+        }
 
-        Material destMat = dst.material;
-        if (importerSettings.CreateMaterials && shouldApplyMaterialData) ApplyMaterialDataToMaterial(src, destMat, m_textureList);
+        private protected abstract void UpdateMaterialAssetV(MaterialData materialData);
 
-        if (onUpdateMaterial != null)
-            onUpdateMaterial.Invoke(destMat, src);
-    }
+        private protected void UpdateMaterialAssetByDefault(MaterialData src, ModelImporterSettings importerSettings) {
+            int materialID = src.id;
+            string materialName = src.name;
 
-    //----------------------------------------------------------------------------------------------------------------------    
+            MaterialHolder dst = m_materialList.Find(a => a.id == materialID);
+
+            bool isNewMaterial = dst == null || dst.material == null;
+
+            //if (invalid && creating materials is allowed)
+            if ((dst == null || dst.material == null || dst.name != materialName) && importerSettings.CreateMaterials) {
+                if (null == dst) {
+                    dst = new MaterialHolder { id = materialID };
+                    m_materialList.Add(dst);
+                }
+
+                Assert.IsNotNull(dst);
 
 #if UNITY_EDITOR
-
-    [CanBeNull]
-    private Material SearchMaterialInEditor(AssetSearchMode materialSearchMode, string materialName) {
-        HashSet<string> materialPaths = null;
-        string          assetsFolder  = GetAssetsFolder();
-        switch (materialSearchMode) {
-            case AssetSearchMode.LOCAL: {
-                if (Directory.Exists(assetsFolder))
-                    materialPaths = AssetEditorUtility.FindAssetPaths("t:Material ", materialName, new string[] { assetsFolder });
-                break;
-            }
-
-            case AssetSearchMode.RECURSIVE_UP: {
-                string nextFolder = assetsFolder;
-                while (!string.IsNullOrEmpty(nextFolder) && (null == materialPaths || materialPaths.Count <= 0)) {
-                    if (Directory.Exists(nextFolder))
-                        materialPaths = AssetEditorUtility.FindAssetPaths("t:Material ", materialName, new string[] { nextFolder }, false);
-
-                    nextFolder = PathUtility.GetDirectoryName(nextFolder, 1);
+                dst.material = SearchMaterialInEditor(importerSettings.MaterialSearchMode, materialName);
+                if (null != dst.material) {
+                    isNewMaterial = false;
                 }
-
-                break;
-            }
-            case AssetSearchMode.EVERYWHERE: {
-                materialPaths = AssetEditorUtility.FindAssetPaths("t:Material ", materialName);
-                break;
-            }
-        }
-
-        if (null == materialPaths || materialPaths.Count <= 0)
-            return null;
-
-        Material candidate = null;
-
-        foreach (string materialPath in materialPaths) {
-            Material material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
-            candidate = material;
-            //if there are multiple candidates, prefer the editable one (= not a part of fbx etc)
-            if (((int)material.hideFlags & (int)HideFlags.NotEditable) == 0)
-                return material;
-        }
-
-        Assert.IsNotNull(candidate);
-        return candidate;
-    }
+                else
 #endif
-
-    //----------------------------------------------------------------------------------------------------------------------    
-
-    private void ApplyMaterialDataToMaterial(MaterialData src, Material destMat,
-        List<TextureHolder> textureHolders) {
-        int numKeywords = src.numKeywords;
-        for (int ki = 0; ki < numKeywords; ++ki) {
-            MaterialKeywordData kw = src.GetKeyword(ki);
-            if (kw.value)
-                destMat.EnableKeyword(kw.name);
-            else
-                destMat.DisableKeyword(kw.name);
-        }
-
-        UpdateShader(destMat, src.shader);
-
-        // Put all properties in a list so we can look them up more easily:
-        int                                   numProps           = src.numProperties;
-        Dictionary<int, IMaterialPropertyData> materialProperties = new Dictionary<int, IMaterialPropertyData>(numProps);
-        
-        for (int pi = 0; pi < numProps; ++pi)
-        {
-            IMaterialPropertyData prop = src.GetProperty(pi);
-            // Change parallax slider value to 0.005
-            if (prop.nameID == MeshSyncConstants._Parallax)
-            {
-                CustomMaterialPropertyData parallax = new CustomMaterialPropertyData(prop);
-                parallax.floatValue = 0.005f;
-                materialProperties.Add(parallax.nameID, parallax);
-            }
-            else
-            {
-                materialProperties.Add(prop.nameID, prop);
-            }
-        }
-
-        if (!materialProperties.ContainsKey(MeshSyncConstants._Glossiness)
-            && !materialProperties.ContainsKey(MeshSyncConstants._GlossMapScale))
-        {
-            var id = MeshSyncConstants._Glossiness;
-            if (!materialProperties.ContainsKey(MeshSyncConstants._MetallicGlossMap))
-            {
-                id = MeshSyncConstants._GlossMapScale;
-                
-                var textureChannel = new CustomMaterialPropertyData()
                 {
-                    intValue = 1,
-                    arrayLength = 1,
-                    type = IMaterialPropertyData.Type.Int,
-                        nameID = MeshSyncConstants._SmoothnessTextureChannel
-                };
-                materialProperties.Add(textureChannel.nameID, textureChannel);
+                    dst.material = CreateDefaultMaterial(src.shader);
+                    dst.material.name = materialName;
+                }
+
+                m_needReassignMaterials = true;
             }
-            
-            var glossiness = new CustomMaterialPropertyData
-            {
-                floatValue = 0.5f,
+
+            if (dst == null || dst.material == null)
+                return;
+
+            bool shouldApplyMaterialData = isNewMaterial || importerSettings.OverwriteExportedMaterials;
+
+            dst.name = materialName;
+            dst.index = src.index;
+            dst.color = src.color;
+
+            Material destMat = dst.material;
+            if (importerSettings.CreateMaterials && shouldApplyMaterialData)
+                ApplyMaterialDataToMaterial(src, destMat, m_textureList);
+
+            if (onUpdateMaterial != null)
+                onUpdateMaterial.Invoke(destMat, src);
+        }
+
+        //----------------------------------------------------------------------------------------------------------------------    
+
+#if UNITY_EDITOR
+
+        [CanBeNull]
+        private Material SearchMaterialInEditor(AssetSearchMode materialSearchMode, string materialName) {
+            HashSet<string> materialPaths = null;
+            string assetsFolder = GetAssetsFolder();
+            switch (materialSearchMode) {
+                case AssetSearchMode.LOCAL: {
+                    if (Directory.Exists(assetsFolder))
+                        materialPaths = AssetEditorUtility.FindAssetPaths("t:Material ", materialName,
+                            new string[] { assetsFolder });
+                    break;
+                }
+
+                case AssetSearchMode.RECURSIVE_UP: {
+                    string nextFolder = assetsFolder;
+                    while (!string.IsNullOrEmpty(nextFolder) && (null == materialPaths || materialPaths.Count <= 0)) {
+                        if (Directory.Exists(nextFolder))
+                            materialPaths = AssetEditorUtility.FindAssetPaths("t:Material ", materialName,
+                                new string[] { nextFolder }, false);
+
+                        nextFolder = PathUtility.GetDirectoryName(nextFolder, 1);
+                    }
+
+                    break;
+                }
+                case AssetSearchMode.EVERYWHERE: {
+                    materialPaths = AssetEditorUtility.FindAssetPaths("t:Material ", materialName);
+                    break;
+                }
+            }
+
+            if (null == materialPaths || materialPaths.Count <= 0)
+                return null;
+
+            Material candidate = null;
+
+            foreach (string materialPath in materialPaths) {
+                Material material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+                candidate = material;
+                //if there are multiple candidates, prefer the editable one (= not a part of fbx etc)
+                if (((int)material.hideFlags & (int)HideFlags.NotEditable) == 0)
+                    return material;
+            }
+
+            Assert.IsNotNull(candidate);
+            return candidate;
+        }
+#endif
+
+        //----------------------------------------------------------------------------------------------------------------------    
+
+        private void ApplyMaterialDataToMaterial(MaterialData src, Material destMat,
+            List<TextureHolder> textureHolders) {
+            int numKeywords = src.numKeywords;
+            for (int ki = 0; ki < numKeywords; ++ki) {
+                MaterialKeywordData kw = src.GetKeyword(ki);
+                if (kw.value)
+                    destMat.EnableKeyword(kw.name);
+                else
+                    destMat.DisableKeyword(kw.name);
+            }
+
+            UpdateShader(destMat, src.shader);
+
+            // Put all properties in a list so we can look them up more easily:
+            int numProps = src.numProperties;
+            Dictionary<int, IMaterialPropertyData> materialProperties =
+                new Dictionary<int, IMaterialPropertyData>(numProps);
+
+            for (int pi = 0; pi < numProps; ++pi) {
+                IMaterialPropertyData prop = src.GetProperty(pi);
+                // Change parallax slider value to 0.005
+                if (prop.nameID == MeshSyncConstants._Parallax) {
+                    CustomMaterialPropertyData parallax = new CustomMaterialPropertyData(prop);
+                    parallax.floatValue = 0.005f;
+                    materialProperties.Add(parallax.nameID, parallax);
+                }
+                else {
+                    materialProperties.Add(prop.nameID, prop);
+                }
+            }
+
+            if (!materialProperties.ContainsKey(MeshSyncConstants._Glossiness)
+                && !materialProperties.ContainsKey(MeshSyncConstants._GlossMapScale)) {
+                var id = MeshSyncConstants._Glossiness;
+                if (!materialProperties.ContainsKey(MeshSyncConstants._MetallicGlossMap)) {
+                    id = MeshSyncConstants._GlossMapScale;
+
+                    var textureChannel = new CustomMaterialPropertyData() {
+                        intValue = 1,
+                        arrayLength = 1,
+                        type = IMaterialPropertyData.Type.Int,
+                        nameID = MeshSyncConstants._SmoothnessTextureChannel
+                    };
+                    materialProperties.Add(textureChannel.nameID, textureChannel);
+                }
+
+                var glossiness = new CustomMaterialPropertyData {
+                    floatValue = 0.5f,
+                    arrayLength = 1,
+                    type = IMaterialPropertyData.Type.Float,
+                    nameID = id
+                };
+
+                materialProperties.Add(glossiness.nameID, glossiness);
+            }
+
+            // Change AO slider value to 0.25
+            CustomMaterialPropertyData aoStrength = new CustomMaterialPropertyData {
+                floatValue = 0.25f,
                 arrayLength = 1,
                 type = IMaterialPropertyData.Type.Float,
-                nameID = id
+                nameID = MeshSyncConstants._OcclusionStrength
             };
-                
-            materialProperties.Add(glossiness.nameID, glossiness);
+            materialProperties.Add(aoStrength.nameID, aoStrength);
+
+            foreach (KeyValuePair<int, IMaterialPropertyData> prop in materialProperties)
+                ApplyMaterialProperty(destMat, textureHolders, prop.Value, prop.Key, materialProperties, src.shader);
+
+            MapsBaker.BakeMaps(destMat, textureHolders, materialProperties, this);
+
+            // Need to update shader again to ensure any custom setup is still there after the material properties were applied.
+            UpdateCustomShaderSettings(destMat, src.shader);
         }
-        
-        // Change AO slider value to 0.25
-        CustomMaterialPropertyData aoStrength = new CustomMaterialPropertyData
-        {
-            floatValue = 0.25f,
-            arrayLength = 1,
-            type = IMaterialPropertyData.Type.Float,
-            nameID = MeshSyncConstants._OcclusionStrength
-        };
-        materialProperties.Add(aoStrength.nameID, aoStrength);
 
-        foreach (KeyValuePair<int, IMaterialPropertyData> prop in materialProperties)
-            ApplyMaterialProperty(destMat, textureHolders, prop.Value, prop.Key, materialProperties, src.shader);
+        private static bool HandleKeywords(Material destMat, List<TextureHolder> textureHolders,
+            IMaterialPropertyData prop, string keyword) {
+            // If the texture exists, enable its keyword, otherwise disable it:
+            if (prop.type == IMaterialPropertyData.Type.Texture) {
+                IMaterialPropertyData.TextureRecord rec = prop.textureValue;
+                Texture2D tex = FindTexture(rec.id, textureHolders);
 
-        MapsBaker.BakeMaps(destMat, textureHolders, materialProperties, this);
-
-        // Need to update shader again to ensure any custom setup is still there after the material properties were applied.
-        UpdateCustomShaderSettings(destMat, src.shader);
-    }
-
-    private static bool HandleKeywords(Material destMat, List<TextureHolder> textureHolders,
-        IMaterialPropertyData prop, string keyword) {
-        // If the texture exists, enable its keyword, otherwise disable it:
-        if (prop.type == IMaterialPropertyData.Type.Texture) {
-            IMaterialPropertyData.TextureRecord rec = prop.textureValue;
-            Texture2D                          tex = FindTexture(rec.id, textureHolders);
-
-            if (tex != null) {
-                destMat.EnableKeyword(keyword);
-                return true;
+                if (tex != null) {
+                    destMat.EnableKeyword(keyword);
+                    return true;
+                }
             }
+
+            destMat.DisableKeyword(keyword);
+
+            return false;
         }
 
-        destMat.DisableKeyword(keyword);
+        private static bool HandleKeywords(Material destMat, string keyword) {
+            destMat.EnableKeyword(keyword);
+            return true;
+        }
 
-        return false;
-    }
+        private static Dictionary<int, int[]> synonymMap = new Dictionary<int, int[]> {
+            { MeshSyncConstants._Color, new[] { MeshSyncConstants._BaseColor } },
+            { MeshSyncConstants._MainTex, new[] { MeshSyncConstants._BaseMap, MeshSyncConstants._BaseColorMap } }, {
+                MeshSyncConstants._Glossiness, new[] { MeshSyncConstants._Smoothness, MeshSyncConstants._GlossMapScale }
+            },
+            { MeshSyncConstants._BumpMap, new[] { MeshSyncConstants._NormalMap } },
+            { MeshSyncConstants._EmissionMap, new[] { MeshSyncConstants._EmissiveColorMap } },
+            { MeshSyncConstants._ParallaxMap, new[] { MeshSyncConstants._HeightMap } },
+            { MeshSyncConstants._BumpScale, new[] { MeshSyncConstants._NormalScale } }
+        };
 
-    private static bool HandleKeywords(Material destMat, string keyword)
-    {
-        destMat.EnableKeyword(keyword);
-        return true;
-    }
+        private void ApplyMaterialProperty(Material destMat,
+            List<TextureHolder> textureHolders,
+            IMaterialPropertyData prop,
+            int propNameID,
+            Dictionary<int, IMaterialPropertyData> materialProperties,
+            string shaderName) {
+            // Shaders use different names to refer to the same maps, this map contains those synonyms so we can apply them to every shader easily:
+            if (synonymMap.TryGetValue(propNameID, out int[] synonyms))
+                foreach (int synonym in synonyms)
+                    ApplyMaterialProperty(destMat, textureHolders, prop, synonym, materialProperties, shaderName);
 
-    private static Dictionary<int, int[]> synonymMap = new Dictionary<int, int[]> {
-        { MeshSyncConstants._Color, new[] { MeshSyncConstants._BaseColor } },
-        { MeshSyncConstants._MainTex, new[] { MeshSyncConstants._BaseMap, MeshSyncConstants._BaseColorMap } },
-        { MeshSyncConstants._Glossiness, new[] { MeshSyncConstants._Smoothness, MeshSyncConstants._GlossMapScale } },
-        { MeshSyncConstants._BumpMap, new[] { MeshSyncConstants._NormalMap } },
-        { MeshSyncConstants._EmissionMap, new[] { MeshSyncConstants._EmissiveColorMap } },
-        { MeshSyncConstants._ParallaxMap, new[] { MeshSyncConstants._HeightMap } },
-        { MeshSyncConstants._BumpScale, new[] { MeshSyncConstants._NormalScale } }
-    };
+            IMaterialPropertyData.Type propType = prop.type;
+            if (!destMat.HasProperty(propNameID))
+                return;
 
-    private void ApplyMaterialProperty(Material destMat,
-        List<TextureHolder> textureHolders,
-        IMaterialPropertyData prop,
-        int propNameID,
-        Dictionary<int, IMaterialPropertyData> materialProperties,
-        string shaderName) {
-        // Shaders use different names to refer to the same maps, this map contains those synonyms so we can apply them to every shader easily:
-        if (synonymMap.TryGetValue(propNameID, out int[] synonyms))
-            foreach (int synonym in synonyms)
-                ApplyMaterialProperty(destMat, textureHolders, prop, synonym, materialProperties, shaderName);
-
-        IMaterialPropertyData.Type propType = prop.type;
-        if (!destMat.HasProperty(propNameID))
-            return;
-
-        // Enable alpha test if there is a color texture so alpha clipping works:
-        if (propNameID == MeshSyncConstants._BaseMap ||
-            propNameID == MeshSyncConstants._MainTex ||
-            propNameID == MeshSyncConstants._BaseColorMap) {
-            bool hasAlpha = HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._ALPHATEST_ON);
-            if (hasAlpha) destMat.SetOverrideTag(MeshSyncConstants.RenderType, MeshSyncConstants.TransparentCutout);
+            // Enable alpha test if there is a color texture so alpha clipping works:
+            if (propNameID == MeshSyncConstants._BaseMap ||
+                propNameID == MeshSyncConstants._MainTex ||
+                propNameID == MeshSyncConstants._BaseColorMap) {
+                bool hasAlpha = HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._ALPHATEST_ON);
+                if (hasAlpha) destMat.SetOverrideTag(MeshSyncConstants.RenderType, MeshSyncConstants.TransparentCutout);
 #if AT_USE_HDRP
             destMat.SetFloat(MeshSyncConstants._AlphaCutoffEnable, hasAlpha ? 1 : 0);
             if (hasAlpha) {
@@ -1267,36 +1314,35 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 destMat.SetFloat(MeshSyncConstants._ZTestGBuffer, 3);
             }
 #elif AT_USE_URP
-            destMat.SetFloat(MeshSyncConstants._AlphaClip, hasAlpha ? 1 : 0);
+                destMat.SetFloat(MeshSyncConstants._AlphaClip, hasAlpha ? 1 : 0);
 #else
             if (hasAlpha) destMat.SetFloat(MeshSyncConstants._Mode, 1);
 #endif
-        }
-
-        if (propNameID == MeshSyncConstants._EmissionColor) {
-            if (destMat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack) {
-                destMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-
-                HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._EMISSION);
             }
-        }
-        else if (propNameID == MeshSyncConstants._MetallicGlossMap) {
-            HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._METALLICGLOSSMAP);
-            HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._METALLICSPECGLOSSMAP);
-        }
-        else if (propNameID == MeshSyncConstants._BumpMap) {
-            HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._NORMALMAP);
-        }
-        else if (propNameID == MeshSyncConstants._ParallaxMap) {
-            HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._PARALLAXMAP);
-        }
-        else if (propNameID == MeshSyncConstants._OcclusionMap) {
-            HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._OCCLUSIONMAP);
-        }
-        else if (propNameID == MeshSyncConstants._SmoothnessTextureChannel)
-        {
-            HandleKeywords(destMat, MeshSyncConstants._SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A);
-        }
+
+            if (propNameID == MeshSyncConstants._EmissionColor) {
+                if (destMat.globalIlluminationFlags == MaterialGlobalIlluminationFlags.EmissiveIsBlack) {
+                    destMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+
+                    HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._EMISSION);
+                }
+            }
+            else if (propNameID == MeshSyncConstants._MetallicGlossMap) {
+                HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._METALLICGLOSSMAP);
+                HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._METALLICSPECGLOSSMAP);
+            }
+            else if (propNameID == MeshSyncConstants._BumpMap) {
+                HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._NORMALMAP);
+            }
+            else if (propNameID == MeshSyncConstants._ParallaxMap) {
+                HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._PARALLAXMAP);
+            }
+            else if (propNameID == MeshSyncConstants._OcclusionMap) {
+                HandleKeywords(destMat, textureHolders, prop, MeshSyncConstants._OCCLUSIONMAP);
+            }
+            else if (propNameID == MeshSyncConstants._SmoothnessTextureChannel) {
+                HandleKeywords(destMat, MeshSyncConstants._SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A);
+            }
 #if AT_USE_HDRP
         else if (propNameID == MeshSyncConstants._EmissiveColorMap) {
             Color baseEmissionColor = Color.white;
@@ -1352,191 +1398,219 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         }
 #endif
 
-        int len = prop.arrayLength;
-        switch (propType) {
-            case IMaterialPropertyData.Type.Int:
-                destMat.SetInt(propNameID, prop.intValue);
-                break;
-            case IMaterialPropertyData.Type.Float:
-                if (len == 1)
-                    destMat.SetFloat(propNameID, prop.floatValue);
-                else
-                    destMat.SetFloatArray(propNameID, prop.floatArray);
-                break;
-            case IMaterialPropertyData.Type.Vector:
-                if (len == 1)
-                    destMat.SetVector(propNameID, prop.vectorValue);
-                else
-                    destMat.SetVectorArray(propNameID, prop.vectorArray);
-                break;
-            case IMaterialPropertyData.Type.Matrix:
-                if (len == 1)
-                    destMat.SetMatrix(propNameID, prop.matrixValue);
-                else
-                    destMat.SetMatrixArray(propNameID, prop.matrixArray);
-                break;
-            case IMaterialPropertyData.Type.Texture: {
-                IMaterialPropertyData.TextureRecord rec = prop.textureValue;
-                Texture2D                          tex = FindTexture(rec.id, textureHolders);
-                // Allow setting of null textures to clear them:
-                destMat.SetTextureAndReleaseExistingRenderTextures(propNameID, tex);
-                if (rec.hasScaleOffset) {
-                    destMat.SetTextureScale(propNameID, rec.scale);
-                    destMat.SetTextureOffset(propNameID, rec.offset);
+            int len = prop.arrayLength;
+            switch (propType) {
+                case IMaterialPropertyData.Type.Int:
+                    destMat.SetInt(propNameID, prop.intValue);
+                    break;
+                case IMaterialPropertyData.Type.Float:
+                    if (len == 1)
+                        destMat.SetFloat(propNameID, prop.floatValue);
+                    else
+                        destMat.SetFloatArray(propNameID, prop.floatArray);
+                    break;
+                case IMaterialPropertyData.Type.Vector:
+                    if (len == 1) {
+                        // Apply gamma correction if needed:
+                        Color propertyValueAsColor = prop.vectorValue;
+
+                        var col = IsColorInGammaSpace && QualitySettings.activeColorSpace == ColorSpace.Linear
+                            ? propertyValueAsColor.gamma
+                            : propertyValueAsColor;
+                        destMat.SetVector(propNameID, col);
+                    }
+                    else {
+                        if (IsColorInGammaSpace && QualitySettings.activeColorSpace == ColorSpace.Linear) {
+                            var propertyValueAsColorArray = new Vector4[prop.vectorArray.Length];
+                            for (int i = 0; i < prop.vectorArray.Length; i++) {
+                                Color propertyValueAsColor = prop.vectorArray[i];
+                                var col = QualitySettings.activeColorSpace == ColorSpace.Linear
+                                    ? propertyValueAsColor.gamma
+                                    : propertyValueAsColor;
+                                propertyValueAsColorArray[i] = col;
+                            }
+
+                            destMat.SetVectorArray(propNameID, propertyValueAsColorArray);
+                        }
+                        else {
+                            destMat.SetVectorArray(propNameID, prop.vectorArray);
+                        }
+                    }
+
+                    break;
+                case IMaterialPropertyData.Type.Matrix:
+                    if (len == 1)
+                        destMat.SetMatrix(propNameID, prop.matrixValue);
+                    else
+                        destMat.SetMatrixArray(propNameID, prop.matrixArray);
+                    break;
+                case IMaterialPropertyData.Type.Texture: {
+                    IMaterialPropertyData.TextureRecord rec = prop.textureValue;
+                    Texture2D tex = FindTexture(rec.id, textureHolders);
+                    // Allow setting of null textures to clear them:
+                    destMat.SetTextureAndReleaseExistingRenderTextures(propNameID, tex);
+                    if (rec.hasScaleOffset) {
+                        destMat.SetTextureScale(propNameID, rec.scale);
+                        destMat.SetTextureOffset(propNameID, rec.offset);
+                    }
                 }
+                    break;
+                case IMaterialPropertyData.Type.String:
+                    // Not used at the moment but would be: prop.stringValue;
+                    break;
+                default: break;
             }
-                break;
-            case IMaterialPropertyData.Type.String:
-                // Not used at the moment but would be: prop.stringValue;
-                break;
-            default: break;
         }
-    }
 
-    //----------------------------------------------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------------------------------------------
 
-    private EntityRecord UpdateMeshEntity(MeshData data, MeshSyncPlayerConfig config) {
-        if (!config.SyncMeshes)
-            return null;
+        private EntityRecord UpdateMeshEntity(MeshData data, MeshSyncPlayerConfig config) {
+            if (!config.SyncMeshes)
+                return null;
 
-        TransformData dtrans = data.transform;
-        MeshDataFlags dflags = data.dataFlags;
-        EntityRecord  rec    = UpdateTransformEntity(dtrans, config);
-        if (rec == null || dflags.unchanged)
-            return null;
+            TransformData dtrans = data.transform;
+            MeshDataFlags dflags = data.dataFlags;
+            EntityRecord rec = UpdateTransformEntity(dtrans, config);
+            if (rec == null || dflags.unchanged)
+                return null;
 
-        if (!string.IsNullOrEmpty(rec.reference))
-            // references will be resolved later in UpdateReference()
-            return null;
+            if (!string.IsNullOrEmpty(rec.reference))
+                // references will be resolved later in UpdateReference()
+                return null;
 
-        string     path              = dtrans.path;
-        GameObject go                = rec.go;
-        bool       activeInHierarchy = go.activeInHierarchy;
-        if (!activeInHierarchy && !dflags.hasPoints)
-            return null;
-
-        return UpdateMeshEntity(data, config, rec);
-    }
-
-    private EntityRecord UpdateMeshEntity(MeshData data, MeshSyncPlayerConfig config, EntityRecord rec) {
-        TransformData dtrans = data.transform;
-        MeshDataFlags dflags = data.dataFlags;
-        GameObject    go     = rec.go;
-        Transform     trans  = go.transform;
-
-        // allocate material list
-        bool materialsUpdated = rec.BuildMaterialData(data);
-        bool meshUpdated      = false;
-
-        if (dflags.hasPoints && dflags.hasIndices) {
-            // note:
-            // assume there is always only 1 mesh split.
-            // old versions supported multiple splits because vertex index was 16 bit (pre-Unity 2017.3),
-            // but that code path was removed for simplicity and my sanity.
-            if (data.numIndices == 0) {
-                if (rec.mesh != null)
+            string path = dtrans.path;
+            GameObject go = rec.go;
+            bool activeInHierarchy = go.activeInHierarchy;
+            if (!activeInHierarchy && !dflags.hasPoints) {
+                if (rec.mesh != null) {
                     rec.mesh.Clear();
-            }
-            else {
-                if (rec.mesh == null) {
-                    rec.mesh      = new Mesh();
-                    rec.mesh.name = trans.name;
-                    if (m_markMeshesDynamic)
-                        rec.mesh.MarkDynamic();
-                    if (!m_saveAssetsInScene)
-                        rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
-                    rec.mesh.indexFormat = IndexFormat.UInt32;
                 }
 
-                UpdateMeshEntity(ref rec.mesh, data);
+                return null;
             }
 
-            meshUpdated = true;
-        }
-        else if (rec.mesh != null) {
-            rec.mesh.Clear();
+            return UpdateMeshEntity(data, config, rec);
         }
 
-        if (dflags.hasBones || dflags.hasBlendshapes) {
-            SkinnedMeshRenderer smr = rec.skinnedMeshRenderer;
-            if (smr == null) {
-                materialsUpdated = true;
-                smr              = rec.skinnedMeshRenderer = Misc.GetOrAddComponent<SkinnedMeshRenderer>(trans.gameObject);
-                rec.DestroyMeshRendererAndFilter();
-            }
+        private EntityRecord UpdateMeshEntity(MeshData data, MeshSyncPlayerConfig config, EntityRecord rec) {
+            TransformData dtrans = data.transform;
+            MeshDataFlags dflags = data.dataFlags;
+            GameObject go = rec.go;
+            Transform trans = go.transform;
 
-            rec.smrUpdated = true;
-            if (config.SyncVisibility && dtrans.dataFlags.hasVisibility)
-                rec.smrEnabled = data.transform.visibility.visibleInRender;
-            else
-                rec.smrEnabled = smr.enabled;
-            // disable temporarily to prevent error. restore on AfterUpdateScene()
-            smr.enabled    = false;
-            smr.sharedMesh = rec.mesh;
+            // allocate material list
+            bool materialsUpdated = rec.BuildMaterialData(data);
+            bool meshUpdated = false;
 
-            // update bones
-            if (dflags.hasBones) {
-                if (dflags.hasRootBone)
-                    rec.rootBonePath = data.rootBonePath;
-                rec.bonePaths = data.bonePaths;
-                // bones will be resolved in AfterUpdateScene()
-            }
-            else {
-                smr.localBounds         = null != rec.mesh ? rec.mesh.bounds : new Bounds();
-                smr.updateWhenOffscreen = false;
-            }
-
-            // update blendshape weights
-            if (dflags.hasBlendshapes) {
-                int meshBlendShapeCount = null != rec.mesh ? rec.mesh.blendShapeCount : 0;
-                int numBlendShapes      = Math.Min(data.numBlendShapes, meshBlendShapeCount);
-                for (int bi = 0; bi < numBlendShapes; ++bi) {
-                    BlendShapeData bsd = data.GetBlendShapeData(bi);
-                    smr.SetBlendShapeWeight(bi, bsd.weight);
+            if (dflags.hasPoints && dflags.hasIndices) {
+                // note:
+                // assume there is always only 1 mesh split.
+                // old versions supported multiple splits because vertex index was 16 bit (pre-Unity 2017.3),
+                // but that code path was removed for simplicity and my sanity.
+                if (data.numIndices == 0) {
+                    if (rec.mesh != null)
+                        rec.mesh.Clear();
                 }
+                else {
+                    if (rec.mesh == null) {
+                        rec.mesh = new Mesh();
+                        rec.mesh.name = trans.name;
+                        if (m_markMeshesDynamic)
+                            rec.mesh.MarkDynamic();
+                        if (!m_saveAssetsInScene)
+                            rec.mesh.hideFlags = HideFlags.DontSaveInEditor;
+                        rec.mesh.indexFormat = IndexFormat.UInt32;
+                    }
+
+                    UpdateMeshEntity(ref rec.mesh, data);
+                }
+
+                meshUpdated = true;
             }
+            else if (rec.mesh != null) {
+                rec.mesh.Clear();
+            }
+
+            if (dflags.hasBones || dflags.hasBlendshapes) {
+                SkinnedMeshRenderer smr = rec.skinnedMeshRenderer;
+                if (smr == null) {
+                    materialsUpdated = true;
+                    smr = rec.skinnedMeshRenderer = Misc.GetOrAddComponent<SkinnedMeshRenderer>(trans.gameObject);
+                    rec.DestroyMeshRendererAndFilter();
+                }
+
+                rec.smrUpdated = true;
+                if (config.SyncVisibility && dtrans.dataFlags.hasVisibility)
+                    rec.smrEnabled = data.transform.visibility.visibleInRender;
+                else
+                    rec.smrEnabled = smr.enabled;
+                // disable temporarily to prevent error. restore on AfterUpdateScene()
+                smr.enabled = false;
+                smr.sharedMesh = rec.mesh;
+
+                // update bones
+                if (dflags.hasBones) {
+                    if (dflags.hasRootBone)
+                        rec.rootBonePath = data.rootBonePath;
+                    rec.bonePaths = data.bonePaths;
+                    // bones will be resolved in AfterUpdateScene()
+                }
+                else {
+                    smr.localBounds = null != rec.mesh ? rec.mesh.bounds : new Bounds();
+                    smr.updateWhenOffscreen = false;
+                }
+
+                // update blendshape weights
+                if (dflags.hasBlendshapes) {
+                    int meshBlendShapeCount = null != rec.mesh ? rec.mesh.blendShapeCount : 0;
+                    int numBlendShapes = Math.Min(data.numBlendShapes, meshBlendShapeCount);
+                    for (int bi = 0; bi < numBlendShapes; ++bi) {
+                        BlendShapeData bsd = data.GetBlendShapeData(bi);
+                        smr.SetBlendShapeWeight(bi, bsd.weight);
+                    }
+                }
 
 #if AT_USE_HDRP
             UpdateRayTracingModeIfNecessary(smr);
 #endif
-        }
-        else if (meshUpdated) {
-            MeshFilter   mf = rec.meshFilter;
-            MeshRenderer mr = rec.meshRenderer;
-
-            if (mf == null) {
-                materialsUpdated = true;
-
-                mf = rec.meshFilter = Misc.GetOrAddComponent<MeshFilter>(trans.gameObject);
-
-                mr = rec.meshRenderer = Misc.GetOrAddComponent<MeshRenderer>(trans.gameObject);
-                if (rec.skinnedMeshRenderer != null) {
-                    mr.sharedMaterials = rec.skinnedMeshRenderer.sharedMaterials;
-                    DestroyImmediate(rec.skinnedMeshRenderer);
-                    rec.skinnedMeshRenderer = null;
-                }
             }
+            else if (meshUpdated) {
+                MeshFilter mf = rec.meshFilter;
+                MeshRenderer mr = rec.meshRenderer;
 
-            if (config.SyncVisibility && dtrans.dataFlags.hasVisibility)
-                mr.enabled = data.transform.visibility.visibleInRender;
-            mf.sharedMesh  = rec.mesh;
-            rec.smrEnabled = false;
+                if (mf == null) {
+                    materialsUpdated = true;
+
+                    mf = rec.meshFilter = Misc.GetOrAddComponent<MeshFilter>(trans.gameObject);
+
+                    mr = rec.meshRenderer = Misc.GetOrAddComponent<MeshRenderer>(trans.gameObject);
+                    if (rec.skinnedMeshRenderer != null) {
+                        mr.sharedMaterials = rec.skinnedMeshRenderer.sharedMaterials;
+                        DestroyImmediate(rec.skinnedMeshRenderer);
+                        rec.skinnedMeshRenderer = null;
+                    }
+                }
+
+                if (config.SyncVisibility && dtrans.dataFlags.hasVisibility)
+                    mr.enabled = data.transform.visibility.visibleInRender;
+                mf.sharedMesh = rec.mesh;
+                rec.smrEnabled = false;
 
 #if AT_USE_HDRP
             UpdateRayTracingModeIfNecessary(mr);
 #endif
-        }
+            }
 
-        if (meshUpdated) {
-            MeshCollider collider = config.UpdateMeshColliders ? trans.GetComponent<MeshCollider>() : null;
-            if (collider != null &&
-                (collider.sharedMesh == null || collider.sharedMesh == rec.mesh))
-                collider.sharedMesh = rec.mesh;
-        }
+            if (meshUpdated) {
+                MeshCollider collider = config.UpdateMeshColliders ? trans.GetComponent<MeshCollider>() : null;
+                if (collider != null &&
+                    (collider.sharedMesh == null || collider.sharedMesh == rec.mesh))
+                    collider.sharedMesh = rec.mesh;
+            }
 
-        // assign materials if needed
-        if (materialsUpdated)
-            AssignMaterials(rec, false);
+            // assign materials if needed
+            if (materialsUpdated)
+                AssignMaterials(rec, false);
 
 #if AT_USE_PROBUILDER
         if (UseProBuilder) {
@@ -1544,12 +1618,13 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
                 //Debug.LogError("Rebuilding");
                 ProBuilderBeforeRebuild?.Invoke();
 
-                rec.proBuilderMeshFilter = Misc.GetOrAddComponent<UnityEngine.ProBuilder.ProBuilderMesh>(trans.gameObject);
+                rec.proBuilderMeshFilter =
+ Misc.GetOrAddComponent<UnityEngine.ProBuilder.ProBuilderMesh>(trans.gameObject);
 
-                Material[] sharedMaterials                    = null;
+                Material[] sharedMaterials = null;
                 if (rec.meshRenderer != null) sharedMaterials = rec.meshRenderer.sharedMaterials;
 
-                UnityEngine.ProBuilder.MeshOperations.MeshImporter importer = 
+                UnityEngine.ProBuilder.MeshOperations.MeshImporter importer =
                     new UnityEngine.ProBuilder.MeshOperations.MeshImporter(rec.mesh, sharedMaterials, rec.proBuilderMeshFilter);
                 // Disable quads, it is much slower:
                 importer.Import(new UnityEngine.ProBuilder.MeshOperations.MeshImportSettings() { quads = false });
@@ -1568,8 +1643,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             }
         }
 #endif
-        return rec;
-    }
+            return rec;
+        }
 
 #if AT_USE_PROBUILDER
     internal static Action ProBuilderBeforeRebuild;
@@ -1593,7 +1668,7 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
         if (!m_pathTracingExists)
             return;
 
-        r.rayTracingMode         = UnityEngine.Experimental.Rendering.RayTracingMode.DynamicGeometry;
+        r.rayTracingMode = UnityEngine.Experimental.Rendering.RayTracingMode.DynamicGeometry;
 #if UNITY_2021_2_OR_NEWER
         m_needToResetPathTracing = true;
 #endif
@@ -1603,1563 +1678,1735 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    private void UpdateMeshEntity(ref Mesh mesh, MeshData data) {
-        bool keepIndices = false;
-        if (mesh.vertexCount != 0) {
-            if (data.dataFlags.topologyUnchanged) {
-                keepIndices = true;
-            }
-            else {
-                mesh.Clear();
-                // Mesh.Clear() seems don't clear bindposes
-                mesh.bindposes = null;
-            }
-        }
-
-        int           numPoints = data.numPoints;
-        MeshDataFlags dataFlags = data.dataFlags;
-        if (dataFlags.hasPoints) {
-            m_tmpV3.Resize(numPoints);
-            data.ReadPoints(m_tmpV3);
-            mesh.SetVertices(m_tmpV3.List);
-        }
-
-        if (dataFlags.hasNormals) {
-            m_tmpV3.Resize(numPoints);
-            data.ReadNormals(m_tmpV3);
-            mesh.SetNormals(m_tmpV3.List);
-        }
-
-        if (dataFlags.hasTangents) {
-            m_tmpV4.Resize(numPoints);
-            data.ReadTangents(m_tmpV4);
-            mesh.SetTangents(m_tmpV4.List);
-        }
-
-        for (int i = 0; i < CoreAPIConstants.MAX_UV; ++i)
-            if (dataFlags.HasUV(i)) {
-                m_tmpV2.Resize(numPoints);
-                data.ReadUV(m_tmpV2, i);
-                mesh.SetUVs(i, m_tmpV2.List);
-            }
-
-        if (dataFlags.hasColors) {
-            m_tmpC.Resize(numPoints);
-            data.ReadColors(m_tmpC);
-            mesh.SetColors(m_tmpC.List);
-        }
-
-        if (dataFlags.hasBones) {
-            mesh.bindposes = data.bindposes;
-
-            {
-                // bonesPerVertex + weights1
-                NativeArray<byte>        bonesPerVertex = new NativeArray<byte>(numPoints, Allocator.Temp);
-                NativeArray<BoneWeight1> weights1       = new NativeArray<BoneWeight1>(data.numBoneWeights, Allocator.Temp);
-                data.ReadBoneCounts(Misc.ForceGetPointer(ref bonesPerVertex));
-                data.ReadBoneWeightsV(Misc.ForceGetPointer(ref weights1));
-                mesh.SetBoneWeights(bonesPerVertex, weights1);
-                bonesPerVertex.Dispose();
-                weights1.Dispose();
-            }
-        }
-
-        if (dataFlags.hasIndices && !keepIndices) {
-            int subMeshCount = data.numSubmeshes;
-            mesh.subMeshCount = subMeshCount;
-            for (int smi = 0; smi < subMeshCount; ++smi) {
-                SubmeshData          submesh  = data.GetSubmesh(smi);
-                SubmeshData.Topology topology = submesh.topology;
-
-                m_tmpI.Resize(submesh.numIndices);
-                submesh.ReadIndices(data, m_tmpI);
-
-                if (topology == SubmeshData.Topology.Triangles) {
-                    mesh.SetTriangles(m_tmpI.List, smi, false);
+        private void UpdateMeshEntity(ref Mesh mesh, MeshData data) {
+            bool keepIndices = false;
+            if (mesh.vertexCount != 0) {
+                if (data.dataFlags.topologyUnchanged) {
+                    keepIndices = true;
                 }
                 else {
-                    MeshTopology mt = MeshTopology.Points;
-                    switch (topology) {
-                        case SubmeshData.Topology.Lines:
-                            mt = MeshTopology.Lines;
-                            break;
-                        case SubmeshData.Topology.Quads:
-                            mt = MeshTopology.Quads;
-                            break;
-                        default: break;
+                    mesh.Clear();
+                    // Mesh.Clear() seems don't clear bindposes
+                    mesh.bindposes = null;
+                }
+            }
+
+            int numPoints = data.numPoints;
+            MeshDataFlags dataFlags = data.dataFlags;
+            if (dataFlags.hasPoints) {
+                m_tmpV3.Resize(numPoints);
+                data.ReadPoints(m_tmpV3);
+                mesh.SetVertices(m_tmpV3.List);
+            }
+
+            if (dataFlags.hasNormals) {
+                m_tmpV3.Resize(numPoints);
+                data.ReadNormals(m_tmpV3);
+                mesh.SetNormals(m_tmpV3.List);
+            }
+
+            if (dataFlags.hasTangents) {
+                m_tmpV4.Resize(numPoints);
+                data.ReadTangents(m_tmpV4);
+                mesh.SetTangents(m_tmpV4.List);
+            }
+
+            for (int i = 0; i < CoreAPIConstants.MAX_UV; ++i)
+                if (dataFlags.HasUV(i)) {
+                    m_tmpV2.Resize(numPoints);
+                    data.ReadUV(m_tmpV2, i);
+                    mesh.SetUVs(i, m_tmpV2.List);
+                }
+
+            if (dataFlags.hasColors) {
+                m_tmpC.Resize(numPoints);
+                data.ReadColors(m_tmpC);
+                mesh.SetColors(m_tmpC.List);
+            }
+
+            if (dataFlags.hasBones) {
+                mesh.bindposes = data.bindposes;
+
+                {
+                    // bonesPerVertex + weights1
+                    NativeArray<byte> bonesPerVertex = new NativeArray<byte>(numPoints, Allocator.Temp);
+                    NativeArray<BoneWeight1> weights1 =
+                        new NativeArray<BoneWeight1>(data.numBoneWeights, Allocator.Temp);
+                    data.ReadBoneCounts(Misc.ForceGetPointer(ref bonesPerVertex));
+                    data.ReadBoneWeightsV(Misc.ForceGetPointer(ref weights1));
+                    mesh.SetBoneWeights(bonesPerVertex, weights1);
+                    bonesPerVertex.Dispose();
+                    weights1.Dispose();
+                }
+            }
+
+            if (dataFlags.hasIndices && !keepIndices) {
+                int subMeshCount = data.numSubmeshes;
+                mesh.subMeshCount = subMeshCount;
+                for (int smi = 0; smi < subMeshCount; ++smi) {
+                    SubmeshData submesh = data.GetSubmesh(smi);
+                    SubmeshData.Topology topology = submesh.topology;
+
+                    m_tmpI.Resize(submesh.numIndices);
+                    submesh.ReadIndices(data, m_tmpI);
+
+                    if (topology == SubmeshData.Topology.Triangles) {
+                        mesh.SetTriangles(m_tmpI.List, smi, false);
                     }
+                    else {
+                        MeshTopology mt = MeshTopology.Points;
+                        switch (topology) {
+                            case SubmeshData.Topology.Lines:
+                                mt = MeshTopology.Lines;
+                                break;
+                            case SubmeshData.Topology.Quads:
+                                mt = MeshTopology.Quads;
+                                break;
+                            default: break;
+                        }
 
-                    // note: tmpI.Array can't be used because its length is not current size but capacity.
-                    mesh.SetIndices(m_tmpI.List.ToArray(), mt, smi, false);
-                }
-            }
-        }
-
-        if (dataFlags.hasBlendshapes) {
-            PinnedList<Vector3> tmpBSP = new PinnedList<Vector3>(numPoints);
-            PinnedList<Vector3> tmpBSN = new PinnedList<Vector3>(numPoints);
-            PinnedList<Vector3> tmpBST = new PinnedList<Vector3>(numPoints);
-
-            int numBlendShapes = data.numBlendShapes;
-            for (int bi = 0; bi < numBlendShapes; ++bi) {
-                BlendShapeData bsd       = data.GetBlendShapeData(bi);
-                string         name      = bsd.name;
-                float          numFrames = bsd.numFrames;
-                for (int fi = 0; fi < numFrames; ++fi) {
-                    bsd.ReadPoints(fi, tmpBSP);
-                    bsd.ReadNormals(fi, tmpBSN);
-                    bsd.ReadTangents(fi, tmpBST);
-                    mesh.AddBlendShapeFrame(name, bsd.GetWeight(fi), tmpBSP.Array, tmpBSN.Array, tmpBST.Array);
+                        // note: tmpI.Array can't be used because its length is not current size but capacity.
+                        mesh.SetIndices(m_tmpI.List.ToArray(), mt, smi, false);
+                    }
                 }
             }
 
-            tmpBSP.Dispose();
-            tmpBSN.Dispose();
-            tmpBST.Dispose();
+            if (dataFlags.hasBlendshapes) {
+                PinnedList<Vector3> tmpBSP = new PinnedList<Vector3>(numPoints);
+                PinnedList<Vector3> tmpBSN = new PinnedList<Vector3>(numPoints);
+                PinnedList<Vector3> tmpBST = new PinnedList<Vector3>(numPoints);
+
+                int numBlendShapes = data.numBlendShapes;
+                for (int bi = 0; bi < numBlendShapes; ++bi) {
+                    BlendShapeData bsd = data.GetBlendShapeData(bi);
+                    string name = bsd.name;
+                    float numFrames = bsd.numFrames;
+                    for (int fi = 0; fi < numFrames; ++fi) {
+                        bsd.ReadPoints(fi, tmpBSP);
+                        bsd.ReadNormals(fi, tmpBSN);
+                        bsd.ReadTangents(fi, tmpBST);
+                        mesh.AddBlendShapeFrame(name, bsd.GetWeight(fi), tmpBSP.Array, tmpBSN.Array, tmpBST.Array);
+                    }
+                }
+
+                tmpBSP.Dispose();
+                tmpBSN.Dispose();
+                tmpBST.Dispose();
+            }
+
+            mesh.bounds = data.bounds;
+            mesh.UploadMeshData(false);
         }
 
-        mesh.bounds = data.bounds;
-        mesh.UploadMeshData(false);
-    }
+        //----------------------------------------------------------------------------------------------------------------------        
+        private EntityRecord UpdatePointsEntity(PointsData data, MeshSyncPlayerConfig config) {
+            TransformData dtrans = data.transform;
+            PointsDataFlags dflags = data.dataFlags;
+            EntityRecord rec = UpdateTransformEntity(dtrans, config);
+            if (rec == null || dflags.unchanged)
+                return null;
 
-    //----------------------------------------------------------------------------------------------------------------------        
-    private EntityRecord UpdatePointsEntity(PointsData data, MeshSyncPlayerConfig config) {
-        TransformData   dtrans = data.transform;
-        PointsDataFlags dflags = data.dataFlags;
-        EntityRecord    rec    = UpdateTransformEntity(dtrans, config);
-        if (rec == null || dflags.unchanged)
-            return null;
+            // reference (source mesh) will be resolved in UpdateReference()
 
-        // reference (source mesh) will be resolved in UpdateReference()
+            string path = dtrans.path;
+            GameObject go = rec.go;
 
-        string     path = dtrans.path;
-        GameObject go   = rec.go;
+            PointCache dst = rec.pointCache;
+            if (dst == null) {
+                rec.pointCacheRenderer = Misc.GetOrAddComponent<PointCacheRenderer>(go);
+                dst = rec.pointCache = Misc.GetOrAddComponent<PointCache>(go);
+            }
 
-        PointCache dst = rec.pointCache;
-        if (dst == null) {
-            rec.pointCacheRenderer = Misc.GetOrAddComponent<PointCacheRenderer>(go);
-            dst                    = rec.pointCache = Misc.GetOrAddComponent<PointCache>(go);
+            dst.Clear();
+
+            int num = data.numPoints;
+            dst.bounds = data.bounds;
+            if (dflags.hasPoints) {
+                dst.points = new Vector3[num];
+                data.ReadPoints(dst.points);
+            }
+
+            if (dflags.hasRotations) {
+                dst.rotations = new Quaternion[num];
+                data.ReadRotations(dst.rotations);
+            }
+
+            if (dflags.hasScales) {
+                dst.scales = new Vector3[num];
+                data.ReadScales(dst.scales);
+            }
+
+            return rec;
         }
 
-        dst.Clear();
+        static Transform FindOrCreateByPath(Transform parent,
+            string path,
+            Action<string> parentCreationCallback,
+            bool worldPositionStays = true,
+            int gameObjectLayer = -1) {
+            string[] names = path.Split('/');
+            if (names.Length <= 0)
+                return null;
 
-        int num = data.numPoints;
-        dst.bounds = data.bounds;
-        if (dflags.hasPoints) {
-            dst.points = new Vector3[num];
-            data.ReadPoints(dst.points);
-        }
+            static Transform FindFirstRoot(string objectName) {
+                GameObject[] roots = SceneManager.GetActiveScene().GetRootGameObjects();
+                foreach (GameObject go in roots) {
+                    if (go.name != objectName)
+                        continue;
 
-        if (dflags.hasRotations) {
-            dst.rotations = new Quaternion[num];
-            data.ReadRotations(dst.rotations);
-        }
+                    return go.transform;
+                }
 
-        if (dflags.hasScales) {
-            dst.scales = new Vector3[num];
-            data.ReadScales(dst.scales);
-        }
+                return null;
+            }
 
-        return rec;
-    }
-
-    static Transform FindOrCreateByPath(Transform parent, string path, Action<string> parentCreationCallback, bool worldPositionStays = true) {
-        string[] names = path.Split('/');
-        if (names.Length <= 0)
-            return null;
-        
-        //if parent is null, search from root 
-        Transform t             = parent;
-        int       tokenStartIdx = 0;
-        if (null == t) {
-            string rootGameObjectName = names[0];
-            t = FilmInternalUtilities.GameObjectUtility.FindFirstRoot(rootGameObjectName);
+            //if parent is null, search from root 
+            Transform t = parent;
+            int tokenStartIdx = 0;
             if (null == t) {
-                GameObject go = new GameObject(rootGameObjectName);
-                t = go.GetComponent<Transform>();
+                string rootGameObjectName = names[0];
+                t = FilmInternalUtilities.GameObjectUtility.FindFirstRoot(rootGameObjectName);
+                if (null == t) {
+                    GameObject go = new GameObject(rootGameObjectName);
+                    t = go.GetComponent<Transform>();
+
+                    if (gameObjectLayer != -1) {
+                        go.layer = gameObjectLayer;
+                    }
+                }
+
+                tokenStartIdx = 1;
             }
 
-            tokenStartIdx = 1;
-        }
+            Transform FindOrCreateChild(Transform t, string childName, out bool didCreate,
+                bool worldPositionStays = true) {
+                Transform childT = t.Find(childName);
+                if (null != childT) {
+                    didCreate = false;
+                    return childT;
+                }
 
-        static Transform FindOrCreateChild(Transform t, string childName, out bool didCreate, bool worldPositionStays = true) {
-            Transform childT = t.Find(childName);
-            if (null != childT) {
-                didCreate = false;
+                GameObject go = new GameObject(childName);
+
+                if (gameObjectLayer != -1) {
+                    go.layer = gameObjectLayer;
+                }
+
+                childT = go.transform;
+                childT.SetParent(t, worldPositionStays);
+                didCreate = true;
                 return childT;
             }
 
-            GameObject go = new GameObject(childName);
-            childT = go.transform;
-            childT.SetParent(t, worldPositionStays);
-            didCreate = true;
-            return childT;
-        }
-        
-        //loop over hierarchy of names and generate parents that don't exist
-        int          nameLength       = names.Length;
-        List<string> processedParents = new List<string>();
-        for (int i = tokenStartIdx; i < nameLength; ++i) {
-            string nameToken = names[i];
-            if (string.IsNullOrEmpty(nameToken))
-                continue;
-            
-            processedParents.Add(nameToken);
+            //loop over hierarchy of names and generate parents that don't exist
+            int nameLength = names.Length;
+            List<string> processedParents = new List<string>();
+            for (int i = tokenStartIdx; i < nameLength; ++i) {
+                string nameToken = names[i];
+                if (string.IsNullOrEmpty(nameToken))
+                    continue;
 
-            t = FindOrCreateChild(t, nameToken, out var didCreate, worldPositionStays);
-            if (i < nameLength - 1 && didCreate) {
-                var parentPath = String.Join("/", processedParents);
-                if (!parentPath.StartsWith("/")) {
-                    parentPath = $"/{parentPath}";
+                processedParents.Add(nameToken);
+
+                t = FindOrCreateChild(t, nameToken, out var didCreate, worldPositionStays);
+                if (i < nameLength - 1 && didCreate) {
+                    var parentPath = String.Join("/", processedParents);
+                    if (!parentPath.StartsWith("/")) {
+                        parentPath = $"/{parentPath}";
+                    }
+
+                    parentCreationCallback?.Invoke(parentPath);
                 }
-                
-                parentCreationCallback?.Invoke(parentPath);
+
+                if (null == t)
+                    return null;
             }
 
-            if (null == t)
-                return null;
+            return t;
         }
 
-        return t;
-    }
-
-    void AddClientObject(string path, out EntityRecord rec) {
-        if (m_clientObjects.TryGetValue(path, out rec))
-            if (rec.go == null) {
-                m_clientObjects.Remove(path);
-                rec = null;
-            }
-
-        if (rec == null) {
-            var trans = FindOrCreateByPath(m_rootObject, path,
-                delegate(string parentPath) {
-                    EntityRecord parentRec = null;
-                    AddClientObject(parentPath, out parentRec);
-                    if (parentRec.dataType == EntityType.Unknown)
-                        parentRec.dataType = EntityType.Transform;
-                },
-                false);
-
-            rec = new EntityRecord {
-                go     = trans.gameObject,
-                trans  = trans,
-                recved = true
-            };
-            m_clientObjects.Add(path, rec);
-        }
-    }
-
-    private EntityRecord UpdateTransformEntity(TransformData data, MeshSyncPlayerConfig config) {
-        string path   = data.path;
-        int    hostID = data.hostID;
-        if (path.Length == 0)
-            return null;
-
-        EntityRecord rec   = null;
-        if (hostID != Lib.invalidID) {
-            if (m_hostObjects.TryGetValue(hostID, out rec))
+        void AddClientObject(string path, out EntityRecord rec) {
+            if (m_clientObjects.TryGetValue(path, out rec))
                 if (rec.go == null) {
-                    m_hostObjects.Remove(hostID);
+                    m_clientObjects.Remove(path);
                     rec = null;
                 }
 
-            if (rec == null)
-                return null;
-        }
-        else {
-            AddClientObject(path, out rec);
-        }
+            if (rec == null) {
+                var trans = FindOrCreateByPath(m_rootObject, path,
+                    delegate(string parentPath) {
+                        EntityRecord parentRec = null;
+                        AddClientObject(parentPath, out parentRec);
+                        if (parentRec.dataType == EntityType.Unknown)
+                            parentRec.dataType = EntityType.Transform;
+                    },
+                    false,
+                    m_rootObject.gameObject.layer);
 
-        return UpdateTransformEntity(data, config, rec);
-    }
-
-    private void SetVis(Behaviour c, VisibilityFlags visibility) {
-        if (c != null) c.enabled = visibility.visibleInRender;
-    }
-
-    private void SetVis(Renderer c, VisibilityFlags visibility) {
-        if (c != null) c.enabled = visibility.visibleInRender;
-    }
-
-    private EntityRecord UpdateTransformEntity(TransformData data, MeshSyncPlayerConfig config, EntityRecord rec) {
-        Transform trans = rec.trans;
-        if (trans == null)
-            trans = rec.trans = rec.go.transform;
-
-        TransformDataFlags dflags = data.dataFlags;
-        if (!dflags.unchanged) {
-            VisibilityFlags visibility = data.visibility;
-            rec.index    = data.index;
-            rec.dataType = data.entityType;
-
-            // sync TRS
-            if (config.SyncTransform) {
-                if (dflags.hasPosition)
-                    trans.localPosition = data.position;
-                if (dflags.hasRotation)
-                    trans.localRotation = data.rotation;
-                if (dflags.hasScale)
-                    trans.localScale = data.scale;
+                rec = new EntityRecord {
+                    go = trans.gameObject,
+                    trans = trans,
+                    recved = true
+                };
+                m_clientObjects.Add(path, rec);
             }
 
-            // visibility
-            if (config.SyncVisibility && dflags.hasVisibility) {
-                trans.gameObject.SetActive(visibility.active);
-
-                if (!visibility.active) {
-                    // If the parent is invisible because of layer visibility, make the
-                    // child active inside the parent so enabling the parent also enables
-                    // the child. This is important so instances work correctly.
-                    string parentPath = data.path.Substring(0, data.path.LastIndexOf('/'));
-
-                    if (m_clientObjects.TryGetValue(parentPath, out EntityRecord parentEntity))
-                        if (parentEntity.hasVisibility &&
-                            !parentEntity.visibility.active)
-                            trans.gameObject.SetActive(visibility.visibleInRender);
+            if (m_clientObjects.TryGetValue(path, out rec))
+                if (rec.go == null) {
+                    m_clientObjects.Remove(path);
+                    rec = null;
                 }
 
-                SetVis(rec.meshRenderer, visibility);
-                SetVis(rec.camera, visibility);
-                SetVis(rec.skinnedMeshRenderer, visibility);
-            }
+            if (rec == null) {
+                var trans = FindOrCreateByPath(m_rootObject, path,
+                    delegate(string parentPath) {
+                        EntityRecord parentRec = null;
+                        AddClientObject(parentPath, out parentRec);
+                        if (parentRec.dataType == EntityType.Unknown)
+                            parentRec.dataType = EntityType.Transform;
+                    },
+                    false);
 
-            // visibility for reference
-            rec.hasVisibility = dflags.hasVisibility;
-            if (rec.hasVisibility)
-                rec.visibility = visibility;
-
-            // reference. will be resolved in AfterUpdateScene()
-            if (dflags.hasReference)
-                rec.reference = data.reference;
-            else
-                rec.reference = null;
-        }
-
-        return rec;
-    }
-
-    private EntityRecord UpdateCameraEntity(CameraData data, MeshSyncPlayerConfig config) {
-        ComponentSyncSettings cameraSyncSettings = config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA);
-        if (!cameraSyncSettings.CanCreate)
-            return null;
-
-        TransformData   dtrans = data.transform;
-        CameraDataFlags dflags = data.dataFlags;
-        EntityRecord    rec    = UpdateTransformEntity(dtrans, config);
-        if (rec == null || dflags.unchanged)
-            return null;
-
-        Camera cam = rec.camera;
-        if (cam == null)
-            cam = rec.camera = Misc.GetOrAddComponent<Camera>(rec.go);
-
-        if (!cameraSyncSettings.CanUpdate)
-            return null;
-
-        if (config.SyncVisibility && dtrans.dataFlags.hasVisibility)
-            cam.enabled = dtrans.visibility.visibleInRender;
-
-        cam.orthographic = data.orthographic;
-        if (cam.orthographic) {
-            cam.orthographicSize = data.orthographic_size / cam.aspect / 2;
-        }
-
-        // use physical camera params if available
-        if (config.IsPhysicalCameraParamsUsed() && dflags.hasFocalLength && dflags.hasSensorSize) {
-            cam.usePhysicalProperties = true;
-            cam.focalLength           = data.focalLength;
-            cam.sensorSize            = data.sensorSize;
-            cam.lensShift             = data.lensShift;
-            //todo: gate fit support
-        }
-        else {
-            if (dflags.hasFov && !cam.orthographic)
-                cam.fieldOfView = data.fov;
-        }
-
-        if (dflags.hasNearPlane && dflags.hasFarPlane) {
-            cam.nearClipPlane = data.nearPlane;
-            cam.farClipPlane  = data.farPlane;
-        }
-
-        if (dflags.hasViewMatrix)
-            cam.worldToCameraMatrix = data.viewMatrix;
-        //else
-        //    cam.ResetWorldToCameraMatrix();
-
-        if (dflags.hasProjMatrix)
-            cam.projectionMatrix = data.projMatrix;
-        //else
-        //    cam.ResetProjectionMatrix();
-        return rec;
-    }
-
-    private EntityRecord UpdateLightEntity(LightData data, MeshSyncPlayerConfig config) {
-        ComponentSyncSettings syncLightSettings = config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS);
-        if (!syncLightSettings.CanCreate)
-            return null;
-
-        TransformData  dtrans = data.transform;
-        LightDataFlags dflags = data.dataFlags;
-        EntityRecord   rec    = UpdateTransformEntity(dtrans, config);
-        if (rec == null || dflags.unchanged)
-            return null;
-
-        rec.SetLight(data, config.SyncVisibility, syncLightSettings.CanUpdate);
-        return rec;
-    }
-
-    private void UpdateReference(EntityRecord dst, EntityRecord src, MeshSyncPlayerConfig config) {
-        if (src.dataType == EntityType.Unknown) {
-            Debug.LogError("MeshSync: should not be here!");
-            return;
-        }
-
-        GameObject dstgo = dst.go;
-        GameObject srcgo = src.go;
-        if (src.dataType == EntityType.Camera) {
-            Camera srccam = src.camera;
-            if (srccam != null) {
-                Camera dstcam = dst.camera;
-                if (dstcam == null)
-                    dstcam = dst.camera = Misc.GetOrAddComponent<Camera>(dstgo);
-                if (config.SyncVisibility && dst.hasVisibility)
-                    dstcam.enabled = dst.visibility.visibleInRender;
-                dstcam.enabled       = srccam.enabled;
-                dstcam.orthographic  = srccam.orthographic;
-                dstcam.fieldOfView   = srccam.fieldOfView;
-                dstcam.nearClipPlane = srccam.nearClipPlane;
-                dstcam.farClipPlane  = srccam.farClipPlane;
+                rec = new EntityRecord {
+                    go = trans.gameObject,
+                    trans = trans,
+                    recved = true
+                };
+                m_clientObjects.Add(path, rec);
             }
         }
-        else if (src.dataType == EntityType.Light) {
-            dst.SetLight(src, config.SyncVisibility);
-        }
-        else if (src.dataType == EntityType.Mesh) {
-            Mesh                mesh   = src.mesh;
-            MeshRenderer        srcmr  = src.meshRenderer;
-            SkinnedMeshRenderer srcsmr = src.skinnedMeshRenderer;
 
-            if (mesh != null) {
-                PointCacheRenderer dstpcr = dst.pointCacheRenderer;
-                if (dstpcr != null) {
+        private EntityRecord UpdateTransformEntity(TransformData data, MeshSyncPlayerConfig config) {
+            string path = data.path;
+            int hostID = data.hostID;
+            if (path.Length == 0)
+                return null;
+
+            EntityRecord rec = null;
+            if (hostID != Lib.invalidID) {
+                if (m_hostObjects.TryGetValue(hostID, out rec))
+                    if (rec.go == null) {
+                        m_hostObjects.Remove(hostID);
+                        rec = null;
+                    }
+
+                if (rec == null)
+                    return null;
+            }
+            else {
+                AddClientObject(path, out rec);
+            }
+
+            return UpdateTransformEntity(data, config, rec);
+        }
+
+        private void SetVis(Behaviour c, VisibilityFlags visibility) {
+            if (c != null) c.enabled = visibility.visibleInRender;
+        }
+
+        private void SetVis(Renderer c, VisibilityFlags visibility) {
+            if (c != null) c.enabled = visibility.visibleInRender;
+        }
+
+        private EntityRecord UpdateTransformEntity(TransformData data, MeshSyncPlayerConfig config, EntityRecord rec) {
+            Transform trans = rec.trans;
+            if (trans == null)
+                trans = rec.trans = rec.go.transform;
+
+            TransformDataFlags dflags = data.dataFlags;
+            if (!dflags.unchanged) {
+                VisibilityFlags visibility = data.visibility;
+                rec.index = data.index;
+                rec.dataType = data.entityType;
+
+                // sync TRS
+                if (config.SyncTransform) {
+                    if (dflags.hasPosition)
+                        trans.localPosition = data.position;
+                    if (dflags.hasRotation)
+                        trans.localRotation = data.rotation;
+                    if (dflags.hasScale)
+                        trans.localScale = data.scale;
+                }
+
+                // visibility
+                if (config.SyncVisibility && dflags.hasVisibility) {
+                    trans.gameObject.SetActive(visibility.active);
+
+                    if (!visibility.active) {
+                        // If the parent is invisible because of layer visibility, make the
+                        // child active inside the parent so enabling the parent also enables
+                        // the child. This is important so instances work correctly.
+                        string parentPath = data.path.Substring(0, data.path.LastIndexOf('/'));
+
+                        if (m_clientObjects.TryGetValue(parentPath, out EntityRecord parentEntity))
+                            if (parentEntity.hasVisibility &&
+                                !parentEntity.visibility.active)
+                                trans.gameObject.SetActive(visibility.visibleInRender);
+                    }
+
+                    SetVis(rec.meshRenderer, visibility);
+                    SetVis(rec.camera, visibility);
+                    SetVis(rec.skinnedMeshRenderer, visibility);
+                }
+
+                // visibility for reference
+                rec.hasVisibility = dflags.hasVisibility;
+                if (rec.hasVisibility)
+                    rec.visibility = visibility;
+
+                // reference. will be resolved in AfterUpdateScene()
+                if (dflags.hasReference)
+                    rec.reference = data.reference;
+                else
+                    rec.reference = null;
+            }
+
+            return rec;
+        }
+
+        private EntityRecord UpdateCameraEntity(CameraData data, MeshSyncPlayerConfig config) {
+            ComponentSyncSettings cameraSyncSettings =
+                config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_CAMERA);
+            if (!cameraSyncSettings.CanCreate)
+                return null;
+
+            TransformData dtrans = data.transform;
+            CameraDataFlags dflags = data.dataFlags;
+            EntityRecord rec = UpdateTransformEntity(dtrans, config);
+            if (rec == null || dflags.unchanged)
+                return null;
+
+            Camera cam = rec.camera;
+            if (cam == null)
+                cam = rec.camera = Misc.GetOrAddComponent<Camera>(rec.go);
+
+            if (!cameraSyncSettings.CanUpdate)
+                return null;
+
+            if (config.SyncVisibility && dtrans.dataFlags.hasVisibility)
+                cam.enabled = dtrans.visibility.visibleInRender;
+
+            cam.orthographic = data.orthographic;
+            if (cam.orthographic) {
+                cam.orthographicSize = data.orthographic_size / cam.aspect / 2;
+            }
+
+            // use physical camera params if available
+            if (config.IsPhysicalCameraParamsUsed() && dflags.hasFocalLength && dflags.hasSensorSize) {
+                cam.usePhysicalProperties = true;
+                cam.focalLength = data.focalLength;
+                cam.sensorSize = data.sensorSize;
+                cam.lensShift = data.lensShift;
+                //todo: gate fit support
+            }
+            else {
+                if (dflags.hasFov && !cam.orthographic)
+                    cam.fieldOfView = data.fov;
+            }
+
+            if (dflags.hasNearPlane && dflags.hasFarPlane) {
+                cam.nearClipPlane = data.nearPlane;
+                cam.farClipPlane = data.farPlane;
+            }
+
+            if (dflags.hasViewMatrix)
+                cam.worldToCameraMatrix = data.viewMatrix;
+            //else
+            //    cam.ResetWorldToCameraMatrix();
+
+            if (dflags.hasProjMatrix)
+                cam.projectionMatrix = data.projMatrix;
+            //else
+            //    cam.ResetProjectionMatrix();
+            return rec;
+        }
+
+        private EntityRecord UpdateLightEntity(LightData data, MeshSyncPlayerConfig config) {
+            ComponentSyncSettings syncLightSettings = config.GetComponentSyncSettings(MeshSyncPlayerConfig.SYNC_LIGHTS);
+            if (!syncLightSettings.CanCreate)
+                return null;
+
+            TransformData dtrans = data.transform;
+            LightDataFlags dflags = data.dataFlags;
+            EntityRecord rec = UpdateTransformEntity(dtrans, config);
+            if (rec == null || dflags.unchanged)
+                return null;
+
+            rec.SetLight(data, config.SyncVisibility, syncLightSettings.CanUpdate);
+            return rec;
+        }
+
+        private void UpdateReference(EntityRecord dst, EntityRecord src, MeshSyncPlayerConfig config) {
+            if (src.dataType == EntityType.Unknown) {
+                Debug.LogError("MeshSync: should not be here!");
+                return;
+            }
+
+            // Objects with references are passed as transforms, update the type to match the reference:
+            dst.dataType = src.dataType;
+
+            GameObject dstgo = dst.go;
+            GameObject srcgo = src.go;
+            if (src.dataType == EntityType.Camera) {
+                Camera srccam = src.camera;
+                if (srccam != null) {
+                    Camera dstcam = dst.camera;
+                    if (dstcam == null)
+                        dstcam = dst.camera = Misc.GetOrAddComponent<Camera>(dstgo);
                     if (config.SyncVisibility && dst.hasVisibility)
-                        dstpcr.enabled = dst.visibility.visibleInRender;
-                    dstpcr.sharedMesh = mesh;
+                        dstcam.enabled = dst.visibility.visibleInRender;
+                    dstcam.enabled = srccam.enabled;
+                    dstcam.orthographic = srccam.orthographic;
+                    dstcam.fieldOfView = srccam.fieldOfView;
+                    dstcam.nearClipPlane = srccam.nearClipPlane;
+                    dstcam.farClipPlane = srccam.farClipPlane;
+                }
+            }
+            else if (src.dataType == EntityType.Light) {
+                dst.SetLight(src, config.SyncVisibility);
+            }
+            else if (src.dataType == EntityType.Mesh) {
+                Mesh mesh = src.mesh;
+                MeshRenderer srcmr = src.meshRenderer;
+                SkinnedMeshRenderer srcsmr = src.skinnedMeshRenderer;
 
-                    if (dstpcr.sharedMaterials == null || dstpcr.sharedMaterials.Length == 0) {
-                        Material[] materials = null;
-                        if (srcmr != null)
-                            materials = srcmr.sharedMaterials;
-                        else if (srcsmr != null)
-                            materials = srcsmr.sharedMaterials;
+                if (mesh != null) {
+                    PointCacheRenderer dstpcr = dst.pointCacheRenderer;
+                    if (dstpcr != null) {
+                        if (config.SyncVisibility && dst.hasVisibility)
+                            dstpcr.enabled = dst.visibility.visibleInRender;
+                        dstpcr.sharedMesh = mesh;
 
-                        if (materials != null) {
-                            foreach (Material m in materials)
-                                m.enableInstancing = true;
-                            dstpcr.sharedMaterials = materials;
+                        if (dstpcr.sharedMaterials == null || dstpcr.sharedMaterials.Length == 0) {
+                            Material[] materials = null;
+                            if (srcmr != null)
+                                materials = srcmr.sharedMaterials;
+                            else if (srcsmr != null)
+                                materials = srcsmr.sharedMaterials;
+
+                            if (materials != null) {
+                                foreach (Material m in materials)
+                                    m.enableInstancing = true;
+                                dstpcr.sharedMaterials = materials;
+                            }
+                        }
+                    }
+                    else if (srcmr != null) {
+                        MeshRenderer dstmr = dst.meshRenderer;
+                        MeshFilter dstmf = dst.meshFilter;
+                        if (dstmr == null) {
+                            dstmr = dst.meshRenderer = Misc.GetOrAddComponent<MeshRenderer>(dstgo);
+                            dstmf = dst.meshFilter = Misc.GetOrAddComponent<MeshFilter>(dstgo);
+                        }
+
+                        if (config.SyncVisibility && dst.hasVisibility)
+                            dstmr.enabled = dst.visibility.visibleInRender;
+                        dstmf.sharedMesh = mesh;
+                        dstmr.sharedMaterials = srcmr.sharedMaterials;
+                    }
+                    else if (srcsmr != null) {
+                        SkinnedMeshRenderer dstsmr = dst.skinnedMeshRenderer;
+                        if (dstsmr == null)
+                            dstsmr = dst.skinnedMeshRenderer = Misc.GetOrAddComponent<SkinnedMeshRenderer>(dstgo);
+
+                        // disable SkinnedMeshRenderer while updating
+                        bool oldEnabled = dstsmr.enabled;
+                        dstsmr.enabled = false;
+                        dstsmr.sharedMesh = mesh;
+                        dstsmr.sharedMaterials = srcsmr.sharedMaterials;
+                        dstsmr.bones = srcsmr.bones;
+                        dstsmr.rootBone = srcsmr.rootBone;
+                        dstsmr.updateWhenOffscreen = srcsmr.updateWhenOffscreen;
+                        int blendShapeCount = mesh.blendShapeCount;
+                        for (int bi = 0; bi < blendShapeCount; ++bi)
+                            dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
+
+                        if (config.SyncVisibility && dst.hasVisibility)
+                            dstsmr.enabled = dst.visibility.visibleInRender;
+                        else
+                            dstsmr.enabled = oldEnabled;
+                    }
+
+                    // handle mesh collider
+                    if (config.UpdateMeshColliders) {
+                        MeshCollider srcmc = srcgo.GetComponent<MeshCollider>();
+                        if (srcmc != null && srcmc.sharedMesh == mesh) {
+                            MeshCollider dstmc = Misc.GetOrAddComponent<MeshCollider>(dstgo);
+                            dstmc.enabled = srcmc.enabled;
+                            dstmc.isTrigger = srcmc.isTrigger;
+                            dstmc.sharedMaterial = srcmc.sharedMaterial;
+                            dstmc.sharedMesh = mesh;
+                            dstmc.convex = srcmc.convex;
+                            dstmc.cookingOptions = srcmc.cookingOptions;
                         }
                     }
                 }
-                else if (srcmr != null) {
-                    MeshRenderer dstmr = dst.meshRenderer;
-                    MeshFilter   dstmf = dst.meshFilter;
-                    if (dstmr == null) {
-                        dstmr = dst.meshRenderer = Misc.GetOrAddComponent<MeshRenderer>(dstgo);
-                        dstmf = dst.meshFilter   = Misc.GetOrAddComponent<MeshFilter>(dstgo);
-                    }
+            }
+            else if (src.dataType == EntityType.Points) {
+                PointCacheRenderer srcpcr = src.pointCacheRenderer;
+                if (srcpcr != null) {
+                    PointCacheRenderer dstpcr = dst.pointCacheRenderer;
+                    dstpcr.sharedMesh = srcpcr.sharedMesh;
 
-                    if (config.SyncVisibility && dst.hasVisibility)
-                        dstmr.enabled = dst.visibility.visibleInRender;
-                    dstmf.sharedMesh      = mesh;
-                    dstmr.sharedMaterials = srcmr.sharedMaterials;
-                }
-                else if (srcsmr != null) {
-                    SkinnedMeshRenderer dstsmr = dst.skinnedMeshRenderer;
-                    if (dstsmr == null)
-                        dstsmr = dst.skinnedMeshRenderer = Misc.GetOrAddComponent<SkinnedMeshRenderer>(dstgo);
-
-                    // disable SkinnedMeshRenderer while updating
-                    bool oldEnabled = dstsmr.enabled;
-                    dstsmr.enabled             = false;
-                    dstsmr.sharedMesh          = mesh;
-                    dstsmr.sharedMaterials     = srcsmr.sharedMaterials;
-                    dstsmr.bones               = srcsmr.bones;
-                    dstsmr.rootBone            = srcsmr.rootBone;
-                    dstsmr.updateWhenOffscreen = srcsmr.updateWhenOffscreen;
-                    int blendShapeCount = mesh.blendShapeCount;
-                    for (int bi = 0; bi < blendShapeCount; ++bi)
-                        dstsmr.SetBlendShapeWeight(bi, srcsmr.GetBlendShapeWeight(bi));
-
-                    if (config.SyncVisibility && dst.hasVisibility)
-                        dstsmr.enabled = dst.visibility.visibleInRender;
-                    else
-                        dstsmr.enabled = oldEnabled;
-                }
-
-                // handle mesh collider
-                if (config.UpdateMeshColliders) {
-                    MeshCollider srcmc = srcgo.GetComponent<MeshCollider>();
-                    if (srcmc != null && srcmc.sharedMesh == mesh) {
-                        MeshCollider dstmc = Misc.GetOrAddComponent<MeshCollider>(dstgo);
-                        dstmc.enabled        = srcmc.enabled;
-                        dstmc.isTrigger      = srcmc.isTrigger;
-                        dstmc.sharedMaterial = srcmc.sharedMaterial;
-                        dstmc.sharedMesh     = mesh;
-                        dstmc.convex         = srcmc.convex;
-                        dstmc.cookingOptions = srcmc.cookingOptions;
-                    }
+                    Material[] materials = srcpcr.sharedMaterials;
+                    for (int i = 0; i < materials.Length; ++i)
+                        materials[i].enableInstancing = true;
+                    dstpcr.sharedMaterials = materials;
                 }
             }
         }
-        else if (src.dataType == EntityType.Points) {
-            PointCacheRenderer srcpcr = src.pointCacheRenderer;
-            if (srcpcr != null) {
-                PointCacheRenderer dstpcr = dst.pointCacheRenderer;
-                dstpcr.sharedMesh = srcpcr.sharedMesh;
 
-                Material[] materials = srcpcr.sharedMaterials;
-                for (int i = 0; i < materials.Length; ++i)
-                    materials[i].enableInstancing = true;
-                dstpcr.sharedMaterials = materials;
+        private EntityRecord UpdateInstancedEntity(TransformData data) {
+            MeshSyncPlayerConfig config = GetConfigV();
+
+            if (!m_clientInstancedEntities.TryGetValue(data.path, out EntityRecord rec) || rec.go == null) {
+                Transform trans =
+                    FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, data.path, false);
+
+                // Ensure any objects we create are on the same layer as the server:
+                trans.gameObject.layer = m_rootObject.gameObject.layer;
+                rec = new EntityRecord {
+                    go = trans.gameObject,
+                    trans = trans,
+                    recved = true
+                };
+
+                m_clientInstancedEntities[data.path] = rec;
             }
-        }
-    }
 
-    private EntityRecord UpdateInstancedEntity(TransformData data) {
-        MeshSyncPlayerConfig config = GetConfigV();
-
-        if (!m_clientInstancedEntities.TryGetValue(data.path, out EntityRecord rec) || rec.go == null) {
-            Transform trans =
-                FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, data.path, false);
-
-            rec = new EntityRecord {
-                go     = trans.gameObject,
-                trans  = trans,
-                recved = true
-            };
+            UpdateTransformEntity(data, config, rec);
+            if (data.entityType == EntityType.Mesh) {
+                UpdateMeshEntity((MeshData)data, config, rec);
+            }
 
             m_clientInstancedEntities[data.path] = rec;
+
+            // If there is a instance info record that references the new object
+            if (m_clientInstances.TryGetValue(data.path, out InstanceInfoRecord infoRecord)) {
+                // Update the renderer reference
+                infoRecord.go = rec.go;
+
+                foreach (var renderer in infoRecord.renderers) {
+                    if (renderer != null) renderer.UpdateReference(rec.go);
+                }
+            }
+
+            return rec;
         }
 
-        UpdateTransformEntity(data, config, rec);
-        UpdateMeshEntity((MeshData)data, config, rec);
+        private HashSet<string> instanceNames = new HashSet<string>();
 
-        m_clientInstancedEntities[data.path] = rec;
+        private InstanceInfoRecord UpdateInstanceInfo(InstanceInfoData data) {
+            string path = data.path;
 
-        // If there is a instance info record that references the new object
-        if (m_clientInstances.TryGetValue(data.path, out InstanceInfoRecord infoRecord)) {
-            // Update the renderer reference
-            infoRecord.go = rec.go;
-            MeshSyncInstanceRenderer renderer = infoRecord.renderer;
-            if (renderer != null) renderer.UpdateReference(rec.go);
+            if (!instancesReceivedLastUpdate.TryGetValue(data.path, out var parentList)) {
+                parentList = new HashSet<string>();
+                instancesReceivedLastUpdate[data.path] = parentList;
+            }
+
+            parentList.Add(data.parentPath);
+
+            InstanceInfoRecord infoRecord;
+            if (!m_clientInstances.TryGetValue(path, out infoRecord)) {
+                infoRecord = new InstanceInfoRecord();
+                m_clientInstances.Add(path, infoRecord);
+            }
+
+            infoRecord.parentPaths.Add(data.parentPath);
+
+            EntityRecord instancedEntityRecord;
+            // Look for reference in client instanced objects
+            if (m_clientInstancedEntities.TryGetValue(path, out instancedEntityRecord))
+                infoRecord.go = instancedEntityRecord.go;
+
+            // Instanced object might exist in m_clientInstancedEntities but deleted because it was sent as a client object:
+            if (instancedEntityRecord == null || instancedEntityRecord.go == null) {
+                if (m_clientObjects.TryGetValue(path, out instancedEntityRecord))
+                    infoRecord.go = instancedEntityRecord.go;
+                else
+                    throw new Exception($"[MeshSync] No instanced entity found for path {data.path}");
+            }
+
+            // Find parent for this instance:
+            GameObject instanceRendererParent;
+            if (m_clientObjects.TryGetValue(data.parentPath, out EntityRecord parentRecord)) {
+                instanceRendererParent = parentRecord.go;
+            }
+            else {
+                instanceRendererParent = m_rootObject.gameObject;
+
+                Debug.LogWarningFormat(
+                    "[MeshSync] No entity found for parent path {0}, using root as parent", data.parentPath);
+            }
+
+            // Ensure references are updated
+            UpdateReference(instancedEntityRecord);
+
+            // Anything other than a mesh needs to use copies if we're in instance renderer mode:
+            InstanceHandlingType instanceHandlingToUse = InstanceHandling;
+            if (instanceHandlingToUse == InstanceHandlingType.InstanceRenderer &&
+                instancedEntityRecord.dataType != EntityType.Mesh)
+                instanceHandlingToUse = InstanceHandlingType.Copies;
+
+            switch (instanceHandlingToUse) {
+                case InstanceHandlingType.InstanceRenderer:
+                    UpdateInstanceInfo_InstanceRenderer(data, infoRecord, instanceRendererParent);
+                    break;
+                case InstanceHandlingType.Copies:
+                case InstanceHandlingType.Prefabs:
+                    UpdateInstanceInfo_CopiesAndPrefabs(data, infoRecord, instanceRendererParent);
+                    break;
+                default:
+                    break;
+            }
+
+            return infoRecord;
         }
 
-        return rec;
-    }
-
-    private HashSet<string> instanceNames = new HashSet<string>();
-
-    private InstanceInfoRecord UpdateInstanceInfo(InstanceInfoData data) {
-        string path = data.path;
-
-        InstanceInfoRecord infoRecord;
-        if (!m_clientInstances.TryGetValue(path, out infoRecord)) {
-            infoRecord = new InstanceInfoRecord();
-            m_clientInstances.Add(path, infoRecord);
-        }
-
-        EntityRecord instancedEntityRecord;
-        // Look for reference in client instanced objects
-        if (m_clientInstancedEntities.TryGetValue(path, out instancedEntityRecord))
-            infoRecord.go = instancedEntityRecord.go;
-        else if (m_clientObjects.TryGetValue(path, out instancedEntityRecord))
-            infoRecord.go = instancedEntityRecord.go;
-        else
-            throw new Exception($"[MeshSync] No instanced entity found for path {data.path}");
-
-        // Find parent for this instance:
-        GameObject instanceRendererParent;
-        if (m_clientObjects.TryGetValue(data.parentPath, out EntityRecord parentRecord)) {
-            instanceRendererParent = parentRecord.go;
-        }
-        else {
-            instanceRendererParent = m_rootObject.gameObject;
-
-            Debug.LogWarningFormat(
-                "[MeshSync] No entity found for parent path {0}, using root as parent", data.parentPath);
-        }
-
-        // Anything other than a mesh needs to use copies if we're in instance renderer mode:
-        InstanceHandlingType instanceHandlingToUse = InstanceHandling;
-        if (instanceHandlingToUse == InstanceHandlingType.InstanceRenderer &&
-            instancedEntityRecord.dataType != EntityType.Mesh)
-            instanceHandlingToUse = InstanceHandlingType.Copies;
-
-        switch (instanceHandlingToUse) {
-            case InstanceHandlingType.InstanceRenderer:
-                UpdateInstanceInfo_InstanceRenderer(data, infoRecord, instanceRendererParent);
-                break;
-            case InstanceHandlingType.Copies:
-            case InstanceHandlingType.Prefabs:
-                UpdateInstanceInfo_CopiesAndPrefabs(data, infoRecord, instanceRendererParent);
-                break;
-            default:
-                break;
-        }
-
-        return infoRecord;
-    }
-    
-    private void UpdateInstanceInfo_CopiesAndPrefabs(
-        InstanceInfoData data,
-        InstanceInfoRecord infoRecord,
-        GameObject instanceRendererParent) {
-        // Make sure the other renderer is removed if this was not a copy or prefab before:
-        if (infoRecord.renderer != null) {
-            DestroyImmediate(infoRecord.renderer);
-            infoRecord.renderer = null;
-        }
-
-        infoRecord.DeleteInstanceObjects();
-
-        instanceNames.Add(infoRecord.go.name);
-        
-        if (infoRecord.go.transform.parent == null ||
-            !instanceNames.Contains(infoRecord.go.transform.parent.name)) {
-            GameObject instanceObjectOriginal;
-            if (InstanceHandling == InstanceHandlingType.Prefabs)
-                instanceObjectOriginal = GetOrCreatePrefab(data, infoRecord);
-            else
-                instanceObjectOriginal = infoRecord.go;
-
-            if (instanceObjectOriginal == null) return;
-
-            foreach (Matrix4x4 mat in data.transforms) {
-                GameObject instancedCopy;
-                if (InstanceHandling == InstanceHandlingType.Prefabs) {
+        private void UpdateInstanceInfo_CopiesAndPrefabs(
+            InstanceInfoData data,
+            InstanceInfoRecord infoRecord,
+            GameObject instanceRendererParent) {
 #if UNITY_EDITOR
-                    instancedCopy = (GameObject)PrefabUtility.InstantiatePrefab(instanceObjectOriginal,
-                        instanceRendererParent.transform);
+            if (PrefabUtility.IsAnyPrefabInstanceRoot(instanceRendererParent)) {
+                Debug.LogWarning(
+                    $"Object '{instanceRendererParent.name}' is a prefab, to avoid data loss this cannot be updated. If you want to update this object, clear the prefabs on the MeshSyncServer.");
+                return;
+            }
+#endif
+
+            // Make sure the other renderer is removed if this was not a copy or prefab before:
+            foreach (var meshSyncInstanceRenderer in infoRecord.renderers) {
+                DestroyImmediate(meshSyncInstanceRenderer);
+            }
+
+            infoRecord.renderers.Clear();
+
+            if (infoRecord.go == null) {
+                Debug.LogError($"Found null on {infoRecord.parentPaths} {instanceRendererParent} {data.path}");
+            }
+
+            instanceNames.Add(infoRecord.go.name);
+
+            if (infoRecord.go.transform.parent == null ||
+                !instanceNames.Contains(infoRecord.go.transform.parent.name)) {
+                infoRecord.DeleteInstanceObjects(instanceRendererParent.transform);
+
+                GameObject instanceObjectOriginal;
+                if (InstanceHandling == InstanceHandlingType.Prefabs)
+                    instanceObjectOriginal = GetOrCreatePrefab(data, infoRecord);
+                else
+                    instanceObjectOriginal = infoRecord.go;
+
+                if (instanceObjectOriginal == null) return;
+
+                foreach (Matrix4x4 mat in data.transforms) {
+                    GameObject instancedCopy;
+                    if (InstanceHandling == InstanceHandlingType.Prefabs) {
+#if UNITY_EDITOR
+                        instancedCopy = (GameObject)PrefabUtility.InstantiatePrefab(instanceObjectOriginal,
+                            instanceRendererParent.transform);
 #else
                         instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
 #endif
+                    }
+                    else {
+                        instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
+                    }
+
+                    // Remove (Clone) at the end so the path lookup works:
+                    instancedCopy.name = instanceObjectOriginal.name;
+
+                    SetInstanceTransform(instancedCopy, instanceRendererParent, mat);
+                    EnableInstancedCopy(instancedCopy);
+
+                    infoRecord.instanceObjects.Add(instancedCopy);
                 }
-                else {
-                    instancedCopy = Instantiate(instanceObjectOriginal, instanceRendererParent.transform);
-                }
-
-                // Remove (Clone) at the end so the path lookup works:
-                instancedCopy.name = instanceObjectOriginal.name;
-
-                SetInstanceTransform(instancedCopy, instanceRendererParent, mat);
-                EnableInstancedCopy(instancedCopy);
-
-                infoRecord.instanceObjects.Add(instancedCopy);
             }
         }
-        else {
-            // This instance exists inside another instanced object,
-            // update its transform to be correct relative to the parent on the infoRecord:
-            // For example, in an object structure like this:
-            // MainObject
-            //   InstancedChildA
-            //     InstancedChildB
-            // For the instance renderer method, InstancedChildA and InstancedChildB exist as
-            // MeshSyncInstanceRenderer components on MainObject and the transforms in data.transforms
-            // are relative to MainObject. 
-            // In this mode, where we use copies of the objects, InstancedChildB already exists as child of InstancedChildA
-            // but the transform of InstancedChildB needs to be updated to be relative to MainObject.
 
-            if (data.transforms.Length != 1) {
-                Debug.LogWarning(
-                    $"[MeshSync] There should never be more than 1 transform on instances inside other instances: {data.path}");
-                return;
+        static void EnableChildren(Transform trans) {
+            trans.gameObject.SetActive(true);
+
+            for (int i = 0; i < trans.childCount; i++) {
+                EnableChildren(trans.GetChild(i));
             }
-
-            // Find the instanced copy as (a potentially indirect) child of `MainObject`:
-            var instancedCopy =
-                FilmInternalUtilities.GameObjectUtility.FindByPath(instanceRendererParent.transform, data.path);
-
-            if (instancedCopy == null) {
-                Debug.LogWarning(
-                    $"[MeshSync] No instanced copy found for {data.path}");
-                return;
-            }
-
-            // Set the transform relative to `MainObject`.
-            // The easiest and safest way to do that is to:
-            // - parent the instanced copy to `MainObject`
-            // - set the transform matrix
-            // - restore the original parent
-            var originalParent = instancedCopy.parent;
-
-            instancedCopy.transform.SetParent(instanceRendererParent.transform);
-
-            SetInstanceTransform(instancedCopy.gameObject, instanceRendererParent, data.transforms[0]);
-
-            instancedCopy.SetParent(originalParent);
         }
-    }
 
-    private void EnableInstancedCopy(GameObject obj) {
-        obj.SetActive(true);
+        private void EnableInstancedCopy(GameObject obj) {
+            EnableChildren(obj.transform);
 
-        MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
-        if (renderer != null)
-            renderer.enabled = true;
-    }
+            MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
+            if (renderer != null)
+                renderer.enabled = true;
+        }
 
-    private static void SetInstanceTransform(GameObject instancedCopy, GameObject parent, Matrix4x4 mat) {
-        Transform objTransform = instancedCopy.transform;
+        private static void SetInstanceTransform(GameObject instancedCopy, GameObject parent, Matrix4x4 mat) {
+            Transform objTransform = instancedCopy.transform;
 
-        objTransform.localScale    = mat.lossyScale;
-        objTransform.localPosition = mat.MultiplyPoint(Vector3.zero);
+            objTransform.localScale = mat.lossyScale;
+            objTransform.localPosition = mat.MultiplyPoint(Vector3.zero);
 
-        // Calculate rotation here to avoid gimbal lock issue:
-        Vector3 forward;
-        forward.x = mat.m02;
-        forward.y = mat.m12;
-        forward.z = mat.m22;
+            // Calculate rotation here to avoid gimbal lock issue:
+            Vector3 forward;
+            forward.x = mat.m02;
+            forward.y = mat.m12;
+            forward.z = mat.m22;
 
-        Vector3 upwards;
-        upwards.x = mat.m01;
-        upwards.y = mat.m11;
-        upwards.z = mat.m21;
+            Vector3 upwards;
+            upwards.x = mat.m01;
+            upwards.y = mat.m11;
+            upwards.z = mat.m21;
 
-        objTransform.localRotation = Quaternion.LookRotation(forward, upwards);
+            objTransform.localRotation = Quaternion.LookRotation(forward, upwards);
 
 #if DEBUG
-        Matrix4x4 converted   = parent.transform.localToWorldMatrix * mat;
-        Matrix4x4 localMatrix = objTransform.localToWorldMatrix;
-        for (int x = 0; x < 3; x++)
-        for (int y = 0; y < 3; y++)
-            Debug.Assert(Math.Abs(localMatrix[x, y] - converted[x, y]) < 0.01f, "Matrices don't match!");
+            Matrix4x4 converted = parent.transform.localToWorldMatrix * mat;
+            Matrix4x4 localMatrix = objTransform.localToWorldMatrix;
+            for (int x = 0; x < 3; x++)
+            for (int y = 0; y < 3; y++) {
+                Debug.Assert(Math.Abs(localMatrix[x, y] - converted[x, y]) < 0.01f, "Matrices don't match!");
+            }
 #endif
-    }
-
-    private GameObject GetOrCreatePrefab(InstanceInfoData data, InstanceInfoRecord infoRecord) {
-        GameObject instanceObject = null;
-
-        // Look for existing prefab and make sure the object exists:
-        if (m_prefabDict.TryGetValue(data.path, out PrefabHolder existingPrefab)) {
-            instanceObject = existingPrefab.prefab;
-            if (instanceObject == null) m_prefabDict.Remove(data.path);
         }
 
-        // Create it if it doesn't exist:
-        if (instanceObject == null) {
-#if UNITY_EDITOR // Cannot create prefabs when not in editor.
-            ExportMeshes();
-            ExportMaterials();
-
+        private GameObject GetOrCreatePrefab(InstanceInfoData data, InstanceInfoRecord infoRecord) {
             string pathWithoutSlash = data.path.Trim('/');
-            string prefabLocation   = Path.Combine(m_assetsFolder, Misc.SanitizeFileName(pathWithoutSlash) + ".prefab");
+            
+            if (GetPrefabForInstance != null) {
+                // Get properties on that object:
+                var props = new List<PropertyInfoDataWrapper>();
+                foreach (var propertyInfo in propertyInfos) {
+                    if (propertyInfo.path == data.path) {
+                        props.Add(propertyInfo);
+                    }
+                }
+                
+                var prefab = GetPrefabForInstance(pathWithoutSlash, props);
 
-            bool wasActive = infoRecord.go.activeSelf;
-            infoRecord.go.SetActive(true);
+                if (prefab != null) {
+                    return prefab;
+                }
+            }
 
-            GameObject prefab = PrefabUtility.SaveAsPrefabAssetAndConnect(infoRecord.go, prefabLocation,
-                InteractionMode.AutomatedAction);
+            GameObject instanceObject = null;
 
-            AssetDatabase.SaveAssets();
+            // Look for existing prefab and make sure the object exists:
+            if (m_prefabDict.TryGetValue(data.path, out PrefabHolder existingPrefab)) {
+                instanceObject = existingPrefab.prefab;
+                if (instanceObject == null) m_prefabDict.Remove(data.path);
+            }
 
-            m_prefabDict[data.path] = new PrefabHolder { name = data.path, prefab = prefab };
+#if UNITY_EDITOR // Cannot create prefabs when not in editor.
 
-            instanceObject = prefab;
+            // Create it if it doesn't exist:
+            if (instanceObject == null) {
+                ExportMeshes();
+                ExportMaterials();
+                
+                // Only remove the extension if it's not the [<filename>.<ext>] from a lib override:
+                if (!pathWithoutSlash.EndsWith("]")) {
+                    pathWithoutSlash = Path.GetFileNameWithoutExtension(pathWithoutSlash);
+                }
 
-            infoRecord.go.SetActive(wasActive);
+                pathWithoutSlash = Misc.SanitizeFileName(pathWithoutSlash);
+                
+                string prefabLocation =
+                    Path.Combine(m_assetsFolder, pathWithoutSlash + ".prefab");
+
+                bool wasActive = infoRecord.go.activeSelf;
+                infoRecord.go.SetActive(true);
+
+                GameObject prefab = PrefabUtility.SaveAsPrefabAssetAndConnect(infoRecord.go, prefabLocation,
+                    InteractionMode.AutomatedAction);
+
+                AssetDatabase.SaveAssets();
+
+                m_prefabDict[data.path] = new PrefabHolder { name = data.path, prefab = prefab };
+
+                instanceObject = prefab;
+
+                infoRecord.go.SetActive(wasActive);
+            }
 #endif
+
+            return instanceObject;
         }
 
-        return instanceObject;
-    }
+        private static void UpdateInstanceInfo_InstanceRenderer(
+            InstanceInfoData data,
+            InstanceInfoRecord infoRecord,
+            GameObject instanceRendererParent) {
+            infoRecord.DeleteInstanceObjects();
 
-    private static void UpdateInstanceInfo_InstanceRenderer(InstanceInfoData data, InstanceInfoRecord infoRecord,
-        GameObject instanceRendererParent) {
-        infoRecord.DeleteInstanceObjects();
+            // If the infoRecord's gameObject has a mesh instance renderer, we need to make child instance renderers:
+            var instanceRenderers = infoRecord.go.GetComponents<MeshSyncInstanceRenderer>();
+            if (instanceRenderers.Length > 0) {
+                Debug.LogWarningFormat("[MeshSync] Using child instance renderers for {0}", data.path);
 
-        if (instanceRendererParent != null && infoRecord.renderer == null)
-            infoRecord.renderer = instanceRendererParent.AddComponent<MeshSyncInstanceRenderer>();
+                var existingRenderers = instanceRendererParent.GetComponents<MeshSyncInstanceRenderer>();
 
-        infoRecord.renderer.UpdateAll(data.transforms, infoRecord.go);
-    }
+                foreach (var instanceRenderer in instanceRenderers) {
+                    MeshSyncInstanceRenderer renderer = null;
+                    foreach (var existingRenderer in existingRenderers) {
+                        if (instanceRenderer.ParentRenderers.Contains(existingRenderer)) {
+                            renderer = existingRenderer;
+                            break;
+                        }
+                    }
 
-    private void UpdateConstraint(ConstraintData data) {
-        Transform trans = FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, data.path, false);
-        if (trans == null)
-            return;
+                    if (renderer == null) {
+                        renderer = instanceRendererParent.AddComponent<MeshSyncInstanceRenderer>();
+                        infoRecord.renderers.Add(renderer);
+                        instanceRenderer.ParentRenderers.Add(renderer);
+                    }
 
-        Action<IConstraint> basicSetup = (c) => {
-            int ns = data.numSources;
-            while (c.sourceCount < ns)
-                c.AddSource(new ConstraintSource());
-            for (int si = 0; si < ns; ++si) {
-                ConstraintSource s = c.GetSource(si);
-                s.sourceTransform = FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, data.GetSourcePath(si), false);
-            }
-        };
+                    renderer.UpdateFromExistingInstanceRenderer(instanceRenderer, data);
+                }
 
-        switch (data.type) {
-            case ConstraintData.ConstraintType.Aim: {
-                AimConstraint c = Misc.GetOrAddComponent<AimConstraint>(trans.gameObject);
-                basicSetup(c);
-                break;
+                return;
             }
-            case ConstraintData.ConstraintType.Parent: {
-                ParentConstraint c = Misc.GetOrAddComponent<ParentConstraint>(trans.gameObject);
-                basicSetup(c);
-                break;
+
+            if (instanceRendererParent != null) {
+                var existingRenderers = instanceRendererParent.GetComponents<MeshSyncInstanceRenderer>();
+
+                bool hasRenderer = false;
+                foreach (var existingRenderer in existingRenderers) {
+                    if (infoRecord.renderers.Contains(existingRenderer)) {
+                        hasRenderer = true;
+                        break;
+                    }
+                }
+
+                if (!hasRenderer) {
+                    infoRecord.renderers.Add(instanceRendererParent.AddComponent<MeshSyncInstanceRenderer>());
+                }
             }
-            case ConstraintData.ConstraintType.Position: {
-                PositionConstraint c = Misc.GetOrAddComponent<PositionConstraint>(trans.gameObject);
-                basicSetup(c);
-                break;
+
+            foreach (var renderer in infoRecord.renderers) {
+                if (renderer.gameObject != instanceRendererParent)
+                    continue;
+
+                renderer.UpdateAll(data.transforms, infoRecord.go);
             }
-            case ConstraintData.ConstraintType.Rotation: {
-                RotationConstraint c = Misc.GetOrAddComponent<RotationConstraint>(trans.gameObject);
-                basicSetup(c);
-                break;
-            }
-            case ConstraintData.ConstraintType.Scale: {
-                ScaleConstraint c = Misc.GetOrAddComponent<ScaleConstraint>(trans.gameObject);
-                basicSetup(c);
-                break;
-            }
-            default:
-                break;
         }
-    }
 
-    //----------------------------------------------------------------------------------------------------------------------   
+        private void UpdateConstraint(ConstraintData data) {
+            Transform trans =
+                FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, data.path, false);
+            if (trans == null)
+                return;
 
-    private void UpdateAnimationAsset(AnimationClipData clipData, MeshSyncPlayerConfig config) {
-        MakeSureAssetDirectoryExists();
+            Action<IConstraint> basicSetup = (c) => {
+                int ns = data.numSources;
+                while (c.sourceCount < ns)
+                    c.AddSource(new ConstraintSource());
+                for (int si = 0; si < ns; ++si) {
+                    ConstraintSource s = c.GetSource(si);
+                    s.sourceTransform =
+                        FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, data.GetSourcePath(si),
+                            false);
+                }
+            };
+
+            switch (data.type) {
+                case ConstraintData.ConstraintType.Aim: {
+                    AimConstraint c = Misc.GetOrAddComponent<AimConstraint>(trans.gameObject);
+                    basicSetup(c);
+                    break;
+                }
+                case ConstraintData.ConstraintType.Parent: {
+                    ParentConstraint c = Misc.GetOrAddComponent<ParentConstraint>(trans.gameObject);
+                    basicSetup(c);
+                    break;
+                }
+                case ConstraintData.ConstraintType.Position: {
+                    PositionConstraint c = Misc.GetOrAddComponent<PositionConstraint>(trans.gameObject);
+                    basicSetup(c);
+                    break;
+                }
+                case ConstraintData.ConstraintType.Rotation: {
+                    RotationConstraint c = Misc.GetOrAddComponent<RotationConstraint>(trans.gameObject);
+                    basicSetup(c);
+                    break;
+                }
+                case ConstraintData.ConstraintType.Scale: {
+                    ScaleConstraint c = Misc.GetOrAddComponent<ScaleConstraint>(trans.gameObject);
+                    basicSetup(c);
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+
+        //----------------------------------------------------------------------------------------------------------------------   
+
+        private void UpdateAnimationAsset(AnimationClipData clipData, MeshSyncPlayerConfig config) {
+            MakeSureAssetDirectoryExists();
 
 #if UNITY_EDITOR
 
-        clipData.Convert((InterpolationMode)config.AnimationInterpolation);
-        if (config.KeyframeReduction)
-            clipData.KeyframeReduction(config.ReductionThreshold, config.ReductionEraseFlatCurves);
+            clipData.Convert((InterpolationMode)config.AnimationInterpolation);
+            if (config.KeyframeReduction)
+                clipData.KeyframeReduction(config.ReductionThreshold, config.ReductionEraseFlatCurves);
 
-        //float start = Time.realtimeSinceStartup;
+            //float start = Time.realtimeSinceStartup;
 
-        Dictionary<GameObject, AnimationClip> animClipCache = new Dictionary<GameObject, AnimationClip>();
+            Dictionary<GameObject, AnimationClip> animClipCache = new Dictionary<GameObject, AnimationClip>();
 
-        int numAnimations = clipData.numAnimations;
-        for (int ai = 0; ai < numAnimations; ++ai) {
-            AnimationData data = clipData.GetAnimation(ai);
+            int numAnimations = clipData.numAnimations;
+            for (int ai = 0; ai < numAnimations; ++ai) {
+                AnimationData data = clipData.GetAnimation(ai);
 
-            string       path = data.path;
-            EntityRecord rec  = null;
-            m_clientObjects.TryGetValue(path, out rec);
+                string path = data.path;
+                EntityRecord rec = null;
+                m_clientObjects.TryGetValue(path, out rec);
 
-            Transform target = null;
-            if (rec != null)
-                target = rec.trans;
-            if (target == null) {
-                target = FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
-                if (target == null)
-                    return;
+                Transform target = null;
+                if (rec != null)
+                    target = rec.trans;
+                if (target == null) {
+                    target = FilmInternalUtilities.GameObjectUtility.FindOrCreateByPath(m_rootObject, path, false);
+                    if (target == null)
+                        return;
+                }
+
+                Transform root = target;
+                while (root.parent != null && root.parent != m_rootObject)
+                    root = root.parent;
+
+                Animator animator = Misc.GetOrAddComponent<Animator>(root.gameObject);
+
+                // get or create animation clip
+                AnimationClip clip = null;
+                if (!animClipCache.TryGetValue(root.gameObject, out clip)) {
+                    if (animator.runtimeAnimatorController != null) {
+                        AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
+                        if (clips != null && clips.Length > 0) {
+                            // note: this is extremely slow. animClipCache exists to cache the result and avoid frequent call.
+                            AnimationClip tmp = animator.runtimeAnimatorController.animationClips[0];
+                            if (tmp != null) {
+                                clip = tmp;
+                                animClipCache[root.gameObject] = tmp;
+                            }
+                        }
+                    }
+
+                    if (clip == null) {
+                        clip = new AnimationClip();
+                        string clipName = clipData.name;
+                        if (clipName.Length > 0)
+                            clipName = root.name + "_" + clipName;
+                        else
+                            clipName = root.name;
+
+                        string dstPath = m_assetsFolder + "/" + Misc.SanitizeFileName(clipName) + ".anim";
+                        clip = Misc.OverwriteOrCreateAsset(clip, dstPath);
+                        animator.runtimeAnimatorController =
+                            UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(
+                                dstPath + ".controller", clip);
+                        animClipCache[root.gameObject] = clip;
+                    }
+
+                    clip.frameRate = clipData.frameRate;
+                }
+
+                string animPath = path.Replace("/" + root.name, "");
+                if (animPath.Length > 0 && animPath[0] == '/')
+                    animPath = animPath.Remove(0, 1);
+
+                // get animation curves
+                AnimationImportContext ctx = new AnimationImportContext() {
+                    clip = clip,
+                    root = root.gameObject,
+                    target = target.gameObject,
+                    path = animPath,
+                    enableVisibility = config.SyncVisibility,
+                    usePhysicalCameraParams = config.IsPhysicalCameraParamsUsed()
+                };
+                if (rec != null) {
+                    if (rec.meshRenderer != null) ctx.mainComponentType = typeof(MeshRenderer);
+                    else if (rec.skinnedMeshRenderer != null) ctx.mainComponentType = typeof(SkinnedMeshRenderer);
+                }
+
+                data.ExportToClip(ctx);
             }
 
-            Transform root = target;
-            while (root.parent != null && root.parent != m_rootObject)
-                root = root.parent;
+            //Debug.Log("UpdateAnimationAsset() " + (Time.realtimeSinceStartup - start) + " sec");
 
-            Animator animator = Misc.GetOrAddComponent<Animator>(root.gameObject);
+            // fire event
+            if (onUpdateAnimation != null)
+                foreach (KeyValuePair<GameObject, AnimationClip> kvp in animClipCache)
+                    onUpdateAnimation.Invoke(kvp.Value, clipData);
+#endif
+        }
 
-            // get or create animation clip
-            AnimationClip clip = null;
-            if (!animClipCache.TryGetValue(root.gameObject, out clip)) {
-                if (animator.runtimeAnimatorController != null) {
-                    AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
-                    if (clips != null && clips.Length > 0) {
-                        // note: this is extremely slow. animClipCache exists to cache the result and avoid frequent call.
-                        AnimationClip tmp = animator.runtimeAnimatorController.animationClips[0];
-                        if (tmp != null) {
-                            clip                           = tmp;
-                            animClipCache[root.gameObject] = tmp;
+        private void ReassignMaterials(bool recordUndo) {
+            foreach (KeyValuePair<string, EntityRecord> rec in m_clientObjects)
+                AssignMaterials(rec.Value, recordUndo);
+            foreach (KeyValuePair<int, EntityRecord> rec in m_hostObjects)
+                AssignMaterials(rec.Value, recordUndo);
+            foreach (KeyValuePair<string, EntityRecord> rec in m_clientInstancedEntities) {
+                AssignMaterials(rec.Value, recordUndo);
+
+                if (m_clientInstances.TryGetValue(rec.Key, out var instanceInfoRecord)) {
+                    foreach (var meshSyncInstanceRenderer in instanceInfoRecord.renderers) {
+                        if (meshSyncInstanceRenderer != null) meshSyncInstanceRenderer.UpdateMaterials();
+                    }
+
+                    foreach (var instancedCopy in instanceInfoRecord.instanceObjects) {
+                        if (instancedCopy != null) {
+                            var renderer = instancedCopy.GetComponent<Renderer>();
+                            if (renderer != null) {
+                                AssignMaterials(renderer, rec.Value.materialIDs, recordUndo);
+                            }
                         }
                     }
                 }
-
-                if (clip == null) {
-                    clip = new AnimationClip();
-                    string clipName = clipData.name;
-                    if (clipName.Length > 0)
-                        clipName = root.name + "_" + clipName;
-                    else
-                        clipName = root.name;
-
-                    string dstPath = m_assetsFolder + "/" + Misc.SanitizeFileName(clipName) + ".anim";
-                    clip = Misc.OverwriteOrCreateAsset(clip, dstPath);
-                    animator.runtimeAnimatorController =
-                        UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(dstPath + ".controller", clip);
-                    animClipCache[root.gameObject] = clip;
-                }
-
-                clip.frameRate = clipData.frameRate;
             }
-
-            string animPath = path.Replace("/" + root.name, "");
-            if (animPath.Length > 0 && animPath[0] == '/')
-                animPath = animPath.Remove(0, 1);
-
-            // get animation curves
-            AnimationImportContext ctx = new AnimationImportContext() {
-                clip                    = clip,
-                root                    = root.gameObject,
-                target                  = target.gameObject,
-                path                    = animPath,
-                enableVisibility        = config.SyncVisibility,
-                usePhysicalCameraParams = config.IsPhysicalCameraParamsUsed()
-            };
-            if (rec != null) {
-                if (rec.meshRenderer != null) ctx.mainComponentType             = typeof(MeshRenderer);
-                else if (rec.skinnedMeshRenderer != null) ctx.mainComponentType = typeof(SkinnedMeshRenderer);
-            }
-
-            data.ExportToClip(ctx);
         }
 
-        //Debug.Log("UpdateAnimationAsset() " + (Time.realtimeSinceStartup - start) + " sec");
+        private void AssignMaterials(EntityRecord rec, bool recordUndo) {
+            if (rec.go == null || rec.mesh == null || rec.materialIDs == null)
+                return;
 
-        // fire event
-        if (onUpdateAnimation != null)
-            foreach (KeyValuePair<GameObject, AnimationClip> kvp in animClipCache)
-                onUpdateAnimation.Invoke(kvp.Value, clipData);
-#endif
-    }
+            Renderer r = rec.meshRenderer != null ? (Renderer)rec.meshRenderer : (Renderer)rec.skinnedMeshRenderer;
+            AssignMaterials(r, rec.materialIDs, recordUndo);
+        }
 
-    private void ReassignMaterials(bool recordUndo)
-    {
-        foreach (KeyValuePair<string, EntityRecord> rec in m_clientObjects)
-            AssignMaterials(rec.Value, recordUndo);
-        foreach (KeyValuePair<int, EntityRecord> rec in m_hostObjects)
-            AssignMaterials(rec.Value, recordUndo);
-        foreach (KeyValuePair<string, EntityRecord> rec in m_clientInstancedEntities)
-        {
-            AssignMaterials(rec.Value, recordUndo);
+        private void AssignMaterials(Renderer r, int[] materialIDs, bool recordUndo) {
+            if (r == null)
+                return;
 
-            if (m_clientInstances.TryGetValue(rec.Key, out var instanceInfoRecord))
-            {
-                if (instanceInfoRecord.renderer != null)
-                {
-                    instanceInfoRecord.renderer.UpdateMaterials();
+            bool changed = false;
+            int materialCount = materialIDs.Length;
+            Material[] materials = new Material[materialCount];
+            Material[] prevMaterials = r.sharedMaterials;
+
+            // If the number of material slots has changed, we have to reassign!
+            if (prevMaterials.Length != materials.Length)
+                changed = true;
+
+            Array.Copy(prevMaterials, materials, Math.Min(prevMaterials.Length, materials.Length));
+
+            for (int si = 0; si < materialCount; ++si) {
+                int mid = materialIDs[si];
+                Material material = FindMaterial(mid);
+                if (material != null) {
+                    if (materials[si] == material)
+                        continue;
+                    materials[si] = material;
+                    changed = true;
                 }
-                
-                foreach (var instancedCopy in instanceInfoRecord.instanceObjects)
-                {
-                    var renderer = instancedCopy.GetComponent<Renderer>();
-                    if (renderer != null)
-                    {
-                        AssignMaterials(renderer, rec.Value.materialIDs, recordUndo);
+                else if (materials[si] == null) {
+                    materials[si] = FindDefaultMaterial();
+                    changed = true;
+                }
+            }
+
+            if (!changed)
+                return;
+#if UNITY_EDITOR
+            if (recordUndo)
+                Undo.RecordObject(r, "Assign Material");
+#endif
+            r.sharedMaterials = materials;
+        }
+
+        internal bool EraseInstanceRecord<R>(
+            Identifier identifier,
+            Dictionary<string, R> records,
+            Action<R> onErase) {
+            string path = identifier.name;
+
+            bool ret = false;
+            if (records.TryGetValue(path, out R rec)) {
+                ret = records.Remove(path);
+
+                onErase(rec);
+            }
+
+            return ret;
+        }
+
+        internal void EraseInstanceInfoRecord(
+            InstanceInfoRecord record,
+            Transform parentFilter) {
+            for (var i = record.renderers.Count - 1; i >= 0; i--) {
+                var meshSyncInstanceRenderer = record.renderers[i];
+                if (parentFilter == null || meshSyncInstanceRenderer.transform == parentFilter) {
+                    DestroyImmediate(meshSyncInstanceRenderer);
+                    record.renderers.RemoveAt(i);
+                }
+            }
+
+            record.DeleteInstanceObjects(parentFilter);
+        }
+
+        internal bool EraseInstanceInfoRecord(Identifier identifier) {
+            return EraseInstanceRecord(identifier, m_clientInstances,
+                delegate(InstanceInfoRecord record) {
+                    foreach (var meshSyncInstanceRenderer in record.renderers) {
+                        DestroyImmediate(meshSyncInstanceRenderer);
+                    }
+
+                    record.DeleteInstanceObjects();
+
+                    if (onDeleteInstanceInfo != null)
+                        onDeleteInstancedEntity(identifier.name);
+                });
+        }
+
+        internal bool EraseInstancedEntityRecord(Identifier identifier) {
+            return EraseInstanceRecord(identifier, m_clientInstancedEntities,
+                delegate(EntityRecord record) {
+                    DestroyImmediate(record.go);
+                    if (onDeleteInstancedEntity != null)
+                        onDeleteInstancedEntity(identifier.name);
+                });
+        }
+
+        internal bool EraseEntityRecord(Identifier identifier) {
+            int id = identifier.id;
+            string path = identifier.name;
+
+            GameObject target = null;
+            EntityRecord rec = null;
+            bool ret = false;
+            if (id != 0 && m_hostObjects.TryGetValue(id, out rec)) {
+                if (rec.go != null)
+                    target = rec.go;
+                m_hostObjects.Remove(id);
+            }
+            else if (m_clientObjects.TryGetValue(path, out rec)) {
+                if (rec.go != null)
+                    target = rec.go;
+                ret = m_clientObjects.Remove(path);
+            }
+
+            if (target != null && !IsAsset(target)) {
+                if (onDeleteEntity != null)
+                    onDeleteEntity.Invoke(target);
+                DestroyImmediate(target);
+            }
+
+            return ret;
+        }
+
+        #endregion
+
+        #region Tools
+
+        private bool ApplyMaterialList(MaterialList ml) {
+            if (ml == null)
+                return false;
+
+            List<MaterialHolder> mats = ml.materials;
+            if (mats != null && mats.Count != 0) {
+                bool updated = false;
+                int materialCount = Mathf.Min(m_materialList.Count, ml.materials.Count);
+                for (int mi = 0; mi < materialCount; ++mi) {
+                    MaterialHolder src = ml.materials[mi];
+                    if (src.material == null)
+                        continue;
+                    MaterialHolder dst = m_materialList.Find(a => a.id == src.id);
+                    if (dst == null)
+                        continue;
+                    dst.material = src.material;
+                    updated = true;
+                }
+
+                if (updated)
+                    ReassignMaterials(false);
+            }
+
+            if (ml.nodes == null)
+                return true;
+
+            foreach (MaterialList.Node node in ml.nodes) {
+                Transform trans = FilmInternalUtilities.GameObjectUtility.FindByPath(m_rootObject, node.path);
+                if (trans == null)
+                    continue;
+
+                Renderer r = trans.GetComponent<Renderer>();
+                if (r != null)
+                    r.sharedMaterials = node.materials;
+            }
+
+            return true;
+        }
+
+        private Material FindDefaultMaterial() {
+            if (m_cachedDefaultMaterial != null)
+                return m_cachedDefaultMaterial;
+
+            GameObject primitive = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            primitive.SetActive(false);
+            m_cachedDefaultMaterial = primitive.GetComponent<MeshRenderer>().sharedMaterial;
+            DestroyImmediate(primitive);
+            return m_cachedDefaultMaterial;
+        }
+
+        //----------------------------------------------------------------------------------------------------------------------    
+#if UNITY_EDITOR
+        private void GenerateLightmapUV(GameObject go) {
+            if (go == null)
+                return;
+
+            SkinnedMeshRenderer smr = go.GetComponent<SkinnedMeshRenderer>();
+            if (smr != null) {
+                Mesh mesh = smr.sharedMesh;
+                if (mesh != null) {
+                    List<Vector2> uv = new List<Vector2>();
+                    mesh.GetUVs(0, uv);
+                    if (uv.Count == 0) {
+                        Unwrapping.GenerateSecondaryUVSet(mesh);
+                        Debug.Log("generated uv " + mesh.name);
                     }
                 }
             }
         }
-    }
 
-    private void AssignMaterials(EntityRecord rec, bool recordUndo) {
-        if (rec.go == null || rec.mesh == null || rec.materialIDs == null)
-            return;
-
-        Renderer r = rec.meshRenderer != null ? (Renderer)rec.meshRenderer : (Renderer)rec.skinnedMeshRenderer;
-        AssignMaterials(r, rec.materialIDs, recordUndo);
-    }
-    
-    private void AssignMaterials(Renderer r, int[]materialIDs , bool recordUndo) {
-        if (r == null)
-            return;
-
-        bool       changed       = false;
-        int        materialCount = materialIDs.Length;
-        Material[] materials     = new Material[materialCount];
-        Material[] prevMaterials = r.sharedMaterials;
-        Array.Copy(prevMaterials, materials, Math.Min(prevMaterials.Length, materials.Length));
-
-        for (int si = 0; si < materialCount; ++si) {
-            int      mid      = materialIDs[si];
-            Material material = FindMaterial(mid);
-            if (material != null) {
-                if (materials[si] == material)
-                    continue;
-                materials[si] = material;
-                changed       = true;
-            }
-            else if (materials[si] == null) {
-                materials[si] = FindDefaultMaterial();
-                changed       = true;
-            }
-        }
-
-        if (!changed)
-            return;
-#if UNITY_EDITOR
-        if (recordUndo)
-            Undo.RecordObject(r, "Assign Material");
-#endif
-        r.sharedMaterials = materials;
-    }
-
-    internal bool EraseInstanceRecord<R>(
-        Identifier identifier,
-        Dictionary<string, R> records,
-        Action<R> onErase) {
-        string path = identifier.name;
-
-        bool ret = false;
-        if (records.TryGetValue(path, out R rec)) {
-            ret = records.Remove(path);
-
-            onErase(rec);
-        }
-
-        return ret;
-    }
-
-    internal bool EraseInstanceInfoRecord(Identifier identifier) {
-        return EraseInstanceRecord(identifier, m_clientInstances,
-            delegate(InstanceInfoRecord record) {
-                DestroyImmediate(record.renderer);
-
-                record.DeleteInstanceObjects();
-
-                if (onDeleteInstanceInfo != null)
-                    onDeleteInstancedEntity(identifier.name);
-            });
-    }
-
-    internal bool EraseInstancedEntityRecord(Identifier identifier) {
-        return EraseInstanceRecord(identifier, m_clientInstancedEntities,
-            delegate(EntityRecord record) {
-                DestroyImmediate(record.go);
-                if (onDeleteInstancedEntity != null)
-                    onDeleteInstancedEntity(identifier.name);
-            });
-    }
-
-    internal bool EraseEntityRecord(Identifier identifier) {
-        int    id   = identifier.id;
-        string path = identifier.name;
-
-        GameObject   target = null;
-        EntityRecord rec    = null;
-        bool         ret    = false;
-        if (id != 0 && m_hostObjects.TryGetValue(id, out rec)) {
-            if (rec.go != null)
-                target = rec.go;
-            m_hostObjects.Remove(id);
-        }
-        else if (m_clientObjects.TryGetValue(path, out rec)) {
-            if (rec.go != null)
-                target = rec.go;
-            ret = m_clientObjects.Remove(path);
-        }
-
-        if (target != null && !IsAsset(target)) {
-            if (onDeleteEntity != null)
-                onDeleteEntity.Invoke(target);
-            DestroyImmediate(target);
-        }
-
-        return ret;
-    }
-
-    #endregion
-
-    #region Tools
-
-    private bool ApplyMaterialList(MaterialList ml) {
-        if (ml == null)
-            return false;
-
-        List<MaterialHolder> mats = ml.materials;
-        if (mats != null && mats.Count != 0) {
-            bool updated       = false;
-            int  materialCount = Mathf.Min(m_materialList.Count, ml.materials.Count);
-            for (int mi = 0; mi < materialCount; ++mi) {
-                MaterialHolder src = ml.materials[mi];
-                if (src.material == null)
-                    continue;
-                MaterialHolder dst = m_materialList.Find(a => a.id == src.id);
-                if (dst == null)
-                    continue;
-                dst.material = src.material;
-                updated      = true;
-            }
-
-            if (updated)
-                ReassignMaterials(false);
-        }
-
-        if (ml.nodes == null)
-            return true;
-
-        foreach (MaterialList.Node node in ml.nodes) {
-            Transform trans = FilmInternalUtilities.GameObjectUtility.FindByPath(m_rootObject, node.path);
-            if (trans == null)
-                continue;
-
-            Renderer r = trans.GetComponent<Renderer>();
-            if (r != null)
-                r.sharedMaterials = node.materials;
-        }
-
-        return true;
-    }
-
-    private Material FindDefaultMaterial() {
-        if (m_cachedDefaultMaterial != null)
-            return m_cachedDefaultMaterial;
-
-        GameObject primitive = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        primitive.SetActive(false);
-        m_cachedDefaultMaterial = primitive.GetComponent<MeshRenderer>().sharedMaterial;
-        DestroyImmediate(primitive);
-        return m_cachedDefaultMaterial;
-    }
-
-    //----------------------------------------------------------------------------------------------------------------------    
-#if UNITY_EDITOR
-    private void GenerateLightmapUV(GameObject go) {
-        if (go == null)
-            return;
-
-        SkinnedMeshRenderer smr = go.GetComponent<SkinnedMeshRenderer>();
-        if (smr != null) {
-            Mesh mesh = smr.sharedMesh;
-            if (mesh != null) {
-                List<Vector2> uv = new List<Vector2>();
-                mesh.GetUVs(0, uv);
-                if (uv.Count == 0) {
-                    Unwrapping.GenerateSecondaryUVSet(mesh);
-                    Debug.Log("generated uv " + mesh.name);
-                }
-            }
-        }
-    }
-
-    private void GenerateLightmapUV() {
-        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
-            GenerateLightmapUV(kvp.Value.go);
-        foreach (KeyValuePair<int, EntityRecord> kvp in m_hostObjects)
-            if (kvp.Value.mesh != null)
+        private void GenerateLightmapUV() {
+            foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
                 GenerateLightmapUV(kvp.Value.go);
-    }
+            foreach (KeyValuePair<int, EntityRecord> kvp in m_hostObjects)
+                if (kvp.Value.mesh != null)
+                    GenerateLightmapUV(kvp.Value.go);
+        }
 
-    public void ExportMaterials(bool overwrite = true, bool useExistingOnes = false) {
-        MakeSureAssetDirectoryExists();
+        public void ExportMaterials(bool overwrite = true, bool useExistingOnes = false) {
+            MakeSureAssetDirectoryExists();
 
-        // need to avoid filename collision
-        Misc.UniqueNameGenerator nameGenerator = new Misc.UniqueNameGenerator();
-        string                   basePath      = m_assetsFolder;
+            // need to avoid filename collision
+            Misc.UniqueNameGenerator nameGenerator = new Misc.UniqueNameGenerator();
+            string basePath = m_assetsFolder;
 
-        bool needSaveAssets = false;
-        Func<Material, Material> doExport = (Material mat) => {
-            if (mat == null || IsAsset(mat))
+            bool needSaveAssets = false;
+            Func<Material, Material> doExport = (Material mat) => {
+                if (mat == null || IsAsset(mat))
+                    return mat;
+
+                string dstPath = string.Format("{0}/{1}.mat", basePath, nameGenerator.Gen(mat.name));
+                Material existing = AssetDatabase.LoadAssetAtPath<Material>(dstPath);
+                if (overwrite || existing == null) {
+                    mat = Misc.OverwriteOrCreateAsset(mat, dstPath);
+                    MeshSyncPlayerConfig config = GetConfigV();
+                    if (config.Logging)
+                        Debug.Log("exported material " + dstPath);
+
+                    needSaveAssets = true;
+                }
+                else if (useExistingOnes && existing != null) {
+                    mat = existing;
+                }
+
                 return mat;
+            };
 
-            string   dstPath  = string.Format("{0}/{1}.mat", basePath, nameGenerator.Gen(mat.name));
-            Material existing = AssetDatabase.LoadAssetAtPath<Material>(dstPath);
+            foreach (MaterialHolder m in m_materialList)
+                m.material = doExport(m.material); // material maybe updated by SaveAsset()
+
+            if (needSaveAssets)
+                AssetDatabase.SaveAssets();
+            ReassignMaterials(false);
+        }
+
+        private bool IsSubfolder(string parentPath, string childPath) {
+            Uri parentUri = new Uri(parentPath);
+            DirectoryInfo childUri = new DirectoryInfo(childPath).Parent;
+            while (childUri != null) {
+                if (new Uri(childUri.FullName) == parentUri) return true;
+                childUri = childUri.Parent;
+            }
+
+            return false;
+        }
+
+        internal virtual void ClearInstancePrefabs() {
+            MeshSyncLogger.VerboseLog("Clearing instance prefabs.");
+
+            transform.DestroyChildrenImmediate();
+
+            if (m_prefabDict.Count > 0) {
+                AssetDatabase.StartAssetEditing();
+
+                foreach (PrefabHolder prefabHolder in m_prefabDict.Values) {
+                    string path = AssetDatabase.GetAssetPath(prefabHolder.prefab);
+
+                    // Also delete its asset:
+                    string[] deps = AssetDatabase.GetDependencies(path);
+                    string assetName = Path.ChangeExtension(path, "asset");
+                    if (deps.Contains(assetName)) AssetDatabase.DeleteAsset(assetName);
+
+                    AssetDatabase.DeleteAsset(path);
+                }
+
+                AssetDatabase.StopAssetEditing();
+            }
+
+            m_prefabDict.Clear();
+        }
+
+        private void Export(KeyValuePair<string, EntityRecord> kvp, bool overwrite, bool useExistingOnes,
+            string basePath, MeshSyncPlayerConfig config,
+            Misc.UniqueNameGenerator nameGenerator) {
+            Mesh mesh = kvp.Value.mesh;
+
+            if (mesh == null)
+                //if(kvp.Value.dataType == EntityType.Mesh)
+                //{
+                //    Debug.LogError($"Mesh was lost on {kvp.Key}");
+                //}
+                return;
+
+            // If this is an asset but in another folder, still save it, if it changed:
+            if (IsAsset(mesh)) {
+                string currentPath = Path.GetFullPath(GetAssetsFolder());
+                string existingPath = Path.GetFullPath(AssetDatabase.GetAssetPath(mesh));
+                if (IsSubfolder(currentPath, existingPath)) return;
+            }
+
+            string dstPath = string.Format("{0}/{1}.asset", basePath, nameGenerator.Gen(mesh.name));
+            Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(dstPath);
             if (overwrite || existing == null) {
-                mat = Misc.OverwriteOrCreateAsset(mat, dstPath);
-                MeshSyncPlayerConfig config = GetConfigV();
-                if (config.Logging)
-                    Debug.Log("exported material " + dstPath);
+                mesh = Misc.OverwriteOrCreateAsset(mesh, dstPath);
+                kvp.Value.mesh = mesh; // mesh may be updated by SaveAsset()
 
-                needSaveAssets = true;
+                // Ensure the saved mesh is also linked on the meshfilter:
+                if (kvp.Value.meshFilter != null) kvp.Value.meshFilter.sharedMesh = mesh;
+                if (kvp.Value.skinnedMeshRenderer != null) kvp.Value.skinnedMeshRenderer.sharedMesh = mesh;
+
+                if (config.Logging)
+                    Debug.Log("exported mesh " + dstPath);
             }
             else if (useExistingOnes && existing != null) {
-                mat = existing;
+                kvp.Value.mesh = existing;
             }
-
-            return mat;
-        };
-
-        foreach (MaterialHolder m in m_materialList)
-            m.material = doExport(m.material); // material maybe updated by SaveAsset()
-
-        if (needSaveAssets)
-            AssetDatabase.SaveAssets();
-        ReassignMaterials(false);
-    }
-
-    private bool IsSubfolder(string parentPath, string childPath) {
-        Uri           parentUri = new Uri(parentPath);
-        DirectoryInfo childUri  = new DirectoryInfo(childPath).Parent;
-        while (childUri != null) {
-            if (new Uri(childUri.FullName) == parentUri) return true;
-            childUri = childUri.Parent;
         }
 
-        return false;
-    }
+        public void ExportMeshes(bool overwrite = true, bool useExistingOnes = false) {
+            MakeSureAssetDirectoryExists();
 
-    internal virtual void ClearInstancePrefabs() {
-        MeshSyncLogger.VerboseLog("Clearing instance prefabs.");
+            // need to avoid filename collision
+            Misc.UniqueNameGenerator nameGenerator = new Misc.UniqueNameGenerator();
+            string basePath = GetAssetsFolder();
 
-        transform.DestroyChildrenImmediate();
+            // export client meshes
+            MeshSyncPlayerConfig config = GetConfigV();
 
-        foreach (PrefabHolder prefabHolder in m_prefabDict.Values) {
-            string path = AssetDatabase.GetAssetPath(prefabHolder.prefab);
+            foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects)
+                Export(kvp, overwrite, useExistingOnes, basePath, config, nameGenerator);
 
-            // Also delete its asset:
-            string[] deps      = AssetDatabase.GetDependencies(path);
-            string   assetName = Path.ChangeExtension(path, "asset");
-            if (deps.Contains(assetName)) AssetDatabase.DeleteAsset(assetName);
+            foreach (KeyValuePair<string, EntityRecord> kvp in m_clientInstancedEntities)
+                Export(kvp, overwrite, useExistingOnes, basePath, config, nameGenerator);
 
-            AssetDatabase.DeleteAsset(path);
-        }
-
-        m_prefabDict.Clear();
-    }
-
-    private void Export(KeyValuePair<string, EntityRecord> kvp, bool overwrite, bool useExistingOnes, string basePath, MeshSyncPlayerConfig config,
-        Misc.UniqueNameGenerator nameGenerator) {
-        Mesh mesh = kvp.Value.mesh;
-
-        if (mesh == null)
-            //if(kvp.Value.dataType == EntityType.Mesh)
-            //{
-            //    Debug.LogError($"Mesh was lost on {kvp.Key}");
-            //}
-            return;
-
-        // If this is an asset but in another folder, still save it, if it changed:
-        if (IsAsset(mesh)) {
-            string currentPath  = Path.GetFullPath(GetAssetsFolder());
-            string existingPath = Path.GetFullPath(AssetDatabase.GetAssetPath(mesh));
-            if (IsSubfolder(currentPath, existingPath)) return;
-        }
-
-        string dstPath  = string.Format("{0}/{1}.asset", basePath, nameGenerator.Gen(mesh.name));
-        Mesh   existing = AssetDatabase.LoadAssetAtPath<Mesh>(dstPath);
-        if (overwrite || existing == null) {
-            mesh           = Misc.OverwriteOrCreateAsset(mesh, dstPath);
-            kvp.Value.mesh = mesh; // mesh maybe updated by SaveAsset()
-
-            // Ensure the saved mesh is also linked on the meshfilter:
-            if (kvp.Value.meshFilter != null) kvp.Value.meshFilter.sharedMesh                   = mesh;
-            if (kvp.Value.skinnedMeshRenderer != null) kvp.Value.skinnedMeshRenderer.sharedMesh = mesh;
-
-            if (config.Logging)
-                Debug.Log("exported mesh " + dstPath);
-        }
-        else if (useExistingOnes && existing != null) {
-            kvp.Value.mesh = existing;
-        }
-    }
-
-    public void ExportMeshes(bool overwrite = true, bool useExistingOnes = false) {
-        MakeSureAssetDirectoryExists();
-
-        // need to avoid filename collision
-        Misc.UniqueNameGenerator nameGenerator = new Misc.UniqueNameGenerator();
-        string                   basePath      = GetAssetsFolder();
-
-        // export client meshes
-        MeshSyncPlayerConfig config = GetConfigV();
-
-        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects) Export(kvp, overwrite, useExistingOnes, basePath, config, nameGenerator);
-
-        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientInstancedEntities) Export(kvp, overwrite, useExistingOnes, basePath, config, nameGenerator);
-
-        // replace existing meshes
-        int n = 0;
-        foreach (KeyValuePair<int, EntityRecord> kvp in m_hostObjects) {
-            EntityRecord rec = kvp.Value;
-            if (rec.go == null || rec.mesh == null)
-                continue;
-
-            rec.origMesh.Clear(); // make editor can recognize mesh has modified by CopySerialized()
-            EditorUtility.CopySerialized(rec.mesh, rec.origMesh);
-            rec.mesh = null;
-
-            MeshFilter mf = rec.go.GetComponent<MeshFilter>();
-            if (mf != null)
-                mf.sharedMesh = rec.origMesh;
-
-            SkinnedMeshRenderer smr = rec.go.GetComponent<SkinnedMeshRenderer>();
-            if (smr != null)
-                smr.sharedMesh = rec.origMesh;
-
-            if (config.Logging)
-                Debug.Log("updated mesh " + rec.origMesh.name);
-            ++n;
-        }
-
-        if (n > 0)
-            AssetDatabase.SaveAssets();
-    }
-
-    internal bool ExportMaterialList(string path) {
-        if (string.IsNullOrEmpty(path))
-            return false;
-
-        path = path.Replace(Application.dataPath, "Assets/");
-        if (!path.EndsWith(".asset"))
-            path = path + ".asset";
-
-        MaterialList ml = ScriptableObject.CreateInstance<MaterialList>();
-        // material list
-        ml.materials = m_materialList;
-
-        // extract per-node materials
-        Action<Transform> exportNode = (n) => {
-            foreach (Renderer r in n.GetComponentsInChildren<Renderer>())
-                ml.nodes.Add(new MaterialList.Node {
-                    path      = BuildPath(r.transform),
-                    materials = r.sharedMaterials
-                });
-        };
-        if (m_rootObject != null)
-            exportNode(m_rootObject);
-        else
-            foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
-                exportNode(root.transform);
-
-        AssetDatabase.CreateAsset(ml, path);
-        return true;
-    }
-
-    internal bool ImportMaterialList(string path) {
-        if (string.IsNullOrEmpty(path))
-            return false;
-
-        path = path.Replace(Application.dataPath, "Assets/");
-
-        MaterialList ml = AssetDatabase.LoadAssetAtPath<MaterialList>(path);
-        return ApplyMaterialList(ml);
-    }
-
-    //Returns true if changed
-    private bool IsMaterialAssignedInSceneView() {
-        bool changed = false;
-        foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects) {
-            EntityRecord rec = kvp.Value;
-            if (rec.go != null && rec.go.activeInHierarchy) {
-                Renderer mr = rec.go.GetComponent<Renderer>();
-                if (mr == null || rec.mesh == null)
+            // replace existing meshes
+            int n = 0;
+            foreach (KeyValuePair<int, EntityRecord> kvp in m_hostObjects) {
+                EntityRecord rec = kvp.Value;
+                if (rec.go == null || rec.mesh == null)
                     continue;
 
-                Material[] materials = mr.sharedMaterials;
-                int        n         = Math.Min(materials.Length, rec.materialIDs.Length);
-                for (int si = 0; si < n; ++si) {
-                    int            mid       = rec.materialIDs[si];
-                    MaterialHolder matHolder = m_materialList.Find(a => a.id == mid);
-                    if (matHolder == null || materials[si] == matHolder.material)
-                        continue;
-                    matHolder.material = materials[si];
-                    changed            = true;
-                    break;
-                }
+                rec.origMesh.Clear(); // make editor can recognize mesh has modified by CopySerialized()
+                EditorUtility.CopySerialized(rec.mesh, rec.origMesh);
+                rec.mesh = null;
+
+                MeshFilter mf = rec.go.GetComponent<MeshFilter>();
+                if (mf != null)
+                    mf.sharedMesh = rec.origMesh;
+
+                SkinnedMeshRenderer smr = rec.go.GetComponent<SkinnedMeshRenderer>();
+                if (smr != null)
+                    smr.sharedMesh = rec.origMesh;
+
+                if (config.Logging)
+                    Debug.Log("updated mesh " + rec.origMesh.name);
+                ++n;
             }
 
-            if (changed)
-                break;
+            if (n > 0)
+                AssetDatabase.SaveAssets();
         }
 
-        return changed;
-    }
+        internal bool ExportMaterialList(string path) {
+            if (string.IsNullOrEmpty(path))
+                return false;
+
+            path = path.Replace(Application.dataPath, "Assets/");
+            if (!path.EndsWith(".asset"))
+                path = path + ".asset";
+
+            MaterialList ml = ScriptableObject.CreateInstance<MaterialList>();
+            // material list
+            ml.materials = m_materialList;
+
+            // extract per-node materials
+            Action<Transform> exportNode = (n) => {
+                foreach (Renderer r in n.GetComponentsInChildren<Renderer>())
+                    ml.nodes.Add(new MaterialList.Node {
+                        path = BuildPath(r.transform),
+                        materials = r.sharedMaterials
+                    });
+            };
+            if (m_rootObject != null)
+                exportNode(m_rootObject);
+            else
+                foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
+                    exportNode(root.transform);
+
+            AssetDatabase.CreateAsset(ml, path);
+            return true;
+        }
+
+        internal bool ImportMaterialList(string path) {
+            if (string.IsNullOrEmpty(path))
+                return false;
+
+            path = path.Replace(Application.dataPath, "Assets/");
+
+            MaterialList ml = AssetDatabase.LoadAssetAtPath<MaterialList>(path);
+            return ApplyMaterialList(ml);
+        }
+
+        //Returns true if changed
+        private bool IsMaterialAssignedInSceneView() {
+            bool changed = false;
+            foreach (KeyValuePair<string, EntityRecord> kvp in m_clientObjects) {
+                EntityRecord rec = kvp.Value;
+                if (rec.go != null && rec.go.activeInHierarchy) {
+                    Renderer mr = rec.go.GetComponent<Renderer>();
+                    if (mr == null || rec.mesh == null)
+                        continue;
+
+                    Material[] materials = mr.sharedMaterials;
+                    int n = Math.Min(materials.Length, rec.materialIDs.Length);
+                    for (int si = 0; si < n; ++si) {
+                        int mid = rec.materialIDs[si];
+                        MaterialHolder matHolder = m_materialList.Find(a => a.id == mid);
+                        if (matHolder == null || materials[si] == matHolder.material)
+                            continue;
+                        matHolder.material = materials[si];
+                        changed = true;
+                        break;
+                    }
+                }
+
+                if (changed)
+                    break;
+            }
+
+            return changed;
+        }
 
 
 //---------------------------------------------------------------------------------------------------------------------    
 
-    internal List<AnimationClip> GetAnimationClips() {
-        List<AnimationClip> ret = new List<AnimationClip>();
+        internal List<AnimationClip> GetAnimationClips() {
+            List<AnimationClip> ret = new List<AnimationClip>();
 
-        Action<GameObject> gatherClips = (go) => {
-            AnimationClip[] clips = null;
-            clips = AnimationUtility.GetAnimationClips(go);
-            if (clips != null && clips.Length > 0)
-                ret.AddRange(clips);
-        };
+            Action<GameObject> gatherClips = (go) => {
+                AnimationClip[] clips = null;
+                clips = AnimationUtility.GetAnimationClips(go);
+                if (clips != null && clips.Length > 0)
+                    ret.AddRange(clips);
+            };
 
-        gatherClips(gameObject);
-        // process children. root children should be enough.
-        Transform trans      = transform;
-        int       childCount = trans.childCount;
-        for (int ci = 0; ci < childCount; ++ci)
-            gatherClips(transform.GetChild(ci).gameObject);
-        return ret;
-    }
+            gatherClips(gameObject);
+            // process children. root children should be enough.
+            Transform trans = transform;
+            int childCount = trans.childCount;
+            for (int ci = 0; ci < childCount; ++ci)
+                gatherClips(transform.GetChild(ci).gameObject);
+            return ret;
+        }
 
-    private void OnSceneViewGUI(SceneView sceneView) {
-        MeshSyncPlayerConfig config = GetConfigV();
-        if (null == config) //may happen after deleting prefabs (SceneCache)
-            return;
+        private void OnSceneViewGUI(SceneView sceneView) {
+            MeshSyncPlayerConfig config = GetConfigV();
+            if (null == config) //may happen after deleting prefabs (SceneCache)
+                return;
 
-        if (!config.SyncMaterialList)
-            return;
+            if (!config.SyncMaterialList)
+                return;
 
-        if (Event.current.type != EventType.DragExited || Event.current.button != 0)
-            return;
+            if (Event.current.type != EventType.DragExited || Event.current.button != 0)
+                return;
 
-        bool changed = IsMaterialAssignedInSceneView();
-        if (!changed)
-            return;
+            bool changed = IsMaterialAssignedInSceneView();
+            if (!changed)
+                return;
 
-        // assume last undo group is "Assign Material" performed by mouse drag & drop.
-        // collapse reassigning materials into it.
-        int group = Undo.GetCurrentGroup() - 1;
-        ReassignMaterials(true);
-        Undo.CollapseUndoOperations(@group);
-        Undo.FlushUndoRecordObjects();
-        ForceRepaint();
-        m_onMaterialChangedInSceneViewCB?.Invoke();
-    }
+            // assume last undo group is "Assign Material" performed by mouse drag & drop.
+            // collapse reassigning materials into it.
+            int group = Undo.GetCurrentGroup() - 1;
+            ReassignMaterials(true);
+            Undo.CollapseUndoOperations(@group);
+            Undo.FlushUndoRecordObjects();
+            ForceRepaint();
+            m_onMaterialChangedInSceneViewCB?.Invoke();
+        }
 
-    internal void AssignMaterial(MaterialHolder holder, Material mat) {
-        Undo.RegisterCompleteObjectUndo(this, "Assign Material");
-        holder.material = mat;
-        ReassignMaterials(true);
-        Undo.FlushUndoRecordObjects();
-        ForceRepaint();
-    }
+        internal void AssignMaterial(MaterialHolder holder, Material mat) {
+            Undo.RegisterCompleteObjectUndo(this, "Assign Material");
+            holder.material = mat;
+            ReassignMaterials(true);
+            Undo.FlushUndoRecordObjects();
+            ForceRepaint();
+        }
 
 #endif //UNITY_EDITOR
 
-    #endregion
+        #endregion
 
 //----------------------------------------------------------------------------------------------------------------------        
 
-    #region Events
+        #region Events
 
 #if UNITY_EDITOR
-    private void Reset() {
-        // force disable batching for export
-        MethodInfo method = typeof(PlayerSettings).GetMethod("SetBatchingForPlatform",
-            BindingFlags.NonPublic | BindingFlags.Static);
-        if (method == null)
-            return;
-        method.Invoke(null, new object[] { BuildTarget.StandaloneWindows, 0, 0 });
-        method.Invoke(null, new object[] { BuildTarget.StandaloneWindows64, 0, 0 });
-    }
-#endif
-
-    protected virtual void OnDestroy() {
-        m_tmpI.Dispose();
-        m_tmpV2.Dispose();
-        m_tmpV3.Dispose();
-        m_tmpV4.Dispose();
-        m_tmpC.Dispose();
-        
-#if UNITY_EDITOR
-        // Release any render textures that have not been released:
-        foreach (var renderTexture in CreatedRenderTextures)
-        {
-            if (renderTexture.IsCreated())
-                renderTexture.Release();
+        private void Reset() {
+            // force disable batching for export
+            MethodInfo method = typeof(PlayerSettings).GetMethod("SetBatchingForPlatform",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            if (method == null)
+                return;
+            method.Invoke(null, new object[] { BuildTarget.StandaloneWindows, 0, 0 });
+            method.Invoke(null, new object[] { BuildTarget.StandaloneWindows64, 0, 0 });
         }
 #endif
-    }
+
+        protected virtual void OnDestroy() {
+            m_tmpI.Dispose();
+            m_tmpV2.Dispose();
+            m_tmpV3.Dispose();
+            m_tmpV4.Dispose();
+            m_tmpC.Dispose();
+
+            onSceneUpdateEnd = null;
+            onSceneUpdateBegin = null;
+            onDeleteEntity = null;
+
+#if UNITY_EDITOR
+            // Release any render textures that have not been released:
+            foreach (var renderTexture in CreatedRenderTextures) {
+                if (renderTexture.IsCreated())
+                    renderTexture.Release();
+            }
+#endif
+        }
 
 //----------------------------------------------------------------------------------------------------------------------
-    /// <summary>
-    /// Monobehaviour's OnEnable(). Can be overridden
-    /// </summary>
-    private protected virtual void OnEnable() {
+        /// <summary>
+        /// Monobehaviour's OnEnable(). Can be overridden
+        /// </summary>
+        private protected virtual void OnEnable() {
 #if UNITY_EDITOR
-        SceneView.duringSceneGui += OnSceneViewGUI;
+            SceneView.duringSceneGui += OnSceneViewGUI;
 #endif
-    }
+        }
 
-    /// <summary>
-    /// Monobehaviour's OnDisable(). Can be overridden
-    /// </summary>
-    private protected virtual void OnDisable() {
+        /// <summary>
+        /// Monobehaviour's OnDisable(). Can be overridden
+        /// </summary>
+        private protected virtual void OnDisable() {
 #if UNITY_EDITOR
-        SceneView.duringSceneGui -= OnSceneViewGUI;
+            SceneView.duringSceneGui -= OnSceneViewGUI;
 #endif
-    }
+        }
 
-    private void Update() {
+        private void Update() {
 #if AT_USE_HDRP
         UpdatePathTracingState();
 #endif
-    }
+        }
 
-    #endregion //Events
+        #endregion //Events
 
-    internal int getNumObservers {
-        get { return m_observers?.Count ?? 0; }
-    }
+        internal int getNumObservers {
+            get { return m_observers?.Count ?? 0; }
+        }
 
-    /// <summary>
-    /// Send MeshSync sync event
-    /// </summary>
-    /// <param name="data">Asset type synced</param>
-    private void SendEventData(MeshSyncAnalyticsData data) {
-        foreach (IObserver<MeshSyncAnalyticsData> observer in m_observers) observer.OnNext(data);
-    }
+        /// <summary>
+        /// Send MeshSync sync event
+        /// </summary>
+        /// <param name="data">Asset type synced</param>
+        private void SendEventData(MeshSyncAnalyticsData data) {
+            foreach (IObserver<MeshSyncAnalyticsData> observer in m_observers) observer.OnNext(data);
+        }
 
-    /// <inheritdoc/>
-    public IDisposable Subscribe(IObserver<MeshSyncAnalyticsData> observer) {
-        m_observers.Add(observer);
-        return null;
-    }
+        /// <inheritdoc/>
+        public IDisposable Subscribe(IObserver<MeshSyncAnalyticsData> observer) {
+            m_observers.Add(observer);
+            return null;
+        }
 
-    //----------------------------------------------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------------------------------------------
 
-    // [TODO-sin: 2020-12-14] m_assetsFolder only makes sense for MeshSyncServer because we need to assign a folder that
-    // will keep the synced resources as edits are performed on the DCC tool side.
-    // For SceneCachePlayer, m_assetsFolder is needed only when loading the file, so it should be passed as a parameter
+        // [TODO-sin: 2020-12-14] m_assetsFolder only makes sense for MeshSyncServer because we need to assign a folder that
+        // will keep the synced resources as edits are performed on the DCC tool side.
+        // For SceneCachePlayer, m_assetsFolder is needed only when loading the file, so it should be passed as a parameter
 
-    [SerializeField] private string    m_assetsFolder = null; // Always starts with "Assets"
-    [SerializeField] private Transform m_rootObject;
+        [SerializeField] private string m_assetsFolder = null; // Always starts with "Assets"
+        [SerializeField] private Transform m_rootObject;
 
-    [Obsolete] [SerializeField] private bool m_usePhysicalCameraParams = true;
-    [SerializeField]            private bool m_useCustomCameraMatrices = true;
+        [Obsolete] [SerializeField] private bool m_usePhysicalCameraParams = true;
+        [SerializeField] private bool m_useCustomCameraMatrices = true;
 
-    [SerializeField] private protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
-    [SerializeField] private           List<TextureHolder>  m_textureList  = new List<TextureHolder>();
-    [SerializeField] private           List<AudioHolder>    m_audioList    = new List<AudioHolder>();
-    [SerializeField] private           PrefabDictionary     m_prefabDict   = new PrefabDictionary();
+        [SerializeField] private protected List<MaterialHolder> m_materialList = new List<MaterialHolder>();
+        [SerializeField] private List<TextureHolder> m_textureList = new List<TextureHolder>();
+        [SerializeField] private List<AudioHolder> m_audioList = new List<AudioHolder>();
+        [SerializeField] private PrefabDictionary m_prefabDict = new PrefabDictionary();
 
-    [SerializeField] private string[]       m_clientObjects_keys;
-    [SerializeField] private EntityRecord[] m_clientObjects_values;
-    [SerializeField] private int[]          m_hostObjects_keys;
-    [SerializeField] private EntityRecord[] m_hostObjects_values;
-    [SerializeField] private GameObject[]   m_objIDTable_keys;
-    [SerializeField] private int[]          m_objIDTable_values;
-    [SerializeField] private int            m_objIDSeed = 0;
+        [SerializeField] private string[] m_clientObjects_keys;
+        [SerializeField] private EntityRecord[] m_clientObjects_values;
+        [SerializeField] private int[] m_hostObjects_keys;
+        [SerializeField] private EntityRecord[] m_hostObjects_values;
+        [SerializeField] private GameObject[] m_objIDTable_keys;
+        [SerializeField] private int[] m_objIDTable_values;
+        [SerializeField] private int m_objIDSeed = 0;
 
 #pragma warning disable 414
-    [HideInInspector] [SerializeField] private int m_baseMeshSyncVersion = (int)BaseMeshSyncVersion.NO_VERSIONING;
+        [HideInInspector] [SerializeField] private int m_baseMeshSyncVersion = (int)BaseMeshSyncVersion.NO_VERSIONING;
 #pragma warning restore 414
-    private const int CUR_BASE_MESHSYNC_VERSION = (int)BaseMeshSyncVersion.INITIAL_0_10_0;
+        private const int CUR_BASE_MESHSYNC_VERSION = (int)BaseMeshSyncVersion.INITIAL_0_10_0;
 
 #if UNITY_EDITOR
-    [SerializeField] private bool m_sortEntities       = true;
-    [SerializeField] private bool m_foldSyncSettings   = true;
-    [SerializeField] private bool m_foldImportSettings = true;
-    [SerializeField] private bool m_foldMisc           = true;
-    [SerializeField] private bool m_foldMaterialList   = true;
-    [SerializeField] private bool m_foldAnimationTweak = true;
-    [SerializeField] private bool m_foldExportAssets   = true;
+        [SerializeField] private bool m_sortEntities = true;
+        [SerializeField] private bool m_foldSyncSettings = true;
+        [SerializeField] private bool m_foldImportSettings = true;
+        [SerializeField] private bool m_foldMisc = true;
+        [SerializeField] private bool m_foldMaterialList = true;
+        [SerializeField] private bool m_foldAnimationTweak = true;
+        [SerializeField] private bool m_foldExportAssets = true;
 #endif
 
-    private bool m_saveAssetsInScene             = true;
-    private bool m_markMeshesDynamic             = false;
-    private bool m_needReassignMaterials         = false;
-    private bool m_keyValuesSerializationEnabled = true;
+        private bool m_saveAssetsInScene = true;
+        private bool m_markMeshesDynamic = false;
+        private bool m_needReassignMaterials = false;
+        private bool m_keyValuesSerializationEnabled = true;
 
-    private List<IObserver<MeshSyncAnalyticsData>> m_observers = new List<IObserver<MeshSyncAnalyticsData>>();
-    private Material                               m_cachedDefaultMaterial;
+        private List<IObserver<MeshSyncAnalyticsData>> m_observers = new List<IObserver<MeshSyncAnalyticsData>>();
+        private Material m_cachedDefaultMaterial;
 
-    private readonly           Dictionary<string, EntityRecord> m_clientObjects = new Dictionary<string, EntityRecord>();
-    private protected readonly Dictionary<int, EntityRecord>    m_hostObjects   = new Dictionary<int, EntityRecord>();
-    private readonly           Dictionary<GameObject, int>      m_objIDTable    = new Dictionary<GameObject, int>();
+        private protected readonly Dictionary<string, EntityRecord> m_clientObjects =
+            new Dictionary<string, EntityRecord>();
 
-    [SerializeField] private protected InstanceInfoRecordDictionary m_clientInstances         = new InstanceInfoRecordDictionary();
-    [SerializeField] private           EntityRecordDictionary       m_clientInstancedEntities = new EntityRecordDictionary();
+        private protected readonly Dictionary<int, EntityRecord> m_hostObjects = new Dictionary<int, EntityRecord>();
+        private readonly Dictionary<GameObject, int> m_objIDTable = new Dictionary<GameObject, int>();
 
-    private protected Action m_onMaterialChangedInSceneViewCB = null;
+        [SerializeField]
+        private protected InstanceInfoRecordDictionary m_clientInstances = new InstanceInfoRecordDictionary();
+
+        [SerializeField]
+        private protected EntityRecordDictionary m_clientInstancedEntities = new EntityRecordDictionary();
+
+        private protected Action m_onMaterialChangedInSceneViewCB = null;
+        
+        internal Func<string, List<PropertyInfoDataWrapper>, GameObject> GetPrefabForInstance;
 
 #if AT_USE_HDRP
-    private bool m_pathTracingExists      = false;
+    private bool m_pathTracingExists = false;
     
 #if UNITY_2021_2_OR_NEWER
     private bool m_needToResetPathTracing = false;
@@ -3168,37 +3415,36 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
 
 //----------------------------------------------------------------------------------------------------------------------
 
-    private PinnedList<int>     m_tmpI  = new PinnedList<int>();
-    private PinnedList<Vector2> m_tmpV2 = new PinnedList<Vector2>();
-    private PinnedList<Vector3> m_tmpV3 = new PinnedList<Vector3>();
-    private PinnedList<Vector4> m_tmpV4 = new PinnedList<Vector4>();
-    private PinnedList<Color>   m_tmpC  = new PinnedList<Color>();
+        private PinnedList<int> m_tmpI = new PinnedList<int>();
+        private PinnedList<Vector2> m_tmpV2 = new PinnedList<Vector2>();
+        private PinnedList<Vector3> m_tmpV3 = new PinnedList<Vector3>();
+        private PinnedList<Vector4> m_tmpV4 = new PinnedList<Vector4>();
+        private PinnedList<Color> m_tmpC = new PinnedList<Color>();
 
 #if AT_USE_SPLINES
-    PinnedList<float3> m_tmpFloat3 = new PinnedList<float3>();
+        PinnedList<float3> m_tmpFloat3 = new PinnedList<float3>();
 #endif
-    
+
 #if UNITY_EDITOR
-    [NonSerialized]
-    private List<RenderTexture> CreatedRenderTextures = new List<RenderTexture>();
+        [NonSerialized] private List<RenderTexture> CreatedRenderTextures = new List<RenderTexture>();
 
-    internal void AddCreatedRenderTexture(RenderTexture renderTexture) {
-        // Make sure the list doesn't grow infinitely with already released references:
-        for (int i = CreatedRenderTextures.Count - 1; i >= 0; i--) {
-            if (!CreatedRenderTextures[i].IsCreated()) {
-                CreatedRenderTextures.RemoveAt(i);
+        internal void AddCreatedRenderTexture(RenderTexture renderTexture) {
+            // Make sure the list doesn't grow infinitely with already released references:
+            for (int i = CreatedRenderTextures.Count - 1; i >= 0; i--) {
+                if (!CreatedRenderTextures[i].IsCreated()) {
+                    CreatedRenderTextures.RemoveAt(i);
+                }
             }
+
+            CreatedRenderTextures.Add(renderTexture);
         }
-        
-        CreatedRenderTextures.Add(renderTexture);
-    }
 #endif
 
-    //----------------------------------------------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------------------------------------------
 
-    private enum BaseMeshSyncVersion {
-        NO_VERSIONING  = 0, //Didn't have versioning in earlier versions
-        INITIAL_0_10_0 = 1  //initial for version 0.10.0-preview 
+        private enum BaseMeshSyncVersion {
+            NO_VERSIONING = 0, //Didn't have versioning in earlier versions
+            INITIAL_0_10_0 = 1 //initial for version 0.10.0-preview 
+        }
     }
-}
 } //end namespace
