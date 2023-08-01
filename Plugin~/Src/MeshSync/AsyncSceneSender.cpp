@@ -218,6 +218,17 @@ void AsyncSceneSender::send()
         };
     }
 
+    // property infos
+    if (!propertyInfos.empty()) {
+        ms::SetMessage mes;
+        setup_message(mes);
+        mes.scene->settings = scene_settings;
+        mes.scene->propertyInfos = propertyInfos;
+        succeeded = succeeded && client.send(mes);
+        if (!succeeded)
+            goto cleanup;
+    }
+
     //instance meshes
     if (!instanceMeshes.empty()) {
         ms::SetMessage mes;
@@ -235,17 +246,6 @@ void AsyncSceneSender::send()
         setup_message(mes);
         mes.scene->settings = scene_settings;
         mes.scene->instanceInfos = instanceInfos;
-        succeeded = succeeded && client.send(mes);
-        if (!succeeded)
-            goto cleanup;
-    }
-
-    // property infos
-    if (!propertyInfos.empty()) {
-        ms::SetMessage mes;
-        setup_message(mes);
-        mes.scene->settings = scene_settings;
-        mes.scene->propertyInfos = propertyInfos;
         succeeded = succeeded && client.send(mes);
         if (!succeeded)
             goto cleanup;
