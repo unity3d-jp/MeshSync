@@ -4,7 +4,7 @@ All notable changes to the MeshSync package will be documented in this file.
 ## [0.18.0-preview] - 2023-08-01
 
 ### Added
-* feat: Blender 3.5 support
+* feat: Improved instancing support
 
 ### Changed
 * change: instances are noww sent in a way that allows the same object to be instanced on multiple parents and keep that hierarchy in Unity
