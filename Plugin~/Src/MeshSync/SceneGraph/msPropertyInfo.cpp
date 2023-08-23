@@ -46,12 +46,12 @@ namespace ms {
 
 	uint64_t PropertyInfo::hash() const
 	{
-		uint64_t ret = csum(path);
+		uint64_t ret = std::hash<std::string>{}(path);
 		ret += csum(type);
 		ret += csum(sourceType);
-		ret += csum(name);
-		ret += csum(modifierName);
-		ret += csum(propertyName);
+		ret += std::hash<std::string>{}(name);
+		ret += std::hash<std::string>{}(modifierName);
+		ret += std::hash<std::string>{}(propertyName);
 		return ret;
 	}
 	
