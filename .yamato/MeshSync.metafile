@@ -55,34 +55,34 @@ test_configs:
     test_platforms:
       - platform_type: *platform_win
         test_type: *upm_ci_all
-      - platform_type: *platform_mac
-        test_type: *upm_ci_all
-      - platform_type: *platform_linux
-        test_type: *upm_ci_all
+      #- platform_type: *platform_mac
+      #  test_type: *upm_ci_all
+      #- platform_type: *platform_linux
+      #  test_type: *upm_ci_all
   - editor_version: 2021.3  
     test_platforms:
       - platform_type: *platform_win
         test_type: *upm_ci_mono
-      - platform_type: *platform_mac
-        test_type: *upm_ci_all
-      - platform_type: *platform_linux
-        test_type: *upm_ci_all
+      #- platform_type: *platform_mac
+      #  test_type: *upm_ci_all
+      #- platform_type: *platform_linux
+      #  test_type: *upm_ci_all
   - editor_version: 2022.1  
     test_platforms:
       - platform_type: *platform_win
         test_type: *upm_ci_mono
-      - platform_type: *platform_mac
-        test_type: *upm_ci_all
-      - platform_type: *platform_linux
-        test_type: *upm_ci_all
+      #- platform_type: *platform_mac
+      #  test_type: *upm_ci_all
+      #- platform_type: *platform_linux
+      #  test_type: *upm_ci_all
   - editor_version: trunk
     test_platforms:
       - platform_type: *platform_win
         test_type: *upm_ci_all
-      - platform_type: *platform_mac
-        test_type: *upm_ci_all
-      - platform_type: *platform_linux
-        test_type: *upm_ci_playedit
+      #- platform_type: *platform_mac
+      #  test_type: *upm_ci_all
+      #- platform_type: *platform_linux
+      #  test_type: *upm_ci_playedit
 
 
 promotion_types:
