@@ -518,8 +518,8 @@ public abstract partial class BaseMeshSync : MonoBehaviour, IObservable<MeshSync
             numberOfPropertiesReceived = 0;
             instancesReceivedLastUpdate.Clear();
 
-        if (mes.HasValue)
-        {
+            if (mes.HasValue)
+            {
                 IsColorInGammaSpace = mes.Value.DCCToolName.ToLower().Contains("blender");
             }
         }
