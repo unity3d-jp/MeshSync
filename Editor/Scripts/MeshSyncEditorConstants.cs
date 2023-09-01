@@ -65,6 +65,8 @@ internal static class MeshSyncEditorConstants {
         { "Blender 3.2", new DCCToolInfo(DCCToolType.BLENDER, "3.2") },
         { "Blender 3.3", new DCCToolInfo(DCCToolType.BLENDER, "3.3") },
         { "Blender 3.4", new DCCToolInfo(DCCToolType.BLENDER, "3.4") },
+        { "Blender 3.5", new DCCToolInfo(DCCToolType.BLENDER, "3.5") },
+        { "Blender 3.6", new DCCToolInfo(DCCToolType.BLENDER, "3.6") },
 #elif UNITY_EDITOR_OSX
         { "Blender/2.90", new DCCToolInfo(DCCToolType.BLENDER, "2.90" ) }, 
         { "Blender/2.91", new DCCToolInfo(DCCToolType.BLENDER, "2.91" ) }, 
