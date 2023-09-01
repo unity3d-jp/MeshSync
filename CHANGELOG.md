@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to the MeshSync package will be documented in this file.
 
-## [0.18.1-preview] - 2023-09-01
+## [0.18.2-preview] - 2023-09-01
 
 ### Added
 * feat: Improved instancing support

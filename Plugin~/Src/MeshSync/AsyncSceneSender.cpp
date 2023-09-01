@@ -127,9 +127,14 @@ void AsyncSceneSender::send()
     if (assets.empty() && textures.empty() && materials.empty() &&
         transforms.empty() && geometries.empty() && animations.empty() &&
         instanceInfos.empty() && instanceMeshes.empty() &&
-        deleted_entities.empty() && deleted_materials.empty() && 
-        deleted_instances.empty())
+        deleted_entities.empty() && deleted_materials.empty() &&
+        deleted_instances.empty()) {
+
+        if(on_cancel) {
+            on_cancel();
+        }
         return;
+    }
 
     if(on_before_send)
         on_before_send();
