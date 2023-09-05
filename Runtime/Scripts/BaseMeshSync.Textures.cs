@@ -18,7 +18,8 @@ partial class BaseMeshSync {
     private static readonly int[] textureNameIDs = {
         MeshSyncConstants._MetallicGlossMap,
         MeshSyncConstants._BaseMap,
-        MeshSyncConstants._MaskMap
+        MeshSyncConstants._MaskMap,
+        MeshSyncConstants._MainTex
     };
 
     private static string nameFromID(int id) {
