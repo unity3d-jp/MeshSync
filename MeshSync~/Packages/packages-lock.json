@@ -7,13 +7,6 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
-    "com.unity.collab-proxy": {
-      "version": "2.5.2",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://packages.unity.com"
-    },
     "com.unity.editorcoroutines": {
       "version": "1.0.0",
       "depth": 1,
@@ -55,17 +48,6 @@
       "dependencies": {
         "com.autodesk.fbx": "4.1.2",
         "com.unity.timeline": "1.5.2"
-      },
-      "url": "https://packages.unity.com"
-    },
-    "com.unity.formats.usd": {
-      "version": "3.0.0-exp.2",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.timeline": "1.0.0",
-        "com.unity.modules.physics": "1.0.0",
-        "com.unity.modules.screencapture": "1.0.0"
       },
       "url": "https://packages.unity.com"
     },
