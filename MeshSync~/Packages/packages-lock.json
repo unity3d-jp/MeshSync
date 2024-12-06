@@ -70,7 +70,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "3.0.31",
+      "version": "3.0.34",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -112,7 +112,7 @@
       }
     },
     "com.unity.meshsync.dcc-plugins": {
-      "version": "0.17.0-preview",
+      "version": "0.17.1-preview",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -126,7 +126,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.package-validation-suite": {
-      "version": "0.54.0-preview",
+      "version": "0.78.0-preview",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -171,7 +171,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.textmeshpro": {
-      "version": "3.0.6",
+      "version": "3.0.9",
       "depth": 0,
       "source": "registry",
       "dependencies": {
